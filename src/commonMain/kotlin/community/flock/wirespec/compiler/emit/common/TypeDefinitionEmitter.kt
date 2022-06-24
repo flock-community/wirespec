@@ -1,28 +1,28 @@
 package community.flock.wirespec.compiler.emit.common
 
-import community.flock.wirespec.compiler.parse.Definition.TypeDefinition
+import community.flock.wirespec.compiler.parse.Type
 import community.flock.wirespec.compiler.utils.log
 
 interface TypeDefinitionEmitter : TypeDefinitionEmitterLogger {
-    fun TypeDefinition.emit(): String
+    fun Type.emit(): String
 
-    fun TypeDefinition.Name.emit(): String
+    fun Type.Name.emit(): String
 
-    fun TypeDefinition.Shape.emit(): String
+    fun Type.Shape.emit(): String
 
-    fun TypeDefinition.Shape.Key.emit(): String
+    fun Type.Shape.Key.emit(): String
 
-    fun TypeDefinition.Shape.Value.emit(): String
+    fun Type.Shape.Value.emit(): String
 }
 
 interface TypeDefinitionEmitterLogger {
-    fun TypeDefinition.withLogging(block: () -> String) = log("Emitting TypeDefinition", block)
+    fun Type.withLogging(block: () -> String) = log("Emitting Definition: Type", block)
 
-    fun TypeDefinition.Name.withLogging(block: () -> String) = log("Emitting Type Definition Name", block)
+    fun Type.Name.withLogging(block: () -> String) = log("Emitting Definition: Type Name", block)
 
-    fun TypeDefinition.Shape.withLogging(block: () -> String) = log("Emitting Type Definition Shape", block)
+    fun Type.Shape.withLogging(block: () -> String) = log("Emitting Definition: Type Shape", block)
 
-    fun TypeDefinition.Shape.Key.withLogging(block: () -> String) = log("Emitting Type Definition Shape Key", block)
+    fun Type.Shape.Key.withLogging(block: () -> String) = log("Emitting Definition: Type Shape Key", block)
 
-    fun TypeDefinition.Shape.Value.withLogging(block: () -> String) = log("Emitting Type Definition Shape Value", block)
+    fun Type.Shape.Value.withLogging(block: () -> String) = log("Emitting Definition: Type Shape Value", block)
 }

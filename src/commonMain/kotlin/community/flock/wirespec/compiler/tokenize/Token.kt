@@ -5,20 +5,23 @@ data class Token(
     val value: String,
     val index: Long
 ) {
-    interface Type
+    sealed class Type(val string: String) {
+        override fun toString() = string
+    }
 }
 
-object Whitespace : Token.Type
-object Identifier : Token.Type
-object EndOfProgram : Token.Type
+object Whitespace : Token.Type("WhiteSpace")
+object LeftCurly : Token.Type("LeftCurly")
+object RightCurly : Token.Type("RightCurly")
+object Colon : Token.Type("Colon")
+object Comma : Token.Type("Comma")
+object Identifier : Token.Type("Identifier")
+object EndOfProgram : Token.Type("EndOfProgram")
 
-object LeftCurly : Token.Type
-object RightCurly : Token.Type
-object Colon : Token.Type
-object Comma : Token.Type
+sealed class Keyword(string: String) : Token.Type(string)
+sealed class WsType(string: String) : Keyword(string)
 
-interface Keyword : Token.Type
-
-object WsType : Keyword
-object WsString : Keyword
-object WsInteger : Keyword
+object WsTypeDef : Keyword("WsTypeDef")
+object WsString : WsType("WsString")
+object WsInteger : WsType("WsInteger")
+object WsBoolean : WsType("WsBoolean")

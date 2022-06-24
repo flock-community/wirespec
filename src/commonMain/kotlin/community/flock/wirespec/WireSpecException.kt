@@ -1,5 +1,7 @@
 package community.flock.wirespec
 
+import community.flock.wirespec.compiler.tokenize.Token
+
 sealed class WireSpecException(message: String) : RuntimeException(message) {
 
     sealed class IOException(message: String) : WireSpecException(message) {
@@ -9,9 +11,15 @@ sealed class WireSpecException(message: String) : RuntimeException(message) {
 
     sealed class CompilerException(message: String) : RuntimeException(message) {
 
-        class EmitterException(message: String) : CompilerException(message)
+        sealed class ParserException(string: String) : CompilerException(string) {
+            class WrongTokenException(expected: Token.Type, actual: Token) :
+                ParserException("$expected expected, not: ${actual.type} at position ${actual.index}")
 
-        class ParserException(message: String) : CompilerException(message)
+            sealed class NullTokenException(message: String) : ParserException("$message cannot be null") {
+                class StartingException : NullTokenException("Starting Token")
+                class NextException : NullTokenException("Next Token")
+            }
+        }
 
         class TokenizerException(message: String) : CompilerException(message)
 

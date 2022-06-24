@@ -3,7 +3,7 @@ Version 0.0.1
 ## Quick Start
 On macOS systems run
 ```shell
-make build && make run
+make compile && make test
 ```
-to build the project and compile the WireSpec definitions in `types/in`
-to Kotlin and TypeScript.
+to compile the project and test the WireSpec compiler with definitions found in
+`types/in`. Locate the result in `types/out`

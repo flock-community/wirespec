@@ -5,5 +5,5 @@ type Foo {
 
 type Bar {
   one: Foo,
-  two: String
+  isBool: Boolean
 }

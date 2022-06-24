@@ -7,9 +7,10 @@ import community.flock.wirespec.compiler.tokenize.LeftCurly
 import community.flock.wirespec.compiler.tokenize.RightCurly
 import community.flock.wirespec.compiler.tokenize.Token
 import community.flock.wirespec.compiler.tokenize.Whitespace
+import community.flock.wirespec.compiler.tokenize.WsBoolean
 import community.flock.wirespec.compiler.tokenize.WsInteger
 import community.flock.wirespec.compiler.tokenize.WsString
-import community.flock.wirespec.compiler.tokenize.WsType
+import community.flock.wirespec.compiler.tokenize.WsTypeDef
 
 interface LanguageSpec {
     val matchers: List<Pair<Regex, Token.Type>>
@@ -17,13 +18,14 @@ interface LanguageSpec {
 
 object WireSpec : LanguageSpec {
     override val matchers = listOf(
-        Regex("^type") to WsType,
+        Regex("^type") to WsTypeDef,
         Regex("^\\s+") to Whitespace,
         Regex("^\\{") to LeftCurly,
         Regex("^:") to Colon,
         Regex("^,") to Comma,
         Regex("^String") to WsString,
         Regex("^Integer") to WsInteger,
+        Regex("^Boolean") to WsBoolean,
         Regex("^}") to RightCurly,
         Regex("^[a-zA-Z]+") to Identifier,
         )

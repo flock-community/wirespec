@@ -1,12 +1,13 @@
 package community.flock.wirespec.compiler.parse
 
-import community.flock.wirespec.WireSpecException.CompilerException.ParserException
+import community.flock.wirespec.WireSpecException.CompilerException.ParserException.NullTokenException.NextException
+import community.flock.wirespec.WireSpecException.CompilerException.ParserException.NullTokenException.StartingException
 import community.flock.wirespec.compiler.tokenize.Token
 import community.flock.wirespec.compiler.utils.log
 
 class TokenProvider(private val tokenIterator: Iterator<Token>) {
 
-    var token = nextToken() ?: throw ParserException("CurrentToken cannot be null")
+    var token = nextToken() ?: throw StartingException()
     var nextToken = nextToken()
 
     init {
@@ -17,7 +18,7 @@ class TokenProvider(private val tokenIterator: Iterator<Token>) {
 
     fun eatToken() {
         val previousToken = token
-        token = nextToken ?: throw ParserException("NextToken cannot be null")
+        token = nextToken ?: throw NextException()
         nextToken = nextToken()
 
         printTokens(previousToken)

@@ -1,9 +1,8 @@
 package community.flock.wirespec.compiler.emit.common
 
-import community.flock.wirespec.WireSpecException
 import community.flock.wirespec.compiler.parse.AST
-import community.flock.wirespec.compiler.parse.Definition.TypeDefinition
 import community.flock.wirespec.compiler.parse.Node
+import community.flock.wirespec.compiler.parse.Type
 import community.flock.wirespec.compiler.utils.log
 
 abstract class Emitter : TypeDefinitionEmitter {
@@ -13,12 +12,12 @@ abstract class Emitter : TypeDefinitionEmitter {
     private fun Node.emit(): String = run {
         log("Emitting Node $this")
         when (this) {
-            is TypeDefinition -> emit()
-            else -> throw WireSpecException.CompilerException.EmitterException("Unknown Node: $this")
+            is Type -> emit()
         }
     }
 
     companion object {
-        internal const val SPACER = "  "
+        protected const val SPACER = "  "
     }
+
 }

@@ -1,0 +1,3 @@
+*
+!build/bin/linuxX64/*
+!types/in/*
