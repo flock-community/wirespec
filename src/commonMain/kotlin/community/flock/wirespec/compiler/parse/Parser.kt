@@ -10,7 +10,7 @@ import community.flock.wirespec.compiler.tokenize.Identifier
 import community.flock.wirespec.compiler.tokenize.LeftCurly
 import community.flock.wirespec.compiler.tokenize.RightCurly
 import community.flock.wirespec.compiler.tokenize.Token
-import community.flock.wirespec.compiler.tokenize.Whitespace
+import community.flock.wirespec.compiler.tokenize.WhiteSpace
 import community.flock.wirespec.compiler.tokenize.WsBoolean
 import community.flock.wirespec.compiler.tokenize.WsInteger
 import community.flock.wirespec.compiler.tokenize.WsString
@@ -19,7 +19,7 @@ import community.flock.wirespec.compiler.utils.log
 
 typealias AST = List<Node>
 
-fun List<Token>.parse(): AST = filterNot { it.type is Whitespace }
+fun List<Token>.parse(): AST = filterNot { it.type is WhiteSpace }
     .toProvider()
     .parse()
 
@@ -27,7 +27,7 @@ private fun TokenProvider.parse(): AST = mutableListOf<Definition>()
     .apply { while (hasNext()) add(parseDefinition()) }
 
 private fun TokenProvider.parseDefinition(): Definition = run {
-    log(token)
+    token.log()
     when (token.type) {
         is WsTypeDef -> parseTypeDeclaration()
         else -> throw WrongTokenException(WsTypeDef, token)
@@ -36,7 +36,7 @@ private fun TokenProvider.parseDefinition(): Definition = run {
 
 private fun TokenProvider.parseTypeDeclaration(): Type = run {
     eatToken()
-    log(token)
+    token.log()
     when (token.type) {
         is Identifier -> parseTypeDefinition(token.value)
         else -> throw WrongTokenException(Identifier, token)
@@ -45,7 +45,7 @@ private fun TokenProvider.parseTypeDeclaration(): Type = run {
 
 private fun TokenProvider.parseTypeDefinition(typeName: String): Type = run {
     eatToken()
-    log(token)
+    token.log()
     when (token.type) {
         is LeftCurly -> Type(Type.Name(typeName), parseTypeShape())
         else -> throw WrongTokenException(LeftCurly, token)
@@ -59,7 +59,7 @@ private fun TokenProvider.parseTypeDefinition(typeName: String): Type = run {
 
 private fun TokenProvider.parseTypeShape(): Shape = run {
     eatToken()
-    log(token)
+    token.log()
     when (token.type) {
         is Identifier -> mutableListOf<Pair<Shape.Key, Shape.Value>>().apply {
             add(parseKeyValueAsPair(Shape.Key(token.value)))
@@ -74,7 +74,7 @@ private fun TokenProvider.parseTypeShape(): Shape = run {
 
 private fun TokenProvider.parseKeyValueAsPair(key: Shape.Key): Pair<Shape.Key, Shape.Value> = run {
     eatToken()
-    log(token)
+    token.log()
     when (token.type) {
         is Colon -> eatToken()
         else -> throw WrongTokenException(Colon, token)
@@ -90,4 +90,4 @@ private fun TokenProvider.parseKeyValueAsPair(key: Shape.Key): Pair<Shape.Key, S
     key to value
 }
 
-private fun log(token: Token) = log("Parsing ${token.type} at position ${token.index}")
+private fun Token.log() = log("Parsing $type at line ${index.line} position ${index.position}")

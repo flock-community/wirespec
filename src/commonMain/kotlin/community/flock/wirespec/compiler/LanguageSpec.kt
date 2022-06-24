@@ -4,9 +4,10 @@ import community.flock.wirespec.compiler.tokenize.Colon
 import community.flock.wirespec.compiler.tokenize.Comma
 import community.flock.wirespec.compiler.tokenize.Identifier
 import community.flock.wirespec.compiler.tokenize.LeftCurly
+import community.flock.wirespec.compiler.tokenize.NewLine
 import community.flock.wirespec.compiler.tokenize.RightCurly
 import community.flock.wirespec.compiler.tokenize.Token
-import community.flock.wirespec.compiler.tokenize.Whitespace
+import community.flock.wirespec.compiler.tokenize.WhiteSpaceExceptNewLine
 import community.flock.wirespec.compiler.tokenize.WsBoolean
 import community.flock.wirespec.compiler.tokenize.WsInteger
 import community.flock.wirespec.compiler.tokenize.WsString
@@ -19,7 +20,8 @@ interface LanguageSpec {
 object WireSpec : LanguageSpec {
     override val matchers = listOf(
         Regex("^type") to WsTypeDef,
-        Regex("^\\s+") to Whitespace,
+        Regex("^[^\\S\\r\\n]+") to WhiteSpaceExceptNewLine,
+        Regex("^[\\r\\n]") to NewLine,
         Regex("^\\{") to LeftCurly,
         Regex("^:") to Colon,
         Regex("^,") to Comma,
@@ -28,5 +30,5 @@ object WireSpec : LanguageSpec {
         Regex("^Boolean") to WsBoolean,
         Regex("^}") to RightCurly,
         Regex("^[a-zA-Z]+") to Identifier,
-        )
+    )
 }

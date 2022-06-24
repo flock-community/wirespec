@@ -10,15 +10,18 @@ import community.flock.wirespec.compiler.utils.log
 
 fun LanguageSpec.compile(source: String): (Emitter) -> String = { emitter ->
     tokenize(source)
-        .also { report(it, `as` = TOKENIZED) }
+        .also(TOKENIZED::report)
         .parse()
-        .also { report(it, `as` = PARSED) }
-        .let { emitter.emit(it) }
-        .also { report(it, `as` = EMITTED) }
+        .also(PARSED::report)
+        .let(emitter::emit)
+        .also(EMITTED::report)
 }
 
-private fun report(any: Any, `as`: Reported) = `as`.run {
-    log("********** $name **********\n$any\n########## $name ##########")
-}
 
-private enum class Reported { TOKENIZED, PARSED, EMITTED }
+private enum class Reported {
+    TOKENIZED, PARSED, EMITTED;
+
+    fun report(any: Any) = run {
+        log("********** $name **********\n$any\n########## $name ##########")
+    }
+}

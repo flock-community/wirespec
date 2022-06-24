@@ -13,7 +13,7 @@ sealed class WireSpecException(message: String) : RuntimeException(message) {
 
         sealed class ParserException(string: String) : CompilerException(string) {
             class WrongTokenException(expected: Token.Type, actual: Token) :
-                ParserException("$expected expected, not: ${actual.type} at position ${actual.index}")
+                ParserException("$expected expected, not: ${actual.type} at line ${actual.index.line} and position ${actual.index.position - actual.value.length}")
 
             sealed class NullTokenException(message: String) : ParserException("$message cannot be null") {
                 class StartingException : NullTokenException("Starting Token")
