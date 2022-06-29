@@ -2,8 +2,8 @@ FROM debian:latest
 
 RUN mkdir -p /app/types/
 
-COPY build/bin/linuxX64/debugExecutable/wireSpec.kexe /app
+COPY compiler/build/bin/linuxX64/releaseExecutable/compiler.kexe /app
 
 WORKDIR /app
 
-CMD /app/wireSpec.kexe $(pwd) Kotlin,TypeScript
+CMD /app/compiler.kexe $(pwd) Kotlin,TypeScript

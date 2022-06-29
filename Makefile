@@ -3,7 +3,7 @@ compile:
 .PHONY: compile
 
 test:
-	./build/bin/macosX64/releaseExecutable/wireSpec.kexe $(shell pwd) Kotlin,TypeScript
+	./compiler/build/bin/macosX64/releaseExecutable/compiler.kexe $(shell pwd) Kotlin,TypeScript
 .PHONY: test
 
 build:

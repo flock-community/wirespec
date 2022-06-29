@@ -1,10 +1,10 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithHostTests
 
 plugins {
-    kotlin("multiplatform") version "1.7.0"
+    kotlin("multiplatform") version Versions.Languages.kotlin
 }
 
-group = "community.flock"
+group = "community.flock.wirespec"
 version = "0.0.1-SNAPSHOT"
 
 repositories {
