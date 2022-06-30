@@ -3,7 +3,7 @@ package community.flock.wirespec.compiler.parse
 import community.flock.wirespec.WireSpecException.CompilerException.ParserException.NullTokenException.NextException
 import community.flock.wirespec.WireSpecException.CompilerException.ParserException.NullTokenException.StartingException
 import community.flock.wirespec.compiler.tokenize.Token
-import community.flock.wirespec.compiler.utils.log
+import community.flock.wirespec.utils.log
 
 class TokenProvider(private val tokenIterator: Iterator<Token>) {
 

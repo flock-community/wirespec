@@ -6,7 +6,7 @@ import community.flock.wirespec.compiler.Reported.TOKENIZED
 import community.flock.wirespec.compiler.emit.common.Emitter
 import community.flock.wirespec.compiler.parse.parse
 import community.flock.wirespec.compiler.tokenize.tokenize
-import community.flock.wirespec.compiler.utils.log
+import community.flock.wirespec.utils.log
 
 fun LanguageSpec.compile(source: String): (Emitter) -> String = { emitter ->
     tokenize(source)

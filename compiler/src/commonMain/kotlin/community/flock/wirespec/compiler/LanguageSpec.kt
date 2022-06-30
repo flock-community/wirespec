@@ -18,6 +18,7 @@ interface LanguageSpec {
 }
 
 object WireSpec : LanguageSpec {
+    @Suppress("RegExpRedundantEscape")
     override val matchers = listOf(
         Regex("^type") to WsTypeDef,
         Regex("^[^\\S\\r\\n]+") to WhiteSpaceExceptNewLine,
@@ -28,7 +29,7 @@ object WireSpec : LanguageSpec {
         Regex("^String") to WsString,
         Regex("^Integer") to WsInteger,
         Regex("^Boolean") to WsBoolean,
-        Regex("^}") to RightCurly,
+        Regex("^\\}") to RightCurly, // "^\\}" Redundant Escape in regex is needed for js compatibility
         Regex("^[a-zA-Z]+") to Identifier,
     )
 }

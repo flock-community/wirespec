@@ -9,6 +9,8 @@ import community.flock.wirespec.compiler.emit.TypeScriptEmitter
 import community.flock.wirespec.io.KotlinFile
 import community.flock.wirespec.io.TypeScriptFile
 import community.flock.wirespec.io.WireSpecFile
+import community.flock.wirespec.utils.getFirst
+import community.flock.wirespec.utils.getSecond
 
 const val typesDir = "/types"
 
@@ -16,8 +18,8 @@ private enum class Language { Kotlin, TypeScript }
 
 fun main(args: Array<String>) {
 
-    val basePath = runCatching { args[0] }.getOrNull()
-    val languages = runCatching { args[1] }.getOrNull()
+    val basePath = getFirst(args)
+    val languages = getSecond(args)
         ?.split(",")
         ?.map(Language::valueOf)
         ?.toSet()

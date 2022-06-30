@@ -15,7 +15,7 @@ import community.flock.wirespec.compiler.tokenize.WsBoolean
 import community.flock.wirespec.compiler.tokenize.WsInteger
 import community.flock.wirespec.compiler.tokenize.WsString
 import community.flock.wirespec.compiler.tokenize.WsTypeDef
-import community.flock.wirespec.compiler.utils.log
+import community.flock.wirespec.utils.log
 
 typealias AST = List<Node>
 

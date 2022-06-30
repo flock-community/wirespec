@@ -1,7 +1,7 @@
 package community.flock.wirespec.compiler.emit.common
 
 import community.flock.wirespec.compiler.parse.Type
-import community.flock.wirespec.compiler.utils.log
+import community.flock.wirespec.utils.log
 
 interface TypeDefinitionEmitter : TypeDefinitionEmitterLogger {
     fun Type.emit(): String
