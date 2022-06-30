@@ -1,23 +1,23 @@
 compile:
-	./gradlew build
+	$(shell pwd)/scripts/compile.sh
 .PHONY: compile
 
 test:
-	./compiler/build/bin/macosX64/releaseExecutable/compiler.kexe $(shell pwd) Kotlin,TypeScript
+	$(shell pwd)/scripts/test.sh
 .PHONY: test
 
-test-js:
-	node build/js/packages/wire-spec-compiler/kotlin/wire-spec-compiler.js $(shell pwd) Kotlin,TypeScript
-.PHONY: test-js
-
 build:
-	docker build -t wire-spec .
+	$(shell pwd)/scripts/build.sh
 .PHONY: build
 
 run:
-	docker run --rm -it -v $(shell pwd)/types:/app/types wire-spec
+	$(shell pwd)/scripts/run.sh
 .PHONY: run
 
 clean:
-	./gradlew clean && docker rmi wire-spec
+	$(shell pwd)/scripts/clean.sh
 .PHONY: clean
+
+all:
+	$(shell pwd)/scripts/all.sh
+.PHONY: all

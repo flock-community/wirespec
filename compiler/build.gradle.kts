@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithHostTests
+import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsTargetDsl
 
 plugins {
     kotlin("multiplatform") version Versions.Languages.kotlin
@@ -13,24 +14,22 @@ repositories {
 
 kotlin {
     val buildAll = "WIRE_SPEC_BUILD_ALL".fromEnv()
-    val buildLinux = buildAll || "WIRE_SPEC_BUILD_LINUX".fromEnv()
+    val buildNode = buildAll || "WIRE_SPEC_BUILD_NODE".fromEnv()
+    val buildMac = buildAll || "WIRE_SPEC_BUILD_MAC".fromEnv()
     val buildWindows = buildAll || "WIRE_SPEC_BUILD_WINDOWS".fromEnv()
-    val buildMacOS = buildAll || "WIRE_SPEC_BUILD_MAC".fromEnv() || (!buildLinux && !buildWindows)
+    val buildLinux = buildAll || "WIRE_SPEC_BUILD_LINUX".fromEnv() || (!buildNode && !buildMac && !buildWindows)
 
-    if (buildMacOS) macosX64 { build() }
+    if (buildMac) macosX64 { build() }
     if (buildLinux) linuxX64 { build() }
     if (buildWindows) mingwX64 { build() }
-    js(IR) {
-        nodejs()
-        binaries.executable()
-    }
+    if (buildNode) js(IR) { build() }
 
     sourceSets {
         val commonMain by getting {}
         val desktopMain by creating {
             dependsOn(commonMain)
         }
-        if (buildMacOS) {
+        if (buildMac) {
             val macosX64Main by getting {
                 dependsOn(desktopMain)
             }
@@ -45,8 +44,10 @@ kotlin {
                 dependsOn(desktopMain)
             }
         }
-        val jsMain by getting {
-            dependsOn(commonMain)
+        if (buildNode) {
+            val jsMain by getting {
+                dependsOn(commonMain)
+            }
         }
     }
 }
@@ -57,4 +58,9 @@ fun KotlinNativeTargetWithHostTests.build() = binaries {
     executable {
         entryPoint = "community.flock.wirespec.main"
     }
+}
+
+fun KotlinJsTargetDsl.build() {
+    nodejs()
+    binaries.executable()
 }

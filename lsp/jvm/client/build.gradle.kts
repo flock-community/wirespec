@@ -14,7 +14,7 @@ repositories {
 
 dependencies {
     implementLSP()
-    implementation(project(":lsp:core"))
+    implementation(project(":lsp:jvm:core"))
 
     implementTesting()
 }
