@@ -20,7 +20,7 @@ abstract class Emitter : TypeDefinitionEmitter {
     }
 
     companion object {
-        protected const val SPACER = "  "
+        const val SPACER = "  "
     }
 
 }
