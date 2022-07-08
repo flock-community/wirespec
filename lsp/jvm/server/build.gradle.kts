@@ -1,12 +1,13 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
-    kotlin("jvm") version Versions.Languages.kotlin
-    id("com.github.johnrengelman.shadow") version Versions.Plugins.shadow
+    kotlin("multiplatform") apply false
+    kotlin("jvm")
+    id("com.github.johnrengelman.shadow")
 }
 
-group = "community.flock.wirespec.lsp"
-version = "0.0.1-SNAPSHOT"
+group = "${Settings.groupId}.lsp"
+version = Settings.version
 
 repositories {
     mavenCentral()

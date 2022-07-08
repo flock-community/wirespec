@@ -1,9 +1,11 @@
 plugins {
-    kotlin("jvm") version Versions.Languages.kotlin
+    kotlin("multiplatform") apply false
+    kotlin("jvm")
+    id("com.github.johnrengelman.shadow") apply false
 }
 
-group = "community.flock.wirespec.lsp"
-version = "0.0.1-SNAPSHOT"
+group = "${Settings.groupId}.lsp"
+version = Settings.version
 
 repositories {
     mavenCentral()

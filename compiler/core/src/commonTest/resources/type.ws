@@ -1,0 +1,3 @@
+type Bla {
+  yolo: String
+}
