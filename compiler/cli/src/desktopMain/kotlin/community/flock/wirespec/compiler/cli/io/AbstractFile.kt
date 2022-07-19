@@ -36,7 +36,7 @@ actual abstract class AbstractFile actual constructor(private val path: String) 
     }.toString()
 
     actual fun write(text: String) {
-        val file = fopen(path.split(".").joinToString("-from-kt."), "w")
+        val file = fopen(path.split(".").joinToString("-from-native."), "w")
             ?: throw FileReadException("Cannot open output file $path")
         try {
             memScoped {

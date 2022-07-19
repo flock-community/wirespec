@@ -17,6 +17,7 @@ kotlin {
     mingwX64()
     js(IR) {
         nodejs()
+        binaries.library()
     }
     jvm()
 }

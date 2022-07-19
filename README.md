@@ -1,7 +1,10 @@
 # WireSpec
 Version 0.0.1
+## Dependencies
+* JDK 17
+* Docker
 ## Quick Start
-On *nix systems with docker installed run:
+On *nix systems run:
 ```shell
 make all
 ```
