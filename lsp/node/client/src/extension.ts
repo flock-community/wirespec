@@ -1,17 +1,27 @@
 import { ExtensionContext } from "vscode";
-import { LanguageClient } from "vscode-languageclient";
+import { LanguageClient, ServerOptions, TransportKind } from "vscode-languageclient/node";
+import * as path from "path";
+
+let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
   console.log("Activating...");
 
-  const runConfig = {
-    command: "wire-spec-server",
-    args: ["--stdio"],
-  };
+  const serverModule = context.asAbsolutePath(path.join("..", "server", "index.js"));
 
-  const serverOptions = {
-    run: runConfig,
-    debug: runConfig,
+  console.log(serverModule);
+
+  const serverOptions: ServerOptions = {
+    run: {
+      module: serverModule,
+      transport: TransportKind.ipc,
+      options: { execArgv: ["--nolazy", "--inspect=6009"] },
+    },
+    debug: {
+      module: serverModule,
+      transport: TransportKind.ipc,
+      options: { execArgv: ["--nolazy", "--inspect=6009"] },
+    },
   };
 
   const clientOptions = {
@@ -23,14 +33,13 @@ export function activate(context: ExtensionContext) {
     ],
   };
 
-  const client = new LanguageClient(
-    "wire-spec-extension-id",
-    "WireSpecChecker",
-    serverOptions,
-    clientOptions
-  );
+  client = new LanguageClient("wire-spec-extension-id", "WireSpecChecker", serverOptions, clientOptions);
 
-  context.subscriptions.push(client.start());
+  client.start();
 
   console.log("Done.");
+}
+
+export function deactivate(): Thenable<void> | undefined {
+  return client ? client.stop() : undefined;
 }

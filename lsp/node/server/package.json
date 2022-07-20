@@ -5,17 +5,20 @@
   "bin": {
     "wire-spec-server": "./index.js"
   },
-  "scripts": {
-    "start": "node index.js --stdio",
-    "clean": "rimraf node_modules"
-  },
   "dependencies": {
-    "vscode-languageserver": "^6.0.1",
-    "vscode-languageserver-textdocument": "^1.0.0"
+    "vscode-languageserver": "8.0.2",
+    "vscode-languageserver-textdocument": "1.0.5",
+    "wire-spec-core": "file:../../../build/js/packages/wire-spec-core"
   },
   "devDependencies": {
-    "prettier": "2.7.1",
-    "rimraf": "3.0.2"
+    "prettier": "^2.7.1",
+    "rimraf": "^3.0.2",
+    "update-ruecksichtslos": "^0.0.17"
+  },
+  "scripts": {
+    "start": "node index.js --stdio",
+    "clean": "rimraf node_modules",
+    "update": "update-ruecksichtslos"
   },
   "prettier": {
     "printWidth": 120
