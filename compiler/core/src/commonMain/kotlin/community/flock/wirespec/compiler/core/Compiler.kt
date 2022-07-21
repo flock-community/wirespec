@@ -5,20 +5,21 @@ import community.flock.wirespec.compiler.core.Reported.PARSED
 import community.flock.wirespec.compiler.core.Reported.TOKENIZED
 import community.flock.wirespec.compiler.core.Reported.VALIDATED
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.exceptions.WireSpecException
 import community.flock.wirespec.compiler.core.parse.Parser
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.core.validate.validate
 import community.flock.wirespec.compiler.utils.Logger
 
-fun LanguageSpec.compile(source: String): (Logger) -> (Emitter) -> String = {
+fun LanguageSpec.compile(source: String): (Logger) -> (Emitter) -> Either<WireSpecException, String> = {
     { emitter ->
         tokenize(source)
             .also((TOKENIZED::report)(it))
-            .let(Parser(it)::parse)
+            .flatMap(Parser(it)::parse)
             .also((PARSED::report)(it))
-            .validate()
+            .flatMap { it.validate() }
             .also((VALIDATED::report)(it))
-            .let(emitter::emit)
+            .flatMap(emitter::emit)
             .also((EMITTED::report)(it))
     }
 }

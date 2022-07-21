@@ -1,6 +1,9 @@
 package community.flock.wirespec.compiler.core.parse
 
-import community.flock.wirespec.compiler.core.WireSpecException.CompilerException.ParserException.WrongTokenException
+import community.flock.wirespec.compiler.core.Either
+import community.flock.wirespec.compiler.core.exceptions.WireSpecException
+import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException.ParserException.WrongTokenException
+import community.flock.wirespec.compiler.core.either
 import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Value.Custom
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Value.Ws
@@ -21,9 +24,11 @@ typealias AST = List<Node>
 
 class Parser(private val logger: Logger) {
 
-    fun parse(tokens: List<Token>): AST = tokens.filterNot { it.type is WhiteSpace }
-        .toProvider(logger)
-        .parse()
+    fun parse(tokens: List<Token>): Either<WireSpecException, AST> = either {
+        tokens.filterNot { it.type is WhiteSpace }
+            .toProvider(logger)
+            .parse()
+    }
 
     private fun TokenProvider.parse(): AST = mutableListOf<Definition>()
         .apply { while (hasNext()) add(parseDefinition()) }

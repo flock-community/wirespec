@@ -17,3 +17,11 @@ clean:
 all:
 	$(shell pwd)/scripts/all.sh
 .PHONY: all
+
+mac:
+	$(shell pwd)/scripts/mac.sh
+.PHONY: mac
+
+linux:
+	$(shell pwd)/scripts/linux.sh
+.PHONY: linux

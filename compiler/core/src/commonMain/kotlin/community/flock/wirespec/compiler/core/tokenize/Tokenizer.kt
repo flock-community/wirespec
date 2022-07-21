@@ -1,11 +1,16 @@
 package community.flock.wirespec.compiler.core.tokenize
 
-import community.flock.wirespec.compiler.core.WireSpecException.CompilerException.TokenizerException
+import community.flock.wirespec.compiler.core.Either
 import community.flock.wirespec.compiler.core.LanguageSpec
+import community.flock.wirespec.compiler.core.exceptions.WireSpecException
+import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException.TokenizerException
+import community.flock.wirespec.compiler.core.either
 import community.flock.wirespec.compiler.core.tokenize.Token.Index
 
-fun LanguageSpec.tokenize(source: String): List<Token> = with(tokenize(source, listOf())) {
-    this + Token(type = EndOfProgram, value = "EOP", index = Index(count { it.type is NewLine } + 1))
+fun LanguageSpec.tokenize(source: String): Either<WireSpecException, List<Token>> = either {
+    with(tokenize(source, listOf())) {
+        this + Token(type = EndOfProgram, value = "EOP", index = Index(count { it.type is NewLine } + 1))
+    }
 }
 
 private tailrec fun LanguageSpec.tokenize(source: String, tokens: List<Token>): List<Token> {
@@ -17,7 +22,7 @@ private tailrec fun LanguageSpec.tokenize(source: String, tokens: List<Token>): 
 
 private fun LanguageSpec.findToken(index: Index, source: String): Token = matchers
     .firstNotNullOfOrNull { (regex, tokenType) -> regex.find(source)?.toToken(tokenType, index) }
-    ?: throw TokenizerException("At line ${index.line}, position ${index.position}, character: '${source.first()}' in '\n${source.partial()}\n' is not expected")
+    ?: throw TokenizerException(index, "At line ${index.line}, position ${index.position}, character: '${source.first()}' in '\n${source.partial()}\n' is not expected")
 
 private fun MatchResult.toToken(type: Token.Type, index: Index) = Token(type, value, index)
 

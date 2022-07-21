@@ -1,7 +1,7 @@
 package community.flock.wirespec.compiler.core.parse
 
-import community.flock.wirespec.compiler.core.WireSpecException.CompilerException.ParserException.NullTokenException.NextException
-import community.flock.wirespec.compiler.core.WireSpecException.CompilerException.ParserException.NullTokenException.StartingException
+import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException.ParserException.NullTokenException.NextException
+import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException.ParserException.NullTokenException.StartingException
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.utils.Logger
 
@@ -18,7 +18,7 @@ class TokenProvider(private val logger: Logger, private val tokenIterator: Itera
 
     fun eatToken() {
         val previousToken = token
-        token = nextToken ?: throw NextException()
+        token = nextToken ?: throw NextException(previousToken.index)
         nextToken = nextToken()
 
         printTokens(previousToken)

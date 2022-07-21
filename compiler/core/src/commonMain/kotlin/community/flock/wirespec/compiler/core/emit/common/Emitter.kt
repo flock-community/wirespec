@@ -1,5 +1,8 @@
 package community.flock.wirespec.compiler.core.emit.common
 
+import community.flock.wirespec.compiler.core.Either
+import community.flock.wirespec.compiler.core.exceptions.WireSpecException
+import community.flock.wirespec.compiler.core.either
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Type
@@ -7,10 +10,12 @@ import community.flock.wirespec.compiler.utils.Logger
 
 abstract class Emitter(val logger: Logger) : TypeDefinitionEmitter {
 
-    fun emit(ast: AST): String = ast
-        .map { it.emit() }
-        .takeIf { it.isNotEmpty() }
-        ?.reduce { acc, cur -> acc + cur } ?: ""
+    fun emit(ast: AST): Either<WireSpecException, String> = either {
+        ast
+            .map { it.emit() }
+            .reduceOrNull { acc, cur -> acc + cur }
+            .let { it ?: "" }
+    }
 
     private fun Node.emit(): String = run {
         logger.log("Emitting Node $this")

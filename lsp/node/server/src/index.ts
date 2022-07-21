@@ -5,16 +5,11 @@ import { community } from "wire-spec-lib";
 const wsToTs = new community.flock.wirespec.compiler.lib.WsToTypeScript();
 
 const getCompilerErrors = (text) => {
-  const errors = [];
-  try {
-    wsToTs.compile(text);
-  } catch (e) {
-    errors.push({
-      value: e.toString(),
-      index: 0,
-    });
-  }
-  return errors;
+  const error = wsToTs.compile(text).error;
+  if (error) {
+    const { index, value } = error;
+    return [{ index, value }];
+  } else return [];
 };
 
 const toDiagnostic =

@@ -2,15 +2,16 @@ package community.flock.wirespec.compiler.cli
 
 import community.flock.wirespec.compiler.cli.Language.Kotlin
 import community.flock.wirespec.compiler.cli.Language.TypeScript
+import community.flock.wirespec.compiler.cli.io.AbstractFile
+import community.flock.wirespec.compiler.cli.io.KotlinFile
+import community.flock.wirespec.compiler.cli.io.TypeScriptFile
+import community.flock.wirespec.compiler.cli.io.WireSpecFile
 import community.flock.wirespec.compiler.core.WireSpec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitter
-import community.flock.wirespec.compiler.cli.io.AbstractFile
-import community.flock.wirespec.compiler.cli.io.KotlinFile
-import community.flock.wirespec.compiler.cli.io.TypeScriptFile
-import community.flock.wirespec.compiler.cli.io.WireSpecFile
+import community.flock.wirespec.compiler.core.getOrHandle
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.getEnvVar
 import community.flock.wirespec.compiler.utils.getFirst
@@ -54,5 +55,6 @@ fun main(args: Array<String>) {
 fun compile(inputPath: String): (Pair<Emitter, AbstractFile>) -> Unit = { (emitter, file) ->
     WireSpecFile(inputPath).read()
         .let(WireSpec::compile)(logger)(emitter)
+        .getOrHandle { throw it }
         .let(file::write)
 }

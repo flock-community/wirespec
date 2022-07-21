@@ -11,7 +11,7 @@ private val logger = object : Logger(false) {}
 @JsExport
 @ExperimentalJsExport
 class WsToKotlin {
-    fun compile(source: String) = WireSpec.compile(source)(logger)(kotlinEmitter)
+    fun compile(source: String) = WireSpec.compile(source)(logger)(kotlinEmitter).produce()
 
     companion object {
         private val kotlinEmitter = KotlinEmitter(logger)
@@ -21,7 +21,7 @@ class WsToKotlin {
 @JsExport
 @ExperimentalJsExport
 class WsToTypeScript {
-    fun compile(source: String) = WireSpec.compile(source)(logger)(typeScriptEmitter)
+    fun compile(source: String) = WireSpec.compile(source)(logger)(typeScriptEmitter).produce()
 
     companion object {
         private val typeScriptEmitter = TypeScriptEmitter(logger)
