@@ -4,22 +4,17 @@ import * as path from "path";
 
 let client: LanguageClient;
 
-export function activate(context: ExtensionContext) {
+export const activate = (context: ExtensionContext) => {
   console.log("Activating...");
 
-  const serverModule = context.asAbsolutePath(path.join("..", "server", "index.js"));
+  const serverModule = context.asAbsolutePath(path.join("..", "server", "build", "index.js"));
 
-  console.log(serverModule);
+  const nodeModule = { module: serverModule, transport: TransportKind.ipc };
 
   const serverOptions: ServerOptions = {
-    run: {
-      module: serverModule,
-      transport: TransportKind.ipc,
-      options: { execArgv: ["--nolazy", "--inspect=6009"] },
-    },
+    run: nodeModule,
     debug: {
-      module: serverModule,
-      transport: TransportKind.ipc,
+      ...nodeModule,
       options: { execArgv: ["--nolazy", "--inspect=6009"] },
     },
   };
@@ -35,11 +30,9 @@ export function activate(context: ExtensionContext) {
 
   client = new LanguageClient("wire-spec-extension-id", "WireSpecChecker", serverOptions, clientOptions);
 
-  client.start();
+  client.start().catch(console.error);
 
   console.log("Done.");
-}
+};
 
-export function deactivate(): Thenable<void> | undefined {
-  return client ? client.stop() : undefined;
-}
+export const deactivate = (): Thenable<void> | undefined => (client ? client.stop() : undefined);

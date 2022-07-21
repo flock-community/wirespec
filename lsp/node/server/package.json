@@ -1,9 +1,9 @@
 {
   "name": "wire-spec-server",
   "version": "0.0.1",
-  "main": "index.js",
+  "main": "src/index.js",
   "bin": {
-    "wire-spec-server": "./index.js"
+    "wire-spec-server": "src/index.js"
   },
   "dependencies": {
     "vscode-languageserver": "8.0.2",
@@ -16,9 +16,12 @@
     "update-ruecksichtslos": "^0.0.17"
   },
   "scripts": {
-    "start": "node index.js --stdio",
-    "clean": "rimraf node_modules",
-    "update": "update-ruecksichtslos"
+    "compile": "tsc",
+    "clean": "npm run clean:build && npm run clean:node_modules",
+    "clean:build": "rimraf build",
+    "clean:node_modules": "rimraf node_modules",
+    "start": "npm run compile && node build/index.js --stdio",
+    "update": "update-ruecksichtslos && npm i"
   },
   "prettier": {
     "printWidth": 120

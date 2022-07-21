@@ -1,6 +1,8 @@
-const { DiagnosticSeverity, TextDocuments, createConnection } = require("vscode-languageserver");
-const { TextDocument } = require("vscode-languageserver-textdocument");
-const Compiler = require("wire-spec-core").community.flock.wirespec.compiler.core.Compiler;
+import { TextDocument } from "vscode-languageserver-textdocument";
+import { createConnection, DiagnosticSeverity, TextDocuments } from "vscode-languageserver";
+import { community } from "wire-spec-core";
+
+const Compiler = community.flock.wirespec.compiler.core.Compiler;
 
 const { log } = console;
 
@@ -40,21 +42,25 @@ const blacklistToDiagnostic =
 const getDiagnostics = (textDocument) =>
   getBlacklisted(textDocument.getText()).map(blacklistToDiagnostic(textDocument));
 
+// @ts-ignore
 const connection = createConnection();
 const documents = new TextDocuments(TextDocument);
 
 connection.onInitialize(() => ({
   capabilities: {
+    // @ts-ignore
     textDocumentSync: documents.syncKind,
   },
 }));
 
-documents.onDidChangeContent((change) => {
-  connection.sendDiagnostics({
-    uri: change.document.uri,
-    diagnostics: getDiagnostics(change.document),
-  });
-});
+documents.onDidChangeContent((change) =>
+  connection
+    .sendDiagnostics({
+      uri: change.document.uri,
+      diagnostics: getDiagnostics(change.document),
+    })
+    .catch(console.error)
+);
 
 documents.listen(connection);
 connection.listen();
