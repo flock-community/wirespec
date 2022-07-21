@@ -15,6 +15,7 @@ rootProject.name = "wire-spec"
 include(
     "compiler:core",
     "compiler:cli",
+    "compiler:lib",
     "lsp:jvm:core",
     "lsp:jvm:server",
     "lsp:jvm:client",

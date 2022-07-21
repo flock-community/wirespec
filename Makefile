@@ -1,7 +1,3 @@
-compile:
-	$(shell pwd)/scripts/compile.sh
-.PHONY: compile
-
 test:
 	$(shell pwd)/scripts/test.sh
 .PHONY: test
@@ -10,9 +6,9 @@ build:
 	$(shell pwd)/scripts/build.sh
 .PHONY: build
 
-run:
-	$(shell pwd)/scripts/run.sh
-.PHONY: run
+image:
+	$(shell pwd)/scripts/image.sh
+.PHONY: image
 
 clean:
 	$(shell pwd)/scripts/clean.sh

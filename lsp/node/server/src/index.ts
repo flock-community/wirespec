@@ -1,46 +1,35 @@
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { createConnection, DiagnosticSeverity, TextDocuments } from "vscode-languageserver";
-import { community } from "wire-spec-core";
+import { community } from "wire-spec-lib";
 
-const Compiler = community.flock.wirespec.compiler.core.Compiler;
+const wsToTs = new community.flock.wirespec.compiler.lib.WsToTypeScript();
 
-const { log } = console;
-
-const wsSource = "type Foo { bar: String, baz: Integer }";
-const wsCompiler = new Compiler();
-
-log(wsCompiler.toKotlin(wsSource));
-log(wsCompiler.toTypeScript(wsSource));
-
-const getBlacklisted = (text) => {
-  const blacklist = ["foo", "bar", "baz", "bal"];
-  const regex = new RegExp(`\\b(${blacklist.join("|")})\\b`, "gi");
-  const results = [];
-  regex.lastIndex = 0;
-  let matches;
-  while ((matches = regex.exec(text)) && results.length < 100) {
-    results.push({
-      value: matches[0],
-      index: matches.index,
+const getCompilerErrors = (text) => {
+  const errors = [];
+  try {
+    wsToTs.compile(text);
+  } catch (e) {
+    errors.push({
+      value: e.toString(),
+      index: 0,
     });
   }
-  return results;
+  return errors;
 };
 
-const blacklistToDiagnostic =
+const toDiagnostic =
   (textDocument) =>
   ({ index, value }) => ({
-    severity: DiagnosticSeverity.Warning,
+    severity: DiagnosticSeverity.Error,
     range: {
       start: textDocument.positionAt(index),
       end: textDocument.positionAt(index + value.length),
     },
-    message: `${value} is blacklisted.`,
+    message: value,
     source: "WireSpecCheck",
   });
 
-const getDiagnostics = (textDocument) =>
-  getBlacklisted(textDocument.getText()).map(blacklistToDiagnostic(textDocument));
+const getDiagnostics = (textDocument) => getCompilerErrors(textDocument.getText()).map(toDiagnostic(textDocument));
 
 // @ts-ignore
 const connection = createConnection();

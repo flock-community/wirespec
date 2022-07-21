@@ -12,11 +12,19 @@ repositories {
 }
 
 kotlin {
-    macosX64()
-    linuxX64()
-    mingwX64()
     js(IR) {
         nodejs()
+        binaries.library()
     }
-    jvm()
+
+    sourceSets {
+        val commonMain by getting {
+            dependencies {
+                implementation(project(":compiler:core"))
+            }
+        }
+        val jsMain by getting {
+            dependsOn(commonMain)
+        }
+    }
 }

@@ -1,1 +1,4 @@
-Foo bar baz bal foobar bas
+type Foo {
+  bar: String
+  baz: Integer
+}

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-if [ "$WIRE_SPEC_BUILD_ALL" = true ] || [ "$WIRE_SPEC_BUILD_LINUX" = true ]; then
-  docker build -t wire-spec .
-  else
-      echo "WIRE_SPEC_BUILD_LINUX or WIRE_SPEC_BUILD_ALL not set to 'true'"
-fi
+dir="$(dirname -- "$0")"
+
+./gradlew build &&
+  cd "$dir"/../lsp/node/client && npm i && npm run build &&
+  cd "$dir"/../lsp/node/server && npm i && npm run build

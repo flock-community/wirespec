@@ -21,11 +21,11 @@
     "update-ruecksichtslos": "^0.0.17"
   },
   "scripts": {
-    "compile": "tsc",
+    "build": "tsc",
     "clean": "npm run clean:build && npm run clean:node_modules",
     "clean:build": "rimraf build",
     "clean:node_modules": "rimraf node_modules",
-    "start": "npm run compile",
+    "start": "npm run build",
     "update": "update-ruecksichtslos && npm i"
   },
   "prettier": {
