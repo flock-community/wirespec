@@ -7,18 +7,18 @@ import community.flock.wirespec.compiler.core.exceptions.WireSpecException.Compi
 import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Value.Custom
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Value.Ws
-import community.flock.wirespec.compiler.core.tokenize.Colon
-import community.flock.wirespec.compiler.core.tokenize.Comma
-import community.flock.wirespec.compiler.core.tokenize.CustomType
-import community.flock.wirespec.compiler.core.tokenize.CustomValue
-import community.flock.wirespec.compiler.core.tokenize.LeftCurly
-import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.Token
-import community.flock.wirespec.compiler.core.tokenize.WhiteSpace
-import community.flock.wirespec.compiler.core.tokenize.WsBoolean
-import community.flock.wirespec.compiler.core.tokenize.WsInteger
-import community.flock.wirespec.compiler.core.tokenize.WsString
-import community.flock.wirespec.compiler.core.tokenize.WsTypeDef
+import community.flock.wirespec.compiler.core.tokenize.types.Colon
+import community.flock.wirespec.compiler.core.tokenize.types.Comma
+import community.flock.wirespec.compiler.core.tokenize.types.CustomType
+import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
+import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
+import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
+import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpace
+import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
+import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
+import community.flock.wirespec.compiler.core.tokenize.types.WsString
+import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
 import community.flock.wirespec.compiler.utils.Logger
 
 typealias AST = List<Node>
@@ -104,6 +104,6 @@ class Parser(private val logger: Logger) {
         key to value
     }
 
-    private fun Token.log() = logger.log("Parsing $type at line ${index.line} position ${index.position}")
+    private fun Token.log() = logger.log("Parsing $type at line ${coordinates.line} position ${coordinates.position}")
 
 }

@@ -1,21 +1,21 @@
 package community.flock.wirespec.compiler.core
 
-import community.flock.wirespec.compiler.core.tokenize.Colon
-import community.flock.wirespec.compiler.core.tokenize.Comma
-import community.flock.wirespec.compiler.core.tokenize.CustomType
-import community.flock.wirespec.compiler.core.tokenize.CustomValue
-import community.flock.wirespec.compiler.core.tokenize.LeftCurly
-import community.flock.wirespec.compiler.core.tokenize.NewLine
-import community.flock.wirespec.compiler.core.tokenize.RightCurly
-import community.flock.wirespec.compiler.core.tokenize.Token
-import community.flock.wirespec.compiler.core.tokenize.WhiteSpaceExceptNewLine
-import community.flock.wirespec.compiler.core.tokenize.WsBoolean
-import community.flock.wirespec.compiler.core.tokenize.WsInteger
-import community.flock.wirespec.compiler.core.tokenize.WsString
-import community.flock.wirespec.compiler.core.tokenize.WsTypeDef
+import community.flock.wirespec.compiler.core.tokenize.types.Colon
+import community.flock.wirespec.compiler.core.tokenize.types.Comma
+import community.flock.wirespec.compiler.core.tokenize.types.CustomType
+import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
+import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
+import community.flock.wirespec.compiler.core.tokenize.types.NewLine
+import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
+import community.flock.wirespec.compiler.core.tokenize.types.TokenType
+import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpaceExceptNewLine
+import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
+import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
+import community.flock.wirespec.compiler.core.tokenize.types.WsString
+import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
 
 interface LanguageSpec {
-    val matchers: List<Pair<Regex, Token.Type>>
+    val matchers: List<Pair<Regex, TokenType>>
 }
 
 object WireSpec : LanguageSpec {

@@ -18,7 +18,7 @@ class TokenProvider(private val logger: Logger, private val tokenIterator: Itera
 
     fun eatToken() {
         val previousToken = token
-        token = nextToken ?: throw NextException(previousToken.index)
+        token = nextToken ?: throw NextException(previousToken.coordinates)
         nextToken = nextToken()
 
         printTokens(previousToken)
