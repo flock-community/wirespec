@@ -3,29 +3,33 @@ package community.flock.wirespec.compiler.core.tokenize
 import community.flock.wirespec.compiler.core.Either
 import community.flock.wirespec.compiler.core.LanguageSpec
 import community.flock.wirespec.compiler.core.either
-import community.flock.wirespec.compiler.core.exceptions.WireSpecException
+import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException
 import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException.TokenizerException
 import community.flock.wirespec.compiler.core.tokenize.Token.Index
 import community.flock.wirespec.compiler.core.tokenize.Token.Index.Companion.plus
 
-fun LanguageSpec.tokenize(source: String): Either<WireSpecException, List<Token>> = either {
+fun LanguageSpec.tokenize(source: String): Either<CompilerException, List<Token>> = either {
     with(tokenize(source, listOf())) {
-        this + Token(type = EndOfProgram, value = "EOP", index = Index(count { it.type is NewLine } + 1))
+        this + Token(type = EndOfProgram, value = "EOP", index = lastIndex()).run { copy(index = newIndex()) }
     }
 }
 
 private tailrec fun LanguageSpec.tokenize(source: String, tokens: List<Token>): List<Token> {
-    val token = findToken(tokens.lastIndex(), source).run { copy(index = newIndex()) }
+    val token = findToken(tokens.lastIndex(), source)
     val newSource = source.removePrefix(token.value)
     return if (newSource.isEmpty()) tokens + token
     else tokenize(newSource, tokens + token)
 }
 
-private fun LanguageSpec.findToken(index: Index, source: String): Token = matchers
-    .firstNotNullOfOrNull { (regex, tokenType) -> regex.find(source)?.toToken(tokenType, index) }
-    ?: throw TokenizerException(index, "At line ${index.line}, position ${index.position}, character: '${source.first()}' in '\n${source.partial()}\n' is not expected")
+private fun LanguageSpec.findToken(oldIdx: Index, source: String): Token = matchers
+    .firstNotNullOfOrNull { (regex, tokenType) -> regex.find(source)?.toToken(tokenType, oldIdx) }
+    ?: throw TokenizerException(
+        oldIdx,
+        "At line ${oldIdx.line}, position ${oldIdx.position}, character: '${source.first()}' in '\n${source.partial()}\n' is not expected"
+    )
 
-private fun MatchResult.toToken(type: Token.Type, index: Index) = Token(type, value, index)
+private fun MatchResult.toToken(type: Token.Type, oldIdx: Index) = Token(type, value, oldIdx)
+    .run { copy(index = newIndex()) }
 
 private fun List<Token>.lastIndex() = lastOrNull()?.index ?: Index()
 

@@ -1,15 +1,16 @@
 package community.flock.wirespec.compiler.core.parse
 
 import community.flock.wirespec.compiler.core.Either
-import community.flock.wirespec.compiler.core.exceptions.WireSpecException
-import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException.ParserException.WrongTokenException
 import community.flock.wirespec.compiler.core.either
+import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException
+import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException.ParserException.WrongTokenException
 import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Value.Custom
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Value.Ws
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.Comma
-import community.flock.wirespec.compiler.core.tokenize.Identifier
+import community.flock.wirespec.compiler.core.tokenize.CustomType
+import community.flock.wirespec.compiler.core.tokenize.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.Token
@@ -24,11 +25,14 @@ typealias AST = List<Node>
 
 class Parser(private val logger: Logger) {
 
-    fun parse(tokens: List<Token>): Either<WireSpecException, AST> = either {
-        tokens.filterNot { it.type is WhiteSpace }
+    fun parse(tokens: List<Token>): Either<CompilerException, AST> = either {
+        tokens
+            .filterWhiteSpace()
             .toProvider(logger)
             .parse()
     }
+
+    private fun List<Token>.filterWhiteSpace() = filterNot { it.type is WhiteSpace }
 
     private fun TokenProvider.parse(): AST = mutableListOf<Definition>()
         .apply { while (hasNext()) add(parseDefinition()) }
@@ -45,8 +49,8 @@ class Parser(private val logger: Logger) {
         eatToken()
         token.log()
         when (token.type) {
-            is Identifier -> parseTypeDefinition(token.value)
-            else -> throw WrongTokenException(Identifier, token)
+            is CustomType -> parseTypeDefinition(token.value)
+            else -> throw WrongTokenException(CustomType, token)
         }
     }
 
@@ -68,14 +72,17 @@ class Parser(private val logger: Logger) {
         eatToken()
         token.log()
         when (token.type) {
-            is Identifier -> mutableListOf<Pair<Shape.Key, Shape.Value>>().apply {
+            is CustomValue -> mutableListOf<Pair<Shape.Key, Shape.Value>>().apply {
                 add(parseKeyValueAsPair(Shape.Key(token.value)))
                 while (token.type == Comma) {
                     eatToken()
-                    add(parseKeyValueAsPair(Shape.Key(token.value)))
+                    when (token.type) {
+                        is CustomValue -> add(parseKeyValueAsPair(Shape.Key(token.value)))
+                        else -> throw WrongTokenException(CustomValue, token)
+                    }
                 }
             }
-            else -> throw WrongTokenException(Identifier, token)
+            else -> throw WrongTokenException(CustomValue, token)
         }.toMap().let(::Shape)
     }
 
@@ -90,8 +97,8 @@ class Parser(private val logger: Logger) {
             is WsString -> Ws(Ws.Type.String)
             is WsInteger -> Ws(Ws.Type.Integer)
             is WsBoolean -> Ws(Ws.Type.Boolean)
-            is Identifier -> Custom(token.value)
-            else -> throw WrongTokenException(Identifier, token)
+            is CustomType -> Custom(token.value)
+            else -> throw WrongTokenException(CustomType, token)
         }
         eatToken()
         key to value

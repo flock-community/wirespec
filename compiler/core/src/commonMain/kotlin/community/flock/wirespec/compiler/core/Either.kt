@@ -4,7 +4,7 @@ import community.flock.wirespec.compiler.core.Either.Companion.left
 import community.flock.wirespec.compiler.core.Either.Companion.right
 import community.flock.wirespec.compiler.core.Either.Left
 import community.flock.wirespec.compiler.core.Either.Right
-import community.flock.wirespec.compiler.core.exceptions.WireSpecException
+import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException
 
 sealed class Either<out A, out B> private constructor() {
 
@@ -50,11 +50,11 @@ fun <A, B> Either<A, B>.getOrHandle(default: (A) -> B) = when (this) {
     is Right -> value
 }
 
-fun <T> either(block: () -> T): Either<WireSpecException, T> = try {
+fun <T> either(block: () -> T): Either<CompilerException, T> = try {
     block().right()
 } catch (e: Throwable) {
     when (e) {
-        is WireSpecException -> e.left()
+        is CompilerException -> e.left()
         else -> throw e
     }
 }

@@ -2,7 +2,8 @@ package community.flock.wirespec.compiler.core
 
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.Comma
-import community.flock.wirespec.compiler.core.tokenize.Identifier
+import community.flock.wirespec.compiler.core.tokenize.CustomType
+import community.flock.wirespec.compiler.core.tokenize.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.NewLine
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
@@ -30,6 +31,7 @@ object WireSpec : LanguageSpec {
         Regex("^Integer") to WsInteger,
         Regex("^Boolean") to WsBoolean,
         Regex("^\\}") to RightCurly, // "^\\}" Redundant Escape in regex is needed for js compatibility
-        Regex("^[a-zA-Z]+") to Identifier,
+        Regex("^[a-z][a-zA-Z]*") to CustomValue,
+        Regex("^[A-Z][a-zA-Z]*") to CustomType,
     )
 }

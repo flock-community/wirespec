@@ -5,13 +5,13 @@ import community.flock.wirespec.compiler.core.Reported.PARSED
 import community.flock.wirespec.compiler.core.Reported.TOKENIZED
 import community.flock.wirespec.compiler.core.Reported.VALIDATED
 import community.flock.wirespec.compiler.core.emit.common.Emitter
-import community.flock.wirespec.compiler.core.exceptions.WireSpecException
+import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException
 import community.flock.wirespec.compiler.core.parse.Parser
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.core.validate.validate
 import community.flock.wirespec.compiler.utils.Logger
 
-fun LanguageSpec.compile(source: String): (Logger) -> (Emitter) -> Either<WireSpecException, String> = {
+fun LanguageSpec.compile(source: String): (Logger) -> (Emitter) -> Either<CompilerException, String> = {
     { emitter ->
         tokenize(source)
             .also((TOKENIZED::report)(it))
@@ -23,7 +23,6 @@ fun LanguageSpec.compile(source: String): (Logger) -> (Emitter) -> Either<WireSp
             .also((EMITTED::report)(it))
     }
 }
-
 
 private enum class Reported {
     TOKENIZED, PARSED, VALIDATED, EMITTED;
