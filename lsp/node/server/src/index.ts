@@ -7,18 +7,18 @@ const wsToTs = new community.flock.wirespec.compiler.lib.WsToTypeScript();
 const getCompilerErrors = (text) => {
   const error = wsToTs.compile(text).error;
   if (error) {
-    const { index, value } = error;
-    return [{ index, value }];
+    const { index, value, length } = error;
+    return [{ index, length, value }];
   } else return [];
 };
 
 const toDiagnostic =
   (textDocument) =>
-  ({ index, value }) => ({
+  ({ index, length, value }) => ({
     severity: DiagnosticSeverity.Error,
     range: {
       start: textDocument.positionAt(index),
-      end: textDocument.positionAt(index + value.length),
+      end: textDocument.positionAt(index + length),
     },
     message: value,
     source: "WireSpecCheck",

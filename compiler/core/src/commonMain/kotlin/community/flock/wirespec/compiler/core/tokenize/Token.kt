@@ -9,7 +9,11 @@ data class Token(
         override fun toString() = string
     }
 
-    data class Index(val line: Int = 1, val position: Int = 1)
+    data class Index(val line: Int = 1, val position: Int = 1, val idxAndLength: Pair<Int, Int> = 0 to 0) {
+        companion object {
+             operator fun Pair<Int, Int>.plus(length: Int) = (first + length) to length
+        }
+    }
 }
 
 sealed class WhiteSpace(string: String) : Token.Type(string)
