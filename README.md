@@ -2,6 +2,7 @@
 Version 0.0.1
 ## Dependencies
 * JDK 17
+* Node 16
 * Docker
 ## Quick Start
 On *nix systems run:

@@ -5,18 +5,25 @@ version="0.0.1-SNAPSHOT"
 
 buildNothing=false
 
+macosArch=macosX64
+arch=""
+if [ "$(uname -m)" = arm64 ]; then
+  macosArch="macosArm64"
+  arch="--platform=linux/amd64"
+fi
+
 if [ "$WIRE_SPEC_BUILD_MAC" != true ] && [ "$WIRE_SPEC_BUILD_WINDOWS" != true ]; then
   buildNothing=true
 fi
 
 if [ "$WIRE_SPEC_BUILD_ALL" = true ] || [ "$WIRE_SPEC_BUILD_MAC" = true ]; then
   echo "Test macOS artifact"
-  ./compiler/$artifactName/build/bin/macosX64/releaseExecutable/$artifactName.kexe "$(pwd)" Kotlin,TypeScript
+  ./compiler/$artifactName/build/bin/$macosArch/releaseExecutable/$artifactName.kexe "$(pwd)" Kotlin,TypeScript
 fi
 
 if [ "$WIRE_SPEC_BUILD_ALL" = true ] || [ "$WIRE_SPEC_BUILD_LINUX" = true ] || [ "$buildNothing" = true ]; then
   echo "Test docker image"
-  docker run --rm -it -v "$(pwd)"/types:/app/types wire-spec
+  docker run $arch --rm -it -v "$(pwd)"/types:/app/types wire-spec
 fi
 
 echo "Test Node.js artifact"

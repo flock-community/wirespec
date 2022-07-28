@@ -18,12 +18,14 @@ repositories {
 kotlin {
     val projectName = name
     val buildAll = "WIRE_SPEC_BUILD_ALL".fromEnv()
-    val buildMac = buildAll || "WIRE_SPEC_BUILD_MAC".fromEnv()
+    val buildMacX86 = buildAll || "WIRE_SPEC_BUILD_MAC_X86".fromEnv()
+    val buildMacArm = buildAll || "WIRE_SPEC_BUILD_MAC_ARM".fromEnv()
     val buildWindows = buildAll || "WIRE_SPEC_BUILD_WINDOWS".fromEnv()
-    val buildNothing = !buildMac && !buildWindows
+    val buildNothing = !buildMacX86 && !buildMacArm && !buildWindows
     val buildLinux = buildAll || "WIRE_SPEC_BUILD_LINUX".fromEnv() || buildNothing
 
-    if (buildMac) macosX64 { build() }
+    if (buildMacX86) macosX64 { build() }
+    if (buildMacArm) macosArm64 { build() }
     if (buildLinux) linuxX64 { build() }
     if (buildWindows) mingwX64 { build() }
     js(IR) { build() }
@@ -50,8 +52,13 @@ kotlin {
         val desktopMain by creating {
             dependsOn(commonMain)
         }
-        if (buildMac) {
+        if (buildMacX86) {
             val macosX64Main by getting {
+                dependsOn(desktopMain)
+            }
+        }
+        if (buildMacArm) {
+            val macosArm64Main by getting {
                 dependsOn(desktopMain)
             }
         }
