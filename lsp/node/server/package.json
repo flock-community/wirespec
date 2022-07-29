@@ -13,6 +13,7 @@
   "devDependencies": {
     "prettier": "^2.7.1",
     "rimraf": "^3.0.2",
+    "typescript": "^4.7.4",
     "update-ruecksichtslos": "^0.0.17"
   },
   "scripts": {

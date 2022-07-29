@@ -7,9 +7,14 @@ on:
     branches: [ "master" ]
 
 jobs:
-  build:
+
+  build-all-but-mac:
 
     runs-on: ubuntu-latest
+
+    env:
+      WIRE_SPEC_BUILD_LINUX: true
+      WIRE_SPEC_BUILD_WINDOWS: true
 
     steps:
       - uses: actions/checkout@v3
@@ -18,5 +23,53 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-      - name: Build
-        run: make build
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Run
+        run: |
+          make build
+          make image
+      - name: Archive linux cli
+        uses: actions/upload-artifact@v3
+        with:
+          name: wire-spec-cli-linux
+          path: compiler/cli/build/bin/linuxX64/releaseExecutable/cli.kexe
+      - name: Archive windows cli
+        uses: actions/upload-artifact@v3
+        with:
+          name: wire-spec-cli-windows
+          path: compiler/cli/build/bin/mingwX64/releaseExecutable/cli.exe
+      - name: Archive vscode extension
+        uses: actions/upload-artifact@v3
+        with:
+          name: wire-spec-client-vscode
+          path: lsp/node/client/build/wire-spec-client-vscode-*.vsix
+
+  build-mac:
+
+    runs-on: macos-latest
+
+    env:
+      WIRE_SPEC_BUILD_MAC_ARM: true
+      WIRE_SPEC_BUILD_MAC_X86: true
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Run
+        run: ./gradlew build
+      - name: Archive macosX86 cli
+        uses: actions/upload-artifact@v3
+        with:
+          name: wire-spec-cli-macos-x86
+          path: compiler/cli/build/bin/macosX64/releaseExecutable/cli.kexe
+      - name: Archive macosArm64 cli
+        uses: actions/upload-artifact@v3
+        with:
+          name: wire-spec-cli-macos-arm64
+          path: compiler/cli/build/bin/macosArm64/releaseExecutable/cli.kexe
