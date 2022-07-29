@@ -2,12 +2,12 @@
 
 machineHardware="$(uname -m)"
 
-if [ "$WIRE_SPEC_BUILD_MAC" = true ] && [ "$machineHardware" = arm64 ]; then
+if [[ $WIRE_SPEC_BUILD_MAC = true && $machineHardware = arm64 ]]; then
   echo "Setting Arm64 build for MacOs"
   export WIRE_SPEC_BUILD_MAC_ARM=true
 fi
 
-if [ "$WIRE_SPEC_BUILD_MAC" = true ] && [ "$machineHardware" = x86_64 ]; then
+if [[ $WIRE_SPEC_BUILD_MAC = true && $machineHardware = x86_64 ]]; then
   echo "Setting X86 build for MacOs"
   export WIRE_SPEC_BUILD_MAC_X86=true
 fi
