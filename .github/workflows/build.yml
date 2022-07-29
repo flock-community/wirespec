@@ -30,6 +30,11 @@ jobs:
           make build
           make image
           make test
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-wire-spec-cli
+          path: compiler/cli/build/bin/linuxX64/releaseExecutable/cli.kexe
 
   build-mac:
 
@@ -53,3 +58,40 @@ jobs:
           make build
           make image
           make test
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: macos-wire-spec-cli
+          path: compiler/cli/build/bin/macosX64/releaseExecutable/cli.kexe
+
+  build-vscode:
+
+    runs-on: macos-latest
+
+    env:
+      WIRE_SPEC_BUILD_LINUX: true
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Run
+        run: |
+          make build
+          make image
+          make test
+      - name: Run
+        working-directory: lsp/node/client
+        run: |
+          npm run package
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: vscode-extention
+          path: lsp/node/client/standalone-vscode-ext-0.0.1.vsix

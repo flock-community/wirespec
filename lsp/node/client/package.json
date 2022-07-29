@@ -5,8 +5,12 @@
   "engines": {
     "vscode": "^1.40.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/flock-community/wire-spec"
+  },
   "activationEvents": [
-    "*"
+    "onLanguage:wire-spec"
   ],
   "main": "./build/extension",
   "dependencies": {
@@ -14,14 +18,15 @@
   },
   "devDependencies": {
     "@types/node": "^18.6.2",
-    "@types/vscode": "^1.69.0",
+    "@types/vscode": "^1.40.0",
     "prettier": "^2.7.1",
     "rimraf": "^3.0.2",
     "typescript": "^4.7.4",
-    "update-ruecksichtslos": "^0.0.17"
+    "update-ruecksichtslos": "^0.0.17",
+    "vsce": "^2.10.0"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && vsce package",
     "clean": "npm run clean:build && npm run clean:node_modules",
     "clean:build": "rimraf build",
     "clean:node_modules": "rimraf node_modules",
@@ -30,5 +35,25 @@
   },
   "prettier": {
     "printWidth": 120
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "wire-spec",
+        "aliases": [
+          "wire-spec",
+          "ws"
+        ],
+        "extensions": [
+          ".ws"
+        ]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "wire-spec",
+        "scopeName": "source.ws"
+      }
+    ]
   }
 }
