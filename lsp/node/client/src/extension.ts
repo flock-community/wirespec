@@ -7,7 +7,7 @@ let client: LanguageClient;
 export const activate = (context: ExtensionContext) => {
   console.log("Activating...");
 
-  const serverModule = context.asAbsolutePath(path.join("..", "server", "build", "index.js"));
+  const serverModule = context.asAbsolutePath(path.join("node_modules", "wire-spec-server", "index.js"));
 
   const nodeModule = { module: serverModule, transport: TransportKind.ipc };
 
@@ -15,17 +15,17 @@ export const activate = (context: ExtensionContext) => {
     run: nodeModule,
     debug: {
       ...nodeModule,
-      options: { execArgv: ["--nolazy", "--inspect=6009"] },
-    },
+      options: { execArgv: ["--nolazy", "--inspect=6009"] }
+    }
   };
 
   const clientOptions = {
     documentSelector: [
       {
         scheme: "file",
-        language: "plaintext",
-      },
-    ],
+        language: "plaintext"
+      }
+    ]
   };
 
   client = new LanguageClient("wire-spec-extension-id", "WireSpecChecker", serverOptions, clientOptions);

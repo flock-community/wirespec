@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es2020",
+    "target": "esnext",
     "lib": [
-      "ES2020",
+      "ESNext",
       "DOM"
     ],
     "outDir": "build",

@@ -10,15 +10,17 @@
     "url": "https://github.com/flock-community/wire-spec"
   },
   "activationEvents": [
-    "onLanguage:wire-spec"
+    "*"
   ],
   "main": "./build/extension",
   "dependencies": {
-    "vscode-languageclient": "8.0.2"
+    "vscode-languageclient": "8.0.2",
+    "wire-spec-server": "file:../server/build"
   },
   "devDependencies": {
     "@types/node": "^18.6.2",
     "@types/vscode": "^1.40.0",
+    "esbuild": "^0.14.51",
     "prettier": "^2.7.1",
     "rimraf": "^3.0.2",
     "typescript": "^4.7.4",
@@ -26,35 +28,19 @@
     "vsce": "^2.10.0"
   },
   "scripts": {
-    "build": "tsc && npm run package",
+    "build": "npm run esbuild && npm run package",
     "clean": "npm run clean:build && npm run clean:node_modules",
     "clean:build": "rimraf build",
     "clean:node_modules": "rimraf node_modules",
-    "package": "vsce package --out build/",
+    "compile": "tsc",
+    "esbuild": "npm run esbuild:base -- --sourcemap",
+    "esbuild:base": "esbuild ./src/extension.ts --bundle --outfile=build/extension.js --external:vscode --format=cjs --platform=node",
+    "package": "vsce package --out build --allow-star-activation",
     "start": "npm run build",
-    "update": "update-ruecksichtslos && npm i"
+    "update": "update-ruecksichtslos && npm i",
+    "vscode:prepublish": "npm run esbuild:base -- --minify"
   },
   "prettier": {
     "printWidth": 120
-  },
-  "contributes": {
-    "languages": [
-      {
-        "id": "wire-spec",
-        "aliases": [
-          "wire-spec",
-          "ws"
-        ],
-        "extensions": [
-          ".ws"
-        ]
-      }
-    ],
-    "grammars": [
-      {
-        "language": "wire-spec",
-        "scopeName": "source.ws"
-      }
-    ]
   }
 }
