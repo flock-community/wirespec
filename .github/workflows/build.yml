@@ -35,16 +35,6 @@ jobs:
         with:
           name: wire-spec-cli-linux
           path: compiler/cli/build/bin/linuxX64/releaseExecutable/cli.kexe
-      - name: Archive macos cli
-        uses: actions/upload-artifact@v3
-        with:
-          name: wire-spec-cli-macos-x86
-          path: compiler/cli/build/bin/macosX64/releaseExecutable/cli.kexe
-      - name: Archive macosArm cli
-        uses: actions/upload-artifact@v3
-        with:
-          name: wire-spec-cli-macos-arm64
-          path: compiler/cli/build/bin/macosArm64/releaseExecutable/cli.kexe
       - name: Archive windows cli
         uses: actions/upload-artifact@v3
         with:
