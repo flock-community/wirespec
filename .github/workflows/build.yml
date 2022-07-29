@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ "master" ]
 
+env:
+  WIRE_SPEC_BUILD_LINUX: true
+
 jobs:
   build:
 
@@ -19,4 +22,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
       - name: Build
-        run: make all
+        run: |
+          make build
+          make image
+          make test
