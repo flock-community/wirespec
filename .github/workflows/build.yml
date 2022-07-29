@@ -56,8 +56,6 @@ jobs:
       - name: Run
         run: |
           make build
-          make image
-          make test
       - name: Archive artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -84,12 +82,6 @@ jobs:
       - name: Run
         run: |
           make build
-          make image
-          make test
-      - name: Run
-        working-directory: lsp/node/client
-        run: |
-          npm run package
       - name: Archive artifacts
         uses: actions/upload-artifact@v3
         with:
