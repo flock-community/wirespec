@@ -11,6 +11,7 @@
     "wire-spec-lib": "file:../../../build/js/packages/wire-spec-lib"
   },
   "devDependencies": {
+    "typescript": "^4.7.4",
     "prettier": "^2.7.1",
     "rimraf": "^3.0.2",
     "update-ruecksichtslos": "^0.0.17"
