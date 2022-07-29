@@ -1,6 +1,6 @@
 {
-  "name": "wire-spec-vscode-ext",
-  "displayName": "standalone-vscode-ext",
+  "name": "wire-spec-client-vscode",
+  "displayName": "wire-spec-client-vscode",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.40.0"
@@ -26,10 +26,11 @@
     "vsce": "^2.10.0"
   },
   "scripts": {
-    "build": "tsc && vsce package --out build/",
+    "build": "tsc && npm run package",
     "clean": "npm run clean:build && npm run clean:node_modules",
     "clean:build": "rimraf build",
     "clean:node_modules": "rimraf node_modules",
+    "package": "vsce package --out build/",
     "start": "npm run build",
     "update": "update-ruecksichtslos && npm i"
   },

@@ -66,7 +66,7 @@ jobs:
 
   build-vscode:
 
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
 
     env:
       WIRE_SPEC_BUILD_LINUX: true
@@ -93,5 +93,5 @@ jobs:
       - name: Archive artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: vscode-extention
-          path: lsp/node/client/standalone-vscode-ext-0.0.1.vsix
+          name: vscode-extension
+          path: lsp/node/client/build/wire-spec-client-vscode-0.0.1.vsix
