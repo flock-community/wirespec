@@ -10,14 +10,14 @@
   ],
   "main": "./build/extension",
   "dependencies": {
-    "typescript": "4.7.4",
     "vscode-languageclient": "8.0.2"
   },
   "devDependencies": {
-    "@types/node": "^18.0.6",
+    "@types/node": "^18.6.2",
     "@types/vscode": "^1.69.0",
     "prettier": "^2.7.1",
     "rimraf": "^3.0.2",
+    "typescript": "^4.7.4",
     "update-ruecksichtslos": "^0.0.17"
   },
   "scripts": {
