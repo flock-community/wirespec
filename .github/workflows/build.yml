@@ -6,13 +6,14 @@ on:
   pull_request:
     branches: [ "master" ]
 
-env:
-  WIRE_SPEC_BUILD_LINUX: true
-
 jobs:
-  build:
+
+  build-linux:
 
     runs-on: ubuntu-latest
+
+    env:
+      WIRE_SPEC_BUILD_LINUX: true
 
     steps:
       - uses: actions/checkout@v3
@@ -21,7 +22,33 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-      - name: Build
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Run
+        run: |
+          make build
+          make image
+          make test
+
+  build-mac:
+
+    runs-on: macos-latest
+
+    env:
+      WIRE_SPEC_BUILD_MAC: true
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Run
         run: |
           make build
           make image
