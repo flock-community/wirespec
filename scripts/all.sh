@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
 
+machineHardware="$(uname -m)"
+
 export WIRE_SPEC_BUILD_MAC=true
 export WIRE_SPEC_BUILD_LINUX=true
 export WIRE_SPEC_BUILD_WINDOWS=true
 
-if [ "$WIRE_SPEC_BUILD_MAC" = true ] && [ "$(uname -m)" = arm64 ]; then
+if [ "$WIRE_SPEC_BUILD_MAC" = true ] && [ "$machineHardware" = arm64 ]; then
   export WIRE_SPEC_BUILD_MAC_ARM=true
-else
+fi
+
+if [ "$WIRE_SPEC_BUILD_MAC" = true ] && [ "$machineHardware" = x86_64 ]; then
   export WIRE_SPEC_BUILD_MAC_X86=true
 fi
 

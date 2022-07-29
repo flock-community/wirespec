@@ -6,10 +6,10 @@ version="0.0.1-SNAPSHOT"
 buildNothing=false
 
 macosArch=macosX64
-arch=""
+archSpecific=""
 if [ "$(uname -m)" = arm64 ]; then
   macosArch="macosArm64"
-  arch="--platform=linux/amd64"
+  archSpecific="--platform=linux/amd64"
 fi
 
 if [ "$WIRE_SPEC_BUILD_MAC" != true ] && [ "$WIRE_SPEC_BUILD_WINDOWS" != true ]; then
@@ -23,7 +23,7 @@ fi
 
 if [ "$WIRE_SPEC_BUILD_ALL" = true ] || [ "$WIRE_SPEC_BUILD_LINUX" = true ] || [ "$buildNothing" = true ]; then
   echo "Test docker image"
-  docker run $arch --rm -it -v "$(pwd)"/types:/app/types wire-spec
+  docker run $archSpecific --rm -it -v "$(pwd)"/types:/app/types wire-spec
 fi
 
 echo "Test Node.js artifact"

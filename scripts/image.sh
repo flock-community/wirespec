@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
 buildNothing=false
-arch=""
+archSpecific=""
+
 if [ "$(uname -m)" = arm64 ]; then
-  arch="--platform=linux/amd64"
+  archSpecific="--platform=linux/amd64"
 fi
 
 if [ "$WIRE_SPEC_BUILD_MAC" != true ] && [ "$WIRE_SPEC_BUILD_WINDOWS" != true ]; then
@@ -11,5 +12,5 @@ if [ "$WIRE_SPEC_BUILD_MAC" != true ] && [ "$WIRE_SPEC_BUILD_WINDOWS" != true ];
 fi
 
 if [ "$WIRE_SPEC_BUILD_ALL" = true ] || [ "$WIRE_SPEC_BUILD_LINUX" = true ] || [ "$buildNothing" = true ]; then
-  docker build $arch -t wire-spec .
+  docker build $archSpecific -t wire-spec .
 fi
