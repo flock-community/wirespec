@@ -48,3 +48,5 @@ documents.onDidChangeContent((change) =>
 
 documents.listen(connection);
 connection.listen();
+
+export {}
