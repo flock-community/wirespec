@@ -8,40 +8,12 @@ on:
 
 jobs:
 
-  build-linux:
-
-    runs-on: ubuntu-latest
-
-    env:
-      WIRE_SPEC_BUILD_LINUX: true
-
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up JDK
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-      - name: Run
-        run: |
-          make build
-          make image
-          make test
-      - name: Archive artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: linux-wire-spec-cli
-          path: compiler/cli/build/bin/linuxX64/releaseExecutable/cli.kexe
-
-  build-mac:
+  build-all:
 
     runs-on: macos-latest
 
     env:
-      WIRE_SPEC_BUILD_MAC: true
+      WIRE_SPEC_BUILD_MAC_ARM: true
 
     steps:
       - uses: actions/checkout@v3
@@ -54,36 +26,29 @@ jobs:
         with:
           node-version: 16
       - name: Run
-        run: |
-          make build
-      - name: Archive artifacts
+        run: make all
+      - name: Archive linux cli
         uses: actions/upload-artifact@v3
         with:
-          name: macos-wire-spec-cli
+          name: wire-spec-cli-linux
+          path: compiler/cli/build/bin/linuxX64/releaseExecutable/cli.kexe
+      - name: Archive macos cli
+        uses: actions/upload-artifact@v3
+        with:
+          name: wire-spec-cli-macos-x86
           path: compiler/cli/build/bin/macosX64/releaseExecutable/cli.kexe
-
-  build-vscode:
-
-    runs-on: ubuntu-latest
-
-    env:
-      WIRE_SPEC_BUILD_LINUX: true
-
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up JDK
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-      - name: Run
-        run: |
-          make build
-      - name: Archive artifacts
+      - name: Archive macosArm cli
         uses: actions/upload-artifact@v3
         with:
-          name: vscode-extension
-          path: lsp/node/client/build/wire-spec-client-vscode-0.0.1.vsix
+          name: wire-spec-cli-macos-arm64
+          path: compiler/cli/build/bin/macosArm64/releaseExecutable/cli.kexe
+      - name: Archive windows cli
+        uses: actions/upload-artifact@v3
+        with:
+          name: wire-spec-cli-windows
+          path: compiler/cli/build/bin/mingwX64/releaseExecutable/cli.exe
+      - name: Archive vscode extension
+        uses: actions/upload-artifact@v3
+        with:
+          name: wire-spec-client-vscode
+          path: lsp/node/client/build/wire-spec-client-vscode-*.vsix
