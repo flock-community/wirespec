@@ -8,6 +8,8 @@ import kotlin.test.Test
 
 class CompilerTest {
 
+    private val logger: Logger = object : Logger(enableLogging = false) {}
+
     @Test
     fun `testCompileKotlin`() {
 
@@ -28,7 +30,6 @@ class CompilerTest {
             
         """.trimIndent()
 
-        val logger: Logger = object : Logger(enableLogging = false) {}
         val res = WireSpec.compile(source)(logger)(KotlinEmitter(logger))
         assertRight(out, res)
     }
@@ -44,7 +45,6 @@ class CompilerTest {
             
         """.trimIndent()
 
-        val logger: Logger = object : Logger(enableLogging = false) {}
         val res = WireSpec.compile(source)(logger)(KotlinEmitter(logger))
         assertLeft("RightCurly expected, not: CustomValue at line 3 and position 3", res)
 
