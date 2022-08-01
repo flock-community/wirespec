@@ -8,8 +8,8 @@
       "runtimeExecutable": "${execPath}",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}"
-      ]
+      ],
+      "autoAttachChildProcesses": true
     }
-
   ]
 }
