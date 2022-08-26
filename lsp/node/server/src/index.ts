@@ -1,50 +1,81 @@
-import {TextDocument} from "vscode-languageserver-textdocument";
-import {createConnection, DiagnosticSeverity, SemanticTokensBuilder, TextDocuments} from "vscode-languageserver";
-import {community} from "wire-spec-lib";
-import {ServerCapabilities} from "vscode-languageserver-protocol/lib/common/protocol";
+import { TextDocument } from "vscode-languageserver-textdocument";
+import { createConnection, DiagnosticSeverity, SemanticTokensBuilder, TextDocuments } from "vscode-languageserver";
+import { WsToTypeScript } from "wire-spec-lib";
+import { ServerCapabilities } from "vscode-languageserver-protocol/lib/common/protocol";
 
-import {SemanticTokensLegend} from "vscode-languageserver-types";
+import { SemanticTokensLegend } from "vscode-languageserver-types";
 
-const wsToTs = new community.flock.wirespec.compiler.lib.WsToTypeScript();
+const wsToTs = new WsToTypeScript();
 
 const getCompilerErrors = (text) => {
-    const error = wsToTs.compile(text).error;
-    if (error) {
-        const {index, length, value} = error;
-        return [{index, length, value}];
-    } else return [];
+  const error = wsToTs.compile(text).error;
+
+  if (error) {
+    const { index, length, value } = error;
+    return [{ index, length, value }];
+  } else return [];
 };
 
-const toDiagnostic = (textDocument) => ({index, length, value}) => ({
-    severity: DiagnosticSeverity.Error,
-    range: {
-        start: textDocument.positionAt(index),
-        end: textDocument.positionAt(index + length),
-    },
-    message: value,
-    source: "WireSpecCheck",
+const toDiagnostic = (textDocument) => ({ index, length, value }) => ({
+  severity: DiagnosticSeverity.Error,
+  range: {
+    start: textDocument.positionAt(index),
+    end: textDocument.positionAt(index + length)
+  },
+  message: value,
+  source: "WireSpecCheck"
 });
 
 const getDiagnostics = (textDocument) => getCompilerErrors(textDocument.getText()).map(toDiagnostic(textDocument));
 
+const tokenType = {
+  KEYWORD: { name: "keyword", value: 0 },
+  TYPE: { name: "type", value: 1 },
+  VARIABLE: { name: "variable", value: 2 }
+};
+
+const tokenModifier = {
+  DECLARATION: { name: "declaration", value: 1 }
+};
+
+const tokenTypeMapping = {
+  "WsTypeDef": tokenType.KEYWORD,
+  "CustomType": tokenType.TYPE,
+  "CustomValue": tokenType.VARIABLE,
+  "WsString": tokenType.TYPE,
+  "WsInteger": tokenType.TYPE
+};
+
+const tokenModifierMapping = {
+  "CustomValue": tokenModifier.DECLARATION
+};
+
 const initialize = () => {
-    const legend: SemanticTokensLegend = {
-        tokenTypes: ["keyword", "type", "variable"],
-        tokenModifiers: ["", "declaration"],
-    };
+  const tokenTypes = [];
+  Object.values(tokenType).forEach(({ name, value }) =>
+    tokenTypes[value] = name
+  );
+  const tokenModifiers = [];
+  Object.values(tokenModifier).forEach(({ name, value }) =>
+    tokenModifiers[value] = name
+  );
+  const legend: SemanticTokensLegend = {
+    tokenTypes,
+    tokenModifiers
+  };
 
-    const capabilities: ServerCapabilities = {
-        // @ts-ignore
-        textDocumentSync: documents.syncKind,
-        semanticTokensProvider: {
-            legend,
-            range: false,
-            full: true,
-        },
-    };
+  const capabilities: ServerCapabilities = {
+    // @ts-ignore
+    textDocumentSync: documents.syncKind,
+    semanticTokensProvider: {
+      legend,
+      range: false,
+      full: true
+    }
+  };
 
-    return {capabilities};
-}
+  return { capabilities };
+};
 
 // @ts-ignore
 const connection = createConnection();
@@ -53,31 +84,36 @@ const documents = new TextDocuments(TextDocument);
 connection.onInitialize(initialize);
 
 documents.onDidChangeContent(async (change) => {
-    connection
-        .sendDiagnostics({
-            uri: change.document.uri,
-            diagnostics: getDiagnostics(change.document),
-        })
-        .catch(console.error);
+  connection
+    .sendDiagnostics({
+      uri: change.document.uri,
+      diagnostics: getDiagnostics(change.document)
+    })
+    .catch(console.error);
 });
 
 connection.onRequest(async (method, params) => {
-    const uri = params.textDocument.uri
-    const doc = documents.get(uri)
+  const uri = params.textDocument.uri;
+  const doc = documents.get(uri);
 
-    const tokens = wsToTs.tokenize(doc.getText())
+  const tokens = wsToTs.tokenize(doc.getText()).tokens;
 
-    connection.console.log(tokens)
-    if (method === "textDocument/semanticTokens/full" || method === "textDocument/semanticTokens/full/delta") {
-        const builder = new SemanticTokensBuilder();
-        builder.push(0, 0, 4, 0, 1);
-        builder.push(0, 5, 3, 1, 0);
-        builder.push(1, 4, 3, 2, 0);
-        builder.push(1, 9, 6, 1, 0);
-        builder.push(2, 4, 3, 2, 0);
-        builder.push(2, 9, 6, 1, 0);
-        return builder.build();
-    }
+  if (tokens && (method === "textDocument/semanticTokens/full" || method === "textDocument/semanticTokens/full/delta")) {
+
+    const builder = new SemanticTokensBuilder();
+    tokens.value
+      .map(({ coordinates, type }) => ({
+        line: coordinates.line - 1,
+        position: coordinates.position - 1 - coordinates.idxAndLength.length,
+        length: coordinates.idxAndLength.length,
+        type: tokenTypeMapping[type],
+        modifier: tokenModifierMapping[type]
+      }))
+      .forEach(({ line, position, length, type, modifier }) => {
+        builder.push(line, position, length, type?.value, modifier?.value);
+      });
+    return builder.build();
+  }
 });
 
 documents.listen(connection);

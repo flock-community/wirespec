@@ -25,8 +25,10 @@
     "compile": "tsc",
     "esbuild": "npm run esbuild:base -- --sourcemap",
     "esbuild:base": "esbuild ./src/index.ts --bundle --outfile=build/index.js --external:vscode --format=cjs --platform=node",
+    "esbuild:watch": "npm run esbuild:base -- --watch",
     "start": "npm run build && node build/index.js --stdio",
-    "update": "update-ruecksichtslos && npm i"
+    "update": "update-ruecksichtslos && npm i",
+    "watch": "npm run esbuild:watch"
   },
   "prettier": {
     "printWidth": 120

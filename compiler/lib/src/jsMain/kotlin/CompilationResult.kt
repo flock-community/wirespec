@@ -1,5 +1,3 @@
-package community.flock.wirespec.compiler.lib
-
 import community.flock.wirespec.compiler.core.Either
 import community.flock.wirespec.compiler.core.exceptions.WireSpecException
 

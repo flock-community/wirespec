@@ -1,10 +1,12 @@
-package community.flock.wirespec.compiler.lib
-
 import community.flock.wirespec.compiler.core.exceptions.WireSpecException
 
 @JsExport
 @ExperimentalJsExport
-data class WsError(val index: Int, val length: Int, val value: String)
+data class WsError(
+    @JsName("index") val index: Int,
+    @JsName("length") val length: Int,
+    @JsName("value") val value: String
+)
 
 @ExperimentalJsExport
 fun WireSpecException.produce() = WsError(

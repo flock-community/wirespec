@@ -1,5 +1,3 @@
-package community.flock.wirespec.compiler.lib
-
 import community.flock.wirespec.compiler.core.WireSpec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
