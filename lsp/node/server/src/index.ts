@@ -1,9 +1,9 @@
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { createConnection, DiagnosticSeverity, SemanticTokensBuilder, TextDocuments } from "vscode-languageserver";
-import { WsToTypeScript } from "wire-spec-lib";
+import { WsToken, WsToTypeScript } from "wire-spec-lib";
 import { ServerCapabilities } from "vscode-languageserver-protocol/lib/common/protocol";
 
-import { SemanticTokensLegend } from "vscode-languageserver-types";
+import { Range, SemanticTokensLegend } from "vscode-languageserver-types";
 
 const wsToTs = new WsToTypeScript();
 
@@ -16,52 +16,50 @@ const getCompilerErrors = (text) => {
   } else return [];
 };
 
-const toDiagnostic = (textDocument) => ({ index, length, value }) => ({
-  severity: DiagnosticSeverity.Error,
-  range: {
-    start: textDocument.positionAt(index),
-    end: textDocument.positionAt(index + length)
-  },
-  message: value,
-  source: "WireSpecCheck"
-});
+const toDiagnostic =
+  (textDocument) =>
+  ({ index, length, value }) => ({
+    severity: DiagnosticSeverity.Error,
+    range: {
+      start: textDocument.positionAt(index),
+      end: textDocument.positionAt(index + length),
+    },
+    message: value,
+    source: "WireSpecCheck",
+  });
 
 const getDiagnostics = (textDocument) => getCompilerErrors(textDocument.getText()).map(toDiagnostic(textDocument));
 
 const tokenType = {
   KEYWORD: { name: "keyword", value: 0 },
   TYPE: { name: "type", value: 1 },
-  VARIABLE: { name: "variable", value: 2 }
+  VARIABLE: { name: "variable", value: 2 },
 };
 
 const tokenModifier = {
-  DECLARATION: { name: "declaration", value: 1 }
+  DECLARATION: { name: "declaration", value: 1 },
 };
 
 const tokenTypeMapping = {
-  "WsTypeDef": tokenType.KEYWORD,
-  "CustomType": tokenType.TYPE,
-  "CustomValue": tokenType.VARIABLE,
-  "WsString": tokenType.TYPE,
-  "WsInteger": tokenType.TYPE
+  WsTypeDef: tokenType.KEYWORD,
+  CustomType: tokenType.TYPE,
+  CustomValue: tokenType.VARIABLE,
+  WsString: tokenType.TYPE,
+  WsInteger: tokenType.TYPE,
 };
 
 const tokenModifierMapping = {
-  "CustomValue": tokenModifier.DECLARATION
+  CustomValue: tokenModifier.DECLARATION,
 };
 
 const initialize = () => {
   const tokenTypes = [];
-  Object.values(tokenType).forEach(({ name, value }) =>
-    tokenTypes[value] = name
-  );
+  Object.values(tokenType).forEach(({ name, value }) => (tokenTypes[value] = name));
   const tokenModifiers = [];
-  Object.values(tokenModifier).forEach(({ name, value }) =>
-    tokenModifiers[value] = name
-  );
+  Object.values(tokenModifier).forEach(({ name, value }) => (tokenModifiers[value] = name));
   const legend: SemanticTokensLegend = {
     tokenTypes,
-    tokenModifiers
+    tokenModifiers,
   };
 
   const capabilities: ServerCapabilities = {
@@ -70,8 +68,9 @@ const initialize = () => {
     semanticTokensProvider: {
       legend,
       range: false,
-      full: true
-    }
+      full: true,
+    },
+    definitionProvider: true,
   };
 
   return { capabilities };
@@ -87,7 +86,7 @@ documents.onDidChangeContent(async (change) => {
   connection
     .sendDiagnostics({
       uri: change.document.uri,
-      diagnostics: getDiagnostics(change.document)
+      diagnostics: getDiagnostics(change.document),
     })
     .catch(console.error);
 });
@@ -98,25 +97,60 @@ connection.onRequest(async (method, params) => {
 
   const tokens = wsToTs.tokenize(doc.getText()).tokens;
 
-  if (tokens && (method === "textDocument/semanticTokens/full" || method === "textDocument/semanticTokens/full/delta")) {
-
+  if (
+    tokens &&
+    (method === "textDocument/semanticTokens/full" || method === "textDocument/semanticTokens/full/delta")
+  ) {
     const builder = new SemanticTokensBuilder();
-    tokens.value
-      .map(({ coordinates, type }) => ({
-        line: coordinates.line - 1,
-        position: coordinates.position - 1 - coordinates.idxAndLength.length,
-        length: coordinates.idxAndLength.length,
-        type: tokenTypeMapping[type],
-        modifier: tokenModifierMapping[type]
-      }))
-      .forEach(({ line, position, length, type, modifier }) => {
-        builder.push(line, position, length, type?.value, modifier?.value);
-      });
+    tokens.value.map(mapCoordinates).forEach(({ line, position, length, type, modifier }) => {
+      builder.push(line, position, length, type?.value, modifier?.value);
+    });
     return builder.build();
   }
 });
 
+connection.onDefinition((params) => {
+  const uri = params.textDocument.uri;
+  const doc = documents.get(uri);
+
+  if (params) {
+    const tokens = wsToTs.tokenize(doc.getText()).tokens;
+    const token = tokens.value
+      .map(mapCoordinates)
+      .find(
+        (it) =>
+          params.position.line === it.line &&
+          params.position.character >= it.position &&
+          params.position.character <= it.position + it.length
+      );
+    if (token) {
+      if (token.type?.name === "type") {
+        return tokens.value
+          .map(mapCoordinates)
+          .filter((it) => it.value === token.value)
+          .map((it) => ({
+            uri: uri,
+            range: Range.create(
+              { line: it.line, character: it.position },
+              { line: it.line, character: it.position + it.length }
+            ),
+          }));
+      }
+    }
+  }
+  return undefined;
+});
+
 documents.listen(connection);
 connection.listen();
+
+const mapCoordinates = ({ coordinates, type, value }: WsToken) => ({
+  line: coordinates.line - 1,
+  position: coordinates.position - 1 - coordinates.idxAndLength.length,
+  length: coordinates.idxAndLength.length,
+  type: tokenTypeMapping[type],
+  modifier: tokenModifierMapping[type],
+  value,
+});
 
 export {};
