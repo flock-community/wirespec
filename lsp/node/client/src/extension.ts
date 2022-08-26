@@ -1,5 +1,6 @@
+import * as vscode from "vscode";
 import { ExtensionContext } from "vscode";
-import { LanguageClient, ServerOptions, TransportKind } from "vscode-languageclient/node";
+import { LanguageClient, ServerOptions, TransportKind, LanguageClientOptions } from "vscode-languageclient/node";
 import * as path from "path";
 
 let client: LanguageClient;
@@ -19,13 +20,13 @@ export const activate = (context: ExtensionContext) => {
     }
   };
 
-  const clientOptions = {
+  const clientOptions: LanguageClientOptions = {
     documentSelector: [
       {
         scheme: "file",
-        language: "plaintext"
+        language: "wire-spec",
       }
-    ]
+    ],
   };
 
   client = new LanguageClient("wire-spec-extension-id", "WireSpecChecker", serverOptions, clientOptions);

@@ -10,7 +10,7 @@
     "url": "https://github.com/flock-community/wire-spec"
   },
   "activationEvents": [
-    "*"
+    "onLanguage:wire-spec"
   ],
   "main": "./build/extension",
   "dependencies": {
@@ -42,5 +42,19 @@
   },
   "prettier": {
     "printWidth": 120
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "wire-spec",
+        "aliases": ["ws", "wire-spec"],
+        "extensions": [".ws"]
+      }
+    ]
+  },
+  "configurationDefaults": {
+    "wire-spec-extension-id": {
+      "editor.semanticHighlighting.enabled": true
+    }
   }
 }

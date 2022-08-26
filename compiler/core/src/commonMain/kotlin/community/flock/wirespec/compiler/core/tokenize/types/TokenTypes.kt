@@ -1,6 +1,9 @@
 package community.flock.wirespec.compiler.core.tokenize.types
 
-sealed interface TokenType
+sealed interface TokenType {
+     fun name(): String = this::class.simpleName!!
+}
+
 object LeftCurly : TokenType
 object RightCurly : TokenType
 object Colon : TokenType
