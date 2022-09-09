@@ -2,22 +2,19 @@ package community.flock.wirespec.compiler.cli
 
 import community.flock.wirespec.compiler.cli.Language.Kotlin
 import community.flock.wirespec.compiler.cli.Language.TypeScript
-import community.flock.wirespec.compiler.cli.io.AbstractFile
+import community.flock.wirespec.compiler.cli.io.Directory
+import community.flock.wirespec.compiler.cli.io.Extension
 import community.flock.wirespec.compiler.cli.io.KotlinFile
+import community.flock.wirespec.compiler.cli.io.Path
 import community.flock.wirespec.compiler.cli.io.TypeScriptFile
-import community.flock.wirespec.compiler.cli.io.WireSpecFile
 import community.flock.wirespec.compiler.core.WireSpec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
-import community.flock.wirespec.compiler.core.emit.common.Emitter
-import community.flock.wirespec.compiler.core.getOrHandle
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.getEnvVar
 import community.flock.wirespec.compiler.utils.getFirst
 import community.flock.wirespec.compiler.utils.getSecond
-
-const val typesDir = "/types"
 
 private enum class Language { Kotlin, TypeScript }
 
@@ -32,29 +29,38 @@ private fun Logger.from(s: String): Language? = runCatching { Language.valueOf(s
 fun main(args: Array<String>) {
 
 
-    val basePath = getFirst(args)
+    val basePath = getFirst(args) ?: ""
     val languages = getSecond(args)
         ?.split(",")
         ?.mapNotNull(logger::from)
         ?.toSet()
         ?: setOf(Kotlin)
 
-    val typesPath = "$basePath$typesDir"
-    val inputPath = "$typesPath/in/input"
-    val outputPath = "$typesPath/out/output"
+    compile(languages, basePath)
 
-    languages.forEach {
-        when (it) {
-            Kotlin -> KotlinEmitter(logger) to KotlinFile(outputPath)
-            TypeScript -> TypeScriptEmitter(logger) to TypeScriptFile(outputPath)
-        }.let(compile(inputPath))
-    }
 
 }
 
-fun compile(inputPath: String): (Pair<Emitter, AbstractFile>) -> Unit = { (emitter, file) ->
-    WireSpecFile(inputPath).read()
-        .let(WireSpec::compile)(logger)(emitter)
-        .getOrHandle { throw it }
-        .let(file::write)
+private fun compile(languages: Set<Language>, inputDir: String) = Directory(inputDir)
+    .wireSpecFiles()
+    .forEach { wsFile ->
+        wsFile.read()
+            .let(WireSpec::compile)(logger)
+            .let { it to wsFile.path.out() }
+            .let { (compiler, path) ->
+                languages.map {
+                    when (it) {
+                        Kotlin -> KotlinEmitter(logger) to KotlinFile(path(Extension.Kotlin))
+                        TypeScript -> TypeScriptEmitter(logger) to TypeScriptFile(path(Extension.TypeScript))
+                    }.let { (emitter, file) -> compiler(emitter) to file }
+                }
+            }
+            .map { (result, file) -> result.map(file::write) }
+    }
+
+fun Path.out() = { extension: Extension ->
+    copy(
+        directory = "$directory/out",
+        extension = extension
+    )
 }

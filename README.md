@@ -10,4 +10,4 @@ On *nix systems run:
 make all
 ```
 to compile the project and test the WireSpec compiler with definitions found in
-`types/in`. Locate the result in `types/out`
+`types`. Locate the result in `types/out`

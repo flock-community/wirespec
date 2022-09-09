@@ -93,8 +93,8 @@ documents.onDidChangeContent(async (change) => {
 });
 
 connection.onRequest(async (method, params) => {
-  const uri = params.textDocument.uri;
-  const doc = documents.get(uri);
+  // @ts-ignore
+  const doc = documents.get(params.textDocument.uri);
 
   const tokens = wsToTs.tokenize(doc.getText()).tokens;
 
