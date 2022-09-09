@@ -83,12 +83,10 @@ const documents = new TextDocuments(TextDocument);
 connection.onInitialize(initialize);
 
 documents.onDidChangeContent(async (change) => {
-  connection
-    .sendDiagnostics({
-      uri: change.document.uri,
-      diagnostics: getDiagnostics(change.document),
-    })
-    .catch(console.error);
+  connection.sendDiagnostics({
+    uri: change.document.uri,
+    diagnostics: getDiagnostics(change.document),
+  });
 });
 
 connection.onRequest(async (method, params) => {
