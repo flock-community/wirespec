@@ -1,0 +1,3 @@
+type Baz {
+    hello: String
+}

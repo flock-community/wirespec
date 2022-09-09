@@ -12,14 +12,10 @@ import platform.posix.fgets
 import platform.posix.fopen
 import platform.posix.fputs
 
-actual abstract class AbstractFile actual constructor(private val path: String) {
-
-    companion object {
-        private const val bufferLength = 64 * 1024
-    }
+actual abstract class File actual constructor(actual val path: Path) {
 
     actual fun read() = StringBuilder().apply {
-        fopen(path, "r")?.let { file ->
+        fopen(path.fullFilePath, "r")?.let { file ->
             try {
                 memScoped {
                     val buffer = allocArray<ByteVar>(bufferLength)
@@ -32,12 +28,12 @@ actual abstract class AbstractFile actual constructor(private val path: String) 
             } finally {
                 fclose(file)
             }
-        } ?: throw FileReadException("Cannot open input file $path")
+        } ?: throw FileReadException("Cannot open input file ${path.fullFilePath}")
     }.toString()
 
     actual fun write(text: String) {
-        val file = fopen(path.split(".").joinToString("-from-native."), "w")
-            ?: throw FileReadException("Cannot open output file $path")
+        val file = fopen(path.fullFilePath.split(".").joinToString("-from-native."), "w")
+            ?: throw FileReadException("Cannot open output file ${path.fullFilePath}")
         try {
             memScoped {
                 if (fputs(text, file) == EOF) throw FileWriteException("File write error")
@@ -45,5 +41,9 @@ actual abstract class AbstractFile actual constructor(private val path: String) 
         } finally {
             fclose(file)
         }
+    }
+
+    companion object {
+        private const val bufferLength = 64 * 1024
     }
 }
