@@ -16,6 +16,8 @@ dependencyResolutionManagement {
     }
 }
 
+
+
 rootProject.name = "wire-spec"
 
 include(
@@ -25,4 +27,5 @@ include(
     "lsp:jvm:core",
     "lsp:jvm:server",
     "lsp:jvm:client",
+    "lsp:intellij-plugin",
 )
