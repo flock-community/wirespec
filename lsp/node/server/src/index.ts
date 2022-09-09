@@ -83,7 +83,7 @@ const documents = new TextDocuments(TextDocument);
 connection.onInitialize(initialize);
 
 documents.onDidChangeContent(async (change) => {
-  connection.sendDiagnostics({
+  await connection.sendDiagnostics({
     uri: change.document.uri,
     diagnostics: getDiagnostics(change.document),
   });
