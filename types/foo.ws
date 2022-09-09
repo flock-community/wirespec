@@ -3,7 +3,7 @@ type Foo {
   baz: Integer
 }
 
-type Bar {
+type Bal {
   one: Foo,
   isBool: Boolean
 }

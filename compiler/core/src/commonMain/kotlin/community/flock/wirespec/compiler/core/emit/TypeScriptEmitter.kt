@@ -15,22 +15,27 @@ class TypeScriptEmitter(logger: Logger) : Emitter(logger) {
     override fun Type.Name.emit(): String = withLogging(logger) { value }
 
     override fun Type.Shape.emit(): String = withLogging(logger) {
-        value.map { (key, value) -> "${SPACER}${key.emit()}: ${value.emit()}," }
+        value.map { (key, value) -> "${SPACER}${key.emit(key.nullable)}: ${value.emit()}," }
             .joinToString("\n")
             .dropLast(1)
     }
 
-    override fun Type.Shape.Key.emit(): String = withLogging(logger) { value }
+    override fun Type.Shape.Key.emit(nullable: Boolean): String = withLogging(logger) { if (nullable)"$value?" else value }
 
     override fun Type.Shape.Value.emit(): String = withLogging(logger) {
         when (this) {
-            is Custom -> value
+            is Custom -> emit(value)
             is Ws -> when (value) {
-                Ws.Type.String -> "string"
-                Ws.Type.Integer -> "number"
-                Ws.Type.Boolean -> "boolean"
+                Ws.Type.String -> emit("string")
+                Ws.Type.Integer -> emit("number")
+                Ws.Type.Boolean -> emit("boolean")
             }
         }
+    }
+
+    private fun Type.Shape.Value.emit(s: String) = when {
+        iterable -> "$s[]"
+        else -> s
     }
 
 }

@@ -10,7 +10,7 @@ interface TypeDefinitionEmitter : TypeDefinitionEmitterLogger {
 
     fun Type.Shape.emit(): String
 
-    fun Type.Shape.Key.emit(): String
+    fun Type.Shape.Key.emit(nullable: Boolean = false): String
 
     fun Type.Shape.Value.emit(): String
 }

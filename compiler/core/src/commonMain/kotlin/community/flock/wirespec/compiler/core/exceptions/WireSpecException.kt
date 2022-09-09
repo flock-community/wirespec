@@ -2,6 +2,7 @@ package community.flock.wirespec.compiler.core.exceptions
 
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.types.TokenType
+import kotlin.reflect.KClass
 
 sealed class WireSpecException(message: String, val coordinates: Token.Coordinates) : RuntimeException(message) {
 
@@ -15,10 +16,10 @@ sealed class WireSpecException(message: String, val coordinates: Token.Coordinat
 
         sealed class ParserException(coordinates: Token.Coordinates, message: String) :
             CompilerException(message, coordinates) {
-            class WrongTokenException(expected: TokenType, actual: Token) :
+            class WrongTokenException(expected: KClass<out TokenType>, actual: Token) :
                 ParserException(
                     actual.coordinates,
-                    "${expected::class.simpleName} expected, not: ${actual.type::class.simpleName} at line ${actual.coordinates.line} and position ${actual.coordinates.position - actual.value.length}"
+                    "${expected.simpleName} expected, not: ${actual.type::class.simpleName} at line ${actual.coordinates.line} and position ${actual.coordinates.position - actual.value.length}"
                 )
 
             sealed class NullTokenException(message: String, coordinates: Token.Coordinates) :

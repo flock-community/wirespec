@@ -11,6 +11,7 @@ import community.flock.wirespec.compiler.core.WireSpec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
+import community.flock.wirespec.compiler.core.getOrHandle
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.getEnvVar
 import community.flock.wirespec.compiler.utils.getFirst
@@ -56,6 +57,7 @@ private fun compile(languages: Set<Language>, inputDir: String) = Directory(inpu
                 }
             }
             .map { (result, file) -> result.map(file::write) }
+            .forEach { it.getOrHandle { error -> throw error } }
     }
 
 fun Path.out() = { extension: Extension ->
