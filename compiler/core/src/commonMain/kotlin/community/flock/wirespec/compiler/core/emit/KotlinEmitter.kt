@@ -20,17 +20,24 @@ class KotlinEmitter(logger: Logger) : Emitter(logger) {
             .dropLast(1)
     }
 
-    override fun Type.Shape.Key.emit(): String = withLogging(logger) { value }
+    override fun Type.Shape.Key.emit(nullable: Boolean): String = withLogging(logger) { value }
 
     override fun Type.Shape.Value.emit(): String = withLogging(logger) {
         when (this) {
-            is Custom -> value
+            is Custom -> emit(value)
             is Ws -> when (value) {
-                Ws.Type.String -> "String"
-                Ws.Type.Integer -> "Int"
-                Ws.Type.Boolean -> "Boolean"
+                Ws.Type.String -> emit("String")
+                Ws.Type.Integer -> emit("Int")
+                Ws.Type.Boolean -> emit("Boolean")
             }
         }
+    }
+
+    private fun Type.Shape.Value.emit(s: String) = when {
+        iterable && nullable -> "List<$s>?"
+        iterable -> "List<$s>"
+        nullable -> "$s?"
+        else -> s
     }
 
 }

@@ -18,6 +18,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpace
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
 import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
 import community.flock.wirespec.compiler.core.tokenize.types.WsString
+import community.flock.wirespec.compiler.core.tokenize.types.WsType
 import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
 import community.flock.wirespec.compiler.utils.Logger
 
@@ -41,7 +42,7 @@ class Parser(private val logger: Logger) {
         token.log()
         when (token.type) {
             is WsTypeDef -> parseTypeDeclaration()
-            else -> throw WrongTokenException(WsTypeDef, token)
+            else -> throw WrongTokenException(WsTypeDef::class, token)
         }
     }
 
@@ -50,7 +51,7 @@ class Parser(private val logger: Logger) {
         token.log()
         when (token.type) {
             is CustomType -> parseTypeDefinition(token.value)
-            else -> throw WrongTokenException(CustomType, token)
+            else -> throw WrongTokenException(CustomType::class, token)
         }
     }
 
@@ -59,11 +60,11 @@ class Parser(private val logger: Logger) {
         token.log()
         when (token.type) {
             is LeftCurly -> Type(Type.Name(typeName), parseTypeShape())
-            else -> throw WrongTokenException(LeftCurly, token)
+            else -> throw WrongTokenException(LeftCurly::class, token)
         }.also {
             when (token.type) {
                 is RightCurly -> eatToken()
-                else -> throw WrongTokenException(RightCurly, token)
+                else -> throw WrongTokenException(RightCurly::class, token)
             }
         }
     }
@@ -78,11 +79,12 @@ class Parser(private val logger: Logger) {
                     eatToken()
                     when (token.type) {
                         is CustomValue -> add(parseKeyValueAsPair(Shape.Key(token.value)))
-                        else -> throw WrongTokenException(CustomValue, token)
+                        else -> throw WrongTokenException(CustomValue::class, token)
                     }
                 }
             }
-            else -> throw WrongTokenException(CustomValue, token)
+
+            else -> throw WrongTokenException(CustomValue::class, token)
         }.toMap().let(::Shape)
     }
 
@@ -91,17 +93,18 @@ class Parser(private val logger: Logger) {
         token.log()
         when (token.type) {
             is Colon -> eatToken()
-            else -> throw WrongTokenException(Colon, token)
+            else -> throw WrongTokenException(Colon::class, token)
         }
-        val value = when (token.type) {
-            is WsString -> Ws(Ws.Type.String)
-            is WsInteger -> Ws(Ws.Type.Integer)
-            is WsBoolean -> Ws(Ws.Type.Boolean)
-            is CustomType -> Custom(token.value)
-            else -> throw WrongTokenException(CustomType, token)
-        }
-        eatToken()
-        key to value
+        when (val type = token.type) {
+            is WsType -> when (type) {
+                is WsString -> Ws(Ws.Type.String, type)
+                is WsInteger -> Ws(Ws.Type.Integer, type)
+                is WsBoolean -> Ws(Ws.Type.Boolean, type)
+                is CustomType -> Custom(token.value, type)
+            }.let { key.copy(iterable = it.iterable, nullable = it.nullable) to it }
+
+            else -> throw WrongTokenException(CustomType::class, token)
+        }.also { eatToken() }
     }
 
     private fun Token.log() = logger.log("Parsing $type at line ${coordinates.line} position ${coordinates.position}")
