@@ -8,6 +8,8 @@ object LeftCurly : TokenType
 object RightCurly : TokenType
 object Colon : TokenType
 object Comma : TokenType
+object QuestionMark : TokenType
+object Brackets: TokenType
 object CustomValue : TokenType
 object EndOfProgram : TokenType
 
@@ -18,27 +20,8 @@ object NewLine : WhiteSpace
 sealed interface Keyword : TokenType
 object WsTypeDef : Keyword
 
-sealed interface WsType : Keyword {
-    val iterable: Boolean
-    val nullable: Boolean
-}
-
-class WsString(
-    override val iterable: Boolean = false,
-    override val nullable: Boolean = false
-) : WsType
-
-class WsInteger(
-    override val iterable: Boolean = false,
-    override val nullable: Boolean = false
-) : WsType
-
-class WsBoolean(
-    override val iterable: Boolean = false,
-    override val nullable: Boolean = false
-) : WsType
-
-class CustomType(
-    override val iterable: Boolean = false,
-    override val nullable: Boolean = false
-) : WsType
+sealed interface WsType : Keyword
+object WsString : WsType
+object WsInteger : WsType
+object WsBoolean : WsType
+object CustomType : WsType

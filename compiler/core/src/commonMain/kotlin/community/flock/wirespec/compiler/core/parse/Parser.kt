@@ -9,11 +9,13 @@ import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value
 import community.flock.wirespec.compiler.core.tokenize.Token
+import community.flock.wirespec.compiler.core.tokenize.types.Brackets
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
 import community.flock.wirespec.compiler.core.tokenize.types.Comma
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
+import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpace
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
@@ -97,15 +99,26 @@ class Parser(private val logger: Logger) {
             else -> throw WrongTokenException(Colon::class, token)
         }
         when (val type = token.type) {
-            is WsType -> when (type) {
-                is WsString -> Value.Ws(Value.Ws.Type.String, type.iterable) to type.nullable
-                is WsInteger -> Value.Ws(Value.Ws.Type.Integer, type.iterable) to type.nullable
-                is WsBoolean -> Value.Ws(Value.Ws.Type.Boolean, type.iterable) to type.nullable
-                is CustomType -> Value.Custom(token.value, type.iterable) to type.nullable
-            }.let { (value, isNullable) -> Field(key, value, isNullable) }
+            is WsType -> Field(
+                key = key,
+                value = parseFieldValue(type, token.value),
+                isNullable = (token.type is QuestionMark).also { if (it) eatToken() }
+            )
 
             else -> throw WrongTokenException(CustomType::class, token)
-        }.also { eatToken() }
+        }
+    }
+
+    private fun TokenProvider.parseFieldValue(wsType: WsType, value: String) = run {
+        eatToken()
+        token.log()
+        val isIterable = (token.type is Brackets).also { if (it) eatToken() }
+        when (wsType) {
+            is WsString -> Value.Ws(Value.Ws.Type.String, isIterable)
+            is WsInteger -> Value.Ws(Value.Ws.Type.Integer, isIterable)
+            is WsBoolean -> Value.Ws(Value.Ws.Type.Boolean, isIterable)
+            is CustomType -> Value.Custom(value, isIterable)
+        }
     }
 
     private fun Token.log() = logger.log("Parsing $type at line ${coordinates.line} position ${coordinates.position}")

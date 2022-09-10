@@ -19,7 +19,7 @@ class KotlinEmitter(logger: Logger) : Emitter(logger) {
     }
 
     override fun Type.Shape.Field.emit() = withLogging(logger) {
-        "${SPACER}val ${key.emit()}: ${value.emit()}${if (nullable) "?" else ""},"
+        "${SPACER}val ${key.emit()}: ${value.emit()}${if (isNullable) "?" else ""},"
     }
 
     override fun Type.Shape.Field.Key.emit() = withLogging(logger) { value }
@@ -32,7 +32,7 @@ class KotlinEmitter(logger: Logger) : Emitter(logger) {
                 Ws.Type.Integer -> "Int"
                 Ws.Type.Boolean -> "Boolean"
             }
-        }.let { if (iterable) "List<$it>" else it }
+        }.let { if (isIterable) "List<$it>" else it }
     }
 
 }

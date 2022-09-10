@@ -19,7 +19,7 @@ class TypeScriptEmitter(logger: Logger) : Emitter(logger) {
     }
 
     override fun Type.Shape.Field.emit() = withLogging(logger) {
-        "${SPACER}${key.emit()}${if (nullable) "?" else ""}: ${value.emit()},"
+        "${SPACER}${key.emit()}${if (isNullable) "?" else ""}: ${value.emit()},"
     }
 
     override fun Type.Shape.Field.Key.emit() = withLogging(logger) { value }
@@ -32,7 +32,7 @@ class TypeScriptEmitter(logger: Logger) : Emitter(logger) {
                 Ws.Type.Integer -> "number"
                 Ws.Type.Boolean -> "boolean"
             }
-        }.let { if (iterable) "$it[]" else it }
+        }.let { if (isIterable) "$it[]" else it }
     }
 
 }
