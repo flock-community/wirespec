@@ -10,9 +10,11 @@ interface TypeDefinitionEmitter : TypeDefinitionEmitterLogger {
 
     fun Type.Shape.emit(): String
 
-    fun Type.Shape.Key.emit(nullable: Boolean = false): String
+    fun Type.Shape.Field.emit(): String
 
-    fun Type.Shape.Value.emit(): String
+    fun Type.Shape.Field.Key.emit(): String
+
+    fun Type.Shape.Field.Value.emit(): String
 }
 
 interface TypeDefinitionEmitterLogger {
@@ -25,9 +27,12 @@ interface TypeDefinitionEmitterLogger {
     fun Type.Shape.withLogging(logger: Logger, block: () -> String) = logger
         .log("Emitting Definition: Type Shape", block)
 
-    fun Type.Shape.Key.withLogging(logger: Logger, block: () -> String) = logger
-        .log("Emitting Definition: Type Shape Key", block)
+    fun Type.Shape.Field.withLogging(logger: Logger, block: () -> String) = logger
+        .log("Emitting Definition: Type Shape Field", block)
 
-    fun Type.Shape.Value.withLogging(logger: Logger, block: () -> String) = logger
-        .log("Emitting Definition: Type Shape Value", block)
+    fun Type.Shape.Field.Key.withLogging(logger: Logger, block: () -> String) = logger
+        .log("Emitting Definition: Type Shape Field Key", block)
+
+    fun Type.Shape.Field.Value.withLogging(logger: Logger, block: () -> String) = logger
+        .log("Emitting Definition: Type Shape Field Value", block)
 }
