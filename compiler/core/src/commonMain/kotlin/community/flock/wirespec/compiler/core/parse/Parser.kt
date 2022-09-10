@@ -4,9 +4,10 @@ import community.flock.wirespec.compiler.core.Either
 import community.flock.wirespec.compiler.core.either
 import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException
 import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException.ParserException.WrongTokenException
+import community.flock.wirespec.compiler.core.parse.Type.Name
 import community.flock.wirespec.compiler.core.parse.Type.Shape
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Value.Custom
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Value.Ws
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
 import community.flock.wirespec.compiler.core.tokenize.types.Comma
@@ -59,7 +60,7 @@ class Parser(private val logger: Logger) {
         eatToken()
         token.log()
         when (token.type) {
-            is LeftCurly -> Type(Type.Name(typeName), parseTypeShape())
+            is LeftCurly -> Type(Name(typeName), parseTypeShape())
             else -> throw WrongTokenException(LeftCurly::class, token)
         }.also {
             when (token.type) {
@@ -73,22 +74,22 @@ class Parser(private val logger: Logger) {
         eatToken()
         token.log()
         when (token.type) {
-            is CustomValue -> mutableListOf<Pair<Shape.Key, Shape.Value>>().apply {
-                add(parseKeyValueAsPair(Shape.Key(token.value)))
+            is CustomValue -> mutableListOf<Field>().apply {
+                add(parseField(Field.Key(token.value)))
                 while (token.type == Comma) {
                     eatToken()
                     when (token.type) {
-                        is CustomValue -> add(parseKeyValueAsPair(Shape.Key(token.value)))
+                        is CustomValue -> add(parseField(Field.Key(token.value)))
                         else -> throw WrongTokenException(CustomValue::class, token)
                     }
                 }
             }
 
             else -> throw WrongTokenException(CustomValue::class, token)
-        }.toMap().let(::Shape)
+        }.let(::Shape)
     }
 
-    private fun TokenProvider.parseKeyValueAsPair(key: Shape.Key): Pair<Shape.Key, Shape.Value> = run {
+    private fun TokenProvider.parseField(key: Field.Key): Field = run {
         eatToken()
         token.log()
         when (token.type) {
@@ -97,11 +98,11 @@ class Parser(private val logger: Logger) {
         }
         when (val type = token.type) {
             is WsType -> when (type) {
-                is WsString -> Ws(Ws.Type.String, type)
-                is WsInteger -> Ws(Ws.Type.Integer, type)
-                is WsBoolean -> Ws(Ws.Type.Boolean, type)
-                is CustomType -> Custom(token.value, type)
-            }.let { key.copy(iterable = it.iterable, nullable = it.nullable) to it }
+                is WsString -> Value.Ws(Value.Ws.Type.String, type.iterable) to type.nullable
+                is WsInteger -> Value.Ws(Value.Ws.Type.Integer, type.iterable) to type.nullable
+                is WsBoolean -> Value.Ws(Value.Ws.Type.Boolean, type.iterable) to type.nullable
+                is CustomType -> Value.Custom(token.value, type.iterable) to type.nullable
+            }.let { (value, isNullable) -> Field(key, value, isNullable) }
 
             else -> throw WrongTokenException(CustomType::class, token)
         }.also { eatToken() }
