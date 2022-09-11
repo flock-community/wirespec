@@ -5,7 +5,7 @@ plugins {
   id("org.jetbrains.intellij") version "1.9.0"
 }
 
-group = "${Settings.groupId}.intellij-plugin"
+group = "${Settings.groupId}.intellij-wire-spec-plugin"
 version = Settings.version
 
 repositories {
@@ -26,7 +26,10 @@ sourceSets {
 
 dependencies {
   implementation("com.github.ballerina-platform:lsp4intellij:0.95.0")
+
+  implementation(project(":lsp:node:server"))
   testImplementation("junit:junit:4.13.2")
+
 }
 
 java {
@@ -35,8 +38,9 @@ java {
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
-  version.set("2021.3.3")
-  plugins.set(listOf("com.intellij.java"))
+  version.set("2022.2.1")
+  type.set("IU")
+  plugins.set(listOf("JavaScript"))
 }
 
 tasks {
@@ -56,5 +60,22 @@ tasks {
     // on your local machine. For real world projects, use variants described in:
     // https://docs.gradle.org/current/userguide/build_environment.html
     systemProperty("idea.home.path", "/Users/jhake/Documents/source/comm")
+  }
+}
+
+tasks {
+  val createOpenApiSourceJar by registering(Jar::class) {
+    // Java sources
+    from(sourceSets.main.get().java) {
+      include("**/community/flock/**/*.java")
+    }
+
+    destinationDirectory.set(layout.buildDirectory.dir("libs"))
+    archiveClassifier.set("src")
+  }
+
+  buildPlugin {
+    dependsOn(createOpenApiSourceJar)
+    from(createOpenApiSourceJar) { into("scripts") }
   }
 }
