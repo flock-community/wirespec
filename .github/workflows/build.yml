@@ -49,7 +49,11 @@ jobs:
         with:
           name: wire-spec-client-vscode
           path: lsp/node/client/build/wire-spec-client-vscode-*.vsix
-
+      - name: Archive Intellij plugin
+        uses: actions/upload-artifact@v3
+        with:
+          name: wire-spec-client-vscode
+          path: lsp/intellij-plugin/build/distributions/intellij-plugin-*.zip
   build-mac:
 
     runs-on: macos-latest
