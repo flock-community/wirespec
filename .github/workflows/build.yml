@@ -52,7 +52,7 @@ jobs:
       - name: Archive Intellij plugin
         uses: actions/upload-artifact@v3
         with:
-          name: wire-spec-client-vscode
+          name: wire-spec-intellij-plugin
           path: lsp/intellij-plugin/build/distributions/intellij-plugin-*.zip
   build-mac:
 
