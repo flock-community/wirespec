@@ -32,6 +32,10 @@
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="wire-spec" implementationClass="community.flock.wire_spec.lsp.intellij_plugin.FileType" fieldName="INSTANCE" language="wire-spec" extensions="ws"/>
 
+    <lang.syntaxHighlighterFactory
+            language="wire-spec"
+            implementationClass="community.flock.wire_spec.lsp.intellij_plugin.SyntaxHighlighterFactory"/>
+
     <!-- register a preloading activity. You need to init IntellijLanguageClient with your config, see readme -->
     <postStartupActivity implementation="community.flock.wire_spec.lsp.intellij_plugin.Preloading" id="community.flock.wire_spec.lsp.intellij_plugin.Preloading"/>
 

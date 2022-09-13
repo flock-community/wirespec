@@ -5,7 +5,7 @@ plugins {
   id("org.jetbrains.intellij") version "1.9.0"
 }
 
-group = "${Settings.groupId}.intellij-wire-spec-plugin"
+group = "${Settings.groupId}.lsp.intellij-plugin"
 version = Settings.version
 
 repositories {
@@ -28,12 +28,15 @@ dependencies {
   implementation("com.github.ballerina-platform:lsp4intellij:0.95.0")
 
   implementation(project(":lsp:node:server"))
+  implementation(project(":compiler:core"))
+  implementation(project(":compiler:lib"))
   testImplementation("junit:junit:4.13.2")
 
 }
 
 java {
-  sourceCompatibility = JavaVersion.VERSION_11
+  sourceCompatibility = JavaVersion.VERSION_16
+    targetCompatibility = JavaVersion.VERSION_16
 }
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
