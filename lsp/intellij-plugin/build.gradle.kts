@@ -26,10 +26,8 @@ sourceSets {
 
 dependencies {
   implementation("com.github.ballerina-platform:lsp4intellij:0.95.0")
-
   implementation(project(":lsp:node:server"))
   implementation(project(":compiler:core"))
-  implementation(project(":compiler:lib"))
   testImplementation("junit:junit:4.13.2")
 
 }
