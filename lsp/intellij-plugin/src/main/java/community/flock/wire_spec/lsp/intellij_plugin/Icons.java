@@ -8,6 +8,6 @@ import javax.swing.*;
 
 public class Icons {
 
-  public static final Icon FILE = IconLoader.getIcon("/icons/jar-gray.png", Icons.class);
+  public static final Icon FILE = IconLoader.getIcon("/icons/connected.png", Icons.class);
 
 }
