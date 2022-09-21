@@ -2,6 +2,7 @@
 
 plugins {
   id("java")
+  id("org.jetbrains.kotlin.jvm") version "1.7.20-RC"
   id("org.jetbrains.intellij") version "1.9.0"
 }
 
@@ -25,8 +26,6 @@ sourceSets {
 }
 
 dependencies {
-  implementation("com.github.ballerina-platform:lsp4intellij:0.95.0")
-  implementation(project(":lsp:node:server"))
   implementation(project(":compiler:core"))
   testImplementation("junit:junit:4.13.2")
 
