@@ -15,7 +15,7 @@ fun LanguageSpec.compile(source: String): (Logger) -> (Emitter) -> Either<Compil
     { emitter ->
         tokenize(source)
             .also((TOKENIZED::report)(it))
-            .flatMap(Parser(it)::parse)
+            .let(Parser(it)::parse)
             .also((PARSED::report)(it))
             .flatMap { it.validate() }
             .also((VALIDATED::report)(it))

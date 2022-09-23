@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.Colon
 import community.flock.wirespec.compiler.core.tokenize.types.Comma
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
+import community.flock.wirespec.compiler.core.tokenize.types.Invalid
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.types.NewLine
 import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
@@ -37,5 +38,6 @@ object WireSpec : LanguageSpec {
         Regex("^\\}") to RightCurly,
         Regex("^[a-z][a-zA-Z]*") to CustomValue,
         Regex("^[A-Z][a-zA-Z]*") to CustomType,
+        Regex("^.") to Invalid // Catch all regular expression if none of the above matched
     )
 }
