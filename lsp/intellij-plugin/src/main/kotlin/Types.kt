@@ -9,22 +9,13 @@ interface Types {
         IElementType(debugName, Language.INSTANCE)
 
     companion object {
-        @JvmField
+
         val BRACKETS: IElementType = ElementType("BRACKETS")
-
-        @JvmField
         val TYPE: IElementType = ElementType("TYPE")
-
-        @JvmField
         val KEYWORD: IElementType = ElementType("KEYWORD")
-
-        @JvmField
         val VALUE: IElementType = ElementType("VALUE")
-
-        @JvmField
         val COLON: IElementType = ElementType("COLON")
-
-        @JvmField
         val COMMA: IElementType = ElementType("COMMA")
+        val COMMENTS: IElementType = ElementType("COMMENTS")
     }
 }

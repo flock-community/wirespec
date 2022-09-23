@@ -38,10 +38,16 @@
                 language="wire-spec"
                 implementationClass="community.flock.wire_spec.lsp.intellij_plugin.SyntaxHighlighterFactory"/>
 
+        <lang.parserDefinition
+                language="wire-spec"
+                implementationClass="community.flock.wire_spec.lsp.intellij_plugin.ParserDefinition"/>
+
         <externalAnnotator
                 language="wire-spec"
                 implementationClass="community.flock.wire_spec.lsp.intellij_plugin.Annotator"/>
 
+        <gotoSymbolContributor
+                implementation="community.flock.wire_spec.lsp.intellij_plugin.ChooseByNameContributor"/>
     </extensions>
 
     <depends>com.intellij.modules.platform</depends>
