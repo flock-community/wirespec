@@ -15,7 +15,7 @@ import community.flock.wirespec.compiler.utils.Logger
 
 class Annotator : ExternalAnnotator<List<CompilerException>, List<CompilerException>>() {
 
-    val logger = object : Logger(false) {}
+    private val logger = object : Logger(false) {}
 
     override fun collectInformation(file: PsiFile) = WireSpec.tokenize(file.text)
         .flatMap { Parser(logger).parse(it) }

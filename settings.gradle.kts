@@ -16,8 +16,6 @@ dependencyResolutionManagement {
     }
 }
 
-
-
 rootProject.name = "wire-spec"
 
 include(
