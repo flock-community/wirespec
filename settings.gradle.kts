@@ -25,7 +25,6 @@ include(
     "compiler:cli",
     "compiler:lib",
     "lsp:jvm:core",
-    "lsp:node:server",
     "lsp:jvm:client",
     "lsp:intellij-plugin",
 )
