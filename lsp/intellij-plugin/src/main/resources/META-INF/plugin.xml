@@ -1,0 +1,55 @@
+<!-- Copyright 2000-2022 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+
+<idea-plugin>
+
+    <!-- Unique id for this plugin. Must stay constant for the life of the plugin. -->
+    <id>community.flock.wire_spec.lsp.intellij_plugin</id>
+
+    <!-- Text to display as name on Preferences/Settings | Plugin page -->
+    <name>Wire spec</name>
+
+    <!-- Product and plugin compatibility requirements -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <!-- Text to display as description on Preferences/Settings | Plugin page -->
+    <description>
+        <![CDATA[
+      Wire-spec intellij plugin for a great developer experience.
+    ]]>
+    </description>
+    <change-notes>
+        <![CDATA[
+      <ul>
+        <li><b>1.0.0</b> Initial version</li>
+      </ul>
+    ]]>
+    </change-notes>
+
+    <!-- Text to display as company information on Preferences/Settings | Plugin page -->
+    <vendor url="https://flock.community">Flock. community</vendor>
+
+    <extensions defaultExtensionNs="com.intellij">
+
+        <fileType name="wire-spec" implementationClass="community.flock.wire_spec.lsp.intellij_plugin.FileType"
+                  fieldName="INSTANCE" language="wire-spec" extensions="ws"/>
+
+        <lang.syntaxHighlighterFactory
+                language="wire-spec"
+                implementationClass="community.flock.wire_spec.lsp.intellij_plugin.SyntaxHighlighterFactory"/>
+
+        <lang.parserDefinition
+                language="wire-spec"
+                implementationClass="community.flock.wire_spec.lsp.intellij_plugin.ParserDefinition"/>
+
+        <externalAnnotator
+                language="wire-spec"
+                implementationClass="community.flock.wire_spec.lsp.intellij_plugin.Annotator"/>
+
+        <gotoSymbolContributor
+                implementation="community.flock.wire_spec.lsp.intellij_plugin.ChooseByNameContributor"/>
+    </extensions>
+
+    <depends>com.intellij.modules.platform</depends>
+
+</idea-plugin>

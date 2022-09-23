@@ -28,8 +28,6 @@ const toDiagnostic =
     source: "WireSpecCheck",
   });
 
-const getDiagnostics = (textDocument) => getCompilerErrors(textDocument.getText()).map(toDiagnostic(textDocument));
-
 const tokenType = {
   KEYWORD: { name: "keyword", value: 0 },
   TYPE: { name: "type", value: 1 },
@@ -84,16 +82,30 @@ const documents = new TextDocuments(TextDocument);
 connection.onInitialize(initialize);
 
 documents.onDidChangeContent(async (change) => {
-  await connection.sendDiagnostics({
-    uri: change.document.uri,
-    diagnostics: getDiagnostics(change.document),
-  });
+  const doc = documents.get(change.document.uri);
+  if (doc.getText()) {
+    const errors = getCompilerErrors(doc.getText());
+    await connection.sendDiagnostics({
+      uri: change.document.uri,
+      diagnostics: errors.map(toDiagnostic(doc)),
+    });
+  }
+});
+
+documents.onDidOpen(async (change) => {
+  const doc = documents.get(change.document.uri);
+  if (doc.getText()) {
+    const errors = getCompilerErrors(doc.getText());
+    await connection.sendDiagnostics({
+      uri: change.document.uri,
+      diagnostics: errors.map(toDiagnostic(doc)),
+    });
+  }
 });
 
 connection.onRequest(async (method, params) => {
   // @ts-ignore
   const doc = documents.get(params.textDocument.uri);
-
   const tokens = wsToTs.tokenize(doc.getText()).tokens;
 
   if (

@@ -25,4 +25,5 @@ include(
     "lsp:jvm:core",
     "lsp:jvm:server",
     "lsp:jvm:client",
+    "lsp:intellij-plugin",
 )
