@@ -20,8 +20,7 @@ dependencies {
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
   version.set("2022.2.1")
-  type.set("IU")
-  plugins.set(listOf("JavaScript"))
+  type.set("IC")
 }
 
 tasks {
