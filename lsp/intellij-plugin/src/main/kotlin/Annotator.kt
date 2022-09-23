@@ -18,7 +18,7 @@ class Annotator : ExternalAnnotator<List<CompilerException>, List<CompilerExcept
     private val logger = object : Logger(false) {}
 
     override fun collectInformation(file: PsiFile) = WireSpec.tokenize(file.text)
-        .flatMap { Parser(logger).parse(it) }
+        .let { Parser(logger).parse(it) }
         .fold(
             ifLeft = { listOf(it) },
             ifRight = { listOf() }

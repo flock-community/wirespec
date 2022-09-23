@@ -3,7 +3,13 @@ package community.flock.wire_spec.lsp.intellij_plugin
 import community.flock.wirespec.compiler.core.WireSpec
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.tokenize
-import community.flock.wirespec.compiler.core.tokenize.types.*
+import community.flock.wirespec.compiler.core.tokenize.types.Colon
+import community.flock.wirespec.compiler.core.tokenize.types.Comma
+import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
+import community.flock.wirespec.compiler.core.tokenize.types.Keyword
+import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
+import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
+import community.flock.wirespec.compiler.core.tokenize.types.WsType
 import com.intellij.lexer.Lexer as IntellijLexer
 import com.intellij.lexer.LexerPosition as IntellijLexerPosition
 
@@ -19,10 +25,7 @@ class Lexer : IntellijLexer() {
         this.tokens = emptyList()
         if (buffer.isNotEmpty()) {
             tokens = WireSpec.tokenize(buffer.toString())
-                .fold(
-                    ifLeft = { emptyList() },
-                    ifRight = { it.filterNot { token -> token.type is EndOfProgram } }
-                )
+                .filterNot { token -> token.type is EndOfProgram }
         }
     }
 
