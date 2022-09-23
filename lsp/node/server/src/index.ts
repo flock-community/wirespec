@@ -46,6 +46,7 @@ const tokenTypeMapping = {
   CustomValue: tokenType.VARIABLE,
   WsString: tokenType.TYPE,
   WsInteger: tokenType.TYPE,
+  WsBoolean: tokenType.TYPE,
 };
 
 const tokenModifierMapping = {
