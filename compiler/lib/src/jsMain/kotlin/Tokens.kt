@@ -1,12 +1,7 @@
-import community.flock.wirespec.compiler.core.Either
-import community.flock.wirespec.compiler.core.exceptions.WireSpecException
 import community.flock.wirespec.compiler.core.tokenize.Token
 
 @ExperimentalJsExport
-fun Either<WireSpecException, List<Token>>.produce(): WsTokenResult = when (this) {
-    is Either.Left -> WsTokenResult(error = value.produce())
-    is Either.Right -> WsTokenResult(tokens = WsTokens(value = value.map { it.produce() }.toTypedArray()))
-}
+fun List<Token>.produce(): WsTokenResult = WsTokenResult(tokens = WsTokens(value = map { it.produce() }.toTypedArray()))
 
 @ExperimentalJsExport
 fun Token.produce() = WsToken(

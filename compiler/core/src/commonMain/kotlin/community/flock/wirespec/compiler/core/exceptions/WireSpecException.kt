@@ -29,7 +29,7 @@ sealed class WireSpecException(message: String, val coordinates: Token.Coordinat
             }
         }
 
-        class TokenizerException(coordinates: Token.Coordinates, message: String) :
+        class ThisTokenizerExceptionShouldNeverHappen(coordinates: Token.Coordinates, message: String) :
             CompilerException(message, coordinates)
 
     }

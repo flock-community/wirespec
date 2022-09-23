@@ -12,6 +12,7 @@ object QuestionMark : TokenType
 object Brackets: TokenType
 object CustomValue : TokenType
 object EndOfProgram : TokenType
+object Invalid : TokenType
 
 sealed interface WhiteSpace : TokenType
 object WhiteSpaceExceptNewLine : WhiteSpace
