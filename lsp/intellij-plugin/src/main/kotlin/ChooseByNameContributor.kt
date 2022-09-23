@@ -6,18 +6,16 @@ import com.intellij.navigation.ChooseByNameContributor as IntellijChooseByNameCo
 
 
 class ChooseByNameContributor : IntellijChooseByNameContributor {
-    override fun getNames(project: Project?, includeNonProjectItems: Boolean): Array<String> {
-        return arrayOf()
-    }
+    override fun getNames(project: Project?, includeNonProjectItems: Boolean) =
+        arrayOf<String>()
 
     override fun getItemsByName(
         name: String?,
         pattern: String?,
         project: Project?,
         includeNonProjectItems: Boolean
-    ): Array<NavigationItem> {
-        return arrayOf()
-    }
+    ) =
+        arrayOf<NavigationItem>()
 
 
 }

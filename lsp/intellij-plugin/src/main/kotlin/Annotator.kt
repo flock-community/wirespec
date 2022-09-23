@@ -17,18 +17,14 @@ class Annotator : ExternalAnnotator<List<CompilerException>, List<CompilerExcept
 
     val logger = object : Logger(false) {}
 
-    override fun collectInformation(file: PsiFile): List<CompilerException>? {
-        return WireSpec.tokenize(file.text)
-            .flatMap { Parser(logger).parse(it) }
-            .fold(
-                ifLeft = { listOf(it) },
-                ifRight = { listOf() }
-            )
-    }
+    override fun collectInformation(file: PsiFile) = WireSpec.tokenize(file.text)
+        .flatMap { Parser(logger).parse(it) }
+        .fold(
+            ifLeft = { listOf(it) },
+            ifRight = { listOf() }
+        )
 
-    override fun doAnnotate(collectedInfo: List<CompilerException>): List<CompilerException> {
-        return collectedInfo
-    }
+    override fun doAnnotate(collectedInfo: List<CompilerException>) = collectedInfo
 
     override fun apply(file: PsiFile, annotationResult: List<CompilerException>, holder: AnnotationHolder) {
         annotationResult.forEach {

@@ -16,24 +16,8 @@ repositories {
   }
 }
 
-// Include the generated files in the source set
-sourceSets {
-  main {
-    java {
-      srcDirs("src/main/gen")
-    }
-  }
-}
-
 dependencies {
   implementation(project(":compiler:core"))
-  testImplementation("junit:junit:4.13.2")
-
-}
-
-java {
-  sourceCompatibility = JavaVersion.VERSION_16
-    targetCompatibility = JavaVersion.VERSION_16
 }
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
@@ -46,20 +30,6 @@ intellij {
 tasks {
   buildSearchableOptions {
     enabled = false
-  }
-
-  patchPluginXml {
-    version.set("${project.version}")
-    sinceBuild.set("213")
-    untilBuild.set("222.*")
-  }
-
-  test {
-    // This path value is a machine-specific placeholder text.
-    // Set idea.home.path to the absolute path to the intellij-community source
-    // on your local machine. For real world projects, use variants described in:
-    // https://docs.gradle.org/current/userguide/build_environment.html
-    systemProperty("idea.home.path", "/Users/jhake/Documents/source/comm")
   }
 }
 

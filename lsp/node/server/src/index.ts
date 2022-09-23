@@ -81,7 +81,6 @@ const documents = new TextDocuments(TextDocument);
 connection.onInitialize(initialize);
 
 documents.onDidChangeContent(async (change) => {
-  connection.console.log("Hello 123 123 123");
   const doc = documents.get(change.document.uri);
   if (doc.getText()) {
     const errors = getCompilerErrors(doc.getText());
@@ -93,7 +92,6 @@ documents.onDidChangeContent(async (change) => {
 });
 
 documents.onDidOpen(async (change) => {
-  connection.console.log("Hello 123 123 123");
   const doc = documents.get(change.document.uri);
   if (doc.getText()) {
     const errors = getCompilerErrors(doc.getText());

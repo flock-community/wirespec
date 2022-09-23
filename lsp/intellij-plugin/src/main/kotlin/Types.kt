@@ -9,7 +9,6 @@ interface Types {
         IElementType(debugName, Language.INSTANCE)
 
     companion object {
-
         val BRACKETS: IElementType = ElementType("BRACKETS")
         val TYPE: IElementType = ElementType("TYPE")
         val KEYWORD: IElementType = ElementType("KEYWORD")

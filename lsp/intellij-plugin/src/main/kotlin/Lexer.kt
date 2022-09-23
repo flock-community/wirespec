@@ -1,14 +1,14 @@
 package community.flock.wire_spec.lsp.intellij_plugin
 
-import com.intellij.lexer.Lexer as IntellijLexer
-import com.intellij.lexer.LexerPosition
-import com.intellij.psi.tree.IElementType
 import community.flock.wirespec.compiler.core.WireSpec
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.core.tokenize.types.*
+import com.intellij.lexer.Lexer as IntellijLexer
+import com.intellij.lexer.LexerPosition as IntellijLexerPosition
 
 class Lexer : IntellijLexer() {
+
     private var buffer: CharSequence = ""
     private var index = 0
     private var tokens: List<Token> = emptyList()
@@ -26,16 +26,12 @@ class Lexer : IntellijLexer() {
         }
     }
 
-    override fun getBufferSequence(): CharSequence {
-        return buffer
-    }
+    override fun getBufferSequence() = buffer
 
-    override fun getState(): Int {
-        return 0
-    }
+    override fun getState() = 0
 
-    override fun getTokenType(): IElementType? {
-        return if (index == tokens.size) {
+    override fun getTokenType() =
+        if (index == tokens.size) {
             null
         } else {
             when (tokens[index].type) {
@@ -48,34 +44,33 @@ class Lexer : IntellijLexer() {
                 else -> Types.VALUE
             }
         }
-    }
 
-    override fun getTokenStart(): Int {
-        val (_, _, coordinates) = tokens[index]
-        return coordinates.idxAndLength.idx - coordinates.idxAndLength.length
-    }
+    override fun getTokenStart() = tokens[index]
+        .coordinates
+        .let { it.idxAndLength.idx - it.idxAndLength.length }
 
-    override fun getTokenEnd(): Int {
-        val (_, _, coordinates) = tokens[index]
-        return coordinates.idxAndLength.idx
-    }
+
+    override fun getTokenEnd() = tokens[index]
+        .coordinates
+        .idxAndLength
+        .idx
+
 
     override fun advance() {
         index++
     }
 
-    override fun getCurrentPosition(): LexerPosition {
-        val (_, _, coordinates) = tokens[index]
-        val pos = coordinates.idxAndLength.idx - coordinates.idxAndLength.length
-        return LexerPositionImpl(pos, state)
-    }
+    override fun getCurrentPosition(): IntellijLexerPosition = tokens[index]
+        .coordinates
+        .let {
+            val pos = it.idxAndLength.idx - it.idxAndLength.length
+            LexerPosition(pos, state)
+        }
 
-    override fun restore(position: LexerPosition) {}
-    override fun getBufferEnd(): Int {
-        return buffer.toString().length
-    }
+    override fun restore(position: IntellijLexerPosition) {}
+    override fun getBufferEnd() = buffer.toString().length
 
-    internal class LexerPositionImpl(private val myOffset: Int, private val myState: Int) : LexerPosition {
+    internal class LexerPosition(private val myOffset: Int, private val myState: Int) : IntellijLexerPosition {
         override fun getOffset(): Int {
             return myOffset
         }

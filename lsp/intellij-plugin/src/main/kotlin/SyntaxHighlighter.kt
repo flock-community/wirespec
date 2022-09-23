@@ -1,6 +1,5 @@
 package community.flock.wire_spec.lsp.intellij_plugin
 
-import com.intellij.lexer.Lexer as IntellijLexer
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.*
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
@@ -21,13 +20,9 @@ class SyntaxHighlighter : SyntaxHighlighterBase() {
             else -> arrayOfNulls(0)
         }
 
-    override fun getHighlightingLexer(): IntellijLexer {
-        return Lexer()
-    }
+    override fun getHighlightingLexer() = Lexer()
 }
 
 class SyntaxHighlighterFactory : SyntaxHighlighterFactory() {
-    override fun getSyntaxHighlighter(project: Project?, virtualFile: VirtualFile?): SyntaxHighlighter {
-        return SyntaxHighlighter()
-    }
+    override fun getSyntaxHighlighter(project: Project?, virtualFile: VirtualFile?) = SyntaxHighlighter()
 }

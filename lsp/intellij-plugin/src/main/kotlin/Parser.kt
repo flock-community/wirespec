@@ -6,15 +6,13 @@ import com.intellij.lang.PsiParser
 import com.intellij.openapi.project.Project
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.lang.ParserDefinition as IntellijParserDefinition
-import com.intellij.lexer.Lexer as IntellijLexer
 import com.intellij.psi.tree.TokenSet as IntellijTokenSet
 
 
-class Parser: PsiParser{
+class Parser : PsiParser {
     override fun parse(root: IElementType, builder: PsiBuilder): ASTNode {
 
         val rootMarker = builder.mark()
@@ -35,33 +33,19 @@ class Parser: PsiParser{
 
 
 class ParserDefinition : IntellijParserDefinition {
-    override fun createLexer(project: Project): IntellijLexer {
-        return Lexer()
-    }
+    override fun createLexer(project: Project) = Lexer()
 
-    override fun getCommentTokens(): IntellijTokenSet {
-        return TokenSet.COMMENTS
-    }
+    override fun getCommentTokens() = TokenSet.COMMENTS
 
-    override fun getStringLiteralElements(): IntellijTokenSet {
-        return IntellijTokenSet.EMPTY
-    }
+    override fun getStringLiteralElements() = IntellijTokenSet.EMPTY
 
-    override fun createParser(project: Project): PsiParser {
-        return Parser()
-    }
+    override fun createParser(project: Project) = Parser()
 
-    override fun getFileNodeType(): IFileElementType {
-        return FILE
-    }
+    override fun getFileNodeType() = FILE
 
-    override fun createFile(viewProvider: FileViewProvider): PsiFile {
-        return File(viewProvider)
-    }
+    override fun createFile(viewProvider: FileViewProvider) = File(viewProvider)
 
-    override fun createElement(node: ASTNode): PsiElement {
-        return Element(node)
-    }
+    override fun createElement(node: ASTNode): PsiElement = Element(node)
 
     companion object {
         val FILE = IFileElementType(Language.INSTANCE)
