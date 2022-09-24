@@ -26,5 +26,6 @@ include(
     "lsp:jvm:server",
     "lsp:jvm:client",
     "lsp:intellij-plugin",
-    "plugin:maven",
+    "plugin:maven-plugin",
+    "examples:todo-app",
 )

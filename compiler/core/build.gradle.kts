@@ -2,6 +2,7 @@ plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
     id("com.github.johnrengelman.shadow") apply false
+    id("maven-publish")
 }
 
 group = "${Settings.groupId}.compiler"
@@ -19,9 +20,15 @@ kotlin {
     js(IR) {
         nodejs()
     }
-    jvm()
-
+    jvm {
+        withJava()
+    }
     sourceSets {
+        val commonMain by getting {
+            dependencies {
+                implementation(kotlin("stdlib-common"))
+            }
+        }
         commonTest {
             dependencies {
                 implementation(kotlin("test-common"))
@@ -31,3 +38,4 @@ kotlin {
         }
     }
 }
+
