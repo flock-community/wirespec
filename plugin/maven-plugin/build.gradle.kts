@@ -23,6 +23,11 @@ publishing {
   publications {
     register("mavenJava", MavenPublication::class) {
       from(components["java"])
+
     }
   }
+}
+
+tasks.publishToMavenLocal {
+    dependsOn(":compiler:core:publishToMavenLocal")
 }
