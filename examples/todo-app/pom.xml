@@ -70,14 +70,29 @@
                 </dependencies>
             </plugin>
             <plugin>
-                <groupId>community.flock.wirespec.plugin.maven_plugin</groupId>
-                <artifactId>maven-plugin</artifactId>
+                <groupId>community.flock.wirespec.plugin.maven.kotlin</groupId>
+                <artifactId>kotlin</artifactId>
                 <version>0.0.1-SNAPSHOT</version>
                 <configuration>
                     <language>Kotlin</language>
-                    <packageName>community.flock.wire_spec.examples.todo_app</packageName>
                     <sourceDirectory>${project.basedir}/src/main/wire-spec</sourceDirectory>
                     <targetDirectory>${project.build.directory}/generated-sources/wire-spec</targetDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>community.flock.wirespec.plugin.maven.typescript</groupId>
+                <artifactId>typescript</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+                <configuration>
+                    <sourceDirectory>${project.basedir}/src/main/wire-spec</sourceDirectory>
+                    <targetDirectory>${project.basedir}/src/main/frontend/generated</targetDirectory>
                 </configuration>
                 <executions>
                     <execution>
