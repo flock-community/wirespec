@@ -24,11 +24,6 @@ kotlin {
         withJava()
     }
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation(kotlin("stdlib-common"))
-            }
-        }
         commonTest {
             dependencies {
                 implementation(kotlin("test-common"))
