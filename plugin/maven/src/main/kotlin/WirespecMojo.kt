@@ -23,7 +23,10 @@ abstract class WirespecMojo : AbstractMojo() {
             .map { (name, result) ->
                 name to when (result) {
                     is Either.Right -> result.value
-                    is Either.Left -> log.error(result.value.message)
+                    is Either.Left -> {
+                        log.error(result.value.message)
+                        error("compile error")
+                    }
                 }
             }
 
