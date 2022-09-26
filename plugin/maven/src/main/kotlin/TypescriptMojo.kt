@@ -20,10 +20,7 @@ class TypescriptMojo : WirespecMojo() {
     @Parameter(defaultValue = "\${project}", readonly = true, required = true)
     private lateinit var project: MavenProject
 
-    private val logger = object : Logger(true) {
-        override fun warn(s: String) = log.warn(s)
-        override fun log(s: String) = log.info(s)
-    }
+
 
     private val emitter = TypeScriptEmitter(logger)
 
