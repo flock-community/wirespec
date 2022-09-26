@@ -5,7 +5,6 @@ plugins {
 }
 
 tasks.register<MavenExec>("build") {
-    dependsOn(":plugin:maven:kotlin:publishToMavenLocal")
-    dependsOn(":plugin:maven:typescript:publishToMavenLocal")
+    dependsOn(":plugin:maven:publishToMavenLocal")
     goals(listOf("clean", "package"))
 }

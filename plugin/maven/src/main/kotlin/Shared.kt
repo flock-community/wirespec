@@ -1,4 +1,4 @@
-package community.flock.wirespec.plugin.maven.shared
+package community.flock.wirespec.plugin.maven
 
 import community.flock.wirespec.compiler.core.Either
 import community.flock.wirespec.compiler.core.WireSpec
