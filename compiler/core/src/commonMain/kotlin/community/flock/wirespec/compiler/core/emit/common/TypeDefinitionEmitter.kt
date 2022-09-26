@@ -1,5 +1,6 @@
 package community.flock.wirespec.compiler.core.emit.common
 
+import community.flock.wirespec.compiler.core.parse.Shape
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.utils.Logger
 
@@ -8,13 +9,13 @@ interface TypeDefinitionEmitter : TypeDefinitionEmitterLogger {
 
     fun Type.Name.emit(): String
 
-    fun Type.Shape.emit(): String
+    fun Shape.emit(): String
 
-    fun Type.Shape.Field.emit(): String
+    fun Shape.Field.emit(): String
 
-    fun Type.Shape.Field.Key.emit(): String
+    fun Shape.Field.Key.emit(): String
 
-    fun Type.Shape.Field.Value.emit(): String
+    fun Shape.Field.Value.emit(): String
 }
 
 interface TypeDefinitionEmitterLogger {
@@ -24,15 +25,15 @@ interface TypeDefinitionEmitterLogger {
     fun Type.Name.withLogging(logger: Logger, block: () -> String) = logger
         .log("Emitting Definition: Type Name", block)
 
-    fun Type.Shape.withLogging(logger: Logger, block: () -> String) = logger
+    fun Shape.withLogging(logger: Logger, block: () -> String) = logger
         .log("Emitting Definition: Type Shape", block)
 
-    fun Type.Shape.Field.withLogging(logger: Logger, block: () -> String) = logger
+    fun Shape.Field.withLogging(logger: Logger, block: () -> String) = logger
         .log("Emitting Definition: Type Shape Field", block)
 
-    fun Type.Shape.Field.Key.withLogging(logger: Logger, block: () -> String) = logger
+    fun Shape.Field.Key.withLogging(logger: Logger, block: () -> String) = logger
         .log("Emitting Definition: Type Shape Field Key", block)
 
-    fun Type.Shape.Field.Value.withLogging(logger: Logger, block: () -> String) = logger
+    fun Shape.Field.Value.withLogging(logger: Logger, block: () -> String) = logger
         .log("Emitting Definition: Type Shape Field Value", block)
 }

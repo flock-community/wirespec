@@ -3,9 +3,7 @@ package community.flock.wirespec.compiler.core.emit.common
 import community.flock.wirespec.compiler.core.Either
 import community.flock.wirespec.compiler.core.either
 import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException
-import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.parse.Node
-import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.core.parse.*
 import community.flock.wirespec.compiler.utils.Logger
 
 abstract class Emitter(val logger: Logger) : TypeDefinitionEmitter {
@@ -21,6 +19,9 @@ abstract class Emitter(val logger: Logger) : TypeDefinitionEmitter {
         logger.log("Emitting Node $this")
         when (this) {
             is Type -> emit()
+            is Endpoint -> emit()
+            is Shape -> emit()
+            is Endpoint.PathSegment -> emit()
         }
     }
 

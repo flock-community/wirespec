@@ -5,10 +5,12 @@ sealed interface TokenType {
 }
 
 object LeftCurly : TokenType
+object Slash : TokenType
 object RightCurly : TokenType
 object Colon : TokenType
 object Comma : TokenType
 object QuestionMark : TokenType
+object Arrow : TokenType
 object Brackets: TokenType
 object CustomValue : TokenType
 object EndOfProgram : TokenType
@@ -20,7 +22,7 @@ object NewLine : WhiteSpace
 
 sealed interface Keyword : TokenType
 object WsTypeDef : Keyword
-
+object WsEndpointDef : Keyword
 sealed interface WsType : Keyword
 object WsString : WsType
 object WsInteger : WsType

@@ -4,25 +4,11 @@ import community.flock.wirespec.compiler.core.Either
 import community.flock.wirespec.compiler.core.either
 import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException
 import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException.ParserException.WrongTokenException
+import community.flock.wirespec.compiler.core.parse.Shape.Field
+import community.flock.wirespec.compiler.core.parse.Shape.Field.Value
 import community.flock.wirespec.compiler.core.parse.Type.Name
-import community.flock.wirespec.compiler.core.parse.Type.Shape
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value
 import community.flock.wirespec.compiler.core.tokenize.Token
-import community.flock.wirespec.compiler.core.tokenize.types.Brackets
-import community.flock.wirespec.compiler.core.tokenize.types.Colon
-import community.flock.wirespec.compiler.core.tokenize.types.Comma
-import community.flock.wirespec.compiler.core.tokenize.types.CustomType
-import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
-import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
-import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
-import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
-import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpace
-import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
-import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
-import community.flock.wirespec.compiler.core.tokenize.types.WsString
-import community.flock.wirespec.compiler.core.tokenize.types.WsType
-import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
+import community.flock.wirespec.compiler.core.tokenize.types.*
 import community.flock.wirespec.compiler.utils.Logger
 
 typealias AST = List<Node>
@@ -45,6 +31,7 @@ class Parser(private val logger: Logger) {
         token.log()
         when (token.type) {
             is WsTypeDef -> parseTypeDeclaration()
+            is WsEndpointDef -> parseEndpointDeclaration()
             else -> throw WrongTokenException(WsTypeDef::class, token)
         }
     }
@@ -62,7 +49,7 @@ class Parser(private val logger: Logger) {
         eatToken()
         token.log()
         when (token.type) {
-            is LeftCurly -> Type(Name(typeName), parseTypeShape())
+            is LeftCurly -> Type(Name(typeName), parseShape())
             else -> throw WrongTokenException(LeftCurly::class, token)
         }.also {
             when (token.type) {
@@ -72,7 +59,7 @@ class Parser(private val logger: Logger) {
         }
     }
 
-    private fun TokenProvider.parseTypeShape(): Shape = run {
+    private fun TokenProvider.parseShape(): Shape = run {
         eatToken()
         token.log()
         when (token.type) {
@@ -118,6 +105,96 @@ class Parser(private val logger: Logger) {
             is WsInteger -> Value.Ws(Value.Ws.Type.Integer, isIterable)
             is WsBoolean -> Value.Ws(Value.Ws.Type.Boolean, isIterable)
             is CustomType -> Value.Custom(value, isIterable)
+        }
+    }
+
+
+    private fun TokenProvider.parseEndpointDeclaration(): Endpoint = run {
+        eatToken()
+        token.log()
+        when (token.type) {
+            is CustomType -> parseEndpointDefinition(token.value)
+            else -> throw WrongTokenException(CustomType::class, token)
+        }
+    }
+
+    private fun TokenProvider.parseEndpointDefinition(typeName: String): Endpoint = run {
+        eatToken()
+        token.log()
+        when (typeName) {
+            "GET" -> Endpoint(Endpoint.Verb(typeName), parseEndpointPath(), parseEndpointQuery(), parseEndpointLambda())
+            "POST" -> Endpoint(
+                Endpoint.Verb(typeName),
+                parseEndpointPath(),
+                parseEndpointQuery(),
+                parseEndpointLambda()
+            )
+
+            "PUT" -> Endpoint(Endpoint.Verb(typeName), parseEndpointPath(), parseEndpointQuery(), parseEndpointLambda())
+            "DELETE" -> Endpoint(
+                Endpoint.Verb(typeName),
+                parseEndpointPath(),
+                parseEndpointQuery(),
+                parseEndpointLambda()
+            )
+
+            else -> throw WrongTokenException(token.type::class, token)
+        }
+    }
+
+    private fun TokenProvider.parseEndpointPath(): List<Segment> = run {
+        token.log()
+        when (token.type) {
+            is Slash -> mutableListOf<Segment>().apply {
+                while (token.type is Slash) {
+                    eatToken()
+                    when (token.type) {
+                        is LeftCurly -> {
+                            add(parseShape())
+                            when (token.type) {
+                                is RightCurly -> eatToken()
+                                else -> throw WrongTokenException(token.type::class, token)
+                            }
+                        }
+                        else -> {
+                            add(Endpoint.PathSegment(token.value))
+                            eatToken()
+                        }
+                    }
+                }
+            }.toList()
+
+            else -> throw WrongTokenException(token.type::class, token)
+        }
+    }
+
+    private fun TokenProvider.parseEndpointQuery(): Shape? = run {
+        when (token.type) {
+            is QuestionMark -> {
+                eatToken()
+                when (token.type) {
+                    is LeftCurly -> parseShape()
+                    else -> throw WrongTokenException(token.type::class, token)
+                }.also {
+                    when (token.type) {
+                        is RightCurly -> eatToken()
+                        else -> throw WrongTokenException(token.type::class, token)
+                    }
+                }
+            }
+            else -> null
+        }
+    }
+
+    private fun TokenProvider.parseEndpointLambda(): Endpoint.Lambda = run {
+        if(nextToken?.type is Arrow){
+            val input = eatToken()
+            eatToken()
+            val output = eatToken()
+            Endpoint.Lambda(input.value, output.value)
+        } else {
+            val output = eatToken()
+            Endpoint.Lambda(output.value, null)
         }
     }
 
