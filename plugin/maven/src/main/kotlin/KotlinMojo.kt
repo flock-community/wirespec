@@ -10,7 +10,7 @@ import org.apache.maven.project.MavenProject
 import java.io.File
 
 @Mojo(name = "kotlin", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
-class KotlinMojo : AbstractMojo() {
+class KotlinMojo : WirespecMojo() {
 
     @Parameter(required = true)
     private lateinit var sourceDirectory: String
@@ -30,7 +30,7 @@ class KotlinMojo : AbstractMojo() {
 
     override fun execute() {
         File(targetDirectory).mkdirs()
-        Shared.compile(sourceDirectory, logger, emitter)
+        compile(sourceDirectory, logger, emitter)
             .forEach { (name, result) ->
                 File("$targetDirectory/$name.kt").writeText(result)
             }

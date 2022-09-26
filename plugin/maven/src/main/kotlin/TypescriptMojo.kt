@@ -2,7 +2,6 @@ package community.flock.wirespec.plugin.maven
 
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.utils.Logger
-import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
@@ -10,7 +9,7 @@ import org.apache.maven.project.MavenProject
 import java.io.File
 
 @Mojo(name = "typescript", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
-class TypescriptMojo : AbstractMojo() {
+class TypescriptMojo : WirespecMojo() {
 
     @Parameter(required = true)
     private lateinit var sourceDirectory: String
@@ -30,7 +29,7 @@ class TypescriptMojo : AbstractMojo() {
 
     override fun execute() {
         File(targetDirectory).mkdirs()
-        Shared.compile(sourceDirectory, logger, emitter)
+        compile(sourceDirectory, logger, emitter)
             .forEach { (name, result) ->
                 File("$targetDirectory/$name.ts").writeText(result)
             }

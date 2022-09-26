@@ -5,10 +5,11 @@ import community.flock.wirespec.compiler.core.WireSpec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.utils.Logger
+import org.apache.maven.plugin.AbstractMojo
 import java.io.BufferedReader
 import java.io.File
 
-object Shared {
+abstract class WirespecMojo: AbstractMojo() {
 
     fun compile(sourceDirectory: String, logger: Logger, emitter: Emitter) = File(sourceDirectory).listFiles()
         .let { it ?: arrayOf<File>() }
