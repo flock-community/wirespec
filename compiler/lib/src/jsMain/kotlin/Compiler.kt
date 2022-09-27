@@ -2,7 +2,6 @@ import community.flock.wirespec.compiler.core.WireSpec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
-import community.flock.wirespec.compiler.core.flatMap
 import community.flock.wirespec.compiler.core.parse.Parser
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.Logger
@@ -16,7 +15,7 @@ abstract class Compiler {
     fun tokenize(source: String) = WireSpec.tokenize(source).produce()
 
     fun parse(source: String) = WireSpec.tokenize(source)
-        .flatMap { Parser(logger).parse(it) }
+        .let { Parser(logger).parse(it) }
         .let { Ast(arrayOf()) }
 
     companion object {

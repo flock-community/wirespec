@@ -1,23 +1,17 @@
 package community.flock.wirespec.compiler.core.tokenize
 
-import community.flock.wirespec.compiler.core.Either
 import community.flock.wirespec.compiler.core.LanguageSpec
-import community.flock.wirespec.compiler.core.either
-import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException
-import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException.TokenizerException
 import community.flock.wirespec.compiler.core.tokenize.Token.Coordinates
 import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
 import community.flock.wirespec.compiler.core.tokenize.types.NewLine
 import community.flock.wirespec.compiler.core.tokenize.types.TokenType
 
-fun LanguageSpec.tokenize(source: String): Either<CompilerException, List<Token>> = either {
-    with(tokenize(source, listOf())) {
-        this + Token(
-            type = EndOfProgram,
-            value = "EOP",
-            coordinates = lastIndex()
-        ).run { copy(coordinates = newIndex()) }
-    }
+fun LanguageSpec.tokenize(source: String): List<Token> = with(tokenize(source, listOf())) {
+    this + Token(
+        type = EndOfProgram,
+        value = "EOP",
+        coordinates = lastIndex()
+    ).run { copy(coordinates = newIndex()) }
 }
 
 private tailrec fun LanguageSpec.tokenize(source: String, tokens: List<Token>): List<Token> {
@@ -28,11 +22,7 @@ private tailrec fun LanguageSpec.tokenize(source: String, tokens: List<Token>): 
 }
 
 private fun LanguageSpec.findToken(oldIdx: Coordinates, source: String): Token = matchers
-    .firstNotNullOfOrNull { (regex, tokenType) -> regex.find(source)?.toToken(tokenType, oldIdx) }
-    ?: throw TokenizerException(
-        oldIdx,
-        "At line ${oldIdx.line}, position ${oldIdx.position}, character: '${source.first()}' in '\n${source.partial()}\n' is not expected"
-    )
+    .firstNotNullOf { (regex, tokenType) -> regex.find(source)?.toToken(tokenType, oldIdx) }
 
 private fun MatchResult.toToken(type: TokenType, oldIdx: Coordinates) = Token(type, value, oldIdx)
     .run { copy(coordinates = newIndex()) }
@@ -49,4 +39,4 @@ private fun Token.newIndex() =
         idxAndLength = coordinates.idxAndLength + value.length
     )
 
-private fun String.partial() = take(24) + if (length > 24) "..." else ""
+private fun String.partial(numberOfChars: Int = 24) = take(numberOfChars) + if (length > numberOfChars) "..." else ""
