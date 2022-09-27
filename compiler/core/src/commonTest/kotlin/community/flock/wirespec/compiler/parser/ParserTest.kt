@@ -13,8 +13,12 @@ class ParserTest {
     @Test
     fun testCompileKotlin() {
         val source = """
+            type TodoId {
+              value: String
+            }
+            
             type Todo {
-              id: String,
+              id: TodoId,
               name: String,
               done: Boolean
             }
@@ -24,14 +28,18 @@ class ParserTest {
               done: Boolean
             }
             
-            endpoint GET /todos?{done: Boolean} Todos
-            endpoint GET /todos/{id: String} Todos
-            endpoint POST /todos TodoInput -> Todos
+            endpoint FindAll GET /todos?{done: Boolean} Todos[]
+            endpoint FindById GET /todos/{id: String} Todos?
+            endpoint Create POST /todos TodoInput -> Todos
+            endpoint Update PUT /todos TodoInput -> Todos
             
         """.trimIndent()
 
         val res = WireSpec.tokenize(source)
-            .let { Parser(logger).parse(it) }
+            .let { Parser(logger).parse(it).fold(
+                ifRight = { ex -> ex },
+                ifLeft = { err -> throw err }
+            ) }
 
         println("=========")
         println(res)

@@ -6,18 +6,26 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.tree.IElementType
+import community.flock.wirespec.compiler.core.tokenize.types.*
 
 class SyntaxHighlighter : SyntaxHighlighterBase() {
 
     override fun getTokenHighlights(tokenType: IElementType) =
-        when (tokenType) {
-            Types.KEYWORD -> arrayOf(KEYWORD)
-            Types.VALUE -> arrayOf(IDENTIFIER)
-            Types.TYPE -> arrayOf(PARAMETER)
-            Types.BRACKETS -> arrayOf(BRACKETS)
-            Types.COLON -> arrayOf(SEMICOLON)
-            Types.COMMA -> arrayOf(COMMA)
-            else -> arrayOfNulls(0)
+        if(tokenType is Lexer.ElementType){
+            when(tokenType.token.type) {
+                is Keyword -> arrayOf(KEYWORD)
+                Arrow -> arrayOf(KEYWORD)
+                Brackets -> arrayOf(BRACKETS)
+                Colon -> arrayOf(SEMICOLON)
+                Comma -> arrayOf(COMMA)
+                CustomValue -> arrayOf(PARAMETER)
+                Invalid -> arrayOf(PARAMETER)
+                LeftCurly -> arrayOf(BRACKETS)
+                RightCurly -> arrayOf(BRACKETS)
+                else -> arrayOfNulls(0)
+            }
+        } else {
+            arrayOfNulls(0)
         }
 
     override fun getHighlightingLexer() = Lexer()

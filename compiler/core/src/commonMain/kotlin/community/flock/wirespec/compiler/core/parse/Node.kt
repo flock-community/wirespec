@@ -10,10 +10,13 @@ data class Type(val name: Name, val shape: Shape) : Definition {
 
 }
 
-data class Endpoint(val verb: Verb, val path: Iterable<Segment>, val query: Shape?, val lambda: Lambda) : Definition {
+data class Endpoint(val name: Name, val verb: Verb, val path: Iterable<Segment>, val query: Shape?, val lambda: Lambda) : Definition {
+    data class Name(val value: String)
     data class Verb(val value: String)
     data class PathSegment(val value: String): Segment
-    data class Lambda(val output: String, val input: String?)
+    data class Lambda(val output: Type, val input: Type?) {
+        data class Type(val name: String, val isIterable: Boolean, val isNullable: Boolean)
+    }
 }
 
 data class Shape(val value: List<Field>): Definition, Segment {

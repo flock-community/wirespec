@@ -15,14 +15,14 @@ typealias AST = List<Node>
 
 class Parser(private val logger: Logger) {
 
-    fun parse(tokens: List<Token>): Either<CompilerException, AST> = either {
+    fun parse(tokens: Iterable<Token>): Either<CompilerException, AST> = either {
         tokens
             .filterWhiteSpace()
             .toProvider(logger)
             .parse()
     }
 
-    private fun List<Token>.filterWhiteSpace() = filterNot { it.type is WhiteSpace }
+    private fun Iterable<Token>.filterWhiteSpace() = filterNot { it.type is WhiteSpace }
 
     private fun TokenProvider.parse(): AST = mutableListOf<Definition>()
         .apply { while (hasNext()) add(parseDefinition()) }
@@ -64,11 +64,11 @@ class Parser(private val logger: Logger) {
         token.log()
         when (token.type) {
             is CustomValue -> mutableListOf<Field>().apply {
-                add(parseField(Field.Key(token.value)))
+                add(parseField())
                 while (token.type == Comma) {
                     eatToken()
                     when (token.type) {
-                        is CustomValue -> add(parseField(Field.Key(token.value)))
+                        is CustomValue -> add(parseField())
                         else -> throw WrongTokenException(CustomValue::class, token)
                     }
                 }
@@ -78,8 +78,8 @@ class Parser(private val logger: Logger) {
         }.let(::Shape)
     }
 
-    private fun TokenProvider.parseField(key: Field.Key): Field = run {
-        eatToken()
+    private fun TokenProvider.parseField(): Field = run {
+        val field = eatToken()
         token.log()
         when (token.type) {
             is Colon -> eatToken()
@@ -87,8 +87,8 @@ class Parser(private val logger: Logger) {
         }
         when (val type = token.type) {
             is WsType -> Field(
-                key = key,
-                value = parseFieldValue(type, token.value),
+                key = Field.Key(field.value),
+                value = parseFieldValue(),
                 isNullable = (token.type is QuestionMark).also { if (it) eatToken() }
             )
 
@@ -96,15 +96,16 @@ class Parser(private val logger: Logger) {
         }
     }
 
-    private fun TokenProvider.parseFieldValue(wsType: WsType, value: String) = run {
-        eatToken()
+    private fun TokenProvider.parseFieldValue(): Value = run {
+        val ws = eatToken()
         token.log()
         val isIterable = (token.type is Brackets).also { if (it) eatToken() }
-        when (wsType) {
+        when (ws.type) {
             is WsString -> Value.Ws(Value.Ws.Type.String, isIterable)
             is WsInteger -> Value.Ws(Value.Ws.Type.Integer, isIterable)
             is WsBoolean -> Value.Ws(Value.Ws.Type.Boolean, isIterable)
-            is CustomType -> Value.Custom(value, isIterable)
+            is CustomType -> Value.Custom(ws.value, isIterable)
+            else -> error("token not found")
         }
     }
 
@@ -113,31 +114,23 @@ class Parser(private val logger: Logger) {
         eatToken()
         token.log()
         when (token.type) {
-            is CustomType -> parseEndpointDefinition(token.value)
+            is CustomType -> parseEndpointDefinition()
             else -> throw WrongTokenException(CustomType::class, token)
         }
     }
 
-    private fun TokenProvider.parseEndpointDefinition(typeName: String): Endpoint = run {
-        eatToken()
-        token.log()
-        when (typeName) {
-            "GET" -> Endpoint(Endpoint.Verb(typeName), parseEndpointPath(), parseEndpointQuery(), parseEndpointLambda())
-            "POST" -> Endpoint(
-                Endpoint.Verb(typeName),
-                parseEndpointPath(),
-                parseEndpointQuery(),
-                parseEndpointLambda()
-            )
-
-            "PUT" -> Endpoint(Endpoint.Verb(typeName), parseEndpointPath(), parseEndpointQuery(), parseEndpointLambda())
-            "DELETE" -> Endpoint(
-                Endpoint.Verb(typeName),
-                parseEndpointPath(),
-                parseEndpointQuery(),
-                parseEndpointLambda()
-            )
-
+    private fun TokenProvider.parseEndpointDefinition(): Endpoint = run {
+        val nameToken = eatToken(CustomType::class)
+        val verbToken = eatToken(CustomType::class)
+        nameToken.log()
+        val name = Endpoint.Name(nameToken.value)
+        val verb = Endpoint.Verb(verbToken.value)
+        val endpoint = Endpoint(name, verb, parseEndpointPath(), parseEndpointQuery(), parseEndpointLambda())
+        when (verbToken.value) {
+            "GET" -> endpoint
+            "POST" -> endpoint
+            "PUT" -> endpoint
+            "DELETE" -> endpoint
             else -> throw WrongTokenException(token.type::class, token)
         }
     }
@@ -156,6 +149,7 @@ class Parser(private val logger: Logger) {
                                 else -> throw WrongTokenException(token.type::class, token)
                             }
                         }
+
                         else -> {
                             add(Endpoint.PathSegment(token.value))
                             eatToken()
@@ -164,37 +158,38 @@ class Parser(private val logger: Logger) {
                 }
             }.toList()
 
-            else -> throw WrongTokenException(token.type::class, token)
+            else -> throw WrongTokenException(Slash::class, token)
         }
     }
 
     private fun TokenProvider.parseEndpointQuery(): Shape? = run {
-        when (token.type) {
-            is QuestionMark -> {
-                eatToken()
-                when (token.type) {
-                    is LeftCurly -> parseShape()
-                    else -> throw WrongTokenException(token.type::class, token)
-                }.also {
-                    when (token.type) {
-                        is RightCurly -> eatToken()
-                        else -> throw WrongTokenException(token.type::class, token)
-                    }
-                }
-            }
-            else -> null
+        if (token.type is QuestionMark) {
+            eatToken(LeftCurly::class)
+            val shape = parseShape()
+            eatToken(RightCurly::class)
+            shape
+        } else {
+            null
         }
     }
 
+
     private fun TokenProvider.parseEndpointLambda(): Endpoint.Lambda = run {
-        if(nextToken?.type is Arrow){
-            val input = eatToken()
+        fun parseType(): Endpoint.Lambda.Type {
+            return Endpoint.Lambda.Type(
+                name = eatToken(WsType::class).value,
+                isNullable = (token.type is Brackets).also { if (it) eatToken(Brackets::class) },
+                isIterable = (token.type is QuestionMark).also { if (it) eatToken(QuestionMark::class) }
+            )
+        }
+        if (nextToken?.type is Arrow) {
+            val input = parseType()
             eatToken()
-            val output = eatToken()
-            Endpoint.Lambda(input.value, output.value)
+            val output = parseType()
+            Endpoint.Lambda(input, output)
         } else {
-            val output = eatToken()
-            Endpoint.Lambda(output.value, null)
+            val output = parseType()
+            Endpoint.Lambda(output, null)
         }
     }
 
