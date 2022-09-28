@@ -11,14 +11,21 @@ class SyntaxHighlighter : SyntaxHighlighterBase() {
 
     override fun getTokenHighlights(tokenType: IElementType) =
         when (tokenType) {
-            Types.KEYWORD -> arrayOf(KEYWORD)
-            Types.VALUE -> arrayOf(IDENTIFIER)
-            Types.TYPE -> arrayOf(PARAMETER)
             Types.BRACKETS -> arrayOf(BRACKETS)
             Types.COLON -> arrayOf(SEMICOLON)
             Types.COMMA -> arrayOf(COMMA)
+            Types.CUSTOM_VALUE -> arrayOf(PARAMETER)
+            Types.CUSTOM_TYPE -> arrayOf(IDENTIFIER)
+            Types.BOOLEAN -> arrayOf(KEYWORD)
+            Types.INTEGER -> arrayOf(KEYWORD)
+            Types.STRING -> arrayOf(KEYWORD)
+            Types.TYPE_DEF -> arrayOf(KEYWORD)
+            Types.LEFT_CURLY -> arrayOf(BRACKETS)
+            Types.RIGHT_CURLY -> arrayOf(BRACKETS)
+            Types.QUESTION_MARK -> arrayOf(IDENTIFIER)
             else -> arrayOfNulls(0)
         }
+
 
     override fun getHighlightingLexer() = Lexer()
 }

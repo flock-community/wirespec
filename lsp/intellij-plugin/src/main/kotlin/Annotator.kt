@@ -7,7 +7,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import community.flock.wirespec.compiler.core.WireSpec
 import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException
-import community.flock.wirespec.compiler.core.flatMap
 import community.flock.wirespec.compiler.core.parse.Parser
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.Logger

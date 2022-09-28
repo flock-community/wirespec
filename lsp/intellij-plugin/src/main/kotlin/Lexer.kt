@@ -3,13 +3,7 @@ package community.flock.wire_spec.lsp.intellij_plugin
 import community.flock.wirespec.compiler.core.WireSpec
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.tokenize
-import community.flock.wirespec.compiler.core.tokenize.types.Colon
-import community.flock.wirespec.compiler.core.tokenize.types.Comma
-import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
-import community.flock.wirespec.compiler.core.tokenize.types.Keyword
-import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
-import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
-import community.flock.wirespec.compiler.core.tokenize.types.WsType
+import community.flock.wirespec.compiler.core.tokenize.types.*
 import com.intellij.lexer.Lexer as IntellijLexer
 import com.intellij.lexer.LexerPosition as IntellijLexerPosition
 
@@ -37,15 +31,25 @@ class Lexer : IntellijLexer() {
         if (index == tokens.size) {
             null
         } else {
-            when (tokens[index].type) {
-                is WsType -> Types.TYPE
-                is Keyword -> Types.KEYWORD
-                is RightCurly -> Types.BRACKETS
-                is LeftCurly -> Types.BRACKETS
+            val token = tokens[index]
+            when (token.type) {
+                is WsTypeDef -> Types.TYPE_DEF
+                is WhiteSpace -> Types.WHITE_SPACE
+                is Brackets -> Types.BRACKETS
                 is Colon -> Types.COLON
                 is Comma -> Types.COMMA
-                else -> Types.VALUE
+                is CustomValue -> Types.CUSTOM_VALUE
+                is CustomType -> Types.CUSTOM_TYPE
+                is WsBoolean -> Types.BOOLEAN
+                is WsInteger -> Types.INTEGER
+                is WsString -> Types.STRING
+                is LeftCurly -> Types.LEFT_CURLY
+                is QuestionMark -> Types.QUESTION_MARK
+                is RightCurly -> Types.RIGHT_CURLY
+                is EndOfProgram -> Types.END_OF_PROGRAM
+                is Invalid -> Types.INVALID
             }
+
         }
 
     override fun getTokenStart() = tokens[index]
@@ -82,4 +86,5 @@ class Lexer : IntellijLexer() {
             return 1
         }
     }
+
 }
