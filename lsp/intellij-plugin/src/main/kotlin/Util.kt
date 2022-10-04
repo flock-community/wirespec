@@ -14,7 +14,7 @@ object Util {
             }
 
             override fun getPresentableText(): String {
-                return "adsfadsf"
+                return element.text
             }
 
             override fun getIcon(unused: Boolean): Icon {
