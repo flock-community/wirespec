@@ -17,7 +17,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.lang.ParserDefinition as IntellijParserDefinition
 import com.intellij.psi.tree.TokenSet as IntellijTokenSet
 
-
 class Parser : PsiParser {
 
     class TypeDef : IElementType("TYPE_DEF", Language.INSTANCE)
