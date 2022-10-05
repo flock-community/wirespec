@@ -6,15 +6,16 @@ import javax.swing.Icon
 
 object Utils {
 
-    fun visitAllElements(element: PsiElement?):List<PsiElement>{
-        return if(element != null ){
+    fun visitAllElements(element: PsiElement?): List<PsiElement> {
+        return if (element != null) {
             listOf(element) + element.children
                 .flatMap { visitAllElements(it) }
-        }else{
+        } else {
             listOf()
         }
 
     }
+
     fun getPresentation(element: PsiElement): ItemPresentation {
         return object : ItemPresentation {
 
