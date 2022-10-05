@@ -20,7 +20,7 @@ object Utils {
         return object : ItemPresentation {
 
             override fun getLocationString(): String {
-                return element.containingFile.name
+                return ""
             }
 
             override fun getPresentableText(): String {
