@@ -4,12 +4,21 @@ import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.PsiElement
 import javax.swing.Icon
 
-object Util {
+object Utils {
 
+    fun visitAllElements(element: PsiElement?):List<PsiElement>{
+        return if(element != null ){
+            listOf(element) + element.children
+                .flatMap { visitAllElements(it) }
+        }else{
+            listOf()
+        }
+
+    }
     fun getPresentation(element: PsiElement): ItemPresentation {
         return object : ItemPresentation {
 
-            override fun getLocationString(): String? {
+            override fun getLocationString(): String {
                 return element.containingFile.name
             }
 

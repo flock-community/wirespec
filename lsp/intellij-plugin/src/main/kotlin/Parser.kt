@@ -109,18 +109,28 @@ class ParserDefinition : IntellijParserDefinition {
 class TypeDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
 class BodyElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
 
-class CustomTypeElement(val ast: ASTNode) : ASTWrapperPsiElement(ast), PsiNameIdentifierOwner {
+class CustomTypeElement(ast: ASTNode) : ASTWrapperPsiElement(ast), PsiNameIdentifierOwner {
     override fun setName(name: String): PsiElement {
-        val newNode = PsiFileFactory
+        fun createNewNode() = PsiFileFactory
             .getInstance(project)
             .createFileFromText("dummy.ws", FileType.INSTANCE, "type $name {}")
             .firstChild
-            .let { PsiTreeUtil.findChildOfType(it, CustomTypeElement::class.java)  }
+            .let { PsiTreeUtil.findChildOfType(it, CustomTypeElement::class.java) }
             ?.node
-        val customTypeNode: ASTNode? = node.findChildByType(Types.CUSTOM_TYPE)
-        if (newNode != null && customTypeNode != null) {
-            node.replaceChild(customTypeNode, newNode)
-        }
+            ?: error("Cannot create new node")
+
+        FileTypeIndex
+            .getFiles(FileType.INSTANCE, GlobalSearchScope.everythingScope(project))
+            .run {
+                forEach() {
+                    val file = PsiManager.getInstance(project).findFile(it)
+                    Utils.visitAllElements(file)
+                        .filterIsInstance(CustomTypeElement::class.java)
+                        .filter { element -> element.node.chars == node.chars }
+                        .forEach { element -> element.parent.node.replaceChild(element.node, createNewNode()) }
+                }
+            }
+
         return this
     }
 
@@ -143,6 +153,6 @@ class CustomTypeElement(val ast: ASTNode) : ASTWrapperPsiElement(ast), PsiNameId
     }
 
     override fun getPresentation(): ItemPresentation {
-        return Util.getPresentation(this)
+        return Utils.getPresentation(this)
     }
 }
