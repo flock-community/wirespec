@@ -16,6 +16,7 @@ to compile the project and test the WireSpec compiler with definitions found in
 Example how to use the maven plugin
 ```xml
 <project>
+    ...
     <build>
         <plugins>
             ...
