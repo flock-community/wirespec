@@ -13,7 +13,8 @@ to compile the project and test the WireSpec compiler with definitions found in
 `types`. Locate the result in `types/out`
 
 ## Maven
-Example how to use the maven plugin
+Example how to use the maven plugin  
+For a full example click [here](examples/spring-boot-maven-plugin)
 ```xml
 <project>
     ...
@@ -73,7 +74,8 @@ Example how to use the maven plugin
 ```
 
 ## Gradle
-Example how to use the gradle plugin
+Example how to use the gradle plugin  
+For a full example click [here](examples/spring-boot-gradle-plugin)
 ```
 plugins {
     ...
