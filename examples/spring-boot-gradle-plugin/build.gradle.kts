@@ -1,4 +1,4 @@
 task<Exec>("build") {
-    dependsOn(":plugin:maven:publishToMavenLocal")
+    dependsOn(":plugin:gradle:publishToMavenLocal")
     commandLine("./gradlew", "--build-file", "app.gradle.kts", "wirespec", "build")
 }
