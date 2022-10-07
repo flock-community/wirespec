@@ -76,7 +76,7 @@ Example how to use the gradle plugin
 ```
 plugins {
     ...
-	id("community.flock.wirespec.plugin.gradle") version "0.0.1-SNAPSHOT"
+    id("community.flock.wirespec.plugin.gradle") version "0.0.1-SNAPSHOT"
 }
 
 wirespec {
