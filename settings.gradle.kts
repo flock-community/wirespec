@@ -8,11 +8,18 @@ pluginManagement {
         kotlin("jvm") version kotlinVersion
         id("com.github.johnrengelman.shadow") version shadowVersion
     }
+
+    repositories {
+        mavenLocal()
+        gradlePluginPortal()
+    }
 }
 
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
+        mavenLocal()
+        gradlePluginPortal()
     }
 }
 
@@ -27,5 +34,8 @@ include(
     "lsp:jvm:client",
     "lsp:intellij-plugin",
     "plugin:maven",
-    "examples:todo-app",
+    "plugin:gradle",
+    "examples:spring-boot-maven-plugin",
+    "examples:spring-boot-gradle-plugin",
 )
+
