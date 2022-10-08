@@ -23,11 +23,6 @@ gradlePlugin {
     }
 }
 
-publishing {
-    repositories {
-        maven {
-            name = "localPluginRepository"
-            url = uri("${project.rootDir}/local-plugin-repository")
-        }
-    }
+tasks.publishToMavenLocal {
+    dependsOn(":compiler:core:publishToMavenLocal")
 }
