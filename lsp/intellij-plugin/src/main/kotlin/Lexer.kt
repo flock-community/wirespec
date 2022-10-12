@@ -1,6 +1,5 @@
 package community.flock.wire_spec.lsp.intellij_plugin
 
-import com.intellij.psi.tree.IElementType
 import community.flock.wirespec.compiler.core.WireSpec
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.tokenize
@@ -15,8 +14,6 @@ import com.intellij.lexer.Lexer as IntellijLexer
 import com.intellij.lexer.LexerPosition as IntellijLexerPosition
 
 class Lexer : IntellijLexer() {
-
-    data class ElementType(val token: Token) : IElementType(token.type.name(), Language.INSTANCE)
 
     private var buffer: CharSequence = ""
     private var index = 0
@@ -40,8 +37,15 @@ class Lexer : IntellijLexer() {
         if (index == tokens.size) {
             null
         } else {
-            val token = tokens[index]
-            ElementType(token)
+            when (tokens[index].type) {
+                is WsType -> Types.TYPE
+                is Keyword -> Types.KEYWORD
+                is RightCurly -> Types.BRACKETS
+                is LeftCurly -> Types.BRACKETS
+                is Colon -> Types.COLON
+                is Comma -> Types.COMMA
+                else -> Types.VALUE
+            }
         }
 
     override fun getTokenStart() = tokens[index]

@@ -11,21 +11,14 @@ import community.flock.wirespec.compiler.core.tokenize.types.*
 class SyntaxHighlighter : SyntaxHighlighterBase() {
 
     override fun getTokenHighlights(tokenType: IElementType) =
-        if(tokenType is Lexer.ElementType){
-            when(tokenType.token.type) {
-                is Keyword -> arrayOf(KEYWORD)
-                Arrow -> arrayOf(KEYWORD)
-                Brackets -> arrayOf(BRACKETS)
-                Colon -> arrayOf(SEMICOLON)
-                Comma -> arrayOf(COMMA)
-                CustomValue -> arrayOf(PARAMETER)
-                Invalid -> arrayOf(PARAMETER)
-                LeftCurly -> arrayOf(BRACKETS)
-                RightCurly -> arrayOf(BRACKETS)
-                else -> arrayOfNulls(0)
-            }
-        } else {
-            arrayOfNulls(0)
+        when (tokenType) {
+            Types.KEYWORD -> arrayOf(KEYWORD)
+            Types.VALUE -> arrayOf(IDENTIFIER)
+            Types.TYPE -> arrayOf(PARAMETER)
+            Types.BRACKETS -> arrayOf(BRACKETS)
+            Types.COLON -> arrayOf(SEMICOLON)
+            Types.COMMA -> arrayOf(COMMA)
+            else -> arrayOfNulls(0)
         }
 
     override fun getHighlightingLexer() = Lexer()
