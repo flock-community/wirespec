@@ -11,7 +11,7 @@ object Colon : TokenType
 object Comma : TokenType
 object QuestionMark : TokenType
 object Arrow : TokenType
-object Brackets: TokenType
+object Brackets : TokenType
 object CustomValue : TokenType
 object EndOfProgram : TokenType
 object Invalid : TokenType

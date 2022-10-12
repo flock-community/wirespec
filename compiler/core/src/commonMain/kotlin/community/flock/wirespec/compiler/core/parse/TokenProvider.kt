@@ -1,6 +1,5 @@
 package community.flock.wirespec.compiler.core.parse
 
-import community.flock.wirespec.compiler.core.exceptions.WireSpecException
 import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException.ParserException.NullTokenException.NextException
 import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException.ParserException.NullTokenException.StartingException
 import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException.ParserException.WrongTokenException
@@ -27,9 +26,10 @@ class TokenProvider(private val logger: Logger, private val tokenIterator: Itera
         printTokens(previousToken)
         return previousToken
     }
+
     fun eatToken(expected: KClass<out TokenType>): Token {
         val token = eatToken()
-        if(token.type::class.isInstance(expected)) throw WrongTokenException(expected, token)
+        if (token.type::class.isInstance(expected)) throw WrongTokenException(expected, token)
         return token
     }
 

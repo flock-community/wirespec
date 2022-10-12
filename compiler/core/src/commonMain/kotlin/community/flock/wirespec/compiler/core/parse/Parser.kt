@@ -8,7 +8,23 @@ import community.flock.wirespec.compiler.core.parse.Shape.Field
 import community.flock.wirespec.compiler.core.parse.Shape.Field.Value
 import community.flock.wirespec.compiler.core.parse.Type.Name
 import community.flock.wirespec.compiler.core.tokenize.Token
-import community.flock.wirespec.compiler.core.tokenize.types.*
+import community.flock.wirespec.compiler.core.tokenize.types.Arrow
+import community.flock.wirespec.compiler.core.tokenize.types.Brackets
+import community.flock.wirespec.compiler.core.tokenize.types.Colon
+import community.flock.wirespec.compiler.core.tokenize.types.Comma
+import community.flock.wirespec.compiler.core.tokenize.types.CustomType
+import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
+import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
+import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
+import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
+import community.flock.wirespec.compiler.core.tokenize.types.Slash
+import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpace
+import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
+import community.flock.wirespec.compiler.core.tokenize.types.WsEndpointDef
+import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
+import community.flock.wirespec.compiler.core.tokenize.types.WsString
+import community.flock.wirespec.compiler.core.tokenize.types.WsType
+import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
 import community.flock.wirespec.compiler.utils.Logger
 
 typealias AST = List<Node>
@@ -85,7 +101,7 @@ class Parser(private val logger: Logger) {
             is Colon -> eatToken()
             else -> throw WrongTokenException(Colon::class, token)
         }
-        when (val type = token.type) {
+        when (token.type) {
             is WsType -> Field(
                 key = Field.Key(field.value),
                 value = parseFieldValue(),

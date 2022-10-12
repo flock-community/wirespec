@@ -2,9 +2,9 @@ package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.parse.Shape
-import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Shape.Field.Value.Custom
 import community.flock.wirespec.compiler.core.parse.Shape.Field.Value.Ws
+import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.utils.Logger
 
 class TypeScriptEmitter(logger: Logger) : Emitter(logger) {
