@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.exceptions.WireSpecException.Compi
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Node
+import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.utils.Logger
 
@@ -23,6 +24,7 @@ abstract class Emitter(val logger: Logger) : TypeDefinitionEmitter {
         when (this) {
             is Type -> emit()
             is Endpoint -> "TODO()"
+            is Refined -> "TODO()"
         }
     }
 

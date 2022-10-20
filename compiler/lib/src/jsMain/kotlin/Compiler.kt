@@ -16,7 +16,10 @@ abstract class Compiler {
 
     fun parse(source: String) = WireSpec.tokenize(source)
         .let { Parser(logger).parse(it) }
-        .let { Ast(arrayOf()) }
+        .fold(
+            ifRight = { ast -> ast },
+            ifLeft = { err -> throw err }
+        )
 
     companion object {
         protected val logger = object : Logger(false) {}

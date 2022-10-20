@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.types.Invalid
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
+import community.flock.wirespec.compiler.core.tokenize.types.Literal
 import community.flock.wirespec.compiler.core.tokenize.types.NewLine
 import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
@@ -17,6 +18,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpaceExceptNew
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
 import community.flock.wirespec.compiler.core.tokenize.types.WsEndpointDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
+import community.flock.wirespec.compiler.core.tokenize.types.WsRefinedDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsString
 import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
 
@@ -29,6 +31,7 @@ object WireSpec : LanguageSpec {
     override val matchers = listOf(
         Regex("^type") to WsTypeDef,
         Regex("^endpoint") to WsEndpointDef,
+        Regex("^refined") to WsRefinedDef,
         Regex("^[^\\S\\r\\n]+") to WhiteSpaceExceptNewLine,
         Regex("^[\\r\\n]") to NewLine,
         Regex("^\\{") to LeftCurly,
@@ -44,6 +47,7 @@ object WireSpec : LanguageSpec {
         Regex("^->") to Arrow,
         Regex("^[a-z][a-zA-Z]*") to CustomValue,
         Regex("^[A-Z][a-zA-Z]*") to CustomType,
+        Regex("^\".*\"") to Literal,
         Regex("^.") to Invalid // Catch all regular expression if none of the above matched
     )
 }

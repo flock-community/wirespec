@@ -14,6 +14,7 @@ object Arrow : TokenType
 object Brackets : TokenType
 object CustomValue : TokenType
 object EndOfProgram : TokenType
+object Literal : WsType
 object Invalid : TokenType
 
 sealed interface WhiteSpace : TokenType
@@ -23,6 +24,7 @@ object NewLine : WhiteSpace
 sealed interface Keyword : TokenType
 object WsTypeDef : Keyword
 object WsEndpointDef : Keyword
+object WsRefinedDef : Keyword
 sealed interface WsType : Keyword
 object WsString : WsType
 object WsInteger : WsType

@@ -2,6 +2,7 @@ import community.flock.wirespec.compiler.core.tokenize.Token
 
 @ExperimentalJsExport
 fun List<Token>.produce(): WsTokenResult = WsTokenResult(tokens = WsTokens(value = map { it.produce() }.toTypedArray()))
+fun List<Ast>.produce(): WsParseResult = WsParseResult(ast = this)
 
 @ExperimentalJsExport
 fun Token.produce() = WsToken(
@@ -14,6 +15,13 @@ fun Token.produce() = WsToken(
 @ExperimentalJsExport
 data class WsTokenResult(
     val tokens: WsTokens? = null,
+    val error: WsError? = null
+)
+
+@JsExport
+@ExperimentalJsExport
+data class WsParseResult(
+    val ast: List<Ast>,
     val error: WsError? = null
 )
 

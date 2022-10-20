@@ -10,6 +10,14 @@ data class Type(val name: Name, val shape: Shape) : Definition {
 
 }
 
+data class Refined(
+    val name: Name,
+    val verb: Regex
+) : Definition {
+    data class Name(val value: String)
+    data class Regex(val value: String)
+}
+
 data class Endpoint(
     val name: Name,
     val verb: Verb,

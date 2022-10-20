@@ -15,6 +15,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.Comma
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
+import community.flock.wirespec.compiler.core.tokenize.types.Literal
 import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.types.Slash
@@ -22,6 +23,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpace
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
 import community.flock.wirespec.compiler.core.tokenize.types.WsEndpointDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
+import community.flock.wirespec.compiler.core.tokenize.types.WsRefinedDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsString
 import community.flock.wirespec.compiler.core.tokenize.types.WsType
 import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
@@ -48,6 +50,7 @@ class Parser(private val logger: Logger) {
         when (token.type) {
             is WsTypeDef -> parseTypeDeclaration()
             is WsEndpointDef -> parseEndpointDeclaration()
+            is WsRefinedDef -> parseRefinedDeclaration()
             else -> throw WrongTokenException(WsTypeDef::class, token)
         }
     }
@@ -149,6 +152,24 @@ class Parser(private val logger: Logger) {
             "DELETE" -> endpoint
             else -> throw WrongTokenException(token.type::class, token)
         }
+    }
+
+    private fun TokenProvider.parseRefinedDeclaration(): Refined = run {
+        eatToken()
+        token.log()
+        when (token.type) {
+            is CustomType -> parseRefinedDefinition()
+            else -> throw WrongTokenException(CustomType::class, token)
+        }
+    }
+
+    private fun TokenProvider.parseRefinedDefinition(): Refined = run {
+        val nameToken = eatToken(CustomType::class)
+        val regexToken = eatToken(Literal::class)
+        nameToken.log()
+        val name = Refined.Name(nameToken.value)
+        val regex = Refined.Regex(regexToken.value)
+        Refined(name, regex)
     }
 
     private fun TokenProvider.parseEndpointPath(): List<Segment> = run {

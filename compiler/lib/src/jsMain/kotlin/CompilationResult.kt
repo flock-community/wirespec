@@ -17,3 +17,4 @@ data class WsCompilationResult(
 @JsExport
 @ExperimentalJsExport
 data class WsCompiled(val value: String)
+

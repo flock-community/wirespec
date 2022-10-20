@@ -13,13 +13,15 @@ class ParserTest {
     @Test
     fun testCompileKotlin() {
         val source = """
+            refined Name "^.{1,10}$"
+            
             type TodoId {
               value: String
             }
             
             type Todo {
               id: TodoId,
-              name: String,
+              name: Name,
               done: Boolean
             }
             
