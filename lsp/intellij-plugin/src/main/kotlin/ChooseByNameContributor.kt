@@ -22,7 +22,7 @@ class ChooseByNameContributor : IntellijChooseByNameContributor {
                 val file = PsiManager.getInstance(project).findFile(virtualFile)
                 PsiTreeUtil
                     .getChildrenOfType(file, TypeDefElement::class.java)
-                    ?.map { type -> PsiTreeUtil.findChildOfType(type, CustomTypeElement::class.java) }
+                    ?.map { type -> PsiTreeUtil.findChildOfType(type, CustomTypeElementDef::class.java) }
                     ?.map { it?.node }
                     ?.map { node -> node?.let { it.chars.toString() to it.psi } }
                     ?: listOf()

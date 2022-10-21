@@ -2,6 +2,8 @@ package community.flock.wire_spec.lsp.intellij_plugin
 
 import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceBase
 import javax.swing.Icon
 
 object Utils {
@@ -32,4 +34,5 @@ object Utils {
             }
         }
     }
+
 }

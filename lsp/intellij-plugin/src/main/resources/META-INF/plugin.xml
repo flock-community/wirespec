@@ -42,6 +42,11 @@
                 language="wire-spec"
                 implementationClass="community.flock.wire_spec.lsp.intellij_plugin.ParserDefinition"/>
 
+
+        <lang.findUsagesProvider
+                language="wire-spec"
+                implementationClass="community.flock.wire_spec.lsp.intellij_plugin.FindUsagesProvider"/>
+
         <externalAnnotator
                 language="wire-spec"
                 implementationClass="community.flock.wire_spec.lsp.intellij_plugin.Annotator"/>
