@@ -6,59 +6,84 @@ import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiParser
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceBase
+import com.intellij.psi.search.FileTypeIndex
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.lang.ParserDefinition as IntellijParserDefinition
 import com.intellij.psi.tree.TokenSet as IntellijTokenSet
-
 
 class Parser : PsiParser {
 
     class TypeDef : IElementType("TYPE_DEF", Language.INSTANCE)
-    class CustomType : IElementType("CUSTOM_TYPE", Language.INSTANCE)
+    class CustomTypeDef : IElementType("CUSTOM_TYPE_DEF", Language.INSTANCE)
+    class CustomTypeRef : IElementType("CUSTOM_TYPE_REF", Language.INSTANCE)
+    class Body : IElementType("BODY", Language.INSTANCE)
 
 
     override fun parse(root: IElementType, builder: PsiBuilder): ASTNode {
         val rootMarker = builder.mark()
+        var bodyMarker: PsiBuilder.Marker? = null
 
-        fun parseOther() {
-
+        fun parseNode() {
             when (builder.tokenType) {
                 Types.CUSTOM_TYPE -> {
-                    val typeMarker = builder.mark()
+                    val marker = builder.mark()
                     builder.advanceLexer()
-                    typeMarker.done(CustomType())
+                    if (bodyMarker == null) {
+                        marker.done(CustomTypeDef())
+                    } else {
+                        marker.done(CustomTypeRef())
+                    }
+
+                }
+
+                Types.LEFT_CURLY -> {
+                    bodyMarker = builder.mark()
+                    builder.advanceLexer()
+                }
+
+                Types.RIGHT_CURLY -> {
+                    builder.advanceLexer()
+                    bodyMarker?.done(Body()).also { bodyMarker = null }
                 }
 
                 else -> builder.advanceLexer()
             }
-
             if (!builder.eof() && builder.tokenType != Types.TYPE_DEF) {
-                parseOther()
+                parseNode()
             }
-
         }
 
         fun parseDef() {
-            val typeMarker = builder.mark()
+            val marker = builder.mark()
             builder.advanceLexer()
             if (!builder.eof() && builder.tokenType != Types.TYPE_DEF) {
-                parseOther()
+                parseNode()
             }
-            typeMarker.done(TypeDef())
+            bodyMarker?.done(Body()).also { bodyMarker = null }
+            marker.done(TypeDef())
         }
 
         while (!builder.eof()) {
             if (builder.tokenType == Types.TYPE_DEF) {
                 parseDef()
+            } else {
+                builder.advanceLexer()
             }
         }
-
         rootMarker.done(root)
 
         return builder.treeBuilt
@@ -82,7 +107,9 @@ class ParserDefinition : IntellijParserDefinition {
     override fun createElement(node: ASTNode): PsiElement {
         return when (node.elementType) {
             is Parser.TypeDef -> TypeDefElement(node)
-            is Parser.CustomType -> CustomTypeElement(node)
+            is Parser.CustomTypeDef -> CustomTypeElementDef(node)
+            is Parser.CustomTypeRef -> CustomTypeElementRef(node)
+            is Parser.Body -> BodyElement(node)
             else -> TODO("")
         }
     }
@@ -93,26 +120,91 @@ class ParserDefinition : IntellijParserDefinition {
 
 }
 
-class TypeDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast), PsiNamedElement {
+class TypeDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
+class BodyElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
+
+class CustomTypeElementDef(ast: ASTNode) : ASTWrapperPsiElement(ast), PsiNamedElement {
     override fun setName(name: String): PsiElement {
-        TODO("Not yet implemented")
+        fun createNewNode() = PsiFileFactory
+            .getInstance(project)
+            .createFileFromText("dummy.ws", FileType.INSTANCE, "type $name {}")
+            .firstChild
+            .let { PsiTreeUtil.findChildOfType(it, CustomTypeElementDef::class.java) }
+            ?.node
+            ?: error("Cannot create new node")
+
+        FileTypeIndex
+            .getFiles(FileType.INSTANCE, GlobalSearchScope.everythingScope(project))
+            .forEach {
+                val file = PsiManager.getInstance(project).findFile(it)
+                Utils.visitAllElements(file)
+                    .filterIsInstance(CustomTypeElementDef::class.java)
+                    .filter { element -> element.node.chars == node.chars }
+                    .forEach { element -> element.parent.node.replaceChild(element.node, createNewNode()) }
+            }
+        return this
     }
 
+    override fun getName(): String? {
+        return this.text
+    }
+
+
+
     override fun getPresentation(): ItemPresentation {
-        return Util.getPresentation(this)
+        return Utils.getPresentation(this)
+    }
+
+    override fun getReferences(): Array<PsiReference> {
+
+        return FileTypeIndex
+            .getFiles(FileType.INSTANCE, GlobalSearchScope.everythingScope(project))
+            .flatMap {
+                val file = PsiManager.getInstance(project).findFile(it)
+                Utils.visitAllElements(file)
+                    .filterIsInstance(CustomTypeElementRef::class.java)
+                    .filter { element -> element.node.chars == node.chars }
+                    .map { element ->
+                        object: PsiReferenceBase<CustomTypeElementDef>(this, this.textRange) {
+                            override fun resolve(): PsiElement {
+                                return element
+                            }
+
+                            override fun handleElementRename(newElementName: String): PsiElement {
+                                return element.setName(newElementName)
+                            }
+                        }
+                    }
+            }
+            .toTypedArray()
+
     }
 }
 
-class CustomTypeElement(ast: ASTNode) : ASTWrapperPsiElement(ast), PsiNameIdentifierOwner {
+class CustomTypeElementRef(ast: ASTNode) : ASTWrapperPsiElement(ast), PsiNameIdentifierOwner{
+
+    override fun getName(): String? {
+        return this.text
+    }
+
     override fun setName(name: String): PsiElement {
-        TODO("Not yet implemented")
+        println("Set name $name")
+        return this
     }
 
     override fun getNameIdentifier(): PsiElement? {
-        return null
+        val virtualFiles: Collection<VirtualFile> =
+            FileTypeIndex.getFiles(FileType.INSTANCE, GlobalSearchScope.allScope(project))
+        val res = virtualFiles.flatMap {
+            val file = PsiManager.getInstance(project).findFile(it)
+            PsiTreeUtil
+                .getChildrenOfType(file, TypeDefElement::class.java)
+                ?.map { type -> PsiTreeUtil.findChildOfType(type, CustomTypeElementDef::class.java) }
+                ?.filter { node.chars.toString() == it?.node?.chars.toString() }
+                ?: listOf()
+        }
+        return res.firstOrNull()
     }
 
-    override fun getPresentation(): ItemPresentation {
-        return Util.getPresentation(this)
-    }
+
 }
