@@ -1,3 +1,3 @@
 package community.flock.wirespec.compiler.cli.io
 
-class WireSpecFile(path: Path) : File(path.copy(extension = Extension.WireSpec))
+class WireSpecFile(path: DirPath) : File(path.copy(extension = Extension.WireSpec))

@@ -10,7 +10,7 @@ import community.flock.wirespec.compiler.utils.Logger
 
 abstract class Emitter(val logger: Logger) : TypeDefinitionEmitter {
 
-    fun emit(ast: AST): Either<CompilerException, String> = either {
+    open fun emit(ast: AST): Either<CompilerException, String> = either {
         ast
             .map { it.emit() }
             .reduceOrNull { acc, cur -> acc + cur }

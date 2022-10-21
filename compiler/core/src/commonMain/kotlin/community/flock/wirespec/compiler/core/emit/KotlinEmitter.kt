@@ -1,12 +1,19 @@
 package community.flock.wirespec.compiler.core.emit
 
+import community.flock.wirespec.compiler.core.Either
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.exceptions.WireSpecException
+import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value.Custom
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value.Ws
 import community.flock.wirespec.compiler.utils.Logger
 
-class KotlinEmitter(logger: Logger) : Emitter(logger) {
+class KotlinEmitter(logger: Logger, private val packageName: String = DEFAULT_PACKAGE_NAME) : Emitter(logger) {
+
+    override fun emit(ast: AST): Either<WireSpecException.CompilerException, String> = super.emit(ast)
+        .map { if (packageName.isBlank()) "" else "package $packageName\n\n$it" }
 
     override fun Type.emit() = withLogging(logger) {
         "data class ${name.emit()}(\n${shape.emit()}\n)\n\n"

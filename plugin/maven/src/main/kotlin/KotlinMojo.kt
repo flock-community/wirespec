@@ -1,6 +1,7 @@
 package community.flock.wirespec.plugin.maven
 
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
@@ -16,18 +17,22 @@ class KotlinMojo : WirespecMojo() {
     @Parameter(required = true)
     private lateinit var targetDirectory: String
 
+    @Parameter
+    private var packageName: String = DEFAULT_PACKAGE_NAME
+
     @Parameter(defaultValue = "\${project}", readonly = true, required = true)
     private lateinit var project: MavenProject
 
-    private val emitter = KotlinEmitter(logger)
+    private val emitter = KotlinEmitter(logger, packageName)
 
     override fun execute() {
-        File(targetDirectory).mkdirs()
-        compile(sourceDirectory, logger, emitter)
-            .forEach { (name, result) ->
-                File("$targetDirectory/$name.kt").writeText(result)
-            }
-
+        compile(sourceDirectory, logger, emitter).forEach { (name, result) ->
+            (if (packageName.isBlank()) "" else "/" + packageName.split('.').joinToString("/"))
+                .let { "$targetDirectory$it" }
+                .also { File(it).mkdirs() }
+                .let { File("$it/$name.kt") }
+                .writeText(result)
+        }
     }
 
 }

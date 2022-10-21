@@ -4,6 +4,4 @@ import community.flock.wirespec.compiler.cli.js.process
 
 private val nodeArgs = process.argv.slice(2) as Array<String>
 
-actual fun getFirst(args: Array<String>): String? = runCatching { nodeArgs[0] }.getOrNull()
-
-actual fun getSecond(args: Array<String>): String? = runCatching { nodeArgs[1] }.getOrNull()
+actual fun Array<String>.orNull(idx: Int): String? = kotlin.runCatching { nodeArgs[idx] }.getOrNull()
