@@ -28,10 +28,5 @@ sealed class WireSpecException(message: String, val coordinates: Token.Coordinat
                 class NextException(coordinates: Token.Coordinates) : NullTokenException("Next Token", coordinates)
             }
         }
-
-        class ThisTokenizerExceptionShouldNeverHappen(coordinates: Token.Coordinates, message: String) :
-            CompilerException(message, coordinates)
-
     }
-
 }
