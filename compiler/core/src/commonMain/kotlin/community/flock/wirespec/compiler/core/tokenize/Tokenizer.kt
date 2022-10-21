@@ -6,37 +6,34 @@ import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
 import community.flock.wirespec.compiler.core.tokenize.types.NewLine
 import community.flock.wirespec.compiler.core.tokenize.types.TokenType
 
-fun LanguageSpec.tokenize(source: String): List<Token> = with(tokenize(source, listOf())) {
-    this + Token(
+fun LanguageSpec.tokenize(source: String): List<Token> = tokenize(source, listOf()).let {
+    it + Token(
         type = EndOfProgram,
-        value = "EOP",
-        coordinates = lastIndex()
-    ).run { copy(coordinates = newIndex()) }
+        value = EndOfProgram.value,
+        coordinates = it.lastCoordinates().nextCoordinates(EndOfProgram, EndOfProgram.value)
+    )
 }
 
 private tailrec fun LanguageSpec.tokenize(source: String, tokens: List<Token>): List<Token> {
-    val token = findToken(tokens.lastIndex(), source)
+    val token = findToken(tokens.lastCoordinates(), source)
     val newSource = source.removePrefix(token.value)
-    return if (newSource.isEmpty()) tokens + token
-    else tokenize(newSource, tokens + token)
+    val newTokens = tokens + token
+    return if (newSource.isEmpty()) newTokens
+    else tokenize(newSource, newTokens)
 }
 
-private fun LanguageSpec.findToken(oldIdx: Coordinates, source: String): Token = matchers
-    .firstNotNullOf { (regex, tokenType) -> regex.find(source)?.toToken(tokenType, oldIdx) }
+private fun LanguageSpec.findToken(previousTokenCoordinates: Coordinates, source: String): Token = orderedMatchers
+    .firstNotNullOf { (regex, tokenType) -> regex.find(source)?.toToken(tokenType, previousTokenCoordinates) }
 
-private fun MatchResult.toToken(type: TokenType, oldIdx: Coordinates) = Token(type, value, oldIdx)
-    .run { copy(coordinates = newIndex()) }
+private fun MatchResult.toToken(type: TokenType, previousTokenCoordinates: Coordinates) =
+    Token(type, value, previousTokenCoordinates.nextCoordinates(type, value))
 
-private fun List<Token>.lastIndex() = lastOrNull()?.coordinates ?: Coordinates()
+private fun List<Token>.lastCoordinates() = lastOrNull()?.coordinates ?: Coordinates()
 
-private fun Token.newIndex() =
-    if (type is NewLine) Coordinates(
-        line = coordinates.line + 1,
-        idxAndLength = coordinates.idxAndLength + value.length
+private fun Coordinates.nextCoordinates(type: TokenType, value: String) = when (type) {
+    is NewLine -> Coordinates(
+        line = line + 1,
+        idxAndLength = idxAndLength + value.length
     )
-    else coordinates.copy(
-        position = coordinates.position + value.length,
-        idxAndLength = coordinates.idxAndLength + value.length
-    )
-
-private fun String.partial(numberOfChars: Int = 24) = take(numberOfChars) + if (length > numberOfChars) "..." else ""
+    else -> this + value.length
+}

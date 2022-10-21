@@ -9,10 +9,12 @@ object RightCurly : TokenType
 object Colon : TokenType
 object Comma : TokenType
 object QuestionMark : TokenType
-object Brackets: TokenType
+object Brackets : TokenType
 object CustomValue : TokenType
-object EndOfProgram : TokenType
 object Invalid : TokenType
+object EndOfProgram : TokenType {
+    const val value = "EOP"
+}
 
 sealed interface WhiteSpace : TokenType
 object WhiteSpaceExceptNewLine : WhiteSpace
