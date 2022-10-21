@@ -5,17 +5,17 @@ import community.flock.wirespec.compiler.cli.Language.TypeScript
 import community.flock.wirespec.compiler.cli.io.Directory
 import community.flock.wirespec.compiler.cli.io.Extension
 import community.flock.wirespec.compiler.cli.io.KotlinFile
-import community.flock.wirespec.compiler.cli.io.Path
+import community.flock.wirespec.compiler.cli.io.DirPath
 import community.flock.wirespec.compiler.cli.io.TypeScriptFile
 import community.flock.wirespec.compiler.core.WireSpec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.getOrHandle
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.getEnvVar
-import community.flock.wirespec.compiler.utils.getFirst
-import community.flock.wirespec.compiler.utils.getSecond
+import community.flock.wirespec.compiler.utils.orNull
 
 private enum class Language { Kotlin, TypeScript }
 
@@ -29,29 +29,28 @@ private fun Logger.from(s: String): Language? = runCatching { Language.valueOf(s
 
 fun main(args: Array<String>) {
 
-
-    val basePath = getFirst(args) ?: ""
-    val languages = getSecond(args)
+    val basePath = args.orNull(0) ?: ""
+    val languages = args.orNull(1)
         ?.split(",")
         ?.mapNotNull(logger::from)
         ?.toSet()
         ?: setOf(Kotlin)
+    val packageName = args.orNull(2) ?: DEFAULT_PACKAGE_NAME
 
-    compile(languages, basePath)
-
+    compile(languages, basePath, packageName)
 
 }
 
-private fun compile(languages: Set<Language>, inputDir: String) = Directory(inputDir)
+private fun compile(languages: Set<Language>, inputDir: String, packageName: String) = Directory(inputDir)
     .wireSpecFiles()
     .forEach { wsFile ->
         wsFile.read()
             .let(WireSpec::compile)(logger)
-            .let { it to wsFile.path.out() }
+            .let { it to wsFile.path.out(packageName) }
             .let { (compiler, path) ->
                 languages.map {
                     when (it) {
-                        Kotlin -> KotlinEmitter(logger) to KotlinFile(path(Extension.Kotlin))
+                        Kotlin -> KotlinEmitter(logger, packageName) to KotlinFile(path(Extension.Kotlin))
                         TypeScript -> TypeScriptEmitter(logger) to TypeScriptFile(path(Extension.TypeScript))
                     }.let { (emitter, file) -> compiler(emitter) to file }
                 }
@@ -60,9 +59,9 @@ private fun compile(languages: Set<Language>, inputDir: String) = Directory(inpu
             .forEach { it.getOrHandle { error -> throw error } }
     }
 
-fun Path.out() = { extension: Extension ->
+fun DirPath.out(packageName: String) = { extension: Extension ->
     copy(
-        directory = "$directory/out",
+        directory = "$directory/out/${packageName.split('.').joinToString("/")}",
         extension = extension
     )
 }
