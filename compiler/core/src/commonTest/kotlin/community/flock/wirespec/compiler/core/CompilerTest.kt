@@ -22,6 +22,8 @@ class CompilerTest {
         """.trimIndent()
 
         val out = """
+            package community.flock.wirespec.generated
+            
             data class Bla(
               val foo: String,
               val bar: String

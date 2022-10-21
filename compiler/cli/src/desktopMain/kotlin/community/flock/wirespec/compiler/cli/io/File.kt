@@ -12,7 +12,7 @@ import platform.posix.fgets
 import platform.posix.fopen
 import platform.posix.fputs
 
-actual abstract class File actual constructor(actual val path: Path) {
+actual abstract class File actual constructor(actual val path: DirPath) {
 
     actual fun read() = StringBuilder().apply {
         fopen(path.fullFilePath, "r")?.let { file ->

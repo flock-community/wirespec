@@ -8,7 +8,7 @@ actual class Directory actual constructor(private val path: String) {
         .filter { it.extension == Extension.WireSpec.ext }
         .map { it.name }
         .map { it.dropLast(Extension.WireSpec.ext.length + 1) }
-        .map { Path(path, it, Extension.WireSpec) }
+        .map { DirPath(path, it, Extension.WireSpec) }
         .map(::WireSpecFile)
         .toSet()
 }
