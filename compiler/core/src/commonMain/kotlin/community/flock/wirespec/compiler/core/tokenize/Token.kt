@@ -17,4 +17,9 @@ data class Token(
     }
 }
 
+operator fun Token.Coordinates.plus(length: Int) = copy(
+    position = position + length,
+    idxAndLength = idxAndLength + length
+)
+
 operator fun IdxAndLength.plus(length: Int) = IdxAndLength(idx + length, length)

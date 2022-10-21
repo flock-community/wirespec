@@ -18,12 +18,12 @@ import community.flock.wirespec.compiler.core.tokenize.types.WsString
 import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
 
 interface LanguageSpec {
-    val matchers: List<Pair<Regex, TokenType>>
+    val orderedMatchers: List<Pair<Regex, TokenType>>
 }
 
 object WireSpec : LanguageSpec {
     @Suppress("RegExpRedundantEscape")
-    override val matchers = listOf(
+    override val orderedMatchers = listOf(
         Regex("^type") to WsTypeDef,
         Regex("^[^\\S\\r\\n]+") to WhiteSpaceExceptNewLine,
         Regex("^[\\r\\n]") to NewLine,
