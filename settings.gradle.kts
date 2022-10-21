@@ -35,7 +35,5 @@ include(
     "lsp:intellij-plugin",
     "plugin:maven",
     "plugin:gradle",
-    "examples:spring-boot-maven-plugin",
-    "examples:spring-boot-gradle-plugin",
 )
 

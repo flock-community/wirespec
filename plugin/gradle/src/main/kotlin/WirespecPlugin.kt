@@ -19,6 +19,8 @@ import javax.inject.Inject
 
 open class WirespecPluginExtension @Inject constructor(val objectFactory: ObjectFactory) {
 
+    var sourceDirectory: String = ""
+
     var kotlin: Kotlin? = null
     fun kotlin(action: Action<in Kotlin>) {
         val kotlin = Kotlin()
@@ -27,7 +29,6 @@ open class WirespecPluginExtension @Inject constructor(val objectFactory: Object
 
     }
     class Kotlin() {
-        var sourceDirectory: String = ""
         var targetDirectory: String = ""
     }
 
@@ -39,7 +40,6 @@ open class WirespecPluginExtension @Inject constructor(val objectFactory: Object
 
     }
     class Typescript() {
-        var sourceDirectory: String = ""
         var targetDirectory: String = ""
     }
 }
@@ -73,7 +73,7 @@ class WirespecPlugin : Plugin<Project> {
                 extension.kotlin?.run {
                     val emitter = KotlinEmitter(logger)
                     File(targetDirectory).mkdirs()
-                    compile(sourceDirectory, logger, emitter)
+                    compile(extension.sourceDirectory, logger, emitter)
                         .forEach { (name, result) ->
                             File("${targetDirectory}/$name.kt").writeText(result)
                         }
@@ -81,7 +81,7 @@ class WirespecPlugin : Plugin<Project> {
                 extension.typescript?.run {
                     val emitter = TypeScriptEmitter(logger)
                     File(targetDirectory).mkdirs()
-                    compile(sourceDirectory, logger, emitter)
+                    compile(extension.sourceDirectory, logger, emitter)
                         .forEach { (name, result) ->
                             File("${targetDirectory}/$name.kt").writeText(result)
                         }

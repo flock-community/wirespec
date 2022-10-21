@@ -83,12 +83,11 @@ plugins {
 }
 
 wirespec {
+    sourceDirectory = "$projectDir/src/main/wire-spec"
 	kotlin {
-		sourceDirectory = "$projectDir/src/main/wire-spec"
 		targetDirectory = "$buildDir/generated/main/kotlin"
 	}
 	typescript {
-		sourceDirectory = "$projectDir/src/main/wire-spec"
 		targetDirectory = "$projectDir/src/main/frontend/generated"
 	}
 }

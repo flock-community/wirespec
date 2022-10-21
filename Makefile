@@ -25,3 +25,7 @@ mac:
 linux:
 	$(shell pwd)/scripts/linux.sh
 .PHONY: linux
+
+example:
+	$(shell pwd)/scripts/example.sh
+.PHONY: example
