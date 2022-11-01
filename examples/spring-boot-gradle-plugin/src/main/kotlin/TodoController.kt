@@ -1,8 +1,8 @@
 package community.flock.wirespec.examples.todo_app
 
-import Todo
-import TodoId
-import TodoInput
+import community.flock.wirespec.generated.Todo
+import community.flock.wirespec.generated.TodoId
+import community.flock.wirespec.generated.TodoInput
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
