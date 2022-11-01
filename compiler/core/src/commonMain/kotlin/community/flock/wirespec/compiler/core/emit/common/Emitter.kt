@@ -13,8 +13,8 @@ abstract class Emitter(val logger: Logger) : TypeDefinitionEmitter {
     open fun emit(ast: AST): Either<CompilerException, String> = either {
         ast
             .map { it.emit() }
-            .reduceOrNull { acc, cur -> acc + cur }
-            .let { it ?: "" }
+            .fold("") { acc, cur -> acc + cur }
+            .dropLast(1) // drop last newline
     }
 
     private fun Node.emit(): String = run {

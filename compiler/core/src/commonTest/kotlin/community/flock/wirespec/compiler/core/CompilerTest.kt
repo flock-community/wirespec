@@ -28,7 +28,6 @@ class CompilerTest {
               val foo: String,
               val bar: String
             )
-          
             
         """.trimIndent()
 
