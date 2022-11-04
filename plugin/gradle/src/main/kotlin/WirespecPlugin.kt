@@ -23,10 +23,7 @@ open class WirespecPluginExtension @Inject constructor(val objectFactory: Object
 
     var kotlin: Kotlin? = null
     fun kotlin(action: Action<in Kotlin>) {
-        val kotlin = Kotlin()
-        action.execute(kotlin)
-        this.kotlin = kotlin
-
+        kotlin = Kotlin().also(action::execute)
     }
     class Kotlin() {
         var targetDirectory: String = ""
@@ -34,10 +31,7 @@ open class WirespecPluginExtension @Inject constructor(val objectFactory: Object
 
     var typescript: Typescript? = null
     fun typescript(action: Action<in Typescript>) {
-        val typescript = Typescript()
-        action.execute(typescript)
-        this.typescript = typescript
-
+        typescript = Typescript().also(action::execute)
     }
     class Typescript() {
         var targetDirectory: String = ""
