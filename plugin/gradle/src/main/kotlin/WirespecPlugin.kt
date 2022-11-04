@@ -49,15 +49,13 @@ class WirespecPlugin : Plugin<Project> {
     private val logger = object : Logger(true) {}
 
     private fun compile(sourceDirectory: String, logger: Logger, emitter: Emitter) =
-        (File(sourceDirectory).listFiles() ?: arrayOf<File>())
+        (File(sourceDirectory).listFiles() ?: arrayOf())
             .map { it.name.split(".").first() to it.bufferedReader(Charsets.UTF_8) }
             .map { (name, reader) -> name to WireSpec.compile(reader.collectToString())(logger)(emitter) }
             .map { (name, result) ->
                 name to when (result) {
                     is Either.Right -> result.value
-                    is Either.Left -> {
-                        error("compile error")
-                    }
+                    is Either.Left -> error("compile error")
                 }
             }
 
@@ -69,7 +67,7 @@ class WirespecPlugin : Plugin<Project> {
             project.extensions.create("wirespec", WirespecPluginExtension::class.java)
 
         project.task("wirespec")
-            .doLast { task: Task? ->
+            .doLast { _: Task? ->
                 extension.kotlin?.run {
                     val emitter = KotlinEmitter(logger)
                     File(targetDirectory).mkdirs()
@@ -83,7 +81,7 @@ class WirespecPlugin : Plugin<Project> {
                     File(targetDirectory).mkdirs()
                     compile(extension.sourceDirectory, logger, emitter)
                         .forEach { (name, result) ->
-                            File("${targetDirectory}/$name.kt").writeText(result)
+                            File("${targetDirectory}/$name.ts").writeText(result)
                         }
                 }
             }
