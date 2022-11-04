@@ -1,8 +1,8 @@
 plugins {
     id("java")
-    id("de.benediktritter.maven-plugin-development") version "0.4.0"
     id("maven-publish")
     id("org.jetbrains.kotlin.jvm")
+    id("de.benediktritter.maven-plugin-development") version "0.4.0"
 }
 
 group = "${Settings.groupId}.plugin.maven"
