@@ -10,10 +10,12 @@ import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value.Custo
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value.Ws
 import community.flock.wirespec.compiler.utils.Logger
 
-class JavaEmitter(logger: Logger, private val packageName: String = DEFAULT_PACKAGE_NAME) : Emitter(logger) {
+class JavaEmitter(private val packageName: String = DEFAULT_PACKAGE_NAME, logger: Logger) : Emitter(logger, true) {
 
-    override fun emit(ast: AST): Either<WireSpecException.CompilerException, String> = super.emit(ast)
-        .map { if (packageName.isBlank()) "" else "package $packageName\n\n$it" }
+    override fun emit(ast: AST): Either<WireSpecException.CompilerException, List<Pair<String, String>>> =
+        super.emit(ast).map {
+            it.map { (name, result) -> name to if (packageName.isBlank()) "" else "package $packageName\n\n$result" }
+        }
 
     override fun Type.emit() = withLogging(logger) {
         "public record ${name.emit()}(\n${shape.emit()}\n) {}\n\n"

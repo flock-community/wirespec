@@ -1,6 +1,11 @@
 package community.flock.wirespec.compiler.cli.io
 
-expect abstract class File(path: DirPath) {
+
+interface Copy {
+    fun copy(fileName: String): File
+}
+
+expect abstract class File(path: DirPath) : Copy {
 
     val path: DirPath
 
