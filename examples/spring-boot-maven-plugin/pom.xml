@@ -74,9 +74,9 @@
                 <version>0.0.1-SNAPSHOT</version>
                 <executions>
                     <execution>
-                        <id>kotlin</id>
+                        <id>java</id>
                         <goals>
-                            <goal>kotlin</goal>
+                            <goal>java</goal>
                         </goals>
                         <configuration>
                             <sourceDirectory>${project.basedir}/src/main/wire-spec</sourceDirectory>

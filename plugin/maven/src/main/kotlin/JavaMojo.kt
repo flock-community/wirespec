@@ -1,14 +1,15 @@
 package community.flock.wirespec.plugin.maven
 
-import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
+import community.flock.wirespec.compiler.core.emit.JavaEmitter
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
+import community.flock.wirespec.plugin.maven.utils.JvmUtil
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
-import java.io.File
 
-@Mojo(name = "typescript", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
-class TypescriptMojo : WirespecMojo() {
+@Mojo(name = "java", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
+class JavaMojo : WirespecMojo() {
 
     @Parameter(required = true)
     private lateinit var sourceDirectory: String
@@ -16,17 +17,16 @@ class TypescriptMojo : WirespecMojo() {
     @Parameter(required = true)
     private lateinit var targetDirectory: String
 
+    @Parameter
+    private var packageName: String = DEFAULT_PACKAGE_NAME
+
     @Parameter(defaultValue = "\${project}", readonly = true, required = true)
     private lateinit var project: MavenProject
 
-    private val emitter = TypeScriptEmitter(logger)
+    private val emitter = JavaEmitter(logger, packageName)
 
     override fun execute() {
-        File(targetDirectory).mkdirs()
         compile(sourceDirectory, logger, emitter)
-            .forEach { (name, result) ->
-                File("$targetDirectory/$name.ts").writeText(result)
-            }
+            .forEach { (name, result) -> JvmUtil.emitJvm(packageName, targetDirectory, name, "java").writeText(result) }
     }
-
 }
