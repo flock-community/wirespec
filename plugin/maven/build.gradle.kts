@@ -30,3 +30,8 @@ publishing {
 tasks.publishToMavenLocal {
     dependsOn(":compiler:core:publishToMavenLocal")
 }
+
+mavenPlugin {
+    description.set("Plugin to run wirespec compiler")
+    goalPrefix.set("wirespec")
+}

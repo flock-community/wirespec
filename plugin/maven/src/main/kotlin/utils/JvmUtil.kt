@@ -4,7 +4,7 @@ import java.io.File
 
 object JvmUtil {
 
-    fun emitJvm(targetDirectory: String, packageName: String, name: String, ext: String) =
+    fun emitJvm(packageName: String, targetDirectory: String, name: String, ext: String) =
         renderPackagePath(packageName)
             .let { "$targetDirectory/$it" }
             .also { File(it).mkdirs() }
