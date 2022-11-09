@@ -82,6 +82,13 @@ class WirespecPlugin : Plugin<Project> {
                     is Either.Left -> error("compile error")
                 }
             }
+            .flatMap { (name, result) ->
+                if (!emitter.split) {
+                    listOf(name to result.first().second)
+                } else {
+                    result
+                }
+            }
 
     private fun BufferedReader.collectToString() =
         lines().collect(java.util.stream.Collectors.joining())
@@ -105,17 +112,17 @@ class WirespecPlugin : Plugin<Project> {
                         .apply { emit(targetDirectory, this, "ts") }
                 }
                 extension.java?.run {
-                    JavaEmitter(logger, packageName)
+                    JavaEmitter(packageName, logger)
                         .apply { emit(targetDirectory, this, "java") }
 
                 }
                 extension.scala?.run {
-                    ScalaEmitter(logger, packageName)
+                    ScalaEmitter(packageName, logger)
                         .apply { emit(targetDirectory, this, "scala") }
 
                 }
                 extension.kotlin?.run {
-                    KotlinEmitter(logger, packageName)
+                    KotlinEmitter(packageName, logger)
                         .apply { emit(targetDirectory, this, "kt") }
 
                 }

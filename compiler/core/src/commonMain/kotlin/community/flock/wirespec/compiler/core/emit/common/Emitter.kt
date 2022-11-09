@@ -7,7 +7,7 @@ import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.utils.Logger
 
-abstract class Emitter(val logger: Logger, private val split: Boolean = false) : TypeDefinitionEmitter {
+abstract class Emitter(val logger: Logger, val split: Boolean = false) : TypeDefinitionEmitter {
 
     open fun emit(ast: AST): Either<CompilerException, List<Pair<String, String>>> = either {
         ast

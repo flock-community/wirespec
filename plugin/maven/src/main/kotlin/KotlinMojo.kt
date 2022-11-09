@@ -23,7 +23,7 @@ class KotlinMojo : WirespecMojo() {
     @Parameter(defaultValue = "\${project}", readonly = true, required = true)
     private lateinit var project: MavenProject
 
-    private val emitter = KotlinEmitter(logger, packageName)
+    private val emitter = KotlinEmitter(packageName, logger)
 
     override fun execute() {
         compile(sourceDirectory, logger, emitter)
