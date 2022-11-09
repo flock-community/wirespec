@@ -20,7 +20,7 @@ class TodoController {
     @GetMapping("/:id")
     public Todo get(@PathVariable String id) {
        return todos.stream()
-               .filter (todo -> todo.getId().getValue().equals(id))
+               .filter (todo -> todo.id().value().equals(id))
                .findAny()
                .orElse(null);
     }
@@ -28,7 +28,7 @@ class TodoController {
     @PostMapping("/")
     public void post(TodoInput input) {
         TodoId todoId = new TodoId(UUID.randomUUID().toString());
-        Todo todo = new Todo(todoId, input.getName(), input.getDone());
+        Todo todo = new Todo(todoId, input.name(), input.done());
         todos.add(todo);
     }
 }
