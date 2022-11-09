@@ -14,11 +14,11 @@ class JavaEmitter(private val packageName: String = DEFAULT_PACKAGE_NAME, logger
 
     override fun emit(ast: AST): Either<WireSpecException.CompilerException, List<Pair<String, String>>> =
         super.emit(ast).map {
-            it.map { (name, result) -> name to if (packageName.isBlank()) "" else "package $packageName\n\n$result" }
+            it.map { (name, result) -> name to if (packageName.isBlank()) "" else "package $packageName;\n\n$result" }
         }
 
     override fun Type.emit() = withLogging(logger) {
-        "public record ${name.emit()}(\n${shape.emit()}\n) {}\n\n"
+        "public record ${name.emit()}(\n${shape.emit()}\n) {};\n\n"
     }
 
     override fun Type.Name.emit() = withLogging(logger) { value }
