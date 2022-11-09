@@ -3,7 +3,9 @@ package community.flock.wirespec.plugin.gradle
 import community.flock.wirespec.compiler.core.Either
 import community.flock.wirespec.compiler.core.WireSpec
 import community.flock.wirespec.compiler.core.compile
+import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
+import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.utils.Logger
@@ -21,20 +23,48 @@ open class WirespecPluginExtension @Inject constructor(val objectFactory: Object
 
     var sourceDirectory: String = ""
 
-    var kotlin: Kotlin? = null
-    fun kotlin(action: Action<in Kotlin>) {
-        kotlin = Kotlin().apply(action::execute)
-    }
-    class Kotlin() {
-        var targetDirectory: String = ""
-    }
-
     var typescript: Typescript? = null
     fun typescript(action: Action<in Typescript>) {
         typescript = Typescript().apply(action::execute)
     }
-    class Typescript() {
-        var targetDirectory: String = ""
+
+    var kotlin: Kotlin? = null
+    fun kotlin(action: Action<in Kotlin>) {
+        kotlin = Kotlin().apply(action::execute)
+    }
+
+
+    var java: Java? = null
+    fun java(action: Action<in Java>) {
+        java = Java().apply(action::execute)
+    }
+
+
+    var scala: Scala? = null
+    fun scala(action: Action<in Scala>) {
+        scala = Scala().apply(action::execute)
+    }
+
+
+    companion object {
+        class Typescript() {
+            var targetDirectory: String = ""
+        }
+
+        class Java() {
+            var packageName: String = ""
+            var targetDirectory: String = ""
+        }
+
+        class Scala() {
+            var packageName: String = ""
+            var targetDirectory: String = ""
+        }
+
+        class Kotlin() {
+            var packageName: String = ""
+            var targetDirectory: String = ""
+        }
     }
 }
 
@@ -60,24 +90,36 @@ class WirespecPlugin : Plugin<Project> {
         val extension: WirespecPluginExtension =
             project.extensions.create("wirespec", WirespecPluginExtension::class.java)
 
+        fun emit(targetDirectory: String, emitter: Emitter, ext: String) {
+            File(targetDirectory).mkdirs()
+            compile(extension.sourceDirectory, logger, emitter)
+                .forEach { (name, result) ->
+                    File("${targetDirectory}/$name.$ext").writeText(result)
+                }
+        }
+
         project.task("wirespec")
             .doLast { _: Task? ->
-                extension.kotlin?.run {
-                    val emitter = KotlinEmitter(logger)
-                    File(targetDirectory).mkdirs()
-                    compile(extension.sourceDirectory, logger, emitter)
-                        .forEach { (name, result) ->
-                            File("${targetDirectory}/$name.kt").writeText(result)
-                        }
-                }
                 extension.typescript?.run {
-                    val emitter = TypeScriptEmitter(logger)
-                    File(targetDirectory).mkdirs()
-                    compile(extension.sourceDirectory, logger, emitter)
-                        .forEach { (name, result) ->
-                            File("${targetDirectory}/$name.ts").writeText(result)
-                        }
+                    TypeScriptEmitter(logger)
+                        .apply { emit(targetDirectory, this, "ts") }
                 }
+                extension.java?.run {
+                    JavaEmitter(logger, packageName)
+                        .apply { emit(targetDirectory, this, "java") }
+
+                }
+                extension.scala?.run {
+                    ScalaEmitter(logger, packageName)
+                        .apply { emit(targetDirectory, this, "scala") }
+
+                }
+                extension.kotlin?.run {
+                    KotlinEmitter(logger, packageName)
+                        .apply { emit(targetDirectory, this, "kt") }
+
+                }
+
             }
     }
 }
