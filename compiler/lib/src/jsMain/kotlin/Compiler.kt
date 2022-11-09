@@ -29,7 +29,7 @@ class WsToKotlin : Compiler() {
     fun compile(source: String) = preCompile(source)(kotlinEmitter).produce()
 
     companion object {
-        private val kotlinEmitter = KotlinEmitter(logger)
+        private val kotlinEmitter = KotlinEmitter(logger = logger)
     }
 }
 
