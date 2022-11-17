@@ -1,5 +1,5 @@
 package community.flock.wirespec.compiler.cli.io
 
-class WireSpecFile(path: DirPath) : File(path.copy(extension = Extension.WireSpec)) {
-    override fun copy(fileName: String) = WireSpecFile(path.copy(fileName = fileName))
+class WirespecFile(path: DirPath) : File(path.copy(extension = Extension.Wirespec)) {
+    override fun copy(fileName: String) = WirespecFile(path.copy(fileName = fileName))
 }

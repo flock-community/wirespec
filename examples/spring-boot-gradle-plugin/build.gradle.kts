@@ -39,7 +39,7 @@ sourceSets {
 }
 
 wirespec {
-    sourceDirectory = "$projectDir/src/main/wire-spec"
+    sourceDirectory = "$projectDir/src/main/wirespec"
     kotlin {
         targetDirectory = "$buildDir/generated/main/kotlin"
     }

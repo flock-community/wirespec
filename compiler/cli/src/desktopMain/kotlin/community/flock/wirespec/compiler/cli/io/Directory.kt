@@ -7,7 +7,7 @@ import platform.posix.opendir
 import platform.posix.readdir
 
 actual class Directory actual constructor(private val path: String) {
-    actual fun wireSpecFiles(): Set<WireSpecFile> {
+    actual fun wirespecFiles(): Set<WirespecFile> {
         val filenames = mutableListOf<String>()
         val dir = opendir(path)
         if (dir != null) {
@@ -23,10 +23,10 @@ actual class Directory actual constructor(private val path: String) {
         }
         return filenames
             .asSequence()
-            .filter { it.endsWith(Extension.WireSpec.ext) }
-            .map { it.dropLast(Extension.WireSpec.ext.length + 1) }
-            .map { DirPath(path, it, Extension.WireSpec) }
-            .map(::WireSpecFile)
+            .filter { it.endsWith(Extension.Wirespec.ext) }
+            .map { it.dropLast(Extension.Wirespec.ext.length + 1) }
+            .map { DirPath(path, it, Extension.Wirespec) }
+            .map(::WirespecFile)
             .toSet()
     }
 }

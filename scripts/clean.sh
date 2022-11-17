@@ -7,4 +7,4 @@ dir="$(dirname -- "$0")"
   (cd "$dir"/../examples/spring-boot-maven-plugin; ./mvnw clean) &&
   (cd "$dir"/../lsp/node/client; npm run clean) &&
   (cd "$dir"/../lsp/node/server; npm run clean) &&
-  docker rmi wire-spec
+  docker rmi wirespec

@@ -17,12 +17,12 @@ repositories {
 
 kotlin {
     val projectName = name
-    val buildAll = "WIRE_SPEC_BUILD_ALL".fromEnv()
-    val buildMacX86 = buildAll || "WIRE_SPEC_BUILD_MAC_X86".fromEnv()
-    val buildMacArm = buildAll || "WIRE_SPEC_BUILD_MAC_ARM".fromEnv()
-    val buildWindows = buildAll || "WIRE_SPEC_BUILD_WINDOWS".fromEnv()
+    val buildAll = "WIRESPEC_BUILD_ALL".fromEnv()
+    val buildMacX86 = buildAll || "WIRESPEC_BUILD_MAC_X86".fromEnv()
+    val buildMacArm = buildAll || "WIRESPEC_BUILD_MAC_ARM".fromEnv()
+    val buildWindows = buildAll || "WIRESPEC_BUILD_WINDOWS".fromEnv()
     val buildNothing = !buildMacX86 && !buildMacArm && !buildWindows
-    val buildLinux = buildAll || "WIRE_SPEC_BUILD_LINUX".fromEnv() || buildNothing
+    val buildLinux = buildAll || "WIRESPEC_BUILD_LINUX".fromEnv() || buildNothing
 
     if (buildMacX86) macosX64 { build() }
     if (buildMacArm) macosArm64 { build() }

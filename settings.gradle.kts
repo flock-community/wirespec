@@ -23,7 +23,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "wire-spec"
+rootProject.name = "wirespec"
 
 include(
     "compiler:core",

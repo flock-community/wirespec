@@ -17,8 +17,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      WIRE_SPEC_BUILD_LINUX: true
-      WIRE_SPEC_BUILD_WINDOWS: true
+      WIRESPEC_BUILD_LINUX: true
+      WIRESPEC_BUILD_WINDOWS: true
 
     steps:
       - uses: actions/checkout@v3
@@ -38,30 +38,30 @@ jobs:
       - name: Archive linux cli
         uses: actions/upload-artifact@v3
         with:
-          name: wire-spec-cli-linux
+          name: wirespec-cli-linux
           path: compiler/cli/build/bin/linuxX64/releaseExecutable/cli.kexe
       - name: Archive windows cli
         uses: actions/upload-artifact@v3
         with:
-          name: wire-spec-cli-windows
+          name: wirespec-cli-windows
           path: compiler/cli/build/bin/mingwX64/releaseExecutable/cli.exe
       - name: Archive vscode extension
         uses: actions/upload-artifact@v3
         with:
-          name: wire-spec-client-vscode
-          path: lsp/node/client/build/wire-spec-client-vscode-*.vsix
+          name: wirespec-client-vscode
+          path: lsp/node/client/build/wirespec-client-vscode-*.vsix
       - name: Archive Intellij plugin
         uses: actions/upload-artifact@v3
         with:
-          name: wire-spec-intellij-plugin
+          name: wirespec-intellij-plugin
           path: lsp/intellij-plugin/build/distributions/intellij-plugin-*.zip
   build-mac:
 
     runs-on: macos-latest
 
     env:
-      WIRE_SPEC_BUILD_MAC_ARM: true
-      WIRE_SPEC_BUILD_MAC_X86: true
+      WIRESPEC_BUILD_MAC_ARM: true
+      WIRESPEC_BUILD_MAC_X86: true
 
     steps:
       - uses: actions/checkout@v3
@@ -75,10 +75,10 @@ jobs:
       - name: Archive macosX86 cli
         uses: actions/upload-artifact@v3
         with:
-          name: wire-spec-cli-macos-x86
+          name: wirespec-cli-macos-x86
           path: compiler/cli/build/bin/macosX64/releaseExecutable/cli.kexe
       - name: Archive macosArm64 cli
         uses: actions/upload-artifact@v3
         with:
-          name: wire-spec-cli-macos-arm64
+          name: wirespec-cli-macos-arm64
           path: compiler/cli/build/bin/macosArm64/releaseExecutable/cli.kexe

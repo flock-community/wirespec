@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-export WIRE_SPEC_BUILD_LINUX=true
+export WIRESPEC_BUILD_LINUX=true
 
 dir="$(dirname -- "$0")"
 

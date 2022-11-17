@@ -8,7 +8,7 @@ let client: LanguageClient;
 export const activate = (context: ExtensionContext) => {
   console.log("Activating...");
 
-  const serverModule = context.asAbsolutePath(path.join("node_modules", "wire-spec-server", "index.js"));
+  const serverModule = context.asAbsolutePath(path.join("node_modules", "wirespec-server", "index.js"));
 
   const nodeModule = { module: serverModule, transport: TransportKind.ipc };
 
@@ -24,12 +24,12 @@ export const activate = (context: ExtensionContext) => {
     documentSelector: [
       {
         scheme: "file",
-        language: "wire-spec",
+        language: "wirespec",
       }
     ],
   };
 
-  client = new LanguageClient("wire-spec-extension-id", "WireSpecChecker", serverOptions, clientOptions);
+  client = new LanguageClient("wirespec-extension-id", "WirespecChecker", serverOptions, clientOptions);
 
   client.start().catch(console.error);
 
