@@ -45,7 +45,7 @@
                             <goal>java</goal>
                         </goals>
                         <configuration>
-                            <sourceDirectory>${project.basedir}/src/main/wire-spec</sourceDirectory>
+                            <sourceDirectory>${project.basedir}/src/main/wirespec</sourceDirectory>
                             <targetDirectory>${project.build.directory}/generated-sources</targetDirectory>
                         </configuration>
                     </execution>
@@ -55,7 +55,7 @@
                             <goal>typescript</goal>
                         </goals>
                         <configuration>
-                            <sourceDirectory>${project.basedir}/src/main/wire-spec</sourceDirectory>
+                            <sourceDirectory>${project.basedir}/src/main/wirespec</sourceDirectory>
                             <targetDirectory>${project.basedir}/src/main/frontend/generated</targetDirectory>
                         </configuration>
                     </execution>

@@ -5,7 +5,7 @@ import community.flock.wirespec.compiler.core.Reported.PARSED
 import community.flock.wirespec.compiler.core.Reported.TOKENIZED
 import community.flock.wirespec.compiler.core.Reported.VALIDATED
 import community.flock.wirespec.compiler.core.emit.common.Emitter
-import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException
+import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException
 import community.flock.wirespec.compiler.core.parse.Parser
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.core.validate.validate

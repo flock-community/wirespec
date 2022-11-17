@@ -1,7 +1,7 @@
 package community.flock.wirespec.compiler.cli.io
 
-import community.flock.wirespec.compiler.core.exceptions.WireSpecException.IOException.FileReadException
-import community.flock.wirespec.compiler.core.exceptions.WireSpecException.IOException.FileWriteException
+import community.flock.wirespec.compiler.core.exceptions.WirespecException.IOException.FileReadException
+import community.flock.wirespec.compiler.core.exceptions.WirespecException.IOException.FileWriteException
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.memScoped

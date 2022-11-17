@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-export WIRE_SPEC_BUILD_MAC=true
+export WIRESPEC_BUILD_MAC=true
 
 dir="$(dirname -- "$0")"
 

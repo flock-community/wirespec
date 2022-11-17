@@ -1,4 +1,4 @@
-package community.flock.wire_spec.lsp.intellij_plugin
+package community.flock.wirespec.lsp.intellij_plugin
 
 import com.intellij.lang.ASTNode
 import com.intellij.lang.PsiBuilder

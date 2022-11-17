@@ -1,7 +1,7 @@
 package community.flock.wirespec.plugin.maven
 
 import community.flock.wirespec.compiler.core.Either
-import community.flock.wirespec.compiler.core.WireSpec
+import community.flock.wirespec.compiler.core.Wirespec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.utils.Logger
@@ -19,7 +19,7 @@ abstract class WirespecMojo : AbstractMojo() {
     fun compile(sourceDirectory: String, logger: Logger, emitter: Emitter) =
         (File(sourceDirectory).listFiles() ?: arrayOf<File>())
             .map { it.name.split(".").first() to it.bufferedReader(Charsets.UTF_8) }
-            .map { (name, reader) -> name to WireSpec.compile(reader.collectToString())(logger)(emitter) }
+            .map { (name, reader) -> name to Wirespec.compile(reader.collectToString())(logger)(emitter) }
             .map { (name, result) ->
                 name to when (result) {
                     is Either.Right -> result.value
