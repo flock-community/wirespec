@@ -15,7 +15,7 @@
     <!-- Text to display as description on Preferences/Settings | Plugin page -->
     <description>
         <![CDATA[
-      Wire-spec intellij plugin for a great developer experience.
+      Wirespec intellij plugin for a great developer experience.
     ]]>
     </description>
     <change-notes>

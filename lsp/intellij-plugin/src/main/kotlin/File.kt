@@ -8,6 +8,6 @@ class File(viewProvider: FileViewProvider) : PsiFileBase(viewProvider, Language.
 
     override fun getFileType(): IntellijFileType = FileType.INSTANCE
 
-    override fun toString(): String = "Wire-spec File"
+    override fun toString(): String = "Wirespec File"
 
 }
