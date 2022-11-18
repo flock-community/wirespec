@@ -1,4 +1,4 @@
-package community.flock.wire_spec.lsp.intellij_plugin
+package community.flock.wirespec.lsp.intellij_plugin
 
 import com.intellij.extapi.psi.PsiFileBase
 import com.intellij.psi.FileViewProvider
@@ -8,6 +8,6 @@ class File(viewProvider: FileViewProvider) : PsiFileBase(viewProvider, Language.
 
     override fun getFileType(): IntellijFileType = FileType.INSTANCE
 
-    override fun toString(): String = "Wire-spec File"
+    override fun toString(): String = "Wirespec File"
 
 }

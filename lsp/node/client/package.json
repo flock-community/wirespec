@@ -1,21 +1,21 @@
 {
-  "name": "wire-spec-client-vscode",
-  "displayName": "wire-spec-client-vscode",
+  "name": "wirespec-client-vscode",
+  "displayName": "wirespec-client-vscode",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.40.0"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/flock-community/wire-spec"
+    "url": "https://github.com/flock-community/wirespec"
   },
   "activationEvents": [
-    "onLanguage:wire-spec"
+    "onLanguage:wirespec"
   ],
   "main": "./build/extension",
   "dependencies": {
     "vscode-languageclient": "8.0.2",
-    "wire-spec-server": "file:../server/build"
+    "wirespec-server": "file:../server/build"
   },
   "devDependencies": {
     "@types/node": "^18.6.2",
@@ -46,14 +46,14 @@
   "contributes": {
     "languages": [
       {
-        "id": "wire-spec",
-        "aliases": ["ws", "wire-spec"],
+        "id": "wirespec",
+        "aliases": ["ws", "wirespec"],
         "extensions": [".ws"]
       }
     ]
   },
   "configurationDefaults": {
-    "wire-spec-extension-id": {
+    "wirespec-extension-id": {
       "editor.semanticHighlighting.enabled": true
     }
   }

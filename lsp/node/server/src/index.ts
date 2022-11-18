@@ -1,6 +1,6 @@
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { createConnection, DiagnosticSeverity, SemanticTokensBuilder, TextDocuments } from "vscode-languageserver";
-import { WsToken, WsToTypeScript } from "wire-spec-lib";
+import { WsToken, WsToTypeScript } from "wirespec-lib";
 import { ServerCapabilities } from "vscode-languageserver-protocol/lib/common/protocol";
 
 import { Range, SemanticTokensLegend } from "vscode-languageserver-types";
@@ -25,7 +25,7 @@ const toDiagnostic =
       end: textDocument.positionAt(index + length),
     },
     message: value,
-    source: "WireSpecCheck",
+    source: "WirespecCheck",
   });
 
 const tokenType = {

@@ -4,7 +4,7 @@ import community.flock.wirespec.compiler.core.Either.Companion.left
 import community.flock.wirespec.compiler.core.Either.Companion.right
 import community.flock.wirespec.compiler.core.Either.Left
 import community.flock.wirespec.compiler.core.Either.Right
-import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException
+import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException
 
 sealed class Either<out A, out B> private constructor() {
 

@@ -2,8 +2,8 @@ package community.flock.wirespec.compiler.core.parse
 
 import community.flock.wirespec.compiler.core.Either
 import community.flock.wirespec.compiler.core.either
-import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException
-import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException.ParserException.WrongTokenException
+import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException
+import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
 import community.flock.wirespec.compiler.core.parse.Type.Name
 import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field

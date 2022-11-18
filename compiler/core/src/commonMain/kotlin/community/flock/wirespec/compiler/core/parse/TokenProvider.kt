@@ -1,7 +1,7 @@
 package community.flock.wirespec.compiler.core.parse
 
-import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException.ParserException.NullTokenException.NextException
-import community.flock.wirespec.compiler.core.exceptions.WireSpecException.CompilerException.ParserException.NullTokenException.StartingException
+import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.NullTokenException.NextException
+import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.NullTokenException.StartingException
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.utils.Logger
 

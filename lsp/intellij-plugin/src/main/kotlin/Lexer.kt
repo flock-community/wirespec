@@ -1,6 +1,6 @@
-package community.flock.wire_spec.lsp.intellij_plugin
+package community.flock.wirespec.lsp.intellij_plugin
 
-import community.flock.wirespec.compiler.core.WireSpec
+import community.flock.wirespec.compiler.core.Wirespec
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
@@ -24,7 +24,7 @@ class Lexer : IntellijLexer() {
         this.index = 0
         this.tokens = emptyList()
         if (buffer.isNotEmpty()) {
-            tokens = WireSpec.tokenize(buffer.toString())
+            tokens = Wirespec.tokenize(buffer.toString())
                 .filterNot { token -> token.type is EndOfProgram }
         }
     }

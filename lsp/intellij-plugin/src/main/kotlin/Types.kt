@@ -1,5 +1,5 @@
 // This is a generated file. Not intended for manual editing.
-package community.flock.wire_spec.lsp.intellij_plugin
+package community.flock.wirespec.lsp.intellij_plugin
 
 import com.intellij.psi.tree.IElementType
 

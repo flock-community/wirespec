@@ -11,7 +11,7 @@ import community.flock.wirespec.compiler.cli.io.JavaFile
 import community.flock.wirespec.compiler.cli.io.KotlinFile
 import community.flock.wirespec.compiler.cli.io.ScalaFile
 import community.flock.wirespec.compiler.cli.io.TypeScriptFile
-import community.flock.wirespec.compiler.core.WireSpec
+import community.flock.wirespec.compiler.core.Wirespec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
@@ -32,12 +32,12 @@ private sealed interface Language {
     }
 }
 
-private val enableLogging = getEnvVar("WIRE_SPEC_LOGGING_ENABLED").toBoolean()
+private val enableLogging = getEnvVar("WIRESPEC_LOGGING_ENABLED").toBoolean()
 
 private val logger = object : Logger(enableLogging) {}
 
 private fun Logger.from(s: String): Language? = Language.valueOf(s).also {
-    if (it == null) warn("'$s' is not known to WireSpec. Choose from ${Language.values().joinToString(",")}")
+    if (it == null) warn("'$s' is not known to Wirespec. Choose from ${Language.values().joinToString(",")}")
 }
 
 fun main(args: Array<String>) {
@@ -55,10 +55,10 @@ fun main(args: Array<String>) {
 }
 
 private fun compile(languages: Set<Language>, inputDir: String, packageName: String) = Directory(inputDir)
-    .wireSpecFiles()
+    .wirespecFiles()
     .forEach { wsFile ->
         wsFile.read()
-            .let(WireSpec::compile)(logger)
+            .let(Wirespec::compile)(logger)
             .let { it to wsFile.path::out }
             .let { (compiler, path) ->
                 languages.map {

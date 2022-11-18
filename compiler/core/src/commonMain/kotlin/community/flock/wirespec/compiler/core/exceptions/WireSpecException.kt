@@ -4,15 +4,15 @@ import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.types.TokenType
 import kotlin.reflect.KClass
 
-sealed class WireSpecException(message: String, val coordinates: Token.Coordinates) : RuntimeException(message) {
+sealed class WirespecException(message: String, val coordinates: Token.Coordinates) : RuntimeException(message) {
 
-    sealed class IOException(message: String) : WireSpecException(message, Token.Coordinates()) {
+    sealed class IOException(message: String) : WirespecException(message, Token.Coordinates()) {
         class FileReadException(message: String) : IOException(message)
         class FileWriteException(message: String) : IOException(message)
     }
 
     sealed class CompilerException(message: String, coordinates: Token.Coordinates) :
-        WireSpecException(message, coordinates) {
+        WirespecException(message, coordinates) {
 
         sealed class ParserException(coordinates: Token.Coordinates, message: String) :
             CompilerException(message, coordinates) {

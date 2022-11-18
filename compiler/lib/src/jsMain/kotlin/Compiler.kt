@@ -1,4 +1,4 @@
-import community.flock.wirespec.compiler.core.WireSpec
+import community.flock.wirespec.compiler.core.Wirespec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
@@ -10,11 +10,11 @@ import community.flock.wirespec.compiler.utils.Logger
 @ExperimentalJsExport
 abstract class Compiler {
 
-    protected fun preCompile(source: String) = WireSpec.compile(source)(logger)
+    protected fun preCompile(source: String) = Wirespec.compile(source)(logger)
 
-    fun tokenize(source: String) = WireSpec.tokenize(source).produce()
+    fun tokenize(source: String) = Wirespec.tokenize(source).produce()
 
-    fun parse(source: String) = WireSpec.tokenize(source)
+    fun parse(source: String) = Wirespec.tokenize(source)
         .let { Parser(logger).parse(it) }
         .let { Ast(arrayOf()) }
 

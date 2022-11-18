@@ -4,7 +4,7 @@
 <idea-plugin>
 
     <!-- Unique id for this plugin. Must stay constant for the life of the plugin. -->
-    <id>community.flock.wire_spec.lsp.intellij_plugin</id>
+    <id>community.flock.wirespec.lsp.intellij_plugin</id>
 
     <!-- Text to display as name on Preferences/Settings | Plugin page -->
     <name>Wire spec</name>
@@ -15,7 +15,7 @@
     <!-- Text to display as description on Preferences/Settings | Plugin page -->
     <description>
         <![CDATA[
-      Wire-spec intellij plugin for a great developer experience.
+      Wirespec intellij plugin for a great developer experience.
     ]]>
     </description>
     <change-notes>
@@ -31,23 +31,23 @@
 
     <extensions defaultExtensionNs="com.intellij">
 
-        <fileType name="wire-spec" implementationClass="community.flock.wire_spec.lsp.intellij_plugin.FileType"
-                  fieldName="INSTANCE" language="wire-spec" extensions="ws"/>
+        <fileType name="wirespec" implementationClass="community.flock.wirespec.lsp.intellij_plugin.FileType"
+                  fieldName="INSTANCE" language="wirespec" extensions="ws"/>
 
         <lang.syntaxHighlighterFactory
-                language="wire-spec"
-                implementationClass="community.flock.wire_spec.lsp.intellij_plugin.SyntaxHighlighterFactory"/>
+                language="wirespec"
+                implementationClass="community.flock.wirespec.lsp.intellij_plugin.SyntaxHighlighterFactory"/>
 
         <lang.parserDefinition
-                language="wire-spec"
-                implementationClass="community.flock.wire_spec.lsp.intellij_plugin.ParserDefinition"/>
+                language="wirespec"
+                implementationClass="community.flock.wirespec.lsp.intellij_plugin.ParserDefinition"/>
 
         <externalAnnotator
-                language="wire-spec"
-                implementationClass="community.flock.wire_spec.lsp.intellij_plugin.Annotator"/>
+                language="wirespec"
+                implementationClass="community.flock.wirespec.lsp.intellij_plugin.Annotator"/>
 
         <gotoSymbolContributor
-                implementation="community.flock.wire_spec.lsp.intellij_plugin.ChooseByNameContributor"/>
+                implementation="community.flock.wirespec.lsp.intellij_plugin.ChooseByNameContributor"/>
     </extensions>
 
     <depends>com.intellij.modules.platform</depends>
