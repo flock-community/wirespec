@@ -31,12 +31,9 @@ class Parser(private val logger: Logger) {
 
     fun parse(tokens: List<Token>): Either<CompilerException, AST> = either {
         tokens
-            .filterWhiteSpace()
             .toProvider(logger)
             .parse()
     }
-
-    private fun List<Token>.filterWhiteSpace() = filterNot { it.type is WhiteSpace }
 
     private fun TokenProvider.parse(): AST = mutableListOf<Definition>()
         .apply { while (hasNext()) add(parseDefinition()) }
