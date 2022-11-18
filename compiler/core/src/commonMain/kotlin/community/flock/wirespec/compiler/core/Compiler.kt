@@ -6,23 +6,27 @@ import community.flock.wirespec.compiler.core.Reported.TOKENIZED
 import community.flock.wirespec.compiler.core.Reported.VALIDATED
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException
+import community.flock.wirespec.compiler.core.optimize.optimize
 import community.flock.wirespec.compiler.core.parse.Parser
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.core.validate.validate
 import community.flock.wirespec.compiler.utils.Logger
 
-fun LanguageSpec.compile(source: String): (Logger) -> (Emitter) -> Either<CompilerException, List<Pair<String, String>>> = {
-    { emitter ->
-        tokenize(source)
-            .also((TOKENIZED::report)(it))
-            .let(Parser(it)::parse)
-            .also((PARSED::report)(it))
-            .flatMap { it.validate() }
-            .also((VALIDATED::report)(it))
-            .flatMap(emitter::emit)
-            .also((EMITTED::report)(it))
+fun LanguageSpec.compile(source: String): (Logger) -> (Emitter) -> Either<CompilerException, List<Pair<String, String>>> =
+    {
+        { emitter ->
+            tokenize(source)
+                .also((TOKENIZED::report)(it))
+                .optimize()
+                .also((VALIDATED::report)(it))
+                .let(Parser(it)::parse)
+                .also((PARSED::report)(it))
+                .map { it.validate() }
+                .also((VALIDATED::report)(it))
+                .flatMap(emitter::emit)
+                .also((EMITTED::report)(it))
+        }
     }
-}
 
 private enum class Reported {
     TOKENIZED, PARSED, VALIDATED, EMITTED;
