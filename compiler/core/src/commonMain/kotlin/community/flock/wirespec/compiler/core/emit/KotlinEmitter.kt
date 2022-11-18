@@ -9,8 +9,12 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value.Custom
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value.Ws
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.compiler.utils.noLogger
 
-class KotlinEmitter(private val packageName: String = DEFAULT_PACKAGE_NAME, logger: Logger) : Emitter(logger) {
+class KotlinEmitter(
+    private val packageName: String = DEFAULT_PACKAGE_NAME,
+    logger: Logger = noLogger
+) : Emitter(logger) {
 
     override fun emit(ast: AST): Either<WireSpecException.CompilerException, List<Pair<String, String>>> =
         super.emit(ast).map {

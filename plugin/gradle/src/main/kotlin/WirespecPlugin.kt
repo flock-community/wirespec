@@ -20,7 +20,6 @@ import java.io.File
 import javax.inject.Inject
 import kotlin.streams.asSequence
 
-
 open class WirespecPluginExtension @Inject constructor(val objectFactory: ObjectFactory) {
 
     var sourceDirectory: String = ""
@@ -85,14 +84,11 @@ class WirespecPlugin : Plugin<Project> {
                 }
             }
             .flatMap { (name, result) ->
-                if (!emitter.split) {
-                    listOf(name to result.first().second)
-                } else {
-                    result
-                }
+                if (emitter.split) result
+                else listOf(name to result.first().second)
             }
 
-    private fun BufferedReader.collectToString() = lines().asSequence().joinToString("\n")
+    private fun BufferedReader.collectToString() = lines().asSequence().joinToString("")
 
     override fun apply(project: Project) {
         val extension: WirespecPluginExtension =
@@ -100,14 +96,13 @@ class WirespecPlugin : Plugin<Project> {
 
         fun emit(targetDirectory: String, emitter: Emitter, ext: String) {
             File(targetDirectory).mkdirs()
-            compile(extension.sourceDirectory, logger, emitter)
-                .forEach { (name, result) ->
-                    File("${targetDirectory}/$name.$ext").writeText(result)
-                }
+            compile(extension.sourceDirectory, logger, emitter).forEach { (name, result) ->
+                File("$targetDirectory/$name.$ext").writeText(result)
+            }
         }
 
         project.task("wirespec")
-            .doLast { _: Task? ->
+            .doFirst { _: Task? ->
                 extension.typescript?.run {
                     TypeScriptEmitter(logger)
                         .apply { emit(targetDirectory, this, "ts") }
@@ -115,19 +110,15 @@ class WirespecPlugin : Plugin<Project> {
                 extension.java?.run {
                     JavaEmitter(packageName, logger)
                         .apply { emit(targetDirectory, this, "java") }
-
                 }
                 extension.scala?.run {
                     ScalaEmitter(packageName, logger)
                         .apply { emit(targetDirectory, this, "scala") }
-
                 }
                 extension.kotlin?.run {
                     KotlinEmitter(packageName, logger)
                         .apply { emit(targetDirectory, this, "kt") }
-
                 }
-
             }
     }
 }
