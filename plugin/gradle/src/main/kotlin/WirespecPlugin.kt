@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.utils.Logger
 import org.gradle.api.Action
@@ -53,17 +54,17 @@ open class WirespecPluginExtension @Inject constructor(val objectFactory: Object
         }
 
         class Java {
-            var packageName: String = ""
+            var packageName: String = DEFAULT_PACKAGE_NAME
             var targetDirectory: String = ""
         }
 
         class Scala {
-            var packageName: String = ""
+            var packageName: String = DEFAULT_PACKAGE_NAME
             var targetDirectory: String = ""
         }
 
         class Kotlin {
-            var packageName: String = ""
+            var packageName: String = DEFAULT_PACKAGE_NAME
             var targetDirectory: String = ""
         }
     }
@@ -91,7 +92,7 @@ class WirespecPlugin : Plugin<Project> {
                 }
             }
 
-    private fun BufferedReader.collectToString() = lines().asSequence().joinToString()
+    private fun BufferedReader.collectToString() = lines().asSequence().joinToString("\n")
 
     override fun apply(project: Project) {
         val extension: WirespecPluginExtension =
