@@ -1,4 +1,4 @@
-import community.flock.wirespec.compiler.core.exceptions.WireSpecException
+import community.flock.wirespec.compiler.core.exceptions.WirespecException
 
 @JsExport
 @ExperimentalJsExport
@@ -9,7 +9,7 @@ data class WsError(
 )
 
 @ExperimentalJsExport
-fun WireSpecException.produce() = WsError(
+fun WirespecException.produce() = WsError(
     index = coordinates.idxAndLength.idx - coordinates.idxAndLength.length,
     length = coordinates.idxAndLength.length,
     value = message ?: "No message"

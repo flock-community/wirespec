@@ -3,7 +3,7 @@ package community.flock.wirespec.compiler.core.emit
 import community.flock.wirespec.compiler.core.Either
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitter
-import community.flock.wirespec.compiler.core.exceptions.WireSpecException
+import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value.Custom
@@ -16,7 +16,7 @@ class JavaEmitter(
     logger: Logger = noLogger
 ) : Emitter(logger, true) {
 
-    override fun emit(ast: AST): Either<WireSpecException.CompilerException, List<Pair<String, String>>> =
+    override fun emit(ast: AST): Either<WirespecException.CompilerException, List<Pair<String, String>>> =
         super.emit(ast).map {
             it.map { (name, result) -> name to if (packageName.isBlank()) "" else "package $packageName;\n\n$result" }
         }

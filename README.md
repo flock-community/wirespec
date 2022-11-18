@@ -1,4 +1,4 @@
-# WireSpec
+# Wirespec
 Version 0.0.1
 ## Dependencies
 * JDK 17
@@ -9,7 +9,7 @@ On *nix systems run:
 ```shell
 make all
 ```
-to compile the project and test the WireSpec compiler with definitions found in
+to compile the project and test the Wirespec compiler with definitions found in
 `types`. Locate the result in `types/out`
 
 ## Maven
@@ -32,7 +32,7 @@ For a full example click [here](examples/spring-boot-maven-plugin)
                             <goal>kotlin</goal>
                         </goals>
                         <configuration>
-                            <sourceDirectory>${project.basedir}/src/main/wire-spec</sourceDirectory>
+                            <sourceDirectory>${project.basedir}/src/main/wirespec</sourceDirectory>
                             <targetDirectory>${project.build.directory}/generated-sources</targetDirectory>
                         </configuration>
                     </execution>
@@ -42,7 +42,7 @@ For a full example click [here](examples/spring-boot-maven-plugin)
                             <goal>typescript</goal>
                         </goals>
                         <configuration>
-                            <sourceDirectory>${project.basedir}/src/main/wire-spec</sourceDirectory>
+                            <sourceDirectory>${project.basedir}/src/main/wirespec</sourceDirectory>
                             <targetDirectory>${project.basedir}/src/main/frontend/generated</targetDirectory>
                         </configuration>
                     </execution>
@@ -83,7 +83,7 @@ plugins {
 }
 
 wirespec {
-    sourceDirectory = "$projectDir/src/main/wire-spec"
+    sourceDirectory = "$projectDir/src/main/wirespec"
     kotlin {
         targetDirectory = "$buildDir/generated/main/kotlin"
     }

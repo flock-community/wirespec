@@ -21,7 +21,7 @@ interface LanguageSpec {
     val orderedMatchers: List<Pair<Regex, TokenType>>
 }
 
-object WireSpec : LanguageSpec {
+object Wirespec : LanguageSpec {
     @Suppress("RegExpRedundantEscape")
     override val orderedMatchers = listOf(
         Regex("^type") to WsTypeDef,
