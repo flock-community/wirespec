@@ -17,6 +17,7 @@ import org.gradle.api.model.ObjectFactory
 import java.io.BufferedReader
 import java.io.File
 import javax.inject.Inject
+import kotlin.streams.asSequence
 
 
 open class WirespecPluginExtension @Inject constructor(val objectFactory: ObjectFactory) {
@@ -47,21 +48,21 @@ open class WirespecPluginExtension @Inject constructor(val objectFactory: Object
 
 
     companion object {
-        class Typescript() {
+        class Typescript {
             var targetDirectory: String = ""
         }
 
-        class Java() {
+        class Java {
             var packageName: String = ""
             var targetDirectory: String = ""
         }
 
-        class Scala() {
+        class Scala {
             var packageName: String = ""
             var targetDirectory: String = ""
         }
 
-        class Kotlin() {
+        class Kotlin {
             var packageName: String = ""
             var targetDirectory: String = ""
         }
@@ -90,8 +91,7 @@ class WirespecPlugin : Plugin<Project> {
                 }
             }
 
-    private fun BufferedReader.collectToString() =
-        lines().collect(java.util.stream.Collectors.joining())
+    private fun BufferedReader.collectToString() = lines().asSequence().joinToString()
 
     override fun apply(project: Project) {
         val extension: WirespecPluginExtension =
