@@ -31,6 +31,7 @@ class Parser(private val logger: Logger) {
 
     fun parse(tokens: List<Token>): Either<CompilerException, AST> = either {
         tokens
+            .filterNot { it.type is WhiteSpace }
             .toProvider(logger)
             .parse()
     }
