@@ -5,8 +5,9 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value.Custom
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value.Ws
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.compiler.utils.noLogger
 
-class TypeScriptEmitter(logger: Logger) : Emitter(logger) {
+class TypeScriptEmitter(logger: Logger = noLogger) : Emitter(logger) {
 
     override fun Type.emit() = withLogging(logger) {
         "interface ${name.emit()} {\n${shape.emit()}\n}\n\n"

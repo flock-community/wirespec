@@ -23,10 +23,14 @@ abstract class WirespecMojo : AbstractMojo() {
             .map { (name, result) ->
                 name to when (result) {
                     is Either.Right -> result.value
-                    is Either.Left -> {
-                        log.error(result.value.message)
-                        error("compile error")
-                    }
+                    is Either.Left -> error("compile error")
+                }
+            }
+            .flatMap { (name, result) ->
+                if (!emitter.split) {
+                    listOf(name to result.first().second)
+                } else {
+                    result
                 }
             }
 

@@ -1,14 +1,14 @@
 package community.flock.wirespec.compiler.cli
 
-import community.flock.wirespec.compiler.cli.Language.Java
-import community.flock.wirespec.compiler.cli.Language.Kotlin
-import community.flock.wirespec.compiler.cli.Language.Scala
-import community.flock.wirespec.compiler.cli.Language.TypeScript
+import community.flock.wirespec.compiler.cli.Language.Jvm.Java
+import community.flock.wirespec.compiler.cli.Language.Jvm.Kotlin
+import community.flock.wirespec.compiler.cli.Language.Jvm.Scala
+import community.flock.wirespec.compiler.cli.Language.Script.TypeScript
+import community.flock.wirespec.compiler.cli.io.DirPath
 import community.flock.wirespec.compiler.cli.io.Directory
 import community.flock.wirespec.compiler.cli.io.Extension
-import community.flock.wirespec.compiler.cli.io.KotlinFile
-import community.flock.wirespec.compiler.cli.io.DirPath
 import community.flock.wirespec.compiler.cli.io.JavaFile
+import community.flock.wirespec.compiler.cli.io.KotlinFile
 import community.flock.wirespec.compiler.cli.io.ScalaFile
 import community.flock.wirespec.compiler.cli.io.TypeScriptFile
 import community.flock.wirespec.compiler.core.WireSpec
@@ -23,13 +23,20 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.getEnvVar
 import community.flock.wirespec.compiler.utils.orNull
 
-private enum class Language { Java, Kotlin, Scala, TypeScript }
+private sealed interface Language {
+    enum class Jvm : Language { Java, Kotlin, Scala }
+    enum class Script : Language { TypeScript }
+    companion object {
+        fun values(): List<Enum<*>> = Jvm.values().toList() + Script.values().toList()
+        fun valueOf(s: String): Language? = values().find { it.name == s } as Language?
+    }
+}
 
 private val enableLogging = getEnvVar("WIRE_SPEC_LOGGING_ENABLED").toBoolean()
 
 private val logger = object : Logger(enableLogging) {}
 
-private fun Logger.from(s: String): Language? = runCatching { Language.valueOf(s) }.getOrNull().also {
+private fun Logger.from(s: String): Language? = Language.valueOf(s).also {
     if (it == null) warn("'$s' is not known to WireSpec. Choose from ${Language.values().joinToString(",")}")
 }
 
@@ -52,18 +59,22 @@ private fun compile(languages: Set<Language>, inputDir: String, packageName: Str
     .forEach { wsFile ->
         wsFile.read()
             .let(WireSpec::compile)(logger)
-            .let { it to wsFile.path.out(packageName) }
+            .let { it to wsFile.path::out }
             .let { (compiler, path) ->
                 languages.map {
                     when (it) {
-                        Java -> JavaEmitter(logger, packageName) to JavaFile(path(Extension.Java))
-                        Kotlin -> KotlinEmitter(logger, packageName) to KotlinFile(path(Extension.Kotlin))
-                        Scala -> ScalaEmitter(logger, packageName) to ScalaFile(path(Extension.Scala))
-                        TypeScript -> TypeScriptEmitter(logger) to TypeScriptFile(path(Extension.TypeScript))
+                        Java -> JavaEmitter(packageName, logger) to JavaFile(path(packageName)(Extension.Java))
+                        Kotlin -> KotlinEmitter(packageName, logger) to KotlinFile(path(packageName)(Extension.Kotlin))
+                        Scala -> ScalaEmitter(packageName, logger) to ScalaFile(path(packageName)(Extension.Scala))
+                        TypeScript -> TypeScriptEmitter(logger) to TypeScriptFile(path("")(Extension.TypeScript))
                     }.let { (emitter, file) -> compiler(emitter) to file }
                 }
             }
-            .map { (result, file) -> result.map(file::write) }
+            .map { (results, file) ->
+                results.map {
+                    it.map { (name, result) -> file.copy(name).write(result) }
+                }
+            }
             .forEach { it.getOrHandle { error -> throw error } }
     }
 

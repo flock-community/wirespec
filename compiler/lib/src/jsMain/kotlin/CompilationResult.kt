@@ -2,9 +2,9 @@ import community.flock.wirespec.compiler.core.Either
 import community.flock.wirespec.compiler.core.exceptions.WireSpecException
 
 @ExperimentalJsExport
-fun Either<WireSpecException, String>.produce(): WsCompilationResult = when (this) {
+fun Either<WireSpecException, List<Pair<String, String>>>.produce(): WsCompilationResult = when (this) {
     is Either.Left -> WsCompilationResult(error = value.produce())
-    is Either.Right -> WsCompilationResult(compiled = WsCompiled(value))
+    is Either.Right -> WsCompilationResult(compiled = WsCompiled(value.first().second))
 }
 
 @JsExport

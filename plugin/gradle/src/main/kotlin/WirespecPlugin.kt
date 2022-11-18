@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.utils.Logger
 import org.gradle.api.Action
@@ -17,7 +18,7 @@ import org.gradle.api.model.ObjectFactory
 import java.io.BufferedReader
 import java.io.File
 import javax.inject.Inject
-
+import kotlin.streams.asSequence
 
 open class WirespecPluginExtension @Inject constructor(val objectFactory: ObjectFactory) {
 
@@ -47,22 +48,22 @@ open class WirespecPluginExtension @Inject constructor(val objectFactory: Object
 
 
     companion object {
-        class Typescript() {
+        class Typescript {
             var targetDirectory: String = ""
         }
 
-        class Java() {
-            var packageName: String = ""
+        class Java {
+            var packageName: String = DEFAULT_PACKAGE_NAME
             var targetDirectory: String = ""
         }
 
-        class Scala() {
-            var packageName: String = ""
+        class Scala {
+            var packageName: String = DEFAULT_PACKAGE_NAME
             var targetDirectory: String = ""
         }
 
-        class Kotlin() {
-            var packageName: String = ""
+        class Kotlin {
+            var packageName: String = DEFAULT_PACKAGE_NAME
             var targetDirectory: String = ""
         }
     }
@@ -82,9 +83,12 @@ class WirespecPlugin : Plugin<Project> {
                     is Either.Left -> error("compile error")
                 }
             }
+            .flatMap { (name, result) ->
+                if (emitter.split) result
+                else listOf(name to result.first().second)
+            }
 
-    private fun BufferedReader.collectToString() =
-        lines().collect(java.util.stream.Collectors.joining())
+    private fun BufferedReader.collectToString() = lines().asSequence().joinToString("")
 
     override fun apply(project: Project) {
         val extension: WirespecPluginExtension =
@@ -92,34 +96,29 @@ class WirespecPlugin : Plugin<Project> {
 
         fun emit(targetDirectory: String, emitter: Emitter, ext: String) {
             File(targetDirectory).mkdirs()
-            compile(extension.sourceDirectory, logger, emitter)
-                .forEach { (name, result) ->
-                    File("${targetDirectory}/$name.$ext").writeText(result)
-                }
+            compile(extension.sourceDirectory, logger, emitter).forEach { (name, result) ->
+                File("$targetDirectory/$name.$ext").writeText(result)
+            }
         }
 
         project.task("wirespec")
-            .doLast { _: Task? ->
+            .doFirst { _: Task? ->
                 extension.typescript?.run {
                     TypeScriptEmitter(logger)
                         .apply { emit(targetDirectory, this, "ts") }
                 }
                 extension.java?.run {
-                    JavaEmitter(logger, packageName)
+                    JavaEmitter(packageName, logger)
                         .apply { emit(targetDirectory, this, "java") }
-
                 }
                 extension.scala?.run {
-                    ScalaEmitter(logger, packageName)
+                    ScalaEmitter(packageName, logger)
                         .apply { emit(targetDirectory, this, "scala") }
-
                 }
                 extension.kotlin?.run {
-                    KotlinEmitter(logger, packageName)
+                    KotlinEmitter(packageName, logger)
                         .apply { emit(targetDirectory, this, "kt") }
-
                 }
-
             }
     }
 }

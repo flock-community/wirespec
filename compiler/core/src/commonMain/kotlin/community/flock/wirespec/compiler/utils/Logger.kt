@@ -12,3 +12,5 @@ abstract class Logger(private val enableLogging: Boolean) {
     }
 
 }
+
+val noLogger = object : Logger(false) {}
