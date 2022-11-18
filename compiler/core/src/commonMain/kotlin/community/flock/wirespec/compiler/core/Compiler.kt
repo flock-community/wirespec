@@ -11,7 +11,7 @@ import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.core.validate.validate
 import community.flock.wirespec.compiler.utils.Logger
 
-fun LanguageSpec.compile(source: String): (Logger) -> (Emitter) -> Either<CompilerException, String> = {
+fun LanguageSpec.compile(source: String): (Logger) -> (Emitter) -> Either<CompilerException, List<Pair<String, String>>> = {
     { emitter ->
         tokenize(source)
             .also((TOKENIZED::report)(it))

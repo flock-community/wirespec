@@ -31,8 +31,8 @@ class CompilerTest {
             
         """.trimIndent()
 
-        val res = WireSpec.compile(source)(logger)(KotlinEmitter(logger))
-        assertRight(out, res)
+        val res = WireSpec.compile(source)(logger)(KotlinEmitter(logger = logger))
+        assertRight(out, res.map { it.first().second })
     }
 
     @Test
@@ -46,8 +46,8 @@ class CompilerTest {
             
         """.trimIndent()
 
-        val res = WireSpec.compile(source)(logger)(KotlinEmitter(logger))
-        assertLeft("RightCurly expected, not: CustomValue at line 3 and position 3", res)
+        val res = WireSpec.compile(source)(logger)(KotlinEmitter(logger = logger))
+        assertLeft("RightCurly expected, not: CustomValue at line 3 and position 3", res.map { it.first().second })
 
     }
 }

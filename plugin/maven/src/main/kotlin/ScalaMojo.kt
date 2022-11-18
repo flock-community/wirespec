@@ -23,7 +23,7 @@ class ScalaMojo : WirespecMojo() {
     @Parameter(defaultValue = "\${project}", readonly = true, required = true)
     private lateinit var project: MavenProject
 
-    private val emitter = ScalaEmitter(logger, packageName)
+    private val emitter = ScalaEmitter(packageName, logger)
 
     override fun execute() {
         compile(sourceDirectory, logger, emitter)

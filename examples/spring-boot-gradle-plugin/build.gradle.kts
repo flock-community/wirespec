@@ -33,7 +33,7 @@ tasks.withType<KotlinCompile> {
 sourceSets {
     main {
         java {
-            srcDir("${buildDir}/generated/main/kotlin")
+            srcDir("${buildDir}/generated")
         }
     }
 }
@@ -41,7 +41,7 @@ sourceSets {
 wirespec {
     sourceDirectory = "$projectDir/src/main/wire-spec"
     kotlin {
-        targetDirectory = "$buildDir/generated/main/kotlin"
+        targetDirectory = "$buildDir/generated/wirespec"
     }
     typescript {
         targetDirectory = "$projectDir/src/main/frontend/generated"
