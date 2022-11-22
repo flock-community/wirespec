@@ -7,7 +7,7 @@
     <id>community.flock.wirespec.lsp.intellij_plugin</id>
 
     <!-- Text to display as name on Preferences/Settings | Plugin page -->
-    <name>Wire spec</name>
+    <name>Wirespec</name>
 
     <!-- Product and plugin compatibility requirements -->
     <depends>com.intellij.modules.platform</depends>
@@ -49,7 +49,5 @@
         <gotoSymbolContributor
                 implementation="community.flock.wirespec.lsp.intellij_plugin.ChooseByNameContributor"/>
     </extensions>
-
-    <depends>com.intellij.modules.platform</depends>
 
 </idea-plugin>
