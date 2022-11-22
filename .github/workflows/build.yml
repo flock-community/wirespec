@@ -35,6 +35,7 @@ jobs:
           make build
           make image
           make example
+          make publish
       - name: Archive linux cli
         uses: actions/upload-artifact@v3
         with:
