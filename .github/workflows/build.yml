@@ -58,6 +58,7 @@ jobs:
         with:
           name: wirespec-intellij-plugin
           path: lsp/intellij-plugin/build/distributions/intellij-plugin-*.zip
+
   build-mac:
 
     runs-on: macos-latest
@@ -85,3 +86,19 @@ jobs:
         with:
           name: wirespec-cli-macos-arm64
           path: compiler/cli/build/bin/macosArm64/releaseExecutable/cli.kexe
+
+  publish:
+    runs-on: ubuntu-latest
+    needs:
+      - build-all-but-mac
+      - build-mac
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Run
+        run: |
+          make publish
