@@ -19,6 +19,8 @@ jobs:
     env:
       WIRESPEC_BUILD_LINUX: true
       WIRESPEC_BUILD_WINDOWS: true
+      JFROG_USERNAME: ${{ secrets.JFROG_USERNAME }}
+      JFROG_TOKEN: ${{ secrets.JFROG_TOKEN }}
 
     steps:
       - uses: actions/checkout@v3
