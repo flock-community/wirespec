@@ -15,13 +15,17 @@
     <!-- Text to display as description on Preferences/Settings | Plugin page -->
     <description>
         <![CDATA[
-      Wirespec intellij plugin for a great developer experience.
+      Wirespec is a typesafe language to specify data transfer models which are exchanged between services. These models can be transformed into bindings for a specific language (Typescript, Java, Kotlin, Scala).
+
+      This Plugin supports in writing Wirespec files by syntax highlighting and compiler feedback for a smooth developer experience.
+
+      More information about Wirespec can be found on the github: https://github.com/flock-community/wirespec
     ]]>
     </description>
     <change-notes>
         <![CDATA[
       <ul>
-        <li><b>1.0.0</b> Initial version</li>
+        <li><b>0.0.1</b> Initial version</li>
       </ul>
     ]]>
     </change-notes>
