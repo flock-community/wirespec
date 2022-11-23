@@ -85,16 +85,25 @@ jobs:
           name: wirespec-cli-macos-arm64
           path: compiler/cli/build/bin/macosArm64/releaseExecutable/cli.kexe
 
-  upload_release:
+  publish_extension_intellij:
 
     runs-on: ubuntu-latest
 
-    if: github.event_name == 'release' && github.event.action == 'created'
+    env:
+      ORG_GRADLE_PROJECT_channels: beta
+      ORG_GRADLE_PROJECT_intellijPublishToken: ${{ secrets.JETBRAINS_TOKEN }}
+
+    needs:
+      - build-all-but-mac
+      - build-mac
 
     steps:
       - uses: actions/checkout@v3
-      - name: Upload assets
-        uses: softprops/action-gh-release@v1
+      - name: Set up JDK
+        uses: actions/setup-java@v3
         with:
-          files: |
-            Makefile
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Run
+        run: |
+          ./gradlew :lsp:intellij-plugin:publishPlugin
