@@ -26,6 +26,6 @@ jobs:
     needs:
       - version
     steps:
-      run: |
-        ${{needs.version.steps.version.outputs.version}}
+      - run: |
+          ${{needs.version.steps.version.outputs.version}}
     
