@@ -12,9 +12,6 @@ concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  VERSION: "v0.0.1"
-
 jobs:
 
   build-all-but-mac:
@@ -60,6 +57,7 @@ jobs:
         with:
           name: wirespec-intellij-plugin
           path: lsp/intellij-plugin/build/distributions/intellij-plugin-*.zip
+
   build-mac:
 
     runs-on: macos-latest
@@ -100,6 +98,9 @@ jobs:
 
     outputs:
       version: ${{steps.version.outputs.version}}
+
+    env:
+      VERSION: "v0.0.1"
 
     steps:
       - uses: actions/checkout@v3
