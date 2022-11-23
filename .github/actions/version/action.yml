@@ -23,6 +23,6 @@ runs:
         exit 0
         else
         echo "version number not valid!"
-        echo "Please make sure version number matches: `^v[0-9]\.[0-9]\.[0-9]$`"
+        echo "Please make sure version number matches: ^v[0-9]\.[0-9]\.[0-9]$"
         exit 1
         fi
