@@ -31,7 +31,8 @@ jobs:
           echo "Please make sure version number matches: ^v[0-9]\.[0-9]\.[0-9]$"
           exit 1
           fi
-
+      - run: |
+          echo "Hello: ${{steps.version.outputs.version}}"
   test:
     runs-on: ubuntu-latest
     needs:
