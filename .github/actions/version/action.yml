@@ -19,7 +19,9 @@ runs:
         if [[ "${{ inputs.version }}" =~ ^v[0-9]\.[0-9]\.[0-9]$ ]]
         then
         echo "version number valid: ${{ inputs.version }}"
-        echo "version=$(echo $VERSION_NUMBER)" >> $GITHUB_OUTPUT
+        version="${{ inputs.version }}"
+        version=${name:1}
+        echo "version=$(echo $version)" >> $GITHUB_OUTPUT
         exit 0
         else
         echo "version number not valid: ${{ inputs.version }}"
