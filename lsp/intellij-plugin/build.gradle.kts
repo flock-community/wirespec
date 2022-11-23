@@ -23,6 +23,13 @@ intellij {
   type.set("IC")
 }
 
+
+tasks.publishPlugin {
+  channels.set(listOf("beta"))
+  token.set(System.getenv("JETBRAINS_TOKEN"))
+}
+
+
 tasks {
   buildSearchableOptions {
     enabled = false

@@ -90,8 +90,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      ORG_GRADLE_PROJECT_channels: beta
-      ORG_GRADLE_PROJECT_intellijPublishToken: ${{ secrets.JETBRAINS_TOKEN }}
+      JETBRAINS_TOKEN: ${{ secrets.JETBRAINS_TOKEN }}
 
     needs:
       - build-all-but-mac
