@@ -3,12 +3,11 @@ name: Publish
 on:
   push:
     branches:
-  workflow_dispatch:
-    inputs:
-      version:
-        required: true
 
 jobs:
+
+  env:
+    VERSION: "0.0.0"
 
   test:
 
@@ -20,4 +19,4 @@ jobs:
         id: version
         uses: ./.github/actions/version
         with:
-          version: ${{ github.event.inputs.version }}
+          version: ${{ env.VERSION }}

@@ -8,7 +8,7 @@ inputs:
 outputs:
   version:
     description: 'Version number'
-    value: ${{ steps.version.outputs.version-number }}
+    value: ${{ steps.version.outputs.version }}
 runs:
   using: 'composite'
   steps:
@@ -16,13 +16,13 @@ runs:
       name: Version number
       shell: bash
       run: |
-        if [[ "v0.0" =~ ^v[0-9]\.[0-9]\.[0-9]$ ]]
+        if [[ "${{ inputs.version }}" =~ ^v[0-9]\.[0-9]\.[0-9]$ ]]
         then
-        echo "version number valid"
+        echo "version number valid: ${{ inputs.version }"
         echo "version=$(echo $VERSION_NUMBER)" >> $GITHUB_OUTPUT
         exit 0
         else
-        echo "version number not valid!"
+        echo "version number not valid: ${{ inputs.version }"
         echo "Please make sure version number matches: ^v[0-9]\.[0-9]\.[0-9]$"
         exit 1
         fi
