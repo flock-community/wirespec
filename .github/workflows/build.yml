@@ -19,8 +19,6 @@ jobs:
     env:
       WIRESPEC_BUILD_LINUX: true
       WIRESPEC_BUILD_WINDOWS: true
-      JFROG_USERNAME: ${{ secrets.JFROG_USERNAME }}
-      JFROG_TOKEN: ${{ secrets.JFROG_TOKEN }}
 
     steps:
       - uses: actions/checkout@v3
@@ -88,10 +86,17 @@ jobs:
           path: compiler/cli/build/bin/macosArm64/releaseExecutable/cli.kexe
 
   publish:
+
     runs-on: ubuntu-latest
+
+    env:
+      JFROG_USERNAME: ${{ secrets.JFROG_USERNAME }}
+      JFROG_TOKEN: ${{ secrets.JFROG_TOKEN }}
+
     needs:
       - build-all-but-mac
       - build-mac
+
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK
