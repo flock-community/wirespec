@@ -130,3 +130,4 @@ jobs:
       - name: Run
         run: |
           ./gradlew :lsp:intellij-plugin:publishPlugin
+
