@@ -32,4 +32,5 @@ jobs:
     steps:
       - run: |
           echo "Hello: ${{needs.version.outputs.version}}"
+          exit 0
     
