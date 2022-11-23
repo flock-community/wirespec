@@ -84,7 +84,7 @@ jobs:
           name: wirespec-cli-macos-arm64
           path: compiler/cli/build/bin/macosArm64/releaseExecutable/cli.kexe
 
-  publish:
+  publish_plugins:
 
     runs-on: ubuntu-latest
 
