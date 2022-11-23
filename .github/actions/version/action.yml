@@ -22,7 +22,7 @@ runs:
         version="${{ inputs.version }}"
         version=${version:1}
         echo "version=$version"
-        echo "version=$(echo $version)" >> $GITHUB_OUTPUT
+        echo "version=$version" >> $GITHUB_OUTPUT
         exit 0
         else
         echo "version number not valid: ${{ inputs.version }}"
