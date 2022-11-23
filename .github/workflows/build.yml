@@ -12,6 +12,9 @@ concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  VERSION: "v0.0.1"
+
 jobs:
 
   build-all-but-mac:
@@ -89,21 +92,22 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    # if: github.event_name == 'release' && github.event.action == 'published'
+
     needs:
       - build-all-but-mac
       - build-mac
 
+    outputs:
+      version: ${{steps.version.outputs.version}}
+
     steps:
-      - name: Generate version
-        run: |
-          if [[ "v0.0" =~ ^v[0-9]\.[0-9]\.[0-9]$ ]]
-          then
-            echo "version number valid"
-            exit 0
-          else
-            echo "version number not valid"
-            exit 1
-          fi
+      - uses: actions/checkout@v3
+      - id: version
+        name: Generate version
+        uses: ./.github/actions/version
+        with:
+          version: ${{ env.VERSION }}
 
   publish_extension_intellij:
 
@@ -111,7 +115,7 @@ jobs:
 
     env:
       JETBRAINS_TOKEN: ${{ secrets.JETBRAINS_TOKEN }}
-      VERSION: ${{ github.event.release.tag_name }}
+      VERSION: ${{needs.version.outputs.version}}
 
     needs:
       - version
