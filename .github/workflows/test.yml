@@ -4,10 +4,10 @@ on:
   push:
     branches:
 
-jobs:
+env:
+  VERSION: "0.0.0"
 
-  env:
-    VERSION: "0.0.0"
+jobs:
 
   test:
 
@@ -20,3 +20,4 @@ jobs:
         uses: ./.github/actions/version
         with:
           version: ${{ env.VERSION }}
+
