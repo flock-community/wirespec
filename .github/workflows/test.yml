@@ -27,5 +27,5 @@ jobs:
       - version
     steps:
       - run: |
-          ${{needs.version.steps.version.outputs.version}}
+          echo "${{needs.version.steps.version.outputs.version}}"
     
