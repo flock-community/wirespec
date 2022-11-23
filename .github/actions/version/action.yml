@@ -21,6 +21,7 @@ runs:
         echo "version number valid: ${{ inputs.version }}"
         version="${{ inputs.version }}"
         version=${name:1}
+        echo "version=$(echo $version)"
         echo "version=$(echo $version)" >> $GITHUB_OUTPUT
         exit 0
         else
