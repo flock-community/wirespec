@@ -1,0 +1,28 @@
+name: 'Version number'
+description: 'Check if version number is corect'
+inputs:
+  version:  # id of input
+    description: 'Who to greet'
+    required: true
+    default: 'World'
+outputs:
+  version:
+    description: 'Version number'
+    value: ${{ steps.version.outputs.version-number }}
+runs:
+  using: 'composite'
+  steps:
+    - id: version
+      name: Version number
+      shell: bash
+      run: |
+        if [[ "v0.0" =~ ^v[0-9]\.[0-9]\.[0-9]$ ]]
+        then
+        echo "version number valid"
+        echo "version=$(echo $VERSION_NUMBER)" >> $GITHUB_OUTPUT
+        exit 0
+        else
+        echo "version number not valid!"
+        echo "Please make sure version number matches: `^v[0-9]\.[0-9]\.[0-9]$`"
+        exit 1
+        fi

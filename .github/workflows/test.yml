@@ -1,0 +1,24 @@
+name: Java CI with Gradle
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate version
+        id: version
+        uses: ./.github/actions/version
+        with:
+          version: ${{ github.event.inputs.version }}
