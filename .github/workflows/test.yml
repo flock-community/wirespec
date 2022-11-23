@@ -24,7 +24,7 @@ jobs:
           version="${{ env.VERSION }}"
           version=${version:1}
           echo "version=$version"
-          echo "version=123" >> $GITHUB_OUTPUT
+          echo "version=$version" >> $GITHUB_OUTPUT
           exit 0
           else
           echo "version number not valid: ${{ env.VERSION }}"
