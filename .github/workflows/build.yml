@@ -90,7 +90,7 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    if: github.event_name == 'release' && github.event.action == 'published'
+    if: github.event_name == 'release' && github.event.action == 'created'
 
     needs:
       - build-all-but-mac
@@ -99,16 +99,13 @@ jobs:
     outputs:
       version: ${{steps.version.outputs.version}}
 
-    env:
-      VERSION: "v0.0.2"
-
     steps:
       - uses: actions/checkout@v3
       - id: version
         name: Generate version
         uses: ./.github/actions/version
         with:
-          version: ${{ env.VERSION }}
+          version: ${{ github.event.release.tag_name }}
 
   release_intellij:
 
