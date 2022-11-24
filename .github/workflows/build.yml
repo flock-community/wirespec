@@ -100,7 +100,7 @@ jobs:
       version: ${{steps.version.outputs.version}}
 
     env:
-      VERSION: "v0.0.1"
+      VERSION: "v0.0.2"
 
     steps:
       - uses: actions/checkout@v3
@@ -110,7 +110,7 @@ jobs:
         with:
           version: ${{ env.VERSION }}
 
-  publish_extension_intellij:
+  release_intellij:
 
     runs-on: ubuntu-latest
 
@@ -132,7 +132,7 @@ jobs:
         run: |
           ./gradlew :lsp:intellij-plugin:publishPlugin
 
-  upload_release:
+  release_cli:
 
     runs-on: ubuntu-latest
 
@@ -140,12 +140,23 @@ jobs:
       - version
 
     steps:
-      - uses: actions/checkout@v3
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/download-artifact@v3
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./Makefile
-          asset_name: Makefile
+          name: wirespec-cli-macos-x86
+      - uses: actions/download-artifact@v3
+        with:
+          name: wirespec-cli-macos-arm64
+      - uses: actions/download-artifact@v3
+        with:
+          name: wirespec-cli-linux
+      - uses: actions/download-artifact@v3
+        with:
+          name: wirespec-cli-windows
+      - name: Upload assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            compiler/cli/build/bin/linuxX64/releaseExecutable/cli.kexe
+            compiler/cli/build/bin/mingwX64/releaseExecutable/cli.exe
+            compiler/cli/build/bin/macosX64/releaseExecutable/cli.kexe
+            compiler/cli/build/bin/macosArm64/releaseExecutable/cli.kexe
