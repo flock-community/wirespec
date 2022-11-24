@@ -90,7 +90,7 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    # if: github.event_name == 'release' && github.event.action == 'published'
+    if: github.event_name == 'release' && github.event.action == 'published'
 
     needs:
       - build-all-but-mac
@@ -132,3 +132,20 @@ jobs:
         run: |
           ./gradlew :lsp:intellij-plugin:publishPlugin
 
+  upload_release:
+
+    runs-on: ubuntu-latest
+
+    needs:
+      - version
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./Makefile
+          asset_name: Makefile
