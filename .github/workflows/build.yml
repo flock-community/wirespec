@@ -107,7 +107,7 @@ jobs:
         with:
           version: ${{ github.event.release.tag_name }}
 
-  release_intellij:
+  release-intellij:
 
     runs-on: ubuntu-latest
 
@@ -129,7 +129,7 @@ jobs:
         run: |
           ./gradlew :lsp:intellij-plugin:publishPlugin
 
-  release_cli:
+  release-cli:
 
     runs-on: ubuntu-latest
 
