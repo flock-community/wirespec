@@ -42,12 +42,12 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: wirespec-cli-linux
-          path: compiler/cli/build/bin/linuxX64/releaseExecutable/cli.kexe
+          path: artifacts/linuxX64/releaseExecutable/cli.kexe
       - name: Archive windows cli
         uses: actions/upload-artifact@v3
         with:
           name: wirespec-cli-windows
-          path: compiler/cli/build/bin/mingwX64/releaseExecutable/cli.exe
+          path: artifacts/mingwX64/releaseExecutable/cli.exe
       - name: Archive vscode extension
         uses: actions/upload-artifact@v3
         with:
@@ -81,12 +81,12 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: wirespec-cli-macos-x86
-          path: compiler/cli/build/bin/macosX64/releaseExecutable/cli.kexe
+          path: artifacts/macosX64/releaseExecutable/cli.kexe
       - name: Archive macosArm64 cli
         uses: actions/upload-artifact@v3
         with:
           name: wirespec-cli-macos-arm64
-          path: compiler/cli/build/bin/macosArm64/releaseExecutable/cli.kexe
+          path: artifacts/macosArm64/releaseExecutable/cli.kexe
 
   version:
 
@@ -193,20 +193,24 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: wirespec-cli-macos-x86
+          path: artifacts/macosX64
       - uses: actions/download-artifact@v3
         with:
           name: wirespec-cli-macos-arm64
+          path: artifacts/macosArm64
       - uses: actions/download-artifact@v3
         with:
           name: wirespec-cli-linux
+          path: artifacts/linuxX64
       - uses: actions/download-artifact@v3
         with:
           name: wirespec-cli-windows
+          path: artifacts/mingwX64
       - name: Upload assets
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            compiler/cli/build/bin/linuxX64/releaseExecutable/cli.kexe
-            compiler/cli/build/bin/mingwX64/releaseExecutable/cli.exe
-            compiler/cli/build/bin/macosX64/releaseExecutable/cli.kexe
-            compiler/cli/build/bin/macosArm64/releaseExecutable/cli.kexe
+            artifacts/linuxX64/cli.kexe
+            artifacts/mingwX64/cli.exe
+            artifacts/macosX64/cli.kexe
+            artifacts/macosArm64/cli.kexe
