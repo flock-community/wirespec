@@ -101,3 +101,4 @@ jobs:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ./Makefile
           asset_name: Makefile
+          asset_content_type: text/plain
