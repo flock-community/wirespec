@@ -5,6 +5,8 @@ on:
     branches: [ "master" ]
   pull_request:
     branches:
+  release:
+    types: [ "created" ]
 
 concurrency:
   group: ${{ github.ref }}
@@ -82,3 +84,20 @@ jobs:
         with:
           name: wirespec-cli-macos-arm64
           path: compiler/cli/build/bin/macosArm64/releaseExecutable/cli.kexe
+
+  upload_release:
+
+    runs-on: ubuntu-latest
+
+    if: github.event_name == 'release' && github.event.action == 'created'
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./Makefile
+          asset_name: Makefile
