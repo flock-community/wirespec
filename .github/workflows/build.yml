@@ -107,13 +107,39 @@ jobs:
         with:
           version: ${{ github.event.release.tag_name }}
 
+  release-plugin-gradle:
+
+    runs-on: ubuntu-latest
+
+    env:
+      VERSION: ${{needs.version.outputs.version}}
+
+    needs:
+      - version
+
+    steps:
+
+
+  release-plugin-maven:
+
+    runs-on: ubuntu-latest
+
+    env:
+      VERSION: ${{needs.version.outputs.version}}
+
+    needs:
+      - version
+
+    steps:
+
+
   release-intellij:
 
     runs-on: ubuntu-latest
 
     env:
-      JETBRAINS_TOKEN: ${{ secrets.JETBRAINS_TOKEN }}
       VERSION: ${{needs.version.outputs.version}}
+      JETBRAINS_TOKEN: ${{ secrets.JETBRAINS_TOKEN }}
 
     needs:
       - version
