@@ -37,7 +37,7 @@
             <plugin>
                 <groupId>community.flock.wirespec.plugin.maven</groupId>
                 <artifactId>maven</artifactId>
-                <version>0.0.1-SNAPSHOT</version>
+                <version>0.0.0</version>
                 <executions>
                     <execution>
                         <id>java</id>

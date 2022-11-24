@@ -7,7 +7,7 @@
     <id>community.flock.wirespec.lsp.intellij_plugin</id>
 
     <!-- Text to display as name on Preferences/Settings | Plugin page -->
-    <name>Wire spec</name>
+    <name>Wirespec</name>
 
     <!-- Product and plugin compatibility requirements -->
     <depends>com.intellij.modules.platform</depends>
@@ -15,13 +15,17 @@
     <!-- Text to display as description on Preferences/Settings | Plugin page -->
     <description>
         <![CDATA[
-      Wirespec intellij plugin for a great developer experience.
+      Wirespec is a typesafe language to specify data transfer models which are exchanged between services. These models can be transformed into bindings for a specific languages (Typescript, Java, Kotlin, Scala).
+
+      This plugin supports writing Wirespec files by syntax highlighting and compiler feedback for a smooth developer experience.
+
+      More information about Wirespec can be found on github: https://github.com/flock-community/wirespec
     ]]>
     </description>
     <change-notes>
         <![CDATA[
       <ul>
-        <li><b>1.0.0</b> Initial version</li>
+        <li><b>0.0.1</b> Initial version</li>
       </ul>
     ]]>
     </change-notes>
@@ -49,7 +53,5 @@
         <gotoSymbolContributor
                 implementation="community.flock.wirespec.lsp.intellij_plugin.ChooseByNameContributor"/>
     </extensions>
-
-    <depends>com.intellij.modules.platform</depends>
 
 </idea-plugin>

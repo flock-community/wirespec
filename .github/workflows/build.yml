@@ -29,6 +29,7 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: gradle
       - uses: actions/setup-node@v3
         with:
           node-version: 16
@@ -57,6 +58,7 @@ jobs:
         with:
           name: wirespec-intellij-plugin
           path: lsp/intellij-plugin/build/distributions/intellij-plugin-*.zip
+
   build-mac:
 
     runs-on: macos-latest
@@ -72,6 +74,7 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: gradle
       - name: Run
         run: ./gradlew build
       - name: Archive macosX86 cli
@@ -85,16 +88,125 @@ jobs:
           name: wirespec-cli-macos-arm64
           path: compiler/cli/build/bin/macosArm64/releaseExecutable/cli.kexe
 
-  upload_release:
+  version:
 
     runs-on: ubuntu-latest
 
     if: github.event_name == 'release' && github.event.action == 'created'
 
+    needs:
+      - build-all-but-mac
+      - build-mac
+
+    outputs:
+      version: ${{steps.version.outputs.version}}
+
     steps:
       - uses: actions/checkout@v3
+      - id: version
+        name: Generate version
+        uses: ./.github/actions/version
+        with:
+          version: ${{ github.event.release.tag_name }}
+
+  release-plugin-gradle:
+
+    runs-on: ubuntu-latest
+
+    needs:
+      - version
+
+    env:
+      VERSION: ${{needs.version.outputs.version}}
+      JFROG_USERNAME: ${{ secrets.JFROG_USERNAME }}
+      JFROG_TOKEN: ${{ secrets.JFROG_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+      - name: Run
+        run: |
+          ./gradlew :plugin:gradle:publish
+
+
+  release-plugin-maven:
+
+    runs-on: ubuntu-latest
+
+    needs:
+      - version
+
+    env:
+      VERSION: ${{needs.version.outputs.version}}
+      JFROG_USERNAME: ${{ secrets.JFROG_USERNAME }}
+      JFROG_TOKEN: ${{ secrets.JFROG_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+      - name: Run
+        run: |
+          ./gradlew :plugin:maven:publish
+
+
+  release-intellij:
+
+    runs-on: ubuntu-latest
+
+    needs:
+      - version
+
+    env:
+      VERSION: ${{needs.version.outputs.version}}
+      JETBRAINS_TOKEN: ${{ secrets.JETBRAINS_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+      - name: Run
+        run: |
+          ./gradlew :lsp:intellij-plugin:publishPlugin
+
+  release-cli:
+
+    runs-on: ubuntu-latest
+
+    needs:
+      - version
+
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: wirespec-cli-macos-x86
+      - uses: actions/download-artifact@v3
+        with:
+          name: wirespec-cli-macos-arm64
+      - uses: actions/download-artifact@v3
+        with:
+          name: wirespec-cli-linux
+      - uses: actions/download-artifact@v3
+        with:
+          name: wirespec-cli-windows
       - name: Upload assets
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            Makefile
+            compiler/cli/build/bin/linuxX64/releaseExecutable/cli.kexe
+            compiler/cli/build/bin/mingwX64/releaseExecutable/cli.exe
+            compiler/cli/build/bin/macosX64/releaseExecutable/cli.kexe
+            compiler/cli/build/bin/macosArm64/releaseExecutable/cli.kexe

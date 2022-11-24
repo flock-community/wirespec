@@ -1,4 +1,4 @@
 object Settings {
     val groupId: String = "community.flock.wirespec"
-    val version: String = "0.0.1-SNAPSHOT"
+    val version: String = System.getenv("VERSION") ?: "0.0.0"
 }

@@ -1,5 +1,9 @@
 # Wirespec
-Version 0.0.1
+Type safe wires made easy
+
+## Introduction
+Wirespec is a typesafe language to specify data transfer models which are exchanged between services. These models can be transformed into bindings for a specific language (Typescript, Java, Kotlin, Scala).
+
 ## Dependencies
 * JDK 17
 * Node 16
@@ -11,6 +15,8 @@ make all
 ```
 to compile the project and test the Wirespec compiler with definitions found in
 `types`. Locate the result in `types/out`
+
+
 
 ## Maven
 Example how to use the maven plugin  
