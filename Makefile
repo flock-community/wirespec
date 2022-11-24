@@ -29,3 +29,7 @@ linux:
 example:
 	$(shell pwd)/scripts/example.sh
 .PHONY: example
+
+publish:
+	$(shell pwd)/scripts/publish.sh
+.PHONY: publish

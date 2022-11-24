@@ -26,3 +26,22 @@ gradlePlugin {
 tasks.publishToMavenLocal {
     dependsOn(":compiler:core:publishToMavenLocal")
 }
+
+publishing {
+    publications {
+        create<MavenPublication>("wirespec") {
+            from(components["java"])
+        }
+    }
+
+    repositories {
+        maven {
+            credentials {
+                username = System.getenv("JFROG_USERNAME")
+                password = System.getenv("JFROG_TOKEN")
+            }
+            name = "flock-maven"
+            url = uri("https://flock.jfrog.io/artifactory/flock-maven")
+        }
+    }
+}
