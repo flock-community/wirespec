@@ -98,3 +98,13 @@ wirespec {
     }
 }
 ```
+
+## Release process
+A release can be made using github the UI. 
+Go to https://github.com/flock-community/wirespec/releases/new
+
+![release](images/release.png)
+
+- Create a tag according to the following pattern `v*.*.*`
+- Enter the release title `Release *.*.*`
+- Click `Publish release`
