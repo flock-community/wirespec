@@ -206,11 +206,17 @@ jobs:
         with:
           name: wirespec-cli-windows
           path: artifacts/mingwX64
+      - run: |
+          mkdir uploads
+          cp artifacts/linuxX64/cli.kexe uploads/linuxX64.kexe
+          cp artifacts/mingwX64/cli.exe uploads/mingwX64.exe
+          cp artifacts/macosX64/cli.kexe uploads/macosX64.kexe
+          cp artifacts/macosArm64/cli.kexe uploads/macosArm64.kexe
       - name: Upload assets
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            artifacts/linuxX64/cli.kexe
-            artifacts/mingwX64/cli.exe
-            artifacts/macosX64/cli.kexe
-            artifacts/macosArm64/cli.kexe
+            uploads/linuxX64.kexe
+            uploads/mingwX64.exe
+            uploads/macosX64.kexe
+            uploads/macosArm64.kexe
