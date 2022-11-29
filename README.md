@@ -26,7 +26,6 @@ Instructions on how to install different components
 curl -L https://github.com/flock-community/wirespec/releases/latest/download/linuxX64.kexe -o wirespec
 ```
 
-
 ### macOS
 ```
 curl -L https://github.com/flock-community/wirespec/releases/latest/download/macosX64.kexe -o wirespec
