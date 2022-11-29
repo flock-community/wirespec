@@ -17,22 +17,30 @@ to compile the project and test the Wirespec compiler with definitions found in
 `types`. Locate the result in `types/out`
 
 # Install
-Instructions to install different components
+Instructions on how to install different components
 
 ## Cli
 
 ### Linux
+```
 curl -L https://github.com/flock-community/wirespec/releases/latest/download/linuxX64.kexe -o wirespec
+```
+
 
 ### macOS
+```
 curl -L https://github.com/flock-community/wirespec/releases/latest/download/macosX64.kexe -o wirespec
-
+```
 
 ### macOS Arm
+```
 curl -L https://github.com/flock-community/wirespec/releases/latest/download/macosArm64.kexe -o wirespec
+```
 
+```
 chmod +x wirespec
 sudo mv ./wirespec /usr/local/bin/wirespec
+```
 
 ## Maven
 Example how to use the maven plugin  
