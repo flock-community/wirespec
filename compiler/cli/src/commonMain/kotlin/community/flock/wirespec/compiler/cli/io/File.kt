@@ -5,9 +5,9 @@ interface Copy {
     fun copy(fileName: String): File
 }
 
-expect abstract class File(path: DirPath) : Copy {
+expect abstract class File(path: FullFilePath) : Copy {
 
-    val path: DirPath
+    val path: FullFilePath
 
     fun read(): String
 

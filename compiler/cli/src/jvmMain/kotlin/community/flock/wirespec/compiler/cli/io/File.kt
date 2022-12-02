@@ -3,15 +3,13 @@ package community.flock.wirespec.compiler.cli.io
 import kotlin.text.Charsets.UTF_8
 import java.io.File as JavaFile
 
-actual abstract class File actual constructor(actual val path: DirPath) : Copy {
+actual abstract class File actual constructor(actual val path: FullFilePath) : Copy {
 
-    actual fun read(): String = JavaFile(path.fullFilePath).readText(UTF_8)
+    actual fun read(): String = JavaFile(path.toString()).readText(UTF_8)
 
-    actual fun write(text: String) = path
-        .also { JavaFile(it.directory).run { if (!exists()) mkdirs() } }
-        .fullFilePath.split(".")
-        .joinToString("-from-jvm.")
-        .let { JavaFile(it) }
-        .writeText(text, UTF_8)
+    actual fun write(text: String) = path.copy(directory = path.directory.split("out").joinToString("out/jvm")).run {
+        JavaFile(directory).also { if (!it.exists()) it.mkdirs() }
+        JavaFile(this.toString()).writeText(text, UTF_8)
+    }
 
 }
