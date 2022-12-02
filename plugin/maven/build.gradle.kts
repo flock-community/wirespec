@@ -38,7 +38,7 @@ mavenPlugin {
 
 publishing {
     publications {
-        create<MavenPublication>("wirespec") {
+        create<MavenPublication>("maven") {
             from(components["java"])
         }
     }
