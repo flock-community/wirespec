@@ -180,6 +180,43 @@ jobs:
         run: |
           ./gradlew :lsp:intellij-plugin:publishPlugin
 
+  release-vscode:
+
+    runs-on: ubuntu-latest
+
+    needs:
+      - version
+
+    env:
+      VERSION: ${{needs.version.outputs.version}}
+      VSCE_PAT: ${{ secrets.VSCODE_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Build lib
+        run: |
+          ./gradlew :compiler:lib:build &&
+      - name: Build server
+        working-directory: ./lsp/node/server
+        run: |
+          npm i
+          npm run build
+      - name: Build extension
+        working-directory: ./lsp/node/client
+        run: |
+          npm i
+          npm run build 
+          npm run vscode:publish 
+
   release-cli:
 
     runs-on: ubuntu-latest
@@ -242,3 +279,5 @@ jobs:
       - name: Run
         run: |
           ./gradlew :compiler:core:publish
+
+  release-
