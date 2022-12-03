@@ -38,8 +38,11 @@
     "package": "vsce package --out build --allow-star-activation",
     "start": "npm run build",
     "update": "update-ruecksichtslos && npm i",
-    "vscode:prepublish": "npm run esbuild:base -- --minify"
+    "vscode:prepublish": "npm run esbuild:base -- --minify",
+    "vscode:login": "vsce login",
+    "vscode:publish": "vsce publish"
   },
+  "publisher": "Wirespec",
   "prettier": {
     "printWidth": 120
   },
