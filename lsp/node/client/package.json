@@ -1,7 +1,7 @@
 {
-  "name": "wirespec-client-vscode",
-  "displayName": "wirespec-client-vscode",
-  "version": "0.0.1",
+  "name": "wirespec-vscode-plugin",
+  "displayName": "wirespec",
+  "version": "0.0.0",
   "engines": {
     "vscode": "^1.40.0"
   },
