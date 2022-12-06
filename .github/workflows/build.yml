@@ -215,6 +215,7 @@ jobs:
         run: |
           npm i
           npm run build 
+          npm version $VERSION
           npm run vscode:publish 
 
   release-cli:
