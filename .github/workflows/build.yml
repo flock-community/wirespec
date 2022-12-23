@@ -20,7 +20,7 @@ jobs:
 
     env:
       WIRESPEC_BUILD_LINUX: true
-      WIRESPEC_BUILD_WINDOWS: true
+      WIRESPEC_BUILD_WINDOWS: false
 
     steps:
       - uses: actions/checkout@v3
@@ -43,11 +43,11 @@ jobs:
         with:
           name: wirespec-cli-linux
           path: compiler/cli/build/bin/linuxX64/releaseExecutable/cli.kexe
-      - name: Archive windows cli
-        uses: actions/upload-artifact@v3
-        with:
-          name: wirespec-cli-windows
-          path: compiler/cli/build/bin/mingwX64/releaseExecutable/cli.exe
+#      - name: Archive windows cli
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: wirespec-cli-windows
+#          path: compiler/cli/build/bin/mingwX64/releaseExecutable/cli.exe
       - name: Archive vscode extension
         uses: actions/upload-artifact@v3
         with:
