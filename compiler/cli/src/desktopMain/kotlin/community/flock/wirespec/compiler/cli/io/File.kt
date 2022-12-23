@@ -11,11 +11,13 @@ import platform.posix.fclose
 import platform.posix.fgets
 import platform.posix.fopen
 import platform.posix.fputs
+import platform.posix.mkdir
+import platform.posix.opendir
 
-actual abstract class File actual constructor(actual val path: DirPath) : Copy {
+actual abstract class File actual constructor(actual val path: FullFilePath) : Copy {
 
     actual fun read() = StringBuilder().apply {
-        fopen(path.fullFilePath, "r")?.let { file ->
+        fopen(path.toString(), "r")?.let { file ->
             try {
                 memScoped {
                     val buffer = allocArray<ByteVar>(bufferLength)
@@ -28,19 +30,23 @@ actual abstract class File actual constructor(actual val path: DirPath) : Copy {
             } finally {
                 fclose(file)
             }
-        } ?: throw FileReadException("Cannot open input file ${path.fullFilePath}")
+        } ?: throw FileReadException("Cannot open input file $path")
     }.toString()
 
     actual fun write(text: String) {
-        val file = fopen(path.fullFilePath.split(".").joinToString("-from-native."), "w")
-            ?: throw FileReadException("Cannot open output file ${path.fullFilePath}")
-        try {
-            memScoped {
-                if (fputs(text, file) == EOF) throw FileWriteException("File write error")
+        val directory = path.directory
+            .split("out")
+            .joinToString("out/native")
+            .apply {
+                split("/").reduce { acc, cur -> "$acc/$cur".also { opendir(it) ?: mkdir(it, 493) } }
             }
-        } finally {
-            fclose(file)
-        }
+
+        val nativePath = path.copy(directory = directory)
+
+        fopen(nativePath.toString(), "w")?.runCatching {
+            let { memScoped { if (fputs(text, it) == EOF) throw FileWriteException("File write error") } }
+            fclose(this)
+        } ?: throw FileReadException("Cannot open output file $nativePath")
     }
 
     companion object {

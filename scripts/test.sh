@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 artifactName="cli"
-version="0.0.1-SNAPSHOT"
+version="0.0.0"
 languages="Java,Kotlin,Scala,TypeScript"
 
 buildNothing=false

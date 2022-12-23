@@ -4,7 +4,7 @@ import community.flock.wirespec.compiler.cli.Language.Jvm.Java
 import community.flock.wirespec.compiler.cli.Language.Jvm.Kotlin
 import community.flock.wirespec.compiler.cli.Language.Jvm.Scala
 import community.flock.wirespec.compiler.cli.Language.Script.TypeScript
-import community.flock.wirespec.compiler.cli.io.DirPath
+import community.flock.wirespec.compiler.cli.io.FullFilePath
 import community.flock.wirespec.compiler.cli.io.Directory
 import community.flock.wirespec.compiler.cli.io.Extension
 import community.flock.wirespec.compiler.cli.io.JavaFile
@@ -42,7 +42,7 @@ private fun Logger.from(s: String): Language? = Language.valueOf(s).also {
 
 fun main(args: Array<String>) {
 
-    val basePath = args.orNull(0) ?: ""
+    val inputDir = args.orNull(0) ?: ""
     val languages = args.orNull(1)
         ?.split(",")
         ?.mapNotNull(logger::from)
@@ -50,7 +50,7 @@ fun main(args: Array<String>) {
         ?: setOf(Kotlin)
     val packageName = args.orNull(2) ?: DEFAULT_PACKAGE_NAME
 
-    compile(languages, basePath, packageName)
+    compile(languages, inputDir, packageName)
 
 }
 
@@ -78,9 +78,9 @@ private fun compile(languages: Set<Language>, inputDir: String, packageName: Str
             .forEach { it.getOrHandle { error -> throw error } }
     }
 
-fun DirPath.out(packageName: String) = { extension: Extension ->
+fun FullFilePath.out(packageName: String) = { extension: Extension ->
     copy(
-        directory = "$directory/out/${packageName.split('.').joinToString("/")}",
+        directory = "$directory/out/${extension.name.lowercase()}/${packageName.split('.').joinToString("/")}",
         extension = extension
     )
 }
