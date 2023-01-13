@@ -1,7 +1,6 @@
 package community.flock.wirespec.compiler.core.parse
 
-import community.flock.wirespec.compiler.core.Either
-import community.flock.wirespec.compiler.core.either
+import arrow.core.continuations.eagerEffect
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
 import community.flock.wirespec.compiler.core.parse.Type.Name
@@ -29,72 +28,74 @@ typealias AST = List<Node>
 
 class Parser(private val logger: Logger) {
 
-    fun parse(tokens: List<Token>): Either<CompilerException, AST> = either {
+    fun parse(tokens: List<Token>) = eagerEffect {
         tokens
             .filterNot { it.type is WhiteSpace }
             .toProvider(logger)
-            .parse()
+            .parse().bind()
+    }.toEither()
+
+    private fun TokenProvider.parse() = eagerEffect<CompilerException, AST> {
+        mutableListOf<Definition>()
+            .apply { while (hasNext()) add(parseDefinition().bind()) }
     }
 
-    private fun TokenProvider.parse(): AST = mutableListOf<Definition>()
-        .apply { while (hasNext()) add(parseDefinition()) }
-
-    private fun TokenProvider.parseDefinition(): Definition = run {
+    private fun TokenProvider.parseDefinition() = eagerEffect<CompilerException, Definition> {
         token.log()
         when (token.type) {
-            is WsTypeDef -> parseTypeDeclaration()
-            else -> throw WrongTokenException(WsTypeDef::class, token)
+            is WsTypeDef -> parseTypeDeclaration().bind()
+            else -> shift(WrongTokenException(WsTypeDef::class, token))
         }
     }
 
-    private fun TokenProvider.parseTypeDeclaration(): Type = run {
+    private fun TokenProvider.parseTypeDeclaration() = eagerEffect {
         eatToken()
         token.log()
         when (token.type) {
-            is CustomType -> parseTypeDefinition(token.value)
-            else -> throw WrongTokenException(CustomType::class, token)
+            is CustomType -> parseTypeDefinition(token.value).bind()
+            else -> shift(WrongTokenException(CustomType::class, token))
         }
     }
 
-    private fun TokenProvider.parseTypeDefinition(typeName: String): Type = run {
+    private fun TokenProvider.parseTypeDefinition(typeName: String) = eagerEffect {
         eatToken()
         token.log()
         when (token.type) {
-            is LeftCurly -> Type(Name(typeName), parseTypeShape())
-            else -> throw WrongTokenException(LeftCurly::class, token)
+            is LeftCurly -> Type(Name(typeName), parseTypeShape().bind())
+            else -> shift(WrongTokenException(LeftCurly::class, token))
         }.also {
             when (token.type) {
                 is RightCurly -> eatToken()
-                else -> throw WrongTokenException(RightCurly::class, token)
+                else -> shift(WrongTokenException(RightCurly::class, token))
             }
         }
     }
 
-    private fun TokenProvider.parseTypeShape(): Shape = run {
+    private fun TokenProvider.parseTypeShape() = eagerEffect {
         eatToken()
         token.log()
         when (token.type) {
             is CustomValue -> mutableListOf<Field>().apply {
-                add(parseField(Field.Key(token.value)))
+                add(parseField(Field.Key(token.value)).bind())
                 while (token.type == Comma) {
                     eatToken()
                     when (token.type) {
-                        is CustomValue -> add(parseField(Field.Key(token.value)))
-                        else -> throw WrongTokenException(CustomValue::class, token)
+                        is CustomValue -> add(parseField(Field.Key(token.value)).bind())
+                        else -> shift(WrongTokenException(CustomValue::class, token))
                     }
                 }
             }
 
-            else -> throw WrongTokenException(CustomValue::class, token)
+            else -> shift(WrongTokenException(CustomValue::class, token))
         }.let(::Shape)
     }
 
-    private fun TokenProvider.parseField(key: Field.Key): Field = run {
+    private fun TokenProvider.parseField(key: Field.Key) = eagerEffect<CompilerException, Field> {
         eatToken()
         token.log()
         when (token.type) {
             is Colon -> eatToken()
-            else -> throw WrongTokenException(Colon::class, token)
+            else -> shift(WrongTokenException(Colon::class, token))
         }
         when (val type = token.type) {
             is WsType -> Field(
@@ -103,7 +104,7 @@ class Parser(private val logger: Logger) {
                 isNullable = (token.type is QuestionMark).also { if (it) eatToken() }
             )
 
-            else -> throw WrongTokenException(CustomType::class, token)
+            else -> shift(WrongTokenException(CustomType::class, token))
         }
     }
 

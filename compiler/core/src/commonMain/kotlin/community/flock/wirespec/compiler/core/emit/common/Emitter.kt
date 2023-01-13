@@ -1,7 +1,6 @@
 package community.flock.wirespec.compiler.core.emit.common
 
-import community.flock.wirespec.compiler.core.Either
-import community.flock.wirespec.compiler.core.either
+import arrow.core.continuations.eagerEffect
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Type
@@ -9,7 +8,7 @@ import community.flock.wirespec.compiler.utils.Logger
 
 abstract class Emitter(val logger: Logger, val split: Boolean = false) : TypeDefinitionEmitter {
 
-    open fun emit(ast: AST): Either<CompilerException, List<Pair<String, String>>> = either {
+    open fun emit(ast: AST) = eagerEffect<CompilerException, List<Pair<String, String>>> {
         ast
             .map {
                 logger.log("Emitting Node $this")
@@ -25,7 +24,7 @@ abstract class Emitter(val logger: Logger, val split: Boolean = false) : TypeDef
                         .dropLast(1)
                 )
             }
-    }
+    }.toEither()
 
     companion object {
         const val SPACER = "  "

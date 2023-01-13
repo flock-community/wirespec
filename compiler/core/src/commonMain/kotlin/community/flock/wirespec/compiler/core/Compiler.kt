@@ -1,5 +1,7 @@
 package community.flock.wirespec.compiler.core
 
+import arrow.core.Either
+import arrow.core.flatMap
 import community.flock.wirespec.compiler.core.Reported.EMITTED
 import community.flock.wirespec.compiler.core.Reported.PARSED
 import community.flock.wirespec.compiler.core.Reported.TOKENIZED
@@ -23,7 +25,7 @@ fun LanguageSpec.compile(source: String): (Logger) -> (Emitter) -> Either<Compil
                 .also((PARSED::report)(it))
                 .map { it.validate() }
                 .also((VALIDATED::report)(it))
-                .flatMap(emitter::emit)
+                .flatMap { emitter.emit(it) }
                 .also((EMITTED::report)(it))
         }
     }
