@@ -1,3 +1,5 @@
+import Libraries.`arrow-core`
+
 plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
@@ -24,6 +26,11 @@ kotlin {
         withJava()
     }
     sourceSets {
+        commonMain {
+            dependencies {
+                api(`arrow-core`)
+            }
+        }
         commonTest {
             dependencies {
                 implementation(kotlin("test-common"))

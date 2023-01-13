@@ -1,4 +1,4 @@
-import community.flock.wirespec.compiler.core.Either
+import arrow.core.Either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 
 @ExperimentalJsExport
