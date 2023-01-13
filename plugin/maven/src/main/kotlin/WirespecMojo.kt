@@ -1,6 +1,6 @@
 package community.flock.wirespec.plugin.maven
 
-import community.flock.wirespec.compiler.core.Either
+import arrow.core.Either
 import community.flock.wirespec.compiler.core.Wirespec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.common.Emitter

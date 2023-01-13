@@ -18,21 +18,22 @@ class CompilerTest {
               foo: String,
               bar: String
             }
-            
+
         """.trimIndent()
 
         val out = """
             package community.flock.wirespec.generated
-            
+
             data class Bla(
               val foo: String,
               val bar: String
             )
-            
+
         """.trimIndent()
 
-        val res = Wirespec.compile(source)(logger)(KotlinEmitter(logger = logger))
-        assertRight(out, res.map { it.first().second })
+        Wirespec.compile(source)(logger)(KotlinEmitter(logger = logger))
+            .map { it.first().second }
+            .assertRight(out)
     }
 
     @Test
@@ -43,11 +44,10 @@ class CompilerTest {
               foo: String
               bar: String
             }
-            
+
         """.trimIndent()
 
-        val res = Wirespec.compile(source)(logger)(KotlinEmitter(logger = logger))
-        assertLeft("RightCurly expected, not: CustomValue at line 3 and position 3", res.map { it.first().second })
-
+        Wirespec.compile(source)(logger)(KotlinEmitter(logger = logger))
+            .assertLeft("RightCurly expected, not: CustomValue at line 3 and position 3")
     }
 }

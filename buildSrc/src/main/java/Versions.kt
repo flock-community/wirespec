@@ -1,9 +1,9 @@
-object Versions {
-    object Libraries {
-        const val lsp4j = "0.14.0"
-    }
+import Versions.arrow
 
-    object Tools {
-        const val jUnit = "5.8.1"
-    }
+object Versions {
+    const val arrow = "1.1.3"
+}
+
+object Libraries {
+    const val `arrow-core` = "io.arrow-kt:arrow-core:$arrow"
 }

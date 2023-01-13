@@ -1,19 +1,19 @@
 package community.flock.wirespec.compiler.util
 
-import community.flock.wirespec.compiler.core.Either
+import arrow.core.Either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import kotlin.test.assertEquals
 
-fun assertRight(expected: String, either: Either<WirespecException.CompilerException, String>) {
-    when (either) {
+fun Either<WirespecException.CompilerException, String>.assertRight(expected: String) {
+    when (this) {
         is Either.Left -> error("Right expected")
-        is Either.Right -> assertEquals(expected, either.value)
+        is Either.Right -> assertEquals(expected, value)
     }
 }
 
-fun assertLeft(expected: String, either: Either<WirespecException.CompilerException, String>) {
-    when (either) {
-        is Either.Left -> assertEquals(expected, either.value.message)
+fun <B> Either<WirespecException.CompilerException, B>.assertLeft(expected: String) {
+    when (this) {
+        is Either.Left -> assertEquals(expected, value.message)
         is Either.Right -> error("Left expected")
     }
 }
