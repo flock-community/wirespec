@@ -1,6 +1,6 @@
 package community.flock.wirespec.compiler.core.emit
 
-import arrow.core.Either
+import arrow.core.Validated
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
@@ -16,7 +16,7 @@ class ScalaEmitter(
     logger: Logger = noLogger
 ) : Emitter(logger) {
 
-    override fun emit(ast: AST): Either<WirespecException.CompilerException, List<Pair<String, String>>> =
+    override fun emit(ast: AST): Validated<WirespecException.CompilerException, List<Pair<String, String>>> =
         super.emit(ast).map {
             it.map { (name, result) -> name to if (packageName.isBlank()) "" else "package $packageName\n\n$result" }
         }

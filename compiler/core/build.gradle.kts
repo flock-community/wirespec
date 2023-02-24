@@ -1,5 +1,4 @@
 import Libraries.`arrow-core`
-import Libraries.`kotlin-coroutines`
 
 plugins {
     kotlin("multiplatform")
@@ -30,7 +29,6 @@ kotlin {
         commonMain {
             dependencies {
                 api(`arrow-core`)
-                api(`kotlin-coroutines`)
             }
         }
         commonTest {

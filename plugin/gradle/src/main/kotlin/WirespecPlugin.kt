@@ -1,6 +1,6 @@
 package community.flock.wirespec.plugin.gradle
 
-import arrow.core.Either
+import arrow.core.Validated
 import community.flock.wirespec.compiler.core.Wirespec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
@@ -79,8 +79,8 @@ class WirespecPlugin : Plugin<Project> {
             .map { (name, reader) -> name to Wirespec.compile(reader.collectToString())(logger)(emitter) }
             .map { (name, result) ->
                 name to when (result) {
-                    is Either.Right -> result.value
-                    is Either.Left -> error("compile error")
+                    is Validated.Valid -> result.value
+                    is Validated.Invalid -> error("compile error")
                 }
             }
             .flatMap { (name, result) ->

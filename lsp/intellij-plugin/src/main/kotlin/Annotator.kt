@@ -18,10 +18,7 @@ class Annotator : ExternalAnnotator<List<CompilerException>, List<CompilerExcept
 
     override fun collectInformation(file: PsiFile) = Wirespec.tokenize(file.text)
         .let { Parser(logger).parse(it) }
-        .fold(
-            ifLeft = { listOf(it) },
-            ifRight = { listOf() }
-        )
+        .fold({ listOf(it) }, { listOf() })
 
     override fun doAnnotate(collectedInfo: List<CompilerException>) = collectedInfo
 
