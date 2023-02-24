@@ -24,7 +24,7 @@ abstract class Emitter(val logger: Logger, val split: Boolean = false) : TypeDef
                         .dropLast(1)
                 )
             }
-    }.toEither()
+    }.toValidated()
 
     companion object {
         const val SPACER = "  "

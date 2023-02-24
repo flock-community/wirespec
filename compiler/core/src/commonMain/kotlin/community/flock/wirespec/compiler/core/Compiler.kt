@@ -1,7 +1,7 @@
 package community.flock.wirespec.compiler.core
 
-import arrow.core.Either
-import arrow.core.flatMap
+import arrow.core.Validated
+import arrow.core.andThen
 import community.flock.wirespec.compiler.core.Reported.EMITTED
 import community.flock.wirespec.compiler.core.Reported.PARSED
 import community.flock.wirespec.compiler.core.Reported.TOKENIZED
@@ -14,19 +14,19 @@ import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.core.validate.validate
 import community.flock.wirespec.compiler.utils.Logger
 
-fun LanguageSpec.compile(source: String): (Logger) -> (Emitter) -> Either<CompilerException, List<Pair<String, String>>> =
-    {
+fun LanguageSpec.compile(source: String): (Logger) -> (Emitter) -> Validated<CompilerException, List<Pair<String, String>>> =
+    { logger ->
         { emitter ->
             tokenize(source)
-                .also((TOKENIZED::report)(it))
+                .also((TOKENIZED::report)(logger))
                 .optimize()
-                .also((VALIDATED::report)(it))
-                .let(Parser(it)::parse)
-                .also((PARSED::report)(it))
+                .also((VALIDATED::report)(logger))
+                .let { Parser(logger).parse(it) }
+                .also((PARSED::report)(logger))
                 .map { it.validate() }
-                .also((VALIDATED::report)(it))
-                .flatMap { emitter.emit(it) }
-                .also((EMITTED::report)(it))
+                .also((VALIDATED::report)(logger))
+                .andThen { emitter.emit(it) }
+                .also((EMITTED::report)(logger))
         }
     }
 

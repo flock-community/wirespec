@@ -1,10 +1,10 @@
-import arrow.core.Either
+import arrow.core.Validated
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 
 @ExperimentalJsExport
-fun Either<WirespecException, List<Pair<String, String>>>.produce(): WsCompilationResult = when (this) {
-    is Either.Left -> WsCompilationResult(error = value.produce())
-    is Either.Right -> WsCompilationResult(compiled = WsCompiled(value.first().second))
+fun Validated<WirespecException, List<Pair<String, String>>>.produce(): WsCompilationResult = when (this) {
+    is Validated.Invalid -> WsCompilationResult(error = value.produce())
+    is Validated.Valid -> WsCompilationResult(compiled = WsCompiled(value.first().second))
 }
 
 @JsExport
