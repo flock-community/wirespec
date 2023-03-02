@@ -6,7 +6,6 @@ import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiParser
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
@@ -22,6 +21,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
+import community.flock.wirespec.lsp.intellij_plugin.Utils
 import com.intellij.lang.ParserDefinition as IntellijParserDefinition
 import com.intellij.psi.tree.TokenSet as IntellijTokenSet
 
@@ -35,6 +35,7 @@ class Parser : PsiParser {
 
     override fun parse(root: IElementType, builder: PsiBuilder): ASTNode {
         val rootMarker = builder.mark()
+        var typeMarker: PsiBuilder.Marker? = null
         var bodyMarker: PsiBuilder.Marker? = null
 
         fun parseNode() {
@@ -47,41 +48,41 @@ class Parser : PsiParser {
                     } else {
                         marker.done(CustomTypeRef())
                     }
+                    parseNode()
 
                 }
 
                 Types.LEFT_CURLY -> {
                     bodyMarker = builder.mark()
                     builder.advanceLexer()
+                    parseNode()
                 }
 
                 Types.RIGHT_CURLY -> {
                     builder.advanceLexer()
                     bodyMarker?.done(Body()).also { bodyMarker = null }
+                    typeMarker?.done(TypeDef()).also { typeMarker = null }
                 }
 
-                else -> builder.advanceLexer()
-            }
-            if (!builder.eof() && builder.tokenType != Types.TYPE_DEF) {
-                parseNode()
+                else -> {
+                    builder.advanceLexer()
+                    parseNode()
+                }
             }
         }
 
         fun parseDef() {
-            val marker = builder.mark()
+            typeMarker = builder.mark()
             builder.advanceLexer()
             if (!builder.eof() && builder.tokenType != Types.TYPE_DEF) {
                 parseNode()
             }
-            bodyMarker?.done(Body()).also { bodyMarker = null }
-            marker.done(TypeDef())
         }
 
         while (!builder.eof()) {
-            if (builder.tokenType == Types.TYPE_DEF) {
-                parseDef()
-            } else {
-                builder.advanceLexer()
+            when(builder.tokenType){
+                Types.TYPE_DEF -> parseDef()
+                else -> builder.advanceLexer()
             }
         }
         rootMarker.done(root)
@@ -123,65 +124,15 @@ class ParserDefinition : IntellijParserDefinition {
 class TypeDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
 class BodyElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
 
-class CustomTypeElementDef(ast: ASTNode) : ASTWrapperPsiElement(ast), PsiNamedElement {
-    override fun setName(name: String): PsiElement {
-        fun createNewNode() = PsiFileFactory
-            .getInstance(project)
-            .createFileFromText("dummy.ws", FileType.INSTANCE, "type $name {}")
-            .firstChild
-            .let { PsiTreeUtil.findChildOfType(it, CustomTypeElementDef::class.java) }
-            ?.node
-            ?: error("Cannot create new node")
+fun createNewNode(project: Project, name: String) = PsiFileFactory
+    .getInstance(project)
+    .createFileFromText("dummy.ws", FileType.INSTANCE, "type $name {}")
+    .firstChild
+    .let { PsiTreeUtil.findChildOfType(it, CustomTypeElementDef::class.java) }
+    ?.node
+    ?: error("Cannot create new node")
 
-        FileTypeIndex
-            .getFiles(FileType.INSTANCE, GlobalSearchScope.everythingScope(project))
-            .forEach {
-                val file = PsiManager.getInstance(project).findFile(it)
-                Utils.visitAllElements(file)
-                    .filterIsInstance(CustomTypeElementDef::class.java)
-                    .filter { element -> element.node.chars == node.chars }
-                    .forEach { element -> element.parent.node.replaceChild(element.node, createNewNode()) }
-            }
-        return this
-    }
-
-    override fun getName(): String? {
-        return this.text
-    }
-
-
-
-    override fun getPresentation(): ItemPresentation {
-        return Utils.getPresentation(this)
-    }
-
-    override fun getReferences(): Array<PsiReference> {
-
-        return FileTypeIndex
-            .getFiles(FileType.INSTANCE, GlobalSearchScope.everythingScope(project))
-            .flatMap {
-                val file = PsiManager.getInstance(project).findFile(it)
-                Utils.visitAllElements(file)
-                    .filterIsInstance(CustomTypeElementRef::class.java)
-                    .filter { element -> element.node.chars == node.chars }
-                    .map { element ->
-                        object: PsiReferenceBase<CustomTypeElementDef>(this, this.textRange) {
-                            override fun resolve(): PsiElement {
-                                return element
-                            }
-
-                            override fun handleElementRename(newElementName: String): PsiElement {
-                                return element.setName(newElementName)
-                            }
-                        }
-                    }
-            }
-            .toTypedArray()
-
-    }
-}
-
-class CustomTypeElementRef(ast: ASTNode) : ASTWrapperPsiElement(ast), PsiNameIdentifierOwner{
+abstract class CustomTypeElement(ast: ASTNode) : ASTWrapperPsiElement(ast), PsiNamedElement{
 
     override fun getName(): String? {
         return this.text
@@ -189,20 +140,47 @@ class CustomTypeElementRef(ast: ASTNode) : ASTWrapperPsiElement(ast), PsiNameIde
 
     override fun setName(name: String): PsiElement {
         println("Set name $name")
+        val newNode = createNewNode(project, name)
+        this.parent.node.replaceChild(this.node, newNode)
         return this
     }
 
+    override fun getPresentation(): ItemPresentation {
+        return Utils.getPresentation(this)
+    }
+}
+
+class CustomTypeElementDef(ast: ASTNode) : CustomTypeElement(ast) {
+
+
+}
+
+class CustomTypeElementRef(ast: ASTNode) : CustomTypeElement(ast), PsiNameIdentifierOwner {
+
+    override fun getReferences(): Array<PsiReference> {
+        return FileTypeIndex
+            .getFiles(FileType.INSTANCE, GlobalSearchScope.allScope(project))
+            .flatMap {
+                val file = PsiManager.getInstance(project).findFile(it)
+                Utils.visitAllElements(file)
+                    .filterIsInstance(CustomTypeElementRef::class.java)
+                    .filter { element -> element.node.chars == node.chars }
+                    .map { element -> Reference(element) }
+            }
+            .toTypedArray()
+    }
+
     override fun getNameIdentifier(): PsiElement? {
-        val virtualFiles: Collection<VirtualFile> =
-            FileTypeIndex.getFiles(FileType.INSTANCE, GlobalSearchScope.allScope(project))
-        val res = virtualFiles.flatMap {
-            val file = PsiManager.getInstance(project).findFile(it)
-            PsiTreeUtil
-                .getChildrenOfType(file, TypeDefElement::class.java)
-                ?.map { type -> PsiTreeUtil.findChildOfType(type, CustomTypeElementDef::class.java) }
-                ?.filter { node.chars.toString() == it?.node?.chars.toString() }
-                ?: listOf()
-        }
+        val res = FileTypeIndex
+            .getFiles(FileType.INSTANCE, GlobalSearchScope.allScope(project))
+            .flatMap {
+                val file = PsiManager.getInstance(project).findFile(it)
+                PsiTreeUtil
+                    .getChildrenOfType(file, TypeDefElement::class.java)
+                    ?.map { type -> PsiTreeUtil.findChildOfType(type, CustomTypeElementDef::class.java) }
+                    ?.filter { node.chars.toString() == it?.node?.chars.toString() }
+                    ?: listOf()
+            }
         return res.firstOrNull()
     }
 

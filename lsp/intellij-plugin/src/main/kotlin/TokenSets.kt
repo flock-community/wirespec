@@ -1,5 +1,6 @@
-package community.flock.wire_spec.lsp.intellij_plugin
+package community.flock.wirespec.lsp.intellij_plugin
 
+import community.flock.wirespec.lsp.intellij_plugin.Types
 import com.intellij.psi.tree.TokenSet as IntellijTokenSet
 
 object TokenSets {

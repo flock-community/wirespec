@@ -49,12 +49,11 @@ class Lexer : IntellijLexer() {
                 is EndOfProgram -> Types.END_OF_PROGRAM
                 is Invalid -> Types.INVALID
             }
-
         }
 
     override fun getTokenStart() = tokens[index]
         .coordinates
-        .let { it.idxAndLength.idx - it.idxAndLength.length }
+        .getStartPos()
 
 
     override fun getTokenEnd() = tokens[index]
@@ -70,8 +69,7 @@ class Lexer : IntellijLexer() {
     override fun getCurrentPosition(): IntellijLexerPosition = tokens[index]
         .coordinates
         .let {
-            val pos = it.idxAndLength.idx - it.idxAndLength.length
-            LexerPosition(pos, state)
+            LexerPosition(it.getStartPos(), state)
         }
 
     override fun restore(position: IntellijLexerPosition) {}
@@ -83,8 +81,9 @@ class Lexer : IntellijLexer() {
         }
 
         override fun getState(): Int {
-            return 1
+            return myState
         }
     }
-
 }
+
+fun Token.Coordinates.getStartPos() = idxAndLength.idx - idxAndLength.length

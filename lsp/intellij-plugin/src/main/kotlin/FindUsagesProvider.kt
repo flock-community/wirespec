@@ -1,9 +1,8 @@
-package community.flock.wire_spec.lsp.intellij_plugin
+package community.flock.wirespec.lsp.intellij_plugin
 
 import com.intellij.lang.cacheBuilder.DefaultWordsScanner
 import com.intellij.lang.cacheBuilder.WordsScanner
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.tree.TokenSet
 import com.intellij.lang.findUsages.FindUsagesProvider as IntellijFindUsagesProvider
 
@@ -20,7 +19,7 @@ public class FindUsagesProvider : IntellijFindUsagesProvider {
     }
 
     override fun canFindUsagesFor(psiElement: PsiElement): Boolean {
-        return psiElement is CustomTypeElementDef || psiElement is CustomTypeElementRef
+        return psiElement is CustomTypeElementDef
     }
 
     override fun getHelpId(psiElement: PsiElement): String? {
@@ -29,20 +28,20 @@ public class FindUsagesProvider : IntellijFindUsagesProvider {
 
     override fun getType(element: PsiElement): String {
         if (element is CustomTypeElementDef) {
-            return "property";
+            return "custom Type"
         }
         return "";
     }
 
     override fun getDescriptiveName(element: PsiElement): String {
-        return if (element is CustomTypeElementDef) {
-            "getNodeText";
+        return if (element is CustomTypeElement) {
+            element.name ?: ""
         } else "";
     }
 
     override fun getNodeText(element: PsiElement, useFullName: Boolean): String {
         return if (element is CustomTypeElementDef) {
-            "getNodeText"
+            element.name ?: ""
         } else ""
     }
 }

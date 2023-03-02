@@ -14,6 +14,7 @@ import com.intellij.navigation.ChooseByNameContributor as IntellijChooseByNameCo
 class ChooseByNameContributor : IntellijChooseByNameContributor {
 
     var map: Map<String, PsiElement>? = null
+
     override fun getNames(project: Project, includeNonProjectItems: Boolean): Array<String> {
         val virtualFiles: Collection<VirtualFile> =
             FileTypeIndex.getFiles(FileType.INSTANCE, GlobalSearchScope.allScope(project))
