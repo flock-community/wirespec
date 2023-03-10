@@ -6,22 +6,11 @@ import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiParser
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.FileViewProvider
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFileFactory
-import com.intellij.psi.PsiManager
-import com.intellij.psi.PsiNameIdentifierOwner
-import com.intellij.psi.PsiNamedElement
-import com.intellij.psi.PsiReference
-import com.intellij.psi.PsiReferenceBase
-import com.intellij.psi.search.FileTypeIndex
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.*
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
-import community.flock.wirespec.lsp.intellij_plugin.Utils
 import com.intellij.lang.ParserDefinition as IntellijParserDefinition
 import com.intellij.psi.tree.TokenSet as IntellijTokenSet
 
@@ -80,7 +69,7 @@ class Parser : PsiParser {
         }
 
         while (!builder.eof()) {
-            when(builder.tokenType){
+            when (builder.tokenType) {
                 Types.TYPE_DEF -> parseDef()
                 else -> builder.advanceLexer()
             }
@@ -111,7 +100,7 @@ class ParserDefinition : IntellijParserDefinition {
             is Parser.CustomTypeDef -> CustomTypeElementDef(node)
             is Parser.CustomTypeRef -> CustomTypeElementRef(node)
             is Parser.Body -> BodyElement(node)
-            else -> TODO("")
+            else -> error("Cannot create type")
         }
     }
 
@@ -124,7 +113,7 @@ class ParserDefinition : IntellijParserDefinition {
 class TypeDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
 class BodyElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
 
-fun createNewNode(project: Project, name: String) = PsiFileFactory
+fun createDefNode(project: Project, name: String) = PsiFileFactory
     .getInstance(project)
     .createFileFromText("dummy.ws", FileType.INSTANCE, "type $name {}")
     .firstChild
@@ -132,57 +121,42 @@ fun createNewNode(project: Project, name: String) = PsiFileFactory
     ?.node
     ?: error("Cannot create new node")
 
-abstract class CustomTypeElement(ast: ASTNode) : ASTWrapperPsiElement(ast), PsiNamedElement{
+fun createRefNode(project: Project, name: String) = PsiFileFactory
+    .getInstance(project)
+    .createFileFromText("dummy.ws", FileType.INSTANCE, "type X { y: $name }")
+    .firstChild
+    .let { PsiTreeUtil.findChildOfType(it, CustomTypeElementRef::class.java) }
+    ?.node
+    ?: error("Cannot create new node")
 
-    override fun getName(): String? {
-        return this.text
-    }
+abstract class CustomTypeElement(ast: ASTNode) : ASTWrapperPsiElement(ast), PsiNamedElement {
+
+    override fun getName(): String? = this.text
+
+    override fun getPresentation(): ItemPresentation = Utils.getPresentation(this)
+}
+
+class CustomTypeElementDef(val ast: ASTNode) : CustomTypeElement(ast), PsiNameIdentifierOwner {
 
     override fun setName(name: String): PsiElement {
-        println("Set name $name")
-        val newNode = createNewNode(project, name)
+        val newNode = createDefNode(project, name)
         this.parent.node.replaceChild(this.node, newNode)
         return this
     }
 
-    override fun getPresentation(): ItemPresentation {
-        return Utils.getPresentation(this)
-    }
+    override fun getNameIdentifier(): PsiElement = ast.firstChildNode.psi
 }
 
-class CustomTypeElementDef(ast: ASTNode) : CustomTypeElement(ast) {
+class CustomTypeElementRef(val ast: ASTNode) : CustomTypeElement(ast), PsiNameIdentifierOwner {
 
-
-}
-
-class CustomTypeElementRef(ast: ASTNode) : CustomTypeElement(ast), PsiNameIdentifierOwner {
-
-    override fun getReferences(): Array<PsiReference> {
-        return FileTypeIndex
-            .getFiles(FileType.INSTANCE, GlobalSearchScope.allScope(project))
-            .flatMap {
-                val file = PsiManager.getInstance(project).findFile(it)
-                Utils.visitAllElements(file)
-                    .filterIsInstance(CustomTypeElementRef::class.java)
-                    .filter { element -> element.node.chars == node.chars }
-                    .map { element -> Reference(element) }
-            }
-            .toTypedArray()
+    override fun setName(name: String): PsiElement {
+        val newNode = createRefNode(project, name)
+        this.parent.node.replaceChild(this.node, newNode)
+        return this
     }
 
-    override fun getNameIdentifier(): PsiElement? {
-        val res = FileTypeIndex
-            .getFiles(FileType.INSTANCE, GlobalSearchScope.allScope(project))
-            .flatMap {
-                val file = PsiManager.getInstance(project).findFile(it)
-                PsiTreeUtil
-                    .getChildrenOfType(file, TypeDefElement::class.java)
-                    ?.map { type -> PsiTreeUtil.findChildOfType(type, CustomTypeElementDef::class.java) }
-                    ?.filter { node.chars.toString() == it?.node?.chars.toString() }
-                    ?: listOf()
-            }
-        return res.firstOrNull()
-    }
+    override fun getNameIdentifier(): PsiElement = ast.firstChildNode.psi
 
+    override fun getReference(): PsiReference = Reference(this)
 
 }

@@ -13,14 +13,14 @@ import com.intellij.navigation.ChooseByNameContributor as IntellijChooseByNameCo
 
 class ChooseByNameContributor : IntellijChooseByNameContributor {
 
-    var map: Map<String, PsiElement>? = null
+    lateinit var map: Map<String, PsiElement>
 
     override fun getNames(project: Project, includeNonProjectItems: Boolean): Array<String> {
         val virtualFiles: Collection<VirtualFile> =
             FileTypeIndex.getFiles(FileType.INSTANCE, GlobalSearchScope.allScope(project))
         map = virtualFiles
-            .flatMap { virtualFile ->
-                val file = PsiManager.getInstance(project).findFile(virtualFile)
+            .map { PsiManager.getInstance(project).findFile(it) }
+            .flatMap { file ->
                 PsiTreeUtil
                     .getChildrenOfType(file, TypeDefElement::class.java)
                     ?.map { type -> PsiTreeUtil.findChildOfType(type, CustomTypeElementDef::class.java) }
@@ -31,12 +31,9 @@ class ChooseByNameContributor : IntellijChooseByNameContributor {
             .filterNotNull()
             .toMap()
 
-
-
-        return map?.keys?.toTypedArray() ?: arrayOf()
+        return map.keys.toTypedArray()
 
     }
-
 
     override fun getItemsByName(
         name: String,
@@ -44,7 +41,6 @@ class ChooseByNameContributor : IntellijChooseByNameContributor {
         project: Project,
         includeNonProjectItems: Boolean
     ): Array<NavigationItem> {
-        val res = listOfNotNull(map?.get(name) as NavigationItem).toTypedArray()
-        return res
+        return listOfNotNull(map?.get(name) as NavigationItem).toTypedArray()
     }
 }

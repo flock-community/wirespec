@@ -35,4 +35,5 @@ include(
     "lsp:intellij-plugin",
     "plugin:maven",
     "plugin:gradle",
+    "openapi",
 )

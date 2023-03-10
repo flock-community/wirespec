@@ -1,13 +1,13 @@
 package community.flock.wirespec.compiler.core.emit
 
+import EndpointDefinitionEmitter
 import arrow.core.Validated
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
-import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value.Custom
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value.Ws
+import community.flock.wirespec.compiler.core.parse.*
+import community.flock.wirespec.compiler.core.parse.Shape.Field.Value.Custom
+import community.flock.wirespec.compiler.core.parse.Shape.Field.Value.Primitive
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
@@ -18,32 +18,68 @@ class KotlinEmitter(
 
     override fun emit(ast: AST): Validated<WirespecException.CompilerException, List<Pair<String, String>>> =
         super.emit(ast).map {
-            it.map { (name, result) -> name to if (packageName.isBlank()) "" else "package $packageName\n\n$result" }
+            it.map { (name, result) -> name to
+                    if (packageName.isBlank()) ""
+                    else "package $packageName\n\n$result" }
         }
 
-    override fun Type.emit() = withLogging(logger) {
-        "data class ${name.emit()}(\n${shape.emit()}\n)\n\n"
+    override fun TypeDefinition.emit() = withLogging(logger) {
+        when (shape) {
+            is Shape -> "data class ${name.emit()}(\n${shape.emit()}\n)\n\n"
+            is Shape.Field.Value -> "typealias ${name.emit()} = ${shape.emit()}\n\n"
+        }
     }
 
-    override fun Type.Name.emit() = withLogging(logger) { value }
+    override fun EndpointDefinition.emit(): String {
+        val params = this.path.filterIsInstance<EndpointDefinition.Segment.Param>()
+            .map {
+                when (it.type) {
+                    is Shape -> TODO()
+                    is Custom -> it.key to it.type.value
+                    is Primitive -> it.key to it.type.value.name
+                }
+            }
+            .joinToString(", ") { (k, v) -> "$k: $v" }
+        val className = this.name.value
+        return "interface ${this.name.value} {\n" +
+                "\tsealed interface ${className}Response\n" +
+                this.responses.map { it.emit(className) }.joinToString("\n") + "\n" +
+                "\tfun ${this.name.value}($params):${this.name.value}Response\n" +
+                "}\n\n"
+    }
 
-    override fun Type.Shape.emit() = withLogging(logger) {
+    override fun EndpointDefinition.Response.emit(className: String) =
+        "\tdata class ${className}Response${
+            contentType.replace(
+                "/",
+                ""
+            )
+        }${status}(val status:Int, val contentType:String, val content: ${type.toName()}): ${className}Response"
+
+
+    override fun TypeDefinition.Name.emit() = withLogging(logger) { value }
+
+    override fun Type.emit() = withLogging(logger) {
+        ""
+    }
+
+    override fun Shape.emit() = withLogging(logger) {
         value.joinToString("\n") { it.emit() }.dropLast(1)
     }
 
-    override fun Type.Shape.Field.emit() = withLogging(logger) {
+    override fun Shape.Field.emit() = withLogging(logger) {
         "${SPACER}val ${key.emit()}: ${value.emit()}${if (isNullable) "?" else ""},"
     }
 
-    override fun Type.Shape.Field.Key.emit() = withLogging(logger) { value }
+    override fun Shape.Field.Key.emit() = withLogging(logger) { value }
 
-    override fun Type.Shape.Field.Value.emit() = withLogging(logger) {
+    override fun Shape.Field.Value.emit() = withLogging(logger) {
         when (this) {
             is Custom -> value
-            is Ws -> when (value) {
-                Ws.Type.String -> "String"
-                Ws.Type.Integer -> "Int"
-                Ws.Type.Boolean -> "Boolean"
+            is Primitive -> when (value) {
+                Primitive.PrimitiveType.String -> "String"
+                Primitive.PrimitiveType.Integer -> "Int"
+                Primitive.PrimitiveType.Boolean -> "Boolean"
             }
         }.let { if (isIterable) "List<$it>" else it }
     }

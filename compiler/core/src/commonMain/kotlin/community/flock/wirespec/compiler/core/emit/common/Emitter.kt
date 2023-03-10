@@ -1,19 +1,22 @@
 package community.flock.wirespec.compiler.core.emit.common
 
+import EndpointDefinitionEmitter
 import arrow.core.continuations.eagerEffect
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException
 import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.core.parse.EndpointDefinition
+import community.flock.wirespec.compiler.core.parse.TypeDefinition
 import community.flock.wirespec.compiler.utils.Logger
 
-abstract class Emitter(val logger: Logger, val split: Boolean = false) : TypeDefinitionEmitter {
+abstract class Emitter(val logger: Logger, val split: Boolean = false) : TypeDefinitionEmitter, EndpointDefinitionEmitter {
 
     open fun emit(ast: AST) = eagerEffect<CompilerException, List<Pair<String, String>>> {
         ast
             .map {
                 logger.log("Emitting Node $this")
                 when (it) {
-                    is Type -> it.name.value to it.emit()
+                    is TypeDefinition -> it.name.value to it.emit()
+                    is EndpointDefinition -> it.name.value to it.emit()
                 }
             }
             .let {

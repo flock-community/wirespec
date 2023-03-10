@@ -3,10 +3,9 @@ package community.flock.wirespec.compiler.core.parse
 import arrow.core.continuations.eagerEffect
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
-import community.flock.wirespec.compiler.core.parse.Type.Name
-import community.flock.wirespec.compiler.core.parse.Type.Shape
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value
+import community.flock.wirespec.compiler.core.parse.TypeDefinition.Name
+import community.flock.wirespec.compiler.core.parse.Shape.Field
+import community.flock.wirespec.compiler.core.parse.Shape.Field.Value
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.types.Brackets
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
@@ -61,7 +60,7 @@ class Parser(private val logger: Logger) {
         eatToken()
         token.log()
         when (token.type) {
-            is LeftCurly -> Type(Name(typeName), parseTypeShape().bind())
+            is LeftCurly -> TypeDefinition(Name(typeName), parseTypeShape().bind())
             else -> shift(WrongTokenException(LeftCurly::class, token))
         }.also {
             when (token.type) {
@@ -113,9 +112,9 @@ class Parser(private val logger: Logger) {
         token.log()
         val isIterable = (token.type is Brackets).also { if (it) eatToken() }
         when (wsType) {
-            is WsString -> Value.Ws(Value.Ws.Type.String, isIterable)
-            is WsInteger -> Value.Ws(Value.Ws.Type.Integer, isIterable)
-            is WsBoolean -> Value.Ws(Value.Ws.Type.Boolean, isIterable)
+            is WsString -> Value.Primitive(Value.Primitive.PrimitiveType.String, isIterable)
+            is WsInteger -> Value.Primitive(Value.Primitive.PrimitiveType.Integer, isIterable)
+            is WsBoolean -> Value.Primitive(Value.Primitive.PrimitiveType.Boolean, isIterable)
             is CustomType -> Value.Custom(value, isIterable)
         }
     }

@@ -2,13 +2,9 @@ package community.flock.wirespec.lsp.intellij_plugin
 
 import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiReference
-import com.intellij.psi.PsiReferenceBase
-import community.flock.wirespec.lsp.intellij_plugin.Icons
 import javax.swing.Icon
 
 object Utils {
-
 
 
     fun visitAllElements(element: PsiElement?): List<PsiElement> {

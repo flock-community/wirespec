@@ -19,7 +19,7 @@ public class FindUsagesProvider : IntellijFindUsagesProvider {
     }
 
     override fun canFindUsagesFor(psiElement: PsiElement): Boolean {
-        return psiElement is CustomTypeElementDef
+        return psiElement is CustomTypeElement
     }
 
     override fun getHelpId(psiElement: PsiElement): String? {
@@ -27,7 +27,7 @@ public class FindUsagesProvider : IntellijFindUsagesProvider {
     }
 
     override fun getType(element: PsiElement): String {
-        if (element is CustomTypeElementDef) {
+        if (element is CustomTypeElement) {
             return "custom Type"
         }
         return "";
@@ -40,7 +40,7 @@ public class FindUsagesProvider : IntellijFindUsagesProvider {
     }
 
     override fun getNodeText(element: PsiElement, useFullName: Boolean): String {
-        return if (element is CustomTypeElementDef) {
+        return if (element is CustomTypeElement) {
             element.name ?: ""
         } else ""
     }
