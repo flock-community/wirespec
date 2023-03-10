@@ -3,7 +3,7 @@
 plugins {
   id("java")
   id("org.jetbrains.kotlin.jvm")
-  id("org.jetbrains.intellij") version "1.11.0"
+  id(Plugins.intellij.name) version Plugins.intellij.version
 }
 
 group = "${Settings.groupId}.lsp.intellij-plugin"
@@ -23,12 +23,10 @@ intellij {
   type.set("IC")
 }
 
-
 tasks.publishPlugin {
   channels.set(listOf("beta"))
   token.set(System.getenv("JETBRAINS_TOKEN"))
 }
-
 
 tasks {
   buildSearchableOptions {

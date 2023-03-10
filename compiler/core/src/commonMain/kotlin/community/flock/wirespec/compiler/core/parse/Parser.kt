@@ -33,7 +33,7 @@ class Parser(private val logger: Logger) {
             .filterNot { it.type is WhiteSpace }
             .toProvider(logger)
             .parse().bind()
-    }.toEither()
+    }.toValidated()
 
     private fun TokenProvider.parse() = eagerEffect<CompilerException, AST> {
         mutableListOf<Definition>()

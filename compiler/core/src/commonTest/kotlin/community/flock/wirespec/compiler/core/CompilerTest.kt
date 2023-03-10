@@ -1,8 +1,8 @@
 package community.flock.wirespec.compiler.core
 
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
-import community.flock.wirespec.compiler.util.assertLeft
-import community.flock.wirespec.compiler.util.assertRight
+import community.flock.wirespec.compiler.util.assertInvalid
+import community.flock.wirespec.compiler.util.assertValid
 import community.flock.wirespec.compiler.utils.Logger
 import kotlin.test.Test
 
@@ -33,7 +33,7 @@ class CompilerTest {
 
         Wirespec.compile(source)(logger)(KotlinEmitter(logger = logger))
             .map { it.first().second }
-            .assertRight(out)
+            .assertValid(out)
     }
 
     @Test
@@ -48,6 +48,6 @@ class CompilerTest {
         """.trimIndent()
 
         Wirespec.compile(source)(logger)(KotlinEmitter(logger = logger))
-            .assertLeft("RightCurly expected, not: CustomValue at line 3 and position 3")
+            .assertInvalid("RightCurly expected, not: CustomValue at line 3 and position 3")
     }
 }
