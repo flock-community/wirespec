@@ -4,7 +4,7 @@ plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
     id("com.github.johnrengelman.shadow") apply false
-    id("maven-publish")
+    `maven-publish`
 }
 
 group = "${Settings.groupId}.compiler"
@@ -24,6 +24,11 @@ kotlin {
     }
     jvm {
         withJava()
+        java {
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(17))
+            }
+        }
     }
     sourceSets {
         commonMain {
