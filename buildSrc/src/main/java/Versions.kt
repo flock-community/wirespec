@@ -8,10 +8,10 @@ object Versions {
 }
 
 object Libraries {
-    const val `arrow-core` = "io.arrow-kt:arrow-core:$arrow"
-    const val `kotlin-coroutines` = "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines"
-    const val `kotlin-coroutines-native` = "org.jetbrains.kotlinx:kotlinx-coroutines-core-native:$coroutines"
-    const val `kotlin-coroutines-jvm` = "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:$coroutines"
+    const val arrow_core = "io.arrow-kt:arrow-core:$arrow"
+    const val kotlin_coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines"
+    const val kotlin_coroutines_native = "org.jetbrains.kotlinx:kotlinx-coroutines-core-native:$coroutines"
+    const val kotlin_coroutines_jvm = "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:$coroutines"
 }
 
 object Plugins {

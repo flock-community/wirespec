@@ -1,10 +1,14 @@
-test:
-	$(shell pwd)/scripts/test.sh
-.PHONY: test
+compile:
+	$(shell pwd)/scripts/compile.sh
+.PHONY: compile
 
 build:
 	$(shell pwd)/scripts/build.sh
 .PHONY: build
+
+test:
+	$(shell pwd)/scripts/test.sh
+.PHONY: test
 
 image:
 	$(shell pwd)/scripts/image.sh

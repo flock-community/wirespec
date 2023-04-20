@@ -1,6 +1,6 @@
 package community.flock.wirespec.plugin.gradle
 
-import arrow.core.Validated
+import arrow.core.Either
 import community.flock.wirespec.compiler.core.Wirespec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
@@ -34,38 +34,29 @@ open class WirespecPluginExtension @Inject constructor(val objectFactory: Object
         kotlin = Kotlin().apply(action::execute)
     }
 
-
     var java: Java? = null
     fun java(action: Action<in Java>) {
         java = Java().apply(action::execute)
     }
-
 
     var scala: Scala? = null
     fun scala(action: Action<in Scala>) {
         scala = Scala().apply(action::execute)
     }
 
-
     companion object {
-        class Typescript {
-            var targetDirectory: String = ""
+        abstract class HasTargetDirectory {
+            var targetDir: String = ""
         }
 
-        class Java {
+        abstract class JvmLanguage : HasTargetDirectory() {
             var packageName: String = DEFAULT_PACKAGE_NAME
-            var targetDirectory: String = ""
         }
 
-        class Scala {
-            var packageName: String = DEFAULT_PACKAGE_NAME
-            var targetDirectory: String = ""
-        }
-
-        class Kotlin {
-            var packageName: String = DEFAULT_PACKAGE_NAME
-            var targetDirectory: String = ""
-        }
+        class Typescript : HasTargetDirectory()
+        class Java : JvmLanguage()
+        class Scala : JvmLanguage()
+        class Kotlin : JvmLanguage()
     }
 }
 
@@ -79,8 +70,8 @@ class WirespecPlugin : Plugin<Project> {
             .map { (name, reader) -> name to Wirespec.compile(reader.collectToString())(logger)(emitter) }
             .map { (name, result) ->
                 name to when (result) {
-                    is Validated.Valid -> result.value
-                    is Validated.Invalid -> error("compile error")
+                    is Either.Right -> result.value
+                    is Either.Left -> error("compile error")
                 }
             }
             .flatMap { (name, result) ->
@@ -91,34 +82,20 @@ class WirespecPlugin : Plugin<Project> {
     private fun BufferedReader.collectToString() = lines().asSequence().joinToString("")
 
     override fun apply(project: Project) {
-        val extension: WirespecPluginExtension =
-            project.extensions.create("wirespec", WirespecPluginExtension::class.java)
+        val extension: WirespecPluginExtension = project.extensions
+            .create("wirespec", WirespecPluginExtension::class.java)
 
-        fun emit(targetDirectory: String, emitter: Emitter, ext: String) {
-            File(targetDirectory).mkdirs()
-            compile(extension.sourceDirectory, logger, emitter).forEach { (name, result) ->
-                File("$targetDirectory/$name.$ext").writeText(result)
-            }
+        fun Emitter.emit(targetDirectory: String, ext: String) {
+            compile(extension.sourceDirectory, logger, this)
+                .also { project.file(targetDirectory).mkdirs() }
+                .forEach { (name, result) -> project.file("$targetDirectory/$name.$ext").writeText(result) }
         }
 
-        project.task("wirespec")
-            .doFirst { _: Task? ->
-                extension.typescript?.run {
-                    TypeScriptEmitter(logger)
-                        .apply { emit(targetDirectory, this, "ts") }
-                }
-                extension.java?.run {
-                    JavaEmitter(packageName, logger)
-                        .apply { emit(targetDirectory, this, "java") }
-                }
-                extension.scala?.run {
-                    ScalaEmitter(packageName, logger)
-                        .apply { emit(targetDirectory, this, "scala") }
-                }
-                extension.kotlin?.run {
-                    KotlinEmitter(packageName, logger)
-                        .apply { emit(targetDirectory, this, "kt") }
-                }
-            }
+        project.task("wirespec").doFirst { _: Task? ->
+            extension.typescript?.apply { TypeScriptEmitter(logger).emit(targetDir, "ts") }
+            extension.java?.apply { JavaEmitter(packageName, logger).emit(targetDir, "java") }
+            extension.scala?.apply { ScalaEmitter(packageName, logger).emit(targetDir, "scala") }
+            extension.kotlin?.apply { KotlinEmitter(packageName, logger).emit(targetDir, "kt") }
+        }
     }
 }

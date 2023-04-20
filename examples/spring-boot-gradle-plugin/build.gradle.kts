@@ -3,9 +3,9 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     id("org.springframework.boot") version "2.7.4"
     id("io.spring.dependency-management") version "1.0.14.RELEASE"
-    kotlin("jvm") version "1.7.10"
-    kotlin("plugin.spring") version "1.7.10"
-    id("community.flock.wirespec.plugin.gradle") version "0.0.1-SNAPSHOT"
+    kotlin("jvm") version "1.8.20"
+    kotlin("plugin.spring") version "1.8.20"
+    id("community.flock.wirespec.plugin.gradle") version "0.0.0"
 }
 
 group = "community.flock.wirespec.example-gradle_plugin"
@@ -41,10 +41,10 @@ sourceSets {
 wirespec {
     sourceDirectory = "$projectDir/src/main/wirespec"
     kotlin {
-        targetDirectory = "$buildDir/generated/wirespec"
+        targetDir = "$buildDir/generated/wirespec"
     }
     typescript {
-        targetDirectory = "$projectDir/src/main/frontend/generated"
+        targetDir = "$projectDir/src/main/frontend/generated"
     }
 }
 

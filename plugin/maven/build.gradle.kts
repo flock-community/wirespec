@@ -1,8 +1,8 @@
 plugins {
-    id("java")
-    id("maven-publish")
+    java
+    `maven-publish`
     id("org.jetbrains.kotlin.jvm")
-    id("de.benediktritter.maven-plugin-development") version "0.4.0"
+    id("de.benediktritter.maven-plugin-development") version "0.4.1"
 }
 
 group = "${Settings.groupId}.plugin.maven"
@@ -14,8 +14,8 @@ repositories {
 
 dependencies {
     implementation(project(":compiler:core"))
-    implementation("org.apache.maven:maven-plugin-api:3.6.3")
-    implementation("org.apache.maven.plugin-tools:maven-plugin-annotations:3.6.0")
+    implementation("org.apache.maven:maven-plugin-api:3.9.1")
+    implementation("org.apache.maven.plugin-tools:maven-plugin-annotations:3.8.1")
     implementation("org.apache.maven:maven-project:2.2.1")
 }
 
