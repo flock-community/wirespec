@@ -46,12 +46,24 @@
                 language="wirespec"
                 implementationClass="community.flock.wirespec.lsp.intellij_plugin.ParserDefinition"/>
 
+        <lang.findUsagesProvider
+                language="wirespec"
+                implementationClass="community.flock.wirespec.lsp.intellij_plugin.FindUsagesProvider"/>
+
+        <lang.refactoringSupport
+                language="wirespec"
+                implementationClass="community.flock.wirespec.lsp.intellij_plugin.RefactoringSupportProvider"/>
+
         <externalAnnotator
                 language="wirespec"
                 implementationClass="community.flock.wirespec.lsp.intellij_plugin.Annotator"/>
 
+        <psi.referenceContributor language="wirespec"
+                                  implementation="community.flock.wirespec.lsp.intellij_plugin.ReferenceContributor"/>
+
         <gotoSymbolContributor
                 implementation="community.flock.wirespec.lsp.intellij_plugin.ChooseByNameContributor"/>
+
     </extensions>
 
 </idea-plugin>

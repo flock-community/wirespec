@@ -1,10 +1,7 @@
 package community.flock.wirespec.lsp.intellij_plugin
 
-import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.TokenSet as IntellijTokenSet
 
-object TokenSet {
-    val TYPE: TokenSet = TokenSet.create(Types.TYPE)
-    val KEYWORD: TokenSet = TokenSet.create(Types.KEYWORD)
-    val VALUE: TokenSet = TokenSet.create(Types.VALUE)
-    val COMMENTS: TokenSet = TokenSet.create(Types.COMMENTS)
+object TokenSets {
+    var CUSTOM_TYPE = IntellijTokenSet.create(Types.CUSTOM_TYPE)
 }
