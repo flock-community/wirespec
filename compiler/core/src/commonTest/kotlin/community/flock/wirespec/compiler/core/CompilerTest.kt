@@ -1,14 +1,14 @@
 package community.flock.wirespec.compiler.core
 
+import community.flock.wirespec.compiler.common.TestLogger
+import community.flock.wirespec.compiler.common.assertInvalid
+import community.flock.wirespec.compiler.common.assertValid
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
-import community.flock.wirespec.compiler.util.assertInvalid
-import community.flock.wirespec.compiler.util.assertValid
-import community.flock.wirespec.compiler.utils.Logger
 import kotlin.test.Test
 
 class CompilerTest {
 
-    private val logger: Logger = object : Logger(enableLogging = false) {}
+    private val logger = TestLogger
 
     @Test
     fun testCompileKotlin() {

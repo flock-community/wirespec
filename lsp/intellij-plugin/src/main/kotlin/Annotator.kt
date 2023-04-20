@@ -10,15 +10,18 @@ import community.flock.wirespec.compiler.core.exceptions.WirespecException.Compi
 import community.flock.wirespec.compiler.core.parse.Parser
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.Logger
+import kotlinx.coroutines.runBlocking
 
 
 class Annotator : ExternalAnnotator<List<CompilerException>, List<CompilerException>>() {
 
     private val logger = object : Logger(false) {}
 
-    override fun collectInformation(file: PsiFile) = Wirespec.tokenize(file.text)
-        .let { Parser(logger).parse(it) }
-        .fold({ listOf(it) }, { listOf() })
+    override fun collectInformation(file: PsiFile) = runBlocking {
+        Wirespec.tokenize(file.text)
+            .let { Parser(logger).parse(it) }
+            .fold({ it }, { emptyList() })
+    }
 
     override fun doAnnotate(collectedInfo: List<CompilerException>) = collectedInfo
 

@@ -1,4 +1,4 @@
-import Libraries.`arrow-core`
+import Libraries.arrow_core
 
 plugins {
     kotlin("multiplatform")
@@ -33,7 +33,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api(`arrow-core`)
+                api(arrow_core)
             }
         }
         commonTest {
