@@ -13,7 +13,7 @@ if [[ $(uname -m) = arm64 ]]; then
   archSpecific="--platform=linux/amd64"
 fi
 
-if [[ $WIRESPEC_BUILD_MAC != true && $WIRESPEC_BUILD_WINDOWS != true ]]; then
+if [[ $WIRESPEC_BUILD_MAC != true ]]; then
   buildNothing=true
 fi
 
