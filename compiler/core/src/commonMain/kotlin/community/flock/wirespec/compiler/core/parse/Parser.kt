@@ -16,6 +16,7 @@ import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.types.Brackets
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
 import community.flock.wirespec.compiler.core.tokenize.types.Comma
+import community.flock.wirespec.compiler.core.tokenize.types.CustomRegex
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
@@ -24,6 +25,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpace
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
 import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
+import community.flock.wirespec.compiler.core.tokenize.types.WsRefinedTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsString
 import community.flock.wirespec.compiler.core.tokenize.types.WsType
 import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
@@ -44,10 +46,11 @@ class Parser(private val logger: Logger) {
             .apply { while (hasNext()) add(parseDefinition()) }
             .traverse { it }
 
-    private fun TokenProvider.parseDefinition() = eagerEffect<Nel<CompilerException>, Definition> {
+    private fun TokenProvider.parseDefinition() = eagerEffect {
         token.log()
         when (token.type) {
             is WsTypeDef -> parseTypeDeclaration().bind()
+            is WsRefinedTypeDef -> parseRefinedTypeDeclaration().bind()
             else -> shift(WrongTokenException(WsTypeDef::class, token).also { eatToken() }.nel())
         }
     }.toValidated()
@@ -123,6 +126,24 @@ class Parser(private val logger: Logger) {
             is CustomType -> Value.Custom(value, isIterable)
         }
     }
+
+    private fun TokenProvider.parseRefinedTypeDeclaration() = eagerEffect {
+        eatToken()
+        token.log()
+        when (token.type) {
+            is CustomType -> parseCustomRegex(token.value).bind()
+            else -> shift(WrongTokenException(CustomType::class, token).also { eatToken() }.nel())
+        }
+    }.toValidated()
+
+    private fun TokenProvider.parseCustomRegex(typeName: String) = eagerEffect {
+        eatToken()
+        token.log()
+        when (token.type) {
+            is CustomRegex -> Refined(Refined.Name(typeName), Refined.Validator(token.value))
+            else -> shift(WrongTokenException(LeftCurly::class, token).also { eatToken() }.nel())
+        }.also { eatToken() }
+    }.toValidated()
 
     private fun Token.log() = logger.log("Parsing $type at line ${coordinates.line} position ${coordinates.position}")
 

@@ -18,3 +18,8 @@ data class Type(val name: Name, val shape: Shape) : Definition {
         }
     }
 }
+
+data class Refined(val name: Name, val validator: Validator) : Definition {
+    data class Name(val value: String)
+    data class Validator(val value: String)
+}

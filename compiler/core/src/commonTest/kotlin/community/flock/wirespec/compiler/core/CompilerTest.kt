@@ -50,4 +50,24 @@ class CompilerTest {
         Wirespec.compile(source)(logger)(KotlinEmitter(logger = logger))
             .assertInvalid("RightCurly expected, not: CustomValue at line 3 and position 3")
     }
+
+    @Test
+    fun testRefinedType() {
+        val source = """
+            refined Name "^[a-zA-Z]{1,50}$"
+        """.trimIndent()
+
+        val out = """
+            package community.flock.wirespec.generated
+            
+            data class Name(val value: String)
+            fun Name.validate() = Regex("^[a-zA-Z]{1,50}$").find(value)
+            
+        """.trimIndent()
+
+        Wirespec.compile(source)(logger)(KotlinEmitter(logger = logger))
+            .map { it.first().second }
+            .onLeft(::println)
+            .assertValid(out)
+    }
 }

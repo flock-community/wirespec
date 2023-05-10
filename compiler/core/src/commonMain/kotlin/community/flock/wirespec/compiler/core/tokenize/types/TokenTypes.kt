@@ -22,9 +22,12 @@ object NewLine : WhiteSpace
 
 sealed interface Keyword : TokenType
 object WsTypeDef : Keyword
+object WsRefinedTypeDef : Keyword
 
 sealed interface WsType : Keyword
 object WsString : WsType
 object WsInteger : WsType
 object WsBoolean : WsType
 object CustomType : WsType
+
+object CustomRegex : TokenType

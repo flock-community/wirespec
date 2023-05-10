@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.emit
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value.Custom
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value.Ws
@@ -18,7 +19,7 @@ class ScalaEmitter(
         .map { (name, result) -> name to if (packageName.isBlank()) "" else "package $packageName\n\n$result" }
 
     override fun Type.emit() = withLogging(logger) {
-        "case class ${name.emit()}(\n${shape.emit()}\n)\n\n"
+        "case class ${name.value}(\n${shape.emit()}\n)\n\n"
     }
 
     override fun Type.Name.emit() = withLogging(logger) { value }
@@ -44,4 +45,20 @@ class ScalaEmitter(
         }.let { if (isIterable) "List[$it]" else it }
     }
 
+    override fun Refined.emit() = withLogging(logger) {
+        """case class ${name.emit()}(val value: String) {
+            |${SPACER}implicit class ${name.emit()}Ops(val that: ${name.emit()}) {
+            |${validator.emit()}
+            |$SPACER}
+            |}
+            |
+            |""".trimMargin()
+    }
+
+    override fun Refined.Name.emit() = withLogging(logger) { value }
+
+    override fun Refined.Validator.emit() = withLogging(logger) {
+        """${SPACER}${SPACER}val regex = new scala.util.matching.Regex($value)
+            |${SPACER}${SPACER}regex.findFirstIn(that.value)""".trimMargin()
+    }
 }

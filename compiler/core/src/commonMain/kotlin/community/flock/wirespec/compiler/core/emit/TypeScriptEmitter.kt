@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value.Custom
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value.Ws
@@ -10,7 +11,7 @@ import community.flock.wirespec.compiler.utils.noLogger
 class TypeScriptEmitter(logger: Logger = noLogger) : Emitter(logger) {
 
     override fun Type.emit() = withLogging(logger) {
-        "interface ${name.emit()} {\n${shape.emit()}\n}\n\n"
+        "interface ${name.value} {\n${shape.emit()}\n}\n\n"
     }
 
     override fun Type.Name.emit() = withLogging(logger) { value }
@@ -36,4 +37,13 @@ class TypeScriptEmitter(logger: Logger = noLogger) : Emitter(logger) {
         }.let { if (isIterable) "$it[]" else it }
     }
 
+    override fun Refined.emit() = withLogging(logger) {
+        "interface ${name.emit()} {\n${SPACER}value: string\n}\nconst validate${name.emit()} = (type: ${name.emit()}) => (${validator.emit()}).test(type.value);\n\n"
+    }
+
+    override fun Refined.Name.emit() = withLogging(logger) { value }
+
+    override fun Refined.Validator.emit() = withLogging(logger) {
+        "new RegExp('${value.drop(1).dropLast(1)}')"
+    }
 }
