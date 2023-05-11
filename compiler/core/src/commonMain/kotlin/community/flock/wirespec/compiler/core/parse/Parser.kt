@@ -8,7 +8,7 @@ import arrow.core.nel
 import arrow.core.traverse
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
-import community.flock.wirespec.compiler.core.parse.Type.Name
+import community.flock.wirespec.compiler.core.parse.Type.TName
 import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value
@@ -68,7 +68,7 @@ class Parser(private val logger: Logger) {
         eatToken()
         token.log()
         when (token.type) {
-            is LeftCurly -> Type(Name(typeName), parseTypeShape().bind())
+            is LeftCurly -> Type(TName(typeName), parseTypeShape().bind())
             else -> shift(WrongTokenException(LeftCurly::class, token).also { eatToken() }.nel())
         }.also {
             when (token.type) {
@@ -140,8 +140,8 @@ class Parser(private val logger: Logger) {
         eatToken()
         token.log()
         when (token.type) {
-            is CustomRegex -> Refined(Refined.Name(typeName), Refined.Validator(token.value))
-            else -> shift(WrongTokenException(LeftCurly::class, token).also { eatToken() }.nel())
+            is CustomRegex -> Refined(Refined.RName(typeName), Refined.Validator(token.value))
+            else -> shift(WrongTokenException(CustomRegex::class, token).also { eatToken() }.nel())
         }.also { eatToken() }
     }.toValidated()
 

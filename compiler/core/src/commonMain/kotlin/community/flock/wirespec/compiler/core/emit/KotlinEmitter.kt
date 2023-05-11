@@ -19,10 +19,10 @@ class KotlinEmitter(
         .map { (name, result) -> name to if (packageName.isBlank()) "" else "package $packageName\n\n$result" }
 
     override fun Type.emit() = withLogging(logger) {
-        "data class ${name.value}(\n${shape.emit()}\n)\n\n"
+        "data class ${name.emit()}(\n${shape.emit()}\n)\n\n"
     }
 
-    override fun Type.Name.emit() = withLogging(logger) { value }
+    override fun Type.TName.emit() = withLogging(logger) { value }
 
     override fun Type.Shape.emit() = withLogging(logger) {
         value.joinToString("\n") { it.emit() }.dropLast(1)
@@ -49,7 +49,7 @@ class KotlinEmitter(
         "data class ${name.emit()}(val value: String)\nfun ${name.emit()}.validate() = ${validator.emit()}\n\n"
     }
 
-    override fun Refined.Name.emit() = withLogging(logger) { value }
+    override fun Refined.RName.emit() = withLogging(logger) { value }
 
     override fun Refined.Validator.emit() = withLogging(logger) { "Regex($value).find(value)" }
 }

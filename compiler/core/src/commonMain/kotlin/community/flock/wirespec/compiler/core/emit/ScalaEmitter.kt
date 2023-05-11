@@ -19,10 +19,10 @@ class ScalaEmitter(
         .map { (name, result) -> name to if (packageName.isBlank()) "" else "package $packageName\n\n$result" }
 
     override fun Type.emit() = withLogging(logger) {
-        "case class ${name.value}(\n${shape.emit()}\n)\n\n"
+        "case class ${name.emit()}(\n${shape.emit()}\n)\n\n"
     }
 
-    override fun Type.Name.emit() = withLogging(logger) { value }
+    override fun Type.TName.emit() = withLogging(logger) { value }
 
     override fun Type.Shape.emit() = withLogging(logger) {
         value.joinToString("\n") { it.emit() }.dropLast(1)
@@ -55,7 +55,7 @@ class ScalaEmitter(
             |""".trimMargin()
     }
 
-    override fun Refined.Name.emit() = withLogging(logger) { value }
+    override fun Refined.RName.emit() = withLogging(logger) { value }
 
     override fun Refined.Validator.emit() = withLogging(logger) {
         """${SPACER}${SPACER}val regex = new scala.util.matching.Regex($value)

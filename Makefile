@@ -6,7 +6,6 @@ compile-types:
 	$(shell pwd)/scripts/compileTypes.sh
 .PHONY: compile-types
 
-
 build:
 	$(shell pwd)/scripts/build.sh
 .PHONY: build

@@ -4,8 +4,8 @@ sealed interface Node
 
 sealed interface Definition : Node
 
-data class Type(val name: Name, val shape: Shape) : Definition {
-    data class Name(val value: String)
+data class Type(val name: TName, val shape: Shape) : Definition {
+    data class TName(val value: String)
     data class Shape(val value: List<Field>) {
         data class Field(val key: Key, val value: Value, val isNullable: Boolean) {
             data class Key(val value: String)
@@ -19,7 +19,7 @@ data class Type(val name: Name, val shape: Shape) : Definition {
     }
 }
 
-data class Refined(val name: Name, val validator: Validator) : Definition {
-    data class Name(val value: String)
+data class Refined(val name: RName, val validator: Validator) : Definition {
+    data class RName(val value: String)
     data class Validator(val value: String)
 }

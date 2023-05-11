@@ -19,10 +19,10 @@ class JavaEmitter(
         .map { (name, result) -> name to if (packageName.isBlank()) "" else "package $packageName;\n\n$result" }
 
     override fun Type.emit() = withLogging(logger) {
-        "public record ${name.value}(\n${shape.emit()}\n) {};\n\n"
+        "public record ${name.emit()}(\n${shape.emit()}\n) {};\n\n"
     }
 
-    override fun Type.Name.emit() = withLogging(logger) { value }
+    override fun Type.TName.emit() = withLogging(logger) { value }
 
     override fun Type.Shape.emit() = withLogging(logger) {
         value.joinToString("\n") { it.emit() }.dropLast(1)
@@ -49,7 +49,7 @@ class JavaEmitter(
         "public record ${name.emit()}(String value) {\n${SPACER}static void validate(${name.emit()} record) {\n$SPACER${validator.emit()}\n$SPACER}\n}\n"
     }
 
-    override fun Refined.Name.emit() = withLogging(logger) { value }
+    override fun Refined.RName.emit() = withLogging(logger) { value }
 
     override fun Refined.Validator.emit() = withLogging(logger) {
         "${SPACER}java.util.regex.Pattern.compile($value).matcher(record.value).find();"
