@@ -41,7 +41,7 @@ object Wirespec : LanguageSpec {
         Regex("^\\}") to RightCurly,
         Regex("^[a-z][a-zA-Z]*") to CustomValue,
         Regex("^[A-Z][a-zA-Z]*") to CustomType,
-        Regex("""^".*"""") to CustomRegex,
+        Regex("^/.*/g") to CustomRegex,
         Regex("^.") to Invalid // Catch all regular expression if none of the above matched
     )
 }

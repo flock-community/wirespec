@@ -54,7 +54,7 @@ class CompilerTest {
     @Test
     fun testRefinedType() {
         val source = """
-            refined Name "^[a-zA-Z]{1,50}$"
+            refined Name /^[a-zA-Z]{1,50}$/g
         """.trimIndent()
 
         val out = """
