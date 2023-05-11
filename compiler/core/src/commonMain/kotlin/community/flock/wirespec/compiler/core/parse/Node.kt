@@ -4,14 +4,13 @@ sealed interface Node
 
 sealed interface Definition : Node
 
-data class Type(val name: TName, val shape: Shape) : Definition {
-    data class TName(val value: String)
+data class Type(val name: String, val shape: Shape) : Definition {
     data class Shape(val value: List<Field>) {
-        data class Field(val key: Key, val value: Value, val isNullable: Boolean) {
-            data class Key(val value: String)
-            sealed class Value(val isIterable: Boolean) {
-                class Custom(val value: String, isIterable: Boolean) : Value(isIterable)
-                class Ws(val value: Type, isIterable: Boolean) : Value(isIterable) {
+        data class Field(val identifier: Identifier, val reference: Reference, val isNullable: Boolean) {
+            data class Identifier(val value: String)
+            sealed class Reference(val isIterable: Boolean) {
+                class Custom(val value: String, isIterable: Boolean) : Reference(isIterable)
+                class Primitive(val type: Type, isIterable: Boolean) : Reference(isIterable) {
                     enum class Type { String, Integer, Boolean }
                 }
             }
@@ -19,7 +18,6 @@ data class Type(val name: TName, val shape: Shape) : Definition {
     }
 }
 
-data class Refined(val name: RName, val validator: Validator) : Definition {
-    data class RName(val value: String)
+data class Refined(val name: String, val validator: Validator) : Definition {
     data class Validator(val value: String)
 }
