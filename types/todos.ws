@@ -1,9 +1,9 @@
-type TodoIdAAAAA {
+type TodoId {
     id: String
 }
 
 type Todo {
-    id: TodoIdAAAAA,
+    id: TodoId,
     name: String,
     done: Boolean
 }
