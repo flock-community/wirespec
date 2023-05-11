@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.emit
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Custom
@@ -59,4 +60,13 @@ class JavaEmitter(
     override fun Refined.Validator.emit() = withLogging(logger) {
         "${SPACER}java.util.regex.Pattern.compile($value).matcher(record.value).find();"
     }
+
+    override fun Endpoint.emit(): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun Endpoint.Response.emit(className: String): String {
+        TODO("Not yet implemented")
+    }
+
 }

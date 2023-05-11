@@ -4,6 +4,7 @@ import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Refined
+import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Custom
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive
@@ -55,4 +56,34 @@ class KotlinEmitter(
     }
 
     override fun Refined.Validator.emit() = withLogging(logger) { "Regex($value).find(value)" }
+
+    override fun Endpoint.emit(): String {
+        val params = this.path.filterIsInstance<Endpoint.Segment.Param>()
+            .map {
+                when (it.reference) {
+                    is Custom -> it.key to it.reference.value
+                    is Primitive -> it.key to it.reference.type.name
+                }
+            }
+            .joinToString(", ") { (k, v) -> "$k: $v" }
+        val className = this.name
+        return "interface ${this.name} {\n" +
+                "\tsealed interface ${className}Response\n" +
+                this.responses.map { it.emit(className) }.joinToString("\n") + "\n" +
+                "\tfun ${this.name}($params):${this.name}Response\n" +
+                "}\n\n"
+    }
+
+    override fun Endpoint.Response.emit(className: String) =
+        "\tdata class ${className}Response${
+            contentType.replace(
+                "/",
+                ""
+            )
+        }${status}(val status:Int, val contentType:String, val content: ${type.toName()}): ${className}Response"
+
+    private fun Type.Shape.Field.Reference.toName() = when(this){
+        is Primitive -> this.type.name
+        is Custom -> this.value
+    }
 }
