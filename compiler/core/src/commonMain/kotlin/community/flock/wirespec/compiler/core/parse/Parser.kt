@@ -8,10 +8,9 @@ import arrow.core.nel
 import arrow.core.traverse
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
-import community.flock.wirespec.compiler.core.parse.Type.TName
 import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.types.Brackets
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
@@ -68,7 +67,7 @@ class Parser(private val logger: Logger) {
         eatToken()
         token.log()
         when (token.type) {
-            is LeftCurly -> Type(TName(typeName), parseTypeShape().bind())
+            is LeftCurly -> Type(typeName, parseTypeShape().bind())
             else -> shift(WrongTokenException(LeftCurly::class, token).also { eatToken() }.nel())
         }.also {
             when (token.type) {
@@ -83,11 +82,11 @@ class Parser(private val logger: Logger) {
         token.log()
         when (token.type) {
             is CustomValue -> mutableListOf<Field>().apply {
-                add(parseField(Field.Key(token.value)).bind())
+                add(parseField(Field.Identifier(token.value)).bind())
                 while (token.type == Comma) {
                     eatToken()
                     when (token.type) {
-                        is CustomValue -> add(parseField(Field.Key(token.value)).bind())
+                        is CustomValue -> add(parseField(Field.Identifier(token.value)).bind())
                         else -> shift(WrongTokenException(CustomValue::class, token).also { eatToken() }.nel())
                     }
                 }
@@ -97,7 +96,7 @@ class Parser(private val logger: Logger) {
         }.let(::Shape)
     }.toValidated()
 
-    private fun TokenProvider.parseField(key: Field.Key) = eagerEffect<Nel<CompilerException>, Field> {
+    private fun TokenProvider.parseField(identifier: Field.Identifier) = eagerEffect<Nel<CompilerException>, Field> {
         eatToken()
         token.log()
         when (token.type) {
@@ -106,8 +105,8 @@ class Parser(private val logger: Logger) {
         }
         when (val type = token.type) {
             is WsType -> Field(
-                key = key,
-                value = parseFieldValue(type, token.value),
+                identifier = identifier,
+                reference = parseFieldValue(type, token.value),
                 isNullable = (token.type is QuestionMark).also { if (it) eatToken() }
             )
 
@@ -120,10 +119,10 @@ class Parser(private val logger: Logger) {
         token.log()
         val isIterable = (token.type is Brackets).also { if (it) eatToken() }
         when (wsType) {
-            is WsString -> Value.Ws(Value.Ws.Type.String, isIterable)
-            is WsInteger -> Value.Ws(Value.Ws.Type.Integer, isIterable)
-            is WsBoolean -> Value.Ws(Value.Ws.Type.Boolean, isIterable)
-            is CustomType -> Value.Custom(value, isIterable)
+            is WsString -> Reference.Primitive(Reference.Primitive.Type.String, isIterable)
+            is WsInteger -> Reference.Primitive(Reference.Primitive.Type.Integer, isIterable)
+            is WsBoolean -> Reference.Primitive(Reference.Primitive.Type.Boolean, isIterable)
+            is CustomType -> Reference.Custom(value, isIterable)
         }
     }
 
@@ -140,7 +139,7 @@ class Parser(private val logger: Logger) {
         eatToken()
         token.log()
         when (token.type) {
-            is CustomRegex -> Refined(Refined.RName(typeName), Refined.Validator(token.value))
+            is CustomRegex -> Refined(typeName, Refined.Validator(token.value))
             else -> shift(WrongTokenException(CustomRegex::class, token).also { eatToken() }.nel())
         }.also { eatToken() }
     }.toValidated()

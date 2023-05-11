@@ -13,8 +13,8 @@ abstract class Emitter(val logger: Logger, val split: Boolean = false) : Emitter
         .map {
             logger.log("Emitting Node $this")
             when (it) {
-                is Type -> it.name.value to it.emit()
-                is Refined -> it.name.value to it.emit()
+                is Type -> it.name to it.emit()
+                is Refined -> it.name to it.emit()
             }
         }
         .let {
