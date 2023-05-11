@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.core.tokenize.types.Brackets
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
 import community.flock.wirespec.compiler.core.tokenize.types.Comma
+import community.flock.wirespec.compiler.core.tokenize.types.CustomRegex
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
@@ -16,6 +17,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpace
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
 import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
+import community.flock.wirespec.compiler.core.tokenize.types.WsRefinedTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsString
 import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
 import com.intellij.lexer.Lexer as IntellijLexer
@@ -60,6 +62,8 @@ class Lexer : IntellijLexer() {
                 is RightCurly -> Types.RIGHT_CURLY
                 is EndOfProgram -> Types.END_OF_PROGRAM
                 is Invalid -> Types.INVALID
+                is WsRefinedTypeDef -> Types.REFINED_TYPE_DEF
+                is CustomRegex -> Types.CUSTOM_REGEX
             }
         }
 

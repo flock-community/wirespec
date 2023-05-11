@@ -8,7 +8,7 @@ import arrow.core.nel
 import arrow.core.traverse
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
-import community.flock.wirespec.compiler.core.parse.Type.Name
+import community.flock.wirespec.compiler.core.parse.Type.TName
 import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value
@@ -16,6 +16,7 @@ import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.types.Brackets
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
 import community.flock.wirespec.compiler.core.tokenize.types.Comma
+import community.flock.wirespec.compiler.core.tokenize.types.CustomRegex
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
@@ -24,6 +25,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpace
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
 import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
+import community.flock.wirespec.compiler.core.tokenize.types.WsRefinedTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsString
 import community.flock.wirespec.compiler.core.tokenize.types.WsType
 import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
@@ -44,10 +46,11 @@ class Parser(private val logger: Logger) {
             .apply { while (hasNext()) add(parseDefinition()) }
             .traverse { it }
 
-    private fun TokenProvider.parseDefinition() = eagerEffect<Nel<CompilerException>, Definition> {
+    private fun TokenProvider.parseDefinition() = eagerEffect {
         token.log()
         when (token.type) {
             is WsTypeDef -> parseTypeDeclaration().bind()
+            is WsRefinedTypeDef -> parseRefinedTypeDeclaration().bind()
             else -> shift(WrongTokenException(WsTypeDef::class, token).also { eatToken() }.nel())
         }
     }.toValidated()
@@ -65,7 +68,7 @@ class Parser(private val logger: Logger) {
         eatToken()
         token.log()
         when (token.type) {
-            is LeftCurly -> Type(Name(typeName), parseTypeShape().bind())
+            is LeftCurly -> Type(TName(typeName), parseTypeShape().bind())
             else -> shift(WrongTokenException(LeftCurly::class, token).also { eatToken() }.nel())
         }.also {
             when (token.type) {
@@ -123,6 +126,24 @@ class Parser(private val logger: Logger) {
             is CustomType -> Value.Custom(value, isIterable)
         }
     }
+
+    private fun TokenProvider.parseRefinedTypeDeclaration() = eagerEffect {
+        eatToken()
+        token.log()
+        when (token.type) {
+            is CustomType -> parseCustomRegex(token.value).bind()
+            else -> shift(WrongTokenException(CustomType::class, token).also { eatToken() }.nel())
+        }
+    }.toValidated()
+
+    private fun TokenProvider.parseCustomRegex(typeName: String) = eagerEffect {
+        eatToken()
+        token.log()
+        when (token.type) {
+            is CustomRegex -> Refined(Refined.RName(typeName), Refined.Validator(token.value))
+            else -> shift(WrongTokenException(CustomRegex::class, token).also { eatToken() }.nel())
+        }.also { eatToken() }
+    }.toValidated()
 
     private fun Token.log() = logger.log("Parsing $type at line ${coordinates.line} position ${coordinates.position}")
 

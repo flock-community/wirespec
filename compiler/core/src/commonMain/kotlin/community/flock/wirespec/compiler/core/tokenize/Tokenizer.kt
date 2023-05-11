@@ -6,7 +6,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
 import community.flock.wirespec.compiler.core.tokenize.types.NewLine
 import community.flock.wirespec.compiler.core.tokenize.types.TokenType
 
-fun LanguageSpec.tokenize(source: String): List<Token> = tokenize(source, listOf()).let {
+fun LanguageSpec.tokenize(source: String): List<Token> = tokenize(source, emptyList()).let {
     it + Token(
         type = EndOfProgram,
         value = EndOfProgram.value,

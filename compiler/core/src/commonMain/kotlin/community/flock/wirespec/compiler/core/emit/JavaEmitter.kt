@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.emit
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value.Custom
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value.Ws
@@ -21,7 +22,7 @@ class JavaEmitter(
         "public record ${name.emit()}(\n${shape.emit()}\n) {};\n\n"
     }
 
-    override fun Type.Name.emit() = withLogging(logger) { value }
+    override fun Type.TName.emit() = withLogging(logger) { value }
 
     override fun Type.Shape.emit() = withLogging(logger) {
         value.joinToString("\n") { it.emit() }.dropLast(1)
@@ -41,7 +42,16 @@ class JavaEmitter(
                 Ws.Type.Integer -> "Integer"
                 Ws.Type.Boolean -> "Boolean"
             }
-        }.let { if (isIterable) "List<$it>" else it }
+        }.let { if (isIterable) "java.util.List<$it>" else it }
     }
 
+    override fun Refined.emit() = withLogging(logger) {
+        "public record ${name.emit()}(String value) {\n${SPACER}static void validate(${name.emit()} record) {\n$SPACER${validator.emit()}\n$SPACER}\n}\n"
+    }
+
+    override fun Refined.RName.emit() = withLogging(logger) { value }
+
+    override fun Refined.Validator.emit() = withLogging(logger) {
+        "${SPACER}java.util.regex.Pattern.compile($value).matcher(record.value).find();"
+    }
 }

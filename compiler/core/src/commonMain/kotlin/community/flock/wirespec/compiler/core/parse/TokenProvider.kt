@@ -8,7 +8,7 @@ import community.flock.wirespec.compiler.utils.Logger
 class TokenProvider(private val logger: Logger, private val tokenIterator: Iterator<Token>) {
 
     var token = nextToken() ?: throw StartingException()
-    var nextToken = nextToken()
+    private var nextToken = nextToken()
 
     init {
         printTokens()

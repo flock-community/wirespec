@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.emit
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value.Custom
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Value.Ws
@@ -21,7 +22,7 @@ class KotlinEmitter(
         "data class ${name.emit()}(\n${shape.emit()}\n)\n\n"
     }
 
-    override fun Type.Name.emit() = withLogging(logger) { value }
+    override fun Type.TName.emit() = withLogging(logger) { value }
 
     override fun Type.Shape.emit() = withLogging(logger) {
         value.joinToString("\n") { it.emit() }.dropLast(1)
@@ -44,4 +45,11 @@ class KotlinEmitter(
         }.let { if (isIterable) "List<$it>" else it }
     }
 
+    override fun Refined.emit() = withLogging(logger) {
+        "data class ${name.emit()}(val value: String)\nfun ${name.emit()}.validate() = ${validator.emit()}\n\n"
+    }
+
+    override fun Refined.RName.emit() = withLogging(logger) { value }
+
+    override fun Refined.Validator.emit() = withLogging(logger) { "Regex($value).find(value)" }
 }

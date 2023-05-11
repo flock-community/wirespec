@@ -1,6 +1,4 @@
-type TodoId {
-    value: String
-}
+refined TodoId /^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$/g
 
 type Todo {
     id: TodoId,

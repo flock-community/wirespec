@@ -6,7 +6,7 @@ import community.flock.wirespec.compiler.utils.Logger
 interface TypeDefinitionEmitter : TypeDefinitionEmitterLogger {
     fun Type.emit(): String
 
-    fun Type.Name.emit(): String
+    fun Type.TName.emit(): String
 
     fun Type.Shape.emit(): String
 
@@ -21,7 +21,7 @@ interface TypeDefinitionEmitterLogger {
     fun Type.withLogging(logger: Logger, block: () -> String) = logger
         .log("Emitting Definition: Type", block)
 
-    fun Type.Name.withLogging(logger: Logger, block: () -> String) = logger
+    fun Type.TName.withLogging(logger: Logger, block: () -> String) = logger
         .log("Emitting Definition: Type Name", block)
 
     fun Type.Shape.withLogging(logger: Logger, block: () -> String) = logger
