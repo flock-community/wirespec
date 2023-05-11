@@ -1,3 +1,5 @@
+package community.flock.wirespec.compiler.core.emit.common
+
 import community.flock.wirespec.compiler.core.emit.common.TypeDefinitionEmitterLogger
 import community.flock.wirespec.compiler.core.parse.EndpointDefinition
 
