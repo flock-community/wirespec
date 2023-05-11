@@ -83,7 +83,12 @@ class KotlinEmitter(
         }${status}(val status:Int, val contentType:String, val content: ${type.toName()}): ${className}Response"
 
     private fun Type.Shape.Field.Reference.toName() = when(this){
-        is Primitive -> this.type.name
-        is Custom -> this.value
+        is Primitive -> type.name.toIterable(isIterable)
+        is Custom ->  value.toIterable(isIterable)
+    }
+
+    private fun String.toIterable(isIterable: Boolean) = when(isIterable){
+        true -> "List<$this>"
+        else -> this
     }
 }

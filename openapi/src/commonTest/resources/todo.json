@@ -110,6 +110,23 @@
           "$ref": "#/components/schemas/todo"
         }
       },
+      "todosnested": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "completed": {
+              "type": "boolean"
+            }
+          }
+        }
+      },
       "error": {
         "type": "object",
         "properties": {

@@ -82,6 +82,16 @@ class OpenApiParserTest {
                 )
             ),
             Type(
+                "TodosnestedArray",
+                Shape(
+                    listOf(
+                        Field(Identifier("id"), Primitive(Primitive.Type.String, false), false),
+                        Field(Identifier("title"), Primitive(Primitive.Type.String, false), false),
+                        Field(Identifier("completed"), Primitive(Primitive.Type.Boolean, false), false),
+                    )
+                )
+            ),
+            Type(
                 "Error",
                 Shape(
                     listOf(
