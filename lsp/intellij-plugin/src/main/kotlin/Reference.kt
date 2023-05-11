@@ -10,19 +10,16 @@ import com.intellij.psi.search.GlobalSearchScope
 
 class Reference<A : CustomTypeElement>(element: A) : PsiReferenceBase<A>(element, TextRange(0, element.textLength)) {
 
-    override fun resolve(): PsiElement? {
-        return FileTypeIndex
-            .getFiles(FileType.INSTANCE, GlobalSearchScope.allScope(element.project))
-            .map { PsiManager.getInstance(element.project).findFile(it) }
-            .flatMap { file ->
-                Utils.visitAllElements(file)
-                    .filterIsInstance(CustomTypeElementDef::class.java)
-                    .filter { it.text == element.text }
-            }
-            .firstOrNull()
-    }
+    override fun resolve(): PsiElement? = FileTypeIndex
+        .getFiles(FileType.INSTANCE, GlobalSearchScope.allScope(element.project))
+        .map(PsiManager.getInstance(element.project)::findFile)
+        .flatMap { file ->
+            Utils.visitAllElements(file)
+                .filterIsInstance<CustomTypeElementDef>()
+                .filter { it.text == element.text }
+        }
+        .firstOrNull()
 
-    override fun handleElementRename(newElementName: String): PsiElement {
-        return element.setName(newElementName)
-    }
+    override fun handleElementRename(newElementName: String): PsiElement = element.setName(newElementName)
+
 }

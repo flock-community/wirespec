@@ -1,6 +1,6 @@
 plugins {
-    id("java-gradle-plugin")
-    id("maven-publish")
+    `java-gradle-plugin`
+    `maven-publish`
     id("org.jetbrains.kotlin.jvm")
 }
 
@@ -14,7 +14,6 @@ repositories {
 dependencies {
     implementation(project(":compiler:core"))
 }
-
 
 gradlePlugin {
     val kotlin by plugins.creating {

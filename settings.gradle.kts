@@ -1,6 +1,6 @@
 pluginManagement {
 
-    val kotlinVersion = "1.8.10"
+    val kotlinVersion = "1.8.20"
     val shadowVersion = "7.1.2"
 
     plugins {

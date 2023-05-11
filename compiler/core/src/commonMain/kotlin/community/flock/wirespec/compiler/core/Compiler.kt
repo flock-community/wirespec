@@ -1,8 +1,8 @@
 package community.flock.wirespec.compiler.core
 
-import arrow.core.Validated
-import arrow.core.andThen
-import arrow.core.valid
+import arrow.core.Either
+import arrow.core.Nel
+import arrow.core.ValidatedNel
 import community.flock.wirespec.compiler.core.Reported.EMITTED
 import community.flock.wirespec.compiler.core.Reported.PARSED
 import community.flock.wirespec.compiler.core.Reported.TOKENIZED
@@ -16,7 +16,7 @@ import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.core.validate.validate
 import community.flock.wirespec.compiler.utils.Logger
 
-fun LanguageSpec.compile(source: String): (Logger) -> (Emitter) -> Validated<CompilerException, List<Pair<String, String>>> =
+fun LanguageSpec.compile(source: String): (Logger) -> (Emitter) -> Either<Nel<CompilerException>, List<Pair<String, String>>> =
     { logger ->
         { emitter ->
             tokenize(source)
@@ -27,7 +27,7 @@ fun LanguageSpec.compile(source: String): (Logger) -> (Emitter) -> Validated<Com
                 .also((PARSED::report)(logger))
                 .map { it.validate() }
                 .also((VALIDATED::report)(logger))
-                .andThen { emitter.emit(it) }
+                .map { emitter.emit(it) }
                 .also((EMITTED::report)(logger))
         }
     }

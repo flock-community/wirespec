@@ -108,7 +108,7 @@ For a full example click [here](examples/spring-boot-gradle-plugin)
 ```kotlin
 plugins {
     ...
-    id("community.flock.wirespec.plugin.gradle") version "0.0.1-SNAPSHOT"
+    id("community.flock.wirespec.plugin.gradle") version "0.0.0"
 }
 
 wirespec {

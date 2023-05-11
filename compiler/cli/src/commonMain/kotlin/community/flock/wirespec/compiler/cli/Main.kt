@@ -1,5 +1,9 @@
 package community.flock.wirespec.compiler.cli
 
+import arrow.core.Either
+import arrow.core.Invalid
+import arrow.core.Validated
+import arrow.core.validNel
 import community.flock.wirespec.compiler.cli.Language.Jvm.Java
 import community.flock.wirespec.compiler.cli.Language.Jvm.Kotlin
 import community.flock.wirespec.compiler.cli.Language.Jvm.Scala
@@ -70,11 +74,11 @@ private fun compile(languages: Set<Language>, inputDir: String, packageName: Str
                 }
             }
             .map { (results, file) ->
-                results.map {
-                    it.map { (name, result) -> file.copy(name).write(result) }
+                when (results) {
+                    is Either.Right -> results.value.forEach { (name, result) -> file.copy(name).write(result) }
+                    is Either.Left -> println(results.value)
                 }
             }
-            .forEach { it.mapLeft { error -> throw error } }
     }
 
 fun FullFilePath.out(packageName: String) = { extension: Extension ->

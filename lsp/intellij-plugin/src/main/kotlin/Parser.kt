@@ -6,11 +6,19 @@ import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiParser
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.FileViewProvider
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiReference
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
+import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.CUSTOM_TYPE
+import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.LEFT_CURLY
+import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.RIGHT_CURLY
 import com.intellij.lang.ParserDefinition as IntellijParserDefinition
 import com.intellij.psi.tree.TokenSet as IntellijTokenSet
 
@@ -29,25 +37,20 @@ class Parser : PsiParser {
 
         fun parseNode() {
             when (builder.tokenType) {
-                Types.CUSTOM_TYPE -> {
-                    val marker = builder.mark()
-                    builder.advanceLexer()
-                    if (bodyMarker == null) {
-                        marker.done(CustomTypeDef())
-                    } else {
-                        marker.done(CustomTypeRef())
-                    }
+                CUSTOM_TYPE -> {
+                    builder.mark()
+                        .also { builder.advanceLexer() }
+                        .done(CustomTypeDef())
                     parseNode()
-
                 }
 
-                Types.LEFT_CURLY -> {
+                LEFT_CURLY -> {
                     bodyMarker = builder.mark()
                     builder.advanceLexer()
                     parseNode()
                 }
 
-                Types.RIGHT_CURLY -> {
+                RIGHT_CURLY -> {
                     builder.advanceLexer()
                     bodyMarker?.done(Body()).also { bodyMarker = null }
                     typeMarker?.done(TypeDef()).also { typeMarker = null }
@@ -86,7 +89,7 @@ class ParserDefinition : IntellijParserDefinition {
 
     override fun getCommentTokens() = TokenSet.create()
 
-    override fun getStringLiteralElements() = IntellijTokenSet.EMPTY
+    override fun getStringLiteralElements(): TokenSet = IntellijTokenSet.EMPTY
 
     override fun createParser(project: Project) = Parser()
 
@@ -94,14 +97,12 @@ class ParserDefinition : IntellijParserDefinition {
 
     override fun createFile(viewProvider: FileViewProvider) = File(viewProvider)
 
-    override fun createElement(node: ASTNode): PsiElement {
-        return when (node.elementType) {
-            is Parser.TypeDef -> TypeDefElement(node)
-            is Parser.CustomTypeDef -> CustomTypeElementDef(node)
-            is Parser.CustomTypeRef -> CustomTypeElementRef(node)
-            is Parser.Body -> BodyElement(node)
-            else -> error("Cannot create type")
-        }
+    override fun createElement(node: ASTNode): PsiElement = when (node.elementType) {
+        is Parser.TypeDef -> TypeDefElement(node)
+        is Parser.CustomTypeDef -> CustomTypeElementDef(node)
+        is Parser.CustomTypeRef -> CustomTypeElementRef(node)
+        is Parser.Body -> BodyElement(node)
+        else -> error("Cannot create type")
     }
 
     companion object {
@@ -130,33 +131,29 @@ fun createRefNode(project: Project, name: String) = PsiFileFactory
     ?: error("Cannot create new node")
 
 abstract class CustomTypeElement(ast: ASTNode) : ASTWrapperPsiElement(ast), PsiNamedElement {
-
-    override fun getName(): String? = this.text
+    override fun getName(): String? = text
 
     override fun getPresentation(): ItemPresentation = Utils.getPresentation(this)
 }
 
-class CustomTypeElementDef(val ast: ASTNode) : CustomTypeElement(ast), PsiNameIdentifierOwner {
+class CustomTypeElementDef(private val ast: ASTNode) : CustomTypeElement(ast), PsiNameIdentifierOwner {
 
     override fun setName(name: String): PsiElement {
-        val newNode = createDefNode(project, name)
-        this.parent.node.replaceChild(this.node, newNode)
+        parent.node.replaceChild(node, createDefNode(project, name))
         return this
     }
 
     override fun getNameIdentifier(): PsiElement = ast.firstChildNode.psi
 }
 
-class CustomTypeElementRef(val ast: ASTNode) : CustomTypeElement(ast), PsiNameIdentifierOwner {
+class CustomTypeElementRef(private val ast: ASTNode) : CustomTypeElement(ast), PsiNameIdentifierOwner {
 
     override fun setName(name: String): PsiElement {
-        val newNode = createRefNode(project, name)
-        this.parent.node.replaceChild(this.node, newNode)
+        this.parent.node.replaceChild(this.node, createRefNode(project, name))
         return this
     }
 
     override fun getNameIdentifier(): PsiElement = ast.firstChildNode.psi
 
     override fun getReference(): PsiReference = Reference(this)
-
 }

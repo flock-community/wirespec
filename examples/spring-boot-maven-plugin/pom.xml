@@ -40,16 +40,6 @@
                 <version>0.0.0</version>
                 <executions>
                     <execution>
-                        <id>java</id>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                        <configuration>
-                            <sourceDirectory>${project.basedir}/src/main/wirespec</sourceDirectory>
-                            <targetDirectory>${project.build.directory}/generated-sources</targetDirectory>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>typescript</id>
                         <goals>
                             <goal>typescript</goal>
@@ -57,6 +47,36 @@
                         <configuration>
                             <sourceDirectory>${project.basedir}/src/main/wirespec</sourceDirectory>
                             <targetDirectory>${project.basedir}/src/main/frontend/generated</targetDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>java</id>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirectory>${project.basedir}/src/main/wirespec</sourceDirectory>
+                            <targetDirectory>${project.build.directory}/generated-sources/java</targetDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>kotlin</id>
+                        <goals>
+                            <goal>kotlin</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirectory>${project.basedir}/src/main/wirespec</sourceDirectory>
+                            <targetDirectory>${project.build.directory}/generated-sources/kotlin</targetDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>scala</id>
+                        <goals>
+                            <goal>scala</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirectory>${project.basedir}/src/main/wirespec</sourceDirectory>
+                            <targetDirectory>${project.build.directory}/generated-sources/scala</targetDirectory>
                         </configuration>
                     </execution>
                 </executions>
