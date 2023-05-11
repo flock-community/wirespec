@@ -168,8 +168,9 @@ fun SchemaObject.flatten(
         OpenapiType.OBJECT -> {
             val fields = properties
                 ?.filter { !isPrimitive() }
-                ?.flatten(name, openApi)
-                ?.entries
+                ?.flatMap {
+                    it.value.flatten(it.key, className(name, it.key), openApi).entries
+                }
 
             mapOf(name to this)
                 .plus(fields
@@ -201,25 +202,6 @@ fun SchemaOrReferenceObject.flatten(
         is ReferenceObject -> this.resolveSchemaObject(openApi)?.flatten(name, prefix, openApi)
             ?: error("Reference not found")
     }
-}
-
-fun Map.Entry<String, SchemaOrReferenceObject>.flatten(
-    name: String,
-    openApi: OpenAPIObject,
-): Map<String, SchemaObject> {
-    return this.value.flatten(key, className(name, key), openApi)
-}
-
-
-fun Map<String, SchemaOrReferenceObject>.flatten(
-    name: String,
-    openApi: OpenAPIObject,
-): Map<String, SchemaObject> {
-    return this
-        .flatMap {
-            it.flatten(name, openApi).entries
-        }
-        .associate { (k, v) -> k to v }
 }
 
 fun PathItemObject.toOperationList() = Endpoint.Method.values()
