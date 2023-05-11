@@ -1,8 +1,18 @@
 package community.flock.wirespec.openapi
 
-import community.flock.kotlinx.openapi.bindings.*
+import community.flock.kotlinx.openapi.bindings.OpenAPIObject
+import community.flock.kotlinx.openapi.bindings.OperationObject
+import community.flock.kotlinx.openapi.bindings.ParameterObject
+import community.flock.kotlinx.openapi.bindings.PathItemObject
+import community.flock.kotlinx.openapi.bindings.Ref
+import community.flock.kotlinx.openapi.bindings.ReferenceObject
+import community.flock.kotlinx.openapi.bindings.ResponseObject
+import community.flock.kotlinx.openapi.bindings.ResponseOrReferenceObject
+import community.flock.kotlinx.openapi.bindings.SchemaObject
+import community.flock.kotlinx.openapi.bindings.SchemaOrReferenceObject
 import community.flock.wirespec.compiler.core.parse.*
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive
 import community.flock.kotlinx.openapi.bindings.Type as OpenapiType
 
@@ -47,7 +57,7 @@ object OpenApiParser {
                                     Endpoint.Response(
                                         status = status.value,
                                         contentType = contentType.value,
-                                        type = Field.Reference.Custom(
+                                        type = Reference.Custom(
                                             when (media.schema) {
                                                 is ReferenceObject -> className((media.schema as ReferenceObject).ref.getType())
                                                 is SchemaObject -> TODO()
@@ -73,8 +83,8 @@ object OpenApiParser {
 
         val componentsAst = openApi.components?.schemas
             ?.flatMap { it.value.flatten(className(it.key), className(it.key), openApi).entries }
-            ?.fold(listOf<Type>()) { acc, (key, value) ->
-                acc + Type(key, Type.Shape(value.fields()))
+            ?.map { (key, value) ->
+                Type(key, Type.Shape(value.fields()))
             }
             ?: TODO()
 
@@ -144,50 +154,60 @@ fun ResponseOrReferenceObject.resolve(openApi: OpenAPIObject): ResponseObject? =
         is ReferenceObject -> this.resolveResponseObject(openApi)
     }
 
-
-fun SchemaObject.fields() = properties
+fun SimpleSchema.fields() = properties
     ?.map {
-        val value = it.value
         Field(
-            Field.Identifier(it.key), when (value) {
-                is ReferenceObject -> TODO()
-                is SchemaObject -> Primitive(Primitive.Type.String, false)
+            Field.Identifier(it.key), when (it.type) {
+                community.flock.kotlinx.openapi.bindings.Type.STRING -> Primitive(Primitive.Type.String, false)
+                community.flock.kotlinx.openapi.bindings.Type.NUMBER -> Primitive(Primitive.Type.Integer, false)
+                community.flock.kotlinx.openapi.bindings.Type.INTEGER -> Primitive(Primitive.Type.Integer, false)
+                community.flock.kotlinx.openapi.bindings.Type.BOOLEAN -> Primitive(Primitive.Type.Boolean, false)
+                community.flock.kotlinx.openapi.bindings.Type.ARRAY -> Reference.Custom(it.className, false)
+                community.flock.kotlinx.openapi.bindings.Type.OBJECT -> Reference.Custom(it.className, false)
+                null -> TODO()
             },
             false
         )
     }
     ?: emptyList()
 
+data class SimpleSchema(val properties: List<SimpleProp>)
+data class SimpleProp(val key: String, val type: community.flock.kotlinx.openapi.bindings.Type?, val className:String)
+
 fun SchemaObject.flatten(
     name: String,
     prefix: String,
     openApi: OpenAPIObject,
-): Map<String, SchemaObject> =
+): Map<String, SimpleSchema> =
     when (type) {
 
         OpenapiType.OBJECT -> {
             val fields = properties
-                ?.filter { !isPrimitive() }
-                ?.flatMap {
-                    it.value.flatten(it.key, className(name, it.key), openApi).entries
-                }
+                ?.flatMap { it.value.flatten(it.key, className(name, it.key), openApi).entries }
 
-            mapOf(name to this)
+            mapOf(name to SimpleSchema(properties
+                ?.map {
+                    when (it.value) {
+                        is SchemaObject -> SimpleProp(it.key, (it.value as SchemaObject).type, className(prefix, it.key))
+                        is ReferenceObject -> TODO()
+                    }
+                }
+                ?: emptyList()))
                 .plus(fields
-                    ?.filter { !isPrimitive() }
-                    ?.fold(mapOf()) { acc, (key, value) -> acc + (className(name, key) to value) }
+                    ?.associate { (key, value) -> (className(name, key) to value) }
                     ?: emptyMap())
+
 
         }
 
-        OpenapiType.ARRAY -> items
-            ?.let {
-                when (it) {
-                    is ReferenceObject -> it.flatten(name, prefix, openApi)
-                    is SchemaObject -> mapOf(name to it)
-                }
-            }
-            ?: TODO()
+//        OpenapiType.ARRAY -> items
+//            ?.let {
+//                when (it) {
+//                    is ReferenceObject -> it.flatten(name, prefix, openApi)
+//                    is SchemaObject -> mapOf(name to it)
+//                }
+//            }
+//            ?: TODO()
 
         else -> mapOf()
     }
@@ -196,10 +216,14 @@ fun SchemaOrReferenceObject.flatten(
     name: String,
     prefix: String,
     openApi: OpenAPIObject,
-): Map<String, SchemaObject> {
+): Map<String, SimpleSchema> {
     return when (this) {
-        is SchemaObject -> this.flatten(name, prefix, openApi)
-        is ReferenceObject -> this.resolveSchemaObject(openApi)?.flatten(name, prefix, openApi)
+        is SchemaObject -> this
+            .flatten(name, prefix, openApi)
+
+        is ReferenceObject -> this
+            .resolveSchemaObject(openApi)
+            ?.flatten(name, prefix, openApi)
             ?: error("Reference not found")
     }
 }
@@ -224,13 +248,3 @@ fun className(vararg arg: String) = arg
     .joinToString("")
 
 fun Ref.getType() = value.split("/")[3]
-
-fun SchemaObject.isPrimitive() = when(type){
-    community.flock.kotlinx.openapi.bindings.Type.STRING -> true
-    community.flock.kotlinx.openapi.bindings.Type.NUMBER -> true
-    community.flock.kotlinx.openapi.bindings.Type.INTEGER -> true
-    community.flock.kotlinx.openapi.bindings.Type.BOOLEAN -> true
-    community.flock.kotlinx.openapi.bindings.Type.ARRAY -> false
-    community.flock.kotlinx.openapi.bindings.Type.OBJECT -> false
-    null -> TODO()
-}

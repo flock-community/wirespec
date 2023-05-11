@@ -99,6 +99,6 @@ class OpenApiParserTest {
         println(output.joinToString("\n") { it.second })
         println("-------------")
 
-//        assertEquals(expect, ast)
+        assertEquals(expect, ast)
     }
 }

@@ -8,9 +8,10 @@ data class Type(val name: String, val shape: Shape) : Definition {
     data class Shape(val value: List<Field>) {
         data class Field(val identifier: Identifier, val reference: Reference, val isNullable: Boolean) {
             data class Identifier(val value: String)
-            sealed class Reference(val isIterable: Boolean) {
-                class Custom(val value: String, isIterable: Boolean) : Reference(isIterable)
-                class Primitive(val type: Type, isIterable: Boolean) : Reference(isIterable) {
+            sealed interface Reference {
+                val isIterable: Boolean
+                data class Custom(val value: String, override val isIterable: Boolean) : Reference
+                data class Primitive(val type: Type, override val isIterable: Boolean) : Reference {
                     enum class Type { String, Integer, Boolean }
                 }
             }
