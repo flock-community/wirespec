@@ -3,10 +3,9 @@ package community.flock.wirespec.compiler.core.emit
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.*
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Custom
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive
 import community.flock.wirespec.compiler.utils.Logger
@@ -64,11 +63,27 @@ class ScalaEmitter(
             |${SPACER}${SPACER}regex.findFirstIn(that.value)""".trimMargin()
     }
 
-    override fun Endpoint.emit(): String {
+    override fun Endpoint.emit() = withLogging(logger) {
         TODO("Not yet implemented")
     }
 
-    override fun Endpoint.Response.emit(className: String): String {
+    override fun Endpoint.Method.emit(): String = withLogging(logger) {
+        TODO("Not yet implemented")
+    }
+
+    override fun Endpoint.Segment.emit(): String = withLogging(logger) {
+        TODO("Not yet implemented")
+    }
+
+    override fun Endpoint.Segment.Param.emit(): String = withLogging(logger) {
+        TODO("Not yet implemented")
+    }
+
+    override fun Endpoint.Segment.Literal.emit(): String = withLogging(logger) {
+        TODO("Not yet implemented")
+    }
+
+    override fun Endpoint.Response.emit() = withLogging(logger) {
         TODO("Not yet implemented")
     }
 

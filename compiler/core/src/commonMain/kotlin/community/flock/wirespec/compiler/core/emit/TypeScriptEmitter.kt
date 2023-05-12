@@ -53,11 +53,27 @@ class TypeScriptEmitter(logger: Logger = noLogger) : Emitter(logger) {
         "new RegExp('${value.drop(1).dropLast(1)}')"
     }
 
-    override fun Endpoint.emit(): String {
+    override fun Endpoint.emit() = withLogging(logger) {
         TODO("Not yet implemented")
     }
 
-    override fun Endpoint.Response.emit(className: String): String {
+    override fun Endpoint.Method.emit(): String = withLogging(logger) {
+        TODO("Not yet implemented")
+    }
+
+    override fun Endpoint.Segment.emit(): String = withLogging(logger) {
+        TODO("Not yet implemented")
+    }
+
+    override fun Endpoint.Segment.Param.emit(): String = withLogging(logger) {
+        TODO("Not yet implemented")
+    }
+
+    override fun Endpoint.Segment.Literal.emit(): String = withLogging(logger) {
+        TODO("Not yet implemented")
+    }
+
+    override fun Endpoint.Response.emit() = withLogging(logger) {
         TODO("Not yet implemented")
     }
 }

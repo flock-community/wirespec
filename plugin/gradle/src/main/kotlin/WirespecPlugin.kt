@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
+import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.utils.Logger
@@ -44,6 +45,11 @@ open class WirespecPluginExtension @Inject constructor(val objectFactory: Object
         scala = Scala().apply(action::execute)
     }
 
+    var wirespec: Wirespec? = null
+    fun wirespec(action: Action<in Wirespec>) {
+        wirespec = Wirespec().apply(action::execute)
+    }
+
     companion object {
         abstract class HasTargetDirectory {
             var targetDir: String = ""
@@ -57,6 +63,7 @@ open class WirespecPluginExtension @Inject constructor(val objectFactory: Object
         class Java : JvmLanguage()
         class Scala : JvmLanguage()
         class Kotlin : JvmLanguage()
+        class Wirespec : HasTargetDirectory()
     }
 }
 
@@ -96,6 +103,7 @@ class WirespecPlugin : Plugin<Project> {
             extension.java?.apply { JavaEmitter(packageName, logger).emit(targetDir, "java") }
             extension.scala?.apply { ScalaEmitter(packageName, logger).emit(targetDir, "scala") }
             extension.kotlin?.apply { KotlinEmitter(packageName, logger).emit(targetDir, "kt") }
+            extension.wirespec?.apply { WirespecEmitter(logger).emit(targetDir, "kt") }
         }
     }
 }

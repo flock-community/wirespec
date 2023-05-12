@@ -1,8 +1,6 @@
 package community.flock.wirespec.compiler.core.emit
 
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitter
-import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -11,18 +9,12 @@ import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.P
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
-class KotlinEmitter(
-    private val packageName: String = DEFAULT_PACKAGE_NAME,
-    logger: Logger = noLogger
-) : Emitter(logger) {
-
-    override fun emit(ast: AST): List<Pair<String, String>> = super.emit(ast)
-        .map { (name, result) -> name to if (packageName.isBlank()) "" else "package $packageName\n\n$result" }
+class WirespecEmitter(logger: Logger = noLogger) : Emitter(logger) {
 
     override fun Type.emit() = withLogging(logger) {
-        """data class $name(
+        """type $name {
             |${shape.emit()}
-            |)
+            |}
             |
             |""".trimMargin()
     }
@@ -32,7 +24,7 @@ class KotlinEmitter(
     }
 
     override fun Type.Shape.Field.emit() = withLogging(logger) {
-        "${SPACER}val ${identifier.emit()}: ${reference.emit()}${if (isNullable) "?" else ""},"
+        "${SPACER}${identifier.emit()}${if (isNullable) "?" else ""}: ${reference.emit()},"
     }
 
     override fun Type.Shape.Field.Identifier.emit() = withLogging(logger) { value }
@@ -42,31 +34,22 @@ class KotlinEmitter(
             is Custom -> value
             is Primitive -> when (type) {
                 Primitive.Type.String -> "String"
-                Primitive.Type.Integer -> "Int"
+                Primitive.Type.Integer -> "Integer"
                 Primitive.Type.Boolean -> "Boolean"
             }
-        }.let { if (isIterable) "List<$it>" else it }
+        }.let { if (isIterable) "$it[]" else it }
     }
 
     override fun Refined.emit() = withLogging(logger) {
-        """data class $name(val value: String)
-            |fun $name.validate() = ${validator.emit()}
-            |
-            |""".trimMargin()
+        "refined $name ${validator.emit()}\n\n"
     }
 
-    override fun Refined.Validator.emit() = withLogging(logger) { "Regex($value).find(value)" }
+    override fun Refined.Validator.emit() = withLogging(logger) {
+        "/${value.drop(1).dropLast(1)}/g"
+    }
 
     override fun Endpoint.emit() = withLogging(logger) {
-        path.filterIsInstance<Endpoint.Segment.Param>().joinToString(", ") { it.emit() }.let { params ->
-            """interface $name {
-            |${SPACER}sealed interface ${name}Response
-            |${responses.joinToString("\n") { "${SPACER}data class ${name}Response${it.emit()}: ${name}Response" }}
-            |${SPACER}fun ${name}($params):${name}Response
-            |}
-            |
-            |""".trimMargin()
-        }
+        TODO("Not yet implemented")
     }
 
     override fun Endpoint.Method.emit(): String = withLogging(logger) {
@@ -78,10 +61,7 @@ class KotlinEmitter(
     }
 
     override fun Endpoint.Segment.Param.emit(): String = withLogging(logger) {
-        when (reference) {
-            is Custom -> key to reference.value
-            is Primitive -> key to reference.type.name
-        }.run { "$first: $second" }
+        TODO("Not yet implemented")
     }
 
     override fun Endpoint.Segment.Literal.emit(): String = withLogging(logger) {
@@ -89,6 +69,6 @@ class KotlinEmitter(
     }
 
     override fun Endpoint.Response.emit() = withLogging(logger) {
-        "${contentType.replace("/", "")}${status}(val status:Int, val contentType:String, val content: ${type.emit()})"
+        TODO("Not yet implemented")
     }
 }

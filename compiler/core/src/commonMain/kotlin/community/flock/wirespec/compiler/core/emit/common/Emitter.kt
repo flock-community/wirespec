@@ -6,7 +6,9 @@ import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.utils.Logger
 
-abstract class Emitter(val logger: Logger, val split: Boolean = false) : TypeDefinitionEmitter, RefinedTypeDefinitionEmitter, EndpointDefinitionEmitter {
+interface Emitters : TypeDefinitionEmitter, RefinedTypeDefinitionEmitter, EndpointDefinitionEmitter
+
+abstract class Emitter(val logger: Logger, val split: Boolean = false) : Emitters {
 
     open fun emit(ast: AST) = ast
         .map {
@@ -17,13 +19,9 @@ abstract class Emitter(val logger: Logger, val split: Boolean = false) : TypeDef
                 is Refined -> it.name to it.emit()
             }
         }
-        .let {
-            if (split) it
-            else listOf(
-                it.first().first to it.fold("") { acc, cur -> acc + cur.second }
-                    // drop last newline
-                    .dropLast(1)
-            )
+        .run {
+            if (split) this
+            else listOf(first().first to joinToString("") { it.second }.dropLast(1)) // drop last newline
         }
 
     companion object {

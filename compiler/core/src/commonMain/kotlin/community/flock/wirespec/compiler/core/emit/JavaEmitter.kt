@@ -61,11 +61,27 @@ class JavaEmitter(
         "${SPACER}java.util.regex.Pattern.compile($value).matcher(record.value).find();"
     }
 
-    override fun Endpoint.emit(): String {
+    override fun Endpoint.emit() = withLogging(logger) {
         TODO("Not yet implemented")
     }
 
-    override fun Endpoint.Response.emit(className: String): String {
+    override fun Endpoint.Method.emit(): String = withLogging(logger) {
+        TODO("Not yet implemented")
+    }
+
+    override fun Endpoint.Segment.emit(): String = withLogging(logger) {
+        TODO("Not yet implemented")
+    }
+
+    override fun Endpoint.Segment.Param.emit(): String = withLogging(logger) {
+        TODO("Not yet implemented")
+    }
+
+    override fun Endpoint.Segment.Literal.emit(): String = withLogging(logger) {
+        TODO("Not yet implemented")
+    }
+
+    override fun Endpoint.Response.emit() = withLogging(logger) {
         TODO("Not yet implemented")
     }
 
