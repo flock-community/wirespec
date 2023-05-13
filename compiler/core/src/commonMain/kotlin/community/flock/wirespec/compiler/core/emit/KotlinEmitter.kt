@@ -60,14 +60,28 @@ class KotlinEmitter(
     override fun Endpoint.emit() = withLogging(logger) {
         path.filterIsInstance<Endpoint.Segment.Param>().joinToString(", ") { it.emit() }.let { params ->
             """interface $name {
+            |${SPACER}sealed interface ${name}Request
             |${SPACER}sealed interface ${name}Response
-            |${responses.joinToString("\n") { "${SPACER}data class ${name}Response${it.emit()}: ${name}Response" }}
+            |${responses.joinToString("\n") { "${SPACER}sealed interface ${name}Response${it.status}" }}
+            |${responses.joinToString("\n") { "${SPACER}data class ${name}Response${it.emit()}: ${name}Response, ${name}Response${it.status}" }}
             |${SPACER}fun ${name}($params):${name}Response
+            |${SPACER}companion object{
+            |${SPACER}${SPACER}const val PATH = "${path.emit()}"
+            |${SPACER}}
             |}
-            |
             |""".trimMargin()
         }
     }
+
+    fun List<Endpoint.Segment>.emit() = "/" + this
+        .map {
+            when (it) {
+                is Endpoint.Segment.Param -> "{${it.key}}"
+                is Endpoint.Segment.Literal -> it.value
+            }
+        }
+        .joinToString("/")
+
 
     override fun Endpoint.Method.emit(): String = withLogging(logger) {
         TODO("Not yet implemented")
@@ -89,6 +103,9 @@ class KotlinEmitter(
     }
 
     override fun Endpoint.Response.emit() = withLogging(logger) {
-        "${contentType.replace("/", "")}${status}(val status:Int, val contentType:String, val content: ${type.emit()})"
+        "${status}${contentType.emitContentType()}(val status:Int, val contentType:String, val content: ${type.emit()})"
     }
 }
+
+fun String.emitContentType() = split("/")
+    .joinToString("") { it.replaceFirstChar { it.uppercase() } }
