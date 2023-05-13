@@ -36,7 +36,7 @@ class OpenApiParserTest {
                     Endpoint.Segment.Literal("todos")
                 ),
                 listOf(
-                    Endpoint.Response("200", "application/json", Reference.Custom("Todos", true)),
+                    Endpoint.Response("200", "application/json", Reference.Custom("Todo", true)),
                     Endpoint.Response("500", "application/json", Reference.Custom("Error", false))
                 )
             ),
@@ -87,7 +87,7 @@ class OpenApiParserTest {
                     listOf(
                         Field(Identifier("id"), Primitive(Primitive.Type.String, false), false),
                         Field(Identifier("title"), Primitive(Primitive.Type.String, false), false),
-                        Field(Identifier("completed"), Primitive(Primitive.Type.Boolean, false), false),
+                        Field(Identifier("nested"), Primitive(Primitive.Type.Boolean, false), false),
                     )
                 )
             ),

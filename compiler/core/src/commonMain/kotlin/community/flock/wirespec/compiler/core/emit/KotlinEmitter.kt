@@ -62,13 +62,14 @@ class KotlinEmitter(
             """interface $name {
             |${SPACER}sealed interface ${name}Request
             |${SPACER}sealed interface ${name}Response
-            |${responses.joinToString("\n") { "${SPACER}sealed interface ${name}Response${it.status}" }}
-            |${responses.joinToString("\n") { "${SPACER}data class ${name}Response${it.emit()}: ${name}Response, ${name}Response${it.status}" }}
+            |${responses.joinToString("\n") { "${SPACER}sealed interface ${name}Response${it.status}: ${name}Response" }}
+            |${responses.joinToString("\n") { "${SPACER}data class ${name}Response${it.emit()}: ${name}Response${it.status}" }}
             |${SPACER}fun ${name}($params):${name}Response
             |${SPACER}companion object{
             |${SPACER}${SPACER}const val PATH = "${path.emit()}"
             |${SPACER}}
             |}
+            |
             |""".trimMargin()
         }
     }

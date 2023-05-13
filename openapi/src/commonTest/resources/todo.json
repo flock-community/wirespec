@@ -121,7 +121,7 @@
             "title": {
               "type": "string"
             },
-            "completed": {
+            "nested": {
               "type": "boolean"
             }
           }

@@ -4,12 +4,12 @@ import community.flock.kotlinx.openapi.bindings.OpenAPIObject
 import community.flock.kotlinx.openapi.bindings.OperationObject
 import community.flock.kotlinx.openapi.bindings.ParameterObject
 import community.flock.kotlinx.openapi.bindings.PathItemObject
-import community.flock.kotlinx.openapi.bindings.Ref
 import community.flock.kotlinx.openapi.bindings.ReferenceObject
 import community.flock.kotlinx.openapi.bindings.ResponseObject
 import community.flock.kotlinx.openapi.bindings.ResponseOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.SchemaObject
 import community.flock.kotlinx.openapi.bindings.SchemaOrReferenceObject
+import community.flock.kotlinx.openapi.bindings.Type.*
 import community.flock.wirespec.compiler.core.parse.*
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
@@ -57,14 +57,7 @@ object OpenApiParser {
                                     Endpoint.Response(
                                         status = status.value,
                                         contentType = contentType.value,
-                                        type = Reference.Custom(
-                                            when (media.schema) {
-                                                is ReferenceObject -> className((media.schema as ReferenceObject).getReference())
-                                                is SchemaObject -> TODO()
-                                                null -> TODO()
-                                            },
-                                            (media.schema as SchemaOrReferenceObject).resolve(openApi)?.type == OpenapiType.ARRAY
-                                        )
+                                        type = media.schema?.toReference(openApi) ?: TODO()
                                     )
                                 }
                                 ?: TODO()
@@ -120,22 +113,22 @@ fun ReferenceObject.resolveParameterObject(openApi: OpenAPIObject): ParameterObj
             }
         }
 
-fun ReferenceObject.resolveSchemaObject(openApi: OpenAPIObject): SchemaObject? =
+fun ReferenceObject.resolveSchemaObject(openApi: OpenAPIObject): Pair<ReferenceObject, SchemaObject>? =
     openApi.components?.schemas
         ?.get(getReference())
         ?.let {
             when (it) {
-                is SchemaObject -> it
+                is SchemaObject -> this to it
                 is ReferenceObject -> it.resolveSchemaObject(openApi)
             }
         }
 
-fun ReferenceObject.resolveResponseObject(openApi: OpenAPIObject): ResponseObject? =
+fun ReferenceObject.resolveResponseObject(openApi: OpenAPIObject): Pair<ReferenceObject, ResponseObject>? =
     openApi.components?.responses
         ?.get(getReference())
         ?.let {
             when (it) {
-                is ResponseObject -> it
+                is ResponseObject -> this to it
                 is ReferenceObject -> it.resolveResponseObject(openApi)
             }
         }
@@ -143,44 +136,44 @@ fun ReferenceObject.resolveResponseObject(openApi: OpenAPIObject): ResponseObjec
 fun SchemaOrReferenceObject.resolve(openApi: OpenAPIObject): SchemaObject? =
     when (this) {
         is SchemaObject -> this
-        is ReferenceObject -> this.resolveSchemaObject(openApi)
+        is ReferenceObject -> this.resolveSchemaObject(openApi)?.second
     }
 
 fun ResponseOrReferenceObject.resolve(openApi: OpenAPIObject): ResponseObject? =
     when (this) {
         is ResponseObject -> this
-        is ReferenceObject -> this.resolveResponseObject(openApi)
+        is ReferenceObject -> this.resolveResponseObject(openApi)?.second
     }
 
 fun SimpleSchema.fields() = properties
     .map {
         when (it.type) {
-            community.flock.kotlinx.openapi.bindings.Type.STRING -> Field(
+            STRING -> Field(
                 Field.Identifier(it.key),
                 Primitive(Primitive.Type.String, false),
                 false
             )
 
-            community.flock.kotlinx.openapi.bindings.Type.NUMBER -> Field(
+            NUMBER -> Field(
                 Field.Identifier(it.key),
                 Primitive(Primitive.Type.Integer, false),
                 false
             )
 
-            community.flock.kotlinx.openapi.bindings.Type.INTEGER -> Field(
+            INTEGER -> Field(
                 Field.Identifier(it.key),
                 Primitive(Primitive.Type.Integer, false),
                 false
             )
 
-            community.flock.kotlinx.openapi.bindings.Type.BOOLEAN -> Field(
+            BOOLEAN -> Field(
                 Field.Identifier(it.key),
                 Primitive(Primitive.Type.Boolean, false),
                 false
             )
 
-            community.flock.kotlinx.openapi.bindings.Type.ARRAY -> it.field
-            community.flock.kotlinx.openapi.bindings.Type.OBJECT -> it.field
+            ARRAY -> it.field
+            OBJECT -> it.field
             null -> TODO()
         }
     }
@@ -247,10 +240,29 @@ fun SchemaOrReferenceObject.flatten(
 
         is ReferenceObject -> this
             .resolveSchemaObject(openApi)
+            ?.second
             ?.flatten(name, openApi)
             ?: error("Reference not found")
     }
 }
+
+fun SchemaOrReferenceObject.toReference(openApi: OpenAPIObject) =
+    when (this) {
+        is ReferenceObject -> {
+            val resolved = resolveSchemaObject(openApi) ?: TODO()
+            when(resolved.second.type){
+                ARRAY -> when(resolved.second.items){
+                    is ReferenceObject -> Reference.Custom(className((resolved.second.items as ReferenceObject).getReference()), true)
+                    is SchemaObject -> Reference.Custom(className(resolved.first.getReference(), "Array"), true)
+                    null -> TODO()
+                }
+                else -> Reference.Custom(className(resolved.first.getReference()), false)
+            }
+
+        }
+
+        is SchemaObject -> TODO()
+    }
 
 fun PathItemObject.toOperationList() = Endpoint.Method.values()
     .map {
@@ -274,9 +286,10 @@ fun className(vararg arg: String) = arg
 
 fun ReferenceObject.getReference() = this.ref.value.split("/")[3]
 
-fun SchemaOrReferenceObject.getReference(openApi: OpenAPIObject) = when(this){
+fun SchemaOrReferenceObject.getReference(openApi: OpenAPIObject) = when (this) {
     is ReferenceObject -> {
         this.resolveSchemaObject(openApi)
     }
+
     is SchemaObject -> TODO()
 }
