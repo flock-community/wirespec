@@ -6,8 +6,28 @@
   },
   "paths": {
     "/todos": {
+      "parameters": [
+        {
+          "name": "x-user",
+          "in": "header",
+          "required": false,
+          "schema": {
+            "type": "boolean"
+          }
+        }
+      ],
       "get": {
         "operationId": "TodosList",
+        "parameters": [
+          {
+            "name": "completed",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -18,6 +38,37 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/todo_input"
+              }
+            },
+            "application/xml": {
+              "schema": {
+                "$ref": "#/components/schemas/todo"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OkNotContent"
           },
           "500": {
             "description": "Error",
@@ -71,6 +122,17 @@
   },
   "components": {
     "schemas": {
+      "todo_input": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean"
+          }
+        }
+      },
       "todo": {
         "type": "object",
         "properties": {

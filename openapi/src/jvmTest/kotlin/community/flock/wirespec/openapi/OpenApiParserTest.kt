@@ -3,12 +3,12 @@ package community.flock.wirespec.openapi
 import community.flock.kotlinx.openapi.bindings.OpenAPI
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Identifier
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive
-import community.flock.wirespec.compiler.core.parse.Type
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -36,8 +36,48 @@ class OpenApiParserTest {
                     Endpoint.Segment.Literal("todos")
                 ),
                 listOf(
-                    Endpoint.Response("200", "application/json", Reference.Custom("Todo", true)),
-                    Endpoint.Response("500", "application/json", Reference.Custom("Error", false))
+                    Field(Identifier("completed"), Primitive(type = Primitive.Type.Boolean, isIterable = false), false)
+                ),
+                listOf(
+                    Field(Identifier("x-user"), Primitive(type = Primitive.Type.Boolean, isIterable = false), false)
+                ),
+                listOf(),
+                listOf(
+                    Endpoint.Request(content = null)
+                ),
+                listOf(
+                    Endpoint.Response("200", Endpoint.Content("application/json", Reference.Custom("Todo", true))),
+                    Endpoint.Response("500", Endpoint.Content("application/json", Reference.Custom("Error", false)))
+                )
+            ),
+            Endpoint(
+                "TodosPOST",
+                Endpoint.Method.POST,
+                listOf(
+                    Endpoint.Segment.Literal("todos"),
+                ),
+                listOf(),
+                listOf(
+                    Field(Identifier("x-user"), Primitive(type = Primitive.Type.Boolean, isIterable = false), false)
+                ),
+                listOf(),
+                listOf(
+                    Endpoint.Request(
+                        Endpoint.Content(
+                            type = "application/json",
+                            reference = Reference.Custom("Todo_input", false)
+                        )
+                    ),
+                    Endpoint.Request(
+                        Endpoint.Content(
+                            type = "application/xml",
+                        reference = Reference.Custom("Todo", false)
+                    )
+                    )
+                ),
+                listOf(
+                    Endpoint.Response("201", null),
+                    Endpoint.Response("500", Endpoint.Content("application/json", Reference.Custom("Error", false)))
                 )
             ),
             Endpoint(
@@ -45,11 +85,26 @@ class OpenApiParserTest {
                 Endpoint.Method.GET,
                 listOf(
                     Endpoint.Segment.Literal("todos"),
-                    Endpoint.Segment.Param("id", Primitive(Primitive.Type.String, false))
+                    Endpoint.Segment.Param(Identifier("id"), Primitive(Primitive.Type.String, false))
+                ),
+                listOf(),
+                listOf(),
+                listOf(),
+                listOf(
+                    Endpoint.Request(null)
                 ),
                 listOf(
-                    Endpoint.Response("200", "application/json", Reference.Custom("Todo", false)),
-                    Endpoint.Response("500", "application/json", Reference.Custom("Error", false))
+                    Endpoint.Response("200", Endpoint.Content("application/json", Reference.Custom("Todo", false))),
+                    Endpoint.Response("500", Endpoint.Content("application/json", Reference.Custom("Error", false)))
+                )
+            ),
+            Type(
+                "Todo_input",
+                Shape(
+                    listOf(
+                        Field(Identifier(value="title"), Primitive(Primitive.Type.String, false), false),
+                        Field(Identifier(value="completed"), Primitive(Primitive.Type.Boolean, false), false)
+                    )
                 )
             ),
             Type(

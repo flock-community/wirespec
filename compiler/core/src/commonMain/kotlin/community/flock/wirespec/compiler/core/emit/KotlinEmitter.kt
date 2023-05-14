@@ -16,8 +16,13 @@ class KotlinEmitter(
     logger: Logger = noLogger
 ) : Emitter(logger) {
 
+    val base = """
+        |interface Request<T> { val url:String; val method: String; val headers: Map<String, List<String>>; val contentType:String?; val content:T? }
+        |interface Response<T> { val status:Int; val headers: Map<String, List<String>>; val contentType:String; val content:T }
+    """.trimMargin()
+
     override fun emit(ast: AST): List<Pair<String, String>> = super.emit(ast)
-        .map { (name, result) -> name to if (packageName.isBlank()) "" else "package $packageName\n\n$result" }
+        .map { (name, result) -> name to if (packageName.isBlank()) "" else "package $packageName\n\n$base\n\n$result" }
 
     override fun Type.emit() = withLogging(logger) {
         """data class $name(
@@ -28,14 +33,19 @@ class KotlinEmitter(
     }
 
     override fun Type.Shape.emit() = withLogging(logger) {
-        value.joinToString("\n") { it.emit() }.dropLast(1)
+        value.joinToString("\n") { "${SPACER}val ${it.emit()}," }.dropLast(1)
     }
 
     override fun Type.Shape.Field.emit() = withLogging(logger) {
-        "${SPACER}val ${identifier.emit()}: ${reference.emit()}${if (isNullable) "?" else ""},"
+        "${identifier.emit()}: ${reference.emit()}${if (isNullable) "?" else ""}"
     }
 
-    override fun Type.Shape.Field.Identifier.emit() = withLogging(logger) { value }
+    override fun Type.Shape.Field.Identifier.emit() = withLogging(logger) {
+        value
+            .split("-")
+            .mapIndexed { index, s -> if (index > 0) s.replaceFirstChar(Char::uppercase) else s }
+            .joinToString("")
+    }
 
     override fun Type.Shape.Field.Reference.emit() = withLogging(logger) {
         when (this) {
@@ -58,31 +68,35 @@ class KotlinEmitter(
     override fun Refined.Validator.emit() = withLogging(logger) { "Regex($value).find(value)" }
 
     override fun Endpoint.emit() = withLogging(logger) {
-        path.filterIsInstance<Endpoint.Segment.Param>().joinToString(", ") { it.emit() }.let { params ->
-            """interface $name {
-            |${SPACER}sealed interface ${name}Request
-            |${SPACER}sealed interface ${name}Response
-            |${responses.joinToString("\n") { "${SPACER}sealed interface ${name}Response${it.status}: ${name}Response" }}
-            |${responses.joinToString("\n") { "${SPACER}data class ${name}Response${it.emit()}: ${name}Response${it.status}" }}
-            |${SPACER}fun ${name}($params):${name}Response
-            |${SPACER}companion object{
-            |${SPACER}${SPACER}const val PATH = "${path.emit()}"
-            |${SPACER}}
-            |}
-            |
-            |""".trimMargin()
+        val pathField =
+            path.filterIsInstance<Endpoint.Segment.Param>().map { Type.Shape.Field(it.identifier, it.reference, false) }
+        val parameters = pathField + query + headers + cookies
+        """interface $name {
+        |${SPACER}sealed interface ${name}Request
+        |${requests.joinToString("\n") { "${SPACER}data class ${name}Request${it.emit()}: Request<${it.content?.reference?.emit() ?: "Unit"}>, ${name}Request" }}
+        |${SPACER}sealed interface ${name}Response
+        |${responses.joinToString("\n") { "${SPACER}sealed interface ${name}Response${it.status}: ${name}Response" }}
+        |${responses.joinToString("\n") { "${SPACER}data class ${name}Response${it.emit()}: Response<${it.content?.reference?.emit() ?: "Unit"}>, ${name}Response${it.status}" }}
+        |${SPACER}fun ${name}(reqest: ${name}Request):${name}Response {
+        |${SPACER}${SPACER}TODO()
+        |}
+        |${SPACER}companion object{
+        |${SPACER}${SPACER}const val PATH = "${path.emitSegment()}"
+        |${SPACER}}
+        |}
+        |
+        |""".trimMargin()
+
+    }
+
+    private fun List<Endpoint.Segment>.emitSegment() = "/" + joinToString("/") {
+        when (it) {
+            is Endpoint.Segment.Param -> "{${it.identifier.value}}"
+            is Endpoint.Segment.Literal -> it.value
         }
     }
 
-    fun List<Endpoint.Segment>.emit() = "/" + this
-        .map {
-            when (it) {
-                is Endpoint.Segment.Param -> "{${it.key}}"
-                is Endpoint.Segment.Literal -> it.value
-            }
-        }
-        .joinToString("/")
-
+    private fun List<Type.Shape.Field>.emitField() = joinToString(", ") { it.emit() }
 
     override fun Endpoint.Method.emit(): String = withLogging(logger) {
         TODO("Not yet implemented")
@@ -94,8 +108,8 @@ class KotlinEmitter(
 
     override fun Endpoint.Segment.Param.emit(): String = withLogging(logger) {
         when (reference) {
-            is Custom -> key to reference.value
-            is Primitive -> key to reference.type.name
+            is Custom -> identifier to reference.value
+            is Primitive -> identifier to reference.type.name
         }.run { "$first: $second" }
     }
 
@@ -103,8 +117,11 @@ class KotlinEmitter(
         TODO("Not yet implemented")
     }
 
+    fun Endpoint.Request.emit() =
+        "${content?.type?.emitContentType()?:"Unit"}(override val url: String, override val method: String,override val headers:Map<String, List<String>>, override val contentType:String, override val content: ${content?.reference?.emit() ?: "Unit"})"
+
     override fun Endpoint.Response.emit() = withLogging(logger) {
-        "${status}${contentType.emitContentType()}(val status:Int, val contentType:String, val content: ${type.emit()})"
+        "${status}${content?.type?.emitContentType()}(override val status:Int, override val headers:Map<String, List<String>>, override val contentType:String, override val content: ${content?.reference?.emit() ?: "Unit"})"
     }
 }
 

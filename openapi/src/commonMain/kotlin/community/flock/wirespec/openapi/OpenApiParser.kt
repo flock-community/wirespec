@@ -2,14 +2,16 @@ package community.flock.wirespec.openapi
 
 import community.flock.kotlinx.openapi.bindings.OpenAPIObject
 import community.flock.kotlinx.openapi.bindings.OperationObject
+import community.flock.kotlinx.openapi.bindings.ParameterLocation
 import community.flock.kotlinx.openapi.bindings.ParameterObject
 import community.flock.kotlinx.openapi.bindings.PathItemObject
 import community.flock.kotlinx.openapi.bindings.ReferenceObject
+import community.flock.kotlinx.openapi.bindings.RequestBodyObject
+import community.flock.kotlinx.openapi.bindings.RequestBodyOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.ResponseObject
 import community.flock.kotlinx.openapi.bindings.ResponseOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.SchemaObject
 import community.flock.kotlinx.openapi.bindings.SchemaOrReferenceObject
-import community.flock.kotlinx.openapi.bindings.Type.*
 import community.flock.wirespec.compiler.core.parse.*
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
@@ -23,17 +25,21 @@ object OpenApiParser {
         val endpointAst = openApi.paths
             .flatMap { (key, path) ->
                 path.toOperationList().map { (method, operation) ->
+                    val parameters =
+                        path.resolveParameters(openApi) + (operation?.resolveParameters(openApi) ?: emptyList())
                     val segments = key.value.split("/").drop(1).map { segment ->
                         val param = "^\\{(.*)}$".toRegex().find(segment)?.groupValues?.get(1)
                         when {
                             param != null -> {
-                                (path.findParameter(openApi, param) ?: operation?.findParameter(openApi, param))
+                                parameters
+                                    .find { it.name == param }
                                     ?.schema
                                     ?.resolve(openApi)
-                                    ?.let { (key, value) ->
+                                    ?.let { it.type?.toPrimitive() }
+                                    ?.let {
                                         Endpoint.Segment.Param(
-                                            param,
-                                            Primitive(Primitive.Type.String, false)
+                                            Field.Identifier(param),
+                                            Primitive(it, false)
                                         )
                                     }
                                     ?: error(" Declared path parameter $param needs to be defined as a path parameter in path or operation level")
@@ -42,34 +48,65 @@ object OpenApiParser {
                             else -> Endpoint.Segment.Literal(segment)
                         }
                     }
-                    val name = operation?.operationId ?: segments
+                    val name = operation?.operationId?.let { className(it) } ?: segments
                         .joinToString("") {
                             when (it) {
                                 is Endpoint.Segment.Literal -> className(it.value)
-                                is Endpoint.Segment.Param -> className(it.key)
+                                is Endpoint.Segment.Param -> className(it.identifier.value)
                             }
                         }
                         .let { it + method.name }
+                    val query = parameters
+                        .filter { it.`in` == ParameterLocation.QUERY }
+                        .mapNotNull { it.toField(openApi) }
+                    val headers = parameters
+                        .filter { it.`in` == ParameterLocation.HEADER }
+                        .mapNotNull { it.toField(openApi) }
+                    val cookies = parameters
+                        .filter { it.`in` == ParameterLocation.COOKIE }
+                        .mapNotNull { it.toField(openApi) }
+                    val requests = operation?.requestBody?.resolve(openApi)?.content
+                        ?.map { (mediaType, mediaObject) ->
+                            Endpoint.Request(
+                                Endpoint.Content(
+                                    type = mediaType.value,
+                                    reference = mediaObject.schema?.toReference(openApi) ?: TODO()
+                                )
+                            )
+                        }
+                        ?: listOf(
+                            Endpoint.Request(null)
+                        )
                     val responses = operation?.responses
-                        ?.map { (status, res) ->
+                        ?.flatMap { (status, res) ->
                             res.resolve(openApi)?.content
                                 ?.map { (contentType, media) ->
                                     Endpoint.Response(
                                         status = status.value,
-                                        contentType = contentType.value,
-                                        type = media.schema?.toReference(openApi) ?: TODO()
+                                        content = Endpoint.Content(
+                                            type = contentType.value,
+                                            reference = media.schema?.toReference(openApi) ?: TODO()
+                                        )
                                     )
                                 }
-                                ?: TODO()
+                                ?: listOf(
+                                    Endpoint.Response(
+                                        status = status.value,
+                                        content = null
+                                    )
+                                )
                         }
-                        ?.flatten()
-                        ?: TODO()
+                        ?: emptyList()
 
                     Endpoint(
-                        className(name),
-                        method,
-                        segments,
-                        responses
+                        name = name,
+                        method = method,
+                        path = segments,
+                        query = query,
+                        headers = headers,
+                        cookies = cookies,
+                        requests = requests,
+                        responses = responses,
                     )
                 }
             }
@@ -83,24 +120,23 @@ object OpenApiParser {
     }
 }
 
-fun OperationObject.findParameter(openApi: OpenAPIObject, parameterName: String): ParameterObject? = parameters
-    ?.map {
+fun OperationObject.resolveParameters(openApi: OpenAPIObject): List<ParameterObject> = parameters
+    ?.mapNotNull {
         when (it) {
             is ParameterObject -> it
             is ReferenceObject -> it.resolveParameterObject(openApi)
         }
     }
-    ?.find { it?.name == parameterName }
+    ?: emptyList()
 
-
-fun PathItemObject.findParameter(openApi: OpenAPIObject, parameterName: String): ParameterObject? = parameters
-    ?.map {
+fun PathItemObject.resolveParameters(openApi: OpenAPIObject): List<ParameterObject> = parameters
+    ?.mapNotNull {
         when (it) {
             is ParameterObject -> it
             is ReferenceObject -> it.resolveParameterObject(openApi)
         }
     }
-    ?.find { it?.name == parameterName }
+    ?: emptyList()
 
 
 fun ReferenceObject.resolveParameterObject(openApi: OpenAPIObject): ParameterObject? =
@@ -123,6 +159,16 @@ fun ReferenceObject.resolveSchemaObject(openApi: OpenAPIObject): Pair<ReferenceO
             }
         }
 
+fun ReferenceObject.resolveRequestBodyObject(openApi: OpenAPIObject): Pair<ReferenceObject, RequestBodyObject>? =
+    openApi.components?.requestBodies
+        ?.get(getReference())
+        ?.let {
+            when (it) {
+                is RequestBodyObject -> this to it
+                is ReferenceObject -> it.resolveRequestBodyObject(openApi)
+            }
+        }
+
 fun ReferenceObject.resolveResponseObject(openApi: OpenAPIObject): Pair<ReferenceObject, ResponseObject>? =
     openApi.components?.responses
         ?.get(getReference())
@@ -139,6 +185,12 @@ fun SchemaOrReferenceObject.resolve(openApi: OpenAPIObject): SchemaObject? =
         is ReferenceObject -> this.resolveSchemaObject(openApi)?.second
     }
 
+fun RequestBodyOrReferenceObject.resolve(openApi: OpenAPIObject): RequestBodyObject? =
+    when (this) {
+        is RequestBodyObject -> this
+        is ReferenceObject -> this.resolveRequestBodyObject(openApi)?.second
+    }
+
 fun ResponseOrReferenceObject.resolve(openApi: OpenAPIObject): ResponseObject? =
     when (this) {
         is ResponseObject -> this
@@ -148,32 +200,32 @@ fun ResponseOrReferenceObject.resolve(openApi: OpenAPIObject): ResponseObject? =
 fun SimpleSchema.fields() = properties
     .map {
         when (it.type) {
-            STRING -> Field(
+            OpenapiType.STRING -> Field(
                 Field.Identifier(it.key),
                 Primitive(Primitive.Type.String, false),
                 false
             )
 
-            NUMBER -> Field(
+            OpenapiType.NUMBER -> Field(
                 Field.Identifier(it.key),
                 Primitive(Primitive.Type.Integer, false),
                 false
             )
 
-            INTEGER -> Field(
+            OpenapiType.INTEGER -> Field(
                 Field.Identifier(it.key),
                 Primitive(Primitive.Type.Integer, false),
                 false
             )
 
-            BOOLEAN -> Field(
+            OpenapiType.BOOLEAN -> Field(
                 Field.Identifier(it.key),
                 Primitive(Primitive.Type.Boolean, false),
                 false
             )
 
-            ARRAY -> it.field
-            OBJECT -> it.field
+            OpenapiType.ARRAY -> it.field
+            OpenapiType.OBJECT -> it.field
             null -> TODO()
         }
     }
@@ -250,12 +302,17 @@ fun SchemaOrReferenceObject.toReference(openApi: OpenAPIObject) =
     when (this) {
         is ReferenceObject -> {
             val resolved = resolveSchemaObject(openApi) ?: TODO()
-            when(resolved.second.type){
-                ARRAY -> when(resolved.second.items){
-                    is ReferenceObject -> Reference.Custom(className((resolved.second.items as ReferenceObject).getReference()), true)
+            when (resolved.second.type) {
+                OpenapiType.ARRAY -> when (resolved.second.items) {
+                    is ReferenceObject -> Reference.Custom(
+                        className((resolved.second.items as ReferenceObject).getReference()),
+                        true
+                    )
+
                     is SchemaObject -> Reference.Custom(className(resolved.first.getReference(), "Array"), true)
                     null -> TODO()
                 }
+
                 else -> Reference.Custom(className(resolved.first.getReference()), false)
             }
 
@@ -293,3 +350,17 @@ fun SchemaOrReferenceObject.getReference(openApi: OpenAPIObject) = when (this) {
 
     is SchemaObject -> TODO()
 }
+
+fun OpenapiType.toPrimitive() = when (this) {
+    OpenapiType.STRING -> Primitive.Type.String
+    OpenapiType.INTEGER -> Primitive.Type.Integer
+    OpenapiType.NUMBER -> Primitive.Type.Integer
+    OpenapiType.BOOLEAN -> Primitive.Type.Boolean
+    else -> error("Type is not a primitive")
+}
+
+fun ParameterObject.toField(openApi: OpenAPIObject) = schema
+    ?.resolve(openApi)
+    ?.type
+    ?.toPrimitive()
+    ?.let { Field(Field.Identifier(name), Primitive(it, false), this.required ?: false) }
