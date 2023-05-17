@@ -1,5 +1,6 @@
 package community.flock.wirespec.openapi
 
+import community.flock.kotlinx.openapi.bindings.OpenAPI
 import community.flock.kotlinx.openapi.bindings.OpenAPIObject
 import community.flock.kotlinx.openapi.bindings.OperationObject
 import community.flock.kotlinx.openapi.bindings.ParameterLocation
@@ -19,6 +20,11 @@ import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.P
 import community.flock.kotlinx.openapi.bindings.Type as OpenapiType
 
 object OpenApiParser {
+
+    fun parse(json: String): List<Definition> =
+        OpenAPI
+            .decodeFromString(json)
+            .let { parse(it) }
 
     fun parse(openApi: OpenAPIObject): List<Definition> {
 
@@ -310,7 +316,7 @@ fun SchemaOrReferenceObject.toReference(openApi: OpenAPIObject) =
                     )
 
                     is SchemaObject -> Reference.Custom(className(resolved.first.getReference(), "Array"), true)
-                    null -> TODO()
+                    else -> TODO()
                 }
 
                 else -> Reference.Custom(className(resolved.first.getReference()), false)
