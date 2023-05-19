@@ -18,6 +18,8 @@ dependencies {
     implementation("org.apache.maven:maven-plugin-api:3.9.1")
     implementation("org.apache.maven.plugin-tools:maven-plugin-annotations:3.8.1")
     implementation("org.apache.maven:maven-project:2.2.1")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.8.21")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.8.21")
 }
 
 publishing {

@@ -26,12 +26,23 @@ class KotlinEmitter(
         |data class Content<T> (val type:String, val body:T )
         |data class Request<T> ( val url:String, val method: String, val headers: Map<String, List<Any>>, val content:Content<T>? )
         |interface Response<T> { val status:Int; val headers: Map<String, List<Any>>; val content:Content<T> }
-        |interface Api { fun handle(request: Request<*> ):Response<*> }
+        |interface Api { suspend fun <Req : Request<*>, Res : Response<*>> handle(request: Req, mapper: (Mapper) -> (Int, String, Map<String, List<String>>, ByteArray) -> Res): Res }
         |interface Mapper { fun <T> read(src: ByteArray, valueType: KType): T }
     """.trimMargin()
 
-    override fun emit(ast: AST): List<Pair<String, String>> = super.emit(ast)
-        .map { (name, result) -> name to if (packageName.isBlank()) "" else "${optIn}\n\npackage $packageName\n\n$base\n\n$result" }
+    override fun emit(ast: AST): List<Pair<String, String>> =
+        super.emit(ast)
+            .map { (name, result) ->
+                name to """
+                    |${if (ast.hasEndpoints()) "${optIn}\n" else ""}
+                    |${if (packageName.isBlank()) "" else "package $packageName"}
+                    |${if (ast.hasEndpoints()) "${base}" else ""}
+                    |${result}
+            """.trimMargin().trimStart()
+            }
+
+
+    private fun AST.hasEndpoints() = any { it is Endpoint }
 
     override fun Type.emit() = withLogging(logger) {
         """data class $name(
@@ -82,23 +93,27 @@ class KotlinEmitter(
         val parameters = pathField + query + headers + cookies
 
         fun Endpoint.Request.emitFunction() = """
-        |${SPACER}suspend fun ${name.replaceFirstChar(Char::lowercase)}${content?.emitContentType() ?: "Unit"}(${parameters.joinToString(", "){it.emit()}} ${content?.reference?.let { ", content: ${it.emit()}" }?: ""}):${name}Response {
-        |${SPACER}${SPACER}Request<${content?.reference?.emit() ?: "Unit"}>(
-        |${SPACER}${SPACER}${SPACER}url = "/${path.joinToString("/"){it.emit()}}",
+        |${SPACER}suspend fun ${name.replaceFirstChar(Char::lowercase)}${content?.emitContentType() ?: "Unit"}(${
+            parameters.joinToString(
+                ", "
+            ) { it.emit() }
+        } ${content?.reference?.let { ", content: ${it.emit()}" } ?: ""}):${name}Response<*> {
+        |${SPACER}${SPACER}val request = Request<${content?.reference?.emit() ?: "Unit"}>(
+        |${SPACER}${SPACER}${SPACER}url = "/${path.joinToString("/") { it.emit() }}",
         |${SPACER}${SPACER}${SPACER}method = "${method}",
         |${SPACER}${SPACER}${SPACER}headers = mapOf(${headers.joinToString(",") { "\"${it.identifier.value}\" to listOf(${it.identifier.emit()})" }}),
-        |${SPACER}${SPACER}${SPACER}content = ${content?.let { "Content(\"${it.type}\", content)"}},
+        |${SPACER}${SPACER}${SPACER}content = ${content?.let { "Content(\"${it.type}\", content)" }},
         |${SPACER}${SPACER})
-        |${SPACER}${SPACER}TODO()
+        |${SPACER}${SPACER}return handle(request, this::requestMapper)
         |${SPACER}}
         """.trimMargin()
 
-        """interface $name {
-        |${SPACER}sealed interface ${name}Response
-        |${responses.joinToString("\n") { "${SPACER}sealed interface ${name}Response${it.status}: ${name}Response" }}
-        |${responses.joinToString("\n") { "${SPACER}data class Response${it.emit()}: Response<${it.content?.reference?.emit() ?: "Unit"}>, ${name}Response${it.status}" }}
-        |${responses.emitResponseMapper() }
-        |${requests.joinToString("\n") { it.emitFunction() } }
+        """interface $name : Api{
+        |${SPACER}sealed interface ${name}Response<T>: Response<T>
+        |${responses.joinToString("\n") { "${SPACER}sealed interface ${name}Response${it.status}<T>: ${name}Response<T>" }}
+        |${responses.joinToString("\n") { "${SPACER}data class Response${it.emit()}: ${name}Response${it.status}<${it.content?.reference?.emit() ?: "Unit"}>" }}
+        |${responses.emitResponseMapper()}
+        |${requests.joinToString("\n") { it.emitFunction() }}
         |${SPACER}companion object{
         |${SPACER}${SPACER}const val PATH = "${path.emitSegment()}"
         |${SPACER}}
@@ -147,15 +162,18 @@ class KotlinEmitter(
     }
 
     fun List<Endpoint.Response>.emitResponseMapper() = """
-        |suspend fun requestMapper(mapper: Mapper) =
+        |fun requestMapper(mapper: Mapper) =
         |${SPACER}fun(status: Int,  contentType: String, headers:Map<String, List<String>>, src: ByteArray) =
         |${SPACER}${SPACER}when ((status to contentType)) {
-        |${joinToString(""){"""
-            |${SPACER}${SPACER}${SPACER}(${it.status} to "${it.content?.type}") -> mapper
-            |${SPACER}${SPACER}${SPACER}${SPACER}.read<${it.content?.reference?.emit() ?: "Unit"}>(src, typeOf<${it.content?.reference?.emit() ?: "Unit"}>())
-            |${SPACER}${SPACER}${SPACER}${SPACER}.let { Response${it.status}${it.content?.emitContentType()}(status, headers, Content("${it.content?.type}", it)) }
-            |   
-        """.trimMargin()}}  
+        |${joinToString("") {
+            """
+                |${SPACER}${SPACER}${SPACER}(${it.status} to "${it.content?.type}") -> mapper
+                |${SPACER}${SPACER}${SPACER}${SPACER}.read<${it.content?.reference?.emit() ?: "Unit"}>(src, typeOf<${it.content?.reference?.emit() ?: "Unit"}>())
+                |${SPACER}${SPACER}${SPACER}${SPACER}.let { Response${it.status}${it.content?.emitContentType()}(status, headers, Content("${it.content?.type}", it)) }
+                |   
+            """.trimMargin()
+            }
+        }  
         |${SPACER}${SPACER}${SPACER}else -> error("Cannot map")
         |${SPACER}${SPACER}}
     """.trimMargin()

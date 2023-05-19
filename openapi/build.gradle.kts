@@ -2,6 +2,7 @@ plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
     id("com.github.johnrengelman.shadow") apply false
+    `maven-publish`
 }
 
 group = "${Settings.groupId}.compiler"
@@ -36,6 +37,20 @@ kotlin {
                 implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2")
 
             }
+        }
+    }
+}
+
+
+publishing {
+    repositories {
+        maven {
+            credentials {
+                username = System.getenv("JFROG_USERNAME")
+                password = System.getenv("JFROG_TOKEN")
+            }
+            name = "flock-maven"
+            url = uri("https://flock.jfrog.io/artifactory/flock-maven")
         }
     }
 }

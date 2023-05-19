@@ -24,12 +24,7 @@ interface Response<T> {
     val content: Content<T>
 }
 
-interface Api {
-    suspend fun <Req : Request<*>, Res : Response<*>> handle(
-        request: Req,
-        mapper: (Mapper) -> (Int, String, Map<String, List<String>>, ByteArray) -> Res
-    ): Res
-}
+interface Api { suspend fun <Req : Request<*>, Res : Response<*>> handle(request: Req, mapper: (Mapper) -> (Int, String, Map<String, List<String>>, ByteArray) -> Res): Res }
 
 interface Mapper { fun <T> read(src: ByteArray, valueType: KType): T }
 
