@@ -42,13 +42,7 @@ class ClientConfiguration {
                 request: Req,
                 mapper: (Mapper) -> (Int, String, Map<String, List<String>>, ByteArray) -> Res
             ): Res {
-                val method = when (request.method) {
-                    Method.GET -> HttpMethod.GET
-                    Method.POST -> HttpMethod.POST
-                    Method.PUT -> HttpMethod.PUT
-                    Method.DELETE -> HttpMethod.DELETE
-                    else -> error("Cannot map method")
-                }
+                val method = HttpMethod.valueOf(request.method.name) ?: error("Cannot map method")
                 return restTemplate.execute(
                     URI("https://6467e16be99f0ba0a819fd68.mockapi.io${request.url}"),
                     method,
