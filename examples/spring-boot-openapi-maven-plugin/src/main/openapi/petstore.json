@@ -69,6 +69,17 @@
       "post": {
         "summary": "Create a pet",
         "operationId": "createPets",
+        "requestBody": {
+          "description": "A JSON object containing pet information",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Pet"
+              }
+            }
+          }
+        },
         "tags": [
           "pets"
         ],

@@ -23,8 +23,9 @@ class KotlinEmitter(
         |import kotlin.reflect.KType
         |import kotlin.reflect.typeOf
         |
+        |enum class Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
         |data class Content<T> (val type:String, val body:T )
-        |data class Request<T> ( val url:String, val method: String, val headers: Map<String, List<Any>>, val content:Content<T>? )
+        |data class Request<T> ( val url:String, val method: Method, val headers: Map<String, List<Any>>, val content:Content<T>? )
         |interface Response<T> { val status:Int; val headers: Map<String, List<Any>>; val content:Content<T> }
         |interface Api { suspend fun <Req : Request<*>, Res : Response<*>> handle(request: Req, mapper: (Mapper) -> (Int, String, Map<String, List<String>>, ByteArray) -> Res): Res }
         |interface Mapper { fun <T> read(src: ByteArray, valueType: KType): T }
@@ -88,19 +89,21 @@ class KotlinEmitter(
     override fun Refined.Validator.emit() = withLogging(logger) { "Regex($value).find(value)" }
 
     override fun Endpoint.emit() = withLogging(logger) {
-        val pathField =
-            path.filterIsInstance<Endpoint.Segment.Param>().map { Type.Shape.Field(it.identifier, it.reference, false) }
+        val pathField = path
+            .filterIsInstance<Endpoint.Segment.Param>()
+            .map { Type.Shape.Field(it.identifier, it.reference, false) }
         val parameters = pathField + query + headers + cookies
 
         fun Endpoint.Request.emitFunction() = """
         |${SPACER}suspend fun ${name.replaceFirstChar(Char::lowercase)}${content?.emitContentType() ?: "Unit"}(${
-            parameters.joinToString(
-                ", "
-            ) { it.emit() }
-        } ${content?.reference?.let { ", content: ${it.emit()}" } ?: ""}):${name}Response<*> {
+            parameters
+                .plus(content?.reference?.toField("content", false))
+                .filterNotNull()
+                .joinToString(", ") { it.emit() }
+        }):${name}Response<*> {
         |${SPACER}${SPACER}val request = Request<${content?.reference?.emit() ?: "Unit"}>(
         |${SPACER}${SPACER}${SPACER}url = "/${path.joinToString("/") { it.emit() }}",
-        |${SPACER}${SPACER}${SPACER}method = "${method}",
+        |${SPACER}${SPACER}${SPACER}method = Method.valueOf("$method"),
         |${SPACER}${SPACER}${SPACER}headers = mapOf(${headers.joinToString(",") { "\"${it.identifier.value}\" to listOf(${it.identifier.emit()})" }}),
         |${SPACER}${SPACER}${SPACER}content = ${content?.let { "Content(\"${it.type}\", content)" }},
         |${SPACER}${SPACER})
@@ -165,15 +168,16 @@ class KotlinEmitter(
         |fun requestMapper(mapper: Mapper) =
         |${SPACER}fun(status: Int,  contentType: String, headers:Map<String, List<String>>, src: ByteArray) =
         |${SPACER}${SPACER}when ((status to contentType)) {
-        |${joinToString("") {
+        |${
+        joinToString("") {
             """
                 |${SPACER}${SPACER}${SPACER}(${it.status} to "${it.content?.type}") -> mapper
                 |${SPACER}${SPACER}${SPACER}${SPACER}.read<${it.content?.reference?.emit() ?: "Unit"}>(src, typeOf<${it.content?.reference?.emit() ?: "Unit"}>())
                 |${SPACER}${SPACER}${SPACER}${SPACER}.let { Response${it.status}${it.content?.emitContentType()}(status, headers, Content("${it.content?.type}", it)) }
                 |   
             """.trimMargin()
-            }
-        }  
+        }
+    }  
         |${SPACER}${SPACER}${SPACER}else -> error("Cannot map")
         |${SPACER}${SPACER}}
     """.trimMargin()
@@ -182,3 +186,9 @@ class KotlinEmitter(
 
 fun Endpoint.Content.emitContentType() = type.split("/")
     .joinToString("") { it.replaceFirstChar { it.uppercase() } }
+
+fun Type.Shape.Field.Reference.toField(identifier: String, isNullable:Boolean) = Type.Shape.Field(
+    Type.Shape.Field.Identifier(identifier),
+    this,
+    isNullable
+)

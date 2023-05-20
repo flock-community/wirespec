@@ -1,7 +1,6 @@
 package community.flock.wirespec.examples.open_api_app
 
 import community.flock.wirespec.generated.ListPets
-import community.flock.wirespec.generated.Pet
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
@@ -12,12 +11,13 @@ class TodoController(
 ) {
 
     @GetMapping("/")
-    suspend fun list(): List<Pet> {
+    suspend fun list(): List<Int> {
         return when (val res = petstoreClient.listPetsUnit(10)) {
-            is ListPets.Response200ApplicationJson -> res.content.body
+            is ListPets.Response200ApplicationJson -> res.content.body.map {
+                it.id
+            }
             is ListPets.Response500ApplicationJson -> error("Something went wrong")
         }
     }
-
 
 }
