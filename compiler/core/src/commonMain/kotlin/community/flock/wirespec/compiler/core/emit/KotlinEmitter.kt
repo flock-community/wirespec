@@ -162,27 +162,36 @@ class KotlinEmitter(
         "${content?.emitContentType() ?: "Unit"}(override val url: String, override val method: String,override val headers: Map<String, List<Any>>, override val content: Content<${content?.reference?.emit() ?: "Unit"}>? )"
 
     override fun Endpoint.Response.emit() = withLogging(logger) {
-        "${status}${content?.emitContentType()}(override val status: Int, override val headers: Map<String, List<Any>>, override val content: Content<${content?.reference?.emit() ?: "Unit"}>${content?.let { "" } ?: "?"} )"
+        "${status}${content?.emitContentType() ?: ""}(override val status: Int, override val headers: Map<String, List<Any>>, override val content: Content<${content?.reference?.emit() ?: "Unit"}>${content?.let { "" } ?: "? = null"} )"
     }
 
-    fun List<Endpoint.Response>.emitResponseMapper() = """
+    private fun List<Endpoint.Response>.emitResponseMapper() = """
         |fun RESPONSE_MAPPER(contentMapper: ContentMapper) =
         |${SPACER}fun(status: Int,  contentType: String?, headers:Map<String, List<String>>, body: ByteArray) =
         |${SPACER}${SPACER}when (status to contentType) {
-        |${joinToString("") {
-            """
-                |${SPACER}${SPACER}${SPACER}(${it.status} to ${it.content?.type?.let { "\"$it\"" } ?: "null" }) -> contentType!!
-                |.let{ contentMapper.read<${it.content?.reference?.emit() ?: "Unit"}>(Content(contentType, body), typeOf<${it.content?.reference?.emit() ?: "Unit"}>()) }
-                |.let{ Response${it.status}${it.content?.emitContentType()}(status, headers, it) }
-                |
-            """.trimMargin()
-            }
-        }  
+        |${emitResponseMapperCondition()}  
         |${SPACER}${SPACER}${SPACER}else -> error("Cannot map")
         |${SPACER}${SPACER}}
     """.trimMargin()
 
+    private fun List<Endpoint.Response>.emitResponseMapperCondition() = joinToString("") {
+        when (it.content) {
+            null -> """
+            |${SPACER}${SPACER}${SPACER}(${it.status} to null) -> Response${it.status}(status, headers)
+            |
+        """.trimMargin()
+
+            else -> """
+            |${SPACER}${SPACER}${SPACER}(${it.status} to "${it.content.type}") -> contentType!!
+            |${SPACER}${SPACER}${SPACER}${SPACER}.let{ contentMapper.read<${it.content.reference.emit()}>(Content(contentType, body), typeOf<${it.content.reference.emit()}>()) }
+            |${SPACER}${SPACER}${SPACER}${SPACER}.let{ Response${it.status}${it.content.emitContentType()}(status, headers, it) }
+            |
+        """.trimMargin()
+        }
+    }
 }
+
+
 
 fun Endpoint.Content.emitContentType() = type.split("/")
     .joinToString("") { it.replaceFirstChar { it.uppercase() } }
