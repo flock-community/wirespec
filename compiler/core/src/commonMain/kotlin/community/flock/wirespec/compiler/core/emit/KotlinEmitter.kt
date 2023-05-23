@@ -26,9 +26,10 @@ class KotlinEmitter(
         |enum class Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
         |data class Content<T> (val type:String, val body:T )
         |data class Request<T> ( val url:String, val method: Method, val headers: Map<String, List<Any>>, val content:Content<T>? )
-        |interface Response<T> { val status:Int; val headers: Map<String, List<Any>>; val content:Content<T> }
-        |interface Api { suspend fun <Req : Request<*>, Res : Response<*>> handle(request: Req, mapper: (Mapper) -> (Int, String, Map<String, List<String>>, ByteArray) -> Res): Res }
-        |interface Mapper { fun <T> read(src: ByteArray, valueType: KType): T }
+        |interface Response<T> { val status:Int; val headers: Map<String, List<Any>>; val content:Content<T>? }
+        |interface Api { suspend fun <Req : Request<*>, Res : Response<*>> handle(request: Req, contentMapper: (ContentMapper) -> (Int, String, Map<String, List<String>>, ByteArray) -> Res): Res }
+        |interface ContentMapper { fun <T> read(content: Content<ByteArray>, valueType: KType): Content<T> fun <T> write(content: Content<T>): Content<ByteArray> }
+        |
     """.trimMargin()
 
     override fun emit(ast: AST): List<Pair<String, String>> =
@@ -100,14 +101,14 @@ class KotlinEmitter(
                 .plus(content?.reference?.toField("content", false))
                 .filterNotNull()
                 .joinToString(", ") { it.emit() }
-        }):${name}Response<*> {
+        }):${name}Response<out Any> {
         |${SPACER}${SPACER}val request = Request<${content?.reference?.emit() ?: "Unit"}>(
         |${SPACER}${SPACER}${SPACER}url = "/${path.joinToString("/") { it.emit() }}",
         |${SPACER}${SPACER}${SPACER}method = Method.valueOf("$method"),
         |${SPACER}${SPACER}${SPACER}headers = mapOf(${headers.joinToString(",") { "\"${it.identifier.value}\" to listOf(${it.identifier.emit()})" }}),
         |${SPACER}${SPACER}${SPACER}content = ${content?.let { "Content(\"${it.type}\", content)" }},
         |${SPACER}${SPACER})
-        |${SPACER}${SPACER}return handle(request, this::requestMapper)
+        |${SPACER}${SPACER}return handle(request, Companion::RESPONSE_MAPPER)
         |${SPACER}}
         """.trimMargin()
 
@@ -115,10 +116,10 @@ class KotlinEmitter(
         |${SPACER}sealed interface ${name}Response<T>: Response<T>
         |${responses.joinToString("\n") { "${SPACER}sealed interface ${name}Response${it.status}<T>: ${name}Response<T>" }}
         |${responses.joinToString("\n") { "${SPACER}data class Response${it.emit()}: ${name}Response${it.status}<${it.content?.reference?.emit() ?: "Unit"}>" }}
-        |${responses.emitResponseMapper()}
         |${requests.joinToString("\n") { it.emitFunction() }}
         |${SPACER}companion object{
         |${SPACER}${SPACER}const val PATH = "${path.emitSegment()}"
+        |${SPACER}${SPACER}${responses.emitResponseMapper()}
         |${SPACER}}
         |}
         |
@@ -158,26 +159,25 @@ class KotlinEmitter(
     }
 
     fun Endpoint.Request.emit() =
-        "${content?.emitContentType() ?: "Unit"}(override val url: String, override val method: String,override val headers: Map<String, List<Any>>, override val content: Content<${content?.reference?.emit() ?: "Unit"}> )"
+        "${content?.emitContentType() ?: "Unit"}(override val url: String, override val method: String,override val headers: Map<String, List<Any>>, override val content: Content<${content?.reference?.emit() ?: "Unit"}>? )"
 
     override fun Endpoint.Response.emit() = withLogging(logger) {
-        "${status}${content?.emitContentType()}(override val status: Int, override val headers: Map<String, List<Any>>, override val content: Content<${content?.reference?.emit() ?: "Unit"}> )"
+        "${status}${content?.emitContentType()}(override val status: Int, override val headers: Map<String, List<Any>>, override val content: Content<${content?.reference?.emit() ?: "Unit"}>${content?.let { "" } ?: "?"} )"
     }
 
     fun List<Endpoint.Response>.emitResponseMapper() = """
-        |fun requestMapper(mapper: Mapper) =
-        |${SPACER}fun(status: Int,  contentType: String, headers:Map<String, List<String>>, src: ByteArray) =
-        |${SPACER}${SPACER}when ((status to contentType)) {
-        |${
-        joinToString("") {
+        |fun RESPONSE_MAPPER(contentMapper: ContentMapper) =
+        |${SPACER}fun(status: Int,  contentType: String?, headers:Map<String, List<String>>, body: ByteArray) =
+        |${SPACER}${SPACER}when (status to contentType) {
+        |${joinToString("") {
             """
-                |${SPACER}${SPACER}${SPACER}(${it.status} to "${it.content?.type}") -> mapper
-                |${SPACER}${SPACER}${SPACER}${SPACER}.read<${it.content?.reference?.emit() ?: "Unit"}>(src, typeOf<${it.content?.reference?.emit() ?: "Unit"}>())
-                |${SPACER}${SPACER}${SPACER}${SPACER}.let { Response${it.status}${it.content?.emitContentType()}(status, headers, Content("${it.content?.type}", it)) }
-                |   
+                |${SPACER}${SPACER}${SPACER}(${it.status} to ${it.content?.type?.let { "\"$it\"" } ?: "null" }) -> contentType!!
+                |.let{ contentMapper.read<${it.content?.reference?.emit() ?: "Unit"}>(Content(contentType, body), typeOf<${it.content?.reference?.emit() ?: "Unit"}>()) }
+                |.let{ Response${it.status}${it.content?.emitContentType()}(status, headers, it) }
+                |
             """.trimMargin()
-        }
-    }  
+            }
+        }  
         |${SPACER}${SPACER}${SPACER}else -> error("Cannot map")
         |${SPACER}${SPACER}}
     """.trimMargin()
