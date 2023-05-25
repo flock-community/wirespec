@@ -1,0 +1,10 @@
+POST http://localhost:8080/pets
+Content-Type: application/json
+
+{
+  "id": "999",
+  "name": "hello",
+  "tag": "world"
+}
+
+###
