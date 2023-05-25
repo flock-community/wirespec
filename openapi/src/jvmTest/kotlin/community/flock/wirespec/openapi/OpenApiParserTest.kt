@@ -43,11 +43,17 @@ class OpenApiParserTest {
                 ),
                 listOf(),
                 listOf(
-                    Endpoint.Request(content = null)
+                    Endpoint.Request(null),
                 ),
                 listOf(
-                    Endpoint.Response("200", Endpoint.Content("application/json", Reference.Custom("Todo", true))),
-                    Endpoint.Response("500", Endpoint.Content("application/json", Reference.Custom("Error", false)))
+                    Endpoint.Response(
+                        "200",
+                        Endpoint.Content("application/json", Reference.Custom("Todo", true), false)
+                    ),
+                    Endpoint.Response(
+                        "500",
+                        Endpoint.Content("application/json", Reference.Custom("Error", false), false)
+                    )
                 )
             ),
             Endpoint(
@@ -65,19 +71,27 @@ class OpenApiParserTest {
                     Endpoint.Request(
                         Endpoint.Content(
                             type = "application/json",
-                            reference = Reference.Custom("Todo_input", false)
+                            reference = Reference.Custom("Todo_input", false),
+                            isNullable = false
                         )
                     ),
                     Endpoint.Request(
                         Endpoint.Content(
                             type = "application/xml",
-                        reference = Reference.Custom("Todo", false)
-                    )
+                            reference = Reference.Custom("Todo", false),
+                            isNullable = false
+                        )
                     )
                 ),
                 listOf(
                     Endpoint.Response("201", null),
-                    Endpoint.Response("500", Endpoint.Content("application/json", Reference.Custom("Error", false)))
+                    Endpoint.Response(
+                        "500", Endpoint.Content(
+                            type = "application/json",
+                            reference = Reference.Custom("Error", false),
+                            isNullable = false
+                        )
+                    )
                 )
             ),
             Endpoint(
@@ -91,19 +105,33 @@ class OpenApiParserTest {
                 listOf(),
                 listOf(),
                 listOf(
-                    Endpoint.Request(null)
+                    Endpoint.Request(null),
                 ),
                 listOf(
-                    Endpoint.Response("200", Endpoint.Content("application/json", Reference.Custom("Todo", false))),
-                    Endpoint.Response("500", Endpoint.Content("application/json", Reference.Custom("Error", false)))
+                    Endpoint.Response(
+                        status = "200",
+                        content = Endpoint.Content(
+                            type = "application/json",
+                            reference = Reference.Custom("Todo", false),
+                            isNullable = true
+                        )
+                    ),
+                    Endpoint.Response(
+                        status = "500",
+                        content = Endpoint.Content(
+                            type = "application/json",
+                            reference = Reference.Custom("Error", false),
+                            isNullable = false
+                        )
+                    )
                 )
             ),
             Type(
                 "Todo_input",
                 Shape(
                     listOf(
-                        Field(Identifier(value="title"), Primitive(Primitive.Type.String, false), false),
-                        Field(Identifier(value="completed"), Primitive(Primitive.Type.Boolean, false), false)
+                        Field(Identifier(value = "title"), Primitive(Primitive.Type.String, false), false),
+                        Field(Identifier(value = "completed"), Primitive(Primitive.Type.Boolean, false), false)
                     )
                 )
             ),

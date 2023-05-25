@@ -71,18 +71,19 @@ object OpenApiParser {
                     val cookies = parameters
                         .filter { it.`in` == ParameterLocation.COOKIE }
                         .mapNotNull { it.toField(openApi) }
-                    val requests = operation?.requestBody?.resolve(openApi)?.content
-                        ?.map { (mediaType, mediaObject) ->
-                            Endpoint.Request(
-                                Endpoint.Content(
-                                    type = mediaType.value,
-                                    reference = mediaObject.schema?.toReference(openApi) ?: TODO()
-                                )
-                            )
+                    val requests = operation?.requestBody?.resolve(openApi)
+                        ?.let { requestBody -> requestBody.content
+                                ?.map { (mediaType, mediaObject) ->
+                                    Endpoint.Request(
+                                        Endpoint.Content(
+                                            type = mediaType.value,
+                                            reference = mediaObject.schema?.toReference(openApi) ?: TODO(),
+                                            isNullable = requestBody.required?: false
+                                        )
+                                    )
+                                }
                         }
-                        ?: listOf(
-                            Endpoint.Request(null)
-                        )
+                        ?: listOf(Endpoint.Request(null))
                     val responses = operation?.responses
                         ?.flatMap { (status, res) ->
                             res.resolve(openApi)?.content
@@ -91,7 +92,8 @@ object OpenApiParser {
                                         status = status.value,
                                         content = Endpoint.Content(
                                             type = contentType.value,
-                                            reference = media.schema?.toReference(openApi) ?: TODO()
+                                            reference = media.schema?.toReference(openApi) ?: TODO(),
+                                            isNullable = media.schema?.resolve(openApi)?.nullable ?: false
                                         )
                                     )
                                 }
