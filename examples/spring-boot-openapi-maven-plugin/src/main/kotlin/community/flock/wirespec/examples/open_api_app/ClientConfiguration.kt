@@ -78,8 +78,8 @@ class ClientConfiguration {
             ) ?: error("No response")
 
 
-            override suspend fun listPets(limit: Int): ListPets.ListPetsResponse<out Any> {
-                return handle(ListPets.REQUEST_MAPPER(limit)(null), ListPets::RESPONSE_MAPPER)
+            override suspend fun listPets(limit: Int, offset: Int?): ListPets.ListPetsResponse<out Any> {
+                return handle(ListPets.REQUEST_MAPPER(limit, offset)(null), ListPets::RESPONSE_MAPPER)
             }
 
             override suspend fun createPetsApplicationJson(content: Pet): CreatePets.CreatePetsResponse<out Any> {

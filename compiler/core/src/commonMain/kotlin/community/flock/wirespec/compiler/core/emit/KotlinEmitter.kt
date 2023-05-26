@@ -25,7 +25,7 @@ class KotlinEmitter(
         |
         |enum class Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
         |data class Content<T> (val type:String, val body:T )
-        |data class Request<T> ( val url:String, val method: Method, val query: Map<String, String>, val headers: Map<String, List<Any>>, val content:Content<T>? )
+        |data class Request<T> ( val url:String, val method: Method, val query: Map<String, Any?>, val headers: Map<String, List<Any>>, val content:Content<T>? )
         |interface Response<T> { val status:Int; val headers: Map<String, List<Any>>; val content:Content<T>? }
         |interface ContentMapper<B> { fun <T> read(content: Content<B>, valueType: KType): Content<T> fun <T> write(content: Content<T>): Content<B> }
         |
@@ -46,12 +46,11 @@ class KotlinEmitter(
     private fun AST.hasEndpoints() = any { it is Endpoint }
 
     override fun Type.emit() = withLogging(logger) {
-        """|@serializable
-            |data class $name(
-            |${shape.emit()}
-            |)
-            |
-            |""".trimMargin()
+        """|data class $name(
+           |${shape.emit()}
+           |)
+           |
+           |""".trimMargin()
     }
 
     override fun Type.Shape.emit() = withLogging(logger) {
@@ -134,6 +133,8 @@ class KotlinEmitter(
 
     private fun List<Type.Shape.Field>.emitField() = joinToString(", ") { it.emit() }
 
+    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ") { "\"${it.identifier.emit()}\" to ${it.identifier.emit()}" }
+
     override fun Endpoint.Method.emit(): String = withLogging(logger) {
         TODO("Not yet implemented")
     }
@@ -170,7 +171,7 @@ class KotlinEmitter(
             |fun REQUEST_MAPPER ${endpoint.emitFunctionSignature(request.content)} =
             |${SPACER}fun(contentType: String?) =
             |${SPACER}${SPACER}when (contentType) {
-            |${SPACER}${SPACER}${SPACER}${request.content?.let { "\"${it.type}\"" } ?: "null"} -> Request<${request.content?.reference?.emit() ?: "Unit"}>("${endpoint.path.emitPath()}", Method.${endpoint.method.name}, mapOf(), mapOf(), ${request.content?.reference?.let { "Content(\"${request.content.emitContentType()}\", content)" } ?:"null"} )
+            |${SPACER}${SPACER}${SPACER}${request.content?.let { "\"${it.type}\"" } ?: "null"} -> Request<${request.content?.reference?.emit() ?: "Unit"}>("${endpoint.path.emitPath()}", Method.${endpoint.method.name}, mapOf(${endpoint.query.emitMap()}), mapOf(${endpoint.headers.emitMap()}), ${request.content?.reference?.let { "Content(\"${request.content.emitContentType()}\", content)" } ?:"null"} )
             |${SPACER}${SPACER}${SPACER}else -> error("Cannot map request with content type ${"$"}contentType")
             |${SPACER}${SPACER}}
         """.trimMargin()

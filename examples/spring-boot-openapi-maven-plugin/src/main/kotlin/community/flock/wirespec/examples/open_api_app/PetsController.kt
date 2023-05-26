@@ -15,7 +15,7 @@ class PetsController(
 
     @GetMapping
     suspend fun list(): List<Int> {
-        return when (val res = petstoreClient.listPets(10)) {
+        return when (val res = petstoreClient.listPets(10, null)) {
             is ListPets.Response200ApplicationJson -> res.content.body.map { it.id }
             is ListPets.Response500ApplicationJson -> error("Something went wrong")
         }
