@@ -179,23 +179,23 @@ class KotlinEmitter(
 
     private fun List<Endpoint.Response>.emitResponseMapper() = """
         |fun <B> RESPONSE_MAPPER(contentMapper: ContentMapper<B>) =
-        |${SPACER}fun(status: Int,  contentType: String?, headers:Map<String, List<String>>, body: B) =
-        |${SPACER}${SPACER}when (status to contentType) {
+        |${SPACER}fun(status: Int, headers:Map<String, List<String>>, content: Content<B>) =
+        |${SPACER}${SPACER}when {
         |${emitResponseMapperCondition()}  
-        |${SPACER}${SPACER}${SPACER}else -> error("Cannot map response with status ${"$"}status and content type ${"$"}contentType")
+        |${SPACER}${SPACER}${SPACER}else -> error("Cannot map response with status ${"$"}status and content type ${"$"}{content.type}")
         |${SPACER}${SPACER}}
     """.trimMargin()
 
     private fun List<Endpoint.Response>.emitResponseMapperCondition() = joinToString("") {
         when (it.content) {
             null -> """
-                |${SPACER}${SPACER}${SPACER}(${it.status} to null) -> Response${it.status}(status, headers)
+                |${SPACER}${SPACER}${SPACER}status == ${it.status} && content.type == null -> Response${it.status}(status, headers)
                 |
             """.trimMargin()
 
             else -> """
-                |${SPACER}${SPACER}${SPACER}(${it.status} to "${it.content.type}") -> contentType!!
-                |${SPACER}${SPACER}${SPACER}${SPACER}.let{ contentMapper.read<${it.content.reference.emit()}>(Content(contentType, body), typeOf<${it.content.reference.emit()}>()) }
+                |${SPACER}${SPACER}${SPACER}status == ${it.status} && content.type == "${it.content.type}" -> contentMapper
+                |${SPACER}${SPACER}${SPACER}${SPACER}.read<${it.content.reference.emit()}>(content, typeOf<${it.content.reference.emit()}>())
                 |${SPACER}${SPACER}${SPACER}${SPACER}.let{ Response${it.status}${it.content.emitContentType()}(status, headers, it) }
                 |
             """.trimMargin()

@@ -57,7 +57,7 @@ class ClientConfiguration {
         object : PetstoreClient {
             fun <Req : Request<*>, Res : Response<*>> handle(
                 request: Req,
-                responseMapper: (ContentMapper<ByteArray>) -> (Int, String, Map<String, List<String>>, ByteArray) -> Res
+                responseMapper: (ContentMapper<ByteArray>) -> (Int, Map<String, List<String>>, Content<ByteArray>) -> Res
             ) = restTemplate.execute(
                 URI("https://6467e16be99f0ba0a819fd68.mockapi.io${request.url}"),
                 HttpMethod.valueOf(request.method.name),
@@ -68,11 +68,11 @@ class ClientConfiguration {
                 },
                 { res ->
                     val contentType = res.headers.contentType?.toString() ?: error("No content type")
+                    val content = Content(contentType, res.body.readBytes())
                     responseMapper(contentMapper)(
                         res.statusCode.value(),
-                        contentType,
                         res.headers,
-                        res.body.readBytes()
+                        content
                     )
                 }
             ) ?: error("No response")

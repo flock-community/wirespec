@@ -25,7 +25,7 @@ class PetsController(
     suspend fun create(@RequestBody pet: Pet): ResponseEntity<Unit> {
         return when (petstoreClient.createPetsApplicationJson(pet)) {
             is CreatePets.Response201 -> ResponseEntity.noContent().build()
-            is CreatePets.Response500ApplicationJson -> TODO()
+            is CreatePets.Response500ApplicationJson -> error("Something went wrong")
         }
     }
 
