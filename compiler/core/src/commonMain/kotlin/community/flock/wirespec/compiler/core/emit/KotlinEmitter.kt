@@ -91,14 +91,14 @@ class KotlinEmitter(
     override fun Endpoint.emit() = withLogging(logger) {
         """interface $name {
         |${SPACER}sealed interface ${name}Request<T>: Request<T>
-        |${requests.joinToString("\n") { "${SPACER}class ${name}Request${it.content?.emitContentType() ?: "Unit"} ${emitSignature(it.content)}: ${name}Request<${it.content?.reference?.emit() ?: "Unit"}> {override val url = \"${path.emitPath()}\"; override val method = Method.${method.name}; override val query = mapOf<String, Any?>(${query.emitMap()}); override val headers = mapOf<String, List<Any?>>(${headers.emitMap()}); override val content = ${it.content?.let { "Content(\"${it.emitContentType()}\", content)" } ?:"null"}}" }}
+        |${requests.joinToString("\n") { "${SPACER}class ${name}Request${it.content?.emitContentType() ?: "Unit"} ${emitSignature(it.content)}: ${name}Request<${it.content?.reference?.emit() ?: "Unit"}> {override val url = \"${path.emitPath()}\"; override val method = Method.${method.name}; override val query = mapOf<String, Any?>(${query.emitMap()}); override val headers = mapOf<String, List<Any?>>(${headers.emitMap()}); override val content = ${it.content?.let { "Content(\"${it.type}\", content)" } ?:"null"}}" }}
         |${SPACER}sealed interface ${name}Response<T>: Response<T>
         |${responses.joinToString("\n") { "${SPACER}sealed interface ${name}Response${it.status}<T>: ${name}Response<T>" }}
-        |${responses.joinToString("\n") { "${SPACER}data class Response${it.emit()}: ${name}Response${it.status}<${it.content?.reference?.emit() ?: "Unit"}> { override val status = ${it.status} }" }}
+        |${responses.joinToString("\n") { "${SPACER}class ${name}Response${it.emit()}: ${name}Response${it.status}<${it.content?.reference?.emit() ?: "Unit"}> { override val status = ${it.status}; override val content = ${it.content?.let { "Content(\"${it.type}\", content)" } ?: "null"}}" }}
         |suspend fun ${name.replaceFirstChar(Char::lowercase)}(request: ${name}Request<out Any>): ${name}Response<out Any>
         |${SPACER}companion object{
         |${SPACER}${SPACER}const val PATH = "${path.emitSegment()}"
-        |${SPACER}${SPACER}${responses.emitResponseMapper()}
+        |${SPACER}${SPACER}${responses.emitResponseMapper(this)}
         |${SPACER}}
         |}
         |
@@ -157,29 +157,29 @@ class KotlinEmitter(
         "${content?.emitContentType() ?: "Unit"}(override val url: String, override val method: String,override val headers: Map<String, List<Any>>, override val content: Content<${content?.reference?.emit() ?: "Unit"}>? )"
 
     override fun Endpoint.Response.emit() = withLogging(logger) {
-        "${status}${content?.emitContentType() ?: ""}(override val headers: Map<String, List<Any>>, override val content: Content<${content?.reference?.emit() ?: "Unit"}>${content?.let { "" } ?: "? = null"} )"
+        "${status}${content?.emitContentType() ?: "Unit"}(override val headers: Map<String, List<Any>>${ content?.let { ", content: ${it.reference.emit()}" } ?: "" } )"
     }
 
-    private fun List<Endpoint.Response>.emitResponseMapper() = """
+    private fun List<Endpoint.Response>.emitResponseMapper(endpoint: Endpoint) = """
         |fun <B> RESPONSE_MAPPER(contentMapper: ContentMapper<B>) =
-        |${SPACER}fun(status: Int, headers:Map<String, List<String>>, content: Content<B>) =
+        |${SPACER}fun(status: Int, headers:Map<String, List<String>>, content: Content<B>?) =
         |${SPACER}${SPACER}when {
-        |${emitResponseMapperCondition()}  
-        |${SPACER}${SPACER}${SPACER}else -> error("Cannot map response with status ${"$"}status and content type ${"$"}{content.type}")
+        |${emitResponseMapperCondition(endpoint)}  
+        |${SPACER}${SPACER}${SPACER}else -> error("Cannot map response with status ${"$"}status")
         |${SPACER}${SPACER}}
     """.trimMargin()
 
-    private fun List<Endpoint.Response>.emitResponseMapperCondition() = joinToString("") {
+    private fun List<Endpoint.Response>.emitResponseMapperCondition(endpoint: Endpoint) = joinToString("") {
         when (it.content) {
             null -> """
-                |${SPACER}${SPACER}${SPACER}status == ${it.status} && content.type == null -> Response${it.status}(headers)
+                |${SPACER}${SPACER}${SPACER}status == ${it.status} && content == null -> ${endpoint.name}Response${it.status}Unit(headers)
                 |
             """.trimMargin()
 
             else -> """
-                |${SPACER}${SPACER}${SPACER}status == ${it.status} && content.type == "${it.content.type}" -> contentMapper
+                |${SPACER}${SPACER}${SPACER}status == ${it.status} && content?.type == "${it.content.type}" -> contentMapper
                 |${SPACER}${SPACER}${SPACER}${SPACER}.read<${it.content.reference.emit()}>(content, typeOf<${it.content.reference.emit()}>())
-                |${SPACER}${SPACER}${SPACER}${SPACER}.let{ Response${it.status}${it.content.emitContentType()}(headers, it) }
+                |${SPACER}${SPACER}${SPACER}${SPACER}.let{ ${endpoint.name}Response${it.status}${it.content.emitContentType()}(headers, it.body) }
                 |
             """.trimMargin()
         }

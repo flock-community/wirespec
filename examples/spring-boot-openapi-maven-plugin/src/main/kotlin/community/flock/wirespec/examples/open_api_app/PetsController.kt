@@ -17,8 +17,8 @@ class PetsController(
     suspend fun list(): List<Int> {
         val request = ListPets.ListPetsRequestUnit(10, null)
         return when (val res = petstoreClient.listPets(request)) {
-            is ListPets.Response200ApplicationJson -> res.content.body.map { it.id }
-            is ListPets.Response500ApplicationJson -> error("Something went wrong")
+            is ListPets.ListPetsResponse200ApplicationJson -> res.content.body.map { it.id }
+            is ListPets.ListPetsResponse500ApplicationJson -> error("Something went wrong")
         }
     }
 
@@ -26,8 +26,8 @@ class PetsController(
     suspend fun create(@RequestBody pet: Pet): ResponseEntity<Unit> {
         val request = CreatePets.CreatePetsRequestApplicationJson(pet)
         return when (petstoreClient.createPets(request)) {
-            is CreatePets.Response201 -> ResponseEntity.noContent().build()
-            is CreatePets.Response500ApplicationJson -> error("Something went wrong")
+            is CreatePets.CreatePetsResponse201 -> ResponseEntity.noContent().build()
+            is CreatePets.CreatePetsResponse500ApplicationJson -> error("Something went wrong")
         }
     }
 
