@@ -20,7 +20,57 @@ expect object IO {
 class OpenApiParserTest {
 
     @Test
-    fun start() {
+    fun pizza() {
+        val json = IO.readOpenApi("pizza.json")
+
+        val openApi = OpenAPI.decodeFromString(json)
+        val ast = OpenApiParser.parse(openApi)
+
+        val expect = listOf(
+            Endpoint(
+                "PizzasPizzaIdIngredientsGET",
+                Endpoint.Method.GET,
+                listOf(
+                    Endpoint.Segment.Literal("pizzas"),
+                    Endpoint.Segment.Param(
+                        Identifier("pizzaId"),
+                        Primitive(type = Primitive.Type.String, isIterable = false)
+                    ),
+                    Endpoint.Segment.Literal("ingredients"),
+                ),
+                listOf(),
+                listOf(),
+                listOf(),
+                listOf(
+                    Endpoint.Request(null),
+                ),
+                listOf(
+                    Endpoint.Response(
+                        "200",
+                        Endpoint.Content("application/json", Reference.Custom("Ingredient", true), false)
+                    ),
+                    Endpoint.Response(
+                        "404",
+                        null
+                    )
+                )
+            ),
+            Type(
+                "Ingredient",
+                Shape(
+                    listOf(
+                        Field(Identifier("id"), Primitive(Primitive.Type.String, false), false),
+                        Field(Identifier("name"), Primitive(Primitive.Type.String, false), false),
+                        Field(Identifier("quantity"), Primitive(Primitive.Type.String, false), false),
+                    )
+                )
+            ),
+        )
+        assertEquals(expect, ast)
+    }
+
+    @Test
+    fun todo() {
 
         val json = IO.readOpenApi("todo.json")
 

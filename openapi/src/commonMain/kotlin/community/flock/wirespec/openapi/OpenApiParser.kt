@@ -326,7 +326,18 @@ fun SchemaOrReferenceObject.toReference(openApi: OpenAPIObject) =
 
         }
 
-        is SchemaObject -> TODO()
+        is SchemaObject -> {
+            when (type) {
+                OpenapiType.ARRAY -> when (items) {
+                    is ReferenceObject -> Reference.Custom(
+                        className((items as ReferenceObject).getReference()),
+                        true
+                    )
+                    else -> TODO()
+                }
+                else -> TODO()
+            }
+        }
     }
 
 fun PathItemObject.toOperationList() = Endpoint.Method.values()

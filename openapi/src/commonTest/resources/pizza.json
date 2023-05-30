@@ -1,0 +1,70 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Pizza Ingredients API",
+    "description": "This API provides information about pizza ingredients.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.pizza-ingredients.com/v1"
+    }
+  ],
+  "paths": {
+    "/pizzas/{pizzaId}/ingredients": {
+      "get": {
+        "summary": "Get ingredients for a specific pizza",
+        "parameters": [
+          {
+            "name": "pizzaId",
+            "in": "path",
+            "description": "The ID of the pizza",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Ingredient"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pizza not found"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Ingredient": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The ID of the ingredient"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the ingredient"
+          },
+          "quantity": {
+            "type": "string",
+            "description": "The quantity of the ingredient for the pizza"
+          }
+        }
+      }
+    }
+  }
+}
