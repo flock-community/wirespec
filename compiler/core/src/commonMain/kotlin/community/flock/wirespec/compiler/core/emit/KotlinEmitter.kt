@@ -25,8 +25,8 @@ class KotlinEmitter(
         |
         |enum class Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
         |data class Content<T> (val type:String, val body:T )
-        |data class Request<T> ( val url:String, val method: Method, val query: Map<String, Any?>, val headers: Map<String, List<Any>>, val content:Content<T>? )
-        |interface Response<T> { val status:Int; val headers: Map<String, List<Any>>; val content:Content<T>? }
+        |interface Request<T> { val url:String; val method: Method; val query: Map<String, Any?>; val headers: Map<String, List<Any?>>; val content:Content<T>? }
+        |interface Response<T> { val status:Int; val headers: Map<String, List<Any?>>; val content:Content<T>? }
         |interface ContentMapper<B> { fun <T> read(content: Content<B>, valueType: KType): Content<T> fun <T> write(content: Content<T>): Content<B> }
         |
     """.trimMargin()
@@ -90,13 +90,14 @@ class KotlinEmitter(
 
     override fun Endpoint.emit() = withLogging(logger) {
         """interface $name {
+        |${SPACER}sealed interface ${name}Request<T>: Request<T>
+        |${requests.joinToString("\n") { "${SPACER}class ${name}Request${it.content?.emitContentType() ?: "Unit"} ${emitSignature(it.content)}: ${name}Request<${it.content?.reference?.emit() ?: "Unit"}> {override val url = \"${path.emitPath()}\"; override val method = Method.${method.name}; override val query = mapOf<String, Any?>(${query.emitMap()}); override val headers = mapOf<String, List<Any?>>(${headers.emitMap()}); override val content = ${it.content?.let { "Content(\"${it.emitContentType()}\", content)" } ?:"null"}}" }}
         |${SPACER}sealed interface ${name}Response<T>: Response<T>
         |${responses.joinToString("\n") { "${SPACER}sealed interface ${name}Response${it.status}<T>: ${name}Response<T>" }}
-        |${responses.joinToString("\n") { "${SPACER}data class Response${it.emit()}: ${name}Response${it.status}<${it.content?.reference?.emit() ?: "Unit"}>" }}
-        |${requests.joinToString("\n") { it.emitFunction(this) }}
+        |${responses.joinToString("\n") { "${SPACER}data class Response${it.emit()}: ${name}Response${it.status}<${it.content?.reference?.emit() ?: "Unit"}> { override val status = ${it.status} }" }}
+        |suspend fun ${name.replaceFirstChar(Char::lowercase)}(request: ${name}Request<out Any>): ${name}Response<out Any>
         |${SPACER}companion object{
         |${SPACER}${SPACER}const val PATH = "${path.emitSegment()}"
-        |${SPACER}${SPACER}${requests.emitRequestMapper(this)}
         |${SPACER}${SPACER}${responses.emitResponseMapper()}
         |${SPACER}}
         |}
@@ -104,12 +105,7 @@ class KotlinEmitter(
         |""".trimMargin()
     }
 
-    private fun Endpoint.Request.emitFunction(endpoint: Endpoint) =
-        """
-        |${SPACER}suspend fun ${endpoint.name.replaceFirstChar(Char::lowercase)}${content?.emitContentType().orEmptyString()}${endpoint.emitFunctionSignature(content)}:${endpoint.name}Response<out Any>
-        """.trimMargin()
-
-    private fun Endpoint.emitFunctionSignature(content: Endpoint.Content? = null): String {
+    private fun Endpoint.emitSignature(content: Endpoint.Content? = null): String {
         val pathField = path
             .filterIsInstance<Endpoint.Segment.Param>()
             .map { Type.Shape.Field(it.identifier, it.reference, false) }
@@ -130,8 +126,6 @@ class KotlinEmitter(
             is Endpoint.Segment.Literal -> it.value
         }
     }
-
-    private fun List<Type.Shape.Field>.emitField() = joinToString(", ") { it.emit() }
 
     private fun List<Type.Shape.Field>.emitMap() = joinToString(", ") { "\"${it.identifier.emit()}\" to ${it.identifier.emit()}" }
 
@@ -163,18 +157,7 @@ class KotlinEmitter(
         "${content?.emitContentType() ?: "Unit"}(override val url: String, override val method: String,override val headers: Map<String, List<Any>>, override val content: Content<${content?.reference?.emit() ?: "Unit"}>? )"
 
     override fun Endpoint.Response.emit() = withLogging(logger) {
-        "${status}${content?.emitContentType() ?: ""}(override val status: Int, override val headers: Map<String, List<Any>>, override val content: Content<${content?.reference?.emit() ?: "Unit"}>${content?.let { "" } ?: "? = null"} )"
-    }
-
-    private fun List<Endpoint.Request>.emitRequestMapper(endpoint: Endpoint) = joinToString("") { request ->
-        """
-            |fun REQUEST_MAPPER ${endpoint.emitFunctionSignature(request.content)} =
-            |${SPACER}fun(contentType: String?) =
-            |${SPACER}${SPACER}when (contentType) {
-            |${SPACER}${SPACER}${SPACER}${request.content?.let { "\"${it.type}\"" } ?: "null"} -> Request<${request.content?.reference?.emit() ?: "Unit"}>("${endpoint.path.emitPath()}", Method.${endpoint.method.name}, mapOf(${endpoint.query.emitMap()}), mapOf(${endpoint.headers.emitMap()}), ${request.content?.reference?.let { "Content(\"${request.content.emitContentType()}\", content)" } ?:"null"} )
-            |${SPACER}${SPACER}${SPACER}else -> error("Cannot map request with content type ${"$"}contentType")
-            |${SPACER}${SPACER}}
-        """.trimMargin()
+        "${status}${content?.emitContentType() ?: ""}(override val headers: Map<String, List<Any>>, override val content: Content<${content?.reference?.emit() ?: "Unit"}>${content?.let { "" } ?: "? = null"} )"
     }
 
     private fun List<Endpoint.Response>.emitResponseMapper() = """
@@ -189,14 +172,14 @@ class KotlinEmitter(
     private fun List<Endpoint.Response>.emitResponseMapperCondition() = joinToString("") {
         when (it.content) {
             null -> """
-                |${SPACER}${SPACER}${SPACER}status == ${it.status} && content.type == null -> Response${it.status}(status, headers)
+                |${SPACER}${SPACER}${SPACER}status == ${it.status} && content.type == null -> Response${it.status}(headers)
                 |
             """.trimMargin()
 
             else -> """
                 |${SPACER}${SPACER}${SPACER}status == ${it.status} && content.type == "${it.content.type}" -> contentMapper
                 |${SPACER}${SPACER}${SPACER}${SPACER}.read<${it.content.reference.emit()}>(content, typeOf<${it.content.reference.emit()}>())
-                |${SPACER}${SPACER}${SPACER}${SPACER}.let{ Response${it.status}${it.content.emitContentType()}(status, headers, it) }
+                |${SPACER}${SPACER}${SPACER}${SPACER}.let{ Response${it.status}${it.content.emitContentType()}(headers, it) }
                 |
             """.trimMargin()
         }
