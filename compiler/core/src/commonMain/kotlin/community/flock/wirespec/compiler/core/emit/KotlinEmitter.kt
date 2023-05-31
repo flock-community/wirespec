@@ -25,8 +25,8 @@ class KotlinEmitter(
         |
         |enum class Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
         |data class Content<T> (val type:String, val body:T )
-        |interface Request<T> { val url:String; val method: Method; val query: Map<String, Any?>; val headers: Map<String, List<Any?>>; val content:Content<T>? }
-        |interface Response<T> { val status:Int; val headers: Map<String, List<Any?>>; val content:Content<T>? }
+        |interface Request<T> { val url:String; val method: Method; val query: Map<String, String>; val headers: Map<String, List<String>>; val content:Content<T>? }
+        |interface Response<T> { val status:Int; val headers: Map<String, List<String>>; val content:Content<T>? }
         |interface ContentMapper<B> { fun <T> read(content: Content<B>, valueType: KType): Content<T> fun <T> write(content: Content<T>): Content<B> }
         |
     """.trimMargin()
@@ -91,10 +91,10 @@ class KotlinEmitter(
     override fun Endpoint.emit() = withLogging(logger) {
         """interface $name {
         |${SPACER}sealed interface ${name}Request<T>: Request<T>
-        |${requests.joinToString("\n") { "${SPACER}class ${name}Request${it.content?.emitContentType() ?: "Unit"} ${emitSignature(it.content)}: ${name}Request<${it.content?.reference?.emit() ?: "Unit"}> {override val url = \"${path.emitPath()}\"; override val method = Method.${method.name}; override val query = mapOf<String, Any?>(${query.emitMap()}); override val headers = mapOf<String, List<Any?>>(${headers.emitMap()}); override val content = ${it.content?.let { "Content(\"${it.type}\", content)" } ?:"null"}}" }}
+        |${requests.joinToString("\n") { "${SPACER}class ${name}Request${it.content?.emitContentType() ?: "Unit"} ${emitSignature(it.content)}: ${name}Request<${it.content?.reference?.emit() ?: "Unit"}> {override val url = \"${path.emitPath()}\"; override val method = Method.${method.name}; override val query = mapOf<String, String>(${query.emitMap()}); override val headers = mapOf<String, List<String>>(${headers.emitMap()}); override val content = ${it.content?.let { "Content(\"${it.type}\", body)" } ?:"null"}}" }}
         |${SPACER}sealed interface ${name}Response<T>: Response<T>
         |${responses.joinToString("\n") { "${SPACER}sealed interface ${name}Response${it.status}<T>: ${name}Response<T>" }}
-        |${responses.joinToString("\n") { "${SPACER}class ${name}Response${it.emit()}: ${name}Response${it.status}<${it.content?.reference?.emit() ?: "Unit"}> { override val status = ${it.status}; override val content = ${it.content?.let { "Content(\"${it.type}\", content)" } ?: "null"}}" }}
+        |${responses.joinToString("\n") { "${SPACER}class ${name}Response${it.emit()}: ${name}Response${it.status}<${it.content?.reference?.emit() ?: "Unit"}> { override val status = ${it.status}; override val content = ${it.content?.let { "Content(\"${it.type}\", body)" } ?: "null"}}" }}
         |suspend fun ${name.replaceFirstChar(Char::lowercase)}(request: ${name}Request<out Any>): ${name}Response<out Any>
         |${SPACER}companion object{
         |${SPACER}${SPACER}const val PATH = "${path.emitSegment()}"
@@ -113,7 +113,7 @@ class KotlinEmitter(
         return """
             |(${
             parameters
-                .plus(content?.reference?.toField("content", false))
+                .plus(content?.reference?.toField("body", false))
                 .filterNotNull()
                 .joinToString(", ") { it.emit() }
             })
@@ -127,7 +127,7 @@ class KotlinEmitter(
         }
     }
 
-    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ") { "\"${it.identifier.emit()}\" to ${it.identifier.emit()}" }
+    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ") { "\"${it.identifier.emit()}\" to ${it.identifier.emit()}.toString()" }
 
     override fun Endpoint.Method.emit(): String = withLogging(logger) {
         TODO("Not yet implemented")
@@ -154,10 +154,10 @@ class KotlinEmitter(
     }
 
     fun Endpoint.Request.emit() =
-        "${content?.emitContentType() ?: "Unit"}(override val url: String, override val method: String,override val headers: Map<String, List<Any>>, override val content: Content<${content?.reference?.emit() ?: "Unit"}>? )"
+        "${content?.emitContentType() ?: "Unit"}(override val url: String, override val method: String,override val headers: Map<String, List<String>>, override val content: Content<${content?.reference?.emit() ?: "Unit"}>? )"
 
     override fun Endpoint.Response.emit() = withLogging(logger) {
-        "${status}${content?.emitContentType() ?: "Unit"}(override val headers: Map<String, List<Any>>${ content?.let { ", content: ${it.reference.emit()}" } ?: "" } )"
+        "${status}${content?.emitContentType() ?: "Unit"}(override val headers: Map<String, List<String>>${ content?.let { ", body: ${it.reference.emit()}" } ?: "" } )"
     }
 
     private fun List<Endpoint.Response>.emitResponseMapper(endpoint: Endpoint) = """
