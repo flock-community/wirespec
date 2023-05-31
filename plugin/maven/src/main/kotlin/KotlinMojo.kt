@@ -29,10 +29,11 @@ class KotlinMojo : WirespecMojo() {
 
     override fun execute() {
         if(sourceDirectory.endsWith(".json")){
+            val fileName = sourceDirectory.split("/").last().substringBeforeLast(".")
             val json = File(sourceDirectory).readText()
             val ast = OpenApiParser.parse(json)
             val result = emitter.emit(ast).joinToString("\n"){ it.second }
-            JvmUtil.emitJvm(packageName, targetDirectory, "Test", "kt").writeText(result)
+            JvmUtil.emitJvm(packageName, targetDirectory, fileName, "kt").writeText(result)
         } else {
             compile(sourceDirectory, logger, emitter)
                 .forEach { (name, result) ->
