@@ -5,11 +5,11 @@ plugins {
     id("io.spring.dependency-management") version "1.0.14.RELEASE"
     kotlin("jvm") version "1.8.21"
     kotlin("plugin.spring") version "1.8.21"
-    id("community.flock.wirespec.plugin.gradle") version "0.0.0"
+    id("community.flock.wirespec.plugin.gradle") version Settings.version
 }
 
 group = "community.flock.wirespec.example-gradle_plugin"
-version = "0.0.0"
+version = Settings.version
 
 repositories {
     mavenCentral()
