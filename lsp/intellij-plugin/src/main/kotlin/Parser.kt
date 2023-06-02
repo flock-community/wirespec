@@ -37,10 +37,14 @@ class Parser : PsiParser {
 
         fun parseNode() {
             when (builder.tokenType) {
-                CUSTOM_TYPE -> {
-                    builder.mark()
-                        .also { builder.advanceLexer() }
-                        .done(CustomTypeDef())
+                Types.CUSTOM_TYPE -> {
+                    val marker = builder.mark()
+                    builder.advanceLexer()
+                    if (bodyMarker == null) {
+                        marker.done(CustomTypeDef())
+                    } else {
+                        marker.done(CustomTypeRef())
+                    }
                     parseNode()
                 }
 
@@ -89,7 +93,7 @@ class ParserDefinition : IntellijParserDefinition {
 
     override fun getCommentTokens() = TokenSet.create()
 
-    override fun getStringLiteralElements(): TokenSet = IntellijTokenSet.EMPTY
+    override fun getStringLiteralElements() = IntellijTokenSet.EMPTY
 
     override fun createParser(project: Project) = Parser()
 
@@ -97,12 +101,14 @@ class ParserDefinition : IntellijParserDefinition {
 
     override fun createFile(viewProvider: FileViewProvider) = File(viewProvider)
 
-    override fun createElement(node: ASTNode): PsiElement = when (node.elementType) {
-        is Parser.TypeDef -> TypeDefElement(node)
-        is Parser.CustomTypeDef -> CustomTypeElementDef(node)
-        is Parser.CustomTypeRef -> CustomTypeElementRef(node)
-        is Parser.Body -> BodyElement(node)
-        else -> error("Cannot create type")
+    override fun createElement(node: ASTNode): PsiElement {
+        return when (node.elementType) {
+            is Parser.TypeDef -> TypeDefElement(node)
+            is Parser.CustomTypeDef -> CustomTypeElementDef(node)
+            is Parser.CustomTypeRef -> CustomTypeElementRef(node)
+            is Parser.Body -> BodyElement(node)
+            else -> error("Cannot create type")
+        }
     }
 
     companion object {
@@ -131,25 +137,28 @@ fun createRefNode(project: Project, name: String) = PsiFileFactory
     ?: error("Cannot create new node")
 
 abstract class CustomTypeElement(ast: ASTNode) : ASTWrapperPsiElement(ast), PsiNamedElement {
-    override fun getName(): String? = text
+
+    override fun getName(): String? = this.text
 
     override fun getPresentation(): ItemPresentation = Utils.getPresentation(this)
 }
 
-class CustomTypeElementDef(private val ast: ASTNode) : CustomTypeElement(ast), PsiNameIdentifierOwner {
+class CustomTypeElementDef(val ast: ASTNode) : CustomTypeElement(ast), PsiNameIdentifierOwner {
 
     override fun setName(name: String): PsiElement {
-        parent.node.replaceChild(node, createDefNode(project, name))
+        val newNode = createDefNode(project, name)
+        this.parent.node.replaceChild(this.node, newNode)
         return this
     }
 
     override fun getNameIdentifier(): PsiElement = ast.firstChildNode.psi
 }
 
-class CustomTypeElementRef(private val ast: ASTNode) : CustomTypeElement(ast), PsiNameIdentifierOwner {
+class CustomTypeElementRef(val ast: ASTNode) : CustomTypeElement(ast), PsiNameIdentifierOwner {
 
     override fun setName(name: String): PsiElement {
-        this.parent.node.replaceChild(this.node, createRefNode(project, name))
+        val newNode = createRefNode(project, name)
+        this.parent.node.replaceChild(this.node, newNode)
         return this
     }
 
