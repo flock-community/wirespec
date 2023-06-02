@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "community.flock.wirespec.example-gradle_plugin"
-version = Settings.version
+version = "0.0.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
