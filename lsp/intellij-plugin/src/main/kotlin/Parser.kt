@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.CUSTOM_TYPE
 import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.LEFT_CURLY
 import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.RIGHT_CURLY
+import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.TYPE_DEF
 import com.intellij.lang.ParserDefinition as IntellijParserDefinition
 import com.intellij.psi.tree.TokenSet as IntellijTokenSet
 
@@ -32,55 +33,73 @@ class Parser : PsiParser {
 
     override fun parse(root: IElementType, builder: PsiBuilder): ASTNode {
         val rootMarker = builder.mark()
-        var typeMarker: PsiBuilder.Marker? = null
-        var bodyMarker: PsiBuilder.Marker? = null
 
-        fun parseNode() {
-            when (builder.tokenType) {
-                Types.CUSTOM_TYPE -> {
-                    val marker = builder.mark()
+        fun parseBody() {
+            when {
+                builder.eof() -> return
+                builder.tokenType == TYPE_DEF -> return
+                builder.tokenType == RIGHT_CURLY -> return
+                builder.tokenType == CUSTOM_TYPE -> {
+                    val customTypeMarker = builder.mark()
                     builder.advanceLexer()
-                    if (bodyMarker == null) {
-                        marker.done(CustomTypeDef())
-                    } else {
-                        marker.done(CustomTypeRef())
-                    }
-                    parseNode()
-                }
-
-                LEFT_CURLY -> {
-                    bodyMarker = builder.mark()
-                    builder.advanceLexer()
-                    parseNode()
-                }
-
-                RIGHT_CURLY -> {
-                    builder.advanceLexer()
-                    bodyMarker?.done(Body()).also { bodyMarker = null }
-                    typeMarker?.done(TypeDef()).also { typeMarker = null }
+                    customTypeMarker.done(CustomTypeRef())
+                    parseBody()
                 }
 
                 else -> {
                     builder.advanceLexer()
-                    parseNode()
+                    parseBody()
                 }
             }
         }
 
-        fun parseDef() {
-            typeMarker = builder.mark()
-            builder.advanceLexer()
-            if (!builder.eof() && builder.tokenType != Types.TYPE_DEF) {
-                parseNode()
+        fun parseTypeDef() {
+            when {
+                builder.eof() -> return
+                builder.tokenType == TYPE_DEF -> return
+                builder.tokenType == CUSTOM_TYPE -> {
+                    val customTypeMarker = builder.mark()
+                    builder.advanceLexer()
+                    customTypeMarker.done(CustomTypeDef())
+                    parseTypeDef()
+                }
+
+                builder.tokenType == LEFT_CURLY -> {
+                    val bodyMarker = builder.mark()
+                    builder.advanceLexer()
+                    parseBody()
+                    bodyMarker.done(Body())
+                    builder.advanceLexer()
+                    parseTypeDef()
+                }
+
+                else -> {
+                    builder.advanceLexer()
+                    parseTypeDef()
+                }
             }
         }
 
-        while (!builder.eof()) {
-            when (builder.tokenType) {
-                Types.TYPE_DEF -> parseDef()
-                else -> builder.advanceLexer()
+        fun parse() {
+            when {
+                builder.eof() -> return
+                builder.tokenType == TYPE_DEF -> {
+                    val typeDefMarker = builder.mark()
+                    builder.advanceLexer()
+                    parseTypeDef()
+                    typeDefMarker.done(TypeDef())
+                    parse()
+                }
+
+                else -> {
+                    builder.advanceLexer()
+                    parse()
+                }
             }
         }
+
+        parse()
+
         rootMarker.done(root)
 
         return builder.treeBuilt
