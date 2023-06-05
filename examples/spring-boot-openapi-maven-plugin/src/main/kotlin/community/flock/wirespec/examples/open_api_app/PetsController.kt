@@ -18,7 +18,6 @@ class PetsController(
         val request = ListPets.ListPetsRequestUnit(10, null)
         return when (val res = petstoreClient.listPets(request)) {
             is ListPets.ListPetsResponse200ApplicationJson -> res.content.body.map { it.id }
-            is ListPets.ListPetsResponse500ApplicationJson -> error("Something went wrong")
         }
     }
 

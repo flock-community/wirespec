@@ -77,15 +77,15 @@ class ClientConfiguration {
                 }
             ) ?: error("No response")
 
-            override suspend fun listPets(request: ListPets.ListPetsRequest<out Any>): ListPets.ListPetsResponse<out Any> {
+            override suspend fun listPets(request: ListPets.ListPetsRequest<*>): ListPets.ListPetsResponse<*> {
                 return handle(request, ListPets::RESPONSE_MAPPER)
             }
 
-            override suspend fun createPets(request: CreatePets.CreatePetsRequest<out Any>): CreatePets.CreatePetsResponse<out Any> {
+            override suspend fun createPets(request: CreatePets.CreatePetsRequest<*>): CreatePets.CreatePetsResponse<*> {
                 return handle(request, CreatePets::RESPONSE_MAPPER)
             }
 
-            override suspend fun showPetById(request: ShowPetById.ShowPetByIdRequest<out Any>): ShowPetById.ShowPetByIdResponse<out Any> {
+            override suspend fun showPetById(request: ShowPetById.ShowPetByIdRequest<*>): ShowPetById.ShowPetByIdResponse<*> {
                 return handle(request, ShowPetById::RESPONSE_MAPPER)
             }
 

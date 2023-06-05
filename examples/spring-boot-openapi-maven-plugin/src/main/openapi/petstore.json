@@ -65,7 +65,7 @@
               }
             }
           },
-          "500": {
+          "default": {
             "description": "unexpected error",
             "content": {
               "application/json": {
