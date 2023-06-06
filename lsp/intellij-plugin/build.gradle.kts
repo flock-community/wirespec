@@ -24,7 +24,7 @@ intellij {
 }
 
 tasks.publishPlugin {
-    channels.set(listOf("beta"))
+    channels.set(listOf("stable"))
     token.set(System.getenv("JETBRAINS_TOKEN"))
 }
 
