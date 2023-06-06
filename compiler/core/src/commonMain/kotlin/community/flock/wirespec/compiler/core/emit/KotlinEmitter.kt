@@ -16,7 +16,7 @@ class KotlinEmitter(
     logger: Logger = noLogger
 ) : Emitter(logger) {
 
-    val base = """
+    private val endpointBase = """
         |import kotlin.reflect.KType
         |import kotlin.reflect.typeOf
         |
@@ -32,8 +32,8 @@ class KotlinEmitter(
         super.emit(ast)
             .map { (name, result) ->
                 name to """
-                    |${if (packageName.isBlank()) "" else "package $packageName"}
-                    |${if (ast.hasEndpoints()) "$base" else ""}
+                    |${if (packageName.isBlank()) "" else "package $packageName \n"}
+                    |${if (ast.hasEndpoints()) endpointBase else ""}
                     |${result}
             """.trimMargin().trimStart()
             }
@@ -60,7 +60,7 @@ class KotlinEmitter(
     override fun Type.Shape.Field.Identifier.emit() = withLogging(logger) {
         value
             .split("-")
-            .mapIndexed { index, s -> if (index > 0) s.replaceFirstChar(Char::uppercase) else s }
+            .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
             .joinToString("")
     }
 
@@ -89,10 +89,11 @@ class KotlinEmitter(
         |${SPACER}sealed interface ${name}Request<T>: Request<T>
         |${requests.joinToString("\n") { "${SPACER}class ${name}Request${it.content?.emitContentType() ?: "Unit"} ${emitSignature(it.content)}: ${name}Request<${it.content?.reference?.emit() ?: "Unit"}> {override val url = \"${path.emitPath()}\"; override val method = Method.${method.name}; override val query = mapOf<String, String>(${query.emitMap()}); override val headers = mapOf<String, List<String>>(${headers.emitMap()}); override val content = ${it.content?.let { "Content(\"${it.type}\", body)" } ?:"null"}}" }}
         |${SPACER}sealed interface ${name}Response<T>: Response<T>
-        |${responses.filter { it.status.isInt() }.map{it.status.statusXX()}.toSet().joinToString("\n") { "${SPACER}sealed interface ${name}Response${it}<T>: ${name}Response<T>" }}
-        |${responses.filter { it.status.isInt() }.map{it.status}.joinToString("\n") { "${SPACER}sealed interface ${name}Response${it}<T>: ${name}Response${it.statusXX()}<T>" }}
-        |${responses.filter { it.status.isInt() }.joinToString("\n") { "${SPACER}class ${name}Response${it.emit()}: ${name}Response${it.status}<${it.content?.reference?.emit() ?: "Unit"}> { override val status = ${it.status}; override val content = ${it.content?.let { "Content(\"${it.type}\", body)" } ?: "null"}}" }}
-        |suspend fun ${name.replaceFirstChar(Char::lowercase)}(request: ${name}Request<*>): ${name}Response<*>
+        |${responses.map{it.status.groupStatus()}.toSet().joinToString("\n") { "${SPACER}sealed interface ${name}Response${it}<T>: ${name}Response<T>" }}
+        |${responses.filter { it.status.isInt() }.map{it.status}.joinToString("\n") { "${SPACER}sealed interface ${name}Response${it}<T>: ${name}Response${it.groupStatus()}<T>" }}
+        |${responses.filter { it.status.isInt() }.joinToString("\n") { "${SPACER}class ${name}Response${it.status}${it.content?.emitContentType() ?: "Unit"} (override val headers: Map<String, List<String>>${it.content?.let { ", body: ${it.reference.emit()}" } ?: ""} ): ${name}Response${it.status}<${it.content?.reference?.emit() ?: "Unit"}> { override val status = ${it.status}; override val content = ${it.content?.let { "Content(\"${it.type}\", body)" } ?: "null"}}" }}
+        |${responses.filter { !it.status.isInt() }.joinToString("\n") { "${SPACER}class ${name}Response${it.status.firstToUpper()}${it.content?.emitContentType() ?: "Unit"} (override val status: Int, override val headers: Map<String, List<String>>${it.content?.let { ", body: ${it.reference.emit()}" } ?: ""} ): ${name}Response${it.status.firstToUpper()}<${it.content?.reference?.emit() ?: "Unit"}> { override val content = ${it.content?.let { "Content(\"${it.type}\", body)" } ?: "null"}}" }}
+        |suspend fun ${name.firstToLower()}(request: ${name}Request<*>): ${name}Response<*>
         |${SPACER}companion object{
         |${SPACER}${SPACER}const val PATH = "${path.emitSegment()}"
         |${SPACER}${SPACER}${responses.emitResponseMapper(this)}
@@ -102,10 +103,6 @@ class KotlinEmitter(
         |
         |""".trimMargin()
     }
-
-    private fun String.statusXX() = substring(0,1) + "XX"
-    private fun String.isInt() = toIntOrNull() != null
-    private fun String.firstToUpper() = replaceFirstChar(Char::uppercase )
 
     private fun Endpoint.emitSignature(content: Endpoint.Content? = null): String {
         val pathField = path
@@ -155,18 +152,19 @@ class KotlinEmitter(
         TODO("Not yet implemented")
     }
 
-    fun Endpoint.Request.emit() =
-        "${content?.emitContentType() ?: "Unit"}(override val url: String, override val method: String,override val headers: Map<String, List<String>>, override val content: Content<${content?.reference?.emit() ?: "Unit"}>? )"
-
+    fun Endpoint.Request.emit() {
+        TODO("Not yet implemented")
+    }
     override fun Endpoint.Response.emit() = withLogging(logger) {
-        "${status}${content?.emitContentType() ?: "Unit"}(override val headers: Map<String, List<String>>${ content?.let { ", body: ${it.reference.emit()}" } ?: "" } )"
+        "(override val headers: Map<String, List<String>>${ content?.let { ", body: ${it.reference.emit()}" } ?: "" } )"
     }
 
     private fun List<Endpoint.Response>.emitResponseMapper(endpoint: Endpoint) = """
         |fun <B> RESPONSE_MAPPER(contentMapper: ContentMapper<B>) =
         |${SPACER}fun(status: Int, headers:Map<String, List<String>>, content: Content<B>?) =
         |${SPACER}${SPACER}when {
-        |${filter { it.status.isInt() }.joinToString("") { it.emitResponseMapperCondition(endpoint) }}
+        |${filter{ it.status.isInt() }.joinToString("") { it.emitResponseMapperCondition(endpoint) }}
+        |${filter{ !it.status.isInt() }.joinToString("") { it.emitResponseMapperCondition(endpoint) }}
         |${SPACER}${SPACER}${SPACER}else -> error("Cannot map response with status ${"$"}status")
         |
     """.trimMargin()
@@ -174,16 +172,15 @@ class KotlinEmitter(
     private fun Endpoint.Response.emitResponseMapperCondition(endpoint: Endpoint) =
         when (content) {
             null -> """
-                |${SPACER}${SPACER}${SPACER}status == ${status} && content == null -> ${endpoint.name}Response${status}Unit(headers)
-                |
-            """.trimMargin()
-
+                    |${SPACER}${SPACER}${SPACER}${status.takeIf { it.isInt() }?.let{"status == $status && "}.orEmptyString()}content == null -> ${endpoint.name}Response${status.firstToUpper()}Unit(${status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()}headers)
+                    |
+                """.trimMargin()
             else -> """
-                |${SPACER}${SPACER}${SPACER}status == ${status} && content?.type == "${content.type}" -> contentMapper
-                |${SPACER}${SPACER}${SPACER}${SPACER}.read<${content.reference.emit()}>(content, typeOf<${content.reference.emit()}>())
-                |${SPACER}${SPACER}${SPACER}${SPACER}.let{ ${endpoint.name}Response${status}${content.emitContentType()}(headers, it.body) }
-                |
-            """.trimMargin()
+                    |${SPACER}${SPACER}${SPACER}${status.takeIf { it.isInt() }?.let{"status == $status && "}.orEmptyString()}content?.type == "${content.type}" -> contentMapper
+                    |${SPACER}${SPACER}${SPACER}${SPACER}.read<${content.reference.emit()}>(content, typeOf<${content.reference.emit()}>())
+                    |${SPACER}${SPACER}${SPACER}${SPACER}.let{ ${endpoint.name}Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()}headers, it.body) }
+                    |
+                """.trimMargin()
         }
 
 }
@@ -191,7 +188,7 @@ class KotlinEmitter(
 
 
 fun Endpoint.Content.emitContentType() = type.split("/")
-    .joinToString("") { it.replaceFirstChar ( Char::uppercase ) }
+    .joinToString("") { it.firstToUpper() }
 
 fun Type.Shape.Field.Reference.toField(identifier: String, isNullable: Boolean) = Type.Shape.Field(
     Type.Shape.Field.Identifier(identifier),
@@ -200,3 +197,11 @@ fun Type.Shape.Field.Reference.toField(identifier: String, isNullable: Boolean) 
 )
 
 fun String?.orEmptyString() = this ?: ""
+
+private fun String.groupStatus() =
+    if(isInt()) substring(0,1) + "XX"
+    else firstToUpper()
+
+private fun String.isInt() = toIntOrNull() != null
+private fun String.firstToUpper() = replaceFirstChar(Char::uppercase )
+private fun String.firstToLower() = replaceFirstChar(Char::lowercase )
