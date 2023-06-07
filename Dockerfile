@@ -6,4 +6,4 @@ COPY compiler/cli/build/bin/linuxX64/releaseExecutable/cli.kexe /app
 
 WORKDIR /app
 
-CMD /app/cli.kexe $(pwd)/types Java,Kotlin,Scala,TypeScript
+CMD /app/cli.kexe -l Java -l Kotlin -l Scala -l TypeScript $(pwd)/types
