@@ -22,6 +22,7 @@ import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.getEnvVar
+import community.flock.wirespec.compiler.utils.orNull
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import kotlinx.cli.default
@@ -46,13 +47,21 @@ private fun Logger.from(s: String): Language? = Language.valueOf(s).also {
 
 fun main(args: Array<String>) {
 
+    val a = if (args.isEmpty()) {
+        (0..20)
+            .mapNotNull { args.orNull(it) }
+            .toTypedArray()
+    } else {
+        args
+    }
+
     val parser = ArgParser("wirespec")
     val input by parser.argument(ArgType.String, description = "Input file")
     val output by parser.option(ArgType.String, shortName = "o", description = "Output directory")
     val languages by parser.option(ArgType.Choice(Language.values().map { it.name }.mapNotNull(logger::from), { Language.valueOf(it) ?: error("Language not found") }), shortName = "l", description = "Language type").default(Language.Jvm.Kotlin).multiple()
     val packageName by parser.option(ArgType.String, shortName = "p", description = "Package name").default(DEFAULT_PACKAGE_NAME)
 
-    parser.parse(args)
+    parser.parse(a)
 
     compile(languages.toSet(), input, output, packageName)
 
