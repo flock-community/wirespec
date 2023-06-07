@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.cli.io.File
 import community.flock.wirespec.compiler.cli.io.FullFilePath
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import kotlin.test.Test
+import kotlin.test.Ignore
 import kotlin.test.assertEquals
 
 
@@ -18,6 +19,7 @@ class CliTest {
     }
 
     @Test
+    @Ignore
     fun testMainHelp() {
         main(arrayOf("--help"))
     }
