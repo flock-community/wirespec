@@ -32,7 +32,7 @@ class KotlinEmitter(
         super.emit(ast)
             .map { (name, result) ->
                 name to """
-                    |${if (packageName.isBlank()) "" else "package $packageName \n"}
+                    |${if (packageName.isBlank()) "" else "package $packageName"}
                     |${if (ast.hasEndpoints()) endpointBase else ""}
                     |${result}
             """.trimMargin().trimStart()
