@@ -46,12 +46,10 @@ private fun Logger.from(s: String): Language? = Language.valueOf(s).also {
 
 fun main(args: Array<String>) {
 
-    val l = Language.values().map { it.name }.mapNotNull(logger::from)
-
     val parser = ArgParser("wirespec")
     val input by parser.argument(ArgType.String, description = "Input file")
     val output by parser.option(ArgType.String, shortName = "o", description = "Output directory")
-    val languages by parser.option(ArgType.Choice(l, { Language.valueOf(it) ?: error("Language not found") }), shortName = "l", description = "Language type").default(Language.Jvm.Kotlin).multiple()
+    val languages by parser.option(ArgType.Choice(Language.values().map { it.name }.mapNotNull(logger::from), { Language.valueOf(it) ?: error("Language not found") }), shortName = "l", description = "Language type").default(Language.Jvm.Kotlin).multiple()
     val packageName by parser.option(ArgType.String, shortName = "p", description = "Package name").default(DEFAULT_PACKAGE_NAME)
 
     parser.parse(args)
