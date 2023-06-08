@@ -20,15 +20,15 @@ class CliTest {
 
     @Test
     @Ignore
-    fun testMainHelp() {
-        main(arrayOf("--help"))
+    fun testCliHelp() {
+        cli(arrayOf("--help"))
     }
 
     @Test
-    fun testMainOutput() {
+    fun testCliOutput() {
         val packageDir = DEFAULT_PACKAGE_NAME.replace(".", "/")
         val outputDir = outputDir()
-        main(arrayOf(inputDir, "-o", outputDir))
+        cli(arrayOf(inputDir, "-o", outputDir))
 
         val kotlin = TestFile("$outputDir/$packageDir", "Bla", Extension.Kotlin).read()
 
@@ -44,11 +44,11 @@ class CliTest {
     }
 
     @Test
-    fun testMainJavaPackage() {
+    fun testCliJavaPackage() {
         val packageName = "community.flock.next"
         val packageDir = packageName.replace(".", "/")
         val outputDir = outputDir()
-        main(arrayOf(inputDir, "-o", outputDir, "-l", "Kotlin", "-l", "Java", "-p", "community.flock.next"))
+        cli(arrayOf(inputDir, "-o", outputDir, "-l", "Kotlin", "-l", "Java", "-p", "community.flock.next"))
 
         val java = TestFile("$outputDir/$packageDir", "Bla", Extension.Java).read()
 

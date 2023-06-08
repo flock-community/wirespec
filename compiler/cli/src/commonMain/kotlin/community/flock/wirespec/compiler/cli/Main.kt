@@ -46,14 +46,13 @@ private fun Logger.from(s: String): Language? = Language.valueOf(s).also {
 }
 
 fun main(args: Array<String>) {
+    (0..20)
+        .mapNotNull { args.orNull(it) }
+        .toTypedArray()
+        .let{ cli(it) }
+}
 
-    val a = if (args.isEmpty()) {
-        (0..20)
-            .mapNotNull { args.orNull(it) }
-            .toTypedArray()
-    } else {
-        args
-    }
+fun cli(args: Array<String>) {
 
     val parser = ArgParser("wirespec")
     val input by parser.argument(ArgType.String, description = "Input file")
@@ -61,7 +60,7 @@ fun main(args: Array<String>) {
     val languages by parser.option(ArgType.Choice(Language.values().map { it.name }.mapNotNull(logger::from), { Language.valueOf(it) ?: error("Language not found") }), shortName = "l", description = "Language type").default(Language.Jvm.Kotlin).multiple()
     val packageName by parser.option(ArgType.String, shortName = "p", description = "Package name").default(DEFAULT_PACKAGE_NAME)
 
-    parser.parse(a)
+    parser.parse(args)
 
     compile(languages.toSet(), input, output, packageName)
 
