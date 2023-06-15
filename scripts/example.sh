@@ -8,4 +8,8 @@ dir="$(dirname -- "$0")"
 
 # publish and build maven example
 ./gradlew plugin:maven:publishToMavenLocal &&
-  (cd "$dir"/../examples/spring-boot-maven-plugin && ./mvnw package)
+  (cd "$dir"/../examples/spring-boot-maven-plugin && ./mvnw package) &&
+
+# publish and build maven example
+./gradlew plugin:maven:publishToMavenLocal &&
+  (cd "$dir"/../examples/spring-boot-custom-maven-plugin && ./mvnw package)

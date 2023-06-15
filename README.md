@@ -56,6 +56,7 @@ sudo mv ./wirespec /usr/local/bin/wirespec
 ## Maven
 Example how to use the maven plugin  
 For a full example click [here](examples/spring-boot-maven-plugin)
+It is also possible to create your custom emitter and run with the plugin[here](examples/spring-boot-custom-maven-plugin)
 ```xml
 <project>
     ...
@@ -85,6 +86,18 @@ For a full example click [here](examples/spring-boot-maven-plugin)
                         <configuration>
                             <sourceDirectory>${project.basedir}/src/main/wirespec</sourceDirectory>
                             <targetDirectory>${project.basedir}/src/main/frontend/generated</targetDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>custom</id>
+                        <goals>
+                            <goal>custom</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirectory>${project.basedir}/src/main/wirespec</sourceDirectory>
+                            <targetDirectory>${project.build.directory}/generated-sources</targetDirectory>
+                            <emitterClass>community.flock.wirespec.emit.CustomEmitter</emitterClass>
+                            <extention>java</extention>
                         </configuration>
                     </execution>
                 </executions>
