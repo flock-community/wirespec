@@ -58,6 +58,7 @@
                             <targetDirectory>${project.build.directory}/generated-sources/java/hello</targetDirectory>
                             <emitterClass>community.flock.wirespec.emit.CustomEmitter</emitterClass>
                             <extention>java</extention>
+                            <skip>true</skip>
                         </configuration>
                     </execution>
                 </executions>
