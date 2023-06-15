@@ -33,6 +33,9 @@ class CustomMojo : WirespecMojo() {
     @Parameter(required = true)
     private lateinit var extention: String
 
+    @Parameter(required = false)
+    private var split: Boolean = false
+
     @Parameter(defaultValue = "\${project}", readonly = true, required = true)
     private lateinit var project: MavenProject
 
@@ -41,7 +44,7 @@ class CustomMojo : WirespecMojo() {
         val emitter = try {
             val clazz = getClassLoader(project).loadClass(emitterClass)
             val constructor = clazz.getConstructor(Logger::class.java, Boolean::class.java)
-            val instance = constructor.newInstance(logger, true)
+            val instance = constructor.newInstance(logger, split)
             instance as Emitter
         } catch (e: Exception) {
             e.printStackTrace()
