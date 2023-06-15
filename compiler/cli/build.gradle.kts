@@ -6,6 +6,7 @@ plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
     id("com.github.johnrengelman.shadow")
+    id("com.goncalossilva.resources") version "0.3.2"
 }
 
 group = "${Settings.groupId}.compiler"
@@ -45,6 +46,14 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(project(":compiler:core"))
+                implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
+            }
+        }
+        commonTest {
+            dependencies {
+                implementation(kotlin("test-common"))
+                implementation(kotlin("test-annotations-common"))
+                implementation(kotlin("test-junit"))
             }
         }
         val desktopMain by creating {

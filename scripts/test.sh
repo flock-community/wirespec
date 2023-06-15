@@ -2,7 +2,7 @@
 
 artifactName="cli"
 version="0.0.0-SNAPSHOT"
-languages="Java,Kotlin,Scala,TypeScript"
+languages="-l Java -l Kotlin -l Scala -l TypeScript"
 
 buildNothing=false
 
@@ -19,7 +19,7 @@ fi
 
 if [[ $WIRESPEC_BUILD_ALL = true || $WIRESPEC_BUILD_MAC = true ]]; then
   echo "Test macOS artifact"
-  ./compiler/$artifactName/build/bin/$macosArch/releaseExecutable/$artifactName.kexe "$(pwd)"/types $languages
+  ./compiler/$artifactName/build/bin/$macosArch/releaseExecutable/$artifactName.kexe $languages "$(pwd)"/types
 fi
 
 if [[ $WIRESPEC_BUILD_ALL = true || $WIRESPEC_BUILD_LINUX = true || $buildNothing = true ]]; then
@@ -28,7 +28,7 @@ if [[ $WIRESPEC_BUILD_ALL = true || $WIRESPEC_BUILD_LINUX = true || $buildNothin
 fi
 
 echo "Test Node.js artifact"
-node build/js/packages/wirespec-$artifactName/kotlin/wirespec-$artifactName.js "$(pwd)"/types $languages
+node build/js/packages/wirespec-$artifactName/kotlin/wirespec-$artifactName.js $languages "$(pwd)"/types
 
 echo "Test JVM artifact"
-java -jar compiler/$artifactName/build/libs/$artifactName-$version-all.jar "$(pwd)"/types $languages
+java -jar compiler/$artifactName/build/libs/$artifactName-$version-all.jar $languages "$(pwd)"/types

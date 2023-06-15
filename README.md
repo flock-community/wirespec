@@ -21,17 +21,29 @@ Instructions on how to install different components
 
 ## Cli
 
-### Linux
+```
+Usage: wirespec options_list
+Arguments: 
+    input -> Input file { String }
+Options: 
+    --output, -o -> Output directory { String }
+    --languages, -l [Kotlin] -> Language type { Value should be one of [Java, Kotlin, Scala, TypeScript] }
+    --packageName, -p [community.flock.wirespec.generated] -> Package name { String }
+    --help, -h -> Usage info 
+```
+
+### Install
+#### Linux
 ```
 curl -L https://github.com/flock-community/wirespec/releases/latest/download/linuxX64.kexe -o wirespec
 ```
 
-### macOS
+#### macOS
 ```
 curl -L https://github.com/flock-community/wirespec/releases/latest/download/macosX64.kexe -o wirespec
 ```
 
-### macOS Arm
+#### macOS Arm
 ```
 curl -L https://github.com/flock-community/wirespec/releases/latest/download/macosArm64.kexe -o wirespec
 ```
