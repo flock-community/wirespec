@@ -83,7 +83,19 @@
                         </goals>
                         <configuration>
                             <sourceDirectory>${project.basedir}/src/main/openapi/petstore.json</sourceDirectory>
-                            <targetDirectory>${project.build.directory}/generated-sources/kotlin</targetDirectory>
+                            <targetDirectory>${project.build.directory}/generated-sources</targetDirectory>
+                            <packageName>community.flock.wirespec.generated.kotlin</packageName>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>java</id>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirectory>${project.basedir}/src/main/openapi/petstore.json</sourceDirectory>
+                            <targetDirectory>${project.build.directory}/generated-sources</targetDirectory>
+                            <packageName>community.flock.wirespec.generated.java</packageName>
                         </configuration>
                     </execution>
                 </executions>

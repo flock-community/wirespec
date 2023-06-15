@@ -2,6 +2,7 @@ package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Refined
@@ -22,7 +23,7 @@ class KotlinEmitter(
         |
         |enum class Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
         |data class Content<T> (val type:String, val body:T )
-        |interface Request<T> { val url:String; val method: Method; val query: Map<String, String>; val headers: Map<String, List<String>>; val content:Content<T>? }
+        |interface Request<T> { val path:String; val method: Method; val query: Map<String, String>; val headers: Map<String, List<String>>; val content:Content<T>? }
         |interface Response<T> { val status:Int; val headers: Map<String, List<String>>; val content:Content<T>? }
         |interface ContentMapper<B> { fun <T> read(content: Content<B>, valueType: KType): Content<T> fun <T> write(content: Content<T>): Content<B> }
         |
@@ -87,7 +88,7 @@ class KotlinEmitter(
     override fun Endpoint.emit() = withLogging(logger) {
         """interface $name {
         |${SPACER}sealed interface ${name}Request<T>: Request<T>
-        |${requests.joinToString("\n") { "${SPACER}class ${name}Request${it.content?.emitContentType() ?: "Unit"} ${emitSignature(it.content)}: ${name}Request<${it.content?.reference?.emit() ?: "Unit"}> {override val url = \"${path.emitPath()}\"; override val method = Method.${method.name}; override val query = mapOf<String, String>(${query.emitMap()}); override val headers = mapOf<String, List<String>>(${headers.emitMap()}); override val content = ${it.content?.let { "Content(\"${it.type}\", body)" } ?:"null"}}" }}
+        |${requests.joinToString("\n") { "${SPACER}class ${name}Request${it.content?.emitContentType() ?: "Unit"} ${emitRequestSignature(it.content)}: ${name}Request<${it.content?.reference?.emit() ?: "Unit"}> {override val path = \"${path.emitPath()}\"; override val method = Method.${method.name}; override val query = mapOf<String, String>(${query.emitMap()}); override val headers = mapOf<String, List<String>>(${headers.emitMap()}); override val content = ${it.content?.let { "Content(\"${it.type}\", body)" } ?:"null"}}" }}
         |${SPACER}sealed interface ${name}Response<T>: Response<T>
         |${responses.map{it.status.groupStatus()}.toSet().joinToString("\n") { "${SPACER}sealed interface ${name}Response${it}<T>: ${name}Response<T>" }}
         |${responses.filter { it.status.isInt() }.map{it.status}.joinToString("\n") { "${SPACER}sealed interface ${name}Response${it}<T>: ${name}Response${it.groupStatus()}<T>" }}
@@ -104,7 +105,7 @@ class KotlinEmitter(
         |""".trimMargin()
     }
 
-    private fun Endpoint.emitSignature(content: Endpoint.Content? = null): String {
+    private fun Endpoint.emitRequestSignature(content: Endpoint.Content? = null): String {
         val pathField = path
             .filterIsInstance<Endpoint.Segment.Param>()
             .map { Type.Shape.Field(it.identifier, it.reference, false) }
@@ -128,35 +129,20 @@ class KotlinEmitter(
 
     private fun List<Type.Shape.Field>.emitMap() = joinToString(", ") { "\"${it.identifier.emit()}\" to ${it.identifier.emit()}.toString()" }
 
-    override fun Endpoint.Method.emit(): String = withLogging(logger) {
-        TODO("Not yet implemented")
-    }
-
-    override fun Endpoint.Segment.emit(): String = withLogging(logger) {
+    private fun Endpoint.Segment.emit(): String = withLogging(logger) {
         when (this) {
             is Endpoint.Segment.Literal -> value
             is Endpoint.Segment.Param -> "\${${identifier.value}}"
         }
     }
 
-    fun  List<Endpoint.Segment>.emitPath() = "/" + joinToString("/") { it.emit() }
+    private fun List<Endpoint.Segment>.emitPath() = "/" + joinToString("/") { it.emit() }
 
-    override fun Endpoint.Segment.Param.emit(): String = withLogging(logger) {
+    fun Endpoint.Segment.Param.emit(): String = withLogging(logger) {
         when (reference) {
             is Custom -> identifier to reference.value
             is Primitive -> identifier to reference.type.name
         }.run { "$first: $second" }
-    }
-
-    override fun Endpoint.Segment.Literal.emit(): String = withLogging(logger) {
-        TODO("Not yet implemented")
-    }
-
-    fun Endpoint.Request.emit() {
-        TODO("Not yet implemented")
-    }
-    override fun Endpoint.Response.emit() = withLogging(logger) {
-        "(override val headers: Map<String, List<String>>${ content?.let { ", body: ${it.reference.emit()}" } ?: "" } )"
     }
 
     private fun List<Endpoint.Response>.emitResponseMapper(endpoint: Endpoint) = """
@@ -203,5 +189,3 @@ private fun String.groupStatus() =
     else firstToUpper()
 
 private fun String.isInt() = toIntOrNull() != null
-private fun String.firstToUpper() = replaceFirstChar(Char::uppercase )
-private fun String.firstToLower() = replaceFirstChar(Char::lowercase )

@@ -5,16 +5,6 @@ import community.flock.wirespec.compiler.utils.Logger
 
 interface EndpointDefinitionEmitter : EndpointDefinitionEmitterLogger {
     fun Endpoint.emit(): String
-
-    fun Endpoint.Method.emit(): String
-
-    fun Endpoint.Segment.emit(): String
-
-    fun Endpoint.Segment.Param.emit(): String
-
-    fun Endpoint.Segment.Literal.emit(): String
-
-    fun Endpoint.Response.emit(): String
 }
 
 interface EndpointDefinitionEmitterLogger {

@@ -67,24 +67,4 @@ class ScalaEmitter(
         TODO("Not yet implemented")
     }
 
-    override fun Endpoint.Method.emit(): String = withLogging(logger) {
-        TODO("Not yet implemented")
-    }
-
-    override fun Endpoint.Segment.emit(): String = withLogging(logger) {
-        TODO("Not yet implemented")
-    }
-
-    override fun Endpoint.Segment.Param.emit(): String = withLogging(logger) {
-        TODO("Not yet implemented")
-    }
-
-    override fun Endpoint.Segment.Literal.emit(): String = withLogging(logger) {
-        TODO("Not yet implemented")
-    }
-
-    override fun Endpoint.Response.emit() = withLogging(logger) {
-        TODO("Not yet implemented")
-    }
-
 }

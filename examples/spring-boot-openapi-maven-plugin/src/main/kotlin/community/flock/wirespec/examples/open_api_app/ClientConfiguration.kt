@@ -1,14 +1,14 @@
 package community.flock.wirespec.examples.open_api_app
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import community.flock.wirespec.generated.Content
-import community.flock.wirespec.generated.ContentMapper
-import community.flock.wirespec.generated.CreatePets
-import community.flock.wirespec.generated.ListPets
-import community.flock.wirespec.generated.Pet
-import community.flock.wirespec.generated.Request
-import community.flock.wirespec.generated.Response
-import community.flock.wirespec.generated.ShowPetById
+import community.flock.wirespec.generated.kotlin.Content
+import community.flock.wirespec.generated.kotlin.ContentMapper
+import community.flock.wirespec.generated.kotlin.CreatePets
+import community.flock.wirespec.generated.kotlin.ListPets
+import community.flock.wirespec.generated.kotlin.Pet
+import community.flock.wirespec.generated.kotlin.Request
+import community.flock.wirespec.generated.kotlin.Response
+import community.flock.wirespec.generated.kotlin.ShowPetById
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
@@ -59,7 +59,7 @@ class ClientConfiguration {
                 request: Req,
                 responseMapper: (ContentMapper<ByteArray>) -> (Int, Map<String, List<String>>, Content<ByteArray>) -> Res
             ) = restTemplate.execute(
-                URI("https://6467e16be99f0ba0a819fd68.mockapi.io${request.url}"),
+                URI("https://6467e16be99f0ba0a819fd68.mockapi.io${request.path}"),
                 HttpMethod.valueOf(request.method.name),
                 { req ->
                     request.content

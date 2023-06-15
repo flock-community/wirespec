@@ -26,6 +26,8 @@ abstract class Emitter(val logger: Logger, val split: Boolean = false) : Emitter
 
     companion object {
         const val SPACER = "  "
+        fun String.firstToUpper() = replaceFirstChar(Char::uppercase )
+        fun String.firstToLower() = replaceFirstChar(Char::lowercase )
     }
 
 }

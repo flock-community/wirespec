@@ -16,8 +16,27 @@ class JavaEmitter(
     logger: Logger = noLogger
 ) : Emitter(logger, true) {
 
+    private val imports = """
+        |import java.util.List;
+        |import java.util.Map;
+    """.trimMargin()
+
+    private val shared = """
+        |${imports}
+        |
+        |import java.lang.reflect.Type;
+        |
+        |enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE };
+        |record Content<T> (String type, T body) {};
+        |interface Request<T> { String getPath(); Method getMethod(); Map<String, String> getQuery(); Map<String, List<String>> getHeaders(); Content<T> getContent(); }
+        |interface Response<T> { int getStatus(); Map<String, List<String>> getHeaders(); Content<T> getContent(); }
+        |interface ContentMapper<B> { <T> Content<T> read(Content<B> content, Type valueType); <T> Content<B> write(Content<T> content); }
+        |
+    """.trimMargin()
+
     override fun emit(ast: AST): List<Pair<String, String>> = super.emit(ast)
-        .map { (name, result) -> name to if (packageName.isBlank()) "" else "package $packageName;\n\n$result" }
+        .map { (name, result) -> name to if (packageName.isBlank()) "" else "package $packageName;\n\n$imports\n\n$result" }
+        .plus("WirespecShared" to if (packageName.isBlank()) "" else "package $packageName;\n\n$shared")
 
     override fun Type.emit() = withLogging(logger) {
         """public record $name(
@@ -28,11 +47,11 @@ class JavaEmitter(
     }
 
     override fun Type.Shape.emit() = withLogging(logger) {
-        value.joinToString("\n") { it.emit() }.dropLast(1)
+        value.joinToString(",\n") { it.emit() }.dropLast(1)
     }
 
     override fun Type.Shape.Field.emit() = withLogging(logger) {
-        "$SPACER${if (isNullable) "java.util.Optional<${reference.emit()}>" else reference.emit()} ${identifier.emit()},"
+        "$SPACER${if (isNullable) "java.util.Optional<${reference.emit()}>" else reference.emit()} ${identifier.emit()}"
     }
 
     override fun Type.Shape.Field.Identifier.emit() = withLogging(logger) { value }
@@ -62,27 +81,64 @@ class JavaEmitter(
     }
 
     override fun Endpoint.emit() = withLogging(logger) {
-        TODO("Not yet implemented")
+        """interface $name {
+            |${SPACER}abstract interface ${name}Request<T> extends Request<T> {}
+            |${requests.joinToString("\n"){ it.emit(this) }}
+            |}
+            |""".trimMargin()
     }
 
-    override fun Endpoint.Method.emit(): String = withLogging(logger) {
-        TODO("Not yet implemented")
+    private fun AST.hasEndpoints() = any { it is Endpoint }
+
+    private fun Endpoint.Request.emit(endpoint: Endpoint) = """
+        |${SPACER}class ${endpoint.name}Request${content.emitContentType()} implements ${endpoint.name}Request<${content?.reference?.emit() ?: "Void"}> {
+        |${SPACER}${SPACER}private final String path;
+        |${SPACER}${SPACER}private final Method method;
+        |${SPACER}${SPACER}private final Map<String, String> query;
+        |${SPACER}${SPACER}private final Map<String, List<String>> headers;
+        |${SPACER}${SPACER}private final Content<${content?.reference?.emit() ?: "Void"}> content;
+        |${SPACER}${SPACER}public ${endpoint.name}Request${content.emitContentType()}(${endpoint.emitRequestSignature(content)}) {
+        |${SPACER}${SPACER}${SPACER}path = ${endpoint.path.emitPath()};
+        |${SPACER}${SPACER}${SPACER}method = Method.${endpoint.method.name};
+        |${SPACER}${SPACER}${SPACER}query = ${endpoint.query.emitMap()};
+        |${SPACER}${SPACER}${SPACER}headers = ${endpoint.headers.emitMap()};
+        |${SPACER}${SPACER}${SPACER}content = ${content?.let { "new Content(\"${it.type}\", body)" } ?: "null"};
+        |${SPACER}${SPACER}}
+        |${SPACER}${SPACER}@Override public String getPath() {return path;}
+        |${SPACER}${SPACER}@Override public Method getMethod() {return method;}
+        |${SPACER}${SPACER}@Override public Map<String, String> getQuery() {return query;}
+        |${SPACER}${SPACER}@Override public Map<String, List<String>> getHeaders() {return headers;}
+        |${SPACER}${SPACER}@Override public Content<${content?.reference?.emit() ?: "Void"}> getContent() {return content;}
+        |${SPACER}}
+    """.trimMargin()
+
+    private fun Endpoint.Content?.emitContentType() = this
+        ?.type
+        ?.split("/")
+        ?.joinToString("") { it.firstToUpper() }
+        ?: "Void"
+
+    private fun Endpoint.Segment.emit(): String = withLogging(logger) {
+        when (this) {
+            is Endpoint.Segment.Literal -> "\"$value\""
+            is Endpoint.Segment.Param -> identifier.value
+        }
     }
 
-    override fun Endpoint.Segment.emit(): String = withLogging(logger) {
-        TODO("Not yet implemented")
+    private fun Endpoint.emitRequestSignature(content: Endpoint.Content? = null): String {
+        val pathField = path
+            .filterIsInstance<Endpoint.Segment.Param>()
+            .map { Type.Shape.Field(it.identifier, it.reference, false) }
+        val parameters = pathField + query + headers + cookies
+        return parameters
+                .plus(content?.reference?.toField("body", false))
+                .filterNotNull()
+                .joinToString(", ") { it.emit() }
     }
 
-    override fun Endpoint.Segment.Param.emit(): String = withLogging(logger) {
-        TODO("Not yet implemented")
-    }
+    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ", "Map.of(", ")") { "\"${it.identifier.emit()}\", ${it.identifier.emit()}.toString()" }
 
-    override fun Endpoint.Segment.Literal.emit(): String = withLogging(logger) {
-        TODO("Not yet implemented")
-    }
+    private fun List<Endpoint.Segment>.emitPath() = "\"/\" + " + joinToString(" + \"/\" + ") { it.emit() }
 
-    override fun Endpoint.Response.emit() = withLogging(logger) {
-        TODO("Not yet implemented")
-    }
 
 }

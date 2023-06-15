@@ -25,11 +25,13 @@ class KotlinMojo : WirespecMojo() {
     @Parameter(defaultValue = "\${project}", readonly = true, required = true)
     private lateinit var project: MavenProject
 
-    private val emitter = KotlinEmitter(packageName, logger)
-
     override fun execute() {
+        val emitter = KotlinEmitter(packageName, logger)
         if(sourceDirectory.endsWith(".json")){
-            val fileName = sourceDirectory.split("/").last().substringBeforeLast(".")
+            val fileName = sourceDirectory.split("/")
+                .last()
+                .substringBeforeLast(".")
+                .replaceFirstChar(Char::uppercase)
             val json = File(sourceDirectory).readText()
             val ast = OpenApiParser.parse(json)
             val result = emitter.emit(ast).joinToString("\n"){ it.second }
