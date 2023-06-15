@@ -11,7 +11,7 @@ import kotlin.test.assertEquals
 
 class CliTest {
 
-    fun outputDir() = "/tmp/${getRandomString(8)}"
+    fun outputDir() = "../../tmp/${getRandomString(8)}"
     val inputDir = "src/commonTest/resources"
 
     class TestFile(val directory: String, val fileName: String, val extension: Extension) : File(FullFilePath(directory, fileName, extension)) {
