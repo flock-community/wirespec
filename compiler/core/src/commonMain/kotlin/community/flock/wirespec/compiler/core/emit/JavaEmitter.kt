@@ -2,6 +2,7 @@ package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToLower
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Refined
@@ -47,7 +48,7 @@ class JavaEmitter(
     }
 
     override fun Type.Shape.emit() = withLogging(logger) {
-        value.joinToString(",\n") { it.emit() }.dropLast(1)
+        value.joinToString(",\n") { it.emit() }
     }
 
     override fun Type.Shape.Field.emit() = withLogging(logger) {
@@ -82,8 +83,12 @@ class JavaEmitter(
 
     override fun Endpoint.emit() = withLogging(logger) {
         """interface $name {
-            |${SPACER}abstract interface ${name}Request<T> extends Request<T> {}
+            |static String PATH = "${path.emitSegment()}";
+            |${SPACER}interface ${name}Request<T> extends Request<T> {}
             |${requests.joinToString("\n"){ it.emit(this) }}
+            |${SPACER}interface ${name}Response<T> extends Response<T> {}
+            |${responses.joinToString("\n"){ it.emit(this) }}
+            |${SPACER}public ${name}Response ${name.firstToLower()}(${name}Request request);
             |}
             |""".trimMargin()
     }
@@ -98,11 +103,11 @@ class JavaEmitter(
         |${SPACER}${SPACER}private final Map<String, List<String>> headers;
         |${SPACER}${SPACER}private final Content<${content?.reference?.emit() ?: "Void"}> content;
         |${SPACER}${SPACER}public ${endpoint.name}Request${content.emitContentType()}(${endpoint.emitRequestSignature(content)}) {
-        |${SPACER}${SPACER}${SPACER}path = ${endpoint.path.emitPath()};
-        |${SPACER}${SPACER}${SPACER}method = Method.${endpoint.method.name};
-        |${SPACER}${SPACER}${SPACER}query = ${endpoint.query.emitMap()};
-        |${SPACER}${SPACER}${SPACER}headers = ${endpoint.headers.emitMap()};
-        |${SPACER}${SPACER}${SPACER}content = ${content?.let { "new Content(\"${it.type}\", body)" } ?: "null"};
+        |${SPACER}${SPACER}${SPACER}this.path = ${endpoint.path.emitPath()};
+        |${SPACER}${SPACER}${SPACER}this.method = Method.${endpoint.method.name};
+        |${SPACER}${SPACER}${SPACER}this.query = ${endpoint.query.emitMap()};
+        |${SPACER}${SPACER}${SPACER}this.headers = ${endpoint.headers.emitMap()};
+        |${SPACER}${SPACER}${SPACER}this.content = ${content?.let { "new Content(\"${it.type}\", body)" } ?: "null"};
         |${SPACER}${SPACER}}
         |${SPACER}${SPACER}@Override public String getPath() {return path;}
         |${SPACER}${SPACER}@Override public Method getMethod() {return method;}
@@ -111,6 +116,22 @@ class JavaEmitter(
         |${SPACER}${SPACER}@Override public Content<${content?.reference?.emit() ?: "Void"}> getContent() {return content;}
         |${SPACER}}
     """.trimMargin()
+
+    private fun Endpoint.Response.emit(endpoint: Endpoint) = """
+        |${SPACER}class ${endpoint.name}Response${status.firstToUpper()}${content.emitContentType()} implements Response<${content?.reference?.emit() ?: "Void"}> {
+        |${SPACER}${SPACER}private final int status;
+        |${SPACER}${SPACER}private final Map<String, List<String>> headers;
+        |${SPACER}${SPACER}private final Content<${content?.reference?.emit() ?: "Void"}> content;
+        |${SPACER}${SPACER}public ${endpoint.name}Response${status.firstToUpper()}${content.emitContentType()}(Map<String, List<String>> headers${status.takeIf { !it.isInt() }?.let { ", int status" }.orEmptyString()}${content?.let { ", ${it.reference.emit()} body" } ?: ""}) {
+        |${SPACER}${SPACER}${SPACER}this.status = ${status.takeIf { it.isInt() } ?: "status"};
+        |${SPACER}${SPACER}${SPACER}this.headers = headers;
+        |${SPACER}${SPACER}${SPACER}this.content = ${content?.let { "new Content(\"${it.type}\", body)" } ?: "null"};
+        |${SPACER}${SPACER}}
+        |${SPACER}${SPACER}@Override public int getStatus() {return status;}
+        |${SPACER}${SPACER}@Override public Map<String, List<String>> getHeaders() {return headers;}
+        |${SPACER}${SPACER}@Override public Content<${content?.reference?.emit() ?: "Void"}> getContent() {return content;}
+        |${SPACER}}
+        """.trimMargin()
 
     private fun Endpoint.Content?.emitContentType() = this
         ?.type
@@ -138,7 +159,17 @@ class JavaEmitter(
 
     private fun List<Type.Shape.Field>.emitMap() = joinToString(", ", "Map.of(", ")") { "\"${it.identifier.emit()}\", ${it.identifier.emit()}.toString()" }
 
+    private fun List<Endpoint.Segment>.emitSegment() = "/" + joinToString("/") {
+        when (it) {
+            is Endpoint.Segment.Param -> "{${it.identifier.value}}"
+            is Endpoint.Segment.Literal -> it.value
+        }
+    }
+
     private fun List<Endpoint.Segment>.emitPath() = "\"/\" + " + joinToString(" + \"/\" + ") { it.emit() }
 
+    private fun String?.orEmptyString() = this ?: ""
+
+    private fun String.isInt() = toIntOrNull() != null
 
 }

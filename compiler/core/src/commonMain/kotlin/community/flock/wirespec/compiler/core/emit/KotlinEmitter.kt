@@ -182,7 +182,7 @@ fun Type.Shape.Field.Reference.toField(identifier: String, isNullable: Boolean) 
     isNullable
 )
 
-fun String?.orEmptyString() = this ?: ""
+private fun String?.orEmptyString() = this ?: ""
 
 private fun String.groupStatus() =
     if(isInt()) substring(0,1) + "XX"

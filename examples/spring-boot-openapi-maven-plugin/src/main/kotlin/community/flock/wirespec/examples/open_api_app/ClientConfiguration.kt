@@ -5,7 +5,6 @@ import community.flock.wirespec.generated.kotlin.Content
 import community.flock.wirespec.generated.kotlin.ContentMapper
 import community.flock.wirespec.generated.kotlin.CreatePets
 import community.flock.wirespec.generated.kotlin.ListPets
-import community.flock.wirespec.generated.kotlin.Pet
 import community.flock.wirespec.generated.kotlin.Request
 import community.flock.wirespec.generated.kotlin.Response
 import community.flock.wirespec.generated.kotlin.ShowPetById
