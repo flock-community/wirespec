@@ -87,6 +87,8 @@ class JavaEmitter(
             |${SPACER}interface ${name}Request<T> extends Request<T> {}
             |${requests.joinToString("\n"){ it.emit(this) }}
             |${SPACER}interface ${name}Response<T> extends Response<T> {}
+            |${responses.map{it.status.groupStatus()}.toSet().joinToString("\n") { "${SPACER}interface ${name}Response${it}<T> extends ${name}Response<T>{};" }}
+            |${responses.filter { it.status.isInt() }.map{it.status}.joinToString("\n") { "${SPACER}interface ${name}Response${it}<T> extends ${name}Response${it.groupStatus()}<T>{};" }}
             |${responses.joinToString("\n"){ it.emit(this) }}
             |${SPACER}public ${name}Response ${name.firstToLower()}(${name}Request request);
             |}
@@ -118,7 +120,7 @@ class JavaEmitter(
     """.trimMargin()
 
     private fun Endpoint.Response.emit(endpoint: Endpoint) = """
-        |${SPACER}class ${endpoint.name}Response${status.firstToUpper()}${content.emitContentType()} implements Response<${content?.reference?.emit() ?: "Void"}> {
+        |${SPACER}class ${endpoint.name}Response${status.firstToUpper()}${content.emitContentType()} implements ${endpoint.name}Response${status.takeIf { it.isInt() }?.groupStatus().orEmptyString()}<${content?.reference?.emit() ?: "Void"}> {
         |${SPACER}${SPACER}private final int status;
         |${SPACER}${SPACER}private final Map<String, List<String>> headers;
         |${SPACER}${SPACER}private final Content<${content?.reference?.emit() ?: "Void"}> content;
@@ -171,5 +173,9 @@ class JavaEmitter(
     private fun String?.orEmptyString() = this ?: ""
 
     private fun String.isInt() = toIntOrNull() != null
+
+    private fun String.groupStatus() =
+        if(isInt()) substring(0,1) + "XX"
+        else firstToUpper()
 
 }
