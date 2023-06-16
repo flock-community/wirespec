@@ -49,6 +49,6 @@ class WirespecEmitter(logger: Logger = noLogger) : Emitter(logger) {
     }
 
     override fun Endpoint.emit() = withLogging(logger) {
-        TODO("Not yet implemented")
+        """// TODO("Not yet implemented")"""
     }
 }

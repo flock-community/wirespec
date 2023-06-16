@@ -64,7 +64,7 @@ class ScalaEmitter(
     }
 
     override fun Endpoint.emit() = withLogging(logger) {
-        TODO("Not yet implemented")
+        """// TODO("Not yet implemented")"""
     }
 
 }

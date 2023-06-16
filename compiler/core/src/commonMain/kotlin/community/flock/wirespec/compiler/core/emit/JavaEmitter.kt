@@ -123,7 +123,7 @@ class JavaEmitter(
         |${SPACER}${SPACER}${SPACER}this.content = ${content?.let { "new Content(\"${it.type}\", body)" } ?: "null"};
         |${SPACER}${SPACER}}
         |${SPACER}${SPACER}@Override public int getStatus() {return status;}
-        |${SPACER}${SPACER}@Override public java.util.Map<String, List<String>> getHeaders() {return headers;}
+        |${SPACER}${SPACER}@Override public java.util.Map<String, java.util.List<String>> getHeaders() {return headers;}
         |${SPACER}${SPACER}@Override public Content<${content?.reference?.emit() ?: "Void"}> getContent() {return content;}
         |${SPACER}}
         """.trimMargin()
@@ -152,7 +152,7 @@ class JavaEmitter(
                 .joinToString(", ") { it.emit() }
     }
 
-    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ", "Map.of(", ")") { "\"${it.identifier.emit()}\", ${it.identifier.emit()}.toString()" }
+    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ", "java.util.Map.of(", ")") { "\"${it.identifier.emit()}\", ${it.identifier.emit()}.toString()" }
 
     private fun List<Endpoint.Segment>.emitSegment() = "/" + joinToString("/") {
         when (it) {
