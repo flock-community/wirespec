@@ -17,26 +17,19 @@ class JavaEmitter(
     logger: Logger = noLogger
 ) : Emitter(logger, true) {
 
-    private val imports = """
-        |import java.util.List;
-        |import java.util.Map;
-    """.trimMargin()
-
     private val shared = """
-        |${imports}
-        |
         |import java.lang.reflect.Type;
         |
         |enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE };
         |record Content<T> (String type, T body) {};
-        |interface Request<T> { String getPath(); Method getMethod(); Map<String, String> getQuery(); Map<String, List<String>> getHeaders(); Content<T> getContent(); }
-        |interface Response<T> { int getStatus(); Map<String, List<String>> getHeaders(); Content<T> getContent(); }
+        |interface Request<T> { String getPath(); Method getMethod(); java.util.Map<String, String> getQuery(); java.util.Map<String, java.util.List<String>> getHeaders(); Content<T> getContent(); }
+        |interface Response<T> { int getStatus(); java.util.Map<String, java.util.List<String>> getHeaders(); Content<T> getContent(); }
         |interface ContentMapper<B> { <T> Content<T> read(Content<B> content, Type valueType); <T> Content<B> write(Content<T> content); }
         |
     """.trimMargin()
 
     override fun emit(ast: AST): List<Pair<String, String>> = super.emit(ast)
-        .map { (name, result) -> name to if (packageName.isBlank()) "" else "package $packageName;\n\n$imports\n\n$result" }
+        .map { (name, result) -> name to if (packageName.isBlank()) "" else "package $packageName;\n\n$result" }
         .plus("WirespecShared" to if (packageName.isBlank()) "" else "package $packageName;\n\n$shared")
 
     override fun Type.emit() = withLogging(logger) {
@@ -101,8 +94,8 @@ class JavaEmitter(
         |${SPACER}class ${endpoint.name}Request${content.emitContentType()} implements ${endpoint.name}Request<${content?.reference?.emit() ?: "Void"}> {
         |${SPACER}${SPACER}private final String path;
         |${SPACER}${SPACER}private final Method method;
-        |${SPACER}${SPACER}private final Map<String, String> query;
-        |${SPACER}${SPACER}private final Map<String, List<String>> headers;
+        |${SPACER}${SPACER}private final java.util.Map<String, String> query;
+        |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<String>> headers;
         |${SPACER}${SPACER}private final Content<${content?.reference?.emit() ?: "Void"}> content;
         |${SPACER}${SPACER}public ${endpoint.name}Request${content.emitContentType()}(${endpoint.emitRequestSignature(content)}) {
         |${SPACER}${SPACER}${SPACER}this.path = ${endpoint.path.emitPath()};
@@ -113,8 +106,8 @@ class JavaEmitter(
         |${SPACER}${SPACER}}
         |${SPACER}${SPACER}@Override public String getPath() {return path;}
         |${SPACER}${SPACER}@Override public Method getMethod() {return method;}
-        |${SPACER}${SPACER}@Override public Map<String, String> getQuery() {return query;}
-        |${SPACER}${SPACER}@Override public Map<String, List<String>> getHeaders() {return headers;}
+        |${SPACER}${SPACER}@Override public java.util.Map<String, String> getQuery() {return query;}
+        |${SPACER}${SPACER}@Override public java.util.Map<String, java.util.List<String>> getHeaders() {return headers;}
         |${SPACER}${SPACER}@Override public Content<${content?.reference?.emit() ?: "Void"}> getContent() {return content;}
         |${SPACER}}
     """.trimMargin()
@@ -122,15 +115,15 @@ class JavaEmitter(
     private fun Endpoint.Response.emit(endpoint: Endpoint) = """
         |${SPACER}class ${endpoint.name}Response${status.firstToUpper()}${content.emitContentType()} implements ${endpoint.name}Response${status.takeIf { it.isInt() }?.groupStatus().orEmptyString()}<${content?.reference?.emit() ?: "Void"}> {
         |${SPACER}${SPACER}private final int status;
-        |${SPACER}${SPACER}private final Map<String, List<String>> headers;
+        |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<String>> headers;
         |${SPACER}${SPACER}private final Content<${content?.reference?.emit() ?: "Void"}> content;
-        |${SPACER}${SPACER}public ${endpoint.name}Response${status.firstToUpper()}${content.emitContentType()}(Map<String, List<String>> headers${status.takeIf { !it.isInt() }?.let { ", int status" }.orEmptyString()}${content?.let { ", ${it.reference.emit()} body" } ?: ""}) {
+        |${SPACER}${SPACER}public ${endpoint.name}Response${status.firstToUpper()}${content.emitContentType()}(java.util.Map<String, java.util.List<String>> headers${status.takeIf { !it.isInt() }?.let { ", int status" }.orEmptyString()}${content?.let { ", ${it.reference.emit()} body" } ?: ""}) {
         |${SPACER}${SPACER}${SPACER}this.status = ${status.takeIf { it.isInt() } ?: "status"};
         |${SPACER}${SPACER}${SPACER}this.headers = headers;
         |${SPACER}${SPACER}${SPACER}this.content = ${content?.let { "new Content(\"${it.type}\", body)" } ?: "null"};
         |${SPACER}${SPACER}}
         |${SPACER}${SPACER}@Override public int getStatus() {return status;}
-        |${SPACER}${SPACER}@Override public Map<String, List<String>> getHeaders() {return headers;}
+        |${SPACER}${SPACER}@Override public java.util.Map<String, List<String>> getHeaders() {return headers;}
         |${SPACER}${SPACER}@Override public Content<${content?.reference?.emit() ?: "Void"}> getContent() {return content;}
         |${SPACER}}
         """.trimMargin()

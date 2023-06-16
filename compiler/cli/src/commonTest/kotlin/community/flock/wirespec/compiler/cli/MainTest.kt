@@ -45,7 +45,7 @@ class CliTest {
         val packageDir = packageName.replace(".", "/")
         val outputDir = outputDir()
 
-        cli(arrayOf(inputDir, "-o", outputDir, "-l", "Kotlin", "-l", "Java", "-p", "community.flock.next"))
+        cli(arrayOf(inputDir, "-o", outputDir, "-l", "Java", "-p", "community.flock.next"))
 
         val file = JavaFile(FullFilePath("$outputDir/$packageDir", "Bla")).read()
 

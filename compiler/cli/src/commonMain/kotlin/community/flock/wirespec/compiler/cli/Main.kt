@@ -24,11 +24,11 @@ import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.getEnvVar
 import community.flock.wirespec.compiler.utils.orNull
-import community.flock.wirespec.compiler.core.Wirespec as WirespecSpec
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import kotlinx.cli.default
 import kotlinx.cli.multiple
+import community.flock.wirespec.compiler.core.Wirespec as WirespecSpec
 
 private sealed interface Language {
     enum class Jvm : Language { Java, Kotlin, Scala }
@@ -51,7 +51,7 @@ fun main(args: Array<String>) {
     (0..20)
         .mapNotNull { args.orNull(it) }
         .toTypedArray()
-        .let{ cli(it) }
+        .let { cli(it) }
 }
 
 fun cli(args: Array<String>) {
@@ -59,8 +59,13 @@ fun cli(args: Array<String>) {
     val parser = ArgParser("wirespec")
     val input by parser.argument(ArgType.String, description = "Input file")
     val output by parser.option(ArgType.String, shortName = "o", description = "Output directory")
-    val language by parser.option(ArgType.Choice(Language.values().map { it.name }.mapNotNull(logger::from), { Language.valueOf(it) ?: error("Language not found") }), shortName = "l", description = "Language type").default(Language.Jvm.Kotlin).multiple()
-    val packageName by parser.option(ArgType.String, shortName = "p", description = "Package name").default(DEFAULT_PACKAGE_NAME)
+    val language by parser.option(
+        ArgType.Choice(
+            Language.values().map { it.name }.mapNotNull(logger::from),
+            { Language.valueOf(it) ?: error("Language not found") }), shortName = "l", description = "Language type"
+    ).default(Language.Jvm.Kotlin).multiple()
+    val packageName by parser.option(ArgType.String, shortName = "p", description = "Package name")
+        .default(DEFAULT_PACKAGE_NAME)
 
     parser.parse(args)
 
@@ -82,7 +87,7 @@ private fun compile(languages: Set<Language>, inputDir: String, outputDir: Strin
                             Kotlin -> KotlinEmitter(packageName, logger) to KotlinFile(path(Extension.Kotlin))
                             Scala -> ScalaEmitter(packageName, logger) to ScalaFile(path(Extension.Scala))
                             TypeScript -> TypeScriptEmitter(logger) to TypeScriptFile(path(Extension.TypeScript))
-                        Wirespec -> WirespecEmitter(logger) to WirespecFile(path("")(Extension.Wirespec))
+                            Wirespec -> WirespecEmitter(logger) to WirespecFile(path(Extension.Wirespec))
                         }.let { (emitter, file) -> compiler(emitter) to file }
                     }
                 }
