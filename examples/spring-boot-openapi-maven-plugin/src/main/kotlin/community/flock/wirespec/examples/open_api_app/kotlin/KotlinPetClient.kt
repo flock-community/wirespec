@@ -1,4 +1,4 @@
-package community.flock.wirespec.examples.open_api_app
+package community.flock.wirespec.examples.open_api_app.kotlin
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import community.flock.wirespec.generated.kotlin.Content
@@ -32,21 +32,17 @@ class ClientConfiguration {
             override fun <T> read(
                 content: Content<ByteArray>,
                 valueType: KType,
-            ): Content<T> {
-                return content.let {
-                    val type = objectMapper.constructType(valueType.javaType)
-                    val obj: T = objectMapper.readValue(content.body, type)
-                    Content(it.type, obj)
-                }
+            ): Content<T> = content.let {
+                val type = objectMapper.constructType(valueType.javaType)
+                val obj: T = objectMapper.readValue(content.body, type)
+                Content(it.type, obj)
             }
 
             override fun <T> write(
                 content: Content<T>,
-            ): Content<ByteArray> {
-                return content.let {
-                    val bytes = objectMapper.writeValueAsBytes(content.body)
-                    Content(it.type, bytes)
-                }
+            ): Content<ByteArray> = content.let {
+                val bytes = objectMapper.writeValueAsBytes(content.body)
+                Content(it.type, bytes)
             }
         }
 

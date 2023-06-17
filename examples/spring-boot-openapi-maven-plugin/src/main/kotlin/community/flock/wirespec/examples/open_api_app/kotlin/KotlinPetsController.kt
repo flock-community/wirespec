@@ -1,4 +1,4 @@
-package community.flock.wirespec.examples.open_api_app
+package community.flock.wirespec.examples.open_api_app.kotlin
 
 import community.flock.wirespec.generated.kotlin.CreatePets
 import community.flock.wirespec.generated.kotlin.ListPets
@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*
 import java.util.*
 
 @RestController
-@RequestMapping("/pets")
+@RequestMapping("/kotlin/pets")
 class KotlinPetsController(
     private val petstoreClient: PetstoreClient
 ) {
@@ -19,6 +19,7 @@ class KotlinPetsController(
         return when (val res = petstoreClient.listPets(request)) {
             is ListPets.ListPetsResponse200ApplicationJson -> res.content.body.map { it.id }
             is ListPets.ListPetsResponseDefaultApplicationJson -> error("Something went wrong")
+            else -> error("No response")
         }
     }
 
@@ -28,6 +29,7 @@ class KotlinPetsController(
         return when (petstoreClient.createPets(request)) {
             is CreatePets.CreatePetsResponse201 -> ResponseEntity.noContent().build()
             is CreatePets.CreatePetsResponse500ApplicationJson -> error("Something went wrong")
+            else -> error("No response")
         }
     }
 
