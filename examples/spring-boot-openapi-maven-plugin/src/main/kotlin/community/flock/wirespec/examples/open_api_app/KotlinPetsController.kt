@@ -9,7 +9,7 @@ import java.util.*
 
 @RestController
 @RequestMapping("/pets")
-class PetsController(
+class KotlinPetsController(
     private val petstoreClient: PetstoreClient
 ) {
 

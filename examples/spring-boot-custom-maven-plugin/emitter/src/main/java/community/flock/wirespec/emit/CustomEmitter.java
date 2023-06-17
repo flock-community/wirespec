@@ -4,6 +4,7 @@ import community.flock.wirespec.compiler.core.emit.common.Emitter;
 import community.flock.wirespec.compiler.core.parse.Node;
 import community.flock.wirespec.compiler.core.parse.Refined;
 import community.flock.wirespec.compiler.core.parse.Type;
+import community.flock.wirespec.compiler.core.parse.Endpoint;
 import community.flock.wirespec.compiler.utils.Logger;
 import kotlin.Pair;
 
@@ -62,6 +63,11 @@ public class CustomEmitter extends Emitter {
 
     @Override
     public String emit(Type.Shape.Field.Reference reference) {
+        return null;
+    }
+
+    @Override
+    public String emit(Endpoint endpoint) {
         return null;
     }
 }
