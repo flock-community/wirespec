@@ -16,18 +16,13 @@ import java.net.URI
 import kotlin.reflect.KType
 import kotlin.reflect.jvm.javaType
 
-interface PetstoreClient : ListPets, CreatePets, ShowPetById
+interface KotlinPetstoreClient : ListPets, CreatePets, ShowPetById
 
 @Configuration
-class ClientConfiguration {
+class KotlinPetClientConfiguration {
 
     @Bean
-    fun restTemplate(): RestTemplate {
-        return RestTemplate()
-    }
-
-    @Bean
-    fun contentMapper(objectMapper: ObjectMapper) =
+    fun kotlinContentMapper(objectMapper: ObjectMapper) =
         object : ContentMapper<ByteArray> {
             override fun <T> read(
                 content: Content<ByteArray>,
@@ -48,8 +43,8 @@ class ClientConfiguration {
 
 
     @Bean
-    fun petClient(restTemplate: RestTemplate, contentMapper: ContentMapper<ByteArray>): PetstoreClient =
-        object : PetstoreClient {
+    fun kotlinPetstoreClient(restTemplate: RestTemplate, kotlinContentMapper: ContentMapper<ByteArray>): KotlinPetstoreClient =
+        object : KotlinPetstoreClient {
             fun <Req : Request<*>, Res : Response<*>> handle(
                 request: Req,
                 responseMapper: (ContentMapper<ByteArray>) -> (Int, Map<String, List<String>>, Content<ByteArray>) -> Res
@@ -58,13 +53,13 @@ class ClientConfiguration {
                 HttpMethod.valueOf(request.method.name),
                 { req ->
                     request.content
-                        ?.let { contentMapper.write(it) }
+                        ?.let { kotlinContentMapper.write(it) }
                         ?.let { req.body.write(it.body) }
                 },
                 { res ->
                     val contentType = res.headers.contentType?.toString() ?: error("No content type")
                     val content = Content(contentType, res.body.readBytes())
-                    responseMapper(contentMapper)(
+                    responseMapper(kotlinContentMapper)(
                         res.statusCode.value(),
                         res.headers,
                         content

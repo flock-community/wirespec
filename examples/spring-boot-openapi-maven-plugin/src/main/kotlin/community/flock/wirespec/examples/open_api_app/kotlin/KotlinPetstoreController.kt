@@ -9,14 +9,14 @@ import java.util.*
 
 @RestController
 @RequestMapping("/kotlin/pets")
-class KotlinPetsController(
-    private val petstoreClient: PetstoreClient
+class KotlinPetstoreController(
+    private val kotlinPetstoreClient: KotlinPetstoreClient
 ) {
 
     @GetMapping
     suspend fun list(): List<Int> {
         val request = ListPets.ListPetsRequestUnit(10, null)
-        return when (val res = petstoreClient.listPets(request)) {
+        return when (val res = kotlinPetstoreClient.listPets(request)) {
             is ListPets.ListPetsResponse200ApplicationJson -> res.content.body.map { it.id }
             is ListPets.ListPetsResponseDefaultApplicationJson -> error("Something went wrong")
             else -> error("No response")
@@ -26,7 +26,7 @@ class KotlinPetsController(
     @PostMapping
     suspend fun create(@RequestBody pet: Pet): ResponseEntity<Unit> {
         val request = CreatePets.CreatePetsRequestApplicationJson(pet)
-        return when (petstoreClient.createPets(request)) {
+        return when (kotlinPetstoreClient.createPets(request)) {
             is CreatePets.CreatePetsResponse201 -> ResponseEntity.noContent().build()
             is CreatePets.CreatePetsResponse500ApplicationJson -> error("Something went wrong")
             else -> error("No response")

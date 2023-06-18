@@ -177,22 +177,14 @@ class KotlinEmitter(
     private fun Endpoint.Response.emitResponseMapperCondition(endpoint: Endpoint) =
         when (content) {
             null -> """
-                    |${SPACER}${SPACER}${SPACER}${
-                status.takeIf { it.isInt() }?.let { "status == $status && " }.orEmptyString()
-            }content == null -> ${endpoint.name}Response${status.firstToUpper()}Unit(${
-                status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()
-            }headers)
+                    |${SPACER}${SPACER}${SPACER}${status.takeIf { it.isInt() }?.let { "status == $status && " }.orEmptyString()}content == null -> ${endpoint.name}Response${status.firstToUpper()}Unit(${status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()}headers)
                     |
                 """.trimMargin()
 
             else -> """
-                    |${SPACER}${SPACER}${SPACER}${
-                status.takeIf { it.isInt() }?.let { "status == $status && " }.orEmptyString()
-            }content?.type == "${content.type}" -> contentMapper
+                    |${SPACER}${SPACER}${SPACER}${status.takeIf { it.isInt() }?.let { "status == $status && " }.orEmptyString()}content?.type == "${content.type}" -> contentMapper
                     |${SPACER}${SPACER}${SPACER}${SPACER}.read<${content.reference.emit()}>(content, typeOf<${content.reference.emit()}>())
-                    |${SPACER}${SPACER}${SPACER}${SPACER}.let{ ${endpoint.name}Response${status.firstToUpper()}${content.emitContentType()}(${
-                status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()
-            }headers, it.body) }
+                    |${SPACER}${SPACER}${SPACER}${SPACER}.let{ ${endpoint.name}Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()}headers, it.body) }
                     |
                 """.trimMargin()
         }
