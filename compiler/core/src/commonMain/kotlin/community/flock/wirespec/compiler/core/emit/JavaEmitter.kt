@@ -19,6 +19,7 @@ class JavaEmitter(
 
     private val shared = """
         |import java.lang.reflect.Type;
+        |import java.lang.reflect.ParameterizedType;
         |
         |public interface WirespecShared {
         |${SPACER}enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE };
@@ -64,7 +65,7 @@ class JavaEmitter(
 
     override fun Type.Shape.Field.Identifier.emit() = withLogging(logger) { value }
 
-    override fun Type.Shape.Field.Reference.emit() = withLogging(logger) {
+    private fun Type.Shape.Field.Reference.emitPrimaryType() = withLogging(logger) {
         when (this) {
             is Custom -> value
             is Primitive -> when (type) {
@@ -72,7 +73,12 @@ class JavaEmitter(
                 Primitive.Type.Integer -> "Integer"
                 Primitive.Type.Boolean -> "Boolean"
             }
-        }.let { if (isIterable) "java.util.List<$it>" else it }
+        }
+    }
+
+    override fun Type.Shape.Field.Reference.emit() = withLogging(logger) {
+        emitPrimaryType()
+            .let { if (isIterable) "java.util.List<$it>" else it }
     }
 
     override fun Refined.emit() = withLogging(logger) {
@@ -160,7 +166,7 @@ class JavaEmitter(
 
             else -> """
                     |${SPACER}${SPACER}${SPACER}if(${status.takeIf { it.isInt() }?.let { "status == $status && " }.orEmptyString()}content.type().equals("${content.type}")) {
-                    |${SPACER}${SPACER}${SPACER}${SPACER}WirespecShared.Content<${content.reference.emit()}> c = contentMapper.read(content, WirespecShared.getType(${content.reference.emit()}.class, ${content.reference.isIterable}));
+                    |${SPACER}${SPACER}${SPACER}${SPACER}WirespecShared.Content<${content.reference.emit()}> c = contentMapper.read(content, WirespecShared.getType(${content.reference.emitPrimaryType()}.class, ${content.reference.isIterable}));
                     |${SPACER}${SPACER}${SPACER}${SPACER}return new ${endpoint.name}Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()}headers, c.body());
                     |${SPACER}${SPACER}${SPACER}}
                     |
