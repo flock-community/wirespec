@@ -2,6 +2,7 @@ import community.flock.wirespec.compiler.core.Wirespec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
+import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.parse.Parser
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.Logger
@@ -40,5 +41,15 @@ class WsToTypeScript : Compiler() {
 
     companion object {
         private val typeScriptEmitter = TypeScriptEmitter(logger)
+    }
+}
+
+@JsExport
+@ExperimentalJsExport
+class WsToWirespec : Compiler() {
+    fun compile(source: String) = preCompile(source)(wirespecEmitter).produce()
+
+    companion object {
+        private val wirespecEmitter = WirespecEmitter(logger)
     }
 }

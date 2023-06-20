@@ -2,7 +2,7 @@
 
 artifactName="cli"
 version="0.0.0-SNAPSHOT"
-languages="-l Java -l Kotlin -l Scala -l TypeScript"
+languages="-l Java -l Kotlin -l Scala -l TypeScript -l Wirespec"
 
 buildNothing=false
 

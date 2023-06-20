@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.emit
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Custom
@@ -61,4 +62,9 @@ class ScalaEmitter(
         """${SPACER}${SPACER}val regex = new scala.util.matching.Regex($value)
             |${SPACER}${SPACER}regex.findFirstIn(that.value)""".trimMargin()
     }
+
+    override fun Endpoint.emit() = withLogging(logger) {
+        """// TODO("Not yet implemented")"""
+    }
+
 }

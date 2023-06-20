@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Custom
@@ -50,5 +51,9 @@ class TypeScriptEmitter(logger: Logger = noLogger) : Emitter(logger) {
 
     override fun Refined.Validator.emit() = withLogging(logger) {
         "new RegExp('${value.drop(1).dropLast(1)}')"
+    }
+
+    override fun Endpoint.emit() = withLogging(logger) {
+        """// TODO("Not yet implemented")"""
     }
 }

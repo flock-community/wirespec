@@ -19,9 +19,8 @@ class TypescriptMojo : WirespecMojo() {
     @Parameter(defaultValue = "\${project}", readonly = true, required = true)
     private lateinit var project: MavenProject
 
-    private val emitter = TypeScriptEmitter(logger)
-
     override fun execute() {
+        val emitter = TypeScriptEmitter(logger)
         File(targetDirectory).mkdirs()
         compile(sourceDirectory, logger, emitter)
             .forEach { (name, result) ->
