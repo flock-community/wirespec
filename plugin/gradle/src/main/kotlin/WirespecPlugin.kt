@@ -23,7 +23,7 @@ import kotlin.streams.asSequence
 
 open class WirespecPluginExtension @Inject constructor(val objectFactory: ObjectFactory) {
 
-    var sourceDirectory: String = ""
+    var input: String = ""
 
     var typescript: Typescript? = null
     fun typescript(action: Action<in Typescript>) {
@@ -52,7 +52,7 @@ open class WirespecPluginExtension @Inject constructor(val objectFactory: Object
 
     companion object {
         abstract class HasTargetDirectory {
-            var targetDir: String = ""
+            var output: String = ""
         }
 
         abstract class JvmLanguage : HasTargetDirectory() {
@@ -71,8 +71,8 @@ class WirespecPlugin : Plugin<Project> {
 
     private val logger = object : Logger(true) {}
 
-    private fun compile(sourceDirectory: String, logger: Logger, emitter: Emitter) =
-        (File(sourceDirectory).listFiles() ?: arrayOf())
+    private fun compile(input: String, logger: Logger, emitter: Emitter) =
+        (File(input).listFiles() ?: arrayOf())
             .map { it.name.split(".").first() to it.bufferedReader(Charsets.UTF_8) }
             .map { (name, reader) -> name to Wirespec.compile(reader.collectToString())(logger)(emitter) }
             .map { (name, result) ->
@@ -92,18 +92,18 @@ class WirespecPlugin : Plugin<Project> {
         val extension: WirespecPluginExtension = project.extensions
             .create("wirespec", WirespecPluginExtension::class.java)
 
-        fun Emitter.emit(targetDirectory: String, ext: String) {
-            compile(extension.sourceDirectory, logger, this)
-                .also { project.file(targetDirectory).mkdirs() }
-                .forEach { (name, result) -> project.file("$targetDirectory/$name.$ext").writeText(result) }
+        fun Emitter.emit(output: String, ext: String) {
+            compile(extension.input, logger, this)
+                .also { project.file(output).mkdirs() }
+                .forEach { (name, result) -> project.file("$output/$name.$ext").writeText(result) }
         }
 
         project.task("wirespec").doFirst { _: Task? ->
-            extension.typescript?.apply { TypeScriptEmitter(logger).emit(targetDir, "ts") }
-            extension.java?.apply { JavaEmitter(packageName, logger).emit(targetDir, "java") }
-            extension.scala?.apply { ScalaEmitter(packageName, logger).emit(targetDir, "scala") }
-            extension.kotlin?.apply { KotlinEmitter(packageName, logger).emit(targetDir, "kt") }
-            extension.wirespec?.apply { WirespecEmitter(logger).emit(targetDir, "kt") }
+            extension.typescript?.apply { TypeScriptEmitter(logger).emit(output, "ts") }
+            extension.java?.apply { JavaEmitter(packageName, logger).emit(output, "java") }
+            extension.scala?.apply { ScalaEmitter(packageName, logger).emit(output, "scala") }
+            extension.kotlin?.apply { KotlinEmitter(packageName, logger).emit(output, "kt") }
+            extension.wirespec?.apply { WirespecEmitter(logger).emit(output, "kt") }
         }
     }
 }

@@ -54,8 +54,8 @@
                             <goal>custom</goal>
                         </goals>
                         <configuration>
-                            <sourceDirectory>${project.basedir}/src/main/wirespec</sourceDirectory>
-                            <targetDirectory>${project.build.directory}/generated-sources/java/hello</targetDirectory>
+                            <input>${project.basedir}/src/main/wirespec</input>
+                            <output>${project.build.directory}/generated-sources/java/hello</output>
                             <emitterClass>community.flock.wirespec.emit.CustomEmitter</emitterClass>
                             <extention>java</extention>
                             <split>true</split>

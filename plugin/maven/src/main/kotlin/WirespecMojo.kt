@@ -16,8 +16,8 @@ abstract class WirespecMojo : AbstractMojo() {
         override fun log(s: String) = log.info(s)
     }
 
-    fun compile(sourceDirectory: String, logger: Logger, emitter: Emitter) =
-        (File(sourceDirectory).listFiles() ?: arrayOf<File>())
+    fun compile(input: String, logger: Logger, emitter: Emitter) =
+        (File(input).listFiles() ?: arrayOf<File>())
             .map { it.name.split(".").first() to it.bufferedReader(Charsets.UTF_8) }
             .map { (name, reader) -> name to Wirespec.compile(reader.collectToString())(logger)(emitter) }
             .map { (name, result) ->

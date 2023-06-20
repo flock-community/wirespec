@@ -12,10 +12,10 @@ import org.apache.maven.project.MavenProject
 class ScalaMojo : WirespecMojo() {
 
     @Parameter(required = true)
-    private lateinit var sourceDirectory: String
+    private lateinit var input: String
 
     @Parameter(required = true)
-    private lateinit var targetDirectory: String
+    private lateinit var output: String
 
     @Parameter
     private var packageName: String = DEFAULT_PACKAGE_NAME
@@ -25,7 +25,7 @@ class ScalaMojo : WirespecMojo() {
 
     override fun execute() {
         val emitter = ScalaEmitter(packageName, logger)
-        compile(sourceDirectory, logger, emitter)
-            .forEach { (name, result) -> emitJvm(packageName, targetDirectory, name, "scala").writeText(result) }
+        compile(input, logger, emitter)
+            .forEach { (name, result) -> emitJvm(packageName, output, name, "scala").writeText(result) }
     }
 }

@@ -45,8 +45,8 @@
                             <goal>typescript</goal>
                         </goals>
                         <configuration>
-                            <sourceDirectory>${project.basedir}/src/main/wirespec</sourceDirectory>
-                            <targetDirectory>${project.basedir}/src/main/frontend/generated</targetDirectory>
+                            <input>${project.basedir}/src/main/wirespec</input>
+                            <output>${project.basedir}/src/main/frontend/generated</output>
                         </configuration>
                     </execution>
                     <execution>
@@ -55,8 +55,8 @@
                             <goal>java</goal>
                         </goals>
                         <configuration>
-                            <sourceDirectory>${project.basedir}/src/main/wirespec</sourceDirectory>
-                            <targetDirectory>${project.build.directory}/generated-sources/java</targetDirectory>
+                            <input>${project.basedir}/src/main/wirespec</input>
+                            <output>${project.build.directory}/generated-sources/java</output>
                         </configuration>
                     </execution>
                     <execution>
@@ -65,8 +65,8 @@
                             <goal>kotlin</goal>
                         </goals>
                         <configuration>
-                            <sourceDirectory>${project.basedir}/src/main/wirespec</sourceDirectory>
-                            <targetDirectory>${project.build.directory}/generated-sources/kotlin</targetDirectory>
+                            <input>${project.basedir}/src/main/wirespec</input>
+                            <output>${project.build.directory}/generated-sources/kotlin</output>
                         </configuration>
                     </execution>
                     <execution>
@@ -75,8 +75,8 @@
                             <goal>scala</goal>
                         </goals>
                         <configuration>
-                            <sourceDirectory>${project.basedir}/src/main/wirespec</sourceDirectory>
-                            <targetDirectory>${project.build.directory}/generated-sources/scala</targetDirectory>
+                            <input>${project.basedir}/src/main/wirespec</input>
+                            <output>${project.build.directory}/generated-sources/scala</output>
                         </configuration>
                     </execution>
                 </executions>
