@@ -11,20 +11,20 @@ import java.io.File
 class TypescriptMojo : WirespecMojo() {
 
     @Parameter(required = true)
-    private lateinit var sourceDirectory: String
+    private lateinit var input: String
 
     @Parameter(required = true)
-    private lateinit var targetDirectory: String
+    private lateinit var output: String
 
     @Parameter(defaultValue = "\${project}", readonly = true, required = true)
     private lateinit var project: MavenProject
 
     override fun execute() {
         val emitter = TypeScriptEmitter(logger)
-        File(targetDirectory).mkdirs()
-        compile(sourceDirectory, logger, emitter)
+        File(output).mkdirs()
+        compile(input, logger, emitter)
             .forEach { (name, result) ->
-                File("$targetDirectory/$name.ts").writeText(result)
+                File("$output/$name.ts").writeText(result)
             }
     }
 

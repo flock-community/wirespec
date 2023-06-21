@@ -39,12 +39,12 @@ sourceSets {
 }
 
 wirespec {
-    sourceDirectory = "$projectDir/src/main/wirespec"
+    input = "$projectDir/src/main/wirespec"
     kotlin {
-        targetDir = "$buildDir/generated/wirespec"
+        output = "$buildDir/generated/wirespec"
     }
     typescript {
-        targetDir = "$projectDir/src/main/frontend/generated"
+        output = "$projectDir/src/main/frontend/generated"
     }
 }
 

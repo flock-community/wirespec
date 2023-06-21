@@ -19,10 +19,10 @@ import java.io.File
 class CustomMojo : WirespecMojo() {
 
     @Parameter(required = true)
-    private lateinit var sourceDirectory: String
+    private lateinit var input: String
 
     @Parameter(required = true)
-    private lateinit var targetDirectory: String
+    private lateinit var output: String
 
     @Parameter
     private var packageName: String = DEFAULT_PACKAGE_NAME
@@ -51,10 +51,10 @@ class CustomMojo : WirespecMojo() {
             throw e
         }
 
-        compile(sourceDirectory, logger, emitter)
-            .also { File(targetDirectory).mkdirs() }
+        compile(input, logger, emitter)
+            .also { File(output).mkdirs() }
             .forEach { (name, result) ->
-                File("$targetDirectory/$name.$extention").writeText(result)
+                File("$output/$name.$extention").writeText(result)
             }
     }
 

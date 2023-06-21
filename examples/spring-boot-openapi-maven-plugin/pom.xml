@@ -82,8 +82,8 @@
                             <goal>kotlin</goal>
                         </goals>
                         <configuration>
-                            <sourceDirectory>${project.basedir}/src/main/openapi/petstore.json</sourceDirectory>
-                            <targetDirectory>${project.build.directory}/generated-sources</targetDirectory>
+                            <input>${project.basedir}/src/main/openapi/petstore.json</input>
+                            <output>${project.build.directory}/generated-sources</output>
                             <packageName>community.flock.wirespec.generated.kotlin</packageName>
                         </configuration>
                     </execution>
@@ -93,8 +93,8 @@
                             <goal>java</goal>
                         </goals>
                         <configuration>
-                            <sourceDirectory>${project.basedir}/src/main/openapi/petstore.json</sourceDirectory>
-                            <targetDirectory>${project.build.directory}/generated-sources</targetDirectory>
+                            <input>${project.basedir}/src/main/openapi/petstore.json</input>
+                            <output>${project.build.directory}/generated-sources</output>
                             <packageName>community.flock.wirespec.generated.java</packageName>
                         </configuration>
                     </execution>

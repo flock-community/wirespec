@@ -5,7 +5,7 @@ plugins {
     `maven-publish`
 }
 
-group = "${Settings.groupId}.compiler"
+group = "${Settings.groupId}"
 version = Settings.version
 
 repositories {
@@ -40,7 +40,6 @@ kotlin {
         }
     }
 }
-
 
 publishing {
     repositories {

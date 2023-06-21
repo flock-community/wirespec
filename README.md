@@ -74,8 +74,8 @@ It is also possible to create your custom emitter and run with the plugin[here](
                             <goal>kotlin</goal>
                         </goals>
                         <configuration>
-                            <sourceDirectory>${project.basedir}/src/main/wirespec</sourceDirectory>
-                            <targetDirectory>${project.build.directory}/generated-sources</targetDirectory>
+                            <input>${project.basedir}/src/main/wirespec</input>
+                            <output>${project.build.directory}/generated-sources</output>
                         </configuration>
                     </execution>
                     <execution>
@@ -84,8 +84,8 @@ It is also possible to create your custom emitter and run with the plugin[here](
                             <goal>typescript</goal>
                         </goals>
                         <configuration>
-                            <sourceDirectory>${project.basedir}/src/main/wirespec</sourceDirectory>
-                            <targetDirectory>${project.basedir}/src/main/frontend/generated</targetDirectory>
+                            <input>${project.basedir}/src/main/wirespec</input>
+                            <output>${project.basedir}/src/main/frontend/generated</output>
                         </configuration>
                     </execution>
                     <execution>
@@ -94,8 +94,8 @@ It is also possible to create your custom emitter and run with the plugin[here](
                             <goal>custom</goal>
                         </goals>
                         <configuration>
-                            <sourceDirectory>${project.basedir}/src/main/wirespec</sourceDirectory>
-                            <targetDirectory>${project.build.directory}/generated-sources</targetDirectory>
+                            <input>${project.basedir}/src/main/wirespec</input>
+                            <output>${project.build.directory}/generated-sources</output>
                             <emitterClass>community.flock.wirespec.emit.CustomEmitter</emitterClass>
                             <extention>java</extention>
                         </configuration>
@@ -137,12 +137,12 @@ plugins {
 }
 
 wirespec {
-    sourceDirectory = "$projectDir/src/main/wirespec"
+    input = "$projectDir/src/main/wirespec"
     kotlin {
-        targetDirectory = "$buildDir/generated/main/kotlin"
+        output = "$buildDir/generated/main/kotlin"
     }
     typescript {
-        targetDirectory = "$projectDir/src/main/frontend/generated"
+        output = "$projectDir/src/main/frontend/generated"
     }
 }
 ```

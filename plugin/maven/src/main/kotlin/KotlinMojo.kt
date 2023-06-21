@@ -14,10 +14,10 @@ import java.io.File
 class KotlinMojo : WirespecMojo() {
 
     @Parameter(required = true)
-    private lateinit var sourceDirectory: String
+    private lateinit var input: String
 
     @Parameter(required = true)
-    private lateinit var targetDirectory: String
+    private lateinit var output: String
 
     @Parameter
     private var packageName: String = DEFAULT_PACKAGE_NAME
@@ -27,19 +27,19 @@ class KotlinMojo : WirespecMojo() {
 
     override fun execute() {
         val emitter = KotlinEmitter(packageName, logger)
-        if(sourceDirectory.endsWith(".json")){
-            val fileName = sourceDirectory.split("/")
+        if(input.endsWith(".json")){
+            val fileName = input.split("/")
                 .last()
                 .substringBeforeLast(".")
                 .replaceFirstChar(Char::uppercase)
-            val json = File(sourceDirectory).readText()
+            val json = File(input).readText()
             val ast = OpenApiParser.parse(json)
             val result = emitter.emit(ast).joinToString("\n"){ it.second }
-            JvmUtil.emitJvm(packageName, targetDirectory, fileName, "kt").writeText(result)
+            JvmUtil.emitJvm(packageName, output, fileName, "kt").writeText(result)
         } else {
-            compile(sourceDirectory, logger, emitter)
+            compile(input, logger, emitter)
                 .forEach { (name, result) ->
-                    JvmUtil.emitJvm(packageName, targetDirectory, name, "kt").writeText(result)
+                    JvmUtil.emitJvm(packageName, output, name, "kt").writeText(result)
                 }
         }
     }
