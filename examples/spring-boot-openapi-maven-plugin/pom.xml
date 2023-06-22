@@ -77,25 +77,51 @@
                 <version>0.0.0-SNAPSHOT</version>
                 <executions>
                     <execution>
-                        <id>kotlin</id>
+                        <id>kotlin-v2</id>
                         <goals>
                             <goal>kotlin</goal>
                         </goals>
                         <configuration>
-                            <input>${project.basedir}/src/main/openapi/petstore.json</input>
+                            <input>${project.basedir}/src/main/openapi/petstorev2.json</input>
                             <output>${project.build.directory}/generated-sources</output>
-                            <packageName>community.flock.wirespec.generated.kotlin</packageName>
+                            <packageName>community.flock.wirespec.generated.kotlin.v2</packageName>
+                            <openapi>v2</openapi>
                         </configuration>
                     </execution>
                     <execution>
-                        <id>java</id>
+                        <id>kotlin-v3</id>
+                        <goals>
+                            <goal>kotlin</goal>
+                        </goals>
+                        <configuration>
+                            <input>${project.basedir}/src/main/openapi/petstorev3.json</input>
+                            <output>${project.build.directory}/generated-sources</output>
+                            <packageName>community.flock.wirespec.generated.kotlin.v3</packageName>
+                            <openapi>v3</openapi>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>java-v2</id>
                         <goals>
                             <goal>java</goal>
                         </goals>
                         <configuration>
-                            <input>${project.basedir}/src/main/openapi/petstore.json</input>
+                            <input>${project.basedir}/src/main/openapi/petstorev2.json</input>
                             <output>${project.build.directory}/generated-sources</output>
-                            <packageName>community.flock.wirespec.generated.java</packageName>
+                            <packageName>community.flock.wirespec.generated.java.v2</packageName>
+                            <openapi>v2</openapi>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>java-v3</id>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <input>${project.basedir}/src/main/openapi/petstorev3.json</input>
+                            <output>${project.build.directory}/generated-sources</output>
+                            <packageName>community.flock.wirespec.generated.java.v3</packageName>
+                            <openapi>v3</openapi>
                         </configuration>
                     </execution>
                 </executions>

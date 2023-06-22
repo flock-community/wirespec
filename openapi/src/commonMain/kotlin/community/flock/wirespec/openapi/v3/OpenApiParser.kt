@@ -1,23 +1,24 @@
-package community.flock.wirespec.openapi
+package community.flock.wirespec.openapi.v3
 
-import community.flock.kotlinx.openapi.bindings.OpenAPI
-import community.flock.kotlinx.openapi.bindings.OpenAPIObject
-import community.flock.kotlinx.openapi.bindings.OperationObject
-import community.flock.kotlinx.openapi.bindings.ParameterLocation
-import community.flock.kotlinx.openapi.bindings.ParameterObject
-import community.flock.kotlinx.openapi.bindings.PathItemObject
-import community.flock.kotlinx.openapi.bindings.ReferenceObject
-import community.flock.kotlinx.openapi.bindings.RequestBodyObject
-import community.flock.kotlinx.openapi.bindings.RequestBodyOrReferenceObject
-import community.flock.kotlinx.openapi.bindings.ResponseObject
-import community.flock.kotlinx.openapi.bindings.ResponseOrReferenceObject
-import community.flock.kotlinx.openapi.bindings.SchemaObject
-import community.flock.kotlinx.openapi.bindings.SchemaOrReferenceObject
+import community.flock.kotlinx.openapi.bindings.v3.OpenAPI
+import community.flock.kotlinx.openapi.bindings.v3.OpenAPIObject
+import community.flock.kotlinx.openapi.bindings.v3.OperationObject
+import community.flock.kotlinx.openapi.bindings.v3.ParameterLocation
+import community.flock.kotlinx.openapi.bindings.v3.ParameterObject
+import community.flock.kotlinx.openapi.bindings.v3.PathItemObject
+import community.flock.kotlinx.openapi.bindings.v3.ReferenceObject
+import community.flock.kotlinx.openapi.bindings.v3.RequestBodyObject
+import community.flock.kotlinx.openapi.bindings.v3.RequestBodyOrReferenceObject
+import community.flock.kotlinx.openapi.bindings.v3.ResponseObject
+import community.flock.kotlinx.openapi.bindings.v3.ResponseOrReferenceObject
+import community.flock.kotlinx.openapi.bindings.v3.SchemaObject
+import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceObject
+import community.flock.kotlinx.openapi.bindings.v3.Type as OpenapiType
 import community.flock.wirespec.compiler.core.parse.*
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive
-import community.flock.kotlinx.openapi.bindings.Type as OpenapiType
+import community.flock.wirespec.openapi.Common
 
 object OpenApiParser {
 
@@ -54,11 +55,11 @@ object OpenApiParser {
                             else -> Endpoint.Segment.Literal(segment)
                         }
                     }
-                    val name = operation?.operationId?.let { className(it) } ?: segments
+                    val name = operation?.operationId?.let { Common.className(it) } ?: segments
                         .joinToString("") {
                             when (it) {
-                                is Endpoint.Segment.Literal -> className(it.value)
-                                is Endpoint.Segment.Param -> className(it.identifier.value)
+                                is Endpoint.Segment.Literal -> Common.className(it.value)
+                                is Endpoint.Segment.Param -> Common.className(it.identifier.value)
                             }
                         }
                         .let { it + method.name }
@@ -120,7 +121,7 @@ object OpenApiParser {
             }
 
         val componentsAst = openApi.components?.schemas
-            ?.flatMap { it.value.flatten(className(it.key), openApi) }
+            ?.flatMap { it.value.flatten(Common.className(it.key), openApi) }
             ?.map { Type(it.name, Type.Shape(it.fields())) }
             ?: emptyList()
 
@@ -205,50 +206,14 @@ fun ResponseOrReferenceObject.resolve(openApi: OpenAPIObject): ResponseObject? =
         is ReferenceObject -> this.resolveResponseObject(openApi)?.second
     }
 
-fun SimpleSchema.fields() = properties
-    .map {
-        when (it.type) {
-            OpenapiType.STRING -> Field(
-                Field.Identifier(it.key),
-                Primitive(Primitive.Type.String, false),
-                false
-            )
-
-            OpenapiType.NUMBER -> Field(
-                Field.Identifier(it.key),
-                Primitive(Primitive.Type.Integer, false),
-                false
-            )
-
-            OpenapiType.INTEGER -> Field(
-                Field.Identifier(it.key),
-                Primitive(Primitive.Type.Integer, false),
-                false
-            )
-
-            OpenapiType.BOOLEAN -> Field(
-                Field.Identifier(it.key),
-                Primitive(Primitive.Type.Boolean, false),
-                false
-            )
-
-            OpenapiType.ARRAY -> it.field
-            OpenapiType.OBJECT -> it.field
-            null -> TODO()
-        }
-    }
-
-data class SimpleSchema(val name: String, val properties: List<SimpleProp>)
-data class SimpleProp(val key: String, val type: community.flock.kotlinx.openapi.bindings.Type?, val field: Field)
-
-fun SchemaObject.flatten(
+private fun SchemaObject.flatten(
     name: String,
     openApi: OpenAPIObject,
 ): List<SimpleSchema> =
     when (type) {
         OpenapiType.OBJECT -> {
             val fields = properties
-                ?.flatMap { (key, value) -> value.flatten(className(name, key), openApi) }
+                ?.flatMap { (key, value) -> value.flatten(Common.className(name, key), openApi) }
                 ?: emptyList()
 
             listOf(
@@ -262,7 +227,7 @@ fun SchemaObject.flatten(
                                     type = value.type,
                                     field = Field(
                                         Field.Identifier(key),
-                                        Reference.Custom(className(name, key), false),
+                                        Reference.Custom(Common.className(name, key), false),
                                         false
                                     )
                                 )
@@ -281,7 +246,7 @@ fun SchemaObject.flatten(
             ?.let {
                 when (it) {
                     is ReferenceObject -> emptyList()
-                    is SchemaObject -> it.flatten(className(name, "array"), openApi)
+                    is SchemaObject -> it.flatten(Common.className(name, "array"), openApi)
                 }
             }
             ?: emptyList()
@@ -290,7 +255,7 @@ fun SchemaObject.flatten(
         else -> emptyList()
     }
 
-fun SchemaOrReferenceObject.flatten(
+private fun SchemaOrReferenceObject.flatten(
     name: String,
     openApi: OpenAPIObject,
 ): List<SimpleSchema> {
@@ -306,22 +271,22 @@ fun SchemaOrReferenceObject.flatten(
     }
 }
 
-fun SchemaOrReferenceObject.toReference(openApi: OpenAPIObject) =
+private fun SchemaOrReferenceObject.toReference(openApi: OpenAPIObject) =
     when (this) {
         is ReferenceObject -> {
             val resolved = resolveSchemaObject(openApi) ?: TODO()
             when (resolved.second.type) {
                 OpenapiType.ARRAY -> when (resolved.second.items) {
                     is ReferenceObject -> Reference.Custom(
-                        className((resolved.second.items as ReferenceObject).getReference()),
+                        Common.className((resolved.second.items as ReferenceObject).getReference()),
                         true
                     )
 
-                    is SchemaObject -> Reference.Custom(className(resolved.first.getReference(), "Array"), true)
+                    is SchemaObject -> Reference.Custom(Common.className(resolved.first.getReference(), "Array"), true)
                     else -> TODO()
                 }
 
-                else -> Reference.Custom(className(resolved.first.getReference()), false)
+                else -> Reference.Custom(Common.className(resolved.first.getReference()), false)
             }
 
         }
@@ -330,7 +295,7 @@ fun SchemaOrReferenceObject.toReference(openApi: OpenAPIObject) =
             when (type) {
                 OpenapiType.ARRAY -> when (items) {
                     is ReferenceObject -> Reference.Custom(
-                        className((items as ReferenceObject).getReference()),
+                        Common.className((items as ReferenceObject).getReference()),
                         true
                     )
                     else -> TODO()
@@ -340,7 +305,7 @@ fun SchemaOrReferenceObject.toReference(openApi: OpenAPIObject) =
         }
     }
 
-fun PathItemObject.toOperationList() = Endpoint.Method.values()
+private fun PathItemObject.toOperationList() = Endpoint.Method.values()
     .map {
         it to when (it) {
             Endpoint.Method.GET -> get
@@ -355,22 +320,9 @@ fun PathItemObject.toOperationList() = Endpoint.Method.values()
     }
     .filter { (_, value) -> value != null }
 
-fun className(vararg arg: String) = arg
-    .map { it.replaceFirstChar { it.uppercase() } }
-    .joinToString("")
+private fun ReferenceObject.getReference() = this.ref.value.split("/")[3]
 
-
-fun ReferenceObject.getReference() = this.ref.value.split("/")[3]
-
-fun SchemaOrReferenceObject.getReference(openApi: OpenAPIObject) = when (this) {
-    is ReferenceObject -> {
-        this.resolveSchemaObject(openApi)
-    }
-
-    is SchemaObject -> TODO()
-}
-
-fun OpenapiType.toPrimitive() = when (this) {
+private fun OpenapiType.toPrimitive() = when (this) {
     OpenapiType.STRING -> Primitive.Type.String
     OpenapiType.INTEGER -> Primitive.Type.Integer
     OpenapiType.NUMBER -> Primitive.Type.Integer
@@ -378,8 +330,54 @@ fun OpenapiType.toPrimitive() = when (this) {
     else -> error("Type is not a primitive")
 }
 
-fun ParameterObject.toField(openApi: OpenAPIObject) = schema
+private fun ParameterObject.toField(openApi: OpenAPIObject) = schema
     ?.resolve(openApi)
     ?.type
     ?.toPrimitive()
     ?.let { Field(Field.Identifier(name), Primitive(it, false), this.required ?: false) }
+
+
+private data class SimpleSchema(val name: String, val properties: List<SimpleProp>)
+private data class SimpleProp(val key: String, val type: OpenapiType?, val field: Field)
+
+private fun SimpleSchema.fields() = properties
+    .map {
+        when (it.type) {
+            OpenapiType.STRING -> Field(
+                Field.Identifier(it.key),
+                Field.Reference.Primitive(
+                    Field.Reference.Primitive.Type.String,
+                    false
+                ),
+                false
+            )
+
+            OpenapiType.NUMBER -> Field(
+                Field.Identifier(it.key),
+                Field.Reference.Primitive(
+                    Field.Reference.Primitive.Type.Integer,
+                    false
+                ),
+                false
+            )
+
+            OpenapiType.INTEGER -> Field(
+                Field.Identifier(it.key),
+                Field.Reference.Primitive(
+                    Field.Reference.Primitive.Type.Integer,
+                    false
+                ),
+                false
+            )
+
+            OpenapiType.BOOLEAN -> Field(
+                Field.Identifier(it.key),
+                Field.Reference.Primitive(
+                    Field.Reference.Primitive.Type.Boolean,
+                    false
+                ),
+                false
+            )
+            else -> it.field
+        }
+    }

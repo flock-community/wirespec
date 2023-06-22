@@ -21,7 +21,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":compiler:core"))
-                implementation("community.flock.kotlinx.openapi.bindings:kotlin-openapi-bindings:0.0.8")
+                implementation("community.flock.kotlinx.openapi.bindings:kotlin-openapi-bindings:0.0.11")
             }
         }
         commonTest {

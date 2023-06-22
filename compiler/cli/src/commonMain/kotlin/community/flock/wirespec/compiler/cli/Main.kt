@@ -30,6 +30,10 @@ import kotlinx.cli.default
 import kotlinx.cli.multiple
 import community.flock.wirespec.compiler.core.Wirespec as WirespecSpec
 
+private enum class OpenapiVersion {
+    V2, V3
+}
+
 private sealed interface Language {
     enum class Jvm : Language { Java, Kotlin, Scala }
     enum class Script : Language { TypeScript, Wirespec }
@@ -64,40 +68,56 @@ fun cli(args: Array<String>) {
             Language.values().map { it.name }.mapNotNull(logger::from),
             { Language.valueOf(it) ?: error("Language not found") }), shortName = "l", description = "Language type"
     ).default(Language.Jvm.Kotlin).multiple()
+    val openapi by parser.option(
+        ArgType.Choice<OpenapiVersion>(),
+        shortName = "api",
+        description = "Use open api input"
+    )
     val packageName by parser.option(ArgType.String, shortName = "p", description = "Package name")
         .default(DEFAULT_PACKAGE_NAME)
 
     parser.parse(args)
 
-    compile(language.toSet(), input, output, packageName)
+    compile(language.toSet(), input, output, packageName, openapi)
 
 }
 
-private fun compile(languages: Set<Language>, inputDir: String, outputDir: String?, packageName: String) =
-    Directory(inputDir)
-        .wirespecFiles()
-        .forEach { wsFile ->
-            val path = wsFile.path.out(packageName, outputDir)
-            wsFile.read()
-                .let(WirespecSpec::compile)(logger)
-                .let { compiler ->
-                    languages.map {
-                        when (it) {
-                            Java -> JavaEmitter(packageName, logger) to JavaFile(path(Extension.Java))
-                            Kotlin -> KotlinEmitter(packageName, logger) to KotlinFile(path(Extension.Kotlin))
-                            Scala -> ScalaEmitter(packageName, logger) to ScalaFile(path(Extension.Scala))
-                            TypeScript -> TypeScriptEmitter(logger) to TypeScriptFile(path(Extension.TypeScript))
-                            Wirespec -> WirespecEmitter(logger) to WirespecFile(path(Extension.Wirespec))
-                        }.let { (emitter, file) -> compiler(emitter) to file }
+private fun compile(
+    languages: Set<Language>,
+    inputDir: String,
+    outputDir: String?,
+    packageName: String,
+    openapi: OpenapiVersion?
+) {
+    if (openapi != null) {
+        TODO("implement openapi")
+    } else {
+        Directory(inputDir)
+            .wirespecFiles()
+            .forEach { wsFile ->
+                val path = wsFile.path.out(packageName, outputDir)
+                wsFile.read()
+                    .let(WirespecSpec::compile)(logger)
+                    .let { compiler ->
+                        languages.map {
+                            when (it) {
+                                Java -> JavaEmitter(packageName, logger) to JavaFile(path(Extension.Java))
+                                Kotlin -> KotlinEmitter(packageName, logger) to KotlinFile(path(Extension.Kotlin))
+                                Scala -> ScalaEmitter(packageName, logger) to ScalaFile(path(Extension.Scala))
+                                TypeScript -> TypeScriptEmitter(logger) to TypeScriptFile(path(Extension.TypeScript))
+                                Wirespec -> WirespecEmitter(logger) to WirespecFile(path(Extension.Wirespec))
+                            }.let { (emitter, file) -> compiler(emitter) to file }
+                        }
                     }
-                }
-                .map { (results, file) ->
-                    when (results) {
-                        is Either.Right -> results.value.forEach { (name, result) -> file.copy(name).write(result) }
-                        is Either.Left -> println(results.value)
+                    .map { (results, file) ->
+                        when (results) {
+                            is Either.Right -> results.value.forEach { (name, result) -> file.copy(name).write(result) }
+                            is Either.Left -> println(results.value)
+                        }
                     }
-                }
-        }
+            }
+    }
+}
 
 fun FullFilePath.out(packageName: String, outputDir: String?) = { extension: Extension ->
     val dir = outputDir ?: "$directory/out/${extension.name.lowercase()}"
