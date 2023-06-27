@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.cli
 
 import arrow.core.Either
+import arrow.core.Nel
 import community.flock.wirespec.compiler.cli.Language.Jvm.Java
 import community.flock.wirespec.compiler.cli.Language.Jvm.Kotlin
 import community.flock.wirespec.compiler.cli.Language.Jvm.Scala
@@ -8,9 +9,11 @@ import community.flock.wirespec.compiler.cli.Language.Script.TypeScript
 import community.flock.wirespec.compiler.cli.Language.Script.Wirespec
 import community.flock.wirespec.compiler.cli.io.Directory
 import community.flock.wirespec.compiler.cli.io.Extension
+import community.flock.wirespec.compiler.cli.io.File
 import community.flock.wirespec.compiler.cli.io.FullFilePath
 import community.flock.wirespec.compiler.cli.io.JavaFile
 import community.flock.wirespec.compiler.cli.io.KotlinFile
+import community.flock.wirespec.compiler.cli.io.OpenapiFile
 import community.flock.wirespec.compiler.cli.io.ScalaFile
 import community.flock.wirespec.compiler.cli.io.TypeScriptFile
 import community.flock.wirespec.compiler.cli.io.WirespecFile
@@ -21,9 +24,14 @@ import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
+import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.exceptions.WirespecException
+import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.getEnvVar
 import community.flock.wirespec.compiler.utils.orNull
+import community.flock.wirespec.openapi.v2.OpenApiParser as OpenApiParserV2
+import community.flock.wirespec.openapi.v3.OpenApiParser as OpenApiParserV3
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import kotlinx.cli.default
@@ -84,40 +92,51 @@ fun cli(args: Array<String>) {
 
 private fun compile(
     languages: Set<Language>,
-    inputDir: String,
-    outputDir: String?,
+    input: String,
+    output: String?,
     packageName: String,
     openapi: OpenapiVersion?
 ) {
     if (openapi != null) {
-        TODO("implement openapi")
+        val fullPath = FullFilePath.fromString(input)
+        val file = OpenapiFile(fullPath)
+        val ast = when(openapi){
+            OpenapiVersion.V2 -> OpenApiParserV2.parse(file.read())
+            OpenapiVersion.V3 -> OpenApiParserV3.parse(file.read())
+        }
+        fun path(extension: Extension) = fullPath.copy(fileName = fullPath.fileName.replaceFirstChar(Char::uppercase), extension = extension)
+        emit(languages, packageName, ::path)
+            .map { (emitter, file) -> emitter.emit(ast) to file }
+            .map { (results, file) -> write(results, file) }
     } else {
-        Directory(inputDir)
+        Directory(input)
             .wirespecFiles()
             .forEach { wsFile ->
-                val path = wsFile.path.out(packageName, outputDir)
+                val path = wsFile.path.out(packageName, output)
                 wsFile.read()
                     .let(WirespecSpec::compile)(logger)
-                    .let { compiler ->
-                        languages.map {
-                            when (it) {
-                                Java -> JavaEmitter(packageName, logger) to JavaFile(path(Extension.Java))
-                                Kotlin -> KotlinEmitter(packageName, logger) to KotlinFile(path(Extension.Kotlin))
-                                Scala -> ScalaEmitter(packageName, logger) to ScalaFile(path(Extension.Scala))
-                                TypeScript -> TypeScriptEmitter(logger) to TypeScriptFile(path(Extension.TypeScript))
-                                Wirespec -> WirespecEmitter(logger) to WirespecFile(path(Extension.Wirespec))
-                            }.let { (emitter, file) -> compiler(emitter) to file }
-                        }
-                    }
-                    .map { (results, file) ->
-                        when (results) {
-                            is Either.Right -> results.value.forEach { (name, result) -> file.copy(name).write(result) }
-                            is Either.Left -> println(results.value)
-                        }
-                    }
+                    .let { compiler -> emit(languages, packageName, path).map { (emitter, file) -> compiler(emitter) to file } }
+                    .map { (results, file) -> when(results){
+                        is Either.Right -> write(results.value, file)
+                        is Either.Left -> println(results.value)
+                    } }
             }
     }
 }
+private fun emit(languages: Set<Language>, packageName: String, path: (Extension)->FullFilePath): List<Pair<Emitter, File>> {
+    return languages.map {
+        when (it) {
+            Java -> JavaEmitter(packageName, logger) to JavaFile(path(Extension.Java))
+            Kotlin -> KotlinEmitter(packageName, logger) to KotlinFile(path(Extension.Kotlin))
+            Scala -> ScalaEmitter(packageName, logger) to ScalaFile(path(Extension.Scala))
+            TypeScript -> TypeScriptEmitter(logger) to TypeScriptFile(path(Extension.TypeScript))
+            Wirespec -> WirespecEmitter(logger) to WirespecFile(path(Extension.Wirespec))
+        }
+    }
+}
+
+private fun write(output: List<Pair<String, String>>, file:File ) =
+    output.forEach { (name, result) -> file.copy(name).write(result) }
 
 fun FullFilePath.out(packageName: String, outputDir: String?) = { extension: Extension ->
     val dir = outputDir ?: "$directory/out/${extension.name.lowercase()}"

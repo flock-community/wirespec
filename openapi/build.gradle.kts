@@ -14,8 +14,20 @@ repositories {
 }
 
 kotlin {
+    macosX64()
+    macosArm64()
+    linuxX64()
+    mingwX64()
+    js(IR) {
+        nodejs()
+    }
     jvm {
         withJava()
+        java {
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(17))
+            }
+        }
     }
     sourceSets {
         commonMain {
