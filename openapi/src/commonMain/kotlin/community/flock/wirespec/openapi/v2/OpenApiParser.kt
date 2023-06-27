@@ -68,9 +68,9 @@ object OpenApiParser {
                     val formData = parameters
                         .filter { it.`in` == ParameterLocation.FORM_DATA }
                         .mapNotNull { it.toField(openApi) }
-                    val requests = parameters?.filter { it.`in` == ParameterLocation.BODY }
-                        ?.let {
-                            it.map { requestBody ->
+                    val requests = parameters.find { it.`in` == ParameterLocation.BODY }
+                        ?.let { requestBody ->
+                            listOf(
                                 Endpoint.Request(
                                     Endpoint.Content(
                                         type = "application/json",
@@ -78,8 +78,7 @@ object OpenApiParser {
                                         isNullable = requestBody.required ?: false
                                     )
                                 )
-
-                            }
+                            )
                         }
                         ?: listOf(Endpoint.Request(null))
                     val responses = operation?.responses
@@ -197,26 +196,37 @@ private fun SchemaObject.flatten(
                         ?.map { (key, value) ->
                             when (value) {
                                 is SchemaObject -> {
-                                    val reference = when(value.type){
-                                        OpenapiType.STRING -> Reference.Primitive(Reference.Primitive.Type.String, false)
-                                        OpenapiType.NUMBER -> Reference.Primitive(Reference.Primitive.Type.Integer, false)
-                                        OpenapiType.INTEGER -> Reference.Primitive(Reference.Primitive.Type.Integer, false)
-                                        OpenapiType.BOOLEAN ->Reference.Primitive(Reference.Primitive.Type.Boolean, false)
+                                    val reference = when (value.type) {
+                                        OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Reference.Primitive(
+                                            (value.type as OpenapiType).toPrimitive(),
+                                            false
+                                        )
+
                                         OpenapiType.ARRAY -> {
                                             val resolve = value.items?.resolve(openApi)
-                                            when(resolve?.type){
-                                                OpenapiType.STRING -> Reference.Primitive(Reference.Primitive.Type.String, true)
-                                                OpenapiType.NUMBER -> Reference.Primitive(Reference.Primitive.Type.Integer, true)
-                                                OpenapiType.INTEGER -> Reference.Primitive(Reference.Primitive.Type.Integer, true)
-                                                OpenapiType.BOOLEAN ->Reference.Primitive(Reference.Primitive.Type.Boolean, true)
-                                                else -> when(value.items){
-                                                    is ReferenceObject -> Reference.Custom((value.items as ReferenceObject).getReference(), true)
-                                                    is SchemaObject -> Reference.Custom(Common.className(name, key), true)
+                                            when (resolve?.type) {
+                                                OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Reference.Primitive(
+                                                    (resolve?.type as OpenapiType).toPrimitive(),
+                                                    true
+                                                )
+
+                                                else -> when (value.items) {
+                                                    is ReferenceObject -> Reference.Custom(
+                                                        (value.items as ReferenceObject).getReference(),
+                                                        true
+                                                    )
+
+                                                    is SchemaObject -> Reference.Custom(
+                                                        Common.className(name, key),
+                                                        true
+                                                    )
+
                                                     null -> TODO()
                                                 }
                                             }
 
                                         }
+
                                         OpenapiType.OBJECT -> Reference.Custom(Common.className(name, key), false)
                                         OpenapiType.FILE -> TODO()
                                         null -> TODO()
@@ -304,6 +314,11 @@ private fun SchemaOrReferenceObject.toReference(openApi: SwaggerObject) =
 
         is SchemaObject -> {
             when (type) {
+                OpenapiType.STRING, OpenapiType.INTEGER, OpenapiType.NUMBER, OpenapiType.BOOLEAN -> Reference.Primitive(
+                    (type as OpenapiType).toPrimitive(),
+                    false
+                )
+
                 OpenapiType.ARRAY -> when (items) {
                     is ReferenceObject -> Reference.Custom(
                         Common.className((items as ReferenceObject).getReference()),
