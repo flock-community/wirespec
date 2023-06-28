@@ -78,8 +78,8 @@ fun cli(args: Array<String>) {
     ).default(Language.Jvm.Kotlin).multiple()
     val openapi by parser.option(
         ArgType.Choice<OpenapiVersion>(),
-        shortName = "api",
-        description = "Use open api input"
+        shortName = "a",
+        description = "Use openapi as input"
     )
     val packageName by parser.option(ArgType.String, shortName = "p", description = "Package name")
         .default(DEFAULT_PACKAGE_NAME)
@@ -104,8 +104,8 @@ private fun compile(
             OpenapiVersion.V2 -> OpenApiParserV2.parse(file.read())
             OpenapiVersion.V3 -> OpenApiParserV3.parse(file.read())
         }
-        fun path(extension: Extension) = fullPath.copy(fileName = fullPath.fileName.replaceFirstChar(Char::uppercase), extension = extension)
-        emit(languages, packageName, ::path)
+        val  path = fullPath.out(packageName, output)
+        emit(languages, packageName, path)
             .map { (emitter, file) -> emitter.emit(ast) to file }
             .map { (results, file) -> write(results, file) }
     } else {
@@ -138,8 +138,8 @@ private fun emit(languages: Set<Language>, packageName: String, path: (Extension
 private fun write(output: List<Pair<String, String>>, file:File ) =
     output.forEach { (name, result) -> file.copy(name).write(result) }
 
-fun FullFilePath.out(packageName: String, outputDir: String?) = { extension: Extension ->
-    val dir = outputDir ?: "$directory/out/${extension.name.lowercase()}"
+fun FullFilePath.out(packageName: String, output: String?) = { extension: Extension ->
+    val dir = output ?: "$directory/out/${extension.name.lowercase()}"
     copy(
         directory = "$dir/${packageName.split('.').joinToString("/")}",
         extension = extension

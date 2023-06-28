@@ -19,7 +19,8 @@ fi
 
 if [[ $WIRESPEC_BUILD_ALL = true || $WIRESPEC_BUILD_MAC = true ]]; then
   echo "Test macOS artifact"
-  ./compiler/$artifactName/build/bin/$macosArch/releaseExecutable/$artifactName.kexe $languages "$(pwd)"/types
+  ./compiler/$artifactName/build/bin/$macosArch/releaseExecutable/$artifactName.kexe $languages -p "community.flock.wirespec.generated" "$(pwd)"/types
+  ./compiler/$artifactName/build/bin/$macosArch/releaseExecutable/$artifactName.kexe $languages -p "community.flock.openapi.generated" -a v2 "$(pwd)"/types/petstore.json
 fi
 
 if [[ $WIRESPEC_BUILD_ALL = true || $WIRESPEC_BUILD_LINUX = true || $buildNothing = true ]]; then
@@ -28,7 +29,9 @@ if [[ $WIRESPEC_BUILD_ALL = true || $WIRESPEC_BUILD_LINUX = true || $buildNothin
 fi
 
 echo "Test Node.js artifact"
-node build/js/packages/wirespec-$artifactName/kotlin/wirespec-$artifactName.js $languages "$(pwd)"/types
+node build/js/packages/wirespec-$artifactName/kotlin/wirespec-$artifactName.js $languages -p "community.flock.wirespec.generated" "$(pwd)"/types
+node build/js/packages/wirespec-$artifactName/kotlin/wirespec-$artifactName.js $languages -p "community.flock.openapi.generated" -a v2 "$(pwd)"/types/petstore.json
 
 echo "Test JVM artifact"
-java -jar compiler/$artifactName/build/libs/$artifactName-$version-all.jar $languages "$(pwd)"/types
+java -jar compiler/$artifactName/build/libs/$artifactName-$version-all.jar $languages -p "community.flock.wirespec.generated" "$(pwd)"/types
+java -jar compiler/$artifactName/build/libs/$artifactName-$version-all.jar $languages -p "community.flock.openapi.generated" -a v2 "$(pwd)"/types/petstore.json

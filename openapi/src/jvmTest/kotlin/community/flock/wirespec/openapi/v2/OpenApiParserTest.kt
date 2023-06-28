@@ -95,22 +95,6 @@ class OpenApiParserTest {
                 )
             ),
             Type(
-                name = "PetCategory",
-                shape = Shape(
-                    value = listOf(
-                        Field(
-                            identifier = Identifier(value = "id"),
-                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
-                            isNullable = false
-                        ), Field(
-                            identifier = Identifier(value = "name"),
-                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
-                            isNullable = false
-                        )
-                    )
-                )
-            ),
-            Type(
                 name = "Tag",
                 shape = Shape(
                     value = listOf(

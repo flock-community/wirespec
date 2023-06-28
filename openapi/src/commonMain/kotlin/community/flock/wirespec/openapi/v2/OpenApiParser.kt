@@ -33,9 +33,10 @@ object OpenApiParser {
                     val parameters =
                         path.resolveParameters(openApi) + (operation?.resolveParameters(openApi) ?: emptyList())
                     val segments = key.value.split("/").drop(1).map { segment ->
-                        val param = "^\\{(.*)}$".toRegex().find(segment)?.groupValues?.get(1)
+                        val isParam = segment[0] == '{' && segment[segment.length - 1] == '}'
                         when {
-                            param != null -> {
+                            isParam -> {
+                                val param = segment.substring(1, segment.length - 1)
                                 parameters
                                     .find { it.name == param }
                                     ?.let { it.type?.toPrimitive() }
@@ -64,9 +65,6 @@ object OpenApiParser {
                         .mapNotNull { it.toField(openApi) }
                     val headers = parameters
                         .filter { it.`in` == ParameterLocation.HEADER }
-                        .mapNotNull { it.toField(openApi) }
-                    val formData = parameters
-                        .filter { it.`in` == ParameterLocation.FORM_DATA }
                         .mapNotNull { it.toField(openApi) }
                     val requests = parameters.find { it.`in` == ParameterLocation.BODY }
                         ?.let { requestBody ->
@@ -183,7 +181,7 @@ private fun SchemaObject.flatten(
                             else -> value.flatten(Common.className(name, key), openApi)
                         }
 
-                        is ReferenceObject -> value.flatten(Common.className(name, key), openApi)
+                        is ReferenceObject -> emptyList()
 
                     }
                 }
@@ -206,7 +204,7 @@ private fun SchemaObject.flatten(
                                             val resolve = value.items?.resolve(openApi)
                                             when (resolve?.type) {
                                                 OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Reference.Primitive(
-                                                    (resolve?.type as OpenapiType).toPrimitive(),
+                                                    (resolve.type as OpenapiType).toPrimitive(),
                                                     true
                                                 )
 
@@ -216,12 +214,7 @@ private fun SchemaObject.flatten(
                                                         true
                                                     )
 
-                                                    is SchemaObject -> Reference.Custom(
-                                                        Common.className(name, key),
-                                                        true
-                                                    )
-
-                                                    null -> TODO()
+                                                    else -> TODO()
                                                 }
                                             }
 
@@ -242,7 +235,6 @@ private fun SchemaObject.flatten(
                                 }
 
                                 is ReferenceObject -> {
-                                    val resolved = value.resolveSchemaObject(openApi)
                                     SimpleProp(
                                         key = key,
                                         field = Field(

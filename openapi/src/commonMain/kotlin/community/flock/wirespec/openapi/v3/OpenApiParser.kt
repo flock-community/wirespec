@@ -13,12 +13,12 @@ import community.flock.kotlinx.openapi.bindings.v3.ResponseObject
 import community.flock.kotlinx.openapi.bindings.v3.ResponseOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceObject
-import community.flock.kotlinx.openapi.bindings.v3.Type as OpenapiType
 import community.flock.wirespec.compiler.core.parse.*
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive
 import community.flock.wirespec.openapi.Common
+import community.flock.kotlinx.openapi.bindings.v3.Type as OpenapiType
 
 object OpenApiParser {
 
@@ -35,9 +35,10 @@ object OpenApiParser {
                     val parameters =
                         path.resolveParameters(openApi) + (operation?.resolveParameters(openApi) ?: emptyList())
                     val segments = key.value.split("/").drop(1).map { segment ->
-                        val param = "^\\{(.*)}$".toRegex().find(segment)?.groupValues?.get(1)
+                        val isParam = segment[0] == '{' && segment[segment.length - 1] == '}'
                         when {
-                            param != null -> {
+                            isParam -> {
+                                val param = segment.substring(1, segment.length - 1)
                                 parameters
                                     .find { it.name == param }
                                     ?.schema
@@ -73,13 +74,14 @@ object OpenApiParser {
                         .filter { it.`in` == ParameterLocation.COOKIE }
                         .mapNotNull { it.toField(openApi) }
                     val requests = operation?.requestBody?.resolve(openApi)
-                        ?.let { requestBody -> requestBody.content
+                        ?.let { requestBody ->
+                            requestBody.content
                                 ?.map { (mediaType, mediaObject) ->
                                     Endpoint.Request(
                                         Endpoint.Content(
                                             type = mediaType.value,
                                             reference = mediaObject.schema?.toReference(openApi) ?: TODO(),
-                                            isNullable = requestBody.required?: false
+                                            isNullable = requestBody.required ?: false
                                         )
                                     )
                                 }
@@ -213,7 +215,12 @@ private fun SchemaObject.flatten(
     when (type) {
         OpenapiType.OBJECT -> {
             val fields = properties
-                ?.flatMap { (key, value) -> value.flatten(Common.className(name, key), openApi) }
+                ?.flatMap { (key, value) ->
+                    when (value) {
+                        is SchemaObject -> value.flatten(Common.className(name, key), openApi)
+                        is ReferenceObject -> emptyList()
+                    }
+                }
                 ?: emptyList()
 
             listOf(
@@ -298,8 +305,10 @@ private fun SchemaOrReferenceObject.toReference(openApi: OpenAPIObject) =
                         Common.className((items as ReferenceObject).getReference()),
                         true
                     )
+
                     else -> TODO()
                 }
+
                 else -> TODO()
             }
         }
@@ -378,6 +387,7 @@ private fun SimpleSchema.fields() = properties
                 ),
                 false
             )
+
             else -> it.field
         }
     }
