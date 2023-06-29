@@ -44,7 +44,6 @@ class KotlinEmitter(
         """|data class $name(
            |${shape.emit()}
            |)
-           |
            |""".trimMargin()
     }
 
@@ -77,7 +76,6 @@ class KotlinEmitter(
     override fun Refined.emit() = withLogging(logger) {
         """data class $name(val value: String)
             |fun $name.validate() = ${validator.emit()}
-            |
             |""".trimMargin()
     }
 
@@ -119,7 +117,6 @@ class KotlinEmitter(
         |${SPACER}${SPACER}}
         |${SPACER}}
         |}
-        |
         |""".trimMargin()
     }
 
@@ -168,24 +165,21 @@ class KotlinEmitter(
         |fun <B> RESPONSE_MAPPER(contentMapper: ContentMapper<B>) =
         |${SPACER}fun(status: Int, headers:Map<String, List<String>>, content: Content<B>?) =
         |${SPACER}${SPACER}when {
-        |${filter { it.status.isInt() }.joinToString("") { it.emitResponseMapperCondition(endpoint) }}
-        |${filter { !it.status.isInt() }.joinToString("") { it.emitResponseMapperCondition(endpoint) }}
+        |${filter { it.status.isInt() }.joinToString("\n") { it.emitResponseMapperCondition(endpoint) }}
+        |${filter { !it.status.isInt() }.joinToString("\n") { it.emitResponseMapperCondition(endpoint) }}
         |${SPACER}${SPACER}${SPACER}else -> error("Cannot map response with status ${"$"}status")
-        |
     """.trimMargin()
 
     private fun Endpoint.Response.emitResponseMapperCondition(endpoint: Endpoint) =
         when (content) {
             null -> """
                     |${SPACER}${SPACER}${SPACER}${status.takeIf { it.isInt() }?.let { "status == $status && " }.orEmptyString()}content == null -> ${endpoint.name}Response${status.firstToUpper()}Unit(${status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()}headers)
-                    |
                 """.trimMargin()
 
             else -> """
                     |${SPACER}${SPACER}${SPACER}${status.takeIf { it.isInt() }?.let { "status == $status && " }.orEmptyString()}content?.type == "${content.type}" -> contentMapper
                     |${SPACER}${SPACER}${SPACER}${SPACER}.read<${content.reference.emit()}>(content, typeOf<${content.reference.emit()}>())
                     |${SPACER}${SPACER}${SPACER}${SPACER}.let{ ${endpoint.name}Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()}headers, it.body) }
-                    |
                 """.trimMargin()
         }
 

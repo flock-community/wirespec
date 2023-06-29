@@ -15,7 +15,6 @@ class WirespecEmitter(logger: Logger = noLogger) : Emitter(logger) {
         """type $name {
             |${shape.emit()}
             |}
-            |
             |""".trimMargin()
     }
 
@@ -41,7 +40,7 @@ class WirespecEmitter(logger: Logger = noLogger) : Emitter(logger) {
     }
 
     override fun Refined.emit() = withLogging(logger) {
-        "refined $name ${validator.emit()}\n\n"
+        "refined $name ${validator.emit()}\n"
     }
 
     override fun Refined.Validator.emit() = withLogging(logger) {

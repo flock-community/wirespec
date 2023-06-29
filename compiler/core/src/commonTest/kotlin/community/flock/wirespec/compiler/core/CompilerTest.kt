@@ -18,7 +18,7 @@ class CompilerTest {
               foo: String,
               bar: String
             }
-
+            
         """.trimIndent()
 
         val out = """
@@ -28,7 +28,7 @@ class CompilerTest {
               val foo: String,
               val bar: String
             )
-
+            
         """.trimIndent()
 
         Wirespec.compile(source)(logger)(KotlinEmitter(logger = logger))
@@ -44,7 +44,7 @@ class CompilerTest {
               foo: String
               bar: String
             }
-
+            
         """.trimIndent()
 
         Wirespec.compile(source)(logger)(KotlinEmitter(logger = logger))
@@ -55,6 +55,7 @@ class CompilerTest {
     fun testRefinedType() {
         val source = """
             refined Name /^[a-zA-Z]{1,50}$/g
+            
         """.trimIndent()
 
         val out = """

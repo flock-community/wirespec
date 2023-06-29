@@ -40,18 +40,18 @@ class JavaEmitter(
         |${SPACER}${SPACER}}
         |${SPACER}}
         |}
-        |
     """.trimMargin()
 
+    private val pkg = if (packageName.isBlank()) "" else "package $packageName;"
+
     override fun emit(ast: AST): List<Pair<String, String>> = super.emit(ast)
-        .map { (name, result) -> name to if (packageName.isBlank()) "" else "package $packageName;\n\n$result" }
-        .plus("WirespecShared" to if (packageName.isBlank()) "" else "package $packageName;\n\n$shared")
+        .map { (name, result) -> name to "$pkg\n\n$result" }
+        .plus("WirespecShared" to "$pkg\n\n$shared")
 
     override fun Type.emit() = withLogging(logger) {
         """public record $name(
             |${shape.emit()}
             |) {};
-            |
             |""".trimMargin()
     }
 
@@ -154,7 +154,6 @@ class JavaEmitter(
         |${joinToString (""){ it.emitResponseMapperCondition(endpoint) }}
         |${SPACER}${SPACER}throw new IllegalStateException("Unknown response type");
         |${SPACER}}
-        |
     """.trimMargin()
 
     private fun Endpoint.Response.emitResponseMapperCondition(endpoint: Endpoint) =

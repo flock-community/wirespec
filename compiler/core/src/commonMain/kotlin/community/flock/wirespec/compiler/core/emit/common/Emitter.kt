@@ -6,11 +6,13 @@ import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.utils.Logger
 
+typealias Emitted = List<Pair<String, String>>
+
 interface Emitters : TypeDefinitionEmitter, RefinedTypeDefinitionEmitter, EndpointDefinitionEmitter
 
 abstract class Emitter(val logger: Logger, val split: Boolean = false) : Emitters {
 
-    open fun emit(ast: AST) = ast
+    open fun emit(ast: AST): Emitted = ast
         .map {
             logger.log("Emitting Node $this")
             when (it) {
@@ -21,7 +23,7 @@ abstract class Emitter(val logger: Logger, val split: Boolean = false) : Emitter
         }
         .run {
             if (split) this
-            else listOf(first().first to joinToString("") { it.second }.dropLast(1)) // drop last newline
+            else listOf("NoName" to joinToString("\n") { it.second }) // drop last newline
         }
 
     companion object {
