@@ -35,7 +35,9 @@ class ScalaEmitter(
         "${SPACER}val ${identifier.emit()}: ${if (isNullable) "Option[${reference.emit()}]" else reference.emit()},"
     }
 
-    override fun Type.Shape.Field.Identifier.emit() = withLogging(logger) { value }
+    override fun Type.Shape.Field.Identifier.emit() = withLogging(logger) {
+        if (preservedKeywords.contains(value)) "`$value`" else value
+    }
 
     override fun Type.Shape.Field.Reference.emit() = withLogging(logger) {
         when (this) {
@@ -67,6 +69,50 @@ class ScalaEmitter(
         """// TODO("Not yet implemented")
             |
         """.trimMargin()
+    }
+
+    companion object {
+        private val preservedKeywords = listOf(
+            "abstract",
+            "case",
+            "catch",
+            "class",
+            "def",
+            "do",
+            "else",
+            "extends",
+            "false",
+            "final",
+            "finally",
+            "for",
+            "forSome",
+            "if",
+            "implicit",
+            "import",
+            "lazy",
+            "match",
+            "new",
+            "null",
+            "object",
+            "override",
+            "package",
+            "private",
+            "protected",
+            "return",
+            "sealed",
+            "super",
+            "this",
+            "throw",
+            "trait",
+            "true",
+            "try",
+            "type",
+            "val",
+            "var",
+            "while",
+            "with",
+            "yield",
+        )
     }
 
 }

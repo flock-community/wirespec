@@ -135,8 +135,12 @@ private fun emit(languages: Set<Language>, packageName: String, path: (Extension
     }
 }
 
-private fun write(output: List<Pair<String, String>>, file:File ) =
+private fun write(output: List<Pair<String, String>>, file:File ) {
+    println("-=-=-=-=-=--=-=-=-=")
+    println(file.path)
+    println("-=-=-=-=-=--=-=-=-=")
     output.forEach { (name, result) -> file.copy(name).write(result) }
+}
 
 fun FullFilePath.out(packageName: String, output: String?) = { extension: Extension ->
     val dir = output ?: "$directory/out/${extension.name.lowercase()}"
