@@ -12,7 +12,7 @@ import community.flock.wirespec.compiler.cli.io.File
 import community.flock.wirespec.compiler.cli.io.FullFilePath
 import community.flock.wirespec.compiler.cli.io.JavaFile
 import community.flock.wirespec.compiler.cli.io.KotlinFile
-import community.flock.wirespec.compiler.cli.io.OpenapiFile
+import community.flock.wirespec.compiler.cli.io.JsonFile
 import community.flock.wirespec.compiler.cli.io.ScalaFile
 import community.flock.wirespec.compiler.cli.io.TypeScriptFile
 import community.flock.wirespec.compiler.cli.io.WirespecFile
@@ -25,7 +25,6 @@ import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.compiler.utils.getEnvVar
 import community.flock.wirespec.compiler.utils.orNull
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
@@ -90,8 +89,8 @@ private fun compile(
     logger: Logger
 ) {
     if (openapi != null) {
-        val fullPath = FullFilePath.fromString(input)
-        val file = OpenapiFile(fullPath)
+        val fullPath = FullFilePath.parse(input)
+        val file = JsonFile(fullPath)
         val ast = when (openapi) {
             OpenapiVersion.V2 -> OpenApiParserV2.parse(file.read())
             OpenapiVersion.V3 -> OpenApiParserV3.parse(file.read())

@@ -4,7 +4,7 @@ import community.flock.wirespec.compiler.cli.io.Extension.Wirespec
 
 data class FullFilePath(val directory: String, val fileName: String, val extension: Extension = Wirespec) {
     companion object {
-        fun fromString(input: String): FullFilePath {
+        fun parse(input: String): FullFilePath {
             val list = input.split("/", ".")
             val extension = list.last().lowercase()
                 .let { ext -> Extension.values().find { it.ext == ext } }
