@@ -99,7 +99,7 @@ private fun compile(
         emit(languages, packageName, path, logger)
             .map { (emitter, file) ->
                 val result = emitter.emit(ast)
-                if (!emitter.split) listOf(fullPath.fileName to result.first().second) to file
+                if (!emitter.split) listOf(fullPath.fileName.replaceFirstChar(Char::uppercase) to result.first().second) to file
                 else result to file
             }
             .map { (results, file) -> write(results, file) }
@@ -114,7 +114,7 @@ private fun compile(
                         emit(languages, packageName, path, logger)
                             .map { (emitter, file) ->
                                 val result = compiler(emitter)
-                                if (!emitter.split) result.map { listOf(wsFile.path.fileName to it.first().second) } to file
+                                if (!emitter.split) result.map { listOf(wsFile.path.fileName.replaceFirstChar(Char::uppercase) to it.first().second) } to file
                                 else result to file
                             }
                     }
