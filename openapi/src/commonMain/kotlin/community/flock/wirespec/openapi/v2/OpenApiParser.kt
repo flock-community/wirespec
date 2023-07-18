@@ -172,7 +172,7 @@ private fun SchemaObject.flatten(
     openApi: SwaggerObject,
 ): List<SimpleSchema> =
     when (type) {
-        OpenapiType.OBJECT -> {
+        null, OpenapiType.OBJECT -> {
             val fields = properties
                 ?.flatMap { (key, value) ->
                     when (value) {
@@ -229,7 +229,7 @@ private fun SchemaObject.flatten(
                                         field = Field(
                                             Field.Identifier(key),
                                             reference,
-                                            false
+                                            !(this.required?.contains(key) ?: false)
                                         )
                                     )
                                 }
@@ -239,8 +239,8 @@ private fun SchemaObject.flatten(
                                         key = key,
                                         field = Field(
                                             Field.Identifier(key),
-                                            Reference.Custom(Common.className(key), false),
-                                            false
+                                            Reference.Custom(value.getReference(), false),
+                                            !(this.required?.contains(key) ?: false)
                                         )
                                     )
                                 }
@@ -261,7 +261,6 @@ private fun SchemaObject.flatten(
                 }
             }
             ?: emptyList()
-
 
         else -> emptyList()
     }

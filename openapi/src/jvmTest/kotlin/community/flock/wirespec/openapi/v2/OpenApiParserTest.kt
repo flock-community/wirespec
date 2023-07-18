@@ -28,15 +28,15 @@ class OpenApiParserTest {
                         Field(
                             identifier = Identifier(value = "code"),
                             reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         ), Field(
                             identifier = Identifier(value = "type"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         ), Field(
                             identifier = Identifier(value = "message"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         )
                     )
                 )
@@ -48,11 +48,11 @@ class OpenApiParserTest {
                         Field(
                             identifier = Identifier(value = "id"),
                             reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         ), Field(
                             identifier = Identifier(value = "name"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         )
                     )
                 )
@@ -64,12 +64,12 @@ class OpenApiParserTest {
                         Field(
                             identifier = Identifier(value = "id"),
                             reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         ),
                         Field(
                             identifier = Identifier(value = "category"),
                             reference = Custom(value = "Category", isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         ),
                         Field(
                             identifier = Identifier(value = "name"),
@@ -84,12 +84,12 @@ class OpenApiParserTest {
                         Field(
                             identifier = Identifier(value = "tags"),
                             reference = Custom(value = "Tag", isIterable = true),
-                            isNullable = false
+                            isNullable = true
                         ),
                         Field(
                             identifier = Identifier(value = "status"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         )
                     )
                 )
@@ -101,11 +101,11 @@ class OpenApiParserTest {
                         Field(
                             identifier = Identifier(value = "id"),
                             reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         ), Field(
                             identifier = Identifier(value = "name"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         )
                     )
                 )
@@ -117,27 +117,27 @@ class OpenApiParserTest {
                         Field(
                             identifier = Identifier(value = "id"),
                             reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         ), Field(
                             identifier = Identifier(value = "petId"),
                             reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         ), Field(
                             identifier = Identifier(value = "quantity"),
                             reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         ), Field(
                             identifier = Identifier(value = "shipDate"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         ), Field(
                             identifier = Identifier(value = "status"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         ), Field(
                             identifier = Identifier(value = "complete"),
                             reference = Primitive(type = Primitive.Type.Boolean, isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         )
                     )
                 )
@@ -149,35 +149,35 @@ class OpenApiParserTest {
                         Field(
                             identifier = Identifier(value = "id"),
                             reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         ), Field(
                             identifier = Identifier(value = "username"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         ), Field(
                             identifier = Identifier(value = "firstName"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         ), Field(
                             identifier = Identifier(value = "lastName"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         ), Field(
                             identifier = Identifier(value = "email"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         ), Field(
                             identifier = Identifier(value = "password"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         ), Field(
                             identifier = Identifier(value = "phone"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         ), Field(
                             identifier = Identifier(value = "userStatus"),
                             reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
-                            isNullable = false
+                            isNullable = true
                         )
                     )
                 )
