@@ -21,7 +21,7 @@ abstract class Emitter(val logger: Logger, val split: Boolean = false) : Emitter
         }
         .run {
             if (split) this
-            else listOf(first().first to joinToString("") { it.second }.dropLast(1)) // drop last newline
+            else listOf("NoName" to joinToString("\n") { it.second })
         }
 
     companion object {

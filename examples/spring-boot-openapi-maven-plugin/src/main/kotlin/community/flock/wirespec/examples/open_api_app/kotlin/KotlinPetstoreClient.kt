@@ -1,13 +1,13 @@
 package community.flock.wirespec.examples.open_api_app.kotlin
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import community.flock.wirespec.generated.kotlin.Content
-import community.flock.wirespec.generated.kotlin.ContentMapper
-import community.flock.wirespec.generated.kotlin.CreatePets
-import community.flock.wirespec.generated.kotlin.ListPets
-import community.flock.wirespec.generated.kotlin.Request
-import community.flock.wirespec.generated.kotlin.Response
-import community.flock.wirespec.generated.kotlin.ShowPetById
+import community.flock.wirespec.generated.kotlin.v3.Content
+import community.flock.wirespec.generated.kotlin.v3.ContentMapper
+import community.flock.wirespec.generated.kotlin.v3.CreatePets
+import community.flock.wirespec.generated.kotlin.v3.ListPets
+import community.flock.wirespec.generated.kotlin.v3.Request
+import community.flock.wirespec.generated.kotlin.v3.Response
+import community.flock.wirespec.generated.kotlin.v3.ShowPetById
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod

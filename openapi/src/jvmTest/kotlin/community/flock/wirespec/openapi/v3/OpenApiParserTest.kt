@@ -1,6 +1,6 @@
-package community.flock.wirespec.openapi
+package community.flock.wirespec.openapi.v3
 
-import community.flock.kotlinx.openapi.bindings.OpenAPI
+import community.flock.kotlinx.openapi.bindings.v3.OpenAPI
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Type
@@ -9,19 +9,16 @@ import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Identifier
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive
+import community.flock.wirespec.openapi.IO
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-
-expect object IO {
-    fun readOpenApi(file: String): String
-}
 
 class OpenApiParserTest {
 
     @Test
     fun pizza() {
-        val json = IO.readOpenApi("pizza.json")
+        val json = IO.readOpenApi("v3/pizza.json")
 
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiParser.parse(openApi)
@@ -72,7 +69,7 @@ class OpenApiParserTest {
     @Test
     fun todo() {
 
-        val json = IO.readOpenApi("todo.json")
+        val json = IO.readOpenApi("v3/todo.json")
 
         val openApi = OpenAPI.decodeFromString(json)
 

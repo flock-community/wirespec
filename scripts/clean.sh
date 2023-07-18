@@ -8,6 +8,7 @@ root="$dir/.."
   (cd "$root"/lsp/node/server && npm run clean) &&
   (cd "$root"/examples/spring-boot-gradle-plugin && ./gradlew clean) &&
   (cd "$root"/examples/spring-boot-maven-plugin && ./mvnw clean) &&
+  (cd "$root"/examples/spring-boot-openapi-maven-plugin && ./mvnw clean) &&
   (cd "$root"/types && ./clean.sh) &&
   (cd "$root"/tmp && ./clean.sh) &&
   docker rmi wirespec

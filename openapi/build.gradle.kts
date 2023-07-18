@@ -14,14 +14,26 @@ repositories {
 }
 
 kotlin {
+    macosX64()
+    macosArm64()
+    linuxX64()
+    mingwX64()
+    js(IR) {
+        nodejs()
+    }
     jvm {
         withJava()
+        java {
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(17))
+            }
+        }
     }
     sourceSets {
         commonMain {
             dependencies {
                 implementation(project(":compiler:core"))
-                implementation("community.flock.kotlinx.openapi.bindings:kotlin-openapi-bindings:0.0.8")
+                implementation("community.flock.kotlinx.openapi.bindings:kotlin-openapi-bindings:0.0.11")
             }
         }
         commonTest {

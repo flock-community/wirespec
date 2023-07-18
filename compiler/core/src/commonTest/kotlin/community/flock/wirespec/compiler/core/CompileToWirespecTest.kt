@@ -16,7 +16,7 @@ class CompileToWirespecTest {
                   foo: String,
                   bar: String
                 }
-                
+          
                 """.trimIndent()
 
         Wirespec.compile(source)(logger)(WirespecEmitter(logger = logger))

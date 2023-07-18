@@ -46,6 +46,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(project(":compiler:core"))
+                implementation(project(":openapi"))
                 implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
             }
         }

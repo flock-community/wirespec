@@ -1,8 +1,8 @@
 package community.flock.wirespec.examples.open_api_app.kotlin
 
-import community.flock.wirespec.generated.kotlin.CreatePets
-import community.flock.wirespec.generated.kotlin.ListPets
-import community.flock.wirespec.generated.kotlin.Pet
+import community.flock.wirespec.generated.kotlin.v3.CreatePets
+import community.flock.wirespec.generated.kotlin.v3.ListPets
+import community.flock.wirespec.generated.kotlin.v3.Pet
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
