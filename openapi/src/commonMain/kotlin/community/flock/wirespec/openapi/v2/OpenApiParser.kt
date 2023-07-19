@@ -4,6 +4,7 @@ import community.flock.kotlinx.openapi.bindings.v2.OpenAPI
 import community.flock.kotlinx.openapi.bindings.v2.OperationObject
 import community.flock.kotlinx.openapi.bindings.v2.ParameterLocation
 import community.flock.kotlinx.openapi.bindings.v2.ParameterObject
+import community.flock.kotlinx.openapi.bindings.v2.ParameterOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v2.PathItemObject
 import community.flock.kotlinx.openapi.bindings.v2.ReferenceObject
 import community.flock.kotlinx.openapi.bindings.v2.ResponseObject
@@ -165,6 +166,12 @@ fun ResponseOrReferenceObject.resolve(openApi: SwaggerObject): ResponseObject? =
     when (this) {
         is ResponseObject -> this
         is ReferenceObject -> this.resolveResponseObject(openApi)?.second
+    }
+
+fun ParameterOrReferenceObject.resolve(openApi: SwaggerObject): ParameterObject? =
+    when (this) {
+        is ParameterObject -> this
+        is ReferenceObject -> this.resolveParameterObject(openApi)
     }
 
 private fun SchemaObject.flatten(
@@ -354,8 +361,24 @@ private fun OpenapiType.toPrimitive() = when (this) {
     else -> error("Type is not a primitive")
 }
 
-private fun ParameterObject.toField(openApi: SwaggerObject) = schema
-    ?.resolve(openApi)
-    ?.type
-    ?.toPrimitive()
-    ?.let { Field(Field.Identifier(name), Reference.Primitive(it, false), this.required ?: false) }
+private fun ParameterObject.toField(openApi: SwaggerObject) = this
+    .resolve(openApi)
+    ?.let {
+        when (val type = it.type) {
+            OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> type
+                .toPrimitive()
+                .let { Reference.Primitive(it, false) }
+
+            OpenapiType.ARRAY -> it.items
+                ?.resolve(openApi)
+                ?.type
+                ?.toPrimitive()
+                ?.let { Reference.Primitive(it, true) }
+                ?: TODO()
+
+            OpenapiType.OBJECT -> TODO()
+            OpenapiType.FILE -> TODO()
+            null -> TODO()
+        }
+    }
+    ?.let { Field(Field.Identifier(name), it, !(this.required ?: false)) }

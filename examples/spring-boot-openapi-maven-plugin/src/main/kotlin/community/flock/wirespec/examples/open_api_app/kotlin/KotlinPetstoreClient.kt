@@ -1,12 +1,9 @@
 package community.flock.wirespec.examples.open_api_app.kotlin
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import community.flock.wirespec.generated.kotlin.v3.Content
-import community.flock.wirespec.generated.kotlin.v3.ContentMapper
 import community.flock.wirespec.generated.kotlin.v3.CreatePets
 import community.flock.wirespec.generated.kotlin.v3.ListPets
-import community.flock.wirespec.generated.kotlin.v3.Request
-import community.flock.wirespec.generated.kotlin.v3.Response
+import community.flock.wirespec.generated.kotlin.v3.WirespecShared
 import community.flock.wirespec.generated.kotlin.v3.ShowPetById
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -23,31 +20,31 @@ class KotlinPetClientConfiguration {
 
     @Bean
     fun kotlinContentMapper(objectMapper: ObjectMapper) =
-        object : ContentMapper<ByteArray> {
+        object : WirespecShared.ContentMapper<ByteArray> {
             override fun <T> read(
-                content: Content<ByteArray>,
+                content: WirespecShared.Content<ByteArray>,
                 valueType: KType,
-            ): Content<T> = content.let {
+            ): WirespecShared.Content<T> = content.let {
                 val type = objectMapper.constructType(valueType.javaType)
                 val obj: T = objectMapper.readValue(content.body, type)
-                Content(it.type, obj)
+                WirespecShared.Content(it.type, obj)
             }
 
             override fun <T> write(
-                content: Content<T>,
-            ): Content<ByteArray> = content.let {
+                content: WirespecShared.Content<T>,
+            ): WirespecShared.Content<ByteArray> = content.let {
                 val bytes = objectMapper.writeValueAsBytes(content.body)
-                Content(it.type, bytes)
+                WirespecShared.Content(it.type, bytes)
             }
         }
 
 
     @Bean
-    fun kotlinPetstoreClient(restTemplate: RestTemplate, kotlinContentMapper: ContentMapper<ByteArray>): KotlinPetstoreClient =
+    fun kotlinPetstoreClient(restTemplate: RestTemplate, kotlinContentMapper: WirespecShared.ContentMapper<ByteArray>): KotlinPetstoreClient =
         object : KotlinPetstoreClient {
-            fun <Req : Request<*>, Res : Response<*>> handle(
+            fun <Req : WirespecShared.Request<*>, Res : WirespecShared.Response<*>> handle(
                 request: Req,
-                responseMapper: (ContentMapper<ByteArray>) -> (Int, Map<String, List<String>>, Content<ByteArray>) -> Res
+                responseMapper: (WirespecShared.ContentMapper<ByteArray>) -> (Int, Map<String, List<String>>, WirespecShared.Content<ByteArray>) -> Res
             ) = restTemplate.execute(
                 URI("https://6467e16be99f0ba0a819fd68.mockapi.io${request.path}"),
                 HttpMethod.valueOf(request.method.name),
@@ -58,7 +55,7 @@ class KotlinPetClientConfiguration {
                 },
                 { res ->
                     val contentType = res.headers.contentType?.toString() ?: error("No content type")
-                    val content = Content(contentType, res.body.readBytes())
+                    val content = WirespecShared.Content(contentType, res.body.readBytes())
                     responseMapper(kotlinContentMapper)(
                         res.statusCode.value(),
                         res.headers,

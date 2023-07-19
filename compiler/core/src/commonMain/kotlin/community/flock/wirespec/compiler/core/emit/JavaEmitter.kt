@@ -24,7 +24,7 @@ class JavaEmitter(
         |public interface WirespecShared {
         |${SPACER}enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE };
         |${SPACER}record Content<T> (String type, T body) {};
-        |${SPACER}interface Request<T> { String getPath(); Method getMethod(); java.util.Map<String, String> getQuery(); java.util.Map<String, java.util.List<String>> getHeaders(); Content<T> getContent(); }
+        |${SPACER}interface Request<T> { String getPath(); Method getMethod(); java.util.Map<String, java.util.List<String>> getQuery(); java.util.Map<String, java.util.List<String>> getHeaders(); Content<T> getContent(); }
         |${SPACER}interface Response<T> { int getStatus(); java.util.Map<String, java.util.List<String>> getHeaders(); Content<T> getContent(); }
         |${SPACER}interface ContentMapper<B> { <T> Content<T> read(Content<B> content, Type valueType); <T> Content<B> write(Content<T> content); }
         |${SPACER}static Type getType(final Class<?> type, final boolean isIterable) {
@@ -115,7 +115,7 @@ class JavaEmitter(
         |${SPACER}class ${endpoint.name}Request${content.emitContentType()} implements ${endpoint.name}Request<${content?.reference?.emit() ?: "Void"}> {
         |${SPACER}${SPACER}private final String path;
         |${SPACER}${SPACER}private final WirespecShared.Method method;
-        |${SPACER}${SPACER}private final java.util.Map<String, String> query;
+        |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<String>> query;
         |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<String>> headers;
         |${SPACER}${SPACER}private final WirespecShared.Content<${content?.reference?.emit() ?: "Void"}> content;
         |${SPACER}${SPACER}public ${endpoint.name}Request${content.emitContentType()}(${endpoint.emitRequestSignature(content)}) {
@@ -127,7 +127,7 @@ class JavaEmitter(
         |${SPACER}${SPACER}}
         |${SPACER}${SPACER}@Override public String getPath() {return path;}
         |${SPACER}${SPACER}@Override public WirespecShared.Method getMethod() {return method;}
-        |${SPACER}${SPACER}@Override public java.util.Map<String, String> getQuery() {return query;}
+        |${SPACER}${SPACER}@Override public java.util.Map<String, java.util.List<String>> getQuery() {return query;}
         |${SPACER}${SPACER}@Override public java.util.Map<String, java.util.List<String>> getHeaders() {return headers;}
         |${SPACER}${SPACER}@Override public WirespecShared.Content<${content?.reference?.emit() ?: "Void"}> getContent() {return content;}
         |${SPACER}}
@@ -195,7 +195,7 @@ class JavaEmitter(
                 .joinToString(", ") { it.emit() }
     }
 
-    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ", "java.util.Map.of(", ")") { "\"${it.identifier.emit()}\", ${it.identifier.emit()}.toString()" }
+    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ", "java.util.Map.of(", ")") { "\"${it.identifier.emit()}\", java.util.List.of(${it.identifier.emit()}.toString())" }
 
     private fun List<Endpoint.Segment>.emitSegment() = "/" + joinToString("/") {
         when (it) {
