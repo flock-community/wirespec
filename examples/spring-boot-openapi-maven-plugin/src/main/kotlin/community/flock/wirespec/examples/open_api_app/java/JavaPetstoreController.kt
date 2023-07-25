@@ -17,8 +17,8 @@ class JavaPetstoreController(
     suspend fun list(): List<Int> {
         val request = ListPets.ListPetsRequestVoid(10, null)
         return when (val res = javaPetstoreClient.listPets(request)) {
-            is ListPets.ListPetsResponse200ApplicationJson -> res.content.body.map { it.id }
-            is ListPets.ListPetsResponseDefaultApplicationJson -> error("Something went wrong")
+            is ListPets.Response200ApplicationJson -> res.content.body.map { it.id }
+            is ListPets.ResponseDefaultApplicationJson -> error("Something went wrong")
             else -> error("No response")
         }
     }

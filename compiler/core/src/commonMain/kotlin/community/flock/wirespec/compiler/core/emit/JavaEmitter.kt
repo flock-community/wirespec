@@ -98,13 +98,13 @@ class JavaEmitter(
         """public interface $name {
             |${SPACER}static String PATH = "${path.emitSegment()}";
             |${responses.emitResponseMapper(this)}
-            |${SPACER}interface ${name}Request<T> extends WirespecShared.Request<T> {}
+            |${SPACER}interface Request<T> extends WirespecShared.Request<T> {}
             |${requests.joinToString("\n"){ it.emit(this) }}
-            |${SPACER}interface ${name}Response<T> extends WirespecShared.Response<T> {}
-            |${responses.map{it.status.groupStatus()}.toSet().joinToString("\n") { "${SPACER}interface ${name}Response${it}<T> extends ${name}Response<T>{};" }}
-            |${responses.filter { it.status.isInt() }.map{it.status}.joinToString("\n") { "${SPACER}interface ${name}Response${it}<T> extends ${name}Response${it.groupStatus()}<T>{};" }}
+            |${SPACER}interface Response<T> extends WirespecShared.Response<T> {}
+            |${responses.map{it.status.groupStatus()}.toSet().joinToString("\n") { "${SPACER}interface Response${it}<T> extends Response<T>{};" }}
+            |${responses.filter { it.status.isInt() }.map{it.status}.joinToString("\n") { "${SPACER}interface Response${it}<T> extends Response${it.groupStatus()}<T>{};" }}
             |${responses.joinToString("\n"){ it.emit(this) }}
-            |${SPACER}public ${name}Response ${name.firstToLower()}(${name}Request request);
+            |${SPACER}public Response ${name.firstToLower()}(Request request);
             |}
             |""".trimMargin()
     }
@@ -112,7 +112,7 @@ class JavaEmitter(
     private fun AST.hasEndpoints() = any { it is Endpoint }
 
     private fun Endpoint.Request.emit(endpoint: Endpoint) = """
-        |${SPACER}class ${endpoint.name}Request${content.emitContentType()} implements ${endpoint.name}Request<${content?.reference?.emit() ?: "Void"}> {
+        |${SPACER}class Request${content.emitContentType()} implements Request<${content?.reference?.emit() ?: "Void"}> {
         |${SPACER}${SPACER}private final String path;
         |${SPACER}${SPACER}private final WirespecShared.Method method;
         |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<String>> query;
