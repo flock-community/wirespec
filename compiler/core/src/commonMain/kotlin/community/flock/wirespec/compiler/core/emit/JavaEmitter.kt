@@ -97,14 +97,14 @@ class JavaEmitter(
     override fun Endpoint.emit() = withLogging(logger) {
         """public interface $name {
             |${SPACER}static String PATH = "${path.emitSegment()}";
-            |${responses.emitResponseMapper(this)}
-            |${SPACER}interface ${name}Request<T> extends WirespecShared.Request<T> {}
+            |${responses.emitResponseMapper()}
+            |${SPACER}interface Request<T> extends WirespecShared.Request<T> {}
             |${requests.joinToString("\n"){ it.emit(this) }}
-            |${SPACER}interface ${name}Response<T> extends WirespecShared.Response<T> {}
-            |${responses.map{it.status.groupStatus()}.toSet().joinToString("\n") { "${SPACER}interface ${name}Response${it}<T> extends ${name}Response<T>{};" }}
-            |${responses.filter { it.status.isInt() }.map{it.status}.joinToString("\n") { "${SPACER}interface ${name}Response${it}<T> extends ${name}Response${it.groupStatus()}<T>{};" }}
-            |${responses.joinToString("\n"){ it.emit(this) }}
-            |${SPACER}public ${name}Response ${name.firstToLower()}(${name}Request request);
+            |${SPACER}interface Response<T> extends WirespecShared.Response<T> {}
+            |${responses.map{it.status.groupStatus()}.toSet().joinToString("\n") { "${SPACER}interface Response${it}<T> extends Response<T>{};" }}
+            |${responses.filter { it.status.isInt() }.map{it.status}.joinToString("\n") { "${SPACER}interface Response${it}<T> extends Response${it.groupStatus()}<T>{};" }}
+            |${responses.joinToString("\n"){ it.emit() }}
+            |${SPACER}public Response ${name.firstToLower()}(Request request);
             |}
             |""".trimMargin()
     }
@@ -112,13 +112,13 @@ class JavaEmitter(
     private fun AST.hasEndpoints() = any { it is Endpoint }
 
     private fun Endpoint.Request.emit(endpoint: Endpoint) = """
-        |${SPACER}class ${endpoint.name}Request${content.emitContentType()} implements ${endpoint.name}Request<${content?.reference?.emit() ?: "Void"}> {
+        |${SPACER}class Request${content.emitContentType()} implements Request<${content?.reference?.emit() ?: "Void"}> {
         |${SPACER}${SPACER}private final String path;
         |${SPACER}${SPACER}private final WirespecShared.Method method;
         |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<String>> query;
         |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<String>> headers;
         |${SPACER}${SPACER}private final WirespecShared.Content<${content?.reference?.emit() ?: "Void"}> content;
-        |${SPACER}${SPACER}public ${endpoint.name}Request${content.emitContentType()}(${endpoint.emitRequestSignature(content)}) {
+        |${SPACER}${SPACER}public Request${content.emitContentType()}(${endpoint.emitRequestSignature(content)}) {
         |${SPACER}${SPACER}${SPACER}this.path = ${endpoint.path.emitPath()};
         |${SPACER}${SPACER}${SPACER}this.method = WirespecShared.Method.${endpoint.method.name};
         |${SPACER}${SPACER}${SPACER}this.query = ${endpoint.query.emitMap()};
@@ -133,12 +133,12 @@ class JavaEmitter(
         |${SPACER}}
     """.trimMargin()
 
-    private fun Endpoint.Response.emit(endpoint: Endpoint) = """
-        |${SPACER}class ${endpoint.name}Response${status.firstToUpper()}${content.emitContentType()} implements ${endpoint.name}Response${status.takeIf { it.isInt() }?.groupStatus().orEmptyString()}<${content?.reference?.emit() ?: "Void"}> {
+    private fun Endpoint.Response.emit() = """
+        |${SPACER}class Response${status.firstToUpper()}${content.emitContentType()} implements Response${status.takeIf { it.isInt() }?.groupStatus().orEmptyString()}<${content?.reference?.emit() ?: "Void"}> {
         |${SPACER}${SPACER}private final int status;
         |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<String>> headers;
         |${SPACER}${SPACER}private final WirespecShared.Content<${content?.reference?.emit() ?: "Void"}> content;
-        |${SPACER}${SPACER}public ${endpoint.name}Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "int status, " }.orEmptyString()}java.util.Map<String, java.util.List<String>> headers${content?.let { ", ${it.reference.emit()} body" } ?: ""}) {
+        |${SPACER}${SPACER}public Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "int status, " }.orEmptyString()}java.util.Map<String, java.util.List<String>> headers${content?.let { ", ${it.reference.emit()} body" } ?: ""}) {
         |${SPACER}${SPACER}${SPACER}this.status = ${status.takeIf { it.isInt() } ?: "status"};
         |${SPACER}${SPACER}${SPACER}this.headers = headers;
         |${SPACER}${SPACER}${SPACER}this.content = ${content?.let { "new WirespecShared.Content(\"${it.type}\", body)" } ?: "null"};
@@ -149,24 +149,24 @@ class JavaEmitter(
         |${SPACER}}
         """.trimMargin()
 
-    private fun List<Endpoint.Response>.emitResponseMapper(endpoint: Endpoint) = """
-        |${SPACER}static <B> ${endpoint.name}Response RESPONSE_MAPPER(WirespecShared.ContentMapper<B> contentMapper, int status, java.util.Map<String, java.util.List<String>> headers, WirespecShared.Content<B> content) {
-        |${joinToString (""){ it.emitResponseMapperCondition(endpoint) }}
+    private fun List<Endpoint.Response>.emitResponseMapper() = """
+        |${SPACER}static <B> Response RESPONSE_MAPPER(WirespecShared.ContentMapper<B> contentMapper, int status, java.util.Map<String, java.util.List<String>> headers, WirespecShared.Content<B> content) {
+        |${joinToString (""){ it.emitResponseMapperCondition() }}
         |${SPACER}${SPACER}throw new IllegalStateException("Unknown response type");
         |${SPACER}}
     """.trimMargin()
 
-    private fun Endpoint.Response.emitResponseMapperCondition(endpoint: Endpoint) =
+    private fun Endpoint.Response.emitResponseMapperCondition() =
         when (content) {
             null -> """
-                    |${SPACER}${SPACER}${SPACER}if(${status.takeIf { it.isInt() }?.let { "status == $status && " }.orEmptyString()}content == null) { return new ${endpoint.name}Response${status.firstToUpper()}Void(${status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()}headers); }
+                    |${SPACER}${SPACER}${SPACER}if(${status.takeIf { it.isInt() }?.let { "status == $status && " }.orEmptyString()}content == null) { return new Response${status.firstToUpper()}Void(${status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()}headers); }
                     |
                 """.trimMargin()
 
             else -> """
                     |${SPACER}${SPACER}${SPACER}if(${status.takeIf { it.isInt() }?.let { "status == $status && " }.orEmptyString()}content.type().equals("${content.type}")) {
                     |${SPACER}${SPACER}${SPACER}${SPACER}WirespecShared.Content<${content.reference.emit()}> c = contentMapper.read(content, WirespecShared.getType(${content.reference.emitPrimaryType()}.class, ${content.reference.isIterable}));
-                    |${SPACER}${SPACER}${SPACER}${SPACER}return new ${endpoint.name}Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()}headers, c.body());
+                    |${SPACER}${SPACER}${SPACER}${SPACER}return new Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()}headers, c.body());
                     |${SPACER}${SPACER}${SPACER}}
                     |
                 """.trimMargin()

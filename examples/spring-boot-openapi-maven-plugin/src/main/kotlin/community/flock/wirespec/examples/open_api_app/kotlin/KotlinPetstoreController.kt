@@ -15,20 +15,20 @@ class KotlinPetstoreController(
 
     @GetMapping
     suspend fun list(): List<Int> {
-        val request = ListPets.ListPetsRequestUnit(10, null)
+        val request = ListPets.RequestUnit(10, null)
         return when (val res = kotlinPetstoreClient.listPets(request)) {
-            is ListPets.ListPetsResponse200ApplicationJson -> res.content.body.map { it.id }
-            is ListPets.ListPetsResponseDefaultApplicationJson -> error("Something went wrong")
+            is ListPets.Response200ApplicationJson -> res.content.body.map { it.id }
+            is ListPets.ResponseDefaultApplicationJson -> error("Something went wrong")
             else -> error("No response")
         }
     }
 
     @PostMapping
     suspend fun create(@RequestBody pet: Pet): ResponseEntity<Unit> {
-        val request = CreatePets.CreatePetsRequestApplicationJson(pet)
+        val request = CreatePets.RequestApplicationJson(pet)
         return when (kotlinPetstoreClient.createPets(request)) {
-            is CreatePets.CreatePetsResponse201 -> ResponseEntity.noContent().build()
-            is CreatePets.CreatePetsResponse500ApplicationJson -> error("Something went wrong")
+            is CreatePets.Response201 -> ResponseEntity.noContent().build()
+            is CreatePets.Response500ApplicationJson -> error("Something went wrong")
             else -> error("No response")
         }
     }

@@ -83,37 +83,37 @@ class KotlinEmitter(
 
     override fun Endpoint.emit() = withLogging(logger) {
         """interface $name {
-        |${SPACER}sealed interface ${name}Request<T>: WirespecShared.Request<T>
+        |${SPACER}sealed interface Request<T>: WirespecShared.Request<T>
         |${
             requests.joinToString("\n") {
-                "${SPACER}class ${name}Request${it.content?.emitContentType() ?: "Unit"} ${
+                "${SPACER}class Request${it.content?.emitContentType() ?: "Unit"} ${
                     emitRequestSignature(
                         it.content
                     )
-                }: ${name}Request<${it.content?.reference?.emit() ?: "Unit"}> {override val path = \"${path.emitPath()}\"; override val method = WirespecShared.Method.${method.name}; override val query = mapOf<String, List<String>>(${query.emitMap()}); override val headers = mapOf<String, List<String>>(${headers.emitMap()}); override val content = ${it.content?.let { "WirespecShared.Content(\"${it.type}\", body)" } ?: "null"}}"
+                }: Request<${it.content?.reference?.emit() ?: "Unit"}> {override val path = \"${path.emitPath()}\"; override val method = WirespecShared.Method.${method.name}; override val query = mapOf<String, List<String>>(${query.emitMap()}); override val headers = mapOf<String, List<String>>(${headers.emitMap()}); override val content = ${it.content?.let { "WirespecShared.Content(\"${it.type}\", body)" } ?: "null"}}"
             }
         }
-        |${SPACER}sealed interface ${name}Response<T>: WirespecShared.Response<T>
+        |${SPACER}sealed interface Response<T>: WirespecShared.Response<T>
         |${
             responses.map { it.status.groupStatus() }.toSet()
-                .joinToString("\n") { "${SPACER}sealed interface ${name}Response${it}<T>: ${name}Response<T>" }
+                .joinToString("\n") { "${SPACER}sealed interface Response${it}<T>: Response<T>" }
         }
         |${
             responses.filter { it.status.isInt() }.map { it.status }
-                .joinToString("\n") { "${SPACER}sealed interface ${name}Response${it}<T>: ${name}Response${it.groupStatus()}<T>" }
+                .joinToString("\n") { "${SPACER}sealed interface Response${it}<T>: Response${it.groupStatus()}<T>" }
         }
         |${
             responses.filter { it.status.isInt() }
-                .joinToString("\n") { "${SPACER}class ${name}Response${it.status}${it.content?.emitContentType() ?: "Unit"} (override val headers: Map<String, List<String>>${it.content?.let { ", body: ${it.reference.emit()}" } ?: ""} ): ${name}Response${it.status}<${it.content?.reference?.emit() ?: "Unit"}> { override val status = ${it.status}; override val content = ${it.content?.let { "WirespecShared.Content(\"${it.type}\", body)" } ?: "null"}}" }
+                .joinToString("\n") { "${SPACER}class Response${it.status}${it.content?.emitContentType() ?: "Unit"} (override val headers: Map<String, List<String>>${it.content?.let { ", body: ${it.reference.emit()}" } ?: ""} ): Response${it.status}<${it.content?.reference?.emit() ?: "Unit"}> { override val status = ${it.status}; override val content = ${it.content?.let { "WirespecShared.Content(\"${it.type}\", body)" } ?: "null"}}" }
         }
         |${
             responses.filter { !it.status.isInt() }
-                .joinToString("\n") { "${SPACER}class ${name}Response${it.status.firstToUpper()}${it.content?.emitContentType() ?: "Unit"} (override val status: Int, override val headers: Map<String, List<String>>${it.content?.let { ", body: ${it.reference.emit()}" } ?: ""} ): ${name}Response${it.status.firstToUpper()}<${it.content?.reference?.emit() ?: "Unit"}> { override val content = ${it.content?.let { "WirespecShared.Content(\"${it.type}\", body)" } ?: "null"}}" }
+                .joinToString("\n") { "${SPACER}class Response${it.status.firstToUpper()}${it.content?.emitContentType() ?: "Unit"} (override val status: Int, override val headers: Map<String, List<String>>${it.content?.let { ", body: ${it.reference.emit()}" } ?: ""} ): Response${it.status.firstToUpper()}<${it.content?.reference?.emit() ?: "Unit"}> { override val content = ${it.content?.let { "WirespecShared.Content(\"${it.type}\", body)" } ?: "null"}}" }
         }
-        |suspend fun ${name.firstToLower()}(request: ${name}Request<*>): ${name}Response<*>
+        |suspend fun ${name.firstToLower()}(request: Request<*>): Response<*>
         |${SPACER}companion object{
         |${SPACER}${SPACER}const val PATH = "${path.emitSegment()}"
-        |${SPACER}${SPACER}${responses.emitResponseMapper(this)}
+        |${SPACER}${SPACER}${responses.emitResponseMapper()}
         |${SPACER}${SPACER}}
         |${SPACER}}
         |}
@@ -161,25 +161,25 @@ class KotlinEmitter(
         }.run { "$first: $second" }
     }
 
-    private fun List<Endpoint.Response>.emitResponseMapper(endpoint: Endpoint) = """
+    private fun List<Endpoint.Response>.emitResponseMapper() = """
         |fun <B> RESPONSE_MAPPER(contentMapper: WirespecShared.ContentMapper<B>) =
         |${SPACER}fun(status: Int, headers:Map<String, List<String>>, content: WirespecShared.Content<B>?) =
         |${SPACER}${SPACER}when {
-        |${filter { it.status.isInt() }.joinToString("\n") { it.emitResponseMapperCondition(endpoint) }}
-        |${filter { !it.status.isInt() }.joinToString("\n") { it.emitResponseMapperCondition(endpoint) }}
+        |${filter { it.status.isInt() }.joinToString("\n") { it.emitResponseMapperCondition() }}
+        |${filter { !it.status.isInt() }.joinToString("\n") { it.emitResponseMapperCondition() }}
         |${SPACER}${SPACER}${SPACER}else -> error("Cannot map response with status ${"$"}status")
     """.trimMargin()
 
-    private fun Endpoint.Response.emitResponseMapperCondition(endpoint: Endpoint) =
+    private fun Endpoint.Response.emitResponseMapperCondition() =
         when (content) {
             null -> """
-                    |${SPACER}${SPACER}${SPACER}${status.takeIf { it.isInt() }?.let { "status == $status && " }.orEmptyString()}content == null -> ${endpoint.name}Response${status.firstToUpper()}Unit(${status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()}headers)
+                    |${SPACER}${SPACER}${SPACER}${status.takeIf { it.isInt() }?.let { "status == $status && " }.orEmptyString()}content == null -> Response${status.firstToUpper()}Unit(${status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()}headers)
                 """.trimMargin()
 
             else -> """
                     |${SPACER}${SPACER}${SPACER}${status.takeIf { it.isInt() }?.let { "status == $status && " }.orEmptyString()}content?.type == "${content.type}" -> contentMapper
                     |${SPACER}${SPACER}${SPACER}${SPACER}.read<${content.reference.emit()}>(content, typeOf<${content.reference.emit()}>())
-                    |${SPACER}${SPACER}${SPACER}${SPACER}.let{ ${endpoint.name}Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()}headers, it.body) }
+                    |${SPACER}${SPACER}${SPACER}${SPACER}.let{ Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()}headers, it.body) }
                 """.trimMargin()
         }
 
