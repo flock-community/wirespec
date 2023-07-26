@@ -113,7 +113,7 @@ class KotlinEmitter(
         |suspend fun ${name.firstToLower()}(request: Request<*>): Response<*>
         |${SPACER}companion object{
         |${SPACER}${SPACER}const val PATH = "${path.emitSegment()}"
-        |${SPACER}${SPACER}${responses.emitResponseMapper(this)}
+        |${SPACER}${SPACER}${responses.emitResponseMapper()}
         |${SPACER}${SPACER}}
         |${SPACER}}
         |}
@@ -161,25 +161,25 @@ class KotlinEmitter(
         }.run { "$first: $second" }
     }
 
-    private fun List<Endpoint.Response>.emitResponseMapper(endpoint: Endpoint) = """
+    private fun List<Endpoint.Response>.emitResponseMapper() = """
         |fun <B> RESPONSE_MAPPER(contentMapper: WirespecShared.ContentMapper<B>) =
         |${SPACER}fun(status: Int, headers:Map<String, List<String>>, content: WirespecShared.Content<B>?) =
         |${SPACER}${SPACER}when {
-        |${filter { it.status.isInt() }.joinToString("\n") { it.emitResponseMapperCondition(endpoint) }}
-        |${filter { !it.status.isInt() }.joinToString("\n") { it.emitResponseMapperCondition(endpoint) }}
+        |${filter { it.status.isInt() }.joinToString("\n") { it.emitResponseMapperCondition() }}
+        |${filter { !it.status.isInt() }.joinToString("\n") { it.emitResponseMapperCondition() }}
         |${SPACER}${SPACER}${SPACER}else -> error("Cannot map response with status ${"$"}status")
     """.trimMargin()
 
-    private fun Endpoint.Response.emitResponseMapperCondition(endpoint: Endpoint) =
+    private fun Endpoint.Response.emitResponseMapperCondition() =
         when (content) {
             null -> """
-                    |${SPACER}${SPACER}${SPACER}${status.takeIf { it.isInt() }?.let { "status == $status && " }.orEmptyString()}content == null -> ${endpoint.name}Response${status.firstToUpper()}Unit(${status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()}headers)
+                    |${SPACER}${SPACER}${SPACER}${status.takeIf { it.isInt() }?.let { "status == $status && " }.orEmptyString()}content == null -> Response${status.firstToUpper()}Unit(${status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()}headers)
                 """.trimMargin()
 
             else -> """
                     |${SPACER}${SPACER}${SPACER}${status.takeIf { it.isInt() }?.let { "status == $status && " }.orEmptyString()}content?.type == "${content.type}" -> contentMapper
                     |${SPACER}${SPACER}${SPACER}${SPACER}.read<${content.reference.emit()}>(content, typeOf<${content.reference.emit()}>())
-                    |${SPACER}${SPACER}${SPACER}${SPACER}.let{ ${endpoint.name}Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()}headers, it.body) }
+                    |${SPACER}${SPACER}${SPACER}${SPACER}.let{ Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()}headers, it.body) }
                 """.trimMargin()
         }
 

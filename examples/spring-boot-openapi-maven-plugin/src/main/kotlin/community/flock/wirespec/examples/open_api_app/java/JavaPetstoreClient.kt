@@ -58,15 +58,15 @@ class JavaPetClientConfiguration {
                 }
             ) ?: error("No response")
 
-            override fun listPets(request: ListPets.ListPetsRequest<*>): ListPets.ListPetsResponse<*> {
+            override fun listPets(request: ListPets.Request<*>): ListPets.Response<*> {
              return handle(request, ListPets::RESPONSE_MAPPER)
             }
 
-            override fun createPets(request: CreatePets.CreatePetsRequest<*>): CreatePets.CreatePetsResponse<*> {
+            override fun createPets(request: CreatePets.Request<*>): CreatePets.Response<*> {
                 return handle(request, CreatePets::RESPONSE_MAPPER)
             }
 
-            override fun showPetById(request: ShowPetById.ShowPetByIdRequest<*>): ShowPetById.ShowPetByIdResponse<*> {
+            override fun showPetById(request: ShowPetById.Request<*>): ShowPetById.Response<*> {
                 return handle(request, ShowPetById::RESPONSE_MAPPER)
             }
 

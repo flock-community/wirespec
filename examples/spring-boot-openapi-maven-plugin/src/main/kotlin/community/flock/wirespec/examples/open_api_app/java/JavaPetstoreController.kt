@@ -15,7 +15,7 @@ class JavaPetstoreController(
 
     @GetMapping
     suspend fun list(): List<Int> {
-        val request = ListPets.ListPetsRequestVoid(10, null)
+        val request = ListPets.RequestVoid(10, null)
         return when (val res = javaPetstoreClient.listPets(request)) {
             is ListPets.Response200ApplicationJson -> res.content.body.map { it.id }
             is ListPets.ResponseDefaultApplicationJson -> error("Something went wrong")
@@ -25,10 +25,11 @@ class JavaPetstoreController(
 
     @PostMapping
     suspend fun create(@RequestBody pet: Pet): ResponseEntity<Unit> {
-        val request = CreatePets.CreatePetsRequestApplicationJson(pet)
-        return when (javaPetstoreClient.createPets(request)) {
-            is CreatePets.CreatePetsResponse201 -> ResponseEntity.noContent().build()
-            is CreatePets.CreatePetsResponse500ApplicationJson -> error("Something went wrong")
+        val request = CreatePets.RequestApplicationJson(pet)
+        val response = javaPetstoreClient.createPets(request)
+        return when (response) {
+            is CreatePets.Response201 -> ResponseEntity.noContent().build()
+            is CreatePets.Response500ApplicationJson -> error("Something went wrong")
             else -> error("No response")
         }
     }

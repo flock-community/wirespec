@@ -64,15 +64,15 @@ class KotlinPetClientConfiguration {
                 }
             ) ?: error("No response")
 
-            override suspend fun listPets(request: ListPets.ListPetsRequest<*>): ListPets.ListPetsResponse<*> {
+            override suspend fun listPets(request: ListPets.Request<*>): ListPets.Response<*> {
                 return handle(request, ListPets::RESPONSE_MAPPER)
             }
 
-            override suspend fun createPets(request: CreatePets.CreatePetsRequest<*>): CreatePets.CreatePetsResponse<*> {
+            override suspend fun createPets(request: CreatePets.Request<*>): CreatePets.Response<*> {
                 return handle(request, CreatePets::RESPONSE_MAPPER)
             }
 
-            override suspend fun showPetById(request: ShowPetById.ShowPetByIdRequest<*>): ShowPetById.ShowPetByIdResponse<*> {
+            override suspend fun showPetById(request: ShowPetById.Request<*>): ShowPetById.Response<*> {
                 return handle(request, ShowPetById::RESPONSE_MAPPER)
             }
 
