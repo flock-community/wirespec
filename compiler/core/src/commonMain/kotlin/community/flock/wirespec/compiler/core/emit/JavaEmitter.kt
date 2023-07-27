@@ -24,8 +24,8 @@ class JavaEmitter(
         |public interface WirespecShared {
         |${SPACER}enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE };
         |${SPACER}record Content<T> (String type, T body) {};
-        |${SPACER}interface Request<T> { String getPath(); Method getMethod(); java.util.Map<String, java.util.List<String>> getQuery(); java.util.Map<String, java.util.List<String>> getHeaders(); Content<T> getContent(); }
-        |${SPACER}interface Response<T> { int getStatus(); java.util.Map<String, java.util.List<String>> getHeaders(); Content<T> getContent(); }
+        |${SPACER}interface Request<T> { String getPath(); Method getMethod(); java.util.Map<String, java.util.List<Object>> getQuery(); java.util.Map<String, java.util.List<String>> getHeaders(); Content<T> getContent(); }
+        |${SPACER}interface Response<T> { int getStatus(); java.util.Map<String, java.util.List<Object>> getHeaders(); Content<T> getContent(); }
         |${SPACER}interface ContentMapper<B> { <T> Content<T> read(Content<B> content, Type valueType); <T> Content<B> write(Content<T> content); }
         |${SPACER}static Type getType(final Class<?> type, final boolean isIterable) {
         |${SPACER}${SPACER}if(isIterable) {
@@ -195,7 +195,7 @@ class JavaEmitter(
                 .joinToString(", ") { it.emit() }
     }
 
-    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ", "java.util.Map.of(", ")") { "\"${it.identifier.emit()}\", java.util.List.of(${it.identifier.emit()}.toString())" }
+    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ", "java.util.Map.of(", ")") { "\"${it.identifier.emit()}\", java.util.List.of(${it.identifier.emit()})" }
 
     private fun List<Endpoint.Segment>.emitSegment() = "/" + joinToString("/") {
         when (it) {

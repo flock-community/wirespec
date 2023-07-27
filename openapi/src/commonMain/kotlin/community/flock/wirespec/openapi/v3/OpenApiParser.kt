@@ -264,7 +264,7 @@ private fun SchemaObject.flatten(
                                         field = Field(
                                             Field.Identifier(key),
                                             reference,
-                                            false
+                                            !(this.required?.contains(key) ?: false)
                                         )
                                     )
                                 }
@@ -274,7 +274,7 @@ private fun SchemaObject.flatten(
                                     field = Field(
                                         Field.Identifier(key),
                                         Reference.Custom(value.getReference(), false),
-                                        false
+                                        !(this.required?.contains(key) ?: false)
                                     )
                                 )
                             }

@@ -23,8 +23,8 @@ class KotlinEmitter(
         |object WirespecShared {
         |${SPACER}enum class Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
         |${SPACER}data class Content<T> (val type:String, val body:T )
-        |${SPACER}interface Request<T> { val path:String; val method: Method; val query: Map<String, List<String>>; val headers: Map<String, List<String>>; val content:Content<T>? }
-        |${SPACER}interface Response<T> { val status:Int; val headers: Map<String, List<String>>; val content:Content<T>? }
+        |${SPACER}interface Request<T> { val path:String; val method: Method; val query: Map<String, List<Any>>; val headers: Map<String, List<String>>; val content:Content<T>? }
+        |${SPACER}interface Response<T> { val status:Int; val headers: Map<String, List<Any>>; val content:Content<T>? }
         |${SPACER}interface ContentMapper<B> { fun <T> read(content: Content<B>, valueType: KType): Content<T> fun <T> write(content: Content<T>): Content<B> }
         |}
     """.trimMargin()
@@ -143,7 +143,7 @@ class KotlinEmitter(
     }
 
     private fun List<Type.Shape.Field>.emitMap() =
-        joinToString(", ") { "\"${it.identifier.emit()}\" to listOf(${it.identifier.emit()}.toString())" }
+        joinToString(", ") { "\"${it.identifier.emit()}\" to listOf(${it.identifier.emit()})" }
 
     private fun Endpoint.Segment.emit(): String = withLogging(logger) {
         when (this) {
