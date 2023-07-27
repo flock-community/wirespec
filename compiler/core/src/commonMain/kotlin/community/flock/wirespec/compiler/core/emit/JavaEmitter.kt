@@ -24,8 +24,8 @@ class JavaEmitter(
         |public interface WirespecShared {
         |${SPACER}enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE };
         |${SPACER}record Content<T> (String type, T body) {};
-        |${SPACER}interface Request<T> { String getPath(); Method getMethod(); java.util.Map<String, java.util.List<String>> getQuery(); java.util.Map<String, java.util.List<String>> getHeaders(); Content<T> getContent(); }
-        |${SPACER}interface Response<T> { int getStatus(); java.util.Map<String, java.util.List<String>> getHeaders(); Content<T> getContent(); }
+        |${SPACER}interface Request<T> { String getPath(); Method getMethod(); java.util.Map<String, java.util.List<Object>> getQuery(); java.util.Map<String, java.util.List<Object>> getHeaders(); Content<T> getContent(); }
+        |${SPACER}interface Response<T> { int getStatus(); java.util.Map<String, java.util.List<Object>> getHeaders(); Content<T> getContent(); }
         |${SPACER}interface ContentMapper<B> { <T> Content<T> read(Content<B> content, Type valueType); <T> Content<B> write(Content<T> content); }
         |${SPACER}static Type getType(final Class<?> type, final boolean isIterable) {
         |${SPACER}${SPACER}if(isIterable) {
@@ -115,8 +115,8 @@ class JavaEmitter(
         |${SPACER}class Request${content.emitContentType()} implements Request<${content?.reference?.emit() ?: "Void"}> {
         |${SPACER}${SPACER}private final String path;
         |${SPACER}${SPACER}private final WirespecShared.Method method;
-        |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<String>> query;
-        |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<String>> headers;
+        |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<Object>> query;
+        |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<Object>> headers;
         |${SPACER}${SPACER}private final WirespecShared.Content<${content?.reference?.emit() ?: "Void"}> content;
         |${SPACER}${SPACER}public Request${content.emitContentType()}(${endpoint.emitRequestSignature(content)}) {
         |${SPACER}${SPACER}${SPACER}this.path = ${endpoint.path.emitPath()};
@@ -127,8 +127,8 @@ class JavaEmitter(
         |${SPACER}${SPACER}}
         |${SPACER}${SPACER}@Override public String getPath() {return path;}
         |${SPACER}${SPACER}@Override public WirespecShared.Method getMethod() {return method;}
-        |${SPACER}${SPACER}@Override public java.util.Map<String, java.util.List<String>> getQuery() {return query;}
-        |${SPACER}${SPACER}@Override public java.util.Map<String, java.util.List<String>> getHeaders() {return headers;}
+        |${SPACER}${SPACER}@Override public java.util.Map<String, java.util.List<Object>> getQuery() {return query;}
+        |${SPACER}${SPACER}@Override public java.util.Map<String, java.util.List<Object>> getHeaders() {return headers;}
         |${SPACER}${SPACER}@Override public WirespecShared.Content<${content?.reference?.emit() ?: "Void"}> getContent() {return content;}
         |${SPACER}}
     """.trimMargin()
@@ -136,21 +136,21 @@ class JavaEmitter(
     private fun Endpoint.Response.emit() = """
         |${SPACER}class Response${status.firstToUpper()}${content.emitContentType()} implements Response${status.takeIf { it.isInt() }?.groupStatus().orEmptyString()}<${content?.reference?.emit() ?: "Void"}> {
         |${SPACER}${SPACER}private final int status;
-        |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<String>> headers;
+        |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<Object>> headers;
         |${SPACER}${SPACER}private final WirespecShared.Content<${content?.reference?.emit() ?: "Void"}> content;
-        |${SPACER}${SPACER}public Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "int status, " }.orEmptyString()}java.util.Map<String, java.util.List<String>> headers${content?.let { ", ${it.reference.emit()} body" } ?: ""}) {
+        |${SPACER}${SPACER}public Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "int status, " }.orEmptyString()}java.util.Map<String, java.util.List<Object>> headers${content?.let { ", ${it.reference.emit()} body" } ?: ""}) {
         |${SPACER}${SPACER}${SPACER}this.status = ${status.takeIf { it.isInt() } ?: "status"};
         |${SPACER}${SPACER}${SPACER}this.headers = headers;
         |${SPACER}${SPACER}${SPACER}this.content = ${content?.let { "new WirespecShared.Content(\"${it.type}\", body)" } ?: "null"};
         |${SPACER}${SPACER}}
         |${SPACER}${SPACER}@Override public int getStatus() {return status;}
-        |${SPACER}${SPACER}@Override public java.util.Map<String, java.util.List<String>> getHeaders() {return headers;}
+        |${SPACER}${SPACER}@Override public java.util.Map<String, java.util.List<Object>> getHeaders() {return headers;}
         |${SPACER}${SPACER}@Override public WirespecShared.Content<${content?.reference?.emit() ?: "Void"}> getContent() {return content;}
         |${SPACER}}
         """.trimMargin()
 
     private fun List<Endpoint.Response>.emitResponseMapper() = """
-        |${SPACER}static <B> Response RESPONSE_MAPPER(WirespecShared.ContentMapper<B> contentMapper, int status, java.util.Map<String, java.util.List<String>> headers, WirespecShared.Content<B> content) {
+        |${SPACER}static <B> Response RESPONSE_MAPPER(WirespecShared.ContentMapper<B> contentMapper, int status, java.util.Map<String, java.util.List<Object>> headers, WirespecShared.Content<B> content) {
         |${joinToString (""){ it.emitResponseMapperCondition() }}
         |${SPACER}${SPACER}throw new IllegalStateException("Unknown response type");
         |${SPACER}}
@@ -195,7 +195,7 @@ class JavaEmitter(
                 .joinToString(", ") { it.emit() }
     }
 
-    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ", "java.util.Map.of(", ")") { "\"${it.identifier.emit()}\", java.util.List.of(${it.identifier.emit()}.toString())" }
+    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ", "java.util.Map.of(", ")") { "\"${it.identifier.emit()}\", java.util.List.of(${it.identifier.emit()})" }
 
     private fun List<Endpoint.Segment>.emitSegment() = "/" + joinToString("/") {
         when (it) {
