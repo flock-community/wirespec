@@ -66,13 +66,13 @@ object OpenApiParser {
                         .let { it + method.name }
                     val query = parameters
                         .filter { it.`in` == ParameterLocation.QUERY }
-                        .mapNotNull { it.toField(openApi) }
+                        .map { it.toField() }
                     val headers = parameters
                         .filter { it.`in` == ParameterLocation.HEADER }
-                        .mapNotNull { it.toField(openApi) }
+                        .map { it.toField() }
                     val cookies = parameters
                         .filter { it.`in` == ParameterLocation.COOKIE }
-                        .mapNotNull { it.toField(openApi) }
+                        .map { it.toField() }
                     val requests = operation?.requestBody?.resolve(openApi)
                         ?.let { requestBody ->
                             requestBody.content
@@ -124,7 +124,7 @@ object OpenApiParser {
 
         val componentsAst = openApi.components?.schemas
             ?.flatMap { it.value.flatten(Common.className(it.key), openApi) }
-            ?.map { Type(it.name, Type.Shape(it.fields())) }
+            ?.map { Type(it.name, Type.Shape(it.properties.map { it.field })) }
             ?: emptyList()
 
         return endpointAst + componentsAst
@@ -229,17 +229,54 @@ private fun SchemaObject.flatten(
                     properties = properties
                         ?.map { (key, value) ->
                             when (value) {
-                                is SchemaObject -> SimpleProp(
+                                is SchemaObject -> {
+                                    val reference = when (value.type) {
+                                        OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Primitive(
+                                            (value.type as OpenapiType).toPrimitive(),
+                                            false
+                                        )
+
+                                        OpenapiType.ARRAY -> {
+                                            val resolve = value.items?.resolve(openApi)
+                                            when (resolve?.type) {
+                                                OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Primitive(
+                                                    (resolve.type as OpenapiType).toPrimitive(),
+                                                    true
+                                                )
+
+                                                else -> when (value.items) {
+                                                    is ReferenceObject -> Reference.Custom(
+                                                        (value.items as ReferenceObject).getReference(),
+                                                        true
+                                                    )
+
+                                                    else -> TODO()
+                                                }
+                                            }
+
+                                        }
+
+                                        OpenapiType.OBJECT -> Reference.Custom(Common.className(name, key), false)
+                                        null -> TODO()
+                                    }
+                                    SimpleProp(
+                                        key = key,
+                                        field = Field(
+                                            Field.Identifier(key),
+                                            reference,
+                                            false
+                                        )
+                                    )
+                                }
+
+                                is ReferenceObject -> SimpleProp(
                                     key = key,
-                                    type = value.type,
                                     field = Field(
                                         Field.Identifier(key),
-                                        Reference.Custom(Common.className(name, key), false),
+                                        Reference.Custom(value.getReference(), false),
                                         false
                                     )
                                 )
-
-                                is ReferenceObject -> TODO()
                             }
                         } ?: emptyList()
                 )
@@ -339,55 +376,27 @@ private fun OpenapiType.toPrimitive() = when (this) {
     else -> error("Type is not a primitive")
 }
 
-private fun ParameterObject.toField(openApi: OpenAPIObject) = schema
-    ?.resolve(openApi)
-    ?.type
-    ?.toPrimitive()
-    ?.let { Field(Field.Identifier(name), Primitive(it, false), this.required ?: false) }
+private fun ParameterObject.toField() =
+    when (schema) {
+        is ReferenceObject -> Reference.Custom((schema as ReferenceObject).getReference(), false)
+        is SchemaObject -> {
+            when (val type = (schema as SchemaObject).type) {
+                OpenapiType.STRING, OpenapiType.INTEGER, OpenapiType.NUMBER, OpenapiType.BOOLEAN -> Primitive(
+                    type.toPrimitive(),
+                    false
+                )
+
+                OpenapiType.ARRAY -> TODO()
+                OpenapiType.OBJECT -> TODO()
+                null -> TODO()
+            }
+        }
+
+        null -> TODO()
+    }
+        .let { Field(Field.Identifier(name), it, this.required ?: false) }
 
 
 private data class SimpleSchema(val name: String, val properties: List<SimpleProp>)
-private data class SimpleProp(val key: String, val type: OpenapiType?, val field: Field)
+private data class SimpleProp(val key: String, val field: Field)
 
-private fun SimpleSchema.fields() = properties
-    .map {
-        when (it.type) {
-            OpenapiType.STRING -> Field(
-                Field.Identifier(it.key),
-                Field.Reference.Primitive(
-                    Field.Reference.Primitive.Type.String,
-                    false
-                ),
-                false
-            )
-
-            OpenapiType.NUMBER -> Field(
-                Field.Identifier(it.key),
-                Field.Reference.Primitive(
-                    Field.Reference.Primitive.Type.Integer,
-                    false
-                ),
-                false
-            )
-
-            OpenapiType.INTEGER -> Field(
-                Field.Identifier(it.key),
-                Field.Reference.Primitive(
-                    Field.Reference.Primitive.Type.Integer,
-                    false
-                ),
-                false
-            )
-
-            OpenapiType.BOOLEAN -> Field(
-                Field.Identifier(it.key),
-                Field.Reference.Primitive(
-                    Field.Reference.Primitive.Type.Boolean,
-                    false
-                ),
-                false
-            )
-
-            else -> it.field
-        }
-    }
