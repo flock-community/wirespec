@@ -23,8 +23,8 @@ class KotlinEmitter(
         |object WirespecShared {
         |${SPACER}enum class Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
         |${SPACER}data class Content<T> (val type:String, val body:T )
-        |${SPACER}interface Request<T> { val path:String; val method: Method; val query: Map<String, List<Any>>; val headers: Map<String, List<String>>; val content:Content<T>? }
-        |${SPACER}interface Response<T> { val status:Int; val headers: Map<String, List<Any>>; val content:Content<T>? }
+        |${SPACER}interface Request<T> { val path:String; val method: Method; val query: Map<String, List<Any?>>; val headers: Map<String, List<Any?>>; val content:Content<T>? }
+        |${SPACER}interface Response<T> { val status:Int; val headers: Map<String, List<Any?>>; val content:Content<T>? }
         |${SPACER}interface ContentMapper<B> { fun <T> read(content: Content<B>, valueType: KType): Content<T> fun <T> write(content: Content<T>): Content<B> }
         |}
     """.trimMargin()
@@ -90,7 +90,7 @@ class KotlinEmitter(
                     emitRequestSignature(
                         it.content
                     )
-                }: Request<${it.content?.reference?.emit() ?: "Unit"}> {override val path = \"${path.emitPath()}\"; override val method = WirespecShared.Method.${method.name}; override val query = mapOf<String, List<String>>(${query.emitMap()}); override val headers = mapOf<String, List<String>>(${headers.emitMap()}); override val content = ${it.content?.let { "WirespecShared.Content(\"${it.type}\", body)" } ?: "null"}}"
+                }: Request<${it.content?.reference?.emit() ?: "Unit"}> {override val path = \"${path.emitPath()}\"; override val method = WirespecShared.Method.${method.name}; override val query = mapOf<String, List<Any?>>(${query.emitMap()}); override val headers = mapOf<String, List<Any?>>(${headers.emitMap()}); override val content = ${it.content?.let { "WirespecShared.Content(\"${it.type}\", body)" } ?: "null"}}"
             }
         }
         |${SPACER}sealed interface Response<T>: WirespecShared.Response<T>
@@ -104,11 +104,11 @@ class KotlinEmitter(
         }
         |${
             responses.filter { it.status.isInt() }
-                .joinToString("\n") { "${SPACER}class Response${it.status}${it.content?.emitContentType() ?: "Unit"} (override val headers: Map<String, List<String>>${it.content?.let { ", body: ${it.reference.emit()}" } ?: ""} ): Response${it.status}<${it.content?.reference?.emit() ?: "Unit"}> { override val status = ${it.status}; override val content = ${it.content?.let { "WirespecShared.Content(\"${it.type}\", body)" } ?: "null"}}" }
+                .joinToString("\n") { "${SPACER}class Response${it.status}${it.content?.emitContentType() ?: "Unit"} (override val headers: Map<String, List<Any?>>${it.content?.let { ", body: ${it.reference.emit()}" } ?: ""} ): Response${it.status}<${it.content?.reference?.emit() ?: "Unit"}> { override val status = ${it.status}; override val content = ${it.content?.let { "WirespecShared.Content(\"${it.type}\", body)" } ?: "null"}}" }
         }
         |${
             responses.filter { !it.status.isInt() }
-                .joinToString("\n") { "${SPACER}class Response${it.status.firstToUpper()}${it.content?.emitContentType() ?: "Unit"} (override val status: Int, override val headers: Map<String, List<String>>${it.content?.let { ", body: ${it.reference.emit()}" } ?: ""} ): Response${it.status.firstToUpper()}<${it.content?.reference?.emit() ?: "Unit"}> { override val content = ${it.content?.let { "WirespecShared.Content(\"${it.type}\", body)" } ?: "null"}}" }
+                .joinToString("\n") { "${SPACER}class Response${it.status.firstToUpper()}${it.content?.emitContentType() ?: "Unit"} (override val status: Int, override val headers: Map<String, List<Any?>>${it.content?.let { ", body: ${it.reference.emit()}" } ?: ""} ): Response${it.status.firstToUpper()}<${it.content?.reference?.emit() ?: "Unit"}> { override val content = ${it.content?.let { "WirespecShared.Content(\"${it.type}\", body)" } ?: "null"}}" }
         }
         |suspend fun ${name.firstToLower()}(request: Request<*>): Response<*>
         |${SPACER}companion object{
@@ -163,7 +163,7 @@ class KotlinEmitter(
 
     private fun List<Endpoint.Response>.emitResponseMapper() = """
         |fun <B> RESPONSE_MAPPER(contentMapper: WirespecShared.ContentMapper<B>) =
-        |${SPACER}fun(status: Int, headers:Map<String, List<String>>, content: WirespecShared.Content<B>?) =
+        |${SPACER}fun(status: Int, headers:Map<String, List<Any?>>, content: WirespecShared.Content<B>?) =
         |${SPACER}${SPACER}when {
         |${filter { it.status.isInt() }.joinToString("\n") { it.emitResponseMapperCondition() }}
         |${filter { !it.status.isInt() }.joinToString("\n") { it.emitResponseMapperCondition() }}

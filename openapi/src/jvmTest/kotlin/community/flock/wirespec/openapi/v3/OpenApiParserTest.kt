@@ -56,9 +56,9 @@ class OpenApiParserTest {
                 "Ingredient",
                 Shape(
                     listOf(
-                        Field(Identifier("id"), Primitive(Primitive.Type.String, false), false),
-                        Field(Identifier("name"), Primitive(Primitive.Type.String, false), false),
-                        Field(Identifier("quantity"), Primitive(Primitive.Type.String, false), false),
+                        Field(Identifier("id"), Primitive(Primitive.Type.String, false), true),
+                        Field(Identifier("name"), Primitive(Primitive.Type.String, false), true),
+                        Field(Identifier("quantity"), Primitive(Primitive.Type.String, false), true),
                     )
                 )
             ),
@@ -177,8 +177,8 @@ class OpenApiParserTest {
                 "Todo_input",
                 Shape(
                     listOf(
-                        Field(Identifier(value = "title"), Primitive(Primitive.Type.String, false), false),
-                        Field(Identifier(value = "completed"), Primitive(Primitive.Type.Boolean, false), false)
+                        Field(Identifier(value = "title"), Primitive(Primitive.Type.String, false), true),
+                        Field(Identifier(value = "completed"), Primitive(Primitive.Type.Boolean, false), true)
                     )
                 )
             ),
@@ -186,10 +186,10 @@ class OpenApiParserTest {
                 "Todo",
                 Shape(
                     listOf(
-                        Field(Identifier("id"), Primitive(Primitive.Type.String, false), false),
-                        Field(Identifier("title"), Primitive(Primitive.Type.String, false), false),
-                        Field(Identifier("completed"), Primitive(Primitive.Type.Boolean, false), false),
-                        Field(Identifier("alert"), Reference.Custom("TodoAlert", false), false),
+                        Field(Identifier("id"), Primitive(Primitive.Type.String, false), true),
+                        Field(Identifier("title"), Primitive(Primitive.Type.String, false), true),
+                        Field(Identifier("completed"), Primitive(Primitive.Type.Boolean, false), true),
+                        Field(Identifier("alert"), Reference.Custom("TodoAlert", false), true),
                     )
                 )
             ),
@@ -197,8 +197,8 @@ class OpenApiParserTest {
                 "TodoAlert",
                 Shape(
                     listOf(
-                        Field(Identifier("code"), Primitive(Primitive.Type.String, false), false),
-                        Field(Identifier("message"), Reference.Custom("TodoAlertMessage", false), false),
+                        Field(Identifier("code"), Primitive(Primitive.Type.String, false), true),
+                        Field(Identifier("message"), Reference.Custom("TodoAlertMessage", false), true),
                     )
                 )
             ),
@@ -206,8 +206,8 @@ class OpenApiParserTest {
                 "TodoAlertMessage",
                 Shape(
                     listOf(
-                        Field(Identifier("key"), Primitive(Primitive.Type.String, false), false),
-                        Field(Identifier("value"), Primitive(Primitive.Type.String, false), false),
+                        Field(Identifier("key"), Primitive(Primitive.Type.String, false), true),
+                        Field(Identifier("value"), Primitive(Primitive.Type.String, false), true),
                     )
                 )
             ),
@@ -215,9 +215,9 @@ class OpenApiParserTest {
                 "TodosnestedArray",
                 Shape(
                     listOf(
-                        Field(Identifier("id"), Primitive(Primitive.Type.String, false), false),
-                        Field(Identifier("title"), Primitive(Primitive.Type.String, false), false),
-                        Field(Identifier("nested"), Primitive(Primitive.Type.Boolean, false), false),
+                        Field(Identifier("id"), Primitive(Primitive.Type.String, false), true),
+                        Field(Identifier("title"), Primitive(Primitive.Type.String, false), true),
+                        Field(Identifier("nested"), Primitive(Primitive.Type.Boolean, false), true),
                     )
                 )
             ),
@@ -225,8 +225,8 @@ class OpenApiParserTest {
                 "Error",
                 Shape(
                     listOf(
-                        Field(Identifier("code"), Primitive(Primitive.Type.String, false), false),
-                        Field(Identifier("message"), Primitive(Primitive.Type.String, false), false),
+                        Field(Identifier("code"), Primitive(Primitive.Type.String, false), true),
+                        Field(Identifier("message"), Primitive(Primitive.Type.String, false), true),
                     )
                 )
             ),
