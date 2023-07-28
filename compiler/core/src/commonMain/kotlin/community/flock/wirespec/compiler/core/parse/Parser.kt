@@ -22,6 +22,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpace
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
+import community.flock.wirespec.compiler.core.tokenize.types.WsEnumTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
 import community.flock.wirespec.compiler.core.tokenize.types.WsRefinedTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsString
@@ -48,6 +49,7 @@ class Parser(private val logger: Logger) {
         token.log()
         when (token.type) {
             is WsTypeDef -> parseTypeDeclaration().bind()
+            is WsEnumTypeDef -> parseEnumTypeDeclaration().bind()
             is WsRefinedTypeDef -> parseRefinedTypeDeclaration().bind()
             else -> raise(WrongTokenException(WsTypeDef::class, token).also { eatToken() }.nel())
         }
@@ -123,6 +125,49 @@ class Parser(private val logger: Logger) {
             is WsBoolean -> Reference.Primitive(Reference.Primitive.Type.Boolean, isIterable)
             is CustomType -> Reference.Custom(value, isIterable)
         }
+    }
+
+    private fun TokenProvider.parseEnumTypeDeclaration() = either {
+        eatToken()
+        token.log()
+        when (token.type) {
+            is CustomType -> parseEnumTypeDefinition(token.value).bind()
+            else -> raise(WrongTokenException(CustomType::class, token).also { eatToken() }.nel())
+        }
+    }
+
+    private fun TokenProvider.parseEnumTypeDefinition(typeName: String) = either {
+        eatToken()
+        token.log()
+        when (token.type) {
+            is LeftCurly -> Enum(typeName, parseEnumTypeEntries().bind())
+            else -> raise(WrongTokenException(LeftCurly::class, token).also { eatToken() }.nel())
+        }.also {
+            when (token.type) {
+                is RightCurly -> eatToken()
+                else -> raise(WrongTokenException(RightCurly::class, token).also { eatToken() }.nel())
+            }
+        }
+    }
+
+    private fun TokenProvider.parseEnumTypeEntries() = either {
+        eatToken()
+        token.log()
+        when (token.type) {
+            is CustomType -> mutableListOf<String>().apply {
+                add(token.value)
+                eatToken()
+                while (token.type == Comma) {
+                    eatToken()
+                    when (token.type) {
+                        is CustomType -> add(token.value).also { eatToken() }
+                        else -> raise(WrongTokenException(CustomType::class, token).also { eatToken() }.nel())
+                    }
+                }
+            }
+
+            else -> raise(WrongTokenException(CustomType::class, token).also { eatToken() }.nel())
+        }.toSet()
     }
 
     private fun TokenProvider.parseRefinedTypeDeclaration() = either {

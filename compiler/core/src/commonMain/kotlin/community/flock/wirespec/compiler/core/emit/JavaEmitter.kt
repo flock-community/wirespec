@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToLower
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Custom
@@ -80,6 +81,8 @@ class JavaEmitter(
         emitPrimaryType()
             .let { if (isIterable) "java.util.List<$it>" else it }
     }
+
+    override fun Enum.emit() = withLogging(logger) { "enum $name {\n${SPACER}${entries.joinToString(", ")};\n}\n" }
 
     override fun Refined.emit() = withLogging(logger) {
         """public record $name(String value) {

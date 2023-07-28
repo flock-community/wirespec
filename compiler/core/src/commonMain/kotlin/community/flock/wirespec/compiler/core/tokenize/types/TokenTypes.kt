@@ -22,6 +22,7 @@ object NewLine : WhiteSpace
 
 sealed interface Keyword : TokenType
 object WsTypeDef : Keyword
+object WsEnumTypeDef : Keyword
 object WsRefinedTypeDef : Keyword
 
 sealed interface WsType : Keyword

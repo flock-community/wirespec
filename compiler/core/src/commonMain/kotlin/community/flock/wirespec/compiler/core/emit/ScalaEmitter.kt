@@ -4,6 +4,7 @@ import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Custom
@@ -48,6 +49,15 @@ class ScalaEmitter(
                 Primitive.Type.Boolean -> "Boolean"
             }
         }.let { if (isIterable) "List[$it]" else it }
+    }
+
+    override fun Enum.emit() = withLogging(logger) {
+        """
+        |sealed abstract class $name(val label: String)
+        |object $name {
+        |${entries.joinToString("\n") { """${SPACER}final case object $it extends $name(label = "$it")""" }}
+        |}
+        |""".trimMargin()
     }
 
     override fun Refined.emit() = withLogging(logger) {
