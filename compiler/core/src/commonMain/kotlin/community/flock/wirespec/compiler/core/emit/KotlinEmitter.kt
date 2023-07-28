@@ -48,11 +48,11 @@ class KotlinEmitter(
     }
 
     override fun Type.Shape.emit() = withLogging(logger) {
-        value.joinToString("\n") { "${SPACER}val ${it.emit()}," }.dropLast(1)
+        value.joinToString(",\n") { "${SPACER}val ${it.emit()}" }
     }
 
     override fun Type.Shape.Field.emit() = withLogging(logger) {
-        "${identifier.emit()}: ${reference.emit()}${if (isNullable) "?" else ""}"
+        "${identifier.emit()}: ${reference.emit()}${if (isNullable) "? = null" else ""}"
     }
 
     override fun Type.Shape.Field.Identifier.emit() = withLogging(logger) {
