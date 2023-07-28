@@ -83,10 +83,10 @@ class OpenApiParserTest {
                     Endpoint.Segment.Literal("todos")
                 ),
                 listOf(
-                    Field(Identifier("completed"), Primitive(type = Primitive.Type.Boolean, isIterable = false), false)
+                    Field(Identifier("completed"), Primitive(type = Primitive.Type.Boolean, isIterable = false), true)
                 ),
                 listOf(
-                    Field(Identifier("x-user"), Primitive(type = Primitive.Type.Boolean, isIterable = false), false)
+                    Field(Identifier("x-user"), Primitive(type = Primitive.Type.Boolean, isIterable = false), true)
                 ),
                 listOf(),
                 listOf(
@@ -111,7 +111,7 @@ class OpenApiParserTest {
                 ),
                 listOf(),
                 listOf(
-                    Field(Identifier("x-user"), Primitive(type = Primitive.Type.Boolean, isIterable = false), false)
+                    Field(Identifier("x-user"), Primitive(type = Primitive.Type.Boolean, isIterable = false), true)
                 ),
                 listOf(),
                 listOf(
