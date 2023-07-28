@@ -39,7 +39,10 @@ class ParserTest {
 
         Wirespec.tokenize(source)
             .let(parser()::parse)
-            .onLeft { assertEquals(4, it.size) }
+            .onLeft {
+                assertEquals(1, it.size)
+                assertEquals("RightCurly expected, not: CustomValue at line 3 and position 3", it.first().message)
+            }
             .onRight { fail("Should not be Either.Right") }
     }
 }
