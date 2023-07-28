@@ -1,13 +1,11 @@
 package community.flock.wirespec.compiler.cli
 
-import community.flock.wirespec.compiler.cli.io.Extension
 import community.flock.wirespec.compiler.cli.io.FullFilePath
 import community.flock.wirespec.compiler.cli.io.JavaFile
 import community.flock.wirespec.compiler.cli.io.KotlinFile
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import kotlin.test.Ignore
 import kotlin.test.Test
-import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 

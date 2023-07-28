@@ -38,7 +38,7 @@ actual abstract class File actual constructor(actual val path: FullFilePath) : C
             .split("out")
             .joinToString("out/native")
             .apply {
-                split("/").reduce { acc, cur -> "$acc/$cur".also { opendir(it) ?: mkdir(it, 493) } }
+                split("/").reduce { acc, cur -> "$acc/$cur".also { opendir(it) ?: mkdir(it, 493u) } }
             }
 
         val nativePath = path.copy(directory = directory)

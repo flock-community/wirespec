@@ -2,7 +2,6 @@ package community.flock.wirespec.compiler.core
 
 import arrow.core.Either
 import arrow.core.Nel
-import arrow.core.ValidatedNel
 import community.flock.wirespec.compiler.core.Reported.EMITTED
 import community.flock.wirespec.compiler.core.Reported.PARSED
 import community.flock.wirespec.compiler.core.Reported.TOKENIZED
