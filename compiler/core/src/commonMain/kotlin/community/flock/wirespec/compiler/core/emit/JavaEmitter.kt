@@ -112,8 +112,6 @@ class JavaEmitter(
             |""".trimMargin()
     }
 
-    private fun AST.hasEndpoints() = any { it is Endpoint }
-
     private fun Endpoint.Request.emit(endpoint: Endpoint) = """
         |${SPACER}class Request${content.emitContentType()} implements Request<${content?.reference?.emit() ?: "Void"}> {
         |${SPACER}${SPACER}private final String path;

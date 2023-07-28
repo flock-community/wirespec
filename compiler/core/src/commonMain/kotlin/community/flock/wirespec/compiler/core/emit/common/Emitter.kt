@@ -30,6 +30,7 @@ abstract class Emitter(val logger: Logger, val split: Boolean = false) : Emitter
         const val SPACER = "  "
         fun String.firstToUpper() = replaceFirstChar(Char::uppercase )
         fun String.firstToLower() = replaceFirstChar(Char::lowercase )
+        fun AST.hasEndpoints() = any { it is Endpoint }
     }
 
 }

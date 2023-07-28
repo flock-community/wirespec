@@ -39,8 +39,6 @@ class KotlinEmitter(
             """.trimMargin().trimStart()
         }
 
-    private fun AST.hasEndpoints() = any { it is Endpoint }
-
     override fun Type.emit() = withLogging(logger) {
         """|data class $name(
            |${shape.emit()}
