@@ -15,7 +15,7 @@ class JavaPetstoreController(
 
     @GetMapping
     suspend fun list(): List<Int> {
-        val request = ListPets.RequestVoid(10, null)
+        val request = ListPets.RequestVoid(null, 10)
         return when (val res = javaPetstoreClient.listPets(request)) {
             is ListPets.Response200ApplicationJson -> res.content.body.map { it.id }
             is ListPets.ResponseDefaultApplicationJson -> error("Something went wrong")

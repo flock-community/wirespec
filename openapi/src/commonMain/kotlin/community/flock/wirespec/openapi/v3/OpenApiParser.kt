@@ -394,7 +394,7 @@ private fun ParameterObject.toField() =
 
         null -> TODO()
     }
-        .let { Field(Field.Identifier(name), it, this.required ?: false) }
+        .let { Field(Field.Identifier(name), it, !(this.required ?: false)) }
 
 
 private data class SimpleSchema(val name: String, val properties: List<SimpleProp>)

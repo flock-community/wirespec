@@ -77,12 +77,12 @@ class CliTest {
 
         val expected = """
             data class Pet(
-              val id: Int?,
-              val category: Category?,
+              val id: Int? = null,
+              val category: Category? = null,
               val name: String,
               val photoUrls: List<String>,
-              val tags: List<Tag>?,
-              val status: String?
+              val tags: List<Tag>? = null,
+              val status: String? = null
             )
             """.trimIndent()
 
