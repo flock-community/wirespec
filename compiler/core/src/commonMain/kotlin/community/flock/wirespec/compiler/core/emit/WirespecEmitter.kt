@@ -2,6 +2,7 @@ package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Custom
@@ -38,6 +39,8 @@ class WirespecEmitter(logger: Logger = noLogger) : Emitter(logger) {
             }
         }.let { if (isIterable) "$it[]" else it }
     }
+
+    override fun Enum.emit() = withLogging(logger) { "enum $name {\n${SPACER}${entries.joinToString(", ")}\n}\n" }
 
     override fun Refined.emit() = withLogging(logger) {
         "refined $name ${validator.emit()}\n"

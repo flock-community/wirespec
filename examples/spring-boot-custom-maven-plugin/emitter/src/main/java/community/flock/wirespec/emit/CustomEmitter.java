@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.parse.Node;
 import community.flock.wirespec.compiler.core.parse.Refined;
 import community.flock.wirespec.compiler.core.parse.Type;
 import community.flock.wirespec.compiler.core.parse.Endpoint;
+import community.flock.wirespec.compiler.core.parse.Enum;
 import community.flock.wirespec.compiler.utils.Logger;
 import kotlin.Pair;
 
@@ -30,36 +31,35 @@ public class CustomEmitter extends Emitter {
         return null;
     }
 
+    @Override
+    public String emit(Enum enumm) {
+        return null;
+    }
 
     @Override
     public String emit(Refined.Validator validator) {
         return null;
     }
 
-
     @Override
     public String emit(Type type) {
         return "public class " + type.getName() + " {}";
     }
-
 
     @Override
     public String emit(Type.Shape shape) {
         return null;
     }
 
-
     @Override
     public String emit(Type.Shape.Field field) {
         return null;
     }
 
-
     @Override
     public String emit(Type.Shape.Field.Identifier identifier) {
         return null;
     }
-
 
     @Override
     public String emit(Type.Shape.Field.Reference reference) {

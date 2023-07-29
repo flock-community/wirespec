@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Custom
@@ -72,6 +73,8 @@ class KotlinEmitter(
             }
         }.let { if (isIterable) "List<$it>" else it }
     }
+
+    override fun Enum.emit() = withLogging(logger) { "enum class $name {\n${SPACER}${entries.joinToString(", ")}\n}\n" }
 
     override fun Refined.emit() = withLogging(logger) {
         """data class $name(val value: String)

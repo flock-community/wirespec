@@ -16,6 +16,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpace
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
+import community.flock.wirespec.compiler.core.tokenize.types.WsEnumTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
 import community.flock.wirespec.compiler.core.tokenize.types.WsRefinedTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsString
@@ -62,6 +63,7 @@ class Lexer : IntellijLexer() {
                 is RightCurly -> Types.RIGHT_CURLY
                 is EndOfProgram -> Types.END_OF_PROGRAM
                 is Invalid -> Types.INVALID
+                is WsEnumTypeDef -> Types.ENUM_TYPE_DEF
                 is WsRefinedTypeDef -> Types.REFINED_TYPE_DEF
                 is CustomRegex -> Types.CUSTOM_REGEX
             }

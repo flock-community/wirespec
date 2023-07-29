@@ -19,6 +19,8 @@ data class Type(val name: String, val shape: Shape) : Definition {
     }
 }
 
+data class Enum(val name: String, val entries: Set<String>): Definition
+
 data class Refined(val name: String, val validator: Validator) : Definition {
     data class Validator(val value: String)
 }
@@ -42,5 +44,3 @@ data class Endpoint(
     data class Response(val status: String, val content:Content?)
     data class Content(val type: String, val reference: Type.Shape.Field.Reference, val isNullable: Boolean)
 }
-
-
