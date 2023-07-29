@@ -6,14 +6,14 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import community.flock.wirespec.compiler.core.Wirespec
-import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException
+import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.Parser
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.Logger
 import kotlinx.coroutines.runBlocking
 
 
-class Annotator : ExternalAnnotator<List<CompilerException>, List<CompilerException>>() {
+class Annotator : ExternalAnnotator<List<WirespecException>, List<WirespecException>>() {
 
     private val logger = object : Logger(false) {}
 
@@ -23,9 +23,9 @@ class Annotator : ExternalAnnotator<List<CompilerException>, List<CompilerExcept
             .fold({ it }, { emptyList() })
     }
 
-    override fun doAnnotate(collectedInfo: List<CompilerException>) = collectedInfo
+    override fun doAnnotate(collectedInfo: List<WirespecException>) = collectedInfo
 
-    override fun apply(file: PsiFile, annotationResult: List<CompilerException>, holder: AnnotationHolder) {
+    override fun apply(file: PsiFile, annotationResult: List<WirespecException>, holder: AnnotationHolder) {
         annotationResult.forEach {
             holder
                 .newAnnotation(HighlightSeverity.ERROR, it.message ?: "")

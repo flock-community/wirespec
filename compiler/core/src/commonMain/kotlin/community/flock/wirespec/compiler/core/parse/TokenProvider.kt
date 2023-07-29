@@ -1,5 +1,10 @@
 package community.flock.wirespec.compiler.core.parse
 
+import arrow.core.Either
+import arrow.core.NonEmptyList
+import arrow.core.nel
+import arrow.core.raise.either
+import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.NullTokenException.NextException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.NullTokenException.StartingException
 import community.flock.wirespec.compiler.core.tokenize.Token
@@ -16,11 +21,10 @@ class TokenProvider(private val logger: Logger, private val tokenIterator: Itera
 
     fun hasNext() = nextToken != null
 
-    fun eatToken() {
+    fun eatToken(): Either<NonEmptyList<WirespecException>, Unit> = either{
         val previousToken = token
-        token = nextToken ?: throw NextException(previousToken.coordinates)
+        token = nextToken ?: raise(NextException(previousToken.coordinates).nel())
         nextToken = nextToken()
-
         printTokens(previousToken)
     }
 
