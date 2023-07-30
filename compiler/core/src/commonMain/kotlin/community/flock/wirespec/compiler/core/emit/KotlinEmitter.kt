@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.emit
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
+import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.isInt
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -203,5 +204,3 @@ private fun String?.orEmptyString() = this ?: ""
 private fun String.groupStatus() =
     if (isInt()) substring(0, 1) + "XX"
     else firstToUpper()
-
-private fun String.isInt() = toIntOrNull() != null
