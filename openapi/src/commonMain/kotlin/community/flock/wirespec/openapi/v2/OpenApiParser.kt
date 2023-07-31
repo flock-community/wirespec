@@ -20,25 +20,27 @@ import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 import community.flock.wirespec.openapi.Common
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenapiType
 
+class OpenApiParser(private val openApi: SwaggerObject) {
 
-object OpenApiParser {
-
-    fun parse(json: String): List<Definition> =
-        OpenAPI
+    companion object {
+        fun parse(json: String): List<Definition> = OpenAPI
             .decodeFromString(json)
-            .let { parse(it) }
+            .let { OpenApiParser(it).parse() }
 
-    fun parse(openApi: SwaggerObject): List<Definition> {
+        fun parse(openApi: SwaggerObject) = OpenApiParser(openApi).parse()
+    }
+
+    fun parse(): List<Definition> {
         val endpointAst = openApi.flatMapRequests { req ->
-            val parameters = req.pathItem.resolveParameters(openApi) + req.operation.resolveParameters(openApi)
+            val parameters = req.pathItem.resolveParameters() + req.operation.resolveParameters()
             val segments = req.path.toSegments(parameters)
             val name = req.operation.toName(segments, req.method)
             val query = parameters
                 .filter { it.`in` == ParameterLocation.QUERY }
-                .mapNotNull { it.toField(openApi) }
+                .map { it.toField() }
             val headers = parameters
                 .filter { it.`in` == ParameterLocation.HEADER }
-                .mapNotNull { it.toField(openApi) }
+                .map { it.toField() }
             val requests = parameters
                 .filter { it.`in` == ParameterLocation.BODY }
                 .flatMap { requestBody ->
@@ -47,7 +49,7 @@ object OpenApiParser {
                             Endpoint.Content(
                                 type = type,
                                 reference = when (val schema = requestBody.schema) {
-                                    is ReferenceObject -> schema.toReference(openApi)
+                                    is ReferenceObject -> schema.toReference()
                                     is SchemaObject -> Reference.Custom(
                                         Common.className(
                                             name,
@@ -64,7 +66,7 @@ object OpenApiParser {
                 }
                 .ifEmpty { listOf(Endpoint.Request(null)) }
             val responses = req.operation.responses.orEmpty().flatMap { (status, res) ->
-                val response = res.resolve(openApi)
+                val response = res.resolve()
                 openApi.produces.orEmpty().map { type ->
                     Endpoint.Response(
                         status = status.value,
@@ -72,7 +74,7 @@ object OpenApiParser {
                             Endpoint.Content(
                                 type = type,
                                 reference = when (schema) {
-                                    is ReferenceObject -> schema.toReference(openApi)
+                                    is ReferenceObject -> schema.toReference()
                                     is SchemaObject -> when (schema.type) {
                                         null, OpenapiType.OBJECT -> Reference.Custom(
                                             Common.className(
@@ -109,17 +111,17 @@ object OpenApiParser {
 
         val requestBodyAst = openApi.flatMapRequests { req ->
             req.operation.parameters
-                ?.map { it.resolve(openApi) }
+                ?.map { it.resolve() }
                 ?.filter { it.`in` == ParameterLocation.BODY }
                 ?.flatMap {
                     val parameters =
-                        req.pathItem.resolveParameters(openApi) + (req.operation.resolveParameters(openApi))
+                        req.pathItem.resolveParameters() + (req.operation.resolveParameters())
                     val segments = req.path.toSegments(parameters)
                     val name = req.operation.toName(segments, req.method)
                     when (val schema = it.schema) {
                         is SchemaObject -> when (schema.type) {
                             null, OpenapiType.OBJECT -> schema
-                                .flatten(Common.className(name, "RequestBody"), openApi)
+                                .flatten(Common.className(name, "RequestBody"))
                                 .map { s -> Type(s.name, Type.Shape(s.properties.map { it.field })) }
 
                             else -> emptyList()
@@ -134,17 +136,14 @@ object OpenApiParser {
 
         val responseBodyAst: List<Type> = openApi
             .flatMapResponses { req ->
-                val response = req.response.resolve(openApi)
-                val parameters = req.pathItem.resolveParameters(openApi) + (req.operation.resolveParameters(openApi))
+                val response = req.response.resolve()
+                val parameters = req.pathItem.resolveParameters() + (req.operation.resolveParameters())
                 val segments = req.path.toSegments(parameters)
                 val name = req.operation.toName(segments, req.method)
                 when (val schema = response.schema) {
                     is SchemaObject -> when (schema.type) {
                         null, OpenapiType.OBJECT -> schema
-                            .flatten(
-                                Common.className(name, req.statusCode.value, "ResponseBody"),
-                                openApi
-                            )
+                            .flatten(Common.className(name, req.statusCode.value, "ResponseBody"))
                             .map { Type(it.name, Type.Shape(it.properties.map { it.field })) }
 
                         else -> emptyList()
@@ -156,68 +155,71 @@ object OpenApiParser {
             }
 
         val definitionsAst = openApi.definitions
-            ?.flatMap { it.value.flatten(Common.className(it.key), openApi) }
+            ?.flatMap { it.value.flatten(Common.className(it.key)) }
             ?.map { Type(it.name, Type.Shape(it.properties.map { it.field })) }
             ?: emptyList()
 
         return endpointAst + requestBodyAst + responseBodyAst + definitionsAst
     }
-}
 
-fun OperationObject.resolveParameters(openApi: SwaggerObject): List<ParameterObject> = parameters.orEmpty()
-    .mapNotNull {
-        when (it) {
-            is ParameterObject -> it
-            is ReferenceObject -> it.resolveParameterObject(openApi)
+    private fun OperationObject.resolveParameters(): List<ParameterObject> = parameters.orEmpty()
+        .mapNotNull {
+            when (it) {
+                is ParameterObject -> it
+                is ReferenceObject -> it.resolveParameterObject()
+            }
         }
-    }
 
-fun PathItemObject.resolveParameters(openApi: SwaggerObject): List<ParameterObject> = parameters.orEmpty()
-    .mapNotNull {
-        when (it) {
-            is ParameterObject -> it
-            is ReferenceObject -> it.resolveParameterObject(openApi)
+    private fun PathItemObject.resolveParameters(): List<ParameterObject> = parameters.orEmpty()
+        .mapNotNull {
+            when (it) {
+                is ParameterObject -> it
+                is ReferenceObject -> it.resolveParameterObject()
+            }
         }
-    }
 
 
-fun ReferenceObject.resolveParameterObject(openApi: SwaggerObject) =
-    openApi.parameters
-        ?.get(getReference())
+    private fun ReferenceObject.resolveParameterObject() =
+        openApi.parameters
+            ?.get(getReference())
 
-fun ReferenceObject.resolveResponseObject(openApi: SwaggerObject) =
-    openApi.responses
-        ?.get(getReference())
+    private fun ReferenceObject.resolveResponseObject() =
+        openApi.responses
+            ?.get(getReference())
 
-fun SchemaOrReferenceObject.resolve(openApi: SwaggerObject): SchemaObject =
-    when (this) {
-        is SchemaObject -> this
-        is ReferenceObject -> this.resolveSchemaObject(openApi)?.second ?: error("Cannot resolve reference: $ref")
-    }
+    private fun ReferenceObject.resolveSchemaObject(): Pair<ReferenceObject, SchemaObject>? =
+        openApi.definitions
+            ?.get(getReference())
+            ?.let { this to it }
 
-fun ResponseOrReferenceObject.resolve(openApi: SwaggerObject): ResponseObject =
-    when (this) {
-        is ResponseObject -> this
-        is ReferenceObject -> this.resolveResponseObject(openApi) ?: error("Cannot resolve reference: $ref")
-    }
+    private fun SchemaOrReferenceObject.resolve(): SchemaObject =
+        when (this) {
+            is SchemaObject -> this
+            is ReferenceObject -> this.resolveSchemaObject()?.second ?: error("Cannot resolve reference: $ref")
+        }
 
-fun ParameterOrReferenceObject.resolve(openApi: SwaggerObject): ParameterObject =
-    when (this) {
-        is ParameterObject -> this
-        is ReferenceObject -> this.resolveParameterObject(openApi) ?: error("Cannot resolve reference: $ref")
-    }
+    private fun ResponseOrReferenceObject.resolve(): ResponseObject =
+        when (this) {
+            is ResponseObject -> this
+            is ReferenceObject -> this.resolveResponseObject() ?: error("Cannot resolve reference: $ref")
+        }
 
-private fun SchemaObject.flatten(
-    name: String,
-    openApi: SwaggerObject,
-): List<SimpleSchema> = when (type) {
+    private fun ParameterOrReferenceObject.resolve(): ParameterObject =
+        when (this) {
+            is ParameterObject -> this
+            is ReferenceObject -> this.resolveParameterObject() ?: error("Cannot resolve reference: $ref")
+        }
+
+    private fun SchemaObject.flatten(
+        name: String,
+    ): List<SimpleSchema> = when (type) {
         null, OpenapiType.OBJECT -> {
             val fields = properties
                 ?.flatMap { (key, value) ->
                     when (value) {
                         is SchemaObject -> when (value.type) {
                             OpenapiType.ARRAY -> emptyList()
-                            else -> value.flatten(Common.className(name, key), openApi)
+                            else -> value.flatten(Common.className(name, key))
                         }
 
                         is ReferenceObject -> emptyList()
@@ -240,7 +242,7 @@ private fun SchemaObject.flatten(
                                         )
 
                                         OpenapiType.ARRAY -> {
-                                            val resolve = value.items?.resolve(openApi)
+                                            val resolve = value.items?.resolve()
                                             when (val type = resolve?.type) {
                                                 OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Reference.Primitive(
                                                     type.toPrimitive(),
@@ -299,7 +301,7 @@ private fun SchemaObject.flatten(
             ?.let {
                 when (it) {
                     is ReferenceObject -> emptyList()
-                    is SchemaObject -> it.items?.flatten(Common.className(name, "array"), openApi)
+                    is SchemaObject -> it.items?.flatten(Common.className(name, "array"))
                 }
             }
             ?: emptyList()
@@ -307,192 +309,185 @@ private fun SchemaObject.flatten(
         else -> emptyList()
     }
 
-private fun SchemaOrReferenceObject.flatten(
-    name: String,
-    openApi: SwaggerObject,
-): List<SimpleSchema> {
-    return when (this) {
-        is SchemaObject -> this.flatten(name, openApi)
+    private fun SchemaOrReferenceObject.flatten(
+        name: String,
+    ): List<SimpleSchema> {
+        return when (this) {
+            is SchemaObject -> this.flatten(name)
 
-        is ReferenceObject -> this
-            .resolveSchemaObject(openApi)
-            ?.second
-            ?.flatten(name, openApi)
-            ?: error("Reference not found")
+            is ReferenceObject -> this
+                .resolveSchemaObject()
+                ?.second
+                ?.flatten(name)
+                ?: error("Reference not found")
+        }
     }
-}
 
-private data class SimpleProp(val key: String, val field: Field)
-private data class SimpleSchema(val name: String, val properties: List<SimpleProp>)
+    private data class SimpleProp(val key: String, val field: Field)
+    private data class SimpleSchema(val name: String, val properties: List<SimpleProp>)
 
-private fun SchemaObject.toReference(): Reference =
-    when (val type = this.type) {
-        OpenapiType.STRING, OpenapiType.INTEGER, OpenapiType.NUMBER, OpenapiType.BOOLEAN -> Reference.Primitive(
-            type.toPrimitive(),
-            false
-        )
-
-        OpenapiType.ARRAY -> when (items) {
-            is ReferenceObject -> Reference.Custom(
-                Common.className((items as ReferenceObject).getReference()),
-                true
+    private fun SchemaObject.toReference(): Reference =
+        when (val type = this.type) {
+            OpenapiType.STRING, OpenapiType.INTEGER, OpenapiType.NUMBER, OpenapiType.BOOLEAN -> Reference.Primitive(
+                type.toPrimitive(),
+                false
             )
 
+            OpenapiType.ARRAY -> when (items) {
+                is ReferenceObject -> Reference.Custom(
+                    Common.className((items as ReferenceObject).getReference()),
+                    true
+                )
+
+                else -> TODO()
+            }
+
             else -> TODO()
         }
 
-        else -> TODO()
-    }
+    private fun ReferenceObject.toReference(): Reference {
+        val resolved = resolveSchemaObject() ?: error("Cannot resolve ref: ${this.ref}")
+        return when (resolved.second.type) {
+            OpenapiType.ARRAY -> when (val items = resolved.second.items) {
+                is ReferenceObject -> Reference.Custom(Common.className(items.getReference()), true)
+                is SchemaObject -> Reference.Custom(Common.className(resolved.first.getReference(), "Array"), true)
+                else -> TODO()
+            }
 
-
-private fun ReferenceObject.toReference(openApi: SwaggerObject): Reference {
-    val resolved = resolveSchemaObject(openApi) ?: error("Cannot resolve ref: ${this.ref}")
-    return when (resolved.second.type) {
-        OpenapiType.ARRAY -> when (val items = resolved.second.items) {
-            is ReferenceObject -> Reference.Custom(Common.className(items.getReference()), true)
-            is SchemaObject -> Reference.Custom(Common.className(resolved.first.getReference(), "Array"), true)
-            else -> TODO()
-        }
-
-        else -> Reference.Custom(Common.className(resolved.first.getReference()), false)
-    }
-}
-
-
-private fun PathItemObject.toOperationList() = Endpoint.Method.values()
-    .map {
-        it to when (it) {
-            Endpoint.Method.GET -> get
-            Endpoint.Method.POST -> post
-            Endpoint.Method.PUT -> put
-            Endpoint.Method.DELETE -> delete
-            Endpoint.Method.OPTIONS -> options
-            Endpoint.Method.HEAD -> head
-            Endpoint.Method.PATCH -> patch
-            Endpoint.Method.TRACE -> trace
+            else -> Reference.Custom(Common.className(resolved.first.getReference()), false)
         }
     }
-    .filter { (_, value) -> value != null }
 
-private fun ReferenceObject.resolveSchemaObject(openApi: SwaggerObject): Pair<ReferenceObject, SchemaObject>? =
-    openApi.definitions
-        ?.get(getReference())
-        ?.let { this to it }
-
-private fun ReferenceObject.getReference() = this.ref.value.split("/")[2]
-
-private fun OpenapiType.toPrimitive() = when (this) {
-    OpenapiType.STRING -> Reference.Primitive.Type.String
-    OpenapiType.INTEGER -> Reference.Primitive.Type.Integer
-    OpenapiType.NUMBER -> Reference.Primitive.Type.Integer
-    OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean
-    else -> error("Type is not a primitive")
-}
-
-private fun ParameterObject.toField(openApi: SwaggerObject) = this
-    .resolve(openApi)
-    ?.let {
-        when (val type = it.type) {
-            OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> type
-                .toPrimitive()
-                .let { Reference.Primitive(it, false) }
-
-            OpenapiType.ARRAY -> it.items
-                ?.resolve(openApi)
-                ?.type
-                ?.toPrimitive()
-                ?.let { Reference.Primitive(it, true) }
-                ?: TODO()
-
-            OpenapiType.OBJECT -> TODO()
-            OpenapiType.FILE -> TODO()
-            null -> TODO()
-        }
-    }
-    ?.let { Field(Field.Identifier(name), it, !(this.required ?: false)) }
-
-private fun Path.toSegments(parameters: List<ParameterObject>) = value.split("/").drop(1).map { segment ->
-    val isParam = segment.isNotEmpty() && segment[0] == '{' && segment[segment.length - 1] == '}'
-    when {
-        isParam -> {
-            val param = segment.substring(1, segment.length - 1)
-            parameters
-                .find { it.name == param }
-                ?.let { it.type?.toPrimitive() }
-                ?.let {
-                    Endpoint.Segment.Param(
-                        Field.Identifier(param),
-                        Reference.Primitive(it, false)
-                    )
-                }
-                ?: error(" Declared path parameter $param needs to be defined as a path parameter in path or operation level")
-        }
-
-        else -> Endpoint.Segment.Literal(segment)
-    }
-}
-
-private fun OperationObject?.toName(segments: List<Endpoint.Segment>, method: Endpoint.Method): String {
-    return this?.operationId?.let { Common.className(it) } ?: segments
-        .joinToString("") {
-            when (it) {
-                is Endpoint.Segment.Literal -> Common.className(it.value)
-                is Endpoint.Segment.Param -> Common.className(it.identifier.value)
+    private fun PathItemObject.toOperationList() = Endpoint.Method.values()
+        .map {
+            it to when (it) {
+                Endpoint.Method.GET -> get
+                Endpoint.Method.POST -> post
+                Endpoint.Method.PUT -> put
+                Endpoint.Method.DELETE -> delete
+                Endpoint.Method.OPTIONS -> options
+                Endpoint.Method.HEAD -> head
+                Endpoint.Method.PATCH -> patch
+                Endpoint.Method.TRACE -> trace
             }
         }
-        .let { it + method.name }
-}
+        .filter { (_, value) -> value != null }
 
-data class FlattenRequest(
-    val path: Path,
-    val pathItem: PathItemObject,
-    val method: Endpoint.Method,
-    val operation: OperationObject,
-    val type: String
-)
+    private fun ReferenceObject.getReference() = this.ref.value.split("/")[2]
 
-private fun <T> SwaggerObject.flatMapRequests(f: (req: FlattenRequest) -> List<T>) = paths
-    .flatMap { (path, pathItem) ->
-        pathItem.toOperationList()
-            .flatMap { (method, operation) ->
-                operation
-                    ?.let { consumes?.map { type -> FlattenRequest(path, pathItem, method, operation, type) } }
-                    ?: emptyList()
-            }
+    private fun OpenapiType.toPrimitive() = when (this) {
+        OpenapiType.STRING -> Reference.Primitive.Type.String
+        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer
+        OpenapiType.NUMBER -> Reference.Primitive.Type.Integer
+        OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean
+        else -> error("Type is not a primitive")
     }
-    .flatMap { f(it) }
 
-data class FlattenResponse(
-    val path: Path,
-    val pathItem: PathItemObject,
-    val method: Endpoint.Method,
-    val operation: OperationObject,
-    val statusCode: StatusCode,
-    val response: ResponseOrReferenceObject,
-    val type: String
-)
+    private fun ParameterObject.toField() = this
+        .resolve()
+        .let {
+            when (val type = it.type) {
+                OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> type
+                    .toPrimitive()
+                    .let { Reference.Primitive(it, false) }
 
-private fun <T> SwaggerObject.flatMapResponses(f: (res: FlattenResponse) -> List<T>) = paths
-    .flatMap { (path, pathItem) ->
-        pathItem.toOperationList()
-            .flatMap { (method, operation) ->
-                operation
-                    ?.responses?.flatMap { (statusCode, response) ->
-                        produces
-                            ?.map { type ->
-                                FlattenResponse(
-                                    path,
-                                    pathItem,
-                                    method,
-                                    operation,
-                                    statusCode,
-                                    response,
-                                    type
-                                )
-                            }
-                            ?: emptyList()
+                OpenapiType.ARRAY -> it.items
+                    ?.resolve()
+                    ?.type
+                    ?.toPrimitive()
+                    ?.let { Reference.Primitive(it, true) }
+                    ?: TODO()
+
+                OpenapiType.OBJECT -> TODO()
+                OpenapiType.FILE -> TODO()
+                null -> TODO()
+            }
+        }
+        .let { Field(Field.Identifier(name), it, !(this.required ?: false)) }
+
+    private fun Path.toSegments(parameters: List<ParameterObject>) = value.split("/").drop(1).map { segment ->
+        val isParam = segment.isNotEmpty() && segment[0] == '{' && segment[segment.length - 1] == '}'
+        when {
+            isParam -> {
+                val param = segment.substring(1, segment.length - 1)
+                parameters
+                    .find { it.name == param }
+                    ?.let { it.type?.toPrimitive() }
+                    ?.let {
+                        Endpoint.Segment.Param(
+                            Field.Identifier(param),
+                            Reference.Primitive(it, false)
+                        )
                     }
-                    ?: emptyList()
+                    ?: error(" Declared path parameter $param needs to be defined as a path parameter in path or operation level")
             }
+
+            else -> Endpoint.Segment.Literal(segment)
+        }
     }
-    .flatMap { f(it) }
+
+    private fun OperationObject?.toName(segments: List<Endpoint.Segment>, method: Endpoint.Method): String {
+        return this?.operationId?.let { Common.className(it) } ?: segments
+            .joinToString("") {
+                when (it) {
+                    is Endpoint.Segment.Literal -> Common.className(it.value)
+                    is Endpoint.Segment.Param -> Common.className(it.identifier.value)
+                }
+            }
+            .let { it + method.name }
+    }
+
+    data class FlattenRequest(
+        val path: Path,
+        val pathItem: PathItemObject,
+        val method: Endpoint.Method,
+        val operation: OperationObject,
+        val type: String
+    )
+
+    private fun <T> SwaggerObject.flatMapRequests(f: (req: FlattenRequest) -> List<T>) = paths
+        .flatMap { (path, pathItem) ->
+            pathItem.toOperationList()
+                .flatMap { (method, operation) ->
+                    operation
+                        ?.let { consumes?.map { type -> FlattenRequest(path, pathItem, method, operation, type) } }
+                        ?: emptyList()
+                }
+        }
+        .flatMap { f(it) }
+
+    data class FlattenResponse(
+        val path: Path,
+        val pathItem: PathItemObject,
+        val method: Endpoint.Method,
+        val operation: OperationObject,
+        val statusCode: StatusCode,
+        val response: ResponseOrReferenceObject,
+        val type: String
+    )
+
+    private fun <T> SwaggerObject.flatMapResponses(f: (res: FlattenResponse) -> List<T>) = paths
+        .flatMap { (path, pathItem) ->
+            pathItem.toOperationList()
+                .flatMap { (method, operation) ->
+                    operation
+                        ?.responses?.flatMap { (statusCode, response) ->
+                            produces
+                                ?.map { type ->
+                                    FlattenResponse(
+                                        path,
+                                        pathItem,
+                                        method,
+                                        operation,
+                                        statusCode,
+                                        response,
+                                        type
+                                    )
+                                }
+                                ?: emptyList()
+                        }
+                        ?: emptyList()
+                }
+        }
+        .flatMap { f(it) }
+}
