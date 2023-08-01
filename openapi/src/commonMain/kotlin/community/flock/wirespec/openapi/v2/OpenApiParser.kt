@@ -66,11 +66,10 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                 }
                 .ifEmpty { listOf(Endpoint.Request(null)) }
             val responses = req.operation.responses.orEmpty().flatMap { (status, res) ->
-                val response = res.resolve()
                 openApi.produces.orEmpty().map { type ->
                     Endpoint.Response(
                         status = status.value,
-                        content = response.schema?.let { schema ->
+                        content = res.resolve().schema?.let { schema ->
                             Endpoint.Content(
                                 type = type,
                                 reference = when (schema) {
