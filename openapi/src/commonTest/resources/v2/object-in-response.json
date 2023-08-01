@@ -1,8 +1,8 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "Object in request",
-    "version": "1.0.6"
+    "title": "Object in response",
+    "version": "1.0.0"
   },
   "consumes": [
     "application/json"

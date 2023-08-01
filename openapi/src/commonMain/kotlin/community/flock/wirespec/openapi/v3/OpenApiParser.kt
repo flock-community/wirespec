@@ -1,8 +1,5 @@
 package community.flock.wirespec.openapi.v3
 
-import Path
-import StatusCode
-import SwaggerObject
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPI
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPIObject
 import community.flock.kotlinx.openapi.bindings.v3.OperationObject
@@ -39,81 +36,156 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
     }
 
 
-    fun parse(): List<Definition> {
+    private fun parse(): List<Definition> =
+        parseEndpoint() + parseRequestBody() + parseResponseBody() + parseComponents()
 
-        val endpointAst = openApi.paths
-            .flatMap { (key, path) ->
-                path.toOperationList().map { (method, operation) ->
-                    val parameters = path.resolveParameters() + operation?.resolveParameters().orEmpty()
-                    val segments = key.toSegments(parameters)
-                    val name = operation?.toName(segments, method)
-                    val query = parameters
-                        .filter { it.`in` == ParameterLocation.QUERY }
-                        .map { it.toField() }
-                    val headers = parameters
-                        .filter { it.`in` == ParameterLocation.HEADER }
-                        .map { it.toField() }
-                    val cookies = parameters
-                        .filter { it.`in` == ParameterLocation.COOKIE }
-                        .map { it.toField() }
-                    val requests = operation?.requestBody?.resolve()
-                        ?.let { requestBody ->
-                            requestBody.content
-                                ?.map { (mediaType, mediaObject) ->
-                                    Endpoint.Request(
-                                        Endpoint.Content(
-                                            type = mediaType.value,
-                                            reference = mediaObject.schema?.toReference() ?: TODO(),
-                                            isNullable = requestBody.required ?: false
-                                        )
-                                    )
-                                }
-                        }
-                        ?: listOf(Endpoint.Request(null))
-                    val responses = operation?.responses
-                        ?.flatMap { (status, res) ->
-                            res.resolve()?.content
-                                ?.map { (contentType, media) ->
-                                    Endpoint.Response(
-                                        status = status.value,
-                                        content = Endpoint.Content(
-                                            type = contentType.value,
-                                            reference = media.schema?.toReference() ?: TODO(),
-                                            isNullable = media.schema?.resolve()?.nullable ?: false
-                                        )
-                                    )
-                                }
-                                ?: listOf(
-                                    Endpoint.Response(
-                                        status = status.value,
-                                        content = null
+    private fun parseEndpoint(): List<Definition> = openApi.paths
+        .flatMap { (key, path) ->
+            path.toOperationList().map { (method, operation) ->
+                val parameters = path.resolveParameters() + operation.resolveParameters().orEmpty()
+                val segments = key.toSegments(parameters)
+                val name = operation.toName(segments, method)
+                val query = parameters
+                    .filter { it.`in` == ParameterLocation.QUERY }
+                    .map { it.toField() }
+                val headers = parameters
+                    .filter { it.`in` == ParameterLocation.HEADER }
+                    .map { it.toField() }
+                val cookies = parameters
+                    .filter { it.`in` == ParameterLocation.COOKIE }
+                    .map { it.toField() }
+                val requests = operation.requestBody?.resolve()
+                    ?.let { requestBody ->
+                        requestBody.content
+                            ?.map { (mediaType, mediaObject) ->
+                                Endpoint.Request(
+                                    Endpoint.Content(
+                                        type = mediaType.value,
+                                        reference = when (val schema = mediaObject.schema) {
+                                            is ReferenceObject -> schema.toReference()
+                                            is SchemaObject -> Reference.Custom(
+                                                Common.className(
+                                                    name,
+                                                    "RequestBody"
+                                                ), true
+                                            )
+                                            null -> TODO()
+                                        },
+                                        isNullable = requestBody.required ?: false
                                     )
                                 )
-                        }
-                        ?: emptyList()
-
-                    Endpoint(
-                        name = name,
-                        method = method,
-                        path = segments,
-                        query = query,
-                        headers = headers,
-                        cookies = cookies,
-                        requests = requests,
-                        responses = responses,
+                            }
+                    }
+                    ?: listOf(
+                        Endpoint.Request(null)
                     )
+
+                val responses = operation.responses.orEmpty().flatMap { (status, res) ->
+                    res.resolve()?.content
+                        ?.map { (contentType, media) ->
+                            Endpoint.Response(
+                                status = status.value,
+                                content = Endpoint.Content(
+                                    type = contentType.value,
+                                    reference = when (val schema = media.schema) {
+                                        is ReferenceObject -> schema.toReference()
+                                        is SchemaObject -> when (schema.type) {
+                                            null, OpenapiType.OBJECT -> Reference.Custom(
+                                                Common.className(
+                                                    name,
+                                                    status.value,
+                                                    "ResponseBody",
+                                                ), true
+                                            )
+                                            else -> schema.toReference()
+                                        }
+                                        null -> TODO()
+                                    },
+                                    isNullable = media.schema?.resolve()?.nullable ?: false
+                                )
+                            )
+                        }
+                        ?: listOf(
+                            Endpoint.Response(
+                                status = status.value,
+                                content = null
+                            )
+                        )
+                }
+
+                Endpoint(
+                    name = name,
+                    method = method,
+                    path = segments,
+                    query = query,
+                    headers = headers,
+                    cookies = cookies,
+                    requests = requests,
+                    responses = responses,
+                )
+            }
+        }
+
+    private fun parseRequestBody() = openApi.flatMapRequests { req ->
+        val parameters = req.pathItem.resolveParameters() + req.operation.resolveParameters()
+        val segments = req.path.toSegments(parameters)
+        val name = req.operation.toName(segments, req.method)
+        req.operation.requestBody?.resolve()?.content.orEmpty()
+            .flatMap { (_, mediaObject) ->
+                when (val schema = mediaObject.schema) {
+                    is SchemaObject -> when (schema.type) {
+                        null, OpenapiType.OBJECT -> schema
+                            .flatten(Common.className(name, "RequestBody"))
+                            .map {
+                                Type(
+                                    it.name,
+                                    Type.Shape(it.properties)
+                                )
+                            }
+
+                        else -> emptyList()
+                    }
+
+                    is ReferenceObject -> emptyList()
+                    null -> emptyList()
                 }
             }
-
-        val componentsAst = openApi.components?.schemas
-            ?.flatMap { it.value.flatten(Common.className(it.key)) }
-            ?.map { Type(it.name, Type.Shape(it.properties)) }
-            ?: emptyList()
-
-        return endpointAst + componentsAst
     }
 
-    fun Path.toSegments(parameters: List<ParameterObject>) = value.split("/").drop(1).map { segment ->
+    private fun parseResponseBody() = openApi.flatMapResponses { req ->
+        val parameters = req.pathItem.resolveParameters() + (req.operation.resolveParameters())
+        val segments = req.path.toSegments(parameters)
+        val name = req.operation.toName(segments, req.method)
+        req.operation.responses.orEmpty().flatMap {
+            it.value.resolve()?.content.orEmpty().flatMap { (_, mediaObject) ->
+                when (val schema = mediaObject.schema) {
+                    is SchemaObject -> when (schema.type) {
+                        null, OpenapiType.OBJECT -> schema
+                            .flatten(Common.className(name, req.statusCode.value, "ResponseBody"))
+                            .map {
+                                Type(
+                                    it.name,
+                                    Type.Shape(it.properties)
+                                )
+                            }
+
+                        else -> emptyList()
+                    }
+
+                    is ReferenceObject -> emptyList()
+                    null -> emptyList()
+                }
+            }
+        }
+    }
+
+
+    private fun parseComponents(): List<Definition> = openApi.components?.schemas
+        ?.flatMap { it.value.flatten(Common.className(it.key)) }
+        ?.map { Type(it.name, Type.Shape(it.properties)) }
+        ?: emptyList()
+
+    private fun Path.toSegments(parameters: List<ParameterObject>) = value.split("/").drop(1).map { segment ->
         val isParam = segment[0] == '{' && segment[segment.length - 1] == '}'
         when {
             isParam -> {
@@ -136,16 +208,17 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         }
     }
 
-    fun OperationObject.toName(segments: List<Endpoint.Segment>, method: Endpoint.Method) = operationId?.let { Common.className(it) } ?: segments
-        .joinToString("") {
-            when (it) {
-                is Endpoint.Segment.Literal -> Common.className(it.value)
-                is Endpoint.Segment.Param -> Common.className(it.identifier.value)
+    private fun OperationObject.toName(segments: List<Endpoint.Segment>, method: Endpoint.Method) =
+        operationId?.let { Common.className(it) } ?: segments
+            .joinToString("") {
+                when (it) {
+                    is Endpoint.Segment.Literal -> Common.className(it.value)
+                    is Endpoint.Segment.Param -> Common.className(it.identifier.value)
+                }
             }
-        }
-        .let { it + method.name }
+            .let { it + method.name }
 
-    fun OperationObject.resolveParameters(): List<ParameterObject> = parameters
+    private fun OperationObject.resolveParameters(): List<ParameterObject> = parameters
         ?.mapNotNull {
             when (it) {
                 is ParameterObject -> it
@@ -154,7 +227,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         }
         ?: emptyList()
 
-    fun PathItemObject.resolveParameters(): List<ParameterObject> = parameters
+    private fun PathItemObject.resolveParameters(): List<ParameterObject> = parameters
         ?.mapNotNull {
             when (it) {
                 is ParameterObject -> it
@@ -164,7 +237,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         ?: emptyList()
 
 
-    fun ReferenceObject.resolveParameterObject(): ParameterObject? =
+    private fun ReferenceObject.resolveParameterObject(): ParameterObject? =
         openApi.components?.parameters
             ?.get(getReference())
             ?.let {
@@ -174,7 +247,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                 }
             }
 
-    fun ReferenceObject.resolveSchemaObject(): Pair<ReferenceObject, SchemaObject>? =
+    private fun ReferenceObject.resolveSchemaObject(): Pair<ReferenceObject, SchemaObject>? =
         openApi.components?.schemas
             ?.get(getReference())
             ?.let {
@@ -184,7 +257,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                 }
             }
 
-    fun ReferenceObject.resolveRequestBodyObject(): Pair<ReferenceObject, RequestBodyObject>? =
+    private fun ReferenceObject.resolveRequestBodyObject(): Pair<ReferenceObject, RequestBodyObject>? =
         openApi.components?.requestBodies
             ?.get(getReference())
             ?.let {
@@ -194,7 +267,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                 }
             }
 
-    fun ReferenceObject.resolveResponseObject(): Pair<ReferenceObject, ResponseObject>? =
+    private fun ReferenceObject.resolveResponseObject(): Pair<ReferenceObject, ResponseObject>? =
         openApi.components?.responses
             ?.get(getReference())
             ?.let {
@@ -204,19 +277,19 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                 }
             }
 
-    fun SchemaOrReferenceObject.resolve(): SchemaObject? =
+    private fun SchemaOrReferenceObject.resolve(): SchemaObject? =
         when (this) {
             is SchemaObject -> this
             is ReferenceObject -> this.resolveSchemaObject()?.second
         }
 
-    fun RequestBodyOrReferenceObject.resolve(): RequestBodyObject? =
+    private fun RequestBodyOrReferenceObject.resolve(): RequestBodyObject? =
         when (this) {
             is RequestBodyObject -> this
             is ReferenceObject -> this.resolveRequestBodyObject()?.second
         }
 
-    fun ResponseOrReferenceObject.resolve(): ResponseObject? =
+    private fun ResponseOrReferenceObject.resolve(): ResponseObject? =
         when (this) {
             is ResponseObject -> this
             is ReferenceObject -> this.resolveResponseObject()?.second
@@ -321,49 +394,41 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         }
     }
 
-    private fun SchemaOrReferenceObject.toReference() =
-        when (this) {
-            is ReferenceObject -> {
-                val resolved = resolveSchemaObject() ?: TODO()
-                when (resolved.second.type) {
-                    OpenapiType.ARRAY -> when (resolved.second.items) {
-                        is ReferenceObject -> Reference.Custom(
-                            Common.className((resolved.second.items as ReferenceObject).getReference()),
-                            true
-                        )
+    private fun SchemaObject.toReference(): Reference =
+        when (val type = this.type) {
+            OpenapiType.STRING, OpenapiType.INTEGER, OpenapiType.NUMBER, OpenapiType.BOOLEAN -> Primitive(
+                type.toPrimitive(),
+                false
+            )
 
-                        is SchemaObject -> Reference.Custom(
-                            Common.className(resolved.first.getReference(), "Array"),
-                            true
-                        )
+            OpenapiType.ARRAY -> when (items) {
+                is ReferenceObject -> Reference.Custom(
+                    Common.className((items as ReferenceObject).getReference()),
+                    true
+                )
 
-                        else -> TODO()
-                    }
-
-                    else -> Reference.Custom(Common.className(resolved.first.getReference()), false)
-                }
-
+                else -> TODO()
             }
 
-            is SchemaObject -> {
-                when (type) {
-                    OpenapiType.ARRAY -> when (items) {
-                        is ReferenceObject -> Reference.Custom(
-                            Common.className((items as ReferenceObject).getReference()),
-                            true
-                        )
-
-                        else -> TODO()
-                    }
-
-                    else -> TODO()
-                }
-            }
+            else -> TODO()
         }
 
+    private fun ReferenceObject.toReference(): Reference {
+        val resolved = resolveSchemaObject() ?: error("Cannot resolve ref: ${this.ref}")
+        return when (resolved.second.type) {
+            OpenapiType.ARRAY -> when (val items = resolved.second.items) {
+                is ReferenceObject -> Reference.Custom(Common.className(items.getReference()), true)
+                is SchemaObject -> Reference.Custom(Common.className(resolved.first.getReference(), "Array"), true)
+                else -> TODO()
+            }
+
+            else -> Reference.Custom(Common.className(resolved.first.getReference()), false)
+        }
+    }
+
     private fun PathItemObject.toOperationList() = Endpoint.Method.values()
-        .map {
-            it to when (it) {
+        .associateWith {
+            when (it) {
                 Endpoint.Method.GET -> get
                 Endpoint.Method.POST -> post
                 Endpoint.Method.PUT -> put
@@ -374,7 +439,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                 Endpoint.Method.TRACE -> trace
             }
         }
-        .filter { (_, value) -> value != null }
+        .filterNotNullValues()
 
     private fun ReferenceObject.getReference() = this.ref.value.split("/")[3]
 
@@ -410,52 +475,50 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
     private data class SimpleSchema(val name: String, val properties: List<Field>)
 
 
-    data class FlattenRequest(
+    private data class FlattenRequest(
         val path: Path,
         val pathItem: PathItemObject,
         val method: Endpoint.Method,
-        val operation: OperationObject,
-        val type: String
+        val operation: OperationObject
     )
 
     private fun <T> OpenAPIObject.flatMapRequests(f: (req: FlattenRequest) -> List<T>) = paths
         .flatMap { (path, pathItem) ->
-            pathItem.toOperationList().mapNotNull { (method, operation) ->
-                    val parameters = pathItem.resolveParameters() + operation?.resolveParameters().orEmpty()
-                    operation?.let { type -> FlattenRequest(path, pathItem, method, operation, operation.parameters) }
-                }
+            pathItem.toOperationList().map { (method, operation) ->
+                FlattenRequest(path, pathItem, method, operation)
+            }
         }
         .flatMap { f(it) }
 
-    data class FlattenResponse(
+    private data class FlattenResponse(
         val path: Path,
         val pathItem: PathItemObject,
         val method: Endpoint.Method,
         val operation: OperationObject,
         val statusCode: StatusCode,
         val response: ResponseOrReferenceObject,
-        val type: String
     )
 
     private fun <T> OpenAPIObject.flatMapResponses(f: (res: FlattenResponse) -> List<T>) = paths
         .flatMap { (path, pathItem) ->
             pathItem.toOperationList()
-                .map { (method, operation) ->
-                    operation
-                        ?.responses?.flatMap { (statusCode, response) ->
-                                    FlattenResponse(
-                                        path,
-                                        pathItem,
-                                        method,
-                                        operation,
-                                        statusCode,
-                                        response,
-                                        "type"
-                                    )
-                                }
-                                ?: emptyList()
-           
+                .flatMap { (method, operation) ->
+                    operation.responses?.map { (statusCode, response) ->
+                        FlattenResponse(
+                            path,
+                            pathItem,
+                            method,
+                            operation,
+                            statusCode,
+                            response,
+                        )
+                    }.orEmpty()
                 }
         }
         .flatMap { f(it) }
+
+
 }
+
+private fun <K, V> Map<K, V?>.filterNotNullValues(): Map<K, V> =
+    mapNotNull { (key, value) -> value?.let { key to it } }.toMap()

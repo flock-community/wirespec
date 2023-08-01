@@ -113,7 +113,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
     private fun parseRequestBody() = openApi.flatMapRequests { req ->
         req.operation.parameters
             ?.map { it.resolve() }
-            ?.filter { it.`in` == community.flock.kotlinx.openapi.bindings.v2.ParameterLocation.BODY }
+            ?.filter { it.`in` == ParameterLocation.BODY }
             ?.flatMap { param ->
                 val parameters =
                     req.pathItem.resolveParameters() + (req.operation.resolveParameters())
@@ -122,11 +122,11 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                 when (val schema = param.schema) {
                     is SchemaObject -> when (schema.type) {
                         null, community.flock.kotlinx.openapi.bindings.v2.Type.OBJECT -> schema
-                            .flatten(community.flock.wirespec.openapi.Common.className(name, "RequestBody"))
+                            .flatten(Common.className(name, "RequestBody"))
                             .map {
                                 Type(
                                     it.name,
-                                    community.flock.wirespec.compiler.core.parse.Type.Shape(it.properties)
+                                    Type.Shape(it.properties)
                                 )
                             }
 
@@ -353,8 +353,8 @@ class OpenApiParser(private val openApi: SwaggerObject) {
     }
 
     private fun PathItemObject.toOperationList() = Endpoint.Method.values()
-        .map {
-            it to when (it) {
+        .associateWith {
+            when (it) {
                 Endpoint.Method.GET -> get
                 Endpoint.Method.POST -> post
                 Endpoint.Method.PUT -> put
@@ -365,7 +365,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                 Endpoint.Method.TRACE -> trace
             }
         }
-        .filter { (_, value) -> value != null }
+        .filterNotNullValues()
 
     private fun ReferenceObject.getReference() = this.ref.value.split("/")[2]
 
@@ -431,7 +431,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
             .let { it + method.name }
     }
 
-    data class FlattenRequest(
+    private data class FlattenRequest(
         val path: Path,
         val pathItem: PathItemObject,
         val method: Endpoint.Method,
@@ -443,14 +443,12 @@ class OpenApiParser(private val openApi: SwaggerObject) {
         .flatMap { (path, pathItem) ->
             pathItem.toOperationList()
                 .flatMap { (method, operation) ->
-                    operation
-                        ?.let { consumes?.map { type -> FlattenRequest(path, pathItem, method, operation, type) } }
-                        ?: emptyList()
+                    consumes.orEmpty().map { type -> FlattenRequest(path, pathItem, method, operation, type) }
                 }
         }
         .flatMap { f(it) }
 
-    data class FlattenResponse(
+    private data class FlattenResponse(
         val path: Path,
         val pathItem: PathItemObject,
         val method: Endpoint.Method,
@@ -465,23 +463,23 @@ class OpenApiParser(private val openApi: SwaggerObject) {
             pathItem.toOperationList()
                 .flatMap { (method, operation) ->
                     operation
-                        ?.responses?.flatMap { (statusCode, response) ->
-                            produces
-                                ?.map { type ->
-                                    FlattenResponse(
-                                        path,
-                                        pathItem,
-                                        method,
-                                        operation,
-                                        statusCode,
-                                        response,
-                                        type
-                                    )
-                                }
-                                ?: emptyList()
+                        .responses.orEmpty().flatMap { (statusCode, response) ->
+                            produces.orEmpty().map { type ->
+                                FlattenResponse(
+                                    path,
+                                    pathItem,
+                                    method,
+                                    operation,
+                                    statusCode,
+                                    response,
+                                    type
+                                )
+                            }
                         }
-                        ?: emptyList()
                 }
         }
         .flatMap { f(it) }
 }
+
+private fun <K, V> Map<K, V?>.filterNotNullValues(): Map<K, V> =
+    mapNotNull { (key, value) -> value?.let { key to it } }.toMap()

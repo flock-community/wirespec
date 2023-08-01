@@ -241,4 +241,152 @@ class OpenApiParserTest {
 
         assertEquals(expect, ast)
     }
+
+    @Test
+    fun objectInRequest() {
+        val json = IO.readOpenApi("v3/object-in-request.json")
+
+        val openApi = OpenAPI.decodeFromString(json)
+        val ast = OpenApiParser.parse(openApi)
+
+        val expectedDefinitions = listOf(
+            Endpoint(
+                name = "Test",
+                method = Endpoint.Method.GET,
+                path = listOf(Endpoint.Segment.Literal(value = "test")),
+                query = emptyList(),
+                headers = emptyList(),
+                cookies = emptyList(),
+                requests = listOf(
+                    Endpoint.Request(
+                        content = Endpoint.Content(
+                            type = "application/json",
+                            reference = Reference.Custom(value = "TestRequestBody", isIterable = true),
+                            isNullable = false
+                        )
+                    )
+                ),
+                responses = listOf(
+                    Endpoint.Response(
+                        status = "200",
+                        content = Endpoint.Content(
+                            type = "application/json",
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
+                            isNullable = false
+                        )
+                    )
+                )
+            ),
+            Type(
+                name = "TestRequestBody",
+                shape = Shape(
+                    value = listOf(
+                        Field(
+                            identifier = Identifier(value = "id"),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "nest"),
+                            reference = Reference.Custom(value = "TestRequestBodyNest", isIterable = false),
+                            isNullable = true
+                        )
+                    )
+                )
+            ),
+            Type(
+                name = "TestRequestBodyNest",
+                shape = Shape(
+                    value = listOf(
+                        Field(
+                            identifier = Identifier(value = "a"),
+                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "b"),
+                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
+                            isNullable = true
+                        )
+                    )
+                )
+            )
+        )
+
+        assertEquals(expectedDefinitions, ast)
+
+        println(ast)
+    }
+
+    @Test
+    fun objectInResponse() {
+        val json = IO.readOpenApi("v3/object-in-response.json")
+
+        val openApi = OpenAPI.decodeFromString(json)
+        val ast = OpenApiParser.parse(openApi)
+
+        val expectedDefinitions = listOf(
+            Endpoint(
+                name = "Test",
+                method = Endpoint.Method.GET,
+                path = listOf(Endpoint.Segment.Literal(value = "test")),
+                query = emptyList(),
+                headers = emptyList(),
+                cookies = emptyList(),
+                requests = listOf(
+                    Endpoint.Request(
+                        content = null
+                    )
+                ),
+                responses = listOf(
+                    Endpoint.Response(
+                        status = "200",
+                        content = Endpoint.Content(
+                            type = "application/json",
+                            reference = Reference.Custom(value = "Test200ResponseBody", isIterable = true),
+                            isNullable = false
+                        )
+                    )
+                )
+            ),
+            Type(
+                name = "Test200ResponseBody",
+                shape = Shape(
+                    value = listOf(
+                        Field(
+                            identifier = Identifier(value = "id"),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "nest"),
+                            reference = Reference.Custom(value = "Test200ResponseBodyNest", isIterable = false),
+                            isNullable = true
+                        )
+                    )
+                )
+            ),
+            Type(
+                name = "Test200ResponseBodyNest",
+                shape = Shape(
+                    value = listOf(
+                        Field(
+                            identifier = Identifier(value = "a"),
+                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "b"),
+                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
+                            isNullable = true
+                        )
+                    )
+                )
+            )
+        )
+
+        assertEquals(expectedDefinitions, ast)
+
+        println(ast)
+    }
 }
