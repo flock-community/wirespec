@@ -112,16 +112,16 @@ class OpenApiParser(private val openApi: SwaggerObject) {
             req.operation.parameters
                 ?.map { it.resolve() }
                 ?.filter { it.`in` == ParameterLocation.BODY }
-                ?.flatMap {
+                ?.flatMap { param ->
                     val parameters =
                         req.pathItem.resolveParameters() + (req.operation.resolveParameters())
                     val segments = req.path.toSegments(parameters)
                     val name = req.operation.toName(segments, req.method)
-                    when (val schema = it.schema) {
+                    when (val schema = param.schema) {
                         is SchemaObject -> when (schema.type) {
                             null, OpenapiType.OBJECT -> schema
                                 .flatten(Common.className(name, "RequestBody"))
-                                .map { s -> Type(s.name, Type.Shape(s.properties.map { it.field })) }
+                                .map { Type(it.name, Type.Shape(it.properties)) }
 
                             else -> emptyList()
                         }
@@ -143,7 +143,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                     is SchemaObject -> when (schema.type) {
                         null, OpenapiType.OBJECT -> schema
                             .flatten(Common.className(name, req.statusCode.value, "ResponseBody"))
-                            .map { Type(it.name, Type.Shape(it.properties.map { it.field })) }
+                            .map { Type(it.name, Type.Shape(it.properties)) }
 
                         else -> emptyList()
                     }
@@ -155,7 +155,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
 
         val definitionsAst = openApi.definitions
             ?.flatMap { it.value.flatten(Common.className(it.key)) }
-            ?.map { Type(it.name, Type.Shape(it.properties.map { it.field })) }
+            ?.map { Type(it.name, Type.Shape(it.properties)) }
             ?: emptyList()
 
         return endpointAst + requestBodyAst + responseBodyAst + definitionsAst
@@ -267,25 +267,19 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                                         OpenapiType.FILE -> TODO()
                                         null -> TODO()
                                     }
-                                    SimpleProp(
-                                        key = key,
-                                        field = Field(
+                                    Field(
                                             Field.Identifier(key),
                                             reference,
                                             !(this.required?.contains(key) ?: false)
                                         )
-                                    )
                                 }
 
                                 is ReferenceObject -> {
-                                    SimpleProp(
-                                        key = key,
-                                        field = Field(
+                                    Field(
                                             Field.Identifier(key),
                                             Reference.Custom(value.getReference(), false),
                                             !(this.required?.contains(key) ?: false)
                                         )
-                                    )
                                 }
                             }
                         } ?: emptyList()
@@ -322,8 +316,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
         }
     }
 
-    private data class SimpleProp(val key: String, val field: Field)
-    private data class SimpleSchema(val name: String, val properties: List<SimpleProp>)
+    private data class SimpleSchema(val name: String, val properties: List<Field>)
 
     private fun SchemaObject.toReference(): Reference =
         when (val type = this.type) {
