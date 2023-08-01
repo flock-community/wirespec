@@ -1,0 +1,44 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Object in request",
+    "version": "1.0.6"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/test": {
+      "get": {
+        "operationId": "Test",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "nest": {
+                  "type": "object",
+                  "properties": {
+                    "a": {
+                      "type": "number"
+                    },
+                    "b": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

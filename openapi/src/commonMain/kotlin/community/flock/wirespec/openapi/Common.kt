@@ -1,8 +1,8 @@
 package community.flock.wirespec.openapi
 
-import community.flock.kotlinx.openapi.bindings.v3.Type
+import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
 
 object Common {
-    fun className(vararg arg: String) = arg.joinToString("") { it.replaceFirstChar { it.uppercase() } }
+    fun className(vararg arg: String) = arg.joinToString("") { it.firstToUpper() }
 }
 
