@@ -296,5 +296,4 @@ jobs:
       - name: Build
         working-directory: ./build/js
         run: |
-          npm version ${{needs.version.outputs.version}} --workspace @flock/wirespec
           npm publish --access public --workspace @flock/wirespec
