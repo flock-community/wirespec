@@ -1,10 +1,14 @@
 package community.flock.wirespec.openapi.v3
 
+import Path
+import StatusCode
+import SwaggerObject
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPI
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPIObject
 import community.flock.kotlinx.openapi.bindings.v3.OperationObject
 import community.flock.kotlinx.openapi.bindings.v3.ParameterLocation
 import community.flock.kotlinx.openapi.bindings.v3.ParameterObject
+import community.flock.kotlinx.openapi.bindings.v3.Path
 import community.flock.kotlinx.openapi.bindings.v3.PathItemObject
 import community.flock.kotlinx.openapi.bindings.v3.ReferenceObject
 import community.flock.kotlinx.openapi.bindings.v3.RequestBodyObject
@@ -13,6 +17,7 @@ import community.flock.kotlinx.openapi.bindings.v3.ResponseObject
 import community.flock.kotlinx.openapi.bindings.v3.ResponseOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceObject
+import community.flock.kotlinx.openapi.bindings.v3.StatusCode
 import community.flock.wirespec.compiler.core.parse.*
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
@@ -39,38 +44,9 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         val endpointAst = openApi.paths
             .flatMap { (key, path) ->
                 path.toOperationList().map { (method, operation) ->
-                    val parameters =
-                        path.resolveParameters() + (operation?.resolveParameters() ?: emptyList())
-                    val segments = key.value.split("/").drop(1).map { segment ->
-                        val isParam = segment[0] == '{' && segment[segment.length - 1] == '}'
-                        when {
-                            isParam -> {
-                                val param = segment.substring(1, segment.length - 1)
-                                parameters
-                                    .find { it.name == param }
-                                    ?.schema
-                                    ?.resolve()
-                                    ?.let { it.type?.toPrimitive() }
-                                    ?.let {
-                                        Endpoint.Segment.Param(
-                                            Field.Identifier(param),
-                                            Primitive(it, false)
-                                        )
-                                    }
-                                    ?: error(" Declared path parameter $param needs to be defined as a path parameter in path or operation level")
-                            }
-
-                            else -> Endpoint.Segment.Literal(segment)
-                        }
-                    }
-                    val name = operation?.operationId?.let { Common.className(it) } ?: segments
-                        .joinToString("") {
-                            when (it) {
-                                is Endpoint.Segment.Literal -> Common.className(it.value)
-                                is Endpoint.Segment.Param -> Common.className(it.identifier.value)
-                            }
-                        }
-                        .let { it + method.name }
+                    val parameters = path.resolveParameters() + operation?.resolveParameters().orEmpty()
+                    val segments = key.toSegments(parameters)
+                    val name = operation?.toName(segments, method)
                     val query = parameters
                         .filter { it.`in` == ParameterLocation.QUERY }
                         .map { it.toField() }
@@ -137,6 +113,37 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         return endpointAst + componentsAst
     }
 
+    fun Path.toSegments(parameters: List<ParameterObject>) = value.split("/").drop(1).map { segment ->
+        val isParam = segment[0] == '{' && segment[segment.length - 1] == '}'
+        when {
+            isParam -> {
+                val param = segment.substring(1, segment.length - 1)
+                parameters
+                    .find { it.name == param }
+                    ?.schema
+                    ?.resolve()
+                    ?.let { it.type?.toPrimitive() }
+                    ?.let {
+                        Endpoint.Segment.Param(
+                            Field.Identifier(param),
+                            Primitive(it, false)
+                        )
+                    }
+                    ?: error(" Declared path parameter $param needs to be defined as a path parameter in path or operation level")
+            }
+
+            else -> Endpoint.Segment.Literal(segment)
+        }
+    }
+
+    fun OperationObject.toName(segments: List<Endpoint.Segment>, method: Endpoint.Method) = operationId?.let { Common.className(it) } ?: segments
+        .joinToString("") {
+            when (it) {
+                is Endpoint.Segment.Literal -> Common.className(it.value)
+                is Endpoint.Segment.Param -> Common.className(it.identifier.value)
+            }
+        }
+        .let { it + method.name }
 
     fun OperationObject.resolveParameters(): List<ParameterObject> = parameters
         ?.mapNotNull {
@@ -402,4 +409,53 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
 
     private data class SimpleSchema(val name: String, val properties: List<Field>)
 
+
+    data class FlattenRequest(
+        val path: Path,
+        val pathItem: PathItemObject,
+        val method: Endpoint.Method,
+        val operation: OperationObject,
+        val type: String
+    )
+
+    private fun <T> OpenAPIObject.flatMapRequests(f: (req: FlattenRequest) -> List<T>) = paths
+        .flatMap { (path, pathItem) ->
+            pathItem.toOperationList().mapNotNull { (method, operation) ->
+                    val parameters = pathItem.resolveParameters() + operation?.resolveParameters().orEmpty()
+                    operation?.let { type -> FlattenRequest(path, pathItem, method, operation, operation.parameters) }
+                }
+        }
+        .flatMap { f(it) }
+
+    data class FlattenResponse(
+        val path: Path,
+        val pathItem: PathItemObject,
+        val method: Endpoint.Method,
+        val operation: OperationObject,
+        val statusCode: StatusCode,
+        val response: ResponseOrReferenceObject,
+        val type: String
+    )
+
+    private fun <T> OpenAPIObject.flatMapResponses(f: (res: FlattenResponse) -> List<T>) = paths
+        .flatMap { (path, pathItem) ->
+            pathItem.toOperationList()
+                .map { (method, operation) ->
+                    operation
+                        ?.responses?.flatMap { (statusCode, response) ->
+                                    FlattenResponse(
+                                        path,
+                                        pathItem,
+                                        method,
+                                        operation,
+                                        statusCode,
+                                        response,
+                                        "type"
+                                    )
+                                }
+                                ?: emptyList()
+           
+                }
+        }
+        .flatMap { f(it) }
 }
