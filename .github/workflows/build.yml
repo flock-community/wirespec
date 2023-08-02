@@ -290,11 +290,11 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
+          registry-url: 'https://registry.npmjs.org'
       - name: Build
         run: |
           ./gradlew compiler:lib:build
       - name: Build
         working-directory: ./build/js
         run: |
-          npm version ${VERSION} --workspace @flock/wirespec
           npm publish --access public --workspace @flock/wirespec
