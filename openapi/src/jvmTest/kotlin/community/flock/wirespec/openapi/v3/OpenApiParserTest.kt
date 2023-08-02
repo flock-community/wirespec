@@ -343,7 +343,7 @@ class OpenApiParserTest {
                         status = "200",
                         content = Endpoint.Content(
                             type = "application/json",
-                            reference = Reference.Custom(value = "Test200ResponseBody", isIterable = true),
+                            reference = Reference.Custom(value = "Test200ResponseBody", isIterable = false),
                             isNullable = false
                         )
                     )
@@ -378,6 +378,86 @@ class OpenApiParserTest {
                         Field(
                             identifier = Identifier(value = "b"),
                             reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
+                            isNullable = true
+                        )
+                    )
+                )
+            )
+        )
+
+        assertEquals(expectedDefinitions, ast)
+
+        println(ast)
+    }
+
+    @Test
+    fun additionalproperties() {
+        val json = IO.readOpenApi("v3/additionalproperties.json")
+
+        val openApi = OpenAPI.decodeFromString(json)
+        val ast = OpenApiParser.parse(openApi)
+
+        val expectedDefinitions = listOf(
+            Endpoint(
+                name = "AdditionalProperties",
+                method = Endpoint.Method.GET,
+                path = listOf(Endpoint.Segment.Literal(value = "additional"), Endpoint.Segment.Literal(value = "properties")),
+                query = emptyList(),
+                headers = emptyList(),
+                cookies = emptyList(),
+                requests = listOf(
+                    Endpoint.Request(
+                        content = null
+                    )
+                ),
+                responses = listOf(
+                    Endpoint.Response(
+                        status = "200",
+                        content = Endpoint.Content(
+                            type = "application/json",
+                            reference = Reference.Custom(value = "Message", isIterable = false, isMap = true),
+                            isNullable = false
+                        )
+                    ),
+                    Endpoint.Response(
+                        status = "404",
+                        content = Endpoint.Content(
+                            type = "application/json",
+                            reference = Reference.Custom(value = "AdditionalProperties404ResponseBody", isIterable = false, isMap = true),
+                            isNullable = false
+                        )
+                    )
+                )
+            ),
+            Type(
+                name="AdditionalProperties404ResponseBody",
+                shape = Shape(
+                    value = listOf(
+                        Field(
+                            identifier = Identifier(value = "code"),
+                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "text"),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
+                            isNullable = true
+                        )
+                    )
+                )
+            ),
+            Type(
+                name = "Message",
+                shape = Shape(
+                    value = listOf(
+                        Field(
+                            identifier = Identifier(value = "code"),
+                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "text"),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
                             isNullable = true
                         )
                     )
