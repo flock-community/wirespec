@@ -334,9 +334,9 @@ class OpenApiParser(private val openApi: SwaggerObject) {
 
         OpenapiType.ARRAY -> {
             val resolve = items?.resolve()
-            when (resolve?.type) {
+            when (val t = resolve?.type) {
                 OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Reference.Primitive(
-                    type.toPrimitive(),
+                    t.toPrimitive(),
                     true
                 )
 
