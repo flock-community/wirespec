@@ -312,14 +312,12 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
     ): List<SimpleSchema> =
         when (type) {
             null, OpenapiType.OBJECT -> {
-
                 val fields = properties.orEmpty().flatMap { (key, value) ->
                     when (value) {
                         is SchemaObject -> value.flatten(Common.className(name, key))
                         is ReferenceObject -> emptyList()
                     }
                 }
-
                 val schema = when (additionalProperties) {
                     null -> listOf(
                         SimpleSchema(
@@ -345,7 +343,6 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
 
                     else -> emptyList()
                 }
-
                 schema + fields
             }
 
@@ -378,11 +375,9 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
 
     private data class SimpleSchema(val name: String, val properties: List<Field>)
 
-    private fun ReferenceObject.toReference(): Reference.Custom {
-        val (referencingObject, schema) = resolveSchemaObject()
-
-        if (schema.additionalProperties != null) {
-            return when (val additionalProperties = schema.additionalProperties) {
+    private fun ReferenceObject.toReference(): Reference.Custom =
+        resolveSchemaObject().let { (referencingObject, schema) ->
+            when (val additionalProperties = schema.additionalProperties) {
                 is BooleanObject -> TODO()
                 is ReferenceObject -> Reference.Custom(
                     Common.className(additionalProperties.getReference()),
@@ -391,19 +386,22 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                 )
 
                 is SchemaObject -> Reference.Custom(Common.className(referencingObject.getReference()), false, true)
-                null -> TODO()
-            }
-        }
-        return when (schema.type) {
-            OpenapiType.ARRAY -> when (val items = schema.items) {
-                is ReferenceObject -> Reference.Custom(Common.className(items.getReference()), true)
-                is SchemaObject -> Reference.Custom(Common.className(referencingObject.getReference(), "array"), true)
-                else -> TODO()
-            }
+                null -> when (schema.type) {
+                    OpenapiType.ARRAY -> when (val items = schema.items) {
+                        is ReferenceObject -> Reference.Custom(Common.className(items.getReference()), true)
+                        is SchemaObject -> Reference.Custom(
+                            Common.className(referencingObject.getReference(), "array"),
+                            true
+                        )
 
-            else -> Reference.Custom(Common.className(referencingObject.getReference()), false)
+                        null -> error("When schema is of type array items cannot be null for name: $ref")
+                    }
+
+                    else -> Reference.Custom(Common.className(referencingObject.getReference()), false)
+                }
+            }
         }
-    }
+
 
     private fun SchemaObject.toReference(name: String): Reference = when (val t = type) {
         OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Primitive(

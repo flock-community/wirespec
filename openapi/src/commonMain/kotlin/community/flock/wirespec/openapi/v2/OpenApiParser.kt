@@ -13,9 +13,9 @@ import community.flock.kotlinx.openapi.bindings.v2.ResponseObject
 import community.flock.kotlinx.openapi.bindings.v2.ResponseOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v2.SchemaObject
 import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceObject
+import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceOrBooleanObject
 import community.flock.kotlinx.openapi.bindings.v2.StatusCode
 import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
-import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceOrBooleanObject
 import community.flock.wirespec.compiler.core.parse.*
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
@@ -298,11 +298,10 @@ class OpenApiParser(private val openApi: SwaggerObject) {
 
     private data class SimpleSchema(val name: String, val properties: List<Field>)
 
-    private fun ReferenceObject.toReference(): Reference.Custom {
-        val (referencingObject, schema) = resolveSchemaObject() ?: error("Cannot resolve ref: ${this.ref}")
-        if (schema.additionalProperties != null) {
-            return when (val additionalProperties = schema.additionalProperties) {
-                is BooleanObject -> TODO()
+    private fun ReferenceObject.toReference(): Reference.Custom =
+        resolveSchemaObject().let { (referencingObject, schema) ->
+            when (val additionalProperties = schema.additionalProperties) {
+                is BooleanObject -> TODO("additionalProperties = true not implemented")
                 is ReferenceObject -> Reference.Custom(
                     Common.className(additionalProperties.getReference()),
                     false,
@@ -310,19 +309,22 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                 )
 
                 is SchemaObject -> Reference.Custom(Common.className(referencingObject.getReference()), false, true)
-                null -> TODO()
-            }
-        }
-        return when (schema.type) {
-            OpenapiType.ARRAY -> when (val items = schema.items) {
-                is ReferenceObject -> Reference.Custom(Common.className(items.getReference()), true)
-                is SchemaObject -> Reference.Custom(Common.className(referencingObject.getReference(), "Array"), true)
-                else -> TODO()
-            }
+                null -> when (schema.type) {
+                    OpenapiType.ARRAY -> when (val items = schema.items) {
+                        is ReferenceObject -> Reference.Custom(Common.className(items.getReference()), true)
+                        is SchemaObject -> Reference.Custom(
+                            Common.className(referencingObject.getReference(), "Array"),
+                            true
+                        )
+                        null -> error("items cannot be null when type is array: ${this.ref}")
+                    }
 
-            else -> Reference.Custom(Common.className(referencingObject.getReference()), false)
+                    else -> Reference.Custom(Common.className(referencingObject.getReference()), false)
+
+                }
+            }
         }
-    }
+
 
     private fun SchemaObject.toReference(name: String): Reference = when (val type = this.type) {
         OpenapiType.STRING, OpenapiType.INTEGER, OpenapiType.NUMBER, OpenapiType.BOOLEAN -> Reference.Primitive(
@@ -348,7 +350,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
             }
         }
 
-        OpenapiType.FILE -> TODO()
+        OpenapiType.FILE -> TODO("Type file not implemented")
     }
 
     private fun PathItemObject.toOperationList() = Endpoint.Method.values()
