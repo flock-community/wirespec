@@ -105,8 +105,8 @@ class JavaEmitter(
             |${requests.joinToString("\n"){ it.emit(this) }}
             |${SPACER}interface Response<T> extends WirespecShared.Response<T> {}
             |${responses.map{it.status.groupStatus()}.toSet().joinToString("\n") { "${SPACER}interface Response${it}<T> extends Response<T>{};" }}
-            |${responses.filter { it.status.isInt() }.map{it.status}.joinToString("\n") { "${SPACER}interface Response${it}<T> extends Response${it.groupStatus()}<T>{};" }}
-            |${responses.joinToString("\n"){ it.emit() }}
+            |${responses.filter { it.status.isInt() }.map{it.status}.toSet().joinToString("\n") { "${SPACER}interface Response${it}<T> extends Response${it.groupStatus()}<T>{};" }}
+            |${responses.distinctBy { it.status to it.content?.type }.joinToString("\n"){ it.emit() }}
             |${SPACER}public Response ${name.firstToLower()}(Request request);
             |}
             |""".trimMargin()
@@ -154,7 +154,7 @@ class JavaEmitter(
 
     private fun List<Endpoint.Response>.emitResponseMapper() = """
         |${SPACER}static <B> Response RESPONSE_MAPPER(WirespecShared.ContentMapper<B> contentMapper, int status, java.util.Map<String, java.util.List<Object>> headers, WirespecShared.Content<B> content) {
-        |${joinToString (""){ it.emitResponseMapperCondition() }}
+        |${distinctBy { it.status to it.content?.type }.joinToString (""){ it.emitResponseMapperCondition() }}
         |${SPACER}${SPACER}throw new IllegalStateException("Unknown response type");
         |${SPACER}}
     """.trimMargin()

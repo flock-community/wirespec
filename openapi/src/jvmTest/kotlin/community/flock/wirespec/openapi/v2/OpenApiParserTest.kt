@@ -205,7 +205,8 @@ class OpenApiParserTest {
         assertEquals(expectedDefinitions, definition)
 
         val endpoints = ast.filterIsInstance<Endpoint>().map { it.name }
-        assertEquals(listOf("UploadFile", "AddPet", "AddPet", "UpdatePet", "UpdatePet", "UpdatePetWithForm", "PlaceOrder", "CreateUsersWithArrayInput", "CreateUsersWithListInput", "UpdateUser", "CreateUser"), endpoints)
+        val expectedEndpoint = listOf("UploadFile", "AddPet", "UpdatePet", "FindPetsByStatus", "FindPetsByTags", "GetPetById", "UpdatePetWithForm", "DeletePet", "PlaceOrder", "GetOrderById", "DeleteOrder", "CreateUsersWithArrayInput", "CreateUsersWithListInput", "GetUserByName", "UpdateUser", "DeleteUser", "LoginUser", "LogoutUser", "CreateUser")
+        assertEquals(expectedEndpoint, endpoints)
 
         println(ast)
     }

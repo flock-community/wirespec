@@ -35,77 +35,79 @@ class OpenApiParser(private val openApi: SwaggerObject) {
     fun parse(): List<Definition> = parseEndpoints() + parseRequestBody() + parseResponseBody() + parseDefinitions()
 
     private fun parseEndpoints(): List<Definition> =
-        openApi.flatMapRequests { req ->
-            val parameters = req.pathItem.resolveParameters() + req.operation.resolveParameters()
-            val segments = req.path.toSegments(parameters)
-            val name = req.operation.toName(segments, req.method)
-            val query = parameters
-                .filter { it.`in` == ParameterLocation.QUERY }
-                .map { it.toField() }
-            val headers = parameters
-                .filter { it.`in` == ParameterLocation.HEADER }
-                .map { it.toField() }
-            val requests = parameters
-                .filter { it.`in` == ParameterLocation.BODY }
-                .flatMap { requestBody ->
-                    (openApi.consumes ?: req.operation.consumes).orEmpty().map { type ->
-                        Endpoint.Request(
-                            Endpoint.Content(
-                                type = type,
-                                reference = when (val schema = requestBody.schema) {
-                                    is ReferenceObject -> schema.toReference()
-                                    is SchemaObject -> schema.toReference(
-                                        Common.className(
-                                            name,
-                                            "RequestBody",
+        openApi.paths.flatMap { (path, pathItem) ->
+            pathItem.toOperationList().flatMap { (method, operation) ->
+                val parameters = pathItem.resolveParameters() + operation.resolveParameters()
+                val segments = path.toSegments(parameters)
+                val name = operation.toName(segments, method)
+                val query = parameters
+                    .filter { it.`in` == ParameterLocation.QUERY }
+                    .map { it.toField() }
+                val headers = parameters
+                    .filter { it.`in` == ParameterLocation.HEADER }
+                    .map { it.toField() }
+                val requests = parameters
+                    .filter { it.`in` == ParameterLocation.BODY }
+                    .flatMap { requestBody ->
+                        (openApi.consumes ?: operation.consumes).orEmpty().map { type ->
+                            Endpoint.Request(
+                                Endpoint.Content(
+                                    type = type,
+                                    reference = when (val schema = requestBody.schema) {
+                                        is ReferenceObject -> schema.toReference()
+                                        is SchemaObject -> schema.toReference(
+                                            Common.className(
+                                                name,
+                                                "RequestBody",
+                                            )
                                         )
-                                    )
 
-                                    null -> TODO()
-                                },
-                                isNullable = requestBody.required ?: false
+                                        null -> TODO()
+                                    },
+                                    isNullable = requestBody.required ?: false
+                                )
                             )
+                        }
+                    }
+                    .ifEmpty { listOf(Endpoint.Request(null)) }
+                val responses = operation.responses.orEmpty().flatMap { (status, res) ->
+                    (openApi.produces ?: operation.produces).orEmpty().map { type ->
+                        Endpoint.Response(
+                            status = status.value,
+                            content = res.resolve().schema?.let { schema ->
+                                Endpoint.Content(
+                                    type = type,
+                                    reference = when (schema) {
+                                        is ReferenceObject -> schema.toReference()
+                                        is SchemaObject -> schema.toReference(
+                                            Common.className(
+                                                name,
+                                                status.value,
+                                                "ResponseBody",
+                                            )
+                                        )
+                                    },
+                                    isNullable = false
+                                )
+                            }
                         )
                     }
                 }
-                .ifEmpty { listOf(Endpoint.Request(null)) }
-            val responses = req.operation.responses.orEmpty().flatMap { (status, res) ->
-                (openApi.produces ?: req.operation.produces).orEmpty().map { type ->
-                    Endpoint.Response(
-                        status = status.value,
-                        content = res.resolve().schema?.let { schema ->
-                            Endpoint.Content(
-                                type = type,
-                                reference = when (schema) {
-                                    is ReferenceObject -> schema.toReference()
-                                    is SchemaObject -> schema.toReference(
-                                        Common.className(
-                                            name,
-                                            status.value,
-                                            "ResponseBody",
-                                        )
-                                    )
-                                },
-                                isNullable = false
-                            )
-                        }
+
+                listOf(
+                    Endpoint(
+                        name = name,
+                        method = method,
+                        path = segments,
+                        query = query,
+                        headers = headers,
+                        cookies = emptyList(),
+                        requests = requests,
+                        responses = responses,
                     )
-                }
-            }
-
-            listOf(
-                Endpoint(
-                    name = name,
-                    method = req.method,
-                    path = segments,
-                    query = query,
-                    headers = headers,
-                    cookies = emptyList(),
-                    requests = requests,
-                    responses = responses,
                 )
-            )
 
+            }
         }
 
     private fun parseRequestBody() = openApi.flatMapRequests { req ->

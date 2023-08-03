@@ -104,15 +104,15 @@ class KotlinEmitter(
                 .joinToString("\n") { "${SPACER}sealed interface Response${it}<T>: Response<T>" }
         }
         |${
-            responses.filter { it.status.isInt() }.map { it.status }
+            responses.filter { it.status.isInt() }.map { it.status }.toSet()
                 .joinToString("\n") { "${SPACER}sealed interface Response${it}<T>: Response${it.groupStatus()}<T>" }
         }
         |${
-            responses.filter { it.status.isInt() }
+            responses.filter { it.status.isInt() }.distinctBy { it.status to it.content?.type }
                 .joinToString("\n") { "${SPACER}class Response${it.status}${it.content?.emitContentType() ?: "Unit"} (override val headers: Map<String, List<Any?>>${it.content?.let { ", body: ${it.reference.emit()}" } ?: ""} ): Response${it.status}<${it.content?.reference?.emit() ?: "Unit"}> { override val status = ${it.status}; override val content = ${it.content?.let { "WirespecShared.Content(\"${it.type}\", body)" } ?: "null"}}" }
         }
         |${
-            responses.filter { !it.status.isInt() }
+            responses.filter { !it.status.isInt() }.distinctBy { it.status to it.content?.type }
                 .joinToString("\n") { "${SPACER}class Response${it.status.firstToUpper()}${it.content?.emitContentType() ?: "Unit"} (override val status: Int, override val headers: Map<String, List<Any?>>${it.content?.let { ", body: ${it.reference.emit()}" } ?: ""} ): Response${it.status.firstToUpper()}<${it.content?.reference?.emit() ?: "Unit"}> { override val content = ${it.content?.let { "WirespecShared.Content(\"${it.type}\", body)" } ?: "null"}}" }
         }
         |suspend fun ${name.firstToLower()}(request: Request<*>): Response<*>
@@ -170,8 +170,8 @@ class KotlinEmitter(
         |fun <B> RESPONSE_MAPPER(contentMapper: WirespecShared.ContentMapper<B>) =
         |${SPACER}fun(status: Int, headers:Map<String, List<Any?>>, content: WirespecShared.Content<B>?) =
         |${SPACER}${SPACER}when {
-        |${filter { it.status.isInt() }.joinToString("\n") { it.emitResponseMapperCondition() }}
-        |${filter { !it.status.isInt() }.joinToString("\n") { it.emitResponseMapperCondition() }}
+        |${filter { it.status.isInt() }.distinctBy { it.status to it.content?.type }.joinToString("\n") { it.emitResponseMapperCondition() }}
+        |${filter { !it.status.isInt() }.distinctBy { it.status to it.content?.type }.joinToString("\n") { it.emitResponseMapperCondition() }}
         |${SPACER}${SPACER}${SPACER}else -> error("Cannot map response with status ${"$"}status")
     """.trimMargin()
 
