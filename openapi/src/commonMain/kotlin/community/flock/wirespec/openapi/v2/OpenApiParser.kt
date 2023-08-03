@@ -291,9 +291,8 @@ class OpenApiParser(private val openApi: SwaggerObject) {
 
             is ReferenceObject -> this
                 .resolveSchemaObject()
-                ?.second
-                ?.flatten(name)
-                ?: error("Reference not found")
+                .second
+                .flatten(name)
         }
     }
 
@@ -333,20 +332,23 @@ class OpenApiParser(private val openApi: SwaggerObject) {
 
         null, OpenapiType.OBJECT -> Reference.Custom(name, false, additionalProperties != null)
 
-        OpenapiType.ARRAY -> when (items) {
-            is ReferenceObject -> Reference.Custom(
-                Common.className((items as ReferenceObject).getReference()),
-                true
-            )
+        OpenapiType.ARRAY -> {
+            val resolve = items?.resolve()
+            when (resolve?.type) {
+                OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Reference.Primitive(
+                    type.toPrimitive(),
+                    true
+                )
 
-            else -> when (val it = items) {
-                is ReferenceObject -> it.toReference().copy(isIterable = true)
-                is SchemaObject -> it.toReference(name)
-                null -> error("When schema is of type array items cannot be null for name: $name")
+                else -> when (val it = items) {
+                    is ReferenceObject -> it.toReference().copy(isIterable = true)
+                    is SchemaObject -> it.toReference(name)
+                    null -> error("When schema is of type array items cannot be null for name: $name")
+                }
             }
         }
 
-        else -> TODO()
+        OpenapiType.FILE -> TODO()
     }
 
     private fun PathItemObject.toOperationList() = Endpoint.Method.values()

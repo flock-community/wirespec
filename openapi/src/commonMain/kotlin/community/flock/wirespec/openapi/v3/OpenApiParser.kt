@@ -415,9 +415,9 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
 
         OpenapiType.ARRAY -> {
             val resolve = items?.resolve()
-            when (resolve?.type) {
+            when (val type = resolve?.type) {
                 OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Primitive(
-                    (resolve.type as OpenapiType).toPrimitive(),
+                    type.toPrimitive(),
                     true
                 )
 
