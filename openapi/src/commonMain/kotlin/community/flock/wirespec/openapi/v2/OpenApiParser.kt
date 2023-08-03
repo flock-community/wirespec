@@ -247,42 +247,9 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                         properties = properties?.map { (key, value) ->
                             when (value) {
                                 is SchemaObject -> {
-                                    val reference = when (value.type) {
-                                        OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Reference.Primitive(
-                                            (value.type as OpenapiType).toPrimitive(),
-                                            false
-                                        )
-
-                                        OpenapiType.ARRAY -> {
-                                            val resolve = value.items?.resolve()
-                                            when (val type = resolve?.type) {
-                                                OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Reference.Primitive(
-                                                    type.toPrimitive(),
-                                                    true
-                                                )
-
-                                                else -> when (val items = value.items) {
-                                                    is ReferenceObject -> Reference.Custom(
-                                                        items.getReference(),
-                                                        true
-                                                    )
-
-                                                    else -> Reference.Custom(
-                                                        name,
-                                                        true
-                                                    )
-                                                }
-                                            }
-
-                                        }
-
-                                        OpenapiType.OBJECT -> Reference.Custom(Common.className(name, key), false)
-                                        OpenapiType.FILE -> TODO()
-                                        null -> TODO()
-                                    }
                                     Field(
                                         Field.Identifier(key),
-                                        reference,
+                                        value.toReference(Common.className(name, key)),
                                         !(this.required?.contains(key) ?: false)
                                     )
                                 }
