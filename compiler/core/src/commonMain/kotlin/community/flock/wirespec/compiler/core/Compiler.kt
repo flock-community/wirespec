@@ -7,14 +7,14 @@ import community.flock.wirespec.compiler.core.Reported.PARSED
 import community.flock.wirespec.compiler.core.Reported.TOKENIZED
 import community.flock.wirespec.compiler.core.Reported.VALIDATED
 import community.flock.wirespec.compiler.core.emit.common.Emitter
-import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException
+import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.optimize.optimize
 import community.flock.wirespec.compiler.core.parse.Parser
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.core.validate.validate
 import community.flock.wirespec.compiler.utils.Logger
 
-fun LanguageSpec.compile(source: String): (Logger) -> (Emitter) -> Either<Nel<CompilerException>, List<Pair<String, String>>> =
+fun LanguageSpec.compile(source: String): (Logger) -> (Emitter) -> Either<Nel<WirespecException>, List<Pair<String, String>>> =
     { logger ->
         { emitter ->
             tokenize(source)
