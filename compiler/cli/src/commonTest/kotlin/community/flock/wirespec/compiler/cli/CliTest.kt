@@ -70,7 +70,7 @@ class CliTest {
         val input = "${inputDir}/openapi/petstore.json"
         val output = outputDir()
 
-        cli(arrayOf(input, "-o", output, "-l", "Kotlin", "-p", "community.flock.openapi", "-a", "v2"))
+        cli(arrayOf(input, "-o", output, "-l", "Kotlin", "-p", "community.flock.openapi", "-a", "v2", "-l", "TypeScript"))
 
         val path = FullFilePath("$output/$packageDir", "Petstore")
         val file = KotlinFile(path).read()
