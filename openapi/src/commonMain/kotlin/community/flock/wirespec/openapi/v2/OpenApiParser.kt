@@ -19,6 +19,7 @@ import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
 import community.flock.wirespec.compiler.core.parse.*
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive
 import community.flock.wirespec.openapi.Common
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenapiType
 
@@ -225,65 +226,66 @@ class OpenApiParser(private val openApi: SwaggerObject) {
 
     private fun SchemaObject.flatten(
         name: String,
-    ): List<SimpleSchema> = when (type) {
-        null, OpenapiType.OBJECT -> {
+    ): List<SimpleSchema> =
+        when (type) {
+            null, OpenapiType.OBJECT -> {
 
-            val fields = properties
-                ?.flatMap { (key, value) ->
-                    when (value) {
-                        is SchemaObject -> when (value.type) {
-                            OpenapiType.ARRAY -> emptyList()
-                            else -> value.flatten(Common.className(name, key))
+                val fields = properties
+                    ?.flatMap { (key, value) ->
+                        when (value) {
+                            is SchemaObject -> when (value.type) {
+                                OpenapiType.ARRAY -> emptyList()
+                                else -> value.flatten(Common.className(name, key))
+                            }
+
+                            is ReferenceObject -> emptyList()
+
                         }
+                    }
+                    ?: emptyList()
 
+                val schema = when (additionalProperties) {
+                    null -> listOf(
+                        SimpleSchema(
+                            name = name,
+                            properties = properties?.map { (key, value) ->
+                                when (value) {
+                                    is SchemaObject -> {
+                                        Field(
+                                            Field.Identifier(key),
+                                            value.toReference(Common.className(name, key)),
+                                            !(this.required?.contains(key) ?: false)
+                                        )
+                                    }
+
+                                    is ReferenceObject -> {
+                                        Field(
+                                            Field.Identifier(key),
+                                            Reference.Custom(value.getReference(), false),
+                                            !(this.required?.contains(key) ?: false)
+                                        )
+                                    }
+                                }
+                            } ?: emptyList()
+                        )
+                    )
+
+                    else -> emptyList()
+                }
+                schema + fields
+            }
+
+            OpenapiType.ARRAY -> items
+                ?.let {
+                    when (it) {
                         is ReferenceObject -> emptyList()
-
+                        is SchemaObject -> it.items?.flatten(Common.className(name, "array"))
                     }
                 }
                 ?: emptyList()
 
-            val schema = when (additionalProperties) {
-                null -> listOf(
-                    SimpleSchema(
-                        name = name,
-                        properties = properties?.map { (key, value) ->
-                            when (value) {
-                                is SchemaObject -> {
-                                    Field(
-                                        Field.Identifier(key),
-                                        value.toReference(Common.className(name, key)),
-                                        !(this.required?.contains(key) ?: false)
-                                    )
-                                }
-
-                                is ReferenceObject -> {
-                                    Field(
-                                        Field.Identifier(key),
-                                        Reference.Custom(value.getReference(), false),
-                                        !(this.required?.contains(key) ?: false)
-                                    )
-                                }
-                            }
-                        } ?: emptyList()
-                    )
-                )
-
-                else -> emptyList()
-            }
-            schema + fields
+            else -> emptyList()
         }
-
-        OpenapiType.ARRAY -> items
-            ?.let {
-                when (it) {
-                    is ReferenceObject -> emptyList()
-                    is SchemaObject -> it.items?.flatten(Common.className(name, "array"))
-                }
-            }
-            ?: emptyList()
-
-        else -> emptyList()
-    }
 
     private fun SchemaOrReferenceObject.flatten(
         name: String,
@@ -330,17 +332,26 @@ class OpenApiParser(private val openApi: SwaggerObject) {
 
 
     private fun SchemaObject.toReference(name: String): Reference = when (val type = this.type) {
-        OpenapiType.STRING, OpenapiType.INTEGER, OpenapiType.NUMBER, OpenapiType.BOOLEAN -> Reference.Primitive(
+        OpenapiType.STRING, OpenapiType.INTEGER, OpenapiType.NUMBER, OpenapiType.BOOLEAN -> Primitive(
             type.toPrimitive(),
             false
         )
 
-        null, OpenapiType.OBJECT -> Reference.Custom(name, false, additionalProperties != null)
+        null, OpenapiType.OBJECT ->
+            when (val t = additionalProperties?.resolve()?.type) {
+                OpenapiType.STRING, OpenapiType.INTEGER, OpenapiType.NUMBER, OpenapiType.BOOLEAN -> Primitive(
+                    t.toPrimitive(),
+                    false,
+                    additionalProperties != null
+                )
+
+                else -> Reference.Custom(name, false, additionalProperties != null)
+            }
 
         OpenapiType.ARRAY -> {
             val resolve = items?.resolve()
             when (val t = resolve?.type) {
-                OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Reference.Primitive(
+                OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Primitive(
                     t.toPrimitive(),
                     true
                 )
@@ -374,10 +385,10 @@ class OpenApiParser(private val openApi: SwaggerObject) {
     private fun ReferenceObject.getReference() = this.ref.value.split("/")[2]
 
     private fun OpenapiType.toPrimitive() = when (this) {
-        OpenapiType.STRING -> Reference.Primitive.Type.String
-        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer
-        OpenapiType.NUMBER -> Reference.Primitive.Type.Integer
-        OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean
+        OpenapiType.STRING -> Primitive.Type.String
+        OpenapiType.INTEGER -> Primitive.Type.Integer
+        OpenapiType.NUMBER -> Primitive.Type.Integer
+        OpenapiType.BOOLEAN -> Primitive.Type.Boolean
         else -> error("Type is not a primitive")
     }
 
@@ -387,13 +398,13 @@ class OpenApiParser(private val openApi: SwaggerObject) {
             when (val type = it.type) {
                 OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> type
                     .toPrimitive()
-                    .let { Reference.Primitive(it, false) }
+                    .let { Primitive(it, false) }
 
                 OpenapiType.ARRAY -> it.items
                     ?.resolve()
                     ?.type
                     ?.toPrimitive()
-                    ?.let { Reference.Primitive(it, true) }
+                    ?.let { Primitive(it, true) }
                     ?: TODO()
 
                 OpenapiType.OBJECT -> TODO()
@@ -414,7 +425,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                     ?.let {
                         Endpoint.Segment.Param(
                             Field.Identifier(param),
-                            Reference.Primitive(it, false)
+                            Primitive(it, false)
                         )
                     }
                     ?: error(" Declared path parameter $param needs to be defined as a path parameter in path or operation level")

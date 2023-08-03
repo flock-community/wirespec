@@ -390,7 +390,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                     OpenapiType.ARRAY -> when (val items = schema.items) {
                         is ReferenceObject -> Reference.Custom(Common.className(items.getReference()), true)
                         is SchemaObject -> Reference.Custom(
-                            Common.className(referencingObject.getReference(), "array"),
+                            Common.className(referencingObject.getReference(), "Array"),
                             true
                         )
 
@@ -403,17 +403,25 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         }
 
 
-    private fun SchemaObject.toReference(name: String): Reference = when (val t = type) {
+    private fun SchemaObject.toReference(name: String): Reference = when (val type = type) {
         OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Primitive(
-            t.toPrimitive(),
+            type.toPrimitive(),
             false
         )
 
-        null, OpenapiType.OBJECT -> Reference.Custom(name, false, additionalProperties != null)
+        null, OpenapiType.OBJECT ->
+            when (val additionalPropertiesType = additionalProperties?.resolve()?.type) {
+                OpenapiType.STRING, OpenapiType.INTEGER, OpenapiType.NUMBER, OpenapiType.BOOLEAN -> Primitive(
+                    additionalPropertiesType.toPrimitive(),
+                    false,
+                    additionalProperties != null
+                )
+
+                else -> Reference.Custom(name, false, additionalProperties != null)
+            }
 
         OpenapiType.ARRAY -> {
-            val resolve = items?.resolve()
-            when (val type = resolve?.type) {
+            when (val type = items?.resolve()?.type) {
                 OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Primitive(
                     type.toPrimitive(),
                     true
