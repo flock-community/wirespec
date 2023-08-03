@@ -58,48 +58,50 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                     .map { it.toField() }
                 val requests = operation.requestBody?.resolve()
                     ?.let { requestBody ->
-                        requestBody.content
-                            ?.map { (mediaType, mediaObject) ->
-                                Endpoint.Request(
-                                    Endpoint.Content(
-                                        type = mediaType.value,
-                                        reference = when (val schema = mediaObject.schema) {
-                                            is ReferenceObject -> schema.toReference()
-                                            is SchemaObject -> Reference.Custom(Common.className(name, "RequestBody"), true)
-                                            null -> TODO()
-                                        },
-                                        isNullable = requestBody.required ?: false
-                                    )
+                        requestBody.content?.map { (mediaType, mediaObject) ->
+                            Endpoint.Request(
+                                Endpoint.Content(
+                                    type = mediaType.value,
+                                    reference = when (val schema = mediaObject.schema) {
+                                        is ReferenceObject -> schema.toReference()
+                                        is SchemaObject -> Reference.Custom(
+                                            Common.className(name, "RequestBody"),
+                                            true
+                                        )
+
+                                        null -> TODO()
+                                    },
+                                    isNullable = requestBody.required ?: false
                                 )
-                            }
+                            )
+                        }
                     }
                     ?: listOf(
                         Endpoint.Request(null)
                     )
 
                 val responses = operation.responses.orEmpty().flatMap { (status, res) ->
-                    res.resolve().content
-                        ?.map { (contentType, media) ->
-                            Endpoint.Response(
-                                status = status.value,
-                                content = Endpoint.Content(
-                                    type = contentType.value,
-                                    reference = when (val schema = media.schema) {
-                                        is ReferenceObject -> schema.toReference()
-                                        is SchemaObject -> schema.toReference(
-                                            Common.className(
-                                                name,
-                                                status.value,
-                                                "ResponseBody",
-                                            )
+                    res.resolve().content?.map { (contentType, media) ->
+                        Endpoint.Response(
+                            status = status.value,
+                            content = Endpoint.Content(
+                                type = contentType.value,
+                                reference = when (val schema = media.schema) {
+                                    is ReferenceObject -> schema.toReference()
+                                    is SchemaObject -> schema.toReference(
+                                        Common.className(
+                                            name,
+                                            status.value,
+                                            "ResponseBody",
                                         )
+                                    )
 
-                                        null -> TODO()
-                                    },
-                                    isNullable = media.schema?.resolve()?.nullable ?: false
-                                )
+                                    null -> TODO()
+                                },
+                                isNullable = media.schema?.resolve()?.nullable ?: false
                             )
-                        }
+                        )
+                    }
                         ?: listOf(
                             Endpoint.Response(
                                 status = status.value,
@@ -309,45 +311,42 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         name: String,
     ): List<SimpleSchema> =
         when (type) {
-            OpenapiType.OBJECT -> {
-                val fields = properties
-                    ?.flatMap { (key, value) ->
-                        when (value) {
-                            is SchemaObject -> value.flatten(Common.className(name, key))
-                            is ReferenceObject -> emptyList()
-                        }
+            null, OpenapiType.OBJECT -> {
+
+                val fields = properties.orEmpty().flatMap { (key, value) ->
+                    when (value) {
+                        is SchemaObject -> value.flatten(Common.className(name, key))
+                        is ReferenceObject -> emptyList()
                     }
-                    ?: emptyList()
-                if(additionalProperties == null) {
-                    listOf(
+                }
+
+                val schema = when (additionalProperties) {
+                    null -> listOf(
                         SimpleSchema(
                             name = name,
-                            properties = properties
-                                ?.map { (key, value) ->
-                                    when (value) {
-                                        is SchemaObject -> {
-                                            Field(
-                                                Field.Identifier(key),
-                                                value.toReference(Common.className(name, key)),
-                                                !(this.required?.contains(key) ?: false)
-                                            )
-                                        }
-
-                                        is ReferenceObject -> Field(
+                            properties = properties?.map { (key, value) ->
+                                when (value) {
+                                    is SchemaObject -> {
+                                        Field(
                                             Field.Identifier(key),
-                                            value.toReference(),
+                                            value.toReference(Common.className(name, key)),
                                             !(this.required?.contains(key) ?: false)
                                         )
                                     }
-                                } ?: emptyList()
-                        )
-                    )
-                        .plus(fields)
-                }else {
-                    emptyList()
+
+                                    is ReferenceObject -> Field(
+                                        Field.Identifier(key),
+                                        value.toReference(),
+                                        !(this.required?.contains(key) ?: false)
+                                    )
+                                }
+                            } ?: emptyList()
+                        ))
+
+                    else -> emptyList()
                 }
 
-
+                schema + fields
             }
 
             OpenapiType.ARRAY -> items
@@ -362,6 +361,22 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
 
             else -> emptyList()
         }
+
+    private fun SchemaOrReferenceObject.flatten(
+        name: String,
+    ): List<SimpleSchema> {
+        return when (this) {
+            is SchemaObject -> this
+                .flatten(name)
+
+            is ReferenceObject -> this
+                .resolveSchemaObject()
+                .second
+                .flatten(name)
+        }
+    }
+
+    private data class SimpleSchema(val name: String, val properties: List<Field>)
 
     private fun ReferenceObject.toReference(): Reference.Custom {
         val (referencingObject, schema) = resolveSchemaObject()
@@ -390,11 +405,9 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         }
     }
 
-    private fun SchemaObject.toReference(
-        name: String
-    ): Reference = when (type) {
+    private fun SchemaObject.toReference(name: String): Reference = when (val t = type) {
         OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Primitive(
-            (type as OpenapiType).toPrimitive(),
+            t.toPrimitive(),
             false
         )
 
@@ -416,21 +429,6 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
             }
         }
     }
-
-    private fun SchemaOrReferenceObject.flatten(
-        name: String,
-    ): List<SimpleSchema> {
-        return when (this) {
-            is SchemaObject -> this
-                .flatten(name)
-
-            is ReferenceObject -> this
-                .resolveSchemaObject()
-                .second
-                .flatten(name)
-        }
-    }
-
 
     private fun PathItemObject.toOperationList() = Endpoint.Method.values()
         .associateWith {
@@ -476,9 +474,6 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
             null -> TODO()
         }
             .let { Field(Field.Identifier(name), it, !(this.required ?: false)) }
-
-
-    private data class SimpleSchema(val name: String, val properties: List<Field>)
 
 
     private data class FlattenRequest(

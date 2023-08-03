@@ -1,0 +1,72 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Object in request",
+    "version": "1.0.0"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/additional/properties": {
+      "get": {
+        "operationId": "AdditionalProperties",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "schema": {
+              "$ref": "#/definitions/Messages"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "schema": {
+              "$ref": "#/definitions/Messages"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer"
+                  },
+                  "text": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Messages": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/Message"
+      }
+    },
+    "Message": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer"
+        },
+        "text": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

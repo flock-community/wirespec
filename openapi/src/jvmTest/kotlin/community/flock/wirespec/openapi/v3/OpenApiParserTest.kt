@@ -407,7 +407,11 @@ class OpenApiParserTest {
                 cookies = emptyList(),
                 requests = listOf(
                     Endpoint.Request(
-                        content = null
+                        content = Endpoint.Content(
+                            type = "application/json",
+                            reference = Reference.Custom(value = "Message", isIterable = false, isMap = true),
+                            isNullable = false
+                        )
                     )
                 ),
                 responses = listOf(

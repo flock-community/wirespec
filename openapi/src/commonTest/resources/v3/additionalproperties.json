@@ -8,6 +8,15 @@
     "/additional/properties": {
       "get": {
         "operationId": "AdditionalProperties",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Messages"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Ok",
