@@ -48,7 +48,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
             val requests = parameters
                 .filter { it.`in` == ParameterLocation.BODY }
                 .flatMap { requestBody ->
-                    openApi.consumes.orEmpty().map { type ->
+                    (openApi.consumes ?: req.operation.consumes).orEmpty().map { type ->
                         Endpoint.Request(
                             Endpoint.Content(
                                 type = type,
@@ -70,7 +70,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                 }
                 .ifEmpty { listOf(Endpoint.Request(null)) }
             val responses = req.operation.responses.orEmpty().flatMap { (status, res) ->
-                openApi.produces.orEmpty().map { type ->
+                (openApi.produces ?: req.operation.produces).orEmpty().map { type ->
                     Endpoint.Response(
                         status = status.value,
                         content = res.resolve().schema?.let { schema ->
@@ -316,6 +316,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                             Common.className(referencingObject.getReference(), "Array"),
                             true
                         )
+
                         null -> error("items cannot be null when type is array: ${this.ref}")
                     }
 
@@ -444,7 +445,15 @@ class OpenApiParser(private val openApi: SwaggerObject) {
         .flatMap { (path, pathItem) ->
             pathItem.toOperationList()
                 .flatMap { (method, operation) ->
-                    consumes.orEmpty().map { type -> FlattenRequest(path, pathItem, method, operation, type) }
+                    (consumes ?: operation.consumes).orEmpty().map { type ->
+                        FlattenRequest(
+                            path,
+                            pathItem,
+                            method,
+                            operation,
+                            type
+                        )
+                    }
                 }
         }
         .flatMap { f(it) }
@@ -465,7 +474,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                 .flatMap { (method, operation) ->
                     operation
                         .responses.orEmpty().flatMap { (statusCode, response) ->
-                            produces.orEmpty().map { type ->
+                            (produces ?: operation.produces).orEmpty().map { type ->
                                 FlattenResponse(
                                     path,
                                     pathItem,

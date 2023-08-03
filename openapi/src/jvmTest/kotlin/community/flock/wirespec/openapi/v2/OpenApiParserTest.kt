@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.C
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive
 import community.flock.wirespec.openapi.IO
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 
 class OpenApiParserTest {
@@ -200,8 +201,11 @@ class OpenApiParserTest {
                 )
             )
         )
-        val types = ast.filterIsInstance<Type>()
-        assertEquals(expectedDefinitions, types)
+        val definition = ast.filterIsInstance<Type>()
+        assertEquals(expectedDefinitions, definition)
+
+        val endpoints = ast.filterIsInstance<Endpoint>().map { it.name }
+        assertEquals(listOf("UploadFile", "AddPet", "AddPet", "UpdatePet", "UpdatePet", "UpdatePetWithForm", "PlaceOrder", "CreateUsersWithArrayInput", "CreateUsersWithListInput", "UpdateUser", "CreateUser"), endpoints)
 
         println(ast)
     }
