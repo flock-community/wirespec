@@ -71,7 +71,9 @@ class KotlinEmitter(
                 Primitive.Type.Integer -> "Int"
                 Primitive.Type.Boolean -> "Boolean"
             }
-        }.let { if (isIterable) "List<$it>" else it }
+        }
+            .let { if (isIterable) "List<$it>" else it }
+            .let { if (isMap) "Map<String, $it>" else it }
     }
 
     override fun Enum.emit() = withLogging(logger) { "enum class $name {\n${SPACER}${entries.joinToString(", ")}\n}\n" }
