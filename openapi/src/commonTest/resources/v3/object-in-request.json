@@ -5,9 +5,8 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/test": {
+    "/test-with-dash": {
       "get": {
-        "operationId": "Test",
         "requestBody": {
           "content": {
             "application/json": {
