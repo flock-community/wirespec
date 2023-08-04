@@ -79,15 +79,7 @@ class TypeScriptEmitter(logger: Logger = noLogger) : Emitter(logger) {
     override fun Endpoint.emit() = withLogging(logger) {
         """
           |export namespace ${name} {
-          |${
-            requests.toSet().joinToString("\n") {
-                "${SPACER}type ${it.emitName()} = { path: ${path.emitType()}, method: \"${method}\", headers: {${
-                    headers.map { it.emit() }.joinToString(",")
-                }}, query: {${
-                    query.map { it.emit() }.joinToString(",")
-                }}${it.content?.let { ", content: { type: \"${it.type}\", body: ${it.reference.emit()} }" } ?: ""} } "
-            }
-        }
+          |${requests.toSet().joinToString("\n") { "${SPACER}type ${it.emitName()} = { path: ${path.emitType()}, method: \"${method}\", headers: {${headers.map { it.emit() }.joinToString(",")}}, query: {${query.map { it.emit() }.joinToString(",")}}${it.content?.let { ", content: { type: \"${it.type}\", body: ${it.reference.emit()} }" } ?: ""} } " }}
           |${SPACER}export type Request = ${requests.toSet().joinToString(" | ") { it.emitName() }}
           |${responses.toSet().joinToString("\n") { "${SPACER}type ${it.emitName()} = { status: ${if (it.status.isInt()) it.status else "number"}${it.content?.let { ", content: { type: \"${it.type}\", body: ${it.reference.emit()} }" } ?: ""} }" }}
           |${SPACER}export type Response = ${responses.toSet().joinToString(" | ") { it.emitName() }}
