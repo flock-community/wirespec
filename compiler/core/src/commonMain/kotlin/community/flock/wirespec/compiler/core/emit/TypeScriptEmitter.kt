@@ -58,7 +58,7 @@ class TypeScriptEmitter(logger: Logger = noLogger) : Emitter(logger) {
             }
         }
             .let { if (isIterable) "$it[]" else it }
-            .let { if (isIterable) "Record<string, $it>" else it }
+            .let { if (isMap) "Record<string, $it>" else it }
     }
 
     override fun Enum.emit() = withLogging(logger) { "type $name = ${entries.joinToString(" | ") { """"$it"""" }}\n" }
