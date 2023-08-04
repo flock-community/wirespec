@@ -98,7 +98,7 @@ class TypeScriptEmitter(logger: Logger = noLogger) : Emitter(logger) {
           |${SPACER}${SPACER}${name.firstToLower()}:(request: Request) => Promise<Response>
           |${SPACER}}
           |${SPACER}${
-            requests.joinToString(",\n") {
+            requests.joinToString("\n") {
                 "export const ${it.emitName().firstToLower()} = (${
                     joinParameters(
                         it.content
