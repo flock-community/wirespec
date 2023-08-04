@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.cli
 import community.flock.wirespec.compiler.cli.io.FullFilePath
 import community.flock.wirespec.compiler.cli.io.JavaFile
 import community.flock.wirespec.compiler.cli.io.KotlinFile
+import community.flock.wirespec.compiler.cli.io.TypeScriptFile
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -64,7 +65,7 @@ class CliTest {
     }
 
     @Test
-    fun testCliOpenapi() {
+    fun testCliOpenapiKotlin() {
         val packageName = "community.flock.openapi"
         val packageDir = packageName.replace(".", "/")
         val input = "${inputDir}/openapi/petstore.json"
@@ -84,6 +85,32 @@ class CliTest {
               val tags: List<Tag>? = null,
               val status: String? = null
             )
+            """.trimIndent()
+
+        assertTrue(file.contains(expected))
+    }
+
+    @Test
+    fun testCliOpenapiTypesScript() {
+        val packageName = "community.flock.openapi"
+        val packageDir = packageName.replace(".", "/")
+        val input = "${inputDir}/openapi/petstore.json"
+        val output = outputDir()
+
+        cli(arrayOf(input, "-o", output, "-l", "TypeScript", "-p", "community.flock.openapi", "-a", "v2"))
+
+        val path = FullFilePath("$output/$packageDir", "Petstore")
+        val file = TypeScriptFile(path).read()
+
+        val expected = """
+            export type Pet = {
+              id?: number,
+              category?: Category,
+              name: string,
+              photoUrls: string[],
+              tags?: Tag[],
+              status?: string
+            }
             """.trimIndent()
 
         assertTrue(file.contains(expected))

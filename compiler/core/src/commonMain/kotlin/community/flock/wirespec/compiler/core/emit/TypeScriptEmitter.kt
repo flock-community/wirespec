@@ -15,23 +15,23 @@ class TypeScriptEmitter(logger: Logger = noLogger) : Emitter(logger) {
 
     private val endpointBase = """
         |export namespace WirespecShared {
-        |${SPACER}export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
-        |${SPACER}export type Content<T> = { type: string, body: T }
-        |${SPACER}export type Request<T> = { path: string, method: Method, query: Record<string, any[]>, headers: Record<string, any[]>, content?: Content<T> }
-        |${SPACER}export type Response<T> = { status: number, headers: Record<string, any[]>, content?: Content<T> }
+        |${SPACER}type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
+        |${SPACER}type Content<T> = { type:string, body:T }
+        |${SPACER}export type Request<T> = { path:string, method: Method, query?: Record<string, any[]>, headers?: Record<string, any[]>, content?:Content<T> }
+        |${SPACER}export type Response<T> = { status:number, headers?: Record<string, any[]>, content?:Content<T> }
         |}
     """.trimMargin()
 
-    override fun emit(ast: AST): List<Pair<String, String>> {
-        return super.emit(ast).map { (name, result) ->
+    override fun emit(ast: AST): List<Pair<String, String>> =
+        super.emit(ast).map { (name, result) ->
             name to """
                     |${if (ast.hasEndpoints()) endpointBase else ""}
                     |${result}
             """.trimMargin().trimStart()
         }
-    }
+
     override fun Type.emit() = withLogging(logger) {
-        """interface $name {
+        """export type $name = {
             |${shape.emit()}
             |}
             |
@@ -56,13 +56,15 @@ class TypeScriptEmitter(logger: Logger = noLogger) : Emitter(logger) {
                 Primitive.Type.Integer -> "number"
                 Primitive.Type.Boolean -> "boolean"
             }
-        }.let { if (isIterable) "$it[]" else it }
+        }
+            .let { if (isIterable) "$it[]" else it }
+            .let { if (isMap) "Record<string, $it>" else it }
     }
 
     override fun Enum.emit() = withLogging(logger) { "type $name = ${entries.joinToString(" | ") { """"$it"""" }}\n" }
 
     override fun Refined.emit() = withLogging(logger) {
-        """interface $name {
+        """type $name = {
             |${SPACER}value: string
             |}
             |const validate$name = (type: $name) => (${validator.emit()}).test(type.value);
@@ -77,18 +79,38 @@ class TypeScriptEmitter(logger: Logger = noLogger) : Emitter(logger) {
     override fun Endpoint.emit() = withLogging(logger) {
         """
           |export namespace ${name} {
-          |${requests.toSet().joinToString("\n") { "${SPACER}type ${it.emitName()} = { path: string, method: \"${method}\", headers: {${headers.map { it.emit() }.joinToString(",")}}, query: {${headers.map { it.emit() }.joinToString(",")}}, content: ${it.content?.let { "{ type: \"${it.type}\", body: ${it.reference.emit()} }" } ?: "undefined"} } " }}
-          |${SPACER}export type Request = ${requests.toSet().joinToString(" | ") { it.emitName() } }
-          |${responses.toSet().joinToString("\n") { "${SPACER}type ${it.emitName() } = { status: ${it.status}, content: ${it.content?.let { "{ type: \"${it.type}\", body: ${it.reference.emit()} }" } ?: "undefined"} }" }}
+          |${requests.toSet().joinToString("\n") { "${SPACER}type ${it.emitName()} = { path: ${path.emitType()}, method: \"${method}\", headers: {${headers.map { it.emit() }.joinToString(",")}}, query: {${query.map { it.emit() }.joinToString(",")}}${it.content?.let { ", content: { type: \"${it.type}\", body: ${it.reference.emit()} }" } ?: ""} } " }}
+          |${SPACER}export type Request = ${requests.toSet().joinToString(" | ") { it.emitName() }}
+          |${responses.toSet().joinToString("\n") { "${SPACER}type ${it.emitName()} = { status: ${if (it.status.isInt()) it.status else "number"}${it.content?.let { ", content: { type: \"${it.type}\", body: ${it.reference.emit()} }" } ?: ""} }" }}
           |${SPACER}export type Response = ${responses.toSet().joinToString(" | ") { it.emitName() }}
           |${SPACER}export type Call = {
           |${SPACER}${SPACER}${name.firstToLower()}:(request: Request) => Promise<Response>
           |${SPACER}}
+          |${SPACER}${requests.joinToString("\n") { "export const ${it.emitName().firstToLower()} = (${joinParameters(it.content).joinToString(",") { it.emit() }}) => ({path: `${path.emitPath()}`, method: \"${method.name}\", query: {${query.emitMap()}}, headers: {${headers.emitMap()}}${it.content?.let { ", content: {type: \"${it.type}\", body}" } ?: ""}} as const)" }}
           |}
+          |
         """.trimMargin()
     }
 
+    private fun List<Endpoint.Segment>.emitType() = "`${joinToString("") { "/" + it.emitType() }}`"
+    private fun Endpoint.Segment.emitType() = withLogging(logger) {
+        when (this) {
+            is Endpoint.Segment.Literal -> value
+            is Endpoint.Segment.Param -> "${"$"}{${reference.emit()}}"
+        }
+    }
 
-    private fun Endpoint.Request.emitName() = "Request" + (content?.emitContentType() ?: "unknown")
-    private fun Endpoint.Response.emitName() = "Response" + status + (content?.emitContentType() ?: "unknown")
+    private fun Endpoint.Request.emitName() = "Request" + (content?.emitContentType() ?: "Undefined")
+    private fun Endpoint.Response.emitName() = "Response" + status.firstToUpper() + (content?.emitContentType() ?: "Undefined")
+
+    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ") { "\"${it.identifier.emit()}\": ${it.identifier.emit()}" }
+
+    private fun List<Endpoint.Segment>.emitPath() = "/" + joinToString("/") { it.emit() }
+    private fun Endpoint.Segment.emit(): String = withLogging(logger) {
+        when (this) {
+            is Endpoint.Segment.Literal -> value
+            is Endpoint.Segment.Param -> "\${${identifier.value}}"
+        }
+    }
+
 }
