@@ -220,9 +220,9 @@ class OpenApiParserTest {
 
         val expectedDefinitions = listOf(
             Endpoint(
-                name = "Test",
+                name = "TestWithDashGET",
                 method = Endpoint.Method.GET,
-                path = listOf(Endpoint.Segment.Literal(value = "test")),
+                path = listOf(Endpoint.Segment.Literal(value = "test-with-dash")),
                 query = emptyList(),
                 headers = emptyList(),
                 cookies = emptyList(),
@@ -230,7 +230,7 @@ class OpenApiParserTest {
                     Endpoint.Request(
                         content = Endpoint.Content(
                             type = "application/json",
-                            reference = Custom(value = "TestRequestBody", isIterable = false),
+                            reference = Custom(value = "TestWithDashGETRequestBody", isIterable = false),
                             isNullable = false
                         )
                     )
@@ -247,7 +247,7 @@ class OpenApiParserTest {
                 )
             ),
             Type(
-                name = "TestRequestBody",
+                name = "TestWithDashGETRequestBody",
                 shape = Shape(
                     value = listOf(
                         Field(
@@ -257,14 +257,14 @@ class OpenApiParserTest {
                         ),
                         Field(
                             identifier = Identifier(value = "nest"),
-                            reference = Custom(value = "TestRequestBodyNest", isIterable = false),
+                            reference = Custom(value = "TestWithDashGETRequestBodyNest", isIterable = false),
                             isNullable = true
                         )
                     )
                 )
             ),
             Type(
-                name = "TestRequestBodyNest",
+                name = "TestWithDashGETRequestBodyNest",
                 shape = Shape(
                     value = listOf(
                         Field(

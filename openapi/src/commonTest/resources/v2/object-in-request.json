@@ -11,9 +11,8 @@
     "application/json"
   ],
   "paths": {
-    "/test": {
+    "/test-with-dash": {
       "get": {
-        "operationId": "Test",
         "parameters": [
           {
             "name": "body",
