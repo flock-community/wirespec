@@ -89,23 +89,12 @@ class TypeScriptEmitter(logger: Logger = noLogger) : Emitter(logger) {
             }
         }
           |${SPACER}export type Request = ${requests.toSet().joinToString(" | ") { it.emitName() }}
-          |${
-            responses.toSet()
-                .joinToString("\n") { "${SPACER}type ${it.emitName()} = { status: ${if (it.status.isInt()) it.status else "number"}${it.content?.let { ", content: { type: \"${it.type}\", body: ${it.reference.emit()} }" } ?: ""} }" }
-        }
+          |${responses.toSet().joinToString("\n") { "${SPACER}type ${it.emitName()} = { status: ${if (it.status.isInt()) it.status else "number"}${it.content?.let { ", content: { type: \"${it.type}\", body: ${it.reference.emit()} }" } ?: ""} }" }}
           |${SPACER}export type Response = ${responses.toSet().joinToString(" | ") { it.emitName() }}
           |${SPACER}export type Call = {
           |${SPACER}${SPACER}${name.firstToLower()}:(request: Request) => Promise<Response>
           |${SPACER}}
-          |${SPACER}${
-            requests.joinToString("\n") {
-                "export const ${it.emitName().firstToLower()} = (${
-                    joinParameters(
-                        it.content
-                    ).joinToString(",") { it.emit() }
-                }) => ({path: `${path.emitPath()}`, method: \"${method.name}\", query: {${query.emitMap()}}, headers: {${headers.emitMap()}}${it.content?.let { ", content: {type: \"${it.type}\", body}" } ?: ""}} as const)"
-            }
-        }
+          |${SPACER}${requests.joinToString("\n") { "export const ${it.emitName().firstToLower()} = (${joinParameters(it.content).joinToString(",") { it.emit() }}) => ({path: `${path.emitPath()}`, method: \"${method.name}\", query: {${query.emitMap()}}, headers: {${headers.emitMap()}}${it.content?.let { ", content: {type: \"${it.type}\", body}" } ?: ""}} as const)" }}
           |}
           |
         """.trimMargin()
@@ -120,11 +109,9 @@ class TypeScriptEmitter(logger: Logger = noLogger) : Emitter(logger) {
     }
 
     private fun Endpoint.Request.emitName() = "Request" + (content?.emitContentType() ?: "Undefined")
-    private fun Endpoint.Response.emitName() =
-        "Response" + status.firstToUpper() + (content?.emitContentType() ?: "Undefined")
+    private fun Endpoint.Response.emitName() = "Response" + status.firstToUpper() + (content?.emitContentType() ?: "Undefined")
 
-    private fun List<Type.Shape.Field>.emitMap() =
-        joinToString(", ") { "\"${it.identifier.emit()}\": ${it.identifier.emit()}" }
+    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ") { "\"${it.identifier.emit()}\": ${it.identifier.emit()}" }
 
     private fun List<Endpoint.Segment>.emitPath() = "/" + joinToString("/") { it.emit() }
     private fun Endpoint.Segment.emit(): String = withLogging(logger) {
