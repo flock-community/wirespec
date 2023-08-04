@@ -122,20 +122,17 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                 val name = req.operation.toName(segments, req.method)
                 when (val schema = param.schema) {
                     is SchemaObject -> when (schema.type) {
-                        null, community.flock.kotlinx.openapi.bindings.v2.Type.OBJECT -> schema
+                        null, OpenapiType.OBJECT -> (schema.additionalProperties?.resolve() ?: schema)
                             .flatten(Common.className(name, "RequestBody"))
-                            .map {
-                                Type(
-                                    it.name,
-                                    Type.Shape(it.properties)
-                                )
-                            }
+                            .map { Type(it.name, Type.Shape(it.properties)) }
+
+                        OpenapiType.ARRAY -> schema.items
+                            ?.flatten(Common.className(name, "RequestBody")).orEmpty()
+                            .map { Type(it.name, Type.Shape(it.properties)) }
 
                         else -> emptyList()
                     }
-
-                    is ReferenceObject -> emptyList()
-                    null -> emptyList()
+                    else -> emptyList()
                 }
             }
             ?: emptyList()
@@ -148,17 +145,19 @@ class OpenApiParser(private val openApi: SwaggerObject) {
         val name = res.operation.toName(segments, res.method)
         when (val schema = response.schema) {
             is SchemaObject -> when (schema.type) {
-                null, OpenapiType.OBJECT -> (
-                        schema.additionalProperties?.resolve()
-                            ?.flatten(Common.className(name, res.statusCode.value, "ResponseBody"))
-                            ?: schema.flatten(Common.className(name, res.statusCode.value, "ResponseBody")))
+                null, OpenapiType.OBJECT -> (schema.additionalProperties?.resolve() ?: schema)
+                    .flatten(Common.className(name, res.statusCode.value, "ResponseBody"))
                     .map { Type(it.name, Type.Shape(it.properties)) }
+
+                OpenapiType.ARRAY -> schema.items
+                    ?.flatten(Common.className(name, res.statusCode.value, "ResponseBody"))
+                    ?.map { Type(it.name, Type.Shape(it.properties)) }
+                    ?: emptyList()
 
                 else -> emptyList()
             }
 
-            is ReferenceObject -> emptyList()
-            null -> emptyList()
+            else -> emptyList()
         }
     }
 
@@ -275,14 +274,16 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                 schema + fields
             }
 
-            OpenapiType.ARRAY -> items
-                ?.let {
-                    when (it) {
-                        is ReferenceObject -> emptyList()
-                        is SchemaObject -> it.items?.flatten(Common.className(name, "array"))
-                    }
-                }
-                ?: emptyList()
+            OpenapiType.ARRAY -> when (val it = this.items) {
+                is ReferenceObject ->
+                    emptyList()
+
+                is SchemaObject ->
+                    it.flatten(Common.className(name, "Array"))
+
+                null ->
+                    emptyList()
+            }
 
             else -> emptyList()
         }
@@ -292,11 +293,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
     ): List<SimpleSchema> {
         return when (this) {
             is SchemaObject -> this.flatten(name)
-
-            is ReferenceObject -> this
-                .resolveSchemaObject()
-                .second
-                .flatten(name)
+            is ReferenceObject -> emptyList()
         }
     }
 
