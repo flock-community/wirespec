@@ -305,53 +305,57 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
     private fun SchemaObject.flatten(
         name: String,
     ): List<SimpleSchema> =
-        when (type) {
-            null, OpenapiType.OBJECT -> {
-                val fields = properties.orEmpty().flatMap { (key, value) ->
-                    when (value) {
-                        is SchemaObject -> value.flatten(Common.className(name, key))
+        when {
+            additionalProperties != null -> emptyList()
+            oneOf != null -> TODO("oneOf is not implemented")
+            anyOf != null -> TODO("anyOf is not implemented")
+            allOf != null -> listOf(
+                SimpleSchema(
+                    name,
+                    allOf.orEmpty().flatMap { it.resolve().toField(name) })
+            ).plus(
+                allOf!!.flatMap { x ->
+                    when (x) {
                         is ReferenceObject -> emptyList()
+                        is SchemaObject -> x.properties.orEmpty().flatMap { (key, value) ->
+                            when (value) {
+                                is ReferenceObject -> emptyList()
+                                is SchemaObject -> value.flatten(Common.className(name, key))
+                            }
+                        }
                     }
                 }
-                val schema = when (additionalProperties) {
-                    null -> listOf(
+            )
+            else -> when (type) {
+                null, OpenapiType.OBJECT -> {
+                    val fields = properties.orEmpty().flatMap { (key, value) ->
+                        when (value) {
+                            is SchemaObject -> value.flatten(Common.className(name, key))
+                            is ReferenceObject -> emptyList()
+                        }
+                    }
+                    val schema = listOf(
                         SimpleSchema(
                             name = name,
-                            properties = properties?.map { (key, value) ->
-                                when (value) {
-                                    is SchemaObject -> {
-                                        Field(
-                                            Field.Identifier(key),
-                                            value.toReference(Common.className(name, key)),
-                                            !(this.required?.contains(key) ?: false)
-                                        )
-                                    }
+                            properties = this.toField(name)
+                        )
+                    )
 
-                                    is ReferenceObject -> Field(
-                                        Field.Identifier(key),
-                                        value.toReference(),
-                                        !(this.required?.contains(key) ?: false)
-                                    )
-                                }
-                            } ?: emptyList()
-                        ))
-
-                    else -> emptyList()
+                    schema + fields
                 }
-                schema + fields
-            }
 
-            OpenapiType.ARRAY -> items
-                ?.let {
-                    when (it) {
-                        is ReferenceObject -> emptyList()
-                        is SchemaObject -> it.flatten(Common.className(name, "array"))
+                OpenapiType.ARRAY -> items
+                    ?.let {
+                        when (it) {
+                            is ReferenceObject -> emptyList()
+                            is SchemaObject -> it.flatten(Common.className(name, "array"))
+                        }
                     }
-                }
-                ?: emptyList()
+                    ?: emptyList()
 
 
-            else -> emptyList()
+                else -> emptyList()
+            }
         }
 
     private fun SchemaOrReferenceObject.flatten(
@@ -451,6 +455,26 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         OpenapiType.NUMBER -> Primitive.Type.Integer
         OpenapiType.BOOLEAN -> Primitive.Type.Boolean
         else -> error("Type is not a primitive")
+    }
+
+    private fun SchemaObject.toField(name: String) = properties.orEmpty().map { (key, value) ->
+        when (value) {
+            is SchemaObject -> {
+                Field(
+                    Field.Identifier(key),
+                    value.toReference(Common.className(name, key)),
+                    !(this.required?.contains(key) ?: false)
+                )
+            }
+
+            is ReferenceObject -> {
+                Field(
+                    Field.Identifier(key),
+                    Reference.Custom(value.getReference(), false),
+                    !(this.required?.contains(key) ?: false)
+                )
+            }
+        }
     }
 
     private fun ParameterObject.toField() =

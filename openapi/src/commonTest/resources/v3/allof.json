@@ -1,0 +1,73 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Object in response",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/allof": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Foo"
+                    },
+                    {
+                      "$ref": "#/components/schemas/Bar"
+                    },
+                    {
+                      "properties": {
+                        "c": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    {
+                      "properties": {
+                        "d": {
+                          "type": "object",
+                          "properties": {
+                            "e": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+  "schemas": {
+    "Foo": {
+      "type": "object",
+      "properties": {
+        "a": {
+          "type": "string"
+        }
+      }
+    },
+    "Bar": {
+      "type": "object",
+      "required": ["b"],
+      "properties": {
+        "b": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+}
+

@@ -242,7 +242,6 @@ class OpenApiParser(private val openApi: SwaggerObject) {
             }
         )
 
-
         else -> when (type) {
             null, OpenapiType.OBJECT -> {
                 val fields = properties
