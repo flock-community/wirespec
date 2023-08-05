@@ -2,6 +2,7 @@ package community.flock.wirespec.openapi.common
 
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Identifier
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Custom
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive
 
@@ -40,12 +41,12 @@ object Expected {
             shape = Type.Shape(
                 value = listOf(
                     Type.Shape.Field(
-                        identifier = Type.Shape.Field.Identifier(value = "id"),
+                        identifier = Identifier(value = "id"),
                         reference = Primitive(type = Primitive.Type.String, isIterable = false),
                         isNullable = true
                     ),
                     Type.Shape.Field(
-                        identifier = Type.Shape.Field.Identifier(value = "nest"),
+                        identifier = Identifier(value = "nest"),
                         reference = Custom(value = "TestWithDashGETRequestBodyNest", isIterable = false),
                         isNullable = true
                     )
@@ -57,12 +58,12 @@ object Expected {
             shape = Type.Shape(
                 value = listOf(
                     Type.Shape.Field(
-                        identifier = Type.Shape.Field.Identifier(value = "a"),
+                        identifier = Identifier(value = "a"),
                         reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
                         isNullable = true
                     ),
                     Type.Shape.Field(
-                        identifier = Type.Shape.Field.Identifier(value = "b"),
+                        identifier = Identifier(value = "b"),
                         reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
                         isNullable = true
                     )
@@ -102,7 +103,7 @@ object Expected {
             shape = Type.Shape(
                 value = listOf(
                     Type.Shape.Field(
-                        identifier = Type.Shape.Field.Identifier(value = "id"),
+                        identifier = Identifier(value = "id"),
                         reference = Primitive(
                             type = Primitive.Type.String,
                             isIterable = false
@@ -110,7 +111,7 @@ object Expected {
                         isNullable = true
                     ),
                     Type.Shape.Field(
-                        identifier = Type.Shape.Field.Identifier(value = "nest"),
+                        identifier = Identifier(value = "nest"),
                         reference = Custom(
                             value = "Test200ResponseBodyNest",
                             isIterable = false
@@ -125,7 +126,7 @@ object Expected {
             shape = Type.Shape(
                 value = listOf(
                     Type.Shape.Field(
-                        identifier = Type.Shape.Field.Identifier(value = "a"),
+                        identifier = Identifier(value = "a"),
                         reference = Primitive(
                             type = Primitive.Type.Integer,
                             isIterable = false
@@ -133,7 +134,7 @@ object Expected {
                         isNullable = true
                     ),
                     Type.Shape.Field(
-                        identifier = Type.Shape.Field.Identifier(value = "b"),
+                        identifier = Identifier(value = "b"),
                         reference = Primitive(
                             type = Primitive.Type.Integer,
                             isIterable = false
@@ -148,7 +149,10 @@ object Expected {
         Endpoint(
             name = "AdditionalProperties",
             method = Endpoint.Method.GET,
-            path = listOf(Endpoint.Segment.Literal(value = "additional"), Endpoint.Segment.Literal(value = "properties")),
+            path = listOf(
+                Endpoint.Segment.Literal(value = "additional"),
+                Endpoint.Segment.Literal(value = "properties")
+            ),
             query = emptyList(),
             headers = emptyList(),
             cookies = emptyList(),
@@ -174,18 +178,22 @@ object Expected {
                     status = "404",
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Custom(value = "AdditionalProperties404ResponseBody", isIterable = false, isMap = true),
+                        reference = Custom(
+                            value = "AdditionalProperties404ResponseBody",
+                            isIterable = false,
+                            isMap = true
+                        ),
                         isNullable = false
                     )
                 )
             )
         ),
         Type(
-            name="AdditionalProperties404ResponseBody",
+            name = "AdditionalProperties404ResponseBody",
             shape = Type.Shape(
                 value = listOf(
                     Type.Shape.Field(
-                        identifier = Type.Shape.Field.Identifier(value = "code"),
+                        identifier = Identifier(value = "code"),
                         reference = Primitive(
                             type = Primitive.Type.Integer,
                             isIterable = false
@@ -193,7 +201,7 @@ object Expected {
                         isNullable = true
                     ),
                     Type.Shape.Field(
-                        identifier = Type.Shape.Field.Identifier(value = "text"),
+                        identifier = Identifier(value = "text"),
                         reference = Primitive(
                             type = Primitive.Type.String,
                             isIterable = false
@@ -208,7 +216,7 @@ object Expected {
             shape = Type.Shape(
                 value = listOf(
                     Type.Shape.Field(
-                        identifier = Type.Shape.Field.Identifier(value = "code"),
+                        identifier = Identifier(value = "code"),
                         reference = Primitive(
                             type = Primitive.Type.Integer,
                             isIterable = false
@@ -216,7 +224,7 @@ object Expected {
                         isNullable = true
                     ),
                     Type.Shape.Field(
-                        identifier = Type.Shape.Field.Identifier(value = "text"),
+                        identifier = Identifier(value = "text"),
                         reference = Primitive(
                             type = Primitive.Type.String,
                             isIterable = false
@@ -272,11 +280,11 @@ object Expected {
             )
         ),
         Type(
-            name="ArrayGET200ResponseBody",
+            name = "ArrayGET200ResponseBody",
             shape = Type.Shape(
                 value = listOf(
                     Type.Shape.Field(
-                        identifier = Type.Shape.Field.Identifier(value = "code"),
+                        identifier = Identifier(value = "code"),
                         reference = Primitive(
                             type = Primitive.Type.Integer,
                             isIterable = false
@@ -284,7 +292,7 @@ object Expected {
                         isNullable = true
                     ),
                     Type.Shape.Field(
-                        identifier = Type.Shape.Field.Identifier(value = "text"),
+                        identifier = Identifier(value = "text"),
                         reference = Primitive(
                             type = Primitive.Type.String,
                             isIterable = false
@@ -299,7 +307,7 @@ object Expected {
             shape = Type.Shape(
                 value = listOf(
                     Type.Shape.Field(
-                        identifier = Type.Shape.Field.Identifier(value = "code"),
+                        identifier = Identifier(value = "code"),
                         reference = Primitive(
                             type = Primitive.Type.Integer,
                             isIterable = false
@@ -307,12 +315,123 @@ object Expected {
                         isNullable = true
                     ),
                     Type.Shape.Field(
-                        identifier = Type.Shape.Field.Identifier(value = "text"),
+                        identifier = Identifier(value = "text"),
                         reference = Primitive(
                             type = Primitive.Type.String,
                             isIterable = false
                         ),
                         isNullable = true
+                    )
+                )
+            )
+        )
+    )
+
+    val allOf = listOf(
+        Endpoint(
+            name = "AllofGET",
+            method = Endpoint.Method.GET,
+            path = listOf(Endpoint.Segment.Literal(value = "allof")),
+            query = emptyList(),
+            headers = emptyList(),
+            cookies = emptyList(),
+            requests = listOf(
+                Endpoint.Request(
+                    content = null
+                )
+            ),
+            responses = listOf(
+                Endpoint.Response(
+                    status = "200",
+                    content = Endpoint.Content(
+                        type = "application/json",
+                        reference = Custom(value = "AllofGET200ResponseBody", isIterable = false, isMap = false),
+                        isNullable = false
+                    )
+                )
+            )
+        ),
+        Type(
+            name = "AllofGET200ResponseBody",
+            shape = Type.Shape(
+                value = listOf(
+                    Type.Shape.Field(
+                        identifier = Identifier(value = "a"),
+                        reference = Primitive(
+                            type = Primitive.Type.String,
+                            isIterable = false
+                        ),
+                        isNullable = true
+                    ),
+                    Type.Shape.Field(
+                        identifier = Identifier(value = "b"),
+                        reference = Primitive(
+                            type = Primitive.Type.String,
+                            isIterable = false
+                        ),
+                        isNullable = false
+                    ),
+                    Type.Shape.Field(
+                        identifier = Identifier(value = "c"),
+                        reference = Primitive(
+                            type = Primitive.Type.String,
+                            isIterable = false
+                        ),
+                        isNullable = true
+                    ),
+                    Type.Shape.Field(
+                        identifier = Identifier(value = "d"),
+                        reference = Custom(
+                            value = "AllofGET200ResponseBodyD",
+                            isIterable = false
+                        ),
+                        isNullable = true
+                    )
+                )
+            )
+        ),
+        Type(
+            name = "AllofGET200ResponseBodyD",
+            shape = Type.Shape(
+                value = listOf(
+                    Type.Shape.Field(
+                        identifier = Identifier(value = "e"),
+                        reference = Primitive(
+                            type = Primitive.Type.String,
+                            isIterable = false,
+                            isMap = false
+                        ),
+                        isNullable = true
+                    )
+                )
+            )
+        ),
+        Type(
+            name = "Foo",
+            shape = Type.Shape(
+                value = listOf(
+                    Type.Shape.Field(
+                        identifier = Identifier(value = "a"),
+                        reference = Primitive(
+                            type = Primitive.Type.String,
+                            isIterable = false
+                        ),
+                        isNullable = true
+                    )
+                )
+            )
+        ),
+        Type(
+            name = "Bar",
+            shape = Type.Shape(
+                value = listOf(
+                    Type.Shape.Field(
+                        identifier = Identifier(value = "b"),
+                        reference = Primitive(
+                            type = Primitive.Type.String,
+                            isIterable = false
+                        ),
+                        isNullable = false
                     )
                 )
             )

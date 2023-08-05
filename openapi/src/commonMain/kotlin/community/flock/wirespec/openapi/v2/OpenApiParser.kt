@@ -132,6 +132,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
 
                         else -> emptyList()
                     }
+
                     else -> emptyList()
                 }
             }
@@ -225,10 +226,25 @@ class OpenApiParser(private val openApi: SwaggerObject) {
 
     private fun SchemaObject.flatten(
         name: String,
-    ): List<SimpleSchema> =
-        when (type) {
-            null, OpenapiType.OBJECT -> {
+    ): List<SimpleSchema> = when {
+        additionalProperties != null -> emptyList()
+        allOf != null -> listOf(SimpleSchema(name, allOf.orEmpty().flatMap { it.resolve().toField(name) })).plus(
+            allOf!!.flatMap { x ->
+                when (x) {
+                    is ReferenceObject -> emptyList()
+                    is SchemaObject -> x.properties.orEmpty().flatMap { (key, value) ->
+                        when (value) {
+                            is ReferenceObject -> emptyList()
+                            is SchemaObject -> value.flatten(Common.className(name, key))
+                        }
+                    }
+                }
+            }
+        )
 
+
+        else -> when (type) {
+            null, OpenapiType.OBJECT -> {
                 val fields = properties
                     ?.flatMap { (key, value) ->
                         when (value) {
@@ -243,34 +259,12 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                     }
                     ?: emptyList()
 
-                val schema = when (additionalProperties) {
-                    null -> listOf(
-                        SimpleSchema(
-                            name = name,
-                            properties = properties?.map { (key, value) ->
-                                when (value) {
-                                    is SchemaObject -> {
-                                        Field(
-                                            Field.Identifier(key),
-                                            value.toReference(Common.className(name, key)),
-                                            !(this.required?.contains(key) ?: false)
-                                        )
-                                    }
-
-                                    is ReferenceObject -> {
-                                        Field(
-                                            Field.Identifier(key),
-                                            Reference.Custom(value.getReference(), false),
-                                            !(this.required?.contains(key) ?: false)
-                                        )
-                                    }
-                                }
-                            } ?: emptyList()
-                        )
+                val schema = listOf(
+                    SimpleSchema(
+                        name = name,
+                        properties = toField(name)
                     )
-
-                    else -> emptyList()
-                }
+                )
                 schema + fields
             }
 
@@ -287,6 +281,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
 
             else -> emptyList()
         }
+    }
 
     private fun SchemaOrReferenceObject.flatten(
         name: String,
@@ -387,6 +382,26 @@ class OpenApiParser(private val openApi: SwaggerObject) {
         OpenapiType.NUMBER -> Primitive.Type.Integer
         OpenapiType.BOOLEAN -> Primitive.Type.Boolean
         else -> error("Type is not a primitive")
+    }
+
+    private fun SchemaObject.toField(name: String) = properties.orEmpty().map { (key, value) ->
+        when (value) {
+            is SchemaObject -> {
+                Field(
+                    Field.Identifier(key),
+                    value.toReference(Common.className(name, key)),
+                    !(this.required?.contains(key) ?: false)
+                )
+            }
+
+            is ReferenceObject -> {
+                Field(
+                    Field.Identifier(key),
+                    Reference.Custom(value.getReference(), false),
+                    !(this.required?.contains(key) ?: false)
+                )
+            }
+        }
     }
 
     private fun ParameterObject.toField() = this

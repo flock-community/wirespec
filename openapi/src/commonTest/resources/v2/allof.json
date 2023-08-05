@@ -1,0 +1,73 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Object in response",
+    "version": "1.0.0"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/allof": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Foo"
+                },
+                {
+                  "$ref": "#/definitions/Bar"
+                },
+                {
+                  "properties": {
+                    "c": {
+                      "type": "string"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "d": {
+                      "type": "object",
+                      "properties": {
+                        "e": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Foo": {
+      "type": "object",
+      "properties": {
+        "a": {
+          "type": "string"
+        }
+      }
+    },
+    "Bar": {
+      "type": "object",
+      "required": ["b"],
+      "properties": {
+        "b": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+

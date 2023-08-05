@@ -248,6 +248,16 @@ class OpenApiParserTest {
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiParser.parse(openApi)
 
-        assertEquals(Expected.array.joinToString("\n"), ast.joinToString ("\n"))
+        assertEquals(Expected.array, ast)
+    }
+
+    @Test
+    fun allOf() {
+        val json = IO.readOpenApi("v2/allof.json")
+
+        val openApi = OpenAPI.decodeFromString(json)
+        val ast = OpenApiParser.parse(openApi)
+
+        assertEquals(Expected.allOf, ast)
     }
 }
