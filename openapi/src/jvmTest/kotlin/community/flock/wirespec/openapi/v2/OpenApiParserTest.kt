@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Identifier
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Custom
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive
 import community.flock.wirespec.openapi.IO
+import community.flock.wirespec.openapi.common.Expected
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -207,8 +208,6 @@ class OpenApiParserTest {
         val endpoints = ast.filterIsInstance<Endpoint>().map { it.name }
         val expectedEndpoint = listOf("UploadFile", "AddPet", "UpdatePet", "FindPetsByStatus", "FindPetsByTags", "GetPetById", "UpdatePetWithForm", "DeletePet", "PlaceOrder", "GetOrderById", "DeleteOrder", "CreateUsersWithArrayInput", "CreateUsersWithListInput", "GetUserByName", "UpdateUser", "DeleteUser", "LoginUser", "LogoutUser", "CreateUser")
         assertEquals(expectedEndpoint, endpoints)
-
-        println(ast)
     }
 
     @Test
@@ -218,73 +217,8 @@ class OpenApiParserTest {
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiParser.parse(openApi)
 
-        val expectedDefinitions = listOf(
-            Endpoint(
-                name = "TestWithDashGET",
-                method = Endpoint.Method.GET,
-                path = listOf(Endpoint.Segment.Literal(value = "test-with-dash")),
-                query = emptyList(),
-                headers = emptyList(),
-                cookies = emptyList(),
-                requests = listOf(
-                    Endpoint.Request(
-                        content = Endpoint.Content(
-                            type = "application/json",
-                            reference = Custom(value = "TestWithDashGETRequestBody", isIterable = false),
-                            isNullable = false
-                        )
-                    )
-                ),
-                responses = listOf(
-                    Endpoint.Response(
-                        status = "200",
-                        content = Endpoint.Content(
-                            type = "application/json",
-                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
-                            isNullable = false
-                        )
-                    )
-                )
-            ),
-            Type(
-                name = "TestWithDashGETRequestBody",
-                shape = Shape(
-                    value = listOf(
-                        Field(
-                            identifier = Identifier(value = "id"),
-                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
-                            isNullable = true
-                        ),
-                        Field(
-                            identifier = Identifier(value = "nest"),
-                            reference = Custom(value = "TestWithDashGETRequestBodyNest", isIterable = false),
-                            isNullable = true
-                        )
-                    )
-                )
-            ),
-            Type(
-                name = "TestWithDashGETRequestBodyNest",
-                shape = Shape(
-                    value = listOf(
-                        Field(
-                            identifier = Identifier(value = "a"),
-                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
-                            isNullable = true
-                        ),
-                        Field(
-                            identifier = Identifier(value = "b"),
-                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
-                            isNullable = true
-                        )
-                    )
-                )
-            )
-        )
-
-        assertEquals(expectedDefinitions, ast)
-
-        println(ast)
+        assertEquals(Expected.objectInRequest, ast)
+        assertEquals(Expected.objectInRequest, ast)
     }
 
     @Test
@@ -294,152 +228,26 @@ class OpenApiParserTest {
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiParser.parse(openApi)
 
-        val expectedDefinitions = listOf(
-            Endpoint(
-                name = "Test",
-                method = Endpoint.Method.GET,
-                path = listOf(Endpoint.Segment.Literal(value = "test")),
-                query = emptyList(),
-                headers = emptyList(),
-                cookies = emptyList(),
-                requests = listOf(
-                    Endpoint.Request(
-                        content = null
-                    )
-                ),
-                responses = listOf(
-                    Endpoint.Response(
-                        status = "200",
-                        content = Endpoint.Content(
-                            type = "application/json",
-                            reference = Custom(value = "Test200ResponseBody", isIterable = false),
-                            isNullable = false
-                        )
-                    )
-                )
-            ),
-            Type(
-                name = "Test200ResponseBody",
-                shape = Shape(
-                    value = listOf(
-                        Field(
-                            identifier = Identifier(value = "id"),
-                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
-                            isNullable = true
-                        ),
-                        Field(
-                            identifier = Identifier(value = "nest"),
-                            reference = Custom(value = "Test200ResponseBodyNest", isIterable = false),
-                            isNullable = true
-                        )
-                    )
-                )
-            ),
-            Type(
-                name = "Test200ResponseBodyNest",
-                shape = Shape(
-                    value = listOf(
-                        Field(
-                            identifier = Identifier(value = "a"),
-                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
-                            isNullable = true
-                        ),
-                        Field(
-                            identifier = Identifier(value = "b"),
-                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
-                            isNullable = true
-                        )
-                    )
-                )
-            )
-        )
-
-        assertEquals(expectedDefinitions, ast)
-
-        println(ast)
+        assertEquals(Expected.objectInResponse, ast)
     }
 
     @Test
-    fun additionalproperties() {
+    fun additionalProperties() {
         val json = IO.readOpenApi("v2/additionalproperties.json")
 
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiParser.parse(openApi)
 
-        val expectedDefinitions = listOf(
-            Endpoint(
-                name = "AdditionalProperties",
-                method = Endpoint.Method.GET,
-                path = listOf(Endpoint.Segment.Literal(value = "additional"), Endpoint.Segment.Literal(value = "properties")),
-                query = emptyList(),
-                headers = emptyList(),
-                cookies = emptyList(),
-                requests = listOf(
-                    Endpoint.Request(
-                        content = Endpoint.Content(
-                            type = "application/json",
-                            reference = Field.Reference.Custom(value = "Message", isIterable = false, isMap = true),
-                            isNullable = false
-                        )
-                    )
-                ),
-                responses = listOf(
-                    Endpoint.Response(
-                        status = "200",
-                        content = Endpoint.Content(
-                            type = "application/json",
-                            reference = Field.Reference.Custom(value = "Message", isIterable = false, isMap = true),
-                            isNullable = false
-                        )
-                    ),
-                    Endpoint.Response(
-                        status = "404",
-                        content = Endpoint.Content(
-                            type = "application/json",
-                            reference = Field.Reference.Custom(value = "AdditionalProperties404ResponseBody", isIterable = false, isMap = true),
-                            isNullable = false
-                        )
-                    )
-                )
-            ),
-            Type(
-                name="AdditionalProperties404ResponseBody",
-                shape = Shape(
-                    value = listOf(
-                        Field(
-                            identifier = Identifier(value = "code"),
-                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
-                            isNullable = true
-                        ),
-                        Field(
-                            identifier = Identifier(value = "text"),
-                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
-                            isNullable = true
-                        )
-                    )
-                )
-            ),
-            Type(
-                name = "Message",
-                shape = Shape(
-                    value = listOf(
-                        Field(
-                            identifier = Identifier(value = "code"),
-                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
-                            isNullable = true
-                        ),
-                        Field(
-                            identifier = Identifier(value = "text"),
-                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
-                            isNullable = true
-                        )
-                    )
-                )
-            )
-        )
+        assertEquals(Expected.additionalproperties, ast)
+    }
 
-        assertEquals(expectedDefinitions, ast)
+    @Test
+    fun array() {
+        val json = IO.readOpenApi("v2/array.json")
 
-        println(ast)
+        val openApi = OpenAPI.decodeFromString(json)
+        val ast = OpenApiParser.parse(openApi)
+
+        assertEquals(Expected.array.joinToString("\n"), ast.joinToString ("\n"))
     }
 }
