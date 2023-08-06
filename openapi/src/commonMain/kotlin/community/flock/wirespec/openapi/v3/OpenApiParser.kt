@@ -88,11 +88,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                                 reference = when (val schema = media.schema) {
                                     is ReferenceObject -> schema.toReference()
                                     is SchemaObject -> schema.toReference(
-                                        Common.className(
-                                            name,
-                                            status.value,
-                                            "ResponseBody",
-                                        )
+                                        Common.className(name, status.value, "ResponseBody")
                                     )
 
                                     null -> TODO()
@@ -130,7 +126,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
             .flatMap { (_, mediaObject) ->
                 when (val schema = mediaObject.schema) {
                     is SchemaObject -> when (schema.type) {
-                        null, OpenapiType.OBJECT -> (schema.additionalProperties?.resolve() ?: schema)
+                        null, OpenapiType.OBJECT -> schema
                             .flatten(Common.className(name, "RequestBody"))
                             .map { Type(it.name, Type.Shape(it.properties)) }
 
@@ -156,7 +152,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                 response.content.orEmpty().flatMap { (_, mediaObject) ->
                     when (val schema = mediaObject.schema) {
                         is SchemaObject -> when (schema.type) {
-                            null, OpenapiType.OBJECT -> (schema.additionalProperties?.resolve() ?: schema)
+                            null, OpenapiType.OBJECT -> schema
                                 .flatten(Common.className(name, res.statusCode.value, "ResponseBody"))
                                 .map { Type(it.name, Type.Shape(it.properties)) }
 
@@ -177,10 +173,15 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
     }
 
 
-    private fun parseComponents(): List<Definition> = openApi.components?.schemas
-        ?.flatMap { it.value.flatten(Common.className(it.key)) }
-        ?.map { Type(it.name, Type.Shape(it.properties)) }
-        ?: emptyList()
+    private fun parseComponents(): List<Definition> = openApi.components?.schemas.orEmpty()
+        .filter {
+            when (val s = it.value) {
+                is SchemaObject -> s.additionalProperties == null
+                else -> false
+            }
+        }
+        .flatMap { it.value.flatten(Common.className(it.key)) }
+        .map { Type(it.name, Type.Shape(it.properties)) }
 
     private fun Path.toSegments(parameters: List<ParameterObject>) = value.split("/").drop(1).map { segment ->
         val isParam = segment[0] == '{' && segment[segment.length - 1] == '}'
@@ -306,26 +307,26 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         name: String,
     ): List<SimpleSchema> =
         when {
-            additionalProperties != null -> emptyList()
+            additionalProperties != null -> when (additionalProperties) {
+                is BooleanObject -> emptyList()
+                else -> additionalProperties!!.resolve().flatten(name)
+            }
+
             oneOf != null -> TODO("oneOf is not implemented")
             anyOf != null -> TODO("anyOf is not implemented")
-            allOf != null -> listOf(
-                SimpleSchema(
-                    name,
-                    allOf.orEmpty().flatMap { it.resolve().toField(name) })
-            ).plus(
-                allOf!!.flatMap { x ->
-                    when (x) {
+            allOf != null -> listOf(SimpleSchema(name, allOf.orEmpty().flatMap { it.resolve().toField(name) }))
+                .plus(allOf!!.flatMap {
+                    when (it) {
                         is ReferenceObject -> emptyList()
-                        is SchemaObject -> x.properties.orEmpty().flatMap { (key, value) ->
+                        is SchemaObject -> it.properties.orEmpty().flatMap { (key, value) ->
                             when (value) {
                                 is ReferenceObject -> emptyList()
                                 is SchemaObject -> value.flatten(Common.className(name, key))
                             }
                         }
                     }
-                }
-            )
+                })
+
             else -> when (type) {
                 null, OpenapiType.OBJECT -> {
                     val fields = properties.orEmpty().flatMap { (key, value) ->
@@ -400,17 +401,13 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
     private fun SchemaObject.toReference(name: String): Reference = when (val type = type) {
         OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Primitive(
             type.toPrimitive(),
-            false
+            false,
+            additionalProperties != null
         )
 
         null, OpenapiType.OBJECT ->
-            when (val additionalPropertiesType = additionalProperties?.resolve()?.type) {
-                OpenapiType.STRING, OpenapiType.INTEGER, OpenapiType.NUMBER, OpenapiType.BOOLEAN -> Primitive(
-                    additionalPropertiesType.toPrimitive(),
-                    false,
-                    additionalProperties != null
-                )
-
+            when {
+                additionalProperties is BooleanObject -> Reference.Any(false, additionalProperties != null)
                 else -> Reference.Custom(name, false, additionalProperties != null)
             }
 
@@ -418,7 +415,8 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
             when (val type = items?.resolve()?.type) {
                 OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Primitive(
                     type.toPrimitive(),
-                    true
+                    true,
+                    false
                 )
 
                 else -> when (val it = items) {

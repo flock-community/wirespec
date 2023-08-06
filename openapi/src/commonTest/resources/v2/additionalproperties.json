@@ -45,6 +45,12 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Error",
+            "schema": {
+              "additionalProperties": true
+            }
           }
         }
       }

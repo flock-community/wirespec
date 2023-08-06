@@ -57,10 +57,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                                     reference = when (val schema = requestBody.schema) {
                                         is ReferenceObject -> schema.toReference()
                                         is SchemaObject -> schema.toReference(
-                                            Common.className(
-                                                name,
-                                                "RequestBody",
-                                            )
+                                            Common.className(name, "RequestBody")
                                         )
 
                                         null -> TODO()
@@ -81,11 +78,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                                     reference = when (schema) {
                                         is ReferenceObject -> schema.toReference()
                                         is SchemaObject -> schema.toReference(
-                                            Common.className(
-                                                name,
-                                                status.value,
-                                                "ResponseBody",
-                                            )
+                                            Common.className(name, status.value, "ResponseBody")
                                         )
                                     },
                                     isNullable = false
@@ -122,7 +115,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                 val name = req.operation.toName(segments, req.method)
                 when (val schema = param.schema) {
                     is SchemaObject -> when (schema.type) {
-                        null, OpenapiType.OBJECT -> (schema.additionalProperties?.resolve() ?: schema)
+                        null, OpenapiType.OBJECT -> schema
                             .flatten(Common.className(name, "RequestBody"))
                             .map { Type(it.name, Type.Shape(it.properties)) }
 
@@ -146,7 +139,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
         val name = res.operation.toName(segments, res.method)
         when (val schema = response.schema) {
             is SchemaObject -> when (schema.type) {
-                null, OpenapiType.OBJECT -> (schema.additionalProperties?.resolve() ?: schema)
+                null, OpenapiType.OBJECT -> schema
                     .flatten(Common.className(name, res.statusCode.value, "ResponseBody"))
                     .map { Type(it.name, Type.Shape(it.properties)) }
 
@@ -162,10 +155,10 @@ class OpenApiParser(private val openApi: SwaggerObject) {
         }
     }
 
-    private fun parseDefinitions() = openApi.definitions
-        ?.flatMap { it.value.flatten(Common.className(it.key)) }
-        ?.map { Type(it.name, Type.Shape(it.properties)) }
-        ?: emptyList()
+    private fun parseDefinitions() = openApi.definitions.orEmpty()
+        .filter { it.value.additionalProperties == null }
+        .flatMap { it.value.flatten(Common.className(it.key)) }
+        .map { Type(it.name, Type.Shape(it.properties)) }
 
     private fun OperationObject.resolveParameters(): List<ParameterObject> = parameters.orEmpty()
         .map {
@@ -227,20 +220,23 @@ class OpenApiParser(private val openApi: SwaggerObject) {
     private fun SchemaObject.flatten(
         name: String,
     ): List<SimpleSchema> = when {
-        additionalProperties != null -> emptyList()
-        allOf != null -> listOf(SimpleSchema(name, allOf.orEmpty().flatMap { it.resolve().toField(name) })).plus(
-            allOf!!.flatMap { x ->
-                when (x) {
+        additionalProperties != null -> when (additionalProperties) {
+            is BooleanObject -> emptyList()
+            else -> additionalProperties!!.resolve().flatten(name)
+        }
+
+        allOf != null -> listOf(SimpleSchema(name, allOf.orEmpty().flatMap { it.resolve().toField(name) }))
+            .plus(allOf!!.flatMap {
+                when (it) {
                     is ReferenceObject -> emptyList()
-                    is SchemaObject -> x.properties.orEmpty().flatMap { (key, value) ->
+                    is SchemaObject -> it.properties.orEmpty().flatMap { (key, value) ->
                         when (value) {
                             is ReferenceObject -> emptyList()
                             is SchemaObject -> value.flatten(Common.className(name, key))
                         }
                     }
                 }
-            }
-        )
+            })
 
         else -> when (type) {
             null, OpenapiType.OBJECT -> {
@@ -322,29 +318,26 @@ class OpenApiParser(private val openApi: SwaggerObject) {
         }
 
 
-    private fun SchemaObject.toReference(name: String): Reference = when (val type = this.type) {
+    private fun SchemaObject.toReference(name: String): Reference = when (val type = type) {
         OpenapiType.STRING, OpenapiType.INTEGER, OpenapiType.NUMBER, OpenapiType.BOOLEAN -> Primitive(
             type.toPrimitive(),
-            false
+            false,
+            additionalProperties != null
         )
 
         null, OpenapiType.OBJECT ->
-            when (val t = additionalProperties?.resolve()?.type) {
-                OpenapiType.STRING, OpenapiType.INTEGER, OpenapiType.NUMBER, OpenapiType.BOOLEAN -> Primitive(
-                    t.toPrimitive(),
-                    false,
-                    additionalProperties != null
-                )
-
+            when {
+                additionalProperties is BooleanObject -> Reference.Any(false, additionalProperties != null)
                 else -> Reference.Custom(name, false, additionalProperties != null)
             }
 
         OpenapiType.ARRAY -> {
             val resolve = items?.resolve()
             when (val t = resolve?.type) {
-                OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Primitive(
+                OpenapiType.STRING, OpenapiType.INTEGER, OpenapiType.NUMBER, OpenapiType.BOOLEAN -> Primitive(
                     t.toPrimitive(),
-                    true
+                    true,
+                    additionalProperties != null
                 )
 
                 else -> when (val it = items) {
@@ -389,7 +382,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                 Field(
                     Field.Identifier(key),
                     value.toReference(Common.className(name, key)),
-                    !(this.required?.contains(key) ?: false)
+                    !(this.required?.contains(key) ?: false),
                 )
             }
 

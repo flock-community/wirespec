@@ -6,8 +6,7 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Custom
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
@@ -50,11 +49,12 @@ class TypeScriptEmitter(logger: Logger = noLogger) : Emitter(logger) {
 
     override fun Type.Shape.Field.Reference.emit() = withLogging(logger) {
         when (this) {
-            is Custom -> value
-            is Primitive -> when (type) {
-                Primitive.Type.String -> "string"
-                Primitive.Type.Integer -> "number"
-                Primitive.Type.Boolean -> "boolean"
+            is Reference.Any -> "any"
+            is Reference.Custom -> value
+            is Reference.Primitive -> when (type) {
+                Reference.Primitive.Type.String -> "string"
+                Reference.Primitive.Type.Integer -> "number"
+                Reference.Primitive.Type.Boolean -> "boolean"
             }
         }
             .let { if (isIterable) "$it[]" else it }
