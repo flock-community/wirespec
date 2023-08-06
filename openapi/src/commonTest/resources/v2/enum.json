@@ -1,0 +1,71 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Object in response",
+    "version": "1.0.0"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/enum": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "schema": {
+              "$ref": "#/definitions/Message"
+            }
+          },
+          "201": {
+            "description": "Ok",
+            "schema": {
+              "type": "object",
+              "required": ["code"],
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "enum": [
+                    "WARNING",
+                    "ERROR"
+                  ]
+                },
+                "text": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Message": {
+      "type": "object",
+      "required": ["code"],
+      "properties": {
+        "code": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ErrorType"
+          }
+        },
+        "text": {
+          "type": "string"
+        }
+      }
+    },
+    "ErrorType": {
+      "type": "string",
+      "enum": [
+        "WARNING",
+        "ERROR"
+      ]
+    }
+  }
+}
+

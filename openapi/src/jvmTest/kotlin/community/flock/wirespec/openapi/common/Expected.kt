@@ -2,6 +2,7 @@ package community.flock.wirespec.openapi.common
 
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Identifier
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 
@@ -264,7 +265,7 @@ object Expected {
                     status = "200",
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(value = "ArrayGET200ResponseBody", isIterable = false, isMap = false),
+                        reference = Reference.Custom(value = "ArrayGET200ResponseBody", isIterable = true, isMap = false),
                         isNullable = false
                     )
                 ),
@@ -442,6 +443,94 @@ object Expected {
                     )
                 )
             )
+        )
+    )
+
+    val enum = listOf(
+        Endpoint(
+            name = "EnumGET",
+            method = Endpoint.Method.GET,
+            path = listOf(Endpoint.Segment.Literal(value = "enum")),
+            query = emptyList(),
+            headers = emptyList(),
+            cookies = emptyList(),
+            requests = listOf(
+                Endpoint.Request(
+                    content = null
+                )
+            ),
+            responses = listOf(
+                Endpoint.Response(
+                    status = "200",
+                    content = Endpoint.Content(
+                        type = "application/json",
+                        reference = Reference.Custom(value = "Message", isIterable = false, isMap = false),
+                        isNullable = false
+                    )
+                ),
+                Endpoint.Response(
+                    status = "201",
+                    content = Endpoint.Content(
+                        type = "application/json",
+                        reference = Reference.Custom(value = "EnumGET201ResponseBody", isIterable = false, isMap = false),
+                        isNullable = false
+                    )
+                )
+            )
+        ),
+        Type(
+            name = "EnumGET201ResponseBody",
+            shape = Type.Shape(
+                value = listOf(
+                    Type.Shape.Field(
+                        identifier = Identifier(value = "code"),
+                        reference = Reference.Custom(
+                            value = "EnumGET201ResponseBodyCode",
+                            isIterable = false
+                        ),
+                        isNullable = false
+                    ),
+                    Type.Shape.Field(
+                        identifier = Identifier(value = "text"),
+                        reference = Reference.Primitive(
+                            type = Reference.Primitive.Type.String,
+                            isIterable = false
+                        ),
+                        isNullable = true
+                    )
+                )
+            )
+        ),
+        Enum(
+            name="EnumGET201ResponseBodyCode",
+            entries= setOf("WARNING", "ERROR")
+        ),
+        Type(
+            name = "Message",
+            shape = Type.Shape(
+                value = listOf(
+                    Type.Shape.Field(
+                        identifier = Identifier(value = "code"),
+                        reference = Reference.Custom(
+                            value = "ErrorType",
+                            isIterable = true
+                        ),
+                        isNullable = false
+                    ),
+                    Type.Shape.Field(
+                        identifier = Identifier(value = "text"),
+                        reference = Reference.Primitive(
+                            type = Reference.Primitive.Type.String,
+                            isIterable = false
+                        ),
+                        isNullable = true
+                    )
+                )
+            )
+        ),
+        Enum(
+            name="ErrorType",
+            entries= setOf("WARNING", "ERROR")
         )
     )
 }

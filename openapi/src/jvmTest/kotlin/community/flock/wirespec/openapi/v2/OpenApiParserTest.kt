@@ -1,7 +1,9 @@
 package community.flock.wirespec.openapi.v2
 
+import arrow.core.valid
 import community.flock.kotlinx.openapi.bindings.v2.OpenAPI
 import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
@@ -23,7 +25,7 @@ class OpenApiParserTest {
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiParser.parse(openApi)
 
-        val expectedDefinitions = listOf(
+        val expectedTypeDefinitions = listOf(
             Type(
                 name = "ApiResponse",
                 shape = Shape(
@@ -94,7 +96,7 @@ class OpenApiParserTest {
                         ),
                         Field(
                             identifier = Identifier(value = "status"),
-                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
+                            reference = Custom(value = "PetStatus", isIterable = false),
                             isNullable = true
                         )
                     )
@@ -143,7 +145,7 @@ class OpenApiParserTest {
                         ),
                         Field(
                             identifier = Identifier(value = "status"),
-                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
+                            reference = Custom(value = "OrderStatus", isIterable = false),
                             isNullable = true
                         ),
                         Field(
@@ -202,8 +204,17 @@ class OpenApiParserTest {
                 )
             )
         )
-        val definition = ast.filterIsInstance<Type>()
-        assertEquals(expectedDefinitions, definition)
+
+        val expectedEnumDefinitions = listOf(
+            Enum(name="PetStatus", entries= setOf( "available", "pending", "sold")),
+            Enum(name="OrderStatus", entries=setOf( "placed", "approved", "delivered"))
+        )
+
+        val typeDefinitions = ast.filterIsInstance<Type>()
+        assertEquals(expectedTypeDefinitions, typeDefinitions)
+
+        val enumDefinitions = ast.filterIsInstance<Enum>()
+        assertEquals(enumDefinitions, expectedEnumDefinitions)
 
         val endpoints = ast.filterIsInstance<Endpoint>().map { it.name }
         val expectedEndpoint = listOf("UploadFile", "AddPet", "UpdatePet", "FindPetsByStatus", "FindPetsByTags", "GetPetById", "UpdatePetWithForm", "DeletePet", "PlaceOrder", "GetOrderById", "DeleteOrder", "CreateUsersWithArrayInput", "CreateUsersWithListInput", "GetUserByName", "UpdateUser", "DeleteUser", "LoginUser", "LogoutUser", "CreateUser")
@@ -259,5 +270,15 @@ class OpenApiParserTest {
         val ast = OpenApiParser.parse(openApi)
 
         assertEquals(Expected.allOf, ast)
+    }
+
+    @Test
+    fun enum() {
+        val json = IO.readOpenApi("v2/enum.json")
+
+        val openApi = OpenAPI.decodeFromString(json)
+        val ast = OpenApiParser.parse(openApi)
+
+        assertEquals(Expected.enum, ast)
     }
 }
