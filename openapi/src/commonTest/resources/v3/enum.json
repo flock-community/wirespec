@@ -1,0 +1,79 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Object in response",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/enum": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "WARNING",
+                        "ERROR"
+                      ]
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Message": {
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErrorType"
+            }
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      },
+      "ErrorType": {
+        "type": "string",
+        "enum": [
+          "WARNING",
+          "ERROR"
+        ]
+      }
+    }
+  }
+}
+

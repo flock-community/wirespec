@@ -37,8 +37,8 @@ class OpenApiParser(private val openApi: SwaggerObject) {
 
     fun parse(): List<Definition> = parseEndpoints() + parseRequestBody() + parseResponseBody() + parseDefinitions()
 
-    private fun parseEndpoints(): List<Definition> =
-        openApi.paths.flatMap { (path, pathItem) ->
+    private fun parseEndpoints(): List<Definition> = openApi.paths
+        .flatMap { (path, pathItem) ->
             pathItem.toOperationList().flatMap { (method, operation) ->
                 val parameters = pathItem.resolveParameters() + operation.resolveParameters()
                 val segments = path.toSegments(parameters)
@@ -319,8 +319,6 @@ class OpenApiParser(private val openApi: SwaggerObject) {
 
     private fun SchemaObject.toReference(name: String): Reference = when {
         enum != null -> Reference.Custom(name, false, additionalProperties != null)
-
-
         else -> when (val type = type) {
             OpenapiType.STRING, OpenapiType.INTEGER, OpenapiType.NUMBER, OpenapiType.BOOLEAN ->
                 Reference.Primitive(type.toPrimitive(), false, additionalProperties != null)
