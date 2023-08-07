@@ -109,7 +109,7 @@ class CliTest {
               name: string,
               photoUrls: string[],
               tags?: Tag[],
-              status?: string
+              status?: PetStatus
             }
             """.trimIndent()
 

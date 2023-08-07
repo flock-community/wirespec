@@ -378,7 +378,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         resolveSchemaObject().let { (referencingObject, schema) ->
             when {
                 schema.additionalProperties != null -> when (val additionalProperties = schema.additionalProperties!!) {
-                    is BooleanObject -> TODO("additionalProperties = true not implemented")
+                    is BooleanObject -> Reference.Any(false, true)
                     is ReferenceObject -> additionalProperties.toReference().toMap()
                     is SchemaObject -> Reference.Custom(className(referencingObject.getReference()), false, true)
                 }
