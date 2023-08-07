@@ -9,8 +9,7 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Custom
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
@@ -62,13 +61,14 @@ class KotlinEmitter(
             .joinToString("")
     }
 
-    override fun Type.Shape.Field.Reference.emit() = withLogging(logger) {
+    override fun Reference.emit() = withLogging(logger) {
         when (this) {
-            is Custom -> value
-            is Primitive -> when (type) {
-                Primitive.Type.String -> "String"
-                Primitive.Type.Integer -> "Int"
-                Primitive.Type.Boolean -> "Boolean"
+            is Reference.Any -> "Any"
+            is Reference.Custom -> value
+            is Reference.Primitive -> when (type) {
+                Reference.Primitive.Type.String -> "String"
+                Reference.Primitive.Type.Integer -> "Int"
+                Reference.Primitive.Type.Boolean -> "Boolean"
             }
         }
             .let { if (isIterable) "List<$it>" else it }
@@ -159,10 +159,7 @@ class KotlinEmitter(
     private fun List<Endpoint.Segment>.emitPath() = "/" + joinToString("/") { it.emit() }
 
     fun Endpoint.Segment.Param.emit(): String = withLogging(logger) {
-        when (reference) {
-            is Custom -> identifier to reference.value
-            is Primitive -> identifier to reference.type.name
-        }.run { "$first: $second" }
+        "$identifier : $reference.emit()"
     }
 
     private fun List<Endpoint.Response>.emitResponseMapper() = """
