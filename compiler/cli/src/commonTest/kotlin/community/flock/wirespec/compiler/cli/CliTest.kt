@@ -83,7 +83,7 @@ class CliTest {
               val name: String,
               val photoUrls: List<String>,
               val tags: List<Tag>? = null,
-              val status: String? = null
+              val status: PetStatus? = null
             )
             """.trimIndent()
 
