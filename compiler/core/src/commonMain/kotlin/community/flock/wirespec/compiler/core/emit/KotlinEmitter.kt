@@ -59,6 +59,7 @@ class KotlinEmitter(
             .split("-")
             .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
             .joinToString("")
+            .sanitizeKeywords()
     }
 
     override fun Reference.emit() = withLogging(logger) {
@@ -76,8 +77,8 @@ class KotlinEmitter(
     }
 
     override fun Enum.emit() = withLogging(logger) {
-        fun String.sanitize() = replace("-", "_").let { if(it.first().isDigit()) "_$it" else it }
-        "enum class $name (val label: String){\n${SPACER}${entries.joinToString(",\n${SPACER}"){"${it.sanitize()}(\"$it\")"}}\n}\n"
+        fun String.sanitize() = replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }
+        "enum class ${name} (val label: String){\n${SPACER}${entries.joinToString(",\n${SPACER}") { "${it.sanitize().sanitizeKeywords()}(\"$it\")" }}\n}\n"
     }
 
     override fun Refined.emit() = withLogging(logger) {
@@ -186,6 +187,40 @@ class KotlinEmitter(
                     |${SPACER}${SPACER}${SPACER}${SPACER}.let{ Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()}headers, it.body) }
                 """.trimMargin()
         }
+
+    fun String.sanitizeKeywords() = if (preservedKeywords.contains(this)) "`$this`" else this
+    companion object {
+        private val preservedKeywords = listOf(
+            "as",
+            "break",
+            "class",
+            "continue",
+            "do",
+            "else",
+            "false",
+            "for",
+            "fun",
+            "if",
+            "in",
+            "interface",
+            "is",
+            "null",
+            "object",
+            "package",
+            "return",
+            "super",
+            "this",
+            "throw",
+            "true",
+            "try",
+            "typealias",
+            "typeof",
+            "val",
+            "var",
+            "when",
+            "while"
+        )
+    }
 
 }
 
