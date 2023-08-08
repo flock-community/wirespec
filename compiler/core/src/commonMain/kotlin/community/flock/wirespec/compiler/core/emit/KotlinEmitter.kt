@@ -75,7 +75,10 @@ class KotlinEmitter(
             .let { if (isMap) "Map<String, $it>" else it }
     }
 
-    override fun Enum.emit() = withLogging(logger) { "enum class $name {\n${SPACER}${entries.joinToString(", ")}\n}\n" }
+    override fun Enum.emit() = withLogging(logger) {
+        fun String.sanitize() = replace("-", "_").let { if(it.first().isDigit()) "_$it" else it }
+        "enum class $name (val label: String){\n${SPACER}${entries.joinToString(",\n${SPACER}"){"${it.sanitize()}(\"$it\")"}}\n}\n"
+    }
 
     override fun Refined.emit() = withLogging(logger) {
         """data class $name(val value: String)
@@ -187,7 +190,8 @@ class KotlinEmitter(
 }
 
 
-fun Endpoint.Content.emitContentType() = type.split("/")
+fun Endpoint.Content.emitContentType() = type
+    .split("/", "-")
     .joinToString("") { it.firstToUpper() }
 
 fun Type.Shape.Field.Reference.toField(identifier: String, isNullable: Boolean) = Type.Shape.Field(

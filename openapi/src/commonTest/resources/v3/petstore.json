@@ -17,6 +17,11 @@
     "description": "Find out more about Swagger",
     "url": "http://swagger.io"
   },
+  "servers": [
+    {
+      "url": "/api/v3"
+    }
+  ],
   "tags": [
     {
       "name": "pet",
@@ -94,7 +99,15 @@
           "405": {
             "description": "Validation exception"
           }
-        }
+        },
+        "security": [
+          {
+            "petstore_auth": [
+              "write:pets",
+              "read:pets"
+            ]
+          }
+        ]
       },
       "post": {
         "tags": [
@@ -143,7 +156,15 @@
           "405": {
             "description": "Invalid input"
           }
-        }
+        },
+        "security": [
+          {
+            "petstore_auth": [
+              "write:pets",
+              "read:pets"
+            ]
+          }
+        ]
       }
     },
     "/pet/findByStatus": {
@@ -197,7 +218,15 @@
           "400": {
             "description": "Invalid status value"
           }
-        }
+        },
+        "security": [
+          {
+            "petstore_auth": [
+              "write:pets",
+              "read:pets"
+            ]
+          }
+        ]
       }
     },
     "/pet/findByTags": {
@@ -248,7 +277,15 @@
           "400": {
             "description": "Invalid tag value"
           }
-        }
+        },
+        "security": [
+          {
+            "petstore_auth": [
+              "write:pets",
+              "read:pets"
+            ]
+          }
+        ]
       }
     },
     "/pet/{petId}": {
@@ -293,7 +330,18 @@
           "404": {
             "description": "Pet not found"
           }
-        }
+        },
+        "security": [
+          {
+            "api_key": []
+          },
+          {
+            "petstore_auth": [
+              "write:pets",
+              "read:pets"
+            ]
+          }
+        ]
       },
       "post": {
         "tags": [
@@ -334,7 +382,15 @@
           "405": {
             "description": "Invalid input"
           }
-        }
+        },
+        "security": [
+          {
+            "petstore_auth": [
+              "write:pets",
+              "read:pets"
+            ]
+          }
+        ]
       },
       "delete": {
         "tags": [
@@ -368,7 +424,15 @@
           "400": {
             "description": "Invalid pet value"
           }
-        }
+        },
+        "security": [
+          {
+            "petstore_auth": [
+              "write:pets",
+              "read:pets"
+            ]
+          }
+        ]
       }
     },
     "/pet/{petId}/uploadImage": {
@@ -421,7 +485,15 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "petstore_auth": [
+              "write:pets",
+              "read:pets"
+            ]
+          }
+        ]
       }
     },
     "/store/inventory": {
@@ -447,7 +519,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
       }
     },
     "/store/order": {
