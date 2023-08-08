@@ -1,10 +1,9 @@
 package community.flock.wirespec.examples.open_api_app.kotlin
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import community.flock.wirespec.generated.kotlin.v3.CreatePets
-import community.flock.wirespec.generated.kotlin.v3.ListPets
+import community.flock.wirespec.generated.kotlin.v3.AddPet
+import community.flock.wirespec.generated.kotlin.v3.FindPetsByStatus
 import community.flock.wirespec.generated.kotlin.v3.WirespecShared
-import community.flock.wirespec.generated.kotlin.v3.ShowPetById
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
@@ -13,7 +12,7 @@ import java.net.URI
 import kotlin.reflect.KType
 import kotlin.reflect.jvm.javaType
 
-interface KotlinPetstoreClient : ListPets, CreatePets, ShowPetById
+interface KotlinPetstoreClient : AddPet, FindPetsByStatus
 
 @Configuration
 class KotlinPetClientConfiguration {
@@ -64,17 +63,14 @@ class KotlinPetClientConfiguration {
                 }
             ) ?: error("No response")
 
-            override suspend fun listPets(request: ListPets.Request<*>): ListPets.Response<*> {
-                return handle(request, ListPets::RESPONSE_MAPPER)
+            override suspend fun addPet(request: AddPet.Request<*>): AddPet.Response<*> {
+                return handle(request, AddPet::RESPONSE_MAPPER)
             }
 
-            override suspend fun createPets(request: CreatePets.Request<*>): CreatePets.Response<*> {
-                return handle(request, CreatePets::RESPONSE_MAPPER)
+            override suspend fun findPetsByStatus(request: FindPetsByStatus.Request<*>): FindPetsByStatus.Response<*> {
+                return handle(request, FindPetsByStatus::RESPONSE_MAPPER)
             }
 
-            override suspend fun showPetById(request: ShowPetById.Request<*>): ShowPetById.Response<*> {
-                return handle(request, ShowPetById::RESPONSE_MAPPER)
-            }
 
         }
 

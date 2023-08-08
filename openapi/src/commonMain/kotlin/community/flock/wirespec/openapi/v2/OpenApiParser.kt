@@ -20,9 +20,6 @@ import community.flock.wirespec.compiler.core.parse.*
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 import community.flock.wirespec.openapi.Common.className
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenapiType
 
 class OpenApiParser(private val openApi: SwaggerObject) {
@@ -35,7 +32,8 @@ class OpenApiParser(private val openApi: SwaggerObject) {
         fun parse(openApi: SwaggerObject) = OpenApiParser(openApi).parse()
     }
 
-    fun parse(): List<Definition> = parseEndpoints() + parseRequestBody() + parseResponseBody() + parseDefinitions()
+    fun parse(): List<Definition> =
+        parseEndpoints() + parseRequestBody() + parseResponseBody() + parseDefinitions()
 
     private fun parseEndpoints(): List<Definition> = openApi.paths
         .flatMap { (path, pathItem) ->
@@ -45,10 +43,10 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                 val name = operation.toName(segments, method)
                 val query = parameters
                     .filter { it.`in` == ParameterLocation.QUERY }
-                    .map { it.toField() }
+                    .map { it.toField(name) }
                 val headers = parameters
                     .filter { it.`in` == ParameterLocation.HEADER }
-                    .map { it.toField() }
+                    .map { it.toField(name) }
                 val requests = parameters
                     .filter { it.`in` == ParameterLocation.BODY }
                     .flatMap { requestBody ->
@@ -107,14 +105,25 @@ class OpenApiParser(private val openApi: SwaggerObject) {
         }
 
     private fun parseRequestBody() = openApi.flatMapRequests { req ->
-        req.operation.parameters
+        val parameters = req.pathItem.resolveParameters() + (req.operation.resolveParameters())
+        val segments = req.path.toSegments(parameters)
+        val name = req.operation.toName(segments, req.method)
+        val enums: List<Definition> = parameters.flatMap { parameter ->
+            when {
+                parameter.enum != null -> listOf(
+                    Enum(
+                        "${name}Parameter${parameter.name}",
+                        parameter.enum!!.map { it.content }.toSet()
+                    )
+                )
+
+                else -> emptyList()
+            }
+        }
+        val types: List<Definition> = req.operation.parameters
             ?.map { it.resolve() }
             ?.filter { it.`in` == ParameterLocation.BODY }
             ?.flatMap { param ->
-                val parameters =
-                    req.pathItem.resolveParameters() + (req.operation.resolveParameters())
-                val segments = req.path.toSegments(parameters)
-                val name = req.operation.toName(segments, req.method)
                 when (val schema = param.schema) {
                     is SchemaObject -> when (schema.type) {
                         null, OpenapiType.OBJECT -> schema
@@ -130,6 +139,8 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                 }
             }
             ?: emptyList()
+
+        enums + types
     }
 
     private fun parseResponseBody() = openApi.flatMapResponses { res ->
@@ -236,13 +247,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
             })
 
         enum != null -> enum!!
-            .map {
-                when (it) {
-                    is JsonPrimitive -> it.content
-                    is JsonArray -> TODO()
-                    is JsonObject -> TODO()
-                }
-            }
+            .map { it.content }
             .toSet()
             .let { listOf(Enum(name, it)) }
 
@@ -298,7 +303,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                 schema.additionalProperties != null -> when (val additionalProperties = schema.additionalProperties!!) {
                     is BooleanObject -> Reference.Any(false, true)
                     is ReferenceObject -> additionalProperties.toReference().toMap()
-                    is SchemaObject -> Reference.Custom(className(referencingObject.getReference()), false, true)
+                    is SchemaObject -> additionalProperties.toReference(getReference()).toMap()
                 }
 
                 schema.enum != null -> Reference.Custom(className(referencingObject.getReference()), false, false)
@@ -386,27 +391,30 @@ class OpenApiParser(private val openApi: SwaggerObject) {
         }
     }
 
-    private fun ParameterObject.toField() = this
+    private fun ParameterObject.toField(name: String) = this
         .resolve()
         .let {
-            when (val type = it.type) {
-                OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> type
-                    .toPrimitive()
-                    .let { Reference.Primitive(it, false) }
+            when {
+                enum != null -> Reference.Custom("${name}Parameter${it.name}", false)
+                else -> when (val type = it.type) {
+                    OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> type
+                        .toPrimitive()
+                        .let { Reference.Primitive(it, false) }
 
-                OpenapiType.ARRAY -> it.items
-                    ?.resolve()
-                    ?.type
-                    ?.toPrimitive()
-                    ?.let { Reference.Primitive(it, true) }
-                    ?: TODO()
+                    OpenapiType.ARRAY -> it.items
+                        ?.resolve()
+                        ?.type
+                        ?.toPrimitive()
+                        ?.let { Reference.Primitive(it, true) }
+                        ?: TODO()
 
-                OpenapiType.OBJECT -> TODO()
-                OpenapiType.FILE -> TODO()
-                null -> TODO()
+                    OpenapiType.OBJECT -> TODO()
+                    OpenapiType.FILE -> TODO()
+                    null -> TODO()
+                }
+
             }
-        }
-        .let { Field(Field.Identifier(name), it, !(this.required ?: false)) }
+        }.let { Field(Field.Identifier(this.name), it, !(this.required ?: false)) }
 
     private fun Path.toSegments(parameters: List<ParameterObject>) = value.split("/").drop(1).map { segment ->
         val isParam = segment.isNotEmpty() && segment[0] == '{' && segment[segment.length - 1] == '}'

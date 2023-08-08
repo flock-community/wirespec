@@ -8,7 +8,7 @@ import kotlin.test.assertTrue
 
 fun Either<Nel<WirespecException>, String>.assertValid(expected: String) {
     when (this) {
-        is Either.Left -> error("Valid expected")
+        is Either.Left -> error("Valid expected: ${this.value.first().message}", )
         is Either.Right -> assertEquals(expected, value)
     }
 }

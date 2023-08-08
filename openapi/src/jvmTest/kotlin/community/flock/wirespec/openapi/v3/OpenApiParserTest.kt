@@ -1,8 +1,8 @@
 package community.flock.wirespec.openapi.v3
 
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPI
-import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
@@ -16,6 +16,316 @@ import kotlin.test.assertEquals
 
 
 class OpenApiParserTest {
+
+    @Test
+    fun petstore() {
+        val json = IO.readOpenApi("v3/petstore.json")
+
+        val openApi = OpenAPI.decodeFromString(json)
+        val ast = OpenApiParser.parse(openApi)
+
+        val expect = listOf(
+            Enum(name = "FindPetsByStatusParameter", entries = setOf("available", "pending", "sold")),
+            Type(
+                name = "Order",
+                shape = Shape(
+                    value = listOf(
+                        Field(
+                            identifier = Identifier(value = "id"),
+                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false, isMap = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "petId"),
+                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false, isMap = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "quantity"),
+                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false, isMap = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "shipDate"),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "status"),
+                            reference = Reference.Custom(value = "OrderStatus", isIterable = false, isMap = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "complete"),
+                            reference = Primitive(type = Primitive.Type.Boolean, isIterable = false, isMap = false),
+                            isNullable = true
+                        )
+                    )
+                )
+            ),
+            Enum(name = "OrderStatus", entries = setOf("placed", "approved", "delivered")),
+            Type(
+                name = "Customer",
+                shape = Shape(
+                    value = listOf(
+                        Field(
+                            identifier = Identifier(value = "id"),
+                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false, isMap = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "username"),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "address"),
+                            reference = Reference.Custom(value = "Address", isIterable = true, isMap = false),
+                            isNullable = true
+                        )
+                    )
+                )
+            ),
+            Type(
+                name = "Address",
+                shape = Shape(
+                    value = listOf(
+                        Field(
+                            identifier = Identifier(value = "street"),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "city"),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "state"),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "zip"),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
+                            isNullable = true
+                        )
+                    )
+                )
+            ),
+            Type(
+                name = "Category",
+                shape = Shape(
+                    value = listOf(
+                        Field(
+                            identifier = Identifier(value = "id"),
+                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false, isMap = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "name"),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
+                            isNullable = true
+                        )
+                    )
+                )
+            ),
+            Type(
+                name = "User",
+                shape = Shape(
+                    value = listOf(
+                        Field(
+                            identifier = Identifier(value = "id"),
+                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false, isMap = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "username"),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "firstName"),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "lastName"),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "email"),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "password"),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "phone"),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "userStatus"),
+                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false, isMap = false),
+                            isNullable = true
+                        )
+                    )
+                )
+            ),
+            Type(
+                name = "Tag",
+                shape = Shape(
+                    value = listOf(
+                        Field(
+                            identifier = Identifier(value = "id"),
+                            reference = Primitive(
+                                type = Primitive.Type.Integer,
+                                isIterable = false,
+                                isMap = false
+                            ),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "name"),
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = false,
+                                isMap = false
+                            ),
+                            isNullable = true
+                        )
+                    )
+                )
+            ),
+            Type(
+                name = "Pet",
+                shape = Shape(
+                    value = listOf(
+                        Field(
+                            identifier = Identifier(value = "id"),
+                            reference = Primitive(
+                                type = Primitive.Type.Integer,
+                                isIterable = false,
+                                isMap = false
+                            ),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "name"),
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = false,
+                                isMap = false
+                            ),
+                            isNullable = false
+                        ),
+                        Field(
+                            identifier = Identifier(value = "category"),
+                            reference = Reference.Custom(
+                                value = "Category",
+                                isIterable = false,
+                                isMap = false
+                            ),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "photoUrls"),
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = true,
+                                isMap = false
+                            ),
+                            isNullable = false
+                        ),
+                        Field(
+                            identifier = Identifier(value = "tags"),
+                            reference = Reference.Custom(
+                                value = "Tag",
+                                isIterable = true,
+                                isMap = false
+                            ),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "status"),
+                            reference = Reference.Custom(
+                                value = "PetStatus",
+                                isIterable = false,
+                                isMap = false
+                            ),
+                            isNullable = true
+                        )
+                    )
+                )
+            ),
+            Enum(name = "PetStatus", entries = setOf("available", "pending", "sold")),
+            Type(
+                name = "ApiResponse",
+                shape = Shape(
+                    value = listOf(
+                        Field(
+                            identifier = Identifier(value = "code"),
+                            reference = Primitive(
+                                type = Primitive.Type.Integer,
+                                isIterable = false,
+                                isMap = false
+                            ),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "type"),
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = false,
+                                isMap = false
+                            ),
+                            isNullable = true
+                        ),
+                        Field(
+                            identifier = Identifier(value = "message"),
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = false,
+                                isMap = false
+                            ),
+                            isNullable = true
+                        )
+                    )
+                )
+            )
+        )
+
+        assertEquals(expect.filterIsInstance<Type>(), ast.filterIsInstance<Type>())
+        assertEquals(expect.filterIsInstance<Enum>(), ast.filterIsInstance<Enum>())
+
+        val endpoint = ast.filterIsInstance<Endpoint>().find { it.name == "GetInventory" }
+
+        val expectedEndpoint = Endpoint(
+            name = "GetInventory",
+            method = Endpoint.Method.GET,
+            path = listOf(Endpoint.Segment.Literal(value = "store"), Endpoint.Segment.Literal(value = "inventory")),
+            query = emptyList(),
+            headers = emptyList(),
+            cookies = emptyList(),
+            requests = listOf(Endpoint.Request(content = null)),
+            responses = listOf(
+                Endpoint.Response(
+                    status = "200",
+                    content = Endpoint.Content(
+                        type = "application/json",
+                        reference = Primitive(type = Primitive.Type.Integer, isIterable = false, isMap = true),
+                        isNullable = false
+                    )
+                )
+            )
+        )
+        assertEquals(expectedEndpoint, endpoint)
+    }
 
     @Test
     fun pizza() {

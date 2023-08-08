@@ -22,9 +22,6 @@ import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive
 import community.flock.wirespec.openapi.Common.className
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import community.flock.kotlinx.openapi.bindings.v3.Type as OpenapiType
 
 class OpenApiParser(private val openApi: OpenAPIObject) {
@@ -42,7 +39,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
 
 
     private fun parse(): List<Definition> =
-        parseEndpoint() + parseRequestBody() + parseResponseBody() + parseComponents()
+        parseEndpoint() + parseParameters() + parseRequestBody() + parseResponseBody() + parseComponents()
 
     private fun parseEndpoint(): List<Definition> = openApi.paths
         .flatMap { (key, path) ->
@@ -52,13 +49,13 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                 val name = operation.toName(segments, method)
                 val query = parameters
                     .filter { it.`in` == ParameterLocation.QUERY }
-                    .map { it.toField() }
+                    .map { it.toField(className(name, "parameter")) }
                 val headers = parameters
                     .filter { it.`in` == ParameterLocation.HEADER }
-                    .map { it.toField() }
+                    .map { it.toField(className(name, "parameter")) }
                 val cookies = parameters
                     .filter { it.`in` == ParameterLocation.COOKIE }
-                    .map { it.toField() }
+                    .map { it.toField(className(name, "parameter")) }
                 val requests = operation.requestBody?.resolve()
                     ?.let { requestBody ->
                         requestBody.content?.map { (mediaType, mediaObject) ->
@@ -120,6 +117,13 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                 )
             }
         }
+
+    private fun parseParameters() = openApi.flatMapRequests { req ->
+        val parameters = req.pathItem.resolveParameters() + req.operation.resolveParameters()
+        val segments = req.path.toSegments(parameters)
+        val name = req.operation.toName(segments, req.method)
+        parameters.flatMap { parameter -> parameter.schema?.flatten(className(name, "Parameter")) ?: emptyList() }
+    }
 
     private fun parseRequestBody() = openApi.flatMapRequests { req ->
         val parameters = req.pathItem.resolveParameters() + req.operation.resolveParameters()
@@ -326,13 +330,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                 })
 
             enum != null -> enum!!
-                .map {
-                    when (it) {
-                        is JsonPrimitive -> it.content
-                        is JsonArray -> TODO()
-                        is JsonObject -> TODO()
-                    }
-                }
+                .map { it.content }
                 .toSet()
                 .let { listOf(Enum(name, it)) }
 
@@ -380,7 +378,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                 schema.additionalProperties != null -> when (val additionalProperties = schema.additionalProperties!!) {
                     is BooleanObject -> Reference.Any(false, true)
                     is ReferenceObject -> additionalProperties.toReference().toMap()
-                    is SchemaObject -> Reference.Custom(className(referencingObject.getReference()), false, true)
+                    is SchemaObject -> additionalProperties.toReference(getReference()).toMap()
                 }
 
                 schema.enum != null -> Reference.Custom(className(referencingObject.getReference()), false, false)
@@ -400,6 +398,12 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
 
 
     private fun SchemaObject.toReference(name: String): Reference = when {
+        additionalProperties != null -> when (val additionalProperties = additionalProperties!!) {
+            is BooleanObject -> Reference.Any(false, true)
+            is ReferenceObject -> additionalProperties.toReference().toMap()
+            is SchemaObject -> additionalProperties.toReference(name).toMap()
+        }
+
         enum != null -> Reference.Custom(name, false, additionalProperties != null)
         else -> when (val type = type) {
             OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Primitive(
@@ -471,25 +475,13 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         }
     }
 
-    private fun ParameterObject.toField() =
-        when (schema) {
-            is ReferenceObject -> Reference.Custom((schema as ReferenceObject).getReference(), false)
-            is SchemaObject -> {
-                when (val type = (schema as SchemaObject).type) {
-                    OpenapiType.STRING, OpenapiType.INTEGER, OpenapiType.NUMBER, OpenapiType.BOOLEAN -> Primitive(
-                        type.toPrimitive(),
-                        false
-                    )
-
-                    OpenapiType.ARRAY -> TODO()
-                    OpenapiType.OBJECT -> TODO()
-                    null -> TODO()
-                }
-            }
-
+    private fun ParameterObject.toField(name: String) =
+        when (val s = schema) {
+            is ReferenceObject -> s.toReference()
+            is SchemaObject -> s.toReference(name)
             null -> TODO()
         }
-            .let { Field(Field.Identifier(name), it, !(this.required ?: false)) }
+            .let { Field(Field.Identifier(this.name), it, !(this.required ?: false)) }
 
 
     private data class FlattenRequest(

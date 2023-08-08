@@ -12,7 +12,7 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
 class JavaEmitter(
-    private val packageName: String = DEFAULT_PACKAGE_NAME,
+    packageName: String = DEFAULT_PACKAGE_NAME,
     logger: Logger = noLogger
 ) : Emitter(logger, true) {
 
@@ -64,7 +64,7 @@ class JavaEmitter(
 
     override fun Type.Shape.Field.Identifier.emit() = withLogging(logger) { value }
 
-    private fun Type.Shape.Field.Reference.emitPrimaryType() = withLogging(logger) {
+    private fun Reference.emitPrimaryType() = withLogging(logger) {
         when (this) {
             is Reference.Any -> "Object"
             is Reference.Custom -> value
@@ -81,7 +81,16 @@ class JavaEmitter(
             .let { if (isIterable) "java.util.List<$it>" else it }
     }
 
-    override fun Enum.emit() = withLogging(logger) { "enum $name {\n${SPACER}${entries.joinToString(", ")};\n}\n" }
+    override fun Enum.emit() = withLogging(logger) {
+        fun String.sanitize() = replace("-", "_").let { if(it.first().isDigit()) "_$it" else it }
+        val body = """
+          |${SPACER}public final String label;
+          |${SPACER}$name(String label) {
+          |${SPACER}${SPACER}this.label = label;
+          |${SPACER}}
+          """.trimMargin()
+        "public enum $name {\n${SPACER}${entries.joinToString(",\n${SPACER}"){ enum -> "${enum.sanitize()}(\"${enum}\")"}};\n${body}\n}\n"
+    }
 
     override fun Refined.emit() = withLogging(logger) {
         """public record $name(String value) {
@@ -192,7 +201,7 @@ class JavaEmitter(
 
     private fun Endpoint.Content?.emitContentType() = this
         ?.type
-        ?.split("/")
+        ?.split("/", "-")
         ?.joinToString("") { it.firstToUpper() }
         ?: "Void"
 

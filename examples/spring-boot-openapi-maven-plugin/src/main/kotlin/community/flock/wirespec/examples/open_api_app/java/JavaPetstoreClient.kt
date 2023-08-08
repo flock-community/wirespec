@@ -5,9 +5,8 @@ import community.flock.wirespec.generated.java.v3.WirespecShared.Request
 import community.flock.wirespec.generated.java.v3.WirespecShared.Response
 import community.flock.wirespec.generated.java.v3.WirespecShared.Content
 import community.flock.wirespec.generated.java.v3.WirespecShared.ContentMapper
-import community.flock.wirespec.generated.java.v3.CreatePets
-import community.flock.wirespec.generated.java.v3.ListPets
-import community.flock.wirespec.generated.java.v3.ShowPetById
+import community.flock.wirespec.generated.java.v3.AddPet
+import community.flock.wirespec.generated.java.v3.FindPetsByStatus
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
@@ -15,7 +14,7 @@ import org.springframework.web.client.RestTemplate
 import java.lang.reflect.Type
 import java.net.URI
 
-interface JavaPetstoreClient : ListPets, CreatePets, ShowPetById
+interface JavaPetstoreClient : AddPet, FindPetsByStatus
 
 @Configuration
 class JavaPetClientConfiguration {
@@ -43,7 +42,7 @@ class JavaPetClientConfiguration {
             fun <Req : Request<*>, Res : Response<*>> handle(
                 request: Req,
                 responseMapper: (ContentMapper<ByteArray>, Int, Map<String, List<String>>, Content<ByteArray>) -> Res
-            ) = restTemplate.execute(
+            ):Res = restTemplate.execute(
                 URI("https://6467e16be99f0ba0a819fd68.mockapi.io${request.path}"),
                 HttpMethod.valueOf(request.method.name),
                 { req ->
@@ -58,16 +57,13 @@ class JavaPetClientConfiguration {
                 }
             ) ?: error("No response")
 
-            override fun listPets(request: ListPets.Request<*>): ListPets.Response<*> {
-             return handle(request, ListPets::RESPONSE_MAPPER)
+
+            override fun addPet(request: AddPet.Request<*>): AddPet.Response<*> {
+                return handle(request, AddPet::RESPONSE_MAPPER)
             }
 
-            override fun createPets(request: CreatePets.Request<*>): CreatePets.Response<*> {
-                return handle(request, CreatePets::RESPONSE_MAPPER)
-            }
-
-            override fun showPetById(request: ShowPetById.Request<*>): ShowPetById.Response<*> {
-                return handle(request, ShowPetById::RESPONSE_MAPPER)
+            override fun findPetsByStatus(request: FindPetsByStatus.Request<*>): FindPetsByStatus.Response<*> {
+                return handle(request, FindPetsByStatus::RESPONSE_MAPPER)
             }
 
 

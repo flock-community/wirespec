@@ -52,10 +52,11 @@ class ScalaEmitter(
     }
 
     override fun Enum.emit() = withLogging(logger) {
+        fun String.sanitize() = replace("-", "_").let { if(it.first().isDigit()) "_$it" else it }
         """
         |sealed abstract class $name(val label: String)
         |object $name {
-        |${entries.joinToString("\n") { """${SPACER}final case object $it extends $name(label = "$it")""" }}
+        |${entries.joinToString("\n") { """${SPACER}final case object ${it.sanitize().uppercase()} extends $name(label = "$it")""" }}
         |}
         |""".trimMargin()
     }

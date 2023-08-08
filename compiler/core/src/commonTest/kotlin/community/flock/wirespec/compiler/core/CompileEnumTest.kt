@@ -28,8 +28,9 @@ class CompileEnumTest {
         val kotlin = """
             package community.flock.wirespec.generated
             
-            enum class MyAwesomeEnum {
-              ONE, Two
+            enum class MyAwesomeEnum (val label: String){
+              ONE("ONE"),
+              Two("Two")
             }
             
         """.trimIndent()
@@ -42,8 +43,13 @@ class CompileEnumTest {
         val java = """
             package community.flock.wirespec.generated;
             
-            enum MyAwesomeEnum {
-              ONE, Two;
+            public enum MyAwesomeEnum {
+              ONE("ONE"),
+              Two("Two");
+              public final String label;
+              MyAwesomeEnum(String label) {
+                this.label = label;
+              }
             }
 
         """.trimIndent()
@@ -59,7 +65,7 @@ class CompileEnumTest {
             sealed abstract class MyAwesomeEnum(val label: String)
             object MyAwesomeEnum {
               final case object ONE extends MyAwesomeEnum(label = "ONE")
-              final case object Two extends MyAwesomeEnum(label = "Two")
+              final case object TWO extends MyAwesomeEnum(label = "Two")
             }
 
         """.trimIndent()

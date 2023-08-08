@@ -34,7 +34,7 @@ kotlin {
             dependencies {
                 implementation(project(":compiler:core"))
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
-                implementation("community.flock.kotlinx.openapi.bindings:kotlin-openapi-bindings:0.0.12")
+                implementation("community.flock.kotlinx.openapi.bindings:kotlin-openapi-bindings:0.0.14")
             }
         }
         commonTest {
