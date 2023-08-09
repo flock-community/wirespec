@@ -25,7 +25,7 @@ class OpenApiParserTest {
         val ast = OpenApiParser.parse(openApi)
 
         val expect = listOf(
-            Enum(name = "FindPetsByStatusParameter", entries = setOf("available", "pending", "sold")),
+            Enum(name = "FindPetsByStatusParameterStatus", entries = setOf("available", "pending", "sold")),
             Type(
                 name = "Order",
                 shape = Shape(
