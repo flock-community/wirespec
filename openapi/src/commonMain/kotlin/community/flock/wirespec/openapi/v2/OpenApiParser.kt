@@ -111,10 +111,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
         val enums: List<Definition> = parameters.flatMap { parameter ->
             when {
                 parameter.enum != null -> listOf(
-                    Enum(
-                        "${name}Parameter${parameter.name}",
-                        parameter.enum!!.map { it.content }.toSet()
-                    )
+                    Enum(className(name, "Parameter", parameter.name), parameter.enum!!.map { it.content }.toSet())
                 )
 
                 else -> emptyList()
@@ -375,9 +372,12 @@ class OpenApiParser(private val openApi: SwaggerObject) {
         when (value) {
             is SchemaObject -> {
                 Field(
-                    Field.Identifier(key),
-                    value.toReference(className(name, key)),
-                    !(this.required?.contains(key) ?: false),
+                    identifier = Field.Identifier(key),
+                    reference = when(value.type){
+                        OpenapiType.ARRAY -> value.toReference(className(name, key, "Array"))
+                        else -> value.toReference(className(name, key))
+                    },
+                    isNullable = !(this.required?.contains(key) ?: false)
                 )
             }
 
@@ -395,7 +395,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
         .resolve()
         .let {
             when {
-                enum != null -> Reference.Custom("${name}Parameter${it.name}", false)
+                enum != null -> Reference.Custom(className(name, "Parameter", it.name), false)
                 else -> when (val type = it.type) {
                     OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> type
                         .toPrimitive()

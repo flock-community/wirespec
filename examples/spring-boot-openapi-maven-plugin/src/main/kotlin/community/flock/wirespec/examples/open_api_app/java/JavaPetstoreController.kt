@@ -3,7 +3,7 @@ package community.flock.wirespec.examples.open_api_app.java
 import community.flock.wirespec.generated.java.v3.AddPet
 import community.flock.wirespec.generated.java.v3.FindPetsByStatus
 import community.flock.wirespec.generated.java.v3.Pet
-import community.flock.wirespec.generated.java.v3.FindPetsByStatusParameter
+import community.flock.wirespec.generated.java.v3.FindPetsByStatusParameterStatus
 import org.springframework.web.bind.annotation.*
 import java.util.*
 import kotlin.jvm.optionals.getOrNull
@@ -26,7 +26,7 @@ class JavaPetstoreController(
 
     @PostMapping
     suspend fun create(@RequestBody pet: Pet): List<Int> {
-        val req = FindPetsByStatus.RequestVoid(Optional.of(FindPetsByStatusParameter.available))
+        val req = FindPetsByStatus.RequestVoid(Optional.of(FindPetsByStatusParameterStatus.available))
         return when (val res = javaPetstoreClient.findPetsByStatus(req)) {
             is FindPetsByStatus.Response200ApplicationJson -> res.content.body.mapNotNull { it.id.getOrNull() }
             else -> error("No response")

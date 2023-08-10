@@ -2,7 +2,7 @@ package community.flock.wirespec.examples.open_api_app.kotlin
 
 import community.flock.wirespec.generated.kotlin.v3.AddPet
 import community.flock.wirespec.generated.kotlin.v3.FindPetsByStatus
-import community.flock.wirespec.generated.kotlin.v3.FindPetsByStatusParameter
+import community.flock.wirespec.generated.kotlin.v3.FindPetsByStatusParameterStatus
 import community.flock.wirespec.generated.kotlin.v3.Pet
 import org.springframework.web.bind.annotation.*
 
@@ -25,7 +25,7 @@ class KotlinPetstoreController(
 
     @GetMapping
     suspend fun find(@RequestBody pet: Pet): List<Int?> {
-        val req = FindPetsByStatus.RequestUnit(status = FindPetsByStatusParameter.available)
+        val req = FindPetsByStatus.RequestUnit(status = FindPetsByStatusParameterStatus.available)
         return when (val res = kotlinPetstoreClient.findPetsByStatus(req)) {
             is FindPetsByStatus.Response200ApplicationJson -> res.content.body.map { it.id }
             else -> error("No response")

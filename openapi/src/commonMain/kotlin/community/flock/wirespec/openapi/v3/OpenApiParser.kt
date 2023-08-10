@@ -49,13 +49,13 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                 val name = operation.toName(segments, method)
                 val query = parameters
                     .filter { it.`in` == ParameterLocation.QUERY }
-                    .map { it.toField(className(name, "parameter")) }
+                    .map { it.toField(className(name, "Parameter", it.name)) }
                 val headers = parameters
                     .filter { it.`in` == ParameterLocation.HEADER }
-                    .map { it.toField(className(name, "parameter")) }
+                    .map { it.toField(className(name, "Parameter", it.name)) }
                 val cookies = parameters
                     .filter { it.`in` == ParameterLocation.COOKIE }
-                    .map { it.toField(className(name, "parameter")) }
+                    .map { it.toField(className(name, "Parameter", it.name)) }
                 val requests = operation.requestBody?.resolve()
                     ?.let { requestBody ->
                         requestBody.content?.map { (mediaType, mediaObject) ->
@@ -122,7 +122,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         val parameters = req.pathItem.resolveParameters() + req.operation.resolveParameters()
         val segments = req.path.toSegments(parameters)
         val name = req.operation.toName(segments, req.method)
-        parameters.flatMap { parameter -> parameter.schema?.flatten(className(name, "Parameter")) ?: emptyList() }
+        parameters.flatMap { parameter -> parameter.schema?.flatten(className(name, "Parameter", parameter.name)) ?: emptyList() }
     }
 
     private fun parseRequestBody() = openApi.flatMapRequests { req ->
@@ -459,9 +459,12 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         when (value) {
             is SchemaObject -> {
                 Field(
-                    Field.Identifier(key),
-                    value.toReference(className(name, key)),
-                    !(this.required?.contains(key) ?: false)
+                    identifier = Field.Identifier(key),
+                    reference = when(value.type){
+                        OpenapiType.ARRAY -> value.toReference(className(name, key, "Array"))
+                        else -> value.toReference(className(name, key))
+                    },
+                    isNullable = !(this.required?.contains(key) ?: false)
                 )
             }
 
