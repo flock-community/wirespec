@@ -4,7 +4,7 @@ import Versions.coroutines
 object Versions {
     const val arrow = "1.2.0"
     const val coroutines = "1.6.4"
-    const val intellij = "1.13.3"
+    const val intellij = "1.15.0"
 }
 
 object Libraries {

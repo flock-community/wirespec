@@ -23,10 +23,10 @@ class Annotator : ExternalAnnotator<List<WirespecException>, List<WirespecExcept
             .fold({ it }, { emptyList() })
     }
 
-    override fun doAnnotate(collectedInfo: List<WirespecException>) = collectedInfo
+    override fun doAnnotate(collectedInfo: List<WirespecException>?) = collectedInfo
 
-    override fun apply(file: PsiFile, annotationResult: List<WirespecException>, holder: AnnotationHolder) {
-        annotationResult.forEach {
+    override fun apply(file: PsiFile, annotationResult: List<WirespecException>?, holder: AnnotationHolder) {
+        annotationResult?.forEach {
             holder
                 .newAnnotation(HighlightSeverity.ERROR, it.message ?: "")
                 .range(

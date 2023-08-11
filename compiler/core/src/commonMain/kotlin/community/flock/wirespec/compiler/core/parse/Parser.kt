@@ -34,7 +34,7 @@ typealias AST = List<Node>
 
 class Parser(private val logger: Logger) {
 
-    fun parse(tokens: List<Token>): Either<NonEmptyList<WirespecException>, List<Definition>> = tokens
+    fun parse(tokens: NonEmptyList<Token>): Either<NonEmptyList<WirespecException>, List<Definition>> = tokens
         .filterNot { it.type is WhiteSpace }
         .toProvider(logger)
         .parse()

@@ -24,7 +24,6 @@ sealed class WirespecException(message: String, val coordinates: Token.Coordinat
 
             sealed class NullTokenException(message: String, coordinates: Token.Coordinates) :
                 ParserException(coordinates, "$message cannot be null") {
-                class StartingException : NullTokenException("Starting Token", Token.Coordinates())
                 class NextException(coordinates: Token.Coordinates) : NullTokenException("Next Token", coordinates)
             }
         }
