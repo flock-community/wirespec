@@ -3,7 +3,7 @@
 plugins {
     java
     id("org.jetbrains.kotlin.jvm")
-    id(Plugins.intellij.name) version Plugins.intellij.version
+    Plugins.intellij.let { (name, ver) -> id(name) version ver }
 }
 
 group = "${Settings.groupId}.lsp.intellij-plugin"
@@ -19,7 +19,7 @@ dependencies {
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
-    version.set("2023.1")
+    version.set("2023.2")
     type.set("IC")
 }
 

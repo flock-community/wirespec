@@ -13,7 +13,7 @@ object Brackets : TokenType
 object CustomValue : TokenType
 object Invalid : TokenType
 object EndOfProgram : TokenType {
-    const val value = "EOP"
+    const val VALUE = "EOP"
 }
 
 sealed interface WhiteSpace : TokenType
