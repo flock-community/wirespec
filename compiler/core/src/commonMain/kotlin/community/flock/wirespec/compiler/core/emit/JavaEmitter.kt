@@ -89,7 +89,13 @@ class JavaEmitter(
           |${SPACER}${SPACER}this.label = label;
           |${SPACER}}
           """.trimMargin()
-        "public enum $name {\n${SPACER}${entries.joinToString(",\n${SPACER}"){ enum -> "${enum.sanitize()}(\"${enum}\")"}};\n${body}\n}\n"
+        val toString = """
+          |${SPACER}@Override
+          |${SPACER}public String toString() {
+          |${SPACER}${SPACER}return label;
+          |${SPACER}}
+          """.trimMargin()
+        "public enum $name {\n${SPACER}${entries.joinToString(",\n${SPACER}"){ enum -> "${enum.sanitize()}(\"${enum}\")"}};\n${body}\n${toString}\n}\n"
     }
 
     override fun Refined.emit() = withLogging(logger) {
