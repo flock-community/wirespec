@@ -147,6 +147,18 @@ wirespec {
 }
 ```
 
+## Integration
+Some notes on how Wirespec integrates with different libraries and frameworks
+
+### Jackson (json object mapper)
+For some languages Wirespec is sanitizing enums names because of usage of preserved keywords and forbidden characters. This results into problems with serialization. In Jackson the following configuration can be used to fix this.
+
+```kotlin
+ObjectMapper()
+  .enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING)
+  .enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING)
+```
+
 ## Release process
 A release can be made using github the UI. 
 Go to https://github.com/flock-community/wirespec/releases/new
