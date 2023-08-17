@@ -30,7 +30,11 @@ class CompileEnumTest {
             
             enum class MyAwesomeEnum (val label: String){
               ONE("ONE"),
-              Two("Two")
+              Two("Two");
+            
+              override fun toString(): String {
+                return label
+              }
             }
             
         """.trimIndent()
@@ -49,6 +53,10 @@ class CompileEnumTest {
               public final String label;
               MyAwesomeEnum(String label) {
                 this.label = label;
+              }
+              @Override
+              public String toString() {
+                return label;
               }
             }
 
