@@ -11,6 +11,8 @@ import community.flock.wirespec.compiler.utils.noLogger
 
 class WirespecEmitter(logger: Logger = noLogger) : Emitter(logger) {
 
+    override val shared = ""
+
     override fun Type.emit() = withLogging(logger) {
         """type $name {
             |${shape.emit()}

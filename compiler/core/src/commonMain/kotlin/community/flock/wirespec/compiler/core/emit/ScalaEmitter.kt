@@ -16,6 +16,8 @@ class ScalaEmitter(
     logger: Logger = noLogger
 ) : Emitter(logger) {
 
+    override val shared = ""
+
     override fun emit(ast: AST): List<Pair<String, String>> = super.emit(ast)
         .map { (name, result) -> name to if (packageName.isBlank()) "" else "package $packageName\n\n$result" }
 

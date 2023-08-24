@@ -16,11 +16,11 @@ class JavaEmitter(
     logger: Logger = noLogger
 ) : Emitter(logger, true) {
 
-    private val shared = """
+    override val shared = """
         |import java.lang.reflect.Type;
         |import java.lang.reflect.ParameterizedType;
         |
-        |public interface WirespecShared {
+        |public interface Wirespec {
         |${SPACER}enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE };
         |${SPACER}record Content<T> (String type, T body) {};
         |${SPACER}interface Request<T> { String getPath(); Method getMethod(); java.util.Map<String, java.util.List<Object>> getQuery(); java.util.Map<String, java.util.List<Object>> getHeaders(); Content<T> getContent(); }
@@ -45,7 +45,6 @@ class JavaEmitter(
 
     override fun emit(ast: AST): List<Pair<String, String>> = super.emit(ast)
         .map { (name, result) -> name to "$pkg\n\n$result" }
-        .plus("WirespecShared" to "$pkg\n\n$shared")
 
     override fun Type.emit() = withLogging(logger) {
         """public record $name(
@@ -115,9 +114,9 @@ class JavaEmitter(
         """public interface $name {
             |${SPACER}static String PATH = "${path.emitSegment()}";
             |${responses.emitResponseMapper()}
-            |${SPACER}interface Request<T> extends WirespecShared.Request<T> {}
+            |${SPACER}interface Request<T> extends Wirespec.Request<T> {}
             |${requests.joinToString("\n") { it.emit(this) }}
-            |${SPACER}interface Response<T> extends WirespecShared.Response<T> {}
+            |${SPACER}interface Response<T> extends Wirespec.Response<T> {}
             |${
             responses.map { it.status.groupStatus() }.toSet()
                 .joinToString("\n") { "${SPACER}interface Response${it}<T> extends Response<T>{};" }
@@ -135,22 +134,22 @@ class JavaEmitter(
     private fun Endpoint.Request.emit(endpoint: Endpoint) = """
         |${SPACER}class Request${content.emitContentType()} implements Request<${content?.reference?.emit() ?: "Void"}> {
         |${SPACER}${SPACER}private final String path;
-        |${SPACER}${SPACER}private final WirespecShared.Method method;
+        |${SPACER}${SPACER}private final Wirespec.Method method;
         |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<Object>> query;
         |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<Object>> headers;
-        |${SPACER}${SPACER}private final WirespecShared.Content<${content?.reference?.emit() ?: "Void"}> content;
+        |${SPACER}${SPACER}private final Wirespec.Content<${content?.reference?.emit() ?: "Void"}> content;
         |${SPACER}${SPACER}public Request${content.emitContentType()}(${endpoint.emitRequestSignature(content)}) {
         |${SPACER}${SPACER}${SPACER}this.path = ${endpoint.path.emitPath()};
-        |${SPACER}${SPACER}${SPACER}this.method = WirespecShared.Method.${endpoint.method.name};
+        |${SPACER}${SPACER}${SPACER}this.method = Wirespec.Method.${endpoint.method.name};
         |${SPACER}${SPACER}${SPACER}this.query = ${endpoint.query.emitMap()};
         |${SPACER}${SPACER}${SPACER}this.headers = ${endpoint.headers.emitMap()};
-        |${SPACER}${SPACER}${SPACER}this.content = ${content?.let { "new WirespecShared.Content(\"${it.type}\", body)" } ?: "null"};
+        |${SPACER}${SPACER}${SPACER}this.content = ${content?.let { "new Wirespec.Content(\"${it.type}\", body)" } ?: "null"};
         |${SPACER}${SPACER}}
         |${SPACER}${SPACER}@Override public String getPath() {return path;}
-        |${SPACER}${SPACER}@Override public WirespecShared.Method getMethod() {return method;}
+        |${SPACER}${SPACER}@Override public Wirespec.Method getMethod() {return method;}
         |${SPACER}${SPACER}@Override public java.util.Map<String, java.util.List<Object>> getQuery() {return query;}
         |${SPACER}${SPACER}@Override public java.util.Map<String, java.util.List<Object>> getHeaders() {return headers;}
-        |${SPACER}${SPACER}@Override public WirespecShared.Content<${content?.reference?.emit() ?: "Void"}> getContent() {return content;}
+        |${SPACER}${SPACER}@Override public Wirespec.Content<${content?.reference?.emit() ?: "Void"}> getContent() {return content;}
         |${SPACER}}
     """.trimMargin()
 
@@ -160,22 +159,22 @@ class JavaEmitter(
     }<${content?.reference?.emit() ?: "Void"}> {
         |${SPACER}${SPACER}private final int status;
         |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<Object>> headers;
-        |${SPACER}${SPACER}private final WirespecShared.Content<${content?.reference?.emit() ?: "Void"}> content;
+        |${SPACER}${SPACER}private final Wirespec.Content<${content?.reference?.emit() ?: "Void"}> content;
         |${SPACER}${SPACER}public Response${status.firstToUpper()}${content.emitContentType()}(${
         status.takeIf { !it.isInt() }?.let { "int status, " }.orEmptyString()
     }java.util.Map<String, java.util.List<Object>> headers${content?.let { ", ${it.reference.emit()} body" } ?: ""}) {
         |${SPACER}${SPACER}${SPACER}this.status = ${status.takeIf { it.isInt() } ?: "status"};
         |${SPACER}${SPACER}${SPACER}this.headers = headers;
-        |${SPACER}${SPACER}${SPACER}this.content = ${content?.let { "new WirespecShared.Content(\"${it.type}\", body)" } ?: "null"};
+        |${SPACER}${SPACER}${SPACER}this.content = ${content?.let { "new Wirespec.Content(\"${it.type}\", body)" } ?: "null"};
         |${SPACER}${SPACER}}
         |${SPACER}${SPACER}@Override public int getStatus() {return status;}
         |${SPACER}${SPACER}@Override public java.util.Map<String, java.util.List<Object>> getHeaders() {return headers;}
-        |${SPACER}${SPACER}@Override public WirespecShared.Content<${content?.reference?.emit() ?: "Void"}> getContent() {return content;}
+        |${SPACER}${SPACER}@Override public Wirespec.Content<${content?.reference?.emit() ?: "Void"}> getContent() {return content;}
         |${SPACER}}
         """.trimMargin()
 
     private fun List<Endpoint.Response>.emitResponseMapper() = """
-        |${SPACER}static <B> Response RESPONSE_MAPPER(WirespecShared.ContentMapper<B> contentMapper, int status, java.util.Map<String, java.util.List<Object>> headers, WirespecShared.Content<B> content) {
+        |${SPACER}static <B> Response RESPONSE_MAPPER(Wirespec.ContentMapper<B> contentMapper, int status, java.util.Map<String, java.util.List<Object>> headers, Wirespec.Content<B> content) {
         |${distinctBy { it.status to it.content?.type }.joinToString("") { it.emitResponseMapperCondition() }}
         |${SPACER}${SPACER}throw new IllegalStateException("Unknown response type");
         |${SPACER}}
@@ -196,7 +195,7 @@ class JavaEmitter(
                     |${SPACER}${SPACER}${SPACER}if(${
                 status.takeIf { it.isInt() }?.let { "status == $status && " }.orEmptyString()
             }content.type().equals("${content.type}")) {
-                    |${SPACER}${SPACER}${SPACER}${SPACER}WirespecShared.Content<${content.reference.emit()}> c = contentMapper.read(content, WirespecShared.getType(${content.reference.emitPrimaryType()}.class, ${content.reference.isIterable}));
+                    |${SPACER}${SPACER}${SPACER}${SPACER}Wirespec.Content<${content.reference.emit()}> c = contentMapper.read(content, Wirespec.getType(${content.reference.emitPrimaryType()}.class, ${content.reference.isIterable}));
                     |${SPACER}${SPACER}${SPACER}${SPACER}return new Response${status.firstToUpper()}${content.emitContentType()}(${
                 status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()
             }headers, c.body());
