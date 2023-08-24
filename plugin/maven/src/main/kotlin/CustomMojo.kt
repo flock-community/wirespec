@@ -12,11 +12,12 @@ import org.apache.maven.project.MavenProject
 import java.net.URLClassLoader
 
 import community.flock.wirespec.compiler.utils.Logger
+import org.apache.maven.plugin.AbstractMojo
 
 import java.io.File
 
 @Mojo(name = "custom", defaultPhase = LifecyclePhase.GENERATE_SOURCES, requiresDependencyResolution = ResolutionScope.COMPILE)
-class CustomMojo : WirespecMojo() {
+class CustomMojo : BaseMojo() {
 
     @Parameter(required = true)
     private lateinit var input: String
