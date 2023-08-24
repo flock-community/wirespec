@@ -36,47 +36,23 @@
             </plugin>
             <plugin>
                 <groupId>community.flock.wirespec.plugin.maven</groupId>
-                <artifactId>maven</artifactId>
+                <artifactId>wirespec-maven-plugin</artifactId>
                 <version>0.0.0-SNAPSHOT</version>
                 <executions>
                     <execution>
-                        <id>typescript</id>
+                        <id>generate</id>
                         <goals>
-                            <goal>typescript</goal>
+                            <goal>generate</goal>
                         </goals>
                         <configuration>
                             <input>${project.basedir}/src/main/wirespec</input>
                             <output>${project.basedir}/src/main/frontend/generated</output>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>java</id>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                        <configuration>
-                            <input>${project.basedir}/src/main/wirespec</input>
-                            <output>${project.build.directory}/generated-sources/java</output>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>kotlin</id>
-                        <goals>
-                            <goal>kotlin</goal>
-                        </goals>
-                        <configuration>
-                            <input>${project.basedir}/src/main/wirespec</input>
-                            <output>${project.build.directory}/generated-sources/kotlin</output>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>scala</id>
-                        <goals>
-                            <goal>scala</goal>
-                        </goals>
-                        <configuration>
-                            <input>${project.basedir}/src/main/wirespec</input>
-                            <output>${project.build.directory}/generated-sources/scala</output>
+                            <languages>
+                                <language>TypeScript</language>
+                                <language>Java</language>
+                                <language>Kotlin</language>
+                                <language>Scala</language>
+                            </languages>
                         </configuration>
                     </execution>
                 </executions>

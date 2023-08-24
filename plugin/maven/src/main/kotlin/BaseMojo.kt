@@ -9,7 +9,7 @@ import org.apache.maven.plugin.AbstractMojo
 import java.io.BufferedReader
 import java.io.File
 
-abstract class WirespecMojo : AbstractMojo() {
+abstract class BaseMojo : AbstractMojo() {
 
     val logger = object : Logger(true) {
         override fun warn(s: String) = log.warn(s)

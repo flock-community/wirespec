@@ -25,6 +25,7 @@ dependencies {
 publishing {
     publications {
         register("mavenJava", MavenPublication::class) {
+            artifactId = "wirespec-maven-plugin"
             from(components["java"])
         }
     }
@@ -36,13 +37,14 @@ tasks.publishToMavenLocal {
 }
 
 mavenPlugin {
+    artifactId.set("wirespec-maven-plugin")
     description.set("Plugin to run wirespec compiler")
     goalPrefix.set("wirespec")
 }
 
 publishing {
     publications {
-        create<MavenPublication>("maven") {
+        create<MavenPublication>("wirespec-maven-plugin") {
             from(components["java"])
         }
     }
