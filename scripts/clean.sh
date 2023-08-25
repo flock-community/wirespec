@@ -10,5 +10,5 @@ root="$dir/.."
   (cd "$root"/examples/spring-boot-maven-plugin && ./mvnw clean) &&
   (cd "$root"/examples/spring-boot-openapi-maven-plugin && ./mvnw clean) &&
   (cd "$root"/types && ./clean.sh) &&
-  (cd "$root"/tmp && ./clean.sh) &&
+  (cd "$root"/test && ./clean.sh) &&
   docker rmi wirespec
