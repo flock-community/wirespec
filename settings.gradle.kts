@@ -26,14 +26,14 @@ dependencyResolutionManagement {
 rootProject.name = "wirespec"
 
 include(
-    "compiler:core",
-    "compiler:cli",
-    "compiler:lib",
-    "lsp:jvm:core",
-    "lsp:jvm:server",
-    "lsp:jvm:client",
-    "lsp:intellij-plugin",
-    "plugin:maven",
-    "plugin:gradle",
-    "openapi",
+    "src:compiler:core",
+    "src:compiler:cli",
+    "src:compiler:lib",
+    "src:lsp:jvm:core",
+    "src:lsp:jvm:server",
+    "src:lsp:jvm:client",
+    "src:lsp:intellij-plugin",
+    "src:plugin:maven",
+    "src:plugin:gradle",
+    "src:openapi",
 )

@@ -1,0 +1,63 @@
+{
+  "name": "wirespec-vscode-plugin",
+  "displayName": "wirespec",
+  "version": "0.0.0",
+  "engines": {
+    "vscode": "^1.40.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/flock-community/wirespec"
+  },
+  "activationEvents": [
+    "onLanguage:wirespec"
+  ],
+  "main": "./build/extension",
+  "dependencies": {
+    "vscode-languageclient": "8.0.2",
+    "wirespec-server": "file:../server/build"
+  },
+  "devDependencies": {
+    "@types/node": "^18.6.2",
+    "@types/vscode": "^1.40.0",
+    "esbuild": "^0.14.51",
+    "prettier": "^2.7.1",
+    "rimraf": "^3.0.2",
+    "typescript": "^4.7.4",
+    "update-ruecksichtslos": "^0.0.17",
+    "vsce": "^2.10.0"
+  },
+  "scripts": {
+    "build": "npm run esbuild && npm run package",
+    "clean": "npm run clean:build && npm run clean:node_modules",
+    "clean:build": "rimraf build",
+    "clean:node_modules": "rimraf node_modules",
+    "compile": "tsc",
+    "esbuild": "npm run esbuild:base -- --sourcemap",
+    "esbuild:base": "esbuild src/extension.ts --bundle --outfile=build/extension.js --external:vscode --format=cjs --platform=node",
+    "package": "vsce package --out build --allow-star-activation",
+    "start": "npm run build",
+    "update": "update-ruecksichtslos && npm i",
+    "vscode:prepublish": "npm run esbuild:base -- --minify",
+    "vscode:login": "vsce login",
+    "vscode:publish": "vsce publish"
+  },
+  "publisher": "Wirespec",
+  "prettier": {
+    "printWidth": 120
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "wirespec",
+        "aliases": ["ws", "wirespec"],
+        "extensions": [".ws"]
+      }
+    ]
+  },
+  "configurationDefaults": {
+    "wirespec-extension-id": {
+      "editor.semanticHighlighting.enabled": true
+    }
+  }
+}

@@ -1,3 +1,3 @@
 *
-!compiler/cli/build/bin/linuxX64/*
+!src/compiler/cli/build/bin/linuxX64/*
 !types/in/*
