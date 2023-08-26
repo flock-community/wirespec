@@ -19,8 +19,10 @@ class KotlinEmitter(
 ) : Emitter(logger) {
     
     override val shared = """
+        |package community.flock.wirespec.kotlin
+        |
         |import kotlin.reflect.KType
-        |import kotlin.reflect.typeOf
+        |
         |object Wirespec {
         |${SPACER}enum class Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
         |${SPACER}data class Content<T> (val type:String, val body:T )
@@ -30,11 +32,17 @@ class KotlinEmitter(
         |}
     """.trimMargin()
 
+    val import = """
+        |import kotlin.reflect.typeOf
+        |import community.flock.wirespec.kotlin.Wirespec
+        |
+    """.trimMargin()
+
     override fun emit(ast: AST): List<Pair<String, String>> =
         super.emit(ast).map { (name, result) ->
             name to """
                     |${if (packageName.isBlank()) "" else "package $packageName"}
-                    |${if (ast.hasEndpoints()) "import community.flock.wirespec.Wirespec" else ""}
+                    |${if (ast.hasEndpoints()) import else ""}
                     |${result}
             """.trimMargin().trimStart()
         }

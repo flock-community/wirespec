@@ -1,10 +1,10 @@
 package community.flock.wirespec.examples.open_api_app.java
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import community.flock.wirespec.generated.java.v3.WirespecShared.Request
-import community.flock.wirespec.generated.java.v3.WirespecShared.Response
-import community.flock.wirespec.generated.java.v3.WirespecShared.Content
-import community.flock.wirespec.generated.java.v3.WirespecShared.ContentMapper
+import community.flock.wirespec.java.Wirespec.Request
+import community.flock.wirespec.java.Wirespec.Response
+import community.flock.wirespec.java.Wirespec.Content
+import community.flock.wirespec.java.Wirespec.ContentMapper
 import community.flock.wirespec.generated.java.v3.AddPet
 import community.flock.wirespec.generated.java.v3.FindPetsByStatus
 import org.springframework.context.annotation.Bean

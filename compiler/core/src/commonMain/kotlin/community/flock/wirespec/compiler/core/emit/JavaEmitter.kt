@@ -2,6 +2,7 @@ package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.hasEndpoints
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -17,6 +18,8 @@ class JavaEmitter(
 ) : Emitter(logger, true) {
 
     override val shared = """
+        |package community.flock.wirespec.java;
+        |
         |import java.lang.reflect.Type;
         |import java.lang.reflect.ParameterizedType;
         |
@@ -42,9 +45,10 @@ class JavaEmitter(
     """.trimMargin()
 
     private val pkg = if (packageName.isBlank()) "" else "package $packageName;"
+    private fun imprt(ast:AST) = if (!ast.hasEndpoints()) "" else "import community.flock.wirespec.java.Wirespec;\n\n"
 
     override fun emit(ast: AST): List<Pair<String, String>> = super.emit(ast)
-        .map { (name, result) -> name to "$pkg\n\n$result" }
+        .map { (name, result) -> name to "$pkg\n\n${imprt(ast)}$result" }
 
     override fun Type.emit() = withLogging(logger) {
         """public record $name(
