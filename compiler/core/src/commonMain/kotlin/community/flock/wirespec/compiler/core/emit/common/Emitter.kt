@@ -12,6 +12,8 @@ interface Emitters : TypeDefinitionEmitter, EnumDefinitionEmitter, RefinedTypeDe
 
 abstract class Emitter(val logger: Logger, val split: Boolean = false) : Emitters {
 
+    abstract val shared:String
+
     open fun emit(ast: AST) = ast
         .map {
             logger.log("Emitting Node $this")
