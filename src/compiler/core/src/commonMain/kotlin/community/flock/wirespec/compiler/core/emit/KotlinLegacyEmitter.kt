@@ -39,12 +39,12 @@ open class KotlinLegacyEmitter(
     """.trimMargin()
 
     override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> "${identifier.emit()}Endpoint"
-        is Channel -> "${identifier.emit()}Channel"
-        is Enum -> identifier.emit()
-        is Refined -> identifier.emit()
-        is Type -> identifier.emit()
-        is Union -> identifier.emit()
+        is Endpoint -> "${identifier.emitClassName()}Endpoint"
+        is Channel -> "${identifier.emitClassName()}Channel"
+        is Enum -> identifier.emitClassName()
+        is Refined -> identifier.emitClassName()
+        is Type -> identifier.emitClassName()
+        is Union -> identifier.emitClassName()
     }
 
     override fun notYetImplemented() =
@@ -102,7 +102,7 @@ open class KotlinLegacyEmitter(
 
     override fun emit(channel: Channel): String =
         """
-            |interface ${channel.identifier.emit()}Channel {
+            |interface ${channel.identifier.emitClassName()}Channel {
             |   operator fun invoke(message: ${channel.reference.transform(channel.isNullable, false).emitWrap()})
             |}
         """.trimMargin()

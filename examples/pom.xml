@@ -16,6 +16,7 @@
         <module>maven-spring-compile</module>
         <module>maven-spring-convert</module>
         <module>maven-spring-custom</module>
+        <module>maven-spring-integration</module>
     </modules>
 
     <properties>

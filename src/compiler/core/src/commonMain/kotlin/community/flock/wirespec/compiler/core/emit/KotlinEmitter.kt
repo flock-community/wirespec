@@ -36,12 +36,12 @@ open class KotlinEmitter(
     """.trimMargin()
 
     override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> "${identifier.emit()}Endpoint"
-        is Channel -> "${identifier.emit()}Channel"
-        is Enum -> identifier.emit()
-        is Refined -> identifier.emit()
-        is Type -> identifier.emit()
-        is Union -> identifier.emit()
+        is Endpoint -> "${identifier.emitClassName()}Endpoint"
+        is Channel -> "${identifier.emitClassName()}Channel"
+        is Enum -> identifier.emitClassName()
+        is Refined -> identifier.emitClassName()
+        is Type -> identifier.emitClassName()
+        is Union -> identifier.emitClassName()
     }
 
     override fun notYetImplemented() =
@@ -70,7 +70,7 @@ open class KotlinEmitter(
 
     override fun Type.Shape.emit() = value.joinToString("\n") { "${Spacer}val ${it.emit()}," }.dropLast(1)
 
-    override fun Field.emit() = "${identifier.emit()}: ${reference.emit()}${if (isNullable) "?" else ""}"
+    override fun Field.emit() = "${identifier.emitVariableName()}: ${reference.emit()}${if (isNullable) "?" else ""}"
 
     override fun Reference.emit() = when (this) {
         is Reference.Unit -> "Unit"
@@ -87,7 +87,13 @@ open class KotlinEmitter(
         .let { if (isDictionary) "Map<String, $it>" else it }
 
 
-    override fun Identifier.emit() = if (value in reservedKeywords) value.addBackticks() else value
+    override fun Identifier.emitClassName() = value
+        .firstToUpper()
+
+    override fun Identifier.emitVariableName() = value
+        .sanitizeSymbol()
+        .firstToLower()
+        .let { if (value in reservedKeywords) it.addBackticks() else it}
 
     override fun emit(refined: Refined) = """
         |data class ${refined.identifier.value.sanitizeSymbol()}(override val value: String): Wirespec.Refined {
@@ -113,25 +119,25 @@ open class KotlinEmitter(
     """.trimMargin()
 
     override fun emit(channel: Channel) = """
-        |interface ${channel.identifier.emit()}Channel {
+        |interface ${channel.identifier.emitClassName()}Channel {
         |   operator fun invoke(message: ${channel.reference.emitWrap(channel.isNullable)})
         |}
     """.trimMargin()
 
     override fun emit(endpoint: Endpoint) = """
-        |object ${endpoint.identifier.emit()}Endpoint : Wirespec.Endpoint {
+        |object ${endpoint.identifier.emitClassName()}Endpoint : Wirespec.Endpoint {
         |${endpoint.pathParams.emitObject("Path", "Wirespec.Path") { it.emit() }}
         |
         |${endpoint.queries.emitObject("Queries", "Wirespec.Queries") { it.emit() }}
         |
         |${endpoint.headers.emitObject("Headers", "Wirespec.Request.Headers") { it.emit() }}
         |
-        |${endpoint.requests.joinToString("\n") { it.emit(endpoint) }}
+        |${endpoint.requests.first().emit(endpoint)}
         |
         |${Spacer}sealed interface Response<T: Any> : Wirespec.Response<T>
         |${endpoint.emitResponseInterfaces()}
         |
-        |${endpoint.responses.joinToString("\n") { it.emit() }}
+        |${endpoint.responses.distinctBy { it.status }.joinToString("\n") { it.emit() }}
         |
         |${Spacer}fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
         |${Spacer(2)}when(response) {
@@ -140,12 +146,15 @@ open class KotlinEmitter(
         |
         |${Spacer}fun fromResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
         |${Spacer(2)}when (response.statusCode) {
-        |${endpoint.responses.joinToString("\n") { it.emitDeserialized() }}
+        |${
+        endpoint.responses.filter { it.status.isStatusCode() }.distinctBy { it.status }
+            .joinToString("\n") { it.emitDeserialized() }
+    }
         |${Spacer(3)}else -> error("Cannot match response with status: ${'$'}{response.statusCode}")
         |${Spacer(2)}}
         |
         |${Spacer}interface Handler: Wirespec.Handler {
-        |${Spacer(2)}suspend fun ${endpoint.identifier.emit().firstToLower()}(request: Request): Response<*>
+        |${Spacer(2)}${emitHandleFunction(endpoint)}
         |${Spacer(2)}companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
         |${Spacer(3)}override val pathTemplate = "/${endpoint.path.joinToString("/") { it.emit() }}"
         |${Spacer(3)}override val method = "${endpoint.method}"
@@ -162,6 +171,9 @@ open class KotlinEmitter(
         |}
     """.trimMargin()
 
+    open fun emitHandleFunction(endpoint: Endpoint): String =
+        "suspend fun ${endpoint.identifier.emitClassName().firstToLower()}(request: Request): Response<*>"
+
     private fun Endpoint.emitResponseInterfaces() = responses
         .distinctBy { it.status[0] }
         .joinToString("\n") { "${Spacer}sealed interface Response${it.status[0]}XX<T: Any> : Response<T>" }
@@ -176,18 +188,42 @@ open class KotlinEmitter(
 
     fun Endpoint.Request.emit(endpoint: Endpoint) = """
         |${Spacer}${emitConstructor(endpoint)}
-        |${Spacer(2)}override val path = Path${endpoint.pathParams.joinToString { it.identifier.emit() }.brace()}
+        |${Spacer(2)}override val path = Path${endpoint.pathParams.joinToString { it.identifier.emitVariableName() }.brace()}
         |${Spacer(2)}override val method = Wirespec.Method.${endpoint.method.name}
-        |${Spacer(2)}override val queries = Queries${endpoint.queries.joinToString { it.identifier.emit() }.brace()}
-        |${Spacer(2)}override val headers = Headers${endpoint.headers.joinToString { it.identifier.emit() }.brace()}${if (content == null) "\n${Spacer(2)}override val body = Unit" else ""}
+        |${Spacer(2)}override val queries = Queries${endpoint.queries.joinToString { it.identifier.emitVariableName() }.brace()}
+        |${Spacer(2)}override val headers = Headers${
+        endpoint.headers.joinToString { it.identifier.emitVariableName() }.brace()
+    }${if (content == null) "\n${Spacer(2)}override val body = Unit" else ""}
         |${Spacer}}
         |
         |${Spacer}fun toRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
         |${Spacer(2)}Wirespec.RawRequest(
-        |${Spacer(3)}path = listOf(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
+        |${Spacer(3)}path = listOf(${
+        endpoint.path.joinToString {
+            when (it) {
+                is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier()
+            }
+        }
+    }),
         |${Spacer(3)}method = request.method.name,
-        |${Spacer(3)}queries = ${if (endpoint.queries.isNotEmpty()) "listOf(${endpoint.queries.joinToString { it.emitSerialized("queries") }}).filterNotNull().toMap()" else "emptyMap()"},
-        |${Spacer(3)}headers = ${if (endpoint.headers.isNotEmpty()) "listOf(${endpoint.headers.joinToString { it.emitSerialized("headers") }}).filterNotNull().toMap()" else "emptyMap()"},
+        |${Spacer(3)}queries = ${
+        if (endpoint.queries.isNotEmpty()) "listOf(${
+            endpoint.queries.joinToString {
+                it.emitSerialized(
+                    "queries"
+                )
+            }
+        }).filterNotNull().toMap()" else "emptyMap()"
+    },
+        |${Spacer(3)}headers = ${
+        if (endpoint.headers.isNotEmpty()) "listOf(${
+            endpoint.headers.joinToString {
+                it.emitSerialized(
+                    "headers"
+                )
+            }
+        }).filterNotNull().toMap()" else "emptyMap()"
+    },
         |${Spacer(3)}body = serialization.serialize(request.body, typeOf<${content.emit()}>()),
         |${Spacer(2)})
         |
@@ -233,22 +269,22 @@ open class KotlinEmitter(
     """.trimMargin()
 
     private fun Field.emitSerialized(fields: String) =
-        """request.$fields.${identifier.emit()}?.let{"${identifier.emit()}" to serialization.serialize(it, typeOf<${reference.emit()}>())}"""
+        """request.$fields.${identifier.emitVariableName()}?.let{"${identifier.value}" to serialization.serialize(it, typeOf<${reference.emit()}>())}"""
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
-        """${Spacer(3)}${value.identifier.emit()} = serialization.deserialize(request.path[${index}], typeOf<${value.reference.emit()}>())"""
+        """${Spacer(3)}${value.identifier.emitVariableName()} = serialization.deserialize(request.path[${index}], typeOf<${value.reference.emit()}>())"""
 
     private fun Field.emitDeserialized(fields: String) =
         if (isNullable)
-            """${Spacer(3)}${identifier.emit()} = request.$fields["${identifier.emit()}"]?.get(0)?.let{ serialization.deserialize(it, typeOf<${reference.emit()}>()) }"""
+            """${Spacer(3)}${identifier.emitVariableName()} = request.$fields["${identifier.value}"]?.let{ serialization.deserialize(it, typeOf<${reference.emit()}>()) }"""
         else
-            """${Spacer(3)}${identifier.emit()} = serialization.deserialize(requireNotNull(request.$fields["${identifier.emit()}"]) { "${identifier.emit()} is null" }, typeOf<${reference.emit()}>())"""
+            """${Spacer(3)}${identifier.emitVariableName()} = serialization.deserialize(requireNotNull(request.$fields["${identifier.value}"]) { "${identifier.emitVariableName()} is null" }, typeOf<${reference.emit()}>())"""
 
     private fun Endpoint.Segment.Param.emitIdentifier() = "request.path.${identifier.value}.toString()"
 
     private fun Endpoint.Content?.emit() = this?.reference?.emit() ?: "Unit"
 
-    private fun Endpoint.Segment.Param.emit() = "${identifier.emit()}: ${reference.emit()}"
+    private fun Endpoint.Segment.Param.emit() = "${identifier.emitVariableName()}: ${reference.emit()}"
 
     private fun String.brace() = wrap("(", ")")
     private fun String.wrap(prefix: String, postfix: String) = if (isEmpty()) "" else "$prefix$this$postfix"
@@ -284,7 +320,7 @@ open class KotlinEmitter(
             "in", "interface", "internal", "is", "null",
             "object", "open", "package", "return", "super",
             "this", "throw", "true", "try", "typealias",
-            "typeof", "val", "var", "when", "while"
+            "typeof", "val", "var", "when", "while", "private", "public"
         )
     }
 

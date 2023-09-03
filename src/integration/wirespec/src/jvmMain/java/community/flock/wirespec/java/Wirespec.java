@@ -2,67 +2,51 @@ package community.flock.wirespec.java;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.List;
+import java.util.Map;
 
 public interface Wirespec {
-    interface Enum {
+    interface Enum {}
+    interface Endpoint {}
+    interface Refined { String getValue(); }
+    interface Path {}
+    interface Queries {}
+    interface Headers {}
+    interface Handler {}
+    interface ServerEdge<Req extends Request<?>, Res extends Response<?>> {
+        Req from(RawRequest request);
+        RawResponse to(Res response);
     }
-
-    interface Refined {
-        String getValue();
+    interface ClientEdge<Req extends Request<?>, Res extends Response<?>> {
+        RawRequest to(Req request);
+        Res from(RawResponse response);
     }
-
-    interface Endpoint {
+    interface Client<Req extends Request<?>, Res extends Response<?>> {
+        String getPathTemplate();
+        String getMethod();
+        ClientEdge<Req, Res> getClient(Serialization<String> serialization);
     }
-
-    enum Method {GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE}
-
-    record Content<T>(String type, T body) {
+    interface Server<Req extends Request<?>, Res extends Response<?>> {
+        String getPathTemplate();
+        String getMethod();
+        ServerEdge<Req, Res> getServer(Serialization<String> serialization);
     }
-
-    interface Request<T> {
-        String getPath();
-
-        Method getMethod();
-
-        java.util.Map<String, java.util.List<Object>> getQuery();
-
-        java.util.Map<String, java.util.List<Object>> getHeaders();
-
-        Content<T> getContent();
-    }
-
-    interface Response<T> {
-        int getStatus();
-
-        java.util.Map<String, java.util.List<Object>> getHeaders();
-
-        Content<T> getContent();
-    }
-
-    interface ContentMapper<B> {
-        <T> Content<T> read(Content<B> content, Type valueType);
-
-        <T> Content<B> write(Content<T> content);
-    }
-
+    enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
+    interface Request<T> { Path getPath(); Method getMethod(); Queries getQueries(); Headers getHeaders(); T getBody(); interface Headers extends Wirespec.Headers {} }
+    interface Response<T> { int getStatus(); Headers getHeaders(); T getBody(); interface Headers extends Wirespec.Headers {} }
+    interface Serialization<RAW> extends Serializer<RAW>, Deserializer<RAW> {}
+    interface Serializer<RAW> { <T> RAW serialize(T t, Type type); }
+    interface Deserializer<RAW> { <T> T deserialize(RAW raw, Type type); }
+    record RawRequest(String method, List<String> path, Map<String, String> queries, Map<String, String> headers, String body) {}
+    record RawResponse(int statusCode, Map<String, String> headers, String body) {}
     static Type getType(final Class<?> type, final boolean isIterable) {
-        if (isIterable) {
+        if(isIterable) {
             return new ParameterizedType() {
-                public Type getRawType() {
-                    return java.util.List.class;
-                }
-
-                public Type[] getActualTypeArguments() {
-                    Class<?>[] types = {type};
-                    return types;
-                }
-
-                public Type getOwnerType() {
-                    return null;
-                }
+                public Type getRawType() { return java.util.List.class; }
+                public Type[] getActualTypeArguments() { return new Class<?>[]{type}; }
+                public Type getOwnerType() { return null; }
             };
-        } else {
-            return type;
         }
+        else { return type; }
     }
 }
