@@ -9,8 +9,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
 import org.springframework.web.client.RestTemplate
 import java.net.URI
-import kotlin.reflect.KType
-import kotlin.reflect.jvm.javaType
+import java.lang.reflect.Type;
 
 interface KotlinPetstoreClient : AddPet, FindPetsByStatus
 
@@ -22,9 +21,9 @@ class KotlinPetClientConfiguration {
         object : Wirespec.ContentMapper<ByteArray> {
             override fun <T> read(
                 content: Wirespec.Content<ByteArray>,
-                valueType: KType,
+                valueType: Type,
             ): Wirespec.Content<T> = content.let {
-                val type = objectMapper.constructType(valueType.javaType)
+                val type = objectMapper.constructType(valueType)
                 val obj: T = objectMapper.readValue(content.body, type)
                 Wirespec.Content(it.type, obj)
             }
