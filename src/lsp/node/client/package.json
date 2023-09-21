@@ -30,8 +30,8 @@
   "scripts": {
     "build": "npm run esbuild && npm run package",
     "clean": "npm run clean:build && npm run clean:node_modules",
-    "clean:build": "rimraf build",
-    "clean:node_modules": "rimraf node_modules",
+    "clean:build": "npx rimraf build",
+    "clean:node_modules": "npx rimraf node_modules",
     "compile": "tsc",
     "esbuild": "npm run esbuild:base -- --sourcemap",
     "esbuild:base": "esbuild src/extension.ts --bundle --outfile=build/extension.js --external:vscode --format=cjs --platform=node",

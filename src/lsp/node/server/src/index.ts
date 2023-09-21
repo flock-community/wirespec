@@ -1,6 +1,6 @@
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { createConnection, DiagnosticSeverity, SemanticTokensBuilder, TextDocuments } from "vscode-languageserver";
-import { WsToken, WsToTypeScript } from "wirespec-lib";
+import { WsToken, WsToTypeScript } from "wirespec";
 import { ServerCapabilities } from "vscode-languageserver-protocol/lib/common/protocol";
 
 import { Range, SemanticTokensLegend } from "vscode-languageserver-types";

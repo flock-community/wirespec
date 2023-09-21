@@ -1,3 +1,5 @@
+@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+
 package community.flock.wirespec.compiler.cli.io
 
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.IOException.FileReadException

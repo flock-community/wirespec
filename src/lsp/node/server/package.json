@@ -8,7 +8,7 @@
   "dependencies": {
     "vscode-languageserver": "8.0.2",
     "vscode-languageserver-textdocument": "1.0.5",
-    "wirespec-lib": "file:../../../../build/js/packages/wirespec-lib"
+    "wirespec": "file:../../../../build/js/packages/wirespec-src-compiler-lib"
   },
   "devDependencies": {
     "esbuild": "^0.14.53",
@@ -20,8 +20,8 @@
   "scripts": {
     "build": "npm run esbuild",
     "clean": "npm run clean:build && npm run clean:node_modules",
-    "clean:build": "rimraf build",
-    "clean:node_modules": "rimraf node_modules",
+    "clean:build": "npx rimraf build",
+    "clean:node_modules": "npx rimraf node_modules",
     "compile": "tsc",
     "esbuild": "npm run esbuild:base -- --sourcemap",
     "esbuild:base": "esbuild src/index.ts --bundle --outfile=build/index.js --external:vscode --format=cjs --platform=node",

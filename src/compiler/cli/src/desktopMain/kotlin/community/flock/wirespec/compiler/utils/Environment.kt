@@ -1,3 +1,5 @@
+@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+
 package community.flock.wirespec.compiler.utils
 
 import kotlinx.cinterop.toKString
