@@ -22,7 +22,6 @@ class CliTest {
     }
 
     @Test
-    @Ignore
     fun testCliOutput() {
         val packageDir = DEFAULT_PACKAGE_NAME.replace(".", "/")
         val input = "${inputDir}/wirespec"
@@ -44,7 +43,6 @@ class CliTest {
     }
 
     @Test
-    @Ignore
     fun testCliJavaPackage() {
         val packageName = "community.flock.next"
         val packageDir = packageName.replace(".", "/")
@@ -67,7 +65,6 @@ class CliTest {
     }
 
     @Test
-    @Ignore
     fun testCliOpenapiKotlin() {
         val packageName = "community.flock.openapi"
         val packageDir = packageName.replace(".", "/")
@@ -94,7 +91,6 @@ class CliTest {
     }
 
     @Test
-    @Ignore
     fun testCliOpenapiTypesScript() {
         val packageName = "community.flock.openapi"
         val packageDir = packageName.replace(".", "/")

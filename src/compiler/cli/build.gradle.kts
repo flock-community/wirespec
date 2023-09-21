@@ -6,7 +6,7 @@ plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
     id("com.github.johnrengelman.shadow")
-    id("com.goncalossilva.resources") version "0.3.2"
+    id("com.goncalossilva.resources") version "0.4.0"
 }
 
 group = "${Settings.groupId}.compiler"

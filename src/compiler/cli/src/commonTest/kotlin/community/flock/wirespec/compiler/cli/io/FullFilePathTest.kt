@@ -6,7 +6,6 @@ import kotlin.test.Test
 class FullFilePathTest {
 
     @Test
-    @Ignore
     fun testParse() {
         val result = FullFilePath.parse("/src/test/resources/test.json")
         kotlin.test.assertEquals("/src/test/resources", result.directory)
