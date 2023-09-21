@@ -22,6 +22,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpace
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
+import community.flock.wirespec.compiler.core.tokenize.types.WsEndpointDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsEnumTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
 import community.flock.wirespec.compiler.core.tokenize.types.WsRefinedTypeDef
@@ -32,7 +33,14 @@ import community.flock.wirespec.compiler.utils.Logger
 
 typealias AST = List<Node>
 
-class Parser(private val logger: Logger) {
+abstract class AbstractParser(protected val logger: Logger) {
+    protected fun Token.log() = logger.log("Parsing $type at line ${coordinates.line} position ${coordinates.position}")
+}
+
+class Parser(logger: Logger) : AbstractParser(logger) {
+
+    private val endpointParser = EndpointParser(logger)
+    private val enumParser = EnumParser(logger)
 
     fun parse(tokens: NonEmptyList<Token>): Either<NonEmptyList<WirespecException>, List<Definition>> = tokens
         .filterNot { it.type is WhiteSpace }
@@ -49,8 +57,9 @@ class Parser(private val logger: Logger) {
         token.log()
         when (token.type) {
             is WsTypeDef -> parseTypeDeclaration().bind()
-            is WsEnumTypeDef -> parseEnumTypeDeclaration().bind()
+            is WsEnumTypeDef -> with(enumParser){ parseEnumTypeDeclaration() }.bind()
             is WsRefinedTypeDef -> parseRefinedTypeDeclaration().bind()
+            is WsEndpointDef -> with(endpointParser) { parseEndpointDeclaration() }.bind()
             else -> raise(WrongTokenException(WsTypeDef::class, token).also { eatToken().bind() }.nel())
         }
     }
@@ -127,49 +136,6 @@ class Parser(private val logger: Logger) {
         }
     }
 
-    private fun TokenProvider.parseEnumTypeDeclaration() = either {
-        eatToken().bind()
-        token.log()
-        when (token.type) {
-            is CustomType -> parseEnumTypeDefinition(token.value).bind()
-            else -> raise(WrongTokenException(CustomType::class, token).also { eatToken().bind() }.nel())
-        }
-    }
-
-    private fun TokenProvider.parseEnumTypeDefinition(typeName: String) = either {
-        eatToken().bind()
-        token.log()
-        when (token.type) {
-            is LeftCurly -> Enum(typeName, parseEnumTypeEntries().bind())
-            else -> raise(WrongTokenException(LeftCurly::class, token).also { eatToken().bind() }.nel())
-        }.also {
-            when (token.type) {
-                is RightCurly -> eatToken().bind()
-                else -> raise(WrongTokenException(RightCurly::class, token).also { eatToken().bind() }.nel())
-            }
-        }
-    }
-
-    private fun TokenProvider.parseEnumTypeEntries() = either {
-        eatToken().bind()
-        token.log()
-        when (token.type) {
-            is CustomType -> mutableListOf<String>().apply {
-                add(token.value)
-                eatToken().bind()
-                while (token.type == Comma) {
-                    eatToken().bind()
-                    when (token.type) {
-                        is CustomType -> add(token.value).also { eatToken().bind() }
-                        else -> raise(WrongTokenException(CustomType::class, token).also { eatToken().bind() }.nel())
-                    }
-                }
-            }
-
-            else -> raise(WrongTokenException(CustomType::class, token).also { eatToken().bind() }.nel())
-        }.toSet()
-    }
-
     private fun TokenProvider.parseRefinedTypeDeclaration() = either {
         eatToken().bind()
         token.log()
@@ -187,7 +153,4 @@ class Parser(private val logger: Logger) {
             else -> raise(WrongTokenException(CustomRegex::class, token).also { eatToken().bind() }.nel())
         }.also { eatToken().bind() }
     }
-
-    private fun Token.log() = logger.log("Parsing $type at line ${coordinates.line} position ${coordinates.position}")
-
 }

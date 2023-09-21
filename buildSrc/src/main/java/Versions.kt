@@ -1,21 +1,21 @@
-import Versions.arrow
-import Versions.coroutines
+import Versions.ARROW
+import Versions.COROUTINES
 
 object Versions {
-    const val arrow = "1.2.0"
-    const val coroutines = "1.6.4"
-    const val intellij = "1.15.0"
+    const val ARROW = "1.2.1"
+    const val COROUTINES = "1.6.4"
+    const val INTELLIJ = "1.15.0"
 }
 
 object Libraries {
-    const val arrow_core = "io.arrow-kt:arrow-core:$arrow"
-    const val kotlin_coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines"
-    const val kotlin_coroutines_native = "org.jetbrains.kotlinx:kotlinx-coroutines-core-native:$coroutines"
-    const val kotlin_coroutines_jvm = "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:$coroutines"
+    const val ARROW_CORE = "io.arrow-kt:arrow-core:$ARROW"
+    const val KOTLIN_COROUTINES = "org.jetbrains.kotlinx:kotlinx-coroutines-core:$COROUTINES"
+    const val KOTLIN_COROUTINES_NATIVE = "org.jetbrains.kotlinx:kotlinx-coroutines-core-native:$COROUTINES"
+    const val KOTLIN_COROUTINES_JVM = "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:$COROUTINES"
 }
 
 object Plugins {
-    val intellij = Plugin("org.jetbrains.intellij", Versions.intellij)
+    val intellij = Plugin("org.jetbrains.intellij", Versions.INTELLIJ)
 }
 
 data class Plugin(val name: String, val version: String)

@@ -16,6 +16,7 @@ interface Types {
         val TYPE_DEF = ElementType("TYPE_DEF")
         val ENUM_TYPE_DEF = ElementType("REFINED_TYPE_DEF")
         val REFINED_TYPE_DEF = ElementType("REFINED_TYPE_DEF")
+        val ENDPOINT_TYPE_DEF = ElementType("ENDPOINT_TYPE_DEF")
         val CUSTOM_REGEX = ElementType("CUSTOM_REGEX")
         val LEFT_CURLY = ElementType("LEFT_CURLY")
         val RIGHT_CURLY = ElementType("RIGHT_CURLY")

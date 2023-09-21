@@ -6,7 +6,7 @@ plugins {
     Plugins.intellij.let { (name, ver) -> id(name) version ver }
 }
 
-group = "${Settings.groupId}.lsp.intellij-plugin"
+group = "${Settings.GROUP_ID}.lsp.intellij-plugin"
 version = Settings.version
 
 repositories {

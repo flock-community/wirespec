@@ -428,7 +428,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         }
     }
 
-    private fun PathItemObject.toOperationList() = Endpoint.Method.values()
+    private fun PathItemObject.toOperationList() = Endpoint.Method.entries
         .associateWith {
             when (it) {
                 Endpoint.Method.GET -> get

@@ -4,31 +4,32 @@ sealed interface TokenType {
     fun name(): String = this::class.simpleName!!
 }
 
-object LeftCurly : TokenType
-object RightCurly : TokenType
-object Colon : TokenType
-object Comma : TokenType
-object QuestionMark : TokenType
-object Brackets : TokenType
-object CustomValue : TokenType
-object Invalid : TokenType
-object EndOfProgram : TokenType {
+data object LeftCurly : TokenType
+data object RightCurly : TokenType
+data object Colon : TokenType
+data object Comma : TokenType
+data object QuestionMark : TokenType
+data object Brackets : TokenType
+data object CustomValue : TokenType
+data object Invalid : TokenType
+data object EndOfProgram : TokenType {
     const val VALUE = "EOP"
 }
 
 sealed interface WhiteSpace : TokenType
-object WhiteSpaceExceptNewLine : WhiteSpace
-object NewLine : WhiteSpace
+data object WhiteSpaceExceptNewLine : WhiteSpace
+data object NewLine : WhiteSpace
 
 sealed interface Keyword : TokenType
-object WsTypeDef : Keyword
-object WsEnumTypeDef : Keyword
-object WsRefinedTypeDef : Keyword
+data object WsTypeDef : Keyword
+data object WsEnumTypeDef : Keyword
+data object WsRefinedTypeDef : Keyword
+data object WsEndpointDef : Keyword
 
 sealed interface WsType : Keyword
-object WsString : WsType
-object WsInteger : WsType
-object WsBoolean : WsType
-object CustomType : WsType
+data object WsString : WsType
+data object WsInteger : WsType
+data object WsBoolean : WsType
+data object CustomType : WsType
 
-object CustomRegex : TokenType
+data object CustomRegex : TokenType

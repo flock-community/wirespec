@@ -5,7 +5,7 @@ plugins {
     `maven-publish`
 }
 
-group = Settings.groupId
+group = Settings.GROUP_ID
 version = Settings.version
 
 repositories {

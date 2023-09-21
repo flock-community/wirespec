@@ -1,4 +1,4 @@
-import Libraries.arrow_core
+import Libraries.ARROW_CORE
 
 plugins {
     kotlin("multiplatform")
@@ -7,7 +7,7 @@ plugins {
     `maven-publish`
 }
 
-group = "${Settings.groupId}.compiler"
+group = "${Settings.GROUP_ID}.compiler"
 version = Settings.version
 
 repositories {
@@ -33,7 +33,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api(arrow_core)
+                api(ARROW_CORE)
             }
         }
         commonTest {

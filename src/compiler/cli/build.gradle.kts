@@ -9,7 +9,7 @@ plugins {
     id("com.goncalossilva.resources") version "0.4.0"
 }
 
-group = "${Settings.groupId}.compiler"
+group = "${Settings.GROUP_ID}.compiler"
 version = Settings.version
 
 repositories {

@@ -343,7 +343,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
         }
     }
 
-    private fun PathItemObject.toOperationList() = Endpoint.Method.values()
+    private fun PathItemObject.toOperationList() = Endpoint.Method.entries
         .associateWith {
             when (it) {
                 Endpoint.Method.GET -> get
