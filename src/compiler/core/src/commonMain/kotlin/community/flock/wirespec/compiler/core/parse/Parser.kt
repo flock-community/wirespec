@@ -36,8 +36,8 @@ class Parser(logger: Logger) : AbstractParser(logger) {
         .parse()
 
     private fun TokenProvider.parse(): EitherNel<WirespecException, List<Definition>> = either {
-        mutableListOf<Either<NonEmptyList<WirespecException>, Definition>>()
-            .apply { while (hasNext()) add(parseDefinition()) }
+        mutableListOf<EitherNel<WirespecException, Definition>>()
+            .apply { while (hasNext()) add(parseDefinition().mapLeft { it.nel() }) }
             .map { it.bind() }
     }
 
@@ -48,7 +48,7 @@ class Parser(logger: Logger) : AbstractParser(logger) {
             is WsEnumTypeDef -> with(enumParser) { parseEnum() }.bind()
             is WsRefinedTypeDef -> with(refinedTypeParser) { parseRefinedType() }.bind()
             is WsEndpointDef -> with(endpointParser) { parseEndpoint() }.bind()
-            else -> raise(WrongTokenException(WsTypeDef::class, token).also { eatToken().bind() }.nel())
+            else -> raise(WrongTokenException(WsTypeDef::class, token).also { eatToken().bind() })
         }
     }
 }

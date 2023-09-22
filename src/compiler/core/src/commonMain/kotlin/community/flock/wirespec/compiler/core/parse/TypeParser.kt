@@ -1,8 +1,9 @@
 package community.flock.wirespec.compiler.core.parse
 
-import arrow.core.nel
+import arrow.core.Either
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
+import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
 import community.flock.wirespec.compiler.core.parse.nodes.Type
 import community.flock.wirespec.compiler.core.tokenize.types.Brackets
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
@@ -20,15 +21,12 @@ import community.flock.wirespec.compiler.utils.Logger
 
 class TypeParser(logger: Logger) : AbstractParser(logger) {
 
-    fun TokenProvider.parseType() = either {
+    fun TokenProvider.parseType(): Either<WirespecException, Type> = either {
         eatToken().bind()
         token.log()
         when (token.type) {
             is CustomType -> parseTypeDefinition(token.value).bind()
-            else -> raise(
-                WirespecException.CompilerException.ParserException.WrongTokenException(CustomType::class, token)
-                    .also { eatToken().bind() }.nel()
-            )
+            else -> raise(WrongTokenException(CustomType::class, token).also { eatToken().bind() })
         }
     }
 
@@ -37,17 +35,11 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         token.log()
         when (token.type) {
             is LeftCurly -> Type(typeName, parseTypeShape().bind())
-            else -> raise(
-                WirespecException.CompilerException.ParserException.WrongTokenException(LeftCurly::class, token)
-                    .also { eatToken().bind() }.nel()
-            )
+            else -> raise(WrongTokenException(LeftCurly::class, token).also { eatToken().bind() })
         }.also {
             when (token.type) {
                 is RightCurly -> eatToken().bind()
-                else -> raise(
-                    WirespecException.CompilerException.ParserException.WrongTokenException(RightCurly::class, token)
-                        .also { eatToken().bind() }.nel()
-                )
+                else -> raise(WrongTokenException(RightCurly::class, token).also { eatToken().bind() })
             }
         }
     }
@@ -62,18 +54,14 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
                     eatToken().bind()
                     when (token.type) {
                         is CustomValue -> add(parseField(Type.Shape.Field.Identifier(token.value)).bind())
-                        else -> raise(
-                            WirespecException.CompilerException.ParserException.WrongTokenException(
-                                CustomValue::class, token
-                            ).also { eatToken().bind() }.nel()
-                        )
+                        else -> raise(WrongTokenException(CustomValue::class, token).also { eatToken().bind() })
                     }
                 }
             }
 
             else -> raise(
-                WirespecException.CompilerException.ParserException.WrongTokenException(CustomValue::class, token)
-                    .also { eatToken().bind() }.nel()
+                WrongTokenException(CustomValue::class, token)
+                    .also { eatToken().bind() }
             )
         }.let(Type::Shape)
     }
@@ -84,8 +72,8 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         when (token.type) {
             is Colon -> eatToken().bind()
             else -> raise(
-                WirespecException.CompilerException.ParserException.WrongTokenException(Colon::class, token)
-                    .also { eatToken().bind() }.nel()
+                WrongTokenException(Colon::class, token)
+                    .also { eatToken().bind() }
             )
         }
         when (val type = token.type) {
@@ -96,8 +84,8 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
             )
 
             else -> raise(
-                WirespecException.CompilerException.ParserException.WrongTokenException(CustomType::class, token)
-                    .also { eatToken().bind() }.nel()
+                WrongTokenException(CustomType::class, token)
+                    .also { eatToken().bind() }
             )
         }
     }

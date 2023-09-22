@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.tokenize
 
 import arrow.core.NonEmptyList
+import arrow.core.nel
 import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.LanguageSpec
 import community.flock.wirespec.compiler.core.tokenize.Token.Coordinates
@@ -9,17 +10,13 @@ import community.flock.wirespec.compiler.core.tokenize.types.NewLine
 import community.flock.wirespec.compiler.core.tokenize.types.TokenType
 import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpace
 
-fun Iterable<Token>.removeWhiteSpace() = filterNot { it.type is WhiteSpace }
+fun NonEmptyList<Token>.removeWhiteSpace() = filterNot { it.type is WhiteSpace }
 
-fun LanguageSpec.tokenize(source: String): NonEmptyList<Token> = extractToken(source, Coordinates())
-    .let { (token, remaining) -> tokenize(remaining, nonEmptyListOf(token)) }
-    .let {
-        it + Token(
-            type = EndOfProgram,
-            value = EndOfProgram.VALUE,
-            coordinates = it.last().coordinates.nextCoordinates(EndOfProgram, EndOfProgram.VALUE)
-        )
-    }
+fun LanguageSpec.tokenize(source: String): NonEmptyList<Token> =
+    if (source.isEmpty()) endToken(Coordinates()).nel()
+    else extractToken(source, Coordinates())
+        .let { (token, remaining) -> tokenize(remaining, nonEmptyListOf(token)) }
+        .let { it + endToken(it.last().coordinates) }
 
 private tailrec fun LanguageSpec.tokenize(source: String, incompleteTokens: NonEmptyList<Token>): NonEmptyList<Token> {
     val (token, remaining) = extractToken(source, incompleteTokens.last().coordinates)
@@ -43,3 +40,9 @@ private fun Coordinates.nextCoordinates(type: TokenType, value: String) = when (
 
     else -> this + value.length
 }
+
+private fun endToken(previousTokenCoordinates: Coordinates) = Token(
+    type = EndOfProgram,
+    value = EndOfProgram.VALUE,
+    coordinates = previousTokenCoordinates.nextCoordinates(EndOfProgram, EndOfProgram.VALUE)
+)

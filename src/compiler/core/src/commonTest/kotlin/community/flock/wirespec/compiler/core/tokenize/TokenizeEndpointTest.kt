@@ -12,7 +12,6 @@ import community.flock.wirespec.compiler.core.tokenize.types.Method
 import community.flock.wirespec.compiler.core.tokenize.types.Path
 import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.types.StatusCode
-import community.flock.wirespec.compiler.core.tokenize.types.TokenType
 import community.flock.wirespec.compiler.core.tokenize.types.WsEndpointDef
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -24,9 +23,10 @@ class TokenizeEndpointTest {
     fun testEmptySource() {
         val source = ""
 
-        val expected = emptyList<TokenType>()
+        val expected = listOf(EndOfProgram)
 
         Wirespec.tokenize(source).removeWhiteSpace().run {
+            onEach { println(it.type) }
             assertEquals(expected.size, size)
             onEachIndexed { index, token -> assertEquals(expected[index], token.type) }
         }
@@ -43,10 +43,11 @@ class TokenizeEndpointTest {
             StatusCode, StatusCode, StatusCode, StatusCode, StatusCode,
             StatusCode, StatusCode, StatusCode, StatusCode, StatusCode,
             Invalid, Invalid, Invalid, Invalid, Invalid, Invalid,
-            EndOfProgram,
+            EndOfProgram
         )
 
         Wirespec.tokenize(source).removeWhiteSpace().run {
+            onEach { println(it.type) }
             assertEquals(expected.size, size)
             onEachIndexed { index, token -> assertEquals(expected[index], token.type) }
         }
