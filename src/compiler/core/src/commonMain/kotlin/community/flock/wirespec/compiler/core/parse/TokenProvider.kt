@@ -5,6 +5,8 @@ import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.NullTokenException.NextException
 import community.flock.wirespec.compiler.core.tokenize.Token
+import community.flock.wirespec.compiler.core.tokenize.Tokens
+import community.flock.wirespec.compiler.core.tokenize.types.TokenType
 import community.flock.wirespec.compiler.utils.Logger
 
 class TokenProvider(private val logger: Logger, private val tokenIterator: Iterator<Token>) {
@@ -35,4 +37,4 @@ class TokenProvider(private val logger: Logger, private val tokenIterator: Itera
     private fun nextToken() = runCatching { tokenIterator.next() }.getOrNull()
 }
 
-fun List<Token>.toProvider(logger: Logger) = TokenProvider(logger, iterator())
+fun Tokens.toProvider(logger: Logger) = TokenProvider(logger, iterator())

@@ -32,7 +32,16 @@ data object WsInteger : WsType
 data object WsBoolean : WsType
 data object CustomType : WsType
 
-data object Method : Keyword
+sealed interface Method : Keyword
+data object GET : Method
+data object POST : Method
+data object PUT : Method
+data object DELETE : Method
+data object OPTIONS : Method
+data object HEAD : Method
+data object PATCH : Method
+data object TRACE : Method
+
 data object StatusCode : Keyword
 data object Path : Keyword
 data object Arrow : Keyword

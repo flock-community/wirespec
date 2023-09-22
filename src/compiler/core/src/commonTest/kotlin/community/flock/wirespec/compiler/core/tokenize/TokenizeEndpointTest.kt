@@ -6,9 +6,9 @@ import community.flock.wirespec.compiler.core.tokenize.types.Brackets
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
+import community.flock.wirespec.compiler.core.tokenize.types.GET
 import community.flock.wirespec.compiler.core.tokenize.types.Invalid
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
-import community.flock.wirespec.compiler.core.tokenize.types.Method
 import community.flock.wirespec.compiler.core.tokenize.types.Path
 import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.types.StatusCode
@@ -64,7 +64,7 @@ class TokenizeEndpointTest {
         """.trimIndent()
 
         val expected = listOf(
-            WsEndpointDef, CustomType, Method, Path, CustomValue, LeftCurly, StatusCode,
+            WsEndpointDef, CustomType, GET, Path, CustomValue, LeftCurly, StatusCode,
             Arrow, CustomType, Brackets, StatusCode, Arrow, CustomType, RightCurly,
             EndOfProgram,
         )

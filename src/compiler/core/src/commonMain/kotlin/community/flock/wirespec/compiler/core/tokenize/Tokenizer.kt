@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.tokenize
 import arrow.core.NonEmptyList
 import arrow.core.nel
 import arrow.core.nonEmptyListOf
+import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.LanguageSpec
 import community.flock.wirespec.compiler.core.tokenize.Token.Coordinates
 import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
@@ -10,15 +11,17 @@ import community.flock.wirespec.compiler.core.tokenize.types.NewLine
 import community.flock.wirespec.compiler.core.tokenize.types.TokenType
 import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpace
 
-fun NonEmptyList<Token>.removeWhiteSpace() = filterNot { it.type is WhiteSpace }
+typealias Tokens = NonEmptyList<Token>
 
-fun LanguageSpec.tokenize(source: String): NonEmptyList<Token> =
-    if (source.isEmpty()) endToken(Coordinates()).nel()
+fun Tokens.removeWhiteSpace(): Tokens = filterNot { it.type is WhiteSpace }.toNonEmptyListOrNull() ?: endToken().nel()
+
+fun LanguageSpec.tokenize(source: String): Tokens =
+    if (source.isEmpty()) endToken().nel()
     else extractToken(source, Coordinates())
         .let { (token, remaining) -> tokenize(remaining, nonEmptyListOf(token)) }
         .let { it + endToken(it.last().coordinates) }
 
-private tailrec fun LanguageSpec.tokenize(source: String, incompleteTokens: NonEmptyList<Token>): NonEmptyList<Token> {
+private tailrec fun LanguageSpec.tokenize(source: String, incompleteTokens: Tokens): Tokens {
     val (token, remaining) = extractToken(source, incompleteTokens.last().coordinates)
     val tokens = incompleteTokens + token
     return if (remaining.isEmpty()) tokens
@@ -41,7 +44,7 @@ private fun Coordinates.nextCoordinates(type: TokenType, value: String) = when (
     else -> this + value.length
 }
 
-private fun endToken(previousTokenCoordinates: Coordinates) = Token(
+private fun endToken(previousTokenCoordinates: Coordinates = Coordinates()) = Token(
     type = EndOfProgram,
     value = EndOfProgram.VALUE,
     coordinates = previousTokenCoordinates.nextCoordinates(EndOfProgram, EndOfProgram.VALUE)
