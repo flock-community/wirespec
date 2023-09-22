@@ -86,7 +86,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
     private fun TokenProvider.parseEndpointPath() = either {
         token.log()
         when (token.type) {
-            is Path -> Endpoint.Segment.Literal(token.value).nel()
+            is Path -> Endpoint.Segment.Literal(token.value.drop(1)).nel()
             else -> raise(WrongTokenException<Path>(token))
         }.also { eatToken().bind() }
     }
@@ -136,6 +136,6 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
 
             is CustomType -> Custom(value, isIterable)
         }
-        Endpoint.Content(type = wsType.name(), reference = reference, isNullable = false)
+        Endpoint.Content(type = "application/json", reference = reference)
     }
 }
