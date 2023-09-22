@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.parse
 
 import community.flock.wirespec.compiler.common.TestLogger
+import community.flock.wirespec.compiler.common.assert
 import community.flock.wirespec.compiler.core.Wirespec
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint.Method.GET
@@ -24,18 +25,17 @@ class ParseEndpointTest {
 
         """.trimIndent()
 
-        val endpoint = Wirespec.tokenize(source)
+        Wirespec.tokenize(source)
             .let(parser()::parse)
             .onRight { assertEquals(1, it.size) }
             .onLeft { fail("Should be Right, but was Left: ${it.first()}") }
-            .getOrNull()!!.first().let {
-                assertTrue { it is Endpoint }
-                it as Endpoint
+            .getOrNull()!!.first()
+            .assert<Endpoint>()
+            .run {
+                assertEquals("GetTodos", name)
+                assertEquals(GET, method)
+                assertEquals(listOf(Literal("todos")), path)
+                assertTrue(requests.isEmpty())
             }
-
-        assertEquals("GetTodos", endpoint.name)
-        assertEquals(GET, endpoint.method)
-        assertEquals(listOf(Literal("todos")), endpoint.path)
-        assertTrue(endpoint.requests.isEmpty())
     }
 }

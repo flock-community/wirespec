@@ -19,6 +19,7 @@ data object EndOfProgram : TokenType {
 sealed interface WhiteSpace : TokenType
 data object WhiteSpaceExceptNewLine : WhiteSpace
 data object NewLine : WhiteSpace
+data object StartOfProgram : WhiteSpace
 
 sealed interface Keyword : TokenType
 sealed interface WirespecDefinition : Keyword

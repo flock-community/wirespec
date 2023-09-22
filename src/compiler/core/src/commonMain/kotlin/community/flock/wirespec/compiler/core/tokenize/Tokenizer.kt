@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.LanguageSpec
 import community.flock.wirespec.compiler.core.tokenize.Token.Coordinates
 import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
 import community.flock.wirespec.compiler.core.tokenize.types.NewLine
+import community.flock.wirespec.compiler.core.tokenize.types.StartOfProgram
 import community.flock.wirespec.compiler.core.tokenize.types.TokenType
 import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpace
 
@@ -16,21 +17,19 @@ typealias Tokens = NonEmptyList<Token>
 fun Tokens.removeWhiteSpace(): Tokens = filterNot { it.type is WhiteSpace }.toNonEmptyListOrNull() ?: endToken().nel()
 
 fun LanguageSpec.tokenize(source: String): Tokens =
-    if (source.isEmpty()) endToken().nel()
-    else extractToken(source, Coordinates())
-        .let { (token, remaining) -> tokenize(remaining, nonEmptyListOf(token)) }
-        .let { it + endToken(it.last().coordinates) }
+    tokenize(source, nonEmptyListOf(Token(type = StartOfProgram, value = "", coordinates = Coordinates())))
 
 private tailrec fun LanguageSpec.tokenize(source: String, incompleteTokens: Tokens): Tokens {
     val (token, remaining) = extractToken(source, incompleteTokens.last().coordinates)
     val tokens = incompleteTokens + token
-    return if (remaining.isEmpty()) tokens
+    return if (token.type is EndOfProgram) tokens
     else tokenize(remaining, tokens)
 }
 
 private fun LanguageSpec.extractToken(source: String, previousTokenCoordinates: Coordinates) = orderedMatchers
-    .firstNotNullOf { (regex, tokenType) -> regex.find(source)?.toToken(tokenType, previousTokenCoordinates) }
-    .let { it to source.removePrefix(it.value) }
+    .firstNotNullOfOrNull { (regex, tokenType) -> regex.find(source)?.toToken(tokenType, previousTokenCoordinates) }
+    ?.let { it to source.removePrefix(it.value) }
+    ?: Pair(endToken(previousTokenCoordinates), "")
 
 private fun MatchResult.toToken(type: TokenType, previousTokenCoordinates: Coordinates) =
     Token(type, value, previousTokenCoordinates.nextCoordinates(type, value))
