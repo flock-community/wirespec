@@ -13,10 +13,10 @@ import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
+import community.flock.wirespec.compiler.core.tokenize.types.WirespecType
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
 import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
 import community.flock.wirespec.compiler.core.tokenize.types.WsString
-import community.flock.wirespec.compiler.core.tokenize.types.WsType
 import community.flock.wirespec.compiler.utils.Logger
 
 class TypeParser(logger: Logger) : AbstractParser(logger) {
@@ -26,7 +26,7 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         token.log()
         when (token.type) {
             is CustomType -> parseTypeDefinition(token.value).bind()
-            else -> raise(WrongTokenException(CustomType::class, token).also { eatToken().bind() })
+            else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
         }
     }
 
@@ -35,11 +35,11 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         token.log()
         when (token.type) {
             is LeftCurly -> Type(typeName, parseTypeShape().bind())
-            else -> raise(WrongTokenException(LeftCurly::class, token).also { eatToken().bind() })
+            else -> raise(WrongTokenException<LeftCurly>(token).also { eatToken().bind() })
         }.also {
             when (token.type) {
                 is RightCurly -> eatToken().bind()
-                else -> raise(WrongTokenException(RightCurly::class, token).also { eatToken().bind() })
+                else -> raise(WrongTokenException<RightCurly>(token).also { eatToken().bind() })
             }
         }
     }
@@ -54,15 +54,12 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
                     eatToken().bind()
                     when (token.type) {
                         is CustomValue -> add(parseField(Type.Shape.Field.Identifier(token.value)).bind())
-                        else -> raise(WrongTokenException(CustomValue::class, token).also { eatToken().bind() })
+                        else -> raise(WrongTokenException<CustomValue>(token).also { eatToken().bind() })
                     }
                 }
             }
 
-            else -> raise(
-                WrongTokenException(CustomValue::class, token)
-                    .also { eatToken().bind() }
-            )
+            else -> raise(WrongTokenException<CustomValue>(token).also { eatToken().bind() })
         }.let(Type::Shape)
     }
 
@@ -71,26 +68,20 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         token.log()
         when (token.type) {
             is Colon -> eatToken().bind()
-            else -> raise(
-                WrongTokenException(Colon::class, token)
-                    .also { eatToken().bind() }
-            )
+            else -> raise(WrongTokenException<Colon>(token).also { eatToken().bind() })
         }
         when (val type = token.type) {
-            is WsType -> Type.Shape.Field(
+            is WirespecType -> Type.Shape.Field(
                 identifier = identifier,
                 reference = parseFieldValue(type, token.value).bind(),
                 isNullable = (token.type is QuestionMark).also { if (it) eatToken().bind() }
             )
 
-            else -> raise(
-                WrongTokenException(CustomType::class, token)
-                    .also { eatToken().bind() }
-            )
+            else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
         }
     }
 
-    private fun TokenProvider.parseFieldValue(wsType: WsType, value: String) = either {
+    private fun TokenProvider.parseFieldValue(wsType: WirespecType, value: String) = either {
         eatToken().bind()
         token.log()
         val isIterable = (token.type is Brackets).also { if (it) eatToken().bind() }

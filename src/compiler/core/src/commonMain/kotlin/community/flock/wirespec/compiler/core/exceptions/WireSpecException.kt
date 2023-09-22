@@ -16,11 +16,15 @@ sealed class WirespecException(message: String, val coordinates: Token.Coordinat
 
         sealed class ParserException(coordinates: Token.Coordinates, message: String) :
             CompilerException(message, coordinates) {
-            class WrongTokenException(expected: KClass<out TokenType>, actual: Token) :
-                ParserException(
-                    actual.coordinates,
-                    "${expected.simpleName} expected, not: ${actual.type::class.simpleName} at line ${actual.coordinates.line} and position ${actual.coordinates.position - actual.value.length}"
-                )
+            class WrongTokenException(expected: KClass<out TokenType>, actual: Token) : ParserException(
+                actual.coordinates,
+                "${expected.simpleName} expected, not: ${actual.type.name()} at line ${actual.coordinates.line} and position ${actual.coordinates.position - actual.value.length}"
+            ) {
+                companion object {
+                    inline operator fun <reified T : TokenType> invoke(actual: Token) =
+                        WrongTokenException(T::class, actual)
+                }
+            }
 
             sealed class NullTokenException(message: String, coordinates: Token.Coordinates) :
                 ParserException(coordinates, "$message cannot be null") {

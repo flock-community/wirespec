@@ -18,7 +18,7 @@ class EnumParser(logger: Logger) : AbstractParser(logger) {
         token.log()
         when (token.type) {
             is CustomType -> parseEnumTypeDefinition(token.value).bind()
-            else -> raise(WrongTokenException(CustomType::class, token).also { eatToken().bind() })
+            else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
         }
     }
 
@@ -27,11 +27,11 @@ class EnumParser(logger: Logger) : AbstractParser(logger) {
         token.log()
         when (token.type) {
             is LeftCurly -> Enum(typeName, parseEnumTypeEntries().bind())
-            else -> raise(WrongTokenException(LeftCurly::class, token).also { eatToken().bind() })
+            else -> raise(WrongTokenException<LeftCurly>(token).also { eatToken().bind() })
         }.also {
             when (token.type) {
                 is RightCurly -> eatToken().bind()
-                else -> raise(WrongTokenException(RightCurly::class, token).also { eatToken().bind() })
+                else -> raise(WrongTokenException<RightCurly>(token).also { eatToken().bind() })
             }
         }
     }
@@ -47,12 +47,12 @@ class EnumParser(logger: Logger) : AbstractParser(logger) {
                     eatToken().bind()
                     when (token.type) {
                         is CustomType -> add(token.value).also { eatToken().bind() }
-                        else -> raise(WrongTokenException(CustomType::class, token).also { eatToken().bind() })
+                        else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
                     }
                 }
             }
 
-            else -> raise(WrongTokenException(CustomType::class, token).also { eatToken().bind() })
+            else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
         }.toSet()
     }
 }

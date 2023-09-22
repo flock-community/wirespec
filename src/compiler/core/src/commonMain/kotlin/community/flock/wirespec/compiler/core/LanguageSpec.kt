@@ -63,11 +63,11 @@ object Wirespec : LanguageSpec {
         Regex("^HEAD") to HEAD,
         Regex("^PATCH") to PATCH,
         Regex("^TRACE") to TRACE,
+        Regex("^/.*/g") to CustomRegex,
         Regex("^[1-5][0-9][0-9]") to StatusCode,
-        Regex("^/[a-z]") to Path,
         Regex("^[a-z][a-zA-Z]*") to CustomValue,
         Regex("^[A-Z][a-zA-Z]*") to CustomType,
-        Regex("^/.*/g") to CustomRegex,
+        Regex("^/[a-z]*") to Path,
         Regex("^.") to Invalid // Catch all regular expression if none of the above matched
     )
 }

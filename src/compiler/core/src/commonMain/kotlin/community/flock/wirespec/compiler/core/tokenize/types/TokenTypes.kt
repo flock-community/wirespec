@@ -21,16 +21,17 @@ data object WhiteSpaceExceptNewLine : WhiteSpace
 data object NewLine : WhiteSpace
 
 sealed interface Keyword : TokenType
-data object WsTypeDef : Keyword
-data object WsEnumTypeDef : Keyword
-data object WsRefinedTypeDef : Keyword
-data object WsEndpointDef : Keyword
+sealed interface WirespecDefinition : Keyword
+data object WsTypeDef : WirespecDefinition
+data object WsEnumTypeDef : WirespecDefinition
+data object WsRefinedTypeDef : WirespecDefinition
+data object WsEndpointDef : WirespecDefinition
 
-sealed interface WsType : Keyword
-data object WsString : WsType
-data object WsInteger : WsType
-data object WsBoolean : WsType
-data object CustomType : WsType
+sealed interface WirespecType : Keyword
+data object WsString : WirespecType
+data object WsInteger : WirespecType
+data object WsBoolean : WirespecType
+data object CustomType : WirespecType
 
 sealed interface Method : Keyword
 data object GET : Method

@@ -12,6 +12,7 @@ import community.flock.wirespec.compiler.core.parse.nodes.Node
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.Tokens
 import community.flock.wirespec.compiler.core.tokenize.removeWhiteSpace
+import community.flock.wirespec.compiler.core.tokenize.types.WirespecDefinition
 import community.flock.wirespec.compiler.core.tokenize.types.WsEndpointDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsEnumTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsRefinedTypeDef
@@ -45,11 +46,14 @@ class Parser(logger: Logger) : AbstractParser(logger) {
     private fun TokenProvider.parseDefinition() = either {
         token.log()
         when (token.type) {
-            is WsTypeDef -> with(typeParser) { parseType() }.bind()
-            is WsEnumTypeDef -> with(enumParser) { parseEnum() }.bind()
-            is WsRefinedTypeDef -> with(refinedTypeParser) { parseRefinedType() }.bind()
-            is WsEndpointDef -> with(endpointParser) { parseEndpoint() }.bind()
-            else -> raise(WrongTokenException(WsTypeDef::class, token).also { eatToken().bind() })
+            is WirespecDefinition -> when (token.type as WirespecDefinition) {
+                is WsTypeDef -> with(typeParser) { parseType() }.bind()
+                is WsEnumTypeDef -> with(enumParser) { parseEnum() }.bind()
+                is WsRefinedTypeDef -> with(refinedTypeParser) { parseRefinedType() }.bind()
+                is WsEndpointDef -> with(endpointParser) { parseEndpoint() }.bind()
+            }
+
+            else -> raise(WrongTokenException<WirespecDefinition>(token).also { eatToken().bind() })
         }
     }
 }

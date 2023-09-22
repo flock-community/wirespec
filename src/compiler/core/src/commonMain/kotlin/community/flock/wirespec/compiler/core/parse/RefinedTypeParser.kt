@@ -9,14 +9,14 @@ import community.flock.wirespec.compiler.core.tokenize.types.CustomRegex
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.utils.Logger
 
-class RefinedTypeParser(logger: Logger):AbstractParser(logger) {
+class RefinedTypeParser(logger: Logger) : AbstractParser(logger) {
 
-     fun TokenProvider.parseRefinedType(): Either<WirespecException, Refined> = either {
+    fun TokenProvider.parseRefinedType(): Either<WirespecException, Refined> = either {
         eatToken().bind()
         token.log()
         when (token.type) {
             is CustomType -> parseCustomRegex(token.value).bind()
-            else -> raise(WrongTokenException(CustomType::class, token).also { eatToken().bind() })
+            else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
         }
     }
 
@@ -25,7 +25,7 @@ class RefinedTypeParser(logger: Logger):AbstractParser(logger) {
         token.log()
         when (token.type) {
             is CustomRegex -> Refined(typeName, Refined.Validator(token.value))
-            else -> raise(WrongTokenException(CustomRegex::class, token).also { eatToken().bind() })
+            else -> raise(WrongTokenException<CustomRegex>(token).also { eatToken().bind() })
         }.also { eatToken().bind() }
     }
 }
