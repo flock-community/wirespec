@@ -5,11 +5,11 @@ import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.isInt
 import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.parse.Endpoint
-import community.flock.wirespec.compiler.core.parse.Enum
-import community.flock.wirespec.compiler.core.parse.Refined
-import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
+import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
+import community.flock.wirespec.compiler.core.parse.nodes.Enum
+import community.flock.wirespec.compiler.core.parse.nodes.Refined
+import community.flock.wirespec.compiler.core.parse.nodes.Type
+import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 

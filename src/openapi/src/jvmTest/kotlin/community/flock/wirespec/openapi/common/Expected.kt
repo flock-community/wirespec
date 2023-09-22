@@ -1,10 +1,10 @@
 package community.flock.wirespec.openapi.common
 
-import community.flock.wirespec.compiler.core.parse.Endpoint
-import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.core.parse.Enum
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Identifier
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
+import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
+import community.flock.wirespec.compiler.core.parse.nodes.Type
+import community.flock.wirespec.compiler.core.parse.nodes.Enum
+import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Identifier
+import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference
 
 object Expected {
 

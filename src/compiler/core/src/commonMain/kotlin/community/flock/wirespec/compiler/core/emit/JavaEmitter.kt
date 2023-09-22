@@ -2,13 +2,12 @@ package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitter
-import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.hasEndpoints
 import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.parse.Endpoint
-import community.flock.wirespec.compiler.core.parse.Enum
-import community.flock.wirespec.compiler.core.parse.Refined
-import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
+import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
+import community.flock.wirespec.compiler.core.parse.nodes.Enum
+import community.flock.wirespec.compiler.core.parse.nodes.Refined
+import community.flock.wirespec.compiler.core.parse.nodes.Type
+import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
@@ -45,10 +44,10 @@ class JavaEmitter(
     """.trimMargin()
 
     private val pkg = if (packageName.isBlank()) "" else "package $packageName;"
-    private fun imprt(ast:AST) = if (!ast.hasEndpoints()) "" else "import community.flock.wirespec.java.Wirespec;\n\n"
+    private fun import(ast:AST) = if (!ast.hasEndpoints()) "" else "import community.flock.wirespec.java.Wirespec;\n\n"
 
     override fun emit(ast: AST): List<Pair<String, String>> = super.emit(ast)
-        .map { (name, result) -> name to "$pkg\n\n${imprt(ast)}$result" }
+        .map { (name, result) -> name to "$pkg\n\n${import(ast)}$result" }
 
     override fun Type.emit() = withLogging(logger) {
         """public record $name(

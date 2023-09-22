@@ -3,6 +3,7 @@ package community.flock.wirespec.lsp.intellij_plugin
 import community.flock.wirespec.compiler.core.Wirespec
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.tokenize
+import community.flock.wirespec.compiler.core.tokenize.types.Arrow
 import community.flock.wirespec.compiler.core.tokenize.types.Brackets
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
 import community.flock.wirespec.compiler.core.tokenize.types.Comma
@@ -12,8 +13,11 @@ import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
 import community.flock.wirespec.compiler.core.tokenize.types.Invalid
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
+import community.flock.wirespec.compiler.core.tokenize.types.Method
+import community.flock.wirespec.compiler.core.tokenize.types.Path
 import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
+import community.flock.wirespec.compiler.core.tokenize.types.StatusCode
 import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpace
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
 import community.flock.wirespec.compiler.core.tokenize.types.WsEndpointDef
@@ -68,6 +72,10 @@ class Lexer : IntellijLexer() {
                 is WsRefinedTypeDef -> Types.REFINED_TYPE_DEF
                 is WsEndpointDef -> Types.ENDPOINT_TYPE_DEF
                 is CustomRegex -> Types.CUSTOM_REGEX
+                is Arrow -> Types.ARROW
+                is Method -> Types.METHOD
+                is Path -> Types.PATH
+                is StatusCode -> Types.STATUS_CODE
             }
         }
 

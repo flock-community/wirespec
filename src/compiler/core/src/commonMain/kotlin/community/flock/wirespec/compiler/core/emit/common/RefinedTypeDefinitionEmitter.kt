@@ -1,6 +1,6 @@
 package community.flock.wirespec.compiler.core.emit.common
 
-import community.flock.wirespec.compiler.core.parse.Refined
+import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.utils.Logger
 
 interface RefinedTypeDefinitionEmitter : RefinedTypeDefinitionEmitterLogger {

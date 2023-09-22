@@ -7,6 +7,9 @@ import community.flock.wirespec.compiler.core.tokenize.Token.Coordinates
 import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
 import community.flock.wirespec.compiler.core.tokenize.types.NewLine
 import community.flock.wirespec.compiler.core.tokenize.types.TokenType
+import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpace
+
+fun Iterable<Token>.removeWhiteSpace() = filterNot { it.type is WhiteSpace }
 
 fun LanguageSpec.tokenize(source: String): NonEmptyList<Token> = extractToken(source, Coordinates())
     .let { (token, remaining) -> tokenize(remaining, nonEmptyListOf(token)) }

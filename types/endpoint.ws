@@ -23,3 +23,7 @@ type Todos {
   prio: Integer,
   date: Date
 }
+
+endpoint GetTodos GET /todos {
+    200 -> Todos[]
+}

@@ -1,0 +1,128 @@
+package community.flock.wirespec.compiler.core.parse
+
+import arrow.core.nel
+import arrow.core.raise.either
+import community.flock.wirespec.compiler.core.exceptions.WirespecException
+import community.flock.wirespec.compiler.core.parse.nodes.Type
+import community.flock.wirespec.compiler.core.tokenize.types.Brackets
+import community.flock.wirespec.compiler.core.tokenize.types.Colon
+import community.flock.wirespec.compiler.core.tokenize.types.Comma
+import community.flock.wirespec.compiler.core.tokenize.types.CustomType
+import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
+import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
+import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
+import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
+import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
+import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
+import community.flock.wirespec.compiler.core.tokenize.types.WsString
+import community.flock.wirespec.compiler.core.tokenize.types.WsType
+import community.flock.wirespec.compiler.utils.Logger
+
+class TypeParser(logger: Logger) : AbstractParser(logger) {
+
+    fun TokenProvider.parseType() = either {
+        eatToken().bind()
+        token.log()
+        when (token.type) {
+            is CustomType -> parseTypeDefinition(token.value).bind()
+            else -> raise(
+                WirespecException.CompilerException.ParserException.WrongTokenException(CustomType::class, token)
+                    .also { eatToken().bind() }.nel()
+            )
+        }
+    }
+
+    private fun TokenProvider.parseTypeDefinition(typeName: String) = either {
+        eatToken().bind()
+        token.log()
+        when (token.type) {
+            is LeftCurly -> Type(typeName, parseTypeShape().bind())
+            else -> raise(
+                WirespecException.CompilerException.ParserException.WrongTokenException(LeftCurly::class, token)
+                    .also { eatToken().bind() }.nel()
+            )
+        }.also {
+            when (token.type) {
+                is RightCurly -> eatToken().bind()
+                else -> raise(
+                    WirespecException.CompilerException.ParserException.WrongTokenException(RightCurly::class, token)
+                        .also { eatToken().bind() }.nel()
+                )
+            }
+        }
+    }
+
+    private fun TokenProvider.parseTypeShape() = either {
+        eatToken().bind()
+        token.log()
+        when (token.type) {
+            is CustomValue -> mutableListOf<Type.Shape.Field>().apply {
+                add(parseField(Type.Shape.Field.Identifier(token.value)).bind())
+                while (token.type == Comma) {
+                    eatToken().bind()
+                    when (token.type) {
+                        is CustomValue -> add(parseField(Type.Shape.Field.Identifier(token.value)).bind())
+                        else -> raise(
+                            WirespecException.CompilerException.ParserException.WrongTokenException(
+                                CustomValue::class, token
+                            ).also { eatToken().bind() }.nel()
+                        )
+                    }
+                }
+            }
+
+            else -> raise(
+                WirespecException.CompilerException.ParserException.WrongTokenException(CustomValue::class, token)
+                    .also { eatToken().bind() }.nel()
+            )
+        }.let(Type::Shape)
+    }
+
+    private fun TokenProvider.parseField(identifier: Type.Shape.Field.Identifier) = either {
+        eatToken().bind()
+        token.log()
+        when (token.type) {
+            is Colon -> eatToken().bind()
+            else -> raise(
+                WirespecException.CompilerException.ParserException.WrongTokenException(Colon::class, token)
+                    .also { eatToken().bind() }.nel()
+            )
+        }
+        when (val type = token.type) {
+            is WsType -> Type.Shape.Field(
+                identifier = identifier,
+                reference = parseFieldValue(type, token.value).bind(),
+                isNullable = (token.type is QuestionMark).also { if (it) eatToken().bind() }
+            )
+
+            else -> raise(
+                WirespecException.CompilerException.ParserException.WrongTokenException(CustomType::class, token)
+                    .also { eatToken().bind() }.nel()
+            )
+        }
+    }
+
+    private fun TokenProvider.parseFieldValue(wsType: WsType, value: String) = either {
+        eatToken().bind()
+        token.log()
+        val isIterable = (token.type is Brackets).also { if (it) eatToken().bind() }
+        when (wsType) {
+            is WsString -> Type.Shape.Field.Reference.Primitive(
+                Type.Shape.Field.Reference.Primitive.Type.String,
+                isIterable
+            )
+
+            is WsInteger -> Type.Shape.Field.Reference.Primitive(
+                Type.Shape.Field.Reference.Primitive.Type.Integer,
+                isIterable
+            )
+
+            is WsBoolean -> Type.Shape.Field.Reference.Primitive(
+                Type.Shape.Field.Reference.Primitive.Type.Boolean,
+                isIterable
+            )
+
+            is CustomType -> Type.Shape.Field.Reference.Custom(value, isIterable)
+        }
+    }
+}

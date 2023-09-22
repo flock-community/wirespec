@@ -32,4 +32,9 @@ data object WsInteger : WsType
 data object WsBoolean : WsType
 data object CustomType : WsType
 
+data object Method : Keyword
+data object StatusCode : Keyword
+data object Path : Keyword
+data object Arrow : Keyword
+
 data object CustomRegex : TokenType
