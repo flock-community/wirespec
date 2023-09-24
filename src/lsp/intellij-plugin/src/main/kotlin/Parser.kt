@@ -17,7 +17,10 @@ import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
 import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.CUSTOM_TYPE
+import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.ENDPOINT_DEF
+import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.ENUM_DEF
 import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.LEFT_CURLY
+import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.REFINED_TYPE_DEF
 import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.RIGHT_CURLY
 import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.TYPE_DEF
 import com.intellij.lang.ParserDefinition as IntellijParserDefinition
@@ -26,6 +29,7 @@ import com.intellij.psi.tree.TokenSet as IntellijTokenSet
 class Parser : PsiParser {
 
     class TypeDef : IElementType("TYPE_DEF", Language.INSTANCE)
+    class EndpointDef : IElementType("ENDPOINT_DEF", Language.INSTANCE)
     class CustomTypeDef : IElementType("CUSTOM_TYPE_DEF", Language.INSTANCE)
     class CustomTypeRef : IElementType("CUSTOM_TYPE_REF", Language.INSTANCE)
     class Body : IElementType("BODY", Language.INSTANCE)
@@ -37,7 +41,7 @@ class Parser : PsiParser {
         fun parseBody() {
             when {
                 builder.eof() -> return
-                builder.tokenType == TYPE_DEF -> return
+                builder.def() -> return
                 builder.tokenType == RIGHT_CURLY -> return
                 builder.tokenType == CUSTOM_TYPE -> {
                     val customTypeMarker = builder.mark()
@@ -53,15 +57,15 @@ class Parser : PsiParser {
             }
         }
 
-        fun parseTypeDef() {
+        fun parseDef() {
             when {
                 builder.eof() -> return
-                builder.tokenType == TYPE_DEF -> return
+                builder.def() -> return
                 builder.tokenType == CUSTOM_TYPE -> {
                     val customTypeMarker = builder.mark()
                     builder.advanceLexer()
                     customTypeMarker.done(CustomTypeDef())
-                    parseTypeDef()
+                    parseDef()
                 }
 
                 builder.tokenType == LEFT_CURLY -> {
@@ -70,12 +74,12 @@ class Parser : PsiParser {
                     parseBody()
                     bodyMarker.done(Body())
                     builder.advanceLexer()
-                    parseTypeDef()
+                    parseDef()
                 }
 
                 else -> {
                     builder.advanceLexer()
-                    parseTypeDef()
+                    parseDef()
                 }
             }
         }
@@ -83,11 +87,11 @@ class Parser : PsiParser {
         fun parse() {
             when {
                 builder.eof() -> return
-                builder.tokenType == TYPE_DEF -> {
-                    val typeDefMarker = builder.mark()
+                builder.def() -> {
+                    val marker = builder.mark()
                     builder.advanceLexer()
-                    parseTypeDef()
-                    typeDefMarker.done(TypeDef())
+                    parseDef()
+                    marker.done(TypeDef())
                     parse()
                 }
 
@@ -103,6 +107,11 @@ class Parser : PsiParser {
         rootMarker.done(root)
 
         return builder.treeBuilt
+    }
+
+    fun PsiBuilder.def() = when (this.tokenType) {
+        TYPE_DEF, ENDPOINT_DEF, REFINED_TYPE_DEF, ENUM_DEF -> true
+        else -> false
     }
 }
 
@@ -123,6 +132,7 @@ class ParserDefinition : IntellijParserDefinition {
     override fun createElement(node: ASTNode): PsiElement {
         return when (node.elementType) {
             is Parser.TypeDef -> TypeDefElement(node)
+            is Parser.EndpointDef -> EndpointDefElement(node)
             is Parser.CustomTypeDef -> CustomTypeElementDef(node)
             is Parser.CustomTypeRef -> CustomTypeElementRef(node)
             is Parser.Body -> BodyElement(node)
@@ -137,6 +147,7 @@ class ParserDefinition : IntellijParserDefinition {
 }
 
 class TypeDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
+class EndpointDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
 class BodyElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
 
 fun createDefNode(project: Project, name: String) = PsiFileFactory

@@ -38,10 +38,7 @@ class Lexer : IntellijLexer() {
     override fun start(buffer: CharSequence, startOffset: Int, endOffset: Int, initialState: Int) {
         this.buffer = buffer
         this.index = 0
-        this.tokens = emptyList()
-        if (buffer.isNotEmpty()) {
-            tokens = Wirespec.tokenize(buffer.toString()).filterNot { it.type is EndOfProgram }
-        }
+        this.tokens = Wirespec.tokenize(buffer.toString()).filterNot { it.type is EndOfProgram }
     }
 
     override fun getBufferSequence() = buffer
@@ -68,9 +65,9 @@ class Lexer : IntellijLexer() {
                 is RightCurly -> Types.RIGHT_CURLY
                 is EndOfProgram -> Types.END_OF_PROGRAM
                 is Invalid -> Types.INVALID
-                is WsEnumTypeDef -> Types.ENUM_TYPE_DEF
+                is WsEnumTypeDef -> Types.ENUM_DEF
                 is WsRefinedTypeDef -> Types.REFINED_TYPE_DEF
-                is WsEndpointDef -> Types.ENDPOINT_TYPE_DEF
+                is WsEndpointDef -> Types.ENDPOINT_DEF
                 is CustomRegex -> Types.CUSTOM_REGEX
                 is Arrow -> Types.ARROW
                 is Method -> Types.METHOD

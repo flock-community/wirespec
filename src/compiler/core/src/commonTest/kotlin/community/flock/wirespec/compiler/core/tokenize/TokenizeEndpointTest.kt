@@ -4,6 +4,7 @@ import community.flock.wirespec.compiler.core.Wirespec
 import community.flock.wirespec.compiler.core.tokenize.types.Arrow
 import community.flock.wirespec.compiler.core.tokenize.types.Brackets
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
+import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
 import community.flock.wirespec.compiler.core.tokenize.types.GET
 import community.flock.wirespec.compiler.core.tokenize.types.Invalid
@@ -26,6 +27,19 @@ class TokenizeEndpointTest {
         val expected = listOf(StartOfProgram, EndOfProgram)
 
         Wirespec.tokenize(source).run {
+            onEach { println(it.type) }
+            assertEquals(expected.size, size)
+            onEachIndexed { index, token -> assertEquals(expected[index], token.type) }
+        }
+    }
+
+    @Test
+    fun testSourceLengthOfOneCharacterSource() {
+        val source = "t"
+
+        val expected = listOf(CustomValue, EndOfProgram)
+
+        Wirespec.tokenize(source).removeWhiteSpace().run {
             onEach { println(it.type) }
             assertEquals(expected.size, size)
             onEachIndexed { index, token -> assertEquals(expected[index], token.type) }
