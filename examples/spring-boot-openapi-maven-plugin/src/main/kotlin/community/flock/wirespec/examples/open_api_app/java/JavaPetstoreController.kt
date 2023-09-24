@@ -19,7 +19,7 @@ class JavaPetstoreController(
         val pet = Pet(Optional.empty(), "Petje", Optional.empty(), emptyList(), Optional.empty(), Optional.empty())
         val req = AddPet.RequestApplicationJson(pet)
         return when (val res = javaPetstoreClient.addPet(req)) {
-            is AddPet.Response200ApplicationJson -> res.content.body.id
+            is AddPet.Response200ApplicationJson -> res.content?.body?.id
             else -> error("No response")
         }
     }
@@ -28,7 +28,7 @@ class JavaPetstoreController(
     suspend fun create(@RequestBody pet: Pet): List<Int> {
         val req = FindPetsByStatus.RequestVoid(Optional.of(FindPetsByStatusParameterStatus.available))
         return when (val res = javaPetstoreClient.findPetsByStatus(req)) {
-            is FindPetsByStatus.Response200ApplicationJson -> res.content.body.mapNotNull { it.id.getOrNull() }
+            is FindPetsByStatus.Response200ApplicationJson -> res.content?.body?.mapNotNull { it.id.getOrNull() } ?: emptyList()
             else -> error("No response")
         }
     }

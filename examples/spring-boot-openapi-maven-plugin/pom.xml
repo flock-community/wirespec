@@ -89,6 +89,7 @@
                             <languages>
                                 <language>Kotlin</language>
                             </languages>
+                            <shared>true</shared>
                         </configuration>
                     </execution>
                     <execution>
@@ -104,6 +105,7 @@
                             <languages>
                                 <language>Kotlin</language>
                             </languages>
+                            <shared>false</shared>
                         </configuration>
                     </execution>
                     <execution>
@@ -119,6 +121,7 @@
                             <languages>
                                 <language>Java</language>
                             </languages>
+                            <shared>false</shared>
                         </configuration>
                     </execution>
                     <execution>
@@ -134,6 +137,7 @@
                             <languages>
                                 <language>Java</language>
                             </languages>
+                            <shared>false</shared>
                         </configuration>
                     </execution>
                 </executions>
@@ -154,6 +158,34 @@
                                 <source>${project.build.directory}/generated-sources</source>
                             </sources>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.5.1</version>
+                <executions>
+                    <!-- Replacing default-compile as it is treated specially by maven -->
+                    <execution>
+                        <id>default-compile</id>
+                        <phase>none</phase>
+                    </execution>
+                    <!-- Replacing default-testCompile as it is treated specially by maven -->
+                    <execution>
+                        <id>default-testCompile</id>
+                        <phase>none</phase>
+                    </execution>
+                    <execution>
+                        <id>java-compile</id>
+                        <phase>compile</phase>
+                        <goals> <goal>compile</goal> </goals>
+                    </execution>
+                    <execution>
+                        <id>java-test-compile</id>
+                        <phase>test-compile</phase>
+                        <goals> <goal>testCompile</goal> </goals>
                     </execution>
                 </executions>
             </plugin>
