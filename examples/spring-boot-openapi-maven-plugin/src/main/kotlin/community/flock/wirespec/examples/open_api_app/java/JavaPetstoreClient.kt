@@ -1,10 +1,9 @@
 package community.flock.wirespec.examples.open_api_app.java
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import community.flock.wirespec.java.Wirespec.Request
-import community.flock.wirespec.java.Wirespec.Response
-import community.flock.wirespec.java.Wirespec.Content
-import community.flock.wirespec.java.Wirespec.ContentMapper
+import community.flock.wirespec.Wirespec
+import community.flock.wirespec.Wirespec.Content
+import community.flock.wirespec.Wirespec.ContentMapper
 import community.flock.wirespec.generated.java.v3.AddPet
 import community.flock.wirespec.generated.java.v3.FindPetsByStatus
 import org.springframework.context.annotation.Bean
@@ -39,7 +38,7 @@ class JavaPetClientConfiguration {
     fun javaPetstoreClient(restTemplate: RestTemplate, javaContentMapper: ContentMapper<ByteArray>): JavaPetstoreClient =
 
         object : JavaPetstoreClient {
-            fun <Req : Request<*>, Res : Response<*>> handle(
+            fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> handle(
                 request: Req,
                 responseMapper: (ContentMapper<ByteArray>, Int, Map<String, List<String>>, Content<ByteArray>) -> Res
             ):Res = restTemplate.execute(

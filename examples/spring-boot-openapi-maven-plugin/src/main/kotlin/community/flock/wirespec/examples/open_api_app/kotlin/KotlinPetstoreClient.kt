@@ -3,7 +3,7 @@ package community.flock.wirespec.examples.open_api_app.kotlin
 import com.fasterxml.jackson.databind.ObjectMapper
 import community.flock.wirespec.generated.kotlin.v3.AddPet
 import community.flock.wirespec.generated.kotlin.v3.FindPetsByStatus
-import community.flock.wirespec.kotlin.Wirespec
+import community.flock.wirespec.Wirespec
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
@@ -42,7 +42,7 @@ class KotlinPetClientConfiguration {
         object : KotlinPetstoreClient {
             fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> handle(
                 request: Req,
-                responseMapper: (Wirespec.ContentMapper<ByteArray>) -> (Int, Map<String, List<String>>, Wirespec.Content<ByteArray>) -> Res
+                responseMapper: (Wirespec.ContentMapper<ByteArray>, Int, Map<String, List<String>>, Wirespec.Content<ByteArray>) -> Res
             ) = restTemplate.execute(
                 URI("https://6467e16be99f0ba0a819fd68.mockapi.io${request.path}"),
                 HttpMethod.valueOf(request.method.name),
@@ -54,7 +54,8 @@ class KotlinPetClientConfiguration {
                 { res ->
                     val contentType = res.headers.contentType?.toString() ?: error("No content type")
                     val content = Wirespec.Content(contentType, res.body.readBytes())
-                    responseMapper(kotlinContentMapper)(
+                    responseMapper(
+                        kotlinContentMapper,
                         res.statusCode.value(),
                         res.headers,
                         content
