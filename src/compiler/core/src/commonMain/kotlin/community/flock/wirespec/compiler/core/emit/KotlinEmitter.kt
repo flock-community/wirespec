@@ -47,8 +47,7 @@ class KotlinEmitter(
     """.trimMargin()
 
     val import = """
-        |import kotlin.reflect.typeOf
-        |import kotlin.reflect.jvm.javaType
+        |
         |import community.flock.wirespec.Wirespec
         |
     """.trimMargin()
@@ -85,7 +84,7 @@ class KotlinEmitter(
             .sanitizeKeywords()
     }
 
-    override fun Reference.emit() = withLogging(logger) {
+    private fun Reference.emitPrimaryType() = withLogging(logger) {
         when (this) {
             is Reference.Any -> "Any"
             is Reference.Custom -> value
@@ -95,6 +94,10 @@ class KotlinEmitter(
                 Reference.Primitive.Type.Boolean -> "Boolean"
             }
         }
+    }
+
+    override fun Reference.emit() = withLogging(logger) {
+        emitPrimaryType()
             .let { if (isIterable) "List<$it>" else it }
             .let { if (isMap) "Map<String, $it>" else it }
     }
@@ -185,7 +188,7 @@ class KotlinEmitter(
 
             else -> """
                     |${SPACER}${SPACER}${SPACER}${SPACER}content?.type == "${content.type}" -> contentMapper
-                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.read<${content.reference.emit()}>(content, typeOf<${content.reference.emit()}>().javaType)
+                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.read<${content.reference.emit()}>(content, Wirespec.getType(${content.reference.emitPrimaryType()}::class.java, ${content.reference.isIterable}))
                     |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.let{ Request${content.emitContentType()}(path, method, query, headers, it) }
                 """.trimMargin()
         }
@@ -207,7 +210,7 @@ class KotlinEmitter(
 
             else -> """
                     |${SPACER}${SPACER}${SPACER}${SPACER}${status.takeIf { it.isInt() }?.let { "status == $status && " }.orEmptyString()}content?.type == "${content.type}" -> contentMapper
-                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.read<${content.reference.emit()}>(content, typeOf<${content.reference.emit()}>().javaType)
+                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.read<${content.reference.emit()}>(content, Wirespec.getType(${content.reference.emitPrimaryType()}::class.java, ${content.reference.isIterable}))
                     |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.let{ Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()}headers, it.body) }
                 """.trimMargin()
         }
