@@ -106,8 +106,25 @@ class GenerateMojo : BaseMojo() {
         if(shared == true) {
             JvmUtil.emitJvm("community.flock.wirespec", output, "Wirespec", "scala").writeText(emitter.shared)
         }
-        compile(input, logger, emitter)
-            .forEach { (name, result) -> JvmUtil.emitJvm(packageName, output, name, "scala").writeText(result) }
+        if (openapi != null) {
+            val fileName = input.split("/")
+                .last()
+                .substringBeforeLast(".")
+                .replaceFirstChar(Char::uppercase)
+            val json = File(input).readText()
+            val ast = when (openapi) {
+                "v2" -> OpenApiParserV2.parse(json)
+                "v3" -> OpenApiParserV3.parse(json)
+                else -> error("Api version not found")
+            }
+            val result = emitter.emit(ast).joinToString("\n") { it.second }
+            JvmUtil.emitJvm(packageName, output, fileName, "scala").writeText(result)
+        } else {
+            compile(input, logger, emitter)
+                .forEach { (name, result) ->
+                    JvmUtil.emitJvm(packageName, output, name, "scala").writeText(result)
+                }
+        }
     }
 
     fun executeTypeScript() {
