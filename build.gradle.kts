@@ -49,7 +49,7 @@ allprojects {
             withType<MavenPublication> {
                 artifact(javadocJar)
                 pom {
-                    name.set("Flock. community")
+                    name.set("Wirespec")
                     description.set("Type safe wires made easy")
                     licenses {
                         license {
