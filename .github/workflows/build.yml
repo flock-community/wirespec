@@ -112,8 +112,8 @@ jobs:
 
     env:
       VERSION: ${{needs.version.outputs.version}}
-      JFROG_USERNAME: ${{ secrets.JFROG_USERNAME }}
-      JFROG_TOKEN: ${{ secrets.JFROG_TOKEN }}
+      SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+      SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
 
     steps:
       - uses: actions/checkout@v3
@@ -125,7 +125,7 @@ jobs:
           cache: gradle
       - name: Run
         run: |
-          ./gradlew :plugin:gradle:publish
+          ./gradlew :src:plugin:gradle:publish
 
   release-plugin-maven:
 
@@ -136,8 +136,8 @@ jobs:
 
     env:
       VERSION: ${{needs.version.outputs.version}}
-      JFROG_USERNAME: ${{ secrets.JFROG_USERNAME }}
-      JFROG_TOKEN: ${{ secrets.JFROG_TOKEN }}
+      SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+      SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
 
     steps:
       - uses: actions/checkout@v3
@@ -149,7 +149,7 @@ jobs:
           cache: gradle
       - name: Run
         run: |
-          ./gradlew :plugin:maven:publish
+          ./gradlew :src:plugin:maven:publish
 
   release-intellij:
 
@@ -254,8 +254,8 @@ jobs:
 
     env:
       VERSION: ${{needs.version.outputs.version}}
-      JFROG_USERNAME: ${{ secrets.JFROG_USERNAME }}
-      JFROG_TOKEN: ${{ secrets.JFROG_TOKEN }}
+      SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+      SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
 
     steps:
       - uses: actions/checkout@v3
@@ -267,7 +267,8 @@ jobs:
           cache: gradle
       - name: Run
         run: |
-          ./gradlew publish
+          ./gradlew :src:compiler:core:publish
+          ./gradlew :src:compiler:lib:publish
 
   release-lib-npm:
 
