@@ -4,7 +4,7 @@ plugins {
     id("org.jetbrains.kotlin.jvm")
 }
 
-group = "${Settings.groupId}.plugin.gradle"
+group = "${Settings.GROUP_ID}.plugin.gradle"
 version = Settings.version
 
 repositories {
@@ -17,7 +17,7 @@ dependencies {
 
 gradlePlugin {
     val kotlin by plugins.creating {
-        id = "${Settings.groupId}.plugin.gradle"
+        id = "${Settings.GROUP_ID}.plugin.gradle"
         implementationClass = "community.flock.wirespec.plugin.gradle.WirespecPlugin"
     }
 }

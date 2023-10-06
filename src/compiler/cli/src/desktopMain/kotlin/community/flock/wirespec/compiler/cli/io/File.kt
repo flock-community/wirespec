@@ -40,7 +40,7 @@ actual abstract class File actual constructor(actual val path: FullFilePath) : C
             .split("out")
             .joinToString("out/native")
             .apply {
-                split("/").reduce { acc, cur -> "$acc/$cur".also { opendir(it) ?: mkdir(it, 493u) } }
+                split("/").reduce { acc, cur -> "$acc/$cur".also { opendir(it) ?: makeDir(it) } }
             }
 
         val nativePath = path.copy(directory = directory)
@@ -50,6 +50,9 @@ actual abstract class File actual constructor(actual val path: FullFilePath) : C
             fclose(this)
         } ?: throw FileReadException("Cannot open output file $nativePath")
     }
+
+    @OptIn(kotlinx.cinterop.UnsafeNumber::class)
+    private fun makeDir(dir: String) = mkdir(dir, 493u)
 
     companion object {
         private const val bufferLength = 64 * 1024

@@ -5,7 +5,7 @@ plugins {
     id("de.benediktritter.maven-plugin-development") version "0.4.1"
 }
 
-group = "${Settings.groupId}.plugin.maven"
+group = "${Settings.GROUP_ID}.plugin.maven"
 version = Settings.version
 
 repositories {

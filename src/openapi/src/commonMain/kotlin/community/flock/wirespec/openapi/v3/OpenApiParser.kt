@@ -17,10 +17,13 @@ import community.flock.kotlinx.openapi.bindings.v3.SchemaObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceOrBooleanObject
 import community.flock.kotlinx.openapi.bindings.v3.StatusCode
-import community.flock.wirespec.compiler.core.parse.*
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive
+import community.flock.wirespec.compiler.core.parse.nodes.Definition
+import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
+import community.flock.wirespec.compiler.core.parse.nodes.Enum
+import community.flock.wirespec.compiler.core.parse.nodes.Type
+import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field
+import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference
+import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference.Primitive
 import community.flock.wirespec.openapi.Common.className
 import community.flock.kotlinx.openapi.bindings.v3.Type as OpenapiType
 
@@ -428,7 +431,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         }
     }
 
-    private fun PathItemObject.toOperationList() = Endpoint.Method.values()
+    private fun PathItemObject.toOperationList() = Endpoint.Method.entries
         .associateWith {
             when (it) {
                 Endpoint.Method.GET -> get

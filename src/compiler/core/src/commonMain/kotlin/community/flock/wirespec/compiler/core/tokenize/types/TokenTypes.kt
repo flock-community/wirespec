@@ -4,31 +4,48 @@ sealed interface TokenType {
     fun name(): String = this::class.simpleName!!
 }
 
-object LeftCurly : TokenType
-object RightCurly : TokenType
-object Colon : TokenType
-object Comma : TokenType
-object QuestionMark : TokenType
-object Brackets : TokenType
-object CustomValue : TokenType
-object Invalid : TokenType
-object EndOfProgram : TokenType {
+data object LeftCurly : TokenType
+data object RightCurly : TokenType
+data object Colon : TokenType
+data object Comma : TokenType
+data object QuestionMark : TokenType
+data object Brackets : TokenType
+data object CustomValue : TokenType
+data object Invalid : TokenType
+data object EndOfProgram : TokenType {
     const val VALUE = "EOP"
 }
 
 sealed interface WhiteSpace : TokenType
-object WhiteSpaceExceptNewLine : WhiteSpace
-object NewLine : WhiteSpace
+data object WhiteSpaceExceptNewLine : WhiteSpace
+data object NewLine : WhiteSpace
+data object StartOfProgram : WhiteSpace
 
 sealed interface Keyword : TokenType
-object WsTypeDef : Keyword
-object WsEnumTypeDef : Keyword
-object WsRefinedTypeDef : Keyword
+sealed interface WirespecDefinition : Keyword
+data object WsTypeDef : WirespecDefinition
+data object WsEnumTypeDef : WirespecDefinition
+data object WsRefinedTypeDef : WirespecDefinition
+data object WsEndpointDef : WirespecDefinition
 
-sealed interface WsType : Keyword
-object WsString : WsType
-object WsInteger : WsType
-object WsBoolean : WsType
-object CustomType : WsType
+sealed interface WirespecType : Keyword
+data object WsString : WirespecType
+data object WsInteger : WirespecType
+data object WsBoolean : WirespecType
+data object CustomType : WirespecType
 
-object CustomRegex : TokenType
+sealed interface Method : Keyword
+data object GET : Method
+data object POST : Method
+data object PUT : Method
+data object DELETE : Method
+data object OPTIONS : Method
+data object HEAD : Method
+data object PATCH : Method
+data object TRACE : Method
+
+data object StatusCode : Keyword
+data object Path : Keyword
+data object Arrow : Keyword
+
+data object CustomRegex : TokenType

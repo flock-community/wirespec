@@ -4,7 +4,7 @@ plugins {
     id("com.github.johnrengelman.shadow") apply false
 }
 
-group = "${Settings.groupId}.compiler"
+group = "${Settings.GROUP_ID}.compiler"
 version = Settings.version
 
 repositories {

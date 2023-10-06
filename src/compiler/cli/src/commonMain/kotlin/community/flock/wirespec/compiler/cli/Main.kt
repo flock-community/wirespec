@@ -42,7 +42,7 @@ private sealed interface Language {
     enum class Jvm : Language { Java, Kotlin, Scala }
     enum class Script : Language { TypeScript, Wirespec }
     companion object {
-        fun values(): List<Enum<*>> = Jvm.values().toList() + Script.values().toList()
+        fun values(): List<Enum<*>> = Jvm.entries + Script.entries
         fun valueOf(s: String): Language? = values().find { it.name == s } as Language?
     }
 }

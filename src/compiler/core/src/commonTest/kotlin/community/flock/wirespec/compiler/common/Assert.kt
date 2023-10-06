@@ -6,6 +6,8 @@ import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
+inline fun <reified R : Any> Any.assert(): R = assertTrue { this is R }.let { this as R }
+
 fun Either<Nel<WirespecException>, String>.assertValid(expected: String) {
     when (this) {
         is Either.Left -> error("Valid expected: ${this.value.first().message}", )

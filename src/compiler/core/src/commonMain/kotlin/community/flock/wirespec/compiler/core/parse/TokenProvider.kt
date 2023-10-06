@@ -1,21 +1,17 @@
 package community.flock.wirespec.compiler.core.parse
 
 import arrow.core.Either
-import arrow.core.NonEmptyList
-import arrow.core.nel
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.NullTokenException.NextException
 import community.flock.wirespec.compiler.core.tokenize.Token
-import community.flock.wirespec.compiler.core.tokenize.Token.Coordinates
-import community.flock.wirespec.compiler.core.tokenize.plus
-import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
-import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram.VALUE
+import community.flock.wirespec.compiler.core.tokenize.Tokens
+import community.flock.wirespec.compiler.core.tokenize.types.TokenType
 import community.flock.wirespec.compiler.utils.Logger
 
 class TokenProvider(private val logger: Logger, private val tokenIterator: Iterator<Token>) {
 
-    var token = nextToken() ?: Token(EndOfProgram, VALUE, Coordinates() + VALUE.length)
+    var token = nextToken()!!
     private var nextToken = nextToken()
 
     init {
@@ -24,9 +20,9 @@ class TokenProvider(private val logger: Logger, private val tokenIterator: Itera
 
     fun hasNext() = nextToken != null
 
-    fun eatToken(): Either<NonEmptyList<WirespecException>, Unit> = either {
+    fun eatToken(): Either<WirespecException, Unit> = either {
         val previousToken = token
-        token = nextToken ?: raise(NextException(previousToken.coordinates).nel())
+        token = nextToken ?: raise(NextException(previousToken.coordinates))
         nextToken = nextToken()
         printTokens(previousToken)
     }
@@ -41,4 +37,4 @@ class TokenProvider(private val logger: Logger, private val tokenIterator: Itera
     private fun nextToken() = runCatching { tokenIterator.next() }.getOrNull()
 }
 
-fun List<Token>.toProvider(logger: Logger) = TokenProvider(logger, iterator())
+fun Tokens.toProvider(logger: Logger) = TokenProvider(logger, iterator())
