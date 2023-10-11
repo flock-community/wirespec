@@ -1,6 +1,5 @@
 plugins {
     `java-gradle-plugin`
-    `maven-publish`
     id("org.jetbrains.kotlin.jvm")
 }
 

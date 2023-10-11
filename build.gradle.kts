@@ -9,10 +9,6 @@ plugins {
 
 val dokkaOutputDir = "$buildDir/dokka"
 
-tasks.getByName<DokkaTask>("dokkaHtml") {
-    outputDirectory.set(file(dokkaOutputDir))
-}
-
 val deleteDokkaOutputDir by tasks.register<Delete>("deleteDokkaOutputDirectory") {
     delete(dokkaOutputDir)
 }
@@ -31,6 +27,15 @@ allprojects {
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
     apply(plugin = "org.jetbrains.dokka")
+
+    tasks.getByName<DokkaTask>("dokkaHtml") {
+        outputDirectory.set(file(dokkaOutputDir))
+    }
+
+    signing {
+        useGpgCmd()
+        sign(publishing.publications)
+    }
 
     publishing {
         publications {
