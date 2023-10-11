@@ -33,7 +33,7 @@ allprojects {
     }
 
     signing {
-        useGpgCmd()
+        setRequired{System.getenv("VERSION") != null}
         sign(publishing.publications)
     }
 

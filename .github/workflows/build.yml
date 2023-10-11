@@ -20,7 +20,6 @@ jobs:
 
     env:
       WIRESPEC_BUILD_LINUX: true
-      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
     steps:
       - uses: actions/checkout@v3
@@ -37,7 +36,6 @@ jobs:
           node-version: 16
       - name: Run
         run: |
-          export GPG_TTY=$(tty)
           make build
           make image
           make example
@@ -77,7 +75,6 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE
       - name: Run
         run: |
-          export GPG_TTY=$(tty)
           ./gradlew build
       - name: Archive macosX86 cli
         uses: actions/upload-artifact@v3
@@ -122,6 +119,8 @@ jobs:
       VERSION: ${{needs.version.outputs.version}}
       SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
       SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+      ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
+      ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
 
     steps:
       - uses: actions/checkout@v3
@@ -135,7 +134,6 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE
       - name: Run
         run: |
-          export GPG_TTY=$(tty)
           ./gradlew :src:plugin:gradle:publish
 
   release-plugin-maven:
@@ -149,6 +147,8 @@ jobs:
       VERSION: ${{needs.version.outputs.version}}
       SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
       SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+      ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
+      ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
 
     steps:
       - uses: actions/checkout@v3
@@ -162,7 +162,6 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE
       - name: Run
         run: |
-          export GPG_TTY=$(tty)
           ./gradlew :src:plugin:maven:publish
 
   release-intellij:
@@ -186,7 +185,6 @@ jobs:
           cache: gradle
       - name: Run
         run: |
-          export GPG_TTY=$(tty)
           ./gradlew :src:lsp:intellij-plugin:publishPlugin
 
   release-vscode:
@@ -215,7 +213,6 @@ jobs:
           node-version: 16
       - name: Build lib
         run: |
-          export GPG_TTY=$(tty)
           ./gradlew :src:compiler:lib:build
       - name: Build server
         working-directory: ./lsp/node/server
@@ -274,6 +271,8 @@ jobs:
       VERSION: ${{needs.version.outputs.version}}
       SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
       SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+      ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
+      ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
 
     steps:
       - uses: actions/checkout@v3
@@ -287,7 +286,6 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE
       - name: Run
         run: |
-          export GPG_TTY=$(tty)
           ./gradlew :src:compiler:core:publish
           ./gradlew :src:compiler:lib:publish
 
@@ -317,7 +315,6 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
       - name: Build
         run: |
-          export GPG_TTY=$(tty)
           ./gradlew :src:compiler:lib:build
       - name: Build
         working-directory: ./build/js
