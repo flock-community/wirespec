@@ -1,6 +1,5 @@
 plugins {
     java
-    `maven-publish`
     id("org.jetbrains.kotlin.jvm")
     id("de.benediktritter.maven-plugin-development") version "0.4.1"
 }

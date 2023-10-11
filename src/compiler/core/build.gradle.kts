@@ -4,7 +4,6 @@ plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
     id("com.github.johnrengelman.shadow") apply false
-    `maven-publish`
 }
 
 group = "${Settings.GROUP_ID}.compiler"
