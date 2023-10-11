@@ -288,6 +288,8 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: gradle
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: GPG_PASSPHRASE
       - uses: actions/setup-node@v3
         with:
           node-version: 18
