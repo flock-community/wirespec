@@ -20,6 +20,7 @@ jobs:
 
     env:
       WIRESPEC_BUILD_LINUX: true
+      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
     steps:
       - uses: actions/checkout@v3
@@ -62,6 +63,7 @@ jobs:
     env:
       WIRESPEC_BUILD_MAC_ARM: true
       WIRESPEC_BUILD_MAC_X86: true
+      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
     steps:
       - uses: actions/checkout@v3
@@ -118,6 +120,7 @@ jobs:
       VERSION: ${{needs.version.outputs.version}}
       SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
       SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
     steps:
       - uses: actions/checkout@v3
@@ -266,6 +269,7 @@ jobs:
       VERSION: ${{needs.version.outputs.version}}
       SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
       SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
     steps:
       - uses: actions/checkout@v3
