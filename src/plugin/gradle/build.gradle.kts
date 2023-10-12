@@ -22,15 +22,8 @@ gradlePlugin {
     val kotlin by plugins.creating {
         id = "${Settings.GROUP_ID}.plugin.gradle"
         implementationClass = "community.flock.wirespec.plugin.gradle.WirespecPlugin"
-    }
-}
-
-publishing {
-    publications {
-        register("mavenJava", MavenPublication::class) {
-            artifactId = "wirespec-gradle-plugin"
-            from(components["java"])
-        }
+        displayName = "Wirespec gradle plugin"
+        description = "Plugin for compiling Wirespec files"
     }
 }
 
