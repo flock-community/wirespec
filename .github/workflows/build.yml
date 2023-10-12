@@ -48,12 +48,12 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: wirespec-client-vscode
-          path: lsp/node/client/build/wirespec-client-vscode-*.vsix
+          path: src/lsp/node/client/build/wirespec-client-vscode-*.vsix
       - name: Archive Intellij plugin
         uses: actions/upload-artifact@v3
         with:
           name: wirespec-intellij-plugin
-          path: lsp/intellij-plugin/build/distributions/intellij-plugin-*.zip
+          path: src/lsp/intellij-plugin/build/distributions/intellij-plugin-*.zip
 
   build-mac:
 
@@ -215,12 +215,12 @@ jobs:
         run: |
           ./gradlew :src:compiler:lib:build
       - name: Build server
-        working-directory: ./lsp/node/server
+        working-directory: ./src/lsp/node/server
         run: |
           npm i
           npm run build
       - name: Build extension
-        working-directory: ./lsp/node/client
+        working-directory: ./src/lsp/node/client
         run: |
           npm i
           npm run build 
