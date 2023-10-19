@@ -318,6 +318,6 @@ jobs:
         run: |
           ./gradlew :src:compiler:lib:build
       - name: Build
-        working-directory: ./build/js
+        working-directory: ./src/compiler/lib/build/dist/js/productionLibrary
         run: |
           npm publish --access public --workspace @flock/wirespec
