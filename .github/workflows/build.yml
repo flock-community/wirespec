@@ -288,6 +288,7 @@ jobs:
         run: |
           ./gradlew :src:compiler:core:publish
           ./gradlew :src:compiler:lib:publish
+          ./gradlew :src:openapi:publish
 
   release-lib-npm:
 
