@@ -16,7 +16,7 @@ runs:
       name: Version number
       shell: bash
       run: |
-        if [[ "${{ inputs.version }}" =~ ^v[0-9]\.[0-9]\.[0-9]$ ]]
+        if [[ "${{ inputs.version }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
         then
         echo "version number valid: ${{ inputs.version }}"
         version="${{ inputs.version }}"

@@ -12,12 +12,12 @@ repositories {
 }
 
 kotlin {
-    js(IR) {
+    js {
         nodejs()
         binaries.library()
         compilations["main"].packageJson {
             customField("name", "@flock/wirespec")
-            customField("bin", mapOf("wirespec" to "kotlin/wirespec-bin.js"))
+            customField("bin", mapOf("wirespec" to "wirespec-bin.js"))
         }
     }
 
