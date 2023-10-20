@@ -1,9 +1,12 @@
 import Libraries.ARROW_CORE
+import Libraries.KOTEST_ASSERTIONS
+import Libraries.KOTEST_ASSERTIONS_ARROW
 
 plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
     id("com.github.johnrengelman.shadow") apply false
+    id("io.kotest.multiplatform")
 }
 
 group = "${Settings.GROUP_ID}.compiler"
@@ -37,9 +40,10 @@ kotlin {
         }
         commonTest {
             dependencies {
-                implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
                 implementation(kotlin("test-junit"))
+                implementation(KOTEST_ASSERTIONS)
+                implementation(KOTEST_ASSERTIONS_ARROW)
             }
         }
     }

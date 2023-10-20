@@ -5,10 +5,11 @@ import community.flock.wirespec.compiler.cli.io.JavaFile
 import community.flock.wirespec.compiler.cli.io.KotlinFile
 import community.flock.wirespec.compiler.cli.io.TypeScriptFile
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
+import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import kotlin.test.Ignore
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class CliTest {
 
@@ -39,7 +40,7 @@ class CliTest {
             )
             
         """.trimIndent()
-        assertEquals(expected, file)
+        file shouldBe expected
     }
 
     @Test
@@ -61,7 +62,7 @@ class CliTest {
             ) {};
             
         """.trimIndent()
-        assertEquals(expected, file)
+        file shouldBe expected
     }
 
     @Test
@@ -87,7 +88,7 @@ class CliTest {
             )
             """.trimIndent()
 
-        assertTrue(file.contains(expected))
+        file.contains(expected).shouldBeTrue()
     }
 
     @Test
@@ -138,7 +139,7 @@ class CliTest {
             }
             """.trimIndent()
 
-        assertTrue(file.contains(expected))
+        file shouldContain expected
     }
 
     private fun getRandomString(length: Int) = (1..length)

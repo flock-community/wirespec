@@ -69,7 +69,7 @@ open class WirespecPluginExtension @Inject constructor(val objectFactory: Object
 
 class WirespecPlugin : Plugin<Project> {
 
-    private val logger = object : Logger(true) {}
+    private val logger = object : Logger() {}
 
     private fun compile(input: String, logger: Logger, emitter: Emitter) =
         (File(input).listFiles() ?: arrayOf())

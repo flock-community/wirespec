@@ -1,6 +1,6 @@
 package community.flock.wirespec.compiler.utils
 
-open class Logger(private val enableLogging: Boolean) {
+open class Logger constructor(private val enableLogging: Boolean = false) {
 
     open fun warn(s: String) = println(s)
 

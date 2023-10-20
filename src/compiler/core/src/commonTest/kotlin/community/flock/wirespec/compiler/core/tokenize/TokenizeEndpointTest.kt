@@ -14,9 +14,9 @@ import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.types.StartOfProgram
 import community.flock.wirespec.compiler.core.tokenize.types.StatusCode
 import community.flock.wirespec.compiler.core.tokenize.types.WsEndpointDef
+import io.kotest.assertions.arrow.core.shouldNotContain
+import io.kotest.matchers.shouldBe
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class TokenizeEndpointTest {
 
@@ -26,11 +26,9 @@ class TokenizeEndpointTest {
 
         val expected = listOf(StartOfProgram, EndOfProgram)
 
-        Wirespec.tokenize(source).run {
-            onEach { println(it.type) }
-            assertEquals(expected.size, size)
-            onEachIndexed { index, token -> assertEquals(expected[index], token.type) }
-        }
+        Wirespec.tokenize(source)
+            .also { it.size shouldBe expected.size }
+            .onEachIndexed { index, token -> token.type shouldBe expected[index] }
     }
 
     @Test
@@ -39,11 +37,9 @@ class TokenizeEndpointTest {
 
         val expected = listOf(CustomValue, EndOfProgram)
 
-        Wirespec.tokenize(source).removeWhiteSpace().run {
-            onEach { println(it.type) }
-            assertEquals(expected.size, size)
-            onEachIndexed { index, token -> assertEquals(expected[index], token.type) }
-        }
+        Wirespec.tokenize(source).removeWhiteSpace()
+            .also { it.size shouldBe expected.size }
+            .onEachIndexed { index, token -> token.type shouldBe expected[index] }
     }
 
     @Test
@@ -60,11 +56,9 @@ class TokenizeEndpointTest {
             EndOfProgram
         )
 
-        Wirespec.tokenize(source).removeWhiteSpace().run {
-            onEach { println(it.type) }
-            assertEquals(expected.size, size)
-            onEachIndexed { index, token -> assertEquals(expected[index], token.type) }
-        }
+        Wirespec.tokenize(source).removeWhiteSpace()
+            .also { it.size shouldBe expected.size }
+            .onEachIndexed { index, token -> token.type shouldBe expected[index] }
     }
 
     @Test
@@ -84,10 +78,9 @@ class TokenizeEndpointTest {
         )
 
         Wirespec.tokenize(source).removeWhiteSpace().run {
-            onEach { println(it.type) }
-            assertTrue(none { it.type is Invalid })
-            assertEquals(expected.size, size)
-            onEachIndexed { index, token -> assertEquals(expected[index], token.type) }
+            size shouldBe expected.size
+            map { it.type } shouldNotContain Invalid
+            onEachIndexed { index, token -> token.type shouldBe expected[index] }
         }
     }
 }
