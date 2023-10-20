@@ -319,4 +319,4 @@ jobs:
       - name: Build
         working-directory: ./build/js
         run: |
-          npm publish --access public --workspace @flock/wirespec
+          npm publish --access public
