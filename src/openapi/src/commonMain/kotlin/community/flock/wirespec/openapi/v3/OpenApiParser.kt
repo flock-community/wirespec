@@ -481,7 +481,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
             is ReferenceObject -> {
                 Field(
                     Field.Identifier(key),
-                    Reference.Custom(value.getReference(), false),
+                    Reference.Custom(className(value.getReference()), false),
                     !(this.required?.contains(key) ?: false)
                 )
             }
