@@ -69,6 +69,7 @@ class KotlinEmitter(
             .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
             .joinToString("")
             .sanitizeKeywords()
+            .sanitizeSymbols()
     }
 
     override fun Reference.emit() = withLogging(logger) {
@@ -201,6 +202,9 @@ class KotlinEmitter(
         }
 
     fun String.sanitizeKeywords() = if (preservedKeywords.contains(this)) "`$this`" else this
+
+    fun String.sanitizeSymbols() = replace(".", "")
+
     companion object {
         private val preservedKeywords = listOf(
             "as",
