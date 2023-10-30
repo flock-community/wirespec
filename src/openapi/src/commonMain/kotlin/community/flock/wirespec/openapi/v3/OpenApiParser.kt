@@ -316,7 +316,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                 is BooleanObject -> emptyList()
                 else -> additionalProperties
                     ?.resolve()
-                    ?.takeIf { properties != null }
+                    ?.takeIf { it.properties != null }
                     ?.flatten(name)
                     ?: emptyList()
             }
@@ -407,9 +407,9 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
     private fun SchemaObject.toReference(name: String): Reference = when {
         additionalProperties != null -> when (val additionalProperties = additionalProperties!!) {
             is BooleanObject -> Reference.Any(false, true)
-            is ReferenceObject -> Reference.Any(false, true)
+            is ReferenceObject -> additionalProperties.toReference().toMap()
             is SchemaObject -> additionalProperties
-                .takeIf { properties != null }
+                .takeIf { it.type != null }
                 ?.run {  toReference(name).toMap() }
                 ?: Reference.Any(false, true)
         }
