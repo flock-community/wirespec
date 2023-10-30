@@ -141,7 +141,7 @@ class KotlinEmitter(
     }
 
     private fun List<Type.Shape.Field>.emitMap() =
-        joinToString(", ") { "\"${it.identifier.emit()}\" to listOf(${it.identifier.emit()})" }
+        joinToString(", ") { "\"${it.identifier.value}\" to listOf(${it.identifier.emit()})" }
 
     private fun Endpoint.Segment.emit(): String = withLogging(logger) {
         when (this) {
