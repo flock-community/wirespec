@@ -91,6 +91,31 @@ class CliTest {
     }
 
     @Test
+    fun testCliKetoKotlin() {
+        val packageName = "community.flock.openapi"
+        val packageDir = packageName.replace(".", "/")
+        val input = "${inputDir}/openapi/keto.json"
+        val output = outputDir()
+
+        cli(arrayOf(input, "-o", output, "-l", "Kotlin", "-p", "community.flock.openapi", "-a", "v3"))
+
+        val path = FullFilePath("$output/$packageDir", "Keto")
+        val file = KotlinFile(path).read()
+
+        val expected = """
+            data class Relationship(
+              val namespace: String,
+              val `object`: String,
+              val relation: String,
+              val subject_id: String? = null,
+              val subject_set: SubjectSet? = null
+            )
+            """.trimIndent()
+
+        assertTrue(file.contains(expected))
+    }
+
+    @Test
     fun testCliOpenapiTypesScript() {
         val packageName = "community.flock.openapi"
         val packageDir = packageName.replace(".", "/")

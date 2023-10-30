@@ -314,7 +314,11 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         when {
             additionalProperties != null -> when (additionalProperties) {
                 is BooleanObject -> emptyList()
-                else -> additionalProperties!!.resolve().flatten(name)
+                else -> additionalProperties
+                    ?.resolve()
+                    ?.takeIf { it.properties != null }
+                    ?.flatten(name)
+                    ?: emptyList()
             }
 
             oneOf != null -> TODO("oneOf is not implemented")
@@ -404,7 +408,10 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         additionalProperties != null -> when (val additionalProperties = additionalProperties!!) {
             is BooleanObject -> Reference.Any(false, true)
             is ReferenceObject -> additionalProperties.toReference().toMap()
-            is SchemaObject -> additionalProperties.toReference(name).toMap()
+            is SchemaObject -> additionalProperties
+                .takeIf { it.type != null }
+                ?.run {  toReference(name).toMap() }
+                ?: Reference.Any(false, true)
         }
 
         enum != null -> Reference.Custom(name, false, additionalProperties != null)
@@ -474,7 +481,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
             is ReferenceObject -> {
                 Field(
                     Field.Identifier(key),
-                    Reference.Custom(value.getReference(), false),
+                    Reference.Custom(className(value.getReference()), false),
                     !(this.required?.contains(key) ?: false)
                 )
             }
