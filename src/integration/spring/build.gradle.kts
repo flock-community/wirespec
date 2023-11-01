@@ -9,7 +9,7 @@ plugins {
     id("io.spring.dependency-management") version "1.1.3"
 }
 
-group = "${Settings.groupId}.integration.spring"
+group = "${Settings.GROUP_ID}.integration.spring"
 version = Settings.version
 
 repositories {
