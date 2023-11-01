@@ -1,6 +1,5 @@
 plugins {
     java
-    `maven-publish`
     id("org.jetbrains.kotlin.jvm")
     id("de.benediktritter.maven-plugin-development") version "0.4.1"
 }
@@ -22,6 +21,10 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.10")
 }
 
+java {
+    withSourcesJar()
+}
+
 publishing {
     publications {
         register("mavenJava", MavenPublication::class) {
@@ -40,23 +43,4 @@ mavenPlugin {
     artifactId.set("wirespec-maven-plugin")
     description.set("Plugin to run wirespec compiler")
     goalPrefix.set("wirespec")
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("wirespec-maven-plugin") {
-            from(components["java"])
-        }
-    }
-
-    repositories {
-        maven {
-            credentials {
-                username = System.getenv("JFROG_USERNAME")
-                password = System.getenv("JFROG_TOKEN")
-            }
-            name = "flock-maven"
-            url = uri("https://flock.jfrog.io/artifactory/flock-maven")
-        }
-    }
 }

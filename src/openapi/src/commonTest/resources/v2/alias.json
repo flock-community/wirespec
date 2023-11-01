@@ -1,0 +1,41 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Alias",
+    "version": "1.0.0"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/alisa": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "schema": {
+              "$ref": "#/definitions/Bar"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Foo": {
+      "type": "object",
+      "properties": {
+        "a": {
+          "type": "string"
+        }
+      }
+    },
+    "Bar": {
+      "$ref": "#/definitions/Foo"
+    }
+  }
+}
+

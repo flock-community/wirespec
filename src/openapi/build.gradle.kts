@@ -2,7 +2,6 @@ plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
     id("com.github.johnrengelman.shadow") apply false
-    `maven-publish`
 }
 
 group = Settings.GROUP_ID
@@ -34,7 +33,7 @@ kotlin {
             dependencies {
                 implementation(project(":src:compiler:core"))
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
-                implementation("community.flock.kotlinx.openapi.bindings:kotlin-openapi-bindings:0.0.14")
+                implementation("community.flock.kotlinx.openapi.bindings:kotlin-openapi-bindings:0.0.17")
             }
         }
         commonTest {
@@ -54,15 +53,3 @@ kotlin {
     }
 }
 
-publishing {
-    repositories {
-        maven {
-            credentials {
-                username = System.getenv("JFROG_USERNAME")
-                password = System.getenv("JFROG_TOKEN")
-            }
-            name = "flock-maven"
-            url = uri("https://flock.jfrog.io/artifactory/flock-maven")
-        }
-    }
-}
