@@ -1,10 +1,7 @@
 package community.flock.wirespec.examples.open_api_app.java
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import community.flock.wirespec.java.Wirespec.Request
-import community.flock.wirespec.java.Wirespec.Response
-import community.flock.wirespec.java.Wirespec.Content
-import community.flock.wirespec.java.Wirespec.ContentMapper
+import community.flock.wirespec.Wirespec
 import community.flock.wirespec.generated.java.v3.AddPet
 import community.flock.wirespec.generated.java.v3.FindPetsByStatus
 import org.springframework.context.annotation.Bean
@@ -21,27 +18,27 @@ class JavaPetClientConfiguration {
 
     @Bean
     fun javaContentMapper(objectMapper: ObjectMapper) =
-        object : ContentMapper<ByteArray> {
-            override fun <T> read(content: Content<ByteArray>, valueType: Type): Content<T> = content.let {
+        object : Wirespec.ContentMapper<ByteArray> {
+            override fun <T> read(content: Wirespec.Content<ByteArray>, valueType: Type): Wirespec.Content<T> = content.let {
                 val type = objectMapper.constructType(valueType)
                 val obj: T = objectMapper.readValue(content.body, type)
-                Content(it.type, obj)
+                Wirespec.Content(it.type, obj)
             }
 
-            override fun <T> write(content: Content<T>): Content<ByteArray> = content.let {
+            override fun <T> write(content: Wirespec.Content<T>): Wirespec.Content<ByteArray> = content.let {
                 val bytes = objectMapper.writeValueAsBytes(content.body)
-                Content(it.type, bytes)
+                Wirespec.Content(it.type, bytes)
             }
         }
 
 
     @Bean
-    fun javaPetstoreClient(restTemplate: RestTemplate, javaContentMapper: ContentMapper<ByteArray>): JavaPetstoreClient =
+    fun javaPetstoreClient(restTemplate: RestTemplate, javaContentMapper: Wirespec.ContentMapper<ByteArray>): JavaPetstoreClient =
 
         object : JavaPetstoreClient {
-            fun <Req : Request<*>, Res : Response<*>> handle(
+            fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> handle(
                 request: Req,
-                responseMapper: (ContentMapper<ByteArray>, Int, Map<String, List<String>>, Content<ByteArray>) -> Res
+                responseMapper: (Wirespec.ContentMapper<ByteArray>, Int, Map<String, List<String>>, Wirespec.Content<ByteArray>) -> Res
             ):Res = restTemplate.execute(
                 URI("https://6467e16be99f0ba0a819fd68.mockapi.io${request.path}"),
                 HttpMethod.valueOf(request.method.name),
@@ -52,7 +49,7 @@ class JavaPetClientConfiguration {
                 },
                 { res ->
                     val contentType = res.headers.contentType?.toString() ?: error("No content type")
-                    val content = Content(contentType, res.body.readBytes())
+                    val content = Wirespec.Content(contentType, res.body.readBytes())
                     responseMapper(javaContentMapper, res.statusCode.value(), res.headers, content)
                 }
             ) ?: error("No response")

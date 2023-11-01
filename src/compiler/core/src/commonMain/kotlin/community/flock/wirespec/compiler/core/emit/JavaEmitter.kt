@@ -17,7 +17,7 @@ class JavaEmitter(
 ) : Emitter(logger, true) {
 
     override val shared = """
-        |package community.flock.wirespec.java;
+        |package community.flock.wirespec;
         |
         |import java.lang.reflect.Type;
         |import java.lang.reflect.ParameterizedType;
@@ -44,7 +44,7 @@ class JavaEmitter(
     """.trimMargin()
 
     private val pkg = if (packageName.isBlank()) "" else "package $packageName;"
-    private fun import(ast:AST) = if (!ast.hasEndpoints()) "" else "import community.flock.wirespec.java.Wirespec;\n\n"
+    private fun import(ast:AST) = if (!ast.hasEndpoints()) "" else "import community.flock.wirespec.Wirespec;\n\n"
 
     override fun emit(ast: AST): List<Pair<String, String>> = super.emit(ast)
         .map { (name, result) -> name to "$pkg\n\n${import(ast)}$result" }
