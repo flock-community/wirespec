@@ -1,5 +1,6 @@
 package community.flock.wirespec.openapi.v2
 
+import arrow.core.filterIsInstance
 import community.flock.kotlinx.openapi.bindings.v2.BooleanObject
 import community.flock.kotlinx.openapi.bindings.v2.OpenAPI
 import community.flock.kotlinx.openapi.bindings.v2.OperationObject
@@ -165,6 +166,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
     }
 
     private fun parseDefinitions() = openApi.definitions.orEmpty()
+        .filterIsInstance<String, SchemaObject>()
         .filter { it.value.additionalProperties == null }
         .flatMap { it.value.flatten(className(it.key)) }
 
@@ -197,19 +199,18 @@ class OpenApiParser(private val openApi: SwaggerObject) {
     private fun ReferenceObject.resolveSchemaObject() =
         openApi.definitions
             ?.get(getReference())
-            ?.let { this to it }
             ?: error("Cannot resolve ref: $ref")
 
     private fun SchemaOrReferenceObject.resolve(): SchemaObject =
         when (this) {
             is SchemaObject -> this
-            is ReferenceObject -> this.resolveSchemaObject().second
+            is ReferenceObject -> this.resolveSchemaObject().resolve()
         }
 
     private fun SchemaOrReferenceOrBooleanObject.resolve(): SchemaObject =
         when (this) {
             is SchemaObject -> this
-            is ReferenceObject -> this.resolveSchemaObject().second
+            is ReferenceObject -> this.resolveSchemaObject().resolve()
             is BooleanObject -> TODO()
         }
 
@@ -298,7 +299,8 @@ class OpenApiParser(private val openApi: SwaggerObject) {
     }
 
     private fun ReferenceObject.toReference(): Reference =
-        resolveSchemaObject().let { (referencingObject, schema) ->
+        resolveSchemaObject().let { refOrSchema ->
+            val schema = refOrSchema.resolve()
             when {
                 schema.additionalProperties != null -> when (val additionalProperties = schema.additionalProperties!!) {
                     is BooleanObject -> Reference.Any(false, true)
@@ -306,16 +308,19 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                     is SchemaObject -> additionalProperties.toReference(getReference()).toMap()
                 }
 
-                schema.enum != null -> Reference.Custom(className(referencingObject.getReference()), false, false)
+                schema.enum != null -> Reference.Custom(className(this.getReference()), false, false)
                 schema.type.isPrimitive() -> Reference.Primitive(schema.type!!.toPrimitive(), false, false)
                 else -> when (schema.type) {
                     OpenapiType.ARRAY -> when (val items = schema.items) {
                         is ReferenceObject -> Reference.Custom(className(items.getReference()), true)
-                        is SchemaObject -> Reference.Custom(className(referencingObject.getReference(), "Array"), true)
+                        is SchemaObject -> Reference.Custom(className(this.getReference(), "Array"), true)
                         null -> error("items cannot be null when type is array: ${this.ref}")
                     }
 
-                    else -> Reference.Custom(className(referencingObject.getReference()), false)
+                    else -> when(refOrSchema){
+                        is SchemaObject -> Reference.Custom(className(this.getReference()), false)
+                        is ReferenceObject -> Reference.Custom(className(refOrSchema.getReference()), false)
+                    }
 
                 }
             }
@@ -376,7 +381,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
             is SchemaObject -> {
                 Field(
                     identifier = Field.Identifier(key),
-                    reference = when(value.type){
+                    reference = when (value.type) {
                         OpenapiType.ARRAY -> value.toReference(className(name, key, "Array"))
                         else -> value.toReference(className(name, key))
                     },

@@ -220,13 +220,59 @@ class OpenApiParserTest {
     }
 
     @Test
+    fun alias() {
+        val json = IO.readOpenApi("v2/alias.json")
+
+        val openApi = OpenAPI.decodeFromString(json)
+        val ast = OpenApiParser.parse(openApi)
+
+        val expected = listOf(
+            Endpoint(
+                name = "AlisaGET",
+                method = Endpoint.Method.GET,
+                path = listOf(Endpoint.Segment.Literal(value = "alisa")),
+                query = emptyList(),
+                headers = emptyList(),
+                cookies = emptyList(),
+                requests = listOf(Endpoint.Request(content = null)),
+                responses = listOf(
+                    Endpoint.Response(
+                        status = "200",
+                        content = Endpoint.Content(
+                            type = "application/json",
+                            reference = Custom(value = "Foo", isIterable = false, isMap = false),
+                            isNullable = false
+                        )
+                    )
+                )
+            ),
+            Type(
+                name = "Foo",
+                shape = Shape(
+                    value = listOf(
+                        Field(
+                            identifier = Identifier(value = "a"),
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = false,
+                                isMap = false
+                            ),
+                            isNullable = true
+                        )
+                    )
+                )
+            )
+        )
+        assertEquals(expected, ast)
+    }
+
+    @Test
     fun objectInRequest() {
         val json = IO.readOpenApi("v2/object-in-request.json")
 
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiParser.parse(openApi)
 
-        assertEquals(Expected.objectInRequest, ast)
         assertEquals(Expected.objectInRequest, ast)
     }
 
