@@ -65,13 +65,13 @@ It is also possible to create your custom emitter and run with the plugin[here](
             ...
             <plugin>
                 <groupId>community.flock.wirespec.plugin.maven</groupId>
-                <artifactId>maven</artifactId>
+                <artifactId>wirespec-maven-plugin</artifactId>
                 <version>0.0.1-SNAPSHOT</version>
                 <executions>
                     <execution>
                         <id>kotlin</id>
                         <goals>
-                            <goal>kotlin</goal>
+                            <goal>generate</goal>
                         </goals>
                         <configuration>
                             <input>${project.basedir}/src/main/wirespec</input>
@@ -81,7 +81,7 @@ It is also possible to create your custom emitter and run with the plugin[here](
                     <execution>
                         <id>typescript</id>
                         <goals>
-                            <goal>typescript</goal>
+                            <goal>generate</goal>
                         </goals>
                         <configuration>
                             <input>${project.basedir}/src/main/wirespec</input>
