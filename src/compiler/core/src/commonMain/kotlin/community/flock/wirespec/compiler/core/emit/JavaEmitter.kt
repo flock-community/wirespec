@@ -44,7 +44,8 @@ class JavaEmitter(
     """.trimMargin()
 
     private val pkg = if (packageName.isBlank()) "" else "package $packageName;"
-    private fun import(ast:AST) = if (!ast.hasEndpoints()) "" else "import community.flock.wirespec.Wirespec;\n\n"
+    private fun import(ast: AST) =
+        if (!ast.hasEndpoints()) "" else "import community.flock.wirespec.Wirespec;\nimport java.util.concurrent.CompletableFuture;\n\n"
 
     override fun emit(ast: AST): List<Pair<String, String>> = super.emit(ast)
         .map { (name, result) -> name to "$pkg\n\n${import(ast)}$result" }
@@ -64,7 +65,14 @@ class JavaEmitter(
         "$SPACER${if (isNullable) "java.util.Optional<${reference.emit()}>" else reference.emit()} ${identifier.emit()}"
     }
 
-    override fun Type.Shape.Field.Identifier.emit() = withLogging(logger) { value }
+    override fun Type.Shape.Field.Identifier.emit() = withLogging(logger) {
+        value
+            .split("-")
+            .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
+            .joinToString("")
+            .sanitizeKeywords()
+            .sanitizeSymbols()
+    }
 
     private fun Reference.emitPrimaryType() = withLogging(logger) {
         when (this) {
@@ -84,7 +92,7 @@ class JavaEmitter(
     }
 
     override fun Enum.emit() = withLogging(logger) {
-        fun String.sanitize() = replace("-", "_").let { if(it.first().isDigit()) "_$it" else it }
+        fun String.sanitize() = replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }
         val body = """
           |${SPACER}public final String label;
           |${SPACER}$name(String label) {
@@ -97,7 +105,7 @@ class JavaEmitter(
           |${SPACER}${SPACER}return label;
           |${SPACER}}
           """.trimMargin()
-        "public enum $name {\n${SPACER}${entries.joinToString(",\n${SPACER}"){ enum -> "${enum.sanitize()}(\"${enum}\")"}};\n${body}\n${toString}\n}\n"
+        "public enum $name {\n${SPACER}${entries.joinToString(",\n${SPACER}") { enum -> "${enum.sanitize()}(\"${enum}\")" }};\n${body}\n${toString}\n}\n"
     }
 
     override fun Refined.emit() = withLogging(logger) {
@@ -117,25 +125,25 @@ class JavaEmitter(
         """public interface $name {
             |${SPACER}static String PATH = "${path.emitSegment()}";
             |${responses.emitResponseMapper()}
-            |${SPACER}interface Request<T> extends Wirespec.Request<T> {}
+            |${SPACER}sealed interface Request<T> extends Wirespec.Request<T> {}
             |${requests.joinToString("\n") { it.emit(this) }}
-            |${SPACER}interface Response<T> extends Wirespec.Response<T> {}
+            |${SPACER}sealed interface Response<T> extends Wirespec.Response<T> {}
             |${
             responses.map { it.status.groupStatus() }.toSet()
-                .joinToString("\n") { "${SPACER}interface Response${it}<T> extends Response<T>{};" }
+                .joinToString("\n") { "${SPACER}sealed interface Response${it}<T> extends Response<T>{};" }
         }
             |${
             responses.filter { it.status.isInt() }.map { it.status }.toSet()
-                .joinToString("\n") { "${SPACER}interface Response${it}<T> extends Response${it.groupStatus()}<T>{};" }
+                .joinToString("\n") { "${SPACER}sealed interface Response${it}<T> extends Response${it.groupStatus()}<T>{};" }
         }
             |${responses.distinctBy { it.status to it.content?.type }.joinToString("\n") { it.emit() }}
-            |${SPACER}public Response ${name.firstToLower()}(Request request);
+            |${SPACER}public CompletableFuture<Response> ${name.firstToLower()}(Request request);
             |}
             |""".trimMargin()
     }
 
     private fun Endpoint.Request.emit(endpoint: Endpoint) = """
-        |${SPACER}class Request${content.emitContentType()} implements Request<${content?.reference?.emit() ?: "Void"}> {
+        |${SPACER}final class Request${content.emitContentType()} implements Request<${content?.reference?.emit() ?: "Void"}> {
         |${SPACER}${SPACER}private final String path;
         |${SPACER}${SPACER}private final Wirespec.Method method;
         |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<Object>> query;
@@ -157,8 +165,8 @@ class JavaEmitter(
     """.trimMargin()
 
     private fun Endpoint.Response.emit() = """
-        |${SPACER}class Response${status.firstToUpper()}${content.emitContentType()} implements Response${
-        status.takeIf { it.isInt() }?.groupStatus().orEmptyString()
+        |${SPACER}final class Response${status.firstToUpper()}${content.emitContentType()} implements Response${
+        status.firstToUpper().orEmptyString()
     }<${content?.reference?.emit() ?: "Void"}> {
         |${SPACER}${SPACER}private final int status;
         |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<Object>> headers;
@@ -177,7 +185,7 @@ class JavaEmitter(
         """.trimMargin()
 
     private fun List<Endpoint.Response>.emitResponseMapper() = """
-        |${SPACER}static <B> Response RESPONSE_MAPPER(Wirespec.ContentMapper<B> contentMapper, int status, java.util.Map<String, java.util.List<Object>> headers, Wirespec.Content<B> content) {
+        |${SPACER}static <B> Response RESPONSE_MAPPER(Wirespec.ContentMapper<B> contentMapper, Wirespec.Response<B> response) {
         |${distinctBy { it.status to it.content?.type }.joinToString("") { it.emitResponseMapperCondition() }}
         |${SPACER}${SPACER}throw new IllegalStateException("Unknown response type");
         |${SPACER}}
@@ -187,21 +195,21 @@ class JavaEmitter(
         when (content) {
             null -> """
                     |${SPACER}${SPACER}${SPACER}if(${
-                status.takeIf { it.isInt() }?.let { "status == $status && " }.orEmptyString()
-            }content == null) { return new Response${status.firstToUpper()}Void(${
-                status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()
-            }headers); }
+                status.takeIf { it.isInt() }?.let { "response.getStatus() == $status && " }.orEmptyString()
+            }response.getContent() == null) { return new Response${status.firstToUpper()}Void(${
+                status.takeIf { !it.isInt() }?.let { "response.getStatus(), " }.orEmptyString()
+            }response.getHeaders()); }
                     |
                 """.trimMargin()
 
             else -> """
                     |${SPACER}${SPACER}${SPACER}if(${
-                status.takeIf { it.isInt() }?.let { "status == $status && " }.orEmptyString()
-            }content.type().equals("${content.type}")) {
-                    |${SPACER}${SPACER}${SPACER}${SPACER}Wirespec.Content<${content.reference.emit()}> c = contentMapper.read(content, Wirespec.getType(${content.reference.emitPrimaryType()}.class, ${content.reference.isIterable}));
+                status.takeIf { it.isInt() }?.let { "response.getStatus() == $status && " }.orEmptyString()
+            }response.getContent().type().equals("${content.type}")) {
+                    |${SPACER}${SPACER}${SPACER}${SPACER}Wirespec.Content<${content.reference.emit()}> content = contentMapper.read(response.getContent(), Wirespec.getType(${content.reference.emitPrimaryType()}.class, ${content.reference.isIterable}));
                     |${SPACER}${SPACER}${SPACER}${SPACER}return new Response${status.firstToUpper()}${content.emitContentType()}(${
-                status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()
-            }headers, c.body());
+                status.takeIf { !it.isInt() }?.let { "response.getStatus(), " }.orEmptyString()
+            }response.getHeaders(), content.body());
                     |${SPACER}${SPACER}${SPACER}}
                     |
                 """.trimMargin()
@@ -231,11 +239,7 @@ class JavaEmitter(
             .joinToString(", ") { it.emit() }
     }
 
-    private fun List<Type.Shape.Field>.emitMap() = joinToString(
-        ", ",
-        "java.util.Map.of(",
-        ")"
-    ) { "\"${it.identifier.emit()}\", java.util.List.of(${it.identifier.emit()})" }
+    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ", "java.util.Map.of(", ")") { "\"${it.identifier.value}\", java.util.List.of(${it.identifier.emit()})" }
 
     private fun List<Endpoint.Segment>.emitSegment() = "/" + joinToString("/") {
         when (it) {
@@ -254,4 +258,21 @@ class JavaEmitter(
         if (isInt()) substring(0, 1) + "XX"
         else firstToUpper()
 
+    fun String.sanitizeKeywords() = if (reservedKeywords.contains(this)) "_$this" else this
+
+    fun String.sanitizeSymbols() = replace(".", "")
+    companion object {
+        private val reservedKeywords = listOf(
+            "abstract", "continue", "for", "new", "switch",
+            "assert", "default", "goto", "package", "synchronized",
+            "boolean", "do", "if", "private", "this",
+            "break", "double", "implements", "protected", "throw",
+            "byte", "else", "import", "public", "throws",
+            "case", "enum", "instanceof", "return", "transient",
+            "catch", "extends", "int", "short", "try",
+            "char", "final", "interface", "static", "void",
+            "class", "finally", "long", "strictfp", "volatile",
+            "const", "float", "native", "super", "while"
+        )
+    }
 }

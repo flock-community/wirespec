@@ -42,7 +42,7 @@ class KotlinPetClientConfiguration {
         object : KotlinPetstoreClient {
             fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> handle(
                 request: Req,
-                responseMapper: (Wirespec.ContentMapper<ByteArray>, Int, Map<String, List<String>>, Wirespec.Content<ByteArray>) -> Res
+                responseMapper: (Wirespec.ContentMapper<ByteArray>, Wirespec.Response<ByteArray>) -> Res
             ) = restTemplate.execute(
                 URI("https://6467e16be99f0ba0a819fd68.mockapi.io${request.path}"),
                 HttpMethod.valueOf(request.method.name),
@@ -54,12 +54,12 @@ class KotlinPetClientConfiguration {
                 { res ->
                     val contentType = res.headers.contentType?.toString() ?: error("No content type")
                     val content = Wirespec.Content(contentType, res.body.readBytes())
-                    responseMapper(
-                        kotlinContentMapper,
-                        res.statusCode.value(),
-                        res.headers,
-                        content
-                    )
+                    val response = object :Wirespec.Response<ByteArray>{
+                        override val status = res.statusCode.value()
+                        override val headers = res.headers
+                        override val content = content
+                    }
+                    responseMapper(kotlinContentMapper, response)
                 }
             ) ?: error("No response")
 
