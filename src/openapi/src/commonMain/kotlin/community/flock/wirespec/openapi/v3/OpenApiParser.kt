@@ -470,8 +470,9 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
             is SchemaObject -> {
                 Field(
                     identifier = Field.Identifier(key),
-                    reference = when(value.type){
-                        OpenapiType.ARRAY -> value.toReference(className(name, key, "Array"))
+                    reference = when{
+                        value.enum != null -> value.toReference(className(name, key))
+                        value.type == OpenapiType.ARRAY -> value.toReference(className(name, key, "Array"))
                         else -> value.toReference(className(name, key))
                     },
                     isNullable = !(this.required?.contains(key) ?: false)

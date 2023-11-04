@@ -239,7 +239,7 @@ class JavaEmitter(
             .joinToString(", ") { it.emit() }
     }
 
-    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ", "java.util.Map.of(", ")") { "\"${it.identifier.value}\", java.util.List.of(${it.identifier.emit()})" }
+    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ", "java.util.Map.ofEntries(", ")") { "java.util.Map.entry(\"${it.identifier.value}\", java.util.List.of(${it.identifier.emit()}))" }
 
     private fun List<Endpoint.Segment>.emitSegment() = "/" + joinToString("/") {
         when (it) {
