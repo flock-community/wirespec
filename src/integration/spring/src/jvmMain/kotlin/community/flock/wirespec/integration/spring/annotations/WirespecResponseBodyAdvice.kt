@@ -1,6 +1,6 @@
 package community.flock.wirespec.integration.spring.annotations
 
-import community.flock.wirespec.kotlin.Wirespec
+import community.flock.wirespec.Wirespec
 import org.springframework.core.MethodParameter
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.MediaType

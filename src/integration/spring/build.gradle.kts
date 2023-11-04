@@ -36,6 +36,7 @@ kotlin {
 
         tasks.getByName<Jar>("jar") {
             enabled = true
+            exclude("community/flock/wirespec/Wirespec.class")
         }
 
         val jvmMain by getting {
@@ -52,6 +53,7 @@ kotlin {
                 implementation("org.springframework.boot:spring-boot-starter-test")
             }
         }
+
     }
 }
 

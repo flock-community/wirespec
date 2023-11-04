@@ -1,6 +1,6 @@
 package community.flock.wirespec.integration.spring.annotations
 
-import community.flock.wirespec.kotlin.Wirespec
+import community.flock.wirespec.Wirespec
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
@@ -12,7 +12,7 @@ import java.io.BufferedReader
 open class WirespecWebMvcConfigurer : WebMvcConfigurer {
 
     @Autowired
-    lateinit var contentMapper: Wirespec.ContentMapper<BufferedReader>
+    lateinit var contentMapper: JacksonContentMapper
 
     override fun addArgumentResolvers(argumentResolvers: MutableList<HandlerMethodArgumentResolver>) {
         argumentResolvers.add(WirespecMethodArgumentResolver(contentMapper))
