@@ -172,6 +172,7 @@ class JavaEmitter(
     override fun Endpoint.emit() = withLogging(logger) {
         """public interface ${emitName().sanitizeSymbol()} extends Wirespec.Endpoint {
             |${SPACER}static String PATH = "${path.emitSegment()}";
+            |${SPACER}static Wirespec.Method METHOD = Wirespec.Method.${method};
             |${responses.emitResponseMapper()}
             |${SPACER}sealed interface Request<T> extends Wirespec.Request<T> {}
             |${requests.joinToString("\n") { it.emit(this) }}
