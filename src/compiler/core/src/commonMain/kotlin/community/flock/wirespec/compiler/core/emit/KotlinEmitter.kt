@@ -174,7 +174,7 @@ class KotlinEmitter(
     }
 
     private fun List<Endpoint.Request>.emitRequestMapper() = """
-        |${SPACER}${SPACER}fun <B> REQUEST_MAPPER(contentMapper: Wirespec.ContentMapper<B>, path:String, method: Wirespec.Method, query: Map<String, List<Any?>>, headers:Map<String, List<Any?>>, content: Wirespec.Content<B>?) =
+        |${SPACER}${SPACER}fun <B> REQUEST_MAPPER(contentMapper: Wirespec.ContentMapper<B>, request: Wirespec.Request<B>) =
         |${SPACER}${SPACER}${SPACER}when {
         |${joinToString("\n") { it.emitRequestMapperCondition() }}
         |${SPACER}${SPACER}${SPACER}${SPACER}else -> error("Cannot map request")
@@ -184,35 +184,35 @@ class KotlinEmitter(
     private fun Endpoint.Request.emitRequestMapperCondition() =
         when (content) {
             null -> """
-                    |${SPACER}${SPACER}${SPACER}${SPACER}content == null -> RequestUnit(path, method, query, headers, null)
+                    |${SPACER}${SPACER}${SPACER}${SPACER}request.content == null -> RequestUnit(request.path, request.method, request.query, request.headers, null)
                 """.trimMargin()
 
             else -> """
-                    |${SPACER}${SPACER}${SPACER}${SPACER}content?.type == "${content.type}" -> contentMapper
-                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.read<${content.reference.emit()}>(content, Wirespec.getType(${content.reference.emitPrimaryType()}::class.java, ${content.reference.isIterable}))
-                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.let{ Request${content.emitContentType()}(path, method, query, headers, it) }
+                    |${SPACER}${SPACER}${SPACER}${SPACER}request.content?.type == "${content.type}" -> contentMapper
+                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.read<${content.reference.emit()}>(request.content!!, Wirespec.getType(${content.reference.emitPrimaryType()}::class.java, ${content.reference.isIterable}))
+                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.let{ Request${content.emitContentType()}(request.path, request.method, request.query, request.headers, it) }
                 """.trimMargin()
         }
 
     private fun List<Endpoint.Response>.emitResponseMapper() = """
-        |${SPACER}${SPACER}fun <B> RESPONSE_MAPPER(contentMapper: Wirespec.ContentMapper<B>, status: Int, headers:Map<String, List<Any?>>, content: Wirespec.Content<B>?) =
+        |${SPACER}${SPACER}fun <B> RESPONSE_MAPPER(contentMapper: Wirespec.ContentMapper<B>, response: Wirespec.Response<B>) =
         |${SPACER}${SPACER}${SPACER}when {
         |${filter { it.status.isInt() }.distinctBy { it.status to it.content?.type }.joinToString("\n") { it.emitResponseMapperCondition() }}
         |${filter { !it.status.isInt() }.distinctBy { it.status to it.content?.type }.joinToString("\n") { it.emitResponseMapperCondition() }}
-        |${SPACER}${SPACER}${SPACER}${SPACER}else -> error("Cannot map response with status ${"$"}status")
+        |${SPACER}${SPACER}${SPACER}${SPACER}else -> error("Cannot map response with status ${"$"}response.status")
         |${SPACER}${SPACER}${SPACER}}
     """.trimMargin()
 
     private fun Endpoint.Response.emitResponseMapperCondition() =
         when (content) {
             null -> """
-                    |${SPACER}${SPACER}${SPACER}${SPACER}${status.takeIf { it.isInt() }?.let { "status == $status && " }.orEmptyString()}content == null -> Response${status.firstToUpper()}Unit(${status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()}headers)
+                    |${SPACER}${SPACER}${SPACER}${SPACER}${status.takeIf { it.isInt() }?.let { "response.status == $status && " }.orEmptyString()}response.content == null -> Response${status.firstToUpper()}Unit(${status.takeIf { !it.isInt() }?.let { "response.status, " }.orEmptyString()}response.headers)
                 """.trimMargin()
 
             else -> """
-                    |${SPACER}${SPACER}${SPACER}${SPACER}${status.takeIf { it.isInt() }?.let { "status == $status && " }.orEmptyString()}content?.type == "${content.type}" -> contentMapper
-                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.read<${content.reference.emit()}>(content, Wirespec.getType(${content.reference.emitPrimaryType()}::class.java, ${content.reference.isIterable}))
-                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.let{ Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "status, " }.orEmptyString()}headers, it.body) }
+                    |${SPACER}${SPACER}${SPACER}${SPACER}${status.takeIf { it.isInt() }?.let { "response.status == $status && " }.orEmptyString()}response.content?.type == "${content.type}" -> contentMapper
+                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.read<${content.reference.emit()}>(response.content!!, Wirespec.getType(${content.reference.emitPrimaryType()}::class.java, ${content.reference.isIterable}))
+                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.let{ Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "response.status, " }.orEmptyString()}response.headers, it.body) }
                 """.trimMargin()
         }
 

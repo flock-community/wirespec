@@ -35,7 +35,7 @@ class GenerateMojo : BaseMojo() {
     private var languages: List<Language>? = null
 
     @Parameter
-    private var shared: Boolean? = null
+    private var shared: Boolean = true
 
     @Parameter(defaultValue = "\${project}", readonly = true, required = true)
     private lateinit var project: MavenProject
@@ -50,11 +50,12 @@ class GenerateMojo : BaseMojo() {
                 Language.Wirespec -> TODO()
             }
         }
+        project.addCompileSourceRoot(output);
     }
 
     fun executeKotlin() {
         val emitter = KotlinEmitter(packageName, logger)
-        if(shared == true) {
+        if(shared) {
             JvmUtil.emitJvm("community.flock.wirespec", output, "Wirespec", "kt").writeText(emitter.shared)
         }
         if (openapi != null) {
@@ -80,7 +81,7 @@ class GenerateMojo : BaseMojo() {
 
     fun executeJava() {
         val emitter = JavaEmitter(packageName, logger)
-        if(shared == true) {
+        if(shared) {
             JvmUtil.emitJvm("community.flock.wirespec", output, "Wirespec", "java").writeText(emitter.shared)
         }
         if (openapi != null) {
@@ -103,7 +104,7 @@ class GenerateMojo : BaseMojo() {
 
     fun executeScala() {
         val emitter = ScalaEmitter(packageName, logger)
-        if(shared == true) {
+        if(shared) {
             JvmUtil.emitJvm("community.flock.wirespec", output, "Wirespec", "scala").writeText(emitter.shared)
         }
         compile(input, logger, emitter)

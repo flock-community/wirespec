@@ -10,6 +10,7 @@ import org.springframework.http.HttpMethod
 import org.springframework.web.client.RestTemplate
 import java.lang.reflect.Type
 import java.net.URI
+import java.util.concurrent.CompletableFuture
 
 interface JavaPetstoreClient : AddPet, FindPetsByStatus
 
@@ -38,8 +39,8 @@ class JavaPetClientConfiguration {
         object : JavaPetstoreClient {
             fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> handle(
                 request: Req,
-                responseMapper: (Wirespec.ContentMapper<ByteArray>, Int, Map<String, List<String>>, Wirespec.Content<ByteArray>) -> Res
-            ):Res = restTemplate.execute(
+                responseMapper: (Wirespec.ContentMapper<ByteArray>, Wirespec.Response<ByteArray>) -> Res
+            ):CompletableFuture<Res> = restTemplate.execute(
                 URI("https://6467e16be99f0ba0a819fd68.mockapi.io${request.path}"),
                 HttpMethod.valueOf(request.method.name),
                 { req ->
@@ -50,16 +51,21 @@ class JavaPetClientConfiguration {
                 { res ->
                     val contentType = res.headers.contentType?.toString() ?: error("No content type")
                     val content = Wirespec.Content(contentType, res.body.readBytes())
-                    responseMapper(javaContentMapper, res.statusCode.value(), res.headers, content)
+                    val response = object :Wirespec.Response<ByteArray>{
+                        override val status = res.statusCode.value()
+                        override val headers = res.headers
+                        override val content = content
+                    }
+                    CompletableFuture.completedFuture(responseMapper(javaContentMapper, response))
                 }
             ) ?: error("No response")
 
 
-            override fun addPet(request: AddPet.Request<*>): AddPet.Response<*> {
+            override fun addPet(request: AddPet.Request<*>): CompletableFuture<AddPet.Response<*>> {
                 return handle(request, AddPet::RESPONSE_MAPPER)
             }
 
-            override fun findPetsByStatus(request: FindPetsByStatus.Request<*>): FindPetsByStatus.Response<*> {
+            override fun findPetsByStatus(request: FindPetsByStatus.Request<*>): CompletableFuture<FindPetsByStatus.Response<*>> {
                 return handle(request, FindPetsByStatus::RESPONSE_MAPPER)
             }
 
