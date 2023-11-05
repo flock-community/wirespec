@@ -128,16 +128,10 @@ class JavaEmitter(
             |${SPACER}sealed interface Request<T> extends Wirespec.Request<T> {}
             |${requests.joinToString("\n") { it.emit(this) }}
             |${SPACER}sealed interface Response<T> extends Wirespec.Response<T> {}
-            |${
-            responses.map { it.status.groupStatus() }.toSet()
-                .joinToString("\n") { "${SPACER}sealed interface Response${it}<T> extends Response<T>{};" }
-        }
-            |${
-            responses.filter { it.status.isInt() }.map { it.status }.toSet()
-                .joinToString("\n") { "${SPACER}sealed interface Response${it}<T> extends Response${it.groupStatus()}<T>{};" }
-        }
+            |${responses.map { it.status.groupStatus() }.toSet().joinToString("\n") { "${SPACER}sealed interface Response${it}<T> extends Response<T>{};" }}
+            |${responses.filter { it.status.isInt() }.map { it.status }.toSet().joinToString("\n") { "${SPACER}sealed interface Response${it}<T> extends Response${it.groupStatus()}<T>{};" }}
             |${responses.distinctBy { it.status to it.content?.type }.joinToString("\n") { it.emit() }}
-            |${SPACER}public CompletableFuture<Response> ${name.firstToLower()}(Request request);
+            |${SPACER}public CompletableFuture<Response<?>> ${name.firstToLower()}(Request<?> request);
             |}
             |""".trimMargin()
     }
