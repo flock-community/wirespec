@@ -17,8 +17,8 @@ class KotlinPetstoreController(
         val pet = Pet(name = "Pet", photoUrls = emptyList())
         val req = AddPet.RequestApplicationJson(pet)
         return when (val res = kotlinPetstoreClient.addPet(req)) {
-            is AddPet.Response200ApplicationJson -> res.content.body.id?: error("not created")
-            is AddPet.Response200ApplicationXml -> res.content.body.id?: error("not created")
+            is AddPet.Response200ApplicationJson -> res.content.body.id ?: error("not created")
+            is AddPet.Response200ApplicationXml -> res.content.body.id ?: error("not created")
             is AddPet.Response405Unit -> error("Something went wrong")
         }
     }
