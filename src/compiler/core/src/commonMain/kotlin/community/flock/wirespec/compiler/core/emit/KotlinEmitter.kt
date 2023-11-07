@@ -82,10 +82,10 @@ class KotlinEmitter(
             .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
             .joinToString("")
             .sanitizeKeywords()
-            .sanitizeSymbols()
+            .sanitizeSymbol()
     }
 
-    private fun Reference.emitPrimaryType() = withLogging(logger) {
+    private fun Reference.emitSymbol() = withLogging(logger) {
         when (this) {
             is Reference.Any -> "Any"
             is Reference.Custom -> value
@@ -94,11 +94,11 @@ class KotlinEmitter(
                 Reference.Primitive.Type.Integer -> "Int"
                 Reference.Primitive.Type.Boolean -> "Boolean"
             }
-        }
+        }.sanitizeSymbol()
     }
 
     override fun Reference.emit() = withLogging(logger) {
-        emitPrimaryType()
+        emitSymbol()
             .let { if (isIterable) "List<$it>" else it }
             .let { if (isMap) "Map<String, $it>" else it }
     }
@@ -190,7 +190,7 @@ class KotlinEmitter(
 
             else -> """
                     |${SPACER}${SPACER}${SPACER}${SPACER}request.content?.type == "${content.type}" -> contentMapper
-                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.read<${content.reference.emit()}>(request.content!!, Wirespec.getType(${content.reference.emitPrimaryType()}::class.java, ${content.reference.isIterable}))
+                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.read<${content.reference.emit()}>(request.content!!, Wirespec.getType(${content.reference.emitSymbol()}::class.java, ${content.reference.isIterable}))
                     |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.let{ Request${content.emitContentType()}(request.path, request.method, request.query, request.headers, it) } as Req
                 """.trimMargin()
         }
@@ -213,14 +213,14 @@ class KotlinEmitter(
 
             else -> """
                     |${SPACER}${SPACER}${SPACER}${SPACER}${status.takeIf { it.isInt() }?.let { "response.status == $status && " }.orEmptyString()}response.content?.type == "${content.type}" -> contentMapper
-                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.read<${content.reference.emit()}>(response.content!!, Wirespec.getType(${content.reference.emitPrimaryType()}::class.java, ${content.reference.isIterable}))
+                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.read<${content.reference.emit()}>(response.content!!, Wirespec.getType(${content.reference.emitSymbol()}::class.java, ${content.reference.isIterable}))
                     |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.let{ Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "response.status, " }.orEmptyString()}response.headers, it.body) } as Res
                 """.trimMargin()
         }
 
     fun String.sanitizeKeywords() = if (preservedKeywords.contains(this)) "`$this`" else this
 
-    fun String.sanitizeSymbols() = replace(".", "")
+    fun String.sanitizeSymbol() = replace(".", "")
 
     companion object {
         private val preservedKeywords = listOf(

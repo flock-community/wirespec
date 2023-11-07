@@ -71,10 +71,10 @@ class JavaEmitter(
             .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
             .joinToString("")
             .sanitizeKeywords()
-            .sanitizeSymbols()
+            .sanitizeSymbol()
     }
 
-    private fun Reference.emitPrimaryType() = withLogging(logger) {
+    private fun Reference.emitSymbol() = withLogging(logger) {
         when (this) {
             is Reference.Any -> "Object"
             is Reference.Custom -> value
@@ -83,11 +83,11 @@ class JavaEmitter(
                 Reference.Primitive.Type.Integer -> "Integer"
                 Reference.Primitive.Type.Boolean -> "Boolean"
             }
-        }
+        }.sanitizeSymbol()
     }
 
-    override fun Type.Shape.Field.Reference.emit() = withLogging(logger) {
-        emitPrimaryType()
+    override fun Reference.emit() = withLogging(logger) {
+        emitSymbol()
             .let { if (isIterable) "java.util.List<$it>" else it }
     }
 
@@ -196,7 +196,7 @@ class JavaEmitter(
 
             else -> """
                     |${SPACER}${SPACER}${SPACER}if(${status.takeIf { it.isInt() }?.let { "response.getStatus() == $status && " }.orEmptyString()}response.getContent().type().equals("${content.type}")) {
-                    |${SPACER}${SPACER}${SPACER}${SPACER}Wirespec.Content<${content.reference.emit()}> content = contentMapper.read(response.getContent(), Wirespec.getType(${content.reference.emitPrimaryType()}.class, ${content.reference.isIterable}));
+                    |${SPACER}${SPACER}${SPACER}${SPACER}Wirespec.Content<${content.reference.emit()}> content = contentMapper.read(response.getContent(), Wirespec.getType(${content.reference.emitSymbol()}.class, ${content.reference.isIterable}));
                     |${SPACER}${SPACER}${SPACER}${SPACER}return (Res) new Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "response.getStatus(), " }.orEmptyString()}response.getHeaders(), content.body());
                     |${SPACER}${SPACER}${SPACER}}
                     |
@@ -248,7 +248,7 @@ class JavaEmitter(
 
     fun String.sanitizeKeywords() = if (reservedKeywords.contains(this)) "_$this" else this
 
-    fun String.sanitizeSymbols() = replace(".", "")
+    fun String.sanitizeSymbol() = replace(".", "")
     companion object {
         private val reservedKeywords = listOf(
             "abstract", "continue", "for", "new", "switch",
