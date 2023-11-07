@@ -55,11 +55,11 @@ open class WirespecConfiguration {
         applicationContext.getBeansWithAnnotation(WirespecController::class.java)
             .forEach { controller ->
                 controller.value.javaClass.interfaces.toList().forEach { endpoint ->
-                    val path = endpoint.getStaticField("PATH").get(endpoint) as String
-                    val method = endpoint.getStaticField("METHOD").get(endpoint) as Wirespec.Method
+                    val path = endpoint.getStaticField("PATH")?.get(endpoint) as String
+                    val method = endpoint.getStaticField("METHOD")?.get(endpoint) as String
                     val requestMappingWirespec = RequestMappingInfo
                         .paths(path)
-                        .methods(RequestMethod.valueOf(method.name))
+                        .methods(RequestMethod.valueOf(method))
                         .options(options)
                         .build();
 
