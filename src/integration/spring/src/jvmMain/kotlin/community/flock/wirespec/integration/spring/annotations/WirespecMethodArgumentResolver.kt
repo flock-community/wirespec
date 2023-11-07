@@ -2,6 +2,7 @@ package community.flock.wirespec.integration.spring.annotations
 
 
 import community.flock.wirespec.Wirespec
+import community.flock.wirespec.integration.spring.annotations.Util.getStaticMethode
 import community.flock.wirespec.integration.spring.annotations.Util.invokeStatic
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.core.MethodParameter
@@ -13,6 +14,7 @@ import org.springframework.web.method.support.ModelAndViewContainer
 import org.springframework.web.util.pattern.PathPatternParser
 import java.io.BufferedReader
 import kotlin.reflect.full.companionObjectInstance
+import kotlin.reflect.jvm.internal.impl.builtins.functions.FunctionTypeKind.KFunction
 
 typealias RequestMapper = (path:String, method: Wirespec.Method, query: Map<String, List<Any?>>, headers:Map<String, List<Any?>>, content: Wirespec.Content<BufferedReader>?) -> Wirespec.Request<*>
 class WirespecMethodArgumentResolver(private val contentMapper: JacksonContentMapper): HandlerMethodArgumentResolver {
@@ -25,22 +27,22 @@ class WirespecMethodArgumentResolver(private val contentMapper: JacksonContentMa
         mavContainer: ModelAndViewContainer?,
         webRequest: NativeWebRequest,
         binderFactory: WebDataBinderFactory?
-    ): Wirespec.Request<*> {
+    ): Wirespec.Request<*>? {
         val request = webRequest.nativeRequest as HttpServletRequest
 
         val static = parameter.parameterType.declaringClass
-        val requestMapper = static.javaClass.methods.find { it.name == "REQUEST_MAPPER" }
-        val content = request.contentType?.let {  Wirespec.Content(it, request.reader) }
+        val requestMapper = static.getStaticMethode("REQUEST_MAPPER") ?: error("Content not found")
+        val wirespecContent: Wirespec.Content<BufferedReader> = request.contentType?.let {  Wirespec.Content(it, request.reader) } ?: error("Content not found")
+        val wirespecRequest = object: Wirespec.Request<BufferedReader>{
+            override val path = request.requestURI
+            override val method = Wirespec.Method.valueOf(request.method)
+            override val query = request.parameterMap.mapValues { it.value.toList() }
+            override val headers = request.headerNames.toList().associateWith { request.getHeaders(it).toList() }
+            override val content = wirespecContent
 
-        return requestMapper?.invokeStatic(
-            static,
-            contentMapper,
-            request.requestURI,
-            Wirespec.Method.valueOf(request.method),
-            request.parameterMap.mapValues { it.value.toList() },
-            request.headerNames.toList().associateWith { request.getHeaders(it).toList() },
-            content as Any
-        )?: error("")
+        }
+        val func = requestMapper.invokeStatic(static, contentMapper)
+        return func(wirespecRequest)
     }
 }
 

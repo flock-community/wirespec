@@ -175,7 +175,6 @@ class KotlinEmitter(
         }
         |${SPACER}suspend fun ${name.sanitizeSymbol().firstToLower()}(request: Request<*>): Response<*>
         |${SPACER}companion object{
-        |${SPACER}${SPACER}val METHOD = Wirespec.Method.${method.name}
         |${SPACER}${SPACER}const val PATH = "${path.emitSegment()}"
         |${SPACER}${SPACER}const val METHOD = "${method.name}"
         |${requests.emitRequestMapper()}
