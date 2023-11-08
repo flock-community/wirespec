@@ -62,7 +62,7 @@ class KotlinEmitter(
         }
 
     override fun Type.emit() = withLogging(logger) {
-        """|data class $name(
+        """|data class ${name.sanitizeSymbol()}(
            |${shape.emit()}
            |)
            |""".trimMargin()

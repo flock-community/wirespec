@@ -51,7 +51,7 @@ class JavaEmitter(
         .map { (name, result) -> name to "$pkg\n\n${import(ast)}$result" }
 
     override fun Type.emit() = withLogging(logger) {
-        """public record $name(
+        """public record ${name.sanitizeSymbol()}(
             |${shape.emit()}
             |) {};
             |""".trimMargin()
