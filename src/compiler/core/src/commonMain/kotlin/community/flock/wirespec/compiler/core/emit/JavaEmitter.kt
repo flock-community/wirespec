@@ -105,7 +105,7 @@ class JavaEmitter(
           |${SPACER}${SPACER}return label;
           |${SPACER}}
           """.trimMargin()
-        "public enum $name {\n${SPACER}${entries.joinToString(",\n${SPACER}") { enum -> "${enum.sanitize()}(\"${enum}\")" }};\n${body}\n${toString}\n}\n"
+        "public enum ${name.sanitizeSymbol()} {\n${SPACER}${entries.joinToString(",\n${SPACER}") { enum -> "${enum.sanitize()}(\"${enum}\")" }};\n${body}\n${toString}\n}\n"
     }
 
     override fun Refined.emit() = withLogging(logger) {
