@@ -254,19 +254,8 @@ class OpenApiParser(private val openApi: SwaggerObject) {
 
         else -> when (type) {
             null, OpenapiType.OBJECT -> {
-                val fields = properties
-                    ?.flatMap { (key, value) ->
-                        when (value) {
-                            is SchemaObject -> when (value.type) {
-                                OpenapiType.ARRAY -> emptyList()
-                                else -> value.flatten(className(name, key))
-                            }
-
-                            is ReferenceObject -> emptyList()
-
-                        }
-                    }
-                    ?: emptyList()
+                val fields = properties.orEmpty()
+                    .flatMap { (key, value) -> value.flatten(className(name, key)) }
 
                 val schema = listOf(
                     Type(name, Type.Shape(toField(name)))
@@ -317,7 +306,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                         null -> error("items cannot be null when type is array: ${this.ref}")
                     }
 
-                    else -> when(refOrSchema){
+                    else -> when (refOrSchema) {
                         is SchemaObject -> Reference.Custom(className(this.getReference()), false)
                         is ReferenceObject -> Reference.Custom(className(refOrSchema.getReference()), false)
                     }
@@ -328,6 +317,15 @@ class OpenApiParser(private val openApi: SwaggerObject) {
 
 
     private fun SchemaObject.toReference(name: String): Reference = when {
+        additionalProperties != null -> when (val additionalProperties = additionalProperties!!) {
+            is BooleanObject -> Reference.Any(false, true)
+            is ReferenceObject -> additionalProperties.toReference().toMap()
+            is SchemaObject -> additionalProperties
+                .takeIf { it.type != null }
+                ?.run { toReference(name).toMap() }
+                ?: Reference.Any(false, true)
+        }
+
         enum != null -> Reference.Custom(name, false, additionalProperties != null)
         else -> when (val type = type) {
             OpenapiType.STRING, OpenapiType.INTEGER, OpenapiType.NUMBER, OpenapiType.BOOLEAN ->
@@ -381,8 +379,9 @@ class OpenApiParser(private val openApi: SwaggerObject) {
             is SchemaObject -> {
                 Field(
                     identifier = Field.Identifier(key),
-                    reference = when (value.type) {
-                        OpenapiType.ARRAY -> value.toReference(className(name, key, "Array"))
+                    reference = when {
+                        value.enum != null -> value.toReference(className(name, key))
+                        value.type == OpenapiType.ARRAY -> value.toReference(className(name, key, "Array"))
                         else -> value.toReference(className(name, key))
                     },
                     isNullable = !(this.required?.contains(key) ?: false)

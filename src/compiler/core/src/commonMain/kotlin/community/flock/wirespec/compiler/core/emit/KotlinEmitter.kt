@@ -54,7 +54,7 @@ class KotlinEmitter(
 
     override fun emit(ast: AST): List<Pair<String, String>> =
         super.emit(ast).map { (name, result) ->
-            name to """
+            name.sanitizeSymbol() to """
                     |${if (packageName.isBlank()) "" else "package $packageName"}
                     |${if (ast.hasEndpoints()) import else ""}
                     |${result}
@@ -104,8 +104,8 @@ class KotlinEmitter(
     }
 
     override fun Enum.emit() = withLogging(logger) {
-        fun String.sanitize() = replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }
-        "enum class ${name.sanitizeSymbol()} (val label: String){\n${SPACER}${entries.joinToString(",\n${SPACER}") { "${it.sanitize().sanitizeKeywords()}(\"$it\")" }};\n\n${SPACER}override fun toString(): String {\n${SPACER}${SPACER}return label\n${SPACER}}\n}\n"
+        fun String.sanitizeEnum() = replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }
+        "enum class ${name.sanitizeSymbol()} (val label: String){\n${SPACER}${entries.joinToString(",\n${SPACER}") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }};\n\n${SPACER}override fun toString(): String {\n${SPACER}${SPACER}return label\n${SPACER}}\n}\n"
     }
 
     override fun Refined.emit() = withLogging(logger) {

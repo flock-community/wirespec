@@ -48,7 +48,7 @@ class JavaEmitter(
         if (!ast.hasEndpoints()) "" else "import community.flock.wirespec.Wirespec;\nimport java.util.concurrent.CompletableFuture;\nimport java.util.function.Function;\n\n"
 
     override fun emit(ast: AST): List<Pair<String, String>> = super.emit(ast)
-        .map { (name, result) -> name to "$pkg\n\n${import(ast)}$result" }
+        .map { (name, result) -> name.sanitizeSymbol() to "$pkg\n\n${import(ast)}$result" }
 
     override fun Type.emit() = withLogging(logger) {
         """public record ${name.sanitizeSymbol()}(
@@ -92,10 +92,10 @@ class JavaEmitter(
     }
 
     override fun Enum.emit() = withLogging(logger) {
-        fun String.sanitize() = replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }
+        fun String.sanitizeEnum() = replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }
         val body = """
           |${SPACER}public final String label;
-          |${SPACER}$name(String label) {
+          |${SPACER}${name.sanitizeSymbol()}(String label) {
           |${SPACER}${SPACER}this.label = label;
           |${SPACER}}
           """.trimMargin()
@@ -105,11 +105,11 @@ class JavaEmitter(
           |${SPACER}${SPACER}return label;
           |${SPACER}}
           """.trimMargin()
-        "public enum ${name.sanitizeSymbol()} {\n${SPACER}${entries.joinToString(",\n${SPACER}") { enum -> "${enum.sanitize()}(\"${enum}\")" }};\n${body}\n${toString}\n}\n"
+        "public enum ${name.sanitizeSymbol()} {\n${SPACER}${entries.joinToString(",\n${SPACER}") { enum -> "${enum.sanitizeEnum()}(\"${enum}\")" }};\n${body}\n${toString}\n}\n"
     }
 
     override fun Refined.emit() = withLogging(logger) {
-        """public record $name(String value) {
+        """public record ${name.sanitizeSymbol()}(String value) {
             |${SPACER}static void validate($name record) {
             |${SPACER}${validator.emit()}
             |${SPACER}}

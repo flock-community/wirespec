@@ -343,11 +343,8 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
 
             else -> when (type) {
                 null, OpenapiType.OBJECT -> {
-                    val fields = properties.orEmpty().flatMap { (key, value) ->
-                        when (value) {
-                            is SchemaObject -> value.flatten(className(name, key))
-                            is ReferenceObject -> emptyList()
-                        }
+                    val fields = properties.orEmpty().flatMap {
+                        (key, value) ->value.flatten(className(name, key))
                     }
                     val schema = listOf(
                         Type(name, Type.Shape(this.toField(name)))
@@ -374,8 +371,8 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         name: String,
     ): List<Definition> {
         return when (this) {
-            is ReferenceObject -> emptyList()
             is SchemaObject -> this.flatten(name)
+            is ReferenceObject -> emptyList()
         }
     }
 
@@ -470,7 +467,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
             is SchemaObject -> {
                 Field(
                     identifier = Field.Identifier(key),
-                    reference = when{
+                    reference = when {
                         value.enum != null -> value.toReference(className(name, key))
                         value.type == OpenapiType.ARRAY -> value.toReference(className(name, key, "Array"))
                         else -> value.toReference(className(name, key))
