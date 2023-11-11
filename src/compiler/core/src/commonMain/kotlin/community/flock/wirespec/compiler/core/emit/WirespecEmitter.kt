@@ -37,6 +37,7 @@ class WirespecEmitter(logger: Logger = noLogger) : Emitter(logger) {
             is Reference.Primitive -> when (type) {
                 Reference.Primitive.Type.String -> "String"
                 Reference.Primitive.Type.Integer -> "Integer"
+                Reference.Primitive.Type.Number -> "Number"
                 Reference.Primitive.Type.Boolean -> "Boolean"
             }
         }.let { if (isIterable) "$it[]" else it }

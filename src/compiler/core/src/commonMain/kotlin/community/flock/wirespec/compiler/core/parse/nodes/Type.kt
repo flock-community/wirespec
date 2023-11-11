@@ -20,7 +20,7 @@ data class Type(val name: String, val shape: Shape) : Definition {
                     override val isIterable: Boolean,
                     override val isMap: Boolean = false
                 ) : Reference {
-                    enum class Type { String, Integer, Boolean }
+                    enum class Type { String, Integer, Number, Boolean }
                 }
             }
         }

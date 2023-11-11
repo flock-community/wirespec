@@ -12,6 +12,7 @@ interface Types {
         val CUSTOM_TYPE = ElementType("CUSTOM_TYPE")
         val BOOLEAN = ElementType("BOOLEAN")
         val INTEGER = ElementType("INTEGER")
+        val NUMBER = ElementType("NUMBER")
         val STRING = ElementType("STRING")
         val TYPE_DEF = ElementType("TYPE_DEF")
         val ENUM_DEF = ElementType("ENUM_DEF")

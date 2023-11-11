@@ -27,6 +27,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.TRACE
 import community.flock.wirespec.compiler.core.tokenize.types.WirespecType
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
 import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
+import community.flock.wirespec.compiler.core.tokenize.types.WsNumber
 import community.flock.wirespec.compiler.core.tokenize.types.WsString
 import community.flock.wirespec.compiler.utils.Logger
 
@@ -131,6 +132,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
             is WsString -> Primitive(Primitive.Type.String, isIterable)
 
             is WsInteger -> Primitive(Primitive.Type.Integer, isIterable)
+            is WsNumber -> Primitive(Primitive.Type.Number, isIterable)
 
             is WsBoolean -> Primitive(Primitive.Type.Boolean, isIterable)
 

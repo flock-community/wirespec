@@ -457,7 +457,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
     private fun OpenapiType.toPrimitive() = when (this) {
         OpenapiType.STRING -> Primitive.Type.String
         OpenapiType.INTEGER -> Primitive.Type.Integer
-        OpenapiType.NUMBER -> Primitive.Type.Integer
+        OpenapiType.NUMBER -> Primitive.Type.Number
         OpenapiType.BOOLEAN -> Primitive.Type.Boolean
         else -> error("Type is not a primitive")
     }

@@ -31,6 +31,7 @@ data object WsEndpointDef : WirespecDefinition
 sealed interface WirespecType : Keyword
 data object WsString : WirespecType
 data object WsInteger : WirespecType
+data object WsNumber : WirespecType
 data object WsBoolean : WirespecType
 data object CustomType : WirespecType
 

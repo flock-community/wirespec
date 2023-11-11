@@ -369,7 +369,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
     private fun OpenapiType.toPrimitive() = when (this) {
         OpenapiType.STRING -> Reference.Primitive.Type.String
         OpenapiType.INTEGER -> Reference.Primitive.Type.Integer
-        OpenapiType.NUMBER -> Reference.Primitive.Type.Integer
+        OpenapiType.NUMBER -> Reference.Primitive.Type.Number
         OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean
         else -> error("Type is not a primitive")
     }
