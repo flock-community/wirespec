@@ -56,6 +56,7 @@ class TypeScriptEmitter(logger: Logger = noLogger) : Emitter(logger) {
             is Reference.Primitive -> when (type) {
                 Reference.Primitive.Type.String -> "string"
                 Reference.Primitive.Type.Integer -> "number"
+                Reference.Primitive.Type.Number -> "number"
                 Reference.Primitive.Type.Boolean -> "boolean"
             }
         }

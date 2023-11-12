@@ -81,6 +81,7 @@ class JavaEmitter(
             is Reference.Primitive -> when (type) {
                 Reference.Primitive.Type.String -> "String"
                 Reference.Primitive.Type.Integer -> "Integer"
+                Reference.Primitive.Type.Number -> "Double"
                 Reference.Primitive.Type.Boolean -> "Boolean"
             }
         }.sanitizeSymbol()
@@ -89,10 +90,17 @@ class JavaEmitter(
     override fun Reference.emit() = withLogging(logger) {
         emitSymbol()
             .let { if (isIterable) "java.util.List<$it>" else it }
+            .let { if (isMap) "java.util.Map<String, $it>" else it }
     }
 
     override fun Enum.emit() = withLogging(logger) {
-        fun String.sanitizeEnum() = replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }
+        fun String.sanitizeEnum() = this
+            .replace("/", "_")
+            .replace(" ", "_")
+            .replace("-", "_")
+            .replace("–", "_")
+            .let { if (it.first().isDigit()) "_$it" else it }
+
         val body = """
           |${SPACER}public final String label;
           |${SPACER}${name.sanitizeSymbol()}(String label) {
@@ -179,7 +187,7 @@ class JavaEmitter(
         """.trimMargin()
 
     private fun List<Endpoint.Response>.emitResponseMapper() = """
-        |${SPACER}static <B, Res extends Wirespec.Response<?>> Function<Wirespec.Response<B>, Res> RESPONSE_MAPPER(Wirespec.ContentMapper<B> contentMapper) {
+        |${SPACER}static <B, Res extends Response<?>> Function<Wirespec.Response<B>, Res> RESPONSE_MAPPER(Wirespec.ContentMapper<B> contentMapper) {
         |return response -> {
         |${distinctBy { it.status to it.content?.type }.joinToString("") { it.emitResponseMapperCondition() }}
         |${SPACER}${SPACER}throw new IllegalStateException("Unknown response type");
@@ -248,7 +256,7 @@ class JavaEmitter(
 
     fun String.sanitizeKeywords() = if (reservedKeywords.contains(this)) "_$this" else this
 
-    fun String.sanitizeSymbol() = replace(".", "")
+    fun String.sanitizeSymbol() = replace(".", "").replace(" ", "_")
     companion object {
         private val reservedKeywords = listOf(
             "abstract", "continue", "for", "new", "switch",

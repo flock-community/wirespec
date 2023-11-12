@@ -48,6 +48,7 @@ class ScalaEmitter(
             is Reference.Primitive -> when (type) {
                 Reference.Primitive.Type.String -> "String"
                 Reference.Primitive.Type.Integer -> "Int"
+                Reference.Primitive.Type.Number -> "Double"
                 Reference.Primitive.Type.Boolean -> "Boolean"
             }
         }.let { if (isIterable) "List[$it]" else it }

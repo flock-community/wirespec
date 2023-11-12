@@ -323,7 +323,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
 
             oneOf != null -> TODO("oneOf is not implemented")
             anyOf != null -> TODO("anyOf is not implemented")
-            allOf != null -> listOf(Type(name, Type.Shape(allOf.orEmpty().flatMap { it.resolve().toField(name) })))
+            allOf != null -> listOf(Type(name, Type.Shape(allOf.orEmpty().flatMap { it.resolve().toField(name) }.distinctBy { it.identifier })))
                 .plus(allOf!!.flatMap {
                     when (it) {
                         is ReferenceObject -> emptyList()
@@ -406,7 +406,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
             is BooleanObject -> Reference.Any(false, true)
             is ReferenceObject -> additionalProperties.toReference().toMap()
             is SchemaObject -> additionalProperties
-                .takeIf { it.type != null }
+                .takeIf { it.type.isPrimitive() || it.properties != null}
                 ?.run {  toReference(name).toMap() }
                 ?: Reference.Any(false, true)
         }
@@ -457,7 +457,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
     private fun OpenapiType.toPrimitive() = when (this) {
         OpenapiType.STRING -> Primitive.Type.String
         OpenapiType.INTEGER -> Primitive.Type.Integer
-        OpenapiType.NUMBER -> Primitive.Type.Integer
+        OpenapiType.NUMBER -> Primitive.Type.Number
         OpenapiType.BOOLEAN -> Primitive.Type.Boolean
         else -> error("Type is not a primitive")
     }
