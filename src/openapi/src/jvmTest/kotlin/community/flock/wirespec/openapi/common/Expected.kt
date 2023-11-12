@@ -59,12 +59,12 @@ object Expected {
                 value = listOf(
                     Type.Shape.Field(
                         identifier = Identifier(value = "a"),
-                        reference = Reference.Primitive(type = Reference.Primitive.Type.Integer, isIterable = false),
+                        reference = Reference.Primitive(type = Reference.Primitive.Type.Number, isIterable = false),
                         isNullable = true
                     ),
                     Type.Shape.Field(
                         identifier = Identifier(value = "b"),
-                        reference = Reference.Primitive(type = Reference.Primitive.Type.Integer, isIterable = false),
+                        reference = Reference.Primitive(type = Reference.Primitive.Type.Number, isIterable = false),
                         isNullable = true
                     )
                 )
@@ -128,7 +128,7 @@ object Expected {
                     Type.Shape.Field(
                         identifier = Identifier(value = "a"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.Integer,
+                            type = Reference.Primitive.Type.Number,
                             isIterable = false
                         ),
                         isNullable = true
@@ -136,7 +136,7 @@ object Expected {
                     Type.Shape.Field(
                         identifier = Identifier(value = "b"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.Integer,
+                            type = Reference.Primitive.Type.Number,
                             isIterable = false
                         ),
                         isNullable = true
@@ -294,7 +294,7 @@ object Expected {
                     Type.Shape.Field(
                         identifier = Identifier(value = "code"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.Integer,
+                            type = Reference.Primitive.Type.Number,
                             isIterable = false
                         ),
                         isNullable = true
@@ -317,7 +317,7 @@ object Expected {
                     Type.Shape.Field(
                         identifier = Identifier(value = "code"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.Integer,
+                            type = Reference.Primitive.Type.Number,
                             isIterable = false
                         ),
                         isNullable = true

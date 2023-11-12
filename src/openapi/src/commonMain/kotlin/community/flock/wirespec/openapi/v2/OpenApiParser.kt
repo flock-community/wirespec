@@ -20,6 +20,7 @@ import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
 import community.flock.wirespec.compiler.core.parse.nodes.Definition
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
+import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.Type
 import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field
 import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference
@@ -231,10 +232,14 @@ class OpenApiParser(private val openApi: SwaggerObject) {
     ): List<Definition> = when {
         additionalProperties != null -> when (additionalProperties) {
             is BooleanObject -> emptyList()
-            else -> additionalProperties!!.resolve().flatten(name)
+            else -> additionalProperties
+                ?.resolve()
+                ?.takeIf { it.properties != null }
+                ?.flatten(name)
+                ?: emptyList()
         }
 
-        allOf != null -> listOf(Type(name, Type.Shape(allOf.orEmpty().flatMap { it.resolve().toField(name) })))
+        allOf != null -> listOf(Type(name, Type.Shape(allOf.orEmpty().flatMap { it.resolve().toField(name) }.distinctBy { it.identifier })))
             .plus(allOf!!.flatMap {
                 when (it) {
                     is ReferenceObject -> emptyList()
@@ -264,14 +269,9 @@ class OpenApiParser(private val openApi: SwaggerObject) {
             }
 
             OpenapiType.ARRAY -> when (val it = this.items) {
-                is ReferenceObject ->
-                    emptyList()
-
-                is SchemaObject ->
-                    it.flatten(className(name, "Array"))
-
-                null ->
-                    emptyList()
+                is ReferenceObject -> emptyList()
+                is SchemaObject -> it.flatten(className(name, "Array"))
+                null -> emptyList()
             }
 
             else -> emptyList()
@@ -321,7 +321,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
             is BooleanObject -> Reference.Any(false, true)
             is ReferenceObject -> additionalProperties.toReference().toMap()
             is SchemaObject -> additionalProperties
-                .takeIf { it.type != null }
+                .takeIf { it.type.isPrimitive() || it.properties != null}
                 ?.run { toReference(name).toMap() }
                 ?: Reference.Any(false, true)
         }
