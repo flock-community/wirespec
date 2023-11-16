@@ -22,6 +22,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
 import community.flock.wirespec.compiler.core.tokenize.types.WsEndpointDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsEnumTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
+import community.flock.wirespec.compiler.core.tokenize.types.WsNumber
 import community.flock.wirespec.compiler.core.tokenize.types.WsRefinedTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsString
 import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
@@ -47,6 +48,7 @@ object Wirespec : LanguageSpec {
         Regex("^\\[\\]") to Brackets,
         Regex("^String") to WsString,
         Regex("^Integer") to WsInteger,
+        Regex("^Number") to WsNumber,
         Regex("^Boolean") to WsBoolean,
         Regex("^->") to Arrow,
         Regex("^GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE") to Method,
