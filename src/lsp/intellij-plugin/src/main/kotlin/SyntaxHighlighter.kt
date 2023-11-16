@@ -22,6 +22,7 @@ class SyntaxHighlighter : SyntaxHighlighterBase() {
         Types.CUSTOM_TYPE -> arrayOf(IDENTIFIER)
         Types.BOOLEAN -> arrayOf(KEYWORD)
         Types.INTEGER -> arrayOf(KEYWORD)
+        Types.NUMBER -> arrayOf(KEYWORD)
         Types.STRING -> arrayOf(KEYWORD)
         Types.TYPE_DEF -> arrayOf(KEYWORD)
         Types.ENDPOINT_DEF -> arrayOf(KEYWORD)
