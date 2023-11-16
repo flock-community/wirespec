@@ -1,13 +1,13 @@
 package community.flock.wirespec.compiler.core
 
-import community.flock.wirespec.compiler.common.TestLogger
-import community.flock.wirespec.compiler.common.assertValid
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
+import community.flock.wirespec.compiler.utils.noLogger
+import io.kotest.assertions.arrow.core.shouldBeRight
 import kotlin.test.Test
 
 class CompileToWirespecTest {
 
-    private val logger = TestLogger
+    private val logger = noLogger
 
     @Test
     fun testCompileType() {
@@ -20,9 +20,7 @@ class CompileToWirespecTest {
                 """.trimIndent()
 
         Wirespec.compile(source)(logger)(WirespecEmitter(logger = logger))
-            .map { it.first().second }
-            .onLeft(::println)
-            .assertValid(source)
+            .map { it.first().second } shouldBeRight source
     }
 
     @Test
@@ -33,8 +31,6 @@ class CompileToWirespecTest {
                 """.trimIndent()
 
         Wirespec.compile(source)(logger)(WirespecEmitter(logger = logger))
-            .map { it.first().second }
-            .onLeft(::println)
-            .assertValid(source)
+            .map { it.first().second } shouldBeRight source
     }
 }

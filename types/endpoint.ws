@@ -24,6 +24,6 @@ type Todos {
   date: Date
 }
 
-endpoint GetTodos GET /todos {
+endpoint GetTodos GET /todos -> {
     200 -> Todos[]
 }

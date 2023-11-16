@@ -1,3 +1,5 @@
+import Libraries.KOTEST_ASSERTIONS
+import Libraries.KOTEST_ASSERTIONS_ARROW
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithHostTests
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsTargetDsl
@@ -7,6 +9,7 @@ plugins {
     kotlin("jvm") apply false
     id("com.github.johnrengelman.shadow")
     id("com.goncalossilva.resources") version "0.4.0"
+    id("io.kotest.multiplatform")
 }
 
 group = "${Settings.GROUP_ID}.compiler"
@@ -30,6 +33,11 @@ kotlin {
     js(IR) { build() }
     jvm {
         withJava()
+        java {
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(17))
+            }
+        }
         tasks {
             getByName<ShadowJar>("shadowJar") {
                 archiveBaseName.set(projectName)
@@ -52,9 +60,10 @@ kotlin {
         }
         commonTest {
             dependencies {
-                implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
                 implementation(kotlin("test-junit"))
+                implementation(KOTEST_ASSERTIONS)
+                implementation(KOTEST_ASSERTIONS_ARROW)
             }
         }
         val desktopMain by creating {

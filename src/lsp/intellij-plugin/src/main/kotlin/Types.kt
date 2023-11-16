@@ -22,6 +22,7 @@ interface Types {
         val ARROW = ElementType("ARROW")
         val METHOD = ElementType("METHOD")
         val PATH = ElementType("PATH")
+        val FORWARD_SLASH = ElementType("FORWARD_SLASH")
         val STATUS_CODE = ElementType("STATUS_CODE")
         val LEFT_CURLY = ElementType("LEFT_CURLY")
         val RIGHT_CURLY = ElementType("RIGHT_CURLY")

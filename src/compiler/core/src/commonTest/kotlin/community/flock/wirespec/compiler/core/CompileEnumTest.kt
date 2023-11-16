@@ -1,18 +1,18 @@
 package community.flock.wirespec.compiler.core
 
-import community.flock.wirespec.compiler.common.TestLogger
-import community.flock.wirespec.compiler.common.assertValid
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.utils.noLogger
+import io.kotest.assertions.arrow.core.shouldBeRight
 import kotlin.test.Test
 
 class CompileEnumTest {
 
-    private val logger = TestLogger
+    private val logger = noLogger
 
     private val compiler = compile(
         """
@@ -38,7 +38,7 @@ class CompileEnumTest {
             
         """.trimIndent()
 
-        compiler(KotlinEmitter(logger = logger)).assertValid(kotlin)
+        compiler(KotlinEmitter(logger = logger)) shouldBeRight kotlin
     }
 
     @Test
@@ -61,7 +61,7 @@ class CompileEnumTest {
 
         """.trimIndent()
 
-        compiler(JavaEmitter(logger = logger)).assertValid(java)
+        compiler(JavaEmitter(logger = logger)) shouldBeRight java
     }
 
     @Test
@@ -77,7 +77,7 @@ class CompileEnumTest {
 
         """.trimIndent()
 
-        compiler(ScalaEmitter(logger = logger)).assertValid(scala)
+        compiler(ScalaEmitter(logger = logger)) shouldBeRight scala
     }
 
     @Test
@@ -87,7 +87,7 @@ class CompileEnumTest {
 
         """.trimIndent()
 
-        compiler(TypeScriptEmitter(logger = logger)).assertValid(ts)
+        compiler(TypeScriptEmitter(logger = logger)) shouldBeRight ts
     }
 
     @Test
@@ -99,7 +99,7 @@ class CompileEnumTest {
         
         """.trimIndent()
 
-        compiler(WirespecEmitter(logger = logger)).assertValid(wirespec)
+        compiler(WirespecEmitter(logger = logger)) shouldBeRight wirespec
     }
 
     private fun compile(source: String) = { emitter: Emitter ->

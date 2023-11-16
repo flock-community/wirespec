@@ -11,6 +11,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.CustomRegex
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
+import community.flock.wirespec.compiler.core.tokenize.types.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.types.Invalid
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.types.Method
@@ -74,6 +75,7 @@ class Lexer : IntellijLexer() {
                 is Arrow -> Types.ARROW
                 is Method -> Types.METHOD
                 is Path -> Types.PATH
+                is ForwardSlash -> Types.FORWARD_SLASH
                 is StatusCode -> Types.STATUS_CODE
             }
         }

@@ -11,7 +11,7 @@ import java.io.File
 
 abstract class BaseMojo : AbstractMojo() {
 
-    val logger = object : Logger(true) {
+    val logger = object : Logger() {
         override fun warn(s: String) = log.warn(s)
         override fun log(s: String) = log.info(s)
     }

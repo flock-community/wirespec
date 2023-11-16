@@ -15,7 +15,7 @@ import kotlinx.coroutines.runBlocking
 
 class Annotator : ExternalAnnotator<List<WirespecException>, List<WirespecException>>() {
 
-    private val logger = object : Logger(false) {}
+    private val logger = object : Logger() {}
 
     override fun collectInformation(file: PsiFile) = runBlocking {
         Wirespec.tokenize(file.text)

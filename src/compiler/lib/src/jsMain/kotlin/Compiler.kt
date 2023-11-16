@@ -20,7 +20,7 @@ abstract class Compiler {
         .let { Ast(arrayOf()) }
 
     companion object {
-        protected val logger = object : Logger(false) {}
+        protected val logger = object : Logger() {}
     }
 }
 

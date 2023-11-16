@@ -1,14 +1,15 @@
 package community.flock.wirespec.compiler.core
 
-import community.flock.wirespec.compiler.common.TestLogger
-import community.flock.wirespec.compiler.common.assertInvalid
-import community.flock.wirespec.compiler.common.assertValid
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
+import community.flock.wirespec.compiler.utils.noLogger
+import io.kotest.assertions.arrow.core.shouldBeLeft
+import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.assertions.arrow.core.shouldContain
 import kotlin.test.Test
 
 class CompilerTest {
 
-    private val logger = TestLogger
+    private val logger = noLogger
 
     @Test
     fun testCompileKotlin() {
@@ -32,8 +33,7 @@ class CompilerTest {
         """.trimIndent()
 
         Wirespec.compile(source)(logger)(KotlinEmitter(logger = logger))
-            .map { it.first().second }
-            .assertValid(out)
+            .map { it.first().second } shouldBeRight out
     }
 
     @Test
@@ -48,7 +48,8 @@ class CompilerTest {
         """.trimIndent()
 
         Wirespec.compile(source)(logger)(KotlinEmitter(logger = logger))
-            .assertInvalid("RightCurly expected, not: CustomValue at line 3 and position 3")
+            .shouldBeLeft()
+            .map { it.message } shouldContain "RightCurly expected, not: CustomValue at line 3 and position 3"
     }
 
     @Test
@@ -68,7 +69,6 @@ class CompilerTest {
 
         Wirespec.compile(source)(logger)(KotlinEmitter(logger = logger))
             .map { it.first().second }
-            .onLeft(::println)
-            .assertValid(out)
+            .onLeft(::println) shouldBeRight out
     }
 }

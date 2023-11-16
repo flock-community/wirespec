@@ -20,6 +20,14 @@ kotlin {
             customField("bin", mapOf("wirespec" to "wirespec-bin.js"))
         }
     }
+    jvm {
+        withJava()
+        java {
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(17))
+            }
+        }
+    }
 
     sourceSets {
         val commonMain by getting {

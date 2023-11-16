@@ -1,15 +1,16 @@
 package community.flock.wirespec.compiler.cli.io
 
-import kotlin.test.Ignore
+import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
 class FullFilePathTest {
 
     @Test
     fun testParse() {
-        val result = FullFilePath.parse("/src/test/resources/test.json")
-        kotlin.test.assertEquals("/src/test/resources", result.directory)
-        kotlin.test.assertEquals("test", result.fileName)
-        kotlin.test.assertEquals(Extension.Json, result.extension)
+        FullFilePath.parse("/src/test/resources/test.json").run {
+            directory shouldBe "/src/test/resources"
+            fileName shouldBe "test"
+            extension shouldBe Extension.Json
+        }
     }
 }

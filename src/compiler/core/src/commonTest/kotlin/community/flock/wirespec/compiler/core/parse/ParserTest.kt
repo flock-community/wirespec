@@ -1,15 +1,16 @@
 package community.flock.wirespec.compiler.core.parse
 
-import community.flock.wirespec.compiler.common.TestLogger
 import community.flock.wirespec.compiler.core.Wirespec
 import community.flock.wirespec.compiler.core.tokenize.tokenize
+import community.flock.wirespec.compiler.utils.Logger
+import io.kotest.assertions.arrow.core.shouldBeLeft
+import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.matchers.shouldBe
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.fail
 
 class ParserTest {
 
-    private fun parser() = Parser(TestLogger)
+    private fun parser() = Parser(object : Logger(false) {})
 
     @Test
     fun testParserWithCorrectInput() {
@@ -23,8 +24,8 @@ class ParserTest {
 
         Wirespec.tokenize(source)
             .let(parser()::parse)
-            .onRight { assertEquals(1, it.size) }
-            .onLeft { fail("Should not be Either.Left") }
+            .shouldBeRight()
+            .size shouldBe 1
     }
 
     @Test
@@ -39,10 +40,9 @@ class ParserTest {
 
         Wirespec.tokenize(source)
             .let(parser()::parse)
-            .onLeft {
-                assertEquals(1, it.size)
-                assertEquals("RightCurly expected, not: CustomValue at line 3 and position 3", it.first().message)
-            }
-            .onRight { fail("Should not be Either.Right") }
+            .shouldBeLeft()
+            .also { it.size shouldBe 1 }
+            .first()
+            .message shouldBe "RightCurly expected, not: CustomValue at line 3 and position 3"
     }
 }
