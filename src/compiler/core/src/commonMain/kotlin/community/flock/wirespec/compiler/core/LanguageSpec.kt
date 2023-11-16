@@ -7,21 +7,15 @@ import community.flock.wirespec.compiler.core.tokenize.types.Comma
 import community.flock.wirespec.compiler.core.tokenize.types.CustomRegex
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
-import community.flock.wirespec.compiler.core.tokenize.types.DELETE
-import community.flock.wirespec.compiler.core.tokenize.types.GET
-import community.flock.wirespec.compiler.core.tokenize.types.HEAD
+import community.flock.wirespec.compiler.core.tokenize.types.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.types.Invalid
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
+import community.flock.wirespec.compiler.core.tokenize.types.Method
 import community.flock.wirespec.compiler.core.tokenize.types.NewLine
-import community.flock.wirespec.compiler.core.tokenize.types.OPTIONS
-import community.flock.wirespec.compiler.core.tokenize.types.PATCH
-import community.flock.wirespec.compiler.core.tokenize.types.POST
-import community.flock.wirespec.compiler.core.tokenize.types.PUT
 import community.flock.wirespec.compiler.core.tokenize.types.Path
 import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.types.StatusCode
-import community.flock.wirespec.compiler.core.tokenize.types.TRACE
 import community.flock.wirespec.compiler.core.tokenize.types.TokenType
 import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpaceExceptNewLine
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
@@ -55,19 +49,13 @@ object Wirespec : LanguageSpec {
         Regex("^Integer") to WsInteger,
         Regex("^Boolean") to WsBoolean,
         Regex("^->") to Arrow,
-        Regex("^GET") to GET,
-        Regex("^POST") to POST,
-        Regex("^PUT") to PUT,
-        Regex("^DELETE") to DELETE,
-        Regex("^OPTIONS") to OPTIONS,
-        Regex("^HEAD") to HEAD,
-        Regex("^PATCH") to PATCH,
-        Regex("^TRACE") to TRACE,
+        Regex("^GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE") to Method,
         Regex("^/.*/g") to CustomRegex,
         Regex("^[1-5][0-9][0-9]") to StatusCode,
         Regex("^[a-z][a-zA-Z]*") to CustomValue,
         Regex("^[A-Z][a-zA-Z]*") to CustomType,
-        Regex("^/[a-z]*") to Path,
+        Regex("^/[a-z]+") to Path,
+        Regex("^/") to ForwardSlash,
         Regex("^.") to Invalid // Catch all regular expression if none of the above matched
     )
 }

@@ -1,18 +1,18 @@
 package community.flock.wirespec.compiler.core
 
-import community.flock.wirespec.compiler.common.TestLogger
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
 import kotlin.test.Test
 
 class CompileEnumTest {
 
-    private val logger = TestLogger
+    private val logger = noLogger
 
     private val compiler = compile(
         """

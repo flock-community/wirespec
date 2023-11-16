@@ -10,6 +10,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import kotlin.test.Ignore
 import kotlin.test.Test
+import kotlin.test.assertTrue
 
 class CliTest {
 

@@ -9,6 +9,7 @@ data object RightCurly : TokenType
 data object Colon : TokenType
 data object Comma : TokenType
 data object QuestionMark : TokenType
+data object ForwardSlash : TokenType
 data object Brackets : TokenType
 data object CustomValue : TokenType
 data object Invalid : TokenType
@@ -35,18 +36,11 @@ data object WsNumber : WirespecType
 data object WsBoolean : WirespecType
 data object CustomType : WirespecType
 
-sealed interface Method : Keyword
-data object GET : Method
-data object POST : Method
-data object PUT : Method
-data object DELETE : Method
-data object OPTIONS : Method
-data object HEAD : Method
-data object PATCH : Method
-data object TRACE : Method
+data object Method : Keyword
+
+data object Path : Keyword
 
 data object StatusCode : Keyword
-data object Path : Keyword
 data object Arrow : Keyword
 
 data object CustomRegex : TokenType

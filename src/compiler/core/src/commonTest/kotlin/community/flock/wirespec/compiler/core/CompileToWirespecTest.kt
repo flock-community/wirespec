@@ -1,13 +1,13 @@
 package community.flock.wirespec.compiler.core
 
-import community.flock.wirespec.compiler.common.TestLogger
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
+import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
 import kotlin.test.Test
 
 class CompileToWirespecTest {
 
-    private val logger = TestLogger
+    private val logger = noLogger
 
     @Test
     fun testCompileType() {

@@ -1,29 +1,24 @@
 package community.flock.wirespec.compiler.core.parse
 
 import arrow.core.Either
-import arrow.core.nel
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
+import community.flock.wirespec.compiler.core.parse.nodes.Type
 import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference.Custom
 import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference.Primitive
 import community.flock.wirespec.compiler.core.tokenize.types.Arrow
 import community.flock.wirespec.compiler.core.tokenize.types.Brackets
+import community.flock.wirespec.compiler.core.tokenize.types.Colon
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
-import community.flock.wirespec.compiler.core.tokenize.types.DELETE
-import community.flock.wirespec.compiler.core.tokenize.types.GET
-import community.flock.wirespec.compiler.core.tokenize.types.HEAD
+import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
+import community.flock.wirespec.compiler.core.tokenize.types.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.types.Method
-import community.flock.wirespec.compiler.core.tokenize.types.OPTIONS
-import community.flock.wirespec.compiler.core.tokenize.types.PATCH
-import community.flock.wirespec.compiler.core.tokenize.types.POST
-import community.flock.wirespec.compiler.core.tokenize.types.PUT
 import community.flock.wirespec.compiler.core.tokenize.types.Path
 import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.types.StatusCode
-import community.flock.wirespec.compiler.core.tokenize.types.TRACE
 import community.flock.wirespec.compiler.core.tokenize.types.WirespecType
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
 import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
@@ -45,8 +40,17 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
     private fun TokenProvider.parseEndpointDefinition(name: String) = either {
         eatToken().bind()
         token.log()
-        val method = parseEndpointMethod().bind()
-        val path = parseEndpointPath().bind()
+        val method = when (token.type) {
+            is Method -> Endpoint.Method.valueOf(token.value)
+            else -> raise(WrongTokenException<Method>(token))
+        }.also { eatToken().bind() }
+
+        val segments = mutableListOf<Endpoint.Segment>().apply {
+            while (token.type !is Arrow) {
+                add(parseEndpointSegments().bind())
+            }
+        }.also { eatToken().bind() }
+
         when (token.type) {
             is LeftCurly -> Unit
             else -> raise(WrongTokenException<LeftCurly>(token))
@@ -57,7 +61,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
         Endpoint(
             name = name,
             method = method,
-            path = path,
+            path = segments,
             query = emptyList(),
             headers = emptyList(),
             cookies = emptyList(),
@@ -66,30 +70,42 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
         )
     }
 
-    private fun TokenProvider.parseEndpointMethod() = either {
+    private fun TokenProvider.parseEndpointSegments() = either {
         token.log()
         when (token.type) {
-            is Method -> when (token.type as Method) {
-                DELETE -> Endpoint.Method.DELETE
-                GET -> Endpoint.Method.GET
-                HEAD -> Endpoint.Method.HEAD
-                OPTIONS -> Endpoint.Method.OPTIONS
-                PATCH -> Endpoint.Method.PATCH
-                POST -> Endpoint.Method.POST
-                PUT -> Endpoint.Method.PUT
-                TRACE -> Endpoint.Method.TRACE
-            }
-
-            else -> raise(WrongTokenException<Method>(token))
-        }.also { eatToken().bind() }
+            is Path -> Endpoint.Segment.Literal(token.value.drop(1)).also { eatToken().bind() }
+            is ForwardSlash -> parseEndpointSegmentParam().bind()
+            else -> raise(WrongTokenException<Path>(token))
+        }
     }
 
-    private fun TokenProvider.parseEndpointPath() = either {
+    private fun TokenProvider.parseEndpointSegmentParam() = either {
+        eatToken().bind()
         token.log()
         when (token.type) {
-            is Path -> Endpoint.Segment.Literal(token.value.drop(1)).nel()
-            else -> raise(WrongTokenException<Path>(token))
-        }.also { eatToken().bind() }
+            is LeftCurly -> eatToken().bind()
+            else -> raise(WrongTokenException<LeftCurly>(token))
+        }
+        val identifier = when (token.type) {
+            is CustomValue -> Type.Shape.Field.Identifier(token.value).also { eatToken().bind() }
+            else -> raise(WrongTokenException<CustomValue>(token))
+        }
+        when (token.type) {
+            is Colon -> eatToken().bind()
+            else -> raise(WrongTokenException<Colon>(token))
+        }
+        val reference = when (token.type) {
+            is WirespecType -> parseReference(token.type as WirespecType, token.value).bind()
+            else -> raise(WrongTokenException<WirespecType>(token))
+        }
+        when (token.type) {
+            is RightCurly -> eatToken().bind()
+            else -> raise(WrongTokenException<RightCurly>(token))
+        }
+        Endpoint.Segment.Param(
+            identifier = identifier,
+            reference = reference
+        )
     }
 
     private fun TokenProvider.parseEndpointResponses() = either {
@@ -125,10 +141,18 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
     }
 
     private fun TokenProvider.parseContent(wsType: WirespecType, value: String) = either {
+        token.log()
+        Endpoint.Content(
+            type = "application/json",
+            reference = parseReference(wsType, value).bind(),
+        )
+    }
+
+    private fun TokenProvider.parseReference(wsType: WirespecType, value: String) = either {
         eatToken().bind()
         token.log()
         val isIterable = (token.type is Brackets).also { if (it) eatToken().bind() }
-        val reference = when (wsType) {
+        when (wsType) {
             is WsString -> Primitive(Primitive.Type.String, isIterable)
 
             is WsInteger -> Primitive(Primitive.Type.Integer, isIterable)
@@ -138,6 +162,5 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
 
             is CustomType -> Custom(value, isIterable)
         }
-        Endpoint.Content(type = "application/json", reference = reference)
     }
 }

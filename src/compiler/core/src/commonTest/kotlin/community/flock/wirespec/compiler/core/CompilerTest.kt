@@ -1,7 +1,7 @@
 package community.flock.wirespec.compiler.core
 
-import community.flock.wirespec.compiler.common.TestLogger
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
+import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.assertions.arrow.core.shouldContain
@@ -9,7 +9,7 @@ import kotlin.test.Test
 
 class CompilerTest {
 
-    private val logger = TestLogger
+    private val logger = noLogger
 
     @Test
     fun testCompileKotlin() {
