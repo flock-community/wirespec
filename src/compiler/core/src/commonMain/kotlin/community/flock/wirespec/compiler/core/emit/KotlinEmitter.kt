@@ -177,7 +177,7 @@ class KotlinEmitter(
 
     private fun List<Endpoint.Request>.emitRequestMapper() = """
         |${SPACER}${SPACER}fun <B> REQUEST_MAPPER(contentMapper: Wirespec.ContentMapper<B>) = {
-        |${SPACER}${SPACER}${SPACER}request: Request<B> -> when {
+        |${SPACER}${SPACER}${SPACER}request: Wirespec.Request<B> -> when {
         |${joinToString("\n") { it.emitRequestMapperCondition() }}
         |${SPACER}${SPACER}${SPACER}${SPACER}else -> error("Cannot map request")
         |${SPACER}${SPACER}${SPACER}}
