@@ -45,6 +45,21 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
             else -> raise(WrongTokenException<Method>(token))
         }.also { eatToken().bind() }
 
+        val requests = listOfNotNull(
+            when (token.type) {
+                is WirespecType -> parseReference(token.type as WirespecType, token.value).bind()
+                else -> null
+            }
+        ).map {
+            Endpoint.Request(
+                content = Endpoint.Content(
+                    type = "application/json",
+                    reference = it,
+                    isNullable = false
+                )
+            )
+        }
+
         val segments = mutableListOf<Endpoint.Segment>().apply {
             while (token.type !is Arrow) {
                 add(parseEndpointSegments().bind())
@@ -65,7 +80,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
             query = emptyList(),
             headers = emptyList(),
             cookies = emptyList(),
-            requests = emptyList(),
+            requests = requests,
             responses = responses,
         )
     }

@@ -86,4 +86,25 @@ class TokenizeEndpointTest {
             onEachIndexed { index, token -> token.type shouldBe expected[index] }
         }
     }
+
+    @Test
+    fun testPOSTWithBodyTokenizer() {
+        val source = """
+            endpoint GetTodos Todo POST /todos -> {
+                200 -> Todo
+            }
+
+        """.trimIndent()
+
+        val expected = listOf(
+            WsEndpointDef, CustomType, CustomType, Method, Path, Arrow, LeftCurly,
+            StatusCode, Arrow, CustomType, RightCurly, EndOfProgram,
+        )
+
+        Wirespec.tokenize(source).removeWhiteSpace().run {
+            size shouldBe expected.size
+            map { it.type } shouldNotContain Invalid
+            onEachIndexed { index, token -> token.type shouldBe expected[index] }
+        }
+    }
 }
