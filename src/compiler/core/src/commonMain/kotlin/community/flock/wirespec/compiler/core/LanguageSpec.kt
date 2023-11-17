@@ -51,7 +51,7 @@ object Wirespec : LanguageSpec {
         Regex("^Number") to WsNumber,
         Regex("^Boolean") to WsBoolean,
         Regex("^->") to Arrow,
-        Regex("^GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE") to Method,
+        Regex("^GET|^POST|^PUT|^DELETE|^OPTIONS|^HEAD|^PATCH|^TRACE") to Method,
         Regex("^/.*/g") to CustomRegex,
         Regex("^[1-5][0-9][0-9]") to StatusCode,
         Regex("^[a-z][a-zA-Z]*") to CustomValue,
