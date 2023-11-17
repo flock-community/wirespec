@@ -27,6 +27,9 @@ mac:
 linux:
 	$(shell pwd)/scripts/linux.sh
 
+jvm:
+	$(shell pwd)/scripts/jvm.sh
+
 example:
 	$(shell pwd)/scripts/example.sh
 

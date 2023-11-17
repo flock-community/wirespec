@@ -14,9 +14,11 @@ import community.flock.wirespec.compiler.core.tokenize.types.Colon
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.types.ForwardSlash
+import community.flock.wirespec.compiler.core.tokenize.types.Hash
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.types.Method
 import community.flock.wirespec.compiler.core.tokenize.types.Path
+import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.types.StatusCode
 import community.flock.wirespec.compiler.core.tokenize.types.WirespecType
@@ -27,6 +29,8 @@ import community.flock.wirespec.compiler.core.tokenize.types.WsString
 import community.flock.wirespec.compiler.utils.Logger
 
 class EndpointParser(logger: Logger) : AbstractParser(logger) {
+
+    private val typeParser = TypeParser(logger)
 
     fun TokenProvider.parseEndpoint(): Either<WirespecException, Endpoint> = either {
         eatToken().bind()
@@ -61,10 +65,39 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
         }
 
         val segments = mutableListOf<Endpoint.Segment>().apply {
-            while (token.type !is Arrow) {
+            while (token.type !is QuestionMark && token.type !is Hash && token.type !is Arrow) {
                 add(parseEndpointSegments().bind())
             }
-        }.also { eatToken().bind() }
+        }
+
+        val queryParams = when (token.type) {
+            is QuestionMark -> {
+                eatToken().bind()
+                when (token.type) {
+                    is LeftCurly -> with(typeParser) { parseTypeShape().bind() }.value
+                    else -> raise(WrongTokenException<LeftCurly>(token))
+                }
+            }
+
+            else -> emptyList()
+        }
+
+        val headers = when (token.type) {
+            is Hash -> {
+                eatToken().bind()
+                when (token.type) {
+                    is LeftCurly -> with(typeParser) { parseTypeShape().bind() }.value
+                    else -> raise(WrongTokenException<LeftCurly>(token))
+                }
+            }
+
+            else -> emptyList()
+        }
+
+        when (token.type) {
+            is Arrow -> eatToken().bind()
+            else -> raise(WrongTokenException<Arrow>(token))
+        }
 
         when (token.type) {
             is LeftCurly -> Unit
@@ -77,8 +110,8 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
             name = name,
             method = method,
             path = segments,
-            query = emptyList(),
-            headers = emptyList(),
+            query = queryParams,
+            headers = headers,
             cookies = emptyList(),
             requests = requests,
             responses = responses,

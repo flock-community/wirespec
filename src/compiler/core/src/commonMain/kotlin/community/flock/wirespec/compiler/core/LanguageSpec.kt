@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.CustomRegex
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.types.ForwardSlash
+import community.flock.wirespec.compiler.core.tokenize.types.Hash
 import community.flock.wirespec.compiler.core.tokenize.types.Invalid
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.types.Method
@@ -45,6 +46,7 @@ object Wirespec : LanguageSpec {
         Regex("^:") to Colon,
         Regex("^,") to Comma,
         Regex("^\\?") to QuestionMark,
+        Regex("^#") to Hash,
         Regex("^\\[\\]") to Brackets,
         Regex("^String") to WsString,
         Regex("^Integer") to WsInteger,

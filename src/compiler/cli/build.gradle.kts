@@ -24,8 +24,9 @@ kotlin {
     val buildAll = "WIRESPEC_BUILD_ALL".fromEnv()
     val buildMacX86 = buildAll || "WIRESPEC_BUILD_MAC_X86".fromEnv()
     val buildMacArm = buildAll || "WIRESPEC_BUILD_MAC_ARM".fromEnv()
-    val buildNothing = !buildMacX86 && !buildMacArm
-    val buildLinux = buildAll || "WIRESPEC_BUILD_LINUX".fromEnv() || buildNothing
+    val buildLinux = buildAll || "WIRESPEC_BUILD_LINUX".fromEnv()
+    val buildNothing = !buildMacX86 && !buildMacArm && !buildLinux
+    val buildJvm = buildAll || "WIRESPEC_BUILD_JVM".fromEnv() || buildNothing
 
     if (buildMacX86) macosX64 { build() }
     if (buildMacArm) macosArm64 { build() }
@@ -84,12 +85,15 @@ kotlin {
                 dependsOn(desktopMain)
             }
         }
+        if (buildJvm) {
+            val jvmMain by getting {
+                dependsOn(commonMain)
+            }
+        }
         val jsMain by getting {
             dependsOn(commonMain)
         }
-        val jvmMain by getting {
-            dependsOn(commonMain)
-        }
+
     }
 }
 

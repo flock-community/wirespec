@@ -27,6 +27,7 @@ interface Types {
         val LEFT_CURLY = ElementType("LEFT_CURLY")
         val RIGHT_CURLY = ElementType("RIGHT_CURLY")
         val QUESTION_MARK = ElementType("QUESTION_MARK")
+        val HASH = ElementType("HASH")
         val BRACKETS = ElementType("BRACKETS")
         val WHITE_SPACE = ElementType("WHITE_SPACE")
         val END_OF_PROGRAM = ElementType("END_OF_PROGRAM")
