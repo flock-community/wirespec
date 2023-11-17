@@ -31,21 +31,7 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         }
     }
 
-    private fun TokenProvider.parseTypeDefinition(typeName: String) = either {
-        eatToken().bind()
-        token.log()
-        when (token.type) {
-            is LeftCurly -> Type(typeName, parseTypeShape().bind())
-            else -> raise(WrongTokenException<LeftCurly>(token).also { eatToken().bind() })
-        }.also {
-            when (token.type) {
-                is RightCurly -> eatToken().bind()
-                else -> raise(WrongTokenException<RightCurly>(token).also { eatToken().bind() })
-            }
-        }
-    }
-
-    private fun TokenProvider.parseTypeShape() = either {
+    fun TokenProvider.parseTypeShape(): Either<WirespecException, Type.Shape> = either {
         eatToken().bind()
         token.log()
         when (token.type) {
@@ -61,7 +47,21 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
             }
 
             else -> raise(WrongTokenException<CustomValue>(token).also { eatToken().bind() })
+        }.also {
+            when (token.type) {
+                is RightCurly -> eatToken().bind()
+                else -> raise(WrongTokenException<RightCurly>(token).also { eatToken().bind() })
+            }
         }.let(Type::Shape)
+    }
+
+    private fun TokenProvider.parseTypeDefinition(typeName: String) = either {
+        eatToken().bind()
+        token.log()
+        when (token.type) {
+            is LeftCurly -> Type(typeName, parseTypeShape().bind())
+            else -> raise(WrongTokenException<LeftCurly>(token).also { eatToken().bind() })
+        }
     }
 
     private fun TokenProvider.parseField(identifier: Type.Shape.Field.Identifier) = either {

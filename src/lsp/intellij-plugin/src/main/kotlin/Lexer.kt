@@ -12,6 +12,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
 import community.flock.wirespec.compiler.core.tokenize.types.ForwardSlash
+import community.flock.wirespec.compiler.core.tokenize.types.Hash
 import community.flock.wirespec.compiler.core.tokenize.types.Invalid
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.types.Method
@@ -65,6 +66,7 @@ class Lexer : IntellijLexer() {
                 is WsString -> Types.STRING
                 is LeftCurly -> Types.LEFT_CURLY
                 is QuestionMark -> Types.QUESTION_MARK
+                is Hash -> Types.HASH
                 is RightCurly -> Types.RIGHT_CURLY
                 is EndOfProgram -> Types.END_OF_PROGRAM
                 is Invalid -> Types.INVALID

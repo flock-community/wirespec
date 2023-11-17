@@ -9,6 +9,7 @@ data object RightCurly : TokenType
 data object Colon : TokenType
 data object Comma : TokenType
 data object QuestionMark : TokenType
+data object Hash : TokenType
 data object ForwardSlash : TokenType
 data object Brackets : TokenType
 data object CustomValue : TokenType
