@@ -16,7 +16,7 @@ type Person {
   address: Address
 }
 
-type Todos {
+type Todo {
   id: TodoIdentifier,
   person: Person,
   done: Boolean,
@@ -24,6 +24,24 @@ type Todos {
   date: Date
 }
 
+type Error {
+  reason: String
+}
+
 endpoint GetTodos GET /todos -> {
-    200 -> Todos[]
+    200 -> Todo[]
+}
+
+endpoint GetTodos POST Todo /todos -> {
+    200 -> Todo
+}
+
+endpoint GetTodos PUT Todo /todos/{id: TodoIdentifier} -> {
+    200 -> Todo
+    404 -> Error
+}
+
+endpoint GetTodos DELETE /todos/{id: TodoIdentifier} -> {
+    200 -> Todo
+    404 -> Error
 }
