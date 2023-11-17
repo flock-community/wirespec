@@ -32,16 +32,16 @@ endpoint GetTodos GET /todos -> {
     200 -> Todo[]
 }
 
-endpoint GetTodos POST Todo /todos -> {
+endpoint PostTodo POST Todo /todos -> {
     200 -> Todo
 }
 
-endpoint GetTodos PUT Todo /todos/{id: TodoIdentifier} -> {
+endpoint PutTodo PUT Todo /todos/{id: TodoIdentifier} -> {
     200 -> Todo
     404 -> Error
 }
 
-endpoint GetTodos DELETE /todos/{id: TodoIdentifier} -> {
+endpoint DeleteTodo DELETE /todos/{id: TodoIdentifier} -> {
     200 -> Todo
     404 -> Error
 }

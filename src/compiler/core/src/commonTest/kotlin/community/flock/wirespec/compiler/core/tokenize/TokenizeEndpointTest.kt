@@ -90,7 +90,7 @@ class TokenizeEndpointTest {
     @Test
     fun testPOSTWithBodyTokenizer() {
         val source = """
-            endpoint GetTodos Todo POST /todos -> {
+            endpoint PostTodos Todo POST /todos -> {
                 200 -> Todo
             }
 

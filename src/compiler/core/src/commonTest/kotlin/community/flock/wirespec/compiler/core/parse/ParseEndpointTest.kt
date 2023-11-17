@@ -47,7 +47,7 @@ class ParseEndpointTest {
     @Test
     fun testPathParamsParserWithCorrectInput() {
         val source = """
-            endpoint GetTodos POST Todo /todos -> {
+            endpoint PostTodo POST Todo /todos -> {
                 200 -> Todo
             }
 
@@ -60,7 +60,7 @@ class ParseEndpointTest {
             .first()
             .shouldBeInstanceOf<Endpoint>()
             .run {
-                name shouldBe "GetTodos"
+                name shouldBe "PostTodo"
                 method shouldBe POST
                 requests.shouldNotBeEmpty().also { it.size shouldBe 1 }.first().run {
                     content.shouldNotBeNull().run {
@@ -77,7 +77,7 @@ class ParseEndpointTest {
     @Test
     fun testRequestBodyParserWithCorrectInput() {
         val source = """
-            endpoint GetTodos GET /todos/{id: String} -> {
+            endpoint GetTodo GET /todos/{id: String} -> {
                 200 -> Todo
             }
 
@@ -90,7 +90,7 @@ class ParseEndpointTest {
             .first()
             .shouldBeInstanceOf<Endpoint>()
             .run {
-                name shouldBe "GetTodos"
+                name shouldBe "GetTodo"
                 method shouldBe GET
                 path shouldBe listOf(
                     Literal("todos"), Endpoint.Segment.Param(
