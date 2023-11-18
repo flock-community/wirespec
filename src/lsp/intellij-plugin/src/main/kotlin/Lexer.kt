@@ -1,5 +1,6 @@
 package community.flock.wirespec.lsp.intellij_plugin
 
+import com.intellij.openapi.util.Comparing
 import community.flock.wirespec.compiler.core.Wirespec
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.tokenize
@@ -29,24 +30,26 @@ import community.flock.wirespec.compiler.core.tokenize.types.WsNumber
 import community.flock.wirespec.compiler.core.tokenize.types.WsRefinedTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsString
 import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
-import com.intellij.lexer.Lexer as IntellijLexer
-import com.intellij.lexer.LexerPosition as IntellijLexerPosition
+import com.intellij.lexer.LexerBase as IntellijLexer
 
 class Lexer : IntellijLexer() {
 
     private var buffer: CharSequence = ""
     private var index = 0
+    private var state = 0
     private var tokens: List<Token> = emptyList()
 
     override fun start(buffer: CharSequence, startOffset: Int, endOffset: Int, initialState: Int) {
         this.buffer = buffer
         this.index = 0
+        this.state = initialState
         this.tokens = Wirespec.tokenize(buffer.toString()).filterNot { it.type is EndOfProgram }
+
     }
 
     override fun getBufferSequence() = buffer
 
-    override fun getState() = 0
+    override fun getState() = state
 
     override fun getTokenType() =
         if (index == tokens.size) null
@@ -95,19 +98,8 @@ class Lexer : IntellijLexer() {
         index++
     }
 
-    override fun getCurrentPosition(): IntellijLexerPosition = tokens[index]
-        .coordinates
-        .run { LexerPosition(getStartPos(), state) }
-
-    override fun restore(position: IntellijLexerPosition) {}
-
     override fun getBufferEnd() = buffer.toString().length
 
-    internal class LexerPosition(private val myOffset: Int, private val myState: Int) : IntellijLexerPosition {
-        override fun getOffset() = myOffset
-
-        override fun getState() = myState
-    }
 }
 
 fun Token.Coordinates.getStartPos() = idxAndLength.idx - idxAndLength.length
