@@ -172,7 +172,8 @@ class JavaEmitter(
     override fun Endpoint.emit() = withLogging(logger) {
         """public interface ${emitName().sanitizeSymbol()} extends Wirespec.Endpoint {
             |${SPACER}static String PATH = "${path.emitSegment()}";
-            |${SPACER}static Wirespec.Method METHOD = Wirespec.Method.${method};
+            |${SPACER}static String METHOD = "${method}";
+            |${requests.emitRequestMapper()}
             |${responses.emitResponseMapper()}
             |${SPACER}sealed interface Request<T> extends Wirespec.Request<T> {}
             |${requests.joinToString("\n") { it.emit(this) }}
@@ -212,6 +213,19 @@ class JavaEmitter(
         |${SPACER}${SPACER}${SPACER}this.headers = ${endpoint.headers.emitMap()};
         |${SPACER}${SPACER}${SPACER}this.content = ${content?.let { "new Wirespec.Content(\"${it.type}\", body)" } ?: "null"};
         |${SPACER}${SPACER}}
+        |${SPACER}${SPACER}public Request${content.emitContentType()}(
+        |${SPACER}${SPACER}${SPACER}String path,
+        |${SPACER}${SPACER}${SPACER}Wirespec.Method methode,
+        |${SPACER}${SPACER}${SPACER}java.util.Map<String, java.util.List<Object>> query,
+        |${SPACER}${SPACER}${SPACER}java.util.Map<String, java.util.List<Object>> headers,
+        |${SPACER}${SPACER}${SPACER}Wirespec.Content<${content?.reference?.emit() ?: "Void"}> content
+        |${SPACER}${SPACER}) {
+        |${SPACER}${SPACER}${SPACER}this.path = path;
+        |${SPACER}${SPACER}${SPACER}this.method = methode;
+        |${SPACER}${SPACER}${SPACER}this.query = query;
+        |${SPACER}${SPACER}${SPACER}this.headers = headers;
+        |${SPACER}${SPACER}${SPACER}this.content = content;
+        |${SPACER}${SPACER}}
         |${SPACER}${SPACER}@Override public String getPath() {return path;}
         |${SPACER}${SPACER}@Override public Wirespec.Method getMethod() {return method;}
         |${SPACER}${SPACER}@Override public java.util.Map<String, java.util.List<Object>> getQuery() {return query;}
@@ -240,9 +254,34 @@ class JavaEmitter(
         |${SPACER}}
         """.trimMargin()
 
+    private fun List<Endpoint.Request>.emitRequestMapper() = """
+        |${SPACER}static <B, Req extends Request<?>> Function<Wirespec.Request<B>, Req> REQUEST_MAPPER(Wirespec.ContentMapper<B> contentMapper) {
+        |${SPACER}return request -> {
+        |${joinToString("\n") { it.emitRequestMapperCondition() }}
+        |${SPACER}${SPACER}throw new IllegalStateException("Unknown response type");
+        |${SPACER}};
+        |}
+    """.trimMargin()
+
+    private fun Endpoint.Request.emitRequestMapperCondition() =
+        when (content) {
+            null -> """
+                    |${SPACER}${SPACER}${SPACER}${SPACER}if(request.getContent() == null) { 
+                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}return (Req) new RequestVoid(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders(), null);
+                    |${SPACER}${SPACER}${SPACER}${SPACER}}
+                """.trimMargin()
+
+            else -> """
+                    |${SPACER}${SPACER}${SPACER}${SPACER}if(request.getContent().type() == "${content.type}"){ 
+                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}Wirespec.Content<${content.reference.emit()}> content = contentMapper.read(request.getContent(), Wirespec.getType(${content.reference.emitSymbol()}.class, ${content.reference.isIterable}));
+                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}return (Req) new Request${content.emitContentType()}(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders(), content);
+                    |${SPACER}${SPACER}${SPACER}${SPACER}}
+                """.trimMargin()
+        }
+
     private fun List<Endpoint.Response>.emitResponseMapper() = """
         |${SPACER}static <B, Res extends Response<?>> Function<Wirespec.Response<B>, Res> RESPONSE_MAPPER(Wirespec.ContentMapper<B> contentMapper) {
-        |return response -> {
+        |${SPACER}return response -> {
         |${distinctBy { it.status to it.content?.type }.joinToString("") { it.emitResponseMapperCondition() }}
         |${SPACER}${SPACER}throw new IllegalStateException("Unknown response type");
         |${SPACER}};

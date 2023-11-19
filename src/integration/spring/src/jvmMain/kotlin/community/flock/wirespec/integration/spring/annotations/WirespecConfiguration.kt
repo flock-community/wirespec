@@ -44,6 +44,7 @@ open class WirespecConfiguration {
 
     @Bean
     open fun registerWirespecController(
+        contentMapper: JacksonContentMapper,
         applicationContext: ApplicationContext,
         requestMappingHandlerMapping: RequestMappingHandlerMapping
     ): String {

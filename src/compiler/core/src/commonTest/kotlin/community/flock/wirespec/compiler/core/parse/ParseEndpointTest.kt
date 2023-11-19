@@ -14,6 +14,7 @@ import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldNotBeEmpty
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -42,7 +43,9 @@ class ParseEndpointTest {
                 name shouldBe "GetTodos"
                 method shouldBe GET
                 path shouldBe listOf(Literal("todos"))
-                requests.shouldBeEmpty()
+                requests.shouldNotBeEmpty().also { it.size shouldBe 1 }.first().run {
+                    content.shouldBeNull()
+                }
             }
     }
 
@@ -104,7 +107,9 @@ class ParseEndpointTest {
                         )
                     )
                 )
-                requests.shouldBeEmpty()
+                requests.shouldNotBeEmpty().also { it.size shouldBe 1 }.first().run {
+                    content.shouldBeNull()
+                }
             }
     }
 

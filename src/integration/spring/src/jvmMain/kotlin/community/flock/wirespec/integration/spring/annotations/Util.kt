@@ -26,8 +26,13 @@ object Util {
         return this.getStaticClass().methods.find { it.name == name }
     }
 
-    fun Method.invokeStatic(obj:Class<*>, contentMapper: Wirespec.ContentMapper<BufferedReader>): (Wirespec.Request<BufferedReader>) -> Wirespec.Request<*> {
-        return this.invoke(obj.kotlin.companionObjectInstance, contentMapper) as (Wirespec.Request<BufferedReader>) -> Wirespec.Request<*>
+    fun Class<*>.invoke(method: Method, contentMapper: Wirespec.ContentMapper<BufferedReader>, request: Wirespec.Request<BufferedReader>): Wirespec.Request<*> {
+        return if (isKotlinClass()) {
+            val func = method.invoke(this.kotlin.companionObjectInstance, contentMapper) as (Wirespec.Request<BufferedReader>) -> Wirespec.Request<*>
+            return func(request)
+        }else{
+            val func = method.invoke(this, contentMapper) as java.util.function.Function<Wirespec.Request<BufferedReader>, Wirespec.Request<*>>
+            func.apply(request)
+        }
     }
-
 }
