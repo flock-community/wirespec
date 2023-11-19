@@ -5,7 +5,6 @@ import community.flock.wirespec.Wirespec
 import community.flock.wirespec.integration.spring.annotations.Util.getStaticMethode
 import community.flock.wirespec.integration.spring.annotations.Util.invoke
 import jakarta.servlet.http.HttpServletRequest
-import org.apache.catalina.connector.RequestFacade
 import org.springframework.core.MethodParameter
 import org.springframework.http.server.PathContainer
 import org.springframework.web.bind.support.WebDataBinderFactory
@@ -15,8 +14,6 @@ import org.springframework.web.method.support.ModelAndViewContainer
 import org.springframework.web.util.pattern.PathPatternParser
 import java.io.BufferedReader
 import kotlin.reflect.full.companionObjectInstance
-
-typealias RequestMapper = (path: String, method: Wirespec.Method, query: Map<String, List<Any?>>, headers: Map<String, List<Any?>>, content: Wirespec.Content<BufferedReader>?) -> Wirespec.Request<*>
 
 class WirespecMethodArgumentResolver(private val contentMapper: JacksonContentMapper) : HandlerMethodArgumentResolver {
     override fun supportsParameter(parameter: MethodParameter): Boolean {
