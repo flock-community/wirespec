@@ -8,10 +8,10 @@ import org.springframework.context.annotation.Import;
 
 @SpringBootApplication
 @Import(WirespecConfiguration.class)
-public class PetstoreApplication {
+public class TodoApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(PetstoreApplication.class, args);
+        SpringApplication.run(TodoApplication.class, args);
     }
 
 }

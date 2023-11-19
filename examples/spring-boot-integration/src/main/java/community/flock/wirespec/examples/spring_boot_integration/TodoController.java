@@ -2,22 +2,21 @@ package community.flock.wirespec.examples.spring_boot_integration;
 
 import community.flock.wirespec.generated.*;
 import community.flock.wirespec.integration.spring.annotations.WirespecController;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-
 @WirespecController
-class PetstoreController implements GetTodos, GetTodoById, CreateTodo, UpdateTodo, DeleteTodo {
+class TodoController implements GetTodos, GetTodoById, CreateTodo, UpdateTodo, DeleteTodo {
 
-    private List<Todo> store = List.of(
-            new Todo(UUID.randomUUID().toString(), "First todo", false),
-            new Todo(UUID.randomUUID().toString(), "Second todo", false),
-            new Todo(UUID.randomUUID().toString(), "Third todo", false)
-    );
+    private final TodoService service;
+
+    public TodoController(TodoService service) {
+        this.service = service;
+    }
 
     @Override
     public CompletableFuture<CreateTodo.Response<?>> createTodo(CreateTodo.Request<?> request) {
@@ -29,7 +28,7 @@ class PetstoreController implements GetTodos, GetTodoById, CreateTodo, UpdateTod
                 todoInput.name(),
                 todoInput.done()
         );
-        store.add(todo);
+        service.create(todo);
         var res = new CreateTodo.Response200ApplicationJson(Map.of(), todo);
         return CompletableFuture.completedFuture(res);
     }
@@ -45,7 +44,7 @@ class PetstoreController implements GetTodos, GetTodoById, CreateTodo, UpdateTod
             case GetTodoById.RequestVoid req -> req.getPath();
         };
         System.out.println(id);
-        var res = new GetTodoById.Response200ApplicationJson(Map.of(), store.get(0));
+        var res = new GetTodoById.Response200ApplicationJson(Map.of(), service.store.get(0));
         return CompletableFuture.completedFuture(res);
     }
 
@@ -56,7 +55,7 @@ class PetstoreController implements GetTodos, GetTodoById, CreateTodo, UpdateTod
 
     @Override
     public CompletableFuture<GetTodos.Response<?>> getTodos(GetTodos.Request<?> request) {
-        var res = new GetTodos.Response200ApplicationJson(Map.of(), store);
+        var res = new GetTodos.Response200ApplicationJson(Map.of(), service.store);
         return CompletableFuture.completedFuture(res);
     }
 }
