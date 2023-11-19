@@ -63,11 +63,13 @@ open class WirespecConfiguration {
                         .methods(RequestMethod.valueOf(method))
                         .options(options)
                         .build();
-
+                    println(endpoint.methods.map { it.name })
+                    val func = endpoint.methods
+                        .first { !listOf("REQUEST_MAPPER", "RESPONSE_MAPPER").contains(it.name) }
                     requestMappingHandlerMapping.registerMapping(
                         requestMappingWirespec,
                         controller.value,
-                        endpoint.methods.first()
+                        func
                     )
                 }
             }
