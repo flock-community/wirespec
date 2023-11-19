@@ -2,10 +2,7 @@ package community.flock.wirespec.emit;
 
 import community.flock.wirespec.compiler.core.emit.common.Emitter;
 import community.flock.wirespec.compiler.core.parse.nodes.Node;
-import community.flock.wirespec.compiler.core.parse.nodes.Refined;
 import community.flock.wirespec.compiler.core.parse.nodes.Type;
-import community.flock.wirespec.compiler.core.parse.nodes.Endpoint;
-import community.flock.wirespec.compiler.core.parse.nodes.Enum;
 import community.flock.wirespec.compiler.utils.Logger;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -15,66 +12,21 @@ import java.util.stream.Collectors;
 
 public class CustomEmitter extends Emitter {
 
-    public CustomEmitter(Logger logger, boolean split) {
+    public CustomEmitter(@NotNull Logger logger, boolean split) {
         super(logger, split);
     }
 
+    @NotNull
     @Override
-    public String getShared() {
-        return "";
-    }
-
-    @Override
-    public List<Pair<String, String>> emit(List<? extends Node> ast) {
-        return super.emit(ast)
+    public List<Pair<String, String>> emit(@NotNull List<? extends Node> ast) {
+        return ast
                 .stream()
-                .map(a -> new Pair<String,String>(a.component1(), "package hello;\n\n" + a.component2()))
+                .filter(sc -> sc instanceof Type)
+                .map (sc -> emit((Type) sc))
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public String emit(Refined refined) {
-        return null;
+    public Pair<String,String> emit(Type type) {
+        return new Pair<>(type.getName(), "package hello;\n\npublic class " + type.getName() + " {}");
     }
-
-    @Override
-    public String emit(Enum enumm) {
-        return null;
-    }
-
-    @Override
-    public String emit(Refined.Validator validator) {
-        return null;
-    }
-
-    @Override
-    public String emit(Type type) {
-        return "public class " + type.getName() + " {}";
-    }
-
-    @Override
-    public String emit(Type.Shape shape) {
-        return null;
-    }
-
-    @Override
-    public String emit(Type.Shape.Field field) {
-        return null;
-    }
-
-    @Override
-    public String emit(Type.Shape.Field.Identifier identifier) {
-        return null;
-    }
-
-    @Override
-    public String emit(Type.Shape.Field.Reference reference) {
-        return null;
-    }
-
-    @Override
-    public String emit(Endpoint endpoint) {
-        return null;
-    }
-
 }

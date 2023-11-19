@@ -1,7 +1,7 @@
 package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
-import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
@@ -14,7 +14,7 @@ import community.flock.wirespec.compiler.utils.noLogger
 class ScalaEmitter(
     private val packageName: String = DEFAULT_PACKAGE_NAME,
     logger: Logger = noLogger
-) : Emitter(logger) {
+) : AbstractEmitter(logger) {
 
     override val shared = ""
 

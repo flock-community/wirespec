@@ -1,6 +1,6 @@
 package community.flock.wirespec.compiler.core.emit
 
-import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
@@ -10,7 +10,7 @@ import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Refer
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
-class TypeScriptEmitter(logger: Logger = noLogger) : Emitter(logger) {
+class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
 
     override val shared = ""
 
