@@ -13,7 +13,6 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import org.springframework.web.util.pattern.PathPatternParser
 import java.io.BufferedReader
 import java.lang.reflect.Type
-import kotlin.reflect.full.companionObjectInstance
 
 class JacksonContentMapper(val objectMapper: ObjectMapper) : Wirespec.ContentMapper<BufferedReader> {
     override fun <T> read(
@@ -63,9 +62,8 @@ open class WirespecConfiguration {
                         .methods(RequestMethod.valueOf(method))
                         .options(options)
                         .build();
-                    println(endpoint.methods.map { it.name })
-                    val func = endpoint.methods
-                        .first { !listOf("REQUEST_MAPPER", "RESPONSE_MAPPER").contains(it.name) }
+                    val ignoredMethods = listOf("REQUEST_MAPPER", "RESPONSE_MAPPER")
+                    val func = endpoint.methods.first { !ignoredMethods.contains(it.name) }
                     requestMappingHandlerMapping.registerMapping(
                         requestMappingWirespec,
                         controller.value,
