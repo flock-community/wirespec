@@ -1,9 +1,11 @@
 package community.flock.wirespec.compiler.cli
 
 import arrow.core.Either
+import community.flock.wirespec.compiler.cli.Language.*
 import community.flock.wirespec.compiler.cli.Language.Jvm.Java
 import community.flock.wirespec.compiler.cli.Language.Jvm.Kotlin
 import community.flock.wirespec.compiler.cli.Language.Jvm.Scala
+import community.flock.wirespec.compiler.cli.Language.OpenApi.*
 import community.flock.wirespec.compiler.cli.Language.Script.TypeScript
 import community.flock.wirespec.compiler.cli.Language.Script.Wirespec
 import community.flock.wirespec.compiler.cli.io.Directory
@@ -19,10 +21,12 @@ import community.flock.wirespec.compiler.cli.io.WirespecFile
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
+import community.flock.wirespec.compiler.core.emit.OpenApiV2Emitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
+import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.orNull
@@ -41,8 +45,9 @@ private enum class OpenapiVersion {
 private sealed interface Language {
     enum class Jvm : Language { Java, Kotlin, Scala }
     enum class Script : Language { TypeScript, Wirespec }
+    enum class OpenApi : Language { OpenApiV2, OpenApiV3 }
     companion object {
-        fun values(): List<Enum<*>> = Jvm.entries + Script.entries
+        fun values(): List<Enum<*>> = Jvm.entries + Script.entries + entries
         fun valueOf(s: String): Language? = values().find { it.name == s } as Language?
     }
 }
@@ -64,7 +69,7 @@ fun cli(args: Array<String>) {
         ArgType.Choice(
             Language.values().map { it.name }.map { Language.valueOf(it) ?: error("Language not found") },
             { Language.valueOf(it) ?: error("Language not found") }), shortName = "l", description = "Language type"
-    ).default(Language.Jvm.Kotlin).multiple()
+    ).default(Jvm.Kotlin).multiple()
     val openapi by parser.option(
         ArgType.Choice<OpenapiVersion>(),
         shortName = "a",
@@ -104,28 +109,40 @@ private fun compile(
             }
             .map { (results, file) -> write(results, file) }
     } else {
+        if(input.endsWith(".ws")){
+            return WirespecFile(FullFilePath.parse(input))
+                .wirespec(languages,packageName,output,logger)
+
+        }
         Directory(input)
             .wirespecFiles()
-            .forEach { wsFile ->
-                val path = wsFile.path.out(packageName, output)
-                wsFile.read()
-                    .let(WirespecSpec::compile)(logger)
-                    .let { compiler ->
-                        emit(languages, packageName, path, logger)
-                            .map { (emitter, file) ->
-                                val result = compiler(emitter)
-                                if (!emitter.split) result.map { listOf(wsFile.path.fileName.replaceFirstChar(Char::uppercase) to it.first().second) } to file
-                                else result to file
-                            }
-                    }
-                    .map { (results, file) ->
-                        when (results) {
-                            is Either.Right -> write(results.value, file)
-                            is Either.Left -> println(results.value)
-                        }
-                    }
-            }
+            .forEach { it.wirespec(languages,packageName,output,logger)}
     }
+}
+
+private fun WirespecFile.wirespec(
+    languages: Set<Language>,
+    packageName: String,
+    output: String?,
+    logger: Logger
+) {
+    val path = this.path.out(packageName, output)
+    read()
+        .let(WirespecSpec::compile)(logger)
+        .let { compiler ->
+            emit(languages, packageName, path, logger)
+                .map { (emitter, file) ->
+                    val result = compiler(emitter)
+                    if (!emitter.split) result.map { listOf(this.path.fileName.replaceFirstChar(Char::uppercase) to it.first().second) } to file
+                    else result to file
+                }
+        }
+        .map { (results, file) ->
+            when (results) {
+                is Either.Right -> write(results.value, file)
+                is Either.Left -> println(results.value)
+            }
+        }
 }
 
 private fun emit(
@@ -142,6 +159,8 @@ private fun emit(
                 Scala -> ScalaEmitter(packageName, logger) to ScalaFile(path(Extension.Scala))
                 TypeScript -> TypeScriptEmitter(logger) to TypeScriptFile(path(Extension.TypeScript))
                 Wirespec -> WirespecEmitter(logger) to WirespecFile(path(Extension.Wirespec))
+                OpenApiV2 -> OpenApiV2Emitter(logger) to JsonFile(path(Extension.Json))
+                OpenApiV3 -> OpenApiV2Emitter(logger) to JsonFile(path(Extension.Json))
             }
         }
 }

@@ -36,6 +36,8 @@ kotlin {
         commonMain {
             dependencies {
                 api(ARROW_CORE)
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+                implementation("community.flock.kotlinx.openapi.bindings:kotlin-openapi-bindings:0.0.19")
             }
         }
         commonTest {

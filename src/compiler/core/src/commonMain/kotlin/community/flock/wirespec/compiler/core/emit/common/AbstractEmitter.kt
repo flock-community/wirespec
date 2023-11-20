@@ -10,11 +10,20 @@ import community.flock.wirespec.compiler.utils.Logger
 
 interface Emitters : TypeDefinitionEmitter, EnumDefinitionEmitter, RefinedTypeDefinitionEmitter, EndpointDefinitionEmitter
 
-abstract class Emitter(val logger: Logger, val split: Boolean = false) : Emitters {
+abstract class Emitter(open val logger: Logger, open val split:Boolean) {
+
+    abstract fun emit(ast: AST): List<Pair<String, String>>
+
+    companion object {
+        const val SPACER = "  "
+    }
+}
+
+abstract class AbstractEmitter(override val logger: Logger, override val split: Boolean = false) : Emitter(logger, split), Emitters {
 
     abstract val shared:String
 
-    open fun emit(ast: AST) = ast
+    override fun emit(ast: AST): List<Pair<String, String>> = ast
         .map {
             logger.log("Emitting Node $this")
             when (it) {
@@ -30,7 +39,7 @@ abstract class Emitter(val logger: Logger, val split: Boolean = false) : Emitter
         }
 
     companion object {
-        const val SPACER = "  "
+        const val SPACER = Emitter.SPACER
         fun String.firstToUpper() = replaceFirstChar(Char::uppercase )
         fun String.firstToLower() = replaceFirstChar(Char::lowercase )
         fun AST.hasEndpoints() = any { it is Endpoint }
@@ -45,5 +54,4 @@ abstract class Emitter(val logger: Logger, val split: Boolean = false) : Emitter
         }
         fun String.isInt() = toIntOrNull() != null
     }
-
 }
