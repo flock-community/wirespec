@@ -14,6 +14,7 @@ repositories {
 kotlin {
     js {
         nodejs()
+        generateTypeScriptDefinitions()
         binaries.library()
         compilations["main"].packageJson {
             customField("name", "@flock/wirespec")
@@ -34,6 +35,7 @@ kotlin {
             dependencies {
                 implementation(project(":src:compiler:cli"))
                 implementation(project(":src:compiler:core"))
+                implementation(project(":src:openapi"))
             }
         }
         val jsMain by getting {
