@@ -7,7 +7,7 @@ import community.flock.wirespec.compiler.core.parse.nodes.Type
 @ExperimentalJsExport
 internal fun List<Node>.produce(): Array<WsNode> = map {
     when (it) {
-        is Type -> WsType(it.name)
+        is Type -> WsType(it.name, it.shape.produce())
         is Endpoint -> WsEndpoint(
             name = it.name,
              method = it.method.produce(),
@@ -23,6 +23,10 @@ internal fun List<Node>.produce(): Array<WsNode> = map {
         is Refined -> WsRefined(it.name, it.validator.value)
     }
 }.toTypedArray()
+
+private fun Type.Shape.produce() = WsShape(
+    value.map { it.produce() }.toTypedArray()
+)
 
 @ExperimentalJsExport
 private fun List<Endpoint.Segment>.produce(): Array<WsSegment> = map{when(it){
@@ -87,7 +91,12 @@ sealed interface WsNode
 
 @JsExport
 @ExperimentalJsExport
-data class WsType(val name: String) : WsNode
+data class WsType(val name: String, val shape: WsShape) : WsNode
+
+@JsExport
+@ExperimentalJsExport
+data class WsShape(val value: Array<WsField>)
+
 
 @JsExport
 @ExperimentalJsExport
