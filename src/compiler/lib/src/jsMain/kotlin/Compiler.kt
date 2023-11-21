@@ -6,6 +6,8 @@ import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.parse.Parser
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.openapi.v2.OpenApiParser as OpenApiParserV2
+import community.flock.wirespec.openapi.v3.OpenApiParser as OpenApiParserV3
 
 @JsExport
 @ExperimentalJsExport
@@ -17,7 +19,6 @@ abstract class Compiler {
 
     fun parse(source: String) = Wirespec.tokenize(source)
         .let { Parser(logger).parse(it) }
-        .let { Ast(arrayOf()) }
 
     companion object {
         protected val logger = object : Logger() {}
@@ -52,4 +53,18 @@ class WsToWirespec : Compiler() {
     companion object {
         private val wirespecEmitter = WirespecEmitter(logger)
     }
+}
+
+@JsExport
+@ExperimentalJsExport
+class OpenApiV2 {
+    fun parse(source: String):Array<WsNode> = OpenApiParserV2.parse(source).produce()
+
+}
+
+@JsExport
+@ExperimentalJsExport
+class OpenApiV3 {
+    fun parse(source: String):Array<WsNode> = OpenApiParserV3.parse(source).produce()
+
 }
