@@ -19,7 +19,7 @@ internal fun List<Node>.produce(): Array<WsNode> = map {
              responses=  it.responses.produce(),
 
         )
-        is Enum -> WsEnum(it.name)
+        is Enum -> WsEnum(it.name, it.entries.toTypedArray())
         is Refined -> WsRefined(it.name, it.validator.value)
     }
 }.toTypedArray()
@@ -113,7 +113,7 @@ data class WsEndpoint(
 
 @JsExport
 @ExperimentalJsExport
-data class WsEnum(val name: String) : WsNode
+data class WsEnum(val name: String, val entries: Array<String>) : WsNode
 
 @JsExport
 @ExperimentalJsExport
