@@ -20,7 +20,6 @@ class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
         |${SPACER}export type Content<T> = { type:string, body:T }
         |${SPACER}export type Request<T> = { path:string, method: Method, query?: Record<string, any[]>, headers?: Record<string, any[]>, content?:Content<T> }
         |${SPACER}export type Response<T> = { status:number, headers?: Record<string, any[]>, content?:Content<T> }
-        |${SPACER}export type Handler = (request:Request<any>) => Promise<Response<any>>
         |}
     """.trimMargin()
 
@@ -93,8 +92,8 @@ class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
           |${SPACER}export type Call = {
           |${SPACER}${SPACER}${name.firstToLower()}: Handler
           |${SPACER}}
-          |${requests.joinToString("\n") { "${SPACER}export const ${it.emitName().firstToLower()} = (${joinParameters(it.content).takeIf { it.isNotEmpty() }?.joinToString(",", "obj:{", "}") { it.emit() }.orEmpty()}) => ({path: `${path.emitPath()}`, method: \"${method.name}\", query: {${query.emitMap()}}, headers: {${headers.emitMap()}}${it.content?.let { ", content: {type: \"${it.type}\", body: obj.body}" } ?: ""}} as const)" }}
-          |${responses.joinToString("\n") { "${SPACER}export const ${it.emitName().firstToLower()} = (${joinParameters(it.content).takeIf { it.isNotEmpty() }?.joinToString(",", "obj:{", "}") { it.emit() }.orEmpty()}) => ({status: ${if(it.status.isInt()) it.status else "`${it.status}`"}, headers: {${headers.emitMap()}}${it.content?.let { ", content: {type: \"${it.type}\", body: obj.body}" } ?: ""}} as const)" }}
+          |${requests.joinToString("\n") { "${SPACER}export const ${it.emitName().firstToLower()} = (${joinParameters(it.content, null).takeIf { it.isNotEmpty() }?.joinToString(",", "obj:{", "}") { it.emit() }.orEmpty()}) => ({path: `${path.emitPath()}`, method: \"${method.name}\", query: {${query.emitMap()}}, headers: {${headers.emitMap()}}${it.content?.let { ", content: {type: \"${it.type}\", body: obj.body}" } ?: ""}} as const)" }}
+          |${responses.joinToString("\n") { "${SPACER}export const ${it.emitName().firstToLower()} = (${joinParameters(it.content, it).takeIf { it.isNotEmpty() }?.joinToString(",", "obj:{", "}") { it.emit() }.orEmpty()}) => ({status: ${if(it.status.isInt()) it.status else "`${it.status}`"}, headers: {${it.headers.emitMap()}}${it.content?.let { ", content: {type: \"${it.type}\", body: obj.body}" } ?: ""}} as const)" }}
           |}
           |
         """.trimMargin()
@@ -111,7 +110,7 @@ class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
     private fun Endpoint.Request.emitName() = "Request" + (content?.emitContentType() ?: "Undefined")
     private fun Endpoint.Response.emitName() = "Response" + status.firstToUpper() + (content?.emitContentType() ?: "Undefined")
 
-    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ") { "\"${it.identifier.emit()}\": obj.${it.identifier.emit()}" }
+    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ") { "\"${it.identifier.emit()}\": obj.${it.identifier.emit().sanitizeSymbol().firstToLower()}" }
 
     private fun List<Endpoint.Segment>.emitPath() = "/" + joinToString("/") { it.emit() }
     private fun Endpoint.Segment.emit(): String = withLogging(logger) {
@@ -120,5 +119,18 @@ class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
             is Endpoint.Segment.Param -> "\${obj.${identifier.value}}"
         }
     }
+
+    private fun Endpoint.joinParameters(content: Endpoint.Content? = null, response: Endpoint.Response?): List<Type.Shape.Field> {
+        val pathField = path
+            .filterIsInstance<Endpoint.Segment.Param>()
+            .map { Type.Shape.Field(it.identifier, it.reference, false) }
+        val parameters = response?.headers ?: (pathField + query + headers + cookies)
+        return parameters
+            .plus(content?.reference?.toField("body", false))
+            .filterNotNull()
+            .map { it.copy(identifier = Type.Shape.Field.Identifier(it.identifier.value.sanitizeSymbol().firstToLower())) }
+    }
+
+    private fun String.sanitizeSymbol() = replace("-", "").replace(".", "").replace(" ", "_")
 
 }

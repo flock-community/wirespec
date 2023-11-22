@@ -2,6 +2,7 @@ package community.flock.wirespec.openapi.v2
 
 import arrow.core.filterIsInstance
 import community.flock.kotlinx.openapi.bindings.v2.BooleanObject
+import community.flock.kotlinx.openapi.bindings.v2.HeaderOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v2.OpenAPI
 import community.flock.kotlinx.openapi.bindings.v2.OperationObject
 import community.flock.kotlinx.openapi.bindings.v2.ParameterLocation
@@ -17,10 +18,10 @@ import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceOrBooleanObject
 import community.flock.kotlinx.openapi.bindings.v2.StatusCode
 import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
+import community.flock.kotlinx.openapi.bindings.v2.HeaderObject
 import community.flock.wirespec.compiler.core.parse.nodes.Definition
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
-import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.Type
 import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field
 import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference
@@ -77,6 +78,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                     (openApi.produces ?: operation.produces).orEmpty().map { type ->
                         Endpoint.Response(
                             status = status.value,
+                            headers = emptyList(),
                             content = res.resolve().schema?.let { schema ->
                                 Endpoint.Content(
                                     type = type,
@@ -221,6 +223,12 @@ class OpenApiParser(private val openApi: SwaggerObject) {
             is ReferenceObject -> this.resolveResponseObject()
         }
 
+    private fun HeaderOrReferenceObject.resolve(): HeaderObject =
+        when (this) {
+            is HeaderObject -> this
+            is ReferenceObject -> TODO("Header can never be a reference in openapi v2")
+        }
+
     private fun ParameterOrReferenceObject.resolve(): ParameterObject =
         when (this) {
             is ParameterObject -> this
@@ -239,7 +247,12 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                 ?: emptyList()
         }
 
-        allOf != null -> listOf(Type(name, Type.Shape(allOf.orEmpty().flatMap { it.resolve().toField(name) }.distinctBy { it.identifier })))
+        allOf != null -> listOf(
+            Type(
+                name,
+                Type.Shape(allOf.orEmpty().flatMap { it.resolve().toField(name) }.distinctBy { it.identifier })
+            )
+        )
             .plus(allOf!!.flatMap {
                 when (it) {
                     is ReferenceObject -> emptyList()
@@ -321,7 +334,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
             is BooleanObject -> Reference.Any(false, true)
             is ReferenceObject -> additionalProperties.toReference().toMap()
             is SchemaObject -> additionalProperties
-                .takeIf { it.type.isPrimitive() || it.properties != null}
+                .takeIf { it.type.isPrimitive() || it.properties != null }
                 ?.run { toReference(name).toMap() }
                 ?: Reference.Any(false, true)
         }

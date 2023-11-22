@@ -1,6 +1,8 @@
 package community.flock.wirespec.openapi.v3
 
 import community.flock.kotlinx.openapi.bindings.v3.BooleanObject
+import community.flock.kotlinx.openapi.bindings.v3.HeaderObject
+import community.flock.kotlinx.openapi.bindings.v3.HeaderOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPI
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPIObject
 import community.flock.kotlinx.openapi.bindings.v3.OperationObject
@@ -83,9 +85,11 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                     )
 
                 val responses = operation.responses.orEmpty().flatMap { (status, res) ->
-                    res.resolve().content?.map { (contentType, media) ->
+                    res.resolve().let{
+                        it.content?.map { (contentType, media) ->
                         Endpoint.Response(
                             status = status.value,
+                            headers = it.headers?.map { it.value.resolve().toField(it.key, className(name, "ResponseHeader")) }.orEmpty(),
                             content = Endpoint.Content(
                                 type = contentType.value,
                                 reference = when (val schema = media.schema) {
@@ -100,9 +104,11 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                             )
                         )
                     }
+                    }
                         ?: listOf(
                             Endpoint.Response(
                                 status = status.value,
+                                headers = emptyList(),
                                 content = null
                             )
                         )
@@ -260,6 +266,17 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
             }
             ?: error("Cannot resolve ref: $ref")
 
+    private fun ReferenceObject.resolveHeaderObject(): Pair<ReferenceObject, HeaderObject> =
+        openApi.components?.headers
+            ?.get(getReference())
+            ?.let {
+                when (it) {
+                    is HeaderObject -> this to it
+                    is ReferenceObject -> it.resolveHeaderObject()
+                }
+            }
+            ?: error("Cannot resolve ref: $ref")
+
     private fun ReferenceObject.resolveRequestBodyObject(): Pair<ReferenceObject, RequestBodyObject> =
         openApi.components?.requestBodies
             ?.get(getReference())
@@ -286,6 +303,12 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         when (this) {
             is SchemaObject -> this
             is ReferenceObject -> this.resolveSchemaObject().second
+        }
+
+    private fun HeaderOrReferenceObject.resolve(): HeaderObject =
+        when (this) {
+            is HeaderObject -> this
+            is ReferenceObject -> this.resolveHeaderObject().second
         }
 
     private fun SchemaOrReferenceOrBooleanObject.resolve(): SchemaObject =
@@ -493,6 +516,13 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         }
             .let { Field(Field.Identifier(this.name), it, !(this.required ?: false)) }
 
+    private fun HeaderObject.toField(identifier: String, name: String) =
+        when (val s = schema) {
+            is ReferenceObject -> s.toReference()
+            is SchemaObject -> s.toReference(name)
+            null -> TODO()
+        }
+            .let { Field(Field.Identifier(identifier), it, !(this.required ?: false)) }
 
     private data class FlattenRequest(
         val path: Path,

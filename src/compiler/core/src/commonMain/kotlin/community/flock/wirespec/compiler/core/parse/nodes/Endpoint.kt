@@ -20,6 +20,6 @@ data class Endpoint(
     }
 
     data class Request(val content: Content?)
-    data class Response(val status: String, val content: Content?)
+    data class Response(val status: String, val headers: List<Type.Shape.Field>, val content: Content?)
     data class Content(val type: String, val reference: Type.Shape.Field.Reference, val isNullable: Boolean = false)
 }

@@ -316,6 +316,7 @@ class OpenApiParserTest {
             responses = listOf(
                 Endpoint.Response(
                     status = "200",
+                    headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Primitive(type = Primitive.Type.Integer, isIterable = false, isMap = true),
@@ -354,12 +355,14 @@ class OpenApiParserTest {
                 ),
                 listOf(
                     Endpoint.Response(
-                        "200",
-                        Endpoint.Content("application/json", Reference.Custom("Ingredient", true), false)
+                        status = "200",
+                        headers = emptyList(),
+                        content = Endpoint.Content("application/json", Reference.Custom("Ingredient", true), false)
                     ),
                     Endpoint.Response(
-                        "404",
-                        null
+                        status = "404",
+                        headers = emptyList(),
+                        content = null
                     )
                 )
             ),
@@ -405,12 +408,14 @@ class OpenApiParserTest {
                 ),
                 listOf(
                     Endpoint.Response(
-                        "200",
-                        Endpoint.Content("application/json", Reference.Custom("Todo", true), false)
+                        status = "200",
+                        headers = emptyList(),
+                        content = Endpoint.Content("application/json", Reference.Custom("Todo", true), false)
                     ),
                     Endpoint.Response(
-                        "500",
-                        Endpoint.Content("application/json", Reference.Custom("Error", false), false)
+                        status = "500",
+                        headers = emptyList(),
+                        content = Endpoint.Content("application/json", Reference.Custom("Error", false), false)
                     )
                 )
             ),
@@ -442,9 +447,15 @@ class OpenApiParserTest {
                     )
                 ),
                 listOf(
-                    Endpoint.Response("201", null),
                     Endpoint.Response(
-                        "500", Endpoint.Content(
+                        status = "201",
+                        headers = emptyList(),
+                        content = null
+                    ),
+                    Endpoint.Response(
+                        status = "500",
+                        headers = emptyList(),
+                        content = Endpoint.Content(
                             type = "application/json",
                             reference = Reference.Custom("Error", false),
                             isNullable = false
@@ -468,6 +479,7 @@ class OpenApiParserTest {
                 listOf(
                     Endpoint.Response(
                         status = "200",
+                        headers = emptyList(),
                         content = Endpoint.Content(
                             type = "application/json",
                             reference = Reference.Custom("Todo", false),
@@ -476,6 +488,7 @@ class OpenApiParserTest {
                     ),
                     Endpoint.Response(
                         status = "500",
+                        headers = emptyList(),
                         content = Endpoint.Content(
                             type = "application/json",
                             reference = Reference.Custom("Error", false),

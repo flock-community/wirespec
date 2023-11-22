@@ -28,6 +28,7 @@ object Expected {
             responses = listOf(
                 Endpoint.Response(
                     status = "200",
+                    headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Primitive(type = Reference.Primitive.Type.String, isIterable = false),
@@ -87,6 +88,7 @@ object Expected {
             responses = listOf(
                 Endpoint.Response(
                     status = "200",
+                    headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(
@@ -168,6 +170,7 @@ object Expected {
             responses = listOf(
                 Endpoint.Response(
                     status = "200",
+                    headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(value = "Message", isIterable = false, isMap = true),
@@ -176,6 +179,7 @@ object Expected {
                 ),
                 Endpoint.Response(
                     status = "404",
+                    headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(
@@ -188,6 +192,7 @@ object Expected {
                 ),
                 Endpoint.Response(
                     status = "500",
+                    headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Any(false, true),
@@ -263,6 +268,7 @@ object Expected {
             responses = listOf(
                 Endpoint.Response(
                     status = "200",
+                    headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(value = "ArrayGET200ResponseBody", isIterable = true, isMap = false),
@@ -271,6 +277,7 @@ object Expected {
                 ),
                 Endpoint.Response(
                     status = "201",
+                    headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(value = "MessageArray", isIterable = true, isMap = false),
@@ -279,6 +286,7 @@ object Expected {
                 ),
                 Endpoint.Response(
                     status = "202",
+                    headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Primitive(type = Reference.Primitive.Type.String, isIterable = true, isMap = false),
@@ -351,6 +359,7 @@ object Expected {
             responses = listOf(
                 Endpoint.Response(
                     status = "200",
+                    headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(value = "AllofGET200ResponseBody", isIterable = false, isMap = false),
@@ -462,6 +471,7 @@ object Expected {
             responses = listOf(
                 Endpoint.Response(
                     status = "200",
+                    headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(value = "Message", isIterable = false, isMap = false),
@@ -470,6 +480,7 @@ object Expected {
                 ),
                 Endpoint.Response(
                     status = "201",
+                    headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(value = "EnumGET201ResponseBody", isIterable = false, isMap = false),
