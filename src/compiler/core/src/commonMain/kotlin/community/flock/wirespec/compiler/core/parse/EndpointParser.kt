@@ -185,7 +185,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
             is WirespecType -> parseContent(token.type as WirespecType, token.value).bind()
             else -> raise(WrongTokenException<WirespecType>(token))
         }
-        Endpoint.Response(status = statusCode, content = content)
+        Endpoint.Response(status = statusCode, headers = emptyList(), content = content)
     }
 
     private fun TokenProvider.parseContent(wsType: WirespecType, value: String) = either {

@@ -43,15 +43,6 @@ abstract class AbstractEmitter(override val logger: Logger, override val split: 
         fun String.firstToUpper() = replaceFirstChar(Char::uppercase )
         fun String.firstToLower() = replaceFirstChar(Char::lowercase )
         fun AST.hasEndpoints() = any { it is Endpoint }
-        fun Endpoint.joinParameters(content: Endpoint.Content? = null): List<Type.Shape.Field> {
-            val pathField = path
-                .filterIsInstance<Endpoint.Segment.Param>()
-                .map { Type.Shape.Field(it.identifier, it.reference, false) }
-            val parameters = pathField + query + headers + cookies
-            return parameters
-                .plus(content?.reference?.toField("body", false))
-                .filterNotNull()
-        }
         fun String.isInt() = toIntOrNull() != null
     }
 }

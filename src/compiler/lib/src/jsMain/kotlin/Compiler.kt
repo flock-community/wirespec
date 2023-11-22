@@ -55,16 +55,32 @@ class WsToWirespec : Compiler() {
     }
 }
 
-@JsExport
-@ExperimentalJsExport
-class OpenApiV2 {
-    fun parse(source: String):Array<WsNode> = OpenApiParserV2.parse(source).produce()
-
+interface ParserInterface {
+    fun parse(source: String):Array<WsNode>
 }
 
 @JsExport
 @ExperimentalJsExport
-class OpenApiV3 {
-    fun parse(source: String):Array<WsNode> = OpenApiParserV3.parse(source).produce()
+object OpenApiV2Parser{
+    fun parse(source: String):Array<WsNode> = OpenApiParserV2.parse(source).produce()
+}
 
+@JsExport
+@ExperimentalJsExport
+object OpenApiV3Parser{
+    fun parse(source: String):Array<WsNode> = OpenApiParserV3.parse(source).produce()
+}
+
+
+@JsExport
+@ExperimentalJsExport
+object OpenApiV3ToTypescript {
+    val logger = object : Logger() {}
+    private val emitter = TypeScriptEmitter(logger)
+    fun compile (source: String): Array<WsCompiledFile> {
+        val ast = OpenApiParserV3.parse(source)
+        return emitter.emit(ast)
+            .map { (file, value) -> WsCompiledFile(file, value)}
+            .toTypedArray()
+    }
 }

@@ -238,6 +238,7 @@ class OpenApiParserTest {
                 responses = listOf(
                     Endpoint.Response(
                         status = "200",
+                        headers = emptyList(),
                         content = Endpoint.Content(
                             type = "application/json",
                             reference = Custom(value = "Foo", isIterable = false, isMap = false),
