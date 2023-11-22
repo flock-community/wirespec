@@ -71,7 +71,7 @@ class CliTest {
     }
 
     @Test
-    fun testCliOpenapiKotlin() {
+    fun testCliOpenApiPetstoreKotlin() {
         val packageName = "community.flock.openapi"
         val packageDir = packageName.replace(".", "/")
         val input = "${inputDir}/openapi/petstore.json"

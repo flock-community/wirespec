@@ -18,3 +18,7 @@ class WsCompilationResult(
 @JsExport
 @ExperimentalJsExport
 class WsCompiled(val value: String)
+
+@JsExport
+@ExperimentalJsExport
+class WsCompiledFile(val name: String, val value: String)

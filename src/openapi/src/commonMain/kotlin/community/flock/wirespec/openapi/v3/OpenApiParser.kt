@@ -49,7 +49,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
             path.toOperationList().map { (method, operation) ->
                 val parameters = path.resolveParameters() + operation.resolveParameters()
                 val segments = key.toSegments(parameters)
-                val name = operation.toName(segments, method)
+                val name = operation.toName() ?: (key.toName() + method.name)
                 val query = parameters
                     .filter { it.`in` == ParameterLocation.QUERY }
                     .map { it.toField(className(name, "Parameter", it.name)) }
@@ -123,15 +123,12 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
 
     private fun parseParameters() = openApi.flatMapRequests { req ->
         val parameters = req.pathItem.resolveParameters() + req.operation.resolveParameters()
-        val segments = req.path.toSegments(parameters)
-        val name = req.operation.toName(segments, req.method)
+        val name = req.operation.toName() ?: (req.path.toName() + req.method.name)
         parameters.flatMap { parameter -> parameter.schema?.flatten(className(name, "Parameter", parameter.name)) ?: emptyList() }
     }
 
     private fun parseRequestBody() = openApi.flatMapRequests { req ->
-        val parameters = req.pathItem.resolveParameters() + req.operation.resolveParameters()
-        val segments = req.path.toSegments(parameters)
-        val name = req.operation.toName(segments, req.method)
+        val name = req.operation.toName() ?: (req.path.toName() + req.method.name)
         req.operation.requestBody?.resolve()?.content.orEmpty()
             .flatMap { (_, mediaObject) ->
                 when (val schema = mediaObject.schema) {
@@ -152,9 +149,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
     }
 
     private fun parseResponseBody() = openApi.flatMapResponses { res ->
-        val parameters = res.pathItem.resolveParameters() + (res.operation.resolveParameters())
-        val segments = res.path.toSegments(parameters)
-        val name = res.operation.toName(segments, res.method)
+        val name = res.operation.toName() ?: (res.path.toName() + res.method.name)
         when (val response = res.response) {
             is ResponseObject -> {
                 response.content.orEmpty().flatMap { (_, mediaObject) ->
@@ -188,38 +183,42 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         }
         .flatMap { it.value.flatten(className(it.key)) }
 
-    private fun Path.toSegments(parameters: List<ParameterObject>) = value.split("/").drop(1).map { segment ->
-        val isParam = segment[0] == '{' && segment[segment.length - 1] == '}'
-        when {
-            isParam -> {
-                val param = segment.substring(1, segment.length - 1)
-                parameters
-                    .find { it.name == param }
-                    ?.schema
-                    ?.resolve()
-                    ?.let { it.type?.toPrimitive() }
-                    ?.let {
-                        Endpoint.Segment.Param(
-                            Field.Identifier(param),
-                            Primitive(it, false)
-                        )
-                    }
-                    ?: error(" Declared path parameter $param needs to be defined as a path parameter in path or operation level")
-            }
+    private fun String.isParam() = this[0] == '{' && this[length - 1] == '}'
 
-            else -> Endpoint.Segment.Literal(segment)
+    private fun OperationObject.toName() = this.operationId?.let { className(it) }
+    private fun Path.toName(): String = value
+        .split("/")
+        .drop(1)
+        .filter { it.isNotBlank() }
+        .joinToString("") {
+            when (it.isParam()) {
+                true -> className(it.substring(1, it.length - 1))
+                false -> className(it)
+            }
+        }
+
+    private fun Path.toSegments(parameters: List<ParameterObject>) = value.split("/").drop(1).filter { it.isNotBlank() }.map { segment ->
+        when(segment.isParam()) {
+                true -> {
+                    val param = segment.substring(1, segment.length - 1)
+                    val name = toName()
+                    parameters
+                        .find { it.name == param }
+                        ?.schema
+                        ?.resolve()
+                        ?.toReference(className(name, "Parameter", param))
+                        ?.let {
+                            Endpoint.Segment.Param(
+                                Field.Identifier(param),
+                                it
+                            )
+                        }
+                        ?: error(" Declared path parameter $param needs to be defined as a path parameter in path or operation level")
+                }
+
+                false -> Endpoint.Segment.Literal(segment)
         }
     }
-
-    private fun OperationObject.toName(segments: List<Endpoint.Segment>, method: Endpoint.Method) =
-        operationId?.let { className(it) } ?: segments
-            .joinToString("") {
-                when (it) {
-                    is Endpoint.Segment.Literal -> className(it.value)
-                    is Endpoint.Segment.Param -> className(it.identifier.value)
-                }
-            }
-            .let { it + method.name }
 
     private fun OperationObject.resolveParameters(): List<ParameterObject> = parameters
         ?.mapNotNull {

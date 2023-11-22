@@ -4,6 +4,6 @@ import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Compan
 
 object Common {
     fun className(vararg arg: String) = arg
-        .flatMap { it.split("-") }
+        .flatMap { it.split("-", "/") }
         .joinToString("") { it.firstToUpper() }
 }
