@@ -99,6 +99,7 @@ class OpenApiV2Emitter(override val logger: Logger = noLogger, override val spli
         responses = responses
             .associate {
                 StatusCode(it.status) to ResponseObject(
+                    description = "${this.name} ${it.status} response",
                     schema = it.content?.reference?.let { reference ->
                         when (reference.isIterable) {
                             false -> reference.emit()
