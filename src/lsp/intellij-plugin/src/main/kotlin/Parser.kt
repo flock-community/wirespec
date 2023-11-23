@@ -57,15 +57,15 @@ class Parser : PsiParser {
             }
         }
 
-        fun parseDef() {
+        fun parseRef() {
             when {
                 builder.eof() -> return
                 builder.def() -> return
                 builder.tokenType == CUSTOM_TYPE -> {
                     val customTypeMarker = builder.mark()
                     builder.advanceLexer()
-                    customTypeMarker.done(CustomTypeDef())
-                    parseDef()
+                    customTypeMarker.done(CustomTypeRef())
+                    parseRef()
                 }
 
                 builder.tokenType == LEFT_CURLY -> {
@@ -74,7 +74,25 @@ class Parser : PsiParser {
                     parseBody()
                     bodyMarker.done(Body())
                     builder.advanceLexer()
-                    parseDef()
+                    parseRef()
+                }
+
+                else -> {
+                    builder.advanceLexer()
+                    parseRef()
+                }
+            }
+        }
+
+        fun parseDef() {
+            when {
+                builder.eof() -> return
+                builder.def() -> return
+                builder.tokenType == CUSTOM_TYPE -> {
+                    val customTypeMarker = builder.mark()
+                    builder.advanceLexer()
+                    customTypeMarker.done(CustomTypeDef())
+                    parseRef()
                 }
 
                 else -> {
