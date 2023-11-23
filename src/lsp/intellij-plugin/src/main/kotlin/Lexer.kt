@@ -49,7 +49,7 @@ class Lexer : IntellijLexer() {
 
     override fun getBufferSequence() = buffer
 
-    override fun getState() = state
+    override fun getState() = index
 
     override fun getTokenType() =
         if (index == tokens.size) null
