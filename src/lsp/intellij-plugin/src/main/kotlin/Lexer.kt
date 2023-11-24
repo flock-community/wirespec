@@ -96,6 +96,7 @@ class Lexer : IntellijLexer() {
 
     override fun advance() {
         index++
+        state = index
     }
 
     override fun getBufferEnd() = buffer.toString().length
