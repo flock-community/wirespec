@@ -24,7 +24,8 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenApiType
 
-class OpenApiV2Emitter(override val logger: Logger = noLogger, override val split: Boolean = false) : Emitter(logger, split) {
+class OpenApiV2Emitter(override val logger: Logger = noLogger, override val split: Boolean = false) :
+    Emitter(logger, split) {
 
     override fun emit(ast: AST): List<Pair<String, String>> {
         val obj = SwaggerObject(
@@ -100,15 +101,17 @@ class OpenApiV2Emitter(override val logger: Logger = noLogger, override val spli
             .associate {
                 StatusCode(it.status) to ResponseObject(
                     description = "${this.name} ${it.status} response",
-                    schema = it.content?.reference?.let { reference ->
-                        when (reference.isIterable) {
-                            false -> reference.emit()
-                            true -> SchemaObject(
-                                type = OpenApiType.ARRAY,
-                                items = reference.emit()
-                            )
+                    schema = it.content
+                        ?.takeIf { content -> content.reference !is Field.Reference.Unit }
+                        ?.let { content ->
+                            when (content.reference.isIterable) {
+                                false -> content.reference.emit()
+                                true -> SchemaObject(
+                                    type = OpenApiType.ARRAY,
+                                    items = content.reference.emit()
+                                )
+                            }
                         }
-                    }
                 )
             }
     )
