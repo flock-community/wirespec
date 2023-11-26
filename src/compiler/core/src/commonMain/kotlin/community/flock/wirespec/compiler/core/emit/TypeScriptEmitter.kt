@@ -51,6 +51,7 @@ class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
 
     override fun Type.Shape.Field.Reference.emit() = withLogging(logger) {
         when (this) {
+            is Reference.Unit -> "void"
             is Reference.Any -> "any"
             is Reference.Custom -> value
             is Reference.Primitive -> when (type) {

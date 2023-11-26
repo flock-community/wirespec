@@ -129,6 +129,7 @@ class OpenApiV2Emitter(override val logger: Logger = noLogger, override val spli
         )
 
         is Field.Reference.Any -> error("Cannot map Any")
+        is Field.Reference.Unit -> error("Cannot map Unit")
     }
 
 
@@ -143,6 +144,7 @@ class OpenApiV2Emitter(override val logger: Logger = noLogger, override val spli
         is Field.Reference.Primitive -> type.emitType()
         is Field.Reference.Custom -> OpenApiType.OBJECT
         is Field.Reference.Any -> OpenApiType.OBJECT
+        is Field.Reference.Unit -> OpenApiType.OBJECT
     }
 
 }

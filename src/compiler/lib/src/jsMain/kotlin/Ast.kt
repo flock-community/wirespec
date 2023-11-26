@@ -3,6 +3,7 @@ import community.flock.wirespec.compiler.core.parse.nodes.Enum
 import community.flock.wirespec.compiler.core.parse.nodes.Node
 import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.Type
+import community.flock.wirespec.compiler.core.tokenize.types.WsUnit
 
 @ExperimentalJsExport
 internal fun List<Node>.produce(): Array<WsNode> = map {
@@ -46,6 +47,7 @@ private fun Type.Shape.Field.Identifier.produce() = WsIdentifier(this.value)
 @ExperimentalJsExport
 private fun Type.Shape.Field.Reference.produce() = when(this){
     is Type.Shape.Field.Reference.Any -> WsAny(isIterable, isMap)
+    is Type.Shape.Field.Reference.Unit -> WsUnit(isIterable, isMap)
     is Type.Shape.Field.Reference.Custom -> WsCustom(value, isIterable, isMap)
     is Type.Shape.Field.Reference.Primitive -> WsPrimitive(type.produce(), isIterable, isMap)
 }
@@ -164,6 +166,9 @@ sealed interface WsReference {
 @JsExport
 @ExperimentalJsExport
 data class WsAny(override val isIterable: Boolean, override val isMap: Boolean = false) : WsReference
+@JsExport
+@ExperimentalJsExport
+data class WsUnit(override val isIterable: Boolean, override val isMap: Boolean = false) : WsReference
 @JsExport
 @ExperimentalJsExport
 data class WsCustom(

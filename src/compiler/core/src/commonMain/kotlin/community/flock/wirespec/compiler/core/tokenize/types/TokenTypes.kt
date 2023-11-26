@@ -36,6 +36,7 @@ data object WsInteger : WirespecType
 data object WsNumber : WirespecType
 data object WsBoolean : WirespecType
 data object CustomType : WirespecType
+data object WsUnit : WirespecType
 
 data object Method : Keyword
 

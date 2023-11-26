@@ -14,6 +14,7 @@ interface Types {
         val INTEGER = ElementType("INTEGER")
         val NUMBER = ElementType("NUMBER")
         val STRING = ElementType("STRING")
+        val UNIT = ElementType("UNIT")
         val TYPE_DEF = ElementType("TYPE_DEF")
         val ENUM_DEF = ElementType("ENUM_DEF")
         val REFINED_TYPE_DEF = ElementType("REFINED_TYPE_DEF")

@@ -544,10 +544,12 @@ private fun Reference.toIterable() = when (this) {
     is Reference.Custom -> this.copy(isIterable = true)
     is Reference.Any -> this.copy(isIterable = true)
     is Reference.Primitive -> this.copy(isIterable = true)
+    is Reference.Unit -> this.copy(isIterable = true)
 }
 
 private fun Reference.toMap() = when (this) {
     is Reference.Custom -> this.copy(isMap = true)
     is Reference.Any -> this.copy(isMap = true)
     is Reference.Primitive -> this.copy(isMap = true)
+    is Reference.Unit -> this.copy(isMap = true)
 }

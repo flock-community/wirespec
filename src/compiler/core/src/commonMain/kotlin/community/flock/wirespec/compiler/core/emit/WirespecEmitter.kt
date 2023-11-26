@@ -5,7 +5,6 @@ import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
 import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.Type
-import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
@@ -32,13 +31,14 @@ class WirespecEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
 
     override fun Type.Shape.Field.Reference.emit() = withLogging(logger) {
         when (this) {
-            is Reference.Any -> "Any"
-            is Reference.Custom -> value
-            is Reference.Primitive -> when (type) {
-                Reference.Primitive.Type.String -> "String"
-                Reference.Primitive.Type.Integer -> "Integer"
-                Reference.Primitive.Type.Number -> "Number"
-                Reference.Primitive.Type.Boolean -> "Boolean"
+            is Type.Shape.Field.Reference.Unit -> "Unit"
+            is Type.Shape.Field.Reference.Any -> "Any"
+            is Type.Shape.Field.Reference.Custom -> value
+            is Type.Shape.Field.Reference.Primitive -> when (type) {
+                Type.Shape.Field.Reference.Primitive.Type.String -> "String"
+                Type.Shape.Field.Reference.Primitive.Type.Integer -> "Integer"
+                Type.Shape.Field.Reference.Primitive.Type.Number -> "Number"
+                Type.Shape.Field.Reference.Primitive.Type.Boolean -> "Boolean"
             }
         }.let { if (isIterable) "$it[]" else it }
     }
