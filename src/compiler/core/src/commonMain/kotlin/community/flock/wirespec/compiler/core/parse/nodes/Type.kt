@@ -9,6 +9,7 @@ data class Type(val name: String, val shape: Shape) : Definition {
                 val isMap: Boolean
 
                 data class Any(override val isIterable: Boolean, override val isMap: Boolean = false) : Reference
+                data class Unit(override val isIterable: Boolean, override val isMap: Boolean = false) : Reference
                 data class Custom(
                     val value: String,
                     override val isIterable: Boolean,

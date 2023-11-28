@@ -76,6 +76,7 @@ class JavaEmitter(
 
     private fun Reference.emitSymbol() = withLogging(logger) {
         when (this) {
+            is Reference.Unit -> "Void"
             is Reference.Any -> "Object"
             is Reference.Custom -> value
             is Reference.Primitive -> when (type) {

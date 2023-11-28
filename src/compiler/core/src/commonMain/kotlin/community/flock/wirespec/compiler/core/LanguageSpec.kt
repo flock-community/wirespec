@@ -27,6 +27,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.WsNumber
 import community.flock.wirespec.compiler.core.tokenize.types.WsRefinedTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsString
 import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
+import community.flock.wirespec.compiler.core.tokenize.types.WsUnit
 
 interface LanguageSpec {
     val orderedMatchers: List<Pair<Regex, TokenType>>
@@ -52,6 +53,7 @@ object Wirespec : LanguageSpec {
         Regex("^Integer") to WsInteger,
         Regex("^Number") to WsNumber,
         Regex("^Boolean") to WsBoolean,
+        Regex("^Unit") to WsUnit,
         Regex("^->") to Arrow,
         Regex("^GET|^POST|^PUT|^DELETE|^OPTIONS|^HEAD|^PATCH|^TRACE") to Method,
         Regex("^/.*/g") to CustomRegex,

@@ -87,6 +87,7 @@ class KotlinEmitter(
 
     private fun Reference.emitSymbol() = withLogging(logger) {
         when (this) {
+            is Reference.Unit -> "Unit"
             is Reference.Any -> "Any"
             is Reference.Custom -> value
             is Reference.Primitive -> when (type) {

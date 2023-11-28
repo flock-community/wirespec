@@ -18,6 +18,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
 import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
 import community.flock.wirespec.compiler.core.tokenize.types.WsNumber
 import community.flock.wirespec.compiler.core.tokenize.types.WsString
+import community.flock.wirespec.compiler.core.tokenize.types.WsUnit
 import community.flock.wirespec.compiler.utils.Logger
 
 class TypeParser(logger: Logger) : AbstractParser(logger) {
@@ -106,6 +107,8 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
                 Type.Shape.Field.Reference.Primitive.Type.Boolean,
                 isIterable
             )
+
+            is WsUnit -> Type.Shape.Field.Reference.Unit(isIterable)
 
             is CustomType -> Type.Shape.Field.Reference.Custom(value, isIterable)
         }

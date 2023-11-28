@@ -25,7 +25,6 @@ import community.flock.wirespec.compiler.core.parse.nodes.Enum
 import community.flock.wirespec.compiler.core.parse.nodes.Type
 import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field
 import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference
-import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference.Primitive
 import community.flock.wirespec.openapi.Common.className
 import community.flock.kotlinx.openapi.bindings.v3.Type as OpenapiType
 
@@ -435,7 +434,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
 
         enum != null -> Reference.Custom(name, false, additionalProperties != null)
         else -> when (val type = type) {
-            OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Primitive(
+            OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Reference.Primitive(
                 type.toPrimitive(),
                 false,
                 additionalProperties != null
@@ -477,10 +476,10 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         ?: error("Wrong reference: ${this.ref.value}")
 
     private fun OpenapiType.toPrimitive() = when (this) {
-        OpenapiType.STRING -> Primitive.Type.String
-        OpenapiType.INTEGER -> Primitive.Type.Integer
-        OpenapiType.NUMBER -> Primitive.Type.Number
-        OpenapiType.BOOLEAN -> Primitive.Type.Boolean
+        OpenapiType.STRING -> Reference.Primitive.Type.String
+        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer
+        OpenapiType.NUMBER -> Reference.Primitive.Type.Number
+        OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean
         else -> error("Type is not a primitive")
     }
 
@@ -583,13 +582,15 @@ private fun OpenapiType?.isPrimitive() = when (this) {
 }
 
 private fun Reference.toIterable() = when (this) {
-    is Reference.Custom -> this.copy(isIterable = true)
-    is Reference.Any -> this.copy(isIterable = true)
-    is Reference.Primitive -> this.copy(isIterable = true)
+    is Reference.Custom -> copy(isIterable = true)
+    is Reference.Any -> copy(isIterable = true)
+    is Reference.Primitive -> copy(isIterable = true)
+    is Reference.Unit -> copy(isIterable = true)
 }
 
 private fun Reference.toMap() = when (this) {
-    is Reference.Custom -> this.copy(isMap = true)
-    is Reference.Any -> this.copy(isMap = true)
-    is Reference.Primitive -> this.copy(isMap = true)
+    is Reference.Custom -> copy(isMap = true)
+    is Reference.Any -> copy(isMap = true)
+    is Reference.Primitive -> copy(isMap = true)
+    is Reference.Unit -> copy(isMap = true)
 }
