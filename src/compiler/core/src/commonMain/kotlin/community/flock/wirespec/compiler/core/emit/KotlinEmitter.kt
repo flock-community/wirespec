@@ -89,14 +89,14 @@ class KotlinEmitter(
         when (this) {
             is Reference.Unit -> "Unit"
             is Reference.Any -> "Any"
-            is Reference.Custom -> value
+            is Reference.Custom -> value.sanitizeSymbol()
             is Reference.Primitive -> when (type) {
                 Reference.Primitive.Type.String -> "String"
                 Reference.Primitive.Type.Integer -> "Int"
                 Reference.Primitive.Type.Number -> "Double"
                 Reference.Primitive.Type.Boolean -> "Boolean"
             }
-        }.sanitizeSymbol()
+        }
     }
 
     override fun Reference.emit() = withLogging(logger) {

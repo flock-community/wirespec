@@ -6,7 +6,6 @@ import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
 import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.Type
-import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
@@ -25,19 +24,21 @@ class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
 
     override fun emit(ast: AST): List<Pair<String, String>> =
         super.emit(ast).map { (name, result) ->
-            name to """
+            name.sanitizeSymbol() to """
                     |${if (ast.hasEndpoints()) endpointBase else ""}
                     |${result}
             """.trimMargin().trimStart()
         }
 
     override fun Type.emit() = withLogging(logger) {
-        """export type $name = {
+        """export type ${name.sanitizeSymbol()} = {
             |${shape.emit()}
             |}
             |
             |""".trimMargin()
     }
+
+    override fun Enum.emit() = withLogging(logger) { "type ${name.sanitizeSymbol()} = ${entries.joinToString(" | ") { """"$it"""" }}\n" }
 
     override fun Type.Shape.emit() = withLogging(logger) {
         value.joinToString(",\n") { it.emit() }
@@ -49,26 +50,29 @@ class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
 
     override fun Type.Shape.Field.Identifier.emit() = withLogging(logger) { value }
 
-    override fun Type.Shape.Field.Reference.emit() = withLogging(logger) {
+
+    private fun Type.Shape.Field.Reference.emitSymbol() = withLogging(logger) {
         when (this) {
-            is Reference.Unit -> "void"
-            is Reference.Any -> "any"
-            is Reference.Custom -> value
-            is Reference.Primitive -> when (type) {
-                Reference.Primitive.Type.String -> "string"
-                Reference.Primitive.Type.Integer -> "number"
-                Reference.Primitive.Type.Number -> "number"
-                Reference.Primitive.Type.Boolean -> "boolean"
+            is Type.Shape.Field.Reference.Unit -> "void"
+            is Type.Shape.Field.Reference.Any -> "any"
+            is Type.Shape.Field.Reference.Custom -> value.sanitizeSymbol()
+            is Type.Shape.Field.Reference.Primitive -> when (type) {
+                Type.Shape.Field.Reference.Primitive.Type.String -> "string"
+                Type.Shape.Field.Reference.Primitive.Type.Integer -> "number"
+                Type.Shape.Field.Reference.Primitive.Type.Number -> "number"
+                Type.Shape.Field.Reference.Primitive.Type.Boolean -> "boolean"
             }
         }
+    }
+
+    override fun Type.Shape.Field.Reference.emit() = withLogging(logger) {
+        emitSymbol()
             .let { if (isIterable) "$it[]" else it }
             .let { if (isMap) "Record<string, $it>" else it }
     }
 
-    override fun Enum.emit() = withLogging(logger) { "type $name = ${entries.joinToString(" | ") { """"$it"""" }}\n" }
-
     override fun Refined.emit() = withLogging(logger) {
-        """type $name = {
+        """type ${name.sanitizeSymbol()} = {
             |${SPACER}value: string
             |}
             |const validate$name = (type: $name) => (${validator.emit()}).test(type.value);
@@ -82,7 +86,7 @@ class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
 
     override fun Endpoint.emit() = withLogging(logger) {
         """
-          |export module ${name} {
+          |export module ${name.sanitizeSymbol()} {
           |${SPACER}export const PATH = "/${path.joinToString ("/"){ when (it) {is Endpoint.Segment.Literal -> it.value; is Endpoint.Segment.Param -> ":${it.identifier.value}" } }}"
           |${SPACER}export const METHOD = "${method.name}"
           |${requests.toSet().joinToString("\n") { "${SPACER}type ${it.emitName()} = { path: ${path.emitType()}, method: \"${method}\", headers: {${headers.map { it.emit() }.joinToString(",")}}, query: {${query.map { it.emit() }.joinToString(",")}}${it.content?.let { ", content: { type: \"${it.type}\", body: ${it.reference.emit()} }" } ?: ""} } " }}
@@ -132,6 +136,9 @@ class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
             .map { it.copy(identifier = Type.Shape.Field.Identifier(it.identifier.value.sanitizeSymbol().firstToLower())) }
     }
 
-    private fun String.sanitizeSymbol() = replace("-", "").replace(".", "").replace(" ", "_")
+    private fun String.sanitizeSymbol() = this
+        .replace("-", "")
+        .replace(".", "")
+        .replace(" ", "_")
 
 }
