@@ -27,6 +27,7 @@ endpoint DEFINITION METHOD [INPUT_REFERENCE] [PATH] [? QUERY] [# HEADER] -> {
 ```
 
 ## Example
+
 `todo.ws`
 ```wirespec
 refined UUID /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/g
@@ -132,7 +133,7 @@ sudo mv ./wirespec /usr/local/bin/wirespec
 ```
 
 
-## Maven
+## Maven Plugin
 Example how to use the maven plugin  
 For a full example click [here](examples/spring-boot-maven-plugin)
 It is also possible to create your custom emitter and run with the plugin[here](examples/spring-boot-custom-maven-plugin)
@@ -206,7 +207,7 @@ It is also possible to create your custom emitter and run with the plugin[here](
 </project>
 ```
 
-## Gradle
+## Gradle Plugin
 Example how to use the gradle plugin  
 For a full example click [here](examples/spring-boot-gradle-plugin)
 ```kotlin
