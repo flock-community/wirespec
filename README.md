@@ -7,7 +7,7 @@ Wirespec is a typesafe language to specify data transfer models which are exchan
 ![overview](images/overview.png)
 
 ## Syntax
-Wirespec language has four type of deffinitions: `refined`, `enum', `type`, `refined`.
+Wirespec language has four type of deffinitions: `refined`, `enum`, `type`, `refined`.
 
 ```
 refined DEFINITION /REGEX/g
