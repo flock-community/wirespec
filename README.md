@@ -1,8 +1,77 @@
 # Wirespec
-Type safe wires made easy
+Readable contracts and typesafe wires made easy
 
 ## Introduction
-Wirespec is a typesafe language to specify data transfer models which are exchanged between services. These models can be transformed into bindings for a specific language (Typescript, Java, Kotlin, Scala).
+Wirespec is a typesafe language to specify data transfer models which are exchanged between services. These models can be transformed into bindings for a specific language (Typescript, Java, Kotlin, Scala). Wirespec is 💯 compatible with OpenApiSpecification (OAS).
+
+![overview](images/overview.png)
+
+## Syntax
+Wirespec language has four type of deffinitions: `refined`, `enum', `type`, `refined`.
+
+```
+refined DEFINITION /REGEX/g
+
+enum DEFINITION {
+    ENTRY, ENTRY, ...
+}
+
+type DEFINITION {
+    IDENTIFIER: REFERENCE
+}
+
+endpoint DEFINITION METHOD [INPUT_REFERENCE] [PATH] [? QUERY] [# HEADER] {
+    [STATUS]: [REFERENCE]
+}
+
+```
+
+## Example
+
+```wirespec
+refined UUID /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/g
+
+type Todo {
+    id: UUID,
+    name: String,
+    done: Boolean
+}
+
+type TodoInput {
+    name: String,
+    done: Boolean
+}
+
+type Error {
+    code: String,
+    description: String
+}
+
+endpoint GetTodoById GET /todos/{id:UUID} -> {
+    200 -> Todo[]
+    404 -> Error
+}
+
+endpoint GetTodos GET /todos ? {done:Boolean?} # {limit:Integer, offset:Integer} -> {
+    200 -> Todo[]
+    404 -> Error
+}
+
+endpoint CreateTodo POST TodoInput /todos -> {
+    200 -> Todo
+    404 -> Error
+}
+
+endpoint UpdateTodo PUT TodoInput /todos/{id:UUID} -> {
+    200 -> Todo
+    404 -> Error
+}
+
+endpoint DeleteTodo DELETE /todos/{id:UUID} -> {
+    200 -> Todo
+    404 -> Error
+}
+```
 
 ## Dependencies
 * JDK 17
@@ -36,22 +105,24 @@ Options:
 #### Linux
 ```
 curl -L https://github.com/flock-community/wirespec/releases/latest/download/linuxX64.kexe -o wirespec
+chmod +x wirespec
+sudo mv ./wirespec /usr/local/bin/wirespec
 ```
 
 #### macOS
 ```
 curl -L https://github.com/flock-community/wirespec/releases/latest/download/macosX64.kexe -o wirespec
+chmod +x wirespec
+sudo mv ./wirespec /usr/local/bin/wirespec
 ```
 
 #### macOS Arm
 ```
 curl -L https://github.com/flock-community/wirespec/releases/latest/download/macosArm64.kexe -o wirespec
-```
-
-```
 chmod +x wirespec
 sudo mv ./wirespec /usr/local/bin/wirespec
 ```
+
 
 ## Maven
 Example how to use the maven plugin  
