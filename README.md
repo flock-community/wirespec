@@ -27,7 +27,7 @@ endpoint DEFINITION METHOD [INPUT_REFERENCE] [PATH] [? QUERY] [# HEADER] {
 ```
 
 ## Example
-
+`todo.ws`
 ```wirespec
 refined UUID /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/g
 
@@ -71,6 +71,14 @@ endpoint DeleteTodo DELETE /todos/{id:UUID} -> {
     200 -> Todo
     404 -> Error
 }
+```
+
+## Usage
+
+Wirespec files can be transformed into language specific binding by using the cli
+
+```shell
+wirespec ./todo.ws -o ./tmp -l Kotlin
 ```
 
 ## Dependencies
