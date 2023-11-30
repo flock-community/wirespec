@@ -15,6 +15,7 @@ import community.flock.wirespec.openapi.v2.OpenApiParser as OpenApiParserV2
 import community.flock.wirespec.openapi.v3.OpenApiParser as OpenApiParserV3
 
 private enum class Language { Java, Kotlin, Scala, TypeScript, Wirespec }
+private enum class Format { Wirespec, OpenApiV2, OpenApiV3 }
 
 @Mojo(name = "generate", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
 class GenerateMojo : BaseMojo() {
@@ -29,10 +30,13 @@ class GenerateMojo : BaseMojo() {
     private var packageName: String = DEFAULT_PACKAGE_NAME
 
     @Parameter
-    private var openapi: String? = null
+    private var languages: List<Language>? = null
 
     @Parameter
-    private var languages: List<Language>? = null
+    private var format: Format? = null
+
+    @Parameter
+    private var strict: Boolean = true
 
     @Parameter
     private var shared: Boolean = true
@@ -58,16 +62,16 @@ class GenerateMojo : BaseMojo() {
         if(shared) {
             JvmUtil.emitJvm("community.flock.wirespec", output, "Wirespec", "kt").writeText(emitter.shared)
         }
-        if (openapi != null) {
+        if (format == Format.OpenApiV2 || format == Format.OpenApiV3) {
             val fileName = input.split("/")
                 .last()
                 .substringBeforeLast(".")
                 .replaceFirstChar(Char::uppercase)
             val json = File(input).readText()
-            val ast = when (openapi) {
-                "v2" -> OpenApiParserV2.parse(json)
-                "v3" -> OpenApiParserV3.parse(json)
-                else -> error("Api version not found")
+            val ast = when (format) {
+                Format.OpenApiV2 -> OpenApiParserV2.parse(json, !strict)
+                Format.OpenApiV3 -> OpenApiParserV3.parse(json, !strict)
+                else -> error("Format not found")
             }
             val result = emitter.emit(ast).joinToString("\n") { it.second }
             JvmUtil.emitJvm(packageName, output, fileName, "kt").writeText(result)
@@ -84,12 +88,12 @@ class GenerateMojo : BaseMojo() {
         if(shared) {
             JvmUtil.emitJvm("community.flock.wirespec", output, "Wirespec", "java").writeText(emitter.shared)
         }
-        if (openapi != null) {
+        if (format == Format.OpenApiV2 || format == Format.OpenApiV3) {
             val json = File(input).readText()
-            val ast = when (openapi) {
-                "v2" -> OpenApiParserV2.parse(json)
-                "v3" -> OpenApiParserV3.parse(json)
-                else -> error("Api version not found")
+            val ast = when (format) {
+                Format.OpenApiV2 -> OpenApiParserV2.parse(json, strict)
+                Format.OpenApiV3 -> OpenApiParserV3.parse(json, strict)
+                else -> error("Format not found")
             }
             emitter.emit(ast).forEach { (name, result) ->
                 JvmUtil.emitJvm(packageName, output, name, "java").writeText(result)
