@@ -146,13 +146,13 @@ class JavaEmitter(
     }
 
     private fun Endpoint.Request.emit(endpoint: Endpoint) = """
-        |${SPACER}final class Request${content.emitContentType()} implements Request<${content?.reference?.emit() ?: "Void"}> {
+        |${SPACER}final class Request${content?.emitContentType() ?: "Void"} implements Request<${content?.reference?.emit() ?: "Void"}> {
         |${SPACER}${SPACER}private final String path;
         |${SPACER}${SPACER}private final Wirespec.Method method;
         |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<Object>> query;
         |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<Object>> headers;
         |${SPACER}${SPACER}private final Wirespec.Content<${content?.reference?.emit() ?: "Void"}> content;
-        |${SPACER}${SPACER}public Request${content.emitContentType()}(${endpoint.emitRequestSignature(content)}) {
+        |${SPACER}${SPACER}public Request${content?.emitContentType() ?: "Void"}(${endpoint.emitRequestSignature(content)}) {
         |${SPACER}${SPACER}${SPACER}this.path = ${endpoint.path.emitPath()};
         |${SPACER}${SPACER}${SPACER}this.method = Wirespec.Method.${endpoint.method.name};
         |${SPACER}${SPACER}${SPACER}this.query = ${endpoint.query.emitMap()};
@@ -168,13 +168,13 @@ class JavaEmitter(
     """.trimMargin()
 
     private fun Endpoint.Response.emit() = """
-        |${SPACER}final class Response${status.firstToUpper()}${content.emitContentType()} implements Response${
+        |${SPACER}final class Response${status.firstToUpper()}${content?.emitContentType()?:"Void"} implements Response${
         status.firstToUpper().orEmptyString()
     }<${content?.reference?.emit() ?: "Void"}> {
         |${SPACER}${SPACER}private final int status;
         |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<Object>> headers;
         |${SPACER}${SPACER}private final Wirespec.Content<${content?.reference?.emit() ?: "Void"}> content;
-        |${SPACER}${SPACER}public Response${status.firstToUpper()}${content.emitContentType()}(${
+        |${SPACER}${SPACER}public Response${status.firstToUpper()}${content?.emitContentType() ?: "Void"}(${
         status.takeIf { !it.isInt() }?.let { "int status, " }.orEmptyString()
     }java.util.Map<String, java.util.List<Object>> headers${content?.let { ", ${it.reference.emit()} body" } ?: ""}) {
         |${SPACER}${SPACER}${SPACER}this.status = ${status.takeIf { it.isInt() } ?: "status"};
@@ -211,12 +211,6 @@ class JavaEmitter(
                     |
                 """.trimMargin()
         }
-
-    private fun Endpoint.Content?.emitContentType() = this
-        ?.type
-        ?.split("/", "-")
-        ?.joinToString("") { it.firstToUpper() }
-        ?: "Void"
 
     private fun Endpoint.Segment.emit(): String = withLogging(logger) {
         when (this) {

@@ -77,7 +77,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                     }
                     .ifEmpty { listOf(Endpoint.Request(null)) }
                 val responses = operation.responses.orEmpty().flatMap { (status, res) ->
-                    (openApi.produces ?: operation.produces).orEmpty().map { type ->
+                    (openApi.produces ?: operation.produces ?: listOf("application/json")).map { type ->
                         Endpoint.Response(
                             status = status.value,
                             headers = emptyList(),
@@ -511,7 +511,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                 .flatMap { (method, operation) ->
                     operation
                         .responses.orEmpty().flatMap { (statusCode, response) ->
-                            (produces ?: operation.produces).orEmpty().map { type ->
+                            (produces ?: operation.produces ?: listOf("application/json")).map { type ->
                                 FlattenResponse(
                                     path,
                                     pathItem,

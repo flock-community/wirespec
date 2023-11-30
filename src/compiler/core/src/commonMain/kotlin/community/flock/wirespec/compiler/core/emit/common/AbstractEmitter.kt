@@ -38,6 +38,13 @@ abstract class AbstractEmitter(override val logger: Logger, override val split: 
             else listOf("NoName" to joinToString("\n") { it.second })
         }
 
+    fun Endpoint.Content.emitContentType() = type
+        .substringBefore(";")
+        .split("/", "-")
+        .joinToString("") { it.firstToUpper() }
+        .replace("+", "")
+
+
     companion object {
         const val SPACER = Emitter.SPACER
         fun String.firstToUpper() = replaceFirstChar(Char::uppercase )

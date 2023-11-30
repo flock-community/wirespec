@@ -260,10 +260,6 @@ class KotlinEmitter(
 
 }
 
-fun Endpoint.Content.emitContentType() = type
-    .split("/", "-")
-    .joinToString("") { it.firstToUpper() }
-    .replace("+", "")
 
 fun Type.Shape.Field.Reference.toField(identifier: String, isNullable: Boolean) = Type.Shape.Field(
     Type.Shape.Field.Identifier(identifier),
