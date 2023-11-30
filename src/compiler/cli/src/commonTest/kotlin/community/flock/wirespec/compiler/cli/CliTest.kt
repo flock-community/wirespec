@@ -77,7 +77,7 @@ class CliTest {
         val input = "${inputDir}/openapi/petstore.json"
         val output = outputDir()
 
-        cli(arrayOf(input, "-o", output, "-l", "Kotlin", "-p", "community.flock.openapi", "-a", "v2"))
+        cli(arrayOf(input, "-o", output, "-l", "Kotlin", "-p", "community.flock.openapi", "-f", "openapiv2"))
 
         val path = FullFilePath("$output/$packageDir", "Petstore")
         val file = KotlinFile(path).read()
@@ -103,7 +103,7 @@ class CliTest {
         val input = "${inputDir}/openapi/keto.json"
         val output = outputDir()
 
-        cli(arrayOf(input, "-o", output, "-l", "Kotlin", "-p", "community.flock.openapi", "-a", "v3"))
+        cli(arrayOf(input, "-o", output, "-l", "Kotlin", "-p", "community.flock.openapi", "-f", "openapiv3"))
 
         val path = FullFilePath("$output/$packageDir", "Keto")
         val file = KotlinFile(path).read()
@@ -128,7 +128,7 @@ class CliTest {
         val input = "${inputDir}/openapi/petstore.json"
         val output = outputDir()
 
-        cli(arrayOf(input, "-o", output, "-l", "TypeScript", "-p", "community.flock.openapi", "-a", "v2"))
+        cli(arrayOf(input, "-o", output, "-l", "TypeScript", "-p", "community.flock.openapi", "-f", "openapiv2"))
 
         val path = FullFilePath("$output/$packageDir", "Petstore")
         val file = TypeScriptFile(path).read()
@@ -155,7 +155,7 @@ class CliTest {
         val output = outputDir()
 
         cli(arrayOf(input, "-o", output, "-l", "OpenApiV2", "-p", packageDir))
-        cli(arrayOf("${output}/$packageDir/Todo.json", "-o", output, "-l", "Wirespec", "-p", packageDir, "-a", "v2"))
+        cli(arrayOf("${output}/$packageDir/Todo.json", "-o", output, "-l", "Wirespec", "-p", packageDir, "-f", "openapiv2"))
 
         val pathWs = FullFilePath("$output/$packageDir", "Todo", Extension.Wirespec)
         val fileWs = WirespecFile(pathWs).read()

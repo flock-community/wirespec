@@ -26,13 +26,14 @@ import community.flock.wirespec.compiler.core.parse.nodes.Type
 import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field
 import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference
 import community.flock.wirespec.openapi.Common.className
+import kotlinx.serialization.json.Json
 import community.flock.kotlinx.openapi.bindings.v3.Type as OpenapiType
 
 class OpenApiParser(private val openApi: OpenAPIObject) {
 
     companion object {
-        fun parse(json: String): List<Definition> =
-            OpenAPI
+        fun parse(json: String, strict: Boolean = false): List<Definition> =
+            OpenAPI(json = Json { prettyPrint = true; ignoreUnknownKeys = strict })
                 .decodeFromString(json)
                 .let { OpenApiParser(it).parse() }
 

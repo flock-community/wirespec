@@ -104,10 +104,14 @@ Usage: wirespec options_list
 Arguments: 
     input -> Input file { String }
 Options: 
+    --debug, -d [false] -> Debug mode 
     --output, -o -> Output directory { String }
-    --languages, -l [Kotlin] -> Language type { Value should be one of [Java, Kotlin, Scala, TypeScript] }
+    --language, -l [Kotlin] -> Language type { Value should be one of [Java, Kotlin, Scala, TypeScript, Wirespec, OpenApiV2, OpenApiV3] }
+    --format, -f [Wirespec] -> Input format { Value should be one of [wirespec, openapiv2, openapiv3] }
     --packageName, -p [community.flock.wirespec.generated] -> Package name { String }
+    --strict, -s [true] -> Strict mode 
     --help, -h -> Usage info 
+
 ```
 
 ### Install
@@ -156,6 +160,9 @@ It is also possible to create your custom emitter and run with the plugin[here](
                         <configuration>
                             <input>${project.basedir}/src/main/wirespec</input>
                             <output>${project.build.directory}/generated-sources</output>
+                            <languages>
+                                <language>Kotlin</language>
+                            </languages>
                         </configuration>
                     </execution>
                     <execution>
@@ -166,6 +173,9 @@ It is also possible to create your custom emitter and run with the plugin[here](
                         <configuration>
                             <input>${project.basedir}/src/main/wirespec</input>
                             <output>${project.basedir}/src/main/frontend/generated</output>
+                            <languages>
+                                <language>TypeScript</language>
+                            </languages>
                         </configuration>
                     </execution>
                     <execution>

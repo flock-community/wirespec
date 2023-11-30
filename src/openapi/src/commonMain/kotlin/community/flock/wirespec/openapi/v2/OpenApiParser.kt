@@ -2,6 +2,7 @@ package community.flock.wirespec.openapi.v2
 
 import arrow.core.filterIsInstance
 import community.flock.kotlinx.openapi.bindings.v2.BooleanObject
+import community.flock.kotlinx.openapi.bindings.v2.HeaderObject
 import community.flock.kotlinx.openapi.bindings.v2.HeaderOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v2.OpenAPI
 import community.flock.kotlinx.openapi.bindings.v2.OperationObject
@@ -18,7 +19,6 @@ import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceOrBooleanObject
 import community.flock.kotlinx.openapi.bindings.v2.StatusCode
 import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
-import community.flock.kotlinx.openapi.bindings.v2.HeaderObject
 import community.flock.wirespec.compiler.core.parse.nodes.Definition
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
@@ -26,14 +26,16 @@ import community.flock.wirespec.compiler.core.parse.nodes.Type
 import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field
 import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference
 import community.flock.wirespec.openapi.Common.className
+import kotlinx.serialization.json.Json
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenapiType
 
 class OpenApiParser(private val openApi: SwaggerObject) {
 
     companion object {
-        fun parse(json: String): List<Definition> = OpenAPI
-            .decodeFromString(json)
-            .let { OpenApiParser(it).parse() }
+        fun parse(json: String, ignoreUnknown: Boolean = false): List<Definition> =
+            OpenAPI(json = Json { prettyPrint = true; ignoreUnknownKeys = ignoreUnknown })
+                .decodeFromString(json)
+                .let { OpenApiParser(it).parse() }
 
         fun parse(openApi: SwaggerObject) = OpenApiParser(openApi).parse()
     }
