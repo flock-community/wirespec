@@ -13,6 +13,19 @@
   "paths": {
     "/enum": {
       "get": {
+        "parameters": [
+          {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "default": "ASC",
+            "enum": [
+              "ASC",
+              "DESC"
+            ]
+          }
+        ],
         "responses": {
           "200": {
             "description": "Ok",

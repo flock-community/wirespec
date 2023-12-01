@@ -460,7 +460,13 @@ object Expected {
             name = "EnumGET",
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "enum")),
-            query = emptyList(),
+            query = listOf(
+                Type.Shape.Field(
+                    identifier=Identifier(value="order"),
+                    reference=Reference.Custom(value="EnumGETParameterOrder", isIterable=false, isMap=false),
+                    isNullable=true
+                )
+            ),
             headers = emptyList(),
             cookies = emptyList(),
             requests = listOf(
@@ -488,6 +494,10 @@ object Expected {
                     )
                 )
             )
+        ),
+        Enum(
+            name="EnumGETParameterOrder",
+            entries= setOf("ASC", "DESC")
         ),
         Type(
             name = "EnumGET201ResponseBody",
