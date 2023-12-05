@@ -45,7 +45,7 @@ class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
     }
 
     override fun Type.Shape.Field.emit() = withLogging(logger) {
-        "${SPACER}${identifier.emit()}${if (isNullable) "?" else ""}: ${reference.emit()}"
+        "${SPACER}\"${identifier.emit()}\"${if (isNullable) "?" else ""}: ${reference.emit()}"
     }
 
     override fun Type.Shape.Field.Identifier.emit() = withLogging(logger) { value }
@@ -90,15 +90,15 @@ class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
           |${SPACER}export const PATH = "/${path.joinToString ("/"){ when (it) {is Endpoint.Segment.Literal -> it.value; is Endpoint.Segment.Param -> ":${it.identifier.value}" } }}"
           |${SPACER}export const METHOD = "${method.name}"
           |${requests.toSet().joinToString("\n") { "${SPACER}type ${it.emitName()} = { path: ${path.emitType()}, method: \"${method}\", headers: {${headers.map { it.emit() }.joinToString(",")}}, query: {${query.map { it.emit() }.joinToString(",")}}${it.content?.let { ", content: { type: \"${it.type}\", body: ${it.reference.emit()} }" } ?: ""} } " }}
-          |${SPACER}export type Request = ${requests.toSet().joinToString(" | ") { it.emitName() }}
+          |${SPACER}export type Request = ${requests.toSet().joinToString(" | ") { it.emitName() }.ifEmpty { "undefined" }}
           |${responses.toSet().joinToString("\n") { "${SPACER}type ${it.emitName()} = { status: ${if (it.status.isInt()) it.status else "string"}${it.content?.let { ", content: { type: \"${it.type}\", body: ${it.reference.emit()} }" } ?: ""} }" }}
-          |${SPACER}export type Response = ${responses.toSet().joinToString(" | ") { it.emitName() }}
+          |${SPACER}export type Response = ${responses.toSet().joinToString(" | ") { it.emitName() }.ifEmpty { "undefined" }}
           |${SPACER}export type Handler = (request:Request) => Promise<Response>
           |${SPACER}export type Call = {
-          |${SPACER}${SPACER}${name.firstToLower()}: Handler
+          |${SPACER}${SPACER}${name.sanitizeSymbol().firstToLower()}: Handler
           |${SPACER}}
-          |${requests.joinToString("\n") { "${SPACER}export const ${it.emitName().firstToLower()} = (${joinParameters(it.content, null).takeIf { it.isNotEmpty() }?.joinToString(",", "obj:{", "}") { it.emit() }.orEmpty()}) => ({path: `${path.emitPath()}`, method: \"${method.name}\", query: {${query.emitMap()}}, headers: {${headers.emitMap()}}${it.content?.let { ", content: {type: \"${it.type}\", body: obj.body}" } ?: ""}} as const)" }}
-          |${responses.joinToString("\n") { "${SPACER}export const ${it.emitName().firstToLower()} = (${joinParameters(it.content, it).takeIf { it.isNotEmpty() }?.joinToString(",", "obj:{", "}") { it.emit() }.orEmpty()}) => ({status: ${if(it.status.isInt()) it.status else "`${it.status}`"}, headers: {${it.headers.emitMap()}}${it.content?.let { ", content: {type: \"${it.type}\", body: obj.body}" } ?: ""}} as const)" }}
+          |${requests.distinct().joinToString("\n") { "${SPACER}export const ${it.emitName().firstToLower()} = (${joinParameters(it.content, null).takeIf { it.isNotEmpty() }?.joinToString(",", "props:{", "}") { it.emit() }.orEmpty()}) => ({path: `${path.emitPath()}`, method: \"${method.name}\", query: {${query.emitMap()}}, headers: {${headers.emitMap()}}${it.content?.let { ", content: {type: \"${it.type}\", body: props.body}" } ?: ""}} as const)" }}
+          |${responses.distinct().joinToString("\n") { "${SPACER}export const ${it.emitName().firstToLower()} = (${joinParameters(it.content, it).takeIf { it.isNotEmpty() }?.joinToString(",", "props:{", "}") { it.emit() }.orEmpty()}) => ({status: ${if(it.status.isInt()) it.status else "`${it.status}`"}, headers: {${it.headers.emitMap()}}${it.content?.let { ", content: {type: \"${it.type}\", body: props.body}" } ?: ""}} as const)" }}
           |}
           |
         """.trimMargin()
@@ -115,13 +115,13 @@ class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
     private fun Endpoint.Request.emitName() = "Request" + (content?.emitContentType() ?: "Undefined")
     private fun Endpoint.Response.emitName() = "Response" + status.firstToUpper() + (content?.emitContentType() ?: "Undefined")
 
-    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ") { "\"${it.identifier.emit()}\": obj.${it.identifier.emit().sanitizeSymbol().firstToLower()}" }
+    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ") { "\"${it.identifier.emit()}\": props.${it.identifier.emit().sanitizeSymbol().firstToLower()}" }
 
     private fun List<Endpoint.Segment>.emitPath() = "/" + joinToString("/") { it.emit() }
     private fun Endpoint.Segment.emit(): String = withLogging(logger) {
         when (this) {
             is Endpoint.Segment.Literal -> value
-            is Endpoint.Segment.Param -> "\${obj.${identifier.value}}"
+            is Endpoint.Segment.Param -> "\${props.${identifier.value.sanitizeSymbol().firstToLower()}}"
         }
     }
 
@@ -137,8 +137,8 @@ class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
     }
 
     private fun String.sanitizeSymbol() = this
-        .replace("-", "")
-        .replace(".", "")
-        .replace(" ", "_")
+        .asSequence()
+        .filter { it.isLetterOrDigit() || listOf('_').contains(it) }
+        .joinToString("")
 
 }

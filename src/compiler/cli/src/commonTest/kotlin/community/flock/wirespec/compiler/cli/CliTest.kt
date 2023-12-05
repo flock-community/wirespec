@@ -135,12 +135,12 @@ class CliTest {
 
         val expected = """
             export type Pet = {
-              id?: number,
-              category?: Category,
-              name: string,
-              photoUrls: string[],
-              tags?: Tag[],
-              status?: PetStatus
+              "id"?: number,
+              "category"?: Category,
+              "name": string,
+              "photoUrls": string[],
+              "tags"?: Tag[],
+              "status"?: PetStatus
             }
             """.trimIndent()
 

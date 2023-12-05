@@ -27,6 +27,8 @@ import community.flock.kotlinx.openapi.bindings.v2.Type as OpenApiType
 class OpenApiV2Emitter(override val logger: Logger = noLogger, override val split: Boolean = false) :
     Emitter(logger, split) {
 
+    override val shared = null
+
     override fun emit(ast: AST): List<Pair<String, String>> {
         val obj = SwaggerObject(
             swagger = "2.0",

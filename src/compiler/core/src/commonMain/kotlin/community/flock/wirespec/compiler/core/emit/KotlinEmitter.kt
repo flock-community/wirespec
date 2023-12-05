@@ -1,15 +1,14 @@
 package community.flock.wirespec.compiler.core.emit
 
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.isInt
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
 import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.Type
-import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
@@ -17,7 +16,7 @@ class KotlinEmitter(
     private val packageName: String = DEFAULT_PACKAGE_NAME,
     logger: Logger = noLogger
 ) : AbstractEmitter(logger) {
-    
+
     override val shared = """
         |package community.flock.wirespec
         |
@@ -61,11 +60,19 @@ class KotlinEmitter(
             """.trimMargin().trimStart()
         }
 
+    object Test
+
     override fun Type.emit() = withLogging(logger) {
-        """|data class ${name.sanitizeSymbol()}(
-           |${shape.emit()}
-           |)
-           |""".trimMargin()
+        if(shape.value.isEmpty()){
+            """|object ${name.sanitizeSymbol()}
+               |""".trimMargin()
+        }else{
+            """|data class ${name.sanitizeSymbol()}(
+               |${shape.emit()}
+               |)
+               |""".trimMargin()
+        }
+
     }
 
     override fun Type.Shape.emit() = withLogging(logger) {
@@ -78,40 +85,39 @@ class KotlinEmitter(
 
     override fun Type.Shape.Field.Identifier.emit() = withLogging(logger) {
         value
-            .split("-")
+            .split("-", ".")
             .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
             .joinToString("")
             .sanitizeKeywords()
-            .sanitizeSymbol()
     }
 
-    private fun Reference.emitSymbol() = withLogging(logger) {
+    private fun Type.Shape.Field.Reference.emitSymbol() = withLogging(logger) {
         when (this) {
-            is Reference.Unit -> "Unit"
-            is Reference.Any -> "Any"
-            is Reference.Custom -> value.sanitizeSymbol()
-            is Reference.Primitive -> when (type) {
-                Reference.Primitive.Type.String -> "String"
-                Reference.Primitive.Type.Integer -> "Int"
-                Reference.Primitive.Type.Number -> "Double"
-                Reference.Primitive.Type.Boolean -> "Boolean"
+            is Type.Shape.Field.Reference.Unit -> "Unit"
+            is Type.Shape.Field.Reference.Any -> "Any"
+            is Type.Shape.Field.Reference.Custom -> value.sanitizeSymbol()
+            is Type.Shape.Field.Reference.Primitive -> when (type) {
+                Type.Shape.Field.Reference.Primitive.Type.String -> "String"
+                Type.Shape.Field.Reference.Primitive.Type.Integer -> "Int"
+                Type.Shape.Field.Reference.Primitive.Type.Number -> "Double"
+                Type.Shape.Field.Reference.Primitive.Type.Boolean -> "Boolean"
             }
         }
     }
 
-    override fun Reference.emit() = withLogging(logger) {
+    override fun Type.Shape.Field.Reference.emit() = withLogging(logger) {
         emitSymbol()
             .let { if (isIterable) "List<$it>" else it }
             .let { if (isMap) "Map<String, $it>" else it }
     }
 
     override fun Enum.emit() = withLogging(logger) {
-        fun String.sanitizeEnum() = replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }
+        fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_").sanitizeFirstIsDigit()
         "enum class ${name.sanitizeSymbol()} (val label: String){\n${SPACER}${entries.joinToString(",\n${SPACER}") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }};\n\n${SPACER}override fun toString(): String {\n${SPACER}${SPACER}return label\n${SPACER}}\n}\n"
     }
 
     override fun Refined.emit() = withLogging(logger) {
-        """data class $name(val value: String)
+        """data class ${name.sanitizeSymbol()}(val value: String)
             |fun $name.validate() = ${validator.emit()}
             |""".trimMargin()
     }
@@ -119,15 +125,15 @@ class KotlinEmitter(
     override fun Refined.Validator.emit() = withLogging(logger) { "Regex($value).find(value)" }
 
     override fun Endpoint.emit() = withLogging(logger) {
-        """interface $name {
+        """interface ${name.sanitizeSymbol()}Endpoint {
         |${SPACER}sealed interface Request<T>: Wirespec.Request<T>
-        |${requests.joinToString("\n") { "${SPACER}data class Request${it.content?.emitContentType() ?: "Unit"}(override val path:String, override val method: Wirespec.Method, override val query: Map<String, List<Any?>>, override val headers: Map<String, List<Any?>>, override val content:Wirespec.Content<${it.content?.reference?.emit() ?: "Unit"}>?) : Request<${it.content?.reference?.emit() ?: "Unit"}> { constructor${emitRequestSignature(it.content)}: this(path = \"${path.emitPath()}\", method = Wirespec.Method.${method.name}, query = mapOf<String, List<Any?>>(${query.emitMap()}), headers = mapOf<String, List<Any?>>(${headers.emitMap()}), content = ${it.content?.let { "Wirespec.Content(\"${it.type}\", body)" } ?: "null"})}" }}
+        |${requests.joinToString("\n") { "${SPACER}data class Request${it.content?.emitContentType()?.sanitizeSymbol() ?: "Unit"}(override val path:String, override val method: Wirespec.Method, override val query: Map<String, List<Any?>>, override val headers: Map<String, List<Any?>>, override val content:Wirespec.Content<${it.content?.reference?.emit() ?: "Unit"}>?) : Request<${it.content?.reference?.emit() ?: "Unit"}> { constructor${emitRequestSignature(it.content)}: this(path = \"${path.emitPath()}\", method = Wirespec.Method.${method.name}, query = mapOf<String, List<Any?>>(${query.emitMap()}), headers = mapOf<String, List<Any?>>(${headers.emitMap()}), content = ${it.content?.let { "Wirespec.Content(\"${it.type}\", body)" } ?: "null"})}" }}
         |${SPACER}sealed interface Response<T>: Wirespec.Response<T>
         |${responses.map { it.status.groupStatus() }.toSet().joinToString("\n") { "${SPACER}sealed interface Response${it}<T>: Response<T>" }}
         |${responses.filter { it.status.isInt() }.map { it.status }.toSet().joinToString("\n") { "${SPACER}sealed interface Response${it}<T>: Response${it.groupStatus()}<T>" }}
-        |${responses.filter { it.status.isInt() }.distinctBy { it.status to it.content?.type }.joinToString("\n") { "${SPACER}data class Response${it.status}${it.content?.emitContentType() ?: "Unit"} (override val headers: Map<String, List<Any?>>${it.content?.let { ", val body: ${it.reference.emit()}" } ?: ""} ): Response${it.status}<${it.content?.reference?.emit() ?: "Unit"}> { override val status = ${it.status}; override val content = ${it.content?.let { "Wirespec.Content(\"${it.type}\", body)" } ?: "null"}}" }}
-        |${responses.filter { !it.status.isInt() }.distinctBy { it.status to it.content?.type }.joinToString("\n") { "${SPACER}data class Response${it.status.firstToUpper()}${it.content?.emitContentType() ?: "Unit"} (override val status: Int, override val headers: Map<String, List<Any?>>${it.content?.let { ", val body: ${it.reference.emit()}" } ?: ""} ): Response${it.status.firstToUpper()}<${it.content?.reference?.emit() ?: "Unit"}> { override val content = ${it.content?.let { "Wirespec.Content(\"${it.type}\", body)" } ?: "null"}}" }}
-        |${SPACER}suspend fun ${name.firstToLower()}(request: Request<*>): Response<*>
+        |${responses.filter { it.status.isInt() }.distinctBy { it.status to it.content?.type }.joinToString("\n") { "${SPACER}data class Response${it.status}${it.content?.emitContentType()?.sanitizeSymbol() ?: "Unit"} (override val headers: Map<String, List<Any?>>${it.content?.let { ", val body: ${it.reference.emit()}" } ?: ""} ): Response${it.status}<${it.content?.reference?.emit() ?: "Unit"}> { override val status = ${it.status}; override val content = ${it.content?.let { "Wirespec.Content(\"${it.type}\", body)" } ?: "null"}}" }}
+        |${responses.filter { !it.status.isInt() }.distinctBy { it.status to it.content?.type }.joinToString("\n") { "${SPACER}data class Response${it.status.firstToUpper()}${it.content?.emitContentType()?.sanitizeSymbol() ?: "Unit"} (override val status: Int, override val headers: Map<String, List<Any?>>${it.content?.let { ", val body: ${it.reference.emit()}" } ?: ""} ): Response${it.status.firstToUpper()}<${it.content?.reference?.emit() ?: "Unit"}> { override val content = ${it.content?.let { "Wirespec.Content(\"${it.type}\", body)" } ?: "null"}}" }}
+        |${SPACER}suspend fun ${name.sanitizeSymbol().firstToLower()}(request: Request<*>): Response<*>
         |${SPACER}companion object{
         |${SPACER}${SPACER}const val PATH = "${path.emitSegment()}"
         |${SPACER}${SPACER}const val METHOD = "${method.name}"
@@ -144,12 +150,10 @@ class KotlinEmitter(
             .map { Type.Shape.Field(it.identifier, it.reference, false) }
         val parameters = pathField + query + headers + cookies
         return """
-            |(${
-            parameters
+            |(${parameters
                 .plus(content?.reference?.toField("body", false))
                 .filterNotNull()
-                .joinToString(", ") { it.emit() }
-        })
+                .joinToString(", ") { it.emit() }})
         """.trimMargin()
     }
 
@@ -166,7 +170,7 @@ class KotlinEmitter(
     private fun Endpoint.Segment.emit(): String = withLogging(logger) {
         when (this) {
             is Endpoint.Segment.Literal -> value
-            is Endpoint.Segment.Param -> "\${${identifier.value}}"
+            is Endpoint.Segment.Param -> "\${${identifier.emit()}}"
         }
     }
 
@@ -194,7 +198,7 @@ class KotlinEmitter(
             else -> """
                     |${SPACER}${SPACER}${SPACER}${SPACER}request.content?.type == "${content.type}" -> contentMapper
                     |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.read<${content.reference.emit()}>(request.content!!, Wirespec.getType(${content.reference.emitSymbol()}::class.java, ${content.reference.isIterable}))
-                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.let{ Request${content.emitContentType()}(request.path, request.method, request.query, request.headers, it) }
+                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.let{ Request${content.emitContentType().sanitizeSymbol()}(request.path, request.method, request.query, request.headers, it) }
                 """.trimMargin()
         }
 
@@ -217,13 +221,21 @@ class KotlinEmitter(
             else -> """
                     |${SPACER}${SPACER}${SPACER}${SPACER}${status.takeIf { it.isInt() }?.let { "response.status == $status && " }.orEmptyString()}response.content?.type == "${content.type}" -> contentMapper
                     |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.read<${content.reference.emit()}>(response.content!!, Wirespec.getType(${content.reference.emitSymbol()}::class.java, ${content.reference.isIterable}))
-                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.let{ Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "response.status, " }.orEmptyString()}response.headers, it.body) }
+                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.let{ Response${status.firstToUpper()}${content.emitContentType().sanitizeSymbol()}(${status.takeIf { !it.isInt() }?.let { "response.status, " }.orEmptyString()}response.headers, it.body) }
                 """.trimMargin()
         }
 
-    fun String.sanitizeKeywords() = if (preservedKeywords.contains(this)) "`$this`" else this
+    private fun String.sanitizeKeywords() = if (preservedKeywords.contains(this)) "`$this`" else this
 
-    fun String.sanitizeSymbol() = replace(".", "")
+    private fun String.sanitizeSymbol() = this
+        .split(".", " ")
+        .joinToString("") { it.firstToUpper() }
+        .asSequence()
+        .filter { it.isLetterOrDigit() || listOf('_').contains(it) }
+        .joinToString("")
+        .sanitizeFirstIsDigit()
+
+    private fun String.sanitizeFirstIsDigit() = if (firstOrNull()?.isDigit() == true) "_${this}" else this
 
     companion object {
         private val preservedKeywords = listOf(
@@ -239,9 +251,11 @@ class KotlinEmitter(
             "if",
             "in",
             "interface",
+            "internal",
             "is",
             "null",
             "object",
+            "open",
             "package",
             "return",
             "super",
@@ -260,10 +274,6 @@ class KotlinEmitter(
 
 }
 
-fun Endpoint.Content.emitContentType() = type
-    .split("/", "-")
-    .joinToString("") { it.firstToUpper() }
-    .replace("+", "")
 
 fun Type.Shape.Field.Reference.toField(identifier: String, isNullable: Boolean) = Type.Shape.Field(
     Type.Shape.Field.Identifier(identifier),

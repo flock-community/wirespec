@@ -1,15 +1,15 @@
 package community.flock.wirespec.examples.open_api_app.kotlin
 
 import community.flock.wirespec.Wirespec
-import community.flock.wirespec.generated.kotlin.v3.AddPet
-import community.flock.wirespec.generated.kotlin.v3.FindPetsByStatus
+import community.flock.wirespec.generated.kotlin.v3.AddPetEndpoint
+import community.flock.wirespec.generated.kotlin.v3.FindPetsByStatusEndpoint
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
 import org.springframework.web.client.RestTemplate
 import java.net.URI
 
-interface KotlinPetstoreClient : AddPet, FindPetsByStatus
+interface KotlinPetstoreClient : AddPetEndpoint, FindPetsByStatusEndpoint
 
 @Configuration
 class KotlinPetClientConfiguration {
@@ -43,12 +43,12 @@ class KotlinPetClientConfiguration {
                 }
             ) ?: error("No response")
 
-            override suspend fun addPet(request: AddPet.Request<*>): AddPet.Response<*> {
-                return handle(request, AddPet::RESPONSE_MAPPER)
+            override suspend fun addPet(request: AddPetEndpoint.Request<*>): AddPetEndpoint.Response<*> {
+                return handle(request, AddPetEndpoint::RESPONSE_MAPPER)
             }
 
-            override suspend fun findPetsByStatus(request: FindPetsByStatus.Request<*>): FindPetsByStatus.Response<*> {
-                return handle(request, FindPetsByStatus::RESPONSE_MAPPER)
+            override suspend fun findPetsByStatus(request: FindPetsByStatusEndpoint.Request<*>): FindPetsByStatusEndpoint.Response<*> {
+                return handle(request, FindPetsByStatusEndpoint::RESPONSE_MAPPER)
             }
         }
 }

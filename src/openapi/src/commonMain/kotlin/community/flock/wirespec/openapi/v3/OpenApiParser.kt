@@ -95,7 +95,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                                 reference = when (val schema = media.schema) {
                                     is ReferenceObject -> schema.toReference()
                                     is SchemaObject -> schema.toReference(
-                                        className(name, status.value, "ResponseBody")
+                                        className(name, status.value, contentType.value ,"ResponseBody")
                                     )
 
                                     null -> TODO()
@@ -158,14 +158,14 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         val name = res.operation.toName() ?: (res.path.toName() + res.method.name)
         when (val response = res.response) {
             is ResponseObject -> {
-                response.content.orEmpty().flatMap { (_, mediaObject) ->
+                response.content.orEmpty().flatMap { (mediaType, mediaObject) ->
                     when (val schema = mediaObject.schema) {
                         is SchemaObject -> when (schema.type) {
                             null, OpenapiType.OBJECT -> schema
-                                .flatten(className(name, res.statusCode.value, "ResponseBody"))
+                                .flatten(className(name, res.statusCode.value, mediaType.value, "ResponseBody"))
 
                             OpenapiType.ARRAY -> schema.items
-                                ?.flatten(className(name, res.statusCode.value, "ResponseBody")).orEmpty()
+                                ?.flatten(className(name, res.statusCode.value, mediaType.value, "ResponseBody")).orEmpty()
 
                             else -> emptyList()
                         }

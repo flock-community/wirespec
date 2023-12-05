@@ -108,7 +108,7 @@ fun cli(args: Array<String>) {
             shortName = "s",
             description = "Strict mode"
         )
-        .default(true)
+        .default(false)
     parser.parse(args)
 
     val logger = object : Logger(debug) {}

@@ -37,8 +37,6 @@ actual abstract class File actual constructor(actual val path: FullFilePath) : C
 
     actual fun write(text: String) {
         val directory = path.directory
-            .split("out")
-            .joinToString("out/native")
             .apply {
                 split("/").reduce { acc, cur -> "$acc/$cur".also { opendir(it) ?: makeDir(it) } }
             }

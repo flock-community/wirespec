@@ -12,6 +12,7 @@ interface Emitters : TypeDefinitionEmitter, EnumDefinitionEmitter, RefinedTypeDe
 
 abstract class Emitter(open val logger: Logger, open val split:Boolean) {
 
+    abstract val shared:String?
     abstract fun emit(ast: AST): List<Pair<String, String>>
 
     companion object {
@@ -20,8 +21,6 @@ abstract class Emitter(open val logger: Logger, open val split:Boolean) {
 }
 
 abstract class AbstractEmitter(override val logger: Logger, override val split: Boolean = false) : Emitter(logger, split), Emitters {
-
-    abstract val shared:String
 
     override fun emit(ast: AST): List<Pair<String, String>> = ast
         .map {
@@ -37,6 +36,13 @@ abstract class AbstractEmitter(override val logger: Logger, override val split: 
             if (split) this
             else listOf("NoName" to joinToString("\n") { it.second })
         }
+
+    fun Endpoint.Content.emitContentType() = type
+        .substringBefore(";")
+        .split("/", "-")
+        .joinToString("") { it.firstToUpper() }
+        .replace("+", "")
+
 
     companion object {
         const val SPACER = Emitter.SPACER
