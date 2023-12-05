@@ -92,7 +92,7 @@ object Expected {
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(
-                            value = "Test200ResponseBody",
+                            value = "Test200ApplicationJsonResponseBody",
                             isIterable = false
                         ),
                         isNullable = false
@@ -101,7 +101,7 @@ object Expected {
             )
         ),
         Type(
-            name = "Test200ResponseBody",
+            name = "Test200ApplicationJsonResponseBody",
             shape = Type.Shape(
                 value = listOf(
                     Type.Shape.Field(
@@ -115,7 +115,7 @@ object Expected {
                     Type.Shape.Field(
                         identifier = Identifier(value = "nest"),
                         reference = Reference.Custom(
-                            value = "Test200ResponseBodyNest",
+                            value = "Test200ApplicationJsonResponseBodyNest",
                             isIterable = false
                         ),
                         isNullable = true
@@ -124,7 +124,7 @@ object Expected {
             )
         ),
         Type(
-            name = "Test200ResponseBodyNest",
+            name = "Test200ApplicationJsonResponseBodyNest",
             shape = Type.Shape(
                 value = listOf(
                     Type.Shape.Field(
@@ -183,7 +183,7 @@ object Expected {
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(
-                            value = "AdditionalProperties404ResponseBody",
+                            value = "AdditionalProperties404ApplicationJsonResponseBody",
                             isIterable = false,
                             isMap = true
                         ),
@@ -202,7 +202,7 @@ object Expected {
             )
         ),
         Type(
-            name = "AdditionalProperties404ResponseBody",
+            name = "AdditionalProperties404ApplicationJsonResponseBody",
             shape = Type.Shape(
                 value = listOf(
                     Type.Shape.Field(
@@ -271,7 +271,7 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(value = "ArrayGET200ResponseBody", isIterable = true, isMap = false),
+                        reference = Reference.Custom(value = "ArrayGET200ApplicationJsonResponseBody", isIterable = true, isMap = false),
                         isNullable = false
                     )
                 ),
@@ -296,7 +296,7 @@ object Expected {
             )
         ),
         Type(
-            name = "ArrayGET200ResponseBody",
+            name = "ArrayGET200ApplicationJsonResponseBody",
             shape = Type.Shape(
                 value = listOf(
                     Type.Shape.Field(
@@ -362,14 +362,14 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(value = "AllofGET200ResponseBody", isIterable = false, isMap = false),
+                        reference = Reference.Custom(value = "AllofGET200ApplicationJsonResponseBody", isIterable = false, isMap = false),
                         isNullable = false
                     )
                 )
             )
         ),
         Type(
-            name = "AllofGET200ResponseBody",
+            name = "AllofGET200ApplicationJsonResponseBody",
             shape = Type.Shape(
                 value = listOf(
                     Type.Shape.Field(
@@ -399,7 +399,7 @@ object Expected {
                     Type.Shape.Field(
                         identifier = Identifier(value = "d"),
                         reference = Reference.Custom(
-                            value = "AllofGET200ResponseBodyD",
+                            value = "AllofGET200ApplicationJsonResponseBodyD",
                             isIterable = false
                         ),
                         isNullable = true
@@ -408,7 +408,7 @@ object Expected {
             )
         ),
         Type(
-            name = "AllofGET200ResponseBodyD",
+            name = "AllofGET200ApplicationJsonResponseBodyD",
             shape = Type.Shape(
                 value = listOf(
                     Type.Shape.Field(
@@ -489,7 +489,7 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(value = "EnumGET201ResponseBody", isIterable = false, isMap = false),
+                        reference = Reference.Custom(value = "EnumGET201ApplicationJsonResponseBody", isIterable = false, isMap = false),
                         isNullable = false
                     )
                 )
@@ -500,13 +500,13 @@ object Expected {
             entries= setOf("ASC", "DESC")
         ),
         Type(
-            name = "EnumGET201ResponseBody",
+            name = "EnumGET201ApplicationJsonResponseBody",
             shape = Type.Shape(
                 value = listOf(
                     Type.Shape.Field(
                         identifier = Identifier(value = "code"),
                         reference = Reference.Custom(
-                            value = "EnumGET201ResponseBodyCode",
+                            value = "EnumGET201ApplicationJsonResponseBodyCode",
                             isIterable = false
                         ),
                         isNullable = false
@@ -523,7 +523,7 @@ object Expected {
             )
         ),
         Enum(
-            name="EnumGET201ResponseBodyCode",
+            name="EnumGET201ApplicationJsonResponseBodyCode",
             entries= setOf("WARNING", "ERROR")
         ),
         Type(
