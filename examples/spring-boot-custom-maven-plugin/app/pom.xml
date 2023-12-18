@@ -4,10 +4,10 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>community.flock.wirespec.example.maven_plugin_custom</groupId>
-        <artifactId>parent</artifactId>
+        <artifactId>spring-boot-custom-maven-plugin</artifactId>
         <version>0.0.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
-    <groupId>community.flock.wirespec.example.maven_plugin_custom</groupId>
     <artifactId>app</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
