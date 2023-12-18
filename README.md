@@ -2,12 +2,14 @@
 Readable contracts and typesafe wires made easy
 
 ## Introduction
-Wirespec is a typesafe language to specify data transfer models which are exchanged between services. These models can be transformed into bindings for a specific language (Typescript, Java, Kotlin, Scala). Wirespec is 💯 compatible with OpenApiSpecification (OAS).
+Wirespec is a typesafe language to specify data transfer models which are exchanged between services. These models can
+be transformed into bindings for a specific language (Typescript, Java, Kotlin, Scala). Wirespec is 💯 compatible with
+OpenApiSpecification (OAS).
 
 ![overview](images/overview.png)
 
 ## Syntax
-Wirespec language has four type of deffinitions: `refined`, `enum`, `type`, `refined`.
+Wirespec language has four type of definitions: `refined`, `enum`, `type`, `endpoint`.
 
 ```
 refined DEFINITION /REGEX/g
@@ -241,7 +243,8 @@ wirespec {
 Some notes on how Wirespec integrates with different libraries and frameworks
 
 ### Jackson (json object mapper)
-For some languages Wirespec is sanitizing enums names because of usage of preserved keywords and forbidden characters. This results into problems with serialization. In Jackson the following configuration can be used to fix this.
+For some languages Wirespec is sanitizing enums names because of usage of preserved keywords and forbidden characters.
+This results into problems with serialization. In Jackson the following configuration can be used to fix this.
 
 ```kotlin
 ObjectMapper()
