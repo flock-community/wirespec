@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>community.flock.wirespec.example.maven_plugin</groupId>
-    <artifactId>maven_plugin</artifactId>
+    <artifactId>spring-boot-maven-plugin</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <description>Demo project for Wirespec</description>
     <properties>
