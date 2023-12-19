@@ -1,6 +1,6 @@
 [![Maven Central](https://img.shields.io/maven-central/v/community.flock.wirespec.compiler/lib)](https://mvnrepository.com/artifact/community.flock.wirespec.compiler/core-jvm)
+[![Apache 2.0 License](https://img.shields.io/badge/License-Apache_2.0-blue)](LICENSE)
 ![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/flock-community/wirespec/build.yml)
-[![Apache 2.0 License](https://img.shields.io/badge/License-Apache%202.0-orange)](LICENSE.d)
 
 # Wirespec
 Readable contracts and typesafe wires made easy
