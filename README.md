@@ -2,14 +2,17 @@
 Readable contracts and typesafe wires made easy
 
 ## Introduction
-Wirespec is a typesafe language to specify data transfer models which are exchanged between services. These models can
-be transformed into bindings for a specific language (Typescript, Java, Kotlin, Scala). Wirespec is 💯 compatible with
-OpenApiSpecification (OAS).
+Wirespec is a typesafe language to specify endpoints and data transfer models that are exchanged between services.
+These models and endpoints can then be compiled into bindings for a specific language (TypeScript, Java, Kotlin, Scala). 
 
-![overview](images/overview.png)
+![compile](images/wirespec-compile.png)
+
+Wirespec can read and convert OpenApiSpecification (OAS) files.
+
+![convert](images/wirespec-convert.png)
 
 ## Syntax
-Wirespec language has four type of definitions: `refined`, `enum`, `type`, `endpoint`.
+Wirespec knows four definitions: `refined`, `enum`, `type`, `endpoint`.
 
 ```
 refined DEFINITION /REGEX/g
@@ -29,7 +32,6 @@ endpoint DEFINITION METHOD [INPUT_REFERENCE] PATH [? QUERY] [# HEADER] -> {
 ```
 
 ## Example
-
 `todo.ws`
 ```wirespec
 refined UUID /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/g
@@ -50,12 +52,12 @@ type Error {
     description: String
 }
 
-endpoint GetTodoById GET /todos/{id:UUID} -> {
+endpoint GetTodoById GET /todos/{ id: UUID } -> {
     200 -> Todo[]
     404 -> Error
 }
 
-endpoint GetTodos GET /todos ? {done:Boolean?} # {limit:Integer, offset:Integer} -> {
+endpoint GetTodos GET /todos?{ done: Boolean? }#{ limit: Integer, offset: Integer } -> {    
     200 -> Todo[]
     404 -> Error
 }
@@ -76,9 +78,10 @@ endpoint DeleteTodo DELETE /todos/{id:UUID} -> {
 }
 ```
 
-## Usage
+Other examples can be found [here](examples/README.md)
 
-Wirespec files can be transformed into language specific binding by using the cli
+## Usage
+Wirespec files can be compiled into language specific binding by using the cli
 
 ```shell
 wirespec ./todo.ws -o ./tmp -l Kotlin
@@ -88,19 +91,39 @@ wirespec ./todo.ws -o ./tmp -l Kotlin
 * JDK 17
 * Node 16
 * Docker
+
 ## Quick Start
 On *nix systems run:
+
 ```shell
 make all
 ```
-to compile the project and test the Wirespec compiler with definitions found in
-`types`. Locate the result in `types/out`
 
-# Install
-Instructions on how to install different components
+to compile the project and test the Wirespec compiler with definitions found in `types`. Locate the result in `types/out`
 
-## Cli
+# CLI
+## Install
+### Linux
+```shell
+curl -L https://github.com/flock-community/wirespec/releases/latest/download/linuxX64.kexe -o wirespec
+chmod +x wirespec
+sudo mv ./wirespec /usr/local/bin/wirespec
+```
 
+### macOS
+```shell
+curl -L https://github.com/flock-community/wirespec/releases/latest/download/macosX64.kexe -o wirespec
+chmod +x wirespec
+sudo mv ./wirespec /usr/local/bin/wirespec
+```
+
+### macOS Arm
+```shell
+curl -L https://github.com/flock-community/wirespec/releases/latest/download/macosArm64.kexe -o wirespec
+chmod +x wirespec
+sudo mv ./wirespec /usr/local/bin/wirespec
+```
+## Use
 ```
 Usage: wirespec options_list
 Arguments: 
@@ -115,34 +138,11 @@ Options:
     --help, -h -> Usage info 
 
 ```
-
-### Install
-#### Linux
-```
-curl -L https://github.com/flock-community/wirespec/releases/latest/download/linuxX64.kexe -o wirespec
-chmod +x wirespec
-sudo mv ./wirespec /usr/local/bin/wirespec
-```
-
-#### macOS
-```
-curl -L https://github.com/flock-community/wirespec/releases/latest/download/macosX64.kexe -o wirespec
-chmod +x wirespec
-sudo mv ./wirespec /usr/local/bin/wirespec
-```
-
-#### macOS Arm
-```
-curl -L https://github.com/flock-community/wirespec/releases/latest/download/macosArm64.kexe -o wirespec
-chmod +x wirespec
-sudo mv ./wirespec /usr/local/bin/wirespec
-```
-
-
-## Maven Plugin
+## Plugins
+### Maven
 Example how to use the maven plugin  
-For a full example click [here](examples/spring-boot-maven-plugin)
-It is also possible to create your custom emitter and run with the plugin[here](examples/spring-boot-custom-maven-plugin)
+For a full example click [here](examples/spring-boot-maven-plugin/README.md)
+It is also possible to create your custom emitter and run with the plugin [here](examples/spring-boot-custom-maven-plugin/README.md)
 ```xml
 <project>
     ...
@@ -219,12 +219,11 @@ It is also possible to create your custom emitter and run with the plugin[here](
 </project>
 ```
 
-## Gradle Plugin
+### Gradle
 Example how to use the gradle plugin  
 For a full example click [here](examples/spring-boot-gradle-plugin)
 ```kotlin
 plugins {
-    ...
     id("community.flock.wirespec.plugin.gradle") version "0.0.0"
 }
 
@@ -252,8 +251,8 @@ ObjectMapper()
   .enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING)
 ```
 
-## Release process
-A release can be made using github the UI. 
+## Releases
+A release can be made using GitHub the UI. 
 Go to https://github.com/flock-community/wirespec/releases/new
 
 ![release](images/release.png)
