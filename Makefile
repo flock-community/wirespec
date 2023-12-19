@@ -33,9 +33,6 @@ jvm:
 example:
 	$(shell pwd)/scripts/example.sh
 
-local:
-	$(shell pwd)/scripts/local.sh
-
 publish:
 	$(shell pwd)/scripts/publish.sh
 
