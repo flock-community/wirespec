@@ -65,7 +65,7 @@
                 <dependencies>
                     <dependency>
                         <groupId>community.flock.wirespec.example.maven_plugin_custom</groupId>
-                        <artifactId>emitter</artifactId>
+                        <artifactId>custom-emitter</artifactId>
                         <version>0.0.1-SNAPSHOT</version>
                     </dependency>
                 </dependencies>

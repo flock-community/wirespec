@@ -23,11 +23,11 @@ public class CustomEmitter extends Emitter {
         return ast
                 .stream()
                 .filter(sc -> sc instanceof Type)
-                .map (sc -> emit((Type) sc))
+                .map(sc -> emit((Type) sc))
                 .collect(Collectors.toList());
     }
 
-    public Pair<String,String> emit(Type type) {
+    public Pair<String, String> emit(Type type) {
         return new Pair<>(type.getName(), "package hello;\n\npublic class " + type.getName() + " {}");
     }
 
