@@ -136,8 +136,6 @@ class ParseEndpointTest {
                     isNullable shouldBe false
                 }
             }
-
-
     }
 
     @Test
@@ -168,7 +166,5 @@ class ParseEndpointTest {
                     isNullable shouldBe false
                 }
             }
-
-
     }
 }
