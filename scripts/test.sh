@@ -19,7 +19,7 @@ fi
 if [[ $WIRESPEC_BUILD_ALL = true || $WIRESPEC_BUILD_MAC = true ]]; then
   echo "Test macOS artifact"
   ./src/compiler/$artifactName/build/bin/$macosArch/releaseExecutable/$artifactName.kexe -l Java -l Kotlin -l Scala -l TypeScript -l Wirespec -p "community.flock.wirespec.generated" -o "$(pwd)"/types/out/native "$(pwd)"/types
-  ./src/compiler/$artifactName/build/bin/$macosArch/releaseExecutable/$artifactName.kexe -l Java -l Kotlin -l Scala -l TypeScript -l Wirespec -p "community.flock.openapi.generated" -f openapiv2 -o "$(pwd)"/types/out/native "$(pwd)"/types/petstore.json
+  ./src/compiler/$artifactName/build/bin/$macosArch/releaseExecutable/$artifactName.kexe -l Java -l Kotlin -l Scala -l TypeScript -l Wirespec -p "community.flock.openapi.generated" -f open_api_v2 -o "$(pwd)"/types/out/native "$(pwd)"/types/petstore.json
 fi
 
 if [[ $WIRESPEC_BUILD_ALL = true || $WIRESPEC_BUILD_LINUX = true ]]; then
@@ -30,9 +30,9 @@ fi
 if [[ $WIRESPEC_BUILD_ALL = true || $WIRESPEC_BUILD_JVM = true || $buildNothing = true ]]; then
   echo "Test JVM artifact"
   java -jar src/compiler/$artifactName/build/libs/$artifactName-$version-all.jar -l Java -l Kotlin -l Scala -l TypeScript -l Wirespec -p "community.flock.wirespec.generated" -o "$(pwd)"/types/out/jvm "$(pwd)"/types
-  java -jar src/compiler/$artifactName/build/libs/$artifactName-$version-all.jar -l Java -l Kotlin -l Scala -l TypeScript -l Wirespec -p "community.flock.openapi.generated" -f openapiv2 -o "$(pwd)"/types/out/jvm "$(pwd)"/types/petstore.json
+  java -jar src/compiler/$artifactName/build/libs/$artifactName-$version-all.jar -l Java -l Kotlin -l Scala -l TypeScript -l Wirespec -p "community.flock.openapi.generated" -f open_api_v2 -o "$(pwd)"/types/out/jvm "$(pwd)"/types/petstore.json
 fi
 
 echo "Test Node.js artifact"
 node build/js/packages/wirespec-src-compiler-$artifactName/kotlin/wirespec-src-compiler-$artifactName.js -l Java -l Kotlin -l Scala -l TypeScript -l Wirespec -p "community.flock.wirespec.generated" -o "$(pwd)"/types/out/node "$(pwd)"/types
-node build/js/packages/wirespec-src-compiler-$artifactName/kotlin/wirespec-src-compiler-$artifactName.js -l Java -l Kotlin -l Scala -l TypeScript -l Wirespec -p "community.flock.openapi.generated" -f openapiv2 -o "$(pwd)"/types/out/node "$(pwd)"/types/petstore.json
+node build/js/packages/wirespec-src-compiler-$artifactName/kotlin/wirespec-src-compiler-$artifactName.js -l Java -l Kotlin -l Scala -l TypeScript -l Wirespec -p "community.flock.openapi.generated" -f open_api_v2 -o "$(pwd)"/types/out/node "$(pwd)"/types/petstore.json

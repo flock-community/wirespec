@@ -1,15 +1,11 @@
 package community.flock.wirespec.compiler.cli
 
 import arrow.core.Either
-import community.flock.wirespec.compiler.cli.Language.Jvm
 import community.flock.wirespec.compiler.cli.Language.Jvm.Java
 import community.flock.wirespec.compiler.cli.Language.Jvm.Kotlin
 import community.flock.wirespec.compiler.cli.Language.Jvm.Scala
-import community.flock.wirespec.compiler.cli.Language.OpenApi.OpenApiV2
-import community.flock.wirespec.compiler.cli.Language.OpenApi.OpenApiV3
-import community.flock.wirespec.compiler.cli.Language.OpenApi.entries
 import community.flock.wirespec.compiler.cli.Language.Script.TypeScript
-import community.flock.wirespec.compiler.cli.Language.Script.Wirespec
+import community.flock.wirespec.compiler.cli.Language.Spec.Wirespec
 import community.flock.wirespec.compiler.cli.io.Directory
 import community.flock.wirespec.compiler.cli.io.Extension
 import community.flock.wirespec.compiler.cli.io.File
@@ -23,33 +19,34 @@ import community.flock.wirespec.compiler.cli.io.WirespecFile
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
-import community.flock.wirespec.compiler.core.emit.OpenApiV2Emitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.orNull
-import kotlinx.cli.ArgParser
-import kotlinx.cli.ArgType
-import kotlinx.cli.default
-import kotlinx.cli.multiple
 import community.flock.wirespec.compiler.core.Wirespec as WirespecSpec
 import community.flock.wirespec.openapi.v2.OpenApiParser as OpenApiParserV2
 import community.flock.wirespec.openapi.v3.OpenApiParser as OpenApiParserV3
 
-private enum class Format {
-    Wirespec, OpenApiV2, OpenApiV3
+enum class Format {
+    OPEN_API_V2, OPEN_API_V3;
+
+    companion object {
+        override fun toString() = entries.joinToString()
+    }
 }
 
-private sealed interface Language {
+sealed interface Language {
     enum class Jvm : Language { Java, Kotlin, Scala }
-    enum class Script : Language { TypeScript, Wirespec }
-    enum class OpenApi : Language { OpenApiV2, OpenApiV3 }
+    enum class Script : Language { TypeScript }
+    enum class Spec : Language { Wirespec }
+
     companion object {
-        fun values(): List<Enum<*>> = Jvm.entries + Script.entries + entries
+        fun values(): List<Enum<*>> = Jvm.entries + Script.entries + Spec.entries
         fun valueOf(s: String): Language? = values().find { it.name == s } as Language?
+
+        override fun toString() = values().joinToString()
     }
 }
 
@@ -57,81 +54,30 @@ fun main(args: Array<String>) {
     (0..20)
         .mapNotNull(args::orNull)
         .toTypedArray()
-        .let(::cli)
+        .let(::CommandLineEntitiesParser)
+        .parse()
+        .let(::compile)
 }
 
-fun cli(args: Array<String>) {
+fun compile(arguments: Arguments) {
 
-    val parser = ArgParser("wirespec")
-    val debug by parser
-        .option(
-            type = ArgType.Boolean,
-            shortName = "d",
-            description = "Debug mode"
-        )
-        .default(false)
-    val input by parser
-        .argument(
-            type = ArgType.String,
-            description = "Input file"
-        )
-    val output by parser
-        .option(
-            type = ArgType.String,
-            shortName = "o",
-            description = "Output directory"
-        )
-    val language by parser
-        .option(
-            type = ArgType.Choice(
-                Language.values().map { it.name }.map { Language.valueOf(it) ?: error("Language not found") },
-                { Language.valueOf(it) ?: error("Language not found") }), shortName = "l", description = "Language type"
-        )
-        .default(Jvm.Kotlin).multiple()
-    val format by parser
-        .option(
-            type = ArgType.Choice<Format>(),
-            shortName = "f",
-            description = "Input format"
-        )
-        .default(Format.Wirespec)
-    val packageName by parser
-        .option(
-            type = ArgType.String,
-            shortName = "p",
-            description = "Package name"
-        )
-        .default(DEFAULT_PACKAGE_NAME)
-    val strict by parser
-        .option(
-            type = ArgType.Boolean,
-            shortName = "s",
-            description = "Strict mode"
-        )
-        .default(false)
-    parser.parse(args)
+    val format = arguments.format
+    val input = arguments.input
+    val output = arguments.output
 
-    val logger = object : Logger(debug) {}
-    compile(language.toSet(), input, output, packageName, format, strict, logger)
+    val languages = arguments.languages
+    val packageName = arguments.packageName
 
-}
+    val logger = Logger(arguments.debug)
 
-private fun compile(
-    languages: Set<Language>,
-    input: String,
-    output: String?,
-    packageName: String,
-    format: Format,
-    strict: Boolean,
-    logger: Logger
-) {
-    if (listOf(Format.OpenApiV2, Format.OpenApiV3).contains(format)) {
+    if (listOf(Format.OPEN_API_V2, Format.OPEN_API_V3).contains(format)) {
         val fullPath = FullFilePath.parse(input)
         val file = JsonFile(fullPath)
+        val strict = arguments.strict
         val ast = when (format) {
-            Format.OpenApiV2 -> OpenApiParserV2.parse(file.read(), !strict)
-            Format.OpenApiV3 -> OpenApiParserV3.parse(file.read(), !strict)
-            Format.Wirespec -> error("Wirespec is not parsed here")
+            Format.OPEN_API_V2 -> OpenApiParserV2.parse(file.read(), !strict)
+            Format.OPEN_API_V3 -> OpenApiParserV3.parse(file.read(), !strict)
+            null -> error("This should not happen")
         }
         val path = fullPath.out(packageName, output)
         emit(languages, packageName, path, logger)
@@ -192,8 +138,6 @@ private fun emit(
                 Scala -> ScalaEmitter(packageName, logger) to ScalaFile(path(Extension.Scala))
                 TypeScript -> TypeScriptEmitter(logger) to TypeScriptFile(path(Extension.TypeScript))
                 Wirespec -> WirespecEmitter(logger) to WirespecFile(path(Extension.Wirespec))
-                OpenApiV2 -> OpenApiV2Emitter(logger) to JsonFile(path(Extension.Json))
-                OpenApiV3 -> OpenApiV2Emitter(logger) to JsonFile(path(Extension.Json))
             }
         }
 }
