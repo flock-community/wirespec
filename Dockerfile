@@ -2,8 +2,8 @@ FROM debian:latest
 
 RUN mkdir -p /app/types/
 
-COPY src/compiler/cli/build/bin/linuxX64/releaseExecutable/cli.kexe /app
+COPY src/compiler/cli/build/bin/linuxX64/releaseExecutable/cli.kexe /app/wirespec
 
 WORKDIR /app
 
-CMD /app/cli.kexe -l Java -l Kotlin -l Scala -l TypeScript $(pwd)/types
+CMD /app/wirespec compile $(pwd)/types -l Java -l Kotlin -l Scala -l TypeScript

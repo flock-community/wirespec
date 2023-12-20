@@ -22,7 +22,7 @@ class CliTest {
         val input = "${inputDir}/wirespec"
         val output = outputDir()
 
-        CommandLineEntitiesParser(arrayOf(input, "-o", output, "-l", "Kotlin"))
+        CommandLineEntitiesParser(arrayOf("compile", input, "-o", output, "-l", "Kotlin"))
             .parse()
             .let(::compile)
 
@@ -46,7 +46,7 @@ class CliTest {
         val input = "${inputDir}/wirespec"
         val output = outputDir()
 
-        CommandLineEntitiesParser(arrayOf(input, "-o", output, "-l", "Java", "-p", "community.flock.next"))
+        CommandLineEntitiesParser(arrayOf("compile", input, "-o", output, "-l", "Java", "-p", "community.flock.next"))
             .parse()
             .let(::compile)
 
@@ -72,15 +72,10 @@ class CliTest {
 
         CommandLineEntitiesParser(
             arrayOf(
-                input,
-                "-o",
-                output,
-                "-l",
-                "Kotlin",
-                "-p",
-                "community.flock.openapi",
-                "-f",
-                "open_api_v2"
+                "convert", input, "open_api_v2",
+                "-o", output,
+                "-l", "Kotlin",
+                "-p", "community.flock.openapi",
             )
         )
             .parse()
@@ -112,15 +107,10 @@ class CliTest {
 
         CommandLineEntitiesParser(
             arrayOf(
-                input,
-                "-o",
-                output,
-                "-l",
-                "Kotlin",
-                "-p",
-                "community.flock.openapi",
-                "-f",
-                "open_api_v3"
+                "convert", input, "open_api_v3",
+                "-o", output,
+                "-l", "Kotlin",
+                "-p", "community.flock.openapi",
             )
         )
             .parse()
@@ -151,15 +141,10 @@ class CliTest {
 
         CommandLineEntitiesParser(
             arrayOf(
-                input,
-                "-o",
-                output,
-                "-l",
-                "TypeScript",
-                "-p",
-                "community.flock.openapi",
-                "-f",
-                "open_api_v2"
+                "convert", input, "open_api_v2",
+                "-o", output,
+                "-l", "TypeScript",
+                "-p", "community.flock.openapi",
             )
         )
             .parse()

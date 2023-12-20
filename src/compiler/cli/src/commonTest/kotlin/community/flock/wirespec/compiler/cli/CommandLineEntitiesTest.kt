@@ -3,38 +3,40 @@ package community.flock.wirespec.compiler.cli
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeTypeOf
 import kotlin.test.Test
 
 class CommandLineEntitiesTest {
 
     @Test
     fun testMinimumCliArguments() {
-        CommandLineEntitiesParser(arrayOf("input"))
+        CommandLineEntitiesParser(arrayOf("compile", "input"))
             .parse()
             .run {
-                debug shouldBe false
-                input shouldBe "input"
+                command.shouldBeTypeOf<Compile>()
+                    .input shouldBe "input"
                 output.shouldBeNull()
                 languages shouldBe emptySet()
-                format.shouldBeNull()
                 packageName shouldBe DEFAULT_PACKAGE_NAME
                 strict shouldBe false
+                debug shouldBe false
             }
     }
 
     @Test
     fun testCommandLineEntitiesParser() {
-        CommandLineEntitiesParser(arrayOf("input", "-o", "output", "-l", "Kotlin"))
+        CommandLineEntitiesParser(arrayOf("convert", "input", "open_api_v2", "-o", "output", "-l", "Kotlin"))
             .parse()
             .run {
-                debug shouldBe false
-                input shouldBe "input"
+                command.shouldBeTypeOf<Convert>().run {
+                    input shouldBe "input"
+                    format shouldBe Format.OPEN_API_V2
+                }
                 output shouldBe "output"
                 languages shouldBe setOf(Language.Jvm.Kotlin)
-                format.shouldBeNull()
                 packageName shouldBe DEFAULT_PACKAGE_NAME
                 strict shouldBe false
+                debug shouldBe false
             }
-
     }
 }

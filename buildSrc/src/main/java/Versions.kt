@@ -11,6 +11,7 @@ object Versions {
 
 object Libraries {
     const val ARROW_CORE = "io.arrow-kt:arrow-core:$ARROW"
+    const val KOTEST_ENGINE = "io.kotest:kotest-framework-engine:$KOTEST"
     const val KOTEST_ASSERTIONS = "io.kotest:kotest-assertions-core:$KOTEST"
     const val KOTEST_ASSERTIONS_ARROW = "io.kotest.extensions:kotest-assertions-arrow:$KOTEST_ARROW"
 }

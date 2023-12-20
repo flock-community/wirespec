@@ -59,43 +59,42 @@ fun main(args: Array<String>) {
         .let(::compile)
 }
 
-fun compile(arguments: Arguments) {
+fun compile(operation: Operation) {
 
-    val format = arguments.format
-    val input = arguments.input
-    val output = arguments.output
+    val input = operation.command.input
+    val output = operation.output
 
-    val languages = arguments.languages
-    val packageName = arguments.packageName
+    val languages = operation.languages
+    val packageName = operation.packageName
 
-    val logger = Logger(arguments.debug)
+    val logger = Logger(operation.debug)
 
-    if (listOf(Format.OPEN_API_V2, Format.OPEN_API_V3).contains(format)) {
-        val fullPath = FullFilePath.parse(input)
-        val file = JsonFile(fullPath)
-        val strict = arguments.strict
-        val ast = when (format) {
-            Format.OPEN_API_V2 -> OpenApiParserV2.parse(file.read(), !strict)
-            Format.OPEN_API_V3 -> OpenApiParserV3.parse(file.read(), !strict)
-            null -> error("This should not happen")
-        }
-        val path = fullPath.out(packageName, output)
-        emit(languages, packageName, path, logger)
-            .map { (emitter, file) ->
-                val result = emitter.emit(ast)
-                if (!emitter.split) listOf(fullPath.fileName.replaceFirstChar(Char::uppercase) to result.first().second) to file
-                else result to file
+    when (operation.command) {
+        is Convert -> {
+            val fullPath = FullFilePath.parse(input)
+            val file = JsonFile(fullPath)
+            val strict = operation.strict
+            val ast = when (operation.command.format) {
+                Format.OPEN_API_V2 -> OpenApiParserV2.parse(file.read(), !strict)
+                Format.OPEN_API_V3 -> OpenApiParserV3.parse(file.read(), !strict)
             }
-            .map { (results, file) -> write(results, file) }
-    } else {
-        if (input.endsWith(".ws")) {
-            return WirespecFile(FullFilePath.parse(input))
-                .wirespec(languages, packageName, output, logger)
-
+            val path = fullPath.out(packageName, output)
+            emit(languages, packageName, path, logger)
+                .map { (emitter, file) ->
+                    val result = emitter.emit(ast)
+                    if (!emitter.split) listOf(fullPath.fileName.replaceFirstChar(Char::uppercase) to result.first().second) to file
+                    else result to file
+                }
+                .map { (results, file) -> write(results, file) }
         }
-        Directory(input)
-            .wirespecFiles()
-            .forEach { it.wirespec(languages, packageName, output, logger) }
+
+        is Compile -> {
+            if (input.endsWith(".ws")) WirespecFile(FullFilePath.parse(input))
+                .wirespec(languages, packageName, output, logger)
+            else Directory(input)
+                .wirespecFiles()
+                .forEach { it.wirespec(languages, packageName, output, logger) }
+        }
     }
 }
 

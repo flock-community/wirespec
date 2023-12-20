@@ -11,11 +11,6 @@ import kotlinx.cli.multiple
 @OptIn(ExperimentalCli::class)
 class CommandLineEntitiesParser(private val args: Array<String>) : ArgParser("wirespec") {
 
-    private val input by argument(
-        type = ArgType.String,
-        description = "Input file"
-    )
-
     private val output by option(
         type = ArgType.String,
         shortName = "o",
@@ -46,45 +41,74 @@ class CommandLineEntitiesParser(private val args: Array<String>) : ArgParser("wi
         description = "Strict mode"
     ).default(false)
 
-    val format by option(
-        type = ArgType.Choice<Format>(),
-        shortName = "f",
-        description = "Input format"
-    )
+    class CompileCommand : Subcommand(name = "compile", actionDescription = "Compile Wirespec") {
+        private val input by argument(
+            type = ArgType.String,
+            description = "Input file"
+        )
 
-    class Convert : Subcommand("convert", "Convert any $Format to Wirespec") {
+        var command: Command? = null
+
         override fun execute() {
-            TODO("Not yet implemented")
+            command = Compile(input = input)
         }
     }
 
-    class Compile : Subcommand("compile", "Compile Wirespec to $Language") {
+    class ConvertCommand : Subcommand("convert", "Convert from OpenAPI") {
+        private val input by argument(
+            type = ArgType.String,
+            description = "Input file"
+        )
+
+        private val format by argument(
+            type = ArgType.Choice<Format>(),
+            description = "Input format"
+        )
+
+        var command: Command? = null
+
         override fun execute() {
-            TODO("Not yet implemented")
+            command = Convert(format = format, input = input)
         }
     }
 
-    fun parse(): Arguments {
-        subcommands(Convert(), Compile())
+    fun parse() = run {
+        val compileCommand = CompileCommand()
+        val convertCommand = ConvertCommand()
+        subcommands(compileCommand, convertCommand)
         parse(args)
-        return Arguments(
-            debug = debug,
-            input = input,
+        val compile = (subcommands["compile"] as? CompileCommand)?.command
+        val convert = (subcommands["convert"] as? ConvertCommand)?.command
+
+        Operation(
+            command = compile ?: convert ?: error("provide an operation"),
             output = output,
             languages = languages.toSet(),
-            format = format,
             packageName = packageName,
-            strict = strict
+            strict = strict,
+            debug = debug,
         )
     }
 }
 
-data class Arguments(
-    val debug: Boolean,
-    val input: String,
+data class Operation(
+    val command: Command,
     val output: String?,
     val languages: Set<Language>,
-    val format: Format?,
     val packageName: String,
     val strict: Boolean,
+    val debug: Boolean,
 )
+
+sealed interface Command {
+    val input: String
+}
+
+data class Compile(
+    override val input: String,
+) : Command
+
+data class Convert(
+    val format: Format,
+    override val input: String,
+) : Command

@@ -1,5 +1,6 @@
 import Libraries.KOTEST_ASSERTIONS
 import Libraries.KOTEST_ASSERTIONS_ARROW
+import Libraries.KOTEST_ENGINE
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithHostTests
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsTargetDsl
@@ -63,6 +64,7 @@ kotlin {
             dependencies {
                 implementation(kotlin("test-annotations-common"))
                 implementation(kotlin("test-junit"))
+                implementation(KOTEST_ENGINE)
                 implementation(KOTEST_ASSERTIONS)
                 implementation(KOTEST_ASSERTIONS_ARROW)
             }
