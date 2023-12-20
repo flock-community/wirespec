@@ -59,22 +59,22 @@ fun main(args: Array<String>) {
         .let(::compile)
 }
 
-fun compile(operation: Operation) {
+fun compile(arguments: Arguments) {
 
-    val input = operation.command.input
-    val output = operation.output
+    val input = arguments.operation.input
+    val output = arguments.output
 
-    val languages = operation.languages
-    val packageName = operation.packageName
+    val languages = arguments.languages
+    val packageName = arguments.packageName
 
-    val logger = Logger(operation.debug)
+    val logger = Logger(arguments.debug)
 
-    when (operation.command) {
+    when (arguments.operation) {
         is Convert -> {
             val fullPath = FullFilePath.parse(input)
             val file = JsonFile(fullPath)
-            val strict = operation.strict
-            val ast = when (operation.command.format) {
+            val strict = arguments.strict
+            val ast = when (arguments.operation.format) {
                 Format.OPEN_API_V2 -> OpenApiParserV2.parse(file.read(), !strict)
                 Format.OPEN_API_V3 -> OpenApiParserV3.parse(file.read(), !strict)
             }
@@ -88,13 +88,12 @@ fun compile(operation: Operation) {
                 .map { (results, file) -> write(results, file) }
         }
 
-        is Compile -> {
-            if (input.endsWith(".ws")) WirespecFile(FullFilePath.parse(input))
+        is Compile ->
+            if (input.endsWith(".${Extension.Wirespec.ext}")) WirespecFile(FullFilePath.parse(input))
                 .wirespec(languages, packageName, output, logger)
             else Directory(input)
                 .wirespecFiles()
                 .forEach { it.wirespec(languages, packageName, output, logger) }
-        }
     }
 }
 

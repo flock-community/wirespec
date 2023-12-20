@@ -1,3 +1,4 @@
+import Libraries.CLI_LIB
 import Libraries.KOTEST_ASSERTIONS
 import Libraries.KOTEST_ASSERTIONS_ARROW
 import Libraries.KOTEST_ENGINE
@@ -57,7 +58,7 @@ kotlin {
             dependencies {
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:openapi"))
-                implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
+                implementation(CLI_LIB)
             }
         }
         commonTest {

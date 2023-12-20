@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalJsExport::class)
+
 import community.flock.wirespec.compiler.core.Wirespec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
@@ -10,7 +12,6 @@ import community.flock.wirespec.openapi.v2.OpenApiParser as OpenApiParserV2
 import community.flock.wirespec.openapi.v3.OpenApiParser as OpenApiParserV3
 
 @JsExport
-@ExperimentalJsExport
 abstract class Compiler {
 
     protected fun preCompile(source: String) = Wirespec.compile(source)(logger)
@@ -26,7 +27,6 @@ abstract class Compiler {
 }
 
 @JsExport
-@ExperimentalJsExport
 class WsToKotlin : Compiler() {
     fun compile(source: String) = preCompile(source)(kotlinEmitter).produce()
 
@@ -36,7 +36,6 @@ class WsToKotlin : Compiler() {
 }
 
 @JsExport
-@ExperimentalJsExport
 class WsToTypeScript : Compiler() {
     fun compile(source: String) = preCompile(source)(typeScriptEmitter).produce()
 
@@ -46,7 +45,6 @@ class WsToTypeScript : Compiler() {
 }
 
 @JsExport
-@ExperimentalJsExport
 class WsToWirespec : Compiler() {
     fun compile(source: String) = preCompile(source)(wirespecEmitter).produce()
 
@@ -56,31 +54,28 @@ class WsToWirespec : Compiler() {
 }
 
 interface ParserInterface {
-    fun parse(source: String):Array<WsNode>
+    fun parse(source: String): Array<WsNode>
 }
 
 @JsExport
-@ExperimentalJsExport
-object OpenApiV2Parser{
-    fun parse(source: String):Array<WsNode> = OpenApiParserV2.parse(source).produce()
+object OpenApiV2Parser {
+    fun parse(source: String): Array<WsNode> = OpenApiParserV2.parse(source).produce()
 }
 
 @JsExport
-@ExperimentalJsExport
-object OpenApiV3Parser{
-    fun parse(source: String):Array<WsNode> = OpenApiParserV3.parse(source).produce()
+object OpenApiV3Parser {
+    fun parse(source: String): Array<WsNode> = OpenApiParserV3.parse(source).produce()
 }
 
 
 @JsExport
-@ExperimentalJsExport
 object OpenApiV3ToTypescript {
     val logger = object : Logger() {}
     private val emitter = TypeScriptEmitter(logger)
-    fun compile (source: String): Array<WsCompiledFile> {
+    fun compile(source: String): Array<WsCompiledFile> {
         val ast = OpenApiParserV3.parse(source)
         return emitter.emit(ast)
-            .map { (file, value) -> WsCompiledFile(file, value)}
+            .map { (file, value) -> WsCompiledFile(file, value) }
             .toTypedArray()
     }
 }

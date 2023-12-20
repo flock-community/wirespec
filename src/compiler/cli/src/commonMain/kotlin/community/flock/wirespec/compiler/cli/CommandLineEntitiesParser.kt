@@ -47,10 +47,10 @@ class CommandLineEntitiesParser(private val args: Array<String>) : ArgParser("wi
             description = "Input file"
         )
 
-        var command: Command? = null
+        var operation: Operation? = null
 
         override fun execute() {
-            command = Compile(input = input)
+            operation = Compile(input = input)
         }
     }
 
@@ -65,10 +65,10 @@ class CommandLineEntitiesParser(private val args: Array<String>) : ArgParser("wi
             description = "Input format"
         )
 
-        var command: Command? = null
+        var operation: Operation? = null
 
         override fun execute() {
-            command = Convert(format = format, input = input)
+            operation = Convert(format = format, input = input)
         }
     }
 
@@ -76,12 +76,12 @@ class CommandLineEntitiesParser(private val args: Array<String>) : ArgParser("wi
         val compileCommand = CompileCommand()
         val convertCommand = ConvertCommand()
         subcommands(compileCommand, convertCommand)
-        parse(args)
-        val compile = (subcommands["compile"] as? CompileCommand)?.command
-        val convert = (subcommands["convert"] as? ConvertCommand)?.command
+        parse(if (args.isNotEmpty()) args else arrayOf("-h"))
+        val compile = (subcommands["compile"] as? CompileCommand)?.operation
+        val convert = (subcommands["convert"] as? ConvertCommand)?.operation
 
-        Operation(
-            command = compile ?: convert ?: error("provide an operation"),
+        Arguments(
+            operation = compile ?: convert ?: error("provide an operation"),
             output = output,
             languages = languages.toSet(),
             packageName = packageName,
@@ -91,8 +91,8 @@ class CommandLineEntitiesParser(private val args: Array<String>) : ArgParser("wi
     }
 }
 
-data class Operation(
-    val command: Command,
+data class Arguments(
+    val operation: Operation,
     val output: String?,
     val languages: Set<Language>,
     val packageName: String,
@@ -100,15 +100,15 @@ data class Operation(
     val debug: Boolean,
 )
 
-sealed interface Command {
+sealed interface Operation {
     val input: String
 }
 
 data class Compile(
     override val input: String,
-) : Command
+) : Operation
 
 data class Convert(
     val format: Format,
     override val input: String,
-) : Command
+) : Operation

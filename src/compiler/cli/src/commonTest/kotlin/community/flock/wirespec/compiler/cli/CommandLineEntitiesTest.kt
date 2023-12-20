@@ -13,7 +13,7 @@ class CommandLineEntitiesTest {
         CommandLineEntitiesParser(arrayOf("compile", "input"))
             .parse()
             .run {
-                command.shouldBeTypeOf<Compile>()
+                operation.shouldBeTypeOf<Compile>()
                     .input shouldBe "input"
                 output.shouldBeNull()
                 languages shouldBe emptySet()
@@ -28,7 +28,7 @@ class CommandLineEntitiesTest {
         CommandLineEntitiesParser(arrayOf("convert", "input", "open_api_v2", "-o", "output", "-l", "Kotlin"))
             .parse()
             .run {
-                command.shouldBeTypeOf<Convert>().run {
+                operation.shouldBeTypeOf<Convert>().run {
                     input shouldBe "input"
                     format shouldBe Format.OPEN_API_V2
                 }
