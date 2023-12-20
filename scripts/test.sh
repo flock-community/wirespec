@@ -16,23 +16,29 @@ if [[ $WIRESPEC_BUILD_JVM != true ]]; then
   buildNothing=true
 fi
 
+compilePackage="community.flock.wirespec.generated"
+convertPackage="community.flock.openapi.generated"
+
 if [[ $WIRESPEC_BUILD_ALL = true || $WIRESPEC_BUILD_MAC = true ]]; then
   echo "Test macOS artifact"
-  ./src/compiler/$artifactName/build/bin/$macosArch/releaseExecutable/$artifactName.kexe -l Java -l Kotlin -l Scala -l TypeScript -l Wirespec -p "community.flock.wirespec.generated" -o "$(pwd)"/types/out/native "$(pwd)"/types
-  ./src/compiler/$artifactName/build/bin/$macosArch/releaseExecutable/$artifactName.kexe -l Java -l Kotlin -l Scala -l TypeScript -l Wirespec -p "community.flock.openapi.generated" -f openapiv2 -o "$(pwd)"/types/out/native "$(pwd)"/types/petstore.json
+  macWirespec=./src/compiler/$artifactName/build/bin/$macosArch/releaseExecutable/$artifactName.kexe
+  "$macWirespec" compile "$(pwd)"/types -l Java -l Kotlin -l Scala -l TypeScript -l Wirespec -p "$compilePackage" -o "$(pwd)"/types/out/native
+  "$macWirespec" convert "$(pwd)"/types/petstore.json open_api_v2 -l Java -l Kotlin -l Scala -l TypeScript -l Wirespec -p "$convertPackage" -o "$(pwd)"/types/out/native
 fi
+
+if [[ $WIRESPEC_BUILD_ALL = true || $WIRESPEC_BUILD_JVM = true || $buildNothing = true ]]; then
+  echo "Test JVM artifact"
+  wirespecJar=src/compiler/$artifactName/build/libs/$artifactName-$version-all.jar
+  java -jar "$wirespecJar" compile "$(pwd)"/types -l Java -l Kotlin -l Scala -l TypeScript -l Wirespec -p "$compilePackage" -o "$(pwd)"/types/out/jvm
+  java -jar "$wirespecJar" convert "$(pwd)"/types/petstore.json open_api_v2 -l Java -l Kotlin -l Scala -l TypeScript -l Wirespec -p "$convertPackage" -o "$(pwd)"/types/out/jvm
+fi
+
+echo "Test Node.js artifact"
+wirespecJs=build/js/packages/wirespec-src-compiler-$artifactName/kotlin/wirespec-src-compiler-$artifactName.js
+node "$wirespecJs" compile "$(pwd)"/types -l Java -l Kotlin -l Scala -l TypeScript -l Wirespec -p "$compilePackage" -o "$(pwd)"/types/out/node
+node "$wirespecJs" convert "$(pwd)"/types/petstore.json open_api_v2 -l Java -l Kotlin -l Scala -l TypeScript -l Wirespec -p "$convertPackage" -o "$(pwd)"/types/out/node
 
 if [[ $WIRESPEC_BUILD_ALL = true || $WIRESPEC_BUILD_LINUX = true ]]; then
   echo "Test docker image"
   docker run $archSpecific --rm -it -v "$(pwd)"/types:/app/types wirespec
 fi
-
-if [[ $WIRESPEC_BUILD_ALL = true || $WIRESPEC_BUILD_JVM = true || $buildNothing = true ]]; then
-  echo "Test JVM artifact"
-  java -jar src/compiler/$artifactName/build/libs/$artifactName-$version-all.jar -l Java -l Kotlin -l Scala -l TypeScript -l Wirespec -p "community.flock.wirespec.generated" -o "$(pwd)"/types/out/jvm "$(pwd)"/types
-  java -jar src/compiler/$artifactName/build/libs/$artifactName-$version-all.jar -l Java -l Kotlin -l Scala -l TypeScript -l Wirespec -p "community.flock.openapi.generated" -f openapiv2 -o "$(pwd)"/types/out/jvm "$(pwd)"/types/petstore.json
-fi
-
-echo "Test Node.js artifact"
-node build/js/packages/wirespec-src-compiler-$artifactName/kotlin/wirespec-src-compiler-$artifactName.js -l Java -l Kotlin -l Scala -l TypeScript -l Wirespec -p "community.flock.wirespec.generated" -o "$(pwd)"/types/out/node "$(pwd)"/types
-node build/js/packages/wirespec-src-compiler-$artifactName/kotlin/wirespec-src-compiler-$artifactName.js -l Java -l Kotlin -l Scala -l TypeScript -l Wirespec -p "community.flock.openapi.generated" -f openapiv2 -o "$(pwd)"/types/out/node "$(pwd)"/types/petstore.json
