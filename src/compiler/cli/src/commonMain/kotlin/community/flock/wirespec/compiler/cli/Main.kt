@@ -1,9 +1,6 @@
-@file:OptIn(ExperimentalStdlibApi::class)
-
 package community.flock.wirespec.compiler.cli
 
 import arrow.core.Either
-import com.github.ajalt.clikt.core.subcommands
 import community.flock.wirespec.compiler.cli.Language.Jvm.Java
 import community.flock.wirespec.compiler.cli.Language.Jvm.Kotlin
 import community.flock.wirespec.compiler.cli.Language.Jvm.Scala
@@ -32,7 +29,7 @@ import community.flock.wirespec.openapi.v2.OpenApiParser as OpenApiParserV2
 import community.flock.wirespec.openapi.v3.OpenApiParser as OpenApiParserV3
 
 enum class Format {
-    OPEN_API_V2, OPEN_API_V3;
+    OpenApiV2, OpenApiV3;
 
     companion object {
         override fun toString() = entries.joinToString()
@@ -56,7 +53,7 @@ fun main(args: Array<String>) {
     (0..20)
         .mapNotNull(args::orNull)
         .toTypedArray()
-        .let(WirespecCli().subcommands(Compile(::compile), Convert(::convert))::main)
+        .let(WirespecCli.run(::compile, ::convert))
 }
 
 fun convert(arguments: Arguments) = compile(arguments)
@@ -77,8 +74,8 @@ fun compile(arguments: Arguments) {
             val file = JsonFile(fullPath)
             val strict = arguments.strict
             val ast = when (arguments.operation.format) {
-                Format.OPEN_API_V2 -> OpenApiParserV2.parse(file.read(), !strict)
-                Format.OPEN_API_V3 -> OpenApiParserV3.parse(file.read(), !strict)
+                Format.OpenApiV2 -> OpenApiParserV2.parse(file.read(), !strict)
+                Format.OpenApiV3 -> OpenApiParserV3.parse(file.read(), !strict)
             }
             val path = fullPath.out(packageName, output)
             emit(languages, packageName, path, logger)

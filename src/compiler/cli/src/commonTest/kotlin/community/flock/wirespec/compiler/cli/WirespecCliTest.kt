@@ -1,6 +1,5 @@
 package community.flock.wirespec.compiler.cli
 
-import com.github.ajalt.clikt.core.subcommands
 import community.flock.wirespec.compiler.cli.io.FullFilePath
 import community.flock.wirespec.compiler.cli.io.JavaFile
 import community.flock.wirespec.compiler.cli.io.KotlinFile
@@ -23,10 +22,7 @@ class WirespecCliTest {
         val input = "${inputDir}/wirespec"
         val output = outputDir()
 
-        WirespecCli().subcommands(
-            Compile(::compile),
-            Convert(::convert)
-        ).main(arrayOf("compile", input, "-o", output, "-l", "Kotlin"))
+        WirespecCli.run(::compile, ::convert)(arrayOf("compile", input, "-o", output, "-l", "Kotlin"))
 
         val file = KotlinFile(FullFilePath("$output/$packageDir", "Type")).read()
 
@@ -48,10 +44,7 @@ class WirespecCliTest {
         val input = "${inputDir}/wirespec"
         val output = outputDir()
 
-        WirespecCli().subcommands(
-            Compile(::compile),
-            Convert(::convert)
-        ).main(
+        WirespecCli.run(::compile, ::convert)(
             arrayOf(
                 "compile", input,
                 "-o", output,
@@ -80,12 +73,9 @@ class WirespecCliTest {
         val input = "${inputDir}/openapi/petstore.json"
         val output = outputDir()
 
-        WirespecCli().subcommands(
-            Compile(::compile),
-            Convert(::convert)
-        ).main(
+        WirespecCli.run(::compile, ::convert)(
             arrayOf(
-                "convert", input, "open_api_v2",
+                "convert", input, "openapiv2",
                 "-o", output,
                 "-l", "Kotlin",
                 "-p", "community.flock.openapi",
@@ -116,12 +106,9 @@ class WirespecCliTest {
         val input = "${inputDir}/openapi/keto.json"
         val output = outputDir()
 
-        WirespecCli().subcommands(
-            Compile(::compile),
-            Convert(::convert)
-        ).main(
+        WirespecCli.run(::compile, ::convert)(
             arrayOf(
-                "convert", input, "open_api_v3",
+                "convert", input, "openapiv3",
                 "-o", output,
                 "-l", "Kotlin",
                 "-p", "community.flock.openapi",
@@ -151,12 +138,9 @@ class WirespecCliTest {
         val input = "${inputDir}/openapi/petstore.json"
         val output = outputDir()
 
-        WirespecCli().subcommands(
-            Compile(::compile),
-            Convert(::convert)
-        ).main(
+        WirespecCli.run(::compile, ::convert)(
             arrayOf(
-                "convert", input, "open_api_v2",
+                "convert", input, "openapiv2",
                 "-o", output,
                 "-l", "TypeScript",
                 "-p", "community.flock.openapi",
