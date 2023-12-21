@@ -1,5 +1,6 @@
 package community.flock.wirespec.compiler.cli
 
+import com.github.ajalt.clikt.core.subcommands
 import community.flock.wirespec.compiler.cli.io.FullFilePath
 import community.flock.wirespec.compiler.cli.io.JavaFile
 import community.flock.wirespec.compiler.cli.io.KotlinFile
@@ -11,7 +12,7 @@ import io.kotest.matchers.string.shouldContain
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-class CliTest {
+class WirespecCliTest {
 
     private val inputDir = "src/commonTest/resources"
     private fun outputDir() = "../../test/tmp/${getRandomString(8)}"
@@ -22,9 +23,10 @@ class CliTest {
         val input = "${inputDir}/wirespec"
         val output = outputDir()
 
-        CommandLineEntitiesParser(arrayOf("compile", input, "-o", output, "-l", "Kotlin"))
-            .parse()
-            .let(::compile)
+        WirespecCli().subcommands(
+            Compile(::compile),
+            Convert(::convert)
+        ).main(arrayOf("compile", input, "-o", output, "-l", "Kotlin"))
 
         val file = KotlinFile(FullFilePath("$output/$packageDir", "Type")).read()
 
@@ -46,9 +48,17 @@ class CliTest {
         val input = "${inputDir}/wirespec"
         val output = outputDir()
 
-        CommandLineEntitiesParser(arrayOf("compile", input, "-o", output, "-l", "Java", "-p", "community.flock.next"))
-            .parse()
-            .let(::compile)
+        WirespecCli().subcommands(
+            Compile(::compile),
+            Convert(::convert)
+        ).main(
+            arrayOf(
+                "compile", input,
+                "-o", output,
+                "-l", "Java",
+                "-p", "community.flock.next",
+            )
+        )
 
         val file = JavaFile(FullFilePath("$output/$packageDir", "Bla")).read()
 
@@ -70,7 +80,10 @@ class CliTest {
         val input = "${inputDir}/openapi/petstore.json"
         val output = outputDir()
 
-        CommandLineEntitiesParser(
+        WirespecCli().subcommands(
+            Compile(::compile),
+            Convert(::convert)
+        ).main(
             arrayOf(
                 "convert", input, "open_api_v2",
                 "-o", output,
@@ -78,8 +91,6 @@ class CliTest {
                 "-p", "community.flock.openapi",
             )
         )
-            .parse()
-            .let(::compile)
 
         val path = FullFilePath("$output/$packageDir", "Petstore")
         val file = KotlinFile(path).read()
@@ -105,7 +116,10 @@ class CliTest {
         val input = "${inputDir}/openapi/keto.json"
         val output = outputDir()
 
-        CommandLineEntitiesParser(
+        WirespecCli().subcommands(
+            Compile(::compile),
+            Convert(::convert)
+        ).main(
             arrayOf(
                 "convert", input, "open_api_v3",
                 "-o", output,
@@ -113,8 +127,6 @@ class CliTest {
                 "-p", "community.flock.openapi",
             )
         )
-            .parse()
-            .let(::compile)
 
         val path = FullFilePath("$output/$packageDir", "Keto")
         val file = KotlinFile(path).read()
@@ -139,7 +151,10 @@ class CliTest {
         val input = "${inputDir}/openapi/petstore.json"
         val output = outputDir()
 
-        CommandLineEntitiesParser(
+        WirespecCli().subcommands(
+            Compile(::compile),
+            Convert(::convert)
+        ).main(
             arrayOf(
                 "convert", input, "open_api_v2",
                 "-o", output,
@@ -147,8 +162,6 @@ class CliTest {
                 "-p", "community.flock.openapi",
             )
         )
-            .parse()
-            .let(::compile)
 
         val path = FullFilePath("$output/$packageDir", "Petstore")
         val file = TypeScriptFile(path).read()

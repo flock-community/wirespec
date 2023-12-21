@@ -1,97 +1,73 @@
 package community.flock.wirespec.compiler.cli
 
+import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.NoOpCliktCommand
+import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.multiple
+import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.types.boolean
+import com.github.ajalt.clikt.parameters.types.choice
+import com.github.ajalt.clikt.parameters.types.enum
+import community.flock.wirespec.compiler.cli.Language.Spec.Wirespec
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
-import kotlinx.cli.ArgParser
-import kotlinx.cli.ArgType
-import kotlinx.cli.ExperimentalCli
-import kotlinx.cli.Subcommand
-import kotlinx.cli.default
-import kotlinx.cli.multiple
 
-@OptIn(ExperimentalCli::class)
-class CommandLineEntitiesParser(private val args: Array<String>) : ArgParser("wirespec") {
+enum class Options(val flag: String) {
+    Output("-o"),
+    Language("-l"),
+    PackageName("-p"),
+    Strict("-s"),
+    Debug("-d"),
+}
 
-    private val output by option(
-        type = ArgType.String,
-        shortName = "o",
-        description = "Output directory"
-    )
+class WirespecCli : NoOpCliktCommand(name = "wirespec")
 
-    private val debug by option(
-        type = ArgType.Boolean,
-        shortName = "d",
-        description = "Debug mode"
-    ).default(false)
+abstract class SubCommand : CliktCommand() {
+    val input by argument(help = "Input file")
+    val output by option(Options.Output.flag, help = "Output directory")
+    val languages by option(Options.Language.flag, help = "Language").choice(Language.toMap()).multiple()
+    val packageName by option(Options.PackageName.flag, help = "Package name").default(DEFAULT_PACKAGE_NAME)
+    val strict by option(Options.Strict.flag, help = "Strict mode").boolean().default(false)
+    val debug by option(Options.Debug.flag, help = "Debug mode").boolean().default(false)
+}
 
-    private val languages by option(
-        type = ArgType.Choice(
-            Language.values().map { it.name }.map { Language.valueOf(it) ?: error("Language not found") },
-            { Language.valueOf(it) ?: error("Language not found") }), shortName = "l", description = "Language type"
-    ).multiple()
-
-    private val packageName by option(
-        type = ArgType.String,
-        shortName = "p",
-        description = "Package name"
-    ).default(DEFAULT_PACKAGE_NAME)
-
-    private val strict by option(
-        type = ArgType.Boolean,
-        shortName = "s",
-        description = "Strict mode"
-    ).default(false)
-
-    class CompileCommand : Subcommand(name = "compile", actionDescription = "Compile Wirespec") {
-        private val input by argument(
-            type = ArgType.String,
-            description = "Input file"
+class Compile(private val block: (Arguments) -> Unit) : SubCommand() {
+    override fun run() {
+        block(
+            Arguments(
+                input = input,
+                operation = Operation.Compile,
+                output = output,
+                languages = languages.toSet(),
+                packageName = packageName,
+                strict = strict,
+                debug = debug,
+            )
         )
-
-        var operation: Operation? = null
-
-        override fun execute() {
-            operation = Compile(input = input)
-        }
     }
+}
 
-    class ConvertCommand : Subcommand("convert", "Convert from OpenAPI") {
-        private val input by argument(
-            type = ArgType.String,
-            description = "Input file"
-        )
+class Convert(private val block: (Arguments) -> Unit) : SubCommand() {
 
-        private val format by argument(
-            type = ArgType.Choice<Format>(),
-            description = "Input format"
-        )
+    private val format by argument(help = "Input format").enum<Format>()
 
-        var operation: Operation? = null
-
-        override fun execute() {
-            operation = Convert(format = format, input = input)
-        }
-    }
-
-    fun parse() = run {
-        val compileCommand = CompileCommand()
-        val convertCommand = ConvertCommand()
-        subcommands(compileCommand, convertCommand)
-        parse(if (args.isNotEmpty()) args else arrayOf("-h"))
-        val compile = (subcommands["compile"] as? CompileCommand)?.operation
-        val convert = (subcommands["convert"] as? ConvertCommand)?.operation
-
-        Arguments(
-            operation = compile ?: convert ?: error("provide an operation"),
-            output = output,
-            languages = languages.toSet(),
-            packageName = packageName,
-            strict = strict,
-            debug = debug,
+    override fun run() {
+        block(
+            Arguments(
+                input = input,
+                operation = Operation.Convert(format = format),
+                output = output,
+                languages = languages.toSet().ifEmpty { setOf(Wirespec) },
+                packageName = packageName,
+                strict = strict,
+                debug = debug,
+            )
         )
     }
 }
 
 data class Arguments(
+    val input: String,
     val operation: Operation,
     val output: String?,
     val languages: Set<Language>,
@@ -101,14 +77,6 @@ data class Arguments(
 )
 
 sealed interface Operation {
-    val input: String
+    data object Compile : Operation
+    data class Convert(val format: Format) : Operation
 }
-
-data class Compile(
-    override val input: String,
-) : Operation
-
-data class Convert(
-    val format: Format,
-    override val input: String,
-) : Operation

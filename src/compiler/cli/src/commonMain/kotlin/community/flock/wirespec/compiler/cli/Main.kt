@@ -1,6 +1,9 @@
+@file:OptIn(ExperimentalStdlibApi::class)
+
 package community.flock.wirespec.compiler.cli
 
 import arrow.core.Either
+import com.github.ajalt.clikt.core.subcommands
 import community.flock.wirespec.compiler.cli.Language.Jvm.Java
 import community.flock.wirespec.compiler.cli.Language.Jvm.Kotlin
 import community.flock.wirespec.compiler.cli.Language.Jvm.Scala
@@ -22,7 +25,6 @@ import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
-import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.orNull
 import community.flock.wirespec.compiler.core.Wirespec as WirespecSpec
@@ -43,10 +45,10 @@ sealed interface Language {
     enum class Spec : Language { Wirespec }
 
     companion object {
-        fun values(): List<Enum<*>> = Jvm.entries + Script.entries + Spec.entries
-        fun valueOf(s: String): Language? = values().find { it.name == s } as Language?
-
+        fun toMap() = values().associateBy { it.name }.mapValues { (_, v) -> v as Language }
         override fun toString() = values().joinToString()
+
+        private fun values(): List<Enum<*>> = Jvm.entries + Script.entries + Spec.entries
     }
 }
 
@@ -54,14 +56,14 @@ fun main(args: Array<String>) {
     (0..20)
         .mapNotNull(args::orNull)
         .toTypedArray()
-        .let(::CommandLineEntitiesParser)
-        .parse()
-        .let(::compile)
+        .let(WirespecCli().subcommands(Compile(::compile), Convert(::convert))::main)
 }
+
+fun convert(arguments: Arguments) = compile(arguments)
 
 fun compile(arguments: Arguments) {
 
-    val input = arguments.operation.input
+    val input = arguments.input
     val output = arguments.output
 
     val languages = arguments.languages
@@ -70,7 +72,7 @@ fun compile(arguments: Arguments) {
     val logger = Logger(arguments.debug)
 
     when (arguments.operation) {
-        is Convert -> {
+        is Operation.Convert -> {
             val fullPath = FullFilePath.parse(input)
             val file = JsonFile(fullPath)
             val strict = arguments.strict
@@ -88,7 +90,7 @@ fun compile(arguments: Arguments) {
                 .map { (results, file) -> write(results, file) }
         }
 
-        is Compile ->
+        is Operation.Compile ->
             if (input.endsWith(".${Extension.Wirespec.ext}")) WirespecFile(FullFilePath.parse(input))
                 .wirespec(languages, packageName, output, logger)
             else Directory(input)
@@ -122,31 +124,22 @@ private fun WirespecFile.wirespec(
         }
 }
 
-private fun emit(
-    languages: Set<Language>,
-    packageName: String,
-    path: (Extension) -> FullFilePath,
-    logger: Logger
-): List<Pair<Emitter, File>> {
-    return languages
-        .map {
-            when (it) {
-                Java -> JavaEmitter(packageName, logger) to JavaFile(path(Extension.Java))
-                Kotlin -> KotlinEmitter(packageName, logger) to KotlinFile(path(Extension.Kotlin))
-                Scala -> ScalaEmitter(packageName, logger) to ScalaFile(path(Extension.Scala))
-                TypeScript -> TypeScriptEmitter(logger) to TypeScriptFile(path(Extension.TypeScript))
-                Wirespec -> WirespecEmitter(logger) to WirespecFile(path(Extension.Wirespec))
-            }
+private fun emit(languages: Set<Language>, packageName: String, path: (Extension) -> FullFilePath, logger: Logger) =
+    languages.map {
+        when (it) {
+            Java -> JavaEmitter(packageName, logger) to JavaFile(path(Extension.Java))
+            Kotlin -> KotlinEmitter(packageName, logger) to KotlinFile(path(Extension.Kotlin))
+            Scala -> ScalaEmitter(packageName, logger) to ScalaFile(path(Extension.Scala))
+            TypeScript -> TypeScriptEmitter(logger) to TypeScriptFile(path(Extension.TypeScript))
+            Wirespec -> WirespecEmitter(logger) to WirespecFile(path(Extension.Wirespec))
         }
-}
+    }
 
 private fun write(output: List<Pair<String, String>>, file: File) {
-    output.forEach { (name, result) ->
-        file.copy(name).write(result)
-    }
+    output.forEach { (name, result) -> file.copy(name).write(result) }
 }
 
-fun FullFilePath.out(packageName: String, output: String?) = { extension: Extension ->
+private fun FullFilePath.out(packageName: String, output: String?) = { extension: Extension ->
     val dir = output ?: "$directory/out/${extension.name.lowercase()}"
     copy(
         directory = "$dir/${packageName.split('.').joinToString("/")}",

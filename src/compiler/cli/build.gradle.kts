@@ -53,6 +53,12 @@ kotlin {
         }
     }
 
+    sourceSets.all {
+        languageSettings.apply {
+            languageVersion = "1.9"
+        }
+    }
+
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -96,7 +102,6 @@ kotlin {
         val jsMain by getting {
             dependsOn(commonMain)
         }
-
     }
 }
 
