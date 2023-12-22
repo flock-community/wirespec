@@ -4,6 +4,7 @@ import Versions.KOTEST
 import Versions.KOTEST_ARROW
 
 object Versions {
+    const val KOTLIN_COMPILER = "1.9"
     const val ARROW = "1.2.1"
     const val CLI = "4.2.1"
     const val INTELLIJ = "1.15.0"

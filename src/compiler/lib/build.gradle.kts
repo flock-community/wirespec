@@ -1,3 +1,5 @@
+import Versions.KOTLIN_COMPILER
+
 plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
@@ -27,6 +29,12 @@ kotlin {
             toolchain {
                 languageVersion.set(JavaLanguageVersion.of(17))
             }
+        }
+    }
+
+    sourceSets.all {
+        languageSettings.apply {
+            languageVersion = KOTLIN_COMPILER
         }
     }
 

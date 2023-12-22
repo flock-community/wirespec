@@ -6,4 +6,4 @@ COPY src/compiler/cli/build/bin/linuxX64/releaseExecutable/cli.kexe /app/wirespe
 
 WORKDIR /app
 
-CMD /app/wirespec compile $(pwd)/types -l Java -l Kotlin -l Scala -l TypeScript
+CMD /app/wirespec compile -d $(pwd)/types -l Java -l Kotlin -l Scala -l TypeScript

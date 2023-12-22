@@ -1,5 +1,6 @@
-package community.flock.wirespec.compiler.cli.io
+package community.flock.wirespec.compiler.cli
 
+import community.flock.wirespec.compiler.cli.io.Extension
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 

@@ -14,41 +14,51 @@ import community.flock.wirespec.compiler.cli.Language.Spec.Wirespec
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 
 enum class Options(vararg val flags: String) {
-    Output("-o", "--output"),
+    InputDir("-d", "--input-dir"),
+    InputFile("-f", "--input-file"),
+    OutputDir("-o", "--output-dir"),
     Language("-l", "--language"),
     PackageName("-p", "--package"),
     Strict("-s", "--strict"),
-    Debug("-d", "--debug"),
+    Debug("-b", "--debug"),
 }
 
 class WirespecCli : NoOpCliktCommand(name = "wirespec") {
     companion object {
-        fun run(
+        fun provide(
             compile: (Arguments) -> Unit,
             convert: (Arguments) -> Unit,
         ): (Array<out String>) -> Unit = WirespecCli().subcommands(Compile(compile), Convert(convert))::main
-
     }
 }
 
-abstract class SubCommand : CliktCommand() {
-    val input by argument(help = "Input file")
-    val output by option(*Options.Output.flags, help = "Output directory")
+abstract class CommonOptions : CliktCommand() {
+    private val inputFile by option(*Options.InputFile.flags, help = "Input file")
+    val inputDir by option(*Options.InputDir.flags, help = "Input directory")
+    val outputDir by option(*Options.OutputDir.flags, help = "Output directory")
     val packageName by option(*Options.PackageName.flags, help = "Package name").default(DEFAULT_PACKAGE_NAME)
     val strict by option(*Options.Strict.flags, help = "Strict mode").flag()
     val debug by option(*Options.Debug.flags, help = "Debug mode").flag()
+
+    fun getInput(inputDir: String?): Input =
+        if (inputDir != null && inputFile != null) error("Choose either a file or a directory. Not Both.")
+        else inputFile
+            ?.let(FullFilePath.Companion::parse)
+            ?: inputDir?.let(::FullDirPath)
+            ?: Console
 }
 
-class Compile(private val block: (Arguments) -> Unit) : SubCommand() {
+class Compile(private val block: (Arguments) -> Unit) : CommonOptions() {
+
     private val languages by option(*Options.Language.flags, help = "Language")
         .choice(Language.toMap())
         .multiple(required = true)
 
     override fun run() {
         Arguments(
-            input = input,
             operation = Operation.Compile,
-            output = output,
+            input = getInput(inputDir),
+            output = outputDir,
             languages = languages.toSet(),
             packageName = packageName,
             strict = strict,
@@ -57,7 +67,7 @@ class Compile(private val block: (Arguments) -> Unit) : SubCommand() {
     }
 }
 
-class Convert(private val block: (Arguments) -> Unit) : SubCommand() {
+class Convert(private val block: (Arguments) -> Unit) : CommonOptions() {
 
     private val format by argument(help = "Input format").enum<Format>()
     private val languages by option(*Options.Language.flags, help = "Language")
@@ -65,10 +75,11 @@ class Convert(private val block: (Arguments) -> Unit) : SubCommand() {
         .multiple(listOf(Wirespec))
 
     override fun run() {
+        inputDir?.let { echo("To convert, please specify a file", err = true) }
         Arguments(
-            input = input,
             operation = Operation.Convert(format = format),
-            output = output,
+            input = getInput(null),
+            output = outputDir,
             languages = languages.toSet().ifEmpty { setOf(Wirespec) },
             packageName = packageName,
             strict = strict,
@@ -78,8 +89,8 @@ class Convert(private val block: (Arguments) -> Unit) : SubCommand() {
 }
 
 data class Arguments(
-    val input: String,
     val operation: Operation,
+    val input: Input,
     val output: String?,
     val languages: Set<Language>,
     val packageName: String,

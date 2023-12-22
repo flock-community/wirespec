@@ -2,6 +2,8 @@
 
 package community.flock.wirespec.compiler.cli.io
 
+import community.flock.wirespec.compiler.cli.FullFilePath
+import community.flock.wirespec.compiler.cli.Reader
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.IOException.FileReadException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.IOException.FileWriteException
 import kotlinx.cinterop.ByteVar
@@ -16,9 +18,9 @@ import platform.posix.fputs
 import platform.posix.mkdir
 import platform.posix.opendir
 
-actual abstract class File actual constructor(actual val path: FullFilePath) : Copy {
+actual abstract class File actual constructor(actual val path: FullFilePath) : Reader, Copy {
 
-    actual fun read() = StringBuilder().apply {
+    actual override fun read() = StringBuilder().apply {
         fopen(path.toString(), "r")?.let { file ->
             try {
                 memScoped {
