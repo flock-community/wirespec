@@ -20,7 +20,7 @@ class CompileToWirespecTest {
                 """.trimIndent()
 
         Wirespec.compile(source)(logger)(WirespecEmitter(logger = logger))
-            .map { it.first().second } shouldBeRight source
+            .map { it.first().result } shouldBeRight source
     }
 
     @Test
@@ -31,6 +31,6 @@ class CompileToWirespecTest {
                 """.trimIndent()
 
         Wirespec.compile(source)(logger)(WirespecEmitter(logger = logger))
-            .map { it.first().second } shouldBeRight source
+            .map { it.first().result } shouldBeRight source
     }
 }

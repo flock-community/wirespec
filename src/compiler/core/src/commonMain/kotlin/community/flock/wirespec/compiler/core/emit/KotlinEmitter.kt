@@ -4,6 +4,7 @@ import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.isInt
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
+import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
@@ -52,22 +53,24 @@ class KotlinEmitter(
         |
     """.trimMargin()
 
-    override fun emit(ast: AST): List<Pair<String, String>> =
-        super.emit(ast).map { (name, result) ->
-            name.sanitizeSymbol() to """
+    override fun emit(ast: AST): List<Emitted> =
+        super.emit(ast).map {
+            Emitted(
+                it.typeName.sanitizeSymbol(), """
                     |${if (packageName.isBlank()) "" else "package $packageName"}
                     |${if (ast.hasEndpoints()) import else ""}
-                    |${result}
+                    |${it.result}
             """.trimMargin().trimStart()
+            )
         }
 
     object Test
 
     override fun Type.emit() = withLogging(logger) {
-        if(shape.value.isEmpty()){
+        if (shape.value.isEmpty()) {
             """|object ${name.sanitizeSymbol()}
                |""".trimMargin()
-        }else{
+        } else {
             """|data class ${name.sanitizeSymbol()}(
                |${shape.emit()}
                |)
@@ -114,7 +117,13 @@ class KotlinEmitter(
 
     override fun Enum.emit() = withLogging(logger) {
         fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_").sanitizeFirstIsDigit()
-        "enum class ${name.sanitizeSymbol()} (val label: String){\n${SPACER}${entries.joinToString(",\n${SPACER}") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }};\n\n${SPACER}override fun toString(): String {\n${SPACER}${SPACER}return label\n${SPACER}}\n}\n"
+        "enum class ${name.sanitizeSymbol()} (val label: String){\n${SPACER}${
+            entries.joinToString(",\n${SPACER}") {
+                "${
+                    it.sanitizeEnum().sanitizeKeywords()
+                }(\"$it\")"
+            }
+        };\n\n${SPACER}override fun toString(): String {\n${SPACER}${SPACER}return label\n${SPACER}}\n}\n"
     }
 
     override fun Refined.emit() = withLogging(logger) {
@@ -128,12 +137,40 @@ class KotlinEmitter(
     override fun Endpoint.emit() = withLogging(logger) {
         """interface ${emitName().sanitizeSymbol()} {
         |${SPACER}sealed interface Request<T>: Wirespec.Request<T>
-        |${requests.joinToString("\n") { "${SPACER}data class Request${it.content?.emitContentType()?.sanitizeSymbol() ?: "Unit"}(override val path:String, override val method: Wirespec.Method, override val query: Map<String, List<Any?>>, override val headers: Map<String, List<Any?>>, override val content:Wirespec.Content<${it.content?.reference?.emit() ?: "Unit"}>?) : Request<${it.content?.reference?.emit() ?: "Unit"}> { constructor${emitRequestSignature(it.content)}: this(path = \"${path.emitPath()}\", method = Wirespec.Method.${method.name}, query = mapOf<String, List<Any?>>(${query.emitMap()}), headers = mapOf<String, List<Any?>>(${headers.emitMap()}), content = ${it.content?.let { "Wirespec.Content(\"${it.type}\", body)" } ?: "null"})}" }}
+        |${
+            requests.joinToString("\n") {
+                "${SPACER}data class Request${
+                    it.content?.emitContentType()?.sanitizeSymbol() ?: "Unit"
+                }(override val path:String, override val method: Wirespec.Method, override val query: Map<String, List<Any?>>, override val headers: Map<String, List<Any?>>, override val content:Wirespec.Content<${it.content?.reference?.emit() ?: "Unit"}>?) : Request<${it.content?.reference?.emit() ?: "Unit"}> { constructor${
+                    emitRequestSignature(
+                        it.content
+                    )
+                }: this(path = \"${path.emitPath()}\", method = Wirespec.Method.${method.name}, query = mapOf<String, List<Any?>>(${query.emitMap()}), headers = mapOf<String, List<Any?>>(${headers.emitMap()}), content = ${it.content?.let { "Wirespec.Content(\"${it.type}\", body)" } ?: "null"})}"
+            }
+        }
         |${SPACER}sealed interface Response<T>: Wirespec.Response<T>
-        |${responses.map { it.status.groupStatus() }.toSet().joinToString("\n") { "${SPACER}sealed interface Response${it}<T>: Response<T>" }}
-        |${responses.filter { it.status.isInt() }.map { it.status }.toSet().joinToString("\n") { "${SPACER}sealed interface Response${it}<T>: Response${it.groupStatus()}<T>" }}
-        |${responses.filter { it.status.isInt() }.distinctBy { it.status to it.content?.type }.joinToString("\n") { "${SPACER}data class Response${it.status}${it.content?.emitContentType()?.sanitizeSymbol() ?: "Unit"} (override val headers: Map<String, List<Any?>>${it.content?.let { ", val body: ${it.reference.emit()}" } ?: ""} ): Response${it.status}<${it.content?.reference?.emit() ?: "Unit"}> { override val status = ${it.status}; override val content = ${it.content?.let { "Wirespec.Content(\"${it.type}\", body)" } ?: "null"}}" }}
-        |${responses.filter { !it.status.isInt() }.distinctBy { it.status to it.content?.type }.joinToString("\n") { "${SPACER}data class Response${it.status.firstToUpper()}${it.content?.emitContentType()?.sanitizeSymbol() ?: "Unit"} (override val status: Int, override val headers: Map<String, List<Any?>>${it.content?.let { ", val body: ${it.reference.emit()}" } ?: ""} ): Response${it.status.firstToUpper()}<${it.content?.reference?.emit() ?: "Unit"}> { override val content = ${it.content?.let { "Wirespec.Content(\"${it.type}\", body)" } ?: "null"}}" }}
+        |${
+            responses.map { it.status.groupStatus() }.toSet()
+                .joinToString("\n") { "${SPACER}sealed interface Response${it}<T>: Response<T>" }
+        }
+        |${
+            responses.filter { it.status.isInt() }.map { it.status }.toSet()
+                .joinToString("\n") { "${SPACER}sealed interface Response${it}<T>: Response${it.groupStatus()}<T>" }
+        }
+        |${
+            responses.filter { it.status.isInt() }.distinctBy { it.status to it.content?.type }.joinToString("\n") {
+                "${SPACER}data class Response${it.status}${
+                    it.content?.emitContentType()?.sanitizeSymbol() ?: "Unit"
+                } (override val headers: Map<String, List<Any?>>${it.content?.let { ", val body: ${it.reference.emit()}" } ?: ""} ): Response${it.status}<${it.content?.reference?.emit() ?: "Unit"}> { override val status = ${it.status}; override val content = ${it.content?.let { "Wirespec.Content(\"${it.type}\", body)" } ?: "null"}}"
+            }
+        }
+        |${
+            responses.filter { !it.status.isInt() }.distinctBy { it.status to it.content?.type }.joinToString("\n") {
+                "${SPACER}data class Response${it.status.firstToUpper()}${
+                    it.content?.emitContentType()?.sanitizeSymbol() ?: "Unit"
+                } (override val status: Int, override val headers: Map<String, List<Any?>>${it.content?.let { ", val body: ${it.reference.emit()}" } ?: ""} ): Response${it.status.firstToUpper()}<${it.content?.reference?.emit() ?: "Unit"}> { override val content = ${it.content?.let { "Wirespec.Content(\"${it.type}\", body)" } ?: "null"}}"
+            }
+        }
         |${SPACER}suspend fun ${name.sanitizeSymbol().firstToLower()}(request: Request<*>): Response<*>
         |${SPACER}companion object{
         |${SPACER}${SPACER}const val PATH = "${path.emitSegment()}"
@@ -158,10 +195,12 @@ class KotlinEmitter(
             .map { Type.Shape.Field(it.identifier, it.reference, false) }
         val parameters = pathField + query + headers + cookies
         return """
-            |(${parameters
+            |(${
+            parameters
                 .plus(content?.reference?.toField("body", false))
                 .filterNotNull()
-                .joinToString(", ") { it.emit() }})
+                .joinToString(", ") { it.emit() }
+        })
         """.trimMargin()
     }
 
@@ -206,15 +245,23 @@ class KotlinEmitter(
             else -> """
                     |${SPACER}${SPACER}${SPACER}${SPACER}request.content?.type == "${content.type}" -> contentMapper
                     |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.read<${content.reference.emit()}>(request.content!!, Wirespec.getType(${content.reference.emitSymbol()}::class.java, ${content.reference.isIterable}))
-                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.let{ Request${content.emitContentType().sanitizeSymbol()}(request.path, request.method, request.query, request.headers, it) }
+                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.let{ Request${
+                content.emitContentType().sanitizeSymbol()
+            }(request.path, request.method, request.query, request.headers, it) }
                 """.trimMargin()
         }
 
     private fun List<Endpoint.Response>.emitResponseMapper() = """
         |${SPACER}${SPACER}fun <B> RESPONSE_MAPPER(contentMapper: Wirespec.ContentMapper<B>) = {
         |${SPACER}${SPACER}${SPACER}response: Wirespec.Response<B> -> when {
-        |${filter { it.status.isInt() }.distinctBy { it.status to it.content?.type }.joinToString("\n") { it.emitResponseMapperCondition() }}
-        |${filter { !it.status.isInt() }.distinctBy { it.status to it.content?.type }.joinToString("\n") { it.emitResponseMapperCondition() }}
+        |${
+        filter { it.status.isInt() }.distinctBy { it.status to it.content?.type }
+            .joinToString("\n") { it.emitResponseMapperCondition() }
+    }
+        |${
+        filter { !it.status.isInt() }.distinctBy { it.status to it.content?.type }
+            .joinToString("\n") { it.emitResponseMapperCondition() }
+    }
         |${SPACER}${SPACER}${SPACER}${SPACER}else -> error("Cannot map response with status ${"$"}{response.status}")
         |${SPACER}${SPACER}${SPACER}}
         |${SPACER}${SPACER}}
@@ -223,13 +270,21 @@ class KotlinEmitter(
     private fun Endpoint.Response.emitResponseMapperCondition() =
         when (content) {
             null -> """
-                    |${SPACER}${SPACER}${SPACER}${SPACER}${status.takeIf { it.isInt() }?.let { "response.status == $status && " }.orEmptyString()}response.content == null -> Response${status.firstToUpper()}Unit(${status.takeIf { !it.isInt() }?.let { "response.status, " }.orEmptyString()}response.headers)
+                    |${SPACER}${SPACER}${SPACER}${SPACER}${
+                status.takeIf { it.isInt() }?.let { "response.status == $status && " }.orEmptyString()
+            }response.content == null -> Response${status.firstToUpper()}Unit(${
+                status.takeIf { !it.isInt() }?.let { "response.status, " }.orEmptyString()
+            }response.headers)
                 """.trimMargin()
 
             else -> """
-                    |${SPACER}${SPACER}${SPACER}${SPACER}${status.takeIf { it.isInt() }?.let { "response.status == $status && " }.orEmptyString()}response.content?.type == "${content.type}" -> contentMapper
+                    |${SPACER}${SPACER}${SPACER}${SPACER}${
+                status.takeIf { it.isInt() }?.let { "response.status == $status && " }.orEmptyString()
+            }response.content?.type == "${content.type}" -> contentMapper
                     |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.read<${content.reference.emit()}>(response.content!!, Wirespec.getType(${content.reference.emitSymbol()}::class.java, ${content.reference.isIterable}))
-                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.let{ Response${status.firstToUpper()}${content.emitContentType().sanitizeSymbol()}(${status.takeIf { !it.isInt() }?.let { "response.status, " }.orEmptyString()}response.headers, it.body) }
+                    |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}.let{ Response${status.firstToUpper()}${
+                content.emitContentType().sanitizeSymbol()
+            }(${status.takeIf { !it.isInt() }?.let { "response.status, " }.orEmptyString()}response.headers, it.body) }
                 """.trimMargin()
         }
 

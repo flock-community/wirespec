@@ -1,10 +1,10 @@
 package community.flock.wirespec.emit;
 
+import community.flock.wirespec.compiler.core.emit.common.Emitted;
 import community.flock.wirespec.compiler.core.emit.common.Emitter;
 import community.flock.wirespec.compiler.core.parse.nodes.Node;
 import community.flock.wirespec.compiler.core.parse.nodes.Type;
 import community.flock.wirespec.compiler.utils.Logger;
-import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +19,7 @@ public class CustomEmitter extends Emitter {
 
     @NotNull
     @Override
-    public List<Pair<String, String>> emit(@NotNull List<? extends Node> ast) {
+    public List<Emitted> emit(@NotNull List<? extends Node> ast) {
         return ast
                 .stream()
                 .filter(sc -> sc instanceof Type)
@@ -27,8 +27,8 @@ public class CustomEmitter extends Emitter {
                 .collect(Collectors.toList());
     }
 
-    public Pair<String, String> emit(Type type) {
-        return new Pair<>(type.getName(), "package hello;\n\npublic class " + type.getName() + " {}");
+    public Emitted emit(Type type) {
+        return new Emitted(type.getName(), "package hello;\n\npublic class " + type.getName() + " {}");
     }
 
     @Nullable

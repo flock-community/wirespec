@@ -1,7 +1,8 @@
 package community.flock.wirespec.compiler.core.emit
 
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
+import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
@@ -19,8 +20,8 @@ class ScalaEmitter(
 
     override val shared = ""
 
-    override fun emit(ast: AST): List<Pair<String, String>> = super.emit(ast)
-        .map { (name, result) -> name to if (packageName.isBlank()) "" else "package $packageName\n\n$result" }
+    override fun emit(ast: AST): List<Emitted> = super.emit(ast)
+        .map { Emitted(it.typeName, if (packageName.isBlank()) "" else "package $packageName\n\n${it.result}") }
 
     override fun Type.emit() = withLogging(logger) {
         """case class ${emitName()}(
@@ -57,11 +58,17 @@ class ScalaEmitter(
     }
 
     override fun Enum.emit() = withLogging(logger) {
-        fun String.sanitize() = replace("-", "_").let { if(it.first().isDigit()) "_$it" else it }
+        fun String.sanitize() = replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }
         """
         |sealed abstract class ${emitName()}(val label: String)
         |object $name {
-        |${entries.joinToString("\n") { """${SPACER}final case object ${it.sanitize().uppercase()} extends $name(label = "$it")""" }}
+        |${
+            entries.joinToString("\n") {
+                """${SPACER}final case object ${
+                    it.sanitize().uppercase()
+                } extends $name(label = "$it")"""
+            }
+        }
         |}
         |""".trimMargin()
     }

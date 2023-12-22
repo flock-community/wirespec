@@ -2,11 +2,12 @@
 
 import arrow.core.Either
 import arrow.core.Nel
+import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 
-fun Either<Nel<WirespecException>, List<Pair<String, String>>>.produce(): WsCompilationResult = when (this) {
+fun Either<Nel<WirespecException>, List<Emitted>>.produce(): WsCompilationResult = when (this) {
     is Either.Left -> WsCompilationResult(errors = value.map { it.produce() }.toTypedArray())
-    is Either.Right -> WsCompilationResult(compiled = WsCompiled(value.first().second))
+    is Either.Right -> WsCompilationResult(compiled = WsCompiled(value.first().result))
 }
 
 @JsExport

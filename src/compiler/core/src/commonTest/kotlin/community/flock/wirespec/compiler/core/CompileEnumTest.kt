@@ -104,7 +104,7 @@ class CompileEnumTest {
 
     private fun compile(source: String) = { emitter: AbstractEmitter ->
         Wirespec.compile(source)(logger)(emitter)
-            .map { it.first().second }
+            .map { it.first().result }
             .onLeft(::println)
     }
 }

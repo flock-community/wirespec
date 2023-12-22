@@ -1,7 +1,8 @@
 package community.flock.wirespec.compiler.core.emit
 
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
+import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
@@ -48,8 +49,8 @@ class JavaEmitter(
     private fun import(ast: AST) =
         if (!ast.hasEndpoints()) "" else "import community.flock.wirespec.Wirespec;\nimport java.util.concurrent.CompletableFuture;\nimport java.util.function.Function;\n\n"
 
-    override fun emit(ast: AST): List<Pair<String, String>> = super.emit(ast)
-        .map { (name, result) -> name.sanitizeSymbol() to "$pkg\n\n${import(ast)}$result" }
+    override fun emit(ast: AST): List<Emitted> = super.emit(ast)
+        .map { Emitted(it.typeName.sanitizeSymbol(), "$pkg\n\n${import(ast)}${it.result}") }
 
     override fun Type.emit() = withLogging(logger) {
         """public record ${emitName().sanitizeSymbol()}(
@@ -138,8 +139,14 @@ class JavaEmitter(
             |${SPACER}sealed interface Request<T> extends Wirespec.Request<T> {}
             |${requests.joinToString("\n") { it.emit(this) }}
             |${SPACER}sealed interface Response<T> extends Wirespec.Response<T> {}
-            |${responses.map { it.status.groupStatus() }.toSet().joinToString("\n") { "${SPACER}sealed interface Response${it}<T> extends Response<T>{};" }}
-            |${responses.filter { it.status.isInt() }.map { it.status }.toSet().joinToString("\n") { "${SPACER}sealed interface Response${it}<T> extends Response${it.groupStatus()}<T>{};" }}
+            |${
+            responses.map { it.status.groupStatus() }.toSet()
+                .joinToString("\n") { "${SPACER}sealed interface Response${it}<T> extends Response<T>{};" }
+        }
+            |${
+            responses.filter { it.status.isInt() }.map { it.status }.toSet()
+                .joinToString("\n") { "${SPACER}sealed interface Response${it}<T> extends Response${it.groupStatus()}<T>{};" }
+        }
             |${responses.distinctBy { it.status to it.content?.type }.joinToString("\n") { it.emit() }}
             |${SPACER}public CompletableFuture<Response<?>> ${name.firstToLower()}(Request<?> request);
             |}
@@ -176,7 +183,7 @@ class JavaEmitter(
     """.trimMargin()
 
     private fun Endpoint.Response.emit() = """
-        |${SPACER}final class Response${status.firstToUpper()}${content?.emitContentType()?:"Void"} implements Response${
+        |${SPACER}final class Response${status.firstToUpper()}${content?.emitContentType() ?: "Void"} implements Response${
         status.firstToUpper().orEmptyString()
     }<${content?.reference?.emit() ?: "Void"}> {
         |${SPACER}${SPACER}private final int status;
@@ -207,14 +214,22 @@ class JavaEmitter(
     private fun Endpoint.Response.emitResponseMapperCondition() =
         when (content) {
             null -> """
-                    |${SPACER}${SPACER}${SPACER}if(${status.takeIf { it.isInt() }?.let { "response.getStatus() == $status && " }.orEmptyString()}response.getContent() == null) { return (Res) new Response${status.firstToUpper()}Void(${status.takeIf { !it.isInt() }?.let { "response.getStatus(), " }.orEmptyString()}response.getHeaders()); }
+                    |${SPACER}${SPACER}${SPACER}if(${
+                status.takeIf { it.isInt() }?.let { "response.getStatus() == $status && " }.orEmptyString()
+            }response.getContent() == null) { return (Res) new Response${status.firstToUpper()}Void(${
+                status.takeIf { !it.isInt() }?.let { "response.getStatus(), " }.orEmptyString()
+            }response.getHeaders()); }
                     |
                 """.trimMargin()
 
             else -> """
-                    |${SPACER}${SPACER}${SPACER}if(${status.takeIf { it.isInt() }?.let { "response.getStatus() == $status && " }.orEmptyString()}response.getContent().type().equals("${content.type}")) {
+                    |${SPACER}${SPACER}${SPACER}if(${
+                status.takeIf { it.isInt() }?.let { "response.getStatus() == $status && " }.orEmptyString()
+            }response.getContent().type().equals("${content.type}")) {
                     |${SPACER}${SPACER}${SPACER}${SPACER}Wirespec.Content<${content.reference.emit()}> content = contentMapper.read(response.getContent(), Wirespec.getType(${content.reference.emitSymbol()}.class, ${content.reference.isIterable}));
-                    |${SPACER}${SPACER}${SPACER}${SPACER}return (Res) new Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "response.getStatus(), " }.orEmptyString()}response.getHeaders(), content.body());
+                    |${SPACER}${SPACER}${SPACER}${SPACER}return (Res) new Response${status.firstToUpper()}${content.emitContentType()}(${
+                status.takeIf { !it.isInt() }?.let { "response.getStatus(), " }.orEmptyString()
+            }response.getHeaders(), content.body());
                     |${SPACER}${SPACER}${SPACER}}
                     |
                 """.trimMargin()
@@ -238,7 +253,11 @@ class JavaEmitter(
             .joinToString(", ") { it.emit() }
     }
 
-    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ", "java.util.Map.ofEntries(", ")") { "java.util.Map.entry(\"${it.identifier.value}\", java.util.List.of(${it.identifier.emit()}))" }
+    private fun List<Type.Shape.Field>.emitMap() = joinToString(
+        ", ",
+        "java.util.Map.ofEntries(",
+        ")"
+    ) { "java.util.Map.entry(\"${it.identifier.value}\", java.util.List.of(${it.identifier.emit()}))" }
 
     private fun List<Endpoint.Segment>.emitSegment() = "/" + joinToString("/") {
         when (it) {
@@ -260,6 +279,7 @@ class JavaEmitter(
     fun String.sanitizeKeywords() = if (reservedKeywords.contains(this)) "_$this" else this
 
     fun String.sanitizeSymbol() = replace(".", "").replace(" ", "_")
+
     companion object {
         private val reservedKeywords = listOf(
             "abstract", "continue", "for", "new", "switch",

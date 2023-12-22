@@ -8,8 +8,9 @@ import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
+import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.utils.Logger
 import org.gradle.api.Action
 import org.gradle.api.Plugin
@@ -83,7 +84,7 @@ class WirespecPlugin : Plugin<Project> {
             }
             .flatMap { (name, result) ->
                 if (emitter.split) result
-                else listOf(name to result.first().second)
+                else listOf(Emitted(name, result.first().result))
             }
 
     private fun BufferedReader.collectToString() = lines().asSequence().joinToString("")
@@ -95,7 +96,7 @@ class WirespecPlugin : Plugin<Project> {
         fun AbstractEmitter.emit(output: String, ext: String) {
             compile(extension.input, logger, this)
                 .also { project.file(output).mkdirs() }
-                .forEach { (name, result) -> project.file("$output/$name.$ext").writeText(result) }
+                .forEach { project.file("$output/${it.typeName}.$ext").writeText(it.result) }
         }
 
         project.task("wirespec").doFirst { _: Task? ->

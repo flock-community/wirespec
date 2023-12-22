@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalStdlibApi::class)
-
 package community.flock.wirespec.compiler.cli
 
 import community.flock.wirespec.compiler.cli.io.Extension
@@ -13,6 +11,7 @@ sealed interface Input
 
 data class FullDirPath(val path: String) : Input
 
+@OptIn(ExperimentalStdlibApi::class)
 data class FullFilePath(val directory: String, val fileName: String, val extension: Extension = Wirespec) : Input {
     companion object {
         fun parse(input: String): FullFilePath {

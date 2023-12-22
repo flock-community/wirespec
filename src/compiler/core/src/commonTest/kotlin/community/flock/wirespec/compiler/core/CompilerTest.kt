@@ -33,7 +33,7 @@ class CompilerTest {
         """.trimIndent()
 
         Wirespec.compile(source)(logger)(KotlinEmitter(logger = logger))
-            .map { it.first().second } shouldBeRight out
+            .map { it.first().result } shouldBeRight out
     }
 
     @Test
@@ -68,7 +68,7 @@ class CompilerTest {
         """.trimIndent()
 
         Wirespec.compile(source)(logger)(KotlinEmitter(logger = logger))
-            .map { it.first().second }
+            .map { it.first().result }
             .onLeft(::println) shouldBeRight out
     }
 }

@@ -19,8 +19,8 @@ enum class Options(vararg val flags: String) {
     OutputDir("-o", "--output-dir"),
     Language("-l", "--language"),
     PackageName("-p", "--package"),
-    Strict("-s", "--strict"),
-    Debug("-b", "--debug"),
+    Strict("--strict"),
+    Debug("--debug"),
 }
 
 class WirespecCli : NoOpCliktCommand(name = "wirespec") {

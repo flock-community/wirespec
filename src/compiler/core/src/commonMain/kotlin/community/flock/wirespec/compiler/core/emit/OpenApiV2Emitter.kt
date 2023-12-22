@@ -14,6 +14,7 @@ import community.flock.kotlinx.openapi.bindings.v2.SchemaObject
 import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v2.StatusCode
 import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
+import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
@@ -29,7 +30,7 @@ class OpenApiV2Emitter(override val logger: Logger = noLogger, override val spli
 
     override val shared = null
 
-    override fun emit(ast: AST): List<Pair<String, String>> {
+    override fun emit(ast: AST): List<Emitted> {
         val obj = SwaggerObject(
             swagger = "2.0",
             info = InfoObject(
@@ -75,7 +76,7 @@ class OpenApiV2Emitter(override val logger: Logger = noLogger, override val spli
                 }
         )
         val str = OpenAPI.encodeToString(obj)
-        return listOf("OpenApi" to str)
+        return listOf(Emitted("OpenApi", str))
     }
 
     private fun List<Endpoint>.emit(method: Endpoint.Method): OperationObject? =
