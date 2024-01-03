@@ -4,6 +4,7 @@ import community.flock.wirespec.compiler.core.emit.toField
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
+import community.flock.wirespec.compiler.core.parse.nodes.Node
 import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.Type
 import community.flock.wirespec.compiler.utils.Logger
@@ -26,16 +27,18 @@ abstract class AbstractEmitter(override val logger: Logger, override val split: 
         .map {
             logger.log("Emitting Node $this")
             when (it) {
-                is Type -> it.name to it.emit()
-                is Endpoint -> it.name to it.emit()
-                is Enum -> it.name to it.emit()
-                is Refined -> it.name to it.emit()
+                is Type -> it.emitName() to it.emit()
+                is Endpoint -> it.emitName() to it.emit()
+                is Enum -> it.emitName() to it.emit()
+                is Refined -> it.emitName() to it.emit()
             }
         }
         .run {
             if (split) this
             else listOf("NoName" to joinToString("\n") { it.second })
         }
+
+    abstract fun Node.emitName():String
 
     fun Endpoint.Content.emitContentType() = type
         .substringBefore(";")
