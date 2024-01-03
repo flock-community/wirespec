@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
+import community.flock.wirespec.compiler.core.parse.nodes.Node
 import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.Type
 import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference
@@ -22,7 +23,7 @@ class ScalaEmitter(
         .map { (name, result) -> name to if (packageName.isBlank()) "" else "package $packageName\n\n$result" }
 
     override fun Type.emit() = withLogging(logger) {
-        """case class $name(
+        """case class ${emitName()}(
             |${shape.emit()}
             |)
             |
@@ -58,7 +59,7 @@ class ScalaEmitter(
     override fun Enum.emit() = withLogging(logger) {
         fun String.sanitize() = replace("-", "_").let { if(it.first().isDigit()) "_$it" else it }
         """
-        |sealed abstract class $name(val label: String)
+        |sealed abstract class ${emitName()}(val label: String)
         |object $name {
         |${entries.joinToString("\n") { """${SPACER}final case object ${it.sanitize().uppercase()} extends $name(label = "$it")""" }}
         |}
@@ -66,8 +67,8 @@ class ScalaEmitter(
     }
 
     override fun Refined.emit() = withLogging(logger) {
-        """case class $name(val value: String) {
-            |${SPACER}implicit class ${name}Ops(val that: $name) {
+        """case class ${emitName()}(val value: String) {
+            |${SPACER}implicit class ${emitName()}Ops(val that: ${emitName()}) {
             |${validator.emit()}
             |${SPACER}}
             |}
@@ -128,6 +129,13 @@ class ScalaEmitter(
             "with",
             "yield",
         )
+    }
+
+    override fun Node.emitName(): String = when(this){
+        is Endpoint -> "${this.name}Endpoint"
+        is Enum -> this.name
+        is Refined -> this.name
+        is Type -> this.name
     }
 
 }

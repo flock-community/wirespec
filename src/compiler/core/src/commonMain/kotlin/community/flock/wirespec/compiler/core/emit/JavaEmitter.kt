@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
+import community.flock.wirespec.compiler.core.parse.nodes.Node
 import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.Type
 import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference
@@ -51,7 +52,7 @@ class JavaEmitter(
         .map { (name, result) -> name.sanitizeSymbol() to "$pkg\n\n${import(ast)}$result" }
 
     override fun Type.emit() = withLogging(logger) {
-        """public record ${name.sanitizeSymbol()}(
+        """public record ${emitName().sanitizeSymbol()}(
             |${shape.emit()}
             |) {};
             |""".trimMargin()
@@ -118,7 +119,7 @@ class JavaEmitter(
     }
 
     override fun Refined.emit() = withLogging(logger) {
-        """public record ${name.sanitizeSymbol()}(String value) {
+        """public record ${emitName().sanitizeSymbol()}(String value) {
             |${SPACER}static void validate($name record) {
             |${SPACER}${validator.emit()}
             |${SPACER}}
@@ -131,7 +132,7 @@ class JavaEmitter(
     }
 
     override fun Endpoint.emit() = withLogging(logger) {
-        """public interface $name {
+        """public interface ${emitName().sanitizeSymbol()} {
             |${SPACER}static String PATH = "${path.emitSegment()}";
             |${responses.emitResponseMapper()}
             |${SPACER}sealed interface Request<T> extends Wirespec.Request<T> {}
@@ -143,6 +144,13 @@ class JavaEmitter(
             |${SPACER}public CompletableFuture<Response<?>> ${name.firstToLower()}(Request<?> request);
             |}
             |""".trimMargin()
+    }
+
+    override fun Node.emitName(): String = when(this){
+        is Endpoint -> "${this.name}Endpoint"
+        is Enum -> this.name
+        is Refined -> this.name
+        is Type -> this.name
     }
 
     private fun Endpoint.Request.emit(endpoint: Endpoint) = """

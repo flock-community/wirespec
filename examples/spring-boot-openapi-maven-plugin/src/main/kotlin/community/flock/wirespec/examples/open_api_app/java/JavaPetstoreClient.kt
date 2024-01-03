@@ -1,8 +1,8 @@
 package community.flock.wirespec.examples.open_api_app.java
 
 import community.flock.wirespec.Wirespec
-import community.flock.wirespec.generated.java.v3.AddPet
-import community.flock.wirespec.generated.java.v3.FindPetsByStatus
+import community.flock.wirespec.generated.java.v3.AddPetEndpoint
+import community.flock.wirespec.generated.java.v3.FindPetsByStatusEndpoint
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
@@ -11,7 +11,7 @@ import java.net.URI
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
 
-interface JavaPetstoreClient : AddPet, FindPetsByStatus
+interface JavaPetstoreClient : AddPetEndpoint, FindPetsByStatusEndpoint
 
 @Configuration
 class JavaPetClientConfiguration {
@@ -47,12 +47,12 @@ class JavaPetClientConfiguration {
             ) ?: error("No response")
 
 
-            override fun addPet(request: AddPet.Request<*>): CompletableFuture<AddPet.Response<*>> {
-                return handle(request, AddPet::RESPONSE_MAPPER)
+            override fun addPet(request: AddPetEndpoint.Request<*>): CompletableFuture<AddPetEndpoint.Response<*>> {
+                return handle(request, AddPetEndpoint::RESPONSE_MAPPER)
             }
 
-            override fun findPetsByStatus(request: FindPetsByStatus.Request<*>): CompletableFuture<FindPetsByStatus.Response<*>> {
-                return handle(request, FindPetsByStatus::RESPONSE_MAPPER)
+            override fun findPetsByStatus(request: FindPetsByStatusEndpoint.Request<*>): CompletableFuture<FindPetsByStatusEndpoint.Response<*>> {
+                return handle(request, FindPetsByStatusEndpoint::RESPONSE_MAPPER)
             }
         }
 }

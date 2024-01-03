@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.emit
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
+import community.flock.wirespec.compiler.core.parse.nodes.Node
 import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.Type
 import community.flock.wirespec.compiler.utils.Logger
@@ -60,6 +61,13 @@ class WirespecEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
           |}
           |
         """.trimMargin()
+    }
+
+    override fun Node.emitName(): String = when(this){
+        is Endpoint -> this.name
+        is Enum -> this.name
+        is Refined -> this.name
+        is Type -> this.name
     }
 
     private fun List<Endpoint.Segment>.emitPath() = "/" + joinToString("/") {

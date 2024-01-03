@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
+import community.flock.wirespec.compiler.core.parse.nodes.Node
 import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.Type
 import community.flock.wirespec.compiler.utils.Logger
@@ -125,7 +126,7 @@ class KotlinEmitter(
     override fun Refined.Validator.emit() = withLogging(logger) { "Regex($value).find(value)" }
 
     override fun Endpoint.emit() = withLogging(logger) {
-        """interface ${name.sanitizeSymbol()}Endpoint {
+        """interface ${emitName().sanitizeSymbol()} {
         |${SPACER}sealed interface Request<T>: Wirespec.Request<T>
         |${requests.joinToString("\n") { "${SPACER}data class Request${it.content?.emitContentType()?.sanitizeSymbol() ?: "Unit"}(override val path:String, override val method: Wirespec.Method, override val query: Map<String, List<Any?>>, override val headers: Map<String, List<Any?>>, override val content:Wirespec.Content<${it.content?.reference?.emit() ?: "Unit"}>?) : Request<${it.content?.reference?.emit() ?: "Unit"}> { constructor${emitRequestSignature(it.content)}: this(path = \"${path.emitPath()}\", method = Wirespec.Method.${method.name}, query = mapOf<String, List<Any?>>(${query.emitMap()}), headers = mapOf<String, List<Any?>>(${headers.emitMap()}), content = ${it.content?.let { "Wirespec.Content(\"${it.type}\", body)" } ?: "null"})}" }}
         |${SPACER}sealed interface Response<T>: Wirespec.Response<T>
@@ -142,6 +143,13 @@ class KotlinEmitter(
         |${SPACER}}
         |}
         |""".trimMargin()
+    }
+
+    override fun Node.emitName(): String = when(this){
+        is Endpoint -> "${this.name}Endpoint"
+        is Enum -> this.name
+        is Refined -> this.name
+        is Type -> this.name
     }
 
     private fun Endpoint.emitRequestSignature(content: Endpoint.Content? = null): String {
