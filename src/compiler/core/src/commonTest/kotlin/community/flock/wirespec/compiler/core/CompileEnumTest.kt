@@ -17,7 +17,7 @@ class CompileEnumTest {
     private val compiler = compile(
         """
         enum MyAwesomeEnum {
-          ONE, Two
+          ONE, Two, THREE_MORE
         }
         """.trimIndent()
     )
@@ -29,7 +29,8 @@ class CompileEnumTest {
             
             enum class MyAwesomeEnum (val label: String){
               ONE("ONE"),
-              Two("Two");
+              Two("Two"),
+              THREE_MORE("THREE_MORE");
             
               override fun toString(): String {
                 return label
@@ -48,7 +49,8 @@ class CompileEnumTest {
             
             public enum MyAwesomeEnum {
               ONE("ONE"),
-              Two("Two");
+              Two("Two"),
+              THREE_MORE("THREE_MORE");
               public final String label;
               MyAwesomeEnum(String label) {
                 this.label = label;
@@ -73,6 +75,7 @@ class CompileEnumTest {
             object MyAwesomeEnum {
               final case object ONE extends MyAwesomeEnum(label = "ONE")
               final case object TWO extends MyAwesomeEnum(label = "Two")
+              final case object THREE_MORE extends MyAwesomeEnum(label = "THREE_MORE")
             }
 
         """.trimIndent()
@@ -83,7 +86,7 @@ class CompileEnumTest {
     @Test
     fun testEnumTypeScript() {
         val ts = """
-            type MyAwesomeEnum = "ONE" | "Two"
+            type MyAwesomeEnum = "ONE" | "Two" | "THREE_MORE"
 
         """.trimIndent()
 
@@ -94,7 +97,7 @@ class CompileEnumTest {
     fun testEnumWirespec() {
         val wirespec = """
             enum MyAwesomeEnum {
-              ONE, Two
+              ONE, Two, THREE_MORE
             }
         
         """.trimIndent()
