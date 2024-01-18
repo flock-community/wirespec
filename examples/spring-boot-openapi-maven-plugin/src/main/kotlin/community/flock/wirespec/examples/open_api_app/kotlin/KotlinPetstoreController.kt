@@ -13,7 +13,7 @@ class KotlinPetstoreController(
 ) {
 
     @PostMapping
-    suspend fun create(): Int {
+    suspend fun create(): Long {
         val pet = Pet(name = "Pet", photoUrls = emptyList())
         val req = AddPetEndpoint.RequestApplicationJson(pet)
         return when (val res = kotlinPetstoreClient.addPet(req)) {
@@ -24,7 +24,7 @@ class KotlinPetstoreController(
     }
 
     @GetMapping
-    suspend fun find(@RequestBody pet: Pet): List<Int?> {
+    suspend fun find(@RequestBody pet: Pet): List<Long?> {
         val req = FindPetsByStatusEndpoint.RequestUnit(status = FindPetsByStatusParameterStatus.available)
         return when (val res = kotlinPetstoreClient.findPetsByStatus(req)) {
             is FindPetsByStatusEndpoint.Response200ApplicationJson -> res.content.body.map { it.id }
