@@ -1,5 +1,8 @@
 .PHONY: *
 
+all:
+	$(shell pwd)/scripts/all.sh
+
 compile:
 	$(shell pwd)/scripts/compile.sh
 
@@ -17,9 +20,6 @@ image:
 
 clean:
 	$(shell pwd)/scripts/clean.sh
-
-all:
-	$(shell pwd)/scripts/all.sh
 
 mac:
 	$(shell pwd)/scripts/mac.sh

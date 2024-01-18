@@ -1,5 +1,6 @@
 package community.flock.wirespec.compiler.cli.io
 
+import community.flock.wirespec.compiler.cli.FullFilePath
 import community.flock.wirespec.compiler.cli.js.fs
 
 actual class Directory actual constructor(private val path: String) {

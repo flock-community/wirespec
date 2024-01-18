@@ -59,7 +59,7 @@ class GenerateMojo : BaseMojo() {
 
     fun executeKotlin() {
         val emitter = KotlinEmitter(packageName, logger)
-        if(shared) {
+        if (shared) {
             JvmUtil.emitJvm("community.flock.wirespec", output, "Wirespec", "kt").writeText(emitter.shared)
         }
         if (format == Format.OpenApiV2 || format == Format.OpenApiV3) {
@@ -73,7 +73,7 @@ class GenerateMojo : BaseMojo() {
                 Format.OpenApiV3 -> OpenApiParserV3.parse(json, !strict)
                 else -> error("Format not found")
             }
-            val result = emitter.emit(ast).joinToString("\n") { it.second }
+            val result = emitter.emit(ast).joinToString("\n") { it.result }
             JvmUtil.emitJvm(packageName, output, fileName, "kt").writeText(result)
         } else {
             compile(input, logger, emitter)
@@ -85,7 +85,7 @@ class GenerateMojo : BaseMojo() {
 
     fun executeJava() {
         val emitter = JavaEmitter(packageName, logger)
-        if(shared) {
+        if (shared) {
             JvmUtil.emitJvm("community.flock.wirespec", output, "Wirespec", "java").writeText(emitter.shared)
         }
         if (format == Format.OpenApiV2 || format == Format.OpenApiV3) {
@@ -108,11 +108,11 @@ class GenerateMojo : BaseMojo() {
 
     fun executeScala() {
         val emitter = ScalaEmitter(packageName, logger)
-        if(shared) {
+        if (shared) {
             JvmUtil.emitJvm("community.flock.wirespec", output, "Wirespec", "scala").writeText(emitter.shared)
         }
         compile(input, logger, emitter)
-            .forEach { (name, result) -> JvmUtil.emitJvm(packageName, output, name, "scala").writeText(result) }
+            .forEach { JvmUtil.emitJvm(packageName, output, it.typeName, "scala").writeText(it.result) }
     }
 
     fun executeTypeScript() {

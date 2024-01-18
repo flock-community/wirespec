@@ -1,98 +1,96 @@
 package community.flock.wirespec.compiler.cli
 
+import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.NoOpCliktCommand
+import com.github.ajalt.clikt.core.subcommands
+import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.flag
+import com.github.ajalt.clikt.parameters.options.multiple
+import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.types.choice
+import com.github.ajalt.clikt.parameters.types.enum
+import community.flock.wirespec.compiler.cli.Language.Spec.Wirespec
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
-import kotlinx.cli.ArgParser
-import kotlinx.cli.ArgType
-import kotlinx.cli.ExperimentalCli
-import kotlinx.cli.Subcommand
-import kotlinx.cli.default
-import kotlinx.cli.multiple
 
-@OptIn(ExperimentalCli::class)
-class CommandLineEntitiesParser(private val args: Array<String>) : ArgParser("wirespec") {
+enum class Options(vararg val flags: String) {
+    InputDir("-d", "--input-dir"),
+    InputFile("-f", "--input-file"),
+    OutputDir("-o", "--output-dir"),
+    Language("-l", "--language"),
+    PackageName("-p", "--package"),
+    Strict("--strict"),
+    Debug("--debug"),
+}
 
-    private val output by option(
-        type = ArgType.String,
-        shortName = "o",
-        description = "Output directory"
-    )
-
-    private val debug by option(
-        type = ArgType.Boolean,
-        shortName = "d",
-        description = "Debug mode"
-    ).default(false)
-
-    private val languages by option(
-        type = ArgType.Choice(
-            Language.values().map { it.name }.map { Language.valueOf(it) ?: error("Language not found") },
-            { Language.valueOf(it) ?: error("Language not found") }), shortName = "l", description = "Language type"
-    ).multiple()
-
-    private val packageName by option(
-        type = ArgType.String,
-        shortName = "p",
-        description = "Package name"
-    ).default(DEFAULT_PACKAGE_NAME)
-
-    private val strict by option(
-        type = ArgType.Boolean,
-        shortName = "s",
-        description = "Strict mode"
-    ).default(false)
-
-    class CompileCommand : Subcommand(name = "compile", actionDescription = "Compile Wirespec") {
-        private val input by argument(
-            type = ArgType.String,
-            description = "Input file"
-        )
-
-        var operation: Operation? = null
-
-        override fun execute() {
-            operation = Compile(input = input)
-        }
+class WirespecCli : NoOpCliktCommand(name = "wirespec") {
+    companion object {
+        fun provide(
+            compile: (Arguments) -> Unit,
+            convert: (Arguments) -> Unit,
+        ): (Array<out String>) -> Unit = WirespecCli().subcommands(Compile(compile), Convert(convert))::main
     }
+}
 
-    class ConvertCommand : Subcommand("convert", "Convert from OpenAPI") {
-        private val input by argument(
-            type = ArgType.String,
-            description = "Input file"
-        )
+abstract class CommonOptions : CliktCommand() {
+    private val inputFile by option(*Options.InputFile.flags, help = "Input file")
+    val inputDir by option(*Options.InputDir.flags, help = "Input directory")
+    val outputDir by option(*Options.OutputDir.flags, help = "Output directory")
+    val packageName by option(*Options.PackageName.flags, help = "Package name").default(DEFAULT_PACKAGE_NAME)
+    val strict by option(*Options.Strict.flags, help = "Strict mode").flag()
+    val debug by option(*Options.Debug.flags, help = "Debug mode").flag()
 
-        private val format by argument(
-            type = ArgType.Choice<Format>(),
-            description = "Input format"
-        )
+    fun getInput(inputDir: String?): Input =
+        if (inputDir != null && inputFile != null) error("Choose either a file or a directory. Not Both.")
+        else inputFile
+            ?.let(FullFilePath.Companion::parse)
+            ?: inputDir?.let(::FullDirPath)
+            ?: Console
+}
 
-        var operation: Operation? = null
+class Compile(private val block: (Arguments) -> Unit) : CommonOptions() {
 
-        override fun execute() {
-            operation = Convert(format = format, input = input)
-        }
-    }
+    private val languages by option(*Options.Language.flags, help = "Language")
+        .choice(Language.toMap())
+        .multiple(required = true)
 
-    fun parse() = run {
-        val compileCommand = CompileCommand()
-        val convertCommand = ConvertCommand()
-        subcommands(compileCommand, convertCommand)
-        parse(if (args.isNotEmpty()) args else arrayOf("-h"))
-        val compile = (subcommands["compile"] as? CompileCommand)?.operation
-        val convert = (subcommands["convert"] as? ConvertCommand)?.operation
-
+    override fun run() {
         Arguments(
-            operation = compile ?: convert ?: error("provide an operation"),
-            output = output,
+            operation = Operation.Compile,
+            input = getInput(inputDir),
+            output = outputDir,
             languages = languages.toSet(),
             packageName = packageName,
             strict = strict,
             debug = debug,
-        )
+        ).let(block)
+    }
+}
+
+class Convert(private val block: (Arguments) -> Unit) : CommonOptions() {
+
+    private val format by argument(help = "Input format").enum<Format>()
+    private val languages by option(*Options.Language.flags, help = "Language")
+        .choice(choices = Language.toMap(), ignoreCase = true)
+        .multiple(listOf(Wirespec))
+
+    override fun run() {
+        inputDir?.let { echo("To convert, please specify a file", err = true) }
+        Arguments(
+            operation = Operation.Convert(format = format),
+            input = getInput(null),
+            output = outputDir,
+            languages = languages.toSet().ifEmpty { setOf(Wirespec) },
+            packageName = packageName,
+            strict = strict,
+            debug = debug,
+        ).let(block)
     }
 }
 
 data class Arguments(
     val operation: Operation,
+    val input: Input,
     val output: String?,
     val languages: Set<Language>,
     val packageName: String,
@@ -101,14 +99,6 @@ data class Arguments(
 )
 
 sealed interface Operation {
-    val input: String
+    data object Compile : Operation
+    data class Convert(val format: Format) : Operation
 }
-
-data class Compile(
-    override val input: String,
-) : Operation
-
-data class Convert(
-    val format: Format,
-    override val input: String,
-) : Operation

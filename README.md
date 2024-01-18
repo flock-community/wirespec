@@ -166,7 +166,7 @@ wirespec convert -h
 Usage: wirespec convert options_list
 Arguments: 
     input -> Input file { String }
-    format -> Input format { Value should be one of [open_api_v2, open_api_v3] }
+    format -> Input format { Value should be one of [openapiv2, openapiv3] }
 ```
 
 # Plugins

@@ -1,6 +1,7 @@
 import Libraries.ARROW_CORE
 import Libraries.KOTEST_ASSERTIONS
 import Libraries.KOTEST_ASSERTIONS_ARROW
+import Versions.KOTLIN_COMPILER
 
 plugins {
     kotlin("multiplatform")
@@ -32,6 +33,13 @@ kotlin {
             }
         }
     }
+
+    sourceSets.all {
+        languageSettings.apply {
+            languageVersion = KOTLIN_COMPILER
+        }
+    }
+
     sourceSets {
         commonMain {
             dependencies {

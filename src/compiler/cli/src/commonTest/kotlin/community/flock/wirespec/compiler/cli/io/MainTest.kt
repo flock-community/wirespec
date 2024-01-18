@@ -9,7 +9,7 @@ class MainTest {
 
     @Test
     fun testFormat() {
-        Format.toString() shouldBe "OPEN_API_V2, OPEN_API_V3"
+        Format.toString() shouldBe "OpenApiV2, OpenApiV3"
     }
 
     @Test

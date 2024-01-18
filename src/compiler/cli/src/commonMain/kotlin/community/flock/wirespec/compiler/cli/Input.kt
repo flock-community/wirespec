@@ -1,8 +1,18 @@
-package community.flock.wirespec.compiler.cli.io
+package community.flock.wirespec.compiler.cli
 
+import community.flock.wirespec.compiler.cli.io.Extension
 import community.flock.wirespec.compiler.cli.io.Extension.Wirespec
 
-data class FullFilePath(val directory: String, val fileName: String, val extension: Extension = Wirespec) {
+interface Reader {
+    fun read(): String
+}
+
+sealed interface Input
+
+data class FullDirPath(val path: String) : Input
+
+@OptIn(ExperimentalStdlibApi::class)
+data class FullFilePath(val directory: String, val fileName: String, val extension: Extension = Wirespec) : Input {
     companion object {
         fun parse(input: String): FullFilePath {
             val list = input.split("/").let { it.dropLast(1) + it.last().split(".") }
@@ -16,4 +26,8 @@ data class FullFilePath(val directory: String, val fileName: String, val extensi
     }
 
     override fun toString() = "$directory/$fileName.${extension.ext}"
+}
+
+data object Console : Input, Reader {
+    override fun read() = generateSequence { readlnOrNull() }.joinToString("/n")
 }

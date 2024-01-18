@@ -56,8 +56,8 @@ class WirespecEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
 
     override fun Endpoint.emit() = withLogging(logger) {
         """
-          |endpoint ${name} ${method}${requests.emitRequest()} ${path.emitPath()}${query.emitQuery()} -> {
-          |${responses.joinToString ("\n"){ "$SPACER${ it.status } -> ${it.content?.reference?.emit()}${if(it.content?.isNullable == true) "?" else ""}"}}
+          |endpoint $name ${method}${requests.emitRequest()} ${path.emitPath()}${query.emitQuery()} -> {
+          |${responses.joinToString("\n") { "$SPACER${it.status} -> ${it.content?.reference?.emit()}${if (it.content?.isNullable == true) "?" else ""}" }}
           |}
           |
         """.trimMargin()
@@ -77,10 +77,11 @@ class WirespecEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
         }
     }
 
-    private fun List<Endpoint.Request>.emitRequest() = firstOrNull()?.content?.reference?.emit()?.let { " $it" }.orEmpty()
+    private fun List<Endpoint.Request>.emitRequest() =
+        firstOrNull()?.content?.reference?.emit()?.let { " $it" }.orEmpty()
 
     private fun List<Type.Shape.Field>.emitQuery() = takeIf { it.isNotEmpty() }
-        ?.joinToString (",", "{", "}"){ it.emit() }
+        ?.joinToString(",", "{", "}") { it.emit() }
         ?.let { " ? $it" }
         .orEmpty()
 

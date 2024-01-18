@@ -3,6 +3,7 @@ package community.flock.wirespec.plugin.maven
 import arrow.core.Either
 import community.flock.wirespec.compiler.core.Wirespec
 import community.flock.wirespec.compiler.core.compile
+import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.utils.Logger
 import org.apache.maven.plugin.AbstractMojo
@@ -26,9 +27,9 @@ abstract class BaseMojo : AbstractMojo() {
                     is Either.Left -> error("compile error")
                 }
             }
-            .flatMap { (name, result) ->
-                if (!emitter.split) listOf(name to result.first().second)
-                else result
+            .flatMap { (name, results) ->
+                if (!emitter.split) listOf(Emitted(name, results.first().result))
+                else results
             }
 
     private fun BufferedReader.collectToString() =

@@ -2,6 +2,7 @@
 
 package community.flock.wirespec.compiler.cli.io
 
+import community.flock.wirespec.compiler.cli.FullFilePath
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.toKString
 import platform.posix.closedir
