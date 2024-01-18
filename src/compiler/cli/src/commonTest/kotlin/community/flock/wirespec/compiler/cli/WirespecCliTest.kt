@@ -88,7 +88,7 @@ class WirespecCliTest {
 
         val expected = """
             data class Pet(
-              val id: Int? = null,
+              val id: Long? = null,
               val category: Category? = null,
               val name: String,
               val photoUrls: List<String>,
