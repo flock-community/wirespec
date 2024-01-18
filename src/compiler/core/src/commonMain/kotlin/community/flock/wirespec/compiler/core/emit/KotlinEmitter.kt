@@ -102,7 +102,7 @@ class KotlinEmitter(
             is Type.Shape.Field.Reference.Custom -> value.sanitizeSymbol()
             is Type.Shape.Field.Reference.Primitive -> when (type) {
                 Type.Shape.Field.Reference.Primitive.Type.String -> "String"
-                Type.Shape.Field.Reference.Primitive.Type.Integer -> "Int"
+                Type.Shape.Field.Reference.Primitive.Type.Integer -> "Long"
                 Type.Shape.Field.Reference.Primitive.Type.Number -> "Double"
                 Type.Shape.Field.Reference.Primitive.Type.Boolean -> "Boolean"
             }

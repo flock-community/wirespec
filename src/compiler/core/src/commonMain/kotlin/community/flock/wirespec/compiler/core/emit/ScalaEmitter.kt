@@ -50,7 +50,7 @@ class ScalaEmitter(
             is Reference.Custom -> value
             is Reference.Primitive -> when (type) {
                 Reference.Primitive.Type.String -> "String"
-                Reference.Primitive.Type.Integer -> "Int"
+                Reference.Primitive.Type.Integer -> "Long"
                 Reference.Primitive.Type.Number -> "Double"
                 Reference.Primitive.Type.Boolean -> "Boolean"
             }
