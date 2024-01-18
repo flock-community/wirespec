@@ -36,4 +36,4 @@ out/
 ### VS Code ###
 .vscode/
 
-src/main/frontend/generated
+src/main/typescript/generated
