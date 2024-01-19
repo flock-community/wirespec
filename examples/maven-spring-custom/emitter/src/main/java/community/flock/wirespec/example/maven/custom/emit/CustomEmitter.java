@@ -68,7 +68,7 @@ public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
 
     @NotNull
     @Override
-    public String emit(@NotNull Enum anEnum) {
+    public String emit(@NotNull Enum anEnum, @NotNull List<? extends Node> ast) {
         return notYetImplemented();
     }
 
@@ -119,4 +119,5 @@ public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
     public String emit(@NotNull Identifier identifier) {
         return identifier.getValue();
     }
+
 }

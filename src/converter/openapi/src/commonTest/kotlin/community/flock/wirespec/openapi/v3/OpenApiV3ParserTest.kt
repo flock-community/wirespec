@@ -491,9 +491,9 @@ class OpenApiV3ParserTest {
                 identifier = DefinitionIdentifier("Ingredient"),
                 shape = Shape(
                     listOf(
-                        Field(FieldIdentifier("id"), Primitive(Primitive.Type.String, false), true),
-                        Field(FieldIdentifier("name"), Primitive(Primitive.Type.String, false), true),
-                        Field(FieldIdentifier("quantity"), Primitive(Primitive.Type.String, false), true),
+                        Field(FieldIdentifier("id"), Primitive(Primitive.Type.String, null, false), true),
+                        Field(FieldIdentifier("name"), Primitive(Primitive.Type.String, null, false), true),
+                        Field(FieldIdentifier("quantity"), Primitive(Primitive.Type.String, null, false), true),
                     )
                 ),
                 extends = emptyList(),
@@ -597,7 +597,7 @@ class OpenApiV3ParserTest {
                 method = Endpoint.Method.GET,
                 path = listOf(
                     Endpoint.Segment.Literal("todos"),
-                    Endpoint.Segment.Param(FieldIdentifier("id"), Primitive(Primitive.Type.String, false))
+                    Endpoint.Segment.Param(FieldIdentifier("id"), Primitive(Primitive.Type.String, null, false))
                 ),
                 queries = listOf(),
                 headers = listOf(),
@@ -631,8 +631,8 @@ class OpenApiV3ParserTest {
                 identifier = DefinitionIdentifier("Todo_input"),
                 shape = Shape(
                     listOf(
-                        Field(FieldIdentifier("title"), Primitive(Primitive.Type.String, false), true),
-                        Field(FieldIdentifier("completed"), Primitive(Primitive.Type.Boolean, false), true)
+                        Field(FieldIdentifier("title"), Primitive(Primitive.Type.String, null, false), true),
+                        Field(FieldIdentifier("completed"), Primitive(Primitive.Type.Boolean, null, false), true)
                     )
                 ),
                 extends = emptyList(),
@@ -642,9 +642,9 @@ class OpenApiV3ParserTest {
                 identifier = DefinitionIdentifier("Todo"),
                 shape = Shape(
                     listOf(
-                        Field(FieldIdentifier("id"), Primitive(Primitive.Type.String, false), true),
-                        Field(FieldIdentifier("title"), Primitive(Primitive.Type.String, false), true),
-                        Field(FieldIdentifier("completed"), Primitive(Primitive.Type.Boolean, false), true),
+                        Field(FieldIdentifier("id"), Primitive(Primitive.Type.String, null, false), true),
+                        Field(FieldIdentifier("title"), Primitive(Primitive.Type.String, null, false), true),
+                        Field(FieldIdentifier("completed"), Primitive(Primitive.Type.Boolean, null, false), true),
                         Field(FieldIdentifier("alert"), Custom("TodoAlert", false), true),
                     )
                 ),
@@ -655,7 +655,7 @@ class OpenApiV3ParserTest {
                 identifier = DefinitionIdentifier("TodoAlert"),
                 shape = Shape(
                     listOf(
-                        Field(FieldIdentifier("code"), Primitive(Primitive.Type.String, false), true),
+                        Field(FieldIdentifier("code"), Primitive(Primitive.Type.String, null, false), true),
                         Field(FieldIdentifier("message"), Custom("TodoAlertMessage", false), true),
                     )
                 ),
@@ -666,8 +666,8 @@ class OpenApiV3ParserTest {
                 identifier = DefinitionIdentifier("TodoAlertMessage"),
                 shape = Shape(
                     listOf(
-                        Field(FieldIdentifier("key"), Primitive(Primitive.Type.String, false), true),
-                        Field(FieldIdentifier("value"), Primitive(Primitive.Type.String, false), true),
+                        Field(FieldIdentifier("key"), Primitive(Primitive.Type.String, null, false), true),
+                        Field(FieldIdentifier("value"), Primitive(Primitive.Type.String, null, false), true),
                     )
                 ),
                 extends = emptyList(),
@@ -677,9 +677,9 @@ class OpenApiV3ParserTest {
                 identifier = DefinitionIdentifier("TodosnestedArray"),
                 shape = Shape(
                     listOf(
-                        Field(FieldIdentifier("id"), Primitive(Primitive.Type.String, false), true),
-                        Field(FieldIdentifier("title"), Primitive(Primitive.Type.String, false), true),
-                        Field(FieldIdentifier("nested"), Primitive(Primitive.Type.Boolean, false), true),
+                        Field(FieldIdentifier("id"), Primitive(Primitive.Type.String, null, false), true),
+                        Field(FieldIdentifier("title"), Primitive(Primitive.Type.String, null, false), true),
+                        Field(FieldIdentifier("nested"), Primitive(Primitive.Type.Boolean, null, false), true),
                     )
                 ),
                 extends = emptyList(),
@@ -689,8 +689,8 @@ class OpenApiV3ParserTest {
                 identifier = DefinitionIdentifier("Error"),
                 shape = Shape(
                     listOf(
-                        Field(FieldIdentifier("code"), Primitive(Primitive.Type.String, false), true),
-                        Field(FieldIdentifier("message"), Primitive(Primitive.Type.String, false), true),
+                        Field(FieldIdentifier("code"), Primitive(Primitive.Type.String, null, false), true),
+                        Field(FieldIdentifier("message"), Primitive(Primitive.Type.String, null, false), true),
                     )
                 ),
                 extends = emptyList(),

@@ -48,6 +48,7 @@ sealed interface Reference : Value<String> {
 
     data class Primitive(
         val type: Type,
+        val origin: String? = null,
         override val isIterable: Boolean = false,
         override val isDictionary: Boolean = false
     ) : Reference {

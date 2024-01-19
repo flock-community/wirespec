@@ -3,6 +3,9 @@ dir="$(dirname -- "$0")"
 ./gradlew \
   src:converter:openapi:jvmJar \
   src:plugin:arguments:jvmJar \
+  src:converter:avro:jvmJar \
+  src:converter:avro:publishToMavenLocal \
+  src:integration:avro:publishToMavenLocal \
   src:integration:jackson:publishToMavenLocal \
   src:integration:wirespec:publishToMavenLocal \
   src:integration:spring:publishToMavenLocal \

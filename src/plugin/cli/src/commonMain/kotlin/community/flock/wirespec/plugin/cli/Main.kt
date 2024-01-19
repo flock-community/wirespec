@@ -50,6 +50,7 @@ import community.flock.wirespec.plugin.cli.io.WirespecFile
 import community.flock.wirespec.plugin.utils.orNull
 import community.flock.wirespec.openapi.v2.OpenApiV2Parser as OpenApiParserV2
 import community.flock.wirespec.openapi.v3.OpenApiV3Parser as OpenApiParserV3
+import community.flock.wirespec.converter.avro.AvroParser
 
 fun main(args: Array<String>) {
     (0..20)
@@ -80,6 +81,7 @@ fun compile(arguments: CompilerArguments): List<Either<NonEmptyList<WirespecExce
             val ast = when (format) {
                 Format.OpenApiV2 -> OpenApiParserV2.parse(file.read(), !strict)
                 Format.OpenApiV3 -> OpenApiParserV3.parse(file.read(), !strict)
+                Format.Avro -> AvroParser.parse(file.read())
             }
             val path = fullPath.out(packageName, output)
             languages.emitters(packageName, path, logger).map { (emitter, file) ->

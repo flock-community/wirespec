@@ -1,0 +1,98 @@
+{
+  "type": "record",
+  "name": "TestAvroRecord",
+  "namespace": "com.eventloopsoftware",
+  "fields": [
+    {
+      "name": "metadata",
+      "type": "com.eventloopsoftware.kafka.model.TestAvroMetadata"
+    },
+    {
+      "name": "order",
+      "type": {
+        "type": "record",
+        "name": "TestAvroOrder",
+        "fields": [
+          {
+            "name": "number",
+            "type": "string",
+            "doc": "Unique identifier of the order"
+          },
+          {
+            "name": "created_at",
+            "type": [
+              "null",
+              {
+                "type": "long",
+                "logicalType": "timestamp-millis"
+              }
+            ],
+            "doc": "Order creation data"
+          },
+          {
+            "name": "ref_numbers",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "TestAvroRefNumber",
+                "fields": [
+                  {
+                    "name": "number",
+                    "type": "string",
+                    "doc": "Reference number"
+                  },
+                  {
+                    "name": "enum_identifier",
+                    "type": {
+                      "type": "enum",
+                      "name": "TestAvroEnumIdentifier",
+                      "symbols": [
+                        "REF_1",
+                        "REF_2",
+                        "REF_3"
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "lines",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "TestAvroOrderLines",
+                "fields": [
+                  {
+                    "name": "id",
+                    "type": {
+                      "type": "string",
+                      "logicalType": "uuid"
+                    },
+                    "doc": "Order line ID"
+                  },
+                  {
+                    "name": "amount",
+                    "type": {
+                      "type": "bytes",
+                      "logicalType": "decimal",
+                      "precision": 12,
+                      "scale": 2
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "a_number",
+            "type": "long"
+          }
+        ]
+      }
+    }
+  ]
+}

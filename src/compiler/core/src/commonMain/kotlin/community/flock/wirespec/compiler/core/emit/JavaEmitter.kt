@@ -67,7 +67,7 @@ open class JavaEmitter(
         |
     """.trimMargin()
 
-    private fun Type.emitUnion(ast: AST) = ast
+    fun Type.emitUnion(ast: AST) = ast
         .filterIsInstance<Union>()
         .filter { union -> union.entries.filterIsInstance<Reference.Custom>().any { it.value == identifier.value } }
         .map { it.identifier.value }
@@ -78,13 +78,16 @@ open class JavaEmitter(
     override fun Type.Shape.emit() = value.joinToString("\n") { "${Spacer}${it.emit()}," }.dropLast(1)
 
     override fun Field.emit() =
-        "${if (isNullable) "java.util.Optional<${reference.emit()}>" else reference.emit()} ${emit(identifier)}"
+        "${emitType()} ${emit(identifier)}"
+
+    open fun Field.emitType() =
+        if (isNullable) "java.util.Optional<${reference.emit()}>" else reference.emit()
 
     override fun Reference.emit() = emitType()
         .let { if (isIterable) "java.util.List<$it>" else it }
         .let { if (isDictionary) "java.util.Map<String, $it>" else it }
 
-    private fun Reference.emitType(void:String = "void") = when (this) {
+    open fun Reference.emitType(void:String = "void") = when (this) {
         is Reference.Unit -> void
         is Reference.Any -> "Object"
         is Reference.Custom -> emit()
@@ -96,7 +99,6 @@ open class JavaEmitter(
         ?.let { "$packageName." }
         .orEmpty()
         .let { "$it$value" }
-        .sanitizeSymbol()
 
     private fun Reference.Primitive.emit() = when (type) {
         is Reference.Primitive.Type.String -> "String"
@@ -133,7 +135,7 @@ open class JavaEmitter(
     override fun Refined.Validator.emit() =
         """${Spacer}return java.util.regex.Pattern.compile("${expression.replace("\\", "\\\\")}").matcher(record.value).find();"""
 
-    override fun emit(enum: Enum) = """
+    override fun emit(enum: Enum, ast: AST) = """
         |public enum ${emit(enum.identifier)} implements Wirespec.Enum {
         |${enum.entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }.spacer()};
         |${Spacer}public final String label;
@@ -158,8 +160,8 @@ open class JavaEmitter(
     """.trimMargin()
 
     override fun emit(channel: Channel) = """
-        |interface ${emit(channel.identifier)}Channel {
-        |   void invoke(${channel.reference.emitWrap(channel.isNullable)} message)
+        |public interface ${emit(channel.identifier)}Channel {
+        |   void invoke(${channel.reference.emitWrap(channel.isNullable)} message);
         |}
         |
     """.trimMargin()
@@ -352,7 +354,7 @@ open class JavaEmitter(
         else -> this
     }
 
-    private fun String.sanitizeSymbol() = this
+    open fun String.sanitizeSymbol() = this
         .split(".", " ", "-")
         .mapIndexed { index, s -> if(index > 0) s.firstToUpper() else s }
         .joinToString("")
@@ -361,11 +363,11 @@ open class JavaEmitter(
         .joinToString("")
         .sanitizeFirstIsDigit()
 
-    private fun String.sanitizeFirstIsDigit() = if (firstOrNull()?.isDigit() == true) "_${this}" else this
+    open fun String.sanitizeFirstIsDigit() = if (firstOrNull()?.isDigit() == true) "_${this}" else this
 
-    private fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_").sanitizeFirstIsDigit()
+    open fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_").sanitizeFirstIsDigit()
 
-    private fun String.sanitizeKeywords() = if (this in reservedKeywords) "_$this" else this
+    open fun String.sanitizeKeywords() = if (this in reservedKeywords) "_$this" else this
 
     companion object : Keywords {
         override val reservedKeywords = setOf(
