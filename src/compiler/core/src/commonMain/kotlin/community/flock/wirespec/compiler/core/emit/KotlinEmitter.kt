@@ -132,7 +132,7 @@ class KotlinEmitter(
             |""".trimMargin()
     }
 
-    override fun Refined.Validator.emit() = withLogging(logger) { "Regex($value).find(value)" }
+    override fun Refined.Validator.emit() = withLogging(logger) { "Regex($value).matches(value)" }
 
     override fun Endpoint.emit() = withLogging(logger) {
         """interface ${emitName().sanitizeSymbol()} {
@@ -182,7 +182,7 @@ class KotlinEmitter(
         |""".trimMargin()
     }
 
-    override fun Node.emitName(): String = when(this){
+    override fun Node.emitName(): String = when (this) {
         is Endpoint -> "${this.name}Endpoint"
         is Enum -> this.name
         is Refined -> this.name

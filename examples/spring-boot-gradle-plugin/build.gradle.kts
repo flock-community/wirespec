@@ -1,10 +1,10 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("org.springframework.boot") version "2.7.4"
-    id("io.spring.dependency-management") version "1.0.14.RELEASE"
-    kotlin("jvm") version "1.9.10"
-    kotlin("plugin.spring") version "1.9.10"
+    id("org.springframework.boot") version "3.2.1"
+    id("io.spring.dependency-management") version "1.1.4"
+    kotlin("jvm") version "1.9.22"
+    kotlin("plugin.spring") version "1.9.22"
     id("community.flock.wirespec.plugin.gradle") version "0.0.0-SNAPSHOT"
 }
 
@@ -25,7 +25,7 @@ dependencies {
 tasks.withType<KotlinCompile> {
     kotlinOptions {
         freeCompilerArgs = listOf("-Xjsr305=strict")
-        jvmTarget = "17"
+        jvmTarget = "21"
     }
 }
 
@@ -40,7 +40,8 @@ sourceSets {
 wirespec {
     input = "$projectDir/src/main/wirespec"
     kotlin {
-        output = "$buildDir/generated/wirespec"
+        packageName = "community.flock.wirespec.generated.kotlin"
+        output = "$buildDir/generated/community/flock/wirespec/generated/kotlin"
     }
     typescript {
         output = "$projectDir/src/main/typescript/generated"

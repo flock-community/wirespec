@@ -3,7 +3,7 @@ Accept: application/json
 
 ###
 
-GET http://localhost:8080/todos/8132b795-143f-4afb-8c8a-0608cb63c79c
+GET http://localhost:8080/todos/f20ad876-c6a8-48b8-9a23-71787c1ae34a
 Accept: application/json
 
 ###
@@ -18,7 +18,7 @@ Content-Type: application/json
 
 ###
 
-DELETE http://localhost:8080/todos/8132b795-143f-4afb-8c8a-0608cb63c79c
+DELETE http://localhost:8080/todos/f20ad876-c6a8-48b8-9a23-71787c1ae34a
 Content-Type: application/json
 
 ###
