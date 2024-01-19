@@ -7,7 +7,7 @@ wirespec {
         output = "$buildDir/generated/wirespec"
     }
     typescript {
-        output = "$projectDir/src/main/frontend/generated"
+        output = "$projectDir/src/main/typescript/generated"
     }
 }
 

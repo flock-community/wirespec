@@ -19,7 +19,6 @@ repositories {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
@@ -44,7 +43,7 @@ wirespec {
         output = "$buildDir/generated/wirespec"
     }
     typescript {
-        output = "$projectDir/src/main/frontend/generated"
+        output = "$projectDir/src/main/typescript/generated"
     }
 }
 

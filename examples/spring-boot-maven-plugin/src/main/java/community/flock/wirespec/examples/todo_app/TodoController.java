@@ -10,14 +10,14 @@ import java.util.*;
 @RequestMapping("/todos")
 class TodoController {
 
-    private List<Todo> todos = new ArrayList();
+    private final List<Todo> todos = new ArrayList<>();
 
     @GetMapping("/")
     public List<Todo> list(){
         return todos;
     }
 
-    @GetMapping("/:id")
+    @GetMapping("/{id}")
     public Todo get(@PathVariable String id) {
        return todos.stream()
                .filter (todo -> todo.id().value().equals(id))
