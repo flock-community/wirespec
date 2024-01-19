@@ -25,7 +25,9 @@ include(
     "src:plugin:npm",
     "src:plugin:gradle",
     "src:converter:openapi",
+    "src:converter:avro",
     "src:integration:jackson",
     "src:integration:wirespec",
     "src:tools:generator",
+    "src:generator",
 )
