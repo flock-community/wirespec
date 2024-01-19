@@ -1,4 +1,4 @@
-refined TodoId /^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$/g
+refined TodoId /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/g
 
 type Todo {
     id: TodoId,
@@ -9,4 +9,9 @@ type Todo {
 type TodoInput {
     name: String,
     done: Boolean
+}
+
+type Error {
+    code: Integer,
+    description: String
 }
