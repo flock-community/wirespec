@@ -1,7 +1,10 @@
 package community.flock.wirespec.convert.avro
 
 import com.goncalossilva.resources.Resource
+import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
+import community.flock.wirespec.compiler.core.parse.nodes.Node
+import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.Type
 import community.flock.wirespec.convert.avro.AvroConverter.flatten
 import kotlin.test.Test
@@ -17,6 +20,11 @@ class AvroParserTest {
 
         val schema = AvroParser.parse(resource.readText())
         val ast = schema.flatten()
+
+        assertEquals(
+            listOf("User", "EmailAddress", "TwitterAccount", "OAuthStatus", "ToDoItem", "ToDoStatus"),
+            ast.map { it.toName() }
+        )
 
         assertEquals(
             Type(
@@ -101,8 +109,12 @@ class AvroParserTest {
             ast.last()
         )
 
-        ast.forEach {
-            println(it)
-        }
     }
+}
+
+private fun Node.toName() = when(this){
+    is Type -> name
+    is Endpoint -> name
+    is Enum -> name
+    is Refined -> name
 }
