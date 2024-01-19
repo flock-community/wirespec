@@ -6,6 +6,6 @@ import kotlin.test.Test
 class FormatTest {
     @Test
     fun testFormat() {
-        Format.toString() shouldBe "OpenApiV2, OpenApiV3"
+        Format.toString() shouldBe "OpenApiV2, OpenApiV3, Avro"
     }
 }
