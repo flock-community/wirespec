@@ -1,37 +1,40 @@
 package community.flock.wirespec.convert.avro
 
 import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.parse.nodes.Type
-import community.flock.wirespec.compiler.core.parse.nodes.Enum
+import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Reference
+import community.flock.wirespec.compiler.core.parse.Type
 
 object AvroConverter {
 
     val nullType = AvroModel.SimpleType("null")
     fun AvroModel.TypeList.isNullable() = contains(nullType)
     fun AvroModel.SimpleType.toPrimitive() = when (this.value) {
-        "boolean" -> Type.Shape.Field.Reference.Primitive.Type.Boolean
-        "int" -> Type.Shape.Field.Reference.Primitive.Type.Integer
-        "long" -> Type.Shape.Field.Reference.Primitive.Type.Integer
-        "float" -> Type.Shape.Field.Reference.Primitive.Type.Number
-        "double" -> Type.Shape.Field.Reference.Primitive.Type.Number
-        "bytes" -> Type.Shape.Field.Reference.Primitive.Type.String
-        "string" -> Type.Shape.Field.Reference.Primitive.Type.String
+        "boolean" -> Reference.Primitive.Type.Boolean
+        "int" -> Reference.Primitive.Type.Integer
+        "long" -> Reference.Primitive.Type.Integer
+        "float" -> Reference.Primitive.Type.Number
+        "double" -> Reference.Primitive.Type.Number
+        "bytes" -> Reference.Primitive.Type.String
+        "string" -> Reference.Primitive.Type.String
         else -> TODO("primitive not mapped ${this.value}")
     }
 
-    fun AvroModel.Type.toReference(isIterable: Boolean = false): Type.Shape.Field.Reference = when (this) {
+    fun AvroModel.Type.toReference(isIterable: Boolean = false): Reference = when (this) {
         is AvroModel.SimpleType -> when (value) {
             "null" -> TODO("Map primitive null")
-            "boolean", "int", "long", "float", "double", "bytes", "string" -> Type.Shape.Field.Reference.Primitive(toPrimitive(), isIterable, false)
-            else -> Type.Shape.Field.Reference.Custom(value, isIterable, false)
+            "boolean", "int", "long", "float", "double", "bytes", "string" -> Reference.Primitive(toPrimitive(), isIterable, false)
+            else -> Reference.Custom(value, isIterable, false)
         }
 
         is AvroModel.ArrayType -> items.toReference(true)
-        is AvroModel.RecordType -> Type.Shape.Field.Reference.Custom(name, isIterable, false)
-        is AvroModel.EnumType -> Type.Shape.Field.Reference.Custom(name, isIterable, false)
+        is AvroModel.RecordType -> Reference.Custom(name, isIterable, false)
+        is AvroModel.EnumType -> Reference.Custom(name, isIterable, false)
     }
 
-    fun AvroModel.TypeList.toReference(): Type.Shape.Field.Reference {
+    fun AvroModel.TypeList.toReference(): Reference {
         val list = minus(nullType)
         if (list.size != 1) {
             TODO("Union types are not supported")
@@ -40,18 +43,21 @@ object AvroConverter {
     }
 
     fun AvroModel.RecordType.toType() = Type(
-        name = name,
+        identifier = Identifier(name),
         shape = Type.Shape(this.fields.map {
-            Type.Shape.Field(
-                identifier = Type.Shape.Field.Identifier(it.name),
+            Field(
+                identifier = Identifier(it.name),
                 reference = it.type.toReference(),
                 isNullable = it.type.isNullable()
             )
-        })
+        }),
+        comment = null,
+        extends = emptyList()
     )
 
     fun AvroModel.EnumType.toEnum() = Enum(
-        name = name,
+        comment = null,
+        identifier = Identifier(name),
         entries = symbols.toSet()
     )
 

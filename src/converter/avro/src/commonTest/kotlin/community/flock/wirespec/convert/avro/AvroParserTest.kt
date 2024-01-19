@@ -1,8 +1,16 @@
 package community.flock.wirespec.convert.avro
 
 import com.goncalossilva.resources.Resource
-import community.flock.wirespec.compiler.core.parse.nodes.Enum
-import community.flock.wirespec.compiler.core.parse.nodes.Type
+import community.flock.wirespec.compiler.core.parse.Channel
+import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Node
+import community.flock.wirespec.compiler.core.parse.Reference
+import community.flock.wirespec.compiler.core.parse.Refined
+import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.convert.avro.AvroConverter.flatten
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -19,90 +27,103 @@ class AvroParserTest {
         val ast = schema.flatten()
 
         assertEquals(
+            listOf("User", "EmailAddress", "TwitterAccount", "OAuthStatus", "ToDoItem", "ToDoStatus"),
+            ast.map { it.toName() }
+        )
+
+        assertEquals(
             Type(
-                name = "User",
+                comment = null,
+                identifier = Identifier("User"),
                 shape = Type.Shape(
                     value = listOf(
-                        Type.Shape.Field(
-                            identifier = Type.Shape.Field.Identifier(value = "id"),
-                            reference = Type.Shape.Field.Reference.Primitive(
-                                type = Type.Shape.Field.Reference.Primitive.Type.Integer,
+                        Field(
+                            identifier = Identifier(value = "id"),
+                            reference = Reference.Primitive(
+                                type = Reference.Primitive.Type.Integer,
                                 isIterable = false,
-                                isMap = false
+                                isDictionary = false
                             ),
                             isNullable = false
                         ),
-                        Type.Shape.Field(
-                            identifier = Type.Shape.Field.Identifier(value = "username"),
-                            reference = Type.Shape.Field.Reference.Primitive(
-                                type = Type.Shape.Field.Reference.Primitive.Type.String,
+                        Field(
+                            identifier = Identifier(value = "username"),
+                            reference = Reference.Primitive(
+                                type = Reference.Primitive.Type.String,
                                 isIterable = false,
-                                isMap = false
+                                isDictionary = false
                             ),
                             isNullable = false
                         ),
-                        Type.Shape.Field(
-                            identifier = Type.Shape.Field.Identifier(value = "passwordHash"),
-                            reference = Type.Shape.Field.Reference.Primitive(
-                                type = Type.Shape.Field.Reference.Primitive.Type.String,
+                        Field(
+                            identifier = Identifier(value = "passwordHash"),
+                            reference = Reference.Primitive(
+                                type = Reference.Primitive.Type.String,
                                 isIterable = false,
-                                isMap = false
+                                isDictionary = false
                             ),
                             isNullable = false
                         ),
-                        Type.Shape.Field(
-                            identifier = Type.Shape.Field.Identifier(value = "signupDate"),
-                            reference = Type.Shape.Field.Reference.Primitive(
-                                type = Type.Shape.Field.Reference.Primitive.Type.Integer,
+                        Field(
+                            identifier = Identifier(value = "signupDate"),
+                            reference = Reference.Primitive(
+                                type = Reference.Primitive.Type.Integer,
                                 isIterable = false,
-                                isMap = false
+                                isDictionary = false
                             ),
                             isNullable = false
                         ),
-                        Type.Shape.Field(
-                            identifier = Type.Shape.Field.Identifier(value = "emailAddresses"),
-                            reference = Type.Shape.Field.Reference.Custom(
+                        Field(
+                            identifier = Identifier(value = "emailAddresses"),
+                            reference = Reference.Custom(
                                 value = "EmailAddress",
                                 isIterable = true,
-                                isMap = false
+                                isDictionary = false
                             ),
                             isNullable = false
                         ),
-                        Type.Shape.Field(
-                            identifier = Type.Shape.Field.Identifier(value = "twitterAccounts"),
-                            reference = Type.Shape.Field.Reference.Custom(
+                        Field(
+                            identifier = Identifier(value = "twitterAccounts"),
+                            reference = Reference.Custom(
                                 value = "TwitterAccount",
                                 isIterable = true,
-                                isMap = false
+                                isDictionary = false
                             ),
                             isNullable = false
                         ),
-                        Type.Shape.Field(
-                            identifier = Type.Shape.Field.Identifier(value = "toDoItems"),
-                            reference = Type.Shape.Field.Reference.Custom(
+                        Field(
+                            identifier = Identifier(value = "toDoItems"),
+                            reference = Reference.Custom(
                                 value = "ToDoItem",
                                 isIterable = true,
-                                isMap = false
+                                isDictionary = false
                             ),
                             isNullable = false
                         )
                     )
-                )
+                ),
+                extends = emptyList()
             ),
             ast.first()
         )
 
         assertEquals(
             Enum(
-                name = "ToDoStatus",
+                comment = null,
+                identifier = Identifier("ToDoStatus"),
                 entries = setOf("HIDDEN", "ACTIONABLE", "DONE", "ARCHIVED", "DELETED")
-
             ),
             ast.last()
         )
 
-        ast.forEach {
-            println(it)
-        }
     }
+}
+
+private fun Node.toName() = when (this) {
+    is Type -> identifier.value
+    is Endpoint -> identifier.value
+    is Enum -> identifier.value
+    is Refined -> identifier.value
+    is Channel -> identifier.value
+    is Union -> identifier.value
 }
