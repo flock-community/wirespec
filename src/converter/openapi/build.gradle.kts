@@ -4,7 +4,7 @@ plugins {
     id("com.github.johnrengelman.shadow") apply false
 }
 
-group = Settings.GROUP_ID
+group = "${Settings.GROUP_ID}.converter"
 version = Settings.version
 
 repositories {
