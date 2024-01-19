@@ -43,7 +43,7 @@ kotlin {
             dependencies {
                 implementation(project(":src:compiler:cli"))
                 implementation(project(":src:compiler:core"))
-                implementation(project(":src:openapi"))
+                implementation(project(":src:converter:openapi"))
             }
         }
         val jsMain by getting {

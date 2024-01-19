@@ -37,5 +37,5 @@ include(
     "src:lsp:intellij-plugin",
     "src:plugin:maven",
     "src:plugin:gradle",
-    "src:openapi",
+    "src:converter:openapi",
 )
