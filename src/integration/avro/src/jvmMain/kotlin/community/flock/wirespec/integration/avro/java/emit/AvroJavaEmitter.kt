@@ -1,0 +1,166 @@
+package community.flock.wirespec.integration.avro.java.emit
+
+import arrow.core.escaped
+import community.flock.wirespec.compiler.core.emit.JavaEmitter
+import community.flock.wirespec.compiler.core.emit.common.Spacer
+import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Definition
+import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Reference
+import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.converter.avro.AvroEmitter
+import community.flock.wirespec.converter.avro.AvroModel
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+
+class AvroJavaEmitter(packageName: String, logger: Logger) : JavaEmitter(packageName, logger) {
+
+    private fun emitAvroSchema(type: Definition, ast: AST) = AvroEmitter
+        .emit(ast)
+        .map {
+            when (it) {
+                is AvroModel.RecordType -> it.copy(namespace = packageName)
+                else -> it
+            }
+        }
+        .find {
+            when (it) {
+                is AvroModel.RecordType -> it.name == type.identifier.value
+                is AvroModel.EnumType -> it.name == type.identifier.value
+                else -> false
+            }
+        }
+        ?.flatten()
+        ?.let { Json.encodeToString(it) }
+        ?.escaped()
+        ?.replace("\\\"<<<<<", "\" + ")
+        ?.replace(">>>>>\\\"", ".Avro.SCHEMA + \"")
+        ?: error("Cannot emit avro: ${type.identifier.value}")
+
+    private fun AvroModel.Type.flatten(): AvroModel.Type =
+        when (this) {
+            is AvroModel.RecordType -> this
+                .copy(
+                    fields = fields
+                        .map { field ->
+                            field.copy(type = AvroModel.TypeList(field.type
+                                .map { it.flatten() }
+                            ))
+                        }
+                )
+
+            is AvroModel.ArrayType -> this.copy(items = items.flatten())
+            is AvroModel.EnumType -> this
+            is AvroModel.LogicalType -> this
+            is AvroModel.SimpleType -> this.copy(
+                value = when (value) {
+                    "boolean", "int", "long", "float", "double", "bytes", "string", "null" -> value
+                    else -> "<<<<<$value>>>>>"
+                },
+            )
+        }
+
+    override fun emitTypeFunctionBody(type: Type, ast: AST) = """
+        |  public static class Avro {
+        |    
+        |    public static final org.apache.avro.Schema SCHEMA = 
+        |      new org.apache.avro.Schema.Parser().parse("${emitAvroSchema(type, ast)}");
+        |
+        |    public static ${type.emitName()} from(org.apache.avro.generic.GenericData.Record record) {
+        |       return new ${type.emitName()}(
+        |       ${type.shape.value.mapIndexed(emitFrom(ast)).joinToString(",\n${Spacer(4)}")}
+        |      );
+        |    }
+        |    
+        |    public static org.apache.avro.generic.GenericData.Record to(${type.emitName()} data) {
+        |      var record = new org.apache.avro.generic.GenericData.Record(SCHEMA);
+        |      ${type.shape.value.mapIndexed(emitTo(ast)).joinToString("\n${Spacer(3)}")}
+        |      return record;
+        |    }
+        |  }
+        |
+    """.trimMargin()
+
+    override fun emitEnumFunctionBody(enum: Enum, ast: AST) = """
+        |  public static class Avro {
+        |
+        |    public static final org.apache.avro.Schema SCHEMA = 
+        |      new org.apache.avro.Schema.Parser().parse("${emitAvroSchema(enum, ast)}");
+        |    
+        |    public static ${enum.emitName()} from(org.apache.avro.generic.GenericData.EnumSymbol record) {
+        |      return ${enum.emitName()}.valueOf(record.toString());
+        |    }
+        |    
+        |    public static org.apache.avro.generic.GenericData.EnumSymbol to(${enum.emitName()} data) {
+        |      return new org.apache.avro.generic.GenericData.EnumSymbol(SCHEMA, data.name());
+        |    }
+        |  }
+        |
+    """.trimMargin()
+
+    val emitTo: (ast: AST) -> (index: Int, field: Field) -> String =
+        { ast ->
+            { index, field ->
+                when (val reference = field.reference) {
+                    is Reference.Custom -> when {
+                        reference.isIterable -> "record.put(${index}, data.${field.identifier.emit(Identifier.Type.Field)}().stream().map(it -> ${field.reference.value}.Avro.to(it)).toList());"
+                        else -> "record.put(${index}, ${field.reference.emit()}.Avro.to(data.${
+                            field.identifier.emit(
+                                Identifier.Type.Field
+                            )
+                        }()));"
+                    }
+
+                    is Reference.Primitive -> when {
+                        reference.origin == "bytes" -> "record.put(${index}, java.nio.ByteBuffer.wrap(data.${
+                            field.identifier.emit(
+                                Identifier.Type.Field
+                            )
+                        }().getBytes()));"
+
+                        else -> "record.put(${index}, data.${field.identifier.emit(Identifier.Type.Field)}()${if (field.isNullable) ".orElse(null)" else ""});"
+                    }
+
+                    else -> TODO()
+                }
+            }
+        }
+
+    val emitFrom: (ast: AST) -> (index: Int, field: Field) -> String =
+        { ast ->
+            { index, field ->
+                when (val reference = field.reference) {
+                    is Reference.Custom -> when {
+                        field.isNullable -> "(${field.emitType()}) java.util.Optional.ofNullable((${field.reference.emitType()}) record.get(${index}))"
+                        reference.isIterable -> "((java.util.List<org.apache.avro.generic.GenericData.Record>) record.get(${index})).stream().map(it -> ${field.reference.emitType()}.Avro.from(it)).toList()"
+                        reference.isEnum(ast) -> "${field.reference.emit()}.Avro.from((org.apache.avro.generic.GenericData.EnumSymbol) record.get(${index}))"
+                        else -> "${field.reference.emit()}.Avro.from((org.apache.avro.generic.GenericData.Record) record.get(${index}))"
+                    }
+
+                    is Reference.Primitive -> when {
+                        field.isNullable -> "(${field.emitType()}) java.util.Optional.ofNullable((${field.reference.emitType()}) record.get(${index}))"
+                        reference.origin == "bytes" -> "(${field.emitType()}) new String(((java.nio.ByteBuffer) record.get(${index})).array())"
+                        reference.type == Reference.Primitive.Type.String -> "(${field.emitType()}) record.get(${index}).toString()"
+                        else -> "(${field.emitType()}) record.get(${index})"
+                    }
+
+                    else -> "(${field.emitType()}) record.get(${index})"
+                }
+            }
+        }
+
+    private fun Reference.isEnum(ast: AST): Boolean {
+        return when (this) {
+            is Reference.Custom -> ast
+                .filterIsInstance<Enum>()
+                .any { it.identifier.value == this.value }
+
+            is Reference.Any -> false
+            is Reference.Primitive -> false
+            is Reference.Unit -> false
+        }
+    }
+}

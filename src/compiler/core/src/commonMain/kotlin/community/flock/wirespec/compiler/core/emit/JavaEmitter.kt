@@ -66,11 +66,13 @@ open class JavaEmitter(
         |public record ${type.emitName()} (
         |${type.shape.emit()}
         |)${type.extends.run { if (isEmpty()) "" else " extends ${joinToString(", ") { it.emit() }}" }}${type.emitUnion(ast)} {
-        |};
+        |${emitTypeFunctionBody(type, ast)}};
         |
     """.trimMargin()
 
-    private fun Type.emitUnion(ast: AST) = ast
+    open fun emitTypeFunctionBody(type: Type, ast: AST) = ""
+
+    fun Type.emitUnion(ast: AST) = ast
         .filterIsInstance<Union>()
         .filter { union -> union.entries.filterIsInstance<Reference.Custom>().any { it.value == identifier.value } }
         .map { it.identifier.value }
@@ -81,13 +83,16 @@ open class JavaEmitter(
     override fun Type.Shape.emit() = value.joinToString("\n") { "${Spacer}${it.emit()}," }.dropLast(1)
 
     override fun Field.emit() =
-        "${if (isNullable) "java.util.Optional<${reference.emit()}>" else reference.emit()} ${emit(identifier)}"
+        "${emitType()} ${emit(identifier)}"
+
+    open fun Field.emitType() =
+        if (isNullable) "java.util.Optional<${reference.emit()}>" else reference.emit()
 
     override fun Reference.emit() = emitType()
         .let { if (isIterable) "java.util.List<$it>" else it }
         .let { if (isDictionary) "java.util.Map<String, $it>" else it }
 
-    private fun Reference.emitType(void:String = "void") = when (this) {
+    open fun Reference.emitType(void:String = "void") = when (this) {
         is Reference.Unit -> void
         is Reference.Any -> "Object"
         is Reference.Custom -> emit()
@@ -99,7 +104,6 @@ open class JavaEmitter(
         ?.let { "$packageName." }
         .orEmpty()
         .let { "$it$value" }
-        .sanitizeSymbol()
 
     private fun Reference.Primitive.emit() = when (type) {
         Reference.Primitive.Type.String -> "String"
@@ -129,7 +133,7 @@ open class JavaEmitter(
     override fun Refined.Validator.emit() =
         """${Spacer}return java.util.regex.Pattern.compile("${expression.replace("\\", "\\\\")}").matcher(record.value).find();"""
 
-    override fun emit(enum: Enum) = """
+    override fun emit(enum: Enum, ast: AST) = """
         |public enum ${emit(enum.identifier)} implements Wirespec.Enum {
         |${enum.entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }.spacer()};
         |${Spacer}public final String label;
@@ -144,9 +148,11 @@ open class JavaEmitter(
         |${Spacer}public String getLabel() {
         |${Spacer(2)}return label;
         |${Spacer}}
-        |}
+        |${emitEnumFunctionBody(enum, ast)}}
         |
     """.trimMargin()
+
+    open fun emitEnumFunctionBody(enum: Enum, ast: AST) = ""
 
     override fun emit(union: Union) = """
         |public sealed interface ${union.emitName()} permits ${union.entries.joinToString { it.value }} {}
@@ -155,7 +161,7 @@ open class JavaEmitter(
 
     override fun emit(channel: Channel) = """
         |interface ${emit(channel.identifier)}Channel {
-        |   void invoke(${channel.reference.emitWrap(channel.isNullable)} message)
+        |   void invoke(${channel.reference.emitWrap(channel.isNullable)} message);
         |}
         |
     """.trimMargin()

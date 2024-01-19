@@ -47,6 +47,7 @@ kotlin {
             dependencies {
                 implementation(project(":src:plugin:arguments"))
                 implementation(project(":src:compiler:core"))
+                implementation(project(":src:converter:avro"))
                 implementation(project(":src:converter:openapi"))
                 implementation(libs.clikt)
             }
