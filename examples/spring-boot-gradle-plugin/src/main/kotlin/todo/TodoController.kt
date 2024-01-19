@@ -1,9 +1,9 @@
 package community.flock.wirespec.examples.app.todo
 
 import community.flock.wirespec.examples.app.exception.AppException.TodoNotFoundException
-import community.flock.wirespec.generated.Todo
-import community.flock.wirespec.generated.TodoId
-import community.flock.wirespec.generated.TodoInput
+import community.flock.wirespec.generated.kotlin.Todo
+import community.flock.wirespec.generated.kotlin.TodoId
+import community.flock.wirespec.generated.kotlin.TodoInput
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable

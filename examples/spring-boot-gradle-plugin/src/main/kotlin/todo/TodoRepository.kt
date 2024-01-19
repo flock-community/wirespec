@@ -1,7 +1,7 @@
 package community.flock.wirespec.examples.app.todo
 
-import community.flock.wirespec.generated.Todo
-import community.flock.wirespec.generated.TodoId
+import community.flock.wirespec.generated.kotlin.Todo
+import community.flock.wirespec.generated.kotlin.TodoId
 import org.springframework.stereotype.Repository
 
 @Repository
