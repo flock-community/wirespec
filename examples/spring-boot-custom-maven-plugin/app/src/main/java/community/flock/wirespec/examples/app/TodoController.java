@@ -1,4 +1,4 @@
-package community.flock.wirespec.examples.todo_app;
+package community.flock.wirespec.examples.app;
 
 import hello.Todo;
 import hello.TodoId;

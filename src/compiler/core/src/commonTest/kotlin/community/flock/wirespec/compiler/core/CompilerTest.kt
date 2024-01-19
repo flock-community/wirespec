@@ -63,7 +63,7 @@ class CompilerTest {
             package community.flock.wirespec.generated
             
             data class Name(val value: String)
-            fun Name.validate() = Regex("^[a-zA-Z]{1,50}$").find(value)
+            fun Name.validate() = Regex("^[a-zA-Z]{1,50}$").matches(value)
             
         """.trimIndent()
 

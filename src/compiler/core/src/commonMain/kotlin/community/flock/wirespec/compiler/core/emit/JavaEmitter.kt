@@ -116,12 +116,18 @@ class JavaEmitter(
           |${SPACER}${SPACER}return label;
           |${SPACER}}
           """.trimMargin()
-        "public enum ${name.sanitizeSymbol()} {\n${SPACER}${entries.joinToString(",\n${SPACER}") { enum -> "${enum.sanitizeEnum().sanitizeKeywords()}(\"${enum}\")" }};\n${body}\n${toString}\n}\n"
+        "public enum ${name.sanitizeSymbol()} {\n${SPACER}${
+            entries.joinToString(",\n${SPACER}") { enum ->
+                "${
+                    enum.sanitizeEnum().sanitizeKeywords()
+                }(\"${enum}\")"
+            }
+        };\n${body}\n${toString}\n}\n"
     }
 
     override fun Refined.emit() = withLogging(logger) {
         """public record ${emitName().sanitizeSymbol()}(String value) {
-            |${SPACER}static void validate($name record) {
+            |${SPACER}static boolean validate($name record) {
             |${SPACER}${validator.emit()}
             |${SPACER}}
             |}
@@ -129,7 +135,7 @@ class JavaEmitter(
     }
 
     override fun Refined.Validator.emit() = withLogging(logger) {
-        "${SPACER}java.util.regex.Pattern.compile($value).matcher(record.value).find();"
+        "${SPACER}return java.util.regex.Pattern.compile($value).matcher(record.value).find();"
     }
 
     override fun Endpoint.emit() = withLogging(logger) {
@@ -153,7 +159,7 @@ class JavaEmitter(
             |""".trimMargin()
     }
 
-    override fun Node.emitName(): String = when(this){
+    override fun Node.emitName(): String = when (this) {
         is Endpoint -> "${this.name}Endpoint"
         is Enum -> this.name
         is Refined -> this.name
