@@ -37,7 +37,6 @@ kotlin {
         commonTest {
             dependencies {
                 implementation(libs.kotlinx.resources)
-                implementation(kotlin("test"))
                 implementation(libs.bundles.kotest)
             }
         }

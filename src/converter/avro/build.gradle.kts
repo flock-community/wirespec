@@ -1,13 +1,11 @@
 plugins {
-    kotlin("multiplatform")
-    kotlin("plugin.serialization")
-    id("com.goncalossilva.resources") version "0.4.0"
-    kotlin("jvm") apply false
-    id("com.github.johnrengelman.shadow") apply false
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.kotlinx.resources)
 }
 
-group = "${Settings.GROUP_ID}.converter"
-version = Settings.version
+group = "${libs.versions.group.id.get()}.converter"
+version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.get()
 
 repositories {
     mavenCentral()
@@ -18,7 +16,6 @@ kotlin {
     macosX64()
     macosArm64()
     linuxX64()
-    mingwX64()
     js(IR) {
         nodejs()
     }
@@ -26,7 +23,7 @@ kotlin {
         withJava()
         java {
             toolchain {
-                languageVersion.set(JavaLanguageVersion.of(17))
+                languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get()))
             }
         }
     }
@@ -34,15 +31,18 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":src:compiler:core"))
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+                implementation(libs.kotlinx.serialization)
             }
         }
         commonTest {
             dependencies {
-                implementation(kotlin("test-common"))
-                implementation(kotlin("test-annotations-common"))
-                implementation(kotlin("test-junit"))
-                implementation("com.goncalossilva:resources:0.4.0")
+                implementation(libs.kotlinx.resources)
+                implementation(libs.bundles.kotest)
+            }
+        }
+        val jvmTest by getting {
+            dependencies {
+                implementation(libs.bundles.jackson)
             }
         }
     }

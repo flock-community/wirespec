@@ -2,6 +2,7 @@
 
 package community.flock.wirespec.convert.avro
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -64,6 +65,7 @@ object AvroModel {
     ) : Type
 
 
+    @OptIn(ExperimentalSerializationApi::class)
     object TypeListSerializer : KSerializer<TypeList> {
 
         override val descriptor: SerialDescriptor = buildSerialDescriptor("TypeListSerializer", PolymorphicKind.SEALED)
@@ -84,6 +86,7 @@ object AvroModel {
         }
     }
 
+    @OptIn(ExperimentalSerializationApi::class)
     object TypeSerializer : KSerializer<Type> {
 
         override val descriptor: SerialDescriptor = buildSerialDescriptor("TypeSerializer", PolymorphicKind.SEALED)
@@ -106,7 +109,7 @@ object AvroModel {
                     element.containsKey("items") -> input.json.decodeFromJsonElement(ArrayType.serializer(), element)
                     element.containsKey("fields") -> input.json.decodeFromJsonElement(RecordType.serializer(), element)
                     element.containsKey("symbols") -> input.json.decodeFromJsonElement(EnumType.serializer(), element)
-                    else -> TODO("Unknown object type: ${element}")
+                    else -> TODO("Unknown object type: $element")
                 }
 
                 is JsonArray -> TODO("Type can never be an array")
