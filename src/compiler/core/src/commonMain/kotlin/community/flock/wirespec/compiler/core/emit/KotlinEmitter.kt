@@ -29,7 +29,7 @@ class KotlinEmitter(
         |object Wirespec {
         |${SPACER}interface Enum
         |${SPACER}interface Endpoint
-        |${SPACER}interface Refined
+        |${SPACER}interface Refined { val value: String }
         |${SPACER}enum class Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
         |${SPACER}@JvmRecord data class Content<T> (val type:String, val body:T )
         |${SPACER}interface Request<T> { val path:String; val method: Method; val query: Map<String, List<Any?>>; val headers: Map<String, List<Any?>>; val content:Content<T>? }
@@ -129,7 +129,7 @@ class KotlinEmitter(
     }
 
     override fun Refined.emit() = withLogging(logger) {
-        """data class ${name.sanitizeSymbol()}(val value: String): Wirespec.Refined
+        """data class ${name.sanitizeSymbol()}(override val value: String): Wirespec.Refined
             |fun $name.validate() = ${validator.emit()}
             |""".trimMargin()
     }

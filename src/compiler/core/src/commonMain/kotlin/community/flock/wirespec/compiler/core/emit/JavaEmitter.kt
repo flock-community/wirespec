@@ -26,7 +26,7 @@ class JavaEmitter(
         |
         |public interface Wirespec {
         |${SPACER}interface Enum {};
-        |${SPACER}interface Refined {};
+        |${SPACER}interface Refined { String value(); };
         |${SPACER}interface Endpoint {};
         |${SPACER}enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE };
         |${SPACER}record Content<T> (String type, T body) {};
