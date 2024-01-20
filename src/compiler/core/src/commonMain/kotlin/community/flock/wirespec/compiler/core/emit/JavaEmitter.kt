@@ -155,7 +155,7 @@ class JavaEmitter(
     }
 
     override fun Refined.emit() = withLogging(logger) {
-        """public record ${emitName().sanitizeSymbol()} implements Wirespec.Enum (String value) {
+        """public record ${emitName().sanitizeSymbol()} (String value) implements Wirespec.Refined {
             |${SPACER}static boolean validate($name record) {
             |${SPACER}${validator.emit()}
             |${SPACER}}
