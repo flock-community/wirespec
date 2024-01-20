@@ -52,6 +52,7 @@ abstract class AbstractEmitter(override val logger: Logger, override val split: 
         const val SPACER = Emitter.SPACER
         fun String.firstToUpper() = replaceFirstChar(Char::uppercase)
         fun String.firstToLower() = replaceFirstChar(Char::lowercase)
+        fun AST.needImports() = any { it is Endpoint || it is Enum || it is Refined }
         fun AST.hasEndpoints() = any { it is Endpoint }
         fun String.isInt() = toIntOrNull() != null
     }

@@ -25,6 +25,9 @@ class JavaEmitter(
         |import java.lang.reflect.ParameterizedType;
         |
         |public interface Wirespec {
+        |${SPACER}interface Enum {};
+        |${SPACER}interface Refined {};
+        |${SPACER}interface Endpoint {};
         |${SPACER}enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE };
         |${SPACER}record Content<T> (String type, T body) {};
         |${SPACER}interface Request<T> { String getPath(); Method getMethod(); java.util.Map<String, java.util.List<Object>> getQuery(); java.util.Map<String, java.util.List<Object>> getHeaders(); Content<T> getContent(); }
@@ -45,12 +48,38 @@ class JavaEmitter(
         |}
     """.trimMargin()
 
-    private val pkg = if (packageName.isBlank()) "" else "package $packageName;"
-    private fun import(ast: AST) =
-        if (!ast.hasEndpoints()) "" else "import community.flock.wirespec.Wirespec;\nimport java.util.concurrent.CompletableFuture;\nimport java.util.function.Function;\n\n"
+    private val pkg = if (packageName.isNotBlank()) {
+        """
+        |package $packageName;
+        |
+        |
+        """.trimMargin()}
+    else{
+        ""
+    }
+    private fun importWireSpec(ast: AST) = if(ast.needImports()) {
+        """
+        |import community.flock.wirespec.Wirespec;
+        |
+        |
+        """.trimMargin()}
+    else{
+        ""
+    }
+
+    private fun importJava(ast: AST) = if(ast.hasEndpoints()) {
+        """
+        |import java.util.concurrent.CompletableFuture;
+        |import java.util.function.Function;
+        |
+        |
+        """.trimMargin()}
+    else{
+        ""
+    }
 
     override fun emit(ast: AST): List<Emitted> = super.emit(ast)
-        .map { Emitted(it.typeName.sanitizeSymbol(), "$pkg\n\n${import(ast)}${it.result}") }
+        .map { Emitted(it.typeName.sanitizeSymbol(), "$pkg${importWireSpec(ast)}${importJava(ast)}${it.result}") }
 
     override fun Type.emit() = withLogging(logger) {
         """public record ${emitName().sanitizeSymbol()}(
@@ -116,7 +145,7 @@ class JavaEmitter(
           |${SPACER}${SPACER}return label;
           |${SPACER}}
           """.trimMargin()
-        "public enum ${name.sanitizeSymbol()} {\n${SPACER}${
+        "public enum ${name.sanitizeSymbol()} implements Wirespec.Enum {\n${SPACER}${
             entries.joinToString(",\n${SPACER}") { enum ->
                 "${
                     enum.sanitizeEnum().sanitizeKeywords()
@@ -126,7 +155,7 @@ class JavaEmitter(
     }
 
     override fun Refined.emit() = withLogging(logger) {
-        """public record ${emitName().sanitizeSymbol()}(String value) {
+        """public record ${emitName().sanitizeSymbol()} implements Wirespec.Enum (String value) {
             |${SPACER}static boolean validate($name record) {
             |${SPACER}${validator.emit()}
             |${SPACER}}
@@ -139,7 +168,7 @@ class JavaEmitter(
     }
 
     override fun Endpoint.emit() = withLogging(logger) {
-        """public interface ${emitName().sanitizeSymbol()} {
+        """public interface ${emitName().sanitizeSymbol()} extends Wirespec.Endpoint {
             |${SPACER}static String PATH = "${path.emitSegment()}";
             |${responses.emitResponseMapper()}
             |${SPACER}sealed interface Request<T> extends Wirespec.Request<T> {}

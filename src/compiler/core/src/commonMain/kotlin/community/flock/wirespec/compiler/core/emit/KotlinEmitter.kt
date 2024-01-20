@@ -19,29 +19,31 @@ class KotlinEmitter(
     logger: Logger = noLogger
 ) : AbstractEmitter(logger) {
 
+
     override val shared = """
         |package community.flock.wirespec
         |
         |import java.lang.reflect.Type
         |import java.lang.reflect.ParameterizedType
         |
-        |interface Wirespec {
+        |object Wirespec {
+        |${SPACER}interface Enum
+        |${SPACER}interface Endpoint
+        |${SPACER}interface Refined
         |${SPACER}enum class Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
         |${SPACER}@JvmRecord data class Content<T> (val type:String, val body:T )
         |${SPACER}interface Request<T> { val path:String; val method: Method; val query: Map<String, List<Any?>>; val headers: Map<String, List<Any?>>; val content:Content<T>? }
         |${SPACER}interface Response<T> { val status:Int; val headers: Map<String, List<Any?>>; val content:Content<T>? }
         |${SPACER}interface ContentMapper<B> { fun <T> read(content: Content<B>, valueType: Type): Content<T> fun <T> write(content: Content<T>): Content<B> }
-        |${SPACER}companion object {
         |${SPACER}${SPACER}@JvmStatic fun getType(type: Class<*>, isIterable: Boolean): Type {
-        |${SPACER}${SPACER}${SPACER}return if (isIterable) {
-        |${SPACER}${SPACER}${SPACER}${SPACER}object : ParameterizedType {
-        |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}override fun getRawType() = MutableList::class.java
-        |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}override fun getActualTypeArguments() = arrayOf(type)
-        |${SPACER}${SPACER}${SPACER}${SPACER}${SPACER}override fun getOwnerType() = null
-        |${SPACER}${SPACER}${SPACER}${SPACER}}
-        |${SPACER}${SPACER}${SPACER}} else {
-        |${SPACER}${SPACER}${SPACER}${SPACER}type
+        |${SPACER}${SPACER}return if (isIterable) {
+        |${SPACER}${SPACER}${SPACER}object : ParameterizedType {
+        |${SPACER}${SPACER}${SPACER}${SPACER}override fun getRawType() = MutableList::class.java
+        |${SPACER}${SPACER}${SPACER}${SPACER}override fun getActualTypeArguments() = arrayOf(type)
+        |${SPACER}${SPACER}${SPACER}${SPACER}override fun getOwnerType() = null
         |${SPACER}${SPACER}${SPACER}}
+        |${SPACER}${SPACER}} else {
+        |${SPACER}${SPACER}${SPACER}type
         |${SPACER}${SPACER}}
         |${SPACER}}
         |}
@@ -58,7 +60,7 @@ class KotlinEmitter(
             Emitted(
                 it.typeName.sanitizeSymbol(), """
                     |${if (packageName.isBlank()) "" else "package $packageName"}
-                    |${if (ast.hasEndpoints()) import else ""}
+                    |${if (ast.needImports()) import else ""}
                     |${it.result}
             """.trimMargin().trimStart()
             )
@@ -117,7 +119,7 @@ class KotlinEmitter(
 
     override fun Enum.emit() = withLogging(logger) {
         fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_").sanitizeFirstIsDigit()
-        "enum class ${name.sanitizeSymbol()} (val label: String){\n${SPACER}${
+        "enum class ${name.sanitizeSymbol()} (val label: String): Wirespec.Enum {\n${SPACER}${
             entries.joinToString(",\n${SPACER}") {
                 "${
                     it.sanitizeEnum().sanitizeKeywords()
@@ -127,7 +129,7 @@ class KotlinEmitter(
     }
 
     override fun Refined.emit() = withLogging(logger) {
-        """data class ${name.sanitizeSymbol()}(val value: String)
+        """data class ${name.sanitizeSymbol()}(val value: String): Wirespec.Refined
             |fun $name.validate() = ${validator.emit()}
             |""".trimMargin()
     }
@@ -135,7 +137,7 @@ class KotlinEmitter(
     override fun Refined.Validator.emit() = withLogging(logger) { "Regex($value).matches(value)" }
 
     override fun Endpoint.emit() = withLogging(logger) {
-        """interface ${emitName().sanitizeSymbol()} {
+        """interface ${emitName().sanitizeSymbol()}: Wirespec.Endpoint {
         |${SPACER}sealed interface Request<T>: Wirespec.Request<T>
         |${
             requests.joinToString("\n") {
