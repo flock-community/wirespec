@@ -90,7 +90,7 @@ class CompileEnumTest {
     @Test
     fun testEnumTypeScript() {
         val ts = """
-            type MyAwesomeEnum = "ONE" | "Two" | "THREE_MORE"
+            export type MyAwesomeEnum = "ONE" | "Two" | "THREE_MORE"
 
         """.trimIndent()
 
