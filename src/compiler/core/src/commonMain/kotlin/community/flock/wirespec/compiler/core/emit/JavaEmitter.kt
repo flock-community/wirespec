@@ -26,7 +26,7 @@ class JavaEmitter(
         |
         |public interface Wirespec {
         |${SPACER}interface Enum {};
-        |${SPACER}interface Refined { String value(); };
+        |${SPACER}interface Refined { String getValue(); };
         |${SPACER}interface Endpoint {};
         |${SPACER}enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE };
         |${SPACER}record Content<T> (String type, T body) {};
@@ -159,6 +159,8 @@ class JavaEmitter(
             |${SPACER}static boolean validate($name record) {
             |${SPACER}${validator.emit()}
             |${SPACER}}
+            |${SPACER}@Override
+            |${SPACER}public String getValue() { return value; }
             |}
             |""".trimMargin()
     }

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.DeserializationConfig
 import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
@@ -19,8 +20,8 @@ import kotlin.reflect.full.primaryConstructor
 
 class WirespecModule : SimpleModule() {
     init {
-        addSerializer(Wirespec.Refined::class.java, RefinedWirespecTypeSerializer())
-        setDeserializerModifier(RefinedWirespecModifier())
+        addSerializer(Wirespec.Refined::class.java, RefinedSerializer())
+        setDeserializerModifier(RefinedModifier())
     }
 }
 
@@ -30,7 +31,7 @@ class WirespecModule : SimpleModule() {
  * @see Wirespec.Refined
  * @see WirespecModule
  */
-private class RefinedWirespecTypeSerializer(x: Class<Wirespec.Refined>? = null) : StdSerializer<Wirespec.Refined>(x) {
+private class RefinedSerializer(x: Class<Wirespec.Refined>? = null) : StdSerializer<Wirespec.Refined>(x) {
 
     override fun serialize(value: Wirespec.Refined, gen: JsonGenerator, provider: SerializerProvider) {
         return gen.writeString(value.value)
@@ -41,12 +42,11 @@ class RefinedDeserializer(val vc: Class<*>) : StdDeserializer<Wirespec.Refined>(
     @Throws(IOException::class, JsonProcessingException::class)
     override fun deserialize(jp: JsonParser, ctxt: DeserializationContext): Wirespec.Refined {
         val node = jp.codec.readTree<JsonNode>(jp)
-        val instance = vc.kotlin.primaryConstructor?.call(node.asText())
-        return instance as Wirespec.Refined
+        return vc.declaredConstructors.first().newInstance(node.asText()) as Wirespec.Refined
     }
 }
 
-private class RefinedWirespecModifier : BeanDeserializerModifier() {
+private class RefinedModifier : BeanDeserializerModifier() {
 
     override fun modifyDeserializer(
         config: DeserializationConfig,

@@ -1,4 +1,4 @@
-package community.flock.wirespec.integration.jackson
+package community.flock.wirespec.integration.jackson.kotlin.generated
 
 import community.flock.wirespec.Wirespec
 
