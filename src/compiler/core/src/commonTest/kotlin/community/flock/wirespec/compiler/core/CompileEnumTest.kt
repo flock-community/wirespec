@@ -27,7 +27,9 @@ class CompileEnumTest {
         val kotlin = """
             package community.flock.wirespec.generated
             
-            enum class MyAwesomeEnum (val label: String){
+            import community.flock.wirespec.Wirespec
+            
+            enum class MyAwesomeEnum (val label: String): Wirespec.Enum {
               ONE("ONE"),
               Two("Two"),
               THREE_MORE("THREE_MORE");
@@ -47,7 +49,9 @@ class CompileEnumTest {
         val java = """
             package community.flock.wirespec.generated;
             
-            public enum MyAwesomeEnum {
+            import community.flock.wirespec.Wirespec;
+            
+            public enum MyAwesomeEnum implements Wirespec.Enum {
               ONE("ONE"),
               Two("Two"),
               THREE_MORE("THREE_MORE");

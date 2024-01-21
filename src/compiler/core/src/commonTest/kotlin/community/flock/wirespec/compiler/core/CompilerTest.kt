@@ -62,7 +62,9 @@ class CompilerTest {
         val out = """
             package community.flock.wirespec.generated
             
-            data class Name(val value: String)
+            import community.flock.wirespec.Wirespec
+            
+            data class Name(override val value: String): Wirespec.Refined
             fun Name.validate() = Regex("^[a-zA-Z]{1,50}$").matches(value)
             
         """.trimIndent()

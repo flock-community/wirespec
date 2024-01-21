@@ -96,7 +96,15 @@ class WirespecPlugin : Plugin<Project> {
         fun AbstractEmitter.emit(output: String, ext: String) {
             compile(extension.input, logger, this)
                 .also { project.file(output).mkdirs() }
-                .forEach { project.file("$output/${it.typeName}.$ext").writeText(it.result) }
+                .forEach {
+                    shared?.run {
+                        if(listOf("java", "kt").contains(ext)){
+                            project.file("$output/community/flock/wirespec").mkdirs()
+                            project.file("$output/community/flock/wirespec/Wirespec.$ext").writeText(this)
+                        }
+                    }
+                    project.file("$output/${it.typeName}.$ext").writeText(it.result)
+                }
         }
 
         project.task("wirespec").doFirst { _: Task? ->
