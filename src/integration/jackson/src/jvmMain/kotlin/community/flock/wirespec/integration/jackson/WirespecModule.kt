@@ -18,6 +18,29 @@ import community.flock.wirespec.Wirespec
 import java.io.IOException
 import kotlin.reflect.full.primaryConstructor
 
+/**
+ * A Jackson module that handles deserialization of all Wirespec.Refined, to ensure
+ * collapse / expanse of the wrapper class around the string value.
+ *
+ * Example
+ * ```kt
+ * data class Id(value: String): Wirespec.Refined
+ * data class Task(id: Id, title: String)
+ * ```
+ *
+ * Having an object such as
+ * ```
+ * Task{id: Id("123"), title: "improve API contracts"}
+ * ```
+ * will serialise to:
+ * ```json
+ * {id:"123", title: "improve API contracts"}
+ * ```
+ * flattening the Wirespec.Refined as a String. Conversely, such JSON will deserialize back
+ * into the original `Task`, expanding the `id` field into a type safe Id data class.
+ *
+ * @see Wirespec.Refined
+ */
 class WirespecModule : SimpleModule() {
     init {
         addSerializer(Wirespec.Refined::class.java, RefinedSerializer())
