@@ -37,6 +37,11 @@ kotlin {
         }
         val jvmMain by getting {
             dependencies {
+                compileOnly("com.fasterxml.jackson.core:jackson-databind:2.9.8")
+            }
+        }
+        val jvmTest by getting {
+            dependencies {
                 implementation("com.fasterxml.jackson.core:jackson-databind:2.9.8")
                 implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2")
             }

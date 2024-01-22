@@ -16,7 +16,6 @@ import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import community.flock.wirespec.Wirespec
 import java.io.IOException
-import kotlin.reflect.full.primaryConstructor
 
 /**
  * A Jackson module that handles deserialization of all Wirespec.Refined, to ensure
