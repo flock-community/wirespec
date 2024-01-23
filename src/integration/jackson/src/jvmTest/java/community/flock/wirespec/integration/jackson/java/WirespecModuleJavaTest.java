@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import community.flock.wirespec.integration.jackson.WirespecModule;
 import community.flock.wirespec.integration.jackson.java.generated.Todo;
+import community.flock.wirespec.integration.jackson.java.generated.TodoCategory;
 import community.flock.wirespec.integration.jackson.java.generated.TodoId;
 import org.junit.Test;
 
@@ -14,10 +15,11 @@ public class WirespecModuleJavaTest {
     Todo todo = new Todo(
             new TodoId("123"),
             "Do It now",
-            false
+            false,
+            TodoCategory._WORK
     );
 
-    String json = "{\"id\":\"123\",\"name\":\"Do It now\",\"done\":false}";
+    String json = "{\"id\":\"123\",\"name\":\"Do It now\",\"done\":false,\"category\":\"WORK\"}";
 
     ObjectMapper objectMapper = new ObjectMapper()
             .registerModules(new WirespecModule());

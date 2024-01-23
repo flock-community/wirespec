@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import community.flock.wirespec.integration.jackson.WirespecModule
 import community.flock.wirespec.integration.jackson.kotlin.generated.Todo
+import community.flock.wirespec.integration.jackson.kotlin.generated.TodoCategory
 import community.flock.wirespec.integration.jackson.kotlin.generated.TodoId
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -14,10 +15,11 @@ class WirespecModuleKotlinTest {
     val todo = Todo(
         id = TodoId("123"),
         name = "Do It now",
-        done = false
+        done = false,
+        category = TodoCategory._LIFE
     )
 
-    val json = "{\"id\":\"123\",\"name\":\"Do It now\",\"done\":false}"
+    val json = "{\"id\":\"123\",\"name\":\"Do It now\",\"done\":false,\"category\":\"LIFE\"}"
 
     val objectMapper = ObjectMapper()
         .registerKotlinModule()

@@ -6,9 +6,9 @@ import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.BeanDescription
 import com.fasterxml.jackson.databind.DeserializationConfig
 import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
@@ -41,10 +41,16 @@ import java.io.IOException
  * @see Wirespec.Refined
  */
 class WirespecModule : SimpleModule() {
-    init {
+
+    override fun getModuleName(): String = "Wirespec Jackson Module"
+
+    override fun setupModule(context: SetupContext) {
         addSerializer(Wirespec.Refined::class.java, RefinedSerializer())
-        setDeserializerModifier(RefinedModifier())
+        addSerializer(Wirespec.Enum::class.java, EnumSerializer())
+        setDeserializerModifier(WirespecModifier())
+        super.setupModule(context)
     }
+
 }
 
 /**
@@ -60,6 +66,25 @@ private class RefinedSerializer(x: Class<Wirespec.Refined>? = null) : StdSeriali
     }
 }
 
+/**
+ * Serializer Wirespec.Enum classes.
+ *
+ * @see Wirespec.Enum
+ * @see WirespecModule
+ */
+private class EnumSerializer(x: Class<Wirespec.Enum>? = null) : StdSerializer<Wirespec.Enum>(x) {
+
+    override fun serialize(value: Wirespec.Enum, gen: JsonGenerator, provider: SerializerProvider) {
+        return gen.writeString(value.toString())
+    }
+}
+
+/**
+ * Deserializer Wirespec.Refined classes.
+ *
+ * @see Wirespec.Refined
+ * @see WirespecModule
+ */
 class RefinedDeserializer(val vc: Class<*>) : StdDeserializer<Wirespec.Refined>(vc) {
     @Throws(IOException::class, JsonProcessingException::class)
     override fun deserialize(jp: JsonParser, ctxt: DeserializationContext): Wirespec.Refined {
@@ -68,19 +93,56 @@ class RefinedDeserializer(val vc: Class<*>) : StdDeserializer<Wirespec.Refined>(
     }
 }
 
-private class RefinedModifier : BeanDeserializerModifier() {
+/**
+ * Deserializer Wirespec.Enum classes.
+ *
+ * @see Wirespec.Enum
+ * @see WirespecModule
+ */
+class EnumDeserializer(val vc: Class<*>) : StdDeserializer<Enum<*>>(vc) {
+    @Throws(IOException::class, JsonProcessingException::class)
+    override fun deserialize(jp: JsonParser, ctxt: DeserializationContext): Enum<*> {
+        val node = jp.codec.readTree<JsonNode>(jp)
+        val enum = vc.enumConstants.find {
+            val field =  it.javaClass.getDeclaredField("label")
+            field.setAccessible(true)
+            field.get(it) == node.asText()
+        }
+        return enum as Enum<*>
+    }
+}
+
+/**
+ * Jackson modifier intercept the deserialization of Wirespec.Enum and Wirespec.Refined and modifies the deserializer
+ *
+ * @see Wirespec.Enum
+ * @see WirespecModule
+ */
+private class WirespecModifier : BeanDeserializerModifier() {
+    override fun modifyEnumDeserializer(
+        config: DeserializationConfig,
+        type: JavaType,
+        beanDesc: BeanDescription,
+        deserializer: JsonDeserializer<*>
+    ): JsonDeserializer<*> {
+        if (Wirespec.Enum::class.java.isAssignableFrom(beanDesc.beanClass)) {
+            return super.modifyDeserializer(config, beanDesc, EnumDeserializer(beanDesc.beanClass))
+        }
+        return super.modifyEnumDeserializer(config, type, beanDesc, deserializer)
+    }
 
     override fun modifyDeserializer(
         config: DeserializationConfig,
         beanDesc: BeanDescription,
         deserializer: JsonDeserializer<*>
     ): JsonDeserializer<*> {
-
         if (Wirespec.Refined::class.java.isAssignableFrom(beanDesc.beanClass)) {
             return super.modifyDeserializer(config, beanDesc, RefinedDeserializer(beanDesc.beanClass))
         }
-
         return super.modifyDeserializer(config, beanDesc, deserializer)
     }
-
 }
+
+
+
+
