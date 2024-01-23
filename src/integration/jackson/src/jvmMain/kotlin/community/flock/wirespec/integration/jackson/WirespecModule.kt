@@ -44,13 +44,11 @@ class WirespecModule : SimpleModule() {
 
     override fun getModuleName(): String = "Wirespec Jackson Module"
 
-    override fun setupModule(context: SetupContext) {
+    init {
         addSerializer(Wirespec.Refined::class.java, RefinedSerializer())
         addSerializer(Wirespec.Enum::class.java, EnumSerializer())
         setDeserializerModifier(WirespecModifier())
-        super.setupModule(context)
     }
-
 }
 
 /**
