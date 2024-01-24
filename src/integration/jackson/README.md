@@ -28,7 +28,7 @@ The wirespec Java and Kotlin emitter add an extra wrapper class for refined type
 record TodoId(Sring value){}
 record Todo(TodoId id, String name, boolean done){}
 ```
-When serialized to json this wil result in the following string
+When serialized to json with the default object mapper this wil result in the following output
 
 ```json
 {
@@ -51,7 +51,7 @@ The Jackson module corrects this and flattens the output of the refined types
 
 ### Enum
 
-For Java and Kotlin some values are escaped because the compiler does not except the keywords. Wirespec emits an extra label with the original value for every enum. The toString method is overwritten and returns the orignal value. This module uses the toString method to serialize and deserialize enum values
+For Java and Kotlin some values are sanitized because the compiler does not except certain keywords. Wirespec emits an extra label with the original value for every enum. The toString method is overwritten and returns the orignal value. This module uses the toString method to serialize and deserialize enum values
 
 ```wirespec
 enum MyEnum {
@@ -81,4 +81,4 @@ public enum MyEnum implements Wirespec.Enum {
 
 ## Generate test classes
 
-To test this module test classes are generated from a Wirespec contract. To regenerate the testclasses run the following test [GenerateTestClasses.kt](src%2FjvmTest%2Fkotlin%2Fcommunity%2Fflock%2Fwirespec%2Fintegration%2Fjackson%2Fkotlin%2FGenerateTestClasses.kt)
+To test this module test classes are generated from a Wirespec specification. To regenerate the test classes run the following test [GenerateTestClasses.kt](src%2FjvmTest%2Fkotlin%2Fcommunity%2Fflock%2Fwirespec%2Fintegration%2Fjackson%2Fkotlin%2FGenerateTestClasses.kt)
