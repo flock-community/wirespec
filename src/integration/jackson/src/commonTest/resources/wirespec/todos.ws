@@ -3,7 +3,7 @@ refined TodoId /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{
 type Todo {
     id: TodoId,
     name: String,
-    done: Boolean,
+    final: Boolean,
     category: TodoCategory
 }
 

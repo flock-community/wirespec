@@ -5,6 +5,6 @@ import community.flock.wirespec.Wirespec;
 public record Todo(
   TodoId id,
   String name,
-  Boolean done,
+  Boolean _final,
   TodoCategory category
 ) {};

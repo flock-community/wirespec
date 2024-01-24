@@ -15,11 +15,11 @@ class WirespecModuleKotlinTest {
     val todo = Todo(
         id = TodoId("123"),
         name = "Do It now",
-        done = false,
+        final = false,
         category = TodoCategory.LIFE
     )
 
-    val json = "{\"id\":\"123\",\"name\":\"Do It now\",\"done\":false,\"category\":\"LIFE\"}"
+    val json = "{\"id\":\"123\",\"name\":\"Do It now\",\"final\":false,\"category\":\"LIFE\"}"
 
     val objectMapper = ObjectMapper()
         .registerKotlinModule()

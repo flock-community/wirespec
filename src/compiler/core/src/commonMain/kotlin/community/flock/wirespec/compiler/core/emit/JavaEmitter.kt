@@ -318,7 +318,7 @@ class JavaEmitter(
     fun String.sanitizeSymbol() = replace(".", "").replace(" ", "_")
 
     companion object {
-        private val reservedKeywords = listOf(
+         val reservedKeywords = listOf(
             "abstract", "continue", "for", "new", "switch",
             "assert", "default", "goto", "package", "synchronized",
             "boolean", "do", "if", "private", "this",

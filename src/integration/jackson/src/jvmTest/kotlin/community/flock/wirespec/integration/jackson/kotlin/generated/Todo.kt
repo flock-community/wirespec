@@ -8,7 +8,7 @@ fun TodoId.validate() = Regex("^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}
 data class Todo(
   val id: TodoId,
   val name: String,
-  val done: Boolean,
+  val final: Boolean,
   val category: TodoCategory
 )
 

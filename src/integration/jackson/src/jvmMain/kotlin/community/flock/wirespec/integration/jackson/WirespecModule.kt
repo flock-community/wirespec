@@ -9,13 +9,19 @@ import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.databind.SerializerProvider
+import com.fasterxml.jackson.databind.cfg.MapperConfig
 import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
+import com.fasterxml.jackson.databind.introspect.AnnotatedMethod
+import com.fasterxml.jackson.databind.introspect.AnnotatedParameter
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import community.flock.wirespec.Wirespec
+import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import java.io.IOException
+
 
 /**
  * A Jackson module that handles deserialization of all Wirespec.Refined, to ensure
@@ -47,7 +53,8 @@ class WirespecModule : SimpleModule() {
     init {
         addSerializer(Wirespec.Refined::class.java, RefinedSerializer())
         addSerializer(Wirespec.Enum::class.java, EnumSerializer())
-        setDeserializerModifier(WirespecModifier())
+        setDeserializerModifier(WirespecDeserializerModifier())
+        setNamingStrategy(JavaReservedKeywordNamingStrategy())
     }
 }
 
@@ -102,7 +109,7 @@ class EnumDeserializer(val vc: Class<*>) : StdDeserializer<Enum<*>>(vc) {
     override fun deserialize(jp: JsonParser, ctxt: DeserializationContext): Enum<*> {
         val node = jp.codec.readTree<JsonNode>(jp)
         val enum = vc.enumConstants.find {
-            val toString =  it.javaClass.getDeclaredMethod("toString")
+            val toString = it.javaClass.getDeclaredMethod("toString")
             toString.invoke(it) == node.asText()
         }
         return enum as Enum<*>
@@ -115,7 +122,7 @@ class EnumDeserializer(val vc: Class<*>) : StdDeserializer<Enum<*>>(vc) {
  * @see Wirespec.Enum
  * @see WirespecModule
  */
-private class WirespecModifier : BeanDeserializerModifier() {
+private class WirespecDeserializerModifier : BeanDeserializerModifier() {
     override fun modifyEnumDeserializer(
         config: DeserializationConfig,
         type: JavaType,
@@ -140,6 +147,40 @@ private class WirespecModifier : BeanDeserializerModifier() {
     }
 }
 
+internal class JavaReservedKeywordNamingStrategy : PropertyNamingStrategy() {
+    
+    override fun nameForGetterMethod(config: MapperConfig<*>, method: AnnotatedMethod, defaultName: String): String {
+        if (Record::class.java.isAssignableFrom(method.declaringClass)) {
+            return translate(defaultName)
+        }
+        return defaultName
+    }
 
+    override fun nameForSetterMethod(config: MapperConfig<*>, method: AnnotatedMethod, defaultName: String): String {
+        if (Record::class.java.isAssignableFrom(method.declaringClass)) {
+            return translate(defaultName)
+        }
+        return defaultName
+    }
 
+    override fun nameForConstructorParameter(
+        config: MapperConfig<*>,
+        ctorParam: AnnotatedParameter,
+        defaultName: String
+    ): String {
+        if (Record::class.java.isAssignableFrom(ctorParam.owner.rawType)) {
+            return translate(defaultName)
+        }
+        return defaultName
+    }
+
+    private fun translate(property: String): String {
+        val keywords = JavaEmitter.reservedKeywords.map { "_$it" }
+        if (keywords.contains(property)) {
+            return property.drop(1)
+        } else {
+            return property
+        }
+    }
+}
 

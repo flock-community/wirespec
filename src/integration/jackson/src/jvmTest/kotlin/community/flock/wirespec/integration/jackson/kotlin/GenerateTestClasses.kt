@@ -25,7 +25,7 @@ class GenerateTestClasses {
     val kotlinDir = baseDir.resolve("kotlin").resolve(pkgToPath(kotlinPkg))
 
     @Test
-    fun main(){
+    fun generate(){
         val todoFile = File("src/commonTest/resources/wirespec/todos.ws").readText()
         val ast = Wirespec.parse(todoFile)(noLogger).fold ({e -> error("Cannot parse wirespec: ${e.first().message}") }, { it })
         val emittedJava = javaEmitter.emit(ast)

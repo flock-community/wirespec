@@ -19,7 +19,7 @@ public class WirespecModuleJavaTest {
             TodoCategory.WORK
     );
 
-    String json = "{\"id\":\"123\",\"name\":\"Do It now\",\"done\":false,\"category\":\"WORK\"}";
+    String json = "{\"id\":\"123\",\"name\":\"Do It now\",\"final\":false,\"category\":\"WORK\"}";
 
     ObjectMapper objectMapper = new ObjectMapper()
             .registerModules(new WirespecModule());

@@ -79,6 +79,18 @@ public enum MyEnum implements Wirespec.Enum {
 }
 ```
 
-## Generate test classes
+### reserved keywords
+In java reserved keywords cannot be used as field name. The Wirespec java emitter prefixes the fields with a `_`. The Jackson Module corrects this with a NamingStrategy that removes the `_` only for java record types
 
+```wirespec
+type MyType {
+    final: Boolean
+}
+```
+
+```java
+public record MyType ( String _final){}
+```
+
+## Generate test classes
 To test this module test classes are generated from a Wirespec specification. To regenerate the test classes run the following test [GenerateTestClasses.kt](src%2FjvmTest%2Fkotlin%2Fcommunity%2Fflock%2Fwirespec%2Fintegration%2Fjackson%2Fkotlin%2FGenerateTestClasses.kt)
