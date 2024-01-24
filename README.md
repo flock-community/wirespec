@@ -102,9 +102,15 @@ wirespec compile ./todo.ws -o ./tmp -l Kotlin
 * Maven
 * Gradle
 
+## Extentions
 
 * IntelliJ IDEA
 * Visual Studio Code
+
+## Integration
+Wirespec offers integration libraries with differ libraries.
+
+* [Jackson](src/integration/jackson)
 
 # CLI
 

@@ -16,7 +16,7 @@ class WirespecModuleKotlinTest {
         id = TodoId("123"),
         name = "Do It now",
         done = false,
-        category = TodoCategory._LIFE
+        category = TodoCategory.LIFE
     )
 
     val json = "{\"id\":\"123\",\"name\":\"Do It now\",\"done\":false,\"category\":\"LIFE\"}"

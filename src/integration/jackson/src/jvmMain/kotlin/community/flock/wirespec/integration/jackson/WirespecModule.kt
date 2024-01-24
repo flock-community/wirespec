@@ -102,9 +102,8 @@ class EnumDeserializer(val vc: Class<*>) : StdDeserializer<Enum<*>>(vc) {
     override fun deserialize(jp: JsonParser, ctxt: DeserializationContext): Enum<*> {
         val node = jp.codec.readTree<JsonNode>(jp)
         val enum = vc.enumConstants.find {
-            val field =  it.javaClass.getDeclaredField("label")
-            field.setAccessible(true)
-            field.get(it) == node.asText()
+            val toString =  it.javaClass.getDeclaredMethod("toString")
+            toString.invoke(it) == node.asText()
         }
         return enum as Enum<*>
     }

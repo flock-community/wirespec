@@ -16,7 +16,7 @@ public class WirespecModuleJavaTest {
             new TodoId("123"),
             "Do It now",
             false,
-            TodoCategory._WORK
+            TodoCategory.WORK
     );
 
     String json = "{\"id\":\"123\",\"name\":\"Do It now\",\"done\":false,\"category\":\"WORK\"}";

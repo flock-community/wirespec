@@ -2,6 +2,7 @@ plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
     id("com.github.johnrengelman.shadow") apply false
+    id("com.goncalossilva.resources") version "0.4.0"
 }
 
 group = "${Settings.GROUP_ID}.integration"
@@ -42,6 +43,7 @@ kotlin {
         }
         val jvmTest by getting {
             dependencies {
+                implementation(project(":src:compiler:core"))
                 implementation("com.fasterxml.jackson.core:jackson-databind:2.9.8")
                 implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2")
             }
