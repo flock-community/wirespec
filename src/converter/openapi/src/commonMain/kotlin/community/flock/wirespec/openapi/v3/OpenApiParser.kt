@@ -97,8 +97,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                                     is SchemaObject -> schema.toReference(
                                         className(name, status.value, contentType.value ,"ResponseBody")
                                     )
-
-                                    null -> TODO()
+                                    null -> Reference.Any(false)
                                 },
                                 isNullable = media.schema?.resolve()?.nullable ?: false
                             )
