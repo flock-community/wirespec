@@ -43,7 +43,7 @@ class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
     }
 
     override fun Enum.emit() =
-        withLogging(logger) { "type ${name.sanitizeSymbol()} = ${entries.joinToString(" | ") { """"$it"""" }}\n" }
+        withLogging(logger) { "export type ${name.sanitizeSymbol()} = ${entries.joinToString(" | ") { """"$it"""" }}\n" }
 
     override fun Type.Shape.emit() = withLogging(logger) {
         value.joinToString(",\n") { it.emit() }
@@ -77,7 +77,7 @@ class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
     }
 
     override fun Refined.emit() = withLogging(logger) {
-        """type ${name.sanitizeSymbol()} = {
+        """export type ${name.sanitizeSymbol()} = {
             |${SPACER}value: string
             |}
             |const validate$name = (type: $name) => (${validator.emit()}).test(type.value);
