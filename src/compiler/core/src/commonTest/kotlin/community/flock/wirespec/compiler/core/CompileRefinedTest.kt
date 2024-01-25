@@ -10,34 +10,25 @@ import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
 import kotlin.test.Test
 
-class CompileEnumTest {
+class CompileRefinedTest {
 
     private val logger = noLogger
 
     private val compiler = compile(
         """
-        enum MyAwesomeEnum {
-          ONE, Two, THREE_MORE
-        }
+        refined TodoId /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}/g
         """.trimIndent()
     )
 
     @Test
-    fun testEnumKotlin() {
+    fun testRefinedKotlin() {
         val kotlin = """
             package community.flock.wirespec.generated
             
             import community.flock.wirespec.Wirespec
-            
-            enum class MyAwesomeEnum (val label: String): Wirespec.Enum {
-              ONE("ONE"),
-              Two("Two"),
-              THREE_MORE("THREE_MORE");
-            
-              override fun toString(): String {
-                return label
-              }
-            }
+
+            data class TodoId(override val value: String): Wirespec.Refined
+            fun TodoId.validate() = Regex("^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}").matches(value)
             
         """.trimIndent()
 
@@ -45,23 +36,15 @@ class CompileEnumTest {
     }
 
     @Test
-    fun testEnumJava() {
+    fun testRefinedJava() {
         val java = """
             package community.flock.wirespec.generated;
-            
+
             import community.flock.wirespec.Wirespec;
             
-            public enum MyAwesomeEnum implements Wirespec.Enum {
-              ONE("ONE"),
-              Two("Two"),
-              THREE_MORE("THREE_MORE");
-              public final String label;
-              MyAwesomeEnum(String label) {
-                this.label = label;
-              }
-              @Override
-              public String toString() {
-                return label;
+            public record TodoId (String value) implements Wirespec.Refined {
+              static boolean validate(TodoId record) {
+                return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}").matcher(record.value).find();
               }
             }
 
@@ -71,26 +54,31 @@ class CompileEnumTest {
     }
 
     @Test
-    fun testEnumScala() {
+    fun testRefinedScala() {
         val scala = """
             package community.flock.wirespec.generated
-            
-            sealed abstract class MyAwesomeEnum(val label: String)
-            object MyAwesomeEnum {
-              final case object ONE extends MyAwesomeEnum(label = "ONE")
-              final case object TWO extends MyAwesomeEnum(label = "Two")
-              final case object THREE_MORE extends MyAwesomeEnum(label = "THREE_MORE")
-            }
 
+            case class TodoId(val value: String) {
+              implicit class TodoIdOps(val that: TodoId) {
+                val regex = new scala.util.matching.Regex("^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}")
+                regex.findFirstIn(that.value)
+              }
+            }
+            
+            
         """.trimIndent()
 
         compiler(ScalaEmitter(logger = logger)) shouldBeRight scala
     }
 
     @Test
-    fun testEnumTypeScript() {
+    fun testRefinedTypeScript() {
         val ts = """
-            export type MyAwesomeEnum = "ONE" | "Two" | "THREE_MORE"
+            export type TodoId = {
+              value: string
+            }
+            const validateTodoId = (type: TodoId) => (new RegExp('^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}')).test(type.value);
+
 
         """.trimIndent()
 
@@ -98,11 +86,9 @@ class CompileEnumTest {
     }
 
     @Test
-    fun testEnumWirespec() {
+    fun testRefinedWirespec() {
         val wirespec = """
-            enum MyAwesomeEnum {
-              ONE, Two, THREE_MORE
-            }
+            refined TodoId /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}/g
         
         """.trimIndent()
 
