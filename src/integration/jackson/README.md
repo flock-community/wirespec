@@ -63,7 +63,7 @@ The java emitter will generate the following enum class. The value true and fals
 
 ```java
 public enum MyEnum implements Wirespec.Enum {
-    _true("false"),
+    _true("true"),
     _false("false");
 
     public final String label;
