@@ -79,7 +79,7 @@ public enum MyEnum implements Wirespec.Enum {
 }
 ```
 
-### reserved keywords
+### Reserved keywords
 In java reserved keywords cannot be used as field name. The Wirespec java emitter prefixes the fields with a `_`. The Jackson Module corrects this with a NamingStrategy that removes the `_` only for java record types
 
 ```wirespec
