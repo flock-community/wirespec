@@ -68,7 +68,7 @@ public enum MyEnum implements Wirespec.Enum {
 
     public final String label;
     
-    TodoCategory(String label) {
+    MyEnum(String label) {
         this.label = label;
     }
 
