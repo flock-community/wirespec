@@ -230,11 +230,12 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE
       - name: Run
         run: |
-          ./gradlew :src:compiler:core:publish
-          ./gradlew :src:compiler:lib:publish
-          ./gradlew :src:converter:openapi:publish
-          ./gradlew :src:plugin:gradle:publish
-          ./gradlew :src:plugin:maven:publish
+          ./gradlew :src:compiler:core:publish \
+                    :src:compiler:lib:publish \
+                    :src:converter:openapi:publish \
+                    :src:plugin:gradle:publish \
+                    :src:plugin:maven:publish \
+                    :src:integration:jackson:publish
 
   release-lib-npm:
 

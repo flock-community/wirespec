@@ -38,4 +38,6 @@ include(
     "src:plugin:maven",
     "src:plugin:gradle",
     "src:converter:openapi",
+    "src:integration:jackson",
+    "src:integration:wirespec",
 )
