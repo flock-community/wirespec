@@ -2,8 +2,9 @@ package community.flock.wirespec.integration.spring.annotations
 
 
 import community.flock.wirespec.Wirespec
-import community.flock.wirespec.integration.spring.annotations.Util.getStaticMethode
-import community.flock.wirespec.integration.spring.annotations.Util.invoke
+import community.flock.wirespec.integration.spring.JacksonContentMapper
+import community.flock.wirespec.integration.spring.annotations.ExtensionFunctions.getStaticMethode
+import community.flock.wirespec.integration.spring.annotations.ExtensionFunctions.invoke
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.core.MethodParameter
 import org.springframework.http.server.PathContainer
@@ -27,10 +28,9 @@ class WirespecMethodArgumentResolver(private val contentMapper: JacksonContentMa
         binderFactory: WebDataBinderFactory?
     ): Wirespec.Request<*> {
         val request = webRequest.nativeRequest as HttpServletRequest
-
         val static = parameter.parameterType.declaringClass
-        val requestMapper = static.getStaticMethode("REQUEST_MAPPER") ?: error("Content not found")
-        val wirespecContent: Wirespec.Content<BufferedReader>? = request.contentType?.let { Wirespec.Content(it, request.reader) }
+        val requestMapper = static.getStaticMethode("REQUEST_MAPPER") ?: error("request mapper not found")
+        val wirespecContent = request.contentType?.let { Wirespec.Content(it, request.reader) }
         val wirespecRequest = object : Wirespec.Request<BufferedReader> {
             override val path = request.requestURI
             override val method = Wirespec.Method.valueOf(request.method)

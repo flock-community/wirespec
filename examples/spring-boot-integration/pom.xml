@@ -27,7 +27,7 @@
         </dependency>
 
         <dependency>
-            <groupId>community.flock.wirespec.integration.spring</groupId>
+            <groupId>community.flock.wirespec.integration</groupId>
             <artifactId>spring-jvm</artifactId>
             <version>0.0.0-SNAPSHOT</version>
         </dependency>

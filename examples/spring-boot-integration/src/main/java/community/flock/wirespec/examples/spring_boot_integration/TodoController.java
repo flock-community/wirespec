@@ -1,16 +1,15 @@
 package community.flock.wirespec.examples.spring_boot_integration;
 
+
 import community.flock.wirespec.generated.*;
 import community.flock.wirespec.integration.spring.annotations.WirespecController;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @WirespecController
-class TodoController implements GetTodos, GetTodoById, CreateTodo, UpdateTodo, DeleteTodo {
+class TodoController implements GetTodosEndpoint, GetTodoByIdEndpoint, CreateTodoEndpoint, UpdateTodoEndpoint, DeleteTodoEndpoint {
 
     private final TodoService service;
 
@@ -19,9 +18,9 @@ class TodoController implements GetTodos, GetTodoById, CreateTodo, UpdateTodo, D
     }
 
     @Override
-    public CompletableFuture<CreateTodo.Response<?>> createTodo(CreateTodo.Request<?> request) {
+    public CompletableFuture<CreateTodoEndpoint.Response<?>> createTodo(CreateTodoEndpoint.Request<?> request) {
         var todoInput = switch (request){
-            case CreateTodo.RequestApplicationJson req -> req.getContent().body();
+            case CreateTodoEndpoint.RequestApplicationJson req -> req.getContent().body();
         };
         var todo = new Todo(
                 UUID.randomUUID().toString(),
@@ -29,33 +28,33 @@ class TodoController implements GetTodos, GetTodoById, CreateTodo, UpdateTodo, D
                 todoInput.done()
         );
         service.create(todo);
-        var res = new CreateTodo.Response200ApplicationJson(Map.of(), todo);
+        var res = new CreateTodoEndpoint.Response200ApplicationJson(Map.of(), todo);
         return CompletableFuture.completedFuture(res);
     }
 
     @Override
-    public CompletableFuture<DeleteTodo.Response<?>> deleteTodo(DeleteTodo.Request<?> request) {
+    public CompletableFuture<DeleteTodoEndpoint.Response<?>> deleteTodo(DeleteTodoEndpoint.Request<?> request) {
         return null;
     }
 
     @Override
-    public CompletableFuture<GetTodoById.Response<?>> getTodoById(GetTodoById.Request<?> request) {
+    public CompletableFuture<GetTodoByIdEndpoint.Response<?>> getTodoById(GetTodoByIdEndpoint.Request<?> request) {
         var id = switch (request){
-            case GetTodoById.RequestVoid req -> req.getPath();
+            case GetTodoByIdEndpoint.RequestVoid req -> req.getPath();
         };
         System.out.println(id);
-        var res = new GetTodoById.Response200ApplicationJson(Map.of(), service.store.get(0));
+        var res = new GetTodoByIdEndpoint.Response200ApplicationJson(Map.of(), service.store.get(0));
         return CompletableFuture.completedFuture(res);
     }
 
     @Override
-    public CompletableFuture<UpdateTodo.Response<?>> updateTodo(UpdateTodo.Request<?> request) {
+    public CompletableFuture<UpdateTodoEndpoint.Response<?>> updateTodo(UpdateTodoEndpoint.Request<?> request) {
         return null;
     }
 
     @Override
-    public CompletableFuture<GetTodos.Response<?>> getTodos(GetTodos.Request<?> request) {
-        var res = new GetTodos.Response200ApplicationJson(Map.of(), service.store);
+    public CompletableFuture<GetTodosEndpoint.Response<?>> getTodos(GetTodosEndpoint.Request<?> request) {
+        var res = new GetTodosEndpoint.Response200ApplicationJson(Map.of(), service.store);
         return CompletableFuture.completedFuture(res);
     }
 }
