@@ -108,9 +108,10 @@ wirespec compile ./todo.ws -o ./tmp -l Kotlin
 * Visual Studio Code
 
 ## Integration
-Wirespec offers integration libraries with differ libraries.
+Wirespec offers integration modules for different libraries.
 
 * [Jackson](src/integration/jackson)
+* [Spring](src/integration/spring)
 
 # CLI
 
