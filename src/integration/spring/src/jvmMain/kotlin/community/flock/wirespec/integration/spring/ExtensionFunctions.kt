@@ -6,7 +6,7 @@ import java.lang.reflect.Field
 import java.lang.reflect.Method
 import kotlin.reflect.full.companionObjectInstance
 
-object Util {
+object ExtensionFunctions {
     fun Class<*>.isKotlinClass(): Boolean = declaredAnnotations.any {
         it.annotationClass.qualifiedName == "kotlin.Metadata"
     }

@@ -20,5 +20,6 @@ dir="$(dirname -- "$0")"
 
 # publish and build maven example
 ./gradlew src:plugin:maven:publishToMavenLocal &&
+./gradlew src:integration:jackson:publishToMavenLocal &&
 ./gradlew src:integration:spring:publishToMavenLocal &&
 (cd "$dir"/../examples/spring-boot-integration && ./mvnw package)

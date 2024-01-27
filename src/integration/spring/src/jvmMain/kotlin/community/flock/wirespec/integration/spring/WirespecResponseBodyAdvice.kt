@@ -29,7 +29,6 @@ class WirespecResponseBodyAdvice : ResponseBodyAdvice<Any?> {
                 response.setStatusCode(HttpStatusCode.valueOf(body.status))
                 body.content?.body
             }
-
             else -> body
         }
     }

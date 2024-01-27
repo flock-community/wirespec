@@ -1,15 +1,14 @@
 package community.flock.wirespec.integration.spring.annotations
 
-import community.flock.wirespec.Wirespec
+import community.flock.wirespec.integration.spring.JacksonContentMapper
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
-import java.io.BufferedReader
 
 
 @Configuration
-open class WirespecWebMvcConfigurer : WebMvcConfigurer {
+open class WirespecWebMvcConfiguration : WebMvcConfigurer {
 
     @Autowired
     lateinit var contentMapper: JacksonContentMapper

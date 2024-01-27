@@ -13,7 +13,7 @@ class Service {
     fun create(pet: Pet): Pet = pet
         .apply { list.add(this) }
 
-    fun read(id: Int): Pet? = list.find { it.id == id }
+    fun read(id: Long): Pet? = list.find { it.id == id }
 
     fun update(pet: Pet): Pet {
         list.removeIf { it.id == pet.id }
@@ -21,7 +21,7 @@ class Service {
         return pet
     }
 
-    fun delete(id: Int) {
+    fun delete(id: Long) {
         list.removeIf { it.id == id }
     }
 

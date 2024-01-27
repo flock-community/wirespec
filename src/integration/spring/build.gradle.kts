@@ -9,7 +9,7 @@ plugins {
     id("io.spring.dependency-management") version "1.1.3"
 }
 
-group = "${Settings.GROUP_ID}.integration.spring"
+group = "${Settings.GROUP_ID}.integration"
 version = Settings.version
 
 repositories {
@@ -33,14 +33,10 @@ kotlin {
         tasks.getByName<BootJar>("bootJar") {
             enabled = false
         }
-
-        tasks.getByName<Jar>("jar") {
-            enabled = true
-            exclude("community/flock/wirespec/Wirespec.class")
-        }
-
         val jvmMain by getting {
             dependencies {
+                compileOnly(project(":src:integration:wirespec"))
+                implementation(project(":src:integration:jackson"))
                 implementation("org.springframework.boot:spring-boot-starter-web")
                 implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
                 implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -49,7 +45,9 @@ kotlin {
         }
         val jvmTest by getting {
             dependencies {
-                implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+                implementation(project(":src:compiler:core"))
+                implementation(project(":src:converter:openapi"))
+                implementation(project(":src:integration:wirespec"))
                 implementation("org.springframework.boot:spring-boot-starter-test")
             }
         }

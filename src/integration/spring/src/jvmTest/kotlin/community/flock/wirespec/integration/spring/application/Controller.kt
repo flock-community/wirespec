@@ -2,43 +2,43 @@ package community.flock.wirespec.integration.spring.application
 
 import community.flock.wirespec.integration.spring.annotations.WirespecController
 import community.flock.wirespec.integration.spring.annotations.parsePathParams
-import community.flock.wirespec.integration.spring.generated.AddPet
-import community.flock.wirespec.integration.spring.generated.DeletePet
-import community.flock.wirespec.integration.spring.generated.GetPetById
-import community.flock.wirespec.integration.spring.generated.UpdatePet
+import community.flock.wirespec.integration.spring.generated.AddPetEndpoint
+import community.flock.wirespec.integration.spring.generated.DeletePetEndpoint
+import community.flock.wirespec.integration.spring.generated.GetPetByIdEndpoint
+import community.flock.wirespec.integration.spring.generated.UpdatePetEndpoint
 
 @WirespecController
 class Controller(
     private val service: Service
-) : AddPet, GetPetById, UpdatePet, DeletePet {
+) : AddPetEndpoint, GetPetByIdEndpoint, UpdatePetEndpoint, DeletePetEndpoint {
 
-    override suspend fun addPet(request: AddPet.Request<*>): AddPet.Response<*> {
+    override suspend fun addPet(request: AddPetEndpoint.Request<*>): AddPetEndpoint.Response<*> {
         val createdPet = when (request) {
-            is AddPet.RequestApplicationJson -> service.create(request.content!!.body)
+            is AddPetEndpoint.RequestApplicationJson -> service.create(request.content!!.body)
             else -> TODO()
         }
-        return AddPet.Response200ApplicationJson(emptyMap(), createdPet)
+        return AddPetEndpoint.Response200ApplicationJson(emptyMap(), createdPet)
     }
 
-    override suspend fun getPetById(request: GetPetById.Request<*>): GetPetById.Response<*> {
+    override suspend fun getPetById(request: GetPetByIdEndpoint.Request<*>): GetPetByIdEndpoint.Response<*> {
         val id = request.parsePathParams()["petId"]
-        return service.list.find { it.id == id?.toInt() }
-            ?.let { GetPetById.Response200ApplicationJson(emptyMap(), it) }
-            ?: GetPetById.Response400Unit(emptyMap())
+        return service.list.find { it.id == id?.toLong() }
+            ?.let { GetPetByIdEndpoint.Response200ApplicationJson(emptyMap(), it) }
+            ?: GetPetByIdEndpoint.Response400Unit(emptyMap())
     }
 
-    override suspend fun updatePet(request: UpdatePet.Request<*>): UpdatePet.Response<*> {
+    override suspend fun updatePet(request: UpdatePetEndpoint.Request<*>): UpdatePetEndpoint.Response<*> {
         val updatedPet = when (request) {
-            is UpdatePet.RequestApplicationJson -> service.update(request.content!!.body)
-            else -> TODO()
+            is UpdatePetEndpoint.RequestApplicationJson -> service.update(request.content!!.body)
+            else -> error("Cannot handle request")
         }
-        return UpdatePet.Response200ApplicationJson(emptyMap(), updatedPet)
+        return UpdatePetEndpoint.Response200ApplicationJson(emptyMap(), updatedPet)
     }
 
-    override suspend fun deletePet(request: DeletePet.Request<*>): DeletePet.Response<*> {
-        val id = request.parsePathParams()["petId"]?.toInt() ?: error("petId not found")
+    override suspend fun deletePet(request: DeletePetEndpoint.Request<*>): DeletePetEndpoint.Response<*> {
+        val id = request.parsePathParams()["petId"]?.toLong() ?: error("petId not found")
         return service.delete(id).let {
-            DeletePet.Response400Unit(emptyMap())
+            DeletePetEndpoint.Response400Unit(emptyMap())
         }
     }
 
