@@ -2,7 +2,7 @@ package community.flock.wirespec.emit;
 
 import community.flock.wirespec.compiler.core.emit.common.Emitted;
 import community.flock.wirespec.compiler.core.emit.common.Emitter;
-import community.flock.wirespec.compiler.core.parse.nodes.Node;
+import community.flock.wirespec.compiler.core.parse.nodes.Definition;
 import community.flock.wirespec.compiler.core.parse.nodes.Type;
 import community.flock.wirespec.compiler.utils.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ public class CustomEmitter extends Emitter {
 
     @NotNull
     @Override
-    public List<Emitted> emit(@NotNull List<? extends Node> ast) {
+    public List<Emitted> emit(@NotNull List<? extends Definition> ast) {
         return ast
                 .stream()
                 .filter(sc -> sc instanceof Type)
