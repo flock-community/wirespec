@@ -6,9 +6,10 @@ import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Compan
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.nodes.Definition
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
+import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
-import community.flock.wirespec.compiler.core.parse.nodes.Node
 import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.Type
 import community.flock.wirespec.compiler.utils.Logger
@@ -55,7 +56,7 @@ class KotlinEmitter(
         |
     """.trimMargin()
 
-    override fun emit(ast: AST): List<Emitted> =
+    override fun emit(ast: List<Definition>): List<Emitted> =
         super.emit(ast).map {
             Emitted(
                 it.typeName.sanitizeSymbol(), """
@@ -184,7 +185,7 @@ class KotlinEmitter(
         |""".trimMargin()
     }
 
-    override fun Node.emitName(): String = when (this) {
+    override fun Definition.emitName(): String = when (this) {
         is Endpoint -> "${this.name}Endpoint"
         is Enum -> this.name
         is Refined -> this.name
