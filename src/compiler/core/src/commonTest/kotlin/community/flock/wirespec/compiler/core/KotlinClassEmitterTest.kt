@@ -27,6 +27,24 @@ class KotlinClassEmitterTest {
             |      content = Wirespec.Content("application/json", body)
             |    )
             |  }
+            |
+            |  sealed interface Response<T> : Wirespec.Response<T>
+            |  sealed interface Response2XX<T> : Response<T>
+            |  sealed interface Response4XX<T> : Response<T>
+            |  sealed interface Response200<T> : Response2XX<T>
+            |  sealed interface Response405<T> : Response4XX<T>
+            |  data class Response200ApplicationXml(override val headers: Map<String, List<Any?>>, val body: Pet) : Response200<Pet> {
+            |    override val status = 200;
+            |    override val content = Wirespec.Content("application/xml", body)
+            |  }
+            |  data class Response200ApplicationJson(override val headers: Map<String, List<Any?>>, val body: Pet) : Response200<Pet> {
+            |    override val status = 200;
+            |    override val content = Wirespec.Content("application/json", body)
+            |  }
+            |  data class Response405Unit(override val headers: Map<String, List<Any?>>) : Response405<Unit> {
+            |    override val status = 405;
+            |    override val content = null
+            |  }
             |  companion object {
             |    const val PATH = "/pet"
             |    const val METHOD = "POST"
@@ -42,6 +60,18 @@ class KotlinClassEmitterTest {
             |          .read<Pet>(request.content!!, Wirespec.getType(Pet::class.java, false))
             |          .let { RequestApplicationXWwwFormUrlencoded(request.path, request.method, request.query, request.headers, it) }
             |        else -> error("Cannot map request")
+            |      }
+            |    }
+            |    fun <B> RESPONSE_MAPPER(contentMapper: Wirespec.ContentMapper<B>) = { response: Wirespec.Response<B> ->
+            |      when {
+            |        response.status == 200 && response.content?.type == "application/xml" -> contentMapper
+            |          .read<Pet>(response.content!!, Wirespec.getType(Pet::class.java, false))
+            |          .let { Response200ApplicationXml(response.headers, it.body) }
+            |        response.status == 200 && response.content?.type == "application/json" -> contentMapper
+            |          .read<Pet>(response.content!!, Wirespec.getType(Pet::class.java, false))
+            |          .let { Response200ApplicationJson(response.headers, it.body) }
+            |        response.status == 405 && response.content == null -> Response405Unit(response.headers)
+            |        else -> error("Cannot map response with status ${'$'}{response.status}")
             |      }
             |    }
             |  }

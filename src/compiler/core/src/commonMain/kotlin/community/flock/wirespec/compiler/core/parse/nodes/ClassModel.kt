@@ -7,7 +7,10 @@ data class EndpointClass(
     val path: String,
     val method: String,
     val requestClasses: List<RequestClass>,
+    val responseInterfaces: List<ResponseInterface>,
+    val responseClasses: List<ResponseClass>,
     val requestMapper: RequestMapper,
+    val responseMapper: ResponseMapper,
     val supers: List<Reference>,
 ) : ClassModel {
     data class RequestClass(
@@ -20,16 +23,42 @@ data class EndpointClass(
     data class RequestMapper(
         val name: String,
         val conditions: List<Condition>
-    ){
+    ) {
         data class Condition(
-            val contentType: String,
-            val contentReference: Reference,
+            val content: Content?,
             val responseReference: Reference,
-            val isIterable:Boolean,
+            val isIterable: Boolean,
         )
     }
 
+    data class ResponseClass(
+        val name: String,
+        val fields: List<Field>,
+        val returnReference: Reference,
+        val statusCode: String,
+        val content: Content? = null
+    )
 
+    data class ResponseInterface(
+        val name: Reference,
+        val `super`: Reference,
+    )
+
+    data class ResponseMapper(
+        val name: String,
+        val conditions: List<Condition>
+    ) {
+        data class Condition(
+            val statusCode: String,
+            val content: Content?,
+            val responseReference: Reference,
+            val isIterable: Boolean,
+        )
+    }
+    data class Content(
+        val type: String,
+        val reference: Reference
+    )
 }
 
 data class Constructor(
@@ -74,21 +103,19 @@ sealed interface Statement {
 }
 
 sealed interface Reference {
-    val nullable: Boolean
-    val generics: Generics
 
     data class Language(
         val primitive: Primitive,
-        override val nullable: Boolean = false,
-        override val generics: Generics = Generics()
+        val nullable: Boolean = false,
+        val generics: Generics = Generics()
     ) : Reference {
         enum class Primitive { Any, Unit, String, Integer, Number, Boolean, Map, List }
     }
 
     data class Custom(
         val name: String,
-        override val nullable: Boolean = false,
-        override val generics: Generics = Generics()
+        val nullable: Boolean = false,
+        val generics: Generics = Generics()
     ) : Reference
 
     data class Generics(

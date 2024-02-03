@@ -97,6 +97,12 @@ object ClassModelTransformer {
                 name = "REQUEST_MAPPER",
                 conditions = emptyList()
             ),
+            responseMapper = EndpointClass.ResponseMapper(
+                name = "RESPONSE_MAPPER",
+                conditions = emptyList()
+            ),
+            responseInterfaces = listOf(),
+            responseClasses = listOf(),
             supers = emptyList()
         )
     }

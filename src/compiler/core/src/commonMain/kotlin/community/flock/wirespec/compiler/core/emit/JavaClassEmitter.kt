@@ -45,12 +45,35 @@ class JavaClassEmitter : ClassModelEmitter {
         |}
     """.trimMargin()
 
-    override fun EndpointClass.RequestMapper.Condition.emit(): String = """
-        |if (request.getContent().type() == "$contentType") {
-        |${SPACER}Wirespec.Content<Pet> content = contentMapper.read(request.getContent(), Wirespec.getType(${contentReference.emit()}.class, ${isIterable}));
-        |${SPACER}return (Req) new ${responseReference.emit()}(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders(), content);
-        |}
-    """.trimMargin()
+    override fun EndpointClass.RequestMapper.Condition.emit(): String =
+        if(content != null)
+            """
+                |if (request.getContent().type() == "${content.type}") {
+                |${SPACER}Wirespec.Content<Pet> content = contentMapper.read(request.getContent(), Wirespec.getType(${content.reference.emit()}.class, ${isIterable}));
+                |${SPACER}return (Req) new ${responseReference.emit()}(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders(), content);
+                |}
+            """.trimMargin()
+        else
+            """
+                |if (request.getContent().type() == null") {
+                |${SPACER}return (Req) new ${responseReference.emit()}(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders());
+                |}
+            """.trimMargin()
+    override fun EndpointClass.ResponseClass.emit(): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun EndpointClass.ResponseMapper.emit(): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun EndpointClass.ResponseMapper.Condition.emit(): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun EndpointClass.ResponseInterface.emit(): String {
+        TODO("Not yet implemented")
+    }
 
     override fun Parameter.emit(): String = """
         |${reference.emit()} $identifier
@@ -78,6 +101,7 @@ class JavaClassEmitter : ClassModelEmitter {
         Reference.Language.Primitive.Map -> "java.util.Map"
         Reference.Language.Primitive.List -> "java.util.List"
     }
+
     override fun Statement.AssignField.emit(): String = """
         |this.${value} = ${statement.emit()}
     """.trimMargin()
@@ -97,6 +121,10 @@ class JavaClassEmitter : ClassModelEmitter {
     override fun Statement.Concat.emit(): String = """
         |${values.joinToString(" + ") { it.emit() }}
     """.trimMargin()
+
+    override fun EndpointClass.Content.emit(): String {
+        TODO("Not yet implemented")
+    }
 
     private fun Reference.emitInitialize(): String =
         when(this){

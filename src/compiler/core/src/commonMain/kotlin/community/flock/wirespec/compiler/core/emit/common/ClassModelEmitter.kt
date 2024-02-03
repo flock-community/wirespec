@@ -23,6 +23,11 @@ interface ClassModelEmitter {
     fun EndpointClass.RequestClass.emit(): String
     fun EndpointClass.RequestMapper.emit(): String
     fun EndpointClass.RequestMapper.Condition.emit(): String
+    fun EndpointClass.ResponseInterface.emit(): String
+    fun EndpointClass.ResponseClass.emit(): String
+    fun EndpointClass.ResponseMapper.emit(): String
+    fun EndpointClass.ResponseMapper.Condition.emit(): String
+
     fun Constructor.emit(): String
     fun Parameter.emit(): String
     fun Reference.emit(): String = when (this) {
@@ -59,4 +64,5 @@ interface ClassModelEmitter {
             }
         }
 
+    fun EndpointClass.Content.emit(): String
 }

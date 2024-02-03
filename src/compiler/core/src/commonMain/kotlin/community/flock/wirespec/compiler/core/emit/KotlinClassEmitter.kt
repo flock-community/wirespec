@@ -2,7 +2,6 @@ package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.emit.common.ClassModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.ClassModelEmitter.Companion.SPACER
-import community.flock.wirespec.compiler.core.parse.nodes.ClassModel
 import community.flock.wirespec.compiler.core.parse.nodes.Constructor
 import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
 import community.flock.wirespec.compiler.core.parse.nodes.Field
@@ -12,16 +11,19 @@ import community.flock.wirespec.compiler.core.parse.nodes.Statement
 
 class KotlinClassEmitter : ClassModelEmitter {
 
-
-
     override fun EndpointClass.emit(): String = """
         |interface $name : ${supers.joinToString(", ") { it.emit() }} {
         |${SPACER}sealed interface Request<T> : Wirespec.Request<T>
         |${requestClasses.joinToString("\n") { it.emit() }.spacer()}
+        |
+        |${SPACER}sealed interface Response<T> : Wirespec.Response<T>
+        |${responseInterfaces.joinToString("\n") { it.emit() }.spacer()}
+        |${responseClasses.joinToString("\n") { it.emit() }.spacer()}
         |${SPACER}companion object {
         |${SPACER}${SPACER}const val PATH = "$path"
         |${SPACER}${SPACER}const val METHOD = "$method"
         |${requestMapper.emit().spacer(2)}
+        |${responseMapper.emit().spacer(2)}
         |  }
         |}
     """.trimMargin()
@@ -30,31 +32,74 @@ class KotlinClassEmitter : ClassModelEmitter {
          |data class ${name}(
          |${fields.joinToString(",\n") { it.emit() }.spacer()}
          |) : ${supers.joinToString(", ") { it.emit() }} {
-         |${constructors.drop(1).joinToString("\n") { "${it.emit()} : this(\n${it.body.joinToString(",\n") { it.emit() }.spacer()}\n)" }.spacer()}
+         |${constructors.drop(1).joinToString("\n") { "${it.emit()}" }.spacer()}
          |}
     """.trimMargin()
 
-    override fun EndpointClass.RequestMapper.emit(): String = """
-        |fun <B> REQUEST_MAPPER(contentMapper: Wirespec.ContentMapper<B>) = { request: Wirespec.Request<B> ->
+    override fun EndpointClass.ResponseInterface.emit(): String = """
+        |sealed interface ${name.emit()} : ${`super`.emit()}
+    """.trimMargin()
+
+    override fun EndpointClass.ResponseClass.emit(): String = """
+        |data class ${name}(${fields.joinToString(", ") { it.emit() }}) : ${returnReference.emit()} {
+        |  override val status = ${statusCode};
+        |  override val content = ${content?.emit() ?: "null"}
+        |}
+    """.trimMargin()
+
+    override fun EndpointClass.Content.emit(): String = """
+        |Wirespec.Content("$type", body)
+    """.trimMargin()
+
+    override fun EndpointClass.ResponseMapper.emit(): String = """
+        |fun <B> $name(contentMapper: Wirespec.ContentMapper<B>) = { response: Wirespec.Response<B> ->
          |${SPACER}when {
-         |${this.conditions.joinToString ("\n") { it.emit() }.spacer(2)}
+         |${this.conditions.joinToString("\n") { it.emit() }.spacer(2)}
+         |${SPACER}${SPACER}else -> error("Cannot map response with status ${'$'}{response.status}")
+         |${SPACER}}
+         |}
+    """.trimMargin()
+
+    override fun EndpointClass.ResponseMapper.Condition.emit(): String =
+        if (content != null)
+            """
+                |response.status == $statusCode && response.content?.type == "${content.type}" -> contentMapper
+                |  .read<Pet>(response.content!!, Wirespec.getType(Pet::class.java, false))
+                |  .let { ${responseReference.emit()}(response.headers, it.body) }
+            """.trimMargin()
+        else
+            """
+                |response.status == $statusCode && response.content == null -> ${responseReference.emit()}(response.headers)
+            """.trimMargin()
+
+
+    override fun EndpointClass.RequestMapper.emit(): String = """
+        |fun <B> $name(contentMapper: Wirespec.ContentMapper<B>) = { request: Wirespec.Request<B> ->
+         |${SPACER}when {
+         |${this.conditions.joinToString("\n") { it.emit() }.spacer(2)}
          |${SPACER}${SPACER}else -> error("Cannot map request")
          |${SPACER}}
          |}
     """.trimMargin()
 
-    override fun EndpointClass.RequestMapper.Condition.emit(): String = """
-        |request.content?.type == "$contentType" -> contentMapper
-        |  .read<Pet>(request.content!!, Wirespec.getType(${contentReference.emit()}::class.java, ${isIterable}))
-        |  .let { ${responseReference.emit()}(request.path, request.method, request.query, request.headers, it) }
-    """.trimMargin()
+    override fun EndpointClass.RequestMapper.Condition.emit(): String =
+        if(content != null)
+            """
+                |request.content?.type == "${content.type}" -> contentMapper
+                |  .read<Pet>(request.content!!, Wirespec.getType(${content.reference.emit()}::class.java, ${isIterable}))
+                |  .let { ${responseReference.emit()}(request.path, request.method, request.query, request.headers, it) }
+            """.trimMargin()
+        else
+            """
+                |request.content == null -> ${responseReference.emit()}(request.path, request.method, request.query, request.headers)
+            """.trimMargin()
 
     override fun Parameter.emit(): String = """
         |${identifier}: ${reference.emit()}
     """.trimMargin()
 
     override fun Reference.Generics.emit(): String = """
-        |${references.takeIf { it.isNotEmpty() }?.joinToString(", ", "<", ">") { it.emit() }.orEmpty()}
+        |${if (references.isNotEmpty()) references.joinToString(", ", "<", ">") { it.emit() } else ""}
     """.trimMargin()
 
     override fun Reference.Custom.emit(): String = """
@@ -112,11 +157,13 @@ class KotlinClassEmitter : ClassModelEmitter {
 
 
     override fun Field.emit(): String = """
-        |override val ${identifier}: ${reference.emit()}
+        |${if (override) "override " else ""}val ${identifier}: ${reference.emit()}
     """.trimMargin()
 
     override fun Constructor.emit(): String = """
-        |constructor(${this.fields.joinToString(", ") { it.emit() }})
+        |constructor(${this.fields.joinToString(", ") { it.emit() }}) : this(
+        |${body.joinToString(",\n") { it.emit() }.spacer()}
+        |)
     """.trimMargin()
 
 }
