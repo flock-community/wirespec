@@ -252,22 +252,13 @@ class JavaEmitter(
     private fun Endpoint.Response.emitResponseMapperCondition() =
         when (content) {
             null -> """
-                    |${SPACER}${SPACER}${SPACER}if(${
-                status.takeIf { it.isInt() }?.let { "response.getStatus() == $status && " }.orEmptyString()
-            }response.getContent() == null) { return (Res) new Response${status.firstToUpper()}Void(${
-                status.takeIf { !it.isInt() }?.let { "response.getStatus(), " }.orEmptyString()
-            }response.getHeaders()); }
+                    |${SPACER}${SPACER}${SPACER}if(${status.takeIf { it.isInt() }?.let { "response.getStatus() == $status && " }.orEmptyString()}response.getContent() == null) { return (Res) new Response${status.firstToUpper()}Void(${status.takeIf { !it.isInt() }?.let { "response.getStatus(), " }.orEmptyString()}response.getHeaders()); }
                     |
                 """.trimMargin()
-
             else -> """
-                    |${SPACER}${SPACER}${SPACER}if(${
-                status.takeIf { it.isInt() }?.let { "response.getStatus() == $status && " }.orEmptyString()
-            }response.getContent().type().equals("${content.type}")) {
+                    |${SPACER}${SPACER}${SPACER}if(${status.takeIf { it.isInt() }?.let { "response.getStatus() == $status && " }.orEmptyString()}response.getContent().type().equals("${content.type}")) {
                     |${SPACER}${SPACER}${SPACER}${SPACER}Wirespec.Content<${content.reference.emit()}> content = contentMapper.read(response.getContent(), Wirespec.getType(${content.reference.emitSymbol()}.class, ${content.reference.isIterable}));
-                    |${SPACER}${SPACER}${SPACER}${SPACER}return (Res) new Response${status.firstToUpper()}${content.emitContentType()}(${
-                status.takeIf { !it.isInt() }?.let { "response.getStatus(), " }.orEmptyString()
-            }response.getHeaders(), content.body());
+                    |${SPACER}${SPACER}${SPACER}${SPACER}return (Res) new Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "response.getStatus(), " }.orEmptyString()}response.getHeaders(), content.body());
                     |${SPACER}${SPACER}${SPACER}}
                     |
                 """.trimMargin()

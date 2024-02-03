@@ -23,6 +23,7 @@ class JavaClassEmitter : ClassModelEmitter {
         |${requestClasses.joinToString("\n") { it.emit() }.spacer()}
         |
         |${requestMapper.emit().spacer()}
+        |${responseMapper.emit().spacer()}
         |}
     """.trimMargin()
 
@@ -48,14 +49,14 @@ class JavaClassEmitter : ClassModelEmitter {
     override fun EndpointClass.RequestMapper.Condition.emit(): String =
         if(content != null)
             """
-                |if (request.getContent().type() == "${content.type}") {
+                |if (request.getContent().type().equals("${content.type}")) {
                 |${SPACER}Wirespec.Content<Pet> content = contentMapper.read(request.getContent(), Wirespec.getType(${content.reference.emit()}.class, ${isIterable}));
                 |${SPACER}return (Req) new ${responseReference.emit()}(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders(), content);
                 |}
             """.trimMargin()
         else
             """
-                |if (request.getContent().type() == null") {
+                |if (request.getContent().type() == null) {
                 |${SPACER}return (Req) new ${responseReference.emit()}(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders());
                 |}
             """.trimMargin()
@@ -63,13 +64,29 @@ class JavaClassEmitter : ClassModelEmitter {
         TODO("Not yet implemented")
     }
 
-    override fun EndpointClass.ResponseMapper.emit(): String {
-        TODO("Not yet implemented")
-    }
+    override fun EndpointClass.ResponseMapper.emit(): String = """
+        |static <B, Res extends Response<?>> Function<Wirespec.Response<B>, Res> $name(Wirespec.ContentMapper<B> contentMapper) {
+        |${SPACER}return response -> {
+        |${this.conditions.joinToString ("\n") { it.emit() }.spacer(2)}
+        |${SPACER}${SPACER}throw new IllegalStateException("Unknown response type");
+        |${SPACER}};
+        |}
+    """.trimMargin()
 
-    override fun EndpointClass.ResponseMapper.Condition.emit(): String {
-        TODO("Not yet implemented")
-    }
+    override fun EndpointClass.ResponseMapper.Condition.emit(): String =
+        if(content != null)
+            """
+                |if (response.getStatus() == $statusCode && response.getContent().type().equals("${content.type}")) {
+                |${SPACER}Wirespec.Content<Pet> content = contentMapper.read(response.getContent(), Wirespec.getType(${content.reference.emit()}.class, ${isIterable}));
+                |${SPACER}return (Res) new ${responseReference.emit()}(response.getHeaders(), content.body());
+                |}
+            """.trimMargin()
+        else
+            """
+                |if (response.getStatus() == $statusCode && response.getContent() == null) {
+                |${SPACER}return (Res) new ${responseReference.emit()}(response.getHeaders());
+                |}
+            """.trimMargin()
 
     override fun EndpointClass.ResponseInterface.emit(): String {
         TODO("Not yet implemented")

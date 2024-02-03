@@ -77,20 +77,36 @@ class JavaClassEmitterTest {
             |
             |  static <B, Req extends Request<?>> Function<Wirespec.Request<B>, Req> REQUEST_MAPPER(Wirespec.ContentMapper<B> contentMapper) {
             |    return request -> {
-            |      if (request.getContent().type() == "application/json") {
+            |      if (request.getContent().type().equals("application/json")) {
             |        Wirespec.Content<Pet> content = contentMapper.read(request.getContent(), Wirespec.getType(Pet.class, false));
             |        return (Req) new RequestApplicationJson(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders(), content);
             |      }
-            |      if (request.getContent().type() == "application/xml") {
+            |      if (request.getContent().type().equals("application/xml")) {
             |        Wirespec.Content<Pet> content = contentMapper.read(request.getContent(), Wirespec.getType(Pet.class, false));
             |        return (Req) new RequestApplicationXml(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders(), content);
             |      }
-            |      if (request.getContent().type() == "application/x-www-form-urlencoded") {
+            |      if (request.getContent().type().equals("application/x-www-form-urlencoded")) {
             |        Wirespec.Content<Pet> content = contentMapper.read(request.getContent(), Wirespec.getType(Pet.class, false));
             |        return (Req) new RequestApplicationXWwwFormUrlencoded(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders(), content);
             |      }
             |      throw new IllegalStateException("Unknown response type");
             |    }
+            |  }
+            |  static <B, Res extends Response<?>> Function<Wirespec.Response<B>, Res> RESPONSE_MAPPER(Wirespec.ContentMapper<B> contentMapper) {
+            |    return response -> {
+            |      if (response.getStatus() == 200 && response.getContent().type().equals("application/xml")) {
+            |        Wirespec.Content<Pet> content = contentMapper.read(response.getContent(), Wirespec.getType(Pet.class, false));
+            |        return (Res) new Response200ApplicationXml(response.getHeaders(), content.body());
+            |      }
+            |      if (response.getStatus() == 200 && response.getContent().type().equals("application/json")) {
+            |        Wirespec.Content<Pet> content = contentMapper.read(response.getContent(), Wirespec.getType(Pet.class, false));
+            |        return (Res) new Response200ApplicationJson(response.getHeaders(), content.body());
+            |      }
+            |      if (response.getStatus() == 405 && response.getContent() == null) {
+            |        return (Res) new Response405Unit(response.getHeaders());
+            |      }
+            |      throw new IllegalStateException("Unknown response type");
+            |    };
             |  }
             |}
         """.trimMargin()
