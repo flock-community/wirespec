@@ -12,6 +12,21 @@ class KotlinClassEmitterTest {
         val expected = """
             |interface AddPetEndpoint : Wirespec.Endpoint {
             |  sealed interface Request<T> : Wirespec.Request<T>
+            |  data class RequestApplicationXml(
+            |    override val path: String,
+            |    override val method: Wirespec.Method,
+            |    override val query: Map<String, List<Any?>>,
+            |    override val headers: Map<String, List<Any?>>,
+            |    override val content: Wirespec.Content<Pet>?
+            |  ) : Request<Pet> {
+            |    constructor(body: Pet) : this(
+            |      path = "/pet",
+            |      method = Wirespec.Method.POST,
+            |      query = mapOf<String, List<Any?>>(),
+            |      headers = mapOf<String, List<Any?>>(),
+            |      content = Wirespec.Content("application/xml", body)
+            |    )
+            |  }
             |  data class RequestApplicationJson(
             |    override val path: String,
             |    override val method: Wirespec.Method,
@@ -27,23 +42,47 @@ class KotlinClassEmitterTest {
             |      content = Wirespec.Content("application/json", body)
             |    )
             |  }
+            |  data class RequestApplicationXWwwFormUrlencoded(
+            |    override val path: String,
+            |    override val method: Wirespec.Method,
+            |    override val query: Map<String, List<Any?>>,
+            |    override val headers: Map<String, List<Any?>>,
+            |    override val content: Wirespec.Content<Pet>?
+            |  ) : Request<Pet> {
+            |    constructor(body: Pet) : this(
+            |      path = "/pet",
+            |      method = Wirespec.Method.POST,
+            |      query = mapOf<String, List<Any?>>(),
+            |      headers = mapOf<String, List<Any?>>(),
+            |      content = Wirespec.Content("application/x-www-form-urlencoded", body)
+            |    )
+            |  }
             |
             |  sealed interface Response<T> : Wirespec.Response<T>
             |  sealed interface Response2XX<T> : Response<T>
             |  sealed interface Response4XX<T> : Response<T>
             |  sealed interface Response200<T> : Response2XX<T>
             |  sealed interface Response405<T> : Response4XX<T>
-            |  data class Response200ApplicationXml(override val headers: Map<String, List<Any?>>, val body: Pet) : Response200<Pet> {
-            |    override val status = 200;
-            |    override val content = Wirespec.Content("application/xml", body)
+            |  data class Response200ApplicationXml(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Pet>?) : Response200<Pet> {
+            |    constructor(headers: Map<String, List<Any?>>, body: Pet): this(
+            |      status = 200,
+            |      headers = headers,
+            |      content = Wirespec.Content("application/xml", body),
+            |    )
             |  }
-            |  data class Response200ApplicationJson(override val headers: Map<String, List<Any?>>, val body: Pet) : Response200<Pet> {
-            |    override val status = 200;
-            |    override val content = Wirespec.Content("application/json", body)
+            |  data class Response200ApplicationJson(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Pet>) : Response200<Pet> {
+            |    constructor(headers: Map<String, List<Any?>>, body: Pet): this(
+            |      status = 200,
+            |      headers = headers,
+            |      content = Wirespec.Content("application/json", body),
+            |    )
             |  }
-            |  data class Response405Unit(override val headers: Map<String, List<Any?>>) : Response405<Unit> {
-            |    override val status = 405;
-            |    override val content = null
+            |  data class Response405Unit(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Unit>?) : Response405<Unit> {
+            |    constructor(headers: Map<String, List<Any?>>): this(
+            |      status = 405,
+            |      headers = headers,
+            |      content = null,
+            |    )
             |  }
             |  companion object {
             |    const val PATH = "/pet"

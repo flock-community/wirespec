@@ -65,4 +65,5 @@ interface ClassModelEmitter {
         }
 
     fun EndpointClass.Content.emit(): String
+    fun EndpointClass.ResponseClass.AllArgsConstructor.emit(): String
 }

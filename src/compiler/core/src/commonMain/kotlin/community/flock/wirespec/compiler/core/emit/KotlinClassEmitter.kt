@@ -42,9 +42,16 @@ class KotlinClassEmitter : ClassModelEmitter {
 
     override fun EndpointClass.ResponseClass.emit(): String = """
         |data class ${name}(${fields.joinToString(", ") { it.emit() }}) : ${returnReference.emit()} {
-        |  override val status = ${statusCode};
-        |  override val content = ${content?.emit() ?: "null"}
+        |${allArgsConstructor.emit().spacer()}
         |}
+    """.trimMargin()
+
+    override fun EndpointClass.ResponseClass.AllArgsConstructor.emit(): String = """
+         |constructor(${this.parameters.joinToString (", "){ it.emit() }}): this(
+         |${SPACER}status = $statusCode,
+         |${SPACER}headers = headers,
+         |${SPACER}content = ${content?.emit() ?: "null"},
+         |)
     """.trimMargin()
 
     override fun EndpointClass.Content.emit(): String = """
@@ -114,7 +121,8 @@ class KotlinClassEmitter : ClassModelEmitter {
         Reference.Language.Primitive.Any -> "Any"
         Reference.Language.Primitive.Unit -> "Unit"
         Reference.Language.Primitive.String -> "String"
-        Reference.Language.Primitive.Integer -> "Long"
+        Reference.Language.Primitive.Integer -> "Int"
+        Reference.Language.Primitive.Long -> "Long"
         Reference.Language.Primitive.Number -> "Double"
         Reference.Language.Primitive.Boolean -> "Boolean"
         Reference.Language.Primitive.Map -> "Map"

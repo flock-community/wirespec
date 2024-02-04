@@ -2,7 +2,6 @@ package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.emit.common.ClassModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.ClassModelEmitter.Companion.SPACER
-import community.flock.wirespec.compiler.core.parse.nodes.ClassModel
 import community.flock.wirespec.compiler.core.parse.nodes.Constructor
 import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
 import community.flock.wirespec.compiler.core.parse.nodes.Field
@@ -20,7 +19,14 @@ class JavaClassEmitter : ClassModelEmitter {
         |${SPACER}sealed interface Request<T> extends Wirespec.Request<T> {
         |${SPACER}}
         |
-        |${requestClasses.joinToString("\n") { it.emit() }.spacer()}
+        |${requestClasses.joinToString("\n\n") { it.emit() }.spacer()}
+        |
+        |${SPACER}sealed interface Response<T> extends Wirespec.Response<T> {
+        |${SPACER}};
+        |
+        |${responseInterfaces.joinToString("\n\n") { it.emit() }.spacer()}
+        |
+        |${responseClasses.joinToString("\n\n") { it.emit() }.spacer()}
         |
         |${requestMapper.emit().spacer()}
         |${responseMapper.emit().spacer()}
@@ -60,9 +66,23 @@ class JavaClassEmitter : ClassModelEmitter {
                 |${SPACER}return (Req) new ${responseReference.emit()}(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders());
                 |}
             """.trimMargin()
-    override fun EndpointClass.ResponseClass.emit(): String {
-        TODO("Not yet implemented")
-    }
+    override fun EndpointClass.ResponseClass.emit(): String = """
+        |final class ${name} implements ${returnReference.emit()} {
+        |${fields.joinToString("\n") { "${it.emit()};" }.spacer()}
+        |
+        |${allArgsConstructor.emit().spacer()}
+        |
+        |${fields.joinToString("\n\n") { it.emitGetter() }.spacer()}
+        |}
+    """.trimMargin()
+
+    override fun EndpointClass.ResponseClass.AllArgsConstructor.emit(): String = """
+        |public $name(${parameters.joinToString (", "){ it.emit() }}) {
+        |${SPACER}this.status = ${statusCode};
+        |${SPACER}this.headers = headers;
+        |${SPACER}this.content = ${content?.emit()};
+        |}
+    """.trimMargin()
 
     override fun EndpointClass.ResponseMapper.emit(): String = """
         |static <B, Res extends Response<?>> Function<Wirespec.Response<B>, Res> $name(Wirespec.ContentMapper<B> contentMapper) {
@@ -88,9 +108,10 @@ class JavaClassEmitter : ClassModelEmitter {
                 |}
             """.trimMargin()
 
-    override fun EndpointClass.ResponseInterface.emit(): String {
-        TODO("Not yet implemented")
-    }
+    override fun EndpointClass.ResponseInterface.emit(): String = """
+        |sealed interface ${name.emit()} extends ${`super`.emit()} {
+        |};
+    """.trimMargin()
 
     override fun Parameter.emit(): String = """
         |${reference.emit()} $identifier
@@ -110,11 +131,12 @@ class JavaClassEmitter : ClassModelEmitter {
 
     override fun Reference.Language.Primitive.emit(): String = when(this){
         Reference.Language.Primitive.Any -> "Object"
-        Reference.Language.Primitive.Unit -> "void"
+        Reference.Language.Primitive.Unit -> "Void"
         Reference.Language.Primitive.String -> "String"
-        Reference.Language.Primitive.Integer -> "Long"
+        Reference.Language.Primitive.Integer -> "int"
+        Reference.Language.Primitive.Long -> "Long"
         Reference.Language.Primitive.Number -> "Double"
-        Reference.Language.Primitive.Boolean -> "Boolean"
+        Reference.Language.Primitive.Boolean -> "boolean"
         Reference.Language.Primitive.Map -> "java.util.Map"
         Reference.Language.Primitive.List -> "java.util.List"
     }
@@ -139,9 +161,9 @@ class JavaClassEmitter : ClassModelEmitter {
         |${values.joinToString(" + ") { it.emit() }}
     """.trimMargin()
 
-    override fun EndpointClass.Content.emit(): String {
-        TODO("Not yet implemented")
-    }
+    override fun EndpointClass.Content.emit(): String = """
+        |new Wirespec.Content("$type", body)
+    """.trimMargin()
 
     private fun Reference.emitInitialize(): String =
         when(this){

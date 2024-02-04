@@ -18,6 +18,63 @@ class JavaClassEmitterTest {
             |  sealed interface Request<T> extends Wirespec.Request<T> {
             |  }
             |
+            |  final class RequestApplicationXml implements Request<Pet> {
+            |    private final String path;
+            |    private final Wirespec.Method method;
+            |    private final java.util.Map<String, java.util.List<Object>> query;
+            |    private final java.util.Map<String, java.util.List<Object>> headers;
+            |    private final Wirespec.Content<Pet> content;
+            |
+            |    public RequestApplicationXml(
+            |      String path,
+            |      Wirespec.Method method,
+            |      java.util.Map<String, java.util.List<Object>> query,
+            |      java.util.Map<String, java.util.List<Object>> headers,
+            |      Wirespec.Content<Pet> content
+            |    ) {
+            |      this.path = path;
+            |      this.method = method;
+            |      this.query = query;
+            |      this.headers = headers;
+            |      this.content = content;
+            |    }
+            |
+            |    public RequestApplicationXml(
+            |      Pet body
+            |    ) {
+            |      this.path = "/" + "pet";
+            |      this.method = Wirespec.Method.POST;
+            |      this.query = java.util.Map.of();
+            |      this.headers = java.util.Map.of();
+            |      this.content = new Wirespec.Content("application/xml", body);
+            |    }
+            |
+            |    @Override
+            |    public String getPath() {
+            |      return path;
+            |    }
+            |
+            |    @Override
+            |    public Wirespec.Method getMethod() {
+            |      return method;
+            |    }
+            |
+            |    @Override
+            |    public java.util.Map<String, java.util.List<Object>> getQuery() {
+            |      return query;
+            |    }
+            |
+            |    @Override
+            |    public java.util.Map<String, java.util.List<Object>> getHeaders() {
+            |      return headers;
+            |    }
+            |
+            |    @Override
+            |    public Wirespec.Content<Pet> getContent() {
+            |      return content;
+            |    }
+            |  }
+            |
             |  final class RequestApplicationJson implements Request<Pet> {
             |    private final String path;
             |    private final Wirespec.Method method;
@@ -71,6 +128,159 @@ class JavaClassEmitterTest {
             |
             |    @Override
             |    public Wirespec.Content<Pet> getContent() {
+            |      return content;
+            |    }
+            |  }
+            |
+            |  final class RequestApplicationXWwwFormUrlencoded implements Request<Pet> {
+            |    private final String path;
+            |    private final Wirespec.Method method;
+            |    private final java.util.Map<String, java.util.List<Object>> query;
+            |    private final java.util.Map<String, java.util.List<Object>> headers;
+            |    private final Wirespec.Content<Pet> content;
+            |
+            |    public RequestApplicationXWwwFormUrlencoded(
+            |      String path,
+            |      Wirespec.Method method,
+            |      java.util.Map<String, java.util.List<Object>> query,
+            |      java.util.Map<String, java.util.List<Object>> headers,
+            |      Wirespec.Content<Pet> content
+            |    ) {
+            |      this.path = path;
+            |      this.method = method;
+            |      this.query = query;
+            |      this.headers = headers;
+            |      this.content = content;
+            |    }
+            |
+            |    public RequestApplicationXWwwFormUrlencoded(
+            |      Pet body
+            |    ) {
+            |      this.path = "/" + "pet";
+            |      this.method = Wirespec.Method.POST;
+            |      this.query = java.util.Map.of();
+            |      this.headers = java.util.Map.of();
+            |      this.content = new Wirespec.Content("application/x-www-form-urlencoded", body);
+            |    }
+            |
+            |    @Override
+            |    public String getPath() {
+            |      return path;
+            |    }
+            |
+            |    @Override
+            |    public Wirespec.Method getMethod() {
+            |      return method;
+            |    }
+            |
+            |    @Override
+            |    public java.util.Map<String, java.util.List<Object>> getQuery() {
+            |      return query;
+            |    }
+            |
+            |    @Override
+            |    public java.util.Map<String, java.util.List<Object>> getHeaders() {
+            |      return headers;
+            |    }
+            |
+            |    @Override
+            |    public Wirespec.Content<Pet> getContent() {
+            |      return content;
+            |    }
+            |  }
+            |
+            |  sealed interface Response<T> extends Wirespec.Response<T> {
+            |  };
+            |
+            |  sealed interface Response2XX<T> extends Response<T> {
+            |  };
+            |
+            |  sealed interface Response4XX<T> extends Response<T> {
+            |  };
+            |
+            |  sealed interface Response200<T> extends Response2XX<T> {
+            |  };
+            |
+            |  sealed interface Response405<T> extends Response4XX<T> {
+            |  };
+            |
+            |  final class Response200ApplicationXml implements Response200<Pet> {
+            |    private final int status;
+            |    private final java.util.Map<String, java.util.List<Object>> headers;
+            |    private final Wirespec.Content<Pet> content;
+            |
+            |    public Response200ApplicationXml(java.util.Map<String, java.util.List<Object>> headers, Pet body) {
+            |      this.status = 200;
+            |      this.headers = headers;
+            |      this.content = new Wirespec.Content("application/xml", body);
+            |    }
+            |
+            |    @Override
+            |    public int getStatus() {
+            |      return status;
+            |    }
+            |
+            |    @Override
+            |    public java.util.Map<String, java.util.List<Object>> getHeaders() {
+            |      return headers;
+            |    }
+            |
+            |    @Override
+            |    public Wirespec.Content<Pet> getContent() {
+            |      return content;
+            |    }
+            |  }
+            |
+            |  final class Response200ApplicationJson implements Response200<Pet> {
+            |    private final int status;
+            |    private final java.util.Map<String, java.util.List<Object>> headers;
+            |    private final Wirespec.Content<Pet> content;
+            |
+            |    public Response200ApplicationJson(java.util.Map<String, java.util.List<Object>> headers, Pet body) {
+            |      this.status = 200;
+            |      this.headers = headers;
+            |      this.content = new Wirespec.Content("application/json", body);
+            |    }
+            |
+            |    @Override
+            |    public int getStatus() {
+            |      return status;
+            |    }
+            |
+            |    @Override
+            |    public java.util.Map<String, java.util.List<Object>> getHeaders() {
+            |      return headers;
+            |    }
+            |
+            |    @Override
+            |    public Wirespec.Content<Pet> getContent() {
+            |      return content;
+            |    }
+            |  }
+            |
+            |  final class Response405Unit implements Response405<Void> {
+            |    private final int status;
+            |    private final java.util.Map<String, java.util.List<Object>> headers;
+            |    private final Wirespec.Content<Void> content;
+            |
+            |    public Response405Unit(java.util.Map<String, java.util.List<Object>> headers) {
+            |      this.status = 405;
+            |      this.headers = headers;
+            |      this.content = null;
+            |    }
+            |
+            |    @Override
+            |    public int getStatus() {
+            |      return status;
+            |    }
+            |
+            |    @Override
+            |    public java.util.Map<String, java.util.List<Object>> getHeaders() {
+            |      return headers;
+            |    }
+            |
+            |    @Override
+            |    public Wirespec.Content<Void> getContent() {
             |      return content;
             |    }
             |  }

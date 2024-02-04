@@ -34,10 +34,18 @@ data class EndpointClass(
     data class ResponseClass(
         val name: String,
         val fields: List<Field>,
+        val allArgsConstructor: AllArgsConstructor,
         val returnReference: Reference,
         val statusCode: String,
         val content: Content? = null
-    )
+    ){
+        data class AllArgsConstructor(
+            val name: String,
+            val parameters: List<Parameter>,
+            val statusCode: String,
+            val content: Content? = null
+        )
+    }
 
     data class ResponseInterface(
         val name: Reference,
@@ -109,7 +117,7 @@ sealed interface Reference {
         val nullable: Boolean = false,
         val generics: Generics = Generics()
     ) : Reference {
-        enum class Primitive { Any, Unit, String, Integer, Number, Boolean, Map, List }
+        enum class Primitive { Any, Unit, String, Integer, Long, Number, Boolean, Map, List }
     }
 
     data class Custom(
