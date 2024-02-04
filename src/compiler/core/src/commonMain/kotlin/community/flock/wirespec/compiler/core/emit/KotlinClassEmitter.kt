@@ -2,12 +2,10 @@ package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.emit.common.ClassModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.ClassModelEmitter.Companion.SPACER
-import community.flock.wirespec.compiler.core.parse.nodes.Constructor
 import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
 import community.flock.wirespec.compiler.core.parse.nodes.Field
 import community.flock.wirespec.compiler.core.parse.nodes.Parameter
 import community.flock.wirespec.compiler.core.parse.nodes.Reference
-import community.flock.wirespec.compiler.core.parse.nodes.Statement
 
 class KotlinClassEmitter : ClassModelEmitter {
 
@@ -32,8 +30,22 @@ class KotlinClassEmitter : ClassModelEmitter {
          |data class ${name}(
          |${fields.joinToString(",\n") { it.emit() }.spacer()}
          |) : ${supers.joinToString(", ") { it.emit() }} {
-         |${constructors.drop(1).joinToString("\n") { "${it.emit()}" }.spacer()}
+         |${secondaryConstructor.emit().spacer()}
          |}
+    """.trimMargin()
+
+    override fun EndpointClass.RequestClass.PrimaryConstructor.emit(): String {
+        throw NotImplementedError("primary constructor not needed for data class")
+    }
+
+    override fun EndpointClass.RequestClass.SecondaryConstructor.emit(): String = """
+        |constructor(${parameters.joinToString(", ") { it.emit() }}) : this(
+        |${SPACER}path = "${path.emit()}",
+        |${SPACER}method = Wirespec.Method.${method},
+        |${SPACER}query = mapOf<String, List<Any?>>(${query}),
+        |${SPACER}headers = mapOf<String, List<Any?>>(${headers}),
+        |${SPACER}content = ${content?.emit() ?: "null"}
+        |)
     """.trimMargin()
 
     override fun EndpointClass.ResponseInterface.emit(): String = """
@@ -47,12 +59,21 @@ class KotlinClassEmitter : ClassModelEmitter {
     """.trimMargin()
 
     override fun EndpointClass.ResponseClass.AllArgsConstructor.emit(): String = """
-         |constructor(${this.parameters.joinToString (", "){ it.emit() }}): this(
+         |constructor(${this.parameters.joinToString(", ") { it.emit() }}): this(
          |${SPACER}status = $statusCode,
          |${SPACER}headers = headers,
          |${SPACER}content = ${content?.emit() ?: "null"},
          |)
     """.trimMargin()
+
+    override fun EndpointClass.Path.emit(): String =
+        value.joinToString("/", "/") {
+            when (it) {
+                is EndpointClass.Path.Literal -> it.value
+                is EndpointClass.Path.Parameter -> "${'$'}{${it.value}}"
+            }
+        }
+
 
     override fun EndpointClass.Content.emit(): String = """
         |Wirespec.Content("$type", body)
@@ -67,7 +88,7 @@ class KotlinClassEmitter : ClassModelEmitter {
          |}
     """.trimMargin()
 
-    override fun EndpointClass.ResponseMapper.Condition.emit(): String =
+    override fun EndpointClass.ResponseMapper.ResponseCondition.emit(): String =
         if (content != null)
             """
                 |response.status == $statusCode && response.content?.type == "${content.type}" -> contentMapper
@@ -89,8 +110,8 @@ class KotlinClassEmitter : ClassModelEmitter {
          |}
     """.trimMargin()
 
-    override fun EndpointClass.RequestMapper.Condition.emit(): String =
-        if(content != null)
+    override fun EndpointClass.RequestMapper.RequestCondition.emit(): String =
+        if (content != null)
             """
                 |request.content?.type == "${content.type}" -> contentMapper
                 |  .read<Pet>(request.content!!, Wirespec.getType(${content.reference.emit()}::class.java, ${isIterable}))
@@ -129,49 +150,8 @@ class KotlinClassEmitter : ClassModelEmitter {
         Reference.Language.Primitive.List -> "List"
     }
 
-    override fun Statement.AssignField.emit(): String = """
-        |${value} = ${statement.emit()}
-    """.trimMargin()
-
-    override fun Statement.Variable.emit(): String = """
-        |$value
-    """.trimMargin()
-
-    override fun Statement.Literal.emit(): String = """
-        |"$value"
-    """.trimMargin()
-
-    override fun Statement.Initialize.emit(): String = """
-        |${this.reference.emitInitialize()}(${parameters.joinToString(", ") { it }})
-    """.trimMargin()
-
-    private fun Reference.emitInitialize(): String =
-        when (this) {
-            is Reference.Custom -> name
-            is Reference.Language -> when (this.primitive) {
-                Reference.Language.Primitive.Map -> "mapOf${generics.emit()}"
-                Reference.Language.Primitive.List -> "listOf${generics.emit()}"
-                else -> primitive.emit()
-            }
-        }
-
-    override fun Statement.Concat.emit(): String = values.joinToString("") {
-        when (it) {
-            is Statement.Literal -> it.value
-            is Statement.Variable -> "${'$'}{$it}"
-            else -> error("Cannot emit statement: $it")
-        }
-    }.let { "\"${it}\"" }
-
-
     override fun Field.emit(): String = """
         |${if (override) "override " else ""}val ${identifier}: ${reference.emit()}
-    """.trimMargin()
-
-    override fun Constructor.emit(): String = """
-        |constructor(${this.fields.joinToString(", ") { it.emit() }}) : this(
-        |${body.joinToString(",\n") { it.emit() }.spacer()}
-        |)
     """.trimMargin()
 
 }

@@ -89,7 +89,20 @@ object ClassModelTransformer {
                             )
                         ),
                     ),
-                    constructors = emptyList(),
+                    primaryConstructor = EndpointClass.RequestClass.PrimaryConstructor(
+                        name = "PrimaryConstructor",
+                        parameters = listOf()
+                    ),
+                    secondaryConstructor = EndpointClass.RequestClass.SecondaryConstructor(
+                        name = "SecondaryConstructor",
+                        parameters = listOf(),
+                        path = EndpointClass.Path(listOf(
+                            EndpointClass.Path.Literal("pet")
+                        )),
+                        method = "POST",
+                        query = "",
+                        headers = "",
+                    ),
                     supers = emptyList()
                 )
             },

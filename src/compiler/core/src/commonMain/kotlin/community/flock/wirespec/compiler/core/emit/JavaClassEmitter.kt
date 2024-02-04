@@ -2,12 +2,10 @@ package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.emit.common.ClassModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.ClassModelEmitter.Companion.SPACER
-import community.flock.wirespec.compiler.core.parse.nodes.Constructor
 import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
 import community.flock.wirespec.compiler.core.parse.nodes.Field
 import community.flock.wirespec.compiler.core.parse.nodes.Parameter
 import community.flock.wirespec.compiler.core.parse.nodes.Reference
-import community.flock.wirespec.compiler.core.parse.nodes.Statement
 
 class JavaClassEmitter : ClassModelEmitter {
 
@@ -37,23 +35,49 @@ class JavaClassEmitter : ClassModelEmitter {
          |final class $name implements ${supers.joinToString(", ") { it.emit() }} {
          |${fields.joinToString("\n") { "${it.emit()};" }.spacer()}
          |
-         |${constructors.joinToString("\n\n") { it.emit() }.spacer()}
+         |${primaryConstructor.emit().spacer()}
+         |
+         |${secondaryConstructor.emit().spacer()}
          |
          |${fields.joinToString("\n\n") { it.emitGetter() }.spacer()}
          |}
     """.trimMargin()
 
+    override fun EndpointClass.RequestClass.PrimaryConstructor.emit(): String = """
+        |public $name(
+        |${parameters.joinToString(",\n") { it.emit() }.spacer()}
+        |) {
+        |  this.path = path;
+        |  this.method = method;
+        |  this.query = query;
+        |  this.headers = headers;
+        |  this.content = content;
+        |}
+    """.trimMargin()
+
+    override fun EndpointClass.RequestClass.SecondaryConstructor.emit(): String = """
+        |public $name(
+        |${parameters.joinToString(",\n") { it.emit() }.spacer()}
+        |) {
+        |  this.path = ${path.emit()};
+        |  this.method = Wirespec.Method.${method};
+        |  this.query = java.util.Map.of(${query});
+        |  this.headers = java.util.Map.of(${headers});
+        |  this.content = ${content?.emit() ?: "null"};
+        |}
+    """.trimMargin()
+
     override fun EndpointClass.RequestMapper.emit(): String = """
         |static <B, Req extends Request<?>> Function<Wirespec.Request<B>, Req> $name(Wirespec.ContentMapper<B> contentMapper) {
         |${SPACER}return request -> {
-        |${this.conditions.joinToString ("\n") { it.emit() }.spacer(2)}
+        |${this.conditions.joinToString("\n") { it.emit() }.spacer(2)}
         |${SPACER}${SPACER}throw new IllegalStateException("Unknown response type");
         |${SPACER}}
         |}
     """.trimMargin()
 
-    override fun EndpointClass.RequestMapper.Condition.emit(): String =
-        if(content != null)
+    override fun EndpointClass.RequestMapper.RequestCondition.emit(): String =
+        if (content != null)
             """
                 |if (request.getContent().type().equals("${content.type}")) {
                 |${SPACER}Wirespec.Content<Pet> content = contentMapper.read(request.getContent(), Wirespec.getType(${content.reference.emit()}.class, ${isIterable}));
@@ -66,6 +90,7 @@ class JavaClassEmitter : ClassModelEmitter {
                 |${SPACER}return (Req) new ${responseReference.emit()}(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders());
                 |}
             """.trimMargin()
+
     override fun EndpointClass.ResponseClass.emit(): String = """
         |final class ${name} implements ${returnReference.emit()} {
         |${fields.joinToString("\n") { "${it.emit()};" }.spacer()}
@@ -77,7 +102,7 @@ class JavaClassEmitter : ClassModelEmitter {
     """.trimMargin()
 
     override fun EndpointClass.ResponseClass.AllArgsConstructor.emit(): String = """
-        |public $name(${parameters.joinToString (", "){ it.emit() }}) {
+        |public $name(${parameters.joinToString(", ") { it.emit() }}) {
         |${SPACER}this.status = ${statusCode};
         |${SPACER}this.headers = headers;
         |${SPACER}this.content = ${content?.emit()};
@@ -87,14 +112,14 @@ class JavaClassEmitter : ClassModelEmitter {
     override fun EndpointClass.ResponseMapper.emit(): String = """
         |static <B, Res extends Response<?>> Function<Wirespec.Response<B>, Res> $name(Wirespec.ContentMapper<B> contentMapper) {
         |${SPACER}return response -> {
-        |${this.conditions.joinToString ("\n") { it.emit() }.spacer(2)}
+        |${this.conditions.joinToString("\n") { it.emit() }.spacer(2)}
         |${SPACER}${SPACER}throw new IllegalStateException("Unknown response type");
         |${SPACER}};
         |}
     """.trimMargin()
 
-    override fun EndpointClass.ResponseMapper.Condition.emit(): String =
-        if(content != null)
+    override fun EndpointClass.ResponseMapper.ResponseCondition.emit(): String =
+        if (content != null)
             """
                 |if (response.getStatus() == $statusCode && response.getContent().type().equals("${content.type}")) {
                 |${SPACER}Wirespec.Content<Pet> content = contentMapper.read(response.getContent(), Wirespec.getType(${content.reference.emit()}.class, ${isIterable}));
@@ -122,14 +147,14 @@ class JavaClassEmitter : ClassModelEmitter {
     """.trimMargin()
 
     override fun Reference.Custom.emit(): String = """
-        |${name}${generics.emit() }
+        |${name}${generics.emit()}
     """.trimMargin()
 
     override fun Reference.Language.emit(): String = """
-        |${primitive.emit()}${generics.emit() }
+        |${primitive.emit()}${generics.emit()}
     """.trimMargin()
 
-    override fun Reference.Language.Primitive.emit(): String = when(this){
+    override fun Reference.Language.Primitive.emit(): String = when (this) {
         Reference.Language.Primitive.Any -> "Object"
         Reference.Language.Primitive.Unit -> "Void"
         Reference.Language.Primitive.String -> "String"
@@ -141,40 +166,19 @@ class JavaClassEmitter : ClassModelEmitter {
         Reference.Language.Primitive.List -> "java.util.List"
     }
 
-    override fun Statement.AssignField.emit(): String = """
-        |this.${value} = ${statement.emit()}
-    """.trimMargin()
+    override fun EndpointClass.Path.emit(): String = value
+        .flatMap { listOf(EndpointClass.Path.Literal("/"), it) }
+        .joinToString(" + ") {
+            when (it) {
+                is EndpointClass.Path.Literal -> "\"${it.value}\""
+                is EndpointClass.Path.Parameter -> it.value
+            }
+        }
 
-    override fun Statement.Variable.emit(): String = """
-        |$value
-    """.trimMargin()
-
-    override fun Statement.Literal.emit(): String = """
-        |"$value"
-    """.trimMargin()
-
-    override fun Statement.Initialize.emit(): String = """
-        |${reference.emitInitialize()}(${parameters.joinToString(", ") { it }})
-    """.trimMargin()
-
-    override fun Statement.Concat.emit(): String = """
-        |${values.joinToString(" + ") { it.emit() }}
-    """.trimMargin()
 
     override fun EndpointClass.Content.emit(): String = """
         |new Wirespec.Content("$type", body)
     """.trimMargin()
-
-    private fun Reference.emitInitialize(): String =
-        when(this){
-            is Reference.Custom -> "new $name"
-            is Reference.Language -> when(this.primitive){
-                Reference.Language.Primitive.Map -> "${primitive.emit()}.of"
-                Reference.Language.Primitive.List -> "${primitive.emit()}.of"
-                else -> "new ${primitive.emit()}"
-            }
-        }
-
 
     override fun Field.emit(): String = """
         |private final ${reference.emit()} $identifier
@@ -187,11 +191,4 @@ class JavaClassEmitter : ClassModelEmitter {
         |}
     """.trimMargin()
 
-    override fun Constructor.emit(): String = """
-        |public ${name}(
-        |${fields.joinToString(",\n") { it.emit() }.spacer()}
-        |) {
-        |${body.joinToString ("\n"){ "${it.emit()};"  }.spacer()}
-        |}
-    """.trimMargin()
 }

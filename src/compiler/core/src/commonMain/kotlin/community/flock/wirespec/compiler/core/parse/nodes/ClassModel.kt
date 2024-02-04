@@ -16,15 +16,31 @@ data class EndpointClass(
     data class RequestClass(
         val name: String,
         val fields: List<Field>,
-        val constructors: List<Constructor>,
+        val primaryConstructor: PrimaryConstructor,
+        val secondaryConstructor: SecondaryConstructor,
         val supers: List<Reference>,
-    )
+    ){
+        data class PrimaryConstructor(
+            val name: String,
+            val parameters: List<Parameter>,
+            val content: Content? = null
+        )
+        data class SecondaryConstructor(
+            val name: String,
+            val parameters: List<Parameter>,
+            val path: Path,
+            val method: String,
+            val query: String,
+            val headers: String,
+            val content: Content? = null
+        )
+    }
 
     data class RequestMapper(
         val name: String,
-        val conditions: List<Condition>
+        val conditions: List<RequestCondition>
     ) {
-        data class Condition(
+        data class RequestCondition(
             val content: Content?,
             val responseReference: Reference,
             val isIterable: Boolean,
@@ -54,9 +70,9 @@ data class EndpointClass(
 
     data class ResponseMapper(
         val name: String,
-        val conditions: List<Condition>
+        val conditions: List<ResponseCondition>
     ) {
-        data class Condition(
+        data class ResponseCondition(
             val statusCode: String,
             val content: Content?,
             val responseReference: Reference,
@@ -67,13 +83,13 @@ data class EndpointClass(
         val type: String,
         val reference: Reference
     )
-}
 
-data class Constructor(
-    val name: String,
-    val fields: List<Parameter>,
-    val body: List<Statement>
-)
+    data class Path(val value: List<Segment>){
+        sealed interface Segment
+        data class Literal(val value: String): Segment
+        data class Parameter(val value: String): Segment
+    }
+}
 
 data class Field(
     val identifier: String,
@@ -85,30 +101,6 @@ data class Parameter(
     val identifier: String,
     val reference: Reference,
 )
-
-sealed interface Statement {
-    data class AssignField(
-        val value: String,
-        val statement: Statement
-    ) : Statement
-
-    data class Initialize(
-        val reference: Reference,
-        val parameters: List<String>
-    ) : Statement
-
-    data class Literal(
-        val value: String,
-    ) : Statement
-
-    data class Variable(
-        val value: String,
-    ) : Statement
-
-    data class Concat(
-        val values: List<Statement>,
-    ) : Statement
-}
 
 sealed interface Reference {
 

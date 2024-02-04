@@ -1,12 +1,10 @@
 package community.flock.wirespec.compiler.core.fixture
 
-import community.flock.wirespec.compiler.core.parse.nodes.Constructor
 import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
 import community.flock.wirespec.compiler.core.parse.nodes.Field
 import community.flock.wirespec.compiler.core.parse.nodes.Parameter
 import community.flock.wirespec.compiler.core.parse.nodes.Reference
 import community.flock.wirespec.compiler.core.parse.nodes.Reference.Language.Primitive
-import community.flock.wirespec.compiler.core.parse.nodes.Statement
 
 object ClassModelFixture {
 
@@ -71,7 +69,7 @@ object ClassModelFixture {
                         Field(
                             identifier = "content",
                             reference = Reference.Custom(
-                                name ="Wirespec.Content",
+                                name = "Wirespec.Content",
                                 nullable = true,
                                 generics = Reference.Generics(
                                     listOf(
@@ -82,137 +80,73 @@ object ClassModelFixture {
                             override = true
                         ),
                     ),
-                    constructors = listOf(
-                        Constructor(
-                            name = "RequestApplicationXml",
-                            fields = listOf(
-                                Parameter("path", Reference.Custom("String", false)),
-                                Parameter("method", Reference.Custom("Wirespec.Method", false)),
-                                Parameter(
-                                    "query", Reference.Language(
-                                        Primitive.Map, false, Reference.Generics(
-                                            listOf(
-                                                Reference.Custom("String", false),
-                                                Reference.Language(
-                                                    Primitive.List, false, Reference.Generics(
-                                                        listOf(
-                                                            Reference.Language(Primitive.Any, true)
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        )
-                                    )
-                                ),
-                                Parameter(
-                                    "headers", Reference.Language(
-                                        Primitive.Map, false, Reference.Generics(
-                                            listOf(
-                                                Reference.Custom("String", false),
-                                                Reference.Language(
-                                                    Primitive.List, false, Reference.Generics(
-                                                        listOf(
-                                                            Reference.Language(Primitive.Any, true)
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        )
-                                    )
-                                ),
-                                Parameter(
-                                    "content", Reference.Custom(
-                                        "Wirespec.Content", true, Reference.Generics(
-                                            listOf(
-                                                Reference.Custom("Pet", false)
-                                            )
-                                        )
-                                    )
-                                ),
-                            ),
-                            body = listOf(
-                                Statement.AssignField("path", Statement.Variable("path")),
-                                Statement.AssignField("method", Statement.Variable("method")),
-                                Statement.AssignField("query", Statement.Variable("query")),
-                                Statement.AssignField("headers", Statement.Variable("headers")),
-                                Statement.AssignField("content", Statement.Variable("content"))
-                            )
-                        ),
-                        Constructor(
-                            name = "RequestApplicationXml",
-                            fields = listOf(
-                                Parameter("body", Reference.Custom("Pet", false)),
-                            ),
-                            body = listOf(
-                                Statement.AssignField(
-                                    "path", Statement.Concat(
+                    primaryConstructor = EndpointClass.RequestClass.PrimaryConstructor(
+                        name = "RequestApplicationXml",
+                        parameters = listOf(
+                            Parameter("path", Reference.Custom("String", false)),
+                            Parameter("method", Reference.Custom("Wirespec.Method", false)),
+                            Parameter(
+                                "query", Reference.Language(
+                                    Primitive.Map, false, Reference.Generics(
                                         listOf(
-                                            Statement.Literal("/"),
-                                            Statement.Literal("pet"),
+                                            Reference.Custom("String", false),
+                                            Reference.Language(
+                                                Primitive.List, false, Reference.Generics(
+                                                    listOf(
+                                                        Reference.Language(Primitive.Any, true)
+                                                    )
+                                                )
+                                            )
                                         )
-                                    )
-                                ),
-                                Statement.AssignField("method", Statement.Variable("Wirespec.Method.POST")),
-                                Statement.AssignField(
-                                    "query", Statement.Initialize(
-                                        Reference.Language(
-                                            primitive = Primitive.Map,
-                                            generics = Reference.Generics(
-                                                listOf(
-                                                    Reference.Language(
-                                                        primitive = Primitive.String
-                                                    ),
-                                                    Reference.Language(
-                                                        primitive = Primitive.List,
-                                                        generics = Reference.Generics(
-                                                            listOf(
-                                                                Reference.Language(
-                                                                    primitive = Primitive.Any,
-                                                                    nullable = true
-                                                                ),
-                                                            )
-                                                        )
-                                                    )
-                                                ),
-                                            )
-                                        ),
-                                        listOf()
-                                    )
-                                ),
-                                Statement.AssignField(
-                                    "headers", Statement.Initialize(
-                                        Reference.Language(
-                                            primitive = Primitive.Map,
-                                            generics = Reference.Generics(
-                                                listOf(
-                                                    Reference.Language(
-                                                        primitive = Primitive.String
-                                                    ),
-                                                    Reference.Language(
-                                                        primitive = Primitive.List,
-                                                        generics = Reference.Generics(
-                                                            listOf(
-                                                                Reference.Language(
-                                                                    primitive = Primitive.Any,
-                                                                    nullable = true
-                                                                ),
-                                                            )
-                                                        )
-                                                    )
-                                                ),
-                                            )
-                                        ),
-                                        listOf()
-                                    )
-                                ),
-                                Statement.AssignField(
-                                    "content",
-                                    Statement.Initialize(
-                                        Reference.Custom("Wirespec.Content"),
-                                        listOf("\"application/xml\"", "body")
                                     )
                                 )
+                            ),
+                            Parameter(
+                                "headers", Reference.Language(
+                                    Primitive.Map, false, Reference.Generics(
+                                        listOf(
+                                            Reference.Custom("String", false),
+                                            Reference.Language(
+                                                Primitive.List, false, Reference.Generics(
+                                                    listOf(
+                                                        Reference.Language(Primitive.Any, true)
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            ),
+                            Parameter(
+                                "content", Reference.Custom(
+                                    "Wirespec.Content", true, Reference.Generics(
+                                        listOf(
+                                            Reference.Custom("Pet", false)
+                                        )
+                                    )
+                                )
+                            ),
+                        ),
+                    ),
+                    secondaryConstructor = EndpointClass.RequestClass.SecondaryConstructor(
+                        name = "RequestApplicationXml",
+                        parameters = listOf(
+                            Parameter("body", Reference.Custom("Pet", false)),
+                        ),
+                        path = EndpointClass.Path(
+                            listOf(
+                                EndpointClass.Path.Literal("pet")
                             )
+                        ),
+                        method = "POST",
+                        query = "",
+                        headers = "",
+                        content = EndpointClass.Content(
+                            type = "application/xml",
+                            reference = Reference.Custom(
+                                name = "Pet",
+                                nullable = false,
+                            ),
                         )
                     ),
                     supers = listOf(
@@ -277,7 +211,7 @@ object ClassModelFixture {
                         Field(
                             identifier = "content",
                             reference = Reference.Custom(
-                                name ="Wirespec.Content",
+                                name = "Wirespec.Content",
                                 nullable = true,
                                 generics = Reference.Generics(
                                     listOf(
@@ -288,137 +222,75 @@ object ClassModelFixture {
                             override = true
                         ),
                     ),
-                    constructors = listOf(
-                        Constructor(
-                            name = "RequestApplicationJson",
-                            fields = listOf(
-                                Parameter("path", Reference.Custom("String", false)),
-                                Parameter("method", Reference.Custom("Wirespec.Method", false)),
-                                Parameter(
-                                    "query", Reference.Language(
-                                        Primitive.Map, false, Reference.Generics(
-                                            listOf(
-                                                Reference.Custom("String", false),
-                                                Reference.Language(
-                                                    Primitive.List, false, Reference.Generics(
-                                                        listOf(
-                                                            Reference.Language(Primitive.Any, true)
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        )
-                                    )
-                                ),
-                                Parameter(
-                                    "headers", Reference.Language(
-                                        Primitive.Map, false, Reference.Generics(
-                                            listOf(
-                                                Reference.Custom("String", false),
-                                                Reference.Language(
-                                                    Primitive.List, false, Reference.Generics(
-                                                        listOf(
-                                                            Reference.Language(Primitive.Any, true)
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        )
-                                    )
-                                ),
-                                Parameter(
-                                    "content", Reference.Custom(
-                                        "Wirespec.Content", true, Reference.Generics(
-                                            listOf(
-                                                Reference.Custom("Pet", false)
-                                            )
-                                        )
-                                    )
-                                ),
-                            ),
-                            body = listOf(
-                                Statement.AssignField("path", Statement.Variable("path")),
-                                Statement.AssignField("method", Statement.Variable("method")),
-                                Statement.AssignField("query", Statement.Variable("query")),
-                                Statement.AssignField("headers", Statement.Variable("headers")),
-                                Statement.AssignField("content", Statement.Variable("content"))
-                            )
-                        ),
-                        Constructor(
-                            name = "RequestApplicationJson",
-                            fields = listOf(
-                                Parameter("body", Reference.Custom("Pet", false)),
-                            ),
-                            body = listOf(
-                                Statement.AssignField(
-                                    "path", Statement.Concat(
+                    primaryConstructor =
+                    EndpointClass.RequestClass.PrimaryConstructor(
+                        name = "RequestApplicationJson",
+                        parameters = listOf(
+                            Parameter("path", Reference.Custom("String", false)),
+                            Parameter("method", Reference.Custom("Wirespec.Method", false)),
+                            Parameter(
+                                "query", Reference.Language(
+                                    Primitive.Map, false, Reference.Generics(
                                         listOf(
-                                            Statement.Literal("/"),
-                                            Statement.Literal("pet"),
+                                            Reference.Custom("String", false),
+                                            Reference.Language(
+                                                Primitive.List, false, Reference.Generics(
+                                                    listOf(
+                                                        Reference.Language(Primitive.Any, true)
+                                                    )
+                                                )
+                                            )
                                         )
-                                    )
-                                ),
-                                Statement.AssignField("method", Statement.Variable("Wirespec.Method.POST")),
-                                Statement.AssignField(
-                                    "query", Statement.Initialize(
-                                        Reference.Language(
-                                            primitive = Primitive.Map,
-                                            generics = Reference.Generics(
-                                                listOf(
-                                                    Reference.Language(
-                                                        primitive = Primitive.String
-                                                    ),
-                                                    Reference.Language(
-                                                        primitive = Primitive.List,
-                                                        generics = Reference.Generics(
-                                                            listOf(
-                                                                Reference.Language(
-                                                                    primitive = Primitive.Any,
-                                                                    nullable = true
-                                                                ),
-                                                            )
-                                                        )
-                                                    )
-                                                ),
-                                            )
-                                        ),
-                                        listOf()
-                                    )
-                                ),
-                                Statement.AssignField(
-                                    "headers", Statement.Initialize(
-                                        Reference.Language(
-                                            primitive = Primitive.Map,
-                                            generics = Reference.Generics(
-                                                listOf(
-                                                    Reference.Language(
-                                                        primitive = Primitive.String
-                                                    ),
-                                                    Reference.Language(
-                                                        primitive = Primitive.List,
-                                                        generics = Reference.Generics(
-                                                            listOf(
-                                                                Reference.Language(
-                                                                    primitive = Primitive.Any,
-                                                                    nullable = true
-                                                                ),
-                                                            )
-                                                        )
-                                                    )
-                                                ),
-                                            )
-                                        ),
-                                        listOf()
-                                    )
-                                ),
-                                Statement.AssignField(
-                                    "content",
-                                    Statement.Initialize(
-                                        Reference.Custom("Wirespec.Content"),
-                                        listOf("\"application/json\"", "body")
                                     )
                                 )
+                            ),
+                            Parameter(
+                                "headers", Reference.Language(
+                                    Primitive.Map, false, Reference.Generics(
+                                        listOf(
+                                            Reference.Custom("String", false),
+                                            Reference.Language(
+                                                Primitive.List, false, Reference.Generics(
+                                                    listOf(
+                                                        Reference.Language(Primitive.Any, true)
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            ),
+                            Parameter(
+                                "content", Reference.Custom(
+                                    "Wirespec.Content", true, Reference.Generics(
+                                        listOf(
+                                            Reference.Custom("Pet", false)
+                                        )
+                                    )
+                                )
+                            ),
+                        ),
+
+                        ),
+                    secondaryConstructor = EndpointClass.RequestClass.SecondaryConstructor(
+                        name = "RequestApplicationJson",
+                        parameters = listOf(
+                            Parameter("body", Reference.Custom("Pet", false)),
+                        ),
+                        path = EndpointClass.Path(
+                            listOf(
+                                EndpointClass.Path.Literal("pet")
                             )
+                        ),
+                        method = "POST",
+                        query = "",
+                        headers = "",
+                        content = EndpointClass.Content(
+                            type = "application/json",
+                            reference = Reference.Custom(
+                                name = "Pet",
+                                nullable = false,
+                            ),
                         )
                     ),
                     supers = listOf(
@@ -483,7 +355,7 @@ object ClassModelFixture {
                         Field(
                             identifier = "content",
                             reference = Reference.Custom(
-                                name ="Wirespec.Content",
+                                name = "Wirespec.Content",
                                 nullable = true,
                                 generics = Reference.Generics(
                                     listOf(
@@ -494,137 +366,74 @@ object ClassModelFixture {
                             override = true
                         ),
                     ),
-                    constructors = listOf(
-                        Constructor(
-                            name = "RequestApplicationXWwwFormUrlencoded",
-                            fields = listOf(
-                                Parameter("path", Reference.Custom("String", false)),
-                                Parameter("method", Reference.Custom("Wirespec.Method", false)),
-                                Parameter(
-                                    "query", Reference.Language(
-                                        Primitive.Map, false, Reference.Generics(
-                                            listOf(
-                                                Reference.Custom("String", false),
-                                                Reference.Language(
-                                                    Primitive.List, false, Reference.Generics(
-                                                        listOf(
-                                                            Reference.Language(Primitive.Any, true)
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        )
-                                    )
-                                ),
-                                Parameter(
-                                    "headers", Reference.Language(
-                                        Primitive.Map, false, Reference.Generics(
-                                            listOf(
-                                                Reference.Custom("String", false),
-                                                Reference.Language(
-                                                    Primitive.List, false, Reference.Generics(
-                                                        listOf(
-                                                            Reference.Language(Primitive.Any, true)
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        )
-                                    )
-                                ),
-                                Parameter(
-                                    "content", Reference.Custom(
-                                        "Wirespec.Content", true, Reference.Generics(
-                                            listOf(
-                                                Reference.Custom("Pet", false)
-                                            )
-                                        )
-                                    )
-                                ),
-                            ),
-                            body = listOf(
-                                Statement.AssignField("path", Statement.Variable("path")),
-                                Statement.AssignField("method", Statement.Variable("method")),
-                                Statement.AssignField("query", Statement.Variable("query")),
-                                Statement.AssignField("headers", Statement.Variable("headers")),
-                                Statement.AssignField("content", Statement.Variable("content"))
-                            )
-                        ),
-                        Constructor(
-                            name = "RequestApplicationXWwwFormUrlencoded",
-                            fields = listOf(
-                                Parameter("body", Reference.Custom("Pet", false)),
-                            ),
-                            body = listOf(
-                                Statement.AssignField(
-                                    "path", Statement.Concat(
+                    primaryConstructor = EndpointClass.RequestClass.PrimaryConstructor(
+                        name = "RequestApplicationXWwwFormUrlencoded",
+                        parameters = listOf(
+                            Parameter("path", Reference.Custom("String", false)),
+                            Parameter("method", Reference.Custom("Wirespec.Method", false)),
+                            Parameter(
+                                "query", Reference.Language(
+                                    Primitive.Map, false, Reference.Generics(
                                         listOf(
-                                            Statement.Literal("/"),
-                                            Statement.Literal("pet"),
+                                            Reference.Custom("String", false),
+                                            Reference.Language(
+                                                Primitive.List, false, Reference.Generics(
+                                                    listOf(
+                                                        Reference.Language(Primitive.Any, true)
+                                                    )
+                                                )
+                                            )
                                         )
-                                    )
-                                ),
-                                Statement.AssignField("method", Statement.Variable("Wirespec.Method.POST")),
-                                Statement.AssignField(
-                                    "query", Statement.Initialize(
-                                        Reference.Language(
-                                            primitive = Primitive.Map,
-                                            generics = Reference.Generics(
-                                                listOf(
-                                                    Reference.Language(
-                                                        primitive = Primitive.String
-                                                    ),
-                                                    Reference.Language(
-                                                        primitive = Primitive.List,
-                                                        generics = Reference.Generics(
-                                                            listOf(
-                                                                Reference.Language(
-                                                                    primitive = Primitive.Any,
-                                                                    nullable = true
-                                                                ),
-                                                            )
-                                                        )
-                                                    )
-                                                ),
-                                            )
-                                        ),
-                                        listOf()
-                                    )
-                                ),
-                                Statement.AssignField(
-                                    "headers", Statement.Initialize(
-                                        Reference.Language(
-                                            primitive = Primitive.Map,
-                                            generics = Reference.Generics(
-                                                listOf(
-                                                    Reference.Language(
-                                                        primitive = Primitive.String
-                                                    ),
-                                                    Reference.Language(
-                                                        primitive = Primitive.List,
-                                                        generics = Reference.Generics(
-                                                            listOf(
-                                                                Reference.Language(
-                                                                    primitive = Primitive.Any,
-                                                                    nullable = true
-                                                                ),
-                                                            )
-                                                        )
-                                                    )
-                                                ),
-                                            )
-                                        ),
-                                        listOf()
-                                    )
-                                ),
-                                Statement.AssignField(
-                                    "content",
-                                    Statement.Initialize(
-                                        Reference.Custom("Wirespec.Content"),
-                                        listOf("\"application/x-www-form-urlencoded\"", "body")
                                     )
                                 )
+                            ),
+                            Parameter(
+                                "headers", Reference.Language(
+                                    Primitive.Map, false, Reference.Generics(
+                                        listOf(
+                                            Reference.Custom("String", false),
+                                            Reference.Language(
+                                                Primitive.List, false, Reference.Generics(
+                                                    listOf(
+                                                        Reference.Language(Primitive.Any, true)
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            ),
+                            Parameter(
+                                "content", Reference.Custom(
+                                    "Wirespec.Content", true, Reference.Generics(
+                                        listOf(
+                                            Reference.Custom("Pet", false)
+                                        )
+                                    )
+                                )
+                            ),
+                        ),
+
+                        ),
+                    secondaryConstructor = EndpointClass.RequestClass.SecondaryConstructor(
+                        name = "RequestApplicationXWwwFormUrlencoded",
+                        parameters = listOf(
+                            Parameter("body", Reference.Custom("Pet", false)),
+                        ),
+                        path = EndpointClass.Path(
+                            listOf(
+                                EndpointClass.Path.Literal("pet")
                             )
+                        ),
+                        method = "POST",
+                        query = "",
+                        headers = "",
+                        content = EndpointClass.Content(
+                            type = "application/x-www-form-urlencoded",
+                            reference = Reference.Custom(
+                                name = "Pet",
+                                nullable = false,
+                            ),
                         )
                     ),
                     supers = listOf(
@@ -999,7 +808,7 @@ object ClassModelFixture {
             requestMapper = EndpointClass.RequestMapper(
                 name = "REQUEST_MAPPER",
                 conditions = listOf(
-                    EndpointClass.RequestMapper.Condition(
+                    EndpointClass.RequestMapper.RequestCondition(
                         content = EndpointClass.Content(
                             type = "application/json",
                             reference = Reference.Custom(
@@ -1010,7 +819,7 @@ object ClassModelFixture {
                         responseReference = Reference.Custom("RequestApplicationJson"),
                         isIterable = false,
                     ),
-                    EndpointClass.RequestMapper.Condition(
+                    EndpointClass.RequestMapper.RequestCondition(
                         content = EndpointClass.Content(
                             type = "application/xml",
                             reference = Reference.Custom(
@@ -1021,7 +830,7 @@ object ClassModelFixture {
                         responseReference = Reference.Custom("RequestApplicationXml"),
                         isIterable = false,
                     ),
-                    EndpointClass.RequestMapper.Condition(
+                    EndpointClass.RequestMapper.RequestCondition(
                         content = EndpointClass.Content(
                             type = "application/x-www-form-urlencoded",
                             reference = Reference.Custom(
@@ -1037,7 +846,7 @@ object ClassModelFixture {
             responseMapper = EndpointClass.ResponseMapper(
                 name = "RESPONSE_MAPPER",
                 conditions = listOf(
-                    EndpointClass.ResponseMapper.Condition(
+                    EndpointClass.ResponseMapper.ResponseCondition(
                         statusCode = "200",
                         content = EndpointClass.Content(
                             type = "application/xml",
@@ -1049,7 +858,7 @@ object ClassModelFixture {
                         responseReference = Reference.Custom("Response200ApplicationXml"),
                         isIterable = false,
                     ),
-                    EndpointClass.ResponseMapper.Condition(
+                    EndpointClass.ResponseMapper.ResponseCondition(
                         statusCode = "200",
                         content = EndpointClass.Content(
                             type = "application/json",
@@ -1061,7 +870,7 @@ object ClassModelFixture {
                         responseReference = Reference.Custom("Response200ApplicationJson"),
                         isIterable = false,
                     ),
-                    EndpointClass.ResponseMapper.Condition(
+                    EndpointClass.ResponseMapper.ResponseCondition(
                         statusCode = "405",
                         content = null,
                         responseReference = Reference.Custom("Response405Unit"),
