@@ -3,11 +3,59 @@ package community.flock.wirespec.compiler.core.emit
 import community.flock.wirespec.compiler.core.emit.common.ClassModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.ClassModelEmitter.Companion.SPACER
 import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
+import community.flock.wirespec.compiler.core.parse.nodes.EnumClass
 import community.flock.wirespec.compiler.core.parse.nodes.Field
 import community.flock.wirespec.compiler.core.parse.nodes.Parameter
 import community.flock.wirespec.compiler.core.parse.nodes.Reference
+import community.flock.wirespec.compiler.core.parse.nodes.RefinedClass
+import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
 
 class JavaClassEmitter : ClassModelEmitter {
+
+    override fun TypeClass.emit(): String = """
+        |public record Pet(
+        |${fields.joinToString(",\n") { it.emit() }.spacer()}
+        |){
+        |};
+    """.trimMargin()
+
+    override fun RefinedClass.emit() = """
+        |public record ${name.sanitizeSymbol()} (String value) implements Wirespec.Refined {
+        |${SPACER}static boolean validate($name record) {
+        |${SPACER}${validator.emit()}
+        |${SPACER}}
+        |${SPACER}@Override
+        |${SPACER}public String getValue() { return value; }
+        |}
+    """.trimMargin()
+
+
+    override fun RefinedClass.Validator.emit() =
+        "${SPACER}return java.util.regex.Pattern.compile($value).matcher(record.value).find();"
+
+
+    override fun EnumClass.emit(): String {
+        fun String.sanitizeEnum() = this
+            .replace("/", "_")
+            .replace(" ", "_")
+            .replace("-", "_")
+            .replace("–", "_")
+            .let { if (it.first().isDigit()) "_$it" else it }
+
+        return """
+          |public enum ${name.sanitizeSymbol()} implements Wirespec.Enum {
+          |${entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"${it}\")" }.spacer()};
+          |${SPACER}public final String label;
+          |${SPACER}${name.sanitizeSymbol()}(String label) {
+          |${SPACER}${SPACER}this.label = label;
+          |${SPACER}}
+          |${SPACER}@Override
+          |${SPACER}public String toString() {
+          |${SPACER}${SPACER}return label;
+          |${SPACER}}
+          |}
+        """.trimMargin()
+    }
 
     override fun EndpointClass.emit(): String = """
         |public interface $name extends Wirespec.Endpoint {
@@ -146,9 +194,22 @@ class JavaClassEmitter : ClassModelEmitter {
         |${references.takeIf { it.isNotEmpty() }?.joinToString(", ", "<", ">") { it.emit() }.orEmpty()}
     """.trimMargin()
 
-    override fun Reference.Custom.emit(): String = """
-        |${name}${generics.emit()}
-    """.trimMargin()
+    fun Reference.emit(): String =
+        when (this) {
+            is Reference.Custom -> emit()
+            is Reference.Language -> emit()
+        }
+            .let { if (isOptional) "java.util.Optional<$it>" else it }
+            .let { if (isIterable) "java.util.List<$it>" else it }
+
+
+    override fun Reference.Custom.emit(): String = this
+        .let {
+            """
+                |${name}${generics.emit()}
+            """.trimMargin()
+
+        }
 
     override fun Reference.Language.emit(): String = """
         |${primitive.emit()}${generics.emit()}
@@ -181,7 +242,7 @@ class JavaClassEmitter : ClassModelEmitter {
     """.trimMargin()
 
     override fun Field.emit(): String = """
-        |private final ${reference.emit()} $identifier
+        |${if (isPrivate) "private " else ""}${if (isPrivate) "final " else ""}${reference.emit()} $identifier
     """.trimMargin()
 
     private fun Field.emitGetter(): String = """
@@ -190,5 +251,25 @@ class JavaClassEmitter : ClassModelEmitter {
         |  return ${identifier};
         |}
     """.trimMargin()
+
+    private fun String.sanitizeKeywords() = if (reservedKeywords.contains(this)) "_$this" else this
+
+    private fun String.sanitizeSymbol() = replace(".", "").replace(" ", "_")
+
+    companion object {
+        val reservedKeywords = listOf(
+            "abstract", "continue", "for", "new", "switch",
+            "assert", "default", "goto", "package", "synchronized",
+            "boolean", "do", "if", "private", "this",
+            "break", "double", "implements", "protected", "throw",
+            "byte", "else", "import", "public", "throws",
+            "case", "enum", "instanceof", "return", "transient",
+            "catch", "extends", "int", "short", "try",
+            "char", "final", "interface", "static", "void",
+            "class", "finally", "long", "strictfp", "volatile",
+            "const", "float", "native", "super", "while",
+            "true", "false"
+        )
+    }
 
 }

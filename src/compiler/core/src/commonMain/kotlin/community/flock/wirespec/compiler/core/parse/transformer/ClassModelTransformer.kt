@@ -49,7 +49,9 @@ object ClassModelTransformer {
                                     listOf(
                                         Reference.Custom("String", false),
                                         Reference.Custom(
-                                            "List", false, Reference.Generics(
+                                            name ="List",
+                                            isNullable = false,
+                                            generics = Reference.Generics(
                                                 listOf(
                                                     Reference.Custom("Any", true)
                                                 )
@@ -67,7 +69,9 @@ object ClassModelTransformer {
                                     listOf(
                                         Reference.Custom("String", false),
                                         Reference.Custom(
-                                            "List", false, Reference.Generics(
+                                            name = "List",
+                                            isNullable = false,
+                                            generics = Reference.Generics(
                                                 listOf(
                                                     Reference.Custom("Any", true)
                                                 )
@@ -81,7 +85,7 @@ object ClassModelTransformer {
                             identifier = "content",
                             reference = Reference.Custom(
                                 name = "Wirespec.Content",
-                                nullable = true,
+                                isNullable = true,
                                 generics = Reference.Generics(it.content
                                     ?.let { listOf(Reference.Custom(it.type, false)) }
                                     ?: listOf(Reference.Language(Reference.Language.Primitive.Unit, false))

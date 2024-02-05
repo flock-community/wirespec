@@ -7,8 +7,64 @@ import kotlin.test.assertEquals
 
 class JavaClassEmitterTest {
 
+    val emitter = JavaClassEmitter()
+
     @Test
-    fun testJavaEmitter() {
+    fun testEmitterType() {
+        val expected = """
+            |public record Pet(
+            |  String name,
+            |  java.util.Optional<String> description,
+            |  java.util.List<String> notes,
+            |  boolean done
+            |){
+            |};
+        """.trimMargin()
+
+        val res = emitter.emit(ClassModelFixture.type).values.first()
+        assertEquals(expected, res)
+    }
+
+    @Test
+    fun testEmitterRefined() {
+        val expected = """
+            |public record UUID (String value) implements Wirespec.Refined {
+            |  static boolean validate(UUID record) {
+            |    return java.util.regex.Pattern.compile(^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}).matcher(record.value).find();
+            |  }
+            |  @Override
+            |  public String getValue() { return value; }
+            |}
+        """.trimMargin()
+
+        val res = emitter.emit(ClassModelFixture.refined).values.first()
+        assertEquals(expected, res)
+    }
+
+    @Test
+    fun testEmitterEnum() {
+        val expected = """
+            |public enum TodoStatus implements Wirespec.Enum {
+            |  OPEN("OPEN"),
+            |  IN_PROGRESS("IN_PROGRESS"),
+            |  CLOSE("CLOSE");
+            |  public final String label;
+            |  TodoStatus(String label) {
+            |    this.label = label;
+            |  }
+            |  @Override
+            |  public String toString() {
+            |    return label;
+            |  }
+            |}
+        """.trimMargin()
+
+        val res = emitter.emit(ClassModelFixture.enum).values.first()
+        assertEquals(expected, res)
+    }
+
+    @Test
+    fun testEmitterEndpoint() {
 
         val expected = """
             |public interface AddPetEndpoint extends Wirespec.Endpoint {
@@ -321,10 +377,7 @@ class JavaClassEmitterTest {
             |}
         """.trimMargin()
 
-        val emitter = JavaClassEmitter()
-        val res = emitter.emit(ClassModelFixture.endpointRequest).values.first()
-        println(res)
-
+        val res = emitter.emit(ClassModelFixture.endpoint).values.first()
         assertEquals(expected, res)
     }
 }

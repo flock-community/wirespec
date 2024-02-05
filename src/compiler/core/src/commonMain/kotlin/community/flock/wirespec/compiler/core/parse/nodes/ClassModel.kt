@@ -2,6 +2,25 @@ package community.flock.wirespec.compiler.core.parse.nodes
 
 sealed interface ClassModel : Node
 
+data class TypeClass(
+    val name: String,
+    val fields: List<Field>,
+) : ClassModel
+
+data class RefinedClass(
+    val name: String,
+    val validator: Validator
+) : ClassModel {
+    data class Validator(
+        val value: String
+    )
+}
+
+data class EnumClass(
+    val name: String,
+    val entries: Set<String>
+) : ClassModel
+
 data class EndpointClass(
     val name: String,
     val path: String,
@@ -19,12 +38,13 @@ data class EndpointClass(
         val primaryConstructor: PrimaryConstructor,
         val secondaryConstructor: SecondaryConstructor,
         val supers: List<Reference>,
-    ){
+    ) {
         data class PrimaryConstructor(
             val name: String,
             val parameters: List<Parameter>,
             val content: Content? = null
         )
+
         data class SecondaryConstructor(
             val name: String,
             val parameters: List<Parameter>,
@@ -54,7 +74,7 @@ data class EndpointClass(
         val returnReference: Reference,
         val statusCode: String,
         val content: Content? = null
-    ){
+    ) {
         data class AllArgsConstructor(
             val name: String,
             val parameters: List<Parameter>,
@@ -79,22 +99,25 @@ data class EndpointClass(
             val isIterable: Boolean,
         )
     }
+
     data class Content(
         val type: String,
         val reference: Reference
     )
 
-    data class Path(val value: List<Segment>){
+    data class Path(val value: List<Segment>) {
         sealed interface Segment
-        data class Literal(val value: String): Segment
-        data class Parameter(val value: String): Segment
+        data class Literal(val value: String) : Segment
+        data class Parameter(val value: String) : Segment
     }
 }
 
 data class Field(
     val identifier: String,
     val reference: Reference,
-    val override: Boolean = false,
+    val isOverride: Boolean = false,
+    val isPrivate: Boolean = false,
+    val isFinal: Boolean = false,
 )
 
 data class Parameter(
@@ -103,10 +126,15 @@ data class Parameter(
 )
 
 sealed interface Reference {
+    val isNullable: Boolean
+    val isIterable: Boolean
+    val isOptional: Boolean
 
     data class Language(
         val primitive: Primitive,
-        val nullable: Boolean = false,
+        override val isNullable: Boolean = false,
+        override val isIterable: Boolean = false,
+        override val isOptional: Boolean = false,
         val generics: Generics = Generics()
     ) : Reference {
         enum class Primitive { Any, Unit, String, Integer, Long, Number, Boolean, Map, List }
@@ -114,7 +142,9 @@ sealed interface Reference {
 
     data class Custom(
         val name: String,
-        val nullable: Boolean = false,
+        override val isNullable: Boolean = false,
+        override val isIterable: Boolean = false,
+        override val isOptional: Boolean = false,
         val generics: Generics = Generics()
     ) : Reference
 

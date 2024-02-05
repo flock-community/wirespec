@@ -1,13 +1,40 @@
 package community.flock.wirespec.compiler.core.emit
 
+import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.common.ClassModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.ClassModelEmitter.Companion.SPACER
 import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
+import community.flock.wirespec.compiler.core.parse.nodes.EnumClass
 import community.flock.wirespec.compiler.core.parse.nodes.Field
 import community.flock.wirespec.compiler.core.parse.nodes.Parameter
 import community.flock.wirespec.compiler.core.parse.nodes.Reference
+import community.flock.wirespec.compiler.core.parse.nodes.RefinedClass
+import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
 
 class KotlinClassEmitter : ClassModelEmitter {
+    override fun TypeClass.emit(): String = """
+        |data class Pet(
+        |${fields.joinToString(",\n") { it.emit() }.spacer()}
+        |)
+    """.trimMargin()
+
+    override fun RefinedClass.emit() = """
+        |data class ${name.sanitizeSymbol()}(override val value: String): Wirespec.Refined
+        |fun $name.validate() = ${validator.emit()}
+    """.trimMargin()
+
+    override fun RefinedClass.Validator.emit() = "Regex($value).matches(value)"
+    override fun EnumClass.emit(): String {
+        fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_").sanitizeFirstIsDigit()
+        return """
+            |enum class ${name.sanitizeSymbol()} (val label: String): Wirespec.Enum {
+            |${entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }.spacer()};
+            |${SPACER}override fun toString(): String {
+            |${SPACER}${SPACER}return label
+            |${SPACER}}
+            |}
+        """.trimMargin()
+    }
 
     override fun EndpointClass.emit(): String = """
         |interface $name : ${supers.joinToString(", ") { it.emit() }} {
@@ -74,7 +101,6 @@ class KotlinClassEmitter : ClassModelEmitter {
             }
         }
 
-
     override fun EndpointClass.Content.emit(): String = """
         |Wirespec.Content("$type", body)
     """.trimMargin()
@@ -130,12 +156,19 @@ class KotlinClassEmitter : ClassModelEmitter {
         |${if (references.isNotEmpty()) references.joinToString(", ", "<", ">") { it.emit() } else ""}
     """.trimMargin()
 
+    fun Reference.emit(): String = when (this) {
+        is Reference.Custom -> emit()
+        is Reference.Language -> emit()
+    }
+        .let { if (isOptional) "$it?" else it }
+        .let { if (isIterable) "List<$it>" else it }
+
     override fun Reference.Custom.emit(): String = """
-        |${name}${generics.emit()}${if (nullable) "?" else ""}
+        |${name}${generics.emit()}${if (isNullable) "?" else ""}
     """.trimMargin()
 
     override fun Reference.Language.emit(): String = """
-        |${primitive.emit()}${generics.emit()}${if (nullable) "?" else ""}
+        |${primitive.emit()}${generics.emit()}${if (isNullable) "?" else ""}
     """.trimMargin()
 
     override fun Reference.Language.Primitive.emit(): String = when (this) {
@@ -151,7 +184,30 @@ class KotlinClassEmitter : ClassModelEmitter {
     }
 
     override fun Field.emit(): String = """
-        |${if (override) "override " else ""}val ${identifier}: ${reference.emit()}
+        |${if (isOverride) "override " else ""}val ${identifier}: ${reference.emit()}
     """.trimMargin()
+
+    private fun String.sanitizeKeywords() = if (preservedKeywords.contains(this)) "`$this`" else this
+
+    private fun String.sanitizeSymbol() = this
+        .split(".", " ")
+        .joinToString("") { it.firstToUpper() }
+        .asSequence()
+        .filter { it.isLetterOrDigit() || listOf('_').contains(it) }
+        .joinToString("")
+        .sanitizeFirstIsDigit()
+
+    private fun String.sanitizeFirstIsDigit() = if (firstOrNull()?.isDigit() == true) "_${this}" else this
+
+    companion object {
+        private val preservedKeywords = listOf(
+            "as", "break", "class", "continue", "do",
+            "else", "false", "for", "fun", "if",
+            "in", "interface", "internal", "is", "null",
+            "object", "open", "package", "return", "super",
+            "this", "throw", "true", "try", "typealias",
+            "typeof", "val", "var", "when", "while"
+        )
+    }
 
 }

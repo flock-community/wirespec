@@ -1,14 +1,72 @@
 package community.flock.wirespec.compiler.core.fixture
 
 import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
+import community.flock.wirespec.compiler.core.parse.nodes.EnumClass
 import community.flock.wirespec.compiler.core.parse.nodes.Field
 import community.flock.wirespec.compiler.core.parse.nodes.Parameter
 import community.flock.wirespec.compiler.core.parse.nodes.Reference
 import community.flock.wirespec.compiler.core.parse.nodes.Reference.Language.Primitive
+import community.flock.wirespec.compiler.core.parse.nodes.RefinedClass
+import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
 
 object ClassModelFixture {
 
-    val endpointRequest = listOf(
+    val refined = listOf(
+        RefinedClass(
+            name = "UUID",
+            validator = RefinedClass.Validator(
+                "^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}\$"
+            )
+        )
+    )
+
+    val enum = listOf(
+        EnumClass(
+            name = "TodoStatus",
+            entries = setOf(
+                "OPEN",
+                "IN_PROGRESS",
+                "CLOSE",
+            )
+        )
+    )
+
+    val type = listOf(
+        TypeClass(
+            name = "Todo",
+            fields = listOf(
+                Field(
+                    identifier = "name",
+                    reference = Reference.Language(
+                        primitive = Primitive.String
+                    )
+                ),
+                Field(
+                    identifier = "description",
+                    reference = Reference.Language(
+                        primitive = Primitive.String,
+                        isOptional = true,
+                    ),
+                ),
+                Field(
+                    identifier = "notes",
+                    reference = Reference.Language(
+                        primitive = Primitive.String,
+                        isIterable = true
+                    ),
+                ),
+                Field(
+                    identifier = "done",
+                    reference = Reference.Language(
+                        primitive = Primitive.Boolean
+                    )
+                )
+
+            )
+        )
+    )
+
+    val endpoint = listOf(
         EndpointClass(
             name = "AddPetEndpoint",
             path = "/pet",
@@ -23,39 +81,62 @@ object ClassModelFixture {
                         Field(
                             identifier = "path",
                             reference = Reference.Custom("String", false),
-                            override = true
+                            isOverride = true,
+                            isFinal = true,
+                            isPrivate = true
                         ),
                         Field(
                             identifier = "method",
                             reference = Reference.Custom("Wirespec.Method", false),
-                            override = true
+                            isOverride = true,
+                            isFinal = true,
+                            isPrivate = true
                         ),
                         Field(
                             identifier = "query",
                             reference = Reference.Language(
-                                Primitive.Map, false, Reference.Generics(
+                                primitive = Primitive.Map,
+                                isNullable = false,
+                                generics = Reference.Generics(
                                     listOf(
-                                        Reference.Custom("String", false),
+                                        Reference.Custom(
+                                            name = "String",
+                                            isNullable = false
+                                        ),
                                         Reference.Language(
-                                            Primitive.List, false, Reference.Generics(
+                                            primitive = Primitive.List,
+                                            isNullable = false,
+                                            generics = Reference.Generics(
                                                 listOf(
-                                                    Reference.Language(Primitive.Any, true)
+                                                    Reference.Language(
+                                                        primitive = Primitive.Any,
+                                                        isNullable = true
+                                                    )
                                                 )
                                             )
                                         )
                                     )
                                 )
                             ),
-                            override = true
+                            isOverride = true,
+                            isFinal = true,
+                            isPrivate = true
                         ),
                         Field(
                             identifier = "headers",
                             reference = Reference.Language(
-                                Primitive.Map, false, Reference.Generics(
+                                primitive = Primitive.Map,
+                                isNullable = false,
+                                generics = Reference.Generics(
                                     listOf(
-                                        Reference.Custom("String", false),
+                                        Reference.Custom(
+                                            name = "String",
+                                            isNullable = false
+                                        ),
                                         Reference.Language(
-                                            Primitive.List, false, Reference.Generics(
+                                            primitive = Primitive.List,
+                                            isNullable = false,
+                                            generics = Reference.Generics(
                                                 listOf(
                                                     Reference.Language(Primitive.Any, true)
                                                 )
@@ -64,20 +145,24 @@ object ClassModelFixture {
                                     )
                                 )
                             ),
-                            override = true
+                            isOverride = true,
+                            isFinal = true,
+                            isPrivate = true
                         ),
                         Field(
                             identifier = "content",
                             reference = Reference.Custom(
                                 name = "Wirespec.Content",
-                                nullable = true,
+                                isNullable = true,
                                 generics = Reference.Generics(
                                     listOf(
                                         Reference.Custom("Pet", false)
                                     )
                                 )
                             ),
-                            override = true
+                            isOverride = true,
+                            isFinal = true,
+                            isPrivate = true
                         ),
                     ),
                     primaryConstructor = EndpointClass.RequestClass.PrimaryConstructor(
@@ -87,13 +172,23 @@ object ClassModelFixture {
                             Parameter("method", Reference.Custom("Wirespec.Method", false)),
                             Parameter(
                                 "query", Reference.Language(
-                                    Primitive.Map, false, Reference.Generics(
+                                    primitive = Primitive.Map,
+                                    isNullable = false,
+                                    generics = Reference.Generics(
                                         listOf(
-                                            Reference.Custom("String", false),
+                                            Reference.Custom(
+                                                name = "String",
+                                                isNullable = false
+                                            ),
                                             Reference.Language(
-                                                Primitive.List, false, Reference.Generics(
+                                                primitive = Primitive.List,
+                                                isNullable = false,
+                                                generics = Reference.Generics(
                                                     listOf(
-                                                        Reference.Language(Primitive.Any, true)
+                                                        Reference.Language(
+                                                            primitive = Primitive.Any,
+                                                            isNullable = true
+                                                        )
                                                     )
                                                 )
                                             )
@@ -103,13 +198,20 @@ object ClassModelFixture {
                             ),
                             Parameter(
                                 "headers", Reference.Language(
-                                    Primitive.Map, false, Reference.Generics(
+                                    primitive = Primitive.Map,
+                                    isNullable = false,
+                                    generics = Reference.Generics(
                                         listOf(
                                             Reference.Custom("String", false),
                                             Reference.Language(
-                                                Primitive.List, false, Reference.Generics(
+                                                primitive = Primitive.List,
+                                                isNullable = false,
+                                                generics = Reference.Generics(
                                                     listOf(
-                                                        Reference.Language(Primitive.Any, true)
+                                                        Reference.Language(
+                                                            primitive = Primitive.Any,
+                                                            isNullable = true
+                                                        )
                                                     )
                                                 )
                                             )
@@ -119,9 +221,14 @@ object ClassModelFixture {
                             ),
                             Parameter(
                                 "content", Reference.Custom(
-                                    "Wirespec.Content", true, Reference.Generics(
+                                    name = "Wirespec.Content",
+                                    isNullable = true,
+                                    generics = Reference.Generics(
                                         listOf(
-                                            Reference.Custom("Pet", false)
+                                            Reference.Custom(
+                                                name = "Pet",
+                                                isNullable = false
+                                            )
                                         )
                                     )
                                 )
@@ -145,15 +252,20 @@ object ClassModelFixture {
                             type = "application/xml",
                             reference = Reference.Custom(
                                 name = "Pet",
-                                nullable = false,
+                                isNullable = false,
                             ),
                         )
                     ),
                     supers = listOf(
                         Reference.Custom(
-                            "Request", false, Reference.Generics(
+                            name = "Request",
+                            isNullable = false,
+                            generics = Reference.Generics(
                                 listOf(
-                                    Reference.Custom("Pet", false)
+                                    Reference.Custom(
+                                        name = "Pet",
+                                        isNullable = false
+                                    )
                                 )
                             )
                         )
@@ -165,61 +277,82 @@ object ClassModelFixture {
                         Field(
                             identifier = "path",
                             reference = Reference.Custom("String", false),
-                            override = true
+                            isOverride = true,
+                            isFinal = true,
+                            isPrivate = true
                         ),
                         Field(
                             identifier = "method",
                             reference = Reference.Custom("Wirespec.Method", false),
-                            override = true
+                            isOverride = true,
+                            isFinal = true,
+                            isPrivate = true
                         ),
                         Field(
                             identifier = "query",
                             reference = Reference.Language(
-                                Primitive.Map, false, Reference.Generics(
+                                primitive = Primitive.Map,
+                                isNullable = false,
+                                generics = Reference.Generics(
                                     listOf(
-                                        Reference.Custom("String", false),
+                                        Reference.Custom(
+                                            name = "String", isNullable = false
+                                        ),
                                         Reference.Language(
-                                            Primitive.List, false, Reference.Generics(
+                                            primitive = Primitive.List,
+                                            isNullable = false,
+                                            generics = Reference.Generics(
                                                 listOf(
-                                                    Reference.Language(Primitive.Any, true)
+                                                    Reference.Language(
+                                                        primitive = Primitive.Any,
+                                                        isNullable = true
+                                                    )
                                                 )
                                             )
                                         )
                                     )
                                 )
                             ),
-                            override = true
+                            isOverride = true,
+                            isFinal = true,
+                            isPrivate = true
                         ),
                         Field(
                             identifier = "headers",
                             reference = Reference.Language(
-                                Primitive.Map, false, Reference.Generics(
+                                primitive = Primitive.Map, isNullable = false, generics = Reference.Generics(
                                     listOf(
-                                        Reference.Custom("String", false),
+                                        Reference.Custom(name = "String", isNullable = false),
                                         Reference.Language(
-                                            Primitive.List, false, Reference.Generics(
+                                            primitive = Primitive.List,
+                                            isNullable = false,
+                                            generics = Reference.Generics(
                                                 listOf(
-                                                    Reference.Language(Primitive.Any, true)
+                                                    Reference.Language(primitive = Primitive.Any, isNullable = true)
                                                 )
                                             )
                                         )
                                     )
                                 )
                             ),
-                            override = true
+                            isOverride = true,
+                            isFinal = true,
+                            isPrivate = true
                         ),
                         Field(
                             identifier = "content",
                             reference = Reference.Custom(
                                 name = "Wirespec.Content",
-                                nullable = true,
+                                isNullable = true,
                                 generics = Reference.Generics(
                                     listOf(
                                         Reference.Custom("Pet", false)
                                     )
                                 )
                             ),
-                            override = true
+                            isOverride = true,
+                            isFinal = true,
+                            isPrivate = true
                         ),
                     ),
                     primaryConstructor =
@@ -230,13 +363,23 @@ object ClassModelFixture {
                             Parameter("method", Reference.Custom("Wirespec.Method", false)),
                             Parameter(
                                 "query", Reference.Language(
-                                    Primitive.Map, false, Reference.Generics(
+                                    primitive = Primitive.Map,
+                                    isNullable = false,
+                                    generics = Reference.Generics(
                                         listOf(
-                                            Reference.Custom("String", false),
+                                            Reference.Custom(
+                                                name = "String",
+                                                isNullable = false
+                                            ),
                                             Reference.Language(
-                                                Primitive.List, false, Reference.Generics(
+                                                primitive = Primitive.List,
+                                                isNullable = false,
+                                                generics = Reference.Generics(
                                                     listOf(
-                                                        Reference.Language(Primitive.Any, true)
+                                                        Reference.Language(
+                                                            primitive = Primitive.Any,
+                                                            isNullable = true
+                                                        )
                                                     )
                                                 )
                                             )
@@ -246,13 +389,22 @@ object ClassModelFixture {
                             ),
                             Parameter(
                                 "headers", Reference.Language(
-                                    Primitive.Map, false, Reference.Generics(
+                                    primitive = Primitive.Map,
+                                    isNullable = false,
+                                    generics = Reference.Generics(
                                         listOf(
-                                            Reference.Custom("String", false),
+                                            Reference.Custom(
+                                                name = "String", false
+                                            ),
                                             Reference.Language(
-                                                Primitive.List, false, Reference.Generics(
+                                                primitive = Primitive.List,
+                                                isNullable = false,
+                                                generics = Reference.Generics(
                                                     listOf(
-                                                        Reference.Language(Primitive.Any, true)
+                                                        Reference.Language(
+                                                            primitive = Primitive.Any,
+                                                            isNullable = true
+                                                        )
                                                     )
                                                 )
                                             )
@@ -262,9 +414,14 @@ object ClassModelFixture {
                             ),
                             Parameter(
                                 "content", Reference.Custom(
-                                    "Wirespec.Content", true, Reference.Generics(
+                                    name = "Wirespec.Content",
+                                    isNullable = true,
+                                    generics = Reference.Generics(
                                         listOf(
-                                            Reference.Custom("Pet", false)
+                                            Reference.Custom(
+                                                name = "Pet",
+                                                isNullable = false
+                                            )
                                         )
                                     )
                                 )
@@ -275,7 +432,12 @@ object ClassModelFixture {
                     secondaryConstructor = EndpointClass.RequestClass.SecondaryConstructor(
                         name = "RequestApplicationJson",
                         parameters = listOf(
-                            Parameter("body", Reference.Custom("Pet", false)),
+                            Parameter(
+                                "body", Reference.Custom(
+                                    name = "Pet",
+                                    isNullable = false
+                                )
+                            ),
                         ),
                         path = EndpointClass.Path(
                             listOf(
@@ -289,15 +451,20 @@ object ClassModelFixture {
                             type = "application/json",
                             reference = Reference.Custom(
                                 name = "Pet",
-                                nullable = false,
+                                isNullable = false,
                             ),
                         )
                     ),
                     supers = listOf(
                         Reference.Custom(
-                            "Request", false, Reference.Generics(
+                            name = "Request",
+                            isNullable = false,
+                            generics = Reference.Generics(
                                 listOf(
-                                    Reference.Custom("Pet", false)
+                                    Reference.Custom(
+                                        name = "Pet",
+                                        isNullable = false
+                                    )
                                 )
                             )
                         )
@@ -309,61 +476,75 @@ object ClassModelFixture {
                         Field(
                             identifier = "path",
                             reference = Reference.Custom("String", false),
-                            override = true
+                            isOverride = true,
+                            isFinal = true,
+                            isPrivate = true
                         ),
                         Field(
                             identifier = "method",
                             reference = Reference.Custom("Wirespec.Method", false),
-                            override = true
+                            isOverride = true,
+                            isFinal = true,
+                            isPrivate = true
                         ),
                         Field(
                             identifier = "query",
                             reference = Reference.Language(
-                                Primitive.Map, false, Reference.Generics(
+                                primitive = Primitive.Map, isNullable = false, generics = Reference.Generics(
                                     listOf(
-                                        Reference.Custom("String", false),
+                                        Reference.Custom(name = "String", isNullable = false),
                                         Reference.Language(
-                                            Primitive.List, false, Reference.Generics(
+                                            primitive = Primitive.List,
+                                            isNullable = false,
+                                            generics = Reference.Generics(
                                                 listOf(
-                                                    Reference.Language(Primitive.Any, true)
+                                                    Reference.Language(primitive = Primitive.Any, isNullable = true)
                                                 )
                                             )
                                         )
                                     )
                                 )
                             ),
-                            override = true
+                            isOverride = true,
+                            isFinal = true,
+                            isPrivate = true
                         ),
                         Field(
                             identifier = "headers",
                             reference = Reference.Language(
-                                Primitive.Map, false, Reference.Generics(
+                                primitive = Primitive.Map, isNullable = false, generics = Reference.Generics(
                                     listOf(
-                                        Reference.Custom("String", false),
+                                        Reference.Custom(name = "String", isNullable = false),
                                         Reference.Language(
-                                            Primitive.List, false, Reference.Generics(
+                                            primitive = Primitive.List,
+                                            isNullable = false,
+                                            generics = Reference.Generics(
                                                 listOf(
-                                                    Reference.Language(Primitive.Any, true)
+                                                    Reference.Language(primitive = Primitive.Any, isNullable = true)
                                                 )
                                             )
                                         )
                                     )
                                 )
                             ),
-                            override = true
+                            isOverride = true,
+                            isFinal = true,
+                            isPrivate = true
                         ),
                         Field(
                             identifier = "content",
                             reference = Reference.Custom(
                                 name = "Wirespec.Content",
-                                nullable = true,
+                                isNullable = true,
                                 generics = Reference.Generics(
                                     listOf(
                                         Reference.Custom("Pet", false)
                                     )
                                 )
                             ),
-                            override = true
+                            isOverride = true,
+                            isFinal = true,
+                            isPrivate = true
                         ),
                     ),
                     primaryConstructor = EndpointClass.RequestClass.PrimaryConstructor(
@@ -372,14 +553,24 @@ object ClassModelFixture {
                             Parameter("path", Reference.Custom("String", false)),
                             Parameter("method", Reference.Custom("Wirespec.Method", false)),
                             Parameter(
-                                "query", Reference.Language(
-                                    Primitive.Map, false, Reference.Generics(
+                                identifier = "query", Reference.Language(
+                                    primitive = Primitive.Map,
+                                    isNullable = false,
+                                    generics = Reference.Generics(
                                         listOf(
-                                            Reference.Custom("String", false),
+                                            Reference.Custom(
+                                                name = "String",
+                                                isNullable = false
+                                            ),
                                             Reference.Language(
-                                                Primitive.List, false, Reference.Generics(
+                                                primitive = Primitive.List,
+                                                isNullable = false,
+                                                generics = Reference.Generics(
                                                     listOf(
-                                                        Reference.Language(Primitive.Any, true)
+                                                        Reference.Language(
+                                                            primitive = Primitive.Any,
+                                                            isNullable = true
+                                                        )
                                                     )
                                                 )
                                             )
@@ -389,11 +580,18 @@ object ClassModelFixture {
                             ),
                             Parameter(
                                 "headers", Reference.Language(
-                                    Primitive.Map, false, Reference.Generics(
+                                    primitive = Primitive.Map,
+                                    isNullable = false,
+                                    generics = Reference.Generics(
                                         listOf(
-                                            Reference.Custom("String", false),
+                                            Reference.Custom(
+                                                name = "String",
+                                                isNullable = false
+                                            ),
                                             Reference.Language(
-                                                Primitive.List, false, Reference.Generics(
+                                                primitive = Primitive.List,
+                                                isNullable = false,
+                                                generics = Reference.Generics(
                                                     listOf(
                                                         Reference.Language(Primitive.Any, true)
                                                     )
@@ -405,9 +603,14 @@ object ClassModelFixture {
                             ),
                             Parameter(
                                 "content", Reference.Custom(
-                                    "Wirespec.Content", true, Reference.Generics(
+                                    name = "Wirespec.Content",
+                                    isNullable = true,
+                                    generics = Reference.Generics(
                                         listOf(
-                                            Reference.Custom("Pet", false)
+                                            Reference.Custom(
+                                                name = "Pet",
+                                                isNullable = false
+                                            )
                                         )
                                     )
                                 )
@@ -432,15 +635,20 @@ object ClassModelFixture {
                             type = "application/x-www-form-urlencoded",
                             reference = Reference.Custom(
                                 name = "Pet",
-                                nullable = false,
+                                isNullable = false,
                             ),
                         )
                     ),
                     supers = listOf(
                         Reference.Custom(
-                            "Request", false, Reference.Generics(
+                            name = "Request",
+                            isNullable = false,
+                            generics = Reference.Generics(
                                 listOf(
-                                    Reference.Custom("Pet", false)
+                                    Reference.Custom(
+                                        name = "Pet",
+                                        isNullable = false
+                                    )
                                 )
                             )
                         )
@@ -530,41 +738,49 @@ object ClassModelFixture {
                             reference = Reference.Language(
                                 primitive = Primitive.Integer
                             ),
-                            override = true
+                            isOverride = true,
+                            isFinal = true,
+                            isPrivate = true
                         ),
                         Field(
                             identifier = "headers",
                             reference = Reference.Language(
-                                Primitive.Map, false, Reference.Generics(
+                                primitive = Primitive.Map, isNullable = false, generics = Reference.Generics(
                                     listOf(
-                                        Reference.Custom("String", false),
+                                        Reference.Custom(name = "String", isNullable = false),
                                         Reference.Language(
-                                            Primitive.List, false, Reference.Generics(
+                                            primitive = Primitive.List,
+                                            isNullable = false,
+                                            generics = Reference.Generics(
                                                 listOf(
-                                                    Reference.Language(Primitive.Any, true)
+                                                    Reference.Language(primitive = Primitive.Any, isNullable = true)
                                                 )
                                             )
                                         )
                                     )
                                 )
                             ),
-                            override = true
+                            isOverride = true,
+                            isPrivate = true,
+                            isFinal = true
                         ),
                         Field(
                             identifier = "content",
                             reference = Reference.Custom(
                                 name = "Wirespec.Content",
-                                nullable = true,
+                                isNullable = true,
                                 generics = Reference.Generics(
                                     listOf(
                                         Reference.Custom(
                                             name = "Pet",
-                                            nullable = false,
+                                            isNullable = false,
                                         ),
                                     )
                                 )
                             ),
-                            override = true
+                            isOverride = true,
+                            isFinal = true,
+                            isPrivate = true
                         )
                     ),
                     allArgsConstructor = EndpointClass.ResponseClass.AllArgsConstructor(
@@ -574,13 +790,23 @@ object ClassModelFixture {
                             Parameter(
                                 identifier = "headers",
                                 reference = Reference.Language(
-                                    Primitive.Map, false, Reference.Generics(
+                                    primitive = Primitive.Map,
+                                    isNullable = false,
+                                    generics = Reference.Generics(
                                         listOf(
-                                            Reference.Custom("String", false),
+                                            Reference.Custom(
+                                                name = "String",
+                                                isNullable = false
+                                            ),
                                             Reference.Language(
-                                                Primitive.List, false, Reference.Generics(
+                                                primitive = Primitive.List,
+                                                isNullable = false,
+                                                generics = Reference.Generics(
                                                     listOf(
-                                                        Reference.Language(Primitive.Any, true)
+                                                        Reference.Language(
+                                                            primitive = Primitive.Any,
+                                                            isNullable = true
+                                                        )
                                                     )
                                                 )
                                             )
@@ -592,7 +818,7 @@ object ClassModelFixture {
                                 identifier = "body",
                                 reference = Reference.Custom(
                                     name = "Pet",
-                                    nullable = false,
+                                    isNullable = false,
                                 )
                             )
                         ),
@@ -600,7 +826,7 @@ object ClassModelFixture {
                             type = "application/xml",
                             reference = Reference.Custom(
                                 name = "Pet",
-                                nullable = false,
+                                isNullable = false,
                             ),
                         )
                     ),
@@ -613,14 +839,14 @@ object ClassModelFixture {
                                 )
                             )
                         ),
-                        nullable = false,
+                        isNullable = false,
                     ),
                     statusCode = "200",
                     content = EndpointClass.Content(
                         type = "application/xml",
                         reference = Reference.Custom(
                             name = "Pet",
-                            nullable = false,
+                            isNullable = false,
                         ),
                     ),
                 ),
@@ -633,41 +859,49 @@ object ClassModelFixture {
                             reference = Reference.Language(
                                 primitive = Primitive.Integer
                             ),
-                            override = true
+                            isOverride = true,
+                            isPrivate = true,
+                            isFinal = true
                         ),
                         Field(
                             identifier = "headers",
                             reference = Reference.Language(
-                                Primitive.Map, false, Reference.Generics(
+                                primitive = Primitive.Map, isNullable = false, generics = Reference.Generics(
                                     listOf(
-                                        Reference.Custom("String", false),
+                                        Reference.Custom(name = "String", isNullable = false),
                                         Reference.Language(
-                                            Primitive.List, false, Reference.Generics(
+                                            primitive = Primitive.List,
+                                            isNullable = false,
+                                            generics = Reference.Generics(
                                                 listOf(
-                                                    Reference.Language(Primitive.Any, true)
+                                                    Reference.Language(primitive = Primitive.Any, isNullable = true)
                                                 )
                                             )
                                         )
                                     )
                                 )
                             ),
-                            override = true
+                            isOverride = true,
+                            isPrivate = true,
+                            isFinal = true
                         ),
                         Field(
                             identifier = "content",
                             reference = Reference.Custom(
                                 name = "Wirespec.Content",
-                                nullable = false,
+                                isNullable = false,
                                 generics = Reference.Generics(
                                     listOf(
                                         Reference.Custom(
                                             name = "Pet",
-                                            nullable = false,
+                                            isNullable = false,
                                         ),
                                     )
                                 )
                             ),
-                            override = true
+                            isOverride = true,
+                            isPrivate = true,
+                            isFinal = true
                         )
                     ),
                     allArgsConstructor = EndpointClass.ResponseClass.AllArgsConstructor(
@@ -677,13 +911,23 @@ object ClassModelFixture {
                             Parameter(
                                 identifier = "headers",
                                 reference = Reference.Language(
-                                    Primitive.Map, false, Reference.Generics(
+                                    primitive = Primitive.Map,
+                                    isNullable = false,
+                                    generics = Reference.Generics(
                                         listOf(
-                                            Reference.Custom("String", false),
+                                            Reference.Custom(
+                                                name = "String",
+                                                isNullable = false
+                                            ),
                                             Reference.Language(
-                                                Primitive.List, false, Reference.Generics(
+                                                primitive = Primitive.List,
+                                                isNullable = false,
+                                                generics = Reference.Generics(
                                                     listOf(
-                                                        Reference.Language(Primitive.Any, true)
+                                                        Reference.Language(
+                                                            primitive = Primitive.Any,
+                                                            isNullable = true
+                                                        )
                                                     )
                                                 )
                                             )
@@ -695,7 +939,7 @@ object ClassModelFixture {
                                 identifier = "body",
                                 reference = Reference.Custom(
                                     name = "Pet",
-                                    nullable = false,
+                                    isNullable = false,
                                 )
                             )
                         ),
@@ -703,7 +947,7 @@ object ClassModelFixture {
                             type = "application/json",
                             reference = Reference.Custom(
                                 name = "Pet",
-                                nullable = false,
+                                isNullable = false,
                             ),
                         )
                     ),
@@ -716,13 +960,13 @@ object ClassModelFixture {
                                 )
                             )
                         ),
-                        nullable = false,
+                        isNullable = false,
                     ),
                     content = EndpointClass.Content(
                         type = "application/json",
                         reference = Reference.Custom(
                             name = "Pet",
-                            nullable = false,
+                            isNullable = false,
                         ),
                     )
                 ),
@@ -734,38 +978,46 @@ object ClassModelFixture {
                             reference = Reference.Language(
                                 primitive = Primitive.Integer
                             ),
-                            override = true
+                            isOverride = true,
+                            isFinal = true,
+                            isPrivate = true
                         ),
                         Field(
                             identifier = "headers",
                             reference = Reference.Language(
-                                Primitive.Map, false, Reference.Generics(
+                                primitive = Primitive.Map, isNullable = false, generics = Reference.Generics(
                                     listOf(
-                                        Reference.Custom("String", false),
+                                        Reference.Custom(name = "String", isNullable = false),
                                         Reference.Language(
-                                            Primitive.List, false, Reference.Generics(
+                                            primitive = Primitive.List,
+                                            isNullable = false,
+                                            generics = Reference.Generics(
                                                 listOf(
-                                                    Reference.Language(Primitive.Any, true)
+                                                    Reference.Language(primitive = Primitive.Any, isNullable = true)
                                                 )
                                             )
                                         )
                                     )
                                 )
                             ),
-                            override = true
+                            isOverride = true,
+                            isFinal = true,
+                            isPrivate = true
                         ),
                         Field(
                             identifier = "content",
                             reference = Reference.Custom(
                                 name = "Wirespec.Content",
-                                nullable = true,
+                                isNullable = true,
                                 generics = Reference.Generics(
                                     listOf(
                                         Reference.Language(Primitive.Unit)
                                     )
                                 )
                             ),
-                            override = true
+                            isOverride = true,
+                            isFinal = true,
+                            isPrivate = true
                         )
                     ),
                     allArgsConstructor = EndpointClass.ResponseClass.AllArgsConstructor(
@@ -775,13 +1027,23 @@ object ClassModelFixture {
                             Parameter(
                                 identifier = "headers",
                                 reference = Reference.Language(
-                                    Primitive.Map, false, Reference.Generics(
+                                    primitive = Primitive.Map,
+                                    isNullable = false,
+                                    generics = Reference.Generics(
                                         listOf(
-                                            Reference.Custom("String", false),
+                                            Reference.Custom(
+                                                name = "String",
+                                                isNullable = false
+                                            ),
                                             Reference.Language(
-                                                Primitive.List, false, Reference.Generics(
+                                                primitive = Primitive.List,
+                                                isNullable = false,
+                                                generics = Reference.Generics(
                                                     listOf(
-                                                        Reference.Language(Primitive.Any, true)
+                                                        Reference.Language(
+                                                            primitive = Primitive.Any,
+                                                            isNullable = true
+                                                        )
                                                     )
                                                 )
                                             )
@@ -800,7 +1062,7 @@ object ClassModelFixture {
                                 )
                             )
                         ),
-                        nullable = false,
+                        isNullable = false,
                     ),
                     statusCode = "405",
                 ),
@@ -813,7 +1075,7 @@ object ClassModelFixture {
                             type = "application/json",
                             reference = Reference.Custom(
                                 name = "Pet",
-                                nullable = false,
+                                isNullable = false,
                             ),
                         ),
                         responseReference = Reference.Custom("RequestApplicationJson"),
@@ -824,7 +1086,7 @@ object ClassModelFixture {
                             type = "application/xml",
                             reference = Reference.Custom(
                                 name = "Pet",
-                                nullable = false,
+                                isNullable = false,
                             ),
                         ),
                         responseReference = Reference.Custom("RequestApplicationXml"),
@@ -835,7 +1097,7 @@ object ClassModelFixture {
                             type = "application/x-www-form-urlencoded",
                             reference = Reference.Custom(
                                 name = "Pet",
-                                nullable = false,
+                                isNullable = false,
                             ),
                         ),
                         responseReference = Reference.Custom("RequestApplicationXWwwFormUrlencoded"),
@@ -852,7 +1114,7 @@ object ClassModelFixture {
                             type = "application/xml",
                             reference = Reference.Custom(
                                 name = "Pet",
-                                nullable = false,
+                                isNullable = false,
                             ),
                         ),
                         responseReference = Reference.Custom("Response200ApplicationXml"),
@@ -864,7 +1126,7 @@ object ClassModelFixture {
                             type = "application/json",
                             reference = Reference.Custom(
                                 name = "Pet",
-                                nullable = false,
+                                isNullable = false,
                             ),
                         ),
                         responseReference = Reference.Custom("Response200ApplicationJson"),

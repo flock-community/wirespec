@@ -1,5 +1,6 @@
 package community.flock.wirespec.compiler.core
 
+import community.flock.wirespec.compiler.core.emit.JavaClassEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinClassEmitter
 import community.flock.wirespec.compiler.core.fixture.ClassModelFixture
 import kotlin.test.Test
@@ -7,8 +8,53 @@ import kotlin.test.assertEquals
 
 class KotlinClassEmitterTest {
 
+    private val emitter = KotlinClassEmitter()
+
     @Test
-    fun testKotlinEmitter() {
+    fun testEmitterType() {
+        val expected = """
+            |data class Pet(
+            |  val name: String,
+            |  val description: String?,
+            |  val notes: List<String>,
+            |  val done: Boolean
+            |)
+        """.trimMargin()
+
+        val res = emitter.emit(ClassModelFixture.type).values.first()
+        assertEquals(expected, res)
+    }
+
+    @Test
+    fun testEmitterRefined() {
+        val expected = """
+            |data class UUID(override val value: String): Wirespec.Refined
+            |fun UUID.validate() = Regex(^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}).matches(value)
+        """.trimMargin()
+
+        val res = emitter.emit(ClassModelFixture.refined).values.first()
+        assertEquals(expected, res)
+    }
+
+    @Test
+    fun testEmitterEnum() {
+        val expected = """
+            |enum class TodoStatus (val label: String): Wirespec.Enum {
+            |  OPEN("OPEN"),
+            |  IN_PROGRESS("IN_PROGRESS"),
+            |  CLOSE("CLOSE");
+            |  override fun toString(): String {
+            |    return label
+            |  }
+            |}
+        """.trimMargin()
+
+        val res = emitter.emit(ClassModelFixture.enum).values.first()
+        assertEquals(expected, res)
+    }
+
+    @Test
+    fun testEmitterEndpoint() {
         val expected = """
             |interface AddPetEndpoint : Wirespec.Endpoint {
             |  sealed interface Request<T> : Wirespec.Request<T>
@@ -117,8 +163,7 @@ class KotlinClassEmitterTest {
             |}
         """.trimMargin()
 
-        val emitter = KotlinClassEmitter()
-        val res = emitter.emit(ClassModelFixture.endpointRequest).values.first()
+        val res = emitter.emit(ClassModelFixture.endpoint).values.first()
         println(res)
         assertEquals(expected, res)
     }

@@ -2,9 +2,12 @@ package community.flock.wirespec.compiler.core.emit.common
 
 import community.flock.wirespec.compiler.core.parse.nodes.ClassModel
 import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
+import community.flock.wirespec.compiler.core.parse.nodes.EnumClass
 import community.flock.wirespec.compiler.core.parse.nodes.Field
 import community.flock.wirespec.compiler.core.parse.nodes.Parameter
 import community.flock.wirespec.compiler.core.parse.nodes.Reference
+import community.flock.wirespec.compiler.core.parse.nodes.RefinedClass
+import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
 
 interface ClassModelEmitter {
     companion object {
@@ -14,9 +17,16 @@ interface ClassModelEmitter {
     fun emit(ast: List<ClassModel>): Map<String, String> = ast.associate {
         when (it) {
             is EndpointClass -> it.name to it.emit()
+            is TypeClass -> it.name to it.emit()
+            is RefinedClass -> it.name to it.emit()
+            is EnumClass -> it.name to it.emit()
         }
     }
 
+    fun TypeClass.emit(): String
+    fun RefinedClass.emit(): String
+    fun RefinedClass.Validator.emit(): String
+    fun EnumClass.emit(): String
     fun EndpointClass.emit(): String
     fun EndpointClass.RequestClass.emit(): String
     fun EndpointClass.RequestClass.PrimaryConstructor.emit(): String
@@ -30,11 +40,6 @@ interface ClassModelEmitter {
     fun EndpointClass.ResponseMapper.ResponseCondition.emit(): String
 
     fun Parameter.emit(): String
-    fun Reference.emit(): String = when (this) {
-        is Reference.Custom -> emit()
-        is Reference.Language -> emit()
-    }
-
     fun Reference.Generics.emit(): String
     fun Reference.Custom.emit(): String
     fun Reference.Language.emit(): String
