@@ -34,7 +34,6 @@ class JavaClassEmitter : ClassModelEmitter {
         |${SPACER}return java.util.regex.Pattern.compile($value).matcher(record.value).find();
     """.trimMargin()
 
-
     override fun EnumClass.emit(): String = """
         |public enum ${name.sanitizeSymbol()} implements Wirespec.Enum {
         |${entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"${it}\")" }.spacer()};
