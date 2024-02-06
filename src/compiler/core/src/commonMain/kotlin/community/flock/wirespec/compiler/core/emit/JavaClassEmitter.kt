@@ -13,7 +13,7 @@ import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
 class JavaClassEmitter : ClassModelEmitter {
 
     override fun TypeClass.emit(): String = """
-        |public record Pet(
+        |public record $name(
         |${fields.joinToString(",\n") { it.emit() }.spacer()}
         |){
         |};
