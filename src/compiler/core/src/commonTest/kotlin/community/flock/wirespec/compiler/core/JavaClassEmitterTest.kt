@@ -12,7 +12,7 @@ class JavaClassEmitterTest {
     @Test
     fun testEmitterType() {
         val expected = """
-            |public record Pet(
+            |public record Todo(
             |  String name,
             |  java.util.Optional<String> description,
             |  java.util.List<String> notes,

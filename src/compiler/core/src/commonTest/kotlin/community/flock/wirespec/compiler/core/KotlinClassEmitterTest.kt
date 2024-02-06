@@ -13,7 +13,7 @@ class KotlinClassEmitterTest {
     @Test
     fun testEmitterType() {
         val expected = """
-            |data class Pet(
+            |data class Todo(
             |  val name: String,
             |  val description: String?,
             |  val notes: List<String>,
