@@ -30,32 +30,24 @@ class JavaClassEmitter : ClassModelEmitter {
     """.trimMargin()
 
 
-    override fun RefinedClass.Validator.emit() =
-        "${SPACER}return java.util.regex.Pattern.compile($value).matcher(record.value).find();"
+    override fun RefinedClass.Validator.emit() = """
+        |${SPACER}return java.util.regex.Pattern.compile($value).matcher(record.value).find();
+    """.trimMargin()
 
 
-    override fun EnumClass.emit(): String {
-        fun String.sanitizeEnum() = this
-            .replace("/", "_")
-            .replace(" ", "_")
-            .replace("-", "_")
-            .replace("–", "_")
-            .let { if (it.first().isDigit()) "_$it" else it }
-
-        return """
-          |public enum ${name.sanitizeSymbol()} implements Wirespec.Enum {
-          |${entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"${it}\")" }.spacer()};
-          |${SPACER}public final String label;
-          |${SPACER}${name.sanitizeSymbol()}(String label) {
-          |${SPACER}${SPACER}this.label = label;
-          |${SPACER}}
-          |${SPACER}@Override
-          |${SPACER}public String toString() {
-          |${SPACER}${SPACER}return label;
-          |${SPACER}}
-          |}
-        """.trimMargin()
-    }
+    override fun EnumClass.emit(): String = """
+        |public enum ${name.sanitizeSymbol()} implements Wirespec.Enum {
+        |${entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"${it}\")" }.spacer()};
+        |${SPACER}public final String label;
+        |${SPACER}${name.sanitizeSymbol()}(String label) {
+        |${SPACER}${SPACER}this.label = label;
+        |${SPACER}}
+        |${SPACER}@Override
+        |${SPACER}public String toString() {
+        |${SPACER}${SPACER}return label;
+        |${SPACER}}
+        |}
+    """.trimMargin()
 
     override fun EndpointClass.emit(): String = """
         |public interface $name extends Wirespec.Endpoint {
@@ -251,6 +243,13 @@ class JavaClassEmitter : ClassModelEmitter {
         |  return ${identifier};
         |}
     """.trimMargin()
+
+    private fun String.sanitizeEnum() = this
+        .replace("/", "_")
+        .replace(" ", "_")
+        .replace("-", "_")
+        .replace("–", "_")
+        .let { if (it.first().isDigit()) "_$it" else it }
 
     private fun String.sanitizeKeywords() = if (reservedKeywords.contains(this)) "_$this" else this
 
