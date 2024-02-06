@@ -1,50 +1,67 @@
 package community.flock.wirespec.compiler.core.emit.common
 
 import community.flock.wirespec.compiler.core.parse.nodes.ClassModel
+import community.flock.wirespec.compiler.core.parse.nodes.Definition
+import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
+import community.flock.wirespec.compiler.core.parse.nodes.Enum
 import community.flock.wirespec.compiler.core.parse.nodes.EnumClass
 import community.flock.wirespec.compiler.core.parse.nodes.Field
 import community.flock.wirespec.compiler.core.parse.nodes.Parameter
 import community.flock.wirespec.compiler.core.parse.nodes.Reference
+import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.RefinedClass
 import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
+import community.flock.wirespec.compiler.core.parse.transformer.ClassModelTransformer
+import community.flock.wirespec.compiler.utils.Logger
 
-interface ClassModelEmitter {
+abstract class ClassModelEmitter(
+    override val logger: Logger,
+    override val split: Boolean
+) : Emitter(logger, split) {
+
     companion object {
         const val SPACER = "  "
     }
 
-    fun emit(ast: List<ClassModel>): Map<String, String> = ast.associate {
-        when (it) {
-            is EndpointClass -> it.name to it.emit()
-            is TypeClass -> it.name to it.emit()
-            is RefinedClass -> it.name to it.emit()
-            is EnumClass -> it.name to it.emit()
+    override fun emit(ast: List<Definition>): List<Emitted> =
+        ClassModelTransformer.transform(ast)
+            .map { Emitted(it.name, emit(it)) }
+            .run {
+                if (split) this
+                else listOf(Emitted("NoName", joinToString("\n") { it.result }))
+            }
+
+    open fun emit(node: ClassModel): String =
+        when (node) {
+            is EndpointClass -> node.emit()
+            is TypeClass -> node.emit()
+            is RefinedClass -> node.emit()
+            is EnumClass -> node.emit()
         }
-    }
 
-    fun TypeClass.emit(): String
-    fun RefinedClass.emit(): String
-    fun RefinedClass.Validator.emit(): String
-    fun EnumClass.emit(): String
-    fun EndpointClass.emit(): String
-    fun EndpointClass.RequestClass.emit(): String
-    fun EndpointClass.RequestClass.PrimaryConstructor.emit(): String
-    fun EndpointClass.RequestClass.SecondaryConstructor.emit(): String
-    fun EndpointClass.RequestMapper.emit(): String
-    fun EndpointClass.RequestMapper.RequestCondition.emit(): String
-    fun EndpointClass.ResponseInterface.emit(): String
-    fun EndpointClass.ResponseClass.emit(): String
-    fun EndpointClass.ResponseClass.AllArgsConstructor.emit(): String
-    fun EndpointClass.ResponseMapper.emit(): String
-    fun EndpointClass.ResponseMapper.ResponseCondition.emit(): String
+    abstract fun TypeClass.emit(): String
+    abstract fun RefinedClass.emit(): String
+    abstract fun RefinedClass.Validator.emit(): String
+    abstract fun EnumClass.emit(): String
+    abstract fun EndpointClass.emit(): String
+    abstract fun EndpointClass.RequestClass.emit(): String
+    abstract fun EndpointClass.RequestClass.PrimaryConstructor.emit(): String
+    abstract fun EndpointClass.RequestClass.SecondaryConstructor.emit(): String
+    abstract fun EndpointClass.RequestMapper.emit(): String
+    abstract fun EndpointClass.RequestMapper.RequestCondition.emit(): String
+    abstract fun EndpointClass.ResponseInterface.emit(): String
+    abstract fun EndpointClass.ResponseClass.emit(): String
+    abstract fun EndpointClass.ResponseClass.AllArgsConstructor.emit(): String
+    abstract fun EndpointClass.ResponseMapper.emit(): String
+    abstract fun EndpointClass.ResponseMapper.ResponseCondition.emit(): String
 
-    fun Parameter.emit(): String
-    fun Reference.Generics.emit(): String
-    fun Reference.Custom.emit(): String
-    fun Reference.Language.emit(): String
-    fun Reference.Language.Primitive.emit(): String
-    fun Field.emit(): String
+    abstract fun Parameter.emit(): String
+    abstract fun Reference.Generics.emit(): String
+    abstract fun Reference.Custom.emit(): String
+    abstract fun Reference.Language.emit(): String
+    abstract fun Reference.Language.Primitive.emit(): String
+    abstract fun Field.emit(): String
     fun String.spacer(space: Int = 1) = this
         .split("\n")
         .joinToString("\n") {
@@ -55,6 +72,6 @@ interface ClassModelEmitter {
             }
         }
 
-    fun EndpointClass.Path.emit(): String
-    fun EndpointClass.Content.emit(): String
+    abstract fun EndpointClass.Path.emit(): String
+    abstract fun EndpointClass.Content.emit(): String
 }

@@ -1,23 +1,26 @@
 package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter
+import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.hasEndpoints
+import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.needImports
+import community.flock.wirespec.compiler.core.emit.common.ClassModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitted
-import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.nodes.Definition
-import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
-import community.flock.wirespec.compiler.core.parse.nodes.Enum
-import community.flock.wirespec.compiler.core.parse.nodes.Refined
-import community.flock.wirespec.compiler.core.parse.nodes.Type
-import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference
+import community.flock.wirespec.compiler.core.parse.nodes.EnumClass
+import community.flock.wirespec.compiler.core.parse.nodes.Field
+import community.flock.wirespec.compiler.core.parse.nodes.Parameter
+import community.flock.wirespec.compiler.core.parse.nodes.Reference
+import community.flock.wirespec.compiler.core.parse.nodes.RefinedClass
+import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
 class JavaEmitter(
-    packageName: String = DEFAULT_PACKAGE_NAME,
-    logger: Logger = noLogger
-) : AbstractEmitter(logger, true) {
+    val packageName: String = DEFAULT_PACKAGE_NAME,
+    logger: Logger = noLogger,
+) : ClassModelEmitter(logger, true) {
 
     override val shared = """
         |package community.flock.wirespec;
@@ -26,26 +29,26 @@ class JavaEmitter(
         |import java.lang.reflect.ParameterizedType;
         |
         |public interface Wirespec {
-        |${SPACER}interface Enum {};
-        |${SPACER}interface Refined { String getValue(); };
-        |${SPACER}interface Endpoint {};
-        |${SPACER}enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE };
-        |${SPACER}record Content<T> (String type, T body) {};
-        |${SPACER}interface Request<T> { String getPath(); Method getMethod(); java.util.Map<String, java.util.List<Object>> getQuery(); java.util.Map<String, java.util.List<Object>> getHeaders(); Content<T> getContent(); }
-        |${SPACER}interface Response<T> { int getStatus(); java.util.Map<String, java.util.List<Object>> getHeaders(); Content<T> getContent(); }
-        |${SPACER}interface ContentMapper<B> { <T> Content<T> read(Content<B> content, Type valueType); <T> Content<B> write(Content<T> content); }
-        |${SPACER}static Type getType(final Class<?> type, final boolean isIterable) {
-        |${SPACER}${SPACER}if(isIterable) {
-        |${SPACER}${SPACER}${SPACER}return new ParameterizedType() {
-        |${SPACER}${SPACER}${SPACER}${SPACER}public Type getRawType() {return java.util.List.class;}
-        |${SPACER}${SPACER}${SPACER}${SPACER}public Type[] getActualTypeArguments() {Class<?>[] types = {type};return types;}
-        |${SPACER}${SPACER}${SPACER}${SPACER}public Type getOwnerType() {return null;}
-        |${SPACER}${SPACER}${SPACER}};
-        |${SPACER}${SPACER}}
-        |${SPACER}${SPACER}else {
-        |${SPACER}${SPACER}${SPACER}return type;
-        |${SPACER}${SPACER}}
-        |${SPACER}}
+        |${AbstractEmitter.SPACER}interface Enum {};
+        |${AbstractEmitter.SPACER}interface Refined { String getValue(); };
+        |${AbstractEmitter.SPACER}interface Endpoint {};
+        |${AbstractEmitter.SPACER}enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE };
+        |${AbstractEmitter.SPACER}record Content<T> (String type, T body) {};
+        |${AbstractEmitter.SPACER}interface Request<T> { String getPath(); Method getMethod(); java.util.Map<String, java.util.List<Object>> getQuery(); java.util.Map<String, java.util.List<Object>> getHeaders(); Content<T> getContent(); }
+        |${AbstractEmitter.SPACER}interface Response<T> { int getStatus(); java.util.Map<String, java.util.List<Object>> getHeaders(); Content<T> getContent(); }
+        |${AbstractEmitter.SPACER}interface ContentMapper<B> { <T> Content<T> read(Content<B> content, Type valueType); <T> Content<B> write(Content<T> content); }
+        |${AbstractEmitter.SPACER}static Type getType(final Class<?> type, final boolean isIterable) {
+        |${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}if(isIterable) {
+        |${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}return new ParameterizedType() {
+        |${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}public Type getRawType() {return java.util.List.class;}
+        |${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}public Type[] getActualTypeArguments() {Class<?>[] types = {type};return types;}
+        |${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}public Type getOwnerType() {return null;}
+        |${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}};
+        |${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}}
+        |${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}else {
+        |${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}return type;
+        |${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}}
+        |${AbstractEmitter.SPACER}}
         |}
     """.trimMargin()
 
@@ -54,263 +57,281 @@ class JavaEmitter(
         |package $packageName;
         |
         |
-        """.trimMargin()}
-    else{
+        """.trimMargin()
+    } else {
         ""
     }
-    private fun importWireSpec(ast: AST) = if(ast.needImports()) {
+
+    private fun importWireSpec(ast: List<Definition>) = if (ast.needImports()) {
         """
         |import community.flock.wirespec.Wirespec;
         |
         |
-        """.trimMargin()}
-    else{
+        """.trimMargin()
+    } else {
         ""
     }
 
-    private fun importJava(ast: AST) = if(ast.hasEndpoints()) {
+    private fun importJava(ast: List<Definition>) = if (ast.hasEndpoints()) {
         """
         |import java.util.concurrent.CompletableFuture;
         |import java.util.function.Function;
         |
         |
-        """.trimMargin()}
-    else{
+        """.trimMargin()
+    } else {
         ""
     }
 
     override fun emit(ast: List<Definition>): List<Emitted> = super.emit(ast)
-        .map { Emitted(it.typeName.sanitizeSymbol(), "$pkg${importWireSpec(ast)}${importJava(ast)}${it.result}") }
+        .map { Emitted(it.typeName.sanitizeSymbol(), "$pkg${importWireSpec(ast)}${importJava(ast)}${it.result}\n") }
 
-    override fun Type.emit() = withLogging(logger) {
-        """public record ${emitName().sanitizeSymbol()}(
-            |${shape.emit()}
-            |) {};
-            |""".trimMargin()
-    }
 
-    override fun Type.Shape.emit() = withLogging(logger) {
-        value.joinToString(",\n") { it.emit() }
-    }
-
-    override fun Type.Shape.Field.emit() = withLogging(logger) {
-        "$SPACER${if (isNullable) "java.util.Optional<${reference.emit()}>" else reference.emit()} ${identifier.emit()}"
-    }
-
-    override fun Type.Shape.Field.Identifier.emit() = withLogging(logger) {
-        value
-            .split("-")
-            .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
-            .joinToString("")
-            .sanitizeKeywords()
-            .sanitizeSymbol()
-    }
-
-    private fun Reference.emitSymbol() = withLogging(logger) {
-        when (this) {
-            is Reference.Unit -> "Void"
-            is Reference.Any -> "Object"
-            is Reference.Custom -> value
-            is Reference.Primitive -> when (type) {
-                Reference.Primitive.Type.String -> "String"
-                Reference.Primitive.Type.Integer -> "Long"
-                Reference.Primitive.Type.Number -> "Double"
-                Reference.Primitive.Type.Boolean -> "Boolean"
-            }
-        }.sanitizeSymbol()
-    }
-
-    override fun Reference.emit() = withLogging(logger) {
-        emitSymbol()
-            .let { if (isIterable) "java.util.List<$it>" else it }
-            .let { if (isMap) "java.util.Map<String, $it>" else it }
-    }
-
-    override fun Enum.emit() = withLogging(logger) {
-        fun String.sanitizeEnum() = this
-            .replace("/", "_")
-            .replace(" ", "_")
-            .replace("-", "_")
-            .replace("–", "_")
-            .let { if (it.first().isDigit()) "_$it" else it }
-
-        val body = """
-          |${SPACER}public final String label;
-          |${SPACER}${name.sanitizeSymbol()}(String label) {
-          |${SPACER}${SPACER}this.label = label;
-          |${SPACER}}
-          """.trimMargin()
-        val toString = """
-          |${SPACER}@Override
-          |${SPACER}public String toString() {
-          |${SPACER}${SPACER}return label;
-          |${SPACER}}
-          """.trimMargin()
-        "public enum ${name.sanitizeSymbol()} implements Wirespec.Enum {\n${SPACER}${
-            entries.joinToString(",\n${SPACER}") { enum ->
-                "${
-                    enum.sanitizeEnum().sanitizeKeywords()
-                }(\"${enum}\")"
-            }
-        };\n${body}\n${toString}\n}\n"
-    }
-
-    override fun Refined.emit() = withLogging(logger) {
-        """public record ${emitName().sanitizeSymbol()} (String value) implements Wirespec.Refined {
-            |${SPACER}static boolean validate($name record) {
-            |${SPACER}${validator.emit()}
-            |${SPACER}}
-            |${SPACER}@Override
-            |${SPACER}public String getValue() { return value; }
-            |}
-            |""".trimMargin()
-    }
-
-    override fun Refined.Validator.emit() = withLogging(logger) {
-        "${SPACER}return java.util.regex.Pattern.compile($value).matcher(record.value).find();"
-    }
-
-    override fun Endpoint.emit() = withLogging(logger) {
-        """public interface ${emitName().sanitizeSymbol()} extends Wirespec.Endpoint {
-            |${SPACER}static String PATH = "${path.emitSegment()}";
-            |${responses.emitResponseMapper()}
-            |${SPACER}sealed interface Request<T> extends Wirespec.Request<T> {}
-            |${requests.joinToString("\n") { it.emit(this) }}
-            |${SPACER}sealed interface Response<T> extends Wirespec.Response<T> {}
-            |${
-            responses.map { it.status.groupStatus() }.toSet()
-                .joinToString("\n") { "${SPACER}sealed interface Response${it}<T> extends Response<T>{};" }
-        }
-            |${
-            responses.filter { it.status.isInt() }.map { it.status }.toSet()
-                .joinToString("\n") { "${SPACER}sealed interface Response${it}<T> extends Response${it.groupStatus()}<T>{};" }
-        }
-            |${responses.distinctBy { it.status to it.content?.type }.joinToString("\n") { it.emit() }}
-            |${SPACER}public CompletableFuture<Response<?>> ${name.firstToLower()}(Request<?> request);
-            |}
-            |""".trimMargin()
-    }
-
-    override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> "${this.name}Endpoint"
-        is Enum -> this.name
-        is Refined -> this.name
-        is Type -> this.name
-    }
-
-    private fun Endpoint.Request.emit(endpoint: Endpoint) = """
-        |${SPACER}final class Request${content?.emitContentType() ?: "Void"} implements Request<${content?.reference?.emit() ?: "Void"}> {
-        |${SPACER}${SPACER}private final String path;
-        |${SPACER}${SPACER}private final Wirespec.Method method;
-        |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<Object>> query;
-        |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<Object>> headers;
-        |${SPACER}${SPACER}private final Wirespec.Content<${content?.reference?.emit() ?: "Void"}> content;
-        |${SPACER}${SPACER}public Request${content?.emitContentType() ?: "Void"}(${endpoint.emitRequestSignature(content)}) {
-        |${SPACER}${SPACER}${SPACER}this.path = ${endpoint.path.emitPath()};
-        |${SPACER}${SPACER}${SPACER}this.method = Wirespec.Method.${endpoint.method.name};
-        |${SPACER}${SPACER}${SPACER}this.query = ${endpoint.query.emitMap()};
-        |${SPACER}${SPACER}${SPACER}this.headers = ${endpoint.headers.emitMap()};
-        |${SPACER}${SPACER}${SPACER}this.content = ${content?.let { "new Wirespec.Content(\"${it.type}\", body)" } ?: "null"};
-        |${SPACER}${SPACER}}
-        |${SPACER}${SPACER}@Override public String getPath() {return path;}
-        |${SPACER}${SPACER}@Override public Wirespec.Method getMethod() {return method;}
-        |${SPACER}${SPACER}@Override public java.util.Map<String, java.util.List<Object>> getQuery() {return query;}
-        |${SPACER}${SPACER}@Override public java.util.Map<String, java.util.List<Object>> getHeaders() {return headers;}
-        |${SPACER}${SPACER}@Override public Wirespec.Content<${content?.reference?.emit() ?: "Void"}> getContent() {return content;}
-        |${SPACER}}
+    override fun TypeClass.emit(): String = """
+        |public record $name(
+        |${fields.joinToString(",\n") { it.emit() }.spacer()}
+        |){
+        |};
     """.trimMargin()
 
-    private fun Endpoint.Response.emit() = """
-        |${SPACER}final class Response${status.firstToUpper()}${content?.emitContentType() ?: "Void"} implements Response${
-        status.firstToUpper().orEmptyString()
-    }<${content?.reference?.emit() ?: "Void"}> {
-        |${SPACER}${SPACER}private final int status;
-        |${SPACER}${SPACER}private final java.util.Map<String, java.util.List<Object>> headers;
-        |${SPACER}${SPACER}private final Wirespec.Content<${content?.reference?.emit() ?: "Void"}> content;
-        |${SPACER}${SPACER}public Response${status.firstToUpper()}${content?.emitContentType() ?: "Void"}(${
-        status.takeIf { !it.isInt() }?.let { "int status, " }.orEmptyString()
-    }java.util.Map<String, java.util.List<Object>> headers${content?.let { ", ${it.reference.emit()} body" } ?: ""}) {
-        |${SPACER}${SPACER}${SPACER}this.status = ${status.takeIf { it.isInt() } ?: "status"};
-        |${SPACER}${SPACER}${SPACER}this.headers = headers;
-        |${SPACER}${SPACER}${SPACER}this.content = ${content?.let { "new Wirespec.Content(\"${it.type}\", body)" } ?: "null"};
-        |${SPACER}${SPACER}}
-        |${SPACER}${SPACER}@Override public int getStatus() {return status;}
-        |${SPACER}${SPACER}@Override public java.util.Map<String, java.util.List<Object>> getHeaders() {return headers;}
-        |${SPACER}${SPACER}@Override public Wirespec.Content<${content?.reference?.emit() ?: "Void"}> getContent() {return content;}
+    override fun RefinedClass.emit() = """
+        |public record ${name.sanitizeSymbol()} (String value) implements Wirespec.Refined {
+        |${SPACER}static boolean validate($name record) {
+        |${SPACER}${validator.emit()}
         |${SPACER}}
-        """.trimMargin()
+        |${SPACER}@Override
+        |${SPACER}public String getValue() { return value; }
+        |}
+    """.trimMargin()
 
-    private fun List<Endpoint.Response>.emitResponseMapper() = """
-        |${SPACER}static <B, Res extends Response<?>> Function<Wirespec.Response<B>, Res> RESPONSE_MAPPER(Wirespec.ContentMapper<B> contentMapper) {
-        |return response -> {
-        |${distinctBy { it.status to it.content?.type }.joinToString("") { it.emitResponseMapperCondition() }}
+
+    override fun RefinedClass.Validator.emit() = """
+        |${SPACER}return java.util.regex.Pattern.compile($value).matcher(record.value).find();
+    """.trimMargin()
+
+    override fun EnumClass.emit(): String = """
+        |public enum ${name.sanitizeSymbol()} implements Wirespec.Enum {
+        |${entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"${it}\")" }.spacer()};
+        |${SPACER}public final String label;
+        |${SPACER}${name.sanitizeSymbol()}(String label) {
+        |${SPACER}${SPACER}this.label = label;
+        |${SPACER}}
+        |${SPACER}@Override
+        |${SPACER}public String toString() {
+        |${SPACER}${SPACER}return label;
+        |${SPACER}}
+        |}
+    """.trimMargin()
+
+    override fun EndpointClass.emit(): String = """
+        |public interface $name extends Wirespec.Endpoint {
+        |${SPACER}static String PATH = "$path";
+        |${SPACER}static String METHOD = "$method";
+        |
+        |${SPACER}sealed interface Request<T> extends Wirespec.Request<T> {
+        |${SPACER}}
+        |
+        |${requestClasses.joinToString("\n\n") { it.emit() }.spacer()}
+        |
+        |${SPACER}sealed interface Response<T> extends Wirespec.Response<T> {
+        |${SPACER}};
+        |
+        |${responseInterfaces.joinToString("\n\n") { it.emit() }.spacer()}
+        |
+        |${responseClasses.joinToString("\n\n") { it.emit() }.spacer()}
+        |
+        |${requestMapper.emit().spacer()}
+        |${responseMapper.emit().spacer()}
+        |}
+    """.trimMargin()
+
+    override fun EndpointClass.RequestClass.emit() = """
+         |final class $name implements ${supers.joinToString(", ") { it.emit() }} {
+         |${fields.joinToString("\n") { "${it.emit()};" }.spacer()}
+         |
+         |${primaryConstructor.emit().spacer()}
+         |
+         |${secondaryConstructor.emit().spacer()}
+         |
+         |${fields.joinToString("\n\n") { it.emitGetter() }.spacer()}
+         |}
+    """.trimMargin()
+
+    override fun EndpointClass.RequestClass.PrimaryConstructor.emit(): String = """
+        |public $name(
+        |${parameters.joinToString(",\n") { it.emit() }.spacer()}
+        |) {
+        |  this.path = path;
+        |  this.method = method;
+        |  this.query = query;
+        |  this.headers = headers;
+        |  this.content = content;
+        |}
+    """.trimMargin()
+
+    override fun EndpointClass.RequestClass.SecondaryConstructor.emit(): String = """
+        |public $name(
+        |${parameters.joinToString(",\n") { it.emit() }.spacer()}
+        |) {
+        |  this.path = ${path.emit()};
+        |  this.method = Wirespec.Method.${method};
+        |  this.query = java.util.Map.of(${query});
+        |  this.headers = java.util.Map.of(${headers});
+        |  this.content = ${content?.emit() ?: "null"};
+        |}
+    """.trimMargin()
+
+    override fun EndpointClass.RequestMapper.emit(): String = """
+        |static <B, Req extends Request<?>> Function<Wirespec.Request<B>, Req> $name(Wirespec.ContentMapper<B> contentMapper) {
+        |${SPACER}return request -> {
+        |${this.conditions.joinToString("\n") { it.emit() }.spacer(2)}
+        |${SPACER}${SPACER}throw new IllegalStateException("Unknown response type");
+        |${SPACER}}
+        |}
+    """.trimMargin()
+
+    override fun EndpointClass.RequestMapper.RequestCondition.emit(): String =
+        if (content != null)
+            """
+                |if (request.getContent().type().equals("${content.type}")) {
+                |${SPACER}Wirespec.Content<Pet> content = contentMapper.read(request.getContent(), Wirespec.getType(${content.reference.emit()}.class, ${isIterable}));
+                |${SPACER}return (Req) new ${responseReference.emit()}(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders(), content);
+                |}
+            """.trimMargin()
+        else
+            """
+                |if (request.getContent().type() == null) {
+                |${SPACER}return (Req) new ${responseReference.emit()}(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders());
+                |}
+            """.trimMargin()
+
+    override fun EndpointClass.ResponseClass.emit(): String = """
+        |final class ${name} implements ${returnReference.emit()} {
+        |${fields.joinToString("\n") { "${it.emit()};" }.spacer()}
+        |
+        |${allArgsConstructor.emit().spacer()}
+        |
+        |${fields.joinToString("\n\n") { it.emitGetter() }.spacer()}
+        |}
+    """.trimMargin()
+
+    override fun EndpointClass.ResponseClass.AllArgsConstructor.emit(): String = """
+        |public $name(${parameters.joinToString(", ") { it.emit() }}) {
+        |${SPACER}this.status = ${statusCode};
+        |${SPACER}this.headers = headers;
+        |${SPACER}this.content = ${content?.emit()};
+        |}
+    """.trimMargin()
+
+    override fun EndpointClass.ResponseMapper.emit(): String = """
+        |static <B, Res extends Response<?>> Function<Wirespec.Response<B>, Res> $name(Wirespec.ContentMapper<B> contentMapper) {
+        |${SPACER}return response -> {
+        |${this.conditions.joinToString("\n") { it.emit() }.spacer(2)}
         |${SPACER}${SPACER}throw new IllegalStateException("Unknown response type");
         |${SPACER}};
         |}
     """.trimMargin()
 
-    private fun Endpoint.Response.emitResponseMapperCondition() =
-        when (content) {
-            null -> """
-                    |${SPACER}${SPACER}${SPACER}if(${status.takeIf { it.isInt() }?.let { "response.getStatus() == $status && " }.orEmptyString()}response.getContent() == null) { return (Res) new Response${status.firstToUpper()}Void(${status.takeIf { !it.isInt() }?.let { "response.getStatus(), " }.orEmptyString()}response.getHeaders()); }
-                    |
-                """.trimMargin()
-            else -> """
-                    |${SPACER}${SPACER}${SPACER}if(${status.takeIf { it.isInt() }?.let { "response.getStatus() == $status && " }.orEmptyString()}response.getContent().type().equals("${content.type}")) {
-                    |${SPACER}${SPACER}${SPACER}${SPACER}Wirespec.Content<${content.reference.emit()}> content = contentMapper.read(response.getContent(), Wirespec.getType(${content.reference.emitSymbol()}.class, ${content.reference.isIterable}));
-                    |${SPACER}${SPACER}${SPACER}${SPACER}return (Res) new Response${status.firstToUpper()}${content.emitContentType()}(${status.takeIf { !it.isInt() }?.let { "response.getStatus(), " }.orEmptyString()}response.getHeaders(), content.body());
-                    |${SPACER}${SPACER}${SPACER}}
-                    |
-                """.trimMargin()
-        }
+    override fun EndpointClass.ResponseMapper.ResponseCondition.emit(): String =
+        if (content != null)
+            """
+                |if (response.getStatus() == $statusCode && response.getContent().type().equals("${content.type}")) {
+                |${SPACER}Wirespec.Content<Pet> content = contentMapper.read(response.getContent(), Wirespec.getType(${content.reference.emit()}.class, ${isIterable}));
+                |${SPACER}return (Res) new ${responseReference.emit()}(response.getHeaders(), content.body());
+                |}
+            """.trimMargin()
+        else
+            """
+                |if (response.getStatus() == $statusCode && response.getContent() == null) {
+                |${SPACER}return (Res) new ${responseReference.emit()}(response.getHeaders());
+                |}
+            """.trimMargin()
 
-    private fun Endpoint.Segment.emit(): String = withLogging(logger) {
+    override fun EndpointClass.ResponseInterface.emit(): String = """
+        |sealed interface ${name.emit()} extends ${`super`.emit()} {
+        |};
+    """.trimMargin()
+
+    override fun Parameter.emit(): String = """
+        |${reference.emit()} $identifier
+    """.trimMargin()
+
+    override fun Reference.Generics.emit(): String = """
+        |${references.takeIf { it.isNotEmpty() }?.joinToString(", ", "<", ">") { it.emit() }.orEmpty()}
+    """.trimMargin()
+
+    fun Reference.emit(): String =
         when (this) {
-            is Endpoint.Segment.Literal -> "\"$value\""
-            is Endpoint.Segment.Param -> identifier.value
+            is Reference.Custom -> emit()
+            is Reference.Language -> emit()
         }
-    }
+            .let { if (isOptional) "java.util.Optional<$it>" else it }
+            .let { if (isIterable) "java.util.List<$it>" else it }
 
-    private fun Endpoint.emitRequestSignature(content: Endpoint.Content? = null): String {
-        val pathField = path
-            .filterIsInstance<Endpoint.Segment.Param>()
-            .map { Type.Shape.Field(it.identifier, it.reference, false) }
-        val parameters = pathField + query + headers + cookies
-        return parameters
-            .plus(content?.reference?.toField("body", false))
-            .filterNotNull()
-            .joinToString(", ") { it.emit() }
-    }
 
-    private fun List<Type.Shape.Field>.emitMap() = joinToString(
-        ", ",
-        "java.util.Map.ofEntries(",
-        ")"
-    ) { "java.util.Map.entry(\"${it.identifier.value}\", java.util.List.of(${it.identifier.emit()}))" }
+    override fun Reference.Custom.emit(): String = this
+        .let {
+            """
+                |${name}${generics.emit()}
+            """.trimMargin()
 
-    private fun List<Endpoint.Segment>.emitSegment() = "/" + joinToString("/") {
-        when (it) {
-            is Endpoint.Segment.Param -> "{${it.identifier.value}}"
-            is Endpoint.Segment.Literal -> it.value
         }
+
+    override fun Reference.Language.emit(): String = """
+        |${primitive.emit()}${generics.emit()}
+    """.trimMargin()
+
+    override fun Reference.Language.Primitive.emit(): String = when (this) {
+        Reference.Language.Primitive.Any -> "Object"
+        Reference.Language.Primitive.Unit -> "Void"
+        Reference.Language.Primitive.String -> "String"
+        Reference.Language.Primitive.Integer -> "int"
+        Reference.Language.Primitive.Long -> "Long"
+        Reference.Language.Primitive.Number -> "Double"
+        Reference.Language.Primitive.Boolean -> "boolean"
+        Reference.Language.Primitive.Map -> "java.util.Map"
+        Reference.Language.Primitive.List -> "java.util.List"
+        Reference.Language.Primitive.Double -> "Double"
     }
 
-    private fun List<Endpoint.Segment>.emitPath() = "\"/\" + " + joinToString(" + \"/\" + ") { it.emit() }
+    override fun EndpointClass.Path.emit(): String = value
+        .flatMap { listOf(EndpointClass.Path.Literal("/"), it) }
+        .joinToString(" + ") {
+            when (it) {
+                is EndpointClass.Path.Literal -> "\"${it.value}\""
+                is EndpointClass.Path.Parameter -> it.value
+            }
+        }
 
-    private fun String?.orEmptyString() = this ?: ""
 
-    private fun String.isInt() = toIntOrNull() != null
+    override fun EndpointClass.Content.emit(): String = """
+        |new Wirespec.Content("$type", body)
+    """.trimMargin()
 
-    private fun String.groupStatus() =
-        if (isInt()) substring(0, 1) + "XX"
-        else firstToUpper()
+    override fun Field.emit(): String = """
+        |${if (isPrivate) "private " else ""}${if (isPrivate) "final " else ""}${reference.emit()} $identifier
+    """.trimMargin()
 
-    fun String.sanitizeKeywords() = if (reservedKeywords.contains(this)) "_$this" else this
+    private fun Field.emitGetter(): String = """
+        |@Override
+        |public ${reference.emit()} get${identifier.replaceFirstChar { it.uppercase() }}() {
+        |  return ${identifier};
+        |}
+    """.trimMargin()
 
-    fun String.sanitizeSymbol() = replace(".", "").replace(" ", "_")
+    private fun String.sanitizeEnum() = this
+        .replace("/", "_")
+        .replace(" ", "_")
+        .replace("-", "_")
+        .replace("–", "_")
+        .let { if (it.first().isDigit()) "_$it" else it }
+
+    private fun String.sanitizeKeywords() = if (reservedKeywords.contains(this)) "_$this" else this
+
+    private fun String.sanitizeSymbol() = replace(".", "").replace(" ", "_")
 
     companion object {
-         val reservedKeywords = listOf(
+        val reservedKeywords = listOf(
             "abstract", "continue", "for", "new", "switch",
             "assert", "default", "goto", "package", "synchronized",
             "boolean", "do", "if", "private", "this",
@@ -324,4 +345,5 @@ class JavaEmitter(
             "true", "false"
         )
     }
+
 }

@@ -11,16 +11,16 @@ import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
 
 object ClassModelFixture {
 
-    val refined = listOf(
+    val refined =
         RefinedClass(
             name = "UUID",
             validator = RefinedClass.Validator(
                 "^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}\$"
             )
         )
-    )
 
-    val enum = listOf(
+
+    val enum =
         EnumClass(
             name = "TodoStatus",
             entries = setOf(
@@ -29,9 +29,9 @@ object ClassModelFixture {
                 "CLOSE",
             )
         )
-    )
 
-    val type = listOf(
+
+    val type =
         TypeClass(
             name = "Todo",
             fields = listOf(
@@ -64,9 +64,9 @@ object ClassModelFixture {
 
             )
         )
-    )
 
-    val endpoint = listOf(
+
+    val endpoint =
         EndpointClass(
             name = "AddPetEndpoint",
             path = "/pet",
@@ -1141,5 +1141,5 @@ object ClassModelFixture {
                 )
             )
         )
-    )
+
 }

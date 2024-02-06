@@ -1,14 +1,13 @@
 package community.flock.wirespec.compiler.core
 
-import community.flock.wirespec.compiler.core.emit.JavaClassEmitter
-import community.flock.wirespec.compiler.core.emit.KotlinClassEmitter
+import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.fixture.ClassModelFixture
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class KotlinClassEmitterTest {
+class KotlinEmitterTest {
 
-    private val emitter = KotlinClassEmitter()
+    private val emitter = KotlinEmitter()
 
     @Test
     fun testEmitterType() {
@@ -21,7 +20,7 @@ class KotlinClassEmitterTest {
             |)
         """.trimMargin()
 
-        val res = emitter.emit(ClassModelFixture.type).values.first()
+        val res = emitter.emit(ClassModelFixture.type)
         assertEquals(expected, res)
     }
 
@@ -32,7 +31,7 @@ class KotlinClassEmitterTest {
             |fun UUID.validate() = Regex(^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}).matches(value)
         """.trimMargin()
 
-        val res = emitter.emit(ClassModelFixture.refined).values.first()
+        val res = emitter.emit(ClassModelFixture.refined)
         assertEquals(expected, res)
     }
 
@@ -49,7 +48,7 @@ class KotlinClassEmitterTest {
             |}
         """.trimMargin()
 
-        val res = emitter.emit(ClassModelFixture.enum).values.first()
+        val res = emitter.emit(ClassModelFixture.enum)
         assertEquals(expected, res)
     }
 
@@ -163,8 +162,7 @@ class KotlinClassEmitterTest {
             |}
         """.trimMargin()
 
-        val res = emitter.emit(ClassModelFixture.endpoint).values.first()
-        println(res)
+        val res = emitter.emit(ClassModelFixture.endpoint)
         assertEquals(expected, res)
     }
 }

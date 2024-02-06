@@ -33,7 +33,7 @@ object ClassModelTransformer {
             fields = shape.value.map {
                 Field(
                     identifier = it.identifier.value,
-                    reference = it.reference.transform(),
+                    reference = it.reference.transform(it.isNullable, false),
                 )
             }
         )
@@ -46,18 +46,59 @@ object ClassModelTransformer {
             )
         )
 
-    private fun Type.Shape.Field.Reference.transform(): Reference =
-       when(this){
-           is Type.Shape.Field.Reference.Any -> Reference.Language(Reference.Language.Primitive.Any)
-           is Type.Shape.Field.Reference.Custom -> TODO()
-           is Type.Shape.Field.Reference.Primitive -> when(this.type){
-               Type.Shape.Field.Reference.Primitive.Type.String -> Reference.Language(Reference.Language.Primitive.String)
-               Type.Shape.Field.Reference.Primitive.Type.Integer -> Reference.Language(Reference.Language.Primitive.Integer)
-               Type.Shape.Field.Reference.Primitive.Type.Number -> Reference.Language(Reference.Language.Primitive.Long)
-               Type.Shape.Field.Reference.Primitive.Type.Boolean -> Reference.Language(Reference.Language.Primitive.Boolean)
-           }
-           is Type.Shape.Field.Reference.Unit -> Reference.Language(Reference.Language.Primitive.Unit)
-       }
+    private fun Type.Shape.Field.Reference.transform(isNullable: Boolean, isOptional: Boolean): Reference =
+        when (this) {
+            is Type.Shape.Field.Reference.Any -> Reference.Language(
+                primitive = Reference.Language.Primitive.Any,
+                isNullable = isNullable,
+                isOptional = isOptional,
+                isIterable = isIterable,
+            )
+
+            is Type.Shape.Field.Reference.Custom -> Reference.Custom(
+                name = value,
+                isNullable = isNullable,
+                isOptional = isOptional,
+                isIterable = isIterable,
+            )
+
+            is Type.Shape.Field.Reference.Primitive -> when (type) {
+                Type.Shape.Field.Reference.Primitive.Type.String -> Reference.Language(
+                    primitive = Reference.Language.Primitive.String,
+                    isNullable = isNullable,
+                    isOptional = isOptional,
+                    isIterable = isIterable,
+                )
+
+                Type.Shape.Field.Reference.Primitive.Type.Integer -> Reference.Language(
+                    primitive = Reference.Language.Primitive.Long,
+                    isNullable = isNullable,
+                    isOptional = isOptional,
+                    isIterable = isIterable,
+                )
+
+                Type.Shape.Field.Reference.Primitive.Type.Number -> Reference.Language(
+                    primitive = Reference.Language.Primitive.Double,
+                    isNullable = isNullable,
+                    isOptional = isOptional,
+                    isIterable = isIterable,
+                )
+
+                Type.Shape.Field.Reference.Primitive.Type.Boolean -> Reference.Language(
+                    primitive = Reference.Language.Primitive.Boolean,
+                    isNullable = isNullable,
+                    isOptional = isOptional,
+                    isIterable = isIterable,
+                )
+            }
+
+            is Type.Shape.Field.Reference.Unit -> Reference.Language(
+                primitive = Reference.Language.Primitive.Unit,
+                isNullable = isNullable,
+                isOptional = isOptional,
+                isIterable = isIterable,
+            )
+        }
 
     private fun Enum.transform(): EnumClass =
         EnumClass(
@@ -90,7 +131,7 @@ object ClassModelTransformer {
                                     listOf(
                                         Reference.Custom("String", false),
                                         Reference.Custom(
-                                            name ="List",
+                                            name = "List",
                                             isNullable = false,
                                             generics = Reference.Generics(
                                                 listOf(
@@ -141,9 +182,11 @@ object ClassModelTransformer {
                     secondaryConstructor = EndpointClass.RequestClass.SecondaryConstructor(
                         name = "SecondaryConstructor",
                         parameters = listOf(),
-                        path = EndpointClass.Path(listOf(
-                            EndpointClass.Path.Literal("pet")
-                        )),
+                        path = EndpointClass.Path(
+                            listOf(
+                                EndpointClass.Path.Literal("pet")
+                            )
+                        ),
                         method = "POST",
                         query = "",
                         headers = "",

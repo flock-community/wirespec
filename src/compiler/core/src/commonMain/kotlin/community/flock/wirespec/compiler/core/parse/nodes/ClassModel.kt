@@ -1,14 +1,16 @@
 package community.flock.wirespec.compiler.core.parse.nodes
 
-sealed interface ClassModel : Node
+sealed interface ClassModel : Node {
+    val name: String
+}
 
 data class TypeClass(
-    val name: String,
+    override val name: String,
     val fields: List<Field>,
 ) : ClassModel
 
 data class RefinedClass(
-    val name: String,
+    override val name: String,
     val validator: Validator
 ) : ClassModel {
     data class Validator(
@@ -17,12 +19,12 @@ data class RefinedClass(
 }
 
 data class EnumClass(
-    val name: String,
+    override val name: String,
     val entries: Set<String>
 ) : ClassModel
 
 data class EndpointClass(
-    val name: String,
+    override val name: String,
     val path: String,
     val method: String,
     val requestClasses: List<RequestClass>,
@@ -137,7 +139,7 @@ sealed interface Reference {
         override val isOptional: Boolean = false,
         val generics: Generics = Generics()
     ) : Reference {
-        enum class Primitive { Any, Unit, String, Integer, Long, Number, Boolean, Map, List }
+        enum class Primitive { Any, Unit, String, Integer, Long, Double, Number, Boolean, Map, List }
     }
 
     data class Custom(

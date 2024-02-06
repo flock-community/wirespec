@@ -1,13 +1,13 @@
 package community.flock.wirespec.compiler.core
 
-import community.flock.wirespec.compiler.core.emit.JavaClassEmitter
+import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.fixture.ClassModelFixture
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class JavaClassEmitterTest {
+class JavaEmitterTest {
 
-    val emitter = JavaClassEmitter()
+    private val emitter = JavaEmitter()
 
     @Test
     fun testEmitterType() {
@@ -21,7 +21,7 @@ class JavaClassEmitterTest {
             |};
         """.trimMargin()
 
-        val res = emitter.emit(ClassModelFixture.type).values.first()
+        val res = emitter.emit(ClassModelFixture.type)
         assertEquals(expected, res)
     }
 
@@ -37,7 +37,7 @@ class JavaClassEmitterTest {
             |}
         """.trimMargin()
 
-        val res = emitter.emit(ClassModelFixture.refined).values.first()
+        val res = emitter.emit(ClassModelFixture.refined)
         assertEquals(expected, res)
     }
 
@@ -59,7 +59,7 @@ class JavaClassEmitterTest {
             |}
         """.trimMargin()
 
-        val res = emitter.emit(ClassModelFixture.enum).values.first()
+        val res = emitter.emit(ClassModelFixture.enum)
         assertEquals(expected, res)
     }
 
@@ -377,7 +377,7 @@ class JavaClassEmitterTest {
             |}
         """.trimMargin()
 
-        val res = emitter.emit(ClassModelFixture.endpoint).values.first()
+        val res = emitter.emit(ClassModelFixture.endpoint)
         assertEquals(expected, res)
     }
 }

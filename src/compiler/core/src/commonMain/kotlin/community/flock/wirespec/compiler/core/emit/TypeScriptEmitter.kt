@@ -207,4 +207,11 @@ class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
         .filter { it.isLetterOrDigit() || listOf('_').contains(it) }
         .joinToString("")
 
+    private fun Type.Shape.Field.Reference.toField(identifier: String, isNullable: Boolean) = Type.Shape.Field(
+        Type.Shape.Field.Identifier(identifier),
+        this,
+        isNullable
+    )
+
+
 }
