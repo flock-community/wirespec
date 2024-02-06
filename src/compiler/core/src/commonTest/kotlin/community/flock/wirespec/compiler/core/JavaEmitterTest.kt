@@ -16,7 +16,7 @@ class JavaEmitterTest {
             |  String name,
             |  java.util.Optional<String> description,
             |  java.util.List<String> notes,
-            |  boolean done
+            |  Boolean done
             |){
             |};
         """.trimMargin()

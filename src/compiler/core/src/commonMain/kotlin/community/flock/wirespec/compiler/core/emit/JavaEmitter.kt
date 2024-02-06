@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter
+import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.hasEndpoints
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.needImports
 import community.flock.wirespec.compiler.core.emit.common.ClassModelEmitter
@@ -85,7 +86,6 @@ class JavaEmitter(
 
     override fun emit(ast: List<Definition>): List<Emitted> = super.emit(ast)
         .map { Emitted(it.typeName.sanitizeSymbol(), "$pkg${importWireSpec(ast)}${importJava(ast)}${it.result}\n") }
-
 
     override fun TypeClass.emit(): String = """
         |public record $name(
@@ -288,7 +288,7 @@ class JavaEmitter(
         Reference.Language.Primitive.Integer -> "int"
         Reference.Language.Primitive.Long -> "Long"
         Reference.Language.Primitive.Number -> "Double"
-        Reference.Language.Primitive.Boolean -> "boolean"
+        Reference.Language.Primitive.Boolean -> "Boolean"
         Reference.Language.Primitive.Map -> "java.util.Map"
         Reference.Language.Primitive.List -> "java.util.List"
         Reference.Language.Primitive.Double -> "Double"
@@ -309,7 +309,7 @@ class JavaEmitter(
     """.trimMargin()
 
     override fun Field.emit(): String = """
-        |${if (isPrivate) "private " else ""}${if (isPrivate) "final " else ""}${reference.emit()} $identifier
+        |${if (isPrivate) "private " else ""}${if (isPrivate) "final " else ""}${reference.emit()} ${identifier.sanitizeIdentifier()}
     """.trimMargin()
 
     private fun Field.emitGetter(): String = """
@@ -318,6 +318,13 @@ class JavaEmitter(
         |  return ${identifier};
         |}
     """.trimMargin()
+
+    private fun String.sanitizeIdentifier() = this
+        .split("-")
+        .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
+        .joinToString("")
+        .sanitizeKeywords()
+        .sanitizeSymbol()
 
     private fun String.sanitizeEnum() = this
         .replace("/", "_")

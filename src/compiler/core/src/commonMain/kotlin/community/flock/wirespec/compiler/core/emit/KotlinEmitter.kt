@@ -24,7 +24,6 @@ import community.flock.wirespec.compiler.utils.noLogger
 class KotlinEmitter (
     private val packageName: String = DEFAULT_PACKAGE_NAME,
     logger: Logger = noLogger,
-
 ) : ClassModelEmitter(logger, false) {
 
     override val shared = """
@@ -185,7 +184,7 @@ class KotlinEmitter (
             """.trimMargin()
         else
             """
-                |response.status == $statusCode && response.content == null -> ${responseReference.emit()}(response.headers)
+                |response.status == $statusCode && response.content == null -> ${responseReference.emit()}(response.headers, Unit)
             """.trimMargin()
 
 

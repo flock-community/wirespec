@@ -7,4 +7,5 @@ public record Todo(
   String name,
   Boolean _final,
   TodoCategory category
-) {};
+){
+};

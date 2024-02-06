@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
 import community.flock.wirespec.compiler.core.parse.nodes.EnumClass
 import community.flock.wirespec.compiler.core.parse.nodes.Field
+import community.flock.wirespec.compiler.core.parse.nodes.Parameter
 import community.flock.wirespec.compiler.core.parse.nodes.Reference
 import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.RefinedClass
@@ -107,13 +108,22 @@ object ClassModelTransformer {
         )
 
     private fun Endpoint.transform(): EndpointClass {
+        val pathField = path
+            .filterIsInstance<Endpoint.Segment.Param>()
+            .map { Type.Shape.Field(it.identifier, it.reference, false) }
+        val parameters = pathField + query + headers + cookies
         return EndpointClass(
             name = "${name}Endpoint",
-            path = path.joinToString("/") { it.emit() },
+            path = path.joinToString("/") {
+                when (it) {
+                    is Endpoint.Segment.Literal -> it.value
+                    is Endpoint.Segment.Param -> "{${it.identifier.transform()}}"
+                }
+            },
             method = method.name,
             requestClasses = requests.map {
                 EndpointClass.RequestClass(
-                    name = "Request${it.content?.emit() ?: "Unit"}",
+                    name = "Request${it.content.name()}",
                     fields = listOf(
                         Field(
                             identifier = "path",
@@ -168,26 +178,86 @@ object ClassModelTransformer {
                             reference = Reference.Custom(
                                 name = "Wirespec.Content",
                                 isNullable = true,
-                                generics = Reference.Generics(it.content
-                                    ?.let { listOf(Reference.Custom(it.type, false)) }
-                                    ?: listOf(Reference.Language(Reference.Language.Primitive.Unit, false))
+                                generics = Reference.Generics(
+                                    listOf(
+                                        it.content?.reference?.transform()
+                                            ?: Reference.Language(Reference.Language.Primitive.Unit)
+                                    )
                                 )
                             )
                         ),
                     ),
                     primaryConstructor = EndpointClass.RequestClass.PrimaryConstructor(
-                        name = "PrimaryConstructor",
-                        parameters = listOf()
+                        name = "${name}Endpoint",
+                        parameters = listOf(
+                            Parameter(
+                                identifier = "path",
+                                reference = Reference.Custom("String", false)
+                            ),
+                            Parameter(
+                                identifier = "method",
+                                reference = Reference.Custom("Wirespec.Method", false)
+                            ),
+                            Parameter(
+                                identifier = "query",
+                                reference = Reference.Custom(
+                                    name = "Map",
+                                    generics = Reference.Generics(
+                                        listOf(
+                                            Reference.Custom("String", false),
+                                            Reference.Custom(
+                                                name = "List",
+                                                isNullable = false,
+                                                generics = Reference.Generics(
+                                                    listOf(
+                                                        Reference.Custom("Any", true)
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            ),
+                            Parameter(
+                                identifier = "headers",
+                                reference = Reference.Custom(
+                                    name = "Map",
+                                    generics = Reference.Generics(
+                                        listOf(
+                                            Reference.Custom("String", false),
+                                            Reference.Custom(
+                                                name = "List",
+                                                isNullable = false,
+                                                generics = Reference.Generics(
+                                                    listOf(
+                                                        Reference.Custom("Any", true)
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            ),
+                            Parameter(
+                                identifier = "content",
+                                reference = Reference.Custom(
+                                    name = "Wirespec.Content",
+                                    isNullable = true,
+                                    generics = Reference.Generics(
+                                        listOf(
+                                            it.content?.reference?.transform()
+                                                ?: Reference.Language(Reference.Language.Primitive.Unit)
+                                        )
+                                    )
+                                )
+                            ),
+                        ),
                     ),
                     secondaryConstructor = EndpointClass.RequestClass.SecondaryConstructor(
-                        name = "SecondaryConstructor",
-                        parameters = listOf(),
-                        path = EndpointClass.Path(
-                            listOf(
-                                EndpointClass.Path.Literal("pet")
-                            )
-                        ),
-                        method = "POST",
+                        name = "${name}Endpoint",
+                        parameters = parameters.map { it.transformParameter() },
+                        path = EndpointClass.Path(path.map { it.transform() }),
+                        method = method.name,
                         query = "",
                         headers = "",
                     ),
@@ -196,37 +266,193 @@ object ClassModelTransformer {
             },
             requestMapper = EndpointClass.RequestMapper(
                 name = "REQUEST_MAPPER",
-                conditions = emptyList()
+                conditions = requests.map {
+                    EndpointClass.RequestMapper.RequestCondition(
+                        content = it.content?.transform(),
+                        isIterable = it.content?.reference?.isIterable ?: false,
+                        responseReference = Reference.Custom("Request${it.content.name()}")
+                    )
+                }
             ),
             responseMapper = EndpointClass.ResponseMapper(
                 name = "RESPONSE_MAPPER",
-                conditions = emptyList()
+                conditions = responses.map {
+                    EndpointClass.ResponseMapper.ResponseCondition(
+                        statusCode = it.status,
+                        content = it.content?.transform(),
+                        isIterable = it.content?.reference?.isIterable ?: false,
+                        responseReference = Reference.Custom("Response${it.status}${it.content.name()}")
+                    )
+                }
             ),
-            responseInterfaces = listOf(),
-            responseClasses = listOf(),
+            responseInterfaces = responses.map {
+                EndpointClass.ResponseInterface(
+                    name = Reference.Custom(
+                        name = "Response${it.status}",
+                        generics = Reference.Generics(
+                            listOf(
+                                Reference.Custom("T")
+                            )
+                        )
+                    ),
+                    `super` = Reference.Custom(
+                        name = "Response",
+                        generics = Reference.Generics(
+                            listOf(
+                                Reference.Custom("T")
+                            )
+                        )
+                    )
+                )
+            },
+            responseClasses = responses.map {
+                EndpointClass.ResponseClass(
+                    name = "Response${it.status}${it.content.name()}",
+                    fields = listOf(
+                        Field(
+                            identifier = "status",
+                            reference = Reference.Language(
+                                primitive = Reference.Language.Primitive.Integer
+                            ),
+                            isOverride = true,
+                            isFinal = true,
+                            isPrivate = true
+                        ),
+                        Field(
+                            identifier = "headers",
+                            reference = Reference.Language(
+                                primitive = Reference.Language.Primitive.Map,
+                                isNullable = false,
+                                generics = Reference.Generics(
+                                    listOf(
+                                        Reference.Custom(name = "String", isNullable = false),
+                                        Reference.Language(
+                                            primitive = Reference.Language.Primitive.List,
+                                            isNullable = false,
+                                            generics = Reference.Generics(
+                                                listOf(
+                                                    Reference.Language(
+                                                        primitive = Reference.Language.Primitive.Any,
+                                                        isNullable = true
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            ),
+                            isOverride = true,
+                            isPrivate = true,
+                            isFinal = true
+                        ),
+                        Field(
+                            identifier = "content",
+                            reference = Reference.Custom(
+                                name = "Wirespec.Content",
+                                isNullable = true,
+                                generics = Reference.Generics(
+                                    listOf(
+                                        it.content?.reference?.transform()
+                                            ?: Reference.Language(Reference.Language.Primitive.Unit)
+                                    )
+                                )
+                            ),
+                            isOverride = true,
+                            isFinal = true,
+                            isPrivate = true
+                        )
+                    ),
+                    allArgsConstructor = EndpointClass.ResponseClass.AllArgsConstructor(
+                        name = "Response${it.status}${it.content.name()}",
+                        statusCode = it.status,
+                        parameters = listOf(
+                            Parameter(
+                                identifier = "headers",
+                                reference = Reference.Language(
+                                    primitive = Reference.Language.Primitive.Map,
+                                    isNullable = false,
+                                    generics = Reference.Generics(
+                                        listOf(
+                                            Reference.Custom(
+                                                name = "String",
+                                                isNullable = false
+                                            ),
+                                            Reference.Language(
+                                                primitive = Reference.Language.Primitive.List,
+                                                isNullable = false,
+                                                generics = Reference.Generics(
+                                                    listOf(
+                                                        Reference.Language(
+                                                            primitive = Reference.Language.Primitive.Any,
+                                                            isNullable = true
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            ),
+                            Parameter(
+                                identifier = "body",
+                                reference = it.content?.reference?.transform()
+                                    ?: Reference.Language(Reference.Language.Primitive.Unit)
+                            )
+                        ),
+                        content = it.content?.transform()
+                    ),
+                    returnReference = Reference.Custom(
+                        name = "Response${it.status}",
+                        generics = Reference.Generics(
+                            listOf(
+                                it.content?.reference?.transform()
+                                    ?: Reference.Language(Reference.Language.Primitive.Unit)
+                            )
+                        ),
+                        isNullable = false,
+                    ),
+                    statusCode = it.status,
+                    content = it.content?.transform()
+                )
+            },
             supers = emptyList()
         )
     }
 
-    private fun Endpoint.Segment.emit(): String =
-        when (this) {
-            is Endpoint.Segment.Literal -> value
-            is Endpoint.Segment.Param -> "\${${identifier.emit()}}"
-        }
+    private fun Type.Shape.Field.transform() =
+        Field(
+            identifier = this.identifier.value,
+            reference = this.reference.transform(),
+            isPrivate = false,
+            isFinal = false,
+            isOverride = false,
+        )
 
-    private fun Type.Shape.Field.Identifier.emit() =
+    private fun Type.Shape.Field.transformParameter() =
+        Parameter(
+            identifier = this.identifier.value,
+            reference = this.reference.transform(),
+        )
+
+    private fun Type.Shape.Field.Identifier.transform() =
         value
             .split("-", ".")
             .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
             .joinToString("")
 
-    fun Endpoint.Content.emit() = type
-        .substringBefore(";")
-        .split("/", "-")
-        .joinToString("") { it.firstToUpper() }
-        .replace("+", "")
+    private fun Endpoint.Content?.name() = this?.type
+        ?.substringBefore(";")
+        ?.split("/", "-")
+        ?.joinToString("") { it.firstToUpper() }
+        ?.replace("+", "")
+        ?: "Unit"
 
-    fun Type.Shape.Field.Reference.emit() =
+    private fun Endpoint.Content.transform() = EndpointClass.Content(
+        type = this.type,
+        reference = this.reference.transform()
+    )
+
+    private fun Type.Shape.Field.Reference.transform() =
         when (this) {
             is Type.Shape.Field.Reference.Unit -> "Unit"
             is Type.Shape.Field.Reference.Any -> "Any"
@@ -250,5 +476,10 @@ object ClassModelTransformer {
                 else it
             }
 
+    private fun Endpoint.Segment.transform() =
+        when (this) {
+            is Endpoint.Segment.Literal -> EndpointClass.Path.Literal(value)
+            is Endpoint.Segment.Param -> EndpointClass.Path.Parameter(identifier.value)
+        }
 
 }

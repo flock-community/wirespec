@@ -8,9 +8,9 @@ import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
-import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitted
+import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.utils.Logger
 import org.gradle.api.Action
 import org.gradle.api.Plugin
@@ -72,7 +72,7 @@ class WirespecPlugin : Plugin<Project> {
 
     private val logger = object : Logger() {}
 
-    private fun compile(input: String, logger: Logger, emitter: AbstractEmitter) =
+    private fun compile(input: String, logger: Logger, emitter: Emitter) =
         (File(input).listFiles() ?: arrayOf())
             .map { it.name.split(".").first() to it.bufferedReader(Charsets.UTF_8) }
             .map { (name, reader) -> name to Wirespec.compile(reader.collectToString())(logger)(emitter) }
@@ -93,7 +93,7 @@ class WirespecPlugin : Plugin<Project> {
         val extension: WirespecPluginExtension = project.extensions
             .create("wirespec", WirespecPluginExtension::class.java)
 
-        fun AbstractEmitter.emit(output: String, ext: String) {
+        fun Emitter.emit(output: String, ext: String) {
             compile(extension.input, logger, this)
                 .also { project.file(output).mkdirs() }
                 .forEach {

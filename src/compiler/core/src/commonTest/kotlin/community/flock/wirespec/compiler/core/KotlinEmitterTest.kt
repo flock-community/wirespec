@@ -62,7 +62,7 @@ class KotlinEmitterTest {
             |    override val method: Wirespec.Method,
             |    override val query: Map<String, List<Any?>>,
             |    override val headers: Map<String, List<Any?>>,
-            |    override val content: Wirespec.Content<Pet>?
+            |    override val content: Wirespec.Content<Pet>? = null
             |  ) : Request<Pet> {
             |    constructor(body: Pet) : this(
             |      path = "/pet",
@@ -77,7 +77,7 @@ class KotlinEmitterTest {
             |    override val method: Wirespec.Method,
             |    override val query: Map<String, List<Any?>>,
             |    override val headers: Map<String, List<Any?>>,
-            |    override val content: Wirespec.Content<Pet>?
+            |    override val content: Wirespec.Content<Pet>? = null
             |  ) : Request<Pet> {
             |    constructor(body: Pet) : this(
             |      path = "/pet",
@@ -92,7 +92,7 @@ class KotlinEmitterTest {
             |    override val method: Wirespec.Method,
             |    override val query: Map<String, List<Any?>>,
             |    override val headers: Map<String, List<Any?>>,
-            |    override val content: Wirespec.Content<Pet>?
+            |    override val content: Wirespec.Content<Pet>? = null
             |  ) : Request<Pet> {
             |    constructor(body: Pet) : this(
             |      path = "/pet",
@@ -108,7 +108,7 @@ class KotlinEmitterTest {
             |  sealed interface Response4XX<T> : Response<T>
             |  sealed interface Response200<T> : Response2XX<T>
             |  sealed interface Response405<T> : Response4XX<T>
-            |  data class Response200ApplicationXml(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Pet>?) : Response200<Pet> {
+            |  data class Response200ApplicationXml(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Pet>? = null) : Response200<Pet> {
             |    constructor(headers: Map<String, List<Any?>>, body: Pet): this(
             |      status = 200,
             |      headers = headers,
@@ -122,7 +122,7 @@ class KotlinEmitterTest {
             |      content = Wirespec.Content("application/json", body),
             |    )
             |  }
-            |  data class Response405Unit(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Unit>?) : Response405<Unit> {
+            |  data class Response405Unit(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Unit>? = null) : Response405<Unit> {
             |    constructor(headers: Map<String, List<Any?>>): this(
             |      status = 405,
             |      headers = headers,
@@ -154,7 +154,7 @@ class KotlinEmitterTest {
             |        response.status == 200 && response.content?.type == "application/json" -> contentMapper
             |          .read<Pet>(response.content!!, Wirespec.getType(Pet::class.java, false))
             |          .let { Response200ApplicationJson(response.headers, it.body) }
-            |        response.status == 405 && response.content == null -> Response405Unit(response.headers)
+            |        response.status == 405 && response.content == null -> Response405Unit(response.headers, Unit)
             |        else -> error("Cannot map response with status ${'$'}{response.status}")
             |      }
             |    }

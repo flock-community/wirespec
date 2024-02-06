@@ -657,7 +657,7 @@ object ClassModelFixture {
             ),
             responseInterfaces = listOf(
                 EndpointClass.ResponseInterface(
-                    Reference.Custom(
+                    name = Reference.Custom(
                         name = "Response2XX",
                         generics = Reference.Generics(
                             listOf(
@@ -665,7 +665,7 @@ object ClassModelFixture {
                             )
                         )
                     ),
-                    Reference.Custom(
+                    `super` = Reference.Custom(
                         name = "Response",
                         generics = Reference.Generics(
                             listOf(

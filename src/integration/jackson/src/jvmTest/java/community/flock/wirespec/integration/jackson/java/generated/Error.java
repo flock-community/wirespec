@@ -5,4 +5,5 @@ import community.flock.wirespec.Wirespec;
 public record Error(
   String code,
   String description
-) {};
+){
+};
