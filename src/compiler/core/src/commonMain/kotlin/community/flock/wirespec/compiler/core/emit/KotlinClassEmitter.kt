@@ -13,7 +13,7 @@ import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
 
 class KotlinClassEmitter : ClassModelEmitter {
     override fun TypeClass.emit(): String = """
-        |data class Pet(
+        |data class $name(
         |${fields.joinToString(",\n") { it.emit() }.spacer()}
         |)
     """.trimMargin()
