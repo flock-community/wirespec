@@ -6,10 +6,13 @@ import community.flock.wirespec.compiler.core.parse.nodes.Definition
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
+import community.flock.wirespec.compiler.core.parse.nodes.EnumClass
 import community.flock.wirespec.compiler.core.parse.nodes.Field
 import community.flock.wirespec.compiler.core.parse.nodes.Reference
 import community.flock.wirespec.compiler.core.parse.nodes.Refined
+import community.flock.wirespec.compiler.core.parse.nodes.RefinedClass
 import community.flock.wirespec.compiler.core.parse.nodes.Type
+import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
 
 object ClassModelTransformer {
 
@@ -17,12 +20,50 @@ object ClassModelTransformer {
         return ast.map {
             when (it) {
                 is Endpoint -> it.transform()
-                is Enum -> TODO()
-                is Refined -> TODO()
-                is Type -> TODO()
+                is Enum -> it.transform()
+                is Refined -> it.transform()
+                is Type -> it.transform()
             }
         }
     }
+
+    private fun Type.transform(): TypeClass =
+        TypeClass(
+            name = name,
+            fields = shape.value.map {
+                Field(
+                    identifier = it.identifier.value,
+                    reference = it.reference.transform(),
+                )
+            }
+        )
+
+    private fun Refined.transform(): RefinedClass =
+        RefinedClass(
+            name = name,
+            validator = RefinedClass.Validator(
+                value = validator.value
+            )
+        )
+
+    private fun Type.Shape.Field.Reference.transform(): Reference =
+       when(this){
+           is Type.Shape.Field.Reference.Any -> Reference.Language(Reference.Language.Primitive.Any)
+           is Type.Shape.Field.Reference.Custom -> TODO()
+           is Type.Shape.Field.Reference.Primitive -> when(this.type){
+               Type.Shape.Field.Reference.Primitive.Type.String -> Reference.Language(Reference.Language.Primitive.String)
+               Type.Shape.Field.Reference.Primitive.Type.Integer -> Reference.Language(Reference.Language.Primitive.Integer)
+               Type.Shape.Field.Reference.Primitive.Type.Number -> Reference.Language(Reference.Language.Primitive.Long)
+               Type.Shape.Field.Reference.Primitive.Type.Boolean -> Reference.Language(Reference.Language.Primitive.Boolean)
+           }
+           is Type.Shape.Field.Reference.Unit -> Reference.Language(Reference.Language.Primitive.Unit)
+       }
+
+    private fun Enum.transform(): EnumClass =
+        EnumClass(
+            name = name,
+            entries = entries
+        )
 
     private fun Endpoint.transform(): EndpointClass {
         return EndpointClass(
