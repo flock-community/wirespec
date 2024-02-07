@@ -130,8 +130,8 @@ class KotlinEmitter (
         |constructor(${parameters.joinToString(", ") { it.emit() }}) : this(
         |${SPACER}path = "${path.emit()}",
         |${SPACER}method = Wirespec.Method.${method},
-        |${SPACER}query = mapOf<String, List<Any?>>(${query}),
-        |${SPACER}headers = mapOf<String, List<Any?>>(${headers}),
+        |${SPACER}query = mapOf<String, List<Any?>>(${query.joinToString (", ") { "\"${it}\" to $it"}}),
+        |${SPACER}headers = mapOf<String, List<Any?>>(${headers.joinToString (", ") { "\"${it}\" to ${it}"}}),
         |${SPACER}content = ${content?.emit() ?: "null"}
         |)
     """.trimMargin()

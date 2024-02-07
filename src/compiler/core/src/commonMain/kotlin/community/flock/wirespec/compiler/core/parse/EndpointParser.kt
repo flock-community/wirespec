@@ -52,7 +52,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
         val requests = listOfNotNull(
             when (token.type) {
                 is WirespecType -> parseReference(token.type as WirespecType, token.value).bind()
-                else -> null
+                else -> Reference.Unit(false)
             }
         ).map {
             Endpoint.Request(

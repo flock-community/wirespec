@@ -114,7 +114,7 @@ object ClassModelTransformer {
         val parameters = pathField + query + headers + cookies
         return EndpointClass(
             name = "${name}Endpoint",
-            path = path.joinToString("/") {
+            path = path.joinToString("/", "/") {
                 when (it) {
                     is Endpoint.Segment.Literal -> it.value
                     is Endpoint.Segment.Param -> "{${it.identifier.transform()}}"
@@ -258,8 +258,8 @@ object ClassModelTransformer {
                         parameters = parameters.map { it.transformParameter() },
                         path = EndpointClass.Path(path.map { it.transform() }),
                         method = method.name,
-                        query = "",
-                        headers = "",
+                        query = query.map { it.identifier.value},
+                        headers = headers.map { it.identifier.value},
                     ),
                     supers = emptyList()
                 )

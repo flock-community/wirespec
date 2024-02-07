@@ -246,8 +246,8 @@ object ClassModelFixture {
                             )
                         ),
                         method = "POST",
-                        query = "",
-                        headers = "",
+                        query = emptyList(),
+                        headers = emptyList(),
                         content = EndpointClass.Content(
                             type = "application/xml",
                             reference = Reference.Custom(
@@ -445,8 +445,8 @@ object ClassModelFixture {
                             )
                         ),
                         method = "POST",
-                        query = "",
-                        headers = "",
+                        query = emptyList(),
+                        headers =  emptyList(),
                         content = EndpointClass.Content(
                             type = "application/json",
                             reference = Reference.Custom(
@@ -629,8 +629,8 @@ object ClassModelFixture {
                             )
                         ),
                         method = "POST",
-                        query = "",
-                        headers = "",
+                        query = emptyList(),
+                        headers =  emptyList(),
                         content = EndpointClass.Content(
                             type = "application/x-www-form-urlencoded",
                             reference = Reference.Custom(

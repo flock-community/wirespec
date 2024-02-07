@@ -52,8 +52,8 @@ data class EndpointClass(
             val parameters: List<Parameter>,
             val path: Path,
             val method: String,
-            val query: String,
-            val headers: String,
+            val query: List<String>,
+            val headers: List<String>,
             val content: Content? = null
         )
     }

@@ -1,6 +1,5 @@
-package community.flock.wirespec.compiler.core
+package community.flock.wirespec.compiler.core.emit
 
-import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.fixture.ClassModelFixture
 import kotlin.test.Test
 import kotlin.test.assertEquals
