@@ -175,8 +175,8 @@ class JavaEmitter(
         |) {
         |  this.path = ${path.emit()};
         |  this.method = Wirespec.Method.${method};
-        |  this.query = java.util.Map.of(${query});
-        |  this.headers = java.util.Map.of(${headers});
+        |  this.query = java.util.Map.of(${query.joinToString (", ") { "\"$it\", $it" }});
+        |  this.headers = java.util.Map.of(${headers.joinToString (", ") { "\"$it\", $it" }});
         |  this.content = ${content?.emit() ?: "null"};
         |}
     """.trimMargin()
