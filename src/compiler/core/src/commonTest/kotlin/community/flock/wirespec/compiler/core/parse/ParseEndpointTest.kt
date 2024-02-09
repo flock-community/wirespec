@@ -43,11 +43,7 @@ class ParseEndpointTest {
                 path shouldBe listOf(Literal("todos"))
                 requests shouldBe listOf(
                     Endpoint.Request(
-                        content = Endpoint.Content(
-                            type = "application/json",
-                            reference = Reference.Unit(isIterable = false, isMap = false),
-                            isNullable = false
-                        )
+                        content = null
                     )
                 )
             }
@@ -113,10 +109,7 @@ class ParseEndpointTest {
                 )
                 requests shouldBe listOf(
                     Endpoint.Request(
-                        content = Endpoint.Content(
-                            type = "application/json",
-                            reference = Reference.Unit(isIterable = false, isMap = false)
-                        )
+                        content = null
                     )
                 )
             }

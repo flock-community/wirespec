@@ -74,26 +74,28 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                         }
                     }
                     .ifEmpty { listOf(Endpoint.Request(null)) }
-                val responses = operation.responses.orEmpty().flatMap { (status, res) ->
-                    (openApi.produces ?: operation.produces ?: listOf("application/json")).map { type ->
-                        Endpoint.Response(
-                            status = status.value,
-                            headers = emptyList(),
-                            content = res.resolve().schema?.let { schema ->
-                                Endpoint.Content(
-                                    type = type,
-                                    reference = when (schema) {
-                                        is ReferenceObject -> schema.toReference()
-                                        is SchemaObject -> schema.toReference(
-                                            className(name, status.value, type, "ResponseBody")
-                                        )
-                                    },
-                                    isNullable = false
-                                )
-                            }
-                        )
+                val responses = operation.responses.orEmpty()
+                    .flatMap { (status, res) ->
+                        (openApi.produces ?: operation.produces ?: listOf("application/json")).map { type ->
+                            Endpoint.Response(
+                                status = status.value,
+                                headers = emptyList(),
+                                content = res.resolve().schema?.let { schema ->
+                                    Endpoint.Content(
+                                        type = type,
+                                        reference = when (schema) {
+                                            is ReferenceObject -> schema.toReference()
+                                            is SchemaObject -> schema.toReference(
+                                                className(name, status.value, type, "ResponseBody")
+                                            )
+                                        },
+                                        isNullable = false
+                                    )
+                                }
+                            )
+                        }
                     }
-                }
+                    .distinctBy { it.status to it.content }
 
                 listOf(
                     Endpoint(

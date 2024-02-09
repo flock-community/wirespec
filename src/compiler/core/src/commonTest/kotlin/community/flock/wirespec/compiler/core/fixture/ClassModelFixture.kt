@@ -69,6 +69,7 @@ object ClassModelFixture {
     val endpoint =
         EndpointClass(
             name = "AddPetEndpoint",
+            functionName = "addPet",
             path = "/pet",
             method = "POST",
             supers = listOf(
@@ -165,15 +166,31 @@ object ClassModelFixture {
                             isPrivate = true
                         ),
                     ),
-                    primaryConstructor = EndpointClass.RequestClass.PrimaryConstructor(
+                    requestAllArgsConstructor = EndpointClass.RequestClass.RequestAllArgsConstructor(
                         name = "RequestApplicationXml",
                         parameters = listOf(
-                            Parameter("path", Reference.Custom("String", false)),
-                            Parameter("method", Reference.Custom("Wirespec.Method", false)),
                             Parameter(
-                                "query", Reference.Language(
+                                identifier = "path",
+                                reference = Reference.Custom(
+                                    name = "String",
+                                    isNullable = false,
+                                    isOptional = false,
+                                ),
+                            ),
+                            Parameter(
+                                identifier = "method",
+                                reference = Reference.Custom(
+                                    name = "Wirespec.Method",
+                                    isNullable = false,
+                                    isOptional = false,
+                                ),
+                            ),
+                            Parameter(
+                                identifier = "query",
+                                reference = Reference.Language(
                                     primitive = Primitive.Map,
                                     isNullable = false,
+                                    isOptional = false,
                                     generics = Reference.Generics(
                                         listOf(
                                             Reference.Custom(
@@ -200,6 +217,7 @@ object ClassModelFixture {
                                 "headers", Reference.Language(
                                     primitive = Primitive.Map,
                                     isNullable = false,
+                                    isOptional = false,
                                     generics = Reference.Generics(
                                         listOf(
                                             Reference.Custom("String", false),
@@ -223,6 +241,7 @@ object ClassModelFixture {
                                 "content", Reference.Custom(
                                     name = "Wirespec.Content",
                                     isNullable = true,
+                                    isOptional = false,
                                     generics = Reference.Generics(
                                         listOf(
                                             Reference.Custom(
@@ -235,7 +254,7 @@ object ClassModelFixture {
                             ),
                         ),
                     ),
-                    secondaryConstructor = EndpointClass.RequestClass.SecondaryConstructor(
+                    requestParameterConstructor = EndpointClass.RequestClass.RequestParameterConstructor(
                         name = "RequestApplicationXml",
                         parameters = listOf(
                             Parameter("body", Reference.Custom("Pet", false)),
@@ -355,8 +374,8 @@ object ClassModelFixture {
                             isPrivate = true
                         ),
                     ),
-                    primaryConstructor =
-                    EndpointClass.RequestClass.PrimaryConstructor(
+                    requestAllArgsConstructor =
+                    EndpointClass.RequestClass.RequestAllArgsConstructor(
                         name = "RequestApplicationJson",
                         parameters = listOf(
                             Parameter("path", Reference.Custom("String", false)),
@@ -429,7 +448,7 @@ object ClassModelFixture {
                         ),
 
                         ),
-                    secondaryConstructor = EndpointClass.RequestClass.SecondaryConstructor(
+                    requestParameterConstructor = EndpointClass.RequestClass.RequestParameterConstructor(
                         name = "RequestApplicationJson",
                         parameters = listOf(
                             Parameter(
@@ -446,7 +465,7 @@ object ClassModelFixture {
                         ),
                         method = "POST",
                         query = emptyList(),
-                        headers =  emptyList(),
+                        headers = emptyList(),
                         content = EndpointClass.Content(
                             type = "application/json",
                             reference = Reference.Custom(
@@ -547,7 +566,7 @@ object ClassModelFixture {
                             isPrivate = true
                         ),
                     ),
-                    primaryConstructor = EndpointClass.RequestClass.PrimaryConstructor(
+                    requestAllArgsConstructor = EndpointClass.RequestClass.RequestAllArgsConstructor(
                         name = "RequestApplicationXWwwFormUrlencoded",
                         parameters = listOf(
                             Parameter("path", Reference.Custom("String", false)),
@@ -618,7 +637,7 @@ object ClassModelFixture {
                         ),
 
                         ),
-                    secondaryConstructor = EndpointClass.RequestClass.SecondaryConstructor(
+                    requestParameterConstructor = EndpointClass.RequestClass.RequestParameterConstructor(
                         name = "RequestApplicationXWwwFormUrlencoded",
                         parameters = listOf(
                             Parameter("body", Reference.Custom("Pet", false)),
@@ -630,7 +649,7 @@ object ClassModelFixture {
                         ),
                         method = "POST",
                         query = emptyList(),
-                        headers =  emptyList(),
+                        headers = emptyList(),
                         content = EndpointClass.Content(
                             type = "application/x-www-form-urlencoded",
                             reference = Reference.Custom(
@@ -783,10 +802,16 @@ object ClassModelFixture {
                             isPrivate = true
                         )
                     ),
-                    allArgsConstructor = EndpointClass.ResponseClass.AllArgsConstructor(
+                    responseAllArgsConstructor = EndpointClass.ResponseClass.ResponseAllArgsConstructor(
                         name = "Response200ApplicationXml",
                         statusCode = "200",
                         parameters = listOf(
+                            Parameter(
+                                identifier = "status",
+                                reference = Reference.Language(
+                                    primitive = Primitive.Integer
+                                )
+                            ),
                             Parameter(
                                 identifier = "headers",
                                 reference = Reference.Language(
@@ -815,11 +840,19 @@ object ClassModelFixture {
                                 )
                             ),
                             Parameter(
-                                identifier = "body",
+                                identifier = "content",
                                 reference = Reference.Custom(
-                                    name = "Pet",
-                                    isNullable = false,
-                                )
+                                    name = "Wirespec.Content",
+                                    isNullable = true,
+                                    generics = Reference.Generics(
+                                        listOf(
+                                            Reference.Custom(
+                                                name = "Pet",
+                                                isNullable = false,
+                                            ),
+                                        )
+                                    )
+                                ),
                             )
                         ),
                         content = EndpointClass.Content(
@@ -830,7 +863,7 @@ object ClassModelFixture {
                             ),
                         )
                     ),
-                    returnReference = Reference.Custom(
+                    `super` = Reference.Custom(
                         name = "Response200",
                         generics = Reference.Generics(
                             listOf(
@@ -904,10 +937,16 @@ object ClassModelFixture {
                             isFinal = true
                         )
                     ),
-                    allArgsConstructor = EndpointClass.ResponseClass.AllArgsConstructor(
+                    responseAllArgsConstructor = EndpointClass.ResponseClass.ResponseAllArgsConstructor(
                         name = "Response200ApplicationJson",
                         statusCode = "200",
                         parameters = listOf(
+                            Parameter(
+                                identifier = "status",
+                                reference = Reference.Language(
+                                    primitive = Primitive.Integer
+                                ),
+                            ),
                             Parameter(
                                 identifier = "headers",
                                 reference = Reference.Language(
@@ -936,12 +975,20 @@ object ClassModelFixture {
                                 )
                             ),
                             Parameter(
-                                identifier = "body",
+                                identifier = "content",
                                 reference = Reference.Custom(
-                                    name = "Pet",
+                                    name = "Wirespec.Content",
                                     isNullable = false,
+                                    generics = Reference.Generics(
+                                        listOf(
+                                            Reference.Custom(
+                                                name = "Pet",
+                                                isNullable = false,
+                                            ),
+                                        )
+                                    )
                                 )
-                            )
+                            ),
                         ),
                         content = EndpointClass.Content(
                             type = "application/json",
@@ -951,7 +998,7 @@ object ClassModelFixture {
                             ),
                         )
                     ),
-                    returnReference = Reference.Custom(
+                    `super` = Reference.Custom(
                         name = "Response200",
                         generics = Reference.Generics(
                             listOf(
@@ -1020,10 +1067,16 @@ object ClassModelFixture {
                             isPrivate = true
                         )
                     ),
-                    allArgsConstructor = EndpointClass.ResponseClass.AllArgsConstructor(
+                    responseAllArgsConstructor = EndpointClass.ResponseClass.ResponseAllArgsConstructor(
                         name = "Response405Unit",
                         statusCode = "405",
                         parameters = listOf(
+                            Parameter(
+                                identifier = "status",
+                                reference = Reference.Language(
+                                    primitive = Primitive.Integer
+                                )
+                            ),
                             Parameter(
                                 identifier = "headers",
                                 reference = Reference.Language(
@@ -1050,10 +1103,22 @@ object ClassModelFixture {
                                         )
                                     )
                                 )
+                            ),
+                            Parameter(
+                                identifier = "content",
+                                reference = Reference.Custom(
+                                    name = "Wirespec.Content",
+                                    isNullable = true,
+                                    generics = Reference.Generics(
+                                        listOf(
+                                            Reference.Language(Primitive.Unit)
+                                        )
+                                    )
+                                ),
                             )
                         ),
                     ),
-                    returnReference = Reference.Custom(
+                    `super` = Reference.Custom(
                         name = "Response405",
                         generics = Reference.Generics(
                             listOf(

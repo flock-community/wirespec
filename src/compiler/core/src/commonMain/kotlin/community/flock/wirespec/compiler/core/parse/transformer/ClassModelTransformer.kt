@@ -1,5 +1,6 @@
 package community.flock.wirespec.compiler.core.parse.transformer
 
+import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.firstToLower
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.parse.nodes.ClassModel
 import community.flock.wirespec.compiler.core.parse.nodes.Definition
@@ -30,80 +31,26 @@ object ClassModelTransformer {
 
     private fun Type.transform(): TypeClass =
         TypeClass(
-            name = name,
+            name = className(name),
             fields = shape.value.map {
                 Field(
                     identifier = it.identifier.value,
-                    reference = it.reference.transform(it.isNullable, false),
+                    reference = it.reference.transform(false, it.isNullable),
                 )
             }
         )
 
     private fun Refined.transform(): RefinedClass =
         RefinedClass(
-            name = name,
+            name = className(name),
             validator = RefinedClass.Validator(
                 value = validator.value
             )
         )
 
-    private fun Type.Shape.Field.Reference.transform(isNullable: Boolean, isOptional: Boolean): Reference =
-        when (this) {
-            is Type.Shape.Field.Reference.Any -> Reference.Language(
-                primitive = Reference.Language.Primitive.Any,
-                isNullable = isNullable,
-                isOptional = isOptional,
-                isIterable = isIterable,
-            )
-
-            is Type.Shape.Field.Reference.Custom -> Reference.Custom(
-                name = value,
-                isNullable = isNullable,
-                isOptional = isOptional,
-                isIterable = isIterable,
-            )
-
-            is Type.Shape.Field.Reference.Primitive -> when (type) {
-                Type.Shape.Field.Reference.Primitive.Type.String -> Reference.Language(
-                    primitive = Reference.Language.Primitive.String,
-                    isNullable = isNullable,
-                    isOptional = isOptional,
-                    isIterable = isIterable,
-                )
-
-                Type.Shape.Field.Reference.Primitive.Type.Integer -> Reference.Language(
-                    primitive = Reference.Language.Primitive.Long,
-                    isNullable = isNullable,
-                    isOptional = isOptional,
-                    isIterable = isIterable,
-                )
-
-                Type.Shape.Field.Reference.Primitive.Type.Number -> Reference.Language(
-                    primitive = Reference.Language.Primitive.Double,
-                    isNullable = isNullable,
-                    isOptional = isOptional,
-                    isIterable = isIterable,
-                )
-
-                Type.Shape.Field.Reference.Primitive.Type.Boolean -> Reference.Language(
-                    primitive = Reference.Language.Primitive.Boolean,
-                    isNullable = isNullable,
-                    isOptional = isOptional,
-                    isIterable = isIterable,
-                )
-            }
-
-            is Type.Shape.Field.Reference.Unit -> Reference.Language(
-                primitive = Reference.Language.Primitive.Unit,
-                isNullable = isNullable,
-                isOptional = isOptional,
-                isIterable = isIterable,
-            )
-        }
-
     private fun Enum.transform(): EnumClass =
         EnumClass(
-            name = name,
+            name = className(name),
             entries = entries
         )
 
@@ -113,65 +60,85 @@ object ClassModelTransformer {
             .map { Type.Shape.Field(it.identifier, it.reference, false) }
         val parameters = pathField + query + headers + cookies
         return EndpointClass(
-            name = "${name}Endpoint",
+            name = className(name, "Endpoint"),
             path = path.joinToString("/", "/") {
                 when (it) {
                     is Endpoint.Segment.Literal -> it.value
                     is Endpoint.Segment.Param -> "{${it.identifier.transform()}}"
                 }
             },
+            functionName = name.firstToLower(),
             method = method.name,
             requestClasses = requests.map {
                 EndpointClass.RequestClass(
-                    name = "Request${it.content.name()}",
+                    name = className("Request", it.content.name()),
                     fields = listOf(
                         Field(
                             identifier = "path",
-                            reference = Reference.Custom("String", false)
+                            reference = Reference.Language(
+                                primitive = Reference.Language.Primitive.String,
+                                isNullable = false,
+                            ),
+                            isOverride = true,
                         ),
                         Field(
                             identifier = "method",
-                            reference = Reference.Custom("Wirespec.Method", false)
+                            reference = Reference.Custom("Wirespec.Method", false),
+                            isOverride = true,
                         ),
                         Field(
                             identifier = "query",
-                            reference = Reference.Custom(
-                                name = "Map",
+                            reference = Reference.Language(
+                                primitive = Reference.Language.Primitive.Map,
                                 generics = Reference.Generics(
                                     listOf(
-                                        Reference.Custom("String", false),
-                                        Reference.Custom(
-                                            name = "List",
+                                        Reference.Language(
+                                            primitive = Reference.Language.Primitive.String,
+                                            isNullable = false
+                                        ),
+                                        Reference.Language(
+                                            primitive = Reference.Language.Primitive.List,
                                             isNullable = false,
                                             generics = Reference.Generics(
                                                 listOf(
-                                                    Reference.Custom("Any", true)
+                                                    Reference.Language(
+                                                        primitive = Reference.Language.Primitive.Any,
+                                                        isNullable = true
+                                                    )
                                                 )
                                             )
                                         )
                                     )
                                 )
-                            )
+                            ),
+                            isOverride = true,
                         ),
                         Field(
                             identifier = "headers",
-                            reference = Reference.Custom(
-                                name = "Map",
+                            reference = Reference.Language(
+                                primitive = Reference.Language.Primitive.Map,
                                 generics = Reference.Generics(
                                     listOf(
-                                        Reference.Custom("String", false),
-                                        Reference.Custom(
-                                            name = "List",
+                                        Reference.Language(
+                                            primitive = Reference.Language.Primitive.String,
+                                            isNullable = false
+                                        ),
+                                        Reference.Language(
+                                            primitive = Reference.Language.Primitive.List,
                                             isNullable = false,
                                             generics = Reference.Generics(
                                                 listOf(
-                                                    Reference.Custom("Any", true)
+                                                    Reference.Language(
+                                                        primitive = Reference.Language.Primitive.Any,
+                                                        isNullable = true
+                                                    )
                                                 )
                                             )
                                         )
                                     )
                                 )
-                            )
+                            ),
+                            isOverride = true,
                         ),
                         Field(
                             identifier = "content",
@@ -180,19 +147,23 @@ object ClassModelTransformer {
                                 isNullable = true,
                                 generics = Reference.Generics(
                                     listOf(
-                                        it.content?.reference?.transform()
+                                        it.content?.reference?.transform(it.content.isNullable, false)
                                             ?: Reference.Language(Reference.Language.Primitive.Unit)
                                     )
                                 )
-                            )
+                            ),
+                            isOverride = true,
                         ),
                     ),
-                    primaryConstructor = EndpointClass.RequestClass.PrimaryConstructor(
-                        name = "${name}Endpoint",
+                    requestAllArgsConstructor = EndpointClass.RequestClass.RequestAllArgsConstructor(
+                        name = className("Request", it.content.name()),
                         parameters = listOf(
                             Parameter(
                                 identifier = "path",
-                                reference = Reference.Custom("String", false)
+                                reference = Reference.Language(
+                                    primitive = Reference.Language.Primitive.String,
+                                    isNullable = false
+                                )
                             ),
                             Parameter(
                                 identifier = "method",
@@ -200,17 +171,23 @@ object ClassModelTransformer {
                             ),
                             Parameter(
                                 identifier = "query",
-                                reference = Reference.Custom(
-                                    name = "Map",
+                                reference = Reference.Language(
+                                    primitive = Reference.Language.Primitive.Map,
                                     generics = Reference.Generics(
                                         listOf(
-                                            Reference.Custom("String", false),
-                                            Reference.Custom(
-                                                name = "List",
+                                            Reference.Language(
+                                                primitive = Reference.Language.Primitive.String,
+                                                isNullable = false
+                                            ),
+                                            Reference.Language(
+                                                primitive = Reference.Language.Primitive.List,
                                                 isNullable = false,
                                                 generics = Reference.Generics(
                                                     listOf(
-                                                        Reference.Custom("Any", true)
+                                                        Reference.Language(
+                                                            primitive = Reference.Language.Primitive.Any,
+                                                            isNullable = true
+                                                        )
                                                     )
                                                 )
                                             )
@@ -220,17 +197,23 @@ object ClassModelTransformer {
                             ),
                             Parameter(
                                 identifier = "headers",
-                                reference = Reference.Custom(
-                                    name = "Map",
+                                reference = Reference.Language(
+                                    primitive = Reference.Language.Primitive.Map,
                                     generics = Reference.Generics(
                                         listOf(
-                                            Reference.Custom("String", false),
-                                            Reference.Custom(
-                                                name = "List",
+                                            Reference.Language(
+                                                primitive = Reference.Language.Primitive.String,
+                                                isNullable = false
+                                            ),
+                                            Reference.Language(
+                                                primitive = Reference.Language.Primitive.List,
                                                 isNullable = false,
                                                 generics = Reference.Generics(
                                                     listOf(
-                                                        Reference.Custom("Any", true)
+                                                        Reference.Language(
+                                                            primitive = Reference.Language.Primitive.Any,
+                                                            isNullable = true
+                                                        )
                                                     )
                                                 )
                                             )
@@ -245,7 +228,7 @@ object ClassModelTransformer {
                                     isNullable = true,
                                     generics = Reference.Generics(
                                         listOf(
-                                            it.content?.reference?.transform()
+                                            it.content?.reference?.transform(it.content.isNullable, false)
                                                 ?: Reference.Language(Reference.Language.Primitive.Unit)
                                         )
                                     )
@@ -253,15 +236,29 @@ object ClassModelTransformer {
                             ),
                         ),
                     ),
-                    secondaryConstructor = EndpointClass.RequestClass.SecondaryConstructor(
-                        name = "${name}Endpoint",
-                        parameters = parameters.map { it.transformParameter() },
+                    requestParameterConstructor = EndpointClass.RequestClass.RequestParameterConstructor(
+                        name = className("Request", it.content.name()),
+                        parameters = parameters
+                            .plus(it.content?.reference?.toField("body", false))
+                            .filterNotNull()
+                            .map { it.transformParameter() },
+                        content = it.content?.transform(),
                         path = EndpointClass.Path(path.map { it.transform() }),
                         method = method.name,
-                        query = query.map { it.identifier.value},
-                        headers = headers.map { it.identifier.value},
+                        query = query.map { it.identifier.value },
+                        headers = headers.map { it.identifier.value },
                     ),
-                    supers = emptyList()
+                    supers = listOf(
+                        Reference.Custom(
+                            name = className("Request"),
+                            generics = Reference.Generics(
+                                listOf(
+                                    it.content?.reference?.transform(it.content.isNullable, false)
+                                        ?: Reference.Language(Reference.Language.Primitive.Unit)
+                                )
+                            )
+                        )
+                    )
                 )
             },
             requestMapper = EndpointClass.RequestMapper(
@@ -270,7 +267,7 @@ object ClassModelTransformer {
                     EndpointClass.RequestMapper.RequestCondition(
                         content = it.content?.transform(),
                         isIterable = it.content?.reference?.isIterable ?: false,
-                        responseReference = Reference.Custom("Request${it.content.name()}")
+                        responseReference = Reference.Custom(className("Request", it.content.name()))
                     )
                 }
             ),
@@ -281,33 +278,37 @@ object ClassModelTransformer {
                         statusCode = it.status,
                         content = it.content?.transform(),
                         isIterable = it.content?.reference?.isIterable ?: false,
-                        responseReference = Reference.Custom("Response${it.status}${it.content.name()}")
+                        responseReference = Reference.Custom(
+                            name = className("Response", it.status, it.content.name())
+                        )
                     )
                 }
             ),
-            responseInterfaces = responses.map {
-                EndpointClass.ResponseInterface(
-                    name = Reference.Custom(
-                        name = "Response${it.status}",
-                        generics = Reference.Generics(
-                            listOf(
-                                Reference.Custom("T")
+            responseInterfaces = responses
+                .distinctBy { it.status }
+                .map {
+                    EndpointClass.ResponseInterface(
+                        name = Reference.Custom(
+                            name = className("Response", it.status),
+                            generics = Reference.Generics(
+                                listOf(
+                                    Reference.Custom("T")
+                                )
                             )
-                        )
-                    ),
-                    `super` = Reference.Custom(
-                        name = "Response",
-                        generics = Reference.Generics(
-                            listOf(
-                                Reference.Custom("T")
+                        ),
+                        `super` = Reference.Custom(
+                            name = "Response",
+                            generics = Reference.Generics(
+                                listOf(
+                                    Reference.Custom("T")
+                                )
                             )
                         )
                     )
-                )
-            },
+                },
             responseClasses = responses.map {
                 EndpointClass.ResponseClass(
-                    name = "Response${it.status}${it.content.name()}",
+                    name = className("Response", it.status, it.content.name()),
                     fields = listOf(
                         Field(
                             identifier = "status",
@@ -325,7 +326,10 @@ object ClassModelTransformer {
                                 isNullable = false,
                                 generics = Reference.Generics(
                                     listOf(
-                                        Reference.Custom(name = "String", isNullable = false),
+                                        Reference.Language(
+                                            primitive = Reference.Language.Primitive.String,
+                                            isNullable = false
+                                        ),
                                         Reference.Language(
                                             primitive = Reference.Language.Primitive.List,
                                             isNullable = false,
@@ -352,7 +356,7 @@ object ClassModelTransformer {
                                 isNullable = true,
                                 generics = Reference.Generics(
                                     listOf(
-                                        it.content?.reference?.transform()
+                                        it.content?.reference?.transform(it.content.isNullable, false)
                                             ?: Reference.Language(Reference.Language.Primitive.Unit)
                                     )
                                 )
@@ -362,10 +366,14 @@ object ClassModelTransformer {
                             isPrivate = true
                         )
                     ),
-                    allArgsConstructor = EndpointClass.ResponseClass.AllArgsConstructor(
-                        name = "Response${it.status}${it.content.name()}",
+                    responseAllArgsConstructor = EndpointClass.ResponseClass.ResponseAllArgsConstructor(
+                        name = className("Response", it.status, it.content.name()),
                         statusCode = it.status,
                         parameters = listOf(
+                            Parameter(
+                                identifier = "status",
+                                reference = Reference.Language(Reference.Language.Primitive.Integer)
+                            ),
                             Parameter(
                                 identifier = "headers",
                                 reference = Reference.Language(
@@ -373,9 +381,9 @@ object ClassModelTransformer {
                                     isNullable = false,
                                     generics = Reference.Generics(
                                         listOf(
-                                            Reference.Custom(
-                                                name = "String",
-                                                isNullable = false
+                                            Reference.Language(
+                                                primitive = Reference.Language.Primitive.String,
+                                                isNullable = false,
                                             ),
                                             Reference.Language(
                                                 primitive = Reference.Language.Primitive.List,
@@ -394,35 +402,47 @@ object ClassModelTransformer {
                                 )
                             ),
                             Parameter(
-                                identifier = "body",
-                                reference = it.content?.reference?.transform()
-                                    ?: Reference.Language(Reference.Language.Primitive.Unit)
+                                identifier = "content",
+                                reference = Reference.Custom(
+                                    name = "Wirespec.Content",
+                                    isNullable = false,
+                                    generics = Reference.Generics(
+                                        listOf(
+                                            it.content?.reference?.transform(it.content.isNullable, false)
+                                                ?: Reference.Language(Reference.Language.Primitive.Unit)
+                                        )
+                                    )
+                                )
                             )
                         ),
                         content = it.content?.transform()
                     ),
-                    returnReference = Reference.Custom(
-                        name = "Response${it.status}",
+                    `super` = Reference.Custom(
+                        name = className("Response", it.status),
                         generics = Reference.Generics(
                             listOf(
-                                it.content?.reference?.transform()
+                                it.content?.reference?.transform(it.content.isNullable, false)
                                     ?: Reference.Language(Reference.Language.Primitive.Unit)
                             )
                         ),
                         isNullable = false,
                     ),
                     statusCode = it.status,
-                    content = it.content?.transform()
+                    content = it.content?.transform(),
                 )
             },
-            supers = emptyList()
+            supers = listOf(
+                Reference.Custom(
+                    name = className("Wirespec.Endpoint")
+                )
+            )
         )
     }
 
     private fun Type.Shape.Field.transform() =
         Field(
             identifier = this.identifier.value,
-            reference = this.reference.transform(),
+            reference = this.reference.transform(isNullable, false),
             isPrivate = false,
             isFinal = false,
             isOverride = false,
@@ -430,8 +450,8 @@ object ClassModelTransformer {
 
     private fun Type.Shape.Field.transformParameter() =
         Parameter(
-            identifier = this.identifier.value,
-            reference = this.reference.transform(),
+            identifier = identifier.value,
+            reference = reference.transform(false, isNullable),
         )
 
     private fun Type.Shape.Field.Identifier.transform() =
@@ -449,37 +469,50 @@ object ClassModelTransformer {
 
     private fun Endpoint.Content.transform() = EndpointClass.Content(
         type = this.type,
-        reference = this.reference.transform()
+        reference = this.reference.transform(isNullable, false),
     )
 
-    private fun Type.Shape.Field.Reference.transform() =
+    private fun Type.Shape.Field.Reference.transform(isNullable: Boolean, isOptional: Boolean) =
         when (this) {
-            is Type.Shape.Field.Reference.Unit -> "Unit"
-            is Type.Shape.Field.Reference.Any -> "Any"
-            is Type.Shape.Field.Reference.Custom -> value
-            is Type.Shape.Field.Reference.Primitive -> when (type) {
-                Type.Shape.Field.Reference.Primitive.Type.String -> "String"
-                Type.Shape.Field.Reference.Primitive.Type.Integer -> "Long"
-                Type.Shape.Field.Reference.Primitive.Type.Number -> "Double"
-                Type.Shape.Field.Reference.Primitive.Type.Boolean -> "Boolean"
-            }
+            is Type.Shape.Field.Reference.Unit -> Reference.Language(
+                Reference.Language.Primitive.Unit,
+                isNullable,
+                isIterable,
+                isOptional
+            )
+
+            is Type.Shape.Field.Reference.Any -> Reference.Language(
+                Reference.Language.Primitive.Any,
+                isNullable,
+                isIterable,
+                isOptional
+            )
+
+            is Type.Shape.Field.Reference.Custom -> Reference.Custom(value, isNullable, isIterable, isOptional)
+            is Type.Shape.Field.Reference.Primitive ->
+                when (type) {
+                    Type.Shape.Field.Reference.Primitive.Type.String -> Reference.Language.Primitive.String
+                    Type.Shape.Field.Reference.Primitive.Type.Integer -> Reference.Language.Primitive.Long
+                    Type.Shape.Field.Reference.Primitive.Type.Number -> Reference.Language.Primitive.Double
+                    Type.Shape.Field.Reference.Primitive.Type.Boolean -> Reference.Language.Primitive.Boolean
+                }.let { Reference.Language(it, isNullable, isIterable, isOptional) }
         }
-            .let {
-                Reference.Custom(it)
-            }
-            .let {
-                if (isIterable) Reference.Custom(name = "List", generics = Reference.Generics(listOf(it)))
-                else it
-            }
-            .let {
-                if (isMap) Reference.Custom(name = "Map", generics = Reference.Generics(listOf(it)))
-                else it
-            }
 
     private fun Endpoint.Segment.transform() =
         when (this) {
             is Endpoint.Segment.Literal -> EndpointClass.Path.Literal(value)
             is Endpoint.Segment.Param -> EndpointClass.Path.Parameter(identifier.value)
         }
+
+    private fun className(vararg args: String): String =
+        args.joinToString("") {
+            it.firstToUpper()
+        }
+
+    private fun Type.Shape.Field.Reference.toField(identifier: String, isNullable: Boolean) = Type.Shape.Field(
+        Type.Shape.Field.Identifier(identifier),
+        this,
+        isNullable
+    )
 
 }

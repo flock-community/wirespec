@@ -264,10 +264,10 @@ class JavaEmitterTest {
             |    private final java.util.Map<String, java.util.List<Object>> headers;
             |    private final Wirespec.Content<Pet> content;
             |
-            |    public Response200ApplicationXml(java.util.Map<String, java.util.List<Object>> headers, Pet body) {
-            |      this.status = 200;
+            |    public Response200ApplicationXml(int status, java.util.Map<String, java.util.List<Object>> headers, Wirespec.Content<Pet> content) {
+            |      this.status = status;
             |      this.headers = headers;
-            |      this.content = new Wirespec.Content("application/xml", body);
+            |      this.content = content;
             |    }
             |
             |    @Override
@@ -291,10 +291,10 @@ class JavaEmitterTest {
             |    private final java.util.Map<String, java.util.List<Object>> headers;
             |    private final Wirespec.Content<Pet> content;
             |
-            |    public Response200ApplicationJson(java.util.Map<String, java.util.List<Object>> headers, Pet body) {
-            |      this.status = 200;
+            |    public Response200ApplicationJson(int status, java.util.Map<String, java.util.List<Object>> headers, Wirespec.Content<Pet> content) {
+            |      this.status = status;
             |      this.headers = headers;
-            |      this.content = new Wirespec.Content("application/json", body);
+            |      this.content = content;
             |    }
             |
             |    @Override
@@ -318,10 +318,10 @@ class JavaEmitterTest {
             |    private final java.util.Map<String, java.util.List<Object>> headers;
             |    private final Wirespec.Content<Void> content;
             |
-            |    public Response405Unit(java.util.Map<String, java.util.List<Object>> headers) {
-            |      this.status = 405;
+            |    public Response405Unit(int status, java.util.Map<String, java.util.List<Object>> headers, Wirespec.Content<Void> content) {
+            |      this.status = status;
             |      this.headers = headers;
-            |      this.content = null;
+            |      this.content = content;
             |    }
             |
             |    @Override
@@ -355,24 +355,27 @@ class JavaEmitterTest {
             |        return (Req) new RequestApplicationXWwwFormUrlencoded(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders(), content);
             |      }
             |      throw new IllegalStateException("Unknown response type");
-            |    }
+            |    };
             |  }
             |  static <B, Res extends Response<?>> Function<Wirespec.Response<B>, Res> RESPONSE_MAPPER(Wirespec.ContentMapper<B> contentMapper) {
             |    return response -> {
             |      if (response.getStatus() == 200 && response.getContent().type().equals("application/xml")) {
             |        Wirespec.Content<Pet> content = contentMapper.read(response.getContent(), Wirespec.getType(Pet.class, false));
-            |        return (Res) new Response200ApplicationXml(response.getHeaders(), content.body());
+            |        return (Res) new Response200ApplicationXml(response.getStatus(), response.getHeaders(), content);
             |      }
             |      if (response.getStatus() == 200 && response.getContent().type().equals("application/json")) {
             |        Wirespec.Content<Pet> content = contentMapper.read(response.getContent(), Wirespec.getType(Pet.class, false));
-            |        return (Res) new Response200ApplicationJson(response.getHeaders(), content.body());
+            |        return (Res) new Response200ApplicationJson(response.getStatus(), response.getHeaders(), content);
             |      }
             |      if (response.getStatus() == 405 && response.getContent() == null) {
-            |        return (Res) new Response405Unit(response.getHeaders());
+            |        return (Res) new Response405Unit(response.getStatus(), response.getHeaders(), null);
             |      }
             |      throw new IllegalStateException("Unknown response type");
             |    };
             |  }
+            |
+            |  public CompletableFuture<Response<?>> addPet(Request<?> request);
+            |
             |}
         """.trimMargin()
 

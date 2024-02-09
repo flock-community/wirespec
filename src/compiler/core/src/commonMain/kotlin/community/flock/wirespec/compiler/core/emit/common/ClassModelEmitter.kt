@@ -2,14 +2,11 @@ package community.flock.wirespec.compiler.core.emit.common
 
 import community.flock.wirespec.compiler.core.parse.nodes.ClassModel
 import community.flock.wirespec.compiler.core.parse.nodes.Definition
-import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
-import community.flock.wirespec.compiler.core.parse.nodes.Enum
 import community.flock.wirespec.compiler.core.parse.nodes.EnumClass
 import community.flock.wirespec.compiler.core.parse.nodes.Field
 import community.flock.wirespec.compiler.core.parse.nodes.Parameter
 import community.flock.wirespec.compiler.core.parse.nodes.Reference
-import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.RefinedClass
 import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
 import community.flock.wirespec.compiler.core.parse.transformer.ClassModelTransformer
@@ -46,13 +43,13 @@ abstract class ClassModelEmitter(
     abstract fun EnumClass.emit(): String
     abstract fun EndpointClass.emit(): String
     abstract fun EndpointClass.RequestClass.emit(): String
-    abstract fun EndpointClass.RequestClass.PrimaryConstructor.emit(): String
-    abstract fun EndpointClass.RequestClass.SecondaryConstructor.emit(): String
+    abstract fun EndpointClass.RequestClass.RequestAllArgsConstructor.emit(): String
+    abstract fun EndpointClass.RequestClass.RequestParameterConstructor.emit(): String
     abstract fun EndpointClass.RequestMapper.emit(): String
     abstract fun EndpointClass.RequestMapper.RequestCondition.emit(): String
     abstract fun EndpointClass.ResponseInterface.emit(): String
     abstract fun EndpointClass.ResponseClass.emit(): String
-    abstract fun EndpointClass.ResponseClass.AllArgsConstructor.emit(): String
+    abstract fun EndpointClass.ResponseClass.ResponseAllArgsConstructor.emit(): String
     abstract fun EndpointClass.ResponseMapper.emit(): String
     abstract fun EndpointClass.ResponseMapper.ResponseCondition.emit(): String
 
@@ -74,4 +71,5 @@ abstract class ClassModelEmitter(
 
     abstract fun EndpointClass.Path.emit(): String
     abstract fun EndpointClass.Content.emit(): String
+    abstract fun Reference.emit(): String
 }

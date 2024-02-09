@@ -27,27 +27,28 @@ data class EndpointClass(
     override val name: String,
     val path: String,
     val method: String,
+    val functionName: String,
     val requestClasses: List<RequestClass>,
     val responseInterfaces: List<ResponseInterface>,
     val responseClasses: List<ResponseClass>,
     val requestMapper: RequestMapper,
     val responseMapper: ResponseMapper,
-    val supers: List<Reference>,
+    val supers: List<Reference>
 ) : ClassModel {
     data class RequestClass(
         val name: String,
         val fields: List<Field>,
-        val primaryConstructor: PrimaryConstructor,
-        val secondaryConstructor: SecondaryConstructor,
+        val requestAllArgsConstructor: RequestAllArgsConstructor,
+        val requestParameterConstructor: RequestParameterConstructor,
         val supers: List<Reference>,
     ) {
-        data class PrimaryConstructor(
+        data class RequestAllArgsConstructor(
             val name: String,
             val parameters: List<Parameter>,
             val content: Content? = null
         )
 
-        data class SecondaryConstructor(
+        data class RequestParameterConstructor(
             val name: String,
             val parameters: List<Parameter>,
             val path: Path,
@@ -72,12 +73,12 @@ data class EndpointClass(
     data class ResponseClass(
         val name: String,
         val fields: List<Field>,
-        val allArgsConstructor: AllArgsConstructor,
-        val returnReference: Reference,
+        val responseAllArgsConstructor: ResponseAllArgsConstructor,
+        val `super`: Reference,
         val statusCode: String,
         val content: Content? = null
     ) {
-        data class AllArgsConstructor(
+        data class ResponseAllArgsConstructor(
             val name: String,
             val parameters: List<Parameter>,
             val statusCode: String,

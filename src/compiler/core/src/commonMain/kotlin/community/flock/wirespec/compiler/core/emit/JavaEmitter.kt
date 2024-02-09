@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.emit
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.hasEndpoints
+import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.isInt
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.needImports
 import community.flock.wirespec.compiler.core.emit.common.ClassModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
@@ -142,22 +143,25 @@ class JavaEmitter(
         |
         |${requestMapper.emit().spacer()}
         |${responseMapper.emit().spacer()}
+        |
+        |${SPACER}public CompletableFuture<Response<?>> ${functionName}(Request<?> request);
+        |
         |}
     """.trimMargin()
 
     override fun EndpointClass.RequestClass.emit() = """
-         |final class $name implements ${supers.joinToString(", ") { it.emit() }} {
+         |final class $name implements ${supers.joinToString(", ") { it.emitWrap() }} {
          |${fields.joinToString("\n") { "${it.emit()};" }.spacer()}
          |
-         |${primaryConstructor.emit().spacer()}
+         |${requestAllArgsConstructor.emit().spacer()}
          |
-         |${secondaryConstructor.emit().spacer()}
+         |${requestParameterConstructor.emit().spacer()}
          |
          |${fields.joinToString("\n\n") { it.emitGetter() }.spacer()}
          |}
     """.trimMargin()
 
-    override fun EndpointClass.RequestClass.PrimaryConstructor.emit(): String = """
+    override fun EndpointClass.RequestClass.RequestAllArgsConstructor.emit(): String = """
         |public $name(
         |${parameters.joinToString(",\n") { it.emit() }.spacer()}
         |) {
@@ -169,14 +173,14 @@ class JavaEmitter(
         |}
     """.trimMargin()
 
-    override fun EndpointClass.RequestClass.SecondaryConstructor.emit(): String = """
+    override fun EndpointClass.RequestClass.RequestParameterConstructor.emit(): String = """
         |public $name(
         |${parameters.joinToString(",\n") { it.emit() }.spacer()}
         |) {
         |  this.path = ${path.emit()};
         |  this.method = Wirespec.Method.${method};
-        |  this.query = java.util.Map.of(${query.joinToString (", ") { "\"$it\", $it" }});
-        |  this.headers = java.util.Map.of(${headers.joinToString (", ") { "\"$it\", $it" }});
+        |  this.query = java.util.Map.of(${query.joinToString(", ") { "\"$it\", java.util.List.of($it)" }});
+        |  this.headers = java.util.Map.of(${headers.joinToString(", ") { "\"$it\", java.util.List.of($it)" }});
         |  this.content = ${content?.emit() ?: "null"};
         |}
     """.trimMargin()
@@ -186,7 +190,7 @@ class JavaEmitter(
         |${SPACER}return request -> {
         |${this.conditions.joinToString("\n") { it.emit() }.spacer(2)}
         |${SPACER}${SPACER}throw new IllegalStateException("Unknown response type");
-        |${SPACER}}
+        |${SPACER}};
         |}
     """.trimMargin()
 
@@ -194,32 +198,32 @@ class JavaEmitter(
         if (content != null)
             """
                 |if (request.getContent().type().equals("${content.type}")) {
-                |${SPACER}Wirespec.Content<Pet> content = contentMapper.read(request.getContent(), Wirespec.getType(${content.reference.emit()}.class, ${isIterable}));
-                |${SPACER}return (Req) new ${responseReference.emit()}(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders(), content);
+                |${SPACER}Wirespec.Content<${content.reference.emitWrap()}> content = contentMapper.read(request.getContent(), Wirespec.getType(${content.reference.emit()}.class, ${isIterable}));
+                |${SPACER}return (Req) new ${responseReference.emitWrap()}(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders(), content);
                 |}
             """.trimMargin()
         else
             """
-                |if (request.getContent().type() == null) {
-                |${SPACER}return (Req) new ${responseReference.emit()}(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders());
+                |if (request.getContent() == null) {
+                |${SPACER}return (Req) new ${responseReference.emitWrap()}(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders(), null);
                 |}
             """.trimMargin()
 
     override fun EndpointClass.ResponseClass.emit(): String = """
-        |final class ${name} implements ${returnReference.emit()} {
+        |final class ${name} implements ${`super`.emitWrap()} {
         |${fields.joinToString("\n") { "${it.emit()};" }.spacer()}
         |
-        |${allArgsConstructor.emit().spacer()}
+        |${responseAllArgsConstructor.emit().spacer()}
         |
         |${fields.joinToString("\n\n") { it.emitGetter() }.spacer()}
         |}
     """.trimMargin()
 
-    override fun EndpointClass.ResponseClass.AllArgsConstructor.emit(): String = """
+    override fun EndpointClass.ResponseClass.ResponseAllArgsConstructor.emit(): String = """
         |public $name(${parameters.joinToString(", ") { it.emit() }}) {
-        |${SPACER}this.status = ${statusCode};
+        |${SPACER}this.status = status;
         |${SPACER}this.headers = headers;
-        |${SPACER}this.content = ${content?.emit()};
+        |${SPACER}this.content = content;
         |}
     """.trimMargin()
 
@@ -235,47 +239,46 @@ class JavaEmitter(
     override fun EndpointClass.ResponseMapper.ResponseCondition.emit(): String =
         if (content != null)
             """
-                |if (response.getStatus() == $statusCode && response.getContent().type().equals("${content.type}")) {
-                |${SPACER}Wirespec.Content<Pet> content = contentMapper.read(response.getContent(), Wirespec.getType(${content.reference.emit()}.class, ${isIterable}));
-                |${SPACER}return (Res) new ${responseReference.emit()}(response.getHeaders(), content.body());
+                |if (${if (statusCode.isInt()) "response.getStatus() == $statusCode && " else ""}response.getContent().type().equals("${content.type}")) {
+                |${SPACER}Wirespec.Content<${content.reference.emitWrap()}> content = contentMapper.read(response.getContent(), Wirespec.getType(${content.reference.emit()}.class, ${isIterable}));
+                |${SPACER}return (Res) new ${responseReference.emitWrap()}(response.getStatus(), response.getHeaders(), content);
                 |}
             """.trimMargin()
         else
             """
-                |if (response.getStatus() == $statusCode && response.getContent() == null) {
-                |${SPACER}return (Res) new ${responseReference.emit()}(response.getHeaders());
+                |if (${if (statusCode.isInt()) "response.getStatus() == $statusCode && " else ""}response.getContent() == null) {
+                |${SPACER}return (Res) new ${responseReference.emitWrap()}(response.getStatus(), response.getHeaders(), null);
                 |}
             """.trimMargin()
 
     override fun EndpointClass.ResponseInterface.emit(): String = """
-        |sealed interface ${name.emit()} extends ${`super`.emit()} {
+        |sealed interface ${name.emitWrap()} extends ${`super`.emitWrap()} {
         |};
     """.trimMargin()
 
     override fun Parameter.emit(): String = """
-        |${reference.emit()} $identifier
+        |${reference.emitWrap()} $identifier
     """.trimMargin()
 
     override fun Reference.Generics.emit(): String = """
-        |${references.takeIf { it.isNotEmpty() }?.joinToString(", ", "<", ">") { it.emit() }.orEmpty()}
+        |${references.takeIf { it.isNotEmpty() }?.joinToString(", ", "<", ">") { it.emitWrap() }.orEmpty()}
     """.trimMargin()
 
-    fun Reference.emit(): String =
-        when (this) {
+    override fun Reference.emit(): String {
+        return when (this) {
             is Reference.Custom -> emit()
             is Reference.Language -> emit()
         }
-            .let { if (isOptional) "java.util.Optional<$it>" else it }
-            .let { if (isIterable) "java.util.List<$it>" else it }
+    }
 
+    private fun Reference.emitWrap(): String = emit()
+        .let { if (isIterable) "java.util.List<$it>" else it }
+        .let { if (isOptional) "java.util.Optional<$it>" else it }
 
-    override fun Reference.Custom.emit(): String = this
-        .let {
-            """
-                |${name}${generics.emit()}
-            """.trimMargin()
+    override fun Reference.Custom.emit(): String = """
+        |${name}${generics.emit()}
+    """.trimMargin()
 
-        }
 
     override fun Reference.Language.emit(): String = """
         |${primitive.emit()}${generics.emit()}
@@ -303,18 +306,17 @@ class JavaEmitter(
             }
         }
 
-
     override fun EndpointClass.Content.emit(): String = """
         |new Wirespec.Content("$type", body)
     """.trimMargin()
 
     override fun Field.emit(): String = """
-        |${if (isPrivate) "private " else ""}${if (isPrivate) "final " else ""}${reference.emit()} ${identifier.sanitizeIdentifier()}
+        |${if (isPrivate) "private " else ""}${if (isPrivate) "final " else ""}${reference.emitWrap()} ${identifier.sanitizeIdentifier()}
     """.trimMargin()
 
     private fun Field.emitGetter(): String = """
         |@Override
-        |public ${reference.emit()} get${identifier.replaceFirstChar { it.uppercase() }}() {
+        |public ${reference.emitWrap()} get${identifier.replaceFirstChar { it.uppercase() }}() {
         |  return ${identifier};
         |}
     """.trimMargin()
@@ -352,5 +354,4 @@ class JavaEmitter(
             "true", "false"
         )
     }
-
 }
