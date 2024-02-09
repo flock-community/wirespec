@@ -1,3 +1,4 @@
 type Bla {
-  yolo: String
+  yolo: String,
+  class: Boolean
 }

@@ -89,7 +89,7 @@ class JavaEmitter(
         .map { Emitted(it.typeName.sanitizeSymbol(), "$pkg${importWireSpec(ast)}${importJava(ast)}${it.result}\n") }
 
     override fun TypeClass.emit(): String = """
-        |public record $name(
+        |public record ${name.sanitizeSymbol()}(
         |${fields.joinToString(",\n") { it.emit() }.spacer()}
         |){
         |};
@@ -125,7 +125,7 @@ class JavaEmitter(
     """.trimMargin()
 
     override fun EndpointClass.emit(): String = """
-        |public interface $name extends Wirespec.Endpoint {
+        |public interface ${name.sanitizeSymbol()} extends Wirespec.Endpoint {
         |${SPACER}static String PATH = "$path";
         |${SPACER}static String METHOD = "$method";
         |
@@ -150,7 +150,7 @@ class JavaEmitter(
     """.trimMargin()
 
     override fun EndpointClass.RequestClass.emit() = """
-         |final class $name implements ${supers.joinToString(", ") { it.emitWrap() }} {
+         |final class ${name.sanitizeSymbol()} implements ${supers.joinToString(", ") { it.emitWrap() }} {
          |${fields.joinToString("\n") { "${it.emit()};" }.spacer()}
          |
          |${requestAllArgsConstructor.emit().spacer()}
@@ -162,7 +162,7 @@ class JavaEmitter(
     """.trimMargin()
 
     override fun EndpointClass.RequestClass.RequestAllArgsConstructor.emit(): String = """
-        |public $name(
+        |public ${name.sanitizeSymbol()}(
         |${parameters.joinToString(",\n") { it.emit() }.spacer()}
         |) {
         |  this.path = path;
@@ -174,7 +174,7 @@ class JavaEmitter(
     """.trimMargin()
 
     override fun EndpointClass.RequestClass.RequestParameterConstructor.emit(): String = """
-        |public $name(
+        |public ${name.sanitizeSymbol()}(
         |${parameters.joinToString(",\n") { it.emit() }.spacer()}
         |) {
         |  this.path = ${path.emit()};
@@ -257,7 +257,7 @@ class JavaEmitter(
     """.trimMargin()
 
     override fun Parameter.emit(): String = """
-        |${reference.emitWrap()} $identifier
+        |${reference.emitWrap()} ${identifier.sanitizeKeywords()}
     """.trimMargin()
 
     override fun Reference.Generics.emit(): String = """

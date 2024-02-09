@@ -70,7 +70,7 @@ class KotlinEmitter(
         }
 
     override fun TypeClass.emit(): String = """
-        |data class $name(
+        |data class ${name.sanitizeSymbol()}(
         |${fields.joinToString(",\n") { it.emit() }.spacer()}
         |)
     """.trimMargin()
@@ -94,7 +94,7 @@ class KotlinEmitter(
     }
 
     override fun EndpointClass.emit(): String = """
-        |interface $name : ${supers.joinToString(", ") { it.emitWrap() }} {
+        |interface ${name.sanitizeSymbol()} : ${supers.joinToString(", ") { it.emitWrap() }} {
         |${SPACER}sealed interface Request<T> : Wirespec.Request<T>
         |${requestClasses.joinToString("\n") { it.emit() }.spacer()}
         |
@@ -112,7 +112,7 @@ class KotlinEmitter(
     """.trimMargin()
 
     override fun EndpointClass.RequestClass.emit() = """
-         |data class ${name}(
+         |data class ${name.sanitizeSymbol()}(
          |${fields.joinToString(",\n") { it.emit() }.spacer()}
          |) : ${supers.joinToString(", ") { it.emitWrap() }} {
          |${requestParameterConstructor.emit().spacer()}
@@ -137,7 +137,7 @@ class KotlinEmitter(
     """.trimMargin()
 
     override fun EndpointClass.ResponseClass.emit(): String = """
-        |data class ${name}(${fields.joinToString(", ") { it.emit() }}) : ${`super`.emitWrap()}
+        |data class ${name.sanitizeSymbol()}(${fields.joinToString(", ") { it.emit() }}) : ${`super`.emitWrap()}
     """.trimMargin()
 
     override fun EndpointClass.ResponseClass.ResponseAllArgsConstructor.emit(): String =
@@ -199,7 +199,7 @@ class KotlinEmitter(
             """.trimMargin()
 
     override fun Parameter.emit(): String = """
-        |${identifier}: ${reference.emitWrap()}${if(reference.isOptional) "?" else ""}
+        |${identifier.sanitizeKeywords()}: ${reference.emitWrap()}${if(reference.isOptional) "?" else ""}
     """.trimMargin()
 
     override fun Reference.Generics.emit(): String = """
@@ -218,7 +218,7 @@ class KotlinEmitter(
         .let { if (isOptional) "$it?" else it }
 
     override fun Reference.Custom.emit(): String = """
-        |${name}${generics.emit()}
+        |${name.sanitizeSymbol()}${generics.emit()}
     """.trimMargin()
 
     override fun Reference.Language.emit(): String = """
@@ -239,7 +239,7 @@ class KotlinEmitter(
     }
 
     override fun Field.emit(): String = """
-        |${if (isOverride) "override " else ""}val ${identifier}: ${reference.emitWrap()}${if (reference.isNullable) " = null" else ""}${if (reference.isOptional) " = null" else ""}
+        |${if (isOverride) "override " else ""}val ${identifier.sanitizeKeywords()}: ${reference.emitWrap()}${if (reference.isNullable) " = null" else ""}${if (reference.isOptional) " = null" else ""}
     """.trimMargin()
 
     private fun String.sanitizeKeywords() = if (preservedKeywords.contains(this)) "`$this`" else this

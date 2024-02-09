@@ -29,7 +29,8 @@ class WirespecCliTest {
             |package community.flock.wirespec.generated
             |
             |data class Bla(
-            |  val yolo: String
+            |  val yolo: String,
+            |  val `class`: Boolean
             |)
             |
         """.trimMargin()
@@ -59,7 +60,8 @@ class WirespecCliTest {
             |package community.flock.next;
             |
             |public record Bla(
-            |  String yolo
+            |  String yolo,
+            |  Boolean _class
             |){
             |};
             |
@@ -124,7 +126,7 @@ class WirespecCliTest {
         val expected = """
             |data class Relationship(
             |  val namespace: String,
-            |  val object: String,
+            |  val `object`: String,
             |  val relation: String,
             |  val subject_id: String? = null,
             |  val subject_set: SubjectSet? = null
