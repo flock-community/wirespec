@@ -14,6 +14,7 @@ import community.flock.wirespec.compiler.core.parse.nodes.Parameter
 import community.flock.wirespec.compiler.core.parse.nodes.Reference
 import community.flock.wirespec.compiler.core.parse.nodes.RefinedClass
 import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
+import community.flock.wirespec.compiler.core.parse.nodes.UnionClass
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
@@ -72,7 +73,7 @@ class KotlinEmitter(
     override fun TypeClass.emit(): String = """
         |data class ${name.sanitizeSymbol()}(
         |${fields.joinToString(",\n") { it.emit() }.spacer()}
-        |)
+        |)${if (supers.isNotEmpty()) ": ${supers.joinToString (", "){ it.emit() }}" else ""}
     """.trimMargin()
 
     override fun RefinedClass.emit() = """
@@ -92,6 +93,10 @@ class KotlinEmitter(
             |}
         """.trimMargin()
     }
+
+    override fun UnionClass.emit(): String = """
+        |sealed interface $name
+    """.trimMargin()
 
     override fun EndpointClass.emit(): String = """
         |interface ${name.sanitizeSymbol()} : ${supers.joinToString(", ") { it.emitWrap() }} {

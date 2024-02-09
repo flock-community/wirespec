@@ -15,6 +15,7 @@ import community.flock.wirespec.compiler.core.parse.nodes.Parameter
 import community.flock.wirespec.compiler.core.parse.nodes.Reference
 import community.flock.wirespec.compiler.core.parse.nodes.RefinedClass
 import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
+import community.flock.wirespec.compiler.core.parse.nodes.UnionClass
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
@@ -121,6 +122,10 @@ class JavaEmitter(
         |${SPACER}${SPACER}return label;
         |${SPACER}}
         |}
+    """.trimMargin()
+
+    override fun UnionClass.emit(): String = """
+        |sealed interface $name {}
     """.trimMargin()
 
     override fun EndpointClass.emit(): String = """

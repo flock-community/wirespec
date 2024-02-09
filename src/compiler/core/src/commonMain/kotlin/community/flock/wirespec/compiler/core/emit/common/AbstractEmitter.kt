@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
 import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.Type
+import community.flock.wirespec.compiler.core.parse.nodes.Union
 import community.flock.wirespec.compiler.utils.Logger
 
 interface Emitters : TypeDefinitionEmitter, EnumDefinitionEmitter, RefinedTypeDefinitionEmitter,
@@ -33,6 +34,7 @@ abstract class AbstractEmitter(override val logger: Logger, override val split: 
                 is Endpoint -> Emitted(it.emitName(), it.emit())
                 is Enum -> Emitted(it.emitName(), it.emit())
                 is Refined -> Emitted(it.emitName(), it.emit())
+                is Union -> TODO()
             }
         }
         .run {
