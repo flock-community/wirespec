@@ -72,4 +72,5 @@ abstract class ClassModelEmitter(
     abstract fun EndpointClass.Path.emit(): String
     abstract fun EndpointClass.Content.emit(): String
     abstract fun Reference.emit(): String
+    abstract fun Reference.Wirespec.emit(): String
 }

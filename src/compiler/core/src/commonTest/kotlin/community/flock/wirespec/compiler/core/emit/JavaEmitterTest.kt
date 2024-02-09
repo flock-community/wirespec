@@ -99,8 +99,8 @@ class JavaEmitterTest {
             |    ) {
             |      this.path = "/" + "pet";
             |      this.method = Wirespec.Method.POST;
-            |      this.query = java.util.Map.of();
-            |      this.headers = java.util.Map.of();
+            |      this.query = java.util.Map.ofEntries();
+            |      this.headers = java.util.Map.ofEntries();
             |      this.content = new Wirespec.Content("application/xml", body);
             |    }
             |
@@ -156,8 +156,8 @@ class JavaEmitterTest {
             |    ) {
             |      this.path = "/" + "pet";
             |      this.method = Wirespec.Method.POST;
-            |      this.query = java.util.Map.of();
-            |      this.headers = java.util.Map.of();
+            |      this.query = java.util.Map.ofEntries();
+            |      this.headers = java.util.Map.ofEntries();
             |      this.content = new Wirespec.Content("application/json", body);
             |    }
             |
@@ -213,8 +213,8 @@ class JavaEmitterTest {
             |    ) {
             |      this.path = "/" + "pet";
             |      this.method = Wirespec.Method.POST;
-            |      this.query = java.util.Map.of();
-            |      this.headers = java.util.Map.of();
+            |      this.query = java.util.Map.ofEntries();
+            |      this.headers = java.util.Map.ofEntries();
             |      this.content = new Wirespec.Content("application/x-www-form-urlencoded", body);
             |    }
             |

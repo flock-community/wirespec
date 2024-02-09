@@ -53,7 +53,8 @@ class CompileEndpointTest {
             |  }
             |
             |  sealed interface Response<T> : Wirespec.Response<T>
-            |  sealed interface Response200<T> : Response<T>
+            |  sealed interface Response2XX<T> : Response<T>
+            |  sealed interface Response200<T> : Response2XX<T>
             |  data class Response200ApplicationJson(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Todo>? = null) : Response200<Todo>
             |  companion object {
             |    const val PATH = "/todo"
@@ -105,11 +106,11 @@ class CompileEndpointTest {
             |  }
             |
             |  final class RequestUnit implements Request<Void> {
-            |    String path;
-            |    Wirespec.Method method;
-            |    java.util.Map<String, java.util.List<Object>> query;
-            |    java.util.Map<String, java.util.List<Object>> headers;
-            |    Wirespec.Content<Void> content;
+            |    private final String path;
+            |    private final Wirespec.Method method;
+            |    private final java.util.Map<String, java.util.List<Object>> query;
+            |    private final java.util.Map<String, java.util.List<Object>> headers;
+            |    private final Wirespec.Content<Void> content;
             |
             |    public RequestUnit(
             |      String path,
@@ -131,8 +132,8 @@ class CompileEndpointTest {
             |    ) {
             |      this.path = "/" + "todo";
             |      this.method = Wirespec.Method.GET;
-            |      this.query = java.util.Map.of("done", java.util.List.of(done));
-            |      this.headers = java.util.Map.of("auth", java.util.List.of(auth));
+            |      this.query = java.util.Map.ofEntries(java.util.Map.entry("done", java.util.List.of(done)));
+            |      this.headers = java.util.Map.ofEntries(java.util.Map.entry("auth", java.util.List.of(auth)));
             |      this.content = null;
             |    }
             |
@@ -165,7 +166,10 @@ class CompileEndpointTest {
             |  sealed interface Response<T> extends Wirespec.Response<T> {
             |  };
             |
-            |  sealed interface Response200<T> extends Response<T> {
+            |  sealed interface Response2XX<T> extends Response<T> {
+            |  };
+            |
+            |  sealed interface Response200<T> extends Response2XX<T> {
             |  };
             |
             |  final class Response200ApplicationJson implements Response200<Todo> {

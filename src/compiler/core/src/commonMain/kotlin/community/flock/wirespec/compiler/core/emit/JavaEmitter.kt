@@ -179,8 +179,8 @@ class JavaEmitter(
         |) {
         |  this.path = ${path.emit()};
         |  this.method = Wirespec.Method.${method};
-        |  this.query = java.util.Map.of(${query.joinToString(", ") { "\"$it\", java.util.List.of($it)" }});
-        |  this.headers = java.util.Map.of(${headers.joinToString(", ") { "\"$it\", java.util.List.of($it)" }});
+        |  this.query = java.util.Map.ofEntries(${query.joinToString(", ") { "java.util.Map.entry(\"$it\", java.util.List.of(${it.sanitizeIdentifier()}))" }});
+        |  this.headers = java.util.Map.ofEntries(${headers.joinToString(", ") { "java.util.Map.entry(\"$it\", java.util.List.of(${it.sanitizeIdentifier()}))" }});
         |  this.content = ${content?.emit() ?: "null"};
         |}
     """.trimMargin()
@@ -257,7 +257,7 @@ class JavaEmitter(
     """.trimMargin()
 
     override fun Parameter.emit(): String = """
-        |${reference.emitWrap()} ${identifier.sanitizeKeywords()}
+        |${reference.emitWrap()} ${identifier.sanitizeIdentifier()}
     """.trimMargin()
 
     override fun Reference.Generics.emit(): String = """
@@ -268,6 +268,7 @@ class JavaEmitter(
         return when (this) {
             is Reference.Custom -> emit()
             is Reference.Language -> emit()
+            is Reference.Wirespec -> emit()
         }
     }
 
@@ -276,13 +277,18 @@ class JavaEmitter(
         .let { if (isOptional) "java.util.Optional<$it>" else it }
 
     override fun Reference.Custom.emit(): String = """
-        |${name}${generics.emit()}
+        |${name.sanitizeSymbol()}${generics.emit()}
     """.trimMargin()
 
 
     override fun Reference.Language.emit(): String = """
         |${primitive.emit()}${generics.emit()}
     """.trimMargin()
+
+    override fun Reference.Wirespec.emit(): String = """
+        |Wirespec.${name}${generics.emit()}
+    """.trimMargin()
+
 
     override fun Reference.Language.Primitive.emit(): String = when (this) {
         Reference.Language.Primitive.Any -> "Object"
@@ -316,8 +322,8 @@ class JavaEmitter(
 
     private fun Field.emitGetter(): String = """
         |@Override
-        |public ${reference.emitWrap()} get${identifier.replaceFirstChar { it.uppercase() }}() {
-        |  return ${identifier};
+        |public ${reference.emitWrap()} get${identifier.sanitizeIdentifier().replaceFirstChar { it.uppercase() }}() {
+        |  return ${identifier.sanitizeIdentifier()};
         |}
     """.trimMargin()
 

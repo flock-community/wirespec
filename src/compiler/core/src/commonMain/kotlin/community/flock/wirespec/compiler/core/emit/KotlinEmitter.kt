@@ -210,12 +210,17 @@ class KotlinEmitter(
         when (this) {
             is Reference.Custom -> emit()
             is Reference.Language -> emit()
+            is Reference.Wirespec -> emit()
         }
 
     private fun Reference.emitWrap(): String = emit()
         .let { if (isIterable) "List<$it>" else it }
         .let { if (isNullable) "$it?" else it }
         .let { if (isOptional) "$it?" else it }
+
+    override fun Reference.Wirespec.emit(): String = """
+        |Wirespec.${name}${generics.emit()}
+    """.trimMargin()
 
     override fun Reference.Custom.emit(): String = """
         |${name.sanitizeSymbol()}${generics.emit()}

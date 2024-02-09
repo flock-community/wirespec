@@ -2,6 +2,8 @@ package community.flock.wirespec.compiler.core.parse.transformer
 
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.firstToLower
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.firstToUpper
+import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.isInt
+import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.isStatusCode
 import community.flock.wirespec.compiler.core.parse.nodes.ClassModel
 import community.flock.wirespec.compiler.core.parse.nodes.Definition
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
@@ -18,14 +20,12 @@ import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
 
 object ClassModelTransformer {
 
-    fun transform(ast: List<Definition>): List<ClassModel> {
-        return ast.map {
-            when (it) {
-                is Endpoint -> it.transform()
-                is Enum -> it.transform()
-                is Refined -> it.transform()
-                is Type -> it.transform()
-            }
+    fun transform(ast: List<Definition>): List<ClassModel> = ast.map {
+        when (it) {
+            is Endpoint -> it.transform()
+            is Enum -> it.transform()
+            is Refined -> it.transform()
+            is Type -> it.transform()
         }
     }
 
@@ -80,11 +80,15 @@ object ClassModelTransformer {
                                 isNullable = false,
                             ),
                             isOverride = true,
+                            isPrivate = true,
+                            isFinal = true,
                         ),
                         Field(
                             identifier = "method",
-                            reference = Reference.Custom("Wirespec.Method", false),
+                            reference = Reference.Wirespec("Method"),
                             isOverride = true,
+                            isPrivate = true,
+                            isFinal = true,
                         ),
                         Field(
                             identifier = "query",
@@ -112,6 +116,8 @@ object ClassModelTransformer {
                                 )
                             ),
                             isOverride = true,
+                            isPrivate = true,
+                            isFinal = true,
                         ),
                         Field(
                             identifier = "headers",
@@ -139,11 +145,13 @@ object ClassModelTransformer {
                                 )
                             ),
                             isOverride = true,
+                            isPrivate = true,
+                            isFinal = true,
                         ),
                         Field(
                             identifier = "content",
-                            reference = Reference.Custom(
-                                name = "Wirespec.Content",
+                            reference = Reference.Wirespec(
+                                name = "Content",
                                 isNullable = true,
                                 generics = Reference.Generics(
                                     listOf(
@@ -153,6 +161,8 @@ object ClassModelTransformer {
                                 )
                             ),
                             isOverride = true,
+                            isPrivate = true,
+                            isFinal = true,
                         ),
                     ),
                     requestAllArgsConstructor = EndpointClass.RequestClass.RequestAllArgsConstructor(
@@ -167,7 +177,7 @@ object ClassModelTransformer {
                             ),
                             Parameter(
                                 identifier = "method",
-                                reference = Reference.Custom("Wirespec.Method", false)
+                                reference = Reference.Wirespec("Method", false)
                             ),
                             Parameter(
                                 identifier = "query",
@@ -223,8 +233,8 @@ object ClassModelTransformer {
                             ),
                             Parameter(
                                 identifier = "content",
-                                reference = Reference.Custom(
-                                    name = "Wirespec.Content",
+                                reference = Reference.Wirespec(
+                                    name = "Content",
                                     isNullable = true,
                                     generics = Reference.Generics(
                                         listOf(
@@ -273,7 +283,7 @@ object ClassModelTransformer {
             ),
             responseMapper = EndpointClass.ResponseMapper(
                 name = "RESPONSE_MAPPER",
-                conditions = responses.map {
+                conditions = responses.sortedBy { it.status }.map {
                     EndpointClass.ResponseMapper.ResponseCondition(
                         statusCode = it.status,
                         content = it.content?.transform(),
@@ -285,11 +295,12 @@ object ClassModelTransformer {
                 }
             ),
             responseInterfaces = responses
-                .distinctBy { it.status }
+                .map { it.status.groupStatus() }
+                .distinct()
                 .map {
                     EndpointClass.ResponseInterface(
                         name = Reference.Custom(
-                            name = className("Response", it.status),
+                            name = className("Response", it),
                             generics = Reference.Generics(
                                 listOf(
                                     Reference.Custom("T")
@@ -298,6 +309,29 @@ object ClassModelTransformer {
                         ),
                         `super` = Reference.Custom(
                             name = "Response",
+                            generics = Reference.Generics(
+                                listOf(
+                                    Reference.Custom("T")
+                                )
+                            )
+                        )
+                    )
+                } + responses
+                .filter { it.status.isStatusCode() }
+                .map { it.status }
+                .distinct()
+                .map {
+                    EndpointClass.ResponseInterface(
+                        name = Reference.Custom(
+                            name = className("Response", it),
+                            generics = Reference.Generics(
+                                listOf(
+                                    Reference.Custom("T")
+                                )
+                            )
+                        ),
+                        `super` = Reference.Custom(
+                            name = className("Response", it.groupStatus()),
                             generics = Reference.Generics(
                                 listOf(
                                     Reference.Custom("T")
@@ -351,8 +385,8 @@ object ClassModelTransformer {
                         ),
                         Field(
                             identifier = "content",
-                            reference = Reference.Custom(
-                                name = "Wirespec.Content",
+                            reference = Reference.Wirespec(
+                                name = "Content",
                                 isNullable = true,
                                 generics = Reference.Generics(
                                     listOf(
@@ -403,8 +437,8 @@ object ClassModelTransformer {
                             ),
                             Parameter(
                                 identifier = "content",
-                                reference = Reference.Custom(
-                                    name = "Wirespec.Content",
+                                reference = Reference.Wirespec(
+                                    name = "Content",
                                     isNullable = false,
                                     generics = Reference.Generics(
                                         listOf(
@@ -432,8 +466,8 @@ object ClassModelTransformer {
                 )
             },
             supers = listOf(
-                Reference.Custom(
-                    name = className("Wirespec.Endpoint")
+                Reference.Wirespec(
+                    name = "Endpoint"
                 )
             )
         )
@@ -514,5 +548,9 @@ object ClassModelTransformer {
         this,
         isNullable
     )
+
+    private fun String.groupStatus() =
+        if (isInt()) substring(0, 1) + "XX"
+        else firstToUpper()
 
 }

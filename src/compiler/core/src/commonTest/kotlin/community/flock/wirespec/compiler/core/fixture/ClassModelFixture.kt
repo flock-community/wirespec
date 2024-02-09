@@ -73,7 +73,7 @@ object ClassModelFixture {
             path = "/pet",
             method = "POST",
             supers = listOf(
-                Reference.Custom("Wirespec.Endpoint")
+                Reference.Wirespec("Endpoint")
             ),
             requestClasses = listOf(
                 EndpointClass.RequestClass(
@@ -88,7 +88,7 @@ object ClassModelFixture {
                         ),
                         Field(
                             identifier = "method",
-                            reference = Reference.Custom("Wirespec.Method", false),
+                            reference = Reference.Wirespec("Method", false),
                             isOverride = true,
                             isFinal = true,
                             isPrivate = true
@@ -152,8 +152,8 @@ object ClassModelFixture {
                         ),
                         Field(
                             identifier = "content",
-                            reference = Reference.Custom(
-                                name = "Wirespec.Content",
+                            reference = Reference.Wirespec(
+                                name = "Content",
                                 isNullable = true,
                                 generics = Reference.Generics(
                                     listOf(
@@ -179,8 +179,8 @@ object ClassModelFixture {
                             ),
                             Parameter(
                                 identifier = "method",
-                                reference = Reference.Custom(
-                                    name = "Wirespec.Method",
+                                reference = Reference.Wirespec(
+                                    name = "Method",
                                     isNullable = false,
                                     isOptional = false,
                                 ),
@@ -238,8 +238,8 @@ object ClassModelFixture {
                                 )
                             ),
                             Parameter(
-                                "content", Reference.Custom(
-                                    name = "Wirespec.Content",
+                                "content", Reference.Wirespec(
+                                    name = "Content",
                                     isNullable = true,
                                     isOptional = false,
                                     generics = Reference.Generics(
@@ -302,7 +302,7 @@ object ClassModelFixture {
                         ),
                         Field(
                             identifier = "method",
-                            reference = Reference.Custom("Wirespec.Method", false),
+                            reference = Reference.Wirespec("Method", false),
                             isOverride = true,
                             isFinal = true,
                             isPrivate = true
@@ -360,8 +360,8 @@ object ClassModelFixture {
                         ),
                         Field(
                             identifier = "content",
-                            reference = Reference.Custom(
-                                name = "Wirespec.Content",
+                            reference = Reference.Wirespec(
+                                name = "Content",
                                 isNullable = true,
                                 generics = Reference.Generics(
                                     listOf(
@@ -379,7 +379,7 @@ object ClassModelFixture {
                         name = "RequestApplicationJson",
                         parameters = listOf(
                             Parameter("path", Reference.Custom("String", false)),
-                            Parameter("method", Reference.Custom("Wirespec.Method", false)),
+                            Parameter("method", Reference.Wirespec("Method", false)),
                             Parameter(
                                 "query", Reference.Language(
                                     primitive = Primitive.Map,
@@ -432,8 +432,8 @@ object ClassModelFixture {
                                 )
                             ),
                             Parameter(
-                                "content", Reference.Custom(
-                                    name = "Wirespec.Content",
+                                "content", Reference.Wirespec(
+                                    name = "Content",
                                     isNullable = true,
                                     generics = Reference.Generics(
                                         listOf(
@@ -501,7 +501,7 @@ object ClassModelFixture {
                         ),
                         Field(
                             identifier = "method",
-                            reference = Reference.Custom("Wirespec.Method", false),
+                            reference = Reference.Wirespec("Method", false),
                             isOverride = true,
                             isFinal = true,
                             isPrivate = true
@@ -552,8 +552,8 @@ object ClassModelFixture {
                         ),
                         Field(
                             identifier = "content",
-                            reference = Reference.Custom(
-                                name = "Wirespec.Content",
+                            reference = Reference.Wirespec(
+                                name = "Content",
                                 isNullable = true,
                                 generics = Reference.Generics(
                                     listOf(
@@ -570,7 +570,7 @@ object ClassModelFixture {
                         name = "RequestApplicationXWwwFormUrlencoded",
                         parameters = listOf(
                             Parameter("path", Reference.Custom("String", false)),
-                            Parameter("method", Reference.Custom("Wirespec.Method", false)),
+                            Parameter("method", Reference.Wirespec("Method", false)),
                             Parameter(
                                 identifier = "query", Reference.Language(
                                     primitive = Primitive.Map,
@@ -621,8 +621,8 @@ object ClassModelFixture {
                                 )
                             ),
                             Parameter(
-                                "content", Reference.Custom(
-                                    name = "Wirespec.Content",
+                                "content", Reference.Wirespec(
+                                    name = "Content",
                                     isNullable = true,
                                     generics = Reference.Generics(
                                         listOf(
@@ -785,8 +785,8 @@ object ClassModelFixture {
                         ),
                         Field(
                             identifier = "content",
-                            reference = Reference.Custom(
-                                name = "Wirespec.Content",
+                            reference = Reference.Wirespec(
+                                name = "Content",
                                 isNullable = true,
                                 generics = Reference.Generics(
                                     listOf(
@@ -841,8 +841,8 @@ object ClassModelFixture {
                             ),
                             Parameter(
                                 identifier = "content",
-                                reference = Reference.Custom(
-                                    name = "Wirespec.Content",
+                                reference = Reference.Wirespec(
+                                    name = "Content",
                                     isNullable = true,
                                     generics = Reference.Generics(
                                         listOf(
@@ -920,8 +920,8 @@ object ClassModelFixture {
                         ),
                         Field(
                             identifier = "content",
-                            reference = Reference.Custom(
-                                name = "Wirespec.Content",
+                            reference = Reference.Wirespec(
+                                name = "Content",
                                 isNullable = false,
                                 generics = Reference.Generics(
                                     listOf(
@@ -976,8 +976,8 @@ object ClassModelFixture {
                             ),
                             Parameter(
                                 identifier = "content",
-                                reference = Reference.Custom(
-                                    name = "Wirespec.Content",
+                                reference = Reference.Wirespec(
+                                    name = "Content",
                                     isNullable = false,
                                     generics = Reference.Generics(
                                         listOf(
@@ -1053,8 +1053,8 @@ object ClassModelFixture {
                         ),
                         Field(
                             identifier = "content",
-                            reference = Reference.Custom(
-                                name = "Wirespec.Content",
+                            reference = Reference.Wirespec(
+                                name = "Content",
                                 isNullable = true,
                                 generics = Reference.Generics(
                                     listOf(
@@ -1106,8 +1106,8 @@ object ClassModelFixture {
                             ),
                             Parameter(
                                 identifier = "content",
-                                reference = Reference.Custom(
-                                    name = "Wirespec.Content",
+                                reference = Reference.Wirespec(
+                                    name = "Content",
                                     isNullable = true,
                                     generics = Reference.Generics(
                                         listOf(

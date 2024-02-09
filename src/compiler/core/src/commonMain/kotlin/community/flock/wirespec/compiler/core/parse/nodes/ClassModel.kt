@@ -151,6 +151,14 @@ sealed interface Reference {
         val generics: Generics = Generics()
     ) : Reference
 
+    data class Wirespec(
+        val name: String,
+        override val isNullable: Boolean = false,
+        override val isIterable: Boolean = false,
+        override val isOptional: Boolean = false,
+        val generics: Generics = Generics()
+    ) : Reference
+
     data class Generics(
         val references: List<Reference> = emptyList()
     )

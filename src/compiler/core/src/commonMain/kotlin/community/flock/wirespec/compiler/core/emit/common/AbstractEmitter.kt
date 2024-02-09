@@ -55,5 +55,6 @@ abstract class AbstractEmitter(override val logger: Logger, override val split: 
         fun AST.needImports() = any { it is Endpoint || it is Enum || it is Refined }
         fun AST.hasEndpoints() = any { it is Endpoint }
         fun String.isInt() = toIntOrNull() != null
+        fun String.isStatusCode() = toIntOrNull()?.let { it in 0 .. 599 } ?: false
     }
 }
