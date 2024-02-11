@@ -59,6 +59,10 @@ abstract class ClassModelEmitter(
     abstract fun Reference.Language.emit(): String
     abstract fun Reference.Language.Primitive.emit(): String
     abstract fun Field.emit(): String
+    abstract fun EndpointClass.Path.emit(): String
+    abstract fun EndpointClass.Content.emit(): String
+    abstract fun Reference.emit(): String
+    abstract fun Reference.Wirespec.emit(): String
     fun String.spacer(space: Int = 1) = this
         .split("\n")
         .joinToString("\n") {
@@ -69,8 +73,4 @@ abstract class ClassModelEmitter(
             }
         }
 
-    abstract fun EndpointClass.Path.emit(): String
-    abstract fun EndpointClass.Content.emit(): String
-    abstract fun Reference.emit(): String
-    abstract fun Reference.Wirespec.emit(): String
 }
