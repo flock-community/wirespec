@@ -152,7 +152,7 @@ object ClassModelTransformer {
                             identifier = "content",
                             reference = Reference.Wirespec(
                                 name = "Content",
-                                isNullable = true,
+                                isNullable = it.content == null,
                                 generics = Reference.Generics(
                                     listOf(
                                         it.content?.reference?.transform(it.content.isNullable, false)
@@ -235,7 +235,7 @@ object ClassModelTransformer {
                                 identifier = "content",
                                 reference = Reference.Wirespec(
                                     name = "Content",
-                                    isNullable = true,
+                                    isNullable = it.content == null,
                                     generics = Reference.Generics(
                                         listOf(
                                             it.content?.reference?.transform(it.content.isNullable, false)
@@ -387,7 +387,7 @@ object ClassModelTransformer {
                             identifier = "content",
                             reference = Reference.Wirespec(
                                 name = "Content",
-                                isNullable = true,
+                                isNullable = it.content == null,
                                 generics = Reference.Generics(
                                     listOf(
                                         it.content?.reference?.transform(it.content.isNullable, false)
@@ -439,7 +439,7 @@ object ClassModelTransformer {
                                 identifier = "content",
                                 reference = Reference.Wirespec(
                                     name = "Content",
-                                    isNullable = false,
+                                    isNullable = it.content == null,
                                     generics = Reference.Generics(
                                         listOf(
                                             it.content?.reference?.transform(it.content.isNullable, false)

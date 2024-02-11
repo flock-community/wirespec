@@ -199,7 +199,7 @@ class KotlinEmitter(
             """.trimMargin()
 
     override fun Parameter.emit(): String = """
-        |${identifier.sanitizeKeywords()}: ${reference.emitWrap()}${if(reference.isOptional) "?" else ""}
+        |${identifier.sanitizeKeywords()}: ${reference.emitWrap()}
     """.trimMargin()
 
     override fun Reference.Generics.emit(): String = """

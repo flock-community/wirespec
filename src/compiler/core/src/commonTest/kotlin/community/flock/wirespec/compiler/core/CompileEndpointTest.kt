@@ -55,7 +55,7 @@ class CompileEndpointTest {
             |  sealed interface Response<T> : Wirespec.Response<T>
             |  sealed interface Response2XX<T> : Response<T>
             |  sealed interface Response200<T> : Response2XX<T>
-            |  data class Response200ApplicationJson(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Todo>? = null) : Response200<Todo>
+            |  data class Response200ApplicationJson(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Todo>) : Response200<Todo>
             |  companion object {
             |    const val PATH = "/todo"
             |    const val METHOD = "GET"
