@@ -31,26 +31,26 @@ class JavaEmitter(
         |import java.lang.reflect.ParameterizedType;
         |
         |public interface Wirespec {
-        |${AbstractEmitter.SPACER}interface Enum {};
-        |${AbstractEmitter.SPACER}interface Refined { String getValue(); };
-        |${AbstractEmitter.SPACER}interface Endpoint {};
-        |${AbstractEmitter.SPACER}enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE };
-        |${AbstractEmitter.SPACER}record Content<T> (String type, T body) {};
-        |${AbstractEmitter.SPACER}interface Request<T> { String getPath(); Method getMethod(); java.util.Map<String, java.util.List<Object>> getQuery(); java.util.Map<String, java.util.List<Object>> getHeaders(); Content<T> getContent(); }
-        |${AbstractEmitter.SPACER}interface Response<T> { int getStatus(); java.util.Map<String, java.util.List<Object>> getHeaders(); Content<T> getContent(); }
-        |${AbstractEmitter.SPACER}interface ContentMapper<B> { <T> Content<T> read(Content<B> content, Type valueType); <T> Content<B> write(Content<T> content); }
-        |${AbstractEmitter.SPACER}static Type getType(final Class<?> type, final boolean isIterable) {
-        |${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}if(isIterable) {
-        |${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}return new ParameterizedType() {
-        |${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}public Type getRawType() {return java.util.List.class;}
-        |${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}public Type[] getActualTypeArguments() {Class<?>[] types = {type};return types;}
-        |${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}public Type getOwnerType() {return null;}
-        |${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}};
-        |${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}}
-        |${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}else {
-        |${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}return type;
-        |${AbstractEmitter.SPACER}${AbstractEmitter.SPACER}}
-        |${AbstractEmitter.SPACER}}
+        |${SPACER}interface Enum {};
+        |${SPACER}interface Refined { String getValue(); };
+        |${SPACER}interface Endpoint {};
+        |${SPACER}enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE };
+        |${SPACER}record Content<T> (String type, T body) {};
+        |${SPACER}interface Request<T> { String getPath(); Method getMethod(); java.util.Map<String, java.util.List<Object>> getQuery(); java.util.Map<String, java.util.List<Object>> getHeaders(); Content<T> getContent(); }
+        |${SPACER}interface Response<T> { int getStatus(); java.util.Map<String, java.util.List<Object>> getHeaders(); Content<T> getContent(); }
+        |${SPACER}interface ContentMapper<B> { <T> Content<T> read(Content<B> content, Type valueType); <T> Content<B> write(Content<T> content); }
+        |${SPACER}static Type getType(final Class<?> type, final boolean isIterable) {
+        |${SPACER}${SPACER}if(isIterable) {
+        |${SPACER}${SPACER}${SPACER}return new ParameterizedType() {
+        |${SPACER}${SPACER}${SPACER}${SPACER}public Type getRawType() {return java.util.List.class;}
+        |${SPACER}${SPACER}${SPACER}${SPACER}public Type[] getActualTypeArguments() {Class<?>[] types = {type};return types;}
+        |${SPACER}${SPACER}${SPACER}${SPACER}public Type getOwnerType() {return null;}
+        |${SPACER}${SPACER}${SPACER}};
+        |${SPACER}${SPACER}}
+        |${SPACER}${SPACER}else {
+        |${SPACER}${SPACER}${SPACER}return type;
+        |${SPACER}${SPACER}}
+        |${SPACER}}
         |}
     """.trimMargin()
 
