@@ -152,9 +152,8 @@ class KotlinEmitter(
             }
         }
 
-    override fun EndpointClass.Content.emit(): String = """
-        |Wirespec.Content("$type", body)
-    """.trimMargin()
+    override fun EndpointClass.Content.emit(): String =
+        """Wirespec.Content("$type", body)"""
 
     override fun EndpointClass.RequestMapper.emit(): String = """
         |fun <B> $name(contentMapper: Wirespec.ContentMapper<B>) = { request: Wirespec.Request<B> ->
@@ -167,9 +166,7 @@ class KotlinEmitter(
 
     override fun EndpointClass.RequestMapper.RequestCondition.emit(): String =
         if (content == null)
-            """
-                |request.content == null -> ${responseReference.emitWrap()}(request.path, request.method, request.query, request.headers)
-            """.trimMargin()
+            """request.content == null -> ${responseReference.emitWrap()}(request.path, request.method, request.query, request.headers)"""
         else
             """
                 |request.content?.type == "${content.type}" -> contentMapper
@@ -179,7 +176,7 @@ class KotlinEmitter(
 
 
     override fun EndpointClass.ResponseMapper.emit(): String = """
-        |fun <B> $name(contentMapper: Wirespec.ContentMapper<B>) = { response: Wirespec.Response<B> ->
+         |fun <B> $name(contentMapper: Wirespec.ContentMapper<B>) = { response: Wirespec.Response<B> ->
          |${SPACER}when {
          |${this.conditions.joinToString("\n") { it.emit() }.spacer(2)}
          |${SPACER}${SPACER}else -> error("Cannot map response with status ${'$'}{response.status}")

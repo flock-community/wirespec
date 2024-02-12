@@ -311,13 +311,11 @@ class JavaEmitter(
             }
         }
 
-    override fun EndpointClass.Content.emit(): String = """
-        |new Wirespec.Content("$type", body)
-    """.trimMargin()
+    override fun EndpointClass.Content.emit(): String =
+        """new Wirespec.Content("$type", body)"""
 
-    override fun Field.emit(): String = """
-        |${if (isPrivate) "private " else ""}${if (isPrivate) "final " else ""}${reference.emitWrap()} ${identifier.sanitizeIdentifier()}
-    """.trimMargin()
+    override fun Field.emit(): String =
+        """${if (isPrivate) "private " else ""}${if (isFinal) "final " else ""}${reference.emitWrap()} ${identifier.sanitizeIdentifier()}"""
 
     private fun Field.emitGetter(): String = """
         |@Override
