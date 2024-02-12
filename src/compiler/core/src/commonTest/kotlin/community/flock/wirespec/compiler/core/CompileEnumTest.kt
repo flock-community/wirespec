@@ -6,9 +6,11 @@ import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter
+import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class CompileEnumTest {
 
@@ -25,21 +27,20 @@ class CompileEnumTest {
     @Test
     fun testEnumKotlin() {
         val kotlin = """
-            package community.flock.wirespec.generated
-            
-            import community.flock.wirespec.Wirespec
-            
-            enum class MyAwesomeEnum (val label: String): Wirespec.Enum {
-              ONE("ONE"),
-              Two("Two"),
-              THREE_MORE("THREE_MORE");
-            
-              override fun toString(): String {
-                return label
-              }
-            }
-            
-        """.trimIndent()
+            |package community.flock.wirespec.generated
+            |
+            |import community.flock.wirespec.Wirespec
+            |
+            |enum class MyAwesomeEnum (val label: String): Wirespec.Enum {
+            |  ONE("ONE"),
+            |  Two("Two"),
+            |  THREE_MORE("THREE_MORE");
+            |  override fun toString(): String {
+            |    return label
+            |  }
+            |}
+            |
+        """.trimMargin()
 
         compiler(KotlinEmitter(logger = logger)) shouldBeRight kotlin
     }
@@ -47,25 +48,25 @@ class CompileEnumTest {
     @Test
     fun testEnumJava() {
         val java = """
-            package community.flock.wirespec.generated;
-            
-            import community.flock.wirespec.Wirespec;
-            
-            public enum MyAwesomeEnum implements Wirespec.Enum {
-              ONE("ONE"),
-              Two("Two"),
-              THREE_MORE("THREE_MORE");
-              public final String label;
-              MyAwesomeEnum(String label) {
-                this.label = label;
-              }
-              @Override
-              public String toString() {
-                return label;
-              }
-            }
-
-        """.trimIndent()
+            |package community.flock.wirespec.generated;
+            |
+            |import community.flock.wirespec.Wirespec;
+            |
+            |public enum MyAwesomeEnum implements Wirespec.Enum {
+            |  ONE("ONE"),
+            |  Two("Two"),
+            |  THREE_MORE("THREE_MORE");
+            |  public final String label;
+            |  MyAwesomeEnum(String label) {
+            |    this.label = label;
+            |  }
+            |  @Override
+            |  public String toString() {
+            |    return label;
+            |  }
+            |}
+            |
+        """.trimMargin()
 
         compiler(JavaEmitter(logger = logger)) shouldBeRight java
     }
@@ -109,7 +110,7 @@ class CompileEnumTest {
         compiler(WirespecEmitter(logger = logger)) shouldBeRight wirespec
     }
 
-    private fun compile(source: String) = { emitter: AbstractEmitter ->
+    private fun compile(source: String) = { emitter: Emitter ->
         Wirespec.compile(source)(logger)(emitter)
             .map { it.first().result }
             .onLeft(::println)

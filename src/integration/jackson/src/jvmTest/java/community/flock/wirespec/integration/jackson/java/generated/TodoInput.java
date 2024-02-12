@@ -5,4 +5,5 @@ import community.flock.wirespec.Wirespec;
 public record TodoInput(
   String name,
   Boolean done
-) {};
+){
+};

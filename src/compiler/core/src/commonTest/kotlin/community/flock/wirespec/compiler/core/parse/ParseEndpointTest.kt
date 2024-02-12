@@ -12,7 +12,6 @@ import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Refer
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
-import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -42,7 +41,11 @@ class ParseEndpointTest {
                 name shouldBe "GetTodos"
                 method shouldBe GET
                 path shouldBe listOf(Literal("todos"))
-                requests.shouldBeEmpty()
+                requests shouldBe listOf(
+                    Endpoint.Request(
+                        content = null
+                    )
+                )
             }
     }
 
@@ -104,7 +107,11 @@ class ParseEndpointTest {
                         )
                     )
                 )
-                requests.shouldBeEmpty()
+                requests shouldBe listOf(
+                    Endpoint.Request(
+                        content = null
+                    )
+                )
             }
     }
 

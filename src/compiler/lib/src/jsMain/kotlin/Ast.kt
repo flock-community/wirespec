@@ -1,12 +1,13 @@
 @file:OptIn(ExperimentalJsExport::class)
 
+import community.flock.wirespec.compiler.core.parse.nodes.Definition
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
 import community.flock.wirespec.compiler.core.parse.nodes.Node
 import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.Type
 
-internal fun List<Node>.produce(): Array<WsNode> = map {
+internal fun List<Definition>.produce(): Array<WsNode> = map {
     when (it) {
         is Type -> WsType(it.name, it.shape.produce())
         is Endpoint -> WsEndpoint(

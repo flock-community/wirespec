@@ -26,13 +26,14 @@ class WirespecCliTest {
         val file = KotlinFile(FullFilePath("$output/$packageDir", "Type")).read()
 
         val expected = """
-            package community.flock.wirespec.generated
-
-            data class Bla(
-              val yolo: String
-            )
-            
-        """.trimIndent()
+            |package community.flock.wirespec.generated
+            |
+            |data class Bla(
+            |  val yolo: String,
+            |  val `class`: Boolean
+            |)
+            |
+        """.trimMargin()
         file shouldBe expected
     }
 
@@ -56,13 +57,15 @@ class WirespecCliTest {
         val file = JavaFile(FullFilePath("$output/$packageDir", "Bla")).read()
 
         val expected = """
-            package community.flock.next;
-
-            public record Bla(
-              String yolo
-            ) {};
-            
-        """.trimIndent()
+            |package community.flock.next;
+            |
+            |public record Bla(
+            |  String yolo,
+            |  Boolean _class
+            |){
+            |};
+            |
+        """.trimMargin()
         file shouldBe expected
     }
 
@@ -87,17 +90,17 @@ class WirespecCliTest {
         val file = KotlinFile(path).read()
 
         val expected = """
-            data class Pet(
-              val id: Long? = null,
-              val category: Category? = null,
-              val name: String,
-              val photoUrls: List<String>,
-              val tags: List<Tag>? = null,
-              val status: PetStatus? = null
-            )
-            """.trimIndent()
+            |data class Pet(
+            |  val id: Long? = null,
+            |  val category: Category? = null,
+            |  val name: String,
+            |  val photoUrls: List<String>,
+            |  val tags: List<Tag>? = null,
+            |  val status: PetStatus? = null
+            |)
+            """.trimMargin()
 
-        file.contains(expected).shouldBeTrue()
+        file shouldContain expected
     }
 
     @Test
@@ -121,16 +124,16 @@ class WirespecCliTest {
         val file = KotlinFile(path).read()
 
         val expected = """
-            data class Relationship(
-              val namespace: String,
-              val `object`: String,
-              val relation: String,
-              val subject_id: String? = null,
-              val subject_set: SubjectSet? = null
-            )
-            """.trimIndent()
+            |data class Relationship(
+            |  val namespace: String,
+            |  val `object`: String,
+            |  val relation: String,
+            |  val subject_id: String? = null,
+            |  val subject_set: SubjectSet? = null
+            |)
+            """.trimMargin()
 
-        assertTrue(file.contains(expected))
+        file shouldContain expected
     }
 
     @Test

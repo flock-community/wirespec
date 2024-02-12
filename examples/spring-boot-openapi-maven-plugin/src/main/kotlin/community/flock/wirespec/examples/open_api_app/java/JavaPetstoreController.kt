@@ -25,8 +25,8 @@ class JavaPetstoreController(
     }
 
     @PostMapping
-    suspend fun create(@RequestBody pet: Pet): List<Long> {
-        val req = FindPetsByStatusEndpoint.RequestVoid(Optional.of(FindPetsByStatusParameterStatus.available))
+    suspend fun create(@RequestBody pet: Pet): List<Long?> {
+        val req = FindPetsByStatusEndpoint.RequestUnit(Optional.of(FindPetsByStatusParameterStatus.available))
         return when (val res = javaPetstoreClient.findPetsByStatus(req).get()) {
             is FindPetsByStatusEndpoint.Response200ApplicationJson -> res.content?.body?.mapNotNull { it.id.getOrNull() }
                 ?: emptyList()

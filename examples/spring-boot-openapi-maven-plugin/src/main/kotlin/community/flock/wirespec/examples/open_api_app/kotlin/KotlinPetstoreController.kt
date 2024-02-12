@@ -24,10 +24,10 @@ class KotlinPetstoreController(
     }
 
     @GetMapping
-    suspend fun find(@RequestBody pet: Pet): List<Long?> {
+    suspend fun find(@RequestBody pet: Pet): List<Long> {
         val req = FindPetsByStatusEndpoint.RequestUnit(status = FindPetsByStatusParameterStatus.available)
         return when (val res = kotlinPetstoreClient.findPetsByStatus(req)) {
-            is FindPetsByStatusEndpoint.Response200ApplicationJson -> res.content.body.map { it.id }
+            is FindPetsByStatusEndpoint.Response200ApplicationJson -> res.content.body.mapNotNull { it.id }
             else -> error("No response")
         }
     }
