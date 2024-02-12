@@ -29,7 +29,7 @@ class GenerateTestClasses {
     fun generate(){
         val todoFile = File("src/commonTest/resources/wirespec/todos.ws").readText()
         val ast = Wirespec.parse(todoFile)(noLogger)
-            .fold ({e -> error("Cannot parse wirespec: ${e.first().message}") }, { it })
+            .fold ({error("Cannot parse wirespec: ${it.first().message}") }, { it })
             .filterIsInstance<Definition>()
 
         val emittedJava = javaEmitter.emit(ast)

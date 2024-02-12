@@ -166,16 +166,17 @@ class KotlinEmitter(
     """.trimMargin()
 
     override fun EndpointClass.RequestMapper.RequestCondition.emit(): String =
-        if (content != null) {
+        if (content == null)
+            """
+                |request.content == null -> ${responseReference.emitWrap()}(request.path, request.method, request.query, request.headers)
+            """.trimMargin()
+        else
             """
                 |request.content?.type == "${content.type}" -> contentMapper
                 |  .read<${content.reference.emitWrap()}>(request.content!!, Wirespec.getType(${content.reference.emit()}::class.java, ${isIterable}))
                 |  .let { ${responseReference.emitWrap()}(request.path, request.method, request.query, request.headers, it) }
             """.trimMargin()
-        } else
-            """
-                |request.content == null -> ${responseReference.emitWrap()}(request.path, request.method, request.query, request.headers)
-            """.trimMargin()
+
 
     override fun EndpointClass.ResponseMapper.emit(): String = """
         |fun <B> $name(contentMapper: Wirespec.ContentMapper<B>) = { response: Wirespec.Response<B> ->
@@ -187,24 +188,25 @@ class KotlinEmitter(
     """.trimMargin()
 
     override fun EndpointClass.ResponseMapper.ResponseCondition.emit(): String =
-        if (content != null)
+        if (content == null)
+            """
+                |${if (statusCode.isInt()) "response.status == $statusCode && " else ""}response.content == null -> ${responseReference.emitWrap()}(response.status, response.headers, null)
+            """.trimMargin()
+        else
             """
                 |${if (statusCode.isInt()) "response.status == $statusCode && " else ""}response.content?.type == "${content.type}" -> contentMapper
                 |  .read<${content.reference.emitWrap()}>(response.content!!, Wirespec.getType(${content.reference.emit()}::class.java, false))
                 |  .let { ${responseReference.emitWrap()}(response.status, response.headers, it) }
             """.trimMargin()
-        else
-            """
-                |${if (statusCode.isInt()) "response.status == $statusCode && " else ""}response.content == null -> ${responseReference.emitWrap()}(response.status, response.headers, null)
-            """.trimMargin()
 
-    override fun Parameter.emit(): String = """
-        |${identifier.sanitizeKeywords()}: ${reference.emitWrap()}
-    """.trimMargin()
+    override fun Parameter.emit(): String =
+        "${identifier.sanitizeKeywords()}: ${reference.emitWrap()}"
 
-    override fun Reference.Generics.emit(): String = """
-        |${if (references.isNotEmpty()) references.joinToString(", ", "<", ">") { it.emitWrap() } else ""}
-    """.trimMargin()
+    override fun Reference.Generics.emit(): String =
+        if (references.isNotEmpty()) references.joinToString(", ", "<", ">") {
+            it.emitWrap()
+        } else
+            ""
 
     override fun Reference.emit(): String =
         when (this) {
@@ -218,9 +220,8 @@ class KotlinEmitter(
         .let { if (isNullable) "$it?" else it }
         .let { if (isOptional) "$it?" else it }
 
-    override fun Reference.Wirespec.emit(): String = """
-        |Wirespec.${name}${generics.emit()}
-    """.trimMargin()
+    override fun Reference.Wirespec.emit(): String =
+        "Wirespec.${name}${generics.emit()}"
 
     override fun Reference.Custom.emit(): String = """
         |${name.sanitizeSymbol()}${generics.emit()}

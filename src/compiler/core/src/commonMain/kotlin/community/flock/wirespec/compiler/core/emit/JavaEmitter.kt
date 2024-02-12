@@ -1,6 +1,5 @@
 package community.flock.wirespec.compiler.core.emit
 
-import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.hasEndpoints
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.isInt
@@ -195,19 +194,20 @@ class JavaEmitter(
     """.trimMargin()
 
     override fun EndpointClass.RequestMapper.RequestCondition.emit(): String =
-        if (content != null)
+        if (content == null)
+            """
+                |if (request.getContent() == null) {
+                |${SPACER}return (Req) new ${responseReference.emitWrap()}(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders(), null);
+                |}
+            """.trimMargin()
+        else
             """
                 |if (request.getContent().type().equals("${content.type}")) {
                 |${SPACER}Wirespec.Content<${content.reference.emitWrap()}> content = contentMapper.read(request.getContent(), Wirespec.getType(${content.reference.emit()}.class, ${isIterable}));
                 |${SPACER}return (Req) new ${responseReference.emitWrap()}(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders(), content);
                 |}
             """.trimMargin()
-        else
-            """
-                |if (request.getContent() == null) {
-                |${SPACER}return (Req) new ${responseReference.emitWrap()}(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders(), null);
-                |}
-            """.trimMargin()
+
 
     override fun EndpointClass.ResponseClass.emit(): String = """
         |final class ${name} implements ${`super`.emitWrap()} {
@@ -237,17 +237,17 @@ class JavaEmitter(
     """.trimMargin()
 
     override fun EndpointClass.ResponseMapper.ResponseCondition.emit(): String =
-        if (content != null)
+        if (content == null)
             """
-                |if (${if (statusCode.isInt()) "response.getStatus() == $statusCode && " else ""}response.getContent().type().equals("${content.type}")) {
-                |${SPACER}Wirespec.Content<${content.reference.emitWrap()}> content = contentMapper.read(response.getContent(), Wirespec.getType(${content.reference.emit()}.class, ${isIterable}));
-                |${SPACER}return (Res) new ${responseReference.emitWrap()}(response.getStatus(), response.getHeaders(), content);
+                |if (${if (statusCode.isInt()) "response.getStatus() == $statusCode && " else ""}response.getContent() == null) {
+                |${SPACER}return (Res) new ${responseReference.emitWrap()}(response.getStatus(), response.getHeaders(), null);
                 |}
             """.trimMargin()
         else
             """
-                |if (${if (statusCode.isInt()) "response.getStatus() == $statusCode && " else ""}response.getContent() == null) {
-                |${SPACER}return (Res) new ${responseReference.emitWrap()}(response.getStatus(), response.getHeaders(), null);
+                |if (${if (statusCode.isInt()) "response.getStatus() == $statusCode && " else ""}response.getContent().type().equals("${content.type}")) {
+                |${SPACER}Wirespec.Content<${content.reference.emitWrap()}> content = contentMapper.read(response.getContent(), Wirespec.getType(${content.reference.emit()}.class, ${isIterable}));
+                |${SPACER}return (Res) new ${responseReference.emitWrap()}(response.getStatus(), response.getHeaders(), content);
                 |}
             """.trimMargin()
 
@@ -256,13 +256,13 @@ class JavaEmitter(
         |};
     """.trimMargin()
 
-    override fun Parameter.emit(): String = """
-        |${reference.emitWrap()} ${identifier.sanitizeIdentifier()}
-    """.trimMargin()
+    override fun Parameter.emit(): String =
+        "${reference.emitWrap()} ${identifier.sanitizeIdentifier()}"
 
-    override fun Reference.Generics.emit(): String = """
-        |${references.takeIf { it.isNotEmpty() }?.joinToString(", ", "<", ">") { it.emitWrap() }.orEmpty()}
-    """.trimMargin()
+    override fun Reference.Generics.emit(): String = references
+        .takeIf { it.isNotEmpty() }
+        ?.joinToString(", ", "<", ">") { it.emitWrap() }
+        .orEmpty()
 
     override fun Reference.emit(): String {
         return when (this) {
@@ -285,9 +285,8 @@ class JavaEmitter(
         |${primitive.emit()}${generics.emit()}
     """.trimMargin()
 
-    override fun Reference.Wirespec.emit(): String = """
-        |Wirespec.${name}${generics.emit()}
-    """.trimMargin()
+    override fun Reference.Wirespec.emit(): String =
+        "Wirespec.${name}${generics.emit()}"
 
 
     override fun Reference.Language.Primitive.emit(): String = when (this) {
@@ -327,8 +326,7 @@ class JavaEmitter(
         |}
     """.trimMargin()
 
-    private fun String.sanitizeIdentifier() = this
-        .split("-")
+    private fun String.sanitizeIdentifier() = split("-")
         .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
         .joinToString("")
         .sanitizeKeywords()

@@ -42,8 +42,6 @@ class CompileEnumTest {
             |
         """.trimMargin()
 
-        assertEquals(kotlin, compiler(KotlinEmitter(logger = logger)).getOrNull())
-
         compiler(KotlinEmitter(logger = logger)) shouldBeRight kotlin
     }
 
@@ -69,8 +67,6 @@ class CompileEnumTest {
             |}
             |
         """.trimMargin()
-
-        assertEquals(java, compiler(JavaEmitter(logger = logger)).getOrNull())
 
         compiler(JavaEmitter(logger = logger)) shouldBeRight java
     }

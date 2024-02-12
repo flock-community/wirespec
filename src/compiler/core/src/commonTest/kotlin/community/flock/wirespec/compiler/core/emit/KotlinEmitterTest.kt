@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.fixture.ClassModelFixture
+import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -20,7 +21,7 @@ class KotlinEmitterTest {
         """.trimMargin()
 
         val res = emitter.emit(ClassModelFixture.type)
-        assertEquals(expected, res)
+        res shouldBe expected
     }
 
     @Test
@@ -31,7 +32,7 @@ class KotlinEmitterTest {
         """.trimMargin()
 
         val res = emitter.emit(ClassModelFixture.refined)
-        assertEquals(expected, res)
+        res shouldBe expected
     }
 
     @Test
@@ -48,7 +49,7 @@ class KotlinEmitterTest {
         """.trimMargin()
 
         val res = emitter.emit(ClassModelFixture.enum)
-        assertEquals(expected, res)
+        res shouldBe expected
     }
 
     @Test
@@ -145,6 +146,6 @@ class KotlinEmitterTest {
         """.trimMargin()
 
         val res = emitter.emit(ClassModelFixture.endpoint)
-        assertEquals(expected, res)
+        res shouldBe expected
     }
 }
