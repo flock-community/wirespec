@@ -1,0 +1,24 @@
+GET http://localhost:8080/todos
+Accept: application/json
+
+###
+
+GET http://localhost:8080/todos/f20ad876-c6a8-48b8-9a23-71787c1ae34a
+Accept: application/json
+
+###
+
+POST http://localhost:8080/todos
+Content-Type: application/json
+
+{
+  "name": "Difficult Task",
+  "done": false
+}
+
+###
+
+DELETE http://localhost:8080/todos/f20ad876-c6a8-48b8-9a23-71787c1ae34a
+Content-Type: application/json
+
+###
