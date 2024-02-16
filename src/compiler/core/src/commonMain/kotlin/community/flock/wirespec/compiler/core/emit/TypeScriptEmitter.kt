@@ -78,16 +78,15 @@ class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
     }
 
     override fun Refined.emit() = withLogging(logger) {
-        """export type ${name.sanitizeSymbol()} = {
-            |${SPACER}value: string
-            |}
-            |const validate$name = (type: $name) => (${validator.emit()}).test(type.value);
-            |
+        """export type ${name.sanitizeSymbol()} = string;
+            |const regExp$name = ${validator.emit()};
+            |export const validate$name = (value: string): value is ${name.sanitizeSymbol()} => 
+            |${SPACER}regExp$name.test(value);
             |""".trimMargin()
     }
 
     override fun Refined.Validator.emit() = withLogging(logger) {
-        "new RegExp('${value.drop(1).dropLast(1)}')"
+        "RegExp('${value.drop(1).dropLast(1)}')"
     }
 
     override fun Endpoint.emit() = withLogging(logger) {
@@ -149,7 +148,7 @@ class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
         """.trimMargin()
     }
 
-    override fun Definition.emitName(): String = when(this){
+    override fun Definition.emitName(): String = when (this) {
         is Endpoint -> this.name
         is Enum -> this.name
         is Refined -> this.name
