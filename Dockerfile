@@ -2,7 +2,7 @@ FROM debian:latest
 
 RUN mkdir -p /app/types/
 
-COPY src/compiler/cli/build/bin/linuxX64/releaseExecutable/cli.kexe /app/wirespec
+COPY src/plugin/cli/build/bin/linuxX64/releaseExecutable/cli.kexe /app/wirespec
 
 WORKDIR /app
 

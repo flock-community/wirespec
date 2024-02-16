@@ -12,5 +12,4 @@ root="$dir/.."
   (cd "$root"/examples/spring-boot-openapi-maven-plugin && ./mvnw clean) &&
   (cd "$root"/types && ./clean.sh) &&
   (cd "$root"/src/test && ./clean.sh) &&
-  (cd "$root" && ./gradlew --stop) &&
   docker rmi wirespec
