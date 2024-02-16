@@ -76,13 +76,11 @@ class CompileRefinedTest {
     @Test
     fun testRefinedTypeScript() {
         val ts = """
-            export type TodoId = {
-              value: string
-            }
-            const validateTodoId = (type: TodoId) => (new RegExp('^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}')).test(type.value);
-
-
-        """.trimIndent()
+            |export type TodoId = string;
+            |const regExpTodoId = RegExp('^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}');
+            |export const validateTodoId = (value: string): value is TodoId => 
+            |  regExpTodoId.test(value);
+            |""".trimMargin()
 
         compiler(TypeScriptEmitter(logger = logger)) shouldBeRight ts
     }

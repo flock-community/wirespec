@@ -21,21 +21,30 @@ Wirespec can read and convert OpenApiSpecification (OAS) files.
 
 Wirespec knows four definitions: `refined`, `enum`, `type`, `endpoint`.
 
-```
+### Refined
+```wirespec
 refined DEFINITION /REGEX/g
+```
 
+### Enum
+```wirespec
 enum DEFINITION {
     ENTRY, ENTRY, ...
 }
+```
 
+### Type
+```wirespec
 type DEFINITION {
     IDENTIFIER: REFERENCE
 }
+```
 
+### Endpoint
+```wirespec
 endpoint DEFINITION METHOD [INPUT_REFERENCE] PATH [? QUERY] [# HEADER] -> {
     STATUS -> REFERENCE
 }
-
 ```
 
 ## Example
