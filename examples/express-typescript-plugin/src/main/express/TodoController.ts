@@ -1,5 +1,11 @@
-import express, { Request, Response } from "express";
-import { Todo, TodoInput } from "./wirespec/Todos";
+import express, { RequestHandler } from "express";
+import {
+  Wirespec,
+  GetAllTodos,
+  GetTodoById,
+  SaveTodo,
+  DeleteTodo,
+} from "./wirespec/Todos";
 import {
   deleteTodoById,
   getAllTodos,
@@ -8,40 +14,60 @@ import {
 } from "./TodoRepository";
 
 const router = express.Router();
+type Handler = (request: any) => Promise<Wirespec.Response<any>>;
 
-router.get("/", async (req: Request, res: Response<Todo[]>) => {
-  const todos = await getAllTodos();
-  res.send(todos);
+export const wirespecHandler = <Call extends Handler>(
+  method: string,
+  path: string,
+  call: Call,
+): RequestHandler => {
+  const handler: RequestHandler = async (req, res) => {
+    const data = await call({
+      content: req.body,
+      method: req.method.toUpperCase() as Wirespec.Method,
+      path: req.url.toString(),
+    });
+    return res.send(data.content?.body);
+  };
+
+  switch (method) {
+    case "GET":
+      return router.get(path, handler);
+    case "POST":
+      return router.post(path, handler);
+    case "PUT":
+      return router.put(path, handler);
+    case "DELETE":
+      return router.delete(path, handler);
+  }
+
+  throw new Error(`Cannot match request ${method}`);
+};
+
+wirespecHandler(GetAllTodos.METHOD, GetAllTodos.PATH, async () => {
+  return GetAllTodos.response200ApplicationJson({ body: await getAllTodos() });
 });
 
-router.get(
-  "/:id",
-  async (
-    req: Request,
-    res: Response<Todo | { code: string; description: string }>,
-  ) => {
-    const id = req.params.id;
-    const todo = await getTodoById({ value: id });
-    if (todo) {
-      res.send(todo);
-    } else {
-      res
-        .status(404)
-        .send({ code: "NOT_FOUND", description: "Todo not found" });
-    }
-  },
-);
-
-router.post("/", async (req: Request, res: Response<Todo>) => {
-  const todoInput: TodoInput = req.body;
-  const savedTodo = await saveTodo(todoInput);
-  res.send(savedTodo);
+wirespecHandler(GetTodoById.METHOD, GetTodoById.PATH, async (request) => {
+  const todoId = { value: request.path.split("/")[2] };
+  const todos = await getTodoById(todoId);
+  if (!todos) {
+    return GetTodoById.response404ApplicationJson({ body: undefined });
+  }
+  return GetTodoById.response200ApplicationJson({ body: todos });
 });
 
-router.delete("/:id", async (req: Request, res: Response<Todo>) => {
-  const id = req.params.id;
-  const todo = await deleteTodoById({ value: id });
-  res.send(todo);
+wirespecHandler(SaveTodo.METHOD, SaveTodo.PATH, async (request) => {
+  return SaveTodo.response200ApplicationJson({
+    body: await saveTodo(request.content),
+  });
+});
+
+wirespecHandler(DeleteTodo.METHOD, DeleteTodo.PATH, async (request) => {
+  const todoId = { value: request.path.split("/")[2] };
+  return DeleteTodo.response200ApplicationJson({
+    body: await deleteTodoById(todoId),
+  });
 });
 
 export default router;

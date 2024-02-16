@@ -5,7 +5,7 @@ const app: Express = express();
 const port = 8080;
 
 app.use(express.json());
-app.use("/todos", todoRoutes);
+app.use("/", todoRoutes);
 
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
