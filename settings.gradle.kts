@@ -29,12 +29,13 @@ rootProject.name = "wirespec"
 
 include(
     "src:compiler:core",
-    "src:compiler:cli",
     "src:compiler:lib",
     "src:lsp:jvm:core",
     "src:lsp:jvm:server",
     "src:lsp:jvm:client",
     "src:lsp:intellij-plugin",
+    "src:plugin:arguments",
+    "src:plugin:cli",
     "src:plugin:maven",
     "src:plugin:gradle",
     "src:converter:openapi",

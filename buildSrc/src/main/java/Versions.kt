@@ -2,8 +2,10 @@ import Versions.ARROW
 import Versions.CLI
 import Versions.KOTEST
 import Versions.KOTEST_ARROW
+import Versions.KOTLIN
 
 object Versions {
+    const val KOTLIN = "1.9.10"
     const val KOTLIN_COMPILER = "1.9"
     const val ARROW = "1.2.1"
     const val CLI = "4.2.1"
@@ -13,6 +15,7 @@ object Versions {
 }
 
 object Libraries {
+    const val KOTLIN_STDLIB = "org.jetbrains.kotlin:kotlin-stdlib:$KOTLIN"
     const val ARROW_CORE = "io.arrow-kt:arrow-core:$ARROW"
     const val CLI_LIB = "com.github.ajalt.clikt:clikt:$CLI"
     const val KOTEST_ENGINE = "io.kotest:kotest-framework-engine:$KOTEST"

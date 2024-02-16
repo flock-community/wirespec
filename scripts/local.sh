@@ -9,5 +9,5 @@ if [[ $(uname) = Darwin ]]; then
     macosArch="macosArm64"
   fi
 
-  sudo cp "$dir"/../src/compiler/cli/build/bin/"$macosArch"/releaseExecutable/cli.kexe /usr/local/bin/wirespec
+  sudo cp "$dir"/../src/plugin/cli/build/bin/"$macosArch"/releaseExecutable/cli.kexe /usr/local/bin/wirespec
 fi
