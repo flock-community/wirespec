@@ -69,7 +69,7 @@ kotlin {
                 implementation(CLI_LIB)
             }
         }
-        commonTest {
+        val commonTest by getting {
             dependencies {
                 implementation(kotlin("test-annotations-common"))
                 implementation(kotlin("test-junit"))
@@ -102,6 +102,9 @@ kotlin {
             }
         }
         val jsMain by getting {
+            dependencies{
+                implementation(project(":src:compiler:lib"))
+            }
             dependsOn(commonMain)
         }
     }
@@ -117,5 +120,9 @@ fun KotlinNativeTargetWithHostTests.build() = binaries {
 
 fun KotlinJsTargetDsl.build() {
     nodejs()
-    binaries.executable()
+    binaries.library()
+    compilations["main"].packageJson {
+        customField("name", "@flock/wirespec")
+        customField("bin", mapOf("wirespec" to "wirespec-bin.js"))
+    }
 }

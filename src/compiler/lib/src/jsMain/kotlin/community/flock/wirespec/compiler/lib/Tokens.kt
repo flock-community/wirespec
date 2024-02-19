@@ -1,5 +1,7 @@
 @file:OptIn(ExperimentalJsExport::class)
 
+package community.flock.wirespec.compiler.lib
+
 import community.flock.wirespec.compiler.core.tokenize.Token
 
 fun List<Token>.produce(): WsTokenResult = WsTokenResult(tokens = WsTokens(value = map { it.produce() }.toTypedArray()))

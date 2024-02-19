@@ -265,6 +265,6 @@ jobs:
         run: |
           ./gradlew :src:compiler:lib:build
       - name: Build
-        working-directory: ./src/compiler/lib/build/dist/js/productionLibrary
+        working-directory: ./src/plugin/cli/build/dist/js/productionLibrary
         run: |
           npm publish --access public

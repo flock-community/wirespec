@@ -1,30 +1,32 @@
 @file:OptIn(ExperimentalJsExport::class)
 
+package community.flock.wirespec.compiler.lib
+
 import community.flock.wirespec.compiler.core.parse.nodes.Definition
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
-import community.flock.wirespec.compiler.core.parse.nodes.Node
 import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.Type
 
-internal fun List<Definition>.produce(): Array<WsNode> = map {
-    when (it) {
-        is Type -> WsType(it.name, it.shape.produce())
+fun Definition.produce(): WsNode =
+    when (this) {
+        is Type -> WsType(name, shape.produce())
         is Endpoint -> WsEndpoint(
-            name = it.name,
-            method = it.method.produce(),
-            path = it.path.produce(),
-            query = it.query.produce(),
-            headers = it.headers.produce(),
-            cookies = it.cookies.produce(),
-            requests = it.requests.produce(),
-            responses = it.responses.produce(),
+            name = name,
+            method = method.produce(),
+            path = path.produce(),
+            query = query.produce(),
+            headers = headers.produce(),
+            cookies = cookies.produce(),
+            requests = requests.produce(),
+            responses = responses.produce(),
         )
-
-        is Enum -> WsEnum(it.name, it.entries.toTypedArray())
-        is Refined -> WsRefined(it.name, it.validator.value)
+        is Enum -> WsEnum(name, entries.toTypedArray())
+        is Refined -> WsRefined(name, validator.value)
     }
-}.toTypedArray()
+
+fun List<Definition>.produce(): Array<WsNode> =
+    map { it.produce() }.toTypedArray()
 
 private fun Type.Shape.produce() = WsShape(
     value.map { it.produce() }.toTypedArray()

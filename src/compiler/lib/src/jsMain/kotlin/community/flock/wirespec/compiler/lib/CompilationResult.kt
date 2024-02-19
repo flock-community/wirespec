@@ -1,5 +1,7 @@
 @file:OptIn(ExperimentalJsExport::class)
 
+package community.flock.wirespec.compiler.lib
+
 import arrow.core.Either
 import arrow.core.Nel
 import community.flock.wirespec.compiler.core.emit.common.Emitted

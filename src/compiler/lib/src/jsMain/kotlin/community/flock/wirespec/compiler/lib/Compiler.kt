@@ -1,5 +1,7 @@
 @file:OptIn(ExperimentalJsExport::class)
 
+package community.flock.wirespec.compiler.lib
+
 import community.flock.wirespec.compiler.core.Wirespec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
