@@ -120,6 +120,7 @@ fun KotlinNativeTargetWithHostTests.build() = binaries {
 
 fun KotlinJsTargetDsl.build() {
     nodejs()
+    // generateTypeScriptDefinitions()
     binaries.library()
     compilations["main"].packageJson {
         customField("name", "@flock/wirespec")
