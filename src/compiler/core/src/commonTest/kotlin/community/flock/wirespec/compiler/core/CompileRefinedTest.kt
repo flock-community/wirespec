@@ -20,6 +20,8 @@ class CompileRefinedTest {
         """.trimIndent()
     )
 
+    private val triple = "\"\"\""
+
     @Test
     fun testRefinedKotlin() {
         val kotlin = """
@@ -28,7 +30,7 @@ class CompileRefinedTest {
             import community.flock.wirespec.Wirespec
 
             data class TodoId(override val value: String): Wirespec.Refined
-            fun TodoId.validate() = Regex("^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}").matches(value)
+            fun TodoId.validate() = Regex(${triple}^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}${triple}).matches(value)
             
         """.trimIndent()
 
@@ -44,7 +46,7 @@ class CompileRefinedTest {
             
             public record TodoId (String value) implements Wirespec.Refined {
               static boolean validate(TodoId record) {
-                return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}").matcher(record.value).find();
+                return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}${'$'}").matcher(record.value).find();
               }
               @Override
               public String getValue() { return value; }
@@ -62,7 +64,7 @@ class CompileRefinedTest {
 
             case class TodoId(val value: String) {
               implicit class TodoIdOps(val that: TodoId) {
-                val regex = new scala.util.matching.Regex("^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}")
+                val regex = new scala.util.matching.Regex(${triple}^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}${triple})
                 regex.findFirstIn(that.value)
               }
             }
@@ -77,7 +79,7 @@ class CompileRefinedTest {
     fun testRefinedTypeScript() {
         val ts = """
             |export type TodoId = string;
-            |const regExpTodoId = RegExp('^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}');
+            |const regExpTodoId = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}/g;
             |export const validateTodoId = (value: string): value is TodoId => 
             |  regExpTodoId.test(value);
             |""".trimMargin()
