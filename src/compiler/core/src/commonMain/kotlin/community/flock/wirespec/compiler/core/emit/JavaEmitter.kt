@@ -106,7 +106,7 @@ class JavaEmitter(
 
 
     override fun RefinedClass.Validator.emit() = """
-        |${SPACER}return java.util.regex.Pattern.compile($value).matcher(record.value).find();
+        |${SPACER}return java.util.regex.Pattern.compile(${value.replace("\\", "\\\\")}).matcher(record.value).find();
     """.trimMargin()
 
     override fun EnumClass.emit(): String = """

@@ -86,7 +86,7 @@ class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
     }
 
     override fun Refined.Validator.emit() = withLogging(logger) {
-        "RegExp('${value.drop(1).dropLast(1)}')"
+        "/${value.drop(1).dropLast(1)}/g"
     }
 
     override fun Endpoint.emit() = withLogging(logger) {

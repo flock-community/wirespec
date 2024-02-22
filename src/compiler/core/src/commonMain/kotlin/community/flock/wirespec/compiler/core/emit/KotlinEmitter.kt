@@ -80,7 +80,7 @@ class KotlinEmitter(
         |fun $name.validate() = ${validator.emit()}
     """.trimMargin()
 
-    override fun RefinedClass.Validator.emit() = "Regex($value).matches(value)"
+    override fun RefinedClass.Validator.emit() = "Regex(\"\"$value\"\").matches(value)"
     override fun EnumClass.emit(): String {
         fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_").sanitizeFirstIsDigit()
         return """

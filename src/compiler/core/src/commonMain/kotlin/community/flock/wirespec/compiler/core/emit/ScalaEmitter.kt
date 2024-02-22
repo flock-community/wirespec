@@ -85,7 +85,7 @@ class ScalaEmitter(
     }
 
     override fun Refined.Validator.emit() = withLogging(logger) {
-        """${SPACER}${SPACER}val regex = new scala.util.matching.Regex($value)
+        """${SPACER}${SPACER}val regex = new scala.util.matching.Regex(""$value"")
             |${SPACER}${SPACER}regex.findFirstIn(that.value)""".trimMargin()
     }
 

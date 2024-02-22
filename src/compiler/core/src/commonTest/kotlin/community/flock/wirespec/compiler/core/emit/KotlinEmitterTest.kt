@@ -28,7 +28,7 @@ class KotlinEmitterTest {
     fun testEmitterRefined() {
         val expected = """
             |data class UUID(override val value: String): Wirespec.Refined
-            |fun UUID.validate() = Regex(^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}).matches(value)
+            |fun UUID.validate() = Regex(${"\"\""}^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}${"\"\""}).matches(value)
         """.trimMargin()
 
         val res = emitter.emit(ClassModelFixture.refined)
