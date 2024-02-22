@@ -37,6 +37,7 @@ include(
     "src:plugin:arguments",
     "src:plugin:cli",
     "src:plugin:maven",
+    "src:plugin:npm",
     "src:plugin:gradle",
     "src:converter:openapi",
     "src:integration:jackson",
