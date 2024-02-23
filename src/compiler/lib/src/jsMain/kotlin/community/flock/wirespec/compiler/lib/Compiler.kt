@@ -21,7 +21,7 @@ abstract class Compiler {
     fun tokenize(source: String) = Wirespec.tokenize(source).produce()
 
     fun parse(source: String) = Wirespec.tokenize(source)
-        .let { Parser(logger).parse(it) }
+        .let { Parser(logger).parse(it).produce() }
 
     companion object {
         protected val logger = object : Logger() {}

@@ -21,6 +21,7 @@ fun Definition.produce(): WsNode =
             requests = requests.produce(),
             responses = responses.produce(),
         )
+
         is Enum -> WsEnum(name, entries.toTypedArray())
         is Refined -> WsRefined(name, validator.value)
     }
@@ -81,17 +82,19 @@ private fun Endpoint.Response.produce() = WsResponse(status, content?.produce())
 private fun List<Endpoint.Response>.produce() = map { it.produce() }.toTypedArray()
 
 @JsExport
-sealed interface WsNode
+sealed interface WsNode {
+    val name: String
+}
 
 @JsExport
-data class WsType(val name: String, val shape: WsShape) : WsNode
+data class WsType(override val name: String, val shape: WsShape) : WsNode
 
 @JsExport
 data class WsShape(val value: Array<WsField>)
 
 @JsExport
 data class WsEndpoint(
-    val name: String,
+    override val name: String,
     val method: WsMethod,
     val path: Array<WsSegment>,
     val query: Array<WsField>,
@@ -102,10 +105,10 @@ data class WsEndpoint(
 ) : WsNode
 
 @JsExport
-data class WsEnum(val name: String, val entries: Array<String>) : WsNode
+data class WsEnum(override val name: String, val entries: Array<String>) : WsNode
 
 @JsExport
-data class WsRefined(val name: String, val validator: String) : WsNode
+data class WsRefined(override val name: String, val validator: String) : WsNode
 
 @JsExport
 enum class WsMethod { GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH, TRACE }
