@@ -1,4 +1,6 @@
 import Versions.KOTLIN_COMPILER
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithHostTests
+import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsTargetDsl
 
 plugins {
     kotlin("multiplatform")
@@ -14,14 +16,12 @@ repositories {
 }
 
 kotlin {
-    js(IR) {
-        nodejs()
-        generateTypeScriptDefinitions()
-        binaries.library()
-        compilations["main"].packageJson {
-            customField("name", "@flock/wirespec-lib")
-        }
-    }
+    macosX64 { build() }
+    macosArm64 { build() }
+    linuxX64 { build() }
+    mingwX64 { build() }
+
+    js(IR) { build() }
     jvm {
         withJava()
         java {
@@ -30,7 +30,6 @@ kotlin {
             }
         }
     }
-
     sourceSets.all {
         languageSettings.apply {
             languageVersion = KOTLIN_COMPILER
@@ -40,12 +39,43 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(project(":src:compiler:core"))
-                implementation(project(":src:converter:openapi"))
+                api(project(":src:compiler:core"))
+                api(project(":src:converter:openapi"))
             }
         }
         val jsMain by getting {
             dependsOn(commonMain)
         }
+
+        val desktopMain by creating {
+            dependsOn(commonMain)
+        }
+
+        val macosX64Main by getting {
+            dependsOn(desktopMain)
+        }
+        val macosArm64Main by getting {
+            dependsOn(desktopMain)
+        }
+        val linuxX64Main by getting {
+            dependsOn(desktopMain)
+        }
+    }
+}
+
+fun String.fromEnv() = let(System::getenv).toBoolean()
+
+fun KotlinNativeTargetWithHostTests.build() = binaries {
+    staticLib {
+    }
+}
+
+fun KotlinJsTargetDsl.build() {
+    nodejs()
+//        generateTypeScriptDefinitions()
+    binaries.library()
+    compilations["main"].packageJson {
+        customField("name", "@flock/wirespec")
+        customField("bin", mapOf("wirespec" to "wirespec-bin.js"))
     }
 }
