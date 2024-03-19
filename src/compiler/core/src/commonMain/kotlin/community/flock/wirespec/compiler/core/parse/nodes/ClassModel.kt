@@ -73,6 +73,7 @@ data class EndpointClass(
     data class ResponseClass(
         val name: String,
         val fields: List<Field>,
+        val headers: List<Field>,
         val responseAllArgsConstructor: ResponseAllArgsConstructor,
         val `super`: Reference,
         val statusCode: String,

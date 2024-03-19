@@ -17,6 +17,7 @@ import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.RefinedClass
 import community.flock.wirespec.compiler.core.parse.nodes.Type
 import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
+import community.flock.wirespec.compiler.core.parse.transformer.ClassModelTransformer.transform
 
 object ClassModelTransformer {
 
@@ -462,6 +463,7 @@ object ClassModelTransformer {
                         isNullable = false,
                     ),
                     statusCode = it.status,
+                    headers = it.headers.map { it.transform() },
                     content = it.content?.transform(),
                 )
             },

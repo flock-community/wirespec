@@ -875,6 +875,7 @@ object ClassModelFixture {
                         isNullable = false,
                     ),
                     statusCode = "200",
+                    headers = emptyList(),
                     content = EndpointClass.Content(
                         type = "application/xml",
                         reference = Reference.Custom(
@@ -1009,6 +1010,7 @@ object ClassModelFixture {
                         ),
                         isNullable = false,
                     ),
+                    headers = emptyList(),
                     content = EndpointClass.Content(
                         type = "application/json",
                         reference = Reference.Custom(
@@ -1129,6 +1131,7 @@ object ClassModelFixture {
                         ),
                         isNullable = false,
                     ),
+                    headers = emptyList(),
                     statusCode = "405",
                 ),
             ),
