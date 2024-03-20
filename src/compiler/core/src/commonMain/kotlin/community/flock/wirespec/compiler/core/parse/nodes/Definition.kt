@@ -20,7 +20,7 @@ data class Type(val name: String, val shape: Shape) : Definition {
 
                 data class Primitive(
                     val type: Type,
-                    override val isIterable: Boolean,
+                    override val isIterable: Boolean  = false,
                     override val isMap: Boolean = false
                 ) : Reference {
                     enum class Type { String, Integer, Number, Boolean }

@@ -50,6 +50,7 @@ abstract class ClassModelEmitter(
     abstract fun EndpointClass.ResponseInterface.emit(): String
     abstract fun EndpointClass.ResponseClass.emit(): String
     abstract fun EndpointClass.ResponseClass.ResponseAllArgsConstructor.emit(): String
+    abstract fun EndpointClass.ResponseClass.ResponseParameterConstructor.emit(): String
     abstract fun EndpointClass.ResponseMapper.emit(): String
     abstract fun EndpointClass.ResponseMapper.ResponseCondition.emit(): String
 

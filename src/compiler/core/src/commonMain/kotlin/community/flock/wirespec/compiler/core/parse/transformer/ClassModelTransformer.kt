@@ -17,7 +17,6 @@ import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.RefinedClass
 import community.flock.wirespec.compiler.core.parse.nodes.Type
 import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
-import community.flock.wirespec.compiler.core.parse.transformer.ClassModelTransformer.transform
 
 object ClassModelTransformer {
 
@@ -452,6 +451,16 @@ object ClassModelTransformer {
                         ),
                         content = it.content?.transform()
                     ),
+                    responseParameterConstructor = EndpointClass.ResponseClass.ResponseParameterConstructor(
+                        name = className("Response", it.status, it.content.name()),
+                        statusCode = it.status,
+                        parameters = listOf(if(!it.status.isInt()) Parameter("status", Reference.Language(Reference.Language.Primitive.Integer)) else null)
+                            .plus(it.headers.map { it.transformParameter() },)
+                            .plus(it.content?.reference?.toField("body")?.transformParameter())
+                            .filterNotNull(),
+                        headers = it.headers.map { it.identifier.value },
+                        content = it.content?.transform(),
+                    ),
                     `super` = Reference.Custom(
                         name = className("Response", it.status),
                         generics = Reference.Generics(
@@ -463,7 +472,6 @@ object ClassModelTransformer {
                         isNullable = false,
                     ),
                     statusCode = it.status,
-                    headers = it.headers.map { it.transform() },
                     content = it.content?.transform(),
                 )
             },
@@ -545,7 +553,7 @@ object ClassModelTransformer {
             it.firstToUpper()
         }
 
-    private fun Type.Shape.Field.Reference.toField(identifier: String, isNullable: Boolean) = Type.Shape.Field(
+    private fun Type.Shape.Field.Reference.toField(identifier: String, isNullable: Boolean = false) = Type.Shape.Field(
         Type.Shape.Field.Identifier(identifier),
         this,
         isNullable

@@ -55,7 +55,13 @@ class CompileEndpointTest {
             |  sealed interface Response<T> : Wirespec.Response<T>
             |  sealed interface Response2XX<T> : Response<T>
             |  sealed interface Response200<T> : Response2XX<T>
-            |  data class Response200ApplicationJson(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Todo>) : Response200<Todo>
+            |  data class Response200ApplicationJson(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Todo>) : Response200<Todo> {
+            |    constructor(body: Todo) : this(
+            |      status = 200,
+            |      headers = mapOf<String, List<Any?>>(),
+            |      content = Wirespec.Content("application/json", body)
+            |    )
+            |  }
             |  companion object {
             |    const val PATH = "/todo"
             |    const val METHOD = "GET"
@@ -179,6 +185,14 @@ class CompileEndpointTest {
             |      this.status = status;
             |      this.headers = headers;
             |      this.content = content;
+            |    }
+            |
+            |    public Response200ApplicationJson(
+            |      Todo body
+            |    ) {
+            |      this.status = 200;
+            |      this.headers = java.util.Map.ofEntries();
+            |      this.content = new Wirespec.Content("application/json", body);
             |    }
             |
             |    @Override

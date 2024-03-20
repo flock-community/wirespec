@@ -1,5 +1,6 @@
 package community.flock.wirespec.compiler.core.emit
 
+import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.firstToLower
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.hasEndpoints
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.isInt
@@ -164,11 +165,11 @@ class JavaEmitter(
         |public ${name.sanitizeSymbol()}(
         |${parameters.joinToString(",\n") { it.emit() }.spacer()}
         |) {
-        |  this.path = path;
-        |  this.method = method;
-        |  this.query = query;
-        |  this.headers = headers;
-        |  this.content = content;
+        |${SPACER}this.path = path;
+        |${SPACER}this.method = method;
+        |${SPACER}this.query = query;
+        |${SPACER}this.headers = headers;
+        |${SPACER}this.content = content;
         |}
     """.trimMargin()
 
@@ -176,11 +177,11 @@ class JavaEmitter(
         |public ${name.sanitizeSymbol()}(
         |${parameters.joinToString(",\n") { it.emit() }.spacer()}
         |) {
-        |  this.path = ${path.emit()};
-        |  this.method = Wirespec.Method.${method};
-        |  this.query = java.util.Map.ofEntries(${query.joinToString(", ") { "java.util.Map.entry(\"$it\", java.util.List.of(${it.sanitizeIdentifier()}))" }});
-        |  this.headers = java.util.Map.ofEntries(${headers.joinToString(", ") { "java.util.Map.entry(\"$it\", java.util.List.of(${it.sanitizeIdentifier()}))" }});
-        |  this.content = ${content?.emit() ?: "null"};
+        |${SPACER}this.path = ${path.emit()};
+        |${SPACER}this.method = Wirespec.Method.${method};
+        |${SPACER}this.query = java.util.Map.ofEntries(${query.joinToString(", ") { "java.util.Map.entry(\"$it\", java.util.List.of(${it.sanitizeIdentifier()}))" }});
+        |${SPACER}this.headers = java.util.Map.ofEntries(${headers.joinToString(", ") { "java.util.Map.entry(\"$it\", java.util.List.of(${it.sanitizeIdentifier()}))" }});
+        |${SPACER}this.content = ${content?.emit() ?: "null"};
         |}
     """.trimMargin()
 
@@ -215,6 +216,8 @@ class JavaEmitter(
         |
         |${responseAllArgsConstructor.emit().spacer()}
         |
+        |${responseParameterConstructor.emit().spacer()}
+        |
         |${fields.joinToString("\n\n") { it.emitGetter() }.spacer()}
         |}
     """.trimMargin()
@@ -224,6 +227,16 @@ class JavaEmitter(
         |${SPACER}this.status = status;
         |${SPACER}this.headers = headers;
         |${SPACER}this.content = content;
+        |}
+    """.trimMargin()
+
+    override fun EndpointClass.ResponseClass.ResponseParameterConstructor.emit(): String = """
+        |public ${name.sanitizeSymbol()}(
+        |${parameters.joinToString(",\n") { it.emit() }.spacer()}
+        |) {
+        |${SPACER}this.status = ${if (statusCode.isInt()) statusCode else "status"};
+        |${SPACER}this.headers = java.util.Map.ofEntries(${headers.joinToString(", ") { "java.util.Map.entry(\"$it\", java.util.List.of(${it.sanitizeIdentifier()}))" }});
+        |${SPACER}this.content = ${content?.emit() ?: "null"};
         |}
     """.trimMargin()
 
@@ -329,6 +342,7 @@ class JavaEmitter(
         .joinToString("")
         .sanitizeKeywords()
         .sanitizeSymbol()
+        .firstToLower()
 
     private fun String.sanitizeEnum() = this
         .replace("/", "_")

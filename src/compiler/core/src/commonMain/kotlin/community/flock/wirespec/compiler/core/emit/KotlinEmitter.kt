@@ -1,5 +1,6 @@
 package community.flock.wirespec.compiler.core.emit
 
+import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.firstToLower
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.isInt
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.needImports
@@ -137,12 +138,21 @@ class KotlinEmitter(
     """.trimMargin()
 
     override fun EndpointClass.ResponseClass.emit(): String = """
-        |data class ${name.sanitizeSymbol()}(${fields.joinToString(", ") { it.emit() }}) : ${`super`.emitWrap()}
+        |data class ${name.sanitizeSymbol()}(${fields.joinToString(", ") { it.emit() }}) : ${`super`.emitWrap()} {
+        |${responseParameterConstructor.emit().spacer()}
+        |}
     """.trimMargin()
 
     override fun EndpointClass.ResponseClass.ResponseAllArgsConstructor.emit(): String =
         throw NotImplementedError("all args response constructor not needed for data class")
 
+    override fun EndpointClass.ResponseClass.ResponseParameterConstructor.emit(): String = """
+        |constructor(${parameters.joinToString(", ") { it.emit() }}) : this(
+        |${SPACER}status = ${if (statusCode.isInt()) statusCode else "status"},
+        |${SPACER}headers = mapOf<String, List<Any?>>(${headers.joinToString(", ") { "\"${it}\" to listOf(${it.sanitizeIdentifier()})" }}),
+        |${SPACER}content = ${content?.emit() ?: "null"}
+        |)
+    """.trimMargin()
 
     override fun EndpointClass.Path.emit(): String =
         value.joinToString("/", "/") {
@@ -197,7 +207,7 @@ class KotlinEmitter(
             """.trimMargin()
 
     override fun Parameter.emit(): String =
-        "${identifier.sanitizeKeywords()}: ${reference.emitWrap()}"
+        "${identifier.sanitizeIdentifier()}: ${reference.emitWrap()}"
 
     override fun Reference.Generics.emit(): String =
         if (references.isNotEmpty()) references.joinToString(", ", "<", ">") {
@@ -244,6 +254,13 @@ class KotlinEmitter(
     override fun Field.emit(): String = """
         |${if (isOverride) "override " else ""}val ${identifier.sanitizeKeywords()}: ${reference.emitWrap()}${if (reference.isNullable) " = null" else ""}${if (reference.isOptional) " = null" else ""}
     """.trimMargin()
+
+    private fun String.sanitizeIdentifier() = split("-")
+        .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
+        .joinToString("")
+        .sanitizeKeywords()
+        .sanitizeSymbol()
+        .firstToLower()
 
     private fun String.sanitizeKeywords() = if (preservedKeywords.contains(this)) "`$this`" else this
 
