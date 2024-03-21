@@ -97,7 +97,7 @@ class JavaEmitter(
 
     override fun RefinedClass.emit() = """
         |public record ${name.sanitizeSymbol()} (String value) implements Wirespec.Refined {
-        |${SPACER}static boolean validate($name record) {
+        |${SPACER}public static boolean validate($name record) {
         |${SPACER}${validator.emit()}
         |${SPACER}}
         |${SPACER}@Override
