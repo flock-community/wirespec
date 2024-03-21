@@ -1,0 +1,29 @@
+{
+  "name": "typescript-client",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "parcel src/index.html",
+    "build": "parcel build src/index.html",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@flock/wirespec": "^0.8.51"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.3",
+    "autoprefixer": "^10.4.2",
+    "crypto-browserify": "^3.12.0",
+    "os-browserify": "^0.3.0",
+    "parcel": "^2.3.1",
+    "path-browserify": "^1.0.1",
+    "postcss": "^8.4.6",
+    "stream-browserify": "^3.0.0",
+    "stream-http": "^3.2.0",
+    "tailwindcss": "^3.0.22",
+    "tw-elements": "^1.0.0-alpha11",
+    "ts-node": "^10.9.2"
+  }
+}
