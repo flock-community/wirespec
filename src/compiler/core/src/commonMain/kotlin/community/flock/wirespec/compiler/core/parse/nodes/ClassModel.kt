@@ -74,6 +74,7 @@ data class EndpointClass(
         val name: String,
         val fields: List<Field>,
         val responseAllArgsConstructor: ResponseAllArgsConstructor,
+        val responseParameterConstructor: ResponseParameterConstructor,
         val `super`: Reference,
         val statusCode: String,
         val content: Content? = null
@@ -82,6 +83,14 @@ data class EndpointClass(
             val name: String,
             val parameters: List<Parameter>,
             val statusCode: String,
+            val content: Content? = null
+        )
+
+        data class ResponseParameterConstructor(
+            val name: String,
+            val parameters: List<Parameter>,
+            val statusCode: String,
+            val headers: List<String>,
             val content: Content? = null
         )
     }

@@ -271,6 +271,14 @@ class JavaEmitterTest {
             |      this.content = content;
             |    }
             |
+            |    public Response200ApplicationXml(
+            |
+            |    ) {
+            |      this.status = 200;
+            |      this.headers = java.util.Map.ofEntries();
+            |      this.content = null;
+            |    }
+            |
             |    @Override
             |    public int getStatus() {
             |      return status;
@@ -298,6 +306,14 @@ class JavaEmitterTest {
             |      this.content = content;
             |    }
             |
+            |    public Response200ApplicationJson(
+            |
+            |    ) {
+            |      this.status = 200;
+            |      this.headers = java.util.Map.ofEntries();
+            |      this.content = null;
+            |    }
+            |
             |    @Override
             |    public int getStatus() {
             |      return status;
@@ -323,6 +339,14 @@ class JavaEmitterTest {
             |      this.status = status;
             |      this.headers = headers;
             |      this.content = content;
+            |    }
+            |
+            |    public Response405Unit(
+            |
+            |    ) {
+            |      this.status = 405;
+            |      this.headers = java.util.Map.ofEntries();
+            |      this.content = null;
             |    }
             |
             |    @Override

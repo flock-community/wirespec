@@ -108,9 +108,27 @@ class KotlinEmitterTest {
             |  sealed interface Response4XX<T> : Response<T>
             |  sealed interface Response200<T> : Response2XX<T>
             |  sealed interface Response405<T> : Response4XX<T>
-            |  data class Response200ApplicationXml(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Pet>? = null) : Response200<Pet>
-            |  data class Response200ApplicationJson(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Pet>) : Response200<Pet>
-            |  data class Response405Unit(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Unit>? = null) : Response405<Unit>
+            |  data class Response200ApplicationXml(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Pet>? = null) : Response200<Pet> {
+            |    constructor() : this(
+            |      status = 200,
+            |      headers = mapOf<String, List<Any?>>(),
+            |      content = null
+            |    )
+            |  }
+            |  data class Response200ApplicationJson(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Pet>) : Response200<Pet> {
+            |    constructor() : this(
+            |      status = 200,
+            |      headers = mapOf<String, List<Any?>>(),
+            |      content = null
+            |    )
+            |  }
+            |  data class Response405Unit(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Unit>? = null) : Response405<Unit> {
+            |    constructor() : this(
+            |      status = 405,
+            |      headers = mapOf<String, List<Any?>>(),
+            |      content = null
+            |    )
+            |  }
             |  companion object {
             |    const val PATH = "/pet"
             |    const val METHOD = "POST"

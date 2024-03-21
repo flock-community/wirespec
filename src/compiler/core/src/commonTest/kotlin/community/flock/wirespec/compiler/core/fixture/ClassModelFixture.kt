@@ -863,6 +863,12 @@ object ClassModelFixture {
                             ),
                         )
                     ),
+                    responseParameterConstructor = EndpointClass.ResponseClass.ResponseParameterConstructor(
+                        name = "Response200ApplicationXml",
+                        statusCode = "200",
+                        parameters = emptyList(),
+                        headers = listOf(),
+                    ),
                     `super` = Reference.Custom(
                         name = "Response200",
                         generics = Reference.Generics(
@@ -998,6 +1004,12 @@ object ClassModelFixture {
                             ),
                         )
                     ),
+                    responseParameterConstructor = EndpointClass.ResponseClass.ResponseParameterConstructor(
+                        name = "Response200ApplicationJson",
+                        statusCode = "200",
+                        parameters = emptyList(),
+                        headers = listOf(),
+                    ),
                     `super` = Reference.Custom(
                         name = "Response200",
                         generics = Reference.Generics(
@@ -1117,6 +1129,12 @@ object ClassModelFixture {
                                 ),
                             )
                         ),
+                    ),
+                    responseParameterConstructor = EndpointClass.ResponseClass.ResponseParameterConstructor(
+                        name = "Response405Unit",
+                        statusCode = "405",
+                        parameters = emptyList(),
+                        headers = listOf(),
                     ),
                     `super` = Reference.Custom(
                         name = "Response405",
