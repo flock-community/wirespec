@@ -17,11 +17,10 @@ import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.parse.nodes.Definition
-import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
-import community.flock.wirespec.compiler.core.parse.nodes.Refined
-import community.flock.wirespec.compiler.core.parse.nodes.Type
-import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field
+import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Refined
+import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenApiType
@@ -31,7 +30,7 @@ class OpenApiV2Emitter(override val logger: Logger = noLogger, override val spli
 
     override val shared = null
 
-    override fun emit(ast: List<Definition>): List<Emitted> {
+    override fun emit(ast: AST): List<Emitted> {
         val obj = SwaggerObject(
             swagger = "2.0",
             info = InfoObject(

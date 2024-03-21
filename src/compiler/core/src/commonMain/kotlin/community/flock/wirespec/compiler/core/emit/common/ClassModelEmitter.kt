@@ -1,15 +1,15 @@
 package community.flock.wirespec.compiler.core.emit.common
 
-import community.flock.wirespec.compiler.core.parse.nodes.ClassModel
-import community.flock.wirespec.compiler.core.parse.nodes.Definition
-import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
-import community.flock.wirespec.compiler.core.parse.nodes.EnumClass
-import community.flock.wirespec.compiler.core.parse.nodes.Field
-import community.flock.wirespec.compiler.core.parse.nodes.Parameter
-import community.flock.wirespec.compiler.core.parse.nodes.Reference
-import community.flock.wirespec.compiler.core.parse.nodes.RefinedClass
-import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
-import community.flock.wirespec.compiler.core.parse.transformer.ClassModelTransformer
+import community.flock.wirespec.compiler.core.emit.transformer.ClassModel
+import community.flock.wirespec.compiler.core.emit.transformer.ClassModelTransformer
+import community.flock.wirespec.compiler.core.emit.transformer.EndpointClass
+import community.flock.wirespec.compiler.core.emit.transformer.EnumClass
+import community.flock.wirespec.compiler.core.emit.transformer.Field
+import community.flock.wirespec.compiler.core.emit.transformer.Parameter
+import community.flock.wirespec.compiler.core.emit.transformer.Reference
+import community.flock.wirespec.compiler.core.emit.transformer.RefinedClass
+import community.flock.wirespec.compiler.core.emit.transformer.TypeClass
+import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.utils.Logger
 
 abstract class ClassModelEmitter(
@@ -21,7 +21,7 @@ abstract class ClassModelEmitter(
         const val SPACER = "  "
     }
 
-    override fun emit(ast: List<Definition>): List<Emitted> =
+    override fun emit(ast: AST): List<Emitted> =
         ClassModelTransformer.transform(ast)
             .map { Emitted(it.name, emit(it)) }
             .run {

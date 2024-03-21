@@ -1,10 +1,10 @@
 package community.flock.wirespec.openapi.common
 
-import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
-import community.flock.wirespec.compiler.core.parse.nodes.Type
-import community.flock.wirespec.compiler.core.parse.nodes.Enum
-import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Identifier
-import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference
+import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Identifier
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 
 object Expected {
 
@@ -271,7 +271,11 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(value = "ArrayGET200ApplicationJsonResponseBody", isIterable = true, isMap = false),
+                        reference = Reference.Custom(
+                            value = "ArrayGET200ApplicationJsonResponseBody",
+                            isIterable = true,
+                            isMap = false
+                        ),
                         isNullable = false
                     )
                 ),
@@ -289,7 +293,11 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Primitive(type = Reference.Primitive.Type.String, isIterable = true, isMap = false),
+                        reference = Reference.Primitive(
+                            type = Reference.Primitive.Type.String,
+                            isIterable = true,
+                            isMap = false
+                        ),
                         isNullable = false
                     )
                 )
@@ -362,7 +370,11 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(value = "AllofGET200ApplicationJsonResponseBody", isIterable = false, isMap = false),
+                        reference = Reference.Custom(
+                            value = "AllofGET200ApplicationJsonResponseBody",
+                            isIterable = false,
+                            isMap = false
+                        ),
                         isNullable = false
                     )
                 )
@@ -462,9 +474,9 @@ object Expected {
             path = listOf(Endpoint.Segment.Literal(value = "enum")),
             query = listOf(
                 Type.Shape.Field(
-                    identifier=Identifier(value="order"),
-                    reference=Reference.Custom(value="EnumGETParameterOrder", isIterable=false, isMap=false),
-                    isNullable=true
+                    identifier = Identifier(value = "order"),
+                    reference = Reference.Custom(value = "EnumGETParameterOrder", isIterable = false, isMap = false),
+                    isNullable = true
                 )
             ),
             headers = emptyList(),
@@ -489,15 +501,19 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(value = "EnumGET201ApplicationJsonResponseBody", isIterable = false, isMap = false),
+                        reference = Reference.Custom(
+                            value = "EnumGET201ApplicationJsonResponseBody",
+                            isIterable = false,
+                            isMap = false
+                        ),
                         isNullable = false
                     )
                 )
             )
         ),
         Enum(
-            name="EnumGETParameterOrder",
-            entries= setOf("ASC", "DESC")
+            name = "EnumGETParameterOrder",
+            entries = setOf("ASC", "DESC")
         ),
         Type(
             name = "EnumGET201ApplicationJsonResponseBody",
@@ -523,8 +539,8 @@ object Expected {
             )
         ),
         Enum(
-            name="EnumGET201ApplicationJsonResponseBodyCode",
-            entries= setOf("WARNING", "ERROR")
+            name = "EnumGET201ApplicationJsonResponseBodyCode",
+            entries = setOf("WARNING", "ERROR")
         ),
         Type(
             name = "Message",
@@ -550,8 +566,8 @@ object Expected {
             )
         ),
         Enum(
-            name="ErrorType",
-            entries= setOf("WARNING", "ERROR")
+            name = "ErrorType",
+            entries = setOf("WARNING", "ERROR")
         )
     )
 }

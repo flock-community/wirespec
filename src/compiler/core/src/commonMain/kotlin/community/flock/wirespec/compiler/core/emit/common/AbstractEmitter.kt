@@ -1,11 +1,11 @@
 package community.flock.wirespec.compiler.core.emit.common
 
 import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.parse.nodes.Definition
-import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
-import community.flock.wirespec.compiler.core.parse.nodes.Enum
-import community.flock.wirespec.compiler.core.parse.nodes.Refined
-import community.flock.wirespec.compiler.core.parse.nodes.Type
+import community.flock.wirespec.compiler.core.parse.Definition
+import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Refined
+import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.utils.Logger
 
 interface Emitters :
@@ -17,7 +17,7 @@ interface Emitters :
 abstract class Emitter(open val logger: Logger, open val split: Boolean) {
 
     abstract val shared: String?
-    abstract fun emit(ast: List<Definition>): List<Emitted>
+    abstract fun emit(ast: AST): List<Emitted>
 
     companion object {
         const val SPACER = "  "
@@ -27,7 +27,7 @@ abstract class Emitter(open val logger: Logger, open val split: Boolean) {
 abstract class AbstractEmitter(override val logger: Logger, override val split: Boolean = false) :
     Emitter(logger, split), Emitters {
 
-    override fun emit(ast: List<Definition>): List<Emitted> = ast
+    override fun emit(ast: AST): List<Emitted> = ast
         .map {
             logger.log("Emitting Node $this")
             when (it) {

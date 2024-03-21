@@ -8,14 +8,14 @@ import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Compan
 import community.flock.wirespec.compiler.core.emit.common.ClassModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitted
-import community.flock.wirespec.compiler.core.parse.nodes.Definition
-import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
-import community.flock.wirespec.compiler.core.parse.nodes.EnumClass
-import community.flock.wirespec.compiler.core.parse.nodes.Field
-import community.flock.wirespec.compiler.core.parse.nodes.Parameter
-import community.flock.wirespec.compiler.core.parse.nodes.Reference
-import community.flock.wirespec.compiler.core.parse.nodes.RefinedClass
-import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
+import community.flock.wirespec.compiler.core.emit.transformer.EndpointClass
+import community.flock.wirespec.compiler.core.emit.transformer.EnumClass
+import community.flock.wirespec.compiler.core.emit.transformer.Field
+import community.flock.wirespec.compiler.core.emit.transformer.Parameter
+import community.flock.wirespec.compiler.core.emit.transformer.Reference
+import community.flock.wirespec.compiler.core.emit.transformer.RefinedClass
+import community.flock.wirespec.compiler.core.emit.transformer.TypeClass
+import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
@@ -64,7 +64,7 @@ class JavaEmitter(
         ""
     }
 
-    private fun importWireSpec(ast: List<Definition>) = if (ast.needImports()) {
+    private fun importWireSpec(ast: AST) = if (ast.needImports()) {
         """
         |import community.flock.wirespec.Wirespec;
         |
@@ -74,7 +74,7 @@ class JavaEmitter(
         ""
     }
 
-    private fun importJava(ast: List<Definition>) = if (ast.hasEndpoints()) {
+    private fun importJava(ast: AST) = if (ast.hasEndpoints()) {
         """
         |import java.util.concurrent.CompletableFuture;
         |import java.util.function.Function;
@@ -85,7 +85,7 @@ class JavaEmitter(
         ""
     }
 
-    override fun emit(ast: List<Definition>): List<Emitted> = super.emit(ast)
+    override fun emit(ast: AST): List<Emitted> = super.emit(ast)
         .map { Emitted(it.typeName.sanitizeSymbol(), "$pkg${importWireSpec(ast)}${importJava(ast)}${it.result}\n") }
 
     override fun TypeClass.emit(): String = """

@@ -1,4 +1,6 @@
-package community.flock.wirespec.compiler.core.parse.nodes
+package community.flock.wirespec.compiler.core.parse
+
+sealed interface Node
 
 sealed interface Definition : Node
 
@@ -20,7 +22,7 @@ data class Type(val name: String, val shape: Shape) : Definition {
 
                 data class Primitive(
                     val type: Type,
-                    override val isIterable: Boolean  = false,
+                    override val isIterable: Boolean = false,
                     override val isMap: Boolean = false
                 ) : Reference {
                     enum class Type { String, Integer, Number, Boolean }

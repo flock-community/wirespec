@@ -4,7 +4,6 @@ import arrow.core.Either
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
-import community.flock.wirespec.compiler.core.parse.nodes.Enum
 import community.flock.wirespec.compiler.core.tokenize.types.Comma
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly

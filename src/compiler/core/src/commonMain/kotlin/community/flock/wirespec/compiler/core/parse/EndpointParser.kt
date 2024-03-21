@@ -4,9 +4,7 @@ import arrow.core.Either
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
-import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
-import community.flock.wirespec.compiler.core.parse.nodes.Type
-import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 import community.flock.wirespec.compiler.core.tokenize.types.Arrow
 import community.flock.wirespec.compiler.core.tokenize.types.Brackets
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
@@ -210,7 +208,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
 
             is WsBoolean -> Reference.Primitive(Reference.Primitive.Type.Boolean, isIterable)
 
-            is  WsUnit -> Reference.Unit(isIterable)
+            is WsUnit -> Reference.Unit(isIterable)
 
             is CustomType -> Reference.Custom(value, isIterable)
         }

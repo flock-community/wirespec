@@ -1,6 +1,6 @@
 package community.flock.wirespec.compiler.core.emit.common
 
-import community.flock.wirespec.compiler.core.parse.nodes.Type
+import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.utils.Logger
 
 interface TypeDefinitionEmitter : TypeDefinitionEmitterLogger {

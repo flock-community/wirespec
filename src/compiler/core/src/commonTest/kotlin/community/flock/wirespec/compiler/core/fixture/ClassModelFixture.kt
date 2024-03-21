@@ -1,13 +1,13 @@
 package community.flock.wirespec.compiler.core.fixture
 
-import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
-import community.flock.wirespec.compiler.core.parse.nodes.EnumClass
-import community.flock.wirespec.compiler.core.parse.nodes.Field
-import community.flock.wirespec.compiler.core.parse.nodes.Parameter
-import community.flock.wirespec.compiler.core.parse.nodes.Reference
-import community.flock.wirespec.compiler.core.parse.nodes.Reference.Language.Primitive
-import community.flock.wirespec.compiler.core.parse.nodes.RefinedClass
-import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
+import community.flock.wirespec.compiler.core.emit.transformer.EndpointClass
+import community.flock.wirespec.compiler.core.emit.transformer.EnumClass
+import community.flock.wirespec.compiler.core.emit.transformer.Field
+import community.flock.wirespec.compiler.core.emit.transformer.Parameter
+import community.flock.wirespec.compiler.core.emit.transformer.Reference
+import community.flock.wirespec.compiler.core.emit.transformer.Reference.Language.Primitive
+import community.flock.wirespec.compiler.core.emit.transformer.RefinedClass
+import community.flock.wirespec.compiler.core.emit.transformer.TypeClass
 
 object ClassModelFixture {
 

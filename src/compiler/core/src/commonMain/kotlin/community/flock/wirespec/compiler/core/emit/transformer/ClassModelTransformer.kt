@@ -1,26 +1,18 @@
-package community.flock.wirespec.compiler.core.parse.transformer
+package community.flock.wirespec.compiler.core.emit.transformer
 
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.firstToLower
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.isInt
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.isStatusCode
-import community.flock.wirespec.compiler.core.parse.nodes.ClassModel
-import community.flock.wirespec.compiler.core.parse.nodes.Definition
-import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
-import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
-import community.flock.wirespec.compiler.core.parse.nodes.Enum
-import community.flock.wirespec.compiler.core.parse.nodes.EnumClass
-import community.flock.wirespec.compiler.core.parse.nodes.Field
-import community.flock.wirespec.compiler.core.parse.nodes.Parameter
-import community.flock.wirespec.compiler.core.parse.nodes.Reference
-import community.flock.wirespec.compiler.core.parse.nodes.Refined
-import community.flock.wirespec.compiler.core.parse.nodes.RefinedClass
-import community.flock.wirespec.compiler.core.parse.nodes.Type
-import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
+import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Refined
+import community.flock.wirespec.compiler.core.parse.Type
 
 object ClassModelTransformer {
 
-    fun transform(ast: List<Definition>): List<ClassModel> = ast.map {
+    fun transform(ast: AST): List<ClassModel> = ast.map {
         when (it) {
             is Endpoint -> it.transform()
             is Enum -> it.transform()
