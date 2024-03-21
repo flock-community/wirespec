@@ -11,6 +11,7 @@ import community.flock.wirespec.compiler.core.parse.nodes.Enum
 import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.Type
 import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference
+import community.flock.wirespec.compiler.core.parse.nodes.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
@@ -144,6 +145,7 @@ class ScalaEmitter(
         is Enum -> this.name
         is Refined -> this.name
         is Type -> this.name
+        is Union -> this.name
     }
 
 }

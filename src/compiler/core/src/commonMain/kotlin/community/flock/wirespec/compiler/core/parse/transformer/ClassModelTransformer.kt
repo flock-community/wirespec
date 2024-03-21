@@ -17,6 +17,8 @@ import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.RefinedClass
 import community.flock.wirespec.compiler.core.parse.nodes.Type
 import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
+import community.flock.wirespec.compiler.core.parse.nodes.Union
+import community.flock.wirespec.compiler.core.parse.nodes.UnionClass
 
 object ClassModelTransformer {
 
@@ -25,11 +27,12 @@ object ClassModelTransformer {
             is Endpoint -> it.transform()
             is Enum -> it.transform()
             is Refined -> it.transform()
-            is Type -> it.transform()
+            is Type -> it.transform(ast)
+            is Union -> it.transform()
         }
     }
 
-    private fun Type.transform(): TypeClass =
+    private fun Type.transform(ast: List<Definition>): TypeClass =
         TypeClass(
             name = className(name),
             fields = shape.value.map {
@@ -37,7 +40,11 @@ object ClassModelTransformer {
                     identifier = it.identifier.value,
                     reference = it.reference.transform(false, it.isNullable),
                 )
-            }
+            },
+            supers = ast
+                .filterIsInstance<Union>()
+                .filter { it.entries.contains(name) }
+                .map { Reference.Custom(it.name) }
         )
 
     private fun Refined.transform(): RefinedClass =
@@ -52,6 +59,11 @@ object ClassModelTransformer {
         EnumClass(
             name = className(name),
             entries = entries
+        )
+
+    private fun Union.transform(): UnionClass =
+        UnionClass(
+            name = className(name),
         )
 
     private fun Endpoint.transform(): EndpointClass {

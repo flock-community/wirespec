@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.parse.nodes.Parameter
 import community.flock.wirespec.compiler.core.parse.nodes.Reference
 import community.flock.wirespec.compiler.core.parse.nodes.RefinedClass
 import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
+import community.flock.wirespec.compiler.core.parse.nodes.UnionClass
 import community.flock.wirespec.compiler.core.parse.transformer.ClassModelTransformer
 import community.flock.wirespec.compiler.utils.Logger
 
@@ -35,12 +36,14 @@ abstract class ClassModelEmitter(
             is TypeClass -> node.emit()
             is RefinedClass -> node.emit()
             is EnumClass -> node.emit()
+            is UnionClass -> node.emit()
         }
 
     abstract fun TypeClass.emit(): String
     abstract fun RefinedClass.emit(): String
     abstract fun RefinedClass.Validator.emit(): String
     abstract fun EnumClass.emit(): String
+    abstract fun UnionClass.emit(): String
     abstract fun EndpointClass.emit(): String
     abstract fun EndpointClass.RequestClass.emit(): String
     abstract fun EndpointClass.RequestClass.RequestAllArgsConstructor.emit(): String

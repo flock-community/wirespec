@@ -31,6 +31,7 @@ data class Type(val name: String, val shape: Shape) : Definition {
 }
 
 data class Enum(val name: String, val entries: Set<String>) : Definition
+data class Union(val name: String, val entries: Set<String>) : Definition
 
 data class Refined(val name: String, val validator: Validator) : Definition {
     data class Validator(val value: String)
