@@ -1,7 +1,6 @@
 package community.flock.wirespec.examples.app.todo
 
-import community.flock.wirespec.generated.kotlin.Todo
-import community.flock.wirespec.generated.kotlin.TodoId
+import community.flock.wirespec.examples.app.exception.TodoNotFoundException
 import org.springframework.stereotype.Repository
 
 @Repository
@@ -9,18 +8,18 @@ object TodoRepository {
 
     private val todos = mutableListOf(
         Todo(
-            id = TodoId("8132b795-143f-4afb-8c8a-0608cb63c79c"),
-            name = "Name",
+            id = Todo.Id("8132b795-143f-4afb-8c8a-0608cb63c79c"),
+            name = Name("Name"),
             done = true,
         )
     )
 
     fun getAllTodos(): List<Todo> = todos
 
-    fun getTodoById(id: TodoId): Todo? = todos.find { it.id == id }
+    fun getTodoById(id: Todo.Id): Todo = todos.find { it.id == id } ?: throw TodoNotFoundException(id)
 
     fun saveTodo(todo: Todo): Todo = todo.also(todos::add)
 
-    fun deleteTodoById(id: TodoId): Todo? = getTodoById(id)?.also(todos::remove)
+    fun deleteTodoById(id: Todo.Id): Todo = getTodoById(id).also(todos::remove)
 
 }

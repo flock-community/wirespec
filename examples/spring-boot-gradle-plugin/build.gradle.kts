@@ -25,7 +25,7 @@ dependencies {
 tasks.withType<KotlinCompile> {
     kotlinOptions {
         freeCompilerArgs = listOf("-Xjsr305=strict")
-        jvmTarget = "21"
+        jvmTarget = "17"
     }
 }
 
@@ -42,9 +42,6 @@ wirespec {
     kotlin {
         packageName = "community.flock.wirespec.generated.kotlin"
         output = "$buildDir/generated/community/flock/wirespec/generated/kotlin"
-    }
-    typescript {
-        output = "$projectDir/src/main/typescript/generated"
     }
 }
 
