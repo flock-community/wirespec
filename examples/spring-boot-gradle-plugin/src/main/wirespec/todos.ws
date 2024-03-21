@@ -15,3 +15,21 @@ type Error {
     code: Integer,
     description: String
 }
+
+endpoint GetTodos GET /todos -> {
+    200 -> TodoDto[]
+}
+
+endpoint GetTodoById GET /todos/{id: TodoId} -> {
+    200 -> TodoDto
+    404 -> Error
+}
+
+endpoint PostTodo POST PotentialTodoDto /todos -> {
+    200 -> TodoDto
+}
+
+endpoint DeleteTodoById DELETE /todos/{id: TodoId} -> {
+    200 -> TodoDto
+    404 -> Error
+}

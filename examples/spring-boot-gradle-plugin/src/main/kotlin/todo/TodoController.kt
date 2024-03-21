@@ -1,42 +1,35 @@
 package community.flock.wirespec.examples.app.todo
 
-import community.flock.wirespec.examples.app.exception.TodoIdNotValidException
-import community.flock.wirespec.examples.app.todo.TodoConsumer.consume
-import community.flock.wirespec.examples.app.todo.TodoProducer.produce
+import community.flock.wirespec.generated.kotlin.DeleteTodoByIdEndpoint
+import community.flock.wirespec.generated.kotlin.GetTodoByIdEndpoint
+import community.flock.wirespec.generated.kotlin.GetTodosEndpoint
+import community.flock.wirespec.generated.kotlin.PostTodoEndpoint
 import community.flock.wirespec.generated.kotlin.PotentialTodoDto
-import community.flock.wirespec.generated.kotlin.TodoDto
-import community.flock.wirespec.generated.kotlin.validate
+import community.flock.wirespec.generated.kotlin.TodoId
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import community.flock.wirespec.generated.kotlin.TodoId as PotentialTodoId
 
 @RestController
-@RequestMapping("/todos")
-class TodoController(private val service: TodoService) {
+class TodoController(private val handler: TodoHandler) {
 
-    @GetMapping
-    fun getAllTodos(): List<TodoDto> = service.getAllTodos()
-        .map { it.produce() }
+    @GetMapping(GetTodosEndpoint.PATH)
+    suspend fun getAllTodos() = handler
+        .getTodos(GetTodosEndpoint.RequestUnit()).content.body
 
-    @GetMapping("/{id}")
-    fun getTodoById(@PathVariable id: String): TodoDto = PotentialTodoId(id)
-        .also { if (!it.validate()) throw TodoIdNotValidException(it.value) }
-        .let { Todo.Id(it.value) }
-        .let(service::getTodoById)
-        .produce()
+    @GetMapping(GetTodoByIdEndpoint.PATH)
+    suspend fun getTodoById(@PathVariable id: String) = handler
+        .getTodoById(GetTodoByIdEndpoint.RequestUnit(id = TodoId(value = id))).content.body
 
-    @PostMapping
-    fun postTodo(@RequestBody input: PotentialTodoDto): TodoDto = input.consume().let(service::saveTodo).produce()
+    @PostMapping(PostTodoEndpoint.PATH)
+    suspend fun postTodo(@RequestBody input: PotentialTodoDto) = handler
+        .postTodo(PostTodoEndpoint.RequestApplicationJson(input)).content.body
 
-    @DeleteMapping("/{id}")
-    fun deleteTodoById(@PathVariable id: String): TodoDto = PotentialTodoId(id)
-        .also { if (!it.validate()) throw TodoIdNotValidException(it.value) }
-        .let { Todo.Id(it.value) }
-        .let(service::deleteTodoById)
-        .produce()
+    @DeleteMapping(DeleteTodoByIdEndpoint.PATH)
+    suspend fun deleteTodoById(@PathVariable id: String) = handler
+        .deleteTodoById(DeleteTodoByIdEndpoint.RequestUnit(TodoId(id))).content.body
+
 }

@@ -8,7 +8,6 @@ import community.flock.wirespec.generated.kotlin.TodoDto
 import community.flock.wirespec.generated.kotlin.TodoId
 import java.util.UUID
 
-
 object TodoConsumer : Consumer<PotentialTodoDto, Todo> {
     override fun PotentialTodoDto.consume(): Todo = Todo(
         id = Todo.Id(value = UUID.randomUUID().toString()),

@@ -77,7 +77,10 @@ class KotlinEmitter(
     """.trimMargin()
 
     override fun RefinedClass.emit() = """
-        |data class ${name.sanitizeSymbol()}(override val value: String): Wirespec.Refined
+        |data class ${name.sanitizeSymbol()}(override val value: String): Wirespec.Refined {
+        |${SPACER}override fun toString() = value
+        |}
+        |
         |fun $name.validate() = ${validator.emit()}
     """.trimMargin()
 

@@ -28,6 +28,8 @@ class JavaEmitterTest {
     fun testEmitterRefined() {
         val expected = """
             |public record UUID (String value) implements Wirespec.Refined {
+            |  @Override
+            |  public String toString() { return value; }
             |  public static boolean validate(UUID record) {
             |    return java.util.regex.Pattern.compile(^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}${'$'}).matcher(record.value).find();
             |  }

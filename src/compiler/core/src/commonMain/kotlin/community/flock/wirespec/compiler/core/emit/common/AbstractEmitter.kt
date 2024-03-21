@@ -3,13 +3,15 @@ package community.flock.wirespec.compiler.core.emit.common
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.nodes.Definition
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
-import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
 import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.Type
 import community.flock.wirespec.compiler.utils.Logger
 
-interface Emitters : TypeDefinitionEmitter, EnumDefinitionEmitter, RefinedTypeDefinitionEmitter,
+interface Emitters :
+    TypeDefinitionEmitter,
+    EnumDefinitionEmitter,
+    RefinedTypeDefinitionEmitter,
     EndpointDefinitionEmitter
 
 abstract class Emitter(open val logger: Logger, open val split: Boolean) {
@@ -40,7 +42,7 @@ abstract class AbstractEmitter(override val logger: Logger, override val split: 
             else listOf(Emitted("NoName", joinToString("\n") { it.result }))
         }
 
-    abstract fun Definition.emitName():String
+    abstract fun Definition.emitName(): String
 
     fun Endpoint.Content.emitContentType() = type
         .substringBefore(";")
@@ -55,6 +57,6 @@ abstract class AbstractEmitter(override val logger: Logger, override val split: 
         fun AST.needImports() = any { it is Endpoint || it is Enum || it is Refined }
         fun AST.hasEndpoints() = any { it is Endpoint }
         fun String.isInt() = toIntOrNull() != null
-        fun String.isStatusCode() = toIntOrNull()?.let { it in 0 .. 599 } ?: false
+        fun String.isStatusCode() = toIntOrNull()?.let { it in 0..599 } ?: false
     }
 }

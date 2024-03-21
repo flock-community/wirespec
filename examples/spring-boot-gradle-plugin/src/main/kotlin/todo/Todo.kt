@@ -2,7 +2,6 @@ package community.flock.wirespec.examples.app.todo
 
 import community.flock.wirespec.examples.app.common.Value
 
-
 data class Todo(
     val id: Id,
     val name: Name,

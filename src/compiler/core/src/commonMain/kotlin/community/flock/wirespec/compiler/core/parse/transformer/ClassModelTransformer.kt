@@ -454,8 +454,13 @@ object ClassModelTransformer {
                     responseParameterConstructor = EndpointClass.ResponseClass.ResponseParameterConstructor(
                         name = className("Response", it.status, it.content.name()),
                         statusCode = it.status,
-                        parameters = listOf(if(!it.status.isInt()) Parameter("status", Reference.Language(Reference.Language.Primitive.Integer)) else null)
-                            .plus(it.headers.map { it.transformParameter() },)
+                        parameters = listOf(
+                            if (!it.status.isInt()) Parameter(
+                                "status",
+                                Reference.Language(Reference.Language.Primitive.Integer)
+                            ) else null
+                        )
+                            .plus(it.headers.map { it.transformParameter() })
                             .plus(it.content?.reference?.toField("body")?.transformParameter())
                             .filterNotNull(),
                         headers = it.headers.map { it.identifier.value },
