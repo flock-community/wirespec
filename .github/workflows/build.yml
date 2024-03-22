@@ -263,8 +263,8 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
       - name: Build
         run: |
-          ./gradlew :src:plugin:npm:build
+          ./gradlew :src:plugin:cli:build
       - name: Build
-        working-directory: ./src/plugin/npm/build/dist/js/productionLibrary
+        working-directory: ./src/plugin/cli/build/dist/js/productionLibrary
         run: |
           npm publish --access public

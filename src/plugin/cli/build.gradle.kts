@@ -63,9 +63,8 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                implementation(project(":src:compiler:lib"))
                 implementation(project(":src:plugin:arguments"))
-                implementation(project(":src:compiler:core"))
-                implementation(project(":src:converter:openapi"))
                 implementation(CLI_LIB)
             }
         }
@@ -102,9 +101,6 @@ kotlin {
             }
         }
         val jsMain by getting {
-            dependencies{
-                implementation(project(":src:compiler:lib"))
-            }
             dependsOn(commonMain)
         }
     }
@@ -120,5 +116,10 @@ fun KotlinNativeTargetWithHostTests.build() = binaries {
 
 fun KotlinJsTargetDsl.build() {
     nodejs()
-    binaries.executable()
+    binaries.library()
+    compilations["main"].packageJson {
+        customField("name", "@flock/wirespec-cli")
+        customField("bin", mapOf("wirespec" to "wirespec-bin.js"))
+    }
+//    generateTypeScriptDefinitions()
 }

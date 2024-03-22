@@ -15,6 +15,8 @@ fun cli(args: Array<String>) {
     main(args)
 }
 
+
+// FIXME: remove me? Should be part of cli?
 @JsExport
 fun parser(source: String): Array<WsNode> {
     return Wirespec.parse(source)(noLogger).getOrNull()
