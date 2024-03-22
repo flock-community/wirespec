@@ -1,9 +1,11 @@
 package community.flock.wirespec.examples.app.todo
 
 import community.flock.wirespec.examples.app.exception.TodoNotFoundException
-import org.springframework.stereotype.Repository
 
-@Repository
+interface HasTodoRepository {
+    val todoRepository: TodoRepository
+}
+
 object TodoRepository {
 
     private val todos = mutableListOf(
