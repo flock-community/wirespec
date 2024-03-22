@@ -27,7 +27,6 @@ class ParseEndpointTest {
             endpoint GetTodos GET /todos -> {
                 200 -> Todo[]
             }
-
         """.trimIndent()
 
         Wirespec.tokenize(source)
@@ -54,7 +53,6 @@ class ParseEndpointTest {
             endpoint PostTodo POST Todo /todos -> {
                 200 -> Todo
             }
-
         """.trimIndent()
 
         Wirespec.tokenize(source)
@@ -84,7 +82,6 @@ class ParseEndpointTest {
             endpoint GetTodo GET /todos/{id: String} -> {
                 200 -> Todo
             }
-
         """.trimIndent()
 
         Wirespec.tokenize(source)
@@ -120,7 +117,6 @@ class ParseEndpointTest {
             endpoint GetTodos GET /todos?{name: String, date: String} -> {
                 200 -> Todo[]
             }
-
         """.trimIndent()
 
         Wirespec.tokenize(source)
@@ -150,7 +146,6 @@ class ParseEndpointTest {
             endpoint GetTodos GET /todos#{name: String, date: String} -> {
                 200 -> Todo[]
             }
-
         """.trimIndent()
 
         Wirespec.tokenize(source)

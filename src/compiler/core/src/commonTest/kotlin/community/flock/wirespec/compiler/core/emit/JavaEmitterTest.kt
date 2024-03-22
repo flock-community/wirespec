@@ -1,6 +1,9 @@
 package community.flock.wirespec.compiler.core.emit
 
-import community.flock.wirespec.compiler.core.fixture.ClassModelFixture
+import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.fixture.ClassModelFixtures
+import community.flock.wirespec.compiler.core.fixture.NodeFixtures
+import community.flock.wirespec.compiler.core.parse.Node
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
@@ -11,6 +14,8 @@ class JavaEmitterTest {
     @Test
     fun testEmitterType() {
         val expected = """
+            |package community.flock.wirespec.generated;
+            |
             |public record Todo(
             |  String name,
             |  java.util.Optional<String> description,
@@ -18,15 +23,20 @@ class JavaEmitterTest {
             |  Boolean done
             |){
             |};
+            |
         """.trimMargin()
 
-        val res = emitter.emit(ClassModelFixture.type)
+        val res = emitter.emitFirst(NodeFixtures.type)
         res shouldBe expected
     }
 
     @Test
     fun testEmitterRefined() {
         val expected = """
+            |package community.flock.wirespec.generated;
+            |
+            |import community.flock.wirespec.Wirespec;
+            |
             |public record UUID (String value) implements Wirespec.Refined {
             |  @Override
             |  public String toString() { return value; }
@@ -36,15 +46,20 @@ class JavaEmitterTest {
             |  @Override
             |  public String getValue() { return value; }
             |}
+            |
         """.trimMargin()
 
-        val res = emitter.emit(ClassModelFixture.refined)
+        val res = emitter.emitFirst(NodeFixtures.refined)
         res shouldBe expected
     }
 
     @Test
     fun testEmitterEnum() {
         val expected = """
+            |package community.flock.wirespec.generated;
+            |
+            |import community.flock.wirespec.Wirespec;
+            |
             |public enum TodoStatus implements Wirespec.Enum {
             |  OPEN("OPEN"),
             |  IN_PROGRESS("IN_PROGRESS"),
@@ -58,9 +73,10 @@ class JavaEmitterTest {
             |    return label;
             |  }
             |}
+            |
         """.trimMargin()
 
-        val res = emitter.emit(ClassModelFixture.enum)
+        val res = emitter.emitFirst(NodeFixtures.enum)
         res shouldBe expected
     }
 
@@ -405,7 +421,9 @@ class JavaEmitterTest {
             |}
         """.trimMargin()
 
-        val res = emitter.emit(ClassModelFixture.endpoint)
+        val res = with(emitter) { ClassModelFixtures.endpointClass.emit() }
         res shouldBe expected
     }
+
+    private fun Emitter.emitFirst(node: Node) = emit(listOf(node)).first().result
 }

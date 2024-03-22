@@ -1,72 +1,13 @@
 package community.flock.wirespec.compiler.core.fixture
 
 import community.flock.wirespec.compiler.core.emit.transformer.EndpointClass
-import community.flock.wirespec.compiler.core.emit.transformer.EnumClass
 import community.flock.wirespec.compiler.core.emit.transformer.Field
 import community.flock.wirespec.compiler.core.emit.transformer.Parameter
 import community.flock.wirespec.compiler.core.emit.transformer.Reference
 import community.flock.wirespec.compiler.core.emit.transformer.Reference.Language.Primitive
-import community.flock.wirespec.compiler.core.emit.transformer.RefinedClass
-import community.flock.wirespec.compiler.core.emit.transformer.TypeClass
 
-object ClassModelFixture {
-
-    val refined =
-        RefinedClass(
-            name = "UUID",
-            validator = RefinedClass.Validator(
-                "^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}\$"
-            )
-        )
-
-
-    val enum =
-        EnumClass(
-            name = "TodoStatus",
-            entries = setOf(
-                "OPEN",
-                "IN_PROGRESS",
-                "CLOSE",
-            )
-        )
-
-
-    val type =
-        TypeClass(
-            name = "Todo",
-            fields = listOf(
-                Field(
-                    identifier = "name",
-                    reference = Reference.Language(
-                        primitive = Primitive.String
-                    )
-                ),
-                Field(
-                    identifier = "description",
-                    reference = Reference.Language(
-                        primitive = Primitive.String,
-                        isOptional = true,
-                    ),
-                ),
-                Field(
-                    identifier = "notes",
-                    reference = Reference.Language(
-                        primitive = Primitive.String,
-                        isIterable = true
-                    ),
-                ),
-                Field(
-                    identifier = "done",
-                    reference = Reference.Language(
-                        primitive = Primitive.Boolean
-                    )
-                )
-
-            )
-        )
-
-
-    val endpoint =
+object ClassModelFixtures {
+    val endpointClass =
         EndpointClass(
             name = "AddPetEndpoint",
             functionName = "addPet",
@@ -1224,5 +1165,4 @@ object ClassModelFixture {
                 )
             )
         )
-
 }

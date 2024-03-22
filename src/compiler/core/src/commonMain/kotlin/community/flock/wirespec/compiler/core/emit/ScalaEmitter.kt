@@ -1,8 +1,8 @@
 package community.flock.wirespec.compiler.core.emit
 
-import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitted
+import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
@@ -16,7 +16,7 @@ import community.flock.wirespec.compiler.utils.noLogger
 class ScalaEmitter(
     private val packageName: String = DEFAULT_PACKAGE_NAME,
     logger: Logger = noLogger
-) : AbstractEmitter(logger) {
+) : Emitter(logger) {
 
     override val shared = ""
 
@@ -139,10 +139,10 @@ class ScalaEmitter(
     }
 
     override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> "${this.name}Endpoint"
-        is Enum -> this.name
-        is Refined -> this.name
-        is Type -> this.name
+        is Endpoint -> "${name}Endpoint"
+        is Enum -> name
+        is Refined -> name
+        is Type -> name
     }
 
 }

@@ -66,7 +66,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                                             className(name, "RequestBody")
                                         )
 
-                                        null -> TODO()
+                                        null -> TODO("Not yet implemented")
                                     },
                                     isNullable = requestBody.required ?: false
                                 )
@@ -223,7 +223,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
         when (this) {
             is SchemaObject -> this
             is ReferenceObject -> this.resolveSchemaObject().resolve()
-            is BooleanObject -> TODO()
+            is BooleanObject -> TODO("Not yet implemented")
         }
 
     private fun ResponseOrReferenceObject.resolve(): ResponseObject =
@@ -436,11 +436,11 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                         ?.type
                         ?.toPrimitive()
                         ?.let { Reference.Primitive(it, true) }
-                        ?: TODO()
+                        ?: TODO("Not yet implemented")
 
-                    OpenapiType.OBJECT -> TODO()
-                    OpenapiType.FILE -> TODO()
-                    null -> TODO()
+                    OpenapiType.OBJECT -> TODO("Not yet implemented")
+                    OpenapiType.FILE -> TODO("Not yet implemented")
+                    null -> TODO("Not yet implemented")
                 }
 
             }

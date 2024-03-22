@@ -14,20 +14,14 @@ interface Emitters :
     RefinedTypeDefinitionEmitter,
     EndpointDefinitionEmitter
 
-abstract class Emitter(open val logger: Logger, open val split: Boolean) {
+abstract class Emitter(
+    val logger: Logger,
+    val split: Boolean = false
+) : Emitters {
 
     abstract val shared: String?
-    abstract fun emit(ast: AST): List<Emitted>
 
-    companion object {
-        const val SPACER = "  "
-    }
-}
-
-abstract class AbstractEmitter(override val logger: Logger, override val split: Boolean = false) :
-    Emitter(logger, split), Emitters {
-
-    override fun emit(ast: AST): List<Emitted> = ast
+    open fun emit(ast: AST): List<Emitted> = ast
         .map {
             logger.log("Emitting Node $this")
             when (it) {
@@ -42,7 +36,12 @@ abstract class AbstractEmitter(override val logger: Logger, override val split: 
             else listOf(Emitted("NoName", joinToString("\n") { it.result }))
         }
 
-    abstract fun Definition.emitName(): String
+    open fun Definition.emitName(): String = when (this) {
+        is Endpoint -> name
+        is Enum -> name
+        is Refined -> name
+        is Type -> name
+    }
 
     fun Endpoint.Content.emitContentType() = type
         .substringBefore(";")
@@ -51,7 +50,7 @@ abstract class AbstractEmitter(override val logger: Logger, override val split: 
         .replace("+", "")
 
     companion object {
-        const val SPACER = Emitter.SPACER
+        const val SPACER = "  "
         fun String.firstToUpper() = replaceFirstChar(Char::uppercase)
         fun String.firstToLower() = replaceFirstChar(Char::lowercase)
         fun AST.needImports() = any { it is Endpoint || it is Enum || it is Refined }

@@ -73,7 +73,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                                             className(name, "RequestBody")
                                         )
 
-                                        null -> TODO()
+                                        null -> TODO("Not yet implemented")
                                     },
                                     isNullable = requestBody.required ?: false
                                 )
@@ -321,7 +321,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         when (this) {
             is SchemaObject -> this
             is ReferenceObject -> this.resolveSchemaObject().second
-            is BooleanObject -> TODO()
+            is BooleanObject -> TODO("Not yet implemented")
         }
 
     private fun RequestBodyOrReferenceObject.resolve(): RequestBodyObject =
@@ -523,7 +523,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         when (val s = schema) {
             is ReferenceObject -> s.toReference()
             is SchemaObject -> s.toReference(name)
-            null -> TODO()
+            null -> TODO("Not yet implemented")
         }
             .let { Field(Field.Identifier(this.name), it, !(this.required ?: false)) }
 
@@ -531,7 +531,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         when (val s = schema) {
             is ReferenceObject -> s.toReference()
             is SchemaObject -> s.toReference(name)
-            null -> TODO()
+            null -> TODO("Not yet implemented")
         }
             .let { Field(Field.Identifier(identifier), it, !(this.required ?: false)) }
 
