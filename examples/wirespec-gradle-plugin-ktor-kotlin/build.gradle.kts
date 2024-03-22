@@ -1,18 +1,20 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+val ktor_version: String by project
+val kotlin_version: String by project
+val logback_version: String by project
+
 plugins {
-    id("org.springframework.boot") version "3.2.4"
-    id("io.spring.dependency-management") version "1.1.4"
     kotlin("jvm") version "1.9.23"
-    kotlin("plugin.spring") version "1.9.23"
+    id("io.ktor.plugin") version "2.3.9"
     id("community.flock.wirespec.plugin.gradle") version "0.0.0-SNAPSHOT"
 }
 
 group = "community.flock.wirespec.example-gradle_plugin"
 version = "0.0.0-SNAPSHOT"
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
+application {
+    mainClass.set("community.flock.wirespec.examples.app.ApplicationKt")
 }
 
 repositories {
@@ -21,13 +23,13 @@ repositories {
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-webflux")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("io.projectreactor:reactor-test")
+    implementation("io.ktor:ktor-server-core-jvm")
+    implementation("io.ktor:ktor-server-netty-jvm")
+    implementation("io.ktor:ktor-server-content-negotiation:$ktor_version")
+    implementation("io.ktor:ktor-serialization-jackson:$ktor_version")
+    implementation("ch.qos.logback:logback-classic:$logback_version")
+    testImplementation("io.ktor:ktor-server-tests-jvm")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
 }
 
 tasks.withType<KotlinCompile> {
@@ -36,10 +38,6 @@ tasks.withType<KotlinCompile> {
         freeCompilerArgs += "-Xjsr305=strict"
         jvmTarget = "17"
     }
-}
-
-tasks.withType<Test> {
-    useJUnitPlatform()
 }
 
 sourceSets {
