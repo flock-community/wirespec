@@ -3,7 +3,6 @@ package community.flock.wirespec.compiler.core.emit
 import community.flock.wirespec.compiler.core.fixture.ClassModelFixture
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class JavaEmitterTest {
 
@@ -29,7 +28,7 @@ class JavaEmitterTest {
     fun testEmitterRefined() {
         val expected = """
             |public record UUID (String value) implements Wirespec.Refined {
-            |  static boolean validate(UUID record) {
+            |  public static boolean validate(UUID record) {
             |    return java.util.regex.Pattern.compile(^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}${'$'}).matcher(record.value).find();
             |  }
             |  @Override
