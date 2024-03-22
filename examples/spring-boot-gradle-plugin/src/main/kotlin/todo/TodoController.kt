@@ -1,39 +1,44 @@
 package community.flock.wirespec.examples.app.todo
 
-import community.flock.wirespec.examples.app.exception.AppException.TodoNotFoundException
-import community.flock.wirespec.generated.kotlin.Todo
+import community.flock.wirespec.Wirespec
+import community.flock.wirespec.generated.kotlin.DeleteTodoByIdEndpoint
+import community.flock.wirespec.generated.kotlin.GetTodoByIdEndpoint
+import community.flock.wirespec.generated.kotlin.GetTodosEndpoint
+import community.flock.wirespec.generated.kotlin.PostTodoEndpoint
+import community.flock.wirespec.generated.kotlin.PotentialTodoDto
 import community.flock.wirespec.generated.kotlin.TodoId
-import community.flock.wirespec.generated.kotlin.TodoInput
+import org.springframework.http.ResponseEntity
+import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
-import java.util.UUID
 
-@RestController
-@RequestMapping("/todos")
-class TodoController(private val repository: TodoRepository) {
+@Controller
+class TodoController(private val handler: TodoHandler) {
 
-    @GetMapping
-    fun getAllTodos(): List<Todo> = TodoRepository.getAllTodos()
+    @GetMapping(GetTodosEndpoint.PATH)
+    suspend fun getAllTodos() = handle {
+        getTodos(GetTodosEndpoint.RequestUnit())
+    }
 
-    @GetMapping("/{id}")
-    fun getTodoById(@PathVariable id: String): Todo = TodoId(id).let(repository::getTodoById)
-        ?: throw TodoNotFoundException(id)
+    @GetMapping(GetTodoByIdEndpoint.PATH)
+    suspend fun getTodoById(@PathVariable id: String) = handle {
+        getTodoById(GetTodoByIdEndpoint.RequestUnit(TodoId(id)))
+    }
 
-    @PostMapping
-    fun postTodo(@RequestBody input: TodoInput): Todo = input.consume().let(repository::saveTodo)
+    @PostMapping(PostTodoEndpoint.PATH)
+    suspend fun postTodo(@RequestBody input: PotentialTodoDto) = handle {
+        postTodo(PostTodoEndpoint.RequestApplicationJson(input))
+    }
 
-    @DeleteMapping("/{id}")
-    fun deleteTodoById(@PathVariable id: String): Todo = TodoRepository.deleteTodoById(TodoId(id))
-        ?: throw TodoNotFoundException(id)
+    @DeleteMapping(DeleteTodoByIdEndpoint.PATH)
+    suspend fun deleteTodoById(@PathVariable id: String) = handle {
+        deleteTodoById(DeleteTodoByIdEndpoint.RequestUnit(TodoId(id)))
+    }
 
-    private fun TodoInput.consume(): Todo = Todo(
-        id = TodoId(value = UUID.randomUUID().toString()),
-        name = name,
-        done = done,
-    )
+    private suspend fun <T> handle(block: suspend TodoHandler.() -> Wirespec.Response<T>) = handler.block()
+        .run { ResponseEntity.status(status).body(content?.body) }
+
 }

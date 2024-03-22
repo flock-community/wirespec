@@ -29,7 +29,10 @@ class CompileRefinedTest {
             
             import community.flock.wirespec.Wirespec
 
-            data class TodoId(override val value: String): Wirespec.Refined
+            data class TodoId(override val value: String): Wirespec.Refined {
+              override fun toString() = value
+            }
+            
             fun TodoId.validate() = Regex(${triple}^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}${triple}).matches(value)
             
         """.trimIndent()
@@ -45,6 +48,8 @@ class CompileRefinedTest {
             import community.flock.wirespec.Wirespec;
             
             public record TodoId (String value) implements Wirespec.Refined {
+              @Override
+              public String toString() { return value; }
               public static boolean validate(TodoId record) {
                 return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}${'$'}").matcher(record.value).find();
               }

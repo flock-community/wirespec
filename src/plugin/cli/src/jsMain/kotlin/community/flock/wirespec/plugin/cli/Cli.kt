@@ -4,7 +4,7 @@ package community.flock.wirespec.plugin.cli
 
 import community.flock.wirespec.compiler.core.Wirespec
 import community.flock.wirespec.compiler.core.parse
-import community.flock.wirespec.compiler.core.parse.nodes.Definition
+import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.lib.WsNode
 import community.flock.wirespec.compiler.lib.produce
 

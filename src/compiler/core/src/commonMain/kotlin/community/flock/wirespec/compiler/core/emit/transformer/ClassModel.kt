@@ -1,6 +1,6 @@
-package community.flock.wirespec.compiler.core.parse.nodes
+package community.flock.wirespec.compiler.core.emit.transformer
 
-sealed interface ClassModel : Node {
+sealed interface ClassModel {
     val name: String
 }
 

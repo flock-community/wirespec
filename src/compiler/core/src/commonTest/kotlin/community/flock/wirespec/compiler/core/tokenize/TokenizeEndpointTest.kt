@@ -53,7 +53,6 @@ class TokenizeEndpointTest {
                 200 -> Todo[]
                 404 -> Error
             }
-
         """.trimIndent()
 
         val expected = listOf(
@@ -75,7 +74,6 @@ class TokenizeEndpointTest {
             endpoint PostTodo Todo POST /todos -> {
                 200 -> Todo
             }
-
         """.trimIndent()
 
         val expected = listOf(
@@ -97,7 +95,6 @@ class TokenizeEndpointTest {
             ?{name: String, date: String} -> {
                 200 -> Todo[]
             }
-
         """.trimIndent()
 
         val expected = listOf(
@@ -120,7 +117,6 @@ class TokenizeEndpointTest {
             #{version: String, accept: String} -> {
                 200 -> Todo[]
             }
-
         """.trimIndent()
 
         val expected = listOf(

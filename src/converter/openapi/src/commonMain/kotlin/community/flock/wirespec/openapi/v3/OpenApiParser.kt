@@ -19,12 +19,12 @@ import community.flock.kotlinx.openapi.bindings.v3.SchemaObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceOrBooleanObject
 import community.flock.kotlinx.openapi.bindings.v3.StatusCode
-import community.flock.wirespec.compiler.core.parse.nodes.Definition
-import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
-import community.flock.wirespec.compiler.core.parse.nodes.Enum
-import community.flock.wirespec.compiler.core.parse.nodes.Type
-import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field
-import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference
+import community.flock.wirespec.compiler.core.parse.Definition
+import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 import community.flock.wirespec.openapi.Common.className
 import kotlinx.serialization.json.Json
 import community.flock.kotlinx.openapi.bindings.v3.Type as OpenapiType
@@ -73,7 +73,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                                             className(name, "RequestBody")
                                         )
 
-                                        null -> TODO()
+                                        null -> TODO("Not yet implemented")
                                     },
                                     isNullable = requestBody.required ?: false
                                 )
@@ -85,24 +85,27 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                     )
 
                 val responses = operation.responses.orEmpty().flatMap { (status, res) ->
-                    res.resolve().let{
+                    res.resolve().let {
                         it.content?.map { (contentType, media) ->
-                        Endpoint.Response(
-                            status = status.value,
-                            headers = it.headers?.map { it.value.resolve().toField(it.key, className(name, "ResponseHeader")) }.orEmpty(),
-                            content = Endpoint.Content(
-                                type = contentType.value,
-                                reference = when (val schema = media.schema) {
-                                    is ReferenceObject -> schema.toReference()
-                                    is SchemaObject -> schema.toReference(
-                                        className(name, status.value, contentType.value ,"ResponseBody")
-                                    )
-                                    null -> Reference.Any(false)
-                                },
-                                isNullable = media.schema?.resolve()?.nullable ?: false
+                            Endpoint.Response(
+                                status = status.value,
+                                headers = it.headers?.map {
+                                    it.value.resolve().toField(it.key, className(name, "ResponseHeader"))
+                                }.orEmpty(),
+                                content = Endpoint.Content(
+                                    type = contentType.value,
+                                    reference = when (val schema = media.schema) {
+                                        is ReferenceObject -> schema.toReference()
+                                        is SchemaObject -> schema.toReference(
+                                            className(name, status.value, contentType.value, "ResponseBody")
+                                        )
+
+                                        null -> Reference.Any(false)
+                                    },
+                                    isNullable = media.schema?.resolve()?.nullable ?: false
+                                )
                             )
-                        )
-                    }
+                        }
                     }
                         ?: listOf(
                             Endpoint.Response(
@@ -129,7 +132,9 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
     private fun parseParameters() = openApi.flatMapRequests { req ->
         val parameters = req.pathItem.resolveParameters() + req.operation.resolveParameters()
         val name = req.operation.toName() ?: (req.path.toName() + req.method.name)
-        parameters.flatMap { parameter -> parameter.schema?.flatten(className(name, "Parameter", parameter.name)) ?: emptyList() }
+        parameters.flatMap { parameter ->
+            parameter.schema?.flatten(className(name, "Parameter", parameter.name)) ?: emptyList()
+        }
     }
 
     private fun parseRequestBody() = openApi.flatMapRequests { req ->
@@ -164,7 +169,8 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                                 .flatten(className(name, res.statusCode.value, mediaType.value, "ResponseBody"))
 
                             OpenapiType.ARRAY -> schema.items
-                                ?.flatten(className(name, res.statusCode.value, mediaType.value, "ResponseBody")).orEmpty()
+                                ?.flatten(className(name, res.statusCode.value, mediaType.value, "ResponseBody"))
+                                .orEmpty()
 
                             else -> emptyList()
                         }
@@ -202,8 +208,9 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
             }
         }
 
-    private fun Path.toSegments(parameters: List<ParameterObject>) = value.split("/").drop(1).filter { it.isNotBlank() }.map { segment ->
-        when(segment.isParam()) {
+    private fun Path.toSegments(parameters: List<ParameterObject>) =
+        value.split("/").drop(1).filter { it.isNotBlank() }.map { segment ->
+            when (segment.isParam()) {
                 true -> {
                     val param = segment.substring(1, segment.length - 1)
                     val name = toName()
@@ -222,8 +229,8 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                 }
 
                 false -> Endpoint.Segment.Literal(segment)
+            }
         }
-    }
 
     private fun OperationObject.resolveParameters(): List<ParameterObject> = parameters
         ?.mapNotNull {
@@ -314,7 +321,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         when (this) {
             is SchemaObject -> this
             is ReferenceObject -> this.resolveSchemaObject().second
-            is BooleanObject -> TODO()
+            is BooleanObject -> TODO("Not yet implemented")
         }
 
     private fun RequestBodyOrReferenceObject.resolve(): RequestBodyObject =
@@ -344,7 +351,12 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
 
             oneOf != null -> TODO("oneOf is not implemented")
             anyOf != null -> TODO("anyOf is not implemented")
-            allOf != null -> listOf(Type(name, Type.Shape(allOf.orEmpty().flatMap { it.resolve().toField(name) }.distinctBy { it.identifier })))
+            allOf != null -> listOf(
+                Type(
+                    name,
+                    Type.Shape(allOf.orEmpty().flatMap { it.resolve().toField(name) }.distinctBy { it.identifier })
+                )
+            )
                 .plus(allOf!!.flatMap {
                     when (it) {
                         is ReferenceObject -> emptyList()
@@ -364,8 +376,8 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
 
             else -> when (type) {
                 null, OpenapiType.OBJECT -> {
-                    val fields = properties.orEmpty().flatMap {
-                        (key, value) ->value.flatten(className(name, key))
+                    val fields = properties.orEmpty().flatMap { (key, value) ->
+                        value.flatten(className(name, key))
                     }
                     val schema = listOf(
                         Type(name, Type.Shape(this.toField(name)))
@@ -427,8 +439,8 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
             is BooleanObject -> Reference.Any(false, true)
             is ReferenceObject -> additionalProperties.toReference().toMap()
             is SchemaObject -> additionalProperties
-                .takeIf { it.type.isPrimitive() || it.properties != null}
-                ?.run {  toReference(name).toMap() }
+                .takeIf { it.type.isPrimitive() || it.properties != null }
+                ?.run { toReference(name).toMap() }
                 ?: Reference.Any(false, true)
         }
 
@@ -511,7 +523,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         when (val s = schema) {
             is ReferenceObject -> s.toReference()
             is SchemaObject -> s.toReference(name)
-            null -> TODO()
+            null -> TODO("Not yet implemented")
         }
             .let { Field(Field.Identifier(this.name), it, !(this.required ?: false)) }
 
@@ -519,7 +531,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         when (val s = schema) {
             is ReferenceObject -> s.toReference()
             is SchemaObject -> s.toReference(name)
-            null -> TODO()
+            null -> TODO("Not yet implemented")
         }
             .let { Field(Field.Identifier(identifier), it, !(this.required ?: false)) }
 

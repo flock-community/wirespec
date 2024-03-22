@@ -7,8 +7,6 @@ import arrow.core.nel
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
-import community.flock.wirespec.compiler.core.parse.nodes.Definition
-import community.flock.wirespec.compiler.core.parse.nodes.Node
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.Tokens
 import community.flock.wirespec.compiler.core.tokenize.removeWhiteSpace
@@ -32,12 +30,12 @@ class Parser(logger: Logger) : AbstractParser(logger) {
     private val refinedTypeParser = RefinedTypeParser(logger)
     private val endpointParser = EndpointParser(logger)
 
-    fun parse(tokens: Tokens): Either<NonEmptyList<WirespecException>, List<Definition>> = tokens
+    fun parse(tokens: Tokens): Either<NonEmptyList<WirespecException>, AST> = tokens
         .removeWhiteSpace()
         .toProvider(logger)
         .parse()
 
-    private fun TokenProvider.parse(): EitherNel<WirespecException, List<Definition>> = either {
+    private fun TokenProvider.parse(): EitherNel<WirespecException, AST> = either {
         mutableListOf<EitherNel<WirespecException, Definition>>()
             .apply { while (hasNext()) add(parseDefinition().mapLeft { it.nel() }) }
             .map { it.bind() }

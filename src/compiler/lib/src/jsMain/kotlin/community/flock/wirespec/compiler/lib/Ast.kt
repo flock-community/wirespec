@@ -2,13 +2,13 @@
 
 package community.flock.wirespec.compiler.lib
 
-import community.flock.wirespec.compiler.core.parse.nodes.Definition
-import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
-import community.flock.wirespec.compiler.core.parse.nodes.Enum
-import community.flock.wirespec.compiler.core.parse.nodes.Refined
-import community.flock.wirespec.compiler.core.parse.nodes.Type
+import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Node
+import community.flock.wirespec.compiler.core.parse.Refined
+import community.flock.wirespec.compiler.core.parse.Type
 
-fun Definition.produce(): WsNode =
+fun Node.produce(): WsNode =
     when (this) {
         is Type -> WsType(name, shape.produce())
         is Endpoint -> WsEndpoint(
@@ -26,7 +26,7 @@ fun Definition.produce(): WsNode =
         is Refined -> WsRefined(name, validator.value)
     }
 
-fun List<Definition>.produce(): Array<WsNode> =
+fun List<Node>.produce(): Array<WsNode> =
     map { it.produce() }.toTypedArray()
 
 private fun Type.Shape.produce() = WsShape(

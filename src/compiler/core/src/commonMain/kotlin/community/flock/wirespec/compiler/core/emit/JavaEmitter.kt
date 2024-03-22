@@ -1,21 +1,21 @@
 package community.flock.wirespec.compiler.core.emit
 
-import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.firstToLower
-import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.firstToUpper
-import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.hasEndpoints
-import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.isInt
-import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.needImports
 import community.flock.wirespec.compiler.core.emit.common.ClassModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitted
-import community.flock.wirespec.compiler.core.parse.nodes.Definition
-import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
-import community.flock.wirespec.compiler.core.parse.nodes.EnumClass
-import community.flock.wirespec.compiler.core.parse.nodes.Field
-import community.flock.wirespec.compiler.core.parse.nodes.Parameter
-import community.flock.wirespec.compiler.core.parse.nodes.Reference
-import community.flock.wirespec.compiler.core.parse.nodes.RefinedClass
-import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
+import community.flock.wirespec.compiler.core.emit.transformer.ClassModelTransformer.transform
+import community.flock.wirespec.compiler.core.emit.transformer.EndpointClass
+import community.flock.wirespec.compiler.core.emit.transformer.Field
+import community.flock.wirespec.compiler.core.emit.transformer.Parameter
+import community.flock.wirespec.compiler.core.emit.transformer.Reference
+import community.flock.wirespec.compiler.core.emit.transformer.RefinedClass
+import community.flock.wirespec.compiler.core.emit.transformer.TypeClass
+import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Definition
+import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Refined
+import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
@@ -64,7 +64,7 @@ class JavaEmitter(
         ""
     }
 
-    private fun importWireSpec(ast: List<Definition>) = if (ast.needImports()) {
+    private fun importWireSpec(ast: AST) = if (ast.needImports()) {
         """
         |import community.flock.wirespec.Wirespec;
         |
@@ -74,7 +74,7 @@ class JavaEmitter(
         ""
     }
 
-    private fun importJava(ast: List<Definition>) = if (ast.hasEndpoints()) {
+    private fun importJava(ast: AST) = if (ast.hasEndpoints()) {
         """
         |import java.util.concurrent.CompletableFuture;
         |import java.util.function.Function;
@@ -85,18 +85,29 @@ class JavaEmitter(
         ""
     }
 
-    override fun emit(ast: List<Definition>): List<Emitted> = super.emit(ast)
+    override fun emit(ast: AST): List<Emitted> = super.emit(ast)
         .map { Emitted(it.typeName.sanitizeSymbol(), "$pkg${importWireSpec(ast)}${importJava(ast)}${it.result}\n") }
 
-    override fun TypeClass.emit(): String = """
+    override fun Type.emit(): String = transform().emit()
+
+    fun TypeClass.emit() = """
         |public record ${name.sanitizeSymbol()}(
         |${fields.joinToString(",\n") { it.emit() }.spacer()}
         |){
         |};
     """.trimMargin()
 
-    override fun RefinedClass.emit() = """
+    override fun Type.Shape.emit(): String = TODO("Not yet implemented")
+    override fun Type.Shape.Field.emit(): String = TODO("Not yet implemented")
+    override fun Type.Shape.Field.Identifier.emit(): String = TODO("Not yet implemented")
+    override fun Type.Shape.Field.Reference.emit(): String = TODO("Not yet implemented")
+
+    override fun Refined.emit() = transform().emit()
+
+    fun RefinedClass.emit() = """
         |public record ${name.sanitizeSymbol()} (String value) implements Wirespec.Refined {
+        |${SPACER}@Override
+        |${SPACER}public String toString() { return value; }
         |${SPACER}public static boolean validate($name record) {
         |${SPACER}${validator.emit()}
         |${SPACER}}
@@ -106,11 +117,15 @@ class JavaEmitter(
     """.trimMargin()
 
 
-    override fun RefinedClass.Validator.emit() = """
-        |${SPACER}return java.util.regex.Pattern.compile(${value.replace("\\", "\\\\")}).matcher(record.value).find();
-    """.trimMargin()
+    override fun Refined.Validator.emit(): String = TODO("Not yet implemented")
 
-    override fun EnumClass.emit(): String = """
+    fun RefinedClass.Validator.emit() = run {
+        """
+        |${SPACER}return java.util.regex.Pattern.compile(${value.replace("\\", "\\\\")}).matcher(record.value).find();
+        """.trimMargin()
+    }
+
+    override fun Enum.emit(): String = """
         |public enum ${name.sanitizeSymbol()} implements Wirespec.Enum {
         |${entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"${it}\")" }.spacer()};
         |${SPACER}public final String label;
@@ -124,7 +139,9 @@ class JavaEmitter(
         |}
     """.trimMargin()
 
-    override fun EndpointClass.emit(): String = """
+    override fun Endpoint.emit(): String = transform().emit()
+
+    fun EndpointClass.emit() = """
         |public interface ${name.sanitizeSymbol()} extends Wirespec.Endpoint {
         |${SPACER}static String PATH = "$path";
         |${SPACER}static String METHOD = "$method";
@@ -149,7 +166,8 @@ class JavaEmitter(
         |}
     """.trimMargin()
 
-    override fun EndpointClass.RequestClass.emit() = """
+
+    fun EndpointClass.RequestClass.emit() = """
          |final class ${name.sanitizeSymbol()} implements ${supers.joinToString(", ") { it.emitWrap() }} {
          |${fields.joinToString("\n") { "${it.emit()};" }.spacer()}
          |
@@ -161,7 +179,7 @@ class JavaEmitter(
          |}
     """.trimMargin()
 
-    override fun EndpointClass.RequestClass.RequestAllArgsConstructor.emit(): String = """
+    fun EndpointClass.RequestClass.RequestAllArgsConstructor.emit(): String = """
         |public ${name.sanitizeSymbol()}(
         |${parameters.joinToString(",\n") { it.emit() }.spacer()}
         |) {
@@ -173,7 +191,7 @@ class JavaEmitter(
         |}
     """.trimMargin()
 
-    override fun EndpointClass.RequestClass.RequestParameterConstructor.emit(): String = """
+    fun EndpointClass.RequestClass.RequestParameterConstructor.emit(): String = """
         |public ${name.sanitizeSymbol()}(
         |${parameters.joinToString(",\n") { it.emit() }.spacer()}
         |) {
@@ -185,7 +203,7 @@ class JavaEmitter(
         |}
     """.trimMargin()
 
-    override fun EndpointClass.RequestMapper.emit(): String = """
+    fun EndpointClass.RequestMapper.emit(): String = """
         |static <B, Req extends Request<?>> Function<Wirespec.Request<B>, Req> $name(Wirespec.ContentMapper<B> contentMapper) {
         |${SPACER}return request -> {
         |${this.conditions.joinToString("\n") { it.emit() }.spacer(2)}
@@ -194,7 +212,7 @@ class JavaEmitter(
         |}
     """.trimMargin()
 
-    override fun EndpointClass.RequestMapper.RequestCondition.emit(): String =
+    fun EndpointClass.RequestMapper.RequestCondition.emit(): String =
         if (content == null)
             """
                 |if (request.getContent() == null) {
@@ -210,8 +228,8 @@ class JavaEmitter(
             """.trimMargin()
 
 
-    override fun EndpointClass.ResponseClass.emit(): String = """
-        |final class ${name} implements ${`super`.emitWrap()} {
+    fun EndpointClass.ResponseClass.emit(): String = """
+        |final class $name implements ${`super`.emitWrap()} {
         |${fields.joinToString("\n") { "${it.emit()};" }.spacer()}
         |
         |${responseAllArgsConstructor.emit().spacer()}
@@ -222,7 +240,7 @@ class JavaEmitter(
         |}
     """.trimMargin()
 
-    override fun EndpointClass.ResponseClass.ResponseAllArgsConstructor.emit(): String = """
+    fun EndpointClass.ResponseClass.ResponseAllArgsConstructor.emit(): String = """
         |public $name(${parameters.joinToString(", ") { it.emit() }}) {
         |${SPACER}this.status = status;
         |${SPACER}this.headers = headers;
@@ -230,7 +248,7 @@ class JavaEmitter(
         |}
     """.trimMargin()
 
-    override fun EndpointClass.ResponseClass.ResponseParameterConstructor.emit(): String = """
+    fun EndpointClass.ResponseClass.ResponseParameterConstructor.emit(): String = """
         |public ${name.sanitizeSymbol()}(
         |${parameters.joinToString(",\n") { it.emit() }.spacer()}
         |) {
@@ -240,7 +258,7 @@ class JavaEmitter(
         |}
     """.trimMargin()
 
-    override fun EndpointClass.ResponseMapper.emit(): String = """
+    fun EndpointClass.ResponseMapper.emit(): String = """
         |static <B, Res extends Response<?>> Function<Wirespec.Response<B>, Res> $name(Wirespec.ContentMapper<B> contentMapper) {
         |${SPACER}return response -> {
         |${this.conditions.joinToString("\n") { it.emit() }.spacer(2)}
@@ -249,7 +267,7 @@ class JavaEmitter(
         |}
     """.trimMargin()
 
-    override fun EndpointClass.ResponseMapper.ResponseCondition.emit(): String =
+    fun EndpointClass.ResponseMapper.ResponseCondition.emit(): String =
         if (content == null)
             """
                 |if (${if (statusCode.isInt()) "response.getStatus() == $statusCode && " else ""}response.getContent() == null) {
@@ -264,45 +282,40 @@ class JavaEmitter(
                 |}
             """.trimMargin()
 
-    override fun EndpointClass.ResponseInterface.emit(): String = """
+    fun EndpointClass.ResponseInterface.emit(): String = """
         |sealed interface ${name.emitWrap()} extends ${`super`.emitWrap()} {
         |};
     """.trimMargin()
 
-    override fun Parameter.emit(): String =
-        "${reference.emitWrap()} ${identifier.sanitizeIdentifier()}"
+    fun Parameter.emit(): String = "${reference.emitWrap()} ${identifier.sanitizeIdentifier()}"
 
-    override fun Reference.Generics.emit(): String = references
+    fun Reference.Generics.emit(): String = references
         .takeIf { it.isNotEmpty() }
         ?.joinToString(", ", "<", ">") { it.emitWrap() }
         .orEmpty()
 
-    override fun Reference.emit(): String {
-        return when (this) {
-            is Reference.Custom -> emit()
-            is Reference.Language -> emit()
-            is Reference.Wirespec -> emit()
-        }
+    fun Reference.emit(): String = when (this) {
+        is Reference.Custom -> emit()
+        is Reference.Language -> emit()
+        is Reference.Wirespec -> emit()
     }
 
     private fun Reference.emitWrap(): String = emit()
         .let { if (isIterable) "java.util.List<$it>" else it }
         .let { if (isOptional) "java.util.Optional<$it>" else it }
 
-    override fun Reference.Custom.emit(): String = """
+    fun Reference.Custom.emit(): String = """
         |${name.sanitizeSymbol()}${generics.emit()}
     """.trimMargin()
 
 
-    override fun Reference.Language.emit(): String = """
+    fun Reference.Language.emit(): String = """
         |${primitive.emit()}${generics.emit()}
     """.trimMargin()
 
-    override fun Reference.Wirespec.emit(): String =
-        "Wirespec.${name}${generics.emit()}"
+    fun Reference.Wirespec.emit(): String = "Wirespec.${name}${generics.emit()}"
 
-
-    override fun Reference.Language.Primitive.emit(): String = when (this) {
+    fun Reference.Language.Primitive.emit(): String = when (this) {
         Reference.Language.Primitive.Any -> "Object"
         Reference.Language.Primitive.Unit -> "Void"
         Reference.Language.Primitive.String -> "String"
@@ -315,7 +328,7 @@ class JavaEmitter(
         Reference.Language.Primitive.Double -> "Double"
     }
 
-    override fun EndpointClass.Path.emit(): String = value
+    fun EndpointClass.Path.emit(): String = value
         .flatMap { listOf(EndpointClass.Path.Literal("/"), it) }
         .joinToString(" + ") {
             when (it) {
@@ -324,11 +337,17 @@ class JavaEmitter(
             }
         }
 
-    override fun EndpointClass.Content.emit(): String =
-        """new Wirespec.Content("$type", body)"""
+    fun EndpointClass.Content.emit(): String = """new Wirespec.Content("$type", body)"""
 
-    override fun Field.emit(): String =
+    fun Field.emit(): String =
         """${if (isPrivate) "private " else ""}${if (isFinal) "final " else ""}${reference.emitWrap()} ${identifier.sanitizeIdentifier()}"""
+
+    override fun Definition.emitName(): String = when (this) {
+        is Endpoint -> "${name}Endpoint"
+        is Enum -> name
+        is Refined -> name
+        is Type -> name
+    }
 
     private fun Field.emitGetter(): String = """
         |@Override

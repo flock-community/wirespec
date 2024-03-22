@@ -1,14 +1,13 @@
 package community.flock.wirespec.compiler.core.parse
 
 import community.flock.wirespec.compiler.core.Wirespec
-import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
-import community.flock.wirespec.compiler.core.parse.nodes.Endpoint.Method.GET
-import community.flock.wirespec.compiler.core.parse.nodes.Endpoint.Method.POST
-import community.flock.wirespec.compiler.core.parse.nodes.Endpoint.Segment.Literal
-import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Identifier
-import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference
-import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference.Primitive
-import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference.Primitive.Type.String
+import community.flock.wirespec.compiler.core.parse.Endpoint.Method.GET
+import community.flock.wirespec.compiler.core.parse.Endpoint.Method.POST
+import community.flock.wirespec.compiler.core.parse.Endpoint.Segment.Literal
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Identifier
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive.Type.String
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
@@ -28,7 +27,6 @@ class ParseEndpointTest {
             endpoint GetTodos GET /todos -> {
                 200 -> Todo[]
             }
-
         """.trimIndent()
 
         Wirespec.tokenize(source)
@@ -55,7 +53,6 @@ class ParseEndpointTest {
             endpoint PostTodo POST Todo /todos -> {
                 200 -> Todo
             }
-
         """.trimIndent()
 
         Wirespec.tokenize(source)
@@ -85,7 +82,6 @@ class ParseEndpointTest {
             endpoint GetTodo GET /todos/{id: String} -> {
                 200 -> Todo
             }
-
         """.trimIndent()
 
         Wirespec.tokenize(source)
@@ -121,7 +117,6 @@ class ParseEndpointTest {
             endpoint GetTodos GET /todos?{name: String, date: String} -> {
                 200 -> Todo[]
             }
-
         """.trimIndent()
 
         Wirespec.tokenize(source)
@@ -151,7 +146,6 @@ class ParseEndpointTest {
             endpoint GetTodos GET /todos#{name: String, date: String} -> {
                 200 -> Todo[]
             }
-
         """.trimIndent()
 
         Wirespec.tokenize(source)
