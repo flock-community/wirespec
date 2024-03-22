@@ -27,7 +27,8 @@ public class CustomEmitter extends Emitter {
         return ast
                 .stream()
                 .filter(sc -> sc instanceof Type)
-                .map(sc -> new Emitted(((Type) sc).getName(), emit((Type) sc)))
+                .map(it -> (Type) it)
+                .map(sc -> new Emitted(sc.getName(), emit(sc)))
                 .collect(Collectors.toList());
     }
 

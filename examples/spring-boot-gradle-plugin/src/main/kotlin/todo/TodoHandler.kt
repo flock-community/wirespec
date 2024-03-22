@@ -20,35 +20,39 @@ private interface TodoApi :
 @Component
 class TodoHandler(private val service: TodoService) : TodoApi {
 
-    override suspend fun getTodos(request: GetTodosEndpoint.Request<*>) = when (request) {
-        is GetTodosEndpoint.RequestUnit -> service.getAllTodos()
-            .map { it.produce() }
-            .let(GetTodosEndpoint::Response200ApplicationJson)
-    }
+    override suspend fun getTodos(request: GetTodosEndpoint.Request<*>): GetTodosEndpoint.Response<*> =
+        when (request) {
+            is GetTodosEndpoint.RequestUnit -> service.getAllTodos()
+                .map { it.produce() }
+                .let(GetTodosEndpoint::Response200ApplicationJson)
+        }
 
-    override suspend fun getTodoById(request: GetTodoByIdEndpoint.Request<*>) = when (request) {
-        is GetTodoByIdEndpoint.RequestUnit -> TodoId(request.path.split("/").last())
-            .also { if (!it.validate()) throw TodoIdNotValidException(it.value) }
-            .let { Todo.Id(it.value) }
-            .let(service::getTodoById)
-            .produce()
-            .let(GetTodoByIdEndpoint::Response200ApplicationJson)
-    }
+    override suspend fun getTodoById(request: GetTodoByIdEndpoint.Request<*>): GetTodoByIdEndpoint.Response<*> =
+        when (request) {
+            is GetTodoByIdEndpoint.RequestUnit -> TodoId(request.path.split("/").last())
+                .also { if (!it.validate()) throw TodoIdNotValidException(it.value) }
+                .let { Todo.Id(it.value) }
+                .let(service::getTodoById)
+                .produce()
+                .let(GetTodoByIdEndpoint::Response200ApplicationJson)
+        }
 
-    override suspend fun postTodo(request: PostTodoEndpoint.Request<*>) = when (request) {
-        is PostTodoEndpoint.RequestApplicationJson -> request.content.body
-            .consume()
-            .let(service::saveTodo)
-            .produce()
-            .let(PostTodoEndpoint::Response200ApplicationJson)
-    }
+    override suspend fun postTodo(request: PostTodoEndpoint.Request<*>): PostTodoEndpoint.Response<*> =
+        when (request) {
+            is PostTodoEndpoint.RequestApplicationJson -> request.content.body
+                .consume()
+                .let(service::saveTodo)
+                .produce()
+                .let(PostTodoEndpoint::Response200ApplicationJson)
+        }
 
-    override suspend fun deleteTodoById(request: DeleteTodoByIdEndpoint.Request<*>) = when (request) {
-        is DeleteTodoByIdEndpoint.RequestUnit -> TodoId(request.path.split("/").last())
-            .also { if (!it.validate()) throw TodoIdNotValidException(it.value) }
-            .let { Todo.Id(it.value) }
-            .let(service::deleteTodoById)
-            .produce()
-            .let(DeleteTodoByIdEndpoint::Response200ApplicationJson)
-    }
+    override suspend fun deleteTodoById(request: DeleteTodoByIdEndpoint.Request<*>): DeleteTodoByIdEndpoint.Response<*> =
+        when (request) {
+            is DeleteTodoByIdEndpoint.RequestUnit -> TodoId(request.path.split("/").last())
+                .also { if (!it.validate()) throw TodoIdNotValidException(it.value) }
+                .let { Todo.Id(it.value) }
+                .let(service::deleteTodoById)
+                .produce()
+                .let(DeleteTodoByIdEndpoint::Response200ApplicationJson)
+        }
 }
