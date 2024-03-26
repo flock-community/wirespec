@@ -1,18 +1,22 @@
 {
   "compilerOptions": {
-    "target": "es6",
+    "module": "ES6",
+    "target": "esnext",
     "lib": [
-      "dom"
+      "ESNext",
+      "DOM"
     ],
-    "skipLibCheck": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
-    "module": "ES2022",
+    "moduleResolution":"nodenext",
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "src",
+    "sourceMap": true,
+    "skipLibCheck": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    ".vscode-test"
+  ]
 }
