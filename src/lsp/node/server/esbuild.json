@@ -1,0 +1,5 @@
+{
+  "alias": {
+    "wirespec": "node_modules/@flock/wirespec-lib"
+  }
+}

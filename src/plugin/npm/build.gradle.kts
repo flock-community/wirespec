@@ -16,6 +16,7 @@ repositories {
 kotlin {
     js(IR) {
         nodejs()
+        browser()
         generateTypeScriptDefinitions()
         binaries.library()
         compilations["main"].packageJson {

@@ -2,10 +2,8 @@ package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
-import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.nodes.Definition
 import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
-import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
 import community.flock.wirespec.compiler.core.parse.nodes.Enum
 import community.flock.wirespec.compiler.core.parse.nodes.Refined
 import community.flock.wirespec.compiler.core.parse.nodes.Type
@@ -143,9 +141,44 @@ class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
                 }) => ({status: ${if (it.status.isInt()) it.status else "`${it.status}`"}, headers: {${it.headers.emitMap()}}${it.content?.let { ", content: {type: \"${it.type}\", body: props.body}" } ?: ""}} as const)"
             }
         }
+          |
+          |${emitResponseMapper(responses)}
           |}
           |
         """.trimMargin()
+    }
+
+    private fun emitResponseMapper(responses: List<Endpoint.Response>): String = """
+       |${SPACER}export const RESPONSE_MAPPER = async (fetchResponse: FetchResponse): Promise<Todo.Response> => {
+       |${responses.joinToString("\n") { it.emit() }}
+       |${SPACER}${SPACER}throw new Error("Unknown response type")
+       |${SPACER}}
+    """.trimMargin()
+
+    private fun Endpoint.Response.emit(): String {
+        if (content == null) {
+            return """
+               |$SPACER${SPACER}if(fetchResponse.status === $status ") {
+               |$SPACER$SPACER${SPACER}return {
+               |$SPACER$SPACER${SPACER}${SPACER}status: fetchResponse.status,
+               |$SPACER$SPACER${SPACER}}
+               |$SPACER$SPACER}   
+               |  
+               |""".trimMargin()
+        }
+
+        return """
+            |$SPACER${SPACER}if (fetchResponse.status === $status && fetchResponse.headers.get("Content-type") === "${content.type}") {
+            |$SPACER$SPACER${SPACER}return {
+            |$SPACER$SPACER$SPACER${SPACER}status: fetchResponse.status,
+            |$SPACER$SPACER$SPACER${SPACER}content: {
+            |$SPACER$SPACER$SPACER$SPACER${SPACER}type: "application/json",
+            |$SPACER$SPACER$SPACER$SPACER${SPACER}body: await fetchResponse.json()
+            |$SPACER$SPACER$SPACER${SPACER}}
+            |$SPACER$SPACER${SPACER}}
+            |$SPACER$SPACER}
+            |
+            """.trimMargin()
     }
 
     override fun Definition.emitName(): String = when (this) {

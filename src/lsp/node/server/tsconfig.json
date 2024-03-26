@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "ES6",
     "target": "esnext",
     "lib": [
       "ESNext",
       "DOM"
     ],
+    "moduleResolution":"nodenext",
     "outDir": "build",
     "rootDir": "src",
     "sourceMap": true,
@@ -17,5 +18,6 @@
   "exclude": [
     "node_modules",
     ".vscode-test"
-  ]
+  ],
+
 }

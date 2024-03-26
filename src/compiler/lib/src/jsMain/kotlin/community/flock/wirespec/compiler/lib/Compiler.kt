@@ -39,7 +39,7 @@ class WsToKotlin : Compiler() {
 
 @JsExport
 class WsToTypeScript : Compiler() {
-    fun compile(source: String) = preCompile(source)(typeScriptEmitter).produce()
+    fun compile(source: String): WsCompilationResult = preCompile(source)(typeScriptEmitter).produce()
 
     companion object {
         private val typeScriptEmitter = TypeScriptEmitter(logger)

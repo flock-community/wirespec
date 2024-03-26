@@ -1,20 +1,13 @@
-import { TextDocument } from "vscode-languageserver-textdocument";
-import { createConnection, DiagnosticSeverity, SemanticTokensBuilder, TextDocuments } from "vscode-languageserver";
-import { WsToken, WsToTypeScript } from "wirespec";
-import { ServerCapabilities } from "vscode-languageserver-protocol/lib/common/protocol";
+import {TextDocument} from "vscode-languageserver-textdocument";
+import {createConnection, DiagnosticSeverity, SemanticTokensBuilder, TextDocuments} from "vscode-languageserver";
+import {ServerCapabilities} from "vscode-languageserver-protocol/lib/common/protocol";
 
-import { Range, SemanticTokensLegend } from "vscode-languageserver-types";
+import {Range, SemanticTokensLegend} from "vscode-languageserver-types";
+import {WsError, WsToken, WsToTypeScript} from "wirespec";
 
 const wsToTs = new WsToTypeScript();
 
-const getCompilerErrors = (text) => {
-  const error = wsToTs.compile(text).error;
-
-  if (error) {
-    const { index, length, value } = error;
-    return [{ index, length, value }];
-  } else return [];
-};
+const getCompilerErrors = (text): WsError[] => wsToTs.compile(text).errors ?? [];
 
 const toDiagnostic =
   (textDocument) =>
