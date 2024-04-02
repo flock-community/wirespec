@@ -28,11 +28,11 @@ import com.intellij.psi.tree.TokenSet as IntellijTokenSet
 
 class Parser : PsiParser {
 
-    class TypeDef : IElementType("TYPE_DEF", Language.INSTANCE)
-    class EndpointDef : IElementType("ENDPOINT_DEF", Language.INSTANCE)
-    class CustomTypeDef : IElementType("CUSTOM_TYPE_DEF", Language.INSTANCE)
-    class CustomTypeRef : IElementType("CUSTOM_TYPE_REF", Language.INSTANCE)
-    class Body : IElementType("BODY", Language.INSTANCE)
+    object TypeDef : IElementType("TYPE_DEF", Language.INSTANCE)
+    object EndpointDef : IElementType("ENDPOINT_DEF", Language.INSTANCE)
+    object CustomTypeDef : IElementType("CUSTOM_TYPE_DEF", Language.INSTANCE)
+    object CustomTypeRef : IElementType("CUSTOM_TYPE_REF", Language.INSTANCE)
+    object Body : IElementType("BODY", Language.INSTANCE)
 
 
     override fun parse(root: IElementType, builder: PsiBuilder): ASTNode {
@@ -46,7 +46,7 @@ class Parser : PsiParser {
                 builder.tokenType == CUSTOM_TYPE -> {
                     val customTypeMarker = builder.mark()
                     builder.advanceLexer()
-                    customTypeMarker.done(CustomTypeRef())
+                    customTypeMarker.done(CustomTypeRef)
                     parseBody()
                 }
 
@@ -64,7 +64,7 @@ class Parser : PsiParser {
                 builder.tokenType == CUSTOM_TYPE -> {
                     val customTypeMarker = builder.mark()
                     builder.advanceLexer()
-                    customTypeMarker.done(CustomTypeRef())
+                    customTypeMarker.done(CustomTypeRef)
                     parseRef()
                 }
 
@@ -72,7 +72,7 @@ class Parser : PsiParser {
                     val bodyMarker = builder.mark()
                     builder.advanceLexer()
                     parseBody()
-                    bodyMarker.done(Body())
+                    bodyMarker.done(Body)
                     builder.advanceLexer()
                     parseRef()
                 }
@@ -91,7 +91,7 @@ class Parser : PsiParser {
                 builder.tokenType == CUSTOM_TYPE -> {
                     val customTypeMarker = builder.mark()
                     builder.advanceLexer()
-                    customTypeMarker.done(CustomTypeDef())
+                    customTypeMarker.done(CustomTypeDef)
                     parseRef()
                 }
 
@@ -109,7 +109,7 @@ class Parser : PsiParser {
                     val marker = builder.mark()
                     builder.advanceLexer()
                     parseDef()
-                    marker.done(TypeDef())
+                    marker.done(TypeDef)
                     parse()
                 }
 
