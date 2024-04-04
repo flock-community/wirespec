@@ -1,5 +1,6 @@
 package community.flock.wirespec.compiler.core.exceptions
 
+import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.types.TokenType
 import kotlin.reflect.KClass
@@ -30,6 +31,11 @@ sealed class WirespecException(message: String, val coordinates: Token.Coordinat
             sealed class NullTokenException(message: String, coordinates: Token.Coordinates) :
                 ParserException(coordinates, "$message cannot be null") {
                 class NextException(coordinates: Token.Coordinates) : NullTokenException("Next Token", coordinates)
+            }
+
+            sealed class ValidatorException(message: String, coordinates: Token.Coordinates) :
+                ParserException(coordinates, message) {
+                class DefinitionNotExistsValidatorException(reference: Type.Shape.Field.Reference.Custom) : ValidatorException("Cannot find reference: ${reference.value}", reference.coordinates)
             }
         }
     }

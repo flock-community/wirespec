@@ -4,6 +4,7 @@ import arrow.core.Either
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
+import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.types.Brackets
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
 import community.flock.wirespec.compiler.core.tokenize.types.Comma
@@ -79,7 +80,7 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         when (val type = token.type) {
             is WirespecType -> Type.Shape.Field(
                 identifier = identifier,
-                reference = parseFieldValue(type, token.value).bind(),
+                reference = parseFieldValue(type, token.value, token.coordinates).bind(),
                 isNullable = (token.type is QuestionMark).also { if (it) eatToken().bind() }
             )
 
@@ -87,34 +88,51 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         }
     }
 
-    private fun TokenProvider.parseFieldValue(wsType: WirespecType, value: String) = either {
+    private fun TokenProvider.parseFieldValue(wsType: WirespecType, value: String, coordinates: Token.Coordinates) = either {
         eatToken().bind()
         token.log()
         val isIterable = (token.type is Brackets).also { if (it) eatToken().bind() }
         when (wsType) {
             is WsString -> Type.Shape.Field.Reference.Primitive(
                 Type.Shape.Field.Reference.Primitive.Type.String,
-                isIterable
+                isIterable,
+                false,
+                coordinates
             )
 
             is WsInteger -> Type.Shape.Field.Reference.Primitive(
                 Type.Shape.Field.Reference.Primitive.Type.Integer,
-                isIterable
+                isIterable,
+                false,
+                coordinates
             )
 
             is WsNumber -> Type.Shape.Field.Reference.Primitive(
                 Type.Shape.Field.Reference.Primitive.Type.Number,
-                isIterable
+                isIterable,
+                false,
+                coordinates
             )
 
             is WsBoolean -> Type.Shape.Field.Reference.Primitive(
                 Type.Shape.Field.Reference.Primitive.Type.Boolean,
-                isIterable
+                isIterable,
+                false,
+                coordinates
             )
 
-            is WsUnit -> Type.Shape.Field.Reference.Unit(isIterable)
+            is WsUnit -> Type.Shape.Field.Reference.Unit(
+                isIterable,
+                false,
+                coordinates
+            )
 
-            is CustomType -> Type.Shape.Field.Reference.Custom(value, isIterable)
+            is CustomType -> Type.Shape.Field.Reference.Custom(
+                value,
+                isIterable,
+                false,
+                coordinates
+            )
         }
     }
 
