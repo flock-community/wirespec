@@ -3,11 +3,11 @@ package community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse.Endpoint.Method.GET
 import community.flock.wirespec.compiler.core.parse.Endpoint.Method.POST
-import community.flock.wirespec.compiler.core.parse.Endpoint.Segment.Literal
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Identifier
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive.Type.String
+import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
@@ -38,7 +38,9 @@ class ParseEndpointTest {
             .run {
                 name shouldBe "GetTodos"
                 method shouldBe GET
-                path shouldBe listOf(Literal("todos"))
+                path shouldBe listOf(
+                    Endpoint.Segment.Literal("todos")
+                )
                 requests shouldBe listOf(
                     Endpoint.Request(
                         content = null
@@ -120,12 +122,18 @@ class ParseEndpointTest {
                 name shouldBe "GetTodo"
                 method shouldBe GET
                 path shouldBe listOf(
-                    Literal("todos"), Endpoint.Segment.Param(
+                    Endpoint.Segment.Literal("todos"),
+                    Endpoint.Segment.Param(
                         identifier = Identifier("id"),
                         reference = Primitive(
                             type = String,
                             isIterable = false,
                             isMap = false,
+                            coordinates= Token.Coordinates(
+                                line = 1,
+                                position = 40,
+                                idxAndLength = Token.Coordinates.IdxAndLength(idx = 39, length = 6)
+                            )
                         )
                     )
                 )
