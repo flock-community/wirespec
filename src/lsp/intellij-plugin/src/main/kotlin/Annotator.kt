@@ -1,5 +1,6 @@
 package community.flock.wirespec.lsp.intellij_plugin
 
+import arrow.core.flatMap
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.lang.annotation.HighlightSeverity
@@ -9,6 +10,7 @@ import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.Parser
 import community.flock.wirespec.compiler.core.tokenize.tokenize
+import community.flock.wirespec.compiler.core.validate.validate
 import community.flock.wirespec.compiler.utils.Logger
 import kotlinx.coroutines.runBlocking
 
@@ -20,6 +22,7 @@ class Annotator : ExternalAnnotator<List<WirespecException>, List<WirespecExcept
     override fun collectInformation(file: PsiFile) = runBlocking {
         WirespecSpec.tokenize(file.text)
             .let { Parser(logger).parse(it) }
+            .flatMap { it.validate() }
             .fold({ it }, { emptyList() })
     }
 
