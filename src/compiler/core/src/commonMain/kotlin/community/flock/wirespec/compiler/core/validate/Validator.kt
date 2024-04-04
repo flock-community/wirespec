@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.ValidatorException.DefinitionNotExistsValidatorException
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -25,6 +26,7 @@ fun AST.validateReferences(): Either<NonEmptyList<DefinitionNotExistsValidatorEx
         when (it) {
             is Type -> it.name
             is Refined -> it.name
+            is Enum -> it.name
             else -> null
         }
     }
@@ -72,7 +74,7 @@ fun AST.validateReferences(): Either<NonEmptyList<DefinitionNotExistsValidatorEx
         when (it) {
             is Type -> it.validate().bindNel()
             is Endpoint -> it.validate().bindNel()
-            else -> error("")
+            else -> it
         }
     }
 }
