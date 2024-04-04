@@ -1,18 +1,16 @@
 package community.flock.wirespec.compiler.core.emit
 
-import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
+import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.parse.nodes.Definition
-import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
-import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
-import community.flock.wirespec.compiler.core.parse.nodes.Enum
-import community.flock.wirespec.compiler.core.parse.nodes.Refined
-import community.flock.wirespec.compiler.core.parse.nodes.Type
+import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Refined
+import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
-class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
+class TypeScriptEmitter(logger: Logger = noLogger) : Emitter(logger) {
 
     override val shared = ""
 
@@ -25,7 +23,7 @@ class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
         |}
     """.trimMargin()
 
-    override fun emit(ast: List<Definition>): List<Emitted> =
+    override fun emit(ast: AST): List<Emitted> =
         super.emit(ast).map {
             Emitted(
                 it.typeName.sanitizeSymbol(), """
@@ -146,13 +144,6 @@ class TypeScriptEmitter(logger: Logger = noLogger) : AbstractEmitter(logger) {
           |}
           |
         """.trimMargin()
-    }
-
-    override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> this.name
-        is Enum -> this.name
-        is Refined -> this.name
-        is Type -> this.name
     }
 
     private fun List<Endpoint.Segment>.emitType() = "`${joinToString("") { "/" + it.emitType() }}`"

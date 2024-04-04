@@ -6,11 +6,11 @@ import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.plugin.maven.utils.JvmUtil
+import java.io.File
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
-import java.io.File
 import community.flock.wirespec.openapi.v2.OpenApiParser as OpenApiParserV2
 import community.flock.wirespec.openapi.v3.OpenApiParser as OpenApiParserV3
 
@@ -51,7 +51,7 @@ class GenerateMojo : BaseMojo() {
                 Language.Kotlin -> executeKotlin()
                 Language.Scala -> executeScala()
                 Language.TypeScript -> executeTypeScript()
-                Language.Wirespec -> TODO()
+                Language.Wirespec -> TODO("Not yet implemented")
             }
         }
         project.addCompileSourceRoot(output);

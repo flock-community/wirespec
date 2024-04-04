@@ -1,27 +1,26 @@
 package community.flock.wirespec.compiler.core.emit
 
-import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitted
+import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.parse.nodes.Definition
-import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
-import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
-import community.flock.wirespec.compiler.core.parse.nodes.Enum
-import community.flock.wirespec.compiler.core.parse.nodes.Refined
-import community.flock.wirespec.compiler.core.parse.nodes.Type
-import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference
+import community.flock.wirespec.compiler.core.parse.Definition
+import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Refined
+import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
 class ScalaEmitter(
     private val packageName: String = DEFAULT_PACKAGE_NAME,
     logger: Logger = noLogger
-) : AbstractEmitter(logger) {
+) : Emitter(logger) {
 
     override val shared = ""
 
-    override fun emit(ast: List<Definition>): List<Emitted> = super.emit(ast)
+    override fun emit(ast: AST): List<Emitted> = super.emit(ast)
         .map { Emitted(it.typeName, if (packageName.isBlank()) "" else "package $packageName\n\n${it.result}") }
 
     override fun Type.emit() = withLogging(logger) {
@@ -139,11 +138,11 @@ class ScalaEmitter(
         )
     }
 
-    override fun Definition.emitName(): String = when(this){
-        is Endpoint -> "${this.name}Endpoint"
-        is Enum -> this.name
-        is Refined -> this.name
-        is Type -> this.name
+    override fun Definition.emitName(): String = when (this) {
+        is Endpoint -> "${name}Endpoint"
+        is Enum -> name
+        is Refined -> name
+        is Type -> name
     }
 
 }

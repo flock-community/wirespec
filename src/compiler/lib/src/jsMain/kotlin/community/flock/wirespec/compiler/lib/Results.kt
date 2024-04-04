@@ -6,7 +6,7 @@ import arrow.core.Either
 import arrow.core.Nel
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
-import community.flock.wirespec.compiler.core.parse.nodes.Definition
+import community.flock.wirespec.compiler.core.parse.AST
 
 fun Either<Nel<WirespecException>, List<Emitted>>.produce(): WsCompilationResult = when (this) {
     is Either.Left -> WsCompilationResult(errors = value.map { it.produce() }.toTypedArray())
@@ -25,7 +25,7 @@ class WsCompiled(val value: String)
 @JsExport
 class WsCompiledFile(val name: String, val value: String)
 
-fun Either<Nel<WirespecException>, List<Definition>>.produce(): WsParseResult = when (this) {
+fun Either<Nel<WirespecException>, AST>.produce(): WsParseResult = when (this) {
     is Either.Left -> WsParseResult(errors = value.map { it.produce() }.toTypedArray())
     is Either.Right -> WsParseResult(result = value.map { it.produce() }.toTypedArray())
 }

@@ -2,7 +2,10 @@ package community.flock.wirespec.integration.jackson.kotlin.generated
 
 import community.flock.wirespec.Wirespec
 
-data class TodoId(override val value: String): Wirespec.Refined
+data class TodoId(override val value: String): Wirespec.Refined {
+  override fun toString() = value
+}
+
 fun TodoId.validate() = Regex("""^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$""").matches(value)
 data class Todo(
   val id: TodoId,

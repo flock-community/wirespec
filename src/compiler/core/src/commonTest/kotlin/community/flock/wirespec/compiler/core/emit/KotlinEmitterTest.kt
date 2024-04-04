@@ -1,9 +1,11 @@
 package community.flock.wirespec.compiler.core.emit
 
-import community.flock.wirespec.compiler.core.fixture.ClassModelFixture
+import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.fixture.ClassModelFixtures
+import community.flock.wirespec.compiler.core.fixture.NodeFixtures
+import community.flock.wirespec.compiler.core.parse.Node
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class KotlinEmitterTest {
 
@@ -12,32 +14,47 @@ class KotlinEmitterTest {
     @Test
     fun testEmitterType() {
         val expected = """
+            |package community.flock.wirespec.generated
+            |
             |data class Todo(
             |  val name: String,
             |  val description: String? = null,
             |  val notes: List<String>,
             |  val done: Boolean
             |)
+            |
         """.trimMargin()
 
-        val res = emitter.emit(ClassModelFixture.type)
+        val res = emitter.emitFirst(NodeFixtures.type)
         res shouldBe expected
     }
 
     @Test
     fun testEmitterRefined() {
         val expected = """
-            |data class UUID(override val value: String): Wirespec.Refined
+            |package community.flock.wirespec.generated
+            |
+            |import community.flock.wirespec.Wirespec
+            |
+            |data class UUID(override val value: String): Wirespec.Refined {
+            |  override fun toString() = value
+            |}
+            |
             |fun UUID.validate() = Regex(${"\"\""}^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}${"\"\""}).matches(value)
+            |
         """.trimMargin()
 
-        val res = emitter.emit(ClassModelFixture.refined)
+        val res = emitter.emitFirst(NodeFixtures.refined)
         res shouldBe expected
     }
 
     @Test
     fun testEmitterEnum() {
         val expected = """
+            |package community.flock.wirespec.generated
+            |
+            |import community.flock.wirespec.Wirespec
+            |
             |enum class TodoStatus (val label: String): Wirespec.Enum {
             |  OPEN("OPEN"),
             |  IN_PROGRESS("IN_PROGRESS"),
@@ -46,9 +63,10 @@ class KotlinEmitterTest {
             |    return label
             |  }
             |}
+            |
         """.trimMargin()
 
-        val res = emitter.emit(ClassModelFixture.enum)
+        val res = emitter.emitFirst(NodeFixtures.enum)
         res shouldBe expected
     }
 
@@ -108,9 +126,27 @@ class KotlinEmitterTest {
             |  sealed interface Response4XX<T> : Response<T>
             |  sealed interface Response200<T> : Response2XX<T>
             |  sealed interface Response405<T> : Response4XX<T>
-            |  data class Response200ApplicationXml(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Pet>? = null) : Response200<Pet>
-            |  data class Response200ApplicationJson(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Pet>) : Response200<Pet>
-            |  data class Response405Unit(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Unit>? = null) : Response405<Unit>
+            |  data class Response200ApplicationXml(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Pet>? = null) : Response200<Pet> {
+            |    constructor() : this(
+            |      status = 200,
+            |      headers = mapOf<String, List<Any?>>(),
+            |      content = null
+            |    )
+            |  }
+            |  data class Response200ApplicationJson(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Pet>) : Response200<Pet> {
+            |    constructor() : this(
+            |      status = 200,
+            |      headers = mapOf<String, List<Any?>>(),
+            |      content = null
+            |    )
+            |  }
+            |  data class Response405Unit(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<Unit>? = null) : Response405<Unit> {
+            |    constructor() : this(
+            |      status = 405,
+            |      headers = mapOf<String, List<Any?>>(),
+            |      content = null
+            |    )
+            |  }
             |  companion object {
             |    const val PATH = "/pet"
             |    const val METHOD = "POST"
@@ -145,7 +181,9 @@ class KotlinEmitterTest {
             |}
         """.trimMargin()
 
-        val res = emitter.emit(ClassModelFixture.endpoint)
+        val res = with(emitter) { ClassModelFixtures.endpointClass.emit() }
         res shouldBe expected
     }
+
+    private fun Emitter.emitFirst(node: Node) = emit(listOf(node)).first().result
 }

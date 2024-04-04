@@ -17,12 +17,12 @@ import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceOrBooleanObject
 import community.flock.kotlinx.openapi.bindings.v2.StatusCode
 import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
-import community.flock.wirespec.compiler.core.parse.nodes.Definition
-import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
-import community.flock.wirespec.compiler.core.parse.nodes.Enum
-import community.flock.wirespec.compiler.core.parse.nodes.Type
-import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field
-import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference
+import community.flock.wirespec.compiler.core.parse.Definition
+import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 import community.flock.wirespec.openapi.Common.className
 import kotlinx.serialization.json.Json
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenapiType
@@ -66,7 +66,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                                             className(name, "RequestBody")
                                         )
 
-                                        null -> TODO()
+                                        null -> TODO("Not yet implemented")
                                     },
                                     isNullable = requestBody.required ?: false
                                 )
@@ -223,7 +223,7 @@ class OpenApiParser(private val openApi: SwaggerObject) {
         when (this) {
             is SchemaObject -> this
             is ReferenceObject -> this.resolveSchemaObject().resolve()
-            is BooleanObject -> TODO()
+            is BooleanObject -> TODO("Not yet implemented")
         }
 
     private fun ResponseOrReferenceObject.resolve(): ResponseObject =
@@ -436,11 +436,11 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                         ?.type
                         ?.toPrimitive()
                         ?.let { Reference.Primitive(it, true) }
-                        ?: TODO()
+                        ?: TODO("Not yet implemented")
 
-                    OpenapiType.OBJECT -> TODO()
-                    OpenapiType.FILE -> TODO()
-                    null -> TODO()
+                    OpenapiType.OBJECT -> TODO("Not yet implemented")
+                    OpenapiType.FILE -> TODO("Not yet implemented")
+                    null -> TODO("Not yet implemented")
                 }
 
             }

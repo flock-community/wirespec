@@ -1,14 +1,14 @@
 package community.flock.wirespec.openapi.v2
 
 import community.flock.kotlinx.openapi.bindings.v2.OpenAPI
-import community.flock.wirespec.compiler.core.parse.nodes.Endpoint
-import community.flock.wirespec.compiler.core.parse.nodes.Enum
-import community.flock.wirespec.compiler.core.parse.nodes.Type
-import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape
-import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field
-import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Identifier
-import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference.Custom
-import community.flock.wirespec.compiler.core.parse.nodes.Type.Shape.Field.Reference.Primitive
+import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.core.parse.Type.Shape
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Identifier
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Custom
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive
 import community.flock.wirespec.openapi.IO
 import community.flock.wirespec.openapi.common.Expected
 import kotlin.test.Test
@@ -204,8 +204,8 @@ class OpenApiParserTest {
         )
 
         val expectedEnumDefinitions = listOf(
-            Enum(name="PetStatus", entries= setOf( "available", "pending", "sold")),
-            Enum(name="OrderStatus", entries=setOf( "placed", "approved", "delivered"))
+            Enum(name = "PetStatus", entries = setOf("available", "pending", "sold")),
+            Enum(name = "OrderStatus", entries = setOf("placed", "approved", "delivered"))
         )
 
         val typeDefinitions = ast.filterIsInstance<Type>()
@@ -215,7 +215,27 @@ class OpenApiParserTest {
         assertEquals(enumDefinitions, expectedEnumDefinitions)
 
         val endpoints = ast.filterIsInstance<Endpoint>().map { it.name }
-        val expectedEndpoint = listOf("UploadFile", "AddPet", "UpdatePet", "FindPetsByStatus", "FindPetsByTags", "GetPetById", "UpdatePetWithForm", "DeletePet", "PlaceOrder", "GetOrderById", "DeleteOrder", "CreateUsersWithArrayInput", "CreateUsersWithListInput", "GetUserByName", "UpdateUser", "DeleteUser", "LoginUser", "LogoutUser", "CreateUser")
+        val expectedEndpoint = listOf(
+            "UploadFile",
+            "AddPet",
+            "UpdatePet",
+            "FindPetsByStatus",
+            "FindPetsByTags",
+            "GetPetById",
+            "UpdatePetWithForm",
+            "DeletePet",
+            "PlaceOrder",
+            "GetOrderById",
+            "DeleteOrder",
+            "CreateUsersWithArrayInput",
+            "CreateUsersWithListInput",
+            "GetUserByName",
+            "UpdateUser",
+            "DeleteUser",
+            "LoginUser",
+            "LogoutUser",
+            "CreateUser"
+        )
         assertEquals(expectedEndpoint, endpoints)
     }
 

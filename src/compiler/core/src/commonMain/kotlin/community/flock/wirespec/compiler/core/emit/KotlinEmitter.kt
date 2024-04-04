@@ -1,19 +1,21 @@
 package community.flock.wirespec.compiler.core.emit
 
-import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.firstToUpper
-import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.isInt
-import community.flock.wirespec.compiler.core.emit.common.AbstractEmitter.Companion.needImports
 import community.flock.wirespec.compiler.core.emit.common.ClassModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitted
-import community.flock.wirespec.compiler.core.parse.nodes.Definition
-import community.flock.wirespec.compiler.core.parse.nodes.EndpointClass
-import community.flock.wirespec.compiler.core.parse.nodes.EnumClass
-import community.flock.wirespec.compiler.core.parse.nodes.Field
-import community.flock.wirespec.compiler.core.parse.nodes.Parameter
-import community.flock.wirespec.compiler.core.parse.nodes.Reference
-import community.flock.wirespec.compiler.core.parse.nodes.RefinedClass
-import community.flock.wirespec.compiler.core.parse.nodes.TypeClass
+import community.flock.wirespec.compiler.core.emit.transformer.ClassModelTransformer.transform
+import community.flock.wirespec.compiler.core.emit.transformer.EndpointClass
+import community.flock.wirespec.compiler.core.emit.transformer.EnumClass
+import community.flock.wirespec.compiler.core.emit.transformer.Field
+import community.flock.wirespec.compiler.core.emit.transformer.Parameter
+import community.flock.wirespec.compiler.core.emit.transformer.Reference
+import community.flock.wirespec.compiler.core.emit.transformer.RefinedClass
+import community.flock.wirespec.compiler.core.emit.transformer.TypeClass
+import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Refined
+import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
@@ -57,7 +59,7 @@ class KotlinEmitter(
         |
     """.trimMargin()
 
-    override fun emit(ast: List<Definition>): List<Emitted> =
+    override fun emit(ast: AST): List<Emitted> =
         super.emit(ast).map {
             Emitted(
                 it.typeName.sanitizeSymbol(), """
@@ -69,21 +71,38 @@ class KotlinEmitter(
             )
         }
 
-    override fun TypeClass.emit(): String = """
+    override fun Type.emit(): String = transform().emit()
+
+    fun TypeClass.emit() = """
         |data class ${name.sanitizeSymbol()}(
         |${fields.joinToString(",\n") { it.emit() }.spacer()}
         |)
-    """.trimMargin()
+        """.trimMargin()
 
-    override fun RefinedClass.emit() = """
-        |data class ${name.sanitizeSymbol()}(override val value: String): Wirespec.Refined
+    override fun Type.Shape.emit(): String = TODO("Not yet implemented")
+    override fun Type.Shape.Field.emit(): String = TODO("Not yet implemented")
+    override fun Type.Shape.Field.Identifier.emit(): String = TODO("Not yet implemented")
+    override fun Type.Shape.Field.Reference.emit(): String = TODO("Not yet implemented")
+
+    override fun Refined.emit() = transform().emit()
+
+    fun RefinedClass.emit() = """
+        |data class ${name.sanitizeSymbol()}(override val value: String): Wirespec.Refined {
+        |${SPACER}override fun toString() = value
+        |}
+        |
         |fun $name.validate() = ${validator.emit()}
     """.trimMargin()
 
-    override fun RefinedClass.Validator.emit() = "Regex(\"\"$value\"\").matches(value)"
-    override fun EnumClass.emit(): String {
+    override fun Refined.Validator.emit(): String = TODO("Not yet implemented")
+
+    fun RefinedClass.Validator.emit() = "Regex(\"\"$value\"\").matches(value)"
+
+    override fun Enum.emit(): String = transform().emit()
+
+    fun EnumClass.emit() = run {
         fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_").sanitizeFirstIsDigit()
-        return """
+        """
             |enum class ${name.sanitizeSymbol()} (val label: String): Wirespec.Enum {
             |${entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }.spacer()};
             |${SPACER}override fun toString(): String {
@@ -93,7 +112,9 @@ class KotlinEmitter(
         """.trimMargin()
     }
 
-    override fun EndpointClass.emit(): String = """
+    override fun Endpoint.emit(): String = transform().emit()
+
+    fun EndpointClass.emit() = """
         |interface ${name.sanitizeSymbol()} : ${supers.joinToString(", ") { it.emitWrap() }} {
         |${SPACER}sealed interface Request<T> : Wirespec.Request<T>
         |${requestClasses.joinToString("\n") { it.emit() }.spacer()}
@@ -109,9 +130,9 @@ class KotlinEmitter(
         |${SPACER}}
         |${SPACER}suspend fun ${functionName}(request: Request<*>): Response<*>
         |}
-    """.trimMargin()
+        """.trimMargin()
 
-    override fun EndpointClass.RequestClass.emit() = """
+    fun EndpointClass.RequestClass.emit() = """
          |data class ${name.sanitizeSymbol()}(
          |${fields.joinToString(",\n") { it.emit() }.spacer()}
          |) : ${supers.joinToString(", ") { it.emitWrap() }} {
@@ -119,10 +140,7 @@ class KotlinEmitter(
          |}
     """.trimMargin()
 
-    override fun EndpointClass.RequestClass.RequestAllArgsConstructor.emit(): String =
-        throw NotImplementedError("all args request constructor not needed for data class")
-
-    override fun EndpointClass.RequestClass.RequestParameterConstructor.emit(): String = """
+    fun EndpointClass.RequestClass.RequestParameterConstructor.emit(): String = """
         |constructor(${parameters.joinToString(", ") { it.emit() }}) : this(
         |${SPACER}path = "${path.emit()}",
         |${SPACER}method = Wirespec.Method.${method},
@@ -132,19 +150,25 @@ class KotlinEmitter(
         |)
     """.trimMargin()
 
-    override fun EndpointClass.ResponseInterface.emit(): String = """
+    fun EndpointClass.ResponseInterface.emit(): String = """
         |sealed interface ${name.emitWrap()} : ${`super`.emitWrap()}
     """.trimMargin()
 
-    override fun EndpointClass.ResponseClass.emit(): String = """
-        |data class ${name.sanitizeSymbol()}(${fields.joinToString(", ") { it.emit() }}) : ${`super`.emitWrap()}
+    fun EndpointClass.ResponseClass.emit(): String = """
+        |data class ${name.sanitizeSymbol()}(${fields.joinToString(", ") { it.emit() }}) : ${`super`.emitWrap()} {
+        |${responseParameterConstructor.emit().spacer()}
+        |}
     """.trimMargin()
 
-    override fun EndpointClass.ResponseClass.ResponseAllArgsConstructor.emit(): String =
-        throw NotImplementedError("all args response constructor not needed for data class")
+    fun EndpointClass.ResponseClass.ResponseParameterConstructor.emit(): String = """
+        |constructor(${parameters.joinToString(", ") { it.emit() }}) : this(
+        |${SPACER}status = ${if (statusCode.isInt()) statusCode else "status"},
+        |${SPACER}headers = mapOf<String, List<Any?>>(${headers.joinToString(", ") { "\"${it}\" to listOf(${it.sanitizeIdentifier()})" }}),
+        |${SPACER}content = ${content?.emit() ?: "null"}
+        |)
+    """.trimMargin()
 
-
-    override fun EndpointClass.Path.emit(): String =
+    fun EndpointClass.Path.emit(): String =
         value.joinToString("/", "/") {
             when (it) {
                 is EndpointClass.Path.Literal -> it.value
@@ -152,10 +176,10 @@ class KotlinEmitter(
             }
         }
 
-    override fun EndpointClass.Content.emit(): String =
+    fun EndpointClass.Content.emit(): String =
         """Wirespec.Content("$type", body)"""
 
-    override fun EndpointClass.RequestMapper.emit(): String = """
+    fun EndpointClass.RequestMapper.emit(): String = """
         |fun <B> $name(contentMapper: Wirespec.ContentMapper<B>) = { request: Wirespec.Request<B> ->
          |${SPACER}when {
          |${this.conditions.joinToString("\n") { it.emit() }.spacer(2)}
@@ -164,7 +188,7 @@ class KotlinEmitter(
          |}
     """.trimMargin()
 
-    override fun EndpointClass.RequestMapper.RequestCondition.emit(): String =
+    fun EndpointClass.RequestMapper.RequestCondition.emit(): String =
         if (content == null)
             """request.content == null -> ${responseReference.emitWrap()}(request.path, request.method, request.query, request.headers)"""
         else
@@ -174,8 +198,7 @@ class KotlinEmitter(
                 |  .let { ${responseReference.emitWrap()}(request.path, request.method, request.query, request.headers, it) }
             """.trimMargin()
 
-
-    override fun EndpointClass.ResponseMapper.emit(): String = """
+    fun EndpointClass.ResponseMapper.emit(): String = """
          |fun <B> $name(contentMapper: Wirespec.ContentMapper<B>) = { response: Wirespec.Response<B> ->
          |${SPACER}when {
          |${this.conditions.joinToString("\n") { it.emit() }.spacer(2)}
@@ -184,7 +207,7 @@ class KotlinEmitter(
          |}
     """.trimMargin()
 
-    override fun EndpointClass.ResponseMapper.ResponseCondition.emit(): String =
+    fun EndpointClass.ResponseMapper.ResponseCondition.emit(): String =
         if (content == null)
             """
                 |${if (statusCode.isInt()) "response.status == $statusCode && " else ""}response.content == null -> ${responseReference.emitWrap()}(response.status, response.headers, null)
@@ -196,16 +219,16 @@ class KotlinEmitter(
                 |  .let { ${responseReference.emitWrap()}(response.status, response.headers, it) }
             """.trimMargin()
 
-    override fun Parameter.emit(): String =
-        "${identifier.sanitizeKeywords()}: ${reference.emitWrap()}"
+    fun Parameter.emit(): String =
+        "${identifier.sanitizeIdentifier()}: ${reference.emitWrap()}"
 
-    override fun Reference.Generics.emit(): String =
+    fun Reference.Generics.emit(): String =
         if (references.isNotEmpty()) references.joinToString(", ", "<", ">") {
             it.emitWrap()
         } else
             ""
 
-    override fun Reference.emit(): String =
+    fun Reference.emit(): String =
         when (this) {
             is Reference.Custom -> emit()
             is Reference.Language -> emit()
@@ -217,18 +240,18 @@ class KotlinEmitter(
         .let { if (isNullable) "$it?" else it }
         .let { if (isOptional) "$it?" else it }
 
-    override fun Reference.Wirespec.emit(): String =
+    fun Reference.Wirespec.emit(): String =
         "Wirespec.${name}${generics.emit()}"
 
-    override fun Reference.Custom.emit(): String = """
+    fun Reference.Custom.emit(): String = """
         |${name.sanitizeSymbol()}${generics.emit()}
     """.trimMargin()
 
-    override fun Reference.Language.emit(): String = """
+    fun Reference.Language.emit(): String = """
         |${primitive.emit()}${generics.emit()}
     """.trimMargin()
 
-    override fun Reference.Language.Primitive.emit(): String = when (this) {
+    fun Reference.Language.Primitive.emit(): String = when (this) {
         Reference.Language.Primitive.Any -> "Any"
         Reference.Language.Primitive.Unit -> "Unit"
         Reference.Language.Primitive.String -> "String"
@@ -241,9 +264,16 @@ class KotlinEmitter(
         Reference.Language.Primitive.Double -> "Double"
     }
 
-    override fun Field.emit(): String = """
+    fun Field.emit(): String = """
         |${if (isOverride) "override " else ""}val ${identifier.sanitizeKeywords()}: ${reference.emitWrap()}${if (reference.isNullable) " = null" else ""}${if (reference.isOptional) " = null" else ""}
     """.trimMargin()
+
+    private fun String.sanitizeIdentifier() = split("-")
+        .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
+        .joinToString("")
+        .sanitizeKeywords()
+        .sanitizeSymbol()
+        .firstToLower()
 
     private fun String.sanitizeKeywords() = if (preservedKeywords.contains(this)) "`$this`" else this
 
