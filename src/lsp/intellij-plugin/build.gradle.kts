@@ -19,7 +19,7 @@ dependencies {
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
-    version.set("2023.3")
+    version.set("2024.1")
     type.set("IC")
 }
 
