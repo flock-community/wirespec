@@ -15,6 +15,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.WsEndpointDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsEnumTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsRefinedTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
+import community.flock.wirespec.compiler.core.tokenize.types.WsUniontDef
 import community.flock.wirespec.compiler.utils.Logger
 
 typealias AST = List<Node>
@@ -29,6 +30,7 @@ class Parser(logger: Logger) : AbstractParser(logger) {
     private val enumParser = EnumParser(logger)
     private val refinedTypeParser = RefinedTypeParser(logger)
     private val endpointParser = EndpointParser(logger)
+    private val unionParser = UnionParser(logger)
 
     fun parse(tokens: Tokens): Either<NonEmptyList<WirespecException>, AST> = tokens
         .removeWhiteSpace()
@@ -49,6 +51,7 @@ class Parser(logger: Logger) : AbstractParser(logger) {
                 is WsEnumTypeDef -> with(enumParser) { parseEnum() }.bind()
                 is WsRefinedTypeDef -> with(refinedTypeParser) { parseRefinedType() }.bind()
                 is WsEndpointDef -> with(endpointParser) { parseEndpoint() }.bind()
+                is WsUniontDef -> with(unionParser) { parseUnion() }.bind()
             }
 
             else -> raise(WrongTokenException<WirespecDefinition>(token).also { eatToken().bind() })

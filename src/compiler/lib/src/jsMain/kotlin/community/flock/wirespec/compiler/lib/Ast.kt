@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.core.parse.Union
 
 fun Node.produce(): WsNode =
     when (this) {
@@ -21,9 +22,9 @@ fun Node.produce(): WsNode =
             requests = requests.produce(),
             responses = responses.produce(),
         )
-
         is Enum -> WsEnum(name, entries.toTypedArray())
         is Refined -> WsRefined(name, validator.value)
+        is Union -> WsEnum(name, entries.toTypedArray())
     }
 
 fun List<Node>.produce(): Array<WsNode> =

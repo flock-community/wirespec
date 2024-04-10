@@ -2,9 +2,11 @@ package community.flock.wirespec.compiler.core.parse
 
 sealed interface Node
 
-sealed interface Definition : Node
+sealed interface Definition : Node {
+    val name: String
+}
 
-data class Type(val name: String, val shape: Shape) : Definition {
+data class Type(override val name: String, val shape: Shape) : Definition {
     data class Shape(val value: List<Field>) {
         data class Field(val identifier: Identifier, val reference: Reference, val isNullable: Boolean) {
             data class Identifier(val value: String)
@@ -32,14 +34,15 @@ data class Type(val name: String, val shape: Shape) : Definition {
     }
 }
 
-data class Enum(val name: String, val entries: Set<String>) : Definition
+data class Enum(override val name: String, val entries: Set<String>) : Definition
+data class Union(override val name: String, val entries: Set<String>) : Definition
 
-data class Refined(val name: String, val validator: Validator) : Definition {
+data class Refined(override val name: String, val validator: Validator) : Definition {
     data class Validator(val value: String)
 }
 
 data class Endpoint(
-    val name: String,
+    override val name: String,
     val method: Method,
     val path: List<Segment>,
     val query: List<Type.Shape.Field>,

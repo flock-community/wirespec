@@ -2,15 +2,17 @@ package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.model.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
-class TypeScriptEmitter(logger: Logger = noLogger) : Emitter(logger) {
+class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter(logger) {
 
     override val shared = ""
 
@@ -90,61 +92,26 @@ class TypeScriptEmitter(logger: Logger = noLogger) : Emitter(logger) {
     override fun Endpoint.emit() = withLogging(logger) {
         """
           |export module ${name.sanitizeSymbol()} {
-          |${SPACER}export const PATH = "/${
-            path.joinToString("/") {
-                when (it) {
-                    is Endpoint.Segment.Literal -> it.value; is Endpoint.Segment.Param -> ":${it.identifier.value}"
-                }
-            }
-        }"
+          |${SPACER}export const PATH = "/${path.joinToString("/") { when (it) {is Endpoint.Segment.Literal -> it.value; is Endpoint.Segment.Param -> ":${it.identifier.value}" }}}"
           |${SPACER}export const METHOD = "${method.name}"
-          |${
-            requests.toSet().joinToString("\n") {
-                "${SPACER}type ${it.emitName()} = { path: ${path.emitType()}, method: \"${method}\", headers: {${
-                    headers.map { it.emit() }.joinToString(",")
-                }}, query: {${
-                    query.map { it.emit() }.joinToString(",")
-                }}${it.content?.let { ", content: { type: \"${it.type}\", body: ${it.reference.emit()} }" } ?: ""} } "
-            }
-        }
-          |${SPACER}export type Request = ${
-            requests.toSet().joinToString(" | ") { it.emitName() }.ifEmpty { "undefined" }
-        }
-          |${
-            responses.toSet()
-                .joinToString("\n") { "${SPACER}type ${it.emitName()} = { status: ${if (it.status.isInt()) it.status else "string"}${it.content?.let { ", content: { type: \"${it.type}\", body: ${it.reference.emit()} }" } ?: ""} }" }
-        }
-          |${SPACER}export type Response = ${
-            responses.toSet().joinToString(" | ") { it.emitName() }.ifEmpty { "undefined" }
-        }
+          |${requests.toSet().joinToString("\n") { "${SPACER}type ${it.emitName()} = { path: ${path.emitType()}, method: \"${method}\", headers: {${headers.joinToString(",") { it.emit() }}}, query: {${query.map { it.emit() }.joinToString(",")}}${it.content?.let { ", content: { type: \"${it.type}\", body: ${it.reference.emit()} }" } ?: ""} } " }}
+          |${SPACER}export type Request = ${requests.toSet().joinToString(" | ") { it.emitName() }.ifEmpty { "undefined" }}
+          |${responses.toSet().joinToString("\n") { "${SPACER}type ${it.emitName()} = { status: ${if (it.status.isInt()) it.status else "string"}${it.content?.let { ", content: { type: \"${it.type}\", body: ${it.reference.emit()} }" } ?: ""} }" }}
+          |${SPACER}export type Response = ${responses.toSet().joinToString(" | ") { it.emitName() }.ifEmpty { "undefined" }}
           |${SPACER}export type Handler = (request:Request) => Promise<Response>
           |${SPACER}export type Call = {
           |${SPACER}${SPACER}${name.sanitizeSymbol().firstToLower()}: Handler
           |${SPACER}}
-          |${
-            requests.distinct().joinToString("\n") {
-                "${SPACER}export const ${it.emitName().firstToLower()} = (${
-                    joinParameters(
-                        it.content,
-                        null
-                    ).takeIf { it.isNotEmpty() }?.joinToString(",", "props:{", "}") { it.emit() }.orEmpty()
-                }) => ({path: `${path.emitPath()}`, method: \"${method.name}\", query: {${query.emitMap()}}, headers: {${headers.emitMap()}}${it.content?.let { ", content: {type: \"${it.type}\", body: props.body}" } ?: ""}} as const)"
-            }
-        }
-          |${
-            responses.distinct().joinToString("\n") {
-                "${SPACER}export const ${it.emitName().firstToLower()} = (${
-                    joinParameters(
-                        it.content,
-                        it
-                    ).takeIf { it.isNotEmpty() }?.joinToString(",", "props:{", "}") { it.emit() }.orEmpty()
-                }) => ({status: ${if (it.status.isInt()) it.status else "`${it.status}`"}, headers: {${it.headers.emitMap()}}${it.content?.let { ", content: {type: \"${it.type}\", body: props.body}" } ?: ""}} as const)"
-            }
-        }
+          |${requests.distinct().joinToString("\n") { "${SPACER}export const ${it.emitName().firstToLower()} = (${joinParameters(it.content, null).takeIf { it.isNotEmpty() }?.joinToString(",", "props:{", "}") { it.emit() }.orEmpty()}) => ({path: `${path.emitPath()}`, method: \"${method.name}\", query: {${query.emitMap()}}, headers: {${headers.emitMap()}}${it.content?.let { ", content: {type: \"${it.type}\", body: props.body}" } ?: ""}} as const)" }}
+          |${responses.distinct().joinToString("\n") { "${SPACER}export const ${it.emitName().firstToLower()} = (${joinParameters(it.content, it).takeIf { it.isNotEmpty() }?.joinToString(",", "props:{", "}") { it.emit() }.orEmpty()}) => ({status: ${if (it.status.isInt()) it.status else "`${it.status}`"}, headers: {${it.headers.emitMap()}}${it.content?.let { ", content: {type: \"${it.type}\", body: props.body}" } ?: ""}} as const)" }}
           |}
           |
         """.trimMargin()
     }
+
+    override fun Union.emit() =
+        withLogging(logger) { "export type ${name.sanitizeSymbol()} = ${entries.joinToString(" | ") { it }}\n" }
+
 
     private fun List<Endpoint.Segment>.emitType() = "`${joinToString("") { "/" + it.emitType() }}`"
     private fun Endpoint.Segment.emitType() = withLogging(logger) {

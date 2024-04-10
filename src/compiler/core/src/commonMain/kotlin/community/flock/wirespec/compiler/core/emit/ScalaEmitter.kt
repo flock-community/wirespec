@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.emit
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.model.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
@@ -10,13 +11,14 @@ import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
+import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
 class ScalaEmitter(
     private val packageName: String = DEFAULT_PACKAGE_NAME,
     logger: Logger = noLogger
-) : Emitter(logger) {
+) : DefinitionModelEmitter(logger) {
 
     override val shared = ""
 
@@ -94,6 +96,10 @@ class ScalaEmitter(
         """.trimMargin()
     }
 
+    override fun Union.emit(): String {
+        TODO("Not yet implemented")
+    }
+
     companion object {
         private val preservedKeywords = listOf(
             "abstract",
@@ -138,11 +144,12 @@ class ScalaEmitter(
         )
     }
 
-    override fun Definition.emitName(): String = when (this) {
+    fun Definition.emitName(): String = when (this) {
         is Endpoint -> "${name}Endpoint"
         is Enum -> name
         is Refined -> name
         is Type -> name
+        is Union -> name
     }
 
 }

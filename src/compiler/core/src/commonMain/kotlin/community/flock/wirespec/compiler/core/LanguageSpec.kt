@@ -27,6 +27,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.WsNumber
 import community.flock.wirespec.compiler.core.tokenize.types.WsRefinedTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsString
 import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
+import community.flock.wirespec.compiler.core.tokenize.types.WsUniontDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsUnit
 
 interface LanguageSpec {
@@ -40,6 +41,7 @@ object Wirespec : LanguageSpec {
         Regex("^enum") to WsEnumTypeDef,
         Regex("^refined") to WsRefinedTypeDef,
         Regex("^endpoint") to WsEndpointDef,
+        Regex("^union") to WsUniontDef,
         Regex("^[^\\S\\r\\n]+") to WhiteSpaceExceptNewLine,
         Regex("^[\\r\\n]") to NewLine,
         Regex("^\\{") to LeftCurly,

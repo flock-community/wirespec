@@ -7,6 +7,7 @@ sealed interface ClassModel {
 data class TypeClass(
     override val name: String,
     val fields: List<Field>,
+    val supers: List<Reference> = emptyList(),
 ) : ClassModel
 
 data class RefinedClass(
@@ -21,6 +22,10 @@ data class RefinedClass(
 data class EnumClass(
     override val name: String,
     val entries: Set<String>
+) : ClassModel
+
+data class UnionClass(
+    override val name: String,
 ) : ClassModel
 
 data class EndpointClass(

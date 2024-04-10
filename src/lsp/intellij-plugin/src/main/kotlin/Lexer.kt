@@ -30,6 +30,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.WsNumber
 import community.flock.wirespec.compiler.core.tokenize.types.WsRefinedTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsString
 import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
+import community.flock.wirespec.compiler.core.tokenize.types.WsUniontDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsUnit
 import com.intellij.lexer.LexerBase as IntellijLexer
 
@@ -76,6 +77,7 @@ class Lexer : IntellijLexer() {
                 is EndOfProgram -> Types.END_OF_PROGRAM
                 is Invalid -> Types.INVALID
                 is WsEnumTypeDef -> Types.ENUM_DEF
+                is WsUniontDef -> Types.TYPE_DEF
                 is WsRefinedTypeDef -> Types.REFINED_TYPE_DEF
                 is WsEndpointDef -> Types.ENDPOINT_DEF
                 is CustomRegex -> Types.CUSTOM_REGEX
