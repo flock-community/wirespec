@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.Comma
 import community.flock.wirespec.compiler.core.tokenize.types.CustomRegex
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
+import community.flock.wirespec.compiler.core.tokenize.types.Equals
 import community.flock.wirespec.compiler.core.tokenize.types.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.types.Hash
 import community.flock.wirespec.compiler.core.tokenize.types.Invalid
@@ -14,6 +15,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.types.Method
 import community.flock.wirespec.compiler.core.tokenize.types.NewLine
 import community.flock.wirespec.compiler.core.tokenize.types.Path
+import community.flock.wirespec.compiler.core.tokenize.types.Pipe
 import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.types.StatusCode
@@ -24,10 +26,8 @@ import community.flock.wirespec.compiler.core.tokenize.types.WsEndpointDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsEnumTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
 import community.flock.wirespec.compiler.core.tokenize.types.WsNumber
-import community.flock.wirespec.compiler.core.tokenize.types.WsRefinedTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsString
 import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
-import community.flock.wirespec.compiler.core.tokenize.types.WsUniontDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsUnit
 
 interface LanguageSpec {
@@ -39,13 +39,14 @@ object Wirespec : LanguageSpec {
     override val orderedMatchers = listOf(
         Regex("^type") to WsTypeDef,
         Regex("^enum") to WsEnumTypeDef,
-        Regex("^refined") to WsRefinedTypeDef,
         Regex("^endpoint") to WsEndpointDef,
-        Regex("^union") to WsUniontDef,
         Regex("^[^\\S\\r\\n]+") to WhiteSpaceExceptNewLine,
         Regex("^[\\r\\n]") to NewLine,
         Regex("^\\{") to LeftCurly,
         Regex("^\\}") to RightCurly,
+        Regex("^->") to Arrow,
+        Regex("^=") to Equals,
+        Regex("^\\|") to Pipe,
         Regex("^:") to Colon,
         Regex("^,") to Comma,
         Regex("^\\?") to QuestionMark,
@@ -56,7 +57,6 @@ object Wirespec : LanguageSpec {
         Regex("^Number") to WsNumber,
         Regex("^Boolean") to WsBoolean,
         Regex("^Unit") to WsUnit,
-        Regex("^->") to Arrow,
         Regex("^GET|^POST|^PUT|^DELETE|^OPTIONS|^HEAD|^PATCH|^TRACE") to Method,
         Regex("^/.*/g") to CustomRegex,
         Regex("^[1-5][0-9][0-9]") to StatusCode,

@@ -27,9 +27,7 @@ sealed interface Keyword : TokenType
 sealed interface WirespecDefinition : Keyword
 data object WsTypeDef : WirespecDefinition
 data object WsEnumTypeDef : WirespecDefinition
-data object WsRefinedTypeDef : WirespecDefinition
 data object WsEndpointDef : WirespecDefinition
-data object WsUniontDef : WirespecDefinition
 
 sealed interface WirespecType : Keyword
 data object WsString : WirespecType
@@ -45,5 +43,7 @@ data object Path : Keyword
 
 data object StatusCode : Keyword
 data object Arrow : Keyword
+data object Equals : Keyword
+data object Pipe : Keyword
 
 data object CustomRegex : TokenType

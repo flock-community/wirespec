@@ -3,8 +3,10 @@ package community.flock.wirespec.compiler.core.tokenize
 import community.flock.wirespec.compiler.core.Wirespec
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
+import community.flock.wirespec.compiler.core.tokenize.types.Invalid
 import community.flock.wirespec.compiler.core.tokenize.types.StartOfProgram
 import io.kotest.matchers.collections.shouldNotBeEmpty
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
@@ -19,7 +21,8 @@ class TokenizeTest {
         Wirespec.tokenize(source)
             .shouldNotBeEmpty()
             .also { it.size shouldBe expected.size }
-            .onEachIndexed { index, token -> token.type shouldBe expected[index] }
+            .map { it.type }.shouldNotContain(Invalid)
+            .onEachIndexed { index, tokenType -> tokenType shouldBe expected[index] }
     }
 
     @Test
@@ -31,6 +34,7 @@ class TokenizeTest {
         Wirespec.tokenize(source).removeWhiteSpace()
             .shouldNotBeEmpty()
             .also { it.size shouldBe expected.size }
-            .onEachIndexed { index, token -> token.type shouldBe expected[index] }
+            .map { it.type }.shouldNotContain(Invalid)
+            .onEachIndexed { index, tokenType -> tokenType shouldBe expected[index] }
     }
 }

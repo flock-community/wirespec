@@ -20,6 +20,8 @@ interface Types {
         val REFINED_TYPE_DEF = ElementType("REFINED_TYPE_DEF")
         val ENDPOINT_DEF = ElementType("ENDPOINT_DEF")
         val CUSTOM_REGEX = ElementType("CUSTOM_REGEX")
+        val EQUALS = ElementType("EQUALS")
+        val PIPE = ElementType("PIPE")
         val ARROW = ElementType("ARROW")
         val METHOD = ElementType("METHOD")
         val PATH = ElementType("PATH")

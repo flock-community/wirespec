@@ -16,7 +16,7 @@ class CompileUnionTest {
 
     private val compiler = compile(
         """
-            |union UserAccount {UserAccountPassword, UserAccountToken}
+            |type UserAccount = UserAccountPassword | UserAccountToken
             |type UserAccountPassword {
             |  username: String,
             |  password: String
@@ -65,17 +65,18 @@ class CompileUnionTest {
         compiler(JavaEmitter(logger = logger))
             .shouldBeRight()
             .apply {
-                this[0].first shouldBe "UserAccount"
-                this[0].second shouldBe """
+                val (account, password, token, user) = this
+
+                account.first shouldBe "UserAccount"
+                account.second shouldBe """
                     |package community.flock.wirespec.generated;
                     |
                     |sealed interface UserAccount {}
                     |
                 """.trimMargin()
-            }
-            .apply {
-                this[1].first shouldBe "UserAccountPassword"
-                this[1].second shouldBe """
+
+                password.first shouldBe "UserAccountPassword"
+                password.second shouldBe """
                     |package community.flock.wirespec.generated;
                     |
                     |public record UserAccountPassword implements UserAccount(
@@ -85,10 +86,9 @@ class CompileUnionTest {
                     |};
                     |
                 """.trimMargin()
-            }
-            .apply {
-                this[2].first shouldBe "UserAccountToken"
-                this[2].second shouldBe """
+
+                token.first shouldBe "UserAccountToken"
+                token.second shouldBe """
                     |package community.flock.wirespec.generated;
                     |
                     |public record UserAccountToken implements UserAccount(
@@ -97,10 +97,9 @@ class CompileUnionTest {
                     |};
                     |
                 """.trimMargin()
-            }
-            .apply {
-                this[3].first shouldBe "User"
-                this[3].second shouldBe """
+
+                user.first shouldBe "User"
+                user.second shouldBe """
                     |package community.flock.wirespec.generated;
                     |
                     |public record User(
@@ -150,9 +149,7 @@ class CompileUnionTest {
             .shouldBeRight()
             .apply {
                 first().second shouldBe """
-                    |union UserAccount {
-                    |  UserAccountPassword, UserAccountToken
-                    |}
+                    |type UserAccount = UserAccountPassword | UserAccountToken
                     |
                     |type UserAccountPassword {
                     |  username: String,
@@ -174,7 +171,7 @@ class CompileUnionTest {
 
     private fun compile(source: String) = { emitter: Emitter ->
         Wirespec.compile(source)(logger)(emitter)
-            .map { it.map { it.typeName to it.result } }
+            .map { emittedList -> emittedList.map { it.typeName to it.result } }
             .onLeft(::println)
     }
 }

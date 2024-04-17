@@ -22,11 +22,13 @@ Wirespec can read and convert OpenApiSpecification (OAS) files.
 Wirespec knows four definitions: `refined`, `enum`, `type`, `endpoint`.
 
 ### Refined
+
 ```wirespec
-refined DEFINITION /REGEX/g
+type DEFINITION /REGEX/g
 ```
 
 ### Enum
+
 ```wirespec
 enum DEFINITION {
     ENTRY, ENTRY, ...
@@ -34,6 +36,7 @@ enum DEFINITION {
 ```
 
 ### Type
+
 ```wirespec
 type DEFINITION {
     IDENTIFIER: REFERENCE
@@ -41,13 +44,13 @@ type DEFINITION {
 ```
 
 ### Union
+
 ```wirespec
-union DEFINITION {
-    ENTRY, ENTRY, ...
-}
+type DEFINITION = ENTRY | ENTRY | ...
 ```
 
 ### Endpoint
+
 ```wirespec
 endpoint DEFINITION METHOD [INPUT_REFERENCE] PATH [? QUERY] [# HEADER] -> {
     STATUS -> REFERENCE
@@ -59,7 +62,7 @@ endpoint DEFINITION METHOD [INPUT_REFERENCE] PATH [? QUERY] [# HEADER] -> {
 `todo.ws`
 
 ```wirespec
-refined UUID /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/g
+type UUID /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/g
 
 type Todo {
     id: UUID,
@@ -124,6 +127,7 @@ wirespec compile ./todo.ws -o ./tmp -l Kotlin
 * Visual Studio Code
 
 ## Integration
+
 Wirespec offers integration libraries with differ libraries.
 
 * [Jackson](src/integration/jackson)
