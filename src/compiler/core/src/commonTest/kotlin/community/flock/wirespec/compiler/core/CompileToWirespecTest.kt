@@ -26,7 +26,7 @@ class CompileToWirespecTest {
     @Test
     fun testCompileRefined() {
         val source = """
-                refined Name /^[a-zA-Z]{1,50}$/g
+                type Name /^[a-zA-Z]{1,50}$/g
                 
                 """.trimIndent()
 
