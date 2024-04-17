@@ -58,9 +58,6 @@
                 language="wirespec"
                 implementationClass="community.flock.wirespec.lsp.intellij_plugin.Annotator"/>
 
-        <psi.referenceContributor language="wirespec"
-                                  implementation="community.flock.wirespec.lsp.intellij_plugin.ReferenceContributor"/>
-
         <gotoSymbolContributor
                 implementation="community.flock.wirespec.lsp.intellij_plugin.ChooseByNameContributor"/>
 
