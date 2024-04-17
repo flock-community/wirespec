@@ -1,8 +1,10 @@
 package community.flock.wirespec.compiler.core.emit
 
+import community.flock.wirespec.compiler.core.emit.common.ClassModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitted
-import community.flock.wirespec.compiler.core.emit.model.ClassModelEmitter
+import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.transformer.ClassModelTransformer.transform
 import community.flock.wirespec.compiler.core.emit.transformer.EndpointClass
 import community.flock.wirespec.compiler.core.emit.transformer.EnumClass
 import community.flock.wirespec.compiler.core.emit.transformer.Field
@@ -12,13 +14,19 @@ import community.flock.wirespec.compiler.core.emit.transformer.RefinedClass
 import community.flock.wirespec.compiler.core.emit.transformer.TypeClass
 import community.flock.wirespec.compiler.core.emit.transformer.UnionClass
 import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Definition
+import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Refined
+import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
 class JavaEmitter(
     val packageName: String = DEFAULT_PACKAGE_NAME,
     logger: Logger = noLogger,
-) : ClassModelEmitter(logger, true) {
+) : ClassModelEmitter, Emitter(logger, true) {
 
     override val shared = """
         |package community.flock.wirespec;
@@ -81,9 +89,18 @@ class JavaEmitter(
         ""
     }
 
+    override fun Definition.emitName(): String = when (this) {
+        is Endpoint -> "${name}Endpoint"
+        is Enum -> name
+        is Refined -> name
+        is Type -> name
+        is Union -> name
+    }
+
     override fun emit(ast: AST): List<Emitted> = super.emit(ast)
         .map { Emitted(it.typeName.sanitizeSymbol(), "$pkg${importWireSpec(ast)}${importJava(ast)}${it.result}\n") }
 
+    override fun Type.emit(ast: AST) = transform(ast).emit()
 
     override fun TypeClass.emit() = """
         |public record ${name.sanitizeSymbol()}${if (supers.isNotEmpty()) " implements ${supers.joinToString(", ") { it.emit() }}" else ""}(
@@ -91,6 +108,8 @@ class JavaEmitter(
         |){
         |};
     """.trimMargin()
+
+    override fun Refined.emit() = transform().emit()
 
     override fun RefinedClass.emit() = """
         |public record ${name.sanitizeSymbol()} (String value) implements Wirespec.Refined {
@@ -111,6 +130,8 @@ class JavaEmitter(
         """.trimMargin()
     }
 
+    override fun Enum.emit() = transform().emit()
+
     override fun EnumClass.emit(): String = """
         |public enum ${name.sanitizeSymbol()} implements Wirespec.Enum {
         |${entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"${it}\")" }.spacer()};
@@ -125,9 +146,13 @@ class JavaEmitter(
         |}
     """.trimMargin()
 
+    override fun Union.emit() = transform().emit()
+
     override fun UnionClass.emit(): String = """
         |sealed interface $name {}
     """.trimMargin()
+
+    override fun Endpoint.emit() = transform().emit()
 
     override fun EndpointClass.emit() = """
         |public interface ${name.sanitizeSymbol()} extends Wirespec.Endpoint {

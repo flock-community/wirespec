@@ -9,20 +9,52 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 
+interface Emitters :
+    TypeDefinitionEmitter,
+    EnumDefinitionEmitter,
+    RefinedTypeDefinitionEmitter,
+    EndpointDefinitionEmitter,
+    UnionDefinitionEmitter
+
 abstract class Emitter(
     val logger: Logger,
     val split: Boolean = false
-) {
+) : Emitters {
 
     abstract val shared: String?
 
-    abstract fun emit(ast: AST): List<Emitted>
+    abstract fun Definition.emitName(): String
+
+    open fun emit(ast: AST): List<Emitted> = ast
+        .map {
+            logger.log("Emitting Node $it")
+            when (it) {
+                is Type -> Emitted(it.emitName(), it.emit(ast))
+                is Endpoint -> Emitted(it.emitName(), it.emit())
+                is Enum -> Emitted(it.emitName(), it.emit())
+                is Refined -> Emitted(it.emitName(), it.emit())
+                is Union -> Emitted(it.emitName(), it.emit())
+            }
+        }
+        .run {
+            if (split) this
+            else listOf(Emitted("NoName", joinToString("\n") { it.result }))
+        }
 
     fun Endpoint.Content.emitContentType() = type
         .substringBefore(";")
         .split("/", "-")
         .joinToString("") { it.firstToUpper() }
         .replace("+", "")
+
+    fun String.spacer(space: Int = 1) = split("\n")
+        .joinToString("\n") {
+            if (it.isNotBlank()) {
+                "${(1..space).joinToString("") { SPACER }}$it"
+            } else {
+                it
+            }
+        }
 
     companion object {
         const val SPACER = "  "
