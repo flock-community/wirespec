@@ -40,6 +40,13 @@ type DEFINITION {
 }
 ```
 
+### Union
+```wirespec
+union DEFINITION {
+    ENTRY, ENTRY, ...
+}
+```
+
 ### Endpoint
 ```wirespec
 endpoint DEFINITION METHOD [INPUT_REFERENCE] PATH [? QUERY] [# HEADER] -> {

@@ -1,0 +1,180 @@
+package community.flock.wirespec.compiler.core
+
+import community.flock.wirespec.compiler.core.emit.JavaEmitter
+import community.flock.wirespec.compiler.core.emit.KotlinEmitter
+import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
+import community.flock.wirespec.compiler.core.emit.WirespecEmitter
+import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.utils.noLogger
+import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.matchers.shouldBe
+import kotlin.test.Test
+
+class CompileUnionTest {
+
+    private val logger = noLogger
+
+    private val compiler = compile(
+        """
+            |union UserAccount {UserAccountPassword, UserAccountToken}
+            |type UserAccountPassword {
+            |  username: String,
+            |  password: String
+            |}
+            |type UserAccountToken {
+            |  token: String
+            |}
+            |type User {
+            |   username: String,
+            |   account: UserAccount
+            |}
+        """.trimMargin()
+    )
+
+    @Test
+    fun testUnionKotlin() {
+        val expected =
+            """
+                |package community.flock.wirespec.generated
+                |
+                |sealed interface UserAccount
+                |data class UserAccountPassword(
+                |  val username: String,
+                |  val password: String
+                |): UserAccount
+                |data class UserAccountToken(
+                |  val token: String
+                |): UserAccount
+                |data class User(
+                |  val username: String,
+                |  val account: UserAccount
+                |)
+                |
+            """.trimMargin()
+
+        compiler(KotlinEmitter(logger = logger))
+            .shouldBeRight()
+            .apply {
+                first().second shouldBe expected
+            }
+    }
+
+    @Test
+    fun testUnionJava() {
+
+        compiler(JavaEmitter(logger = logger))
+            .shouldBeRight()
+            .apply {
+                this[0].first shouldBe "UserAccount"
+                this[0].second shouldBe """
+                    |package community.flock.wirespec.generated;
+                    |
+                    |sealed interface UserAccount {}
+                    |
+                """.trimMargin()
+            }
+            .apply {
+                this[1].first shouldBe "UserAccountPassword"
+                this[1].second shouldBe """
+                    |package community.flock.wirespec.generated;
+                    |
+                    |public record UserAccountPassword implements UserAccount(
+                    |  String username,
+                    |  String password
+                    |){
+                    |};
+                    |
+                """.trimMargin()
+            }
+            .apply {
+                this[2].first shouldBe "UserAccountToken"
+                this[2].second shouldBe """
+                    |package community.flock.wirespec.generated;
+                    |
+                    |public record UserAccountToken implements UserAccount(
+                    |  String token
+                    |){
+                    |};
+                    |
+                """.trimMargin()
+            }
+            .apply {
+                this[3].first shouldBe "User"
+                this[3].second shouldBe """
+                    |package community.flock.wirespec.generated;
+                    |
+                    |public record User(
+                    |  String username,
+                    |  UserAccount account
+                    |){
+                    |};
+                    |
+                """.trimMargin()
+            }
+    }
+
+    @Test
+    fun testUnionTypeScript() {
+
+        compiler(TypeScriptEmitter(logger = logger))
+            .shouldBeRight()
+            .apply {
+                first().second shouldBe """
+                    |export type UserAccount = UserAccountPassword | UserAccountToken
+                    |
+                    |export type UserAccountPassword = {
+                    |  "username": string,
+                    |  "password": string
+                    |}
+                    |
+                    |
+                    |export type UserAccountToken = {
+                    |  "token": string
+                    |}
+                    |
+                    |
+                    |export type User = {
+                    |  "username": string,
+                    |  "account": UserAccount
+                    |}
+                    |
+                    |
+                """.trimMargin()
+            }
+    }
+
+    @Test
+    fun testUnionWireSpec() {
+
+        compiler(WirespecEmitter(logger = logger))
+            .shouldBeRight()
+            .apply {
+                first().second shouldBe """
+                    |union UserAccount {
+                    |  UserAccountPassword, UserAccountToken
+                    |}
+                    |
+                    |type UserAccountPassword {
+                    |  username: String,
+                    |  password: String
+                    |}
+                    |
+                    |type UserAccountToken {
+                    |  token: String
+                    |}
+                    |
+                    |type User {
+                    |  username: String,
+                    |  account: UserAccount
+                    |}
+                    |
+                """.trimMargin()
+            }
+    }
+
+    private fun compile(source: String) = { emitter: Emitter ->
+        Wirespec.compile(source)(logger)(emitter)
+            .map { it.map { it.typeName to it.result } }
+            .onLeft(::println)
+    }
+}

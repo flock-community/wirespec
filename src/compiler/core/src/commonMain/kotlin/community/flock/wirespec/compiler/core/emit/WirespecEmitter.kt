@@ -1,14 +1,16 @@
 package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.model.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
-class WirespecEmitter(logger: Logger = noLogger) : Emitter(logger) {
+class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter(logger) {
 
     override val shared = ""
 
@@ -29,7 +31,7 @@ class WirespecEmitter(logger: Logger = noLogger) : Emitter(logger) {
 
     override fun Type.Shape.Field.Identifier.emit() = withLogging(logger) { value }
 
-    override fun Type.Shape.Field.Reference.emit() = withLogging(logger) {
+    override fun Type.Shape.Field.Reference.emit(): String = withLogging(logger) {
         when (this) {
             is Type.Shape.Field.Reference.Unit -> "Unit"
             is Type.Shape.Field.Reference.Any -> "Any"
@@ -62,6 +64,11 @@ class WirespecEmitter(logger: Logger = noLogger) : Emitter(logger) {
         """.trimMargin()
     }
 
+    override fun Union.emit() = withLogging(logger) {
+        "union $name {\n${SPACER}${entries.joinToString(", ")}\n}\n"
+    }
+
+
     private fun List<Endpoint.Segment>.emitPath() = "/" + joinToString("/") {
         when (it) {
             is Endpoint.Segment.Param -> "{${it.identifier.value}: ${it.reference.emit()}}"
@@ -73,8 +80,8 @@ class WirespecEmitter(logger: Logger = noLogger) : Emitter(logger) {
         firstOrNull()?.content?.reference?.emit()?.let { " $it" }.orEmpty()
 
     private fun List<Type.Shape.Field>.emitQuery() = takeIf { it.isNotEmpty() }
-        ?.joinToString(",", "{", "}") { it.emit() }
-        ?.let { " ? $it" }
-        .orEmpty()
+            ?.joinToString(",", "{", "}") { it.emit() }
+            ?.let { " ? $it" }
+            .orEmpty()
 
 }

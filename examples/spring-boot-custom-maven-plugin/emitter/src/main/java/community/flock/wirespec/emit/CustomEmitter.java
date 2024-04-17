@@ -1,9 +1,10 @@
 package community.flock.wirespec.emit;
 
 import community.flock.wirespec.compiler.core.emit.common.Emitted;
-import community.flock.wirespec.compiler.core.emit.common.Emitter;
+import community.flock.wirespec.compiler.core.emit.model.DefinitionModelEmitter;
 import community.flock.wirespec.compiler.core.parse.Endpoint;
 import community.flock.wirespec.compiler.core.parse.Enum;
+import community.flock.wirespec.compiler.core.parse.Union;
 import community.flock.wirespec.compiler.core.parse.Node;
 import community.flock.wirespec.compiler.core.parse.Refined;
 import community.flock.wirespec.compiler.core.parse.Type;
@@ -14,12 +15,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CustomEmitter extends Emitter {
+public class CustomEmitter extends DefinitionModelEmitter {
 
     public CustomEmitter(@NotNull Logger logger, boolean split) {
         super(logger, split);
     }
-
 
     @NotNull
     @Override
@@ -47,6 +47,12 @@ public class CustomEmitter extends Emitter {
     @NotNull
     @Override
     public String emit(@NotNull Enum anEnum) {
+        return "";
+    }
+
+    @NotNull
+    @Override
+    public String emit(@NotNull Union anUnion) {
         return "";
     }
 
