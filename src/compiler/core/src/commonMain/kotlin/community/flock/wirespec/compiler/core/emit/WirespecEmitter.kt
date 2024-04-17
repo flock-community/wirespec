@@ -1,6 +1,5 @@
 package community.flock.wirespec.compiler.core.emit
 
-import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.model.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -48,7 +47,7 @@ class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter(logger
     override fun Enum.emit() = withLogging(logger) { "enum $name {\n${SPACER}${entries.joinToString(", ")}\n}\n" }
 
     override fun Refined.emit() = withLogging(logger) {
-        "refined $name ${validator.emit()}\n"
+        "type $name ${validator.emit()}\n"
     }
 
     override fun Refined.Validator.emit() = withLogging(logger) {
@@ -65,9 +64,8 @@ class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter(logger
     }
 
     override fun Union.emit() = withLogging(logger) {
-        "union $name {\n${SPACER}${entries.joinToString(", ")}\n}\n"
+        "type $name = ${entries.joinToString(" | ")}\n"
     }
-
 
     private fun List<Endpoint.Segment>.emitPath() = "/" + joinToString("/") {
         when (it) {
@@ -80,8 +78,8 @@ class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter(logger
         firstOrNull()?.content?.reference?.emit()?.let { " $it" }.orEmpty()
 
     private fun List<Type.Shape.Field>.emitQuery() = takeIf { it.isNotEmpty() }
-            ?.joinToString(",", "{", "}") { it.emit() }
-            ?.let { " ? $it" }
-            .orEmpty()
+        ?.joinToString(",", "{", "}") { it.emit() }
+        ?.let { " ? $it" }
+        .orEmpty()
 
 }

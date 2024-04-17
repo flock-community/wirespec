@@ -7,9 +7,12 @@ import community.flock.wirespec.compiler.core.exceptions.WirespecException.Compi
 import community.flock.wirespec.compiler.core.tokenize.types.Brackets
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
 import community.flock.wirespec.compiler.core.tokenize.types.Comma
+import community.flock.wirespec.compiler.core.tokenize.types.CustomRegex
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
+import community.flock.wirespec.compiler.core.tokenize.types.Equals
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
+import community.flock.wirespec.compiler.core.tokenize.types.Pipe
 import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.types.WirespecType
@@ -22,7 +25,7 @@ import community.flock.wirespec.compiler.utils.Logger
 
 class TypeParser(logger: Logger) : AbstractParser(logger) {
 
-    fun TokenProvider.parseType(): Either<WirespecException, Type> = either {
+    fun TokenProvider.parseType(): Either<WirespecException, Definition> = either {
         eatToken().bind()
         token.log()
         when (token.type) {
@@ -60,6 +63,8 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         token.log()
         when (token.type) {
             is LeftCurly -> Type(typeName, parseTypeShape().bind())
+            is CustomRegex -> Refined(typeName, Refined.Validator(token.value)).also { eatToken().bind() }
+            is Equals -> Union(typeName, parseUnionTypeEntries().bind())
             else -> raise(WrongTokenException<LeftCurly>(token).also { eatToken().bind() })
         }
     }
@@ -111,5 +116,25 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
 
             is CustomType -> Type.Shape.Field.Reference.Custom(value, isIterable)
         }
+    }
+
+    private fun TokenProvider.parseUnionTypeEntries() = either {
+        eatToken().bind()
+        token.log()
+        when (token.type) {
+            is CustomType -> mutableListOf<String>().apply {
+                add(token.value)
+                eatToken().bind()
+                while (token.type == Pipe) {
+                    eatToken().bind()
+                    when (token.type) {
+                        is CustomType -> add(token.value).also { eatToken().bind() }
+                        else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
+                    }
+                }
+            }
+
+            else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
+        }.toSet()
     }
 }

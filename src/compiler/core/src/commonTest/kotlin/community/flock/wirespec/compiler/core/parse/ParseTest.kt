@@ -8,7 +8,7 @@ import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
-class ParserTest {
+class ParseTest {
 
     private fun parser() = Parser(object : Logger(false) {})
 
