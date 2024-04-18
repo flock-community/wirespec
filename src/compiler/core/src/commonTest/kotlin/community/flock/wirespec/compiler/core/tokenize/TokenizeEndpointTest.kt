@@ -1,6 +1,6 @@
 package community.flock.wirespec.compiler.core.tokenize
 
-import community.flock.wirespec.compiler.core.Wirespec
+import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.tokenize.types.Arrow
 import community.flock.wirespec.compiler.core.tokenize.types.Brackets
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
@@ -40,7 +40,7 @@ class TokenizeEndpointTest {
             EndOfProgram
         )
 
-        Wirespec.tokenize(source).removeWhiteSpace()
+        WirespecSpec.tokenize(source).removeWhiteSpace()
             .shouldNotBeEmpty()
             .also { it.size shouldBe expected.size }
             .onEachIndexed { index, token -> token.type shouldBe expected[index] }
@@ -61,7 +61,7 @@ class TokenizeEndpointTest {
             RightCurly, EndOfProgram,
         )
 
-        Wirespec.tokenize(source).removeWhiteSpace()
+        WirespecSpec.tokenize(source).removeWhiteSpace()
             .shouldNotBeEmpty()
             .also { it.size shouldBe expected.size }
             .map { it.type }.shouldNotContain(Invalid)
@@ -81,7 +81,7 @@ class TokenizeEndpointTest {
             StatusCode, Arrow, CustomType, RightCurly, EndOfProgram,
         )
 
-        Wirespec.tokenize(source).removeWhiteSpace()
+        WirespecSpec.tokenize(source).removeWhiteSpace()
             .shouldNotBeEmpty()
             .also { it.size shouldBe expected.size }
             .map { it.type }.shouldNotContain(Invalid)
@@ -103,7 +103,7 @@ class TokenizeEndpointTest {
             StatusCode, Arrow, CustomType, Brackets, RightCurly, EndOfProgram,
         )
 
-        Wirespec.tokenize(source).removeWhiteSpace()
+        WirespecSpec.tokenize(source).removeWhiteSpace()
             .shouldNotBeEmpty()
             .also { it.size shouldBe expected.size }
             .map { it.type }.shouldNotContain(Invalid)
@@ -125,7 +125,7 @@ class TokenizeEndpointTest {
             StatusCode, Arrow, CustomType, Brackets, RightCurly, EndOfProgram,
         )
 
-        Wirespec.tokenize(source).removeWhiteSpace()
+        WirespecSpec.tokenize(source).removeWhiteSpace()
             .shouldNotBeEmpty()
             .also { it.size shouldBe expected.size }
             .map { it.type }.shouldNotContain(Invalid)

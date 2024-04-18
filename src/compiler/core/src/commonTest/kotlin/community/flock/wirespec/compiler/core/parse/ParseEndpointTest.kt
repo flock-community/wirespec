@@ -1,6 +1,6 @@
 package community.flock.wirespec.compiler.core.parse
 
-import community.flock.wirespec.compiler.core.Wirespec
+import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse.Endpoint.Method.GET
 import community.flock.wirespec.compiler.core.parse.Endpoint.Method.POST
 import community.flock.wirespec.compiler.core.parse.Endpoint.Segment.Literal
@@ -29,7 +29,7 @@ class ParseEndpointTest {
             }
         """.trimIndent()
 
-        Wirespec.tokenize(source)
+        WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
             .also { it.size shouldBe 1 }
@@ -55,7 +55,7 @@ class ParseEndpointTest {
             }
         """.trimIndent()
 
-        Wirespec.tokenize(source)
+        WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
             .also { it.size shouldBe 1 }
@@ -84,7 +84,7 @@ class ParseEndpointTest {
             }
         """.trimIndent()
 
-        Wirespec.tokenize(source)
+        WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
             .also { it.size shouldBe 1 }
@@ -119,7 +119,7 @@ class ParseEndpointTest {
             }
         """.trimIndent()
 
-        Wirespec.tokenize(source)
+        WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
             .also { it.size shouldBe 1 }
@@ -148,7 +148,7 @@ class ParseEndpointTest {
             }
         """.trimIndent()
 
-        Wirespec.tokenize(source)
+        WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
             .also { it.size shouldBe 1 }

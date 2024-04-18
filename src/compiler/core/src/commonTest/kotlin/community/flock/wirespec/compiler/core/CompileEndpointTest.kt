@@ -9,7 +9,6 @@ import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class CompileEndpointTest {
 
@@ -309,7 +308,7 @@ class CompileEndpointTest {
     }
 
     private fun compile(source: String) = { emitter: Emitter ->
-        Wirespec.compile(source)(logger)(emitter)
+        WirespecSpec.compile(source)(logger)(emitter)
             .map { it.first().result }
             .onLeft(::println)
     }

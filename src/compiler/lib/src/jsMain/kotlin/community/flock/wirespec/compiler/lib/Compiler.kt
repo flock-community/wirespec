@@ -2,7 +2,7 @@
 
 package community.flock.wirespec.compiler.lib
 
-import community.flock.wirespec.compiler.core.Wirespec
+import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
@@ -18,11 +18,11 @@ import community.flock.wirespec.openapi.v3.OpenApiParser as OpenApiParserV3
 @JsExport
 abstract class Compiler {
 
-    protected fun preCompile(source: String) = Wirespec.compile(source)(logger)
+    protected fun preCompile(source: String) = WirespecSpec.compile(source)(logger)
 
-    fun tokenize(source: String) = Wirespec.tokenize(source).produce()
+    fun tokenize(source: String) = WirespecSpec.tokenize(source).produce()
 
-    fun parse(source: String) = Wirespec.tokenize(source)
+    fun parse(source: String) = WirespecSpec.tokenize(source)
         .let { Parser(logger).parse(it).produce() }
 
     companion object {

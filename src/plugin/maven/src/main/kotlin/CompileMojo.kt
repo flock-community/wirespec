@@ -31,19 +31,28 @@ class CompileMojo : BaseMojo() {
     private var shared: Boolean = true
 
     override fun execute() {
+        getFilesContent().compileLanguages()
+    }
+
+    private fun FilesContent.compileLanguages() {
         languages?.forEach {
             when (it) {
-                Language.Java -> executeJava()
-                Language.Kotlin -> executeKotlin()
-                Language.Scala -> executeScala()
-                Language.TypeScript -> executeTypeScript()
+                Language.Java -> compileJava()
+                Language.Kotlin -> compileKotlin()
+                Language.Scala -> compileScala()
+                Language.TypeScript -> compileTypeScript()
                 Language.Wirespec -> TODO("Not yet implemented")
             }
-        }
+        } ?: compileDefault()
         project.addCompileSourceRoot(output);
     }
 
-    fun executeKotlin() {
+    private fun FilesContent.compileDefault() {
+        compileKotlin()
+        compileTypeScript()
+    }
+
+    private fun FilesContent.compileKotlin() {
         val emitter = KotlinEmitter(packageName, logger)
         if (shared) {
             JvmUtil.emitJvm("community.flock.wirespec", output, "Wirespec", "kt").writeText(emitter.shared)
@@ -62,14 +71,14 @@ class CompileMojo : BaseMojo() {
             val result = emitter.emit(ast).joinToString("\n") { it.result }
             JvmUtil.emitJvm(packageName, output, fileName, "kt").writeText(result)
         } else {
-            compile(input, logger, emitter)
+            compile(logger, emitter)
                 .forEach { (name, result) ->
                     JvmUtil.emitJvm(packageName, output, name, "kt").writeText(result)
                 }
         }
     }
 
-    fun executeJava() {
+    private fun FilesContent.compileJava() {
         val emitter = JavaEmitter(packageName, logger)
         if (shared) {
             JvmUtil.emitJvm("community.flock.wirespec", output, "Wirespec", "java").writeText(emitter.shared)
@@ -85,26 +94,26 @@ class CompileMojo : BaseMojo() {
                 JvmUtil.emitJvm(packageName, output, name, "java").writeText(result)
             }
         } else {
-            compile(input, logger, emitter)
+            compile(logger, emitter)
                 .forEach { (name, result) ->
                     JvmUtil.emitJvm(packageName, output, name, "java").writeText(result)
                 }
         }
     }
 
-    fun executeScala() {
+    private fun FilesContent.compileScala() {
         val emitter = ScalaEmitter(packageName, logger)
         if (shared) {
             JvmUtil.emitJvm("community.flock.wirespec", output, "Wirespec", "scala").writeText(emitter.shared)
         }
-        compile(input, logger, emitter)
+        compile(logger, emitter)
             .forEach { JvmUtil.emitJvm(packageName, output, it.typeName, "scala").writeText(it.result) }
     }
 
-    fun executeTypeScript() {
+    private fun FilesContent.compileTypeScript() {
         val emitter = TypeScriptEmitter(logger)
         File(output).mkdirs()
-        compile(input, logger, emitter)
+        compile(logger, emitter)
             .forEach { (name, result) ->
                 File("$output/$name.ts").writeText(result)
             }

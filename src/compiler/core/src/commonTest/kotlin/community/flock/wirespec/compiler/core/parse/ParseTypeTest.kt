@@ -1,6 +1,6 @@
 package community.flock.wirespec.compiler.core.parse
 
-import community.flock.wirespec.compiler.core.Wirespec
+import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
@@ -20,7 +20,7 @@ class ParseTypeTest {
             }
         """.trimIndent()
 
-        Wirespec.tokenize(source)
+        WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
             .also { it.size shouldBe 1 }
@@ -49,7 +49,7 @@ class ParseTypeTest {
             type DutchPostalCode /^([0-9]{4}[A-Z]{2})$/g
         """.trimIndent()
 
-        Wirespec.tokenize(source)
+        WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
             .also { it.size shouldBe 1 }
@@ -66,7 +66,7 @@ class ParseTypeTest {
             type Foo = Bar | Bal
         """.trimIndent()
 
-        Wirespec.tokenize(source)
+        WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
             .also { it.size shouldBe 1 }

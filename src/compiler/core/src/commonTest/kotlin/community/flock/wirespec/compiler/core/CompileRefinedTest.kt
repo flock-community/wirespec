@@ -103,7 +103,7 @@ class CompileRefinedTest {
     }
 
     private fun compile(source: String) = { emitter: Emitter ->
-        Wirespec.compile(source)(logger)(emitter)
+        WirespecSpec.compile(source)(logger)(emitter)
             .map { it.first().result }
             .onLeft(::println)
     }

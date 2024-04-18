@@ -32,7 +32,7 @@ class CompilerTest {
             
         """.trimIndent()
 
-        Wirespec.compile(source)(logger)(KotlinEmitter(logger = logger))
+        WirespecSpec.compile(source)(logger)(KotlinEmitter(logger = logger))
             .map { it.first().result } shouldBeRight out
     }
 
@@ -47,7 +47,7 @@ class CompilerTest {
             
         """.trimIndent()
 
-        Wirespec.compile(source)(logger)(KotlinEmitter(logger = logger))
+        WirespecSpec.compile(source)(logger)(KotlinEmitter(logger = logger))
             .shouldBeLeft()
             .map { it.message } shouldContain "RightCurly expected, not: CustomValue at line 3 and position 3"
     }
@@ -72,7 +72,7 @@ class CompilerTest {
             
         """.trimIndent()
 
-        Wirespec.compile(source)(logger)(KotlinEmitter(logger = logger))
+        WirespecSpec.compile(source)(logger)(KotlinEmitter(logger = logger))
             .map { it.first().result }
             .onLeft(::println) shouldBeRight out
     }

@@ -5,7 +5,7 @@ import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
-import community.flock.wirespec.compiler.core.Wirespec
+import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.Parser
 import community.flock.wirespec.compiler.core.tokenize.tokenize
@@ -18,7 +18,7 @@ class Annotator : ExternalAnnotator<List<WirespecException>, List<WirespecExcept
     private val logger = object : Logger() {}
 
     override fun collectInformation(file: PsiFile) = runBlocking {
-        Wirespec.tokenize(file.text)
+        WirespecSpec.tokenize(file.text)
             .let { Parser(logger).parse(it) }
             .fold({ it }, { emptyList() })
     }

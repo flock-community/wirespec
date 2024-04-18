@@ -1,7 +1,7 @@
 package community.flock.wirespec.plugin.gradle
 
 import arrow.core.Either
-import community.flock.wirespec.compiler.core.Wirespec
+import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
@@ -75,7 +75,7 @@ class WirespecPlugin : Plugin<Project> {
     private fun compile(input: String, logger: Logger, emitter: Emitter) =
         (File(input).listFiles() ?: arrayOf())
             .map { it.name.split(".").first() to it.bufferedReader(Charsets.UTF_8) }
-            .map { (name, reader) -> name to Wirespec.compile(reader.collectToString())(logger)(emitter) }
+            .map { (name, reader) -> name to WirespecSpec.compile(reader.collectToString())(logger)(emitter) }
             .map { (name, result) ->
                 name to when (result) {
                     is Either.Right -> result.value

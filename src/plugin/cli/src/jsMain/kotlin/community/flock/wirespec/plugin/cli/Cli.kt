@@ -2,7 +2,7 @@
 
 package community.flock.wirespec.plugin.cli
 
-import community.flock.wirespec.compiler.core.Wirespec
+import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.lib.WsNode
@@ -17,7 +17,7 @@ fun cli(args: Array<String>) {
 
 @JsExport
 fun parser(source: String): Array<WsNode> {
-    return Wirespec.parse(source)(noLogger).getOrNull()
+    return WirespecSpec.parse(source)(noLogger).getOrNull()
         ?.filterIsInstance<Definition>()
         ?.map { it.produce() }
         ?.toTypedArray()

@@ -1,6 +1,6 @@
 package community.flock.wirespec.lsp.intellij_plugin
 
-import community.flock.wirespec.compiler.core.Wirespec
+import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.core.tokenize.types.Arrow
@@ -44,7 +44,7 @@ class Lexer : IntellijLexer() {
         this.buffer = buffer
         this.index = 0
         this.state = initialState
-        this.tokens = Wirespec.tokenize(buffer.toString()).filterNot { it.type is EndOfProgram }
+        this.tokens = WirespecSpec.tokenize(buffer.toString()).filterNot { it.type is EndOfProgram }
 
     }
 

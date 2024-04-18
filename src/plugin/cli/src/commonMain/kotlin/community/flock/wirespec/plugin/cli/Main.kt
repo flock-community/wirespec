@@ -1,6 +1,7 @@
 package community.flock.wirespec.plugin.cli
 
 import arrow.core.Either
+import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.component1
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
@@ -36,7 +37,6 @@ import community.flock.wirespec.plugin.cli.io.ScalaFile
 import community.flock.wirespec.plugin.cli.io.TypeScriptFile
 import community.flock.wirespec.plugin.cli.io.WirespecFile
 import community.flock.wirespec.plugin.utils.orNull
-import community.flock.wirespec.compiler.core.Wirespec as WirespecSpec
 import community.flock.wirespec.openapi.v2.OpenApiParser as OpenApiParserV2
 import community.flock.wirespec.openapi.v3.OpenApiParser as OpenApiParserV3
 

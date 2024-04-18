@@ -29,18 +29,15 @@ class CustomMojo : BaseMojo() {
         val emitter = try {
             val clazz = getClassLoader(project).loadClass(emitterClass)
             val constructor = clazz.getConstructor(Logger::class.java, Boolean::class.java)
-            val instance = constructor.newInstance(logger, split)
-            instance as Emitter
+            constructor.newInstance(logger, split) as Emitter
         } catch (e: Exception) {
             e.printStackTrace()
             throw e
         }
 
-        compile(input, logger, emitter)
+        getFilesContent().compile(logger, emitter)
             .also { File(output).mkdirs() }
-            .forEach { (name, result) ->
-                File("$output/$name.$extention").writeText(result)
-            }
+            .forEach { (name, result) -> File("$output/$name.$extention").writeText(result) }
     }
 
     private fun getClassLoader(project: MavenProject): ClassLoader {
