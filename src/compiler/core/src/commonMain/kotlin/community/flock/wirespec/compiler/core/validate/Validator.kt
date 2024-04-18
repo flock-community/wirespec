@@ -15,6 +15,7 @@ import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
+import community.flock.wirespec.compiler.core.parse.Union
 
 fun AST.validate(): Either<NonEmptyList<WirespecException>, AST> = kotlin.run {
     validateReferences()
@@ -27,6 +28,7 @@ fun AST.validateReferences(): Either<NonEmptyList<DefinitionNotExistsValidatorEx
             is Type -> it.name
             is Refined -> it.name
             is Enum -> it.name
+            is Union -> it.name
             else -> null
         }
     }
