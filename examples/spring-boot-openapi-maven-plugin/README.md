@@ -1,6 +1,9 @@
 # Example: How to convert an OpenAPI Specification with Wirespec
+
 ## Wirespec Maven Plugin Configuration
+
 ```xml
+
 <plugin>
     <groupId>community.flock.wirespec.plugin.maven</groupId>
     <artifactId>wirespec-maven-plugin</artifactId>
@@ -73,4 +76,5 @@
     </executions>
 </plugin>
 ```
+
 According to the [actual pom.xml](pom.xml) file.
