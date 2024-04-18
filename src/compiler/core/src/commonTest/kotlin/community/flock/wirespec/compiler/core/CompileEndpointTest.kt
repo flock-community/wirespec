@@ -18,7 +18,7 @@ class CompileEndpointTest {
     private val compiler = compile(
         """
         |endpoint Todo GET /todo ? {done:Boolean} # {auth:String} -> {
-        |  200 -> Todo
+        |  200 -> Todo 
         |}
         |type Todo {
         |  name: String,
@@ -278,20 +278,6 @@ class CompileEndpointTest {
             |  }
             |  export const requestUndefined = (props:{  "done": boolean,  "auth": string}) => ({path: `/todo`, method: "GET", query: {"done": props.done}, headers: {"auth": props.auth}} as const)
             |  export const response200ApplicationJson = (props:{  "body": Todo}) => ({status: 200, headers: {}, content: {type: "application/json", body: props.body}} as const)
-            |
-            |  export const RESPONSE_MAPPER = async (fetchResponse: FetchResponse): Promise<Todo.Response> => {
-            |    if (fetchResponse.status === 200 && fetchResponse.headers.get("Content-type") === "application/json") {
-            |      return {
-            |        status: fetchResponse.status,
-            |        content: {
-            |          type: "application/json",
-            |          body: await fetchResponse.json()
-            |        }
-            |      }
-            |    }
-            |
-            |    throw new Error("Unknown response type")
-            |  }
             |}
             |
             |export type Todo = {

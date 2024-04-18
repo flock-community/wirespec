@@ -8,12 +8,13 @@
     ],
     "moduleResolution":"nodenext",
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": ".",
     "sourceMap": true,
     "skipLibCheck": true
   },
   "include": [
-    "src"
+    "src",
+    "gen"
   ],
   "exclude": [
     "node_modules",
