@@ -48,7 +48,7 @@ const config: Config = {
             'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
         },
         theme: {
-          customCss: './src/css/custom.css',
+          customCss: './node_modules/@flock/black-sun/build/infima/custom.css',
         },
       } satisfies Preset.Options,
     ],
