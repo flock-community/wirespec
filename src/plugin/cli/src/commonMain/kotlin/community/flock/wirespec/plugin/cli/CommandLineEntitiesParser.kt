@@ -10,7 +10,7 @@ import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.enum
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_STRING
 import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.Console
 import community.flock.wirespec.plugin.Format
@@ -20,6 +20,8 @@ import community.flock.wirespec.plugin.Input
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.Language.Spec.Wirespec
 import community.flock.wirespec.plugin.Operation
+import community.flock.wirespec.plugin.Output
+import community.flock.wirespec.plugin.PackageName
 
 enum class Options(vararg val flags: String) {
     InputDir("-d", "--input-dir"),
@@ -44,7 +46,7 @@ private abstract class CommonOptions : CliktCommand() {
     private val inputFile by option(*Options.InputFile.flags, help = "Input file")
     val inputDir by option(*Options.InputDir.flags, help = "Input directory")
     val outputDir by option(*Options.OutputDir.flags, help = "Output directory")
-    val packageName by option(*Options.PackageName.flags, help = "Package name").default(DEFAULT_PACKAGE_NAME)
+    val packageName by option(*Options.PackageName.flags, help = "Package name").default(DEFAULT_PACKAGE_STRING)
     val strict by option(*Options.Strict.flags, help = "Strict mode").flag()
     val debug by option(*Options.Debug.flags, help = "Debug mode").flag()
 
@@ -66,9 +68,9 @@ private class Compile(private val block: (CompilerArguments) -> Unit) : CommonOp
         CompilerArguments(
             operation = Operation.Compile,
             input = getInput(inputDir),
-            output = outputDir,
+            output = Output(outputDir),
             languages = languages.toSet(),
-            packageName = packageName,
+            packageName = PackageName(packageName),
             strict = strict,
             debug = debug,
         ).let(block)
@@ -87,9 +89,9 @@ private class Convert(private val block: (CompilerArguments) -> Unit) : CommonOp
         CompilerArguments(
             operation = Operation.Convert(format = format),
             input = getInput(null),
-            output = outputDir,
+            output = Output(outputDir),
             languages = languages.toSet().ifEmpty { setOf(Wirespec) },
-            packageName = packageName,
+            packageName = PackageName(packageName),
             strict = strict,
             debug = debug,
         ).let(block)

@@ -4,16 +4,23 @@ import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firs
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.isInt
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.isStatusCode
+import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
-import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 
-object ClassModelTransformer {
+private interface Transformer :
+    TypeShapeTransformer<TypeClass>,
+    RefinedTransformer<RefinedClass>,
+    UnionTransformer<UnionClass>,
+    EnumTransformer<EnumClass>,
+    EndpointTransformer<EndpointClass>
 
-    fun Type.transform(ast: List<Node>): TypeClass =
+object ClassModelTransformer : Transformer {
+
+    override fun Type.transform(ast: AST): TypeClass =
         TypeClass(
             name = className(name),
             fields = shape.value.map {
@@ -28,7 +35,7 @@ object ClassModelTransformer {
                 .map { Reference.Custom(it.name) }
         )
 
-    fun Refined.transform(): RefinedClass =
+    override fun Refined.transform(): RefinedClass =
         RefinedClass(
             name = className(name),
             validator = RefinedClass.Validator(
@@ -36,18 +43,18 @@ object ClassModelTransformer {
             )
         )
 
-    fun Enum.transform(): EnumClass =
+    override fun Union.transform(): UnionClass =
+        UnionClass(
+            name = className(name),
+        )
+
+    override fun Enum.transform(): EnumClass =
         EnumClass(
             name = className(name),
             entries = entries
         )
 
-    fun Union.transform(): UnionClass =
-        UnionClass(
-            name = className(name),
-        )
-
-    fun Endpoint.transform(): EndpointClass {
+    override fun Endpoint.transform(): EndpointClass {
         val pathField = path
             .filterIsInstance<Endpoint.Segment.Param>()
             .map { Type.Shape.Field(it.identifier, it.reference, false) }
@@ -481,40 +488,31 @@ object ClassModelTransformer {
         )
     }
 
-    fun Type.Shape.Field.transform() =
-        Field(
-            identifier = this.identifier.value,
-            reference = this.reference.transform(isNullable, false),
-            isPrivate = false,
-            isFinal = false,
-            isOverride = false,
-        )
-
-    fun Type.Shape.Field.transformParameter() =
+    private fun Type.Shape.Field.transformParameter() =
         Parameter(
             identifier = identifier.value,
             reference = reference.transform(false, isNullable),
         )
 
-    fun Type.Shape.Field.Identifier.transform() =
+    private fun Type.Shape.Field.Identifier.transform() =
         value
             .split("-", ".")
             .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
             .joinToString("")
 
-    fun Endpoint.Content?.name() = this?.type
+    private fun Endpoint.Content?.name() = this?.type
         ?.substringBefore(";")
         ?.split("/", "-")
         ?.joinToString("") { it.firstToUpper() }
         ?.replace("+", "")
         ?: "Unit"
 
-    fun Endpoint.Content.transform() = EndpointClass.Content(
+    private fun Endpoint.Content.transform() = EndpointClass.Content(
         type = this.type,
         reference = this.reference.transform(isNullable, false),
     )
 
-    fun Type.Shape.Field.Reference.transform(isNullable: Boolean, isOptional: Boolean) =
+    private fun Type.Shape.Field.Reference.transform(isNullable: Boolean, isOptional: Boolean) =
         when (this) {
             is Type.Shape.Field.Reference.Unit -> Reference.Language(
                 Reference.Language.Primitive.Unit,
@@ -540,24 +538,24 @@ object ClassModelTransformer {
                 }.let { Reference.Language(it, isNullable, isIterable, isOptional) }
         }
 
-    fun Endpoint.Segment.transform() =
+    private fun Endpoint.Segment.transform(): EndpointClass.Path.Segment =
         when (this) {
             is Endpoint.Segment.Literal -> EndpointClass.Path.Literal(value)
             is Endpoint.Segment.Param -> EndpointClass.Path.Parameter(identifier.value)
         }
 
-    fun className(vararg args: String): String =
+    private fun className(vararg args: String): String =
         args.joinToString("") {
             it.firstToUpper()
         }
 
-    fun Type.Shape.Field.Reference.toField(identifier: String, isNullable: Boolean = false) = Type.Shape.Field(
+    private fun Type.Shape.Field.Reference.toField(identifier: String, isNullable: Boolean = false) = Type.Shape.Field(
         Type.Shape.Field.Identifier(identifier),
         this,
         isNullable
     )
 
-    fun String.groupStatus() =
+    private fun String.groupStatus() =
         if (isInt()) substring(0, 1) + "XX"
         else firstToUpper()
 

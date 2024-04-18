@@ -4,7 +4,7 @@ import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_STRING
 import community.flock.wirespec.plugin.maven.utils.JvmUtil
 import java.io.File
 import org.apache.maven.plugins.annotations.LifecyclePhase
@@ -27,7 +27,7 @@ class GenerateMojo : BaseMojo() {
     private lateinit var output: String
 
     @Parameter
-    private var packageName: String = DEFAULT_PACKAGE_NAME
+    private var packageName: String = DEFAULT_PACKAGE_STRING
 
     @Parameter
     private var languages: List<Language>? = null

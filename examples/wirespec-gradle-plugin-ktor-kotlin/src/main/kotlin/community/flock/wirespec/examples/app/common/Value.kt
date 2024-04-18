@@ -5,5 +5,3 @@ interface Value<T : Any> {
 }
 
 operator fun <T : Any> Value<T>.component1() = value
-
-operator fun <T : Any> Value<T>.invoke() = value

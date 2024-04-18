@@ -1,11 +1,14 @@
 package community.flock.wirespec.plugin
 
+import community.flock.wirespec.compiler.core.Value
+import kotlin.jvm.JvmInline
+
 data class CompilerArguments(
     val operation: Operation,
     val input: Input,
-    val output: String?,
+    val output: Output?,
     val languages: Set<Language>,
-    val packageName: String,
+    val packageName: PackageName,
     val strict: Boolean,
     val debug: Boolean,
 )
@@ -22,3 +25,6 @@ enum class Format {
         override fun toString() = entries.joinToString()
     }
 }
+
+@JvmInline
+value class PackageName(override val value: String) : Value<String>

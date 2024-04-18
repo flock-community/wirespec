@@ -1,5 +1,7 @@
 package community.flock.wirespec.compiler.core.emit.transformer
 
+import community.flock.wirespec.compiler.core.Value
+
 sealed interface ClassModel {
     val name: String
 }
@@ -14,9 +16,7 @@ data class RefinedClass(
     override val name: String,
     val validator: Validator
 ) : ClassModel {
-    data class Validator(
-        val value: String
-    )
+    data class Validator(override val value: String) : Value<String>
 }
 
 data class EnumClass(
@@ -122,10 +122,10 @@ data class EndpointClass(
         val reference: Reference
     )
 
-    data class Path(val value: List<Segment>) {
+    data class Path(override val value: List<Segment>) : Value<List<Path.Segment>> {
         sealed interface Segment
-        data class Literal(val value: String) : Segment
-        data class Parameter(val value: String) : Segment
+        data class Literal(override val value: String) : Value<String>, Segment
+        data class Parameter(override val value: String) : Value<String>, Segment
     }
 }
 

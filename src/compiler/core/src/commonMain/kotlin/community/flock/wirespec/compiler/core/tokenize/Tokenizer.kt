@@ -32,7 +32,7 @@ private fun LanguageSpec.extractToken(source: String, previousTokenCoordinates: 
     ?: Pair(endToken(previousTokenCoordinates), "")
 
 private fun MatchResult.toToken(type: TokenType, previousTokenCoordinates: Coordinates) =
-    Token(type, value, previousTokenCoordinates.nextCoordinates(type, value))
+    Token(value, type, previousTokenCoordinates.nextCoordinates(type, value))
 
 private fun Coordinates.nextCoordinates(type: TokenType, value: String) = when (type) {
     is NewLine -> Coordinates(
