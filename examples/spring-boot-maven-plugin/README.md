@@ -12,7 +12,7 @@
         <execution>
             <id>typescript</id>
             <goals>
-                <goal>generate</goal>
+                <goal>compile</goal>
             </goals>
             <configuration>
                 <input>${project.basedir}/src/main/wirespec</input>
@@ -25,7 +25,7 @@
         <execution>
             <id>java</id>
             <goals>
-                <goal>generate</goal>
+                <goal>compile</goal>
             </goals>
             <configuration>
                 <input>${project.basedir}/src/main/wirespec</input>

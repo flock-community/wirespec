@@ -17,8 +17,8 @@ import community.flock.wirespec.openapi.v3.OpenApiParser as OpenApiParserV3
 private enum class Language { Java, Kotlin, Scala, TypeScript, Wirespec }
 private enum class Format { Wirespec, OpenApiV2, OpenApiV3 }
 
-@Mojo(name = "generate", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
-class GenerateMojo : BaseMojo() {
+@Mojo(name = "compile", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
+class CompileMojo : BaseMojo() {
 
     @Parameter(required = true)
     private lateinit var input: String
