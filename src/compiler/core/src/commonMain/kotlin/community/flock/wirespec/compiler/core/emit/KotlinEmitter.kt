@@ -1,8 +1,9 @@
 package community.flock.wirespec.compiler.core.emit
 
-import community.flock.wirespec.compiler.core.emit.model.ClassModelEmitter
+import community.flock.wirespec.compiler.core.emit.common.ClassModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
 import community.flock.wirespec.compiler.core.emit.common.Emitted
+import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.transformer.ClassModelTransformer.transform
 import community.flock.wirespec.compiler.core.emit.transformer.EndpointClass
 import community.flock.wirespec.compiler.core.emit.transformer.EnumClass
@@ -13,6 +14,7 @@ import community.flock.wirespec.compiler.core.emit.transformer.RefinedClass
 import community.flock.wirespec.compiler.core.emit.transformer.TypeClass
 import community.flock.wirespec.compiler.core.emit.transformer.UnionClass
 import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Refined
@@ -24,7 +26,7 @@ import community.flock.wirespec.compiler.utils.noLogger
 class KotlinEmitter(
     private val packageName: String = DEFAULT_PACKAGE_NAME,
     logger: Logger = noLogger,
-) : ClassModelEmitter(logger, false) {
+) : ClassModelEmitter, Emitter(logger, false) {
 
     override val shared = """
         |package community.flock.wirespec
@@ -61,6 +63,14 @@ class KotlinEmitter(
         |
     """.trimMargin()
 
+    override fun Definition.emitName(): String = when (this) {
+        is Endpoint -> name
+        is Enum -> name
+        is Refined -> name
+        is Type -> name
+        is Union -> name
+    }
+
     override fun emit(ast: AST): List<Emitted> =
         super.emit(ast).map {
             Emitted(
@@ -73,12 +83,15 @@ class KotlinEmitter(
             )
         }
 
+    override fun Type.emit(ast: AST) = transform(ast).emit()
+
     override fun TypeClass.emit() = """
         |data class ${name.sanitizeSymbol()}(
         |${fields.joinToString(",\n") { it.emit() }.spacer()}
-        |)${if (supers.isNotEmpty()) ": ${supers.joinToString (", "){ it.emit() }}" else ""}
+        |)${if (supers.isNotEmpty()) ": ${supers.joinToString(", ") { it.emit() }}" else ""}
         """.trimMargin()
 
+    override fun Refined.emit() = transform().emit()
 
     override fun RefinedClass.emit() = """
         |data class ${name.sanitizeSymbol()}(override val value: String): Wirespec.Refined {
@@ -89,6 +102,8 @@ class KotlinEmitter(
     """.trimMargin()
 
     override fun RefinedClass.Validator.emit() = "Regex(\"\"$value\"\").matches(value)"
+
+    override fun Enum.emit() = transform().emit()
 
     override fun EnumClass.emit() = run {
         fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_").sanitizeFirstIsDigit()
@@ -102,9 +117,13 @@ class KotlinEmitter(
         """.trimMargin()
     }
 
+    override fun Union.emit() = transform().emit()
+
     override fun UnionClass.emit(): String = """
         |sealed interface $name
     """.trimMargin()
+
+    override fun Endpoint.emit() = transform().emit()
 
     override fun EndpointClass.emit() = """
         |interface ${name.sanitizeSymbol()} : ${supers.joinToString(", ") { it.emitWrap() }} {

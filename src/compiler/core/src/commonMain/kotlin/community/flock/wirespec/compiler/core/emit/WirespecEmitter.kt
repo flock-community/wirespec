@@ -1,6 +1,9 @@
 package community.flock.wirespec.compiler.core.emit
 
-import community.flock.wirespec.compiler.core.emit.model.DefinitionModelEmitter
+import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
+import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Refined
@@ -9,63 +12,59 @@ import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
-class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter(logger) {
+class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emitter(logger) {
 
     override val shared = ""
 
-    override fun Type.emit() = withLogging(logger) {
-        """type $name {
-            |${shape.emit()}
-            |}
-            |""".trimMargin()
+    override fun Definition.emitName(): String = when (this) {
+        is Endpoint -> name
+        is Enum -> name
+        is Refined -> name
+        is Type -> name
+        is Union -> name
     }
 
-    override fun Type.Shape.emit() = withLogging(logger) {
-        value.joinToString(",\n") { "$SPACER${it.emit()}" }
-    }
+    override fun Type.emit(ast: AST) = """
+        |type $name {
+        |${shape.emit()}
+        |}
+        |""".trimMargin()
 
-    override fun Type.Shape.Field.emit() = withLogging(logger) {
-        "${identifier.emit()}: ${reference.emit()}${if (isNullable) "?" else ""}"
-    }
 
-    override fun Type.Shape.Field.Identifier.emit() = withLogging(logger) { value }
+    override fun Type.Shape.emit() = value.joinToString(",\n") { "$SPACER${it.emit()}" }
 
-    override fun Type.Shape.Field.Reference.emit(): String = withLogging(logger) {
-        when (this) {
-            is Type.Shape.Field.Reference.Unit -> "Unit"
-            is Type.Shape.Field.Reference.Any -> "Any"
-            is Type.Shape.Field.Reference.Custom -> value
-            is Type.Shape.Field.Reference.Primitive -> when (type) {
-                Type.Shape.Field.Reference.Primitive.Type.String -> "String"
-                Type.Shape.Field.Reference.Primitive.Type.Integer -> "Integer"
-                Type.Shape.Field.Reference.Primitive.Type.Number -> "Number"
-                Type.Shape.Field.Reference.Primitive.Type.Boolean -> "Boolean"
-            }
-        }.let { if (isIterable) "$it[]" else it }
-    }
+    override fun Type.Shape.Field.emit() = "${identifier.emit()}: ${reference.emit()}${if (isNullable) "?" else ""}"
 
-    override fun Enum.emit() = withLogging(logger) { "enum $name {\n${SPACER}${entries.joinToString(", ")}\n}\n" }
 
-    override fun Refined.emit() = withLogging(logger) {
-        "type $name ${validator.emit()}\n"
-    }
+    override fun Type.Shape.Field.Identifier.emit() = value
 
-    override fun Refined.Validator.emit() = withLogging(logger) {
-        "/${value.drop(1).dropLast(1)}/g"
-    }
+    override fun Type.Shape.Field.Reference.emit(): String = when (this) {
+        is Type.Shape.Field.Reference.Unit -> "Unit"
+        is Type.Shape.Field.Reference.Any -> "Any"
+        is Type.Shape.Field.Reference.Custom -> value
+        is Type.Shape.Field.Reference.Primitive -> when (type) {
+            Type.Shape.Field.Reference.Primitive.Type.String -> "String"
+            Type.Shape.Field.Reference.Primitive.Type.Integer -> "Integer"
+            Type.Shape.Field.Reference.Primitive.Type.Number -> "Number"
+            Type.Shape.Field.Reference.Primitive.Type.Boolean -> "Boolean"
+        }
+    }.let { if (isIterable) "$it[]" else it }
 
-    override fun Endpoint.emit() = withLogging(logger) {
+    override fun Enum.emit() = "enum $name {\n${SPACER}${entries.joinToString(", ")}\n}\n"
+
+    override fun Refined.emit() = "type $name ${validator.emit()}\n"
+
+    override fun Refined.Validator.emit() = "/${value.drop(1).dropLast(1)}/g"
+
+    override fun Endpoint.emit() =
         """
-          |endpoint $name ${method}${requests.emitRequest()} ${path.emitPath()}${query.emitQuery()} -> {
-          |${responses.joinToString("\n") { "$SPACER${it.status} -> ${it.content?.reference?.emit()}${if (it.content?.isNullable == true) "?" else ""}" }}
-          |}
-          |
+            |endpoint $name ${method}${requests.emitRequest()} ${path.emitPath()}${query.emitQuery()} -> {
+            |${responses.joinToString("\n") { "$SPACER${it.status} -> ${it.content?.reference?.emit()}${if (it.content?.isNullable == true) "?" else ""}" }}
+            |}
+            |
         """.trimMargin()
-    }
 
-    override fun Union.emit() = withLogging(logger) {
-        "type $name = ${entries.joinToString(" | ")}\n"
-    }
+    override fun Union.emit() = "type $name = ${entries.joinToString(" | ")}\n"
 
     private fun List<Endpoint.Segment>.emitPath() = "/" + joinToString("/") {
         when (it) {

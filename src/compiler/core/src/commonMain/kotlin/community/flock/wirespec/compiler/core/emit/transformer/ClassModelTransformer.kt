@@ -4,7 +4,6 @@ import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firs
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.isInt
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.isStatusCode
-import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Node
@@ -14,17 +13,7 @@ import community.flock.wirespec.compiler.core.parse.Union
 
 object ClassModelTransformer {
 
-    fun AST.transform(): List<ClassModel> = this.map {
-        when (it) {
-            is Endpoint -> it.transform()
-            is Enum -> it.transform()
-            is Refined -> it.transform()
-            is Type -> it.transform(this)
-            is Union -> it.transform()
-        }
-    }
-
-    private fun Type.transform(ast: List<Node>): TypeClass =
+    fun Type.transform(ast: List<Node>): TypeClass =
         TypeClass(
             name = className(name),
             fields = shape.value.map {
@@ -53,7 +42,7 @@ object ClassModelTransformer {
             entries = entries
         )
 
-    private fun Union.transform(): UnionClass =
+    fun Union.transform(): UnionClass =
         UnionClass(
             name = className(name),
         )
