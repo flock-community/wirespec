@@ -3,14 +3,29 @@ package community.flock.wirespec.plugin.maven
 import arrow.core.Either
 import community.flock.wirespec.compiler.core.Wirespec
 import community.flock.wirespec.compiler.core.compile
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.utils.Logger
-import org.apache.maven.plugin.AbstractMojo
 import java.io.BufferedReader
 import java.io.File
+import org.apache.maven.plugin.AbstractMojo
+import org.apache.maven.plugins.annotations.Parameter
+import org.apache.maven.project.MavenProject
 
 abstract class BaseMojo : AbstractMojo() {
+
+    @Parameter(required = true)
+    protected lateinit var input: String
+
+    @Parameter(required = true)
+    protected lateinit var output: String
+
+    @Parameter
+    protected var packageName: String = DEFAULT_PACKAGE_STRING
+
+    @Parameter(defaultValue = "\${project}", readonly = true, required = true)
+    protected lateinit var project: MavenProject
 
     val logger = object : Logger() {
         override fun warn(s: String) = log.warn(s)

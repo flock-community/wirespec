@@ -1,6 +1,5 @@
 package community.flock.wirespec.plugin.maven
 
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.utils.Logger
 import java.io.File
@@ -18,15 +17,6 @@ import org.apache.maven.project.MavenProject
 class CustomMojo : BaseMojo() {
 
     @Parameter(required = true)
-    private lateinit var input: String
-
-    @Parameter(required = true)
-    private lateinit var output: String
-
-    @Parameter
-    private var packageName: String = DEFAULT_PACKAGE_STRING
-
-    @Parameter(required = true)
     private lateinit var emitterClass: String
 
     @Parameter(required = true)
@@ -34,9 +24,6 @@ class CustomMojo : BaseMojo() {
 
     @Parameter(required = false)
     private var split: Boolean = false
-
-    @Parameter(defaultValue = "\${project}", readonly = true, required = true)
-    private lateinit var project: MavenProject
 
     override fun execute() {
         val emitter = try {

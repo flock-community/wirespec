@@ -4,13 +4,11 @@ import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_STRING
 import community.flock.wirespec.plugin.maven.utils.JvmUtil
 import java.io.File
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
-import org.apache.maven.project.MavenProject
 import community.flock.wirespec.openapi.v2.OpenApiParser as OpenApiParserV2
 import community.flock.wirespec.openapi.v3.OpenApiParser as OpenApiParserV3
 
@@ -19,15 +17,6 @@ private enum class Format { Wirespec, OpenApiV2, OpenApiV3 }
 
 @Mojo(name = "compile", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
 class CompileMojo : BaseMojo() {
-
-    @Parameter(required = true)
-    private lateinit var input: String
-
-    @Parameter(required = true)
-    private lateinit var output: String
-
-    @Parameter
-    private var packageName: String = DEFAULT_PACKAGE_STRING
 
     @Parameter
     private var languages: List<Language>? = null
@@ -40,9 +29,6 @@ class CompileMojo : BaseMojo() {
 
     @Parameter
     private var shared: Boolean = true
-
-    @Parameter(defaultValue = "\${project}", readonly = true, required = true)
-    private lateinit var project: MavenProject
 
     override fun execute() {
         languages?.forEach {
