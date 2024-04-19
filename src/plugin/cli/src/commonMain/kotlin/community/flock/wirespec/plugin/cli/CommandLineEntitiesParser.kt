@@ -18,7 +18,7 @@ import community.flock.wirespec.plugin.FullDirPath
 import community.flock.wirespec.plugin.FullFilePath
 import community.flock.wirespec.plugin.Input
 import community.flock.wirespec.plugin.Language
-import community.flock.wirespec.plugin.Language.Spec.Wirespec
+import community.flock.wirespec.plugin.Language.Wirespec
 import community.flock.wirespec.plugin.Operation
 import community.flock.wirespec.plugin.Output
 import community.flock.wirespec.plugin.PackageName

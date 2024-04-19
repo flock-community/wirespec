@@ -6,8 +6,8 @@ import community.flock.wirespec.plugin.FileExtension
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.FullDirPath
 import community.flock.wirespec.plugin.FullFilePath
-import community.flock.wirespec.plugin.Language.Jvm.Kotlin
-import community.flock.wirespec.plugin.Language.Spec.Wirespec
+import community.flock.wirespec.plugin.Language.Kotlin
+import community.flock.wirespec.plugin.Language.Wirespec
 import community.flock.wirespec.plugin.Operation
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -61,7 +61,7 @@ class CommandLineEntitiesTest {
         WirespecCli.provide({ }, {
             it.operation.shouldBeTypeOf<Operation.Convert>()
             it.input.shouldBeTypeOf<FullFilePath>().run {
-                fileName shouldBe "swagger"
+                fileName.value shouldBe "swagger"
                 extension shouldBe FileExtension.Json
             }
             it.output.shouldBeNull()

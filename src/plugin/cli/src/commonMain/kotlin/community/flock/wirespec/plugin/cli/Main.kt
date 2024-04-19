@@ -15,15 +15,16 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.Console
 import community.flock.wirespec.plugin.FileExtension
+import community.flock.wirespec.plugin.FileName
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.FullDirPath
 import community.flock.wirespec.plugin.FullFilePath
 import community.flock.wirespec.plugin.Language
-import community.flock.wirespec.plugin.Language.Jvm.Java
-import community.flock.wirespec.plugin.Language.Jvm.Kotlin
-import community.flock.wirespec.plugin.Language.Jvm.Scala
-import community.flock.wirespec.plugin.Language.Script.TypeScript
-import community.flock.wirespec.plugin.Language.Spec.Wirespec
+import community.flock.wirespec.plugin.Language.Java
+import community.flock.wirespec.plugin.Language.Kotlin
+import community.flock.wirespec.plugin.Language.Scala
+import community.flock.wirespec.plugin.Language.TypeScript
+import community.flock.wirespec.plugin.Language.Wirespec
 import community.flock.wirespec.plugin.Operation
 import community.flock.wirespec.plugin.Output
 import community.flock.wirespec.plugin.PackageName
@@ -75,7 +76,7 @@ fun compile(arguments: CompilerArguments) {
                 val results = emitter.emit(ast)
                 if (!emitter.split) listOf(
                     Emitted(
-                        fullPath.fileName.replaceFirstChar(Char::uppercase),
+                        fullPath.fileName.value.replaceFirstChar(Char::uppercase),
                         results.first().result
                     )
                 ) to file
@@ -85,7 +86,7 @@ fun compile(arguments: CompilerArguments) {
 
         is Operation.Compile -> when (input) {
             is Console -> input
-                .wirespec(languages, packageName, { FullFilePath(output!!.value, "console", it) }, logger)
+                .wirespec(languages, packageName, { FullFilePath(output!!.value, FileName("console"), it) }, logger)
 
             is FullDirPath -> Directory(input.path)
                 .wirespecFiles()
@@ -113,7 +114,7 @@ private fun Reader.wirespec(
                 if (!emitter.split) results.map {
                     listOf(
                         Emitted(
-                            path(community.flock.wirespec.plugin.FileExtension.Wirespec).fileName.firstToUpper(),
+                            path(FileExtension.Wirespec).fileName.value.firstToUpper(),
                             it.first().result
                         )
                     )
@@ -142,7 +143,7 @@ private fun Set<Language>.emitters(packageName: PackageName, path: ((FileExtensi
     }
 
 private fun write(output: List<Emitted>, file: File?) {
-    output.forEach { (name, result) -> file?.copy(name)?.write(result) ?: print(result) }
+    output.forEach { (name, result) -> file?.copy(FileName(name))?.write(result) ?: print(result) }
 }
 
 private fun FullFilePath.out(packageName: PackageName, output: Output?) = { extension: FileExtension ->

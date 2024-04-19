@@ -14,6 +14,7 @@ repositories {
 dependencies {
     implementation(project(":src:compiler:core"))
     implementation(project(":src:converter:openapi"))
+    implementation(project(":src:plugin:arguments"))
     implementation("org.apache.maven:maven-plugin-api:3.9.1")
     implementation("org.apache.maven.plugin-tools:maven-plugin-annotations:3.8.1")
     implementation("org.apache.maven:maven-project:2.2.1")
@@ -37,6 +38,7 @@ publishing {
 tasks.publishToMavenLocal {
     dependsOn(":src:compiler:core:publishToMavenLocal")
     dependsOn(":src:converter:openapi:publishToMavenLocal")
+    dependsOn(":src:plugin:arguments:publishToMavenLocal")
 }
 
 mavenPlugin {

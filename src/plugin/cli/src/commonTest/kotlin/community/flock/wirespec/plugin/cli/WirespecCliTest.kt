@@ -1,6 +1,7 @@
 package community.flock.wirespec.plugin.cli
 
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_STRING
+import community.flock.wirespec.plugin.FileName
 import community.flock.wirespec.plugin.FullFilePath
 import community.flock.wirespec.plugin.cli.io.JavaFile
 import community.flock.wirespec.plugin.cli.io.KotlinFile
@@ -22,7 +23,7 @@ class WirespecCliTest {
 
         WirespecCli.provide(::compile, ::convert)(arrayOf("compile", "-d", input, "-o", output, "-l", "Kotlin"))
 
-        val file = KotlinFile(FullFilePath("$output/$packageDir", "Type")).read()
+        val file = KotlinFile(FullFilePath("$output/$packageDir", FileName("Type"))).read()
 
         val expected = """
             |package community.flock.wirespec.generated
@@ -53,7 +54,7 @@ class WirespecCliTest {
             )
         )
 
-        val file = JavaFile(FullFilePath("$output/$packageDir", "Bla")).read()
+        val file = JavaFile(FullFilePath("$output/$packageDir", FileName("Bla"))).read()
 
         val expected = """
             |package community.flock.next;
@@ -85,7 +86,7 @@ class WirespecCliTest {
             )
         )
 
-        val path = FullFilePath("$output/$packageDir", "Petstore")
+        val path = FullFilePath("$output/$packageDir", FileName("Petstore"))
         val file = KotlinFile(path).read()
 
         val expected = """
@@ -119,7 +120,7 @@ class WirespecCliTest {
             )
         )
 
-        val path = FullFilePath("$output/$packageDir", "Keto")
+        val path = FullFilePath("$output/$packageDir", FileName("Keto"))
         val file = KotlinFile(path).read()
 
         val expected = """
@@ -152,7 +153,7 @@ class WirespecCliTest {
             )
         )
 
-        val path = FullFilePath("$output/$packageDir", "Petstore")
+        val path = FullFilePath("$output/$packageDir", FileName("Petstore"))
         val file = TypeScriptFile(path).read()
 
         val expected = """

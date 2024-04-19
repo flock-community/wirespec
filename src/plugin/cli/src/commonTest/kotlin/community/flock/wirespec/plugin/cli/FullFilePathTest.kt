@@ -11,7 +11,7 @@ class FullFilePathTest {
     fun testParse() {
         FullFilePath.parse("/src/test/resources/test.json").run {
             directory shouldBe "/src/test/resources"
-            fileName shouldBe "test"
+            fileName.value shouldBe "test"
             extension shouldBe FileExtension.Json
         }
     }
