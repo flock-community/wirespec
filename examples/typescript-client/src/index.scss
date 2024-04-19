@@ -1,0 +1,66 @@
+.todo {
+  &__container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 10rem;
+  }
+
+  &__item {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+
+    &__name {
+      margin-right: 1rem;
+
+      &__checked {
+        text-decoration: line-through;
+      }
+    }
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+
+    &__header {
+      height: 2rem;
+      background-color: #ebc675;
+
+      display: grid;
+      grid-template-columns: 2rem 1fr;
+      justify-items: center;
+      align-items: center;
+
+      &__add-button {
+        grid-row: 1/2;
+        grid-column: 1/2;
+        font-weight: 600;
+        background-color: #f8dda300;
+        cursor: pointer;
+      }
+
+      &__title {
+        grid-row: 1/2;
+        grid-column: 1/3;
+        font-weight: 500;
+        font-size: 125%;
+      }
+    }
+
+    &__body {
+      background-color: #f8dda3;
+      padding: 1rem;
+      color: #494848;
+    }
+
+    &__container {
+      border-radius: 5px;
+      border: 1px solid gray;
+      min-width: 15rem;
+    }
+  }
+}
