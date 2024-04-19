@@ -30,11 +30,13 @@ import community.flock.wirespec.compiler.core.tokenize.types.WsString
 import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsUnit
 
+typealias TokenMatcher = Pair<Regex, TokenType>
+
 interface LanguageSpec {
-    val orderedMatchers: List<Pair<Regex, TokenType>>
+    val orderedMatchers: List<TokenMatcher>
 }
 
-object Wirespec : LanguageSpec {
+object WirespecSpec : LanguageSpec {
     @Suppress("RegExpRedundantEscape")
     override val orderedMatchers = listOf(
         Regex("^type") to WsTypeDef,

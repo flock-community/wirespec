@@ -1,13 +1,14 @@
 package community.flock.wirespec.compiler.core.tokenize
 
+import community.flock.wirespec.compiler.core.Value
 import community.flock.wirespec.compiler.core.tokenize.Token.Coordinates.IdxAndLength
 import community.flock.wirespec.compiler.core.tokenize.types.TokenType
 
 data class Token(
+    override val value: String,
     val type: TokenType,
-    val value: String,
     val coordinates: Coordinates
-) {
+) : Value<String> {
     data class Coordinates(
         val line: Int = 1,
         val position: Int = 1,

@@ -2,7 +2,6 @@ package community.flock.wirespec.examples.app.todo
 
 import community.flock.wirespec.examples.app.common.Consumer
 import community.flock.wirespec.examples.app.common.Producer
-import community.flock.wirespec.examples.app.common.invoke
 import community.flock.wirespec.generated.kotlin.PotentialTodoDto
 import community.flock.wirespec.generated.kotlin.TodoDto
 import community.flock.wirespec.generated.kotlin.TodoId
@@ -19,7 +18,7 @@ object TodoConsumer : Consumer<PotentialTodoDto, Todo> {
 object TodoProducer : Producer<Todo, TodoDto> {
     override fun Todo.produce(): TodoDto = TodoDto(
         id = TodoId(id.value),
-        name = name(),
+        name = name.value,
         done = done,
     )
 }

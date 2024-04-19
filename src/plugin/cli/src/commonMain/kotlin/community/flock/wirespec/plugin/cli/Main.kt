@@ -1,7 +1,9 @@
 package community.flock.wirespec.plugin.cli
 
 import arrow.core.Either
+import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.compile
+import community.flock.wirespec.compiler.core.component1
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
@@ -13,16 +15,19 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.Console
 import community.flock.wirespec.plugin.FileExtension
+import community.flock.wirespec.plugin.FileName
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.FullDirPath
 import community.flock.wirespec.plugin.FullFilePath
 import community.flock.wirespec.plugin.Language
-import community.flock.wirespec.plugin.Language.Jvm.Java
-import community.flock.wirespec.plugin.Language.Jvm.Kotlin
-import community.flock.wirespec.plugin.Language.Jvm.Scala
-import community.flock.wirespec.plugin.Language.Script.TypeScript
-import community.flock.wirespec.plugin.Language.Spec.Wirespec
+import community.flock.wirespec.plugin.Language.Java
+import community.flock.wirespec.plugin.Language.Kotlin
+import community.flock.wirespec.plugin.Language.Scala
+import community.flock.wirespec.plugin.Language.TypeScript
+import community.flock.wirespec.plugin.Language.Wirespec
 import community.flock.wirespec.plugin.Operation
+import community.flock.wirespec.plugin.Output
+import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.Reader
 import community.flock.wirespec.plugin.cli.io.Directory
 import community.flock.wirespec.plugin.cli.io.File
@@ -33,7 +38,6 @@ import community.flock.wirespec.plugin.cli.io.ScalaFile
 import community.flock.wirespec.plugin.cli.io.TypeScriptFile
 import community.flock.wirespec.plugin.cli.io.WirespecFile
 import community.flock.wirespec.plugin.utils.orNull
-import community.flock.wirespec.compiler.core.Wirespec as WirespecSpec
 import community.flock.wirespec.openapi.v2.OpenApiParser as OpenApiParserV2
 import community.flock.wirespec.openapi.v3.OpenApiParser as OpenApiParserV3
 
@@ -72,7 +76,7 @@ fun compile(arguments: CompilerArguments) {
                 val results = emitter.emit(ast)
                 if (!emitter.split) listOf(
                     Emitted(
-                        fullPath.fileName.replaceFirstChar(Char::uppercase),
+                        fullPath.fileName.value.replaceFirstChar(Char::uppercase),
                         results.first().result
                     )
                 ) to file
@@ -82,7 +86,7 @@ fun compile(arguments: CompilerArguments) {
 
         is Operation.Compile -> when (input) {
             is Console -> input
-                .wirespec(languages, packageName, { FullFilePath(output!!, "console", it) }, logger)
+                .wirespec(languages, packageName, { FullFilePath(output!!.value, FileName("console"), it) }, logger)
 
             is FullDirPath -> Directory(input.path)
                 .wirespecFiles()
@@ -98,7 +102,7 @@ fun compile(arguments: CompilerArguments) {
 
 private fun Reader.wirespec(
     languages: Set<Language>,
-    packageName: String,
+    packageName: PackageName,
     path: (FileExtension) -> FullFilePath,
     logger: Logger
 ) {
@@ -110,7 +114,7 @@ private fun Reader.wirespec(
                 if (!emitter.split) results.map {
                     listOf(
                         Emitted(
-                            path(community.flock.wirespec.plugin.FileExtension.Wirespec).fileName.firstToUpper(),
+                            path(FileExtension.Wirespec).fileName.value.firstToUpper(),
                             it.first().result
                         )
                     )
@@ -126,25 +130,26 @@ private fun Reader.wirespec(
         }
 }
 
-private fun Set<Language>.emitters(packageName: String, path: ((FileExtension) -> FullFilePath)?, logger: Logger) =
+private fun Set<Language>.emitters(packageName: PackageName, path: ((FileExtension) -> FullFilePath)?, logger: Logger) =
     map {
+        val (packageString) = packageName
         when (it) {
-            Java -> JavaEmitter(packageName, logger) to path?.let { JavaFile(it(FileExtension.Java)) }
-            Kotlin -> KotlinEmitter(packageName, logger) to path?.let { KotlinFile(it(FileExtension.Kotlin)) }
-            Scala -> ScalaEmitter(packageName, logger) to path?.let { ScalaFile(it(FileExtension.Scala)) }
+            Java -> JavaEmitter(packageString, logger) to path?.let { JavaFile(it(FileExtension.Java)) }
+            Kotlin -> KotlinEmitter(packageString, logger) to path?.let { KotlinFile(it(FileExtension.Kotlin)) }
+            Scala -> ScalaEmitter(packageString, logger) to path?.let { ScalaFile(it(FileExtension.Scala)) }
             TypeScript -> TypeScriptEmitter(logger) to path?.let { TypeScriptFile(it(FileExtension.TypeScript)) }
             Wirespec -> WirespecEmitter(logger) to path?.let { WirespecFile(it(FileExtension.Wirespec)) }
         }
     }
 
 private fun write(output: List<Emitted>, file: File?) {
-    output.forEach { (name, result) -> file?.copy(name)?.write(result) ?: print(result) }
+    output.forEach { (name, result) -> file?.copy(FileName(name))?.write(result) ?: print(result) }
 }
 
-private fun FullFilePath.out(packageName: String, output: String?) = { extension: FileExtension ->
+private fun FullFilePath.out(packageName: PackageName, output: Output?) = { extension: FileExtension ->
     val dir = output ?: "$directory/out/${extension.name.lowercase()}"
     copy(
-        directory = "$dir/${packageName.split('.').joinToString("/")}",
+        directory = "$dir/${packageName.value.split('.').joinToString("/")}",
         extension = extension
     )
 }

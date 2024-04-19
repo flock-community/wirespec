@@ -13,7 +13,6 @@ import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.optimize.optimize
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Parser
-import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.core.validate.validate
 import community.flock.wirespec.compiler.utils.Logger
@@ -34,8 +33,8 @@ fun LanguageSpec.parse(source: String): (Logger) -> Either<NonEmptyList<Wirespec
 fun LanguageSpec.compile(source: String): (Logger) -> (Emitter) -> Either<Nel<WirespecException>, List<Emitted>> =
     { logger ->
         { emitter ->
-            this.parse(source)(logger)
-                .map { emitter.emit(it.filterIsInstance<Definition>()) }
+            parse(source)(logger)
+                .map(emitter::emit)
                 .also((EMITTED::report)(logger))
         }
     }

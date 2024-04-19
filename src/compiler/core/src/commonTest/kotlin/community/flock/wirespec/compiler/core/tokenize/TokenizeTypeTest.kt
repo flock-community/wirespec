@@ -1,6 +1,6 @@
 package community.flock.wirespec.compiler.core.tokenize
 
-import community.flock.wirespec.compiler.core.Wirespec
+import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
 import community.flock.wirespec.compiler.core.tokenize.types.CustomRegex
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
@@ -33,7 +33,7 @@ class TokenizeTypeTest {
             Colon, WsString, RightCurly, EndOfProgram,
         )
 
-        Wirespec.tokenize(source).removeWhiteSpace()
+        WirespecSpec.tokenize(source).removeWhiteSpace()
             .shouldNotBeEmpty()
             .also { it.size shouldBe expected.size }
             .map { it.type }.shouldNotContain(Invalid)
@@ -50,7 +50,7 @@ class TokenizeTypeTest {
             WsTypeDef, CustomType, CustomRegex, EndOfProgram,
         )
 
-        Wirespec.tokenize(source).removeWhiteSpace()
+        WirespecSpec.tokenize(source).removeWhiteSpace()
             .shouldNotBeEmpty()
             .also { it.size shouldBe expected.size }
             .map { it.type }.shouldNotContain(Invalid)
@@ -68,7 +68,7 @@ class TokenizeTypeTest {
             Pipe, CustomType, EndOfProgram,
         )
 
-        Wirespec.tokenize(source).removeWhiteSpace()
+        WirespecSpec.tokenize(source).removeWhiteSpace()
             .shouldNotBeEmpty()
             .also { it.size shouldBe expected.size }
             .map { it.type }.shouldNotContain(Invalid)

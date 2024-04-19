@@ -1,13 +1,13 @@
 package community.flock.wirespec.plugin.cli
 
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_STRING
 import community.flock.wirespec.plugin.Console
 import community.flock.wirespec.plugin.FileExtension
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.FullDirPath
 import community.flock.wirespec.plugin.FullFilePath
-import community.flock.wirespec.plugin.Language.Jvm.Kotlin
-import community.flock.wirespec.plugin.Language.Spec.Wirespec
+import community.flock.wirespec.plugin.Language.Kotlin
+import community.flock.wirespec.plugin.Language.Wirespec
 import community.flock.wirespec.plugin.Operation
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -35,9 +35,9 @@ class CommandLineEntitiesTest {
         WirespecCli.provide({
             it.input.shouldBeTypeOf<FullDirPath>().path shouldBe "input"
             it.operation.shouldBeTypeOf<Operation.Compile>()
-            it.output shouldBe "output"
+            it.output?.value shouldBe "output"
             it.languages shouldBe setOf(Wirespec)
-            it.packageName shouldBe "packageName"
+            it.packageName.value shouldBe "packageName"
             it.strict shouldBe true
             it.debug shouldBe true
         }, {})(arrayOf("compile") + opts)
@@ -50,7 +50,7 @@ class CommandLineEntitiesTest {
             it.input.shouldBeTypeOf<Console>()
             it.output.shouldBeNull()
             it.languages shouldBe setOf(Kotlin)
-            it.packageName shouldBe DEFAULT_PACKAGE_NAME
+            it.packageName.value shouldBe DEFAULT_PACKAGE_STRING
             it.strict shouldBe false
             it.debug shouldBe false
         }, {})(arrayOf("compile", "-l", "Kotlin"))
@@ -61,12 +61,12 @@ class CommandLineEntitiesTest {
         WirespecCli.provide({ }, {
             it.operation.shouldBeTypeOf<Operation.Convert>()
             it.input.shouldBeTypeOf<FullFilePath>().run {
-                fileName shouldBe "swagger"
+                fileName.value shouldBe "swagger"
                 extension shouldBe FileExtension.Json
             }
             it.output.shouldBeNull()
             it.languages shouldBe setOf(Wirespec)
-            it.packageName shouldBe DEFAULT_PACKAGE_NAME
+            it.packageName.value shouldBe DEFAULT_PACKAGE_STRING
             it.strict shouldBe false
             it.debug shouldBe false
         })(arrayOf("convert", "-f", "swagger.json", "openapiv2"))
@@ -79,9 +79,9 @@ class CommandLineEntitiesTest {
                 format shouldBe Format.OpenApiV2
             }
             it.input.shouldBeTypeOf<Console>()
-            it.output shouldBe "output"
+            it.output?.value shouldBe "output"
             it.languages shouldBe setOf(Kotlin)
-            it.packageName shouldBe DEFAULT_PACKAGE_NAME
+            it.packageName.value shouldBe DEFAULT_PACKAGE_STRING
             it.strict shouldBe false
             it.debug shouldBe false
         })(arrayOf("convert", "openapiv2", "-o", "output", "-l", "Kotlin"))

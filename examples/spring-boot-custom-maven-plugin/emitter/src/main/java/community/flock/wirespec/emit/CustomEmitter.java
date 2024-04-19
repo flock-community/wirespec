@@ -26,7 +26,7 @@ public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
     @NotNull
     @Override
     public String emitName(Definition definition) {
-        return definition.getName();
+        return definition.getName() + "Custom";
     }
 
     @NotNull
@@ -36,7 +36,7 @@ public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
                 .stream()
                 .filter(sc -> sc instanceof Type)
                 .map(it -> (Type) it)
-                .map(sc -> new Emitted(sc.getName(), emit(sc, ast)))
+                .map(sc -> new Emitted(emitName(sc), emit(sc, ast)))
                 .collect(Collectors.toList());
     }
 
@@ -60,7 +60,7 @@ public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
 
     @NotNull
     @Override
-    public String emit(@NotNull Union anUnion) {
+    public String emit(@NotNull Union aUnion) {
         return "";
     }
 
@@ -79,7 +79,7 @@ public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
     @NotNull
     @Override
     public String emit(@NotNull Type type, @NotNull List<? extends Node> ast) {
-        return "package hello;\n\npublic class " + type.getName() + " {}";
+        return "package hello;\n\npublic class " + emitName(type) + " {}";
     }
 
     @NotNull

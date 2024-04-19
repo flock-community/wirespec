@@ -1,6 +1,9 @@
 # Example: How to convert an OpenAPI Specification with Wirespec
+
 ## Wirespec Maven Plugin Configuration
+
 ```xml
+
 <plugin>
     <groupId>community.flock.wirespec.plugin.maven</groupId>
     <artifactId>wirespec-maven-plugin</artifactId>
@@ -9,7 +12,7 @@
         <execution>
             <id>kotlin-v2</id>
             <goals>
-                <goal>generate</goal>
+                <goal>convert</goal>
             </goals>
             <configuration>
                 <input>${project.basedir}/src/main/openapi/petstorev2.json</input>
@@ -25,7 +28,7 @@
         <execution>
             <id>kotlin-v3</id>
             <goals>
-                <goal>generate</goal>
+                <goal>convert</goal>
             </goals>
             <configuration>
                 <input>${project.basedir}/src/main/openapi/petstorev3.json</input>
@@ -41,7 +44,7 @@
         <execution>
             <id>java-v2</id>
             <goals>
-                <goal>generate</goal>
+                <goal>convert</goal>
             </goals>
             <configuration>
                 <input>${project.basedir}/src/main/openapi/petstorev2.json</input>
@@ -57,7 +60,7 @@
         <execution>
             <id>java-v3</id>
             <goals>
-                <goal>generate</goal>
+                <goal>convert</goal>
             </goals>
             <configuration>
                 <input>${project.basedir}/src/main/openapi/petstorev3.json</input>
@@ -73,4 +76,5 @@
     </executions>
 </plugin>
 ```
+
 According to the [actual pom.xml](pom.xml) file.

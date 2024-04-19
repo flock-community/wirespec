@@ -1,6 +1,6 @@
 package community.flock.wirespec.compiler.core.tokenize
 
-import community.flock.wirespec.compiler.core.Wirespec
+import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
 import community.flock.wirespec.compiler.core.tokenize.types.Invalid
@@ -18,7 +18,7 @@ class TokenizeTest {
 
         val expected = listOf(StartOfProgram, EndOfProgram)
 
-        Wirespec.tokenize(source)
+        WirespecSpec.tokenize(source)
             .shouldNotBeEmpty()
             .also { it.size shouldBe expected.size }
             .map { it.type }.shouldNotContain(Invalid)
@@ -31,7 +31,7 @@ class TokenizeTest {
 
         val expected = listOf(CustomValue, EndOfProgram)
 
-        Wirespec.tokenize(source).removeWhiteSpace()
+        WirespecSpec.tokenize(source).removeWhiteSpace()
             .shouldNotBeEmpty()
             .also { it.size shouldBe expected.size }
             .map { it.type }.shouldNotContain(Invalid)

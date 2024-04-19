@@ -1,5 +1,8 @@
 package community.flock.wirespec.compiler.core.parse
 
+import community.flock.wirespec.compiler.core.Value
+import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
+
 sealed interface Node
 
 sealed interface Definition : Node {
@@ -7,9 +10,9 @@ sealed interface Definition : Node {
 }
 
 data class Type(override val name: String, val shape: Shape) : Definition {
-    data class Shape(val value: List<Field>) {
+    data class Shape(override val value: List<Field>) : Value<List<Field>> {
         data class Field(val identifier: Identifier, val reference: Reference, val isNullable: Boolean) {
-            data class Identifier(val value: String)
+            data class Identifier(override val value: String) : Value<String>
             sealed interface Reference {
                 val isIterable: Boolean
                 val isMap: Boolean
@@ -17,10 +20,10 @@ data class Type(override val name: String, val shape: Shape) : Definition {
                 data class Any(override val isIterable: Boolean, override val isMap: Boolean = false) : Reference
                 data class Unit(override val isIterable: Boolean, override val isMap: Boolean = false) : Reference
                 data class Custom(
-                    val value: String,
+                    override val value: String,
                     override val isIterable: Boolean,
                     override val isMap: Boolean = false
-                ) : Reference
+                ) : Value<String>, Reference
 
                 data class Primitive(
                     val type: Type,
@@ -38,29 +41,29 @@ data class Enum(override val name: String, val entries: Set<String>) : Definitio
 data class Union(override val name: String, val entries: Set<String>) : Definition
 
 data class Refined(override val name: String, val validator: Validator) : Definition {
-    data class Validator(val value: String)
+    data class Validator(override val value: String) : Value<String>
 }
 
 data class Endpoint(
     override val name: String,
     val method: Method,
     val path: List<Segment>,
-    val query: List<Type.Shape.Field>,
-    val headers: List<Type.Shape.Field>,
-    val cookies: List<Type.Shape.Field>,
+    val query: List<Field>,
+    val headers: List<Field>,
+    val cookies: List<Field>,
     val requests: List<Request>,
     val responses: List<Response>
 ) : Definition {
     enum class Method { GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH, TRACE }
     sealed interface Segment {
-        data class Literal(val value: String) : Segment
+        data class Literal(override val value: String) : Value<String>, Segment
         data class Param(
-            val identifier: Type.Shape.Field.Identifier,
-            val reference: Type.Shape.Field.Reference
+            val identifier: Field.Identifier,
+            val reference: Field.Reference
         ) : Segment
     }
 
     data class Request(val content: Content?)
-    data class Response(val status: String, val headers: List<Type.Shape.Field>, val content: Content?)
-    data class Content(val type: String, val reference: Type.Shape.Field.Reference, val isNullable: Boolean = false)
+    data class Response(val status: String, val headers: List<Field>, val content: Content?)
+    data class Content(val type: String, val reference: Field.Reference, val isNullable: Boolean = false)
 }

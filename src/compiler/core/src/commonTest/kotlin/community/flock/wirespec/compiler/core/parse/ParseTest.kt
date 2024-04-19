@@ -1,6 +1,6 @@
 package community.flock.wirespec.compiler.core.parse
 
-import community.flock.wirespec.compiler.core.Wirespec
+import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.Logger
 import io.kotest.assertions.arrow.core.shouldBeLeft
@@ -22,7 +22,7 @@ class ParseTest {
 
         """.trimIndent()
 
-        Wirespec.tokenize(source)
+        WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
             .size shouldBe 1
@@ -38,7 +38,7 @@ class ParseTest {
 
         """.trimIndent()
 
-        Wirespec.tokenize(source)
+        WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeLeft()
             .also { it.size shouldBe 1 }

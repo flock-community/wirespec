@@ -170,7 +170,7 @@ class CompileUnionTest {
     }
 
     private fun compile(source: String) = { emitter: Emitter ->
-        Wirespec.compile(source)(logger)(emitter)
+        WirespecSpec.compile(source)(logger)(emitter)
             .map { emittedList -> emittedList.map { it.typeName to it.result } }
             .onLeft(::println)
     }

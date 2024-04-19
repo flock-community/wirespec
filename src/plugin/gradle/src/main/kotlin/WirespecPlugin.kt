@@ -1,25 +1,25 @@
 package community.flock.wirespec.plugin.gradle
 
 import arrow.core.Either
-import community.flock.wirespec.compiler.core.Wirespec
+import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_NAME
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.utils.Logger
+import java.io.BufferedReader
+import java.io.File
+import javax.inject.Inject
 import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.model.ObjectFactory
-import java.io.BufferedReader
-import java.io.File
-import javax.inject.Inject
 import kotlin.streams.asSequence
 
 open class WirespecPluginExtension @Inject constructor(val objectFactory: ObjectFactory) {
@@ -57,7 +57,7 @@ open class WirespecPluginExtension @Inject constructor(val objectFactory: Object
         }
 
         abstract class JvmLanguage : HasTargetDirectory() {
-            var packageName: String = DEFAULT_PACKAGE_NAME
+            var packageName: String = DEFAULT_PACKAGE_STRING
         }
 
         class Typescript : HasTargetDirectory()
@@ -75,7 +75,7 @@ class WirespecPlugin : Plugin<Project> {
     private fun compile(input: String, logger: Logger, emitter: Emitter) =
         (File(input).listFiles() ?: arrayOf())
             .map { it.name.split(".").first() to it.bufferedReader(Charsets.UTF_8) }
-            .map { (name, reader) -> name to Wirespec.compile(reader.collectToString())(logger)(emitter) }
+            .map { (name, reader) -> name to WirespecSpec.compile(reader.collectToString())(logger)(emitter) }
             .map { (name, result) ->
                 name to when (result) {
                     is Either.Right -> result.value
@@ -98,7 +98,7 @@ class WirespecPlugin : Plugin<Project> {
                 .also { project.file(output).mkdirs() }
                 .forEach {
                     shared?.run {
-                        if(listOf("java", "kt").contains(ext)){
+                        if (listOf("java", "kt").contains(ext)) {
                             project.file("$output/community/flock/wirespec").mkdirs()
                             project.file("$output/community/flock/wirespec/Wirespec.$ext").writeText(this)
                         }
