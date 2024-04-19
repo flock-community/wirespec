@@ -52,6 +52,6 @@ wirespec {
     input = "$projectDir/src/main/wirespec"
     kotlin {
         packageName = "community.flock.wirespec.generated.kotlin"
-        output = "$buildDir/generated/community/flock/wirespec/generated/kotlin"
+        output = "$buildDir/generated"
     }
 }

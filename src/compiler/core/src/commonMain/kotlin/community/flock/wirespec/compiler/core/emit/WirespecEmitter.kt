@@ -14,8 +14,6 @@ import community.flock.wirespec.compiler.utils.noLogger
 
 class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emitter(logger) {
 
-    override val shared = ""
-
     override fun Definition.emitName(): String = when (this) {
         is Endpoint -> name
         is Enum -> name

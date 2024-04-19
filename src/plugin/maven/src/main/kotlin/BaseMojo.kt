@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.utils.Logger
 import java.io.BufferedReader
 import java.io.File
+import java.util.stream.Collectors
 import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
@@ -52,5 +53,5 @@ abstract class BaseMojo : AbstractMojo() {
             }
 
     private fun BufferedReader.collectToString() =
-        lines().collect(java.util.stream.Collectors.joining())
+        lines().collect(Collectors.joining())
 }
