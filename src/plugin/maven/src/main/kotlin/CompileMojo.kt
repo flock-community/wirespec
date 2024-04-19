@@ -4,6 +4,8 @@ import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
+import community.flock.wirespec.compiler.core.emit.common.Emitted
+import community.flock.wirespec.plugin.FileExtension
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.Language.Java
 import community.flock.wirespec.plugin.Language.Kotlin
@@ -48,38 +50,34 @@ open class CompileMojo : BaseMojo() {
     }
 
     private fun FilesContent.compileKotlin() {
-        val emitter = KotlinEmitter(packageName, logger)
-        if (shared) {
-            JvmUtil.emitJvm("community.flock.wirespec", output, "Wirespec", "kt").writeText(emitter.shared)
-        }
-        compile(logger, emitter)
-            .forEach { (name, result) -> JvmUtil.emitJvm(packageName, output, name, "kt").writeText(result) }
+        KotlinEmitter(packageName, logger)
+            .apply { compile(logger, this).writeToJvmFiles(FileExtension.Kotlin, shared) }
     }
 
     private fun FilesContent.compileJava() {
-        val emitter = JavaEmitter(packageName, logger)
-        if (shared) {
-            JvmUtil.emitJvm("community.flock.wirespec", output, "Wirespec", "java").writeText(emitter.shared)
-        }
-        compile(logger, emitter)
-            .forEach { (name, result) -> JvmUtil.emitJvm(packageName, output, name, "java").writeText(result) }
+        JavaEmitter(packageName, logger)
+            .apply { compile(logger, this).writeToJvmFiles(FileExtension.Java, shared) }
     }
 
     private fun FilesContent.compileScala() {
-        val emitter = ScalaEmitter(packageName, logger)
-        if (shared) {
-            JvmUtil.emitJvm("community.flock.wirespec", output, "Wirespec", "scala").writeText(emitter.shared)
-        }
-        compile(logger, emitter)
-            .forEach { (name, result) -> JvmUtil.emitJvm(packageName, output, name, "scala").writeText(result) }
+        ScalaEmitter(packageName, logger)
+            .apply { compile(logger, this).writeToJvmFiles(FileExtension.Scala, shared) }
     }
 
     private fun FilesContent.compileTypeScript() {
-        val emitter = TypeScriptEmitter(logger)
+        compile(logger, TypeScriptEmitter(logger)).writeToFiles(FileExtension.TypeScript)
+    }
+
+    protected fun List<Emitted>.writeToJvmFiles(fe: FileExtension, sharedSource: String, fileName: String? = null) =
+        forEach { (name, result) ->
+            JvmUtil.emitJvm(packageName, output, fileName ?: name, fe.value).writeText(result)
+            if (shared) JvmUtil
+                .emitJvm("community.flock.wirespec", output, Wirespec.name, fe.value)
+                .writeText(sharedSource)
+        }
+
+    protected fun List<Emitted>.writeToFiles(fe: FileExtension, filename: String? = null) = forEach { (name, result) ->
         File(output).mkdirs()
-        compile(logger, emitter)
-            .forEach { (name, result) ->
-                File("$output/$name.ts").writeText(result)
-            }
+        File("$output/${filename ?: name}.${fe.value}").writeText(result)
     }
 }
