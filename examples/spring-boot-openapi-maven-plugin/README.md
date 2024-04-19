@@ -12,7 +12,7 @@
         <execution>
             <id>kotlin-v2</id>
             <goals>
-                <goal>compile</goal>
+                <goal>convert</goal>
             </goals>
             <configuration>
                 <input>${project.basedir}/src/main/openapi/petstorev2.json</input>
@@ -28,7 +28,7 @@
         <execution>
             <id>kotlin-v3</id>
             <goals>
-                <goal>compile</goal>
+                <goal>convert</goal>
             </goals>
             <configuration>
                 <input>${project.basedir}/src/main/openapi/petstorev3.json</input>
@@ -44,7 +44,7 @@
         <execution>
             <id>java-v2</id>
             <goals>
-                <goal>compile</goal>
+                <goal>convert</goal>
             </goals>
             <configuration>
                 <input>${project.basedir}/src/main/openapi/petstorev2.json</input>
@@ -60,7 +60,7 @@
         <execution>
             <id>java-v3</id>
             <goals>
-                <goal>compile</goal>
+                <goal>convert</goal>
             </goals>
             <configuration>
                 <input>${project.basedir}/src/main/openapi/petstorev3.json</input>

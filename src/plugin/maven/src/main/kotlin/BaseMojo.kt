@@ -47,8 +47,8 @@ abstract class BaseMojo : AbstractMojo() {
                 }
             }
             .flatMap { (name, results) ->
-                if (!emitter.split) listOf(Emitted(name, results.first().result))
-                else results
+                if (emitter.split) results
+                else listOf(Emitted(name, results.first().result))
             }
 
     private fun BufferedReader.collectToString() =
