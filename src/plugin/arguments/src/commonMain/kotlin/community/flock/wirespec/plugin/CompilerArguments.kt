@@ -28,3 +28,9 @@ enum class Format {
 
 @JvmInline
 value class PackageName(override val value: String) : Value<String>
+
+fun PackageName?.toDirectory() = let { (it)?.value }
+    ?.split(".")
+    ?.joinToString("/")
+    ?.let { "/$it/" }
+    ?: "/"

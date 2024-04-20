@@ -15,8 +15,6 @@ import community.flock.wirespec.compiler.utils.noLogger
 
 class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emitter(logger) {
 
-    override val shared = ""
-
     private val endpointBase = """
         |export module Wirespec {
         |${SPACER}export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"

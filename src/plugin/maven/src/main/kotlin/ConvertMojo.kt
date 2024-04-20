@@ -5,6 +5,9 @@ import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
+import community.flock.wirespec.compiler.core.emit.shared.JavaShared
+import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
+import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
 import community.flock.wirespec.openapi.v2.OpenApiParser
 import community.flock.wirespec.plugin.FileExtension
 import community.flock.wirespec.plugin.Format
@@ -45,13 +48,13 @@ class ConvertMojo : CompileMojo() {
         languages?.map {
             when (it) {
                 Java -> JavaEmitter(packageName, logger)
-                    .apply { emit(ast).writeToJvmFiles(FileExtension.Java, shared) }
+                    .apply { emit(ast).writeToJvmFiles(FileExtension.Java, JavaShared) }
 
                 Kotlin -> KotlinEmitter(packageName, logger)
-                    .apply { emit(ast).writeToJvmFiles(FileExtension.Kotlin, shared, fileName) }
+                    .apply { emit(ast).writeToJvmFiles(FileExtension.Kotlin, KotlinShared, fileName) }
 
                 Scala -> ScalaEmitter(packageName, logger)
-                    .apply { emit(ast).writeToJvmFiles(FileExtension.Scala, shared, fileName) }
+                    .apply { emit(ast).writeToJvmFiles(FileExtension.Scala, ScalaShared, fileName) }
 
                 TypeScript -> TypeScriptEmitter(logger).emit(ast).writeToFiles(FileExtension.TypeScript, fileName)
                 Wirespec -> WirespecEmitter(logger).emit(ast).writeToFiles(FileExtension.Wirespec, fileName)

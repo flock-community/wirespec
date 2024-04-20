@@ -20,8 +20,6 @@ class ScalaEmitter(
     logger: Logger = noLogger
 ) : DefinitionModelEmitter, Emitter(logger) {
 
-    override val shared = ""
-
     override fun Definition.emitName(): String = when (this) {
         is Endpoint -> "${name}Endpoint"
         is Enum -> name

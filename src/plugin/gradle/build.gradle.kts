@@ -12,6 +12,7 @@ repositories {
 
 dependencies {
     implementation(project(":src:compiler:core"))
+    implementation(project(":src:plugin:arguments"))
 }
 
 java {
@@ -30,4 +31,5 @@ gradlePlugin {
 
 tasks.publishToMavenLocal {
     dependsOn(":src:compiler:core:publishToMavenLocal")
+    dependsOn(":src:plugin:arguments:publishToMavenLocal")
 }

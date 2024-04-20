@@ -21,8 +21,6 @@ abstract class Emitter(
     val split: Boolean = false
 ) : Emitters {
 
-    abstract val shared: String?
-
     abstract fun Definition.emitName(): String
 
     open fun emit(ast: AST): List<Emitted> = ast
