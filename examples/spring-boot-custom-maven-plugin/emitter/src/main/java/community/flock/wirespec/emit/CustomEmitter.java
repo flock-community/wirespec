@@ -12,7 +12,6 @@ import community.flock.wirespec.compiler.core.parse.Type;
 import community.flock.wirespec.compiler.core.parse.Union;
 import community.flock.wirespec.compiler.utils.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,12 +37,6 @@ public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
                 .map(it -> (Type) it)
                 .map(sc -> new Emitted(emitName(sc), emit(sc, ast)))
                 .collect(Collectors.toList());
-    }
-
-    @Nullable
-    @Override
-    public String getShared() {
-        return null;
     }
 
     @NotNull
