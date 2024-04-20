@@ -31,4 +31,11 @@ export const handlers = [
 
         return HttpResponse.json(updatedTodo, {status: 200})
     }),
+
+    http.post('/todos', async (request) => {
+        const newTodo = await request.request.json();
+        const id = Math.random().toString();
+        allTodos.set(id, newTodo);
+        return HttpResponse.json(newTodo, {status: 200})
+    }),
 ]

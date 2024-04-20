@@ -50,7 +50,7 @@ const createTodo = async (name: string): Promise<Todo> => {
 const createTodoCall: Call = {
     async createTodo(request: CreateTodo.Request): Promise<CreateTodo.Response> {
         const res = await fetch(CreateTodo.PATH, {
-            method: CreateTodo.METHOD,
+            method: request.method,
             body: JSON.stringify(request.content.body),
         });
         const body = await res.json();
