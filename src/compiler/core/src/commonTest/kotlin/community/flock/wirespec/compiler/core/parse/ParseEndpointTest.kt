@@ -48,6 +48,32 @@ class ParseEndpointTest {
     }
 
     @Test
+    fun testEndpointPathParser() {
+        val source = """
+            endpoint GetTodos GET /To-Do_List -> {
+                200 -> Todo[]
+            }
+        """.trimIndent()
+
+        WirespecSpec.tokenize(source)
+            .let(parser()::parse)
+            .shouldBeRight()
+            .also { it.size shouldBe 1 }
+            .first()
+            .shouldBeInstanceOf<Endpoint>()
+            .run {
+                name shouldBe "GetTodos"
+                method shouldBe GET
+                path shouldBe listOf(Literal("To-Do_List"))
+                requests shouldBe listOf(
+                    Endpoint.Request(
+                        content = null
+                    )
+                )
+            }
+    }
+
+    @Test
     fun testPathParamsParser() {
         val source = """
             endpoint PostTodo POST Todo /todos -> {
