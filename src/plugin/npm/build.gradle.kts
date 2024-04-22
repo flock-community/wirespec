@@ -36,6 +36,7 @@ kotlin {
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:compiler:lib"))
                 implementation(project(":src:plugin:cli"))
+                implementation(project(":src:generator"))
             }
         }
         val jsMain by getting {

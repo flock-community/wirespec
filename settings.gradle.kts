@@ -42,4 +42,5 @@ include(
     "src:converter:openapi",
     "src:integration:jackson",
     "src:integration:wirespec",
+    "src:generator",
 )
