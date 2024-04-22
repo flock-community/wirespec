@@ -2,6 +2,8 @@ package community.flock.wirespec.compiler.core.parse
 
 import community.flock.wirespec.compiler.core.Value
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
+import community.flock.wirespec.compiler.core.removeBackticks
+import kotlin.jvm.JvmInline
 
 sealed interface Node
 
@@ -12,7 +14,15 @@ sealed interface Definition : Node {
 data class Type(override val name: String, val shape: Shape) : Definition {
     data class Shape(override val value: List<Field>) : Value<List<Field>> {
         data class Field(val identifier: Identifier, val reference: Reference, val isNullable: Boolean) {
-            data class Identifier(override val value: String) : Value<String>
+            @JvmInline
+            value class Identifier private constructor(override val value: String) : Value<String> {
+                companion object {
+                    operator fun invoke(s: String) = s
+                        .run { removeBackticks() }
+                        .let(::Identifier)
+                }
+            }
+
             sealed interface Reference {
                 val isIterable: Boolean
                 val isMap: Boolean

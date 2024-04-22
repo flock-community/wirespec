@@ -29,6 +29,7 @@ enum class Options(vararg val flags: String) {
     OutputDir("-o", "--output-dir"),
     Language("-l", "--language"),
     PackageName("-p", "--package"),
+    Shared("--shared"),
     Strict("--strict"),
     Debug("--debug"),
 }
@@ -47,6 +48,7 @@ private abstract class CommonOptions : CliktCommand() {
     val inputDir by option(*Options.InputDir.flags, help = "Input directory")
     val outputDir by option(*Options.OutputDir.flags, help = "Output directory")
     val packageName by option(*Options.PackageName.flags, help = "Package name").default(DEFAULT_PACKAGE_STRING)
+    val shared by option(*Options.Shared.flags, help = "Generate shared wirespec code").flag(default = false)
     val strict by option(*Options.Strict.flags, help = "Strict mode").flag()
     val debug by option(*Options.Debug.flags, help = "Debug mode").flag()
 
@@ -71,6 +73,7 @@ private class Compile(private val block: (CompilerArguments) -> Unit) : CommonOp
             output = Output(outputDir),
             languages = languages.toSet(),
             packageName = PackageName(packageName),
+            shared = shared,
             strict = strict,
             debug = debug,
         ).let(block)
@@ -92,6 +95,7 @@ private class Convert(private val block: (CompilerArguments) -> Unit) : CommonOp
             output = Output(outputDir),
             languages = languages.toSet().ifEmpty { setOf(Wirespec) },
             packageName = PackageName(packageName),
+            shared = shared,
             strict = strict,
             debug = debug,
         ).let(block)

@@ -346,7 +346,7 @@ class JavaEmitter(
         .replace("–", "_")
         .let { if (it.first().isDigit()) "_$it" else it }
 
-    private fun String.sanitizeKeywords() = if (reservedKeywords.contains(this)) "_$this" else this
+    private fun String.sanitizeKeywords() = if (this in reservedKeywords) "_$this" else this
 
     private fun String.sanitizeSymbol() = replace(".", "").replace(" ", "_")
 

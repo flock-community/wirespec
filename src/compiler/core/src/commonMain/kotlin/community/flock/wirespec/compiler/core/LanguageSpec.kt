@@ -62,7 +62,7 @@ object WirespecSpec : LanguageSpec {
         Regex("^GET|^POST|^PUT|^DELETE|^OPTIONS|^HEAD|^PATCH|^TRACE") to Method,
         Regex("^/.*/g") to CustomRegex,
         Regex("^[1-5][0-9][0-9]") to StatusCode,
-        Regex("^[a-z][a-zA-Z]*") to CustomValue,
+        Regex("^[a-z`][a-zA-Z`]*") to CustomValue,
         Regex("^[A-Z][a-zA-Z_]*") to CustomType,
         Regex("^/[a-zA-Z-_]+") to Path,
         Regex("^/") to ForwardSlash,

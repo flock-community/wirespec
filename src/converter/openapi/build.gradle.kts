@@ -1,3 +1,6 @@
+import Libraries.KOTEST_ASSERTIONS
+import Libraries.KOTEST_ASSERTIONS_ARROW
+
 plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
@@ -41,6 +44,8 @@ kotlin {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
                 implementation(kotlin("test-junit"))
+                implementation(KOTEST_ASSERTIONS)
+                implementation(KOTEST_ASSERTIONS_ARROW)
             }
         }
         val jvmTest by getting {
