@@ -20,7 +20,7 @@ fun parse(source: String) = WirespecSpec
     .let { Parser(noLogger).parse(it).produce() }
 
 @JsExport
-fun generator(source: String, type: String): WsStringResult = WirespecSpec
+fun generate(source: String, type: String): WsStringResult = WirespecSpec
     .tokenize(source)
     .let { Parser(noLogger).parse(it) }
     .map { it.generate(type).toString() }
