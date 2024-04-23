@@ -43,7 +43,7 @@ class ScalaEmitter(
     override fun Type.Shape.Field.emit() =
         "${SPACER}val ${identifier.emit()}: ${if (isNullable) "Option[${reference.emit()}]" else reference.emit()},"
 
-    override fun Type.Shape.Field.Identifier.emit() = if (preservedKeywords.contains(value)) "`$value`" else value
+    override fun Type.Shape.Field.Identifier.emit() = if (value in preservedKeywords) "`$value`" else value
 
     override fun Reference.emit() = when (this) {
         is Reference.Unit -> "Unit"

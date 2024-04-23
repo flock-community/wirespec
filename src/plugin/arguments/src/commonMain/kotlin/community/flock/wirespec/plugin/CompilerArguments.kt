@@ -9,6 +9,7 @@ data class CompilerArguments(
     val output: Output?,
     val languages: Set<Language>,
     val packageName: PackageName,
+    val shared: Boolean,
     val strict: Boolean,
     val debug: Boolean,
 )

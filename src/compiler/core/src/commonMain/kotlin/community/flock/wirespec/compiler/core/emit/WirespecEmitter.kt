@@ -1,5 +1,6 @@
 package community.flock.wirespec.compiler.core.emit
 
+import community.flock.wirespec.compiler.core.addBackticks
 import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.parse.AST
@@ -34,7 +35,7 @@ class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emitt
     override fun Type.Shape.Field.emit() = "${identifier.emit()}: ${reference.emit()}${if (isNullable) "?" else ""}"
 
 
-    override fun Type.Shape.Field.Identifier.emit() = value
+    override fun Type.Shape.Field.Identifier.emit() = if (value in preservedKeywords) value.addBackticks() else value
 
     override fun Type.Shape.Field.Reference.emit(): String = when (this) {
         is Type.Shape.Field.Reference.Unit -> "Unit"
@@ -48,7 +49,7 @@ class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emitt
         }
     }.let { if (isIterable) "$it[]" else it }
 
-    override fun Enum.emit() = "enum $name {\n${SPACER}${entries.joinToString(", ")}\n}\n"
+    override fun Enum.emit() = "enum $name {\n${SPACER}${entries.joinToString(", ") { it.capitalize() }}\n}\n"
 
     override fun Refined.emit() = "type $name ${validator.emit()}\n"
 
@@ -57,12 +58,17 @@ class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emitt
     override fun Endpoint.emit() =
         """
             |endpoint $name ${method}${requests.emitRequest()} ${path.emitPath()}${query.emitQuery()} -> {
-            |${responses.joinToString("\n") { "$SPACER${it.status} -> ${it.content?.reference?.emit()}${if (it.content?.isNullable == true) "?" else ""}" }}
+            |${responses.joinToString("\n") { "$SPACER${it.status.fixStatus()} -> ${it.content?.reference?.emit() ?: "Unit"}${if (it.content?.isNullable == true) "?" else ""}" }}
             |}
             |
         """.trimMargin()
 
     override fun Union.emit() = "type $name = ${entries.joinToString(" | ")}\n"
+
+    private fun String.fixStatus(): String = when (this) {
+        "default" -> "200"
+        else -> this
+    }
 
     private fun List<Endpoint.Segment>.emitPath() = "/" + joinToString("/") {
         when (it) {
@@ -79,4 +85,11 @@ class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emitt
         ?.let { " ? $it" }
         .orEmpty()
 
+    private fun String.capitalize() = replaceFirstChar { it.uppercase() }
+
+    companion object {
+        private val preservedKeywords = listOf(
+            "type", "enum", "endpoint"
+        )
+    }
 }
