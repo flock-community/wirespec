@@ -2,6 +2,7 @@
 
 package community.flock.wirespec.plugin.npm
 
+import Generator.generate
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse.Parser
 import community.flock.wirespec.compiler.core.tokenize.tokenize
@@ -9,7 +10,6 @@ import community.flock.wirespec.compiler.lib.WsStringResult
 import community.flock.wirespec.compiler.lib.produce
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.plugin.cli.main
-import generate
 
 @JsExport
 fun cli(args: Array<String>) = main(args)
