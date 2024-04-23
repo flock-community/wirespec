@@ -1,4 +1,5 @@
 type Foo {
+  `type`: String,
   bar: String,
   baz: Integer
 }

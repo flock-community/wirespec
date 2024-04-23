@@ -148,7 +148,7 @@ private class WirespecDeserializerModifier : BeanDeserializerModifier() {
 }
 
 internal class JavaReservedKeywordNamingStrategy : PropertyNamingStrategy() {
-    
+
     override fun nameForGetterMethod(config: MapperConfig<*>, method: AnnotatedMethod, defaultName: String): String {
         if (Record::class.java.isAssignableFrom(method.declaringClass)) {
             return translate(defaultName)
@@ -176,10 +176,10 @@ internal class JavaReservedKeywordNamingStrategy : PropertyNamingStrategy() {
 
     private fun translate(property: String): String {
         val keywords = JavaEmitter.reservedKeywords.map { "_$it" }
-        if (keywords.contains(property)) {
-            return property.drop(1)
+        return if (property in keywords) {
+            property.drop(1)
         } else {
-            return property
+            property
         }
     }
 }

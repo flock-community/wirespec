@@ -14,12 +14,11 @@ import community.flock.wirespec.openapi.common.Expected
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-
 class OpenApiParserTest {
 
     @Test
     fun petstore() {
-        val json = IO.readOpenApi("v3/petstore.json")
+        val json = IO.readFile("v3/petstore.json")
 
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiParser.parse(openApi)
@@ -31,32 +30,32 @@ class OpenApiParserTest {
                 shape = Shape(
                     value = listOf(
                         Field(
-                            identifier = Identifier(value = "id"),
+                            identifier = Identifier("id"),
                             reference = Primitive(type = Primitive.Type.Integer, isIterable = false, isMap = false),
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "petId"),
+                            identifier = Identifier("petId"),
                             reference = Primitive(type = Primitive.Type.Integer, isIterable = false, isMap = false),
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "quantity"),
+                            identifier = Identifier("quantity"),
                             reference = Primitive(type = Primitive.Type.Integer, isIterable = false, isMap = false),
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "shipDate"),
+                            identifier = Identifier("shipDate"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "status"),
+                            identifier = Identifier("status"),
                             reference = Reference.Custom(value = "OrderStatus", isIterable = false, isMap = false),
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "complete"),
+                            identifier = Identifier("complete"),
                             reference = Primitive(type = Primitive.Type.Boolean, isIterable = false, isMap = false),
                             isNullable = true
                         )
@@ -69,17 +68,17 @@ class OpenApiParserTest {
                 shape = Shape(
                     value = listOf(
                         Field(
-                            identifier = Identifier(value = "id"),
+                            identifier = Identifier("id"),
                             reference = Primitive(type = Primitive.Type.Integer, isIterable = false, isMap = false),
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "username"),
+                            identifier = Identifier("username"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "address"),
+                            identifier = Identifier("address"),
                             reference = Reference.Custom(value = "Address", isIterable = true, isMap = false),
                             isNullable = true
                         )
@@ -91,22 +90,22 @@ class OpenApiParserTest {
                 shape = Shape(
                     value = listOf(
                         Field(
-                            identifier = Identifier(value = "street"),
+                            identifier = Identifier("street"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "city"),
+                            identifier = Identifier("city"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "state"),
+                            identifier = Identifier("state"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "zip"),
+                            identifier = Identifier("zip"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
                             isNullable = true
                         )
@@ -118,12 +117,12 @@ class OpenApiParserTest {
                 shape = Shape(
                     value = listOf(
                         Field(
-                            identifier = Identifier(value = "id"),
+                            identifier = Identifier("id"),
                             reference = Primitive(type = Primitive.Type.Integer, isIterable = false, isMap = false),
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "name"),
+                            identifier = Identifier("name"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
                             isNullable = true
                         )
@@ -135,42 +134,42 @@ class OpenApiParserTest {
                 shape = Shape(
                     value = listOf(
                         Field(
-                            identifier = Identifier(value = "id"),
+                            identifier = Identifier("id"),
                             reference = Primitive(type = Primitive.Type.Integer, isIterable = false, isMap = false),
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "username"),
+                            identifier = Identifier("username"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "firstName"),
+                            identifier = Identifier("firstName"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "lastName"),
+                            identifier = Identifier("lastName"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "email"),
+                            identifier = Identifier("email"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "password"),
+                            identifier = Identifier("password"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "phone"),
+                            identifier = Identifier("phone"),
                             reference = Primitive(type = Primitive.Type.String, isIterable = false, isMap = false),
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "userStatus"),
+                            identifier = Identifier("userStatus"),
                             reference = Primitive(type = Primitive.Type.Integer, isIterable = false, isMap = false),
                             isNullable = true
                         )
@@ -182,7 +181,7 @@ class OpenApiParserTest {
                 shape = Shape(
                     value = listOf(
                         Field(
-                            identifier = Identifier(value = "id"),
+                            identifier = Identifier("id"),
                             reference = Primitive(
                                 type = Primitive.Type.Integer,
                                 isIterable = false,
@@ -191,7 +190,7 @@ class OpenApiParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "name"),
+                            identifier = Identifier("name"),
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = false,
@@ -207,7 +206,7 @@ class OpenApiParserTest {
                 shape = Shape(
                     value = listOf(
                         Field(
-                            identifier = Identifier(value = "id"),
+                            identifier = Identifier("id"),
                             reference = Primitive(
                                 type = Primitive.Type.Integer,
                                 isIterable = false,
@@ -216,7 +215,7 @@ class OpenApiParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "name"),
+                            identifier = Identifier("name"),
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = false,
@@ -225,7 +224,7 @@ class OpenApiParserTest {
                             isNullable = false
                         ),
                         Field(
-                            identifier = Identifier(value = "category"),
+                            identifier = Identifier("category"),
                             reference = Reference.Custom(
                                 value = "Category",
                                 isIterable = false,
@@ -234,7 +233,7 @@ class OpenApiParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "photoUrls"),
+                            identifier = Identifier("photoUrls"),
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = true,
@@ -243,7 +242,7 @@ class OpenApiParserTest {
                             isNullable = false
                         ),
                         Field(
-                            identifier = Identifier(value = "tags"),
+                            identifier = Identifier("tags"),
                             reference = Reference.Custom(
                                 value = "Tag",
                                 isIterable = true,
@@ -252,7 +251,7 @@ class OpenApiParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "status"),
+                            identifier = Identifier("status"),
                             reference = Reference.Custom(
                                 value = "PetStatus",
                                 isIterable = false,
@@ -269,7 +268,7 @@ class OpenApiParserTest {
                 shape = Shape(
                     value = listOf(
                         Field(
-                            identifier = Identifier(value = "code"),
+                            identifier = Identifier("code"),
                             reference = Primitive(
                                 type = Primitive.Type.Integer,
                                 isIterable = false,
@@ -278,7 +277,7 @@ class OpenApiParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "type"),
+                            identifier = Identifier("type"),
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = false,
@@ -287,7 +286,7 @@ class OpenApiParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier(value = "message"),
+                            identifier = Identifier("message"),
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = false,
@@ -330,7 +329,7 @@ class OpenApiParserTest {
 
     @Test
     fun pizza() {
-        val json = IO.readOpenApi("v3/pizza.json")
+        val json = IO.readFile("v3/pizza.json")
 
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiParser.parse(openApi)
@@ -383,7 +382,7 @@ class OpenApiParserTest {
     @Test
     fun todo() {
 
-        val json = IO.readOpenApi("v3/todo.json")
+        val json = IO.readFile("v3/todo.json")
 
         val openApi = OpenAPI.decodeFromString(json)
 
@@ -501,8 +500,8 @@ class OpenApiParserTest {
                 "Todo_input",
                 Shape(
                     listOf(
-                        Field(Identifier(value = "title"), Primitive(Primitive.Type.String, false), true),
-                        Field(Identifier(value = "completed"), Primitive(Primitive.Type.Boolean, false), true)
+                        Field(Identifier("title"), Primitive(Primitive.Type.String, false), true),
+                        Field(Identifier("completed"), Primitive(Primitive.Type.Boolean, false), true)
                     )
                 )
             ),
@@ -561,7 +560,7 @@ class OpenApiParserTest {
 
     @Test
     fun objectInRequest() {
-        val json = IO.readOpenApi("v3/object-in-request.json")
+        val json = IO.readFile("v3/object-in-request.json")
 
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiParser.parse(openApi)
@@ -573,7 +572,7 @@ class OpenApiParserTest {
 
     @Test
     fun objectInResponse() {
-        val json = IO.readOpenApi("v3/object-in-response.json")
+        val json = IO.readFile("v3/object-in-response.json")
 
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiParser.parse(openApi)
@@ -585,7 +584,7 @@ class OpenApiParserTest {
 
     @Test
     fun additionalProperties() {
-        val json = IO.readOpenApi("v3/additionalproperties.json")
+        val json = IO.readFile("v3/additionalproperties.json")
 
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiParser.parse(openApi)
@@ -597,7 +596,7 @@ class OpenApiParserTest {
 
     @Test
     fun array() {
-        val json = IO.readOpenApi("v3/array.json")
+        val json = IO.readFile("v3/array.json")
 
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiParser.parse(openApi)
@@ -609,7 +608,7 @@ class OpenApiParserTest {
 
     @Test
     fun allOf() {
-        val json = IO.readOpenApi("v3/allof.json")
+        val json = IO.readFile("v3/allof.json")
 
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiParser.parse(openApi)
@@ -619,7 +618,7 @@ class OpenApiParserTest {
 
     @Test
     fun enum() {
-        val json = IO.readOpenApi("v3/enum.json")
+        val json = IO.readFile("v3/enum.json")
 
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiParser.parse(openApi)

@@ -19,9 +19,10 @@ import community.flock.kotlinx.openapi.bindings.v3.SchemaObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceOrBooleanObject
 import community.flock.kotlinx.openapi.bindings.v3.StatusCode
-import community.flock.wirespec.compiler.core.parse.Definition
+import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
@@ -32,21 +33,19 @@ import community.flock.kotlinx.openapi.bindings.v3.Type as OpenapiType
 class OpenApiParser(private val openApi: OpenAPIObject) {
 
     companion object {
-        fun parse(json: String, strict: Boolean = false): List<Definition> =
+        fun parse(json: String, strict: Boolean = false): AST =
             OpenAPI(json = Json { prettyPrint = true; ignoreUnknownKeys = strict })
                 .decodeFromString(json)
                 .let { OpenApiParser(it).parse() }
 
-        fun parse(openApi: OpenAPIObject): List<Definition> =
-            OpenApiParser(openApi)
-                .parse()
+        fun parse(openApi: OpenAPIObject): AST = OpenApiParser(openApi).parse()
     }
 
 
-    private fun parse(): List<Definition> =
+    private fun parse(): List<Node> =
         parseEndpoint() + parseParameters() + parseRequestBody() + parseResponseBody() + parseComponents()
 
-    private fun parseEndpoint(): List<Definition> = openApi.paths
+    private fun parseEndpoint(): List<Node> = openApi.paths
         .flatMap { (key, path) ->
             path.toOperationList().map { (method, operation) ->
                 val parameters = path.resolveParameters() + operation.resolveParameters()
@@ -89,8 +88,8 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                         it.content?.map { (contentType, media) ->
                             Endpoint.Response(
                                 status = status.value,
-                                headers = it.headers?.map {
-                                    it.value.resolve().toField(it.key, className(name, "ResponseHeader"))
+                                headers = it.headers?.map { entry ->
+                                    entry.value.resolve().toField(entry.key, className(name, "ResponseHeader"))
                                 }.orEmpty(),
                                 content = Endpoint.Content(
                                     type = contentType.value,
@@ -185,7 +184,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
     }
 
 
-    private fun parseComponents(): List<Definition> = openApi.components?.schemas.orEmpty()
+    private fun parseComponents(): List<Node> = openApi.components?.schemas.orEmpty()
         .filter {
             when (val s = it.value) {
                 is SchemaObject -> s.additionalProperties == null
@@ -336,9 +335,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
             is ReferenceObject -> this.resolveResponseObject().second
         }
 
-    private fun SchemaObject.flatten(
-        name: String,
-    ): List<Definition> =
+    private fun SchemaObject.flatten(name: String): List<Node> =
         when {
             additionalProperties != null -> when (additionalProperties) {
                 is BooleanObject -> emptyList()
@@ -400,9 +397,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
             }
         }
 
-    private fun SchemaOrReferenceObject.flatten(
-        name: String,
-    ): List<Definition> {
+    private fun SchemaOrReferenceObject.flatten(name: String): List<Node> {
         return when (this) {
             is SchemaObject -> this.flatten(name)
             is ReferenceObject -> emptyList()
@@ -413,13 +408,23 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
         resolveSchemaObject().let { (referencingObject, schema) ->
             when {
                 schema.additionalProperties != null -> when (val additionalProperties = schema.additionalProperties!!) {
-                    is BooleanObject -> Reference.Any(false, true)
+                    is BooleanObject -> Reference.Any(isIterable = false, isMap = true)
                     is ReferenceObject -> additionalProperties.toReference().toMap()
                     is SchemaObject -> additionalProperties.toReference(getReference()).toMap()
                 }
 
-                schema.enum != null -> Reference.Custom(className(referencingObject.getReference()), false, false)
-                schema.type.isPrimitive() -> Reference.Primitive(schema.type!!.toPrimitive(), false, false)
+                schema.enum != null -> Reference.Custom(
+                    className(referencingObject.getReference()),
+                    isIterable = false,
+                    isMap = false
+                )
+
+                schema.type.isPrimitive() -> Reference.Primitive(
+                    schema.type!!.toPrimitive(),
+                    isIterable = false,
+                    isMap = false
+                )
+
                 else -> when (schema.type) {
                     OpenapiType.ARRAY -> when (val items = schema.items) {
                         is ReferenceObject -> Reference.Custom(className(items.getReference()), true)
@@ -436,12 +441,12 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
 
     private fun SchemaObject.toReference(name: String): Reference = when {
         additionalProperties != null -> when (val additionalProperties = additionalProperties!!) {
-            is BooleanObject -> Reference.Any(false, true)
+            is BooleanObject -> Reference.Any(isIterable = false, isMap = true)
             is ReferenceObject -> additionalProperties.toReference().toMap()
             is SchemaObject -> additionalProperties
                 .takeIf { it.type.isPrimitive() || it.properties != null }
                 ?.run { toReference(name).toMap() }
-                ?: Reference.Any(false, true)
+                ?: Reference.Any(isIterable = false, isMap = true)
         }
 
         enum != null -> Reference.Custom(name, false, additionalProperties != null)

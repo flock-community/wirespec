@@ -265,13 +265,13 @@ class KotlinEmitter(
         .sanitizeSymbol()
         .firstToLower()
 
-    private fun String.sanitizeKeywords() = if (preservedKeywords.contains(this)) "`$this`" else this
+    private fun String.sanitizeKeywords() = if (this in preservedKeywords) "`$this`" else this
 
     private fun String.sanitizeSymbol() = this
         .split(".", " ")
         .joinToString("") { it.firstToUpper() }
         .asSequence()
-        .filter { it.isLetterOrDigit() || listOf('_').contains(it) }
+        .filter { it.isLetterOrDigit() || it in listOf('_') }
         .joinToString("")
         .sanitizeFirstIsDigit()
 
