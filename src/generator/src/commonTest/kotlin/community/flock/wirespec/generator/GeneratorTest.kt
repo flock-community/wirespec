@@ -41,7 +41,7 @@ class GeneratorTest {
 
 
     private fun parser(source: String) =
-        WirespecSpec.parse(source)(noLogger).getOrElse { e -> error("Cannot parser: ${e.map { it.message }}") }
+        WirespecSpec.parse(source)(noLogger).getOrElse { e -> error("Cannot parse: ${e.map { it.message }}") }
 
     @Test
     fun generateAdderss() {
