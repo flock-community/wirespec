@@ -3,7 +3,7 @@ package community.flock.wirespec.plugin.cli.js
 
 external fun require(name: String): dynamic
 
-val fs = require("fs")
+val fs = require("node:fs")
 
 
 external interface Process {
