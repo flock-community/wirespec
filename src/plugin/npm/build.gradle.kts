@@ -33,9 +33,11 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:compiler:lib"))
                 implementation(project(":src:plugin:cli"))
+                implementation(project(":src:generator"))
             }
         }
         val jsMain by getting {

@@ -35,3 +35,15 @@ class WsParseResult(
     val result: Array<WsNode>? = null,
     val errors: Array<WsError>? = null,
 )
+
+fun Either<Nel<WirespecException>, String>.produce(): WsStringResult = when (this) {
+    is Either.Left -> WsStringResult(errors = value.map { it.produce() }.toTypedArray())
+    is Either.Right -> WsStringResult(result = value)
+}
+
+@JsExport
+class WsStringResult(
+    val result: String? = null,
+    val errors: Array<WsError>? = null,
+)
+

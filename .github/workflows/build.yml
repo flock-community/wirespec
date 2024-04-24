@@ -235,7 +235,8 @@ jobs:
                     :src:converter:openapi:publish \
                     :src:plugin:gradle:publish \
                     :src:plugin:maven:publish \
-                    :src:integration:jackson:publish
+                    :src:integration:jackson:publish \
+                    :src:generator:publish
 
   release-lib-npm:
 
