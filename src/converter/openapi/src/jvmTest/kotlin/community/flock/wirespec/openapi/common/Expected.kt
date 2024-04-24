@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Identifier
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
+import community.flock.wirespec.compiler.core.parse.Union
 
 object Expected {
 
@@ -421,6 +422,91 @@ object Expected {
         ),
         Type(
             name = "AllofGET200ApplicationJsonResponseBodyD",
+            shape = Type.Shape(
+                value = listOf(
+                    Type.Shape.Field(
+                        identifier = Identifier("e"),
+                        reference = Reference.Primitive(
+                            type = Reference.Primitive.Type.String,
+                            isIterable = false,
+                            isMap = false
+                        ),
+                        isNullable = true
+                    )
+                )
+            )
+        ),
+        Type(
+            name = "Foo",
+            shape = Type.Shape(
+                value = listOf(
+                    Type.Shape.Field(
+                        identifier = Identifier("a"),
+                        reference = Reference.Primitive(
+                            type = Reference.Primitive.Type.String,
+                            isIterable = false
+                        ),
+                        isNullable = true
+                    )
+                )
+            )
+        ),
+        Type(
+            name = "Bar",
+            shape = Type.Shape(
+                value = listOf(
+                    Type.Shape.Field(
+                        identifier = Identifier("b"),
+                        reference = Reference.Primitive(
+                            type = Reference.Primitive.Type.String,
+                            isIterable = false
+                        ),
+                        isNullable = false
+                    )
+                )
+            )
+        )
+    )
+
+    val oneOf = listOf(
+        Endpoint(
+            name = "OneofGET",
+            method = Endpoint.Method.GET,
+            path = listOf(Endpoint.Segment.Literal(value = "oneof")),
+            query = emptyList(),
+            headers = emptyList(),
+            cookies = emptyList(),
+            requests = listOf(
+                Endpoint.Request(
+                    content = null
+                )
+            ),
+            responses = listOf(
+                Endpoint.Response(
+                    status = "200",
+                    headers = emptyList(),
+                    content = Endpoint.Content(
+                        type = "application/json",
+                        reference = Reference.Custom(
+                            value = "OneofGET200ApplicationJsonResponseBody",
+                            isIterable = false,
+                            isMap = false
+                        ),
+                        isNullable = false
+                    )
+                )
+            )
+        ),
+        Union(
+            name = "OneofGET200ApplicationJsonResponseBody",
+            entries = setOf(
+                Reference.Custom("Foo", false),
+                Reference.Custom("Bar", false),
+                Reference.Custom("OneofGET200ApplicationJsonResponseBodyD", false),
+            )
+        ),
+        Type(
+            name = "OneofGET200ApplicationJsonResponseBodyD",
             shape = Type.Shape(
                 value = listOf(
                     Type.Shape.Field(

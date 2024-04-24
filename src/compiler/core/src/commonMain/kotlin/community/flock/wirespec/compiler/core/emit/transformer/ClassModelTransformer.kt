@@ -31,7 +31,7 @@ object ClassModelTransformer : Transformer {
             },
             supers = ast
                 .filterIsInstance<Union>()
-                .filter { it.entries.contains(name) }
+                .filter { it.entries.map { it.toString() }.contains(name) }
                 .map { Reference.Custom(it.name) }
         )
 

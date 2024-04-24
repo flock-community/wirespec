@@ -47,7 +47,7 @@ data class Type(override val name: String, val shape: Shape) : Definition {
 
 data class Enum(override val name: String, val entries: Set<String>) : Definition
 
-data class Union(override val name: String, val entries: Set<String>) : Definition
+data class Union(override val name: String, val entries: Set<Field.Reference>) : Definition
 
 data class Refined(override val name: String, val validator: Validator) : Definition {
     data class Validator(override val value: String) : Value<String>

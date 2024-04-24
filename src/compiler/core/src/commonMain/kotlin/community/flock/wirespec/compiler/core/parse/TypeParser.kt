@@ -126,16 +126,16 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is CustomType -> mutableListOf<String>().apply {
+            is CustomType -> mutableListOf<Type.Shape.Field.Reference>().apply {
                 token.shouldBeDefined().bind()
-                add(token.value)
+                add(Type.Shape.Field.Reference.Custom(token.value, false))
                 eatToken().bind()
                 while (token.type == Pipe) {
                     eatToken().bind()
                     when (token.type) {
                         is CustomType -> {
                             token.shouldBeDefined().bind()
-                            add(token.value).also { eatToken().bind() }
+                            add(Type.Shape.Field.Reference.Custom(token.value, false)).also { eatToken().bind() }
                         }
                         else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
                     }

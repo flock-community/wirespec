@@ -142,7 +142,7 @@ class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emi
           |
         """.trimMargin()
 
-    override fun Union.emit() = "export type ${name.sanitizeSymbol()} = ${entries.joinToString(" | ") { it }}\n"
+    override fun Union.emit() = "export type ${name.sanitizeSymbol()} = ${entries.joinToString(" | ") { it.emit() }}\n"
 
     private fun List<Endpoint.Segment>.emitType() = "`${joinToString("") { "/" + it.emitType() }}`"
 
