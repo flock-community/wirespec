@@ -74,7 +74,7 @@ object Generator {
     }
 
     private fun randomRegex(regex: String, random: Random): String {
-        val rgxgen = RgxGen.parse(regex.substring(1, regex.length - 1))
+        val rgxgen = RgxGen.parse(regex.substring(1, regex.length - 2))
         return rgxgen.generate(random)
     }
 
