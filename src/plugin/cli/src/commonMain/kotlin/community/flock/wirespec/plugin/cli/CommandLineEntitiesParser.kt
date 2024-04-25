@@ -4,12 +4,14 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.NoOpCliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.default
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.enum
+import com.github.ajalt.clikt.parameters.types.int
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_STRING
 import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.Console
@@ -39,7 +41,7 @@ class WirespecCli : NoOpCliktCommand(name = "wirespec") {
         fun provide(
             compile: (CompilerArguments) -> Unit,
             convert: (CompilerArguments) -> Unit,
-        ): (Array<out String>) -> Unit = WirespecCli().subcommands(Compile(compile), Convert(convert))::main
+        ): (Array<out String>) -> Unit = WirespecCli().subcommands(Compile(compile), Convert(convert), Serve(convert))::main
     }
 }
 
@@ -101,3 +103,26 @@ private class Convert(private val block: (CompilerArguments) -> Unit) : CommonOp
         ).let(block)
     }
 }
+
+private class Serve(private val block: (CompilerArguments) -> Unit) : CommonOptions() {
+
+    private val port by option("--port", help = "Port").int().default(8080)
+    private val languages by option(*Options.Language.flags, help = "Language")
+        .choice(choices = Language.toMap(), ignoreCase = true)
+        .multiple(listOf(Wirespec))
+
+    override fun run() {
+        inputDir?.let { echo("To serve, please specify a file", err = true) }
+        CompilerArguments(
+            operation = Operation.Serve(port = port),
+            input = getInput(null),
+            output = Output(outputDir),
+            languages = languages.toSet().ifEmpty { setOf(Wirespec) },
+            packageName = PackageName(packageName),
+            shared = shared,
+            strict = strict,
+            debug = debug,
+        ).let(block)
+    }
+}
+

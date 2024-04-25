@@ -73,6 +73,10 @@ kotlin {
         }
         val desktopMain by creating {
             dependsOn(commonMain)
+            dependencies {
+                implementation("io.ktor:ktor-server-core:2.3.10")
+                implementation("io.ktor:ktor-server-cio:2.3.10")
+            }
         }
         val macosX64Main by getting {
             dependsOn(desktopMain)
