@@ -34,6 +34,8 @@ import community.flock.wirespec.plugin.cli.io.File
 import community.flock.wirespec.plugin.cli.io.JavaFile
 import community.flock.wirespec.plugin.cli.io.JsonFile
 import community.flock.wirespec.plugin.cli.io.KotlinFile
+import community.flock.wirespec.plugin.cli.io.Request
+import community.flock.wirespec.plugin.cli.io.Response
 import community.flock.wirespec.plugin.cli.io.ScalaFile
 import community.flock.wirespec.plugin.cli.io.Server
 import community.flock.wirespec.plugin.cli.io.TypeScriptFile
@@ -101,7 +103,8 @@ fun compile(arguments: CompilerArguments) {
 
         is Operation.Serve -> {
             println("Start server")
-            Server.start(operation.port)
+            fun handler(request: Request) = Response("Hello Wirespec!")
+            Server(::handler).start(operation.port)
         }
     }
 }
