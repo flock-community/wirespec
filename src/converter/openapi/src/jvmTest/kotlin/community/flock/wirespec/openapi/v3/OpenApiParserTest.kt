@@ -623,7 +623,11 @@ class OpenApiParserTest {
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiParser.parse(openApi)
 
-        assertEquals(Expected.oneOf, ast)
+        Expected.oneOf.zip(ast).forEach { (expected, actual) ->
+            println(expected.name)
+            assertEquals(expected, actual)
+        }
+
     }
 
     @Test

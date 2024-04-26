@@ -31,7 +31,13 @@ object ClassModelTransformer : Transformer {
             },
             supers = ast
                 .filterIsInstance<Union>()
-                .filter { it.entries.map { it.toString() }.contains(name) }
+                .filter { it.entries
+                    .map { when(it){
+                        is Type.Shape.Field.Reference.Custom -> it.value
+                        else -> error("Any Unit of Primitive cannot be part of Union")
+                    }
+                    }
+                    .contains(name) }
                 .map { Reference.Custom(it.name) }
         )
 

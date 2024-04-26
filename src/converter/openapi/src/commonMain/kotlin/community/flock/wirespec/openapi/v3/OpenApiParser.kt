@@ -346,11 +346,17 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                     ?.flatten(name)
                     ?: emptyList()
             }
-
-            oneOf != null -> listOf(
+            oneOf != null || anyOf != null -> listOf(
                 Union(
                     name = name,
-                    entries = setOf()
+                    entries = oneOf!!
+                        .mapIndexed { index, it ->
+                        when (it) {
+                            is ReferenceObject -> it.toReference()
+                            is SchemaObject -> it.toReference(className(name, index.toString()))
+                        }
+
+                        }.toSet()
                 )
             )
                 .plus(oneOf!!.flatMapIndexed() { index, it ->
@@ -359,8 +365,6 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                         is SchemaObject -> it.flatten(className(name, index.toString()))
                     }
                 })
-
-            anyOf != null -> TODO("anyOf is not implemented")
             allOf != null -> listOf(
                 Type(
                     name,

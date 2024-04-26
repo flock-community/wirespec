@@ -500,18 +500,52 @@ object Expected {
         Union(
             name = "OneofGET200ApplicationJsonResponseBody",
             entries = setOf(
-                Reference.Custom("Foo", false),
-                Reference.Custom("Bar", false),
-                Reference.Custom("OneofGET200ApplicationJsonResponseBodyD", false),
+                Reference.Custom(value = "Foo", isIterable = false, isMap = false),
+                Reference.Custom(value = "Bar", isIterable = false, isMap = false),
+                Reference.Custom(value = "OneofGET200ApplicationJsonResponseBody2", isIterable = false, isMap = false),
+                Reference.Custom(value = "OneofGET200ApplicationJsonResponseBody3", isIterable = false, isMap = false)
             )
         ),
         Type(
-            name = "OneofGET200ApplicationJsonResponseBodyD",
+            name = "OneofGET200ApplicationJsonResponseBody2",
             shape = Type.Shape(
                 value = listOf(
                     Type.Shape.Field(
-                        identifier = Identifier("e"),
+                        identifier = Identifier("c"),
                         reference = Reference.Primitive(
+                            type = Reference.Primitive.Type.String,
+                            isIterable = false,
+                            isMap = false
+                        ),
+                        isNullable = true
+                    )
+                )
+            )
+        ),
+        Type(
+            name = "OneofGET200ApplicationJsonResponseBody3",
+            shape = Type.Shape(
+                value = listOf(
+                    Type.Shape.Field(
+                        identifier = Identifier("d"),
+                        reference = Reference.Custom(
+                            value = "OneofGET200ApplicationJsonResponseBody3D",
+                            isIterable = false,
+                            isMap = false
+                        ),
+                        isNullable = true
+                    )
+                )
+            )
+        ),
+        Type(
+            name = "OneofGET200ApplicationJsonResponseBody3D",
+            shape = Type.Shape(
+                value = listOf(
+                    Type.Shape.Field(
+                        identifier = Identifier(
+                            "e"
+                        ), reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isIterable = false,
                             isMap = false

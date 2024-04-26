@@ -79,8 +79,8 @@ class ParseTypeTest {
             .also { it.size shouldBe 2 }
             .let {
                 val (first, second) = it.toList()
-                first shouldBe "Bar"
-                second shouldBe "Bal"
+                first shouldBe Type.Shape.Field.Reference.Custom(value = "Bar", isIterable = false, isMap = false)
+                second shouldBe Type.Shape.Field.Reference.Custom(value = "Bal", isIterable = false, isMap = false)
             }
     }
 }

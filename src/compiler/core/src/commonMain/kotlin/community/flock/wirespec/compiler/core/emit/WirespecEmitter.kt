@@ -63,7 +63,7 @@ class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emitt
             |
         """.trimMargin()
 
-    override fun Union.emit() = "type $name = ${entries.joinToString(" | ")}\n"
+    override fun Union.emit() = "type $name = ${entries.joinToString(" | "){it.emit()}}\n"
 
     private fun String.fixStatus(): String = when (this) {
         "default" -> "200"
