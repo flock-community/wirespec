@@ -63,14 +63,16 @@ class ParseTypeTest {
     @Test
     fun testUnionParser() {
         val source = """
+            type Bar { str: String }
+            type Bal { str: String }
             type Foo = Bar | Bal
         """.trimIndent()
 
         WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
-            .also { it.size shouldBe 1 }
-            .first()
+            .also { it.size shouldBe 3 }
+            .get(2)
             .shouldBeInstanceOf<Union>()
             .also { it.name shouldBe "Foo" }
             .entries

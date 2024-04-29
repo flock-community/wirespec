@@ -5,7 +5,6 @@ import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
-import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.types.Arrow
 import community.flock.wirespec.compiler.core.tokenize.types.Brackets
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
@@ -50,7 +49,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
 
         val requests = listOf(
             when (token.type) {
-                is WirespecType -> parseReference(token.type as WirespecType, token.value, token.coordinates).bind()
+                is WirespecType -> parseReference(token.type as WirespecType, token.value).bind()
                 else -> null
             }
         ).map {
@@ -144,7 +143,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
             else -> raise(WrongTokenException<Colon>(token))
         }
         val reference = when (token.type) {
-            is WirespecType -> parseReference(token.type as WirespecType, token.value, token.coordinates).bind()
+            is WirespecType -> parseReference(token.type as WirespecType, token.value).bind()
             else -> raise(WrongTokenException<WirespecType>(token))
         }
         when (token.type) {
@@ -183,32 +182,39 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
         eatToken().bind()
         token.log()
         val content = when (token.type) {
-            is WirespecType -> parseContent(token.type as WirespecType, token.value, token.coordinates).bind()
+            is WirespecType -> parseContent(token.type as WirespecType, token.value).bind()
             else -> raise(WrongTokenException<WirespecType>(token))
         }
         Endpoint.Response(status = statusCode, headers = emptyList(), content = content)
     }
 
-    private fun TokenProvider.parseContent(wsType: WirespecType, value: String, coordinates: Token.Coordinates) = either {
+    private fun TokenProvider.parseContent(wsType: WirespecType, value: String) = either {
         token.log()
         Endpoint.Content(
             type = "application/json",
-            reference = parseReference(wsType, value, coordinates).bind(),
+            reference = parseReference(wsType, value).bind(),
         )
     }
 
-    private fun TokenProvider.parseReference(wsType: WirespecType, value: String, coordinates: Token.Coordinates) =
-        either {
-            eatToken().bind()
-            token.log()
-            val isIterable = (token.type is Brackets).also { if (it) eatToken().bind() }
-            when (wsType) {
-                is WsString -> Reference.Primitive(Reference.Primitive.Type.String, isIterable, false, coordinates)
-                is WsInteger -> Reference.Primitive(Reference.Primitive.Type.Integer, isIterable, false, coordinates)
-                is WsNumber -> Reference.Primitive(Reference.Primitive.Type.Number, isIterable, false, coordinates)
-                is WsBoolean -> Reference.Primitive(Reference.Primitive.Type.Boolean, isIterable, false, coordinates)
-                is WsUnit -> Reference.Unit(isIterable, false, coordinates)
-                is CustomType -> Reference.Custom(value, isIterable, false, coordinates)
+    private fun TokenProvider.parseReference(wsType: WirespecType, value: String) = either {
+        val previousToken = token
+        eatToken().bind()
+        token.log()
+        val isIterable = (token.type is Brackets).also { if (it) eatToken().bind() }
+        when (wsType) {
+            is WsString -> Reference.Primitive(Reference.Primitive.Type.String, isIterable)
+
+            is WsInteger -> Reference.Primitive(Reference.Primitive.Type.Integer, isIterable)
+            is WsNumber -> Reference.Primitive(Reference.Primitive.Type.Number, isIterable)
+
+            is WsBoolean -> Reference.Primitive(Reference.Primitive.Type.Boolean, isIterable)
+
+            is WsUnit -> Reference.Unit(isIterable)
+
+            is CustomType -> {
+                previousToken.validateCustomReference().bind()
+                Reference.Custom(value, isIterable)
             }
         }
+    }
 }
