@@ -22,7 +22,7 @@ class Annotator : ExternalAnnotator<List<WirespecException>, List<WirespecExcept
     override fun collectInformation(file: PsiFile) = runBlocking {
         WirespecSpec.tokenize(file.text)
             .let { Parser(logger).parse(it) }
-            .flatMap { it.validate() }
+            .map { it.validate() }
             .fold({ it }, { emptyList() })
     }
 

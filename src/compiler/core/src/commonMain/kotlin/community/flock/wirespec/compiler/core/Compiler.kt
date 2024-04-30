@@ -3,7 +3,6 @@ package community.flock.wirespec.compiler.core
 import arrow.core.Either
 import arrow.core.Nel
 import arrow.core.NonEmptyList
-import arrow.core.flatMap
 import community.flock.wirespec.compiler.core.Reported.EMITTED
 import community.flock.wirespec.compiler.core.Reported.PARSED
 import community.flock.wirespec.compiler.core.Reported.TOKENIZED
@@ -27,7 +26,7 @@ fun LanguageSpec.parse(source: String): (Logger) -> Either<NonEmptyList<Wirespec
             .also((VALIDATED::report)(logger))
             .let { Parser(logger).parse(it) }
             .also((PARSED::report)(logger))
-            .flatMap { it.validate() }
+            .map { it.validate() }
             .also((VALIDATED::report)(logger))
     }
 

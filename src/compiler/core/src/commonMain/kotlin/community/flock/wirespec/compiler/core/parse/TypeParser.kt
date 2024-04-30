@@ -116,7 +116,7 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
             is WsUnit -> Type.Shape.Field.Reference.Unit(isIterable)
 
             is CustomType -> {
-                previousToken.validateCustomReference().bind()
+                previousToken.shouldBeDefined().bind()
                 Type.Shape.Field.Reference.Custom(value, isIterable)
             }
         }
@@ -127,14 +127,14 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         token.log()
         when (token.type) {
             is CustomType -> mutableListOf<String>().apply {
-                token.validateCustomReference().bind()
+                token.shouldBeDefined().bind()
                 add(token.value)
                 eatToken().bind()
                 while (token.type == Pipe) {
                     eatToken().bind()
                     when (token.type) {
                         is CustomType -> {
-                            token.validateCustomReference().bind()
+                            token.shouldBeDefined().bind()
                             add(token.value).also { eatToken().bind() }
                         }
                         else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })

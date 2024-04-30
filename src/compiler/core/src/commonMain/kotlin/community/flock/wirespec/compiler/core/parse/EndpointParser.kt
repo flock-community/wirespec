@@ -212,7 +212,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
             is WsUnit -> Reference.Unit(isIterable)
 
             is CustomType -> {
-                previousToken.validateCustomReference().bind()
+                previousToken.shouldBeDefined().bind()
                 Reference.Custom(value, isIterable)
             }
         }
