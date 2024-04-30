@@ -21,30 +21,30 @@ data class Type(override val name: String, val shape: Shape) : Definition {
                 }
             }
 
-            sealed interface Reference {
+            sealed interface Reference: Value<String> {
                 val isIterable: Boolean
                 val isMap: Boolean
-                fun name(): String
 
                 data class Any(
                     override val isIterable: Boolean,
-                    override val isMap: Boolean = false
+                    override val isMap: Boolean = false,
                 ) : Reference {
-                    override fun name(): String = "Any"
+                    override val value: String
+                        get() = "Any"
                 }
+
                 data class Unit(
                     override val isIterable: Boolean,
-                    override val isMap: Boolean = false
+                    override val isMap: Boolean = false,
                 ) : Reference {
-                    override fun name(): String = "Any"
+                    override val value: String
+                        get() = "Unit"
                 }
                 data class Custom(
                     override val value: String,
                     override val isIterable: Boolean,
                     override val isMap: Boolean = false
-                ) : Value<String>, Reference{
-                    override fun name(): String = value
-                }
+                ) : Reference
 
                 data class Primitive(
                     val type: Type,
@@ -52,7 +52,8 @@ data class Type(override val name: String, val shape: Shape) : Definition {
                     override val isMap: Boolean = false
                 ) : Reference {
                     enum class Type { String, Integer, Number, Boolean }
-                    override fun name(): String = type.name
+                    override val value: String
+                        get() = type.name
                 }
             }
         }
