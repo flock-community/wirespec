@@ -17,19 +17,27 @@ import kotlin.random.Random
 object Generator {
 
     fun AST.generate(type: String, random: Random = Random.Default): JsonElement {
-        val isIterable = type.endsWith("[]")
-        val def = resolveDefinition(type.removeSuffix("[]"))
-        return if (isIterable) {
+        val ref = Reference.Custom(
+            value = type.removeSuffix("[]"),
+            isIterable =  type.endsWith("[]"),
+            isMap = false
+        )
+        return generate(ref, random)
+    }
+
+    fun AST.generate(type: Reference, random: Random = Random.Default): JsonElement {
+        val def = resolveReference(type)
+        return if (type.isIterable) {
             generateIterator(def, random)
         } else {
             generateObject(def, random)
         }
     }
 
-    private fun AST.resolveDefinition(type: String) =
+    private fun AST.resolveReference(type: Reference) =
         this
             .filterIsInstance<Definition>()
-            .find { it.name == type }
+            .find { it.name == type.value }
             ?: error("Definition not found in AST: $type")
 
     private fun AST.generateIterator(def: Definition, random: Random): JsonElement =
@@ -47,13 +55,12 @@ object Generator {
             }
 
             is Reference.Custom -> {
-                val def = resolveDefinition(ref.value)
+                val def = resolveReference(ref)
                 if (ref.isIterable) {
                     generateIterator(def, random)
                 } else {
                     generateObject(def, random)
                 }
-
             }
 
             is Reference.Unit -> JsonNull

@@ -26,6 +26,7 @@ import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
+import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.openapi.Common.className
 import kotlinx.serialization.json.Json
 import community.flock.kotlinx.openapi.bindings.v3.Type as OpenapiType
@@ -345,9 +346,25 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                     ?.flatten(name)
                     ?: emptyList()
             }
+            oneOf != null || anyOf != null -> listOf(
+                Union(
+                    name = name,
+                    entries = oneOf!!
+                        .mapIndexed { index, it ->
+                        when (it) {
+                            is ReferenceObject -> it.toReference()
+                            is SchemaObject -> it.toReference(className(name, index.toString()))
+                        }
 
-            oneOf != null -> TODO("oneOf is not implemented")
-            anyOf != null -> TODO("anyOf is not implemented")
+                        }.toSet()
+                )
+            )
+                .plus(oneOf!!.flatMapIndexed() { index, it ->
+                    when (it) {
+                        is ReferenceObject -> emptyList()
+                        is SchemaObject -> it.flatten(className(name, index.toString()))
+                    }
+                })
             allOf != null -> listOf(
                 Type(
                     name,

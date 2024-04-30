@@ -617,6 +617,20 @@ class OpenApiParserTest {
     }
 
     @Test
+    fun oneOf() {
+        val json = IO.readFile("v3/oneof.json")
+
+        val openApi = OpenAPI.decodeFromString(json)
+        val ast = OpenApiParser.parse(openApi)
+
+        Expected.oneOf.zip(ast).forEach { (expected, actual) ->
+            println(expected.name)
+            assertEquals(expected, actual)
+        }
+
+    }
+
+    @Test
     fun enum() {
         val json = IO.readFile("v3/enum.json")
 

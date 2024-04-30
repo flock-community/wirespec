@@ -22,9 +22,12 @@ fun Node.produce(): WsNode =
             requests = requests.produce(),
             responses = responses.produce(),
         )
+
         is Enum -> WsEnum(name, entries.toTypedArray())
         is Refined -> WsRefined(name, validator.value)
-        is Union -> WsEnum(name, entries.toTypedArray())
+        is Union -> WsUnion(name, entries
+            .map { it.produce()}
+            .toTypedArray())
     }
 
 fun List<Node>.produce(): Array<WsNode> =
@@ -107,6 +110,9 @@ data class WsEndpoint(
 
 @JsExport
 data class WsEnum(override val name: String, val entries: Array<String>) : WsNode
+
+@JsExport
+data class WsUnion(override val name: String, val entries: Array<WsReference>) : WsNode
 
 @JsExport
 data class WsRefined(override val name: String, val validator: String) : WsNode

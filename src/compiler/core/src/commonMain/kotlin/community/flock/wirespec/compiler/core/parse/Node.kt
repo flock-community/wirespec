@@ -21,17 +21,30 @@ data class Type(override val name: String, val shape: Shape) : Definition {
                 }
             }
 
-            sealed interface Reference {
+            sealed interface Reference: Value<String> {
                 val isIterable: Boolean
                 val isMap: Boolean
 
-                data class Any(override val isIterable: Boolean, override val isMap: Boolean = false) : Reference
-                data class Unit(override val isIterable: Boolean, override val isMap: Boolean = false) : Reference
+                data class Any(
+                    override val isIterable: Boolean,
+                    override val isMap: Boolean = false,
+                ) : Reference {
+                    override val value: String
+                        get() = "Any"
+                }
+
+                data class Unit(
+                    override val isIterable: Boolean,
+                    override val isMap: Boolean = false,
+                ) : Reference {
+                    override val value: String
+                        get() = "Unit"
+                }
                 data class Custom(
                     override val value: String,
                     override val isIterable: Boolean,
                     override val isMap: Boolean = false
-                ) : Value<String>, Reference
+                ) : Reference
 
                 data class Primitive(
                     val type: Type,
@@ -39,6 +52,8 @@ data class Type(override val name: String, val shape: Shape) : Definition {
                     override val isMap: Boolean = false
                 ) : Reference {
                     enum class Type { String, Integer, Number, Boolean }
+                    override val value: String
+                        get() = type.name
                 }
             }
         }
@@ -47,7 +62,7 @@ data class Type(override val name: String, val shape: Shape) : Definition {
 
 data class Enum(override val name: String, val entries: Set<String>) : Definition
 
-data class Union(override val name: String, val entries: Set<String>) : Definition
+data class Union(override val name: String, val entries: Set<Field.Reference>) : Definition
 
 data class Refined(override val name: String, val validator: Validator) : Definition {
     data class Validator(override val value: String) : Value<String>
