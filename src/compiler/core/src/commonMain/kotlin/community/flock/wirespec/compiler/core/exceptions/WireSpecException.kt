@@ -27,10 +27,16 @@ sealed class WirespecException(message: String, val coordinates: Token.Coordinat
                 }
             }
 
+            class DefinitionNotExistsException(referenceName: String, coordinates: Token.Coordinates) : ParserException(
+                coordinates,
+                "Cannot find reference: $referenceName"
+            )
+
             sealed class NullTokenException(message: String, coordinates: Token.Coordinates) :
                 ParserException(coordinates, "$message cannot be null") {
                 class NextException(coordinates: Token.Coordinates) : NullTokenException("Next Token", coordinates)
             }
+
         }
     }
 }

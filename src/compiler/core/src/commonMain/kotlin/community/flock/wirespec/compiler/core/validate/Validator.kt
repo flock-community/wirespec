@@ -2,4 +2,4 @@ package community.flock.wirespec.compiler.core.validate
 
 import community.flock.wirespec.compiler.core.parse.AST
 
-fun AST.validate() = this
+fun AST.validate(): AST = this

@@ -88,6 +88,7 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
     }
 
     private fun TokenProvider.parseFieldValue(wsType: WirespecType, value: String) = either {
+        val previousToken = token
         eatToken().bind()
         token.log()
         val isIterable = (token.type is Brackets).also { if (it) eatToken().bind() }
@@ -114,7 +115,10 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
 
             is WsUnit -> Type.Shape.Field.Reference.Unit(isIterable)
 
-            is CustomType -> Type.Shape.Field.Reference.Custom(value, isIterable)
+            is CustomType -> {
+                previousToken.shouldBeDefined().bind()
+                Type.Shape.Field.Reference.Custom(value, isIterable)
+            }
         }
     }
 
@@ -123,12 +127,16 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         token.log()
         when (token.type) {
             is CustomType -> mutableListOf<String>().apply {
+                token.shouldBeDefined().bind()
                 add(token.value)
                 eatToken().bind()
                 while (token.type == Pipe) {
                     eatToken().bind()
                     when (token.type) {
-                        is CustomType -> add(token.value).also { eatToken().bind() }
+                        is CustomType -> {
+                            token.shouldBeDefined().bind()
+                            add(token.value).also { eatToken().bind() }
+                        }
                         else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
                     }
                 }

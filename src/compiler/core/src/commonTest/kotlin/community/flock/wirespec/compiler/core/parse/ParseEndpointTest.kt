@@ -24,6 +24,7 @@ class ParseEndpointTest {
     @Test
     fun testEndpointParser() {
         val source = """
+            type Todo { name: String }
             endpoint GetTodos GET /todos -> {
                 200 -> Todo[]
             }
@@ -32,8 +33,8 @@ class ParseEndpointTest {
         WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
-            .also { it.size shouldBe 1 }
-            .first()
+            .also { it.size shouldBe 2 }
+            .get(1)
             .shouldBeInstanceOf<Endpoint>()
             .run {
                 name shouldBe "GetTodos"
@@ -50,6 +51,7 @@ class ParseEndpointTest {
     @Test
     fun testEndpointPathParser() {
         val source = """
+            type Todo { name: String }
             endpoint GetTodos GET /To-Do_List -> {
                 200 -> Todo[]
             }
@@ -58,8 +60,8 @@ class ParseEndpointTest {
         WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
-            .also { it.size shouldBe 1 }
-            .first()
+            .also { it.size shouldBe 2 }
+            .get(1)
             .shouldBeInstanceOf<Endpoint>()
             .run {
                 name shouldBe "GetTodos"
@@ -76,6 +78,7 @@ class ParseEndpointTest {
     @Test
     fun testPathParamsParser() {
         val source = """
+            type Todo { name: String }
             endpoint PostTodo POST Todo /todos -> {
                 200 -> Todo
             }
@@ -84,8 +87,8 @@ class ParseEndpointTest {
         WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
-            .also { it.size shouldBe 1 }
-            .first()
+            .also { it.size shouldBe 2 }
+            .get(1)
             .shouldBeInstanceOf<Endpoint>()
             .run {
                 name shouldBe "PostTodo"
@@ -105,6 +108,7 @@ class ParseEndpointTest {
     @Test
     fun testRequestBodyParser() {
         val source = """
+            type Todo { name: String }
             endpoint GetTodo GET /todos/{id: String} -> {
                 200 -> Todo
             }
@@ -113,8 +117,8 @@ class ParseEndpointTest {
         WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
-            .also { it.size shouldBe 1 }
-            .first()
+            .also { it.size shouldBe 2 }
+            .get(1)
             .shouldBeInstanceOf<Endpoint>()
             .run {
                 name shouldBe "GetTodo"
@@ -140,6 +144,7 @@ class ParseEndpointTest {
     @Test
     fun testQueryParamsParser() {
         val source = """
+            type Todo { name: String }
             endpoint GetTodos GET /todos?{name: String, date: String} -> {
                 200 -> Todo[]
             }
@@ -148,8 +153,8 @@ class ParseEndpointTest {
         WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
-            .also { it.size shouldBe 1 }
-            .first()
+            .also { it.size shouldBe 2 }
+            .get(1)
             .shouldBeInstanceOf<Endpoint>()
             .query.shouldNotBeEmpty().also { it.size shouldBe 2 }.take(2).let {
                 val (one, two) = it
@@ -169,6 +174,7 @@ class ParseEndpointTest {
     @Test
     fun testHeadersParser() {
         val source = """
+            type Todo { name: String }
             endpoint GetTodos GET /todos#{name: String, date: String} -> {
                 200 -> Todo[]
             }
@@ -177,8 +183,8 @@ class ParseEndpointTest {
         WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
-            .also { it.size shouldBe 1 }
-            .first()
+            .also { it.size shouldBe 2 }
+            .get(1)
             .shouldBeInstanceOf<Endpoint>()
             .headers.shouldNotBeEmpty().also { it.size shouldBe 2 }.take(2).let {
                 val (one, two) = it

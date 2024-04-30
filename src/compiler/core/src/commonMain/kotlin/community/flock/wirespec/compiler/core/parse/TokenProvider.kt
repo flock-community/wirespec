@@ -1,18 +1,40 @@
 package community.flock.wirespec.compiler.core.parse
 
 import arrow.core.Either
+import arrow.core.NonEmptyList
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
+import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.NullTokenException.NextException
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.Tokens
-import community.flock.wirespec.compiler.core.tokenize.types.TokenType
+import community.flock.wirespec.compiler.core.tokenize.removeWhiteSpace
+import community.flock.wirespec.compiler.core.tokenize.types.CustomType
+import community.flock.wirespec.compiler.core.tokenize.types.WirespecDefinition
 import community.flock.wirespec.compiler.utils.Logger
 
-class TokenProvider(private val logger: Logger, private val tokenIterator: Iterator<Token>) {
+class TokenProvider(private val logger: Logger, list: NonEmptyList<Token>) {
 
-    var token = nextToken()!!
+    private val tokenIterator = list.tail.iterator()
+
+    var token = list.head
     private var nextToken = nextToken()
+
+    private val definitionNames: List<String> = list
+        .removeWhiteSpace()
+        .zipWithNext()
+        .mapNotNull { (first, second) ->
+            when (first.type) {
+                is WirespecDefinition -> second.value
+                else -> null
+            }
+        }
+
+    fun Token.shouldBeDefined(): Either<WirespecException, Unit> = either {
+        if (!definitionNames.contains(value)) {
+            raise(ParserException.DefinitionNotExistsException(value, coordinates))
+        }
+    }
 
     init {
         printTokens()
@@ -37,4 +59,4 @@ class TokenProvider(private val logger: Logger, private val tokenIterator: Itera
     private fun nextToken() = runCatching { tokenIterator.next() }.getOrNull()
 }
 
-fun Tokens.toProvider(logger: Logger) = TokenProvider(logger, iterator())
+fun Tokens.toProvider(logger: Logger) = TokenProvider(logger, this)

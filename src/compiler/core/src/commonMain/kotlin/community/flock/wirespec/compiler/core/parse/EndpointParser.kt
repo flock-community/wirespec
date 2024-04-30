@@ -197,6 +197,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
     }
 
     private fun TokenProvider.parseReference(wsType: WirespecType, value: String) = either {
+        val previousToken = token
         eatToken().bind()
         token.log()
         val isIterable = (token.type is Brackets).also { if (it) eatToken().bind() }
@@ -210,7 +211,10 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
 
             is WsUnit -> Reference.Unit(isIterable)
 
-            is CustomType -> Reference.Custom(value, isIterable)
+            is CustomType -> {
+                previousToken.shouldBeDefined().bind()
+                Reference.Custom(value, isIterable)
+            }
         }
     }
 }
