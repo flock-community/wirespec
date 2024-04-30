@@ -38,8 +38,8 @@ import community.flock.wirespec.plugin.cli.io.ScalaFile
 import community.flock.wirespec.plugin.cli.io.TypeScriptFile
 import community.flock.wirespec.plugin.cli.io.WirespecFile
 import community.flock.wirespec.plugin.utils.orNull
-import community.flock.wirespec.openapi.v2.OpenApiParser as OpenApiParserV2
-import community.flock.wirespec.openapi.v3.OpenApiParser as OpenApiParserV3
+import community.flock.wirespec.openapi.v2.OpenApiV2Parser as OpenApiParserV2
+import community.flock.wirespec.openapi.v3.OpenApiV3Parser as OpenApiParserV3
 
 fun main(args: Array<String>) {
     (0..20)

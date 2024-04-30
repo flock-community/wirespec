@@ -29,15 +29,15 @@ import community.flock.wirespec.openapi.Common.className
 import kotlinx.serialization.json.Json
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenapiType
 
-class OpenApiParser(private val openApi: SwaggerObject) {
+class OpenApiV2Parser(private val openApi: SwaggerObject) {
 
     companion object {
         fun parse(json: String, ignoreUnknown: Boolean = false): AST =
             OpenAPI(json = Json { prettyPrint = true; ignoreUnknownKeys = ignoreUnknown })
                 .decodeFromString(json)
-                .let { OpenApiParser(it).parse() }
+                .let { OpenApiV2Parser(it).parse() }
 
-        fun parse(openApi: SwaggerObject): AST = OpenApiParser(openApi).parse()
+        fun parse(openApi: SwaggerObject): AST = OpenApiV2Parser(openApi).parse()
     }
 
     fun parse(): List<Node> =

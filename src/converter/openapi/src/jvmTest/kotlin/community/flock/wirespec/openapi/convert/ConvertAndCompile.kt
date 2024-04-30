@@ -8,8 +8,8 @@ import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.openapi.IO
 import io.kotest.assertions.arrow.core.shouldBeRight
 import org.junit.Test
-import community.flock.wirespec.openapi.v2.OpenApiParser.Companion as OpenApiV2Parser
-import community.flock.wirespec.openapi.v3.OpenApiParser.Companion as OpenApiV3Parser
+import community.flock.wirespec.openapi.v2.OpenApiV2Parser.Companion as OpenApiV2Parser
+import community.flock.wirespec.openapi.v3.OpenApiV3Parser.Companion as OpenApiV3Parser
 
 class ConvertAndCompile {
 

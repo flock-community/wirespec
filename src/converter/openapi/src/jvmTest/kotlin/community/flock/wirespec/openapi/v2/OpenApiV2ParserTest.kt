@@ -14,14 +14,14 @@ import community.flock.wirespec.openapi.common.Expected
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class OpenApiParserTest {
+class OpenApiV2ParserTest {
 
     @Test
     fun petstore() {
         val json = IO.readFile("v2/petstore.json")
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = OpenApiParser.parse(openApi)
+        val ast = OpenApiV2Parser.parse(openApi)
 
         val expectedTypeDefinitions = listOf(
             Type(
@@ -244,7 +244,7 @@ class OpenApiParserTest {
         val json = IO.readFile("v2/alias.json")
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = OpenApiParser.parse(openApi)
+        val ast = OpenApiV2Parser.parse(openApi)
 
         val expected = listOf(
             Endpoint(
@@ -292,7 +292,7 @@ class OpenApiParserTest {
         val json = IO.readFile("v2/object-in-request.json")
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = OpenApiParser.parse(openApi)
+        val ast = OpenApiV2Parser.parse(openApi)
 
         assertEquals(Expected.objectInRequest, ast)
     }
@@ -302,7 +302,7 @@ class OpenApiParserTest {
         val json = IO.readFile("v2/object-in-response.json")
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = OpenApiParser.parse(openApi)
+        val ast = OpenApiV2Parser.parse(openApi)
 
         assertEquals(Expected.objectInResponse, ast)
     }
@@ -312,7 +312,7 @@ class OpenApiParserTest {
         val json = IO.readFile("v2/additionalproperties.json")
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = OpenApiParser.parse(openApi)
+        val ast = OpenApiV2Parser.parse(openApi)
 
         assertEquals(Expected.additionalproperties, ast)
     }
@@ -322,7 +322,7 @@ class OpenApiParserTest {
         val json = IO.readFile("v2/array.json")
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = OpenApiParser.parse(openApi)
+        val ast = OpenApiV2Parser.parse(openApi)
 
         assertEquals(Expected.array, ast)
     }
@@ -332,7 +332,7 @@ class OpenApiParserTest {
         val json = IO.readFile("v2/allof.json")
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = OpenApiParser.parse(openApi)
+        val ast = OpenApiV2Parser.parse(openApi)
 
         assertEquals(Expected.allOf, ast)
     }
@@ -342,7 +342,7 @@ class OpenApiParserTest {
         val json = IO.readFile("v2/enum.json")
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = OpenApiParser.parse(openApi)
+        val ast = OpenApiV2Parser.parse(openApi)
 
         assertEquals(Expected.enum, ast)
     }

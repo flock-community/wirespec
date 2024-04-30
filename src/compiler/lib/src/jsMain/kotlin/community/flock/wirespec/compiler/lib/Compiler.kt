@@ -12,8 +12,8 @@ import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.parse.Parser
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.openapi.v2.OpenApiParser as OpenApiParserV2
-import community.flock.wirespec.openapi.v3.OpenApiParser as OpenApiParserV3
+import community.flock.wirespec.openapi.v2.OpenApiV2Parser as OpenApiParserV2
+import community.flock.wirespec.openapi.v3.OpenApiV3Parser as OpenApiParserV3
 
 @JsExport
 abstract class Compiler {
