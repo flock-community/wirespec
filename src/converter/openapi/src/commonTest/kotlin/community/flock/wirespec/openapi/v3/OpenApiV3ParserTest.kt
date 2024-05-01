@@ -1,5 +1,6 @@
 package community.flock.wirespec.openapi.v3
 
+import com.goncalossilva.resources.Resource
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPI
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -9,8 +10,8 @@ import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Identifier
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive
-import community.flock.wirespec.openapi.IO
 import community.flock.wirespec.openapi.common.Expected
+import community.flock.wirespec.openapi.v3.OpenApiV3Parser
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -18,7 +19,7 @@ class OpenApiV3ParserTest {
 
     @Test
     fun petstore() {
-        val json = IO.readFile("v3/petstore.json")
+        val json = Resource("src/commonTest/resources/v3/petstore.json").readText()
 
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiV3Parser.parse(openApi)
@@ -329,7 +330,7 @@ class OpenApiV3ParserTest {
 
     @Test
     fun pizza() {
-        val json = IO.readFile("v3/pizza.json")
+        val json = Resource("src/commonTest/resources/v3/pizza.json").readText()
 
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiV3Parser.parse(openApi)
@@ -382,7 +383,7 @@ class OpenApiV3ParserTest {
     @Test
     fun todo() {
 
-        val json = IO.readFile("v3/todo.json")
+        val json = Resource("src/commonTest/resources/v3/todo.json").readText()
 
         val openApi = OpenAPI.decodeFromString(json)
 
@@ -560,7 +561,7 @@ class OpenApiV3ParserTest {
 
     @Test
     fun objectInRequest() {
-        val json = IO.readFile("v3/object-in-request.json")
+        val json = Resource("src/commonTest/resources/v3/object-in-request.json").readText()
 
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiV3Parser.parse(openApi)
@@ -572,7 +573,7 @@ class OpenApiV3ParserTest {
 
     @Test
     fun objectInResponse() {
-        val json = IO.readFile("v3/object-in-response.json")
+        val json = Resource("src/commonTest/resources/v3/object-in-response.json").readText()
 
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiV3Parser.parse(openApi)
@@ -584,7 +585,7 @@ class OpenApiV3ParserTest {
 
     @Test
     fun additionalProperties() {
-        val json = IO.readFile("v3/additionalproperties.json")
+        val json = Resource("src/commonTest/resources/v3/additionalproperties.json").readText()
 
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiV3Parser.parse(openApi)
@@ -596,7 +597,7 @@ class OpenApiV3ParserTest {
 
     @Test
     fun array() {
-        val json = IO.readFile("v3/array.json")
+        val json = Resource("src/commonTest/resources/v3/array.json").readText()
 
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiV3Parser.parse(openApi)
@@ -608,7 +609,7 @@ class OpenApiV3ParserTest {
 
     @Test
     fun allOf() {
-        val json = IO.readFile("v3/allof.json")
+        val json = Resource("src/commonTest/resources/v3/allof.json").readText()
 
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiV3Parser.parse(openApi)
@@ -632,7 +633,7 @@ class OpenApiV3ParserTest {
 
     @Test
     fun enum() {
-        val json = IO.readFile("v3/enum.json")
+        val json = Resource("src/commonTest/resources/v3/enum.json").readText()
 
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiV3Parser.parse(openApi)

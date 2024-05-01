@@ -17,15 +17,18 @@ import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenApiType
 
 import community.flock.wirespec.compiler.core.emit.common.Emitted
+import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.core.parse.Enum
+import kotlinx.serialization.json.JsonPrimitive
 
 class OpenApiV2Emitter {
 
-     fun emit(ast: List<Definition>): List<Emitted> {
-        val obj = SwaggerObject(
+     fun emit(ast: AST): SwaggerObject {
+        return SwaggerObject(
             swagger = "2.0",
             info = InfoObject(
                 title = "Wirespec",
@@ -67,10 +70,14 @@ class OpenApiV2Emitter {
                             .map { it.identifier.value }
                             .takeIf { it.isNotEmpty() }
                     )
+                } + ast
+                .filterIsInstance<Enum>().associate { enum ->
+                    enum.name to SchemaObject(
+                        type = OpenApiType.STRING,
+                        enum = enum.entries.map { JsonPrimitive(it) }
+                    )
                 }
         )
-        val str = OpenAPI.encodeToString(obj)
-        return listOf(Emitted("OpenApi", str))
     }
 
     private fun List<Endpoint>.emit(method: Endpoint.Method): OperationObject? =
@@ -93,6 +100,14 @@ class OpenApiV2Emitter {
                 name = it.identifier.value,
                 type = it.reference.emitType()
             )
+
+        }+headers.map {
+            ParameterObject(
+                `in` = ParameterLocation.HEADER,
+                name = it.identifier.value,
+                type = it.reference.emitType()
+            )
+
         },
         responses = responses
             .associate {

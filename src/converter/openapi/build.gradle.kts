@@ -5,6 +5,7 @@ plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
     id("com.github.johnrengelman.shadow") apply false
+    id("com.goncalossilva.resources") version "0.4.0"
 }
 
 group = "${Settings.GROUP_ID}.converter"
@@ -41,6 +42,7 @@ kotlin {
         }
         commonTest {
             dependencies {
+                implementation("com.goncalossilva:resources:0.4.0")
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
                 implementation(kotlin("test-junit"))
