@@ -4,7 +4,6 @@ import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse.Endpoint.Method.GET
 import community.flock.wirespec.compiler.core.parse.Endpoint.Method.POST
 import community.flock.wirespec.compiler.core.parse.Endpoint.Segment.Literal
-import community.flock.wirespec.compiler.core.parse.Field.Identifier
 import community.flock.wirespec.compiler.core.parse.Field.Reference
 import community.flock.wirespec.compiler.core.parse.Field.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.Field.Reference.Primitive.Type.String
@@ -33,11 +32,10 @@ class ParseEndpointTest {
         WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
-            .also { it.size shouldBe 2 }
-            .get(1)
+            .also { it.size shouldBe 2 }[1]
             .shouldBeInstanceOf<Endpoint>()
             .run {
-                name shouldBe "GetTodos"
+                identifier.value shouldBe "GetTodos"
                 method shouldBe GET
                 path shouldBe listOf(Literal("todos"))
                 requests shouldBe listOf(
@@ -60,11 +58,10 @@ class ParseEndpointTest {
         WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
-            .also { it.size shouldBe 2 }
-            .get(1)
+            .also { it.size shouldBe 2 }[1]
             .shouldBeInstanceOf<Endpoint>()
             .run {
-                name shouldBe "GetTodos"
+                identifier.value shouldBe "GetTodos"
                 method shouldBe GET
                 path shouldBe listOf(Literal("To-Do_List"))
                 requests shouldBe listOf(
@@ -87,11 +84,10 @@ class ParseEndpointTest {
         WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
-            .also { it.size shouldBe 2 }
-            .get(1)
+            .also { it.size shouldBe 2 }[1]
             .shouldBeInstanceOf<Endpoint>()
             .run {
-                name shouldBe "PostTodo"
+                identifier.value shouldBe "PostTodo"
                 method shouldBe POST
                 requests.shouldNotBeEmpty().also { it.size shouldBe 1 }.first().run {
                     content.shouldNotBeNull().run {
@@ -117,11 +113,10 @@ class ParseEndpointTest {
         WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
-            .also { it.size shouldBe 2 }
-            .get(1)
+            .also { it.size shouldBe 2 }[1]
             .shouldBeInstanceOf<Endpoint>()
             .run {
-                name shouldBe "GetTodo"
+                identifier.value shouldBe "GetTodo"
                 method shouldBe GET
                 path shouldBe listOf(
                     Literal("todos"), Endpoint.Segment.Param(
@@ -153,8 +148,7 @@ class ParseEndpointTest {
         WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
-            .also { it.size shouldBe 2 }
-            .get(1)
+            .also { it.size shouldBe 2 }[1]
             .shouldBeInstanceOf<Endpoint>()
             .query.shouldNotBeEmpty().also { it.size shouldBe 2 }.take(2).let {
                 val (one, two) = it
@@ -183,8 +177,7 @@ class ParseEndpointTest {
         WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
-            .also { it.size shouldBe 2 }
-            .get(1)
+            .also { it.size shouldBe 2 }[1]
             .shouldBeInstanceOf<Endpoint>()
             .headers.shouldNotBeEmpty().also { it.size shouldBe 2 }.take(2).let {
                 val (one, two) = it

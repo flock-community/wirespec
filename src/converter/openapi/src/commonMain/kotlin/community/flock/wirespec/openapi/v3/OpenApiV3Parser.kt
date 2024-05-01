@@ -24,6 +24,7 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Field.Reference
+import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
@@ -117,7 +118,7 @@ class OpenApiV3Parser(private val openApi: OpenAPIObject) {
                 }
 
                 Endpoint(
-                    name = name,
+                    identifier = Identifier(name),
                     method = method,
                     path = segments,
                     query = query,
@@ -221,7 +222,7 @@ class OpenApiV3Parser(private val openApi: OpenAPIObject) {
                         ?.toReference(className(name, "Parameter", param))
                         ?.let {
                             Endpoint.Segment.Param(
-                                Field.Identifier(param),
+                                Identifier(param),
                                 it
                             )
                         }
@@ -349,7 +350,7 @@ class OpenApiV3Parser(private val openApi: OpenAPIObject) {
 
             oneOf != null || anyOf != null -> listOf(
                 Union(
-                    name = name,
+                    identifier = Identifier(name),
                     entries = oneOf!!
                         .mapIndexed { index, it ->
                             when (it) {
@@ -369,8 +370,9 @@ class OpenApiV3Parser(private val openApi: OpenAPIObject) {
 
             allOf != null -> listOf(
                 Type(
-                    name,
-                    Type.Shape(allOf.orEmpty().flatMap { it.resolve().toField(name) }.distinctBy { it.identifier })
+                    identifier = Identifier(name),
+                    shape = Type.Shape(allOf.orEmpty().flatMap { it.resolve().toField(name) }
+                        .distinctBy { it.identifier })
                 )
             )
                 .plus(allOf!!
@@ -387,7 +389,7 @@ class OpenApiV3Parser(private val openApi: OpenAPIObject) {
             enum != null -> enum!!
                 .map { it.content }
                 .toSet()
-                .let { listOf(Enum(name, it)) }
+                .let { listOf(Enum(Identifier(name), it)) }
 
             else -> when (type) {
                 null, OpenapiType.OBJECT -> {
@@ -395,7 +397,7 @@ class OpenApiV3Parser(private val openApi: OpenAPIObject) {
                         value.flatten(className(name, key))
                     }
                     val schema = listOf(
-                        Type(name, Type.Shape(this.toField(name)))
+                        Type(Identifier(name), Type.Shape(toField(name)))
                     )
 
                     schema + fields
@@ -522,7 +524,7 @@ class OpenApiV3Parser(private val openApi: OpenAPIObject) {
         when (value) {
             is SchemaObject -> {
                 Field(
-                    identifier = Field.Identifier(key),
+                    identifier = Identifier(key),
                     reference = when {
                         value.enum != null -> value.toReference(className(name, key))
                         value.type == OpenapiType.ARRAY -> value.toReference(className(name, key, "Array"))
@@ -534,9 +536,9 @@ class OpenApiV3Parser(private val openApi: OpenAPIObject) {
 
             is ReferenceObject -> {
                 Field(
-                    Field.Identifier(key),
+                    Identifier(key),
                     Reference.Custom(className(value.getReference()), false),
-                    !(this.required?.contains(key) ?: false)
+                    !(required?.contains(key) ?: false)
                 )
             }
         }
@@ -548,7 +550,7 @@ class OpenApiV3Parser(private val openApi: OpenAPIObject) {
             is SchemaObject -> s.toReference(name)
             null -> TODO("Not yet implemented")
         }
-            .let { Field(Field.Identifier(this.name), it, !(this.required ?: false)) }
+            .let { Field(Identifier(this.name), it, !(this.required ?: false)) }
 
     private fun HeaderObject.toField(identifier: String, name: String) =
         when (val s = schema) {
@@ -556,7 +558,7 @@ class OpenApiV3Parser(private val openApi: OpenAPIObject) {
             is SchemaObject -> s.toReference(name)
             null -> TODO("Not yet implemented")
         }
-            .let { Field(Field.Identifier(identifier), it, !(this.required ?: false)) }
+            .let { Field(Identifier(identifier), it, !(this.required ?: false)) }
 
     private data class FlattenRequest(
         val path: Path,

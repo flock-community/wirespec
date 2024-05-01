@@ -5,6 +5,7 @@ package community.flock.wirespec.compiler.lib
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -111,9 +112,9 @@ private fun WsPrimitiveType.consume() =
 
 fun Node.produce(): WsNode =
     when (this) {
-        is Type -> WsType(name, shape.produce())
+        is Type -> WsType(identifier.value, shape.produce())
         is Endpoint -> WsEndpoint(
-            name = name,
+            name = identifier.value,
             method = method.produce(),
             path = path.produce(),
             query = query.produce(),
@@ -123,9 +124,9 @@ fun Node.produce(): WsNode =
             responses = responses.produce(),
         )
 
-        is Enum -> WsEnum(name, entries.toTypedArray())
-        is Refined -> WsRefined(name, validator.value)
-        is Union -> WsUnion(name, entries
+        is Enum -> WsEnum(identifier.value, entries.toTypedArray())
+        is Refined -> WsRefined(identifier.value, validator.value)
+        is Union -> WsUnion(identifier.value, entries
             .map { it.produce() }
             .toTypedArray())
     }
@@ -148,7 +149,7 @@ private fun Field.produce() = WsField(identifier.produce(), reference.produce(),
 
 private fun List<Field>.produce() = map { it.produce() }.toTypedArray()
 
-private fun Field.Identifier.produce() = WsIdentifier(this.value)
+private fun Identifier.produce() = WsIdentifier(value)
 
 private fun Field.Reference.produce() = when (this) {
     is Field.Reference.Any -> WsAny(isIterable, isMap)

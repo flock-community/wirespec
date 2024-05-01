@@ -25,7 +25,7 @@ public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
 
     @NotNull
     @Override
-    public String emitName(Definition definition) {
+    public String emitName(@NotNull Definition definition) {
         return definition.getName() + "Custom";
     }
 
@@ -36,7 +36,7 @@ public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
                 .stream()
                 .filter(sc -> sc instanceof Type)
                 .map(it -> (Type) it)
-                .map(sc -> new Emitted(emitName(sc), emit(sc, ast)))
+                .map(type -> new Emitted(emitName(type), emit(type, ast)))
                 .collect(Collectors.toList());
     }
 
@@ -85,12 +85,6 @@ public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
     @NotNull
     @Override
     public String emit(@NotNull Field field) {
-        return "";
-    }
-
-    @NotNull
-    @Override
-    public String emit(@NotNull Field.Identifier identifier) {
         return "";
     }
 

@@ -35,11 +35,11 @@ class KotlinEmitter(
     """.trimMargin()
 
     override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> name
-        is Enum -> name
-        is Refined -> name
-        is Type -> name
-        is Union -> name
+        is Endpoint -> identifier.emit()
+        is Enum -> identifier.emit()
+        is Refined -> identifier.emit()
+        is Type -> identifier.emit()
+        is Union -> identifier.emit()
     }
 
     override fun emit(ast: AST): List<Emitted> =

@@ -38,7 +38,7 @@ object Generator {
     private fun AST.resolveReference(type: Reference) =
         this
             .filterIsInstance<Definition>()
-            .find { it.name == type.value }
+            .find { it.identifier.value == type.value }
             ?: error("Definition not found in AST: $type")
 
     private fun AST.generateIterator(def: Definition, random: Random): JsonElement =

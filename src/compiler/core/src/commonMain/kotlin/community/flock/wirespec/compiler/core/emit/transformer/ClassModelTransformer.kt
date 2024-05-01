@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
@@ -23,7 +24,7 @@ object ClassModelTransformer : Transformer {
 
     override fun Type.transform(ast: AST): TypeClass =
         TypeClass(
-            name = className(name),
+            name = className(identifier.value),
             fields = shape.value.map {
                 FieldClass(
                     identifier = it.identifier.value,
@@ -40,14 +41,14 @@ object ClassModelTransformer : Transformer {
                                 else -> error("Any Unit of Primitive cannot be part of Union")
                             }
                         }
-                        .contains(name)
+                        .contains(identifier.value)
                 }
-                .map { Reference.Custom(it.name) }
+                .map { Reference.Custom(it.identifier.value) }
         )
 
     override fun Refined.transform(): RefinedClass =
         RefinedClass(
-            name = className(name),
+            name = className(identifier.value),
             validator = RefinedClass.Validator(
                 value = validator.value
             )
@@ -55,13 +56,13 @@ object ClassModelTransformer : Transformer {
 
     override fun Union.transform(): UnionClass =
         UnionClass(
-            name = className(name),
+            name = className(identifier.value),
             entries = entries.map { it.value }
         )
 
     override fun Enum.transform(): EnumClass =
         EnumClass(
-            name = className(name),
+            name = className(identifier.value),
             entries = entries
         )
 
@@ -71,14 +72,14 @@ object ClassModelTransformer : Transformer {
             .map { Field(it.identifier, it.reference, false) }
         val parameters = pathField + query + headers + cookies
         return EndpointClass(
-            name = className(name, "Endpoint"),
+            name = className(identifier.value, "Endpoint"),
             path = path.joinToString("/", "/") {
                 when (it) {
                     is Endpoint.Segment.Literal -> it.value
                     is Endpoint.Segment.Param -> "{${it.identifier.transform()}}"
                 }
             },
-            functionName = name.firstToLower(),
+            functionName = identifier.value.firstToLower(),
             method = method.name,
             requestClasses = requests.map {
                 EndpointClass.RequestClass(
@@ -505,7 +506,7 @@ object ClassModelTransformer : Transformer {
             reference = reference.transform(false, isNullable),
         )
 
-    private fun Field.Identifier.transform() =
+    private fun Identifier.transform() =
         value
             .split("-", ".")
             .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
@@ -561,7 +562,7 @@ object ClassModelTransformer : Transformer {
         }
 
     private fun Field.Reference.toField(identifier: String, isNullable: Boolean = false) = Field(
-        Field.Identifier(identifier),
+        Identifier(identifier),
         this,
         isNullable
     )

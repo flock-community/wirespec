@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
@@ -17,15 +18,15 @@ import community.flock.wirespec.compiler.utils.noLogger
 class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emitter(logger) {
 
     override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> name
-        is Enum -> name
-        is Refined -> name
-        is Type -> name
-        is Union -> name
+        is Endpoint -> identifier.emit()
+        is Enum -> identifier.emit()
+        is Refined -> identifier.emit()
+        is Type -> identifier.emit()
+        is Union -> identifier.emit()
     }
 
     override fun Type.emit(ast: AST) = """
-        |type $name {
+        |type ${identifier.emit()} {
         |${shape.emit()}
         |}
         |""".trimMargin()
@@ -36,7 +37,7 @@ class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emitt
     override fun Field.emit() = "${identifier.emit()}: ${reference.emit()}${if (isNullable) "?" else ""}"
 
 
-    override fun Field.Identifier.emit() = if (value in preservedKeywords) value.addBackticks() else value
+    override fun Identifier.emit() = if (value in preservedKeywords) value.addBackticks() else value
 
     override fun Field.Reference.emit(): String = when (this) {
         is Field.Reference.Unit -> "Unit"
@@ -50,21 +51,22 @@ class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emitt
         }
     }.let { if (isIterable) "$it[]" else it }
 
-    override fun Enum.emit() = "enum $name {\n${SPACER}${entries.joinToString(", ") { it.capitalize() }}\n}\n"
+    override fun Enum.emit() =
+        "enum ${identifier.emit()} {\n${SPACER}${entries.joinToString(", ") { it.capitalize() }}\n}\n"
 
-    override fun Refined.emit() = "type $name ${validator.emit()}\n"
+    override fun Refined.emit() = "type ${identifier.emit()} ${validator.emit()}\n"
 
     override fun Refined.Validator.emit() = "/${value.drop(1).dropLast(1)}/g"
 
     override fun Endpoint.emit() =
         """
-            |endpoint $name ${method}${requests.emitRequest()} ${path.emitPath()}${query.emitQuery()} -> {
+            |endpoint ${identifier.emit()} ${method}${requests.emitRequest()} ${path.emitPath()}${query.emitQuery()} -> {
             |${responses.joinToString("\n") { "$SPACER${it.status.fixStatus()} -> ${it.content?.reference?.emit() ?: "Unit"}${if (it.content?.isNullable == true) "?" else ""}" }}
             |}
             |
         """.trimMargin()
 
-    override fun Union.emit() = "type $name = ${entries.joinToString(" | ") { it.emit() }}\n"
+    override fun Union.emit() = "type ${identifier.emit()} = ${entries.joinToString(" | ") { it.emit() }}\n"
 
     private fun String.fixStatus(): String = when (this) {
         "default" -> "200"

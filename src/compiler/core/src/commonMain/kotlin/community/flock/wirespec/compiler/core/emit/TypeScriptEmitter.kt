@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
@@ -26,11 +27,11 @@ class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emi
     """.trimMargin()
 
     override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> name
-        is Enum -> name
-        is Refined -> name
-        is Type -> name
-        is Union -> name
+        is Endpoint -> identifier.emit()
+        is Enum -> identifier.emit()
+        is Refined -> identifier.emit()
+        is Type -> identifier.emit()
+        is Union -> identifier.emit()
     }
 
     override fun emit(ast: AST): List<Emitted> =
@@ -44,21 +45,19 @@ class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emi
         }
 
     override fun Type.emit(ast: AST) =
-        """export type ${name.sanitizeSymbol()} = {
+        """export type ${identifier.sanitizeSymbol()} = {
             |${shape.emit()}
             |}
             |
             |""".trimMargin()
 
-    override fun Enum.emit() = "export type ${name.sanitizeSymbol()} = ${entries.joinToString(" | ") { """"$it"""" }}\n"
+    override fun Enum.emit() =
+        "export type ${identifier.sanitizeSymbol()} = ${entries.joinToString(" | ") { """"$it"""" }}\n"
 
     override fun Type.Shape.emit() = value.joinToString(",\n") { it.emit() }
 
     override fun Field.emit() =
         "${SPACER}\"${identifier.emit()}\"${if (isNullable) "?" else ""}: ${reference.emit()}"
-
-    override fun Field.Identifier.emit() = value
-
 
     private fun Field.Reference.emitSymbol() = when (this) {
         is Field.Reference.Unit -> "void"
@@ -77,17 +76,17 @@ class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emi
         .let { if (isMap) "Record<string, $it>" else it }
 
     override fun Refined.emit() =
-        """export type ${name.sanitizeSymbol()} = string;
-            |const regExp$name = ${validator.emit()};
-            |export const validate$name = (value: string): value is ${name.sanitizeSymbol()} => 
-            |${SPACER}regExp$name.test(value);
+        """export type ${identifier.sanitizeSymbol()} = string;
+            |const regExp${identifier.emit()} = ${validator.emit()};
+            |export const validate${identifier.emit()} = (value: string): value is ${identifier.sanitizeSymbol()} => 
+            |${SPACER}regExp${identifier.emit()}.test(value);
             |""".trimMargin()
 
     override fun Refined.Validator.emit() = "/${value.drop(1).dropLast(1)}/g"
 
     override fun Endpoint.emit() =
         """
-          |export module ${name.sanitizeSymbol()} {
+          |export module ${identifier.sanitizeSymbol()} {
           |${SPACER}export const PATH = "/${
             path.joinToString("/") {
                 when (it) {
@@ -117,7 +116,7 @@ class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emi
         }
           |${SPACER}export type Handler = (request:Request) => Promise<Response>
           |${SPACER}export type Call = {
-          |${SPACER}${SPACER}${name.sanitizeSymbol().firstToLower()}: Handler
+          |${SPACER}${SPACER}${identifier.sanitizeSymbol().firstToLower()}: Handler
           |${SPACER}}
           |${
             requests.distinct().joinToString("\n") {
@@ -143,7 +142,8 @@ class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emi
           |
         """.trimMargin()
 
-    override fun Union.emit() = "export type ${name.sanitizeSymbol()} = ${entries.joinToString(" | ") { it.emit() }}\n"
+    override fun Union.emit() =
+        "export type ${identifier.sanitizeSymbol()} = ${entries.joinToString(" | ") { it.emit() }}\n"
 
     private fun List<Endpoint.Segment>.emitType() = "`${joinToString("") { "/" + it.emitType() }}`"
 
@@ -164,14 +164,14 @@ class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emi
 
     private fun List<Field>.emitMap() = joinToString(", ") {
         "\"${it.identifier.emit()}\": props.${
-            it.identifier.emit().sanitizeSymbol().firstToLower()
+            it.identifier.sanitizeSymbol().firstToLower()
         }"
     }
 
     private fun List<Endpoint.Segment>.emitPath() = "/" + joinToString("/") { it.emit() }
     private fun Endpoint.Segment.emit(): String = when (this) {
         is Endpoint.Segment.Literal -> value
-        is Endpoint.Segment.Param -> "\${props.${identifier.value.sanitizeSymbol().firstToLower()}}"
+        is Endpoint.Segment.Param -> "\${props.${identifier.sanitizeSymbol().firstToLower()}}"
     }
 
     private fun Endpoint.joinParameters(
@@ -187,20 +187,21 @@ class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emi
             .filterNotNull()
             .map {
                 it.copy(
-                    identifier = Field.Identifier(
-                        it.identifier.value.sanitizeSymbol().firstToLower()
+                    identifier = Identifier(
+                        it.identifier.sanitizeSymbol().firstToLower()
                     )
                 )
             }
     }
 
-    private fun String.sanitizeSymbol() = this
-        .asSequence()
+    private fun Identifier.sanitizeSymbol() = value.sanitizeSymbol()
+
+    private fun String.sanitizeSymbol() = asSequence()
         .filter { it.isLetterOrDigit() || listOf('_').contains(it) }
         .joinToString("")
 
     private fun Field.Reference.toField(identifier: String, isNullable: Boolean) = Field(
-        Field.Identifier(identifier),
+        Identifier(identifier),
         this,
         isNullable
     )

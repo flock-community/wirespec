@@ -34,12 +34,12 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is CustomType -> parseEndpointDefinition(token.value).bind()
+            is CustomType -> parseEndpointDefinition(token.value.toIdentifier()).bind()
             else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
         }
     }
 
-    private fun TokenProvider.parseEndpointDefinition(name: String) = either {
+    private fun TokenProvider.parseEndpointDefinition(name: Identifier) = either {
         eatToken().bind()
         token.log()
         val method = when (token.type) {
@@ -107,7 +107,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
         val responses = parseEndpointResponses().bind()
 
         Endpoint(
-            name = name,
+            identifier = name,
             method = method,
             path = segments,
             query = queryParams,
@@ -135,7 +135,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
             else -> raise(WrongTokenException<LeftCurly>(token))
         }
         val identifier = when (token.type) {
-            is CustomValue -> Field.Identifier(token.value).also { eatToken().bind() }
+            is CustomValue -> Identifier(token.value).also { eatToken().bind() }
             else -> raise(WrongTokenException<CustomValue>(token))
         }
         when (token.type) {

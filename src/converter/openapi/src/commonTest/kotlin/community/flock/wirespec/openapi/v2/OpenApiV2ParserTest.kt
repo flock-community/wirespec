@@ -5,9 +5,9 @@ import community.flock.kotlinx.openapi.bindings.v2.OpenAPI
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Field.Identifier
 import community.flock.wirespec.compiler.core.parse.Field.Reference.Custom
 import community.flock.wirespec.compiler.core.parse.Field.Reference.Primitive
+import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.openapi.common.Expected
@@ -25,7 +25,7 @@ class OpenApiV2ParserTest {
 
         val expectedTypeDefinitions = listOf(
             Type(
-                name = "ApiResponse",
+                identifier = Identifier("ApiResponse"),
                 shape = Shape(
                     value = listOf(
                         Field(
@@ -47,7 +47,7 @@ class OpenApiV2ParserTest {
                 )
             ),
             Type(
-                name = "Category",
+                identifier = Identifier("Category"),
                 shape = Shape(
                     value = listOf(
                         Field(
@@ -64,7 +64,7 @@ class OpenApiV2ParserTest {
                 )
             ),
             Type(
-                name = "Pet",
+                identifier = Identifier("Pet"),
                 shape = Shape(
                     value = listOf(
                         Field(
@@ -101,7 +101,7 @@ class OpenApiV2ParserTest {
                 )
             ),
             Type(
-                name = "Tag",
+                identifier = Identifier("Tag"),
                 shape = Shape(
                     value = listOf(
                         Field(
@@ -118,7 +118,7 @@ class OpenApiV2ParserTest {
                 )
             ),
             Type(
-                name = "Order",
+                identifier = Identifier("Order"),
                 shape = Shape(
                     value = listOf(
                         Field(
@@ -155,7 +155,7 @@ class OpenApiV2ParserTest {
                 )
             ),
             Type(
-                name = "User",
+                identifier = Identifier("User"),
                 shape = Shape(
                     value = listOf(
                         Field(
@@ -204,8 +204,8 @@ class OpenApiV2ParserTest {
         )
 
         val expectedEnumDefinitions = listOf(
-            Enum(name = "PetStatus", entries = setOf("available", "pending", "sold")),
-            Enum(name = "OrderStatus", entries = setOf("placed", "approved", "delivered"))
+            Enum(identifier = Identifier("PetStatus"), entries = setOf("available", "pending", "sold")),
+            Enum(identifier = Identifier("OrderStatus"), entries = setOf("placed", "approved", "delivered"))
         )
 
         val typeDefinitions = ast.filterIsInstance<Type>()
@@ -214,7 +214,7 @@ class OpenApiV2ParserTest {
         val enumDefinitions = ast.filterIsInstance<Enum>()
         assertEquals(enumDefinitions, expectedEnumDefinitions)
 
-        val endpoints = ast.filterIsInstance<Endpoint>().map { it.name }
+        val endpoints = ast.filterIsInstance<Endpoint>().map { it.identifier.value }
         val expectedEndpoint = listOf(
             "UploadFile",
             "AddPet",
@@ -248,7 +248,7 @@ class OpenApiV2ParserTest {
 
         val expected = listOf(
             Endpoint(
-                name = "AlisaGET",
+                identifier = Identifier("AlisaGET"),
                 method = Endpoint.Method.GET,
                 path = listOf(Endpoint.Segment.Literal(value = "alisa")),
                 query = emptyList(),
@@ -268,7 +268,7 @@ class OpenApiV2ParserTest {
                 )
             ),
             Type(
-                name = "Foo",
+                identifier = Identifier("Foo"),
                 shape = Shape(
                     value = listOf(
                         Field(

@@ -9,13 +9,6 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 
-interface Emitters :
-    TypeDefinitionEmitter,
-    EnumDefinitionEmitter,
-    RefinedTypeDefinitionEmitter,
-    EndpointDefinitionEmitter,
-    UnionDefinitionEmitter
-
 abstract class Emitter(
     val logger: Logger,
     val split: Boolean = false
