@@ -22,7 +22,7 @@ fun WsNode.consume(): Node =
 
 fun WsEndpoint.consume(): Endpoint =
     Endpoint(
-        name = name,
+        identifier = Identifier(name),
         method = method.consume(),
         path = path.map { it.consume() },
         query = query.map { it.consume() },
@@ -49,9 +49,9 @@ private fun WsMethod.consume() = when (this) {
     WsMethod.TRACE -> Endpoint.Method.TRACE
 }
 
-private fun WsIdentifier.consume() = Type.Shape.Field.Identifier(value)
+private fun WsIdentifier.consume() = Identifier(value)
 
-private fun WsField.consume() = Type.Shape.Field(
+private fun WsField.consume() = Field(
     identifier = identifier.consume(),
     reference = reference.consume(),
     isNullable = isNullable
@@ -78,23 +78,23 @@ private fun WsContent.consume() =
 
 private fun WsReference.consume() =
     when (this) {
-        is WsAny -> Type.Shape.Field.Reference.Any(
+        is WsAny -> Field.Reference.Any(
             isIterable = isIterable,
             isMap = isMap
         )
 
-        is WsUnit -> Type.Shape.Field.Reference.Unit(
+        is WsUnit -> Field.Reference.Unit(
             isIterable = isIterable,
             isMap = isMap
         )
 
-        is WsCustom -> Type.Shape.Field.Reference.Custom(
+        is WsCustom -> Field.Reference.Custom(
             value = value,
             isIterable = isIterable,
             isMap = isMap
         )
 
-        is WsPrimitive -> Type.Shape.Field.Reference.Primitive(
+        is WsPrimitive -> Field.Reference.Primitive(
             type = type.consume(),
             isIterable = isIterable,
             isMap = isMap
@@ -103,10 +103,10 @@ private fun WsReference.consume() =
 
 private fun WsPrimitiveType.consume() =
     when (this) {
-        WsPrimitiveType.String -> Type.Shape.Field.Reference.Primitive.Type.String
-        WsPrimitiveType.Integer -> Type.Shape.Field.Reference.Primitive.Type.Integer
-        WsPrimitiveType.Number -> Type.Shape.Field.Reference.Primitive.Type.Number
-        WsPrimitiveType.Boolean -> Type.Shape.Field.Reference.Primitive.Type.Boolean
+        WsPrimitiveType.String -> Field.Reference.Primitive.Type.String
+        WsPrimitiveType.Integer -> Field.Reference.Primitive.Type.Integer
+        WsPrimitiveType.Number -> Field.Reference.Primitive.Type.Number
+        WsPrimitiveType.Boolean -> Field.Reference.Primitive.Type.Boolean
     }
 
 

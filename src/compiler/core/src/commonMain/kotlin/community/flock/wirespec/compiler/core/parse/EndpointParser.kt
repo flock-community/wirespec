@@ -34,7 +34,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is CustomType -> parseEndpointDefinition(token.value.toIdentifier()).bind()
+            is CustomType -> parseEndpointDefinition(Identifier(token.value)).bind()
             else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
         }
     }

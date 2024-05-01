@@ -7,12 +7,11 @@ import community.flock.wirespec.compiler.core.parse.Field.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.core.parse.toIdentifier
 
 object NodeFixtures {
 
     val refined = Refined(
-        identifier = "UUID".toIdentifier(),
+        identifier = Identifier("UUID"),
         validator = Refined.Validator(
             "^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}\$"
         )
@@ -20,7 +19,7 @@ object NodeFixtures {
 
 
     val enum = Enum(
-        identifier = "TodoStatus".toIdentifier(),
+        identifier = Identifier("TodoStatus"),
         entries = setOf(
             "OPEN",
             "IN_PROGRESS",
@@ -58,7 +57,7 @@ object NodeFixtures {
     )
 
     val endpoint = Endpoint(
-        identifier = "".toIdentifier(),
+        identifier = Identifier(""),
         method = Endpoint.Method.GET,
         path = listOf(Endpoint.Segment.Literal("/todos")),
         query = emptyList(),

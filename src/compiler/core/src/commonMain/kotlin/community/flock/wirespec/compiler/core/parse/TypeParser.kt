@@ -29,7 +29,7 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is CustomType -> parseTypeDefinition(token.value.toIdentifier()).bind()
+            is CustomType -> parseTypeDefinition(Identifier(token.value)).bind()
             else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
         }
     }

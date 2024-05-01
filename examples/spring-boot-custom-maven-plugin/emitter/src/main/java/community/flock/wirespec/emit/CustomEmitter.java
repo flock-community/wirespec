@@ -26,7 +26,7 @@ public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
     @NotNull
     @Override
     public String emitName(@NotNull Definition definition) {
-        return definition.getName() + "Custom";
+        return definition.getIdentifier() + "Custom";
     }
 
     @NotNull

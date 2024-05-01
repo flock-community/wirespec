@@ -23,6 +23,7 @@ import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
@@ -50,13 +51,15 @@ class OpenApiV3Emitter {
     private fun AST.emitComponents() = this
         .filterIsInstance<Definition>()
         .filter { it !is Endpoint }
-        .associate { it.name to when (it) {
-            is Enum -> it.emit()
-            is Refined -> it.emit()
-            is Type -> it.emit()
-            is Union -> it.emit()
-            is Endpoint -> error("Cannot emit endpoint")
-        } }
+        .associate {
+            it.identifier.value to when (it) {
+                is Enum -> it.emit()
+                is Refined -> it.emit()
+                is Type -> it.emit()
+                is Union -> it.emit()
+                is Endpoint -> error("Cannot emit endpoint")
+            }
+        }
         .let { ComponentsObject(it) }
 
     private fun AST.emitPaths() = this
@@ -111,7 +114,7 @@ class OpenApiV3Emitter {
         filter { it.method == method }.map { it.emit() }.firstOrNull()
 
     private fun Endpoint.emit(): OperationObject = OperationObject(
-        operationId = name,
+        operationId = identifier.value,
         parameters = path.filterIsInstance<Endpoint.Segment.Param>()
             .map { it.emitParameter() } + query.map { it.emitParameter(ParameterLocation.QUERY) } + headers.map {
             it.emitParameter(
@@ -120,14 +123,14 @@ class OpenApiV3Emitter {
         },
         requestBody = RequestBodyObject(
             content = requests.mapNotNull { it.content?.emit() }.toMap().ifEmpty { null },
-            required = !requests.any { it.content?.isNullable?:false }
+            required = !requests.any { it.content?.isNullable ?: false }
         ),
         responses = responses
             .groupBy { it.status }
             .map { (statusCode, res) ->
                 StatusCode(statusCode) to ResponseObject(
                     headers = res.flatMap { it.headers }.associate { it.emitHeader() },
-                    description = "${name} $statusCode response",
+                    description = "$identifier $statusCode response",
                     content = res
                         .mapNotNull { it.content }
                         .associate { it.emit() }
@@ -144,45 +147,45 @@ class OpenApiV3Emitter {
         }
     }
 
-    fun Type.Shape.Field.emitParameter(location: ParameterLocation): ParameterObject = ParameterObject(
+    private fun Field.emitParameter(location: ParameterLocation): ParameterObject = ParameterObject(
         `in` = location,
         name = identifier.value,
         schema = reference.emitSchema()
     )
 
-    fun Endpoint.Segment.Param.emitParameter(): ParameterObject = ParameterObject(
+    private fun Endpoint.Segment.Param.emitParameter(): ParameterObject = ParameterObject(
         `in` = ParameterLocation.PATH,
         name = identifier.value,
         schema = reference.emitSchema()
     )
 
-    fun Type.Shape.Field.emitHeader(): Pair<String, HeaderOrReferenceObject> = identifier.value to reference.emitHeader()
+    private fun Field.emitHeader(): Pair<String, HeaderOrReferenceObject> = identifier.value to reference.emitHeader()
 
-    fun Type.Shape.Field.emitSchema(): Pair<String, SchemaOrReferenceObject> = identifier.value to reference.emitSchema()
+    private fun Field.emitSchema(): Pair<String, SchemaOrReferenceObject> = identifier.value to reference.emitSchema()
 
-    fun Type.Shape.Field.Reference.emitHeader(): HeaderOrReferenceObject {
+    private fun Field.Reference.emitHeader(): HeaderOrReferenceObject {
         return when (this) {
-            is Type.Shape.Field.Reference.Custom -> ReferenceObject(ref = Ref("#/components/headers/${value}"))
-            is Type.Shape.Field.Reference.Primitive -> HeaderObject(schema = emitSchema())
-            is Type.Shape.Field.Reference.Any -> error("Cannot map Any")
-            is Type.Shape.Field.Reference.Unit -> error("Cannot map Unit")
+            is Field.Reference.Custom -> ReferenceObject(ref = Ref("#/components/headers/${value}"))
+            is Field.Reference.Primitive -> HeaderObject(schema = emitSchema())
+            is Field.Reference.Any -> error("Cannot map Any")
+            is Field.Reference.Unit -> error("Cannot map Unit")
         }
     }
 
-    fun Type.Shape.Field.Reference.emitSchema(): SchemaOrReferenceObject {
+    private fun Field.Reference.emitSchema(): SchemaOrReferenceObject {
         val ref = when (this) {
-            is Type.Shape.Field.Reference.Custom -> ReferenceObject(ref = Ref("#/components/schemas/${value}"))
-            is Type.Shape.Field.Reference.Primitive -> SchemaObject(type = type.emitType())
-            is Type.Shape.Field.Reference.Any -> error("Cannot map Any")
-            is Type.Shape.Field.Reference.Unit -> error("Cannot map Unit")
+            is Field.Reference.Custom -> ReferenceObject(ref = Ref("#/components/schemas/${value}"))
+            is Field.Reference.Primitive -> SchemaObject(type = type.emitType())
+            is Field.Reference.Any -> error("Cannot map Any")
+            is Field.Reference.Unit -> error("Cannot map Unit")
         }
-        if(isMap){
+        if (isMap) {
             return SchemaObject(
                 type = OpenApiType.OBJECT,
                 additionalProperties = ref
             )
         }
-        if(isIterable) {
+        if (isIterable) {
             return SchemaObject(
                 type = OpenApiType.ARRAY,
                 items = ref,
@@ -192,11 +195,11 @@ class OpenApiV3Emitter {
     }
 
 
-    private fun Type.Shape.Field.Reference.Primitive.Type.emitType(): OpenApiType = when (this) {
-        Type.Shape.Field.Reference.Primitive.Type.String -> OpenApiType.STRING
-        Type.Shape.Field.Reference.Primitive.Type.Integer -> OpenApiType.INTEGER
-        Type.Shape.Field.Reference.Primitive.Type.Number -> OpenApiType.NUMBER
-        Type.Shape.Field.Reference.Primitive.Type.Boolean -> OpenApiType.BOOLEAN
+    private fun Field.Reference.Primitive.Type.emitType(): OpenApiType = when (this) {
+        Field.Reference.Primitive.Type.String -> OpenApiType.STRING
+        Field.Reference.Primitive.Type.Integer -> OpenApiType.INTEGER
+        Field.Reference.Primitive.Type.Number -> OpenApiType.NUMBER
+        Field.Reference.Primitive.Type.Boolean -> OpenApiType.BOOLEAN
     }
 
     private fun Endpoint.Content.emit(): Pair<MediaType, MediaTypeObject> =

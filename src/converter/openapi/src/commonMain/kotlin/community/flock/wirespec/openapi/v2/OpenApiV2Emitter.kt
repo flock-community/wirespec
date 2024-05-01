@@ -16,6 +16,7 @@ import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import kotlinx.serialization.json.JsonPrimitive
@@ -53,13 +54,13 @@ class OpenApiV2Emitter {
             }.toMap(),
             definitions = ast
                 .filterIsInstance<Refined>().associate { type ->
-                    type.name to SchemaObject(
+                    type.identifier.value to SchemaObject(
                         type = OpenApiType.STRING,
                         pattern = type.validator.value
                     )
                 } + ast
                 .filterIsInstance<Type>().associate { type ->
-                    type.name to SchemaObject(
+                    type.identifier.value to SchemaObject(
                         properties = type.shape.value.associate { it.emit() },
                         required = type.shape.value
                             .filter { !it.isNullable }
@@ -68,7 +69,7 @@ class OpenApiV2Emitter {
                     )
                 } + ast
                 .filterIsInstance<Enum>().associate { enum ->
-                    enum.name to SchemaObject(
+                    enum.identifier.value to SchemaObject(
                         type = OpenApiType.STRING,
                         enum = enum.entries.map { JsonPrimitive(it) }
                     )
@@ -80,7 +81,7 @@ class OpenApiV2Emitter {
 
     private fun Endpoint.emit(): OperationObject {
         val operationObject = OperationObject(
-            operationId = this.name,
+            operationId = identifier.value,
             consumes = requests.mapNotNull { it.content?.type }.distinct().ifEmpty { null },
             produces = responses.mapNotNull { it.content?.type }.distinct().ifEmpty { null },
             parameters = requests
@@ -101,9 +102,9 @@ class OpenApiV2Emitter {
             responses = responses
                 .associate {
                     StatusCode(it.status) to ResponseObject(
-                        description = "${this.name} ${it.status} response",
+                        description = "$identifier ${it.status} response",
                         schema = it.content
-                            ?.takeIf { content -> content.reference !is Type.Shape.Field.Reference.Unit }
+                            ?.takeIf { content -> content.reference !is Field.Reference.Unit }
                             ?.let { content ->
                                 when (content.reference.isIterable) {
                                     false -> content.reference.emit()
@@ -126,9 +127,9 @@ class OpenApiV2Emitter {
         }
     }
 
-    fun Type.Shape.Field.emit(): Pair<String, SchemaOrReferenceObject> = identifier.value to reference.emit()
+    fun Field.emit(): Pair<String, SchemaOrReferenceObject> = identifier.value to reference.emit()
 
-    fun Type.Shape.Field.emitParameter(location: ParameterLocation) =
+    private fun Field.emitParameter(location: ParameterLocation) =
         ParameterObject(
             `in` = location,
             name = identifier.value,
@@ -145,15 +146,15 @@ class OpenApiV2Emitter {
 
         )
 
-    fun Type.Shape.Field.Reference.emit(): SchemaOrReferenceObject {
+    fun Field.Reference.emit(): SchemaOrReferenceObject {
         val ref = when (this) {
-            is Type.Shape.Field.Reference.Custom -> ReferenceObject(ref = Ref("#/definitions/${value}"))
-            is Type.Shape.Field.Reference.Primitive -> SchemaObject(
+            is Field.Reference.Custom -> ReferenceObject(ref = Ref("#/definitions/${value}"))
+            is Field.Reference.Primitive -> SchemaObject(
                 type = type.emitType(),
             )
 
-            is Type.Shape.Field.Reference.Any -> error("Cannot map Any")
-            is Type.Shape.Field.Reference.Unit -> error("Cannot map Unit")
+            is Field.Reference.Any -> error("Cannot map Any")
+            is Field.Reference.Unit -> error("Cannot map Unit")
         }
 
         return if (isIterable) {
@@ -167,22 +168,22 @@ class OpenApiV2Emitter {
     }
 
 
-    private fun Type.Shape.Field.Reference.Primitive.Type.emitType(): OpenApiType = when (this) {
-        Type.Shape.Field.Reference.Primitive.Type.String -> OpenApiType.STRING
-        Type.Shape.Field.Reference.Primitive.Type.Integer -> OpenApiType.INTEGER
-        Type.Shape.Field.Reference.Primitive.Type.Number -> OpenApiType.NUMBER
-        Type.Shape.Field.Reference.Primitive.Type.Boolean -> OpenApiType.BOOLEAN
+    private fun Field.Reference.Primitive.Type.emitType(): OpenApiType = when (this) {
+        Field.Reference.Primitive.Type.String -> OpenApiType.STRING
+        Field.Reference.Primitive.Type.Integer -> OpenApiType.INTEGER
+        Field.Reference.Primitive.Type.Number -> OpenApiType.NUMBER
+        Field.Reference.Primitive.Type.Boolean -> OpenApiType.BOOLEAN
     }
 
-    private fun Type.Shape.Field.Reference.emitType(): OpenApiType =
+    private fun Field.Reference.emitType(): OpenApiType =
         if (isIterable) {
             OpenApiType.ARRAY
         } else {
             when (this) {
-                is Type.Shape.Field.Reference.Primitive -> type.emitType()
-                is Type.Shape.Field.Reference.Custom -> OpenApiType.OBJECT
-                is Type.Shape.Field.Reference.Any -> OpenApiType.OBJECT
-                is Type.Shape.Field.Reference.Unit -> OpenApiType.OBJECT
+                is Field.Reference.Primitive -> type.emitType()
+                is Field.Reference.Custom -> OpenApiType.OBJECT
+                is Field.Reference.Any -> OpenApiType.OBJECT
+                is Field.Reference.Unit -> OpenApiType.OBJECT
             }
         }
 }

@@ -2,14 +2,11 @@ package community.flock.wirespec.compiler.core.parse
 
 import community.flock.wirespec.compiler.core.Value
 import community.flock.wirespec.compiler.core.removeBackticks
-import kotlin.jvm.JvmInline
-import kotlin.jvm.JvmStatic
 
 sealed interface Node
 
 sealed interface Definition : Node {
     val identifier: Identifier
-    val name: String get() = identifier.value
 }
 
 data class Type(override val identifier: Identifier, val shape: Shape) : Definition {
@@ -85,15 +82,24 @@ data class Endpoint(
     data class Content(val type: String, val reference: Field.Reference, val isNullable: Boolean = false)
 }
 
-@JvmInline
-value class Identifier private constructor(override val value: String) : Value<String> {
+class Identifier private constructor(override val value: String) : Value<String> {
+
+    override fun toString(): String = value
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+
+        other as Identifier
+
+        return value == other.value
+    }
+
+    override fun hashCode(): Int = value.hashCode()
+
     companion object {
-        @JvmStatic
-        fun of(value: String) = invoke(value)
         operator fun invoke(value: String) = value
             .removeBackticks()
             .let(::Identifier)
     }
 }
-
-fun String.toIdentifier() = Identifier(this)
