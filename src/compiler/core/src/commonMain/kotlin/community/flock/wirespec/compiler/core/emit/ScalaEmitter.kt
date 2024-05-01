@@ -1,5 +1,6 @@
 package community.flock.wirespec.compiler.core.emit
 
+import community.flock.wirespec.compiler.core.addBackticks
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
@@ -8,9 +9,10 @@ import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Field.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
@@ -40,10 +42,10 @@ class ScalaEmitter(
 
     override fun Type.Shape.emit() = value.joinToString("\n") { it.emit() }.dropLast(1)
 
-    override fun Type.Shape.Field.emit() =
+    override fun Field.emit() =
         "${SPACER}val ${identifier.emit()}: ${if (isNullable) "Option[${reference.emit()}]" else reference.emit()},"
 
-    override fun Type.Shape.Field.Identifier.emit() = if (value in preservedKeywords) "`$value`" else value
+    override fun Field.Identifier.emit() = if (value in preservedKeywords) value.addBackticks() else value
 
     override fun Reference.emit() = when (this) {
         is Reference.Unit -> "Unit"

@@ -30,11 +30,11 @@ class ParseTypeTest {
             .shape.value
             .also { it.size shouldBe 1 }
             .first()
-            .shouldBeInstanceOf<Type.Shape.Field>()
+            .shouldBeInstanceOf<Field>()
             .run {
-                identifier.shouldBeInstanceOf<Type.Shape.Field.Identifier>().value shouldBe "bar"
-                reference.shouldBeInstanceOf<Type.Shape.Field.Reference.Primitive>().run {
-                    type shouldBe Type.Shape.Field.Reference.Primitive.Type.String
+                identifier.shouldBeInstanceOf<Field.Identifier>().value shouldBe "bar"
+                reference.shouldBeInstanceOf<Field.Reference.Primitive>().run {
+                    type shouldBe Field.Reference.Primitive.Type.String
                     isIterable shouldBe false
                     isMap shouldBe false
                 }
@@ -79,8 +79,8 @@ class ParseTypeTest {
             .also { it.size shouldBe 2 }
             .let {
                 val (first, second) = it.toList()
-                first shouldBe Type.Shape.Field.Reference.Custom(value = "Bar", isIterable = false, isMap = false)
-                second shouldBe Type.Shape.Field.Reference.Custom(value = "Bal", isIterable = false, isMap = false)
+                first shouldBe Field.Reference.Custom(value = "Bar", isIterable = false, isMap = false)
+                second shouldBe Field.Reference.Custom(value = "Bal", isIterable = false, isMap = false)
             }
     }
 }

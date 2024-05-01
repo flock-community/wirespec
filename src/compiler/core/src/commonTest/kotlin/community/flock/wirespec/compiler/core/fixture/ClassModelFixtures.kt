@@ -1,7 +1,7 @@
 package community.flock.wirespec.compiler.core.fixture
 
 import community.flock.wirespec.compiler.core.emit.transformer.EndpointClass
-import community.flock.wirespec.compiler.core.emit.transformer.Field
+import community.flock.wirespec.compiler.core.emit.transformer.FieldClass
 import community.flock.wirespec.compiler.core.emit.transformer.Parameter
 import community.flock.wirespec.compiler.core.emit.transformer.Reference
 import community.flock.wirespec.compiler.core.emit.transformer.Reference.Language.Primitive
@@ -20,21 +20,21 @@ object ClassModelFixtures {
                 EndpointClass.RequestClass(
                     name = "RequestApplicationXml",
                     fields = listOf(
-                        Field(
+                        FieldClass(
                             identifier = "path",
                             reference = Reference.Custom("String", false),
                             isOverride = true,
                             isFinal = true,
                             isPrivate = true
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "method",
                             reference = Reference.Wirespec("Method", false),
                             isOverride = true,
                             isFinal = true,
                             isPrivate = true
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "query",
                             reference = Reference.Language(
                                 primitive = Primitive.Map,
@@ -64,7 +64,7 @@ object ClassModelFixtures {
                             isFinal = true,
                             isPrivate = true
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "headers",
                             reference = Reference.Language(
                                 primitive = Primitive.Map,
@@ -91,7 +91,7 @@ object ClassModelFixtures {
                             isFinal = true,
                             isPrivate = true
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "content",
                             reference = Reference.Wirespec(
                                 name = "Content",
@@ -234,21 +234,21 @@ object ClassModelFixtures {
                 EndpointClass.RequestClass(
                     name = "RequestApplicationJson",
                     fields = listOf(
-                        Field(
+                        FieldClass(
                             identifier = "path",
                             reference = Reference.Custom("String", false),
                             isOverride = true,
                             isFinal = true,
                             isPrivate = true
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "method",
                             reference = Reference.Wirespec("Method", false),
                             isOverride = true,
                             isFinal = true,
                             isPrivate = true
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "query",
                             reference = Reference.Language(
                                 primitive = Primitive.Map,
@@ -277,7 +277,7 @@ object ClassModelFixtures {
                             isFinal = true,
                             isPrivate = true
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "headers",
                             reference = Reference.Language(
                                 primitive = Primitive.Map, isNullable = false, generics = Reference.Generics(
@@ -299,7 +299,7 @@ object ClassModelFixtures {
                             isFinal = true,
                             isPrivate = true
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "content",
                             reference = Reference.Wirespec(
                                 name = "Content",
@@ -433,21 +433,21 @@ object ClassModelFixtures {
                 EndpointClass.RequestClass(
                     name = "RequestApplicationXWwwFormUrlencoded",
                     fields = listOf(
-                        Field(
+                        FieldClass(
                             identifier = "path",
                             reference = Reference.Custom("String", false),
                             isOverride = true,
                             isFinal = true,
                             isPrivate = true
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "method",
                             reference = Reference.Wirespec("Method", false),
                             isOverride = true,
                             isFinal = true,
                             isPrivate = true
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "query",
                             reference = Reference.Language(
                                 primitive = Primitive.Map, isNullable = false, generics = Reference.Generics(
@@ -469,7 +469,7 @@ object ClassModelFixtures {
                             isFinal = true,
                             isPrivate = true
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "headers",
                             reference = Reference.Language(
                                 primitive = Primitive.Map, isNullable = false, generics = Reference.Generics(
@@ -491,7 +491,7 @@ object ClassModelFixtures {
                             isFinal = true,
                             isPrivate = true
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "content",
                             reference = Reference.Wirespec(
                                 name = "Content",
@@ -693,7 +693,7 @@ object ClassModelFixtures {
                 EndpointClass.ResponseClass(
                     name = "Response200ApplicationXml",
                     fields = listOf(
-                        Field(
+                        FieldClass(
                             identifier = "status",
                             reference = Reference.Language(
                                 primitive = Primitive.Integer
@@ -702,7 +702,7 @@ object ClassModelFixtures {
                             isFinal = true,
                             isPrivate = true
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "headers",
                             reference = Reference.Language(
                                 primitive = Primitive.Map, isNullable = false, generics = Reference.Generics(
@@ -724,7 +724,7 @@ object ClassModelFixtures {
                             isPrivate = true,
                             isFinal = true
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "content",
                             reference = Reference.Wirespec(
                                 name = "Content",
@@ -834,7 +834,7 @@ object ClassModelFixtures {
                     name = "Response200ApplicationJson",
                     statusCode = "200",
                     fields = listOf(
-                        Field(
+                        FieldClass(
                             identifier = "status",
                             reference = Reference.Language(
                                 primitive = Primitive.Integer
@@ -843,7 +843,7 @@ object ClassModelFixtures {
                             isPrivate = true,
                             isFinal = true
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "headers",
                             reference = Reference.Language(
                                 primitive = Primitive.Map, isNullable = false, generics = Reference.Generics(
@@ -865,7 +865,7 @@ object ClassModelFixtures {
                             isPrivate = true,
                             isFinal = true
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "content",
                             reference = Reference.Wirespec(
                                 name = "Content",
@@ -973,7 +973,7 @@ object ClassModelFixtures {
                 EndpointClass.ResponseClass(
                     name = "Response405Unit",
                     fields = listOf(
-                        Field(
+                        FieldClass(
                             identifier = "status",
                             reference = Reference.Language(
                                 primitive = Primitive.Integer
@@ -982,7 +982,7 @@ object ClassModelFixtures {
                             isFinal = true,
                             isPrivate = true
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "headers",
                             reference = Reference.Language(
                                 primitive = Primitive.Map, isNullable = false, generics = Reference.Generics(
@@ -1004,7 +1004,7 @@ object ClassModelFixtures {
                             isFinal = true,
                             isPrivate = true
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "content",
                             reference = Reference.Wirespec(
                                 name = "Content",

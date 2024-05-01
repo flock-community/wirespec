@@ -38,12 +38,12 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is CustomValue -> mutableListOf<Type.Shape.Field>().apply {
-                add(parseField(Type.Shape.Field.Identifier(token.value)).bind())
+            is CustomValue -> mutableListOf<Field>().apply {
+                add(parseField(Field.Identifier(token.value)).bind())
                 while (token.type == Comma) {
                     eatToken().bind()
                     when (token.type) {
-                        is CustomValue -> add(parseField(Type.Shape.Field.Identifier(token.value)).bind())
+                        is CustomValue -> add(parseField(Field.Identifier(token.value)).bind())
                         else -> raise(WrongTokenException<CustomValue>(token).also { eatToken().bind() })
                     }
                 }
@@ -69,7 +69,7 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         }
     }
 
-    private fun TokenProvider.parseField(identifier: Type.Shape.Field.Identifier) = either {
+    private fun TokenProvider.parseField(identifier: Field.Identifier) = either {
         eatToken().bind()
         token.log()
         when (token.type) {
@@ -77,7 +77,7 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
             else -> raise(WrongTokenException<Colon>(token).also { eatToken().bind() })
         }
         when (val type = token.type) {
-            is WirespecType -> Type.Shape.Field(
+            is WirespecType -> Field(
                 identifier = identifier,
                 reference = parseFieldValue(type, token.value).bind(),
                 isNullable = (token.type is QuestionMark).also { if (it) eatToken().bind() }
@@ -93,31 +93,31 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         token.log()
         val isIterable = (token.type is Brackets).also { if (it) eatToken().bind() }
         when (wsType) {
-            is WsString -> Type.Shape.Field.Reference.Primitive(
-                Type.Shape.Field.Reference.Primitive.Type.String,
+            is WsString -> Field.Reference.Primitive(
+                Field.Reference.Primitive.Type.String,
                 isIterable
             )
 
-            is WsInteger -> Type.Shape.Field.Reference.Primitive(
-                Type.Shape.Field.Reference.Primitive.Type.Integer,
+            is WsInteger -> Field.Reference.Primitive(
+                Field.Reference.Primitive.Type.Integer,
                 isIterable
             )
 
-            is WsNumber -> Type.Shape.Field.Reference.Primitive(
-                Type.Shape.Field.Reference.Primitive.Type.Number,
+            is WsNumber -> Field.Reference.Primitive(
+                Field.Reference.Primitive.Type.Number,
                 isIterable
             )
 
-            is WsBoolean -> Type.Shape.Field.Reference.Primitive(
-                Type.Shape.Field.Reference.Primitive.Type.Boolean,
+            is WsBoolean -> Field.Reference.Primitive(
+                Field.Reference.Primitive.Type.Boolean,
                 isIterable
             )
 
-            is WsUnit -> Type.Shape.Field.Reference.Unit(isIterable)
+            is WsUnit -> Field.Reference.Unit(isIterable)
 
             is CustomType -> {
                 previousToken.shouldBeDefined().bind()
-                Type.Shape.Field.Reference.Custom(value, isIterable)
+                Field.Reference.Custom(value, isIterable)
             }
         }
     }
@@ -126,17 +126,18 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is CustomType -> mutableListOf<Type.Shape.Field.Reference>().apply {
+            is CustomType -> mutableListOf<Field.Reference>().apply {
                 token.shouldBeDefined().bind()
-                add(Type.Shape.Field.Reference.Custom(token.value, false))
+                add(Field.Reference.Custom(token.value, false))
                 eatToken().bind()
                 while (token.type == Pipe) {
                     eatToken().bind()
                     when (token.type) {
                         is CustomType -> {
                             token.shouldBeDefined().bind()
-                            add(Type.Shape.Field.Reference.Custom(token.value, false)).also { eatToken().bind() }
+                            add(Field.Reference.Custom(token.value, false)).also { eatToken().bind() }
                         }
+
                         else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
                     }
                 }

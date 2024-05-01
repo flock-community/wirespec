@@ -4,7 +4,7 @@ import arrow.core.Either
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
+import community.flock.wirespec.compiler.core.parse.Field.Reference
 import community.flock.wirespec.compiler.core.tokenize.types.Arrow
 import community.flock.wirespec.compiler.core.tokenize.types.Brackets
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
@@ -135,7 +135,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
             else -> raise(WrongTokenException<LeftCurly>(token))
         }
         val identifier = when (token.type) {
-            is CustomValue -> Type.Shape.Field.Identifier(token.value).also { eatToken().bind() }
+            is CustomValue -> Field.Identifier(token.value).also { eatToken().bind() }
             else -> raise(WrongTokenException<CustomValue>(token))
         }
         when (token.type) {

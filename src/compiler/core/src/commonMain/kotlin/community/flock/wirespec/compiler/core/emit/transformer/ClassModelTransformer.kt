@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.isSt
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
@@ -24,7 +25,7 @@ object ClassModelTransformer : Transformer {
         TypeClass(
             name = className(name),
             fields = shape.value.map {
-                Field(
+                FieldClass(
                     identifier = it.identifier.value,
                     reference = it.reference.transform(false, it.isNullable),
                 )
@@ -33,12 +34,14 @@ object ClassModelTransformer : Transformer {
                 .filterIsInstance<Union>()
                 .filter { union ->
                     union.entries
-                        .map { when(it){
-                            is Type.Shape.Field.Reference.Custom -> it.value
-                            else -> error("Any Unit of Primitive cannot be part of Union")
+                        .map {
+                            when (it) {
+                                is Field.Reference.Custom -> it.value
+                                else -> error("Any Unit of Primitive cannot be part of Union")
+                            }
                         }
-                    }
-                    .contains(name) }
+                        .contains(name)
+                }
                 .map { Reference.Custom(it.name) }
         )
 
@@ -65,7 +68,7 @@ object ClassModelTransformer : Transformer {
     override fun Endpoint.transform(): EndpointClass {
         val pathField = path
             .filterIsInstance<Endpoint.Segment.Param>()
-            .map { Type.Shape.Field(it.identifier, it.reference, false) }
+            .map { Field(it.identifier, it.reference, false) }
         val parameters = pathField + query + headers + cookies
         return EndpointClass(
             name = className(name, "Endpoint"),
@@ -81,7 +84,7 @@ object ClassModelTransformer : Transformer {
                 EndpointClass.RequestClass(
                     name = className("Request", it.content.name()),
                     fields = listOf(
-                        Field(
+                        FieldClass(
                             identifier = "path",
                             reference = Reference.Language(
                                 primitive = Reference.Language.Primitive.String,
@@ -91,14 +94,14 @@ object ClassModelTransformer : Transformer {
                             isPrivate = true,
                             isFinal = true,
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "method",
                             reference = Reference.Wirespec("Method"),
                             isOverride = true,
                             isPrivate = true,
                             isFinal = true,
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "query",
                             reference = Reference.Language(
                                 primitive = Reference.Language.Primitive.Map,
@@ -127,7 +130,7 @@ object ClassModelTransformer : Transformer {
                             isPrivate = true,
                             isFinal = true,
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "headers",
                             reference = Reference.Language(
                                 primitive = Reference.Language.Primitive.Map,
@@ -156,7 +159,7 @@ object ClassModelTransformer : Transformer {
                             isPrivate = true,
                             isFinal = true,
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "content",
                             reference = Reference.Wirespec(
                                 name = "Content",
@@ -352,7 +355,7 @@ object ClassModelTransformer : Transformer {
                 EndpointClass.ResponseClass(
                     name = className("Response", it.status, it.content.name()),
                     fields = listOf(
-                        Field(
+                        FieldClass(
                             identifier = "status",
                             reference = Reference.Language(
                                 primitive = Reference.Language.Primitive.Integer
@@ -361,7 +364,7 @@ object ClassModelTransformer : Transformer {
                             isFinal = true,
                             isPrivate = true
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "headers",
                             reference = Reference.Language(
                                 primitive = Reference.Language.Primitive.Map,
@@ -391,7 +394,7 @@ object ClassModelTransformer : Transformer {
                             isPrivate = true,
                             isFinal = true
                         ),
-                        Field(
+                        FieldClass(
                             identifier = "content",
                             reference = Reference.Wirespec(
                                 name = "Content",
@@ -496,13 +499,13 @@ object ClassModelTransformer : Transformer {
         )
     }
 
-    private fun Type.Shape.Field.transformParameter() =
+    private fun Field.transformParameter() =
         Parameter(
             identifier = identifier.value,
             reference = reference.transform(false, isNullable),
         )
 
-    private fun Type.Shape.Field.Identifier.transform() =
+    private fun Field.Identifier.transform() =
         value
             .split("-", ".")
             .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
@@ -520,29 +523,29 @@ object ClassModelTransformer : Transformer {
         reference = this.reference.transform(isNullable, false),
     )
 
-    private fun Type.Shape.Field.Reference.transform(isNullable: Boolean, isOptional: Boolean) =
+    private fun Field.Reference.transform(isNullable: Boolean, isOptional: Boolean) =
         when (this) {
-            is Type.Shape.Field.Reference.Unit -> Reference.Language(
+            is Field.Reference.Unit -> Reference.Language(
                 Reference.Language.Primitive.Unit,
                 isNullable,
                 isIterable,
                 isOptional
             )
 
-            is Type.Shape.Field.Reference.Any -> Reference.Language(
+            is Field.Reference.Any -> Reference.Language(
                 Reference.Language.Primitive.Any,
                 isNullable,
                 isIterable,
                 isOptional
             )
 
-            is Type.Shape.Field.Reference.Custom -> Reference.Custom(value, isNullable, isIterable, isOptional)
-            is Type.Shape.Field.Reference.Primitive ->
+            is Field.Reference.Custom -> Reference.Custom(value, isNullable, isIterable, isOptional)
+            is Field.Reference.Primitive ->
                 when (type) {
-                    Type.Shape.Field.Reference.Primitive.Type.String -> Reference.Language.Primitive.String
-                    Type.Shape.Field.Reference.Primitive.Type.Integer -> Reference.Language.Primitive.Long
-                    Type.Shape.Field.Reference.Primitive.Type.Number -> Reference.Language.Primitive.Double
-                    Type.Shape.Field.Reference.Primitive.Type.Boolean -> Reference.Language.Primitive.Boolean
+                    Field.Reference.Primitive.Type.String -> Reference.Language.Primitive.String
+                    Field.Reference.Primitive.Type.Integer -> Reference.Language.Primitive.Long
+                    Field.Reference.Primitive.Type.Number -> Reference.Language.Primitive.Double
+                    Field.Reference.Primitive.Type.Boolean -> Reference.Language.Primitive.Boolean
                 }.let { Reference.Language(it, isNullable, isIterable, isOptional) }
         }
 
@@ -557,8 +560,8 @@ object ClassModelTransformer : Transformer {
             it.firstToUpper()
         }
 
-    private fun Type.Shape.Field.Reference.toField(identifier: String, isNullable: Boolean = false) = Type.Shape.Field(
-        Type.Shape.Field.Identifier(identifier),
+    private fun Field.Reference.toField(identifier: String, isNullable: Boolean = false) = Field(
+        Field.Identifier(identifier),
         this,
         isNullable
     )

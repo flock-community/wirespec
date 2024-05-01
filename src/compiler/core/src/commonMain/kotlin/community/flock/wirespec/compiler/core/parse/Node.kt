@@ -1,7 +1,6 @@
 package community.flock.wirespec.compiler.core.parse
 
 import community.flock.wirespec.compiler.core.Value
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
 import community.flock.wirespec.compiler.core.removeBackticks
 
 sealed interface Node
@@ -11,54 +10,57 @@ sealed interface Definition : Node {
 }
 
 data class Type(override val name: String, val shape: Shape) : Definition {
-    data class Shape(override val value: List<Field>) : Value<List<Field>> {
-        data class Field(val identifier: Identifier, val reference: Reference, val isNullable: Boolean) {
-            data class Identifier private constructor(override val value: String) : Value<String> {
-                companion object {
-                    operator fun invoke(s: String) = s
-                        .run { removeBackticks() }
-                        .let(::Identifier)
-                }
-            }
+    data class Shape(override val value: List<Field>) : Value<List<Field>>
+}
 
-            sealed interface Reference: Value<String> {
-                val isIterable: Boolean
-                val isMap: Boolean
+data class Field(val identifier: Identifier, val reference: Reference, val isNullable: Boolean) {
+    data class Identifier private constructor(override val value: String) : Value<String> {
+        companion object {
+            operator fun invoke(s: String) = s
+                .run { removeBackticks() }
+                .let(::Identifier)
+        }
+    }
 
-                data class Any(
-                    override val isIterable: Boolean,
-                    override val isMap: Boolean = false,
-                ) : Reference {
-                    override val value: String
-                        get() = "Any"
-                }
+    sealed interface Reference : Value<String> {
+        val isIterable: Boolean
+        val isMap: Boolean
 
-                data class Unit(
-                    override val isIterable: Boolean,
-                    override val isMap: Boolean = false,
-                ) : Reference {
-                    override val value: String
-                        get() = "Unit"
-                }
-                data class Custom(
-                    override val value: String,
-                    override val isIterable: Boolean,
-                    override val isMap: Boolean = false
-                ) : Reference
+        data class Any(
+            override val isIterable: Boolean,
+            override val isMap: Boolean = false,
+        ) : Reference {
+            override val value: String
+                get() = "Any"
+        }
 
-                data class Primitive(
-                    val type: Type,
-                    override val isIterable: Boolean = false,
-                    override val isMap: Boolean = false
-                ) : Reference {
-                    enum class Type { String, Integer, Number, Boolean }
-                    override val value: String
-                        get() = type.name
-                }
-            }
+        data class Unit(
+            override val isIterable: Boolean,
+            override val isMap: Boolean = false,
+        ) : Reference {
+            override val value: String
+                get() = "Unit"
+        }
+
+        data class Custom(
+            override val value: String,
+            override val isIterable: Boolean,
+            override val isMap: Boolean = false
+        ) : Reference
+
+        data class Primitive(
+            val type: Type,
+            override val isIterable: Boolean = false,
+            override val isMap: Boolean = false
+        ) : Reference {
+            enum class Type { String, Integer, Number, Boolean }
+
+            override val value: String
+                get() = type.name
         }
     }
 }
+
 
 data class Enum(override val name: String, val entries: Set<String>) : Definition
 

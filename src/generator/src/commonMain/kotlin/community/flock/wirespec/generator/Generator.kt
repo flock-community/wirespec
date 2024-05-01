@@ -3,9 +3,10 @@ import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Field.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 import community.flock.wirespec.compiler.core.parse.Union
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -19,7 +20,7 @@ object Generator {
     fun AST.generate(type: String, random: Random = Random.Default): JsonElement {
         val ref = Reference.Custom(
             value = type.removeSuffix("[]"),
-            isIterable =  type.endsWith("[]"),
+            isIterable = type.endsWith("[]"),
             isMap = false
         )
         return generate(ref, random)
@@ -70,7 +71,7 @@ object Generator {
     private fun AST.generateType(def: Type, random: Random): JsonObject {
         val typeSeed = random.nextInt()
         return def.shape.value
-            .fold<Type.Shape.Field, Map<String, JsonElement>>(emptyMap()) { acc, cur ->
+            .fold<Field, Map<String, JsonElement>>(emptyMap()) { acc, cur ->
                 cur.identifier.value.let { value ->
                     val fieldSeed = typeSeed + value.sumOf { it -> it.code }
                     val fieldRandom = Random(fieldSeed)

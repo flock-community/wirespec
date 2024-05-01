@@ -2,9 +2,10 @@ package community.flock.wirespec.openapi.common
 
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Field.Identifier
+import community.flock.wirespec.compiler.core.parse.Field.Reference
 import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Identifier
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 import community.flock.wirespec.compiler.core.parse.Union
 
 object Expected {
@@ -42,12 +43,12 @@ object Expected {
             name = "TestWithDashGETRequestBody",
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("id"),
                         reference = Reference.Primitive(type = Reference.Primitive.Type.String, isIterable = false),
                         isNullable = true
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("nest"),
                         reference = Reference.Custom(value = "TestWithDashGETRequestBodyNest", isIterable = false),
                         isNullable = true
@@ -59,12 +60,12 @@ object Expected {
             name = "TestWithDashGETRequestBodyNest",
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("a"),
                         reference = Reference.Primitive(type = Reference.Primitive.Type.Number, isIterable = false),
                         isNullable = true
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("b"),
                         reference = Reference.Primitive(type = Reference.Primitive.Type.Number, isIterable = false),
                         isNullable = true
@@ -105,7 +106,7 @@ object Expected {
             name = "Test200ApplicationJsonResponseBody",
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("id"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -113,7 +114,7 @@ object Expected {
                         ),
                         isNullable = true
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("nest"),
                         reference = Reference.Custom(
                             value = "Test200ApplicationJsonResponseBodyNest",
@@ -128,7 +129,7 @@ object Expected {
             name = "Test200ApplicationJsonResponseBodyNest",
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("a"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number,
@@ -136,7 +137,7 @@ object Expected {
                         ),
                         isNullable = true
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("b"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number,
@@ -206,7 +207,7 @@ object Expected {
             name = "AdditionalProperties404ApplicationJsonResponseBody",
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("code"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Integer,
@@ -214,7 +215,7 @@ object Expected {
                         ),
                         isNullable = true
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -229,7 +230,7 @@ object Expected {
             name = "Message",
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("code"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Integer,
@@ -237,7 +238,7 @@ object Expected {
                         ),
                         isNullable = true
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -308,7 +309,7 @@ object Expected {
             name = "ArrayGET200ApplicationJsonResponseBody",
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("code"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number,
@@ -316,7 +317,7 @@ object Expected {
                         ),
                         isNullable = true
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -331,7 +332,7 @@ object Expected {
             name = "MessageArray",
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("code"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number,
@@ -339,7 +340,7 @@ object Expected {
                         ),
                         isNullable = true
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -385,7 +386,7 @@ object Expected {
             name = "AllofGET200ApplicationJsonResponseBody",
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("a"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -393,7 +394,7 @@ object Expected {
                         ),
                         isNullable = true
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("b"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -401,7 +402,7 @@ object Expected {
                         ),
                         isNullable = false
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("c"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -409,7 +410,7 @@ object Expected {
                         ),
                         isNullable = true
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("d"),
                         reference = Reference.Custom(
                             value = "AllofGET200ApplicationJsonResponseBodyD",
@@ -424,7 +425,7 @@ object Expected {
             name = "AllofGET200ApplicationJsonResponseBodyD",
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("e"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -440,7 +441,7 @@ object Expected {
             name = "Foo",
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("a"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -455,7 +456,7 @@ object Expected {
             name = "Bar",
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("b"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -510,7 +511,7 @@ object Expected {
             name = "OneofGET200ApplicationJsonResponseBody2",
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("c"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -526,7 +527,7 @@ object Expected {
             name = "OneofGET200ApplicationJsonResponseBody3",
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("d"),
                         reference = Reference.Custom(
                             value = "OneofGET200ApplicationJsonResponseBody3D",
@@ -542,7 +543,7 @@ object Expected {
             name = "OneofGET200ApplicationJsonResponseBody3D",
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier(
                             "e"
                         ), reference = Reference.Primitive(
@@ -559,7 +560,7 @@ object Expected {
             name = "Foo",
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("a"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -574,7 +575,7 @@ object Expected {
             name = "Bar",
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("b"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -593,7 +594,7 @@ object Expected {
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "enum")),
             query = listOf(
-                Type.Shape.Field(
+                Field(
                     identifier = Identifier("order"),
                     reference = Reference.Custom(value = "EnumGETParameterOrder", isIterable = false, isMap = false),
                     isNullable = true
@@ -639,7 +640,7 @@ object Expected {
             name = "EnumGET201ApplicationJsonResponseBody",
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("code"),
                         reference = Reference.Custom(
                             value = "EnumGET201ApplicationJsonResponseBodyCode",
@@ -647,7 +648,7 @@ object Expected {
                         ),
                         isNullable = false
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -666,7 +667,7 @@ object Expected {
             name = "Message",
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("code"),
                         reference = Reference.Custom(
                             value = "ErrorType",
@@ -674,7 +675,7 @@ object Expected {
                         ),
                         isNullable = false
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,

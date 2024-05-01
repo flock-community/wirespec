@@ -4,12 +4,12 @@ import com.goncalossilva.resources.Resource
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPI
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Field.Identifier
+import community.flock.wirespec.compiler.core.parse.Field.Reference
+import community.flock.wirespec.compiler.core.parse.Field.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Identifier
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive
 import community.flock.wirespec.openapi.common.Expected
 import community.flock.wirespec.openapi.v3.OpenApiV3Parser
 import kotlin.test.Test

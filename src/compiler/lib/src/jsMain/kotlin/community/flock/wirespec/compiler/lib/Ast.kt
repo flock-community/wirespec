@@ -4,6 +4,7 @@ package community.flock.wirespec.compiler.lib
 
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -143,24 +144,24 @@ private fun List<Endpoint.Segment>.produce(): Array<WsSegment> = map {
     }
 }.toTypedArray()
 
-private fun Type.Shape.Field.produce() = WsField(identifier.produce(), reference.produce(), isNullable)
+private fun Field.produce() = WsField(identifier.produce(), reference.produce(), isNullable)
 
-private fun List<Type.Shape.Field>.produce() = map { it.produce() }.toTypedArray()
+private fun List<Field>.produce() = map { it.produce() }.toTypedArray()
 
-private fun Type.Shape.Field.Identifier.produce() = WsIdentifier(this.value)
+private fun Field.Identifier.produce() = WsIdentifier(this.value)
 
-private fun Type.Shape.Field.Reference.produce() = when (this) {
-    is Type.Shape.Field.Reference.Any -> WsAny(isIterable, isMap)
-    is Type.Shape.Field.Reference.Unit -> WsUnit(isIterable, isMap)
-    is Type.Shape.Field.Reference.Custom -> WsCustom(value, isIterable, isMap)
-    is Type.Shape.Field.Reference.Primitive -> WsPrimitive(type.produce(), isIterable, isMap)
+private fun Field.Reference.produce() = when (this) {
+    is Field.Reference.Any -> WsAny(isIterable, isMap)
+    is Field.Reference.Unit -> WsUnit(isIterable, isMap)
+    is Field.Reference.Custom -> WsCustom(value, isIterable, isMap)
+    is Field.Reference.Primitive -> WsPrimitive(type.produce(), isIterable, isMap)
 }
 
-private fun Type.Shape.Field.Reference.Primitive.Type.produce() = when (this) {
-    Type.Shape.Field.Reference.Primitive.Type.String -> WsPrimitiveType.String
-    Type.Shape.Field.Reference.Primitive.Type.Integer -> WsPrimitiveType.Integer
-    Type.Shape.Field.Reference.Primitive.Type.Number -> WsPrimitiveType.Number
-    Type.Shape.Field.Reference.Primitive.Type.Boolean -> WsPrimitiveType.Boolean
+private fun Field.Reference.Primitive.Type.produce() = when (this) {
+    Field.Reference.Primitive.Type.String -> WsPrimitiveType.String
+    Field.Reference.Primitive.Type.Integer -> WsPrimitiveType.Integer
+    Field.Reference.Primitive.Type.Number -> WsPrimitiveType.Number
+    Field.Reference.Primitive.Type.Boolean -> WsPrimitiveType.Boolean
 }
 
 private fun Endpoint.Method.produce() = when (this) {

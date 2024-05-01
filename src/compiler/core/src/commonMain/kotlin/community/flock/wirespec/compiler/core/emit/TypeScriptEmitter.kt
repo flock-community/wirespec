@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
@@ -53,25 +54,25 @@ class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emi
 
     override fun Type.Shape.emit() = value.joinToString(",\n") { it.emit() }
 
-    override fun Type.Shape.Field.emit() =
+    override fun Field.emit() =
         "${SPACER}\"${identifier.emit()}\"${if (isNullable) "?" else ""}: ${reference.emit()}"
 
-    override fun Type.Shape.Field.Identifier.emit() = value
+    override fun Field.Identifier.emit() = value
 
 
-    private fun Type.Shape.Field.Reference.emitSymbol() = when (this) {
-        is Type.Shape.Field.Reference.Unit -> "void"
-        is Type.Shape.Field.Reference.Any -> "any"
-        is Type.Shape.Field.Reference.Custom -> value.sanitizeSymbol()
-        is Type.Shape.Field.Reference.Primitive -> when (type) {
-            Type.Shape.Field.Reference.Primitive.Type.String -> "string"
-            Type.Shape.Field.Reference.Primitive.Type.Integer -> "number"
-            Type.Shape.Field.Reference.Primitive.Type.Number -> "number"
-            Type.Shape.Field.Reference.Primitive.Type.Boolean -> "boolean"
+    private fun Field.Reference.emitSymbol() = when (this) {
+        is Field.Reference.Unit -> "void"
+        is Field.Reference.Any -> "any"
+        is Field.Reference.Custom -> value.sanitizeSymbol()
+        is Field.Reference.Primitive -> when (type) {
+            Field.Reference.Primitive.Type.String -> "string"
+            Field.Reference.Primitive.Type.Integer -> "number"
+            Field.Reference.Primitive.Type.Number -> "number"
+            Field.Reference.Primitive.Type.Boolean -> "boolean"
         }
     }
 
-    override fun Type.Shape.Field.Reference.emit() = emitSymbol()
+    override fun Field.Reference.emit() = emitSymbol()
         .let { if (isIterable) "$it[]" else it }
         .let { if (isMap) "Record<string, $it>" else it }
 
@@ -155,7 +156,13 @@ class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emi
     private fun Endpoint.Response.emitName() =
         "Response" + status.firstToUpper() + (content?.emitContentType() ?: "Undefined")
 
-    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ") {
+    private fun Endpoint.Content.emitContentType() = type
+        .substringBefore(";")
+        .split("/", "-")
+        .joinToString("") { it.firstToUpper() }
+        .replace("+", "")
+
+    private fun List<Field>.emitMap() = joinToString(", ") {
         "\"${it.identifier.emit()}\": props.${
             it.identifier.emit().sanitizeSymbol().firstToLower()
         }"
@@ -170,17 +177,17 @@ class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emi
     private fun Endpoint.joinParameters(
         content: Endpoint.Content? = null,
         response: Endpoint.Response?
-    ): List<Type.Shape.Field> {
+    ): List<Field> {
         val pathField = path
             .filterIsInstance<Endpoint.Segment.Param>()
-            .map { Type.Shape.Field(it.identifier, it.reference, false) }
+            .map { Field(it.identifier, it.reference, false) }
         val parameters = response?.headers ?: (pathField + query + headers + cookies)
         return parameters
             .plus(content?.reference?.toField("body", false))
             .filterNotNull()
             .map {
                 it.copy(
-                    identifier = Type.Shape.Field.Identifier(
+                    identifier = Field.Identifier(
                         it.identifier.value.sanitizeSymbol().firstToLower()
                     )
                 )
@@ -192,8 +199,8 @@ class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emi
         .filter { it.isLetterOrDigit() || listOf('_').contains(it) }
         .joinToString("")
 
-    private fun Type.Shape.Field.Reference.toField(identifier: String, isNullable: Boolean) = Type.Shape.Field(
-        Type.Shape.Field.Identifier(identifier),
+    private fun Field.Reference.toField(identifier: String, isNullable: Boolean) = Field(
+        Field.Identifier(identifier),
         this,
         isNullable
     )

@@ -4,10 +4,10 @@ import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse.Endpoint.Method.GET
 import community.flock.wirespec.compiler.core.parse.Endpoint.Method.POST
 import community.flock.wirespec.compiler.core.parse.Endpoint.Segment.Literal
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Identifier
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive.Type.String
+import community.flock.wirespec.compiler.core.parse.Field.Identifier
+import community.flock.wirespec.compiler.core.parse.Field.Reference
+import community.flock.wirespec.compiler.core.parse.Field.Reference.Primitive
+import community.flock.wirespec.compiler.core.parse.Field.Reference.Primitive.Type.String
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeRight

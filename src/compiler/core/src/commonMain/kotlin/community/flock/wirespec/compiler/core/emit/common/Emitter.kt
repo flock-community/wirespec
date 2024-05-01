@@ -39,12 +39,6 @@ abstract class Emitter(
             else listOf(Emitted("NoName", joinToString("\n") { it.result }))
         }
 
-    fun Endpoint.Content.emitContentType() = type
-        .substringBefore(";")
-        .split("/", "-")
-        .joinToString("") { it.firstToUpper() }
-        .replace("+", "")
-
     fun String.spacer(space: Int = 1) = split("\n")
         .joinToString("\n") {
             if (it.isNotBlank()) {

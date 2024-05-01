@@ -7,7 +7,7 @@ import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.transformer.ClassModelTransformer.transform
 import community.flock.wirespec.compiler.core.emit.transformer.EndpointClass
 import community.flock.wirespec.compiler.core.emit.transformer.EnumClass
-import community.flock.wirespec.compiler.core.emit.transformer.Field
+import community.flock.wirespec.compiler.core.emit.transformer.FieldClass
 import community.flock.wirespec.compiler.core.emit.transformer.Parameter
 import community.flock.wirespec.compiler.core.emit.transformer.Reference
 import community.flock.wirespec.compiler.core.emit.transformer.RefinedClass
@@ -322,10 +322,10 @@ class JavaEmitter(
 
     override fun EndpointClass.Content.emit(): String = """new Wirespec.Content("$type", body)"""
 
-    override fun Field.emit(): String =
+    override fun FieldClass.emit(): String =
         """${if (isPrivate) "private " else ""}${if (isFinal) "final " else ""}${reference.emitWrap()} ${identifier.sanitizeIdentifier()}"""
 
-    private fun Field.emitGetter(): String = """
+    private fun FieldClass.emitGetter(): String = """
         |@Override
         |public ${reference.emitWrap()} get${identifier.sanitizeIdentifier().replaceFirstChar { it.uppercase() }}() {
         |  return ${identifier.sanitizeIdentifier()};
