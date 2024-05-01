@@ -22,6 +22,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.StatusCode
 import community.flock.wirespec.compiler.core.tokenize.types.TokenType
 import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpaceExceptNewLine
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
+import community.flock.wirespec.compiler.core.tokenize.types.WsComment
 import community.flock.wirespec.compiler.core.tokenize.types.WsEndpointDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsEnumTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
@@ -65,6 +66,7 @@ object WirespecSpec : LanguageSpec {
         Regex("^[a-z`][a-zA-Z`]*") to CustomValue,
         Regex("^[A-Z][a-zA-Z_]*") to CustomType,
         Regex("^/[a-zA-Z-_]+") to Path,
+        Regex("^\\/*\\*[\\s\\S]*\\*\\/") to WsComment,
         Regex("^/") to ForwardSlash,
         Regex("^.") to Invalid // Catch all regular expression if none of the above matched
     )

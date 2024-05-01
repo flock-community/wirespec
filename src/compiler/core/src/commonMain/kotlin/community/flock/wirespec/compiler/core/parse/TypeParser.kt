@@ -25,11 +25,11 @@ import community.flock.wirespec.compiler.utils.Logger
 
 class TypeParser(logger: Logger) : AbstractParser(logger) {
 
-    fun TokenProvider.parseType(): Either<WirespecException, Definition> = either {
+    fun TokenProvider.parseType(comment: Comment?): Either<WirespecException, Definition> = either {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is CustomType -> parseTypeDefinition(Identifier(token.value)).bind()
+            is CustomType -> parseTypeDefinition(comment, Identifier(token.value)).bind()
             else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
         }
     }
@@ -58,13 +58,28 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         }.let(Type::Shape)
     }
 
-    private fun TokenProvider.parseTypeDefinition(typeName: Identifier) = either {
+    private fun TokenProvider.parseTypeDefinition(comment: Comment?, typeName: Identifier) = either {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is LeftCurly -> Type(typeName, parseTypeShape().bind())
-            is CustomRegex -> Refined(typeName, Refined.Validator(token.value)).also { eatToken().bind() }
-            is Equals -> Union(typeName, parseUnionTypeEntries().bind())
+            is LeftCurly -> Type(
+                comment = comment,
+                identifier = typeName,
+                shape = parseTypeShape().bind(),
+            )
+
+            is CustomRegex -> Refined(
+                comment = comment,
+                identifier = typeName,
+                validator = Refined.Validator(token.value),
+            ).also { eatToken().bind() }
+
+            is Equals -> Union(
+                comment = comment,
+                identifier = typeName,
+                entries = parseUnionTypeEntries().bind(),
+            )
+
             else -> raise(WrongTokenException<LeftCurly>(token).also { eatToken().bind() })
         }
     }

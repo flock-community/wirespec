@@ -20,7 +20,6 @@ import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.CUSTOM_TYPE
 import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.ENDPOINT_DEF
 import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.ENUM_DEF
 import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.LEFT_CURLY
-import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.REFINED_TYPE_DEF
 import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.RIGHT_CURLY
 import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.TYPE_DEF
 import com.intellij.lang.ParserDefinition as IntellijParserDefinition
@@ -128,7 +127,7 @@ class Parser : PsiParser {
     }
 
     fun PsiBuilder.def() = when (this.tokenType) {
-        TYPE_DEF, ENDPOINT_DEF, REFINED_TYPE_DEF, ENUM_DEF -> true
+        TYPE_DEF, ENDPOINT_DEF, ENUM_DEF -> true
         else -> false
     }
 }

@@ -12,6 +12,7 @@ object Expected {
 
     val objectInRequest = listOf(
         Endpoint(
+            comment = null,
             identifier = Identifier("TestWithDashGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "test-with-dash")),
@@ -40,6 +41,7 @@ object Expected {
             )
         ),
         Type(
+            comment = null,
             identifier = Identifier("TestWithDashGETRequestBody"),
             shape = Type.Shape(
                 value = listOf(
@@ -57,6 +59,7 @@ object Expected {
             )
         ),
         Type(
+            comment = null,
             identifier = Identifier("TestWithDashGETRequestBodyNest"),
             shape = Type.Shape(
                 value = listOf(
@@ -76,6 +79,7 @@ object Expected {
     )
     val objectInResponse = listOf(
         Endpoint(
+            comment = null,
             identifier = Identifier("Test"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "test")),
@@ -103,6 +107,7 @@ object Expected {
             )
         ),
         Type(
+            comment = null,
             identifier = Identifier("Test200ApplicationJsonResponseBody"),
             shape = Type.Shape(
                 value = listOf(
@@ -126,6 +131,7 @@ object Expected {
             )
         ),
         Type(
+            comment = null,
             identifier = Identifier("Test200ApplicationJsonResponseBodyNest"),
             shape = Type.Shape(
                 value = listOf(
@@ -151,6 +157,7 @@ object Expected {
     )
     val additionalproperties = listOf(
         Endpoint(
+            comment = null,
             identifier = Identifier("AdditionalProperties"),
             method = Endpoint.Method.GET,
             path = listOf(
@@ -204,6 +211,7 @@ object Expected {
             )
         ),
         Type(
+            comment = null,
             identifier = Identifier("AdditionalProperties404ApplicationJsonResponseBody"),
             shape = Type.Shape(
                 value = listOf(
@@ -227,6 +235,7 @@ object Expected {
             )
         ),
         Type(
+            comment = null,
             identifier = Identifier("Message"),
             shape = Type.Shape(
                 value = listOf(
@@ -252,6 +261,7 @@ object Expected {
     )
     val array = listOf(
         Endpoint(
+            comment = null,
             identifier = Identifier("ArrayGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "array")),
@@ -306,6 +316,7 @@ object Expected {
             )
         ),
         Type(
+            comment = null,
             identifier = Identifier("ArrayGET200ApplicationJsonResponseBody"),
             shape = Type.Shape(
                 value = listOf(
@@ -329,6 +340,7 @@ object Expected {
             )
         ),
         Type(
+            comment = null,
             identifier = Identifier("MessageArray"),
             shape = Type.Shape(
                 value = listOf(
@@ -355,6 +367,7 @@ object Expected {
 
     val allOf = listOf(
         Endpoint(
+            comment = null,
             identifier = Identifier("AllofGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "allof")),
@@ -383,6 +396,7 @@ object Expected {
             )
         ),
         Type(
+            comment = null,
             identifier = Identifier("AllofGET200ApplicationJsonResponseBody"),
             shape = Type.Shape(
                 value = listOf(
@@ -422,6 +436,7 @@ object Expected {
             )
         ),
         Type(
+            comment = null,
             identifier = Identifier("AllofGET200ApplicationJsonResponseBodyD"),
             shape = Type.Shape(
                 value = listOf(
@@ -438,6 +453,7 @@ object Expected {
             )
         ),
         Type(
+            comment = null,
             identifier = Identifier("Foo"),
             shape = Type.Shape(
                 value = listOf(
@@ -453,6 +469,7 @@ object Expected {
             )
         ),
         Type(
+            comment = null,
             identifier = Identifier("Bar"),
             shape = Type.Shape(
                 value = listOf(
@@ -471,6 +488,7 @@ object Expected {
 
     val oneOf = listOf(
         Endpoint(
+            comment = null,
             identifier = Identifier("OneofGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "oneof")),
@@ -499,6 +517,7 @@ object Expected {
             )
         ),
         Union(
+            comment = null,
             identifier = Identifier("OneofGET200ApplicationJsonResponseBody"),
             entries = setOf(
                 Reference.Custom(value = "Foo", isIterable = false, isMap = false),
@@ -508,6 +527,7 @@ object Expected {
             )
         ),
         Type(
+            comment = null,
             identifier = Identifier("OneofGET200ApplicationJsonResponseBody2"),
             shape = Type.Shape(
                 value = listOf(
@@ -524,6 +544,7 @@ object Expected {
             )
         ),
         Type(
+            comment = null,
             identifier = Identifier("OneofGET200ApplicationJsonResponseBody3"),
             shape = Type.Shape(
                 value = listOf(
@@ -540,6 +561,7 @@ object Expected {
             )
         ),
         Type(
+            comment = null,
             identifier = Identifier("OneofGET200ApplicationJsonResponseBody3D"),
             shape = Type.Shape(
                 value = listOf(
@@ -557,6 +579,7 @@ object Expected {
             )
         ),
         Type(
+            comment = null,
             identifier = Identifier("Foo"),
             shape = Type.Shape(
                 value = listOf(
@@ -572,6 +595,7 @@ object Expected {
             )
         ),
         Type(
+            comment = null,
             identifier = Identifier("Bar"),
             shape = Type.Shape(
                 value = listOf(
@@ -590,6 +614,7 @@ object Expected {
 
     val enum = listOf(
         Endpoint(
+            comment = null,
             identifier = Identifier("EnumGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "enum")),
@@ -633,10 +658,12 @@ object Expected {
             )
         ),
         Enum(
+            comment = null,
             identifier = Identifier("EnumGETParameterOrder"),
             entries = setOf("ASC", "DESC")
         ),
         Type(
+            comment = null,
             identifier = Identifier("EnumGET201ApplicationJsonResponseBody"),
             shape = Type.Shape(
                 value = listOf(
@@ -660,10 +687,12 @@ object Expected {
             )
         ),
         Enum(
+            comment = null,
             identifier = Identifier("EnumGET201ApplicationJsonResponseBodyCode"),
             entries = setOf("WARNING", "ERROR")
         ),
         Type(
+            comment = null,
             identifier = Identifier("Message"),
             shape = Type.Shape(
                 value = listOf(
@@ -687,6 +716,7 @@ object Expected {
             )
         ),
         Enum(
+            comment = null,
             identifier = Identifier("ErrorType"),
             entries = setOf("WARNING", "ERROR")
         )

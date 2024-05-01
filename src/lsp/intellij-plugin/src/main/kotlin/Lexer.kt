@@ -24,6 +24,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.types.StatusCode
 import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpace
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
+import community.flock.wirespec.compiler.core.tokenize.types.WsComment
 import community.flock.wirespec.compiler.core.tokenize.types.WsEndpointDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsEnumTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
@@ -57,34 +58,35 @@ class Lexer : IntellijLexer() {
         else {
             val token = tokens[index]
             when (token.type) {
-                is WsTypeDef -> Types.TYPE_DEF
-                is WhiteSpace -> Types.WHITE_SPACE
-                is Brackets -> Types.BRACKETS
+                is LeftCurly -> Types.LEFT_CURLY
+                is RightCurly -> Types.RIGHT_CURLY
                 is Colon -> Types.COLON
                 is Comma -> Types.COMMA
-                is CustomValue -> Types.CUSTOM_VALUE
-                is CustomType -> Types.CUSTOM_TYPE
-                is WsBoolean -> Types.BOOLEAN
-                is WsInteger -> Types.INTEGER
-                is WsNumber -> Types.NUMBER
-                is WsString -> Types.STRING
-                is WsUnit -> Types.UNIT
-                is LeftCurly -> Types.LEFT_CURLY
                 is QuestionMark -> Types.QUESTION_MARK
                 is Hash -> Types.HASH
-                is RightCurly -> Types.RIGHT_CURLY
-                is EndOfProgram -> Types.END_OF_PROGRAM
+                is ForwardSlash -> Types.FORWARD_SLASH
+                is Brackets -> Types.BRACKETS
+                is CustomValue -> Types.CUSTOM_VALUE
+                is WsComment -> Types.COMMENT
                 is Invalid -> Types.INVALID
+                is EndOfProgram -> Types.END_OF_PROGRAM
+                is WhiteSpace -> Types.WHITE_SPACE
+                is WsTypeDef -> Types.TYPE_DEF
                 is WsEnumTypeDef -> Types.ENUM_DEF
                 is WsEndpointDef -> Types.ENDPOINT_DEF
-                is CustomRegex -> Types.CUSTOM_REGEX
-                is Equals -> Types.EQUALS
-                is Pipe -> Types.PIPE
-                is Arrow -> Types.ARROW
+                is WsString -> Types.STRING
+                is WsInteger -> Types.INTEGER
+                is WsNumber -> Types.NUMBER
+                is WsBoolean -> Types.BOOLEAN
+                is CustomType -> Types.CUSTOM_TYPE
+                is WsUnit -> Types.UNIT
                 is Method -> Types.METHOD
                 is Path -> Types.PATH
-                is ForwardSlash -> Types.FORWARD_SLASH
                 is StatusCode -> Types.STATUS_CODE
+                is Arrow -> Types.ARROW
+                is Equals -> Types.EQUALS
+                is Pipe -> Types.PIPE
+                is CustomRegex -> Types.CUSTOM_REGEX
             }
         }
 

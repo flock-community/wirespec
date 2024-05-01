@@ -12,20 +12,25 @@ import community.flock.wirespec.compiler.utils.Logger
 
 class EnumParser(logger: Logger) : AbstractParser(logger) {
 
-    fun TokenProvider.parseEnum(): Either<WirespecException, Enum> = either {
+    fun TokenProvider.parseEnum(comment: Comment?): Either<WirespecException, Enum> = either {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is CustomType -> parseEnumTypeDefinition(Identifier(token.value)).bind()
+            is CustomType -> parseEnumTypeDefinition(comment, Identifier(token.value)).bind()
             else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
         }
     }
 
-    private fun TokenProvider.parseEnumTypeDefinition(typeName: Identifier) = either {
+    private fun TokenProvider.parseEnumTypeDefinition(comment: Comment?, typeName: Identifier) = either {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is LeftCurly -> Enum(typeName, parseEnumTypeEntries().bind())
+            is LeftCurly -> Enum(
+                comment = comment,
+                identifier = typeName,
+                entries = parseEnumTypeEntries().bind()
+            )
+
             else -> raise(WrongTokenException<LeftCurly>(token).also { eatToken().bind() })
         }.also {
             when (token.type) {

@@ -2,14 +2,20 @@ package community.flock.wirespec.compiler.core.parse
 
 import community.flock.wirespec.compiler.core.Value
 import community.flock.wirespec.compiler.core.removeBackticks
+import kotlin.jvm.JvmInline
 
 sealed interface Node
 
 sealed interface Definition : Node {
+    val comment: Comment?
     val identifier: Identifier
 }
 
-data class Type(override val identifier: Identifier, val shape: Shape) : Definition {
+data class Type(
+    override val comment: Comment?,
+    override val identifier: Identifier,
+    val shape: Shape
+) : Definition {
     data class Shape(override val value: List<Field>) : Value<List<Field>>
 }
 
@@ -50,15 +56,28 @@ data class Field(val identifier: Identifier, val reference: Reference, val isNul
     }
 }
 
-data class Enum(override val identifier: Identifier, val entries: Set<String>) : Definition
+data class Enum(
+    override val comment: Comment?,
+    override val identifier: Identifier,
+    val entries: Set<String>,
+) : Definition
 
-data class Union(override val identifier: Identifier, val entries: Set<Field.Reference>) : Definition
+data class Union(
+    override val comment: Comment?,
+    override val identifier: Identifier,
+    val entries: Set<Field.Reference>,
+) : Definition
 
-data class Refined(override val identifier: Identifier, val validator: Validator) : Definition {
+data class Refined(
+    override val comment: Comment?,
+    override val identifier: Identifier,
+    val validator: Validator,
+) : Definition {
     data class Validator(override val value: String) : Value<String>
 }
 
 data class Endpoint(
+    override val comment: Comment?,
     override val identifier: Identifier,
     val method: Method,
     val path: List<Segment>,
@@ -81,6 +100,9 @@ data class Endpoint(
     data class Response(val status: String, val headers: List<Field>, val content: Content?)
     data class Content(val type: String, val reference: Field.Reference, val isNullable: Boolean = false)
 }
+
+@JvmInline
+value class Comment(override val value: String) : Value<String>
 
 class Identifier private constructor(override val value: String) : Value<String> {
 

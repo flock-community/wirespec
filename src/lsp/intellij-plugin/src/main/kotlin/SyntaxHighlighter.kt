@@ -28,7 +28,6 @@ class SyntaxHighlighter : SyntaxHighlighterBase() {
         Types.TYPE_DEF -> arrayOf(KEYWORD)
         Types.ENDPOINT_DEF -> arrayOf(KEYWORD)
         Types.ENUM_DEF -> arrayOf(KEYWORD)
-        Types.REFINED_TYPE_DEF -> arrayOf(KEYWORD)
         Types.LEFT_CURLY -> arrayOf(BRACKETS)
         Types.RIGHT_CURLY -> arrayOf(BRACKETS)
         Types.QUESTION_MARK -> arrayOf(IDENTIFIER)

@@ -25,6 +25,7 @@ class OpenApiV2ParserTest {
 
         val expectedTypeDefinitions = listOf(
             Type(
+                comment = null,
                 identifier = Identifier("ApiResponse"),
                 shape = Shape(
                     value = listOf(
@@ -47,6 +48,7 @@ class OpenApiV2ParserTest {
                 )
             ),
             Type(
+                comment = null,
                 identifier = Identifier("Category"),
                 shape = Shape(
                     value = listOf(
@@ -64,6 +66,7 @@ class OpenApiV2ParserTest {
                 )
             ),
             Type(
+                comment = null,
                 identifier = Identifier("Pet"),
                 shape = Shape(
                     value = listOf(
@@ -101,6 +104,7 @@ class OpenApiV2ParserTest {
                 )
             ),
             Type(
+                comment = null,
                 identifier = Identifier("Tag"),
                 shape = Shape(
                     value = listOf(
@@ -118,6 +122,7 @@ class OpenApiV2ParserTest {
                 )
             ),
             Type(
+                comment = null,
                 identifier = Identifier("Order"),
                 shape = Shape(
                     value = listOf(
@@ -155,6 +160,7 @@ class OpenApiV2ParserTest {
                 )
             ),
             Type(
+                comment = null,
                 identifier = Identifier("User"),
                 shape = Shape(
                     value = listOf(
@@ -204,8 +210,16 @@ class OpenApiV2ParserTest {
         )
 
         val expectedEnumDefinitions = listOf(
-            Enum(identifier = Identifier("PetStatus"), entries = setOf("available", "pending", "sold")),
-            Enum(identifier = Identifier("OrderStatus"), entries = setOf("placed", "approved", "delivered"))
+            Enum(
+                comment = null,
+                identifier = Identifier("PetStatus"),
+                entries = setOf("available", "pending", "sold")
+            ),
+            Enum(
+                comment = null,
+                identifier = Identifier("OrderStatus"),
+                entries = setOf("placed", "approved", "delivered")
+            )
         )
 
         val typeDefinitions = ast.filterIsInstance<Type>()
@@ -248,6 +262,7 @@ class OpenApiV2ParserTest {
 
         val expected = listOf(
             Endpoint(
+                comment = null,
                 identifier = Identifier("AlisaGET"),
                 method = Endpoint.Method.GET,
                 path = listOf(Endpoint.Segment.Literal(value = "alisa")),
@@ -268,6 +283,7 @@ class OpenApiV2ParserTest {
                 )
             ),
             Type(
+                comment = null,
                 identifier = Identifier("Foo"),
                 shape = Shape(
                     value = listOf(
