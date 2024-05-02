@@ -57,11 +57,11 @@ class CompileTypeTest {
                 user.second shouldBe """
                     |package community.flock.wirespec.generated;
                     |
-                    |public record User(
+                    |public record User (
                     |  String type,
                     |  String username,
                     |  String password
-                    |){
+                    |) {
                     |};
                     |
                 """.trimMargin()

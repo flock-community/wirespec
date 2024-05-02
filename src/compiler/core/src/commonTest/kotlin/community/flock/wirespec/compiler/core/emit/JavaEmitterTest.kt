@@ -16,12 +16,12 @@ class JavaEmitterTest {
         val expected = """
             |package community.flock.wirespec.generated;
             |
-            |public record Todo(
+            |public record Todo (
             |  String name,
             |  java.util.Optional<String> description,
             |  java.util.List<String> notes,
             |  Boolean done
-            |){
+            |) {
             |};
             |
         """.trimMargin()
