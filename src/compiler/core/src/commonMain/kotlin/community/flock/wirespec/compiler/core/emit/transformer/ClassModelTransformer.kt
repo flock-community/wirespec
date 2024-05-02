@@ -53,6 +53,7 @@ object ClassModelTransformer : Transformer {
     override fun Union.transform(): UnionClass =
         UnionClass(
             name = className(name),
+            entries = entries.map { it.value }
         )
 
     override fun Enum.transform(): EnumClass =

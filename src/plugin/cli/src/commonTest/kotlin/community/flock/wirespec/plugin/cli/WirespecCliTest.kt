@@ -59,10 +59,10 @@ class WirespecCliTest {
         val expected = """
             |package community.flock.next;
             |
-            |public record Bla(
+            |public record Bla (
             |  String yolo,
             |  Boolean _class
-            |){
+            |) {
             |};
             |
         """.trimMargin()

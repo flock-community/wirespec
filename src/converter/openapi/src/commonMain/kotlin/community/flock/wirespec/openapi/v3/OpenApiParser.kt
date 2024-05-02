@@ -346,15 +346,16 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                     ?.flatten(name)
                     ?: emptyList()
             }
+
             oneOf != null || anyOf != null -> listOf(
                 Union(
                     name = name,
                     entries = oneOf!!
                         .mapIndexed { index, it ->
-                        when (it) {
-                            is ReferenceObject -> it.toReference()
-                            is SchemaObject -> it.toReference(className(name, index.toString()))
-                        }
+                            when (it) {
+                                is ReferenceObject -> it.toReference()
+                                is SchemaObject -> it.toReference(className(name, index.toString()))
+                            }
 
                         }.toSet()
                 )
@@ -365,23 +366,23 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
                         is SchemaObject -> it.flatten(className(name, index.toString()))
                     }
                 })
+
             allOf != null -> listOf(
                 Type(
                     name,
                     Type.Shape(allOf.orEmpty().flatMap { it.resolve().toField(name) }.distinctBy { it.identifier })
                 )
             )
-                .plus(allOf!!.flatMap {
-                    when (it) {
-                        is ReferenceObject -> emptyList()
-                        is SchemaObject -> it.properties.orEmpty().flatMap { (key, value) ->
-                            when (value) {
-                                is ReferenceObject -> emptyList()
-                                is SchemaObject -> value.flatten(className(name, key))
-                            }
+                .plus(allOf!!
+                    .flatMap {
+                        when (it) {
+                            is ReferenceObject -> it.resolveSchemaObject().second.properties.orEmpty()
+                            is SchemaObject -> it.properties.orEmpty()
                         }
-                    }
-                })
+                            .flatMap { (key, value) ->
+                                value.flatten(className(name, key))
+                            }
+                    })
 
             enum != null -> enum!!
                 .map { it.content }
@@ -416,7 +417,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
 
     private fun SchemaOrReferenceObject.flatten(name: String): List<Node> {
         return when (this) {
-            is SchemaObject -> this.flatten(name)
+            is SchemaObject -> flatten(name)
             is ReferenceObject -> emptyList()
         }
     }

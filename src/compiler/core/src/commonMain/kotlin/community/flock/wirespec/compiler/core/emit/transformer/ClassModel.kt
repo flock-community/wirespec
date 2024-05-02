@@ -26,6 +26,7 @@ data class EnumClass(
 
 data class UnionClass(
     override val name: String,
+    val entries: List<String>,
 ) : ClassModel
 
 data class EndpointClass(

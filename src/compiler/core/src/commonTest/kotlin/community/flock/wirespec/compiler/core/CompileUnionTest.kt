@@ -71,7 +71,7 @@ class CompileUnionTest {
                 account.second shouldBe """
                     |package community.flock.wirespec.generated;
                     |
-                    |sealed interface UserAccount {}
+                    |sealed interface UserAccount permits UserAccountPassword, UserAccountToken {}
                     |
                 """.trimMargin()
 
@@ -79,10 +79,10 @@ class CompileUnionTest {
                 password.second shouldBe """
                     |package community.flock.wirespec.generated;
                     |
-                    |public record UserAccountPassword implements UserAccount(
+                    |public record UserAccountPassword (
                     |  String username,
                     |  String password
-                    |){
+                    |) implements UserAccount {
                     |};
                     |
                 """.trimMargin()
@@ -91,9 +91,9 @@ class CompileUnionTest {
                 token.second shouldBe """
                     |package community.flock.wirespec.generated;
                     |
-                    |public record UserAccountToken implements UserAccount(
+                    |public record UserAccountToken (
                     |  String token
-                    |){
+                    |) implements UserAccount {
                     |};
                     |
                 """.trimMargin()
@@ -102,10 +102,10 @@ class CompileUnionTest {
                 user.second shouldBe """
                     |package community.flock.wirespec.generated;
                     |
-                    |public record User(
+                    |public record User (
                     |  String username,
                     |  UserAccount account
-                    |){
+                    |) {
                     |};
                     |
                 """.trimMargin()
