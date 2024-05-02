@@ -34,22 +34,28 @@ class OpenApiV3Emitter {
         val version: String
     )
 
-    fun AST.emit(options: Options? = null): OpenAPIObject {
+    fun emit(ast: AST, options: Options? = null): OpenAPIObject {
         return OpenAPIObject(
             openapi = "3.0.0",
             info = InfoObject(
                 title = options?.title ?: "Wirespec",
                 version = options?.version ?: "0.0.0"
             ),
-            paths = emitPaths(),
-            components = emitComponents()
+            paths = ast.emitPaths(),
+            components = ast.emitComponents()
         )
     }
 
     private fun AST.emitComponents() = this
         .filterIsInstance<Definition>()
         .filter { it !is Endpoint }
-        .associate { it.name to it.emit() }
+        .associate { it.name to when (it) {
+            is Enum -> it.emit()
+            is Refined -> it.emit()
+            is Type -> it.emit()
+            is Union -> it.emit()
+            is Endpoint -> error("Cannot emit endpoint")
+        } }
         .let { ComponentsObject(it) }
 
     private fun AST.emitPaths() = this
@@ -71,14 +77,6 @@ class OpenApiV3Emitter {
             )
         }
         .toMap()
-
-    private fun Node.emit(): SchemaObject = when (this) {
-        is Enum -> emit()
-        is Refined -> emit()
-        is Type -> emit()
-        is Union -> emit()
-        is Endpoint -> error("Cannot emit endpoint")
-    }
 
     private fun Refined.emit(): SchemaObject =
         SchemaObject(
@@ -104,7 +102,7 @@ class OpenApiV3Emitter {
     private fun Union.emit(): SchemaObject =
         SchemaObject(
             type = OpenApiType.STRING,
-//            oneOf = this.entries
+            oneOf = this.entries.map { it.emit() }
         )
 
     private fun List<Endpoint>.emit(method: Endpoint.Method): OperationObject? =
