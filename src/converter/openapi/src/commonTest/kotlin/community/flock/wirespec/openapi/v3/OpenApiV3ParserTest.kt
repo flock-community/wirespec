@@ -619,10 +619,10 @@ class OpenApiV3ParserTest {
 
     @Test
     fun oneOf() {
-        val json = IO.readFile("v3/oneof.json")
+        val json = Resource("v3/oneof.json").readText()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = OpenApiParser.parse(openApi)
+        val ast = OpenApiV3Parser.parse(openApi)
 
         Expected.oneOf.zip(ast).forEach { (expected, actual) ->
             println(expected.name)

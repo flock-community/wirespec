@@ -1,6 +1,8 @@
 package community.flock.wirespec.openapi.v3
 
 import community.flock.kotlinx.openapi.bindings.v3.ComponentsObject
+import community.flock.kotlinx.openapi.bindings.v3.HeaderObject
+import community.flock.kotlinx.openapi.bindings.v3.HeaderOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v3.InfoObject
 import community.flock.kotlinx.openapi.bindings.v3.MediaType
 import community.flock.kotlinx.openapi.bindings.v3.MediaTypeObject
@@ -21,7 +23,6 @@ import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
-import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
@@ -86,7 +87,8 @@ class OpenApiV3Emitter {
 
     private fun Type.emit(): SchemaObject =
         SchemaObject(
-            properties = shape.value.associate { it.emit() },
+
+            properties = shape.value.associate { it.emitSchema() },
             required = shape.value
                 .filter { !it.isNullable }
                 .map { it.identifier.value }
@@ -102,26 +104,30 @@ class OpenApiV3Emitter {
     private fun Union.emit(): SchemaObject =
         SchemaObject(
             type = OpenApiType.STRING,
-            oneOf = this.entries.map { it.emit() }
+            oneOf = entries.map { it.emitSchema() }
         )
 
     private fun List<Endpoint>.emit(method: Endpoint.Method): OperationObject? =
         filter { it.method == method }.map { it.emit() }.firstOrNull()
 
     private fun Endpoint.emit(): OperationObject = OperationObject(
-        operationId = this.name,
+        operationId = name,
         parameters = path.filterIsInstance<Endpoint.Segment.Param>()
             .map { it.emitParameter() } + query.map { it.emitParameter(ParameterLocation.QUERY) } + headers.map {
             it.emitParameter(
                 ParameterLocation.HEADER
             )
         },
-        requestBody = RequestBodyObject(content = requests.mapNotNull { it.content?.emit() }.toMap()),
+        requestBody = RequestBodyObject(
+            content = requests.mapNotNull { it.content?.emit() }.toMap().ifEmpty { null },
+            required = requests.any { it.content?.isNullable?:false }
+        ),
         responses = responses
             .groupBy { it.status }
             .map { (statusCode, res) ->
                 StatusCode(statusCode) to ResponseObject(
-                    description = "${this.name} $statusCode response",
+                    headers = res.flatMap { it.headers }.associate { it.emitHeader() },
+                    description = "${name} $statusCode response",
                     content = res
                         .mapNotNull { it.content }
                         .associate { it.emit() }
@@ -141,34 +147,48 @@ class OpenApiV3Emitter {
     fun Type.Shape.Field.emitParameter(location: ParameterLocation): ParameterObject = ParameterObject(
         `in` = location,
         name = identifier.value,
-        schema = reference.emit()
+        schema = reference.emitSchema()
     )
 
     fun Endpoint.Segment.Param.emitParameter(): ParameterObject = ParameterObject(
         `in` = ParameterLocation.PATH,
         name = identifier.value,
-        schema = reference.emit()
+        schema = reference.emitSchema()
     )
 
-    fun Type.Shape.Field.emit(): Pair<String, SchemaOrReferenceObject> = identifier.value to reference.emit()
+    fun Type.Shape.Field.emitHeader(): Pair<String, HeaderOrReferenceObject> = identifier.value to reference.emitHeader()
 
-    fun Type.Shape.Field.Reference.emit(): SchemaOrReferenceObject {
+    fun Type.Shape.Field.emitSchema(): Pair<String, SchemaOrReferenceObject> = identifier.value to reference.emitSchema()
+
+    fun Type.Shape.Field.Reference.emitHeader(): HeaderOrReferenceObject {
+        return when (this) {
+            is Type.Shape.Field.Reference.Custom -> ReferenceObject(ref = Ref("#/components/headers/${value}"))
+            is Type.Shape.Field.Reference.Primitive -> HeaderObject(schema = emitSchema())
+            is Type.Shape.Field.Reference.Any -> error("Cannot map Any")
+            is Type.Shape.Field.Reference.Unit -> error("Cannot map Unit")
+        }
+    }
+
+    fun Type.Shape.Field.Reference.emitSchema(): SchemaOrReferenceObject {
         val ref = when (this) {
             is Type.Shape.Field.Reference.Custom -> ReferenceObject(ref = Ref("#/components/schemas/${value}"))
             is Type.Shape.Field.Reference.Primitive -> SchemaObject(type = type.emitType())
             is Type.Shape.Field.Reference.Any -> error("Cannot map Any")
             is Type.Shape.Field.Reference.Unit -> error("Cannot map Unit")
         }
-        return when (isIterable) {
-            true -> {
-                SchemaObject(
-                    type = OpenApiType.ARRAY,
-                    items = ref,
-                )
-            }
-
-            false -> ref
+        if(isMap){
+            return SchemaObject(
+                type = OpenApiType.OBJECT,
+                additionalProperties = ref
+            )
         }
+        if(isIterable) {
+            return SchemaObject(
+                type = OpenApiType.ARRAY,
+                items = ref,
+            )
+        }
+        return ref
     }
 
 
@@ -181,7 +201,7 @@ class OpenApiV3Emitter {
 
     private fun Endpoint.Content.emit(): Pair<MediaType, MediaTypeObject> =
         MediaType(type) to MediaTypeObject(
-            schema = reference.emit()
+            schema = reference.emitSchema()
         )
 
 
