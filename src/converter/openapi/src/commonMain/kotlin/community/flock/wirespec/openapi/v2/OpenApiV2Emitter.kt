@@ -1,7 +1,6 @@
 package community.flock.wirespec.openapi.v2
 
 import community.flock.kotlinx.openapi.bindings.v2.InfoObject
-import community.flock.kotlinx.openapi.bindings.v2.OpenAPI
 import community.flock.kotlinx.openapi.bindings.v2.OperationObject
 import community.flock.kotlinx.openapi.bindings.v2.ParameterLocation
 import community.flock.kotlinx.openapi.bindings.v2.ParameterObject
@@ -14,20 +13,17 @@ import community.flock.kotlinx.openapi.bindings.v2.SchemaObject
 import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v2.StatusCode
 import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
-import community.flock.kotlinx.openapi.bindings.v2.Type as OpenApiType
-
-import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.core.parse.Enum
 import kotlinx.serialization.json.JsonPrimitive
+import community.flock.kotlinx.openapi.bindings.v2.Type as OpenApiType
 
 class OpenApiV2Emitter {
 
-     fun emit(ast: AST): SwaggerObject {
+    fun emit(ast: AST): SwaggerObject {
         return SwaggerObject(
             swagger = "2.0",
             info = InfoObject(
@@ -36,23 +32,23 @@ class OpenApiV2Emitter {
             ),
             consumes = listOf("application/json"),
             produces = listOf("application/json"),
-            paths = ast.filterIsInstance<Endpoint>().groupBy { it.path }.map {
-                Path(it.key.emitSegment()) to PathItemObject(
-                    parameters = it.key.filterIsInstance<Endpoint.Segment.Param>().map {
+            paths = ast.filterIsInstance<Endpoint>().groupBy { it.path }.map { (segments, endpoints) ->
+                Path(segments.emitSegment()) to PathItemObject(
+                    parameters = segments.filterIsInstance<Endpoint.Segment.Param>().map {
                         ParameterObject(
                             `in` = ParameterLocation.PATH,
                             name = it.identifier.value,
-                            type = OpenApiType.STRING
+                            type = it.reference.emitType()
                         )
                     },
-                    get = it.value.emit(Endpoint.Method.GET),
-                    post = it.value.emit(Endpoint.Method.POST),
-                    put = it.value.emit(Endpoint.Method.PUT),
-                    delete = it.value.emit(Endpoint.Method.DELETE),
-                    patch = it.value.emit(Endpoint.Method.PATCH),
-                    options = it.value.emit(Endpoint.Method.OPTIONS),
-                    trace = it.value.emit(Endpoint.Method.TRACE),
-                    head = it.value.emit(Endpoint.Method.HEAD),
+                    get = endpoints.emit(Endpoint.Method.GET),
+                    post = endpoints.emit(Endpoint.Method.POST),
+                    put = endpoints.emit(Endpoint.Method.PUT),
+                    delete = endpoints.emit(Endpoint.Method.DELETE),
+                    patch = endpoints.emit(Endpoint.Method.PATCH),
+                    options = endpoints.emit(Endpoint.Method.OPTIONS),
+                    trace = endpoints.emit(Endpoint.Method.TRACE),
+                    head = endpoints.emit(Endpoint.Method.HEAD),
                 )
             }.toMap(),
             definitions = ast
@@ -85,29 +81,22 @@ class OpenApiV2Emitter {
 
     private fun Endpoint.emit(): OperationObject = OperationObject(
         operationId = this.name,
-        parameters = this.requests
+        consumes = requests.mapNotNull { it.content?.type }.distinct().ifEmpty { null },
+        produces = responses.mapNotNull { it.content?.type }.distinct().ifEmpty { null },
+        parameters = requests
             .mapNotNull { it.content }
             .take(1)
             .map {
                 ParameterObject(
                     `in` = ParameterLocation.BODY,
                     name = "RequestBody",
-                    schema = it.reference.emit()
+                    schema = it.reference.emit(),
+                    required = !it.isNullable,
                 )
-            } + query.map {
-            ParameterObject(
-                `in` = ParameterLocation.QUERY,
-                name = it.identifier.value,
-                type = it.reference.emitType()
+            } + query.map { it.emitParameter(ParameterLocation.QUERY) } + headers.map {
+            it.emitParameter(
+                ParameterLocation.HEADER
             )
-
-        }+headers.map {
-            ParameterObject(
-                `in` = ParameterLocation.HEADER,
-                name = it.identifier.value,
-                type = it.reference.emitType()
-            )
-
         },
         responses = responses
             .associate {
@@ -137,14 +126,40 @@ class OpenApiV2Emitter {
 
     fun Type.Shape.Field.emit(): Pair<String, SchemaOrReferenceObject> = identifier.value to reference.emit()
 
-    fun Type.Shape.Field.Reference.emit(): SchemaOrReferenceObject = when (this) {
-        is Type.Shape.Field.Reference.Custom -> ReferenceObject(ref = Ref("#/definitions/${value}"))
-        is Type.Shape.Field.Reference.Primitive -> SchemaObject(
-            type = type.emitType()
+    fun Type.Shape.Field.emitParameter(location: ParameterLocation) =
+        ParameterObject(
+            `in` = location,
+            name = identifier.value,
+            type = reference.emitType(),
+            items = when (reference.isIterable) {
+                true -> when (val emit = reference.emit()) {
+                    is ReferenceObject -> emit
+                    is SchemaObject -> emit.items
+                }
+                false -> null
+            },
+            required = !isNullable
+
         )
 
-        is Type.Shape.Field.Reference.Any -> error("Cannot map Any")
-        is Type.Shape.Field.Reference.Unit -> error("Cannot map Unit")
+    fun Type.Shape.Field.Reference.emit(): SchemaOrReferenceObject {
+        val ref = when (this) {
+            is Type.Shape.Field.Reference.Custom -> ReferenceObject(ref = Ref("#/definitions/${value}"))
+            is Type.Shape.Field.Reference.Primitive -> SchemaObject(
+                type = type.emitType(),
+            )
+
+            is Type.Shape.Field.Reference.Any -> error("Cannot map Any")
+            is Type.Shape.Field.Reference.Unit -> error("Cannot map Unit")
+        }
+
+        if (isIterable) {
+            return SchemaObject(
+                type = OpenApiType.ARRAY,
+                items = ref,
+            )
+        }
+        return ref
     }
 
 
@@ -155,10 +170,14 @@ class OpenApiV2Emitter {
         Type.Shape.Field.Reference.Primitive.Type.Boolean -> OpenApiType.BOOLEAN
     }
 
-    private fun Type.Shape.Field.Reference.emitType(): OpenApiType = when (this) {
-        is Type.Shape.Field.Reference.Primitive -> type.emitType()
-        is Type.Shape.Field.Reference.Custom -> OpenApiType.OBJECT
-        is Type.Shape.Field.Reference.Any -> OpenApiType.OBJECT
-        is Type.Shape.Field.Reference.Unit -> OpenApiType.OBJECT
-    }
+    private fun Type.Shape.Field.Reference.emitType(): OpenApiType =
+        when (isIterable) {
+            true -> OpenApiType.ARRAY
+            false -> when (this) {
+                is Type.Shape.Field.Reference.Primitive -> type.emitType()
+                is Type.Shape.Field.Reference.Custom -> OpenApiType.OBJECT
+                is Type.Shape.Field.Reference.Any -> OpenApiType.OBJECT
+                is Type.Shape.Field.Reference.Unit -> OpenApiType.OBJECT
+            }
+        }
 }
