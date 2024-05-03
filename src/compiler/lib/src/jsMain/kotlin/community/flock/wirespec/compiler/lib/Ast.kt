@@ -47,7 +47,7 @@ private fun WsMethod.consume() = when (this) {
     WsMethod.TRACE -> Endpoint.Method.TRACE
 }
 
-private fun WsIdentifier.consume() = Type.Shape.Field.Identifier.invoke(value)
+private fun WsIdentifier.consume() = Type.Shape.Field.Identifier(value)
 
 private fun WsField.consume() = Type.Shape.Field(
     identifier = identifier.consume(),
