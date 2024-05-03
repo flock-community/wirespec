@@ -10,8 +10,20 @@ import community.flock.wirespec.compiler.core.parse.AST
 
 fun Either<Nel<WirespecException>, List<Emitted>>.produce(): WsCompilationResult = when (this) {
     is Either.Left -> WsCompilationResult(errors = value.map { it.produce() }.toTypedArray())
-    is Either.Right -> WsCompilationResult(result = WsCompiled(value.first().result))
+    is Either.Right -> WsCompilationResult(
+        result = WsCompiled(
+            value = value
+                .map { it.produce() }
+                .toTypedArray()
+        )
+    )
 }
+
+fun Emitted.produce() =
+    WsEmitted(
+        typeName = typeName,
+        result = result
+    )
 
 @JsExport
 class WsCompilationResult(
@@ -20,7 +32,7 @@ class WsCompilationResult(
 )
 
 @JsExport
-class WsCompiled(val value: String)
+class WsCompiled(val value: Array<WsEmitted>)
 
 @JsExport
 class WsCompiledFile(val name: String, val value: String)
@@ -45,5 +57,11 @@ fun Either<Nel<WirespecException>, String>.produce(): WsStringResult = when (thi
 class WsStringResult(
     val result: String? = null,
     val errors: Array<WsError>? = null,
+)
+
+@JsExport
+class WsEmitted(
+    val typeName: String,
+    val result: String,
 )
 
