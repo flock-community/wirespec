@@ -619,7 +619,7 @@ class OpenApiV3ParserTest {
 
     @Test
     fun oneOf() {
-        val json = Resource("v3/oneof.json").readText()
+        val json = Resource("src/commonTest/resources/v3/oneof.json").readText()
 
         val openApi = OpenAPI.decodeFromString(json)
         val ast = OpenApiV3Parser.parse(openApi)

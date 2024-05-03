@@ -20,9 +20,6 @@ class OpenApiV2EmitterTest {
         val petstoreAst = OpenApiV2Parser.parse(petstoreOpenAPi)
 
         val petstoreConvertedOpenAPi = OpenApiV2Emitter().emit(petstoreAst)
-
-        println(json.encodeToString(petstoreConvertedOpenAPi))
-
         val petstoreConvertedOpenAPiAst = OpenApiV2Parser.parse(petstoreConvertedOpenAPi)
 
         assertEquals(

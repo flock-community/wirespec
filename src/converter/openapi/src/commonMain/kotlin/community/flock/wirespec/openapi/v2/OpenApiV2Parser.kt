@@ -73,7 +73,7 @@ class OpenApiV2Parser(private val openApi: SwaggerObject) {
 
                                             null -> TODO("Not yet implemented")
                                         },
-                                        isNullable = !(requestBody.required ?: false)
+                                        isNullable = requestBody.required ?: false
                                     )
                                 )
                             }

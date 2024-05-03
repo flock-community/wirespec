@@ -79,43 +79,46 @@ class OpenApiV2Emitter {
     private fun List<Endpoint>.emit(method: Endpoint.Method): OperationObject? =
         filter { it.method == method }.map { it.emit() }.firstOrNull()
 
-    private fun Endpoint.emit(): OperationObject = OperationObject(
-        operationId = this.name,
-        consumes = requests.mapNotNull { it.content?.type }.distinct().ifEmpty { null },
-        produces = responses.mapNotNull { it.content?.type }.distinct().ifEmpty { null },
-        parameters = requests
-            .mapNotNull { it.content }
-            .take(1)
-            .map {
-                ParameterObject(
-                    `in` = ParameterLocation.BODY,
-                    name = "RequestBody",
-                    schema = it.reference.emit(),
-                    required = !it.isNullable,
+    private fun Endpoint.emit(): OperationObject {
+        val operationObject = OperationObject(
+            operationId = this.name,
+            consumes = requests.mapNotNull { it.content?.type }.distinct().ifEmpty { null },
+            produces = responses.mapNotNull { it.content?.type }.distinct().ifEmpty { null },
+            parameters = requests
+                .mapNotNull { it.content }
+                .take(1)
+                .map {
+                    ParameterObject(
+                        `in` = ParameterLocation.BODY,
+                        name = "RequestBody",
+                        schema = it.reference.emit(),
+                        required = it.isNullable,
+                    )
+                } + query.map { it.emitParameter(ParameterLocation.QUERY) } + headers.map {
+                it.emitParameter(
+                    ParameterLocation.HEADER
                 )
-            } + query.map { it.emitParameter(ParameterLocation.QUERY) } + headers.map {
-            it.emitParameter(
-                ParameterLocation.HEADER
-            )
-        },
-        responses = responses
-            .associate {
-                StatusCode(it.status) to ResponseObject(
-                    description = "${this.name} ${it.status} response",
-                    schema = it.content
-                        ?.takeIf { content -> content.reference !is Type.Shape.Field.Reference.Unit }
-                        ?.let { content ->
-                            when (content.reference.isIterable) {
-                                false -> content.reference.emit()
-                                true -> SchemaObject(
-                                    type = OpenApiType.ARRAY,
-                                    items = content.reference.emit()
-                                )
+            },
+            responses = responses
+                .associate {
+                    StatusCode(it.status) to ResponseObject(
+                        description = "${this.name} ${it.status} response",
+                        schema = it.content
+                            ?.takeIf { content -> content.reference !is Type.Shape.Field.Reference.Unit }
+                            ?.let { content ->
+                                when (content.reference.isIterable) {
+                                    false -> content.reference.emit()
+                                    true -> SchemaObject(
+                                        type = OpenApiType.ARRAY,
+                                        items = content.reference.emit()
+                                    )
+                                }
                             }
-                        }
-                )
-            }
-    )
+                    )
+                }
+        )
+        return operationObject
+    }
 
     private fun List<Endpoint.Segment>.emitSegment() = "/" + joinToString("/") {
         when (it) {
