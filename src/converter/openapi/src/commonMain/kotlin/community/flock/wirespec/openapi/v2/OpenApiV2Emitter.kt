@@ -92,7 +92,7 @@ class OpenApiV2Emitter {
                         `in` = ParameterLocation.BODY,
                         name = "RequestBody",
                         schema = it.reference.emit(),
-                        required = it.isNullable,
+                        required = !it.isNullable,
                     )
                 } + query.map { it.emitParameter(ParameterLocation.QUERY) } + headers.map {
                 it.emitParameter(

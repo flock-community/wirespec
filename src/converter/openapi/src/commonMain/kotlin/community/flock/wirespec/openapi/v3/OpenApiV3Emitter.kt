@@ -120,7 +120,7 @@ class OpenApiV3Emitter {
         },
         requestBody = RequestBodyObject(
             content = requests.mapNotNull { it.content?.emit() }.toMap().ifEmpty { null },
-            required = requests.any { it.content?.isNullable?:false }
+            required = !requests.any { it.content?.isNullable?:false }
         ),
         responses = responses
             .groupBy { it.status }

@@ -435,14 +435,14 @@ class OpenApiV3ParserTest {
                         Endpoint.Content(
                             type = "application/json",
                             reference = Reference.Custom("Todo_input", false),
-                            isNullable = false
+                            isNullable = true
                         )
                     ),
                     Endpoint.Request(
                         Endpoint.Content(
                             type = "application/xml",
                             reference = Reference.Custom("Todo", false),
-                            isNullable = false
+                            isNullable = true
                         )
                     )
                 ),

@@ -75,7 +75,7 @@ class OpenApiV3Parser(private val openApi: OpenAPIObject) {
 
                                         null -> TODO("Not yet implemented")
                                     },
-                                    isNullable = requestBody.required ?: false
+                                    isNullable = !(requestBody.required ?: false)
                                 )
                             )
                         }
