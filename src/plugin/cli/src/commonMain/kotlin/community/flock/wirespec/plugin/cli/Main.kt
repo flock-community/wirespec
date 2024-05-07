@@ -48,7 +48,7 @@ fun main(args: Array<String>) {
         .let(WirespecCli.provide(::compile, ::convert))
 }
 
-fun convert(arguments: CompilerArguments) = compile(arguments)
+fun convert(arguments: CompilerArguments): Unit = compile(arguments)
 
 fun compile(arguments: CompilerArguments) {
 

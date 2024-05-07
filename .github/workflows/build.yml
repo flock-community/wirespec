@@ -14,12 +14,9 @@ concurrency:
 
 jobs:
 
-  build-all-but-mac:
+  build-all:
 
-    runs-on: ubuntu-latest
-
-    env:
-      WIRESPEC_BUILD_LINUX: true
+    runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v3
@@ -37,45 +34,12 @@ jobs:
       - name: Run
         run: |
           make build
-          make image
           make example
       - name: Archive linux cli
         uses: actions/upload-artifact@v3
         with:
           name: wirespec-cli-linux
           path: src/plugin/cli/build/bin/linuxX64/releaseExecutable/cli.kexe
-      - name: Archive vscode extension
-        uses: actions/upload-artifact@v3
-        with:
-          name: wirespec-client-vscode
-          path: src/lsp/node/client/build/wirespec-client-vscode-*.vsix
-      - name: Archive Intellij plugin
-        uses: actions/upload-artifact@v3
-        with:
-          name: wirespec-intellij-plugin
-          path: src/lsp/intellij-plugin/build/distributions/intellij-plugin-*.zip
-
-  build-mac:
-
-    runs-on: macos-latest
-
-    env:
-      WIRESPEC_BUILD_MAC_ARM: true
-      WIRESPEC_BUILD_MAC_X86: true
-
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up JDK
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: gradle
-          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
-          gpg-passphrase: GPG_PASSPHRASE
-      - name: Run
-        run: |
-          ./gradlew build
       - name: Archive macosX86 cli
         uses: actions/upload-artifact@v3
         with:
@@ -86,6 +50,16 @@ jobs:
         with:
           name: wirespec-cli-macos-arm64
           path: src/plugin/cli/build/bin/macosArm64/releaseExecutable/cli.kexe
+      - name: Archive vscode extension
+        uses: actions/upload-artifact@v3
+        with:
+          name: wirespec-client-vscode
+          path: src/lsp/node/client/build/wirespec-client-vscode-*.vsix
+      - name: Archive Intellij plugin
+        uses: actions/upload-artifact@v3
+        with:
+          name: wirespec-intellij-plugin
+          path: src/lsp/intellij-plugin/build/distributions/intellij-plugin-*.zip
 
   version:
 
