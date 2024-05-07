@@ -23,8 +23,8 @@ import community.flock.kotlinx.openapi.bindings.v2.Type as OpenApiType
 
 class OpenApiV2Emitter {
 
-    fun emit(ast: AST): SwaggerObject {
-        return SwaggerObject(
+    fun emit(ast: AST): SwaggerObject =
+        SwaggerObject(
             swagger = "2.0",
             info = InfoObject(
                 title = "Wirespec",
@@ -74,7 +74,6 @@ class OpenApiV2Emitter {
                     )
                 }
         )
-    }
 
     private fun List<Endpoint>.emit(method: Endpoint.Method): OperationObject? =
         filter { it.method == method }.map { it.emit() }.firstOrNull()
@@ -139,6 +138,7 @@ class OpenApiV2Emitter {
                     is ReferenceObject -> emit
                     is SchemaObject -> emit.items
                 }
+
                 false -> null
             },
             required = !isNullable
@@ -156,13 +156,14 @@ class OpenApiV2Emitter {
             is Type.Shape.Field.Reference.Unit -> error("Cannot map Unit")
         }
 
-        if (isIterable) {
-            return SchemaObject(
+        return if (isIterable) {
+            SchemaObject(
                 type = OpenApiType.ARRAY,
                 items = ref,
             )
+        } else {
+            ref
         }
-        return ref
     }
 
 
@@ -174,9 +175,10 @@ class OpenApiV2Emitter {
     }
 
     private fun Type.Shape.Field.Reference.emitType(): OpenApiType =
-        when (isIterable) {
-            true -> OpenApiType.ARRAY
-            false -> when (this) {
+        if (isIterable) {
+            OpenApiType.ARRAY
+        } else {
+            when (this) {
                 is Type.Shape.Field.Reference.Primitive -> type.emitType()
                 is Type.Shape.Field.Reference.Custom -> OpenApiType.OBJECT
                 is Type.Shape.Field.Reference.Any -> OpenApiType.OBJECT
