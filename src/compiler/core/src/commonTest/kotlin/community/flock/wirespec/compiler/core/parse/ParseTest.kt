@@ -15,12 +15,12 @@ class ParseTest {
     @Test
     fun testParserWithCorrectInput() {
         val source = """
-            type Bla {
-              foo: String,
-              bar: String
-            }
+            |type Bla {
+            |  foo: String,
+            |  bar: String
+            |}
 
-        """.trimIndent()
+        """.trimMargin()
 
         WirespecSpec.tokenize(source)
             .let(parser()::parse)
@@ -31,12 +31,12 @@ class ParseTest {
     @Test
     fun testParserWithFaultyInput() {
         val source = """
-            type Bla {
-              foo: String
-              bar: String
-            }
+            |type Bla {
+            |  foo: String
+            |  bar: String
+            |}
 
-        """.trimIndent()
+        """.trimMargin()
 
         WirespecSpec.tokenize(source)
             .let(parser()::parse)
@@ -44,5 +44,24 @@ class ParseTest {
             .also { it.size shouldBe 1 }
             .first()
             .message shouldBe "RightCurly expected, not: CustomValue at line 3 and position 3"
+    }
+
+    @Test
+    fun testParserWithComment() {
+        val source = """
+            |/**
+            | * This is a comment
+            | */
+            |type Bla {
+            |  foo: String,
+            |  bar: String
+            |}
+
+        """.trimMargin()
+
+        WirespecSpec.tokenize(source)
+            .let(parser()::parse)
+            .shouldBeRight()
+            .size shouldBe 1
     }
 }

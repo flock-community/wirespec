@@ -107,6 +107,7 @@ class OpenApiV2Parser(private val openApi: SwaggerObject) {
 
                 listOf(
                     Endpoint(
+                        comment = null,
                         identifier = Identifier(name),
                         method = method,
                         path = segments,
@@ -138,8 +139,9 @@ class OpenApiV2Parser(private val openApi: SwaggerObject) {
             when {
                 parameter.enum != null -> listOf(
                     Enum(
-                        Identifier(className(name, "Parameter", parameter.name)),
-                        parameter.enum!!.map { it.content }.toSet()
+                        comment = null,
+                        identifier = Identifier(className(name, "Parameter", parameter.name)),
+                        entries = parameter.enum!!.map { it.content }.toSet()
                     )
                 )
 
@@ -261,8 +263,9 @@ class OpenApiV2Parser(private val openApi: SwaggerObject) {
 
         allOf != null -> listOf(
             Type(
-                Identifier(name),
-                Type.Shape(allOf
+                comment = null,
+                identifier = Identifier(name),
+                shape = Type.Shape(allOf
                     .orEmpty()
                     .flatMap {
                         when (it) {
@@ -288,7 +291,7 @@ class OpenApiV2Parser(private val openApi: SwaggerObject) {
         enum != null -> enum!!
             .map { it.content }
             .toSet()
-            .let { listOf(Enum(Identifier(name), it)) }
+            .let { listOf(Enum(comment = null, identifier = Identifier(name), entries = it)) }
 
         else -> when (type) {
             null, OpenapiType.OBJECT -> {
@@ -296,7 +299,7 @@ class OpenApiV2Parser(private val openApi: SwaggerObject) {
                     .flatMap { (key, value) -> value.flatten(className(name, key)) }
 
                 val schema = listOf(
-                    Type(Identifier(name), Type.Shape(toField(name)))
+                    Type(comment = null, identifier = Identifier(name), shape = Type.Shape(toField(name)))
                 )
                 schema + fields
             }

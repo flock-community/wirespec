@@ -11,6 +11,7 @@ import community.flock.wirespec.compiler.core.parse.Type
 object NodeFixtures {
 
     val refined = Refined(
+        comment = null,
         identifier = Identifier("UUID"),
         validator = Refined.Validator(
             "^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}\$"
@@ -19,6 +20,7 @@ object NodeFixtures {
 
 
     val enum = Enum(
+        comment = null,
         identifier = Identifier("TodoStatus"),
         entries = setOf(
             "OPEN",
@@ -29,6 +31,7 @@ object NodeFixtures {
 
 
     val type = Type(
+        comment = null,
         identifier = Identifier("Todo"),
         shape = Type.Shape(
             value = listOf(
@@ -57,6 +60,7 @@ object NodeFixtures {
     )
 
     val endpoint = Endpoint(
+        comment = null,
         identifier = Identifier(""),
         method = Endpoint.Method.GET,
         path = listOf(Endpoint.Segment.Literal("/todos")),

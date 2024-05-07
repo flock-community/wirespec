@@ -30,16 +30,16 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
 
     private val typeParser = TypeParser(logger)
 
-    fun TokenProvider.parseEndpoint(): Either<WirespecException, Endpoint> = either {
+    fun TokenProvider.parseEndpoint(comment: Comment?): Either<WirespecException, Endpoint> = either {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is CustomType -> parseEndpointDefinition(Identifier(token.value)).bind()
+            is CustomType -> parseEndpointDefinition(comment, Identifier(token.value)).bind()
             else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
         }
     }
 
-    private fun TokenProvider.parseEndpointDefinition(name: Identifier) = either {
+    private fun TokenProvider.parseEndpointDefinition(comment: Comment?, name: Identifier) = either {
         eatToken().bind()
         token.log()
         val method = when (token.type) {
@@ -107,6 +107,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
         val responses = parseEndpointResponses().bind()
 
         Endpoint(
+            comment = comment,
             identifier = name,
             method = method,
             path = segments,

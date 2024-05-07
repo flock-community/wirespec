@@ -22,6 +22,7 @@ fun WsNode.consume(): Node =
 
 fun WsEndpoint.consume(): Endpoint =
     Endpoint(
+        comment = null,
         identifier = Identifier(name),
         method = method.consume(),
         path = path.map { it.consume() },

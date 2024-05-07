@@ -118,6 +118,7 @@ class OpenApiV3Parser(private val openApi: OpenAPIObject) {
                 }
 
                 Endpoint(
+                    comment = null,
                     identifier = Identifier(name),
                     method = method,
                     path = segments,
@@ -350,6 +351,7 @@ class OpenApiV3Parser(private val openApi: OpenAPIObject) {
 
             oneOf != null || anyOf != null -> listOf(
                 Union(
+                    comment = null,
                     identifier = Identifier(name),
                     entries = oneOf!!
                         .mapIndexed { index, it ->
@@ -370,6 +372,7 @@ class OpenApiV3Parser(private val openApi: OpenAPIObject) {
 
             allOf != null -> listOf(
                 Type(
+                    comment = null,
                     identifier = Identifier(name),
                     shape = Type.Shape(allOf.orEmpty().flatMap { it.resolve().toField(name) }
                         .distinctBy { it.identifier })
@@ -389,7 +392,7 @@ class OpenApiV3Parser(private val openApi: OpenAPIObject) {
             enum != null -> enum!!
                 .map { it.content }
                 .toSet()
-                .let { listOf(Enum(Identifier(name), it)) }
+                .let { listOf(Enum(comment = null, identifier = Identifier(name), entries = it)) }
 
             else -> when (type) {
                 null, OpenapiType.OBJECT -> {
@@ -397,7 +400,7 @@ class OpenApiV3Parser(private val openApi: OpenAPIObject) {
                         value.flatten(className(name, key))
                     }
                     val schema = listOf(
-                        Type(Identifier(name), Type.Shape(toField(name)))
+                        Type(comment = null, identifier = Identifier(name), shape = Type.Shape(toField(name)))
                     )
 
                     schema + fields
