@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsTargetDsl
 plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
-    id("com.github.johnrengelman.shadow")
+    id("com.github.johnrengelman.shadow") version "7.1.2"
     id("com.goncalossilva.resources") version "0.4.0"
     id("io.kotest.multiplatform")
 }

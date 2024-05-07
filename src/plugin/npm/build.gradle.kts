@@ -3,7 +3,6 @@ import Versions.KOTLIN_COMPILER
 plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
-    id("com.github.johnrengelman.shadow") apply false
 }
 
 group = "${Settings.GROUP_ID}.plugin.npm"

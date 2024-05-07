@@ -2,8 +2,8 @@
 
 plugins {
     java
-    id("org.jetbrains.kotlin.jvm")
-    Plugins.intellij.let { (name, ver) -> id(name) version ver }
+    kotlin("jvm")
+    id("org.jetbrains.intellij") version "1.15.0"
 }
 
 group = "${Settings.GROUP_ID}.lsp.intellij-plugin"

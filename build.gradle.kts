@@ -1,7 +1,7 @@
 import org.jetbrains.dokka.gradle.DokkaTask
 
 plugins {
-    id("org.jetbrains.kotlin.jvm") apply false
+    kotlin("jvm") apply false
     id("maven-publish")
     id("signing")
     id("org.jetbrains.dokka") version "1.8.10"
@@ -33,7 +33,7 @@ allprojects {
     }
 
     signing {
-        setRequired{System.getenv("VERSION") != null}
+        setRequired { System.getenv("VERSION") != null }
         useInMemoryPgpKeys(
             System.getenv("GPG_PRIVATE_KEY"),
             System.getenv("GPG_PASSPHRASE")
