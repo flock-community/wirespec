@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-export WIRESPEC_BUILD_MAC=true
-export WIRESPEC_BUILD_LINUX=true
+export WIRESPEC_BUILD_MAC=false
+export WIRESPEC_BUILD_LINUX=false
 
 dir="$(dirname -- "$0")"
 
