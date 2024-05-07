@@ -31,15 +31,15 @@ import community.flock.wirespec.openapi.Common.className
 import kotlinx.serialization.json.Json
 import community.flock.kotlinx.openapi.bindings.v3.Type as OpenapiType
 
-class OpenApiParser(private val openApi: OpenAPIObject) {
+class OpenApiV3Parser(private val openApi: OpenAPIObject) {
 
     companion object {
         fun parse(json: String, strict: Boolean = false): AST =
             OpenAPI(json = Json { prettyPrint = true; ignoreUnknownKeys = strict })
                 .decodeFromString(json)
-                .let { OpenApiParser(it).parse() }
+                .let { OpenApiV3Parser(it).parse() }
 
-        fun parse(openApi: OpenAPIObject): AST = OpenApiParser(openApi).parse()
+        fun parse(openApi: OpenAPIObject): AST = OpenApiV3Parser(openApi).parse()
     }
 
 
@@ -75,7 +75,7 @@ class OpenApiParser(private val openApi: OpenAPIObject) {
 
                                         null -> TODO("Not yet implemented")
                                     },
-                                    isNullable = requestBody.required ?: false
+                                    isNullable = !(requestBody.required ?: false)
                                 )
                             )
                         }

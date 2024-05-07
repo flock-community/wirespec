@@ -22,7 +22,7 @@ object Expected {
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(value = "TestWithDashGETRequestBody", isIterable = false),
-                        isNullable = false
+                        isNullable = true
                     )
                 )
             ),
@@ -164,7 +164,7 @@ object Expected {
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(value = "Message", isIterable = false, isMap = true),
-                        isNullable = false
+                        isNullable = true
                     )
                 )
             ),
@@ -262,7 +262,7 @@ object Expected {
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(value = "Message", isIterable = true, isMap = false),
-                        isNullable = false
+                        isNullable = true
                     )
                 )
             ),

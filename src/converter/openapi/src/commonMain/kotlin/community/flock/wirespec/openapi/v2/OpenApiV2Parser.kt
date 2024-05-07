@@ -29,15 +29,15 @@ import community.flock.wirespec.openapi.Common.className
 import kotlinx.serialization.json.Json
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenapiType
 
-class OpenApiParser(private val openApi: SwaggerObject) {
+class OpenApiV2Parser(private val openApi: SwaggerObject) {
 
     companion object {
         fun parse(json: String, ignoreUnknown: Boolean = false): AST =
             OpenAPI(json = Json { prettyPrint = true; ignoreUnknownKeys = ignoreUnknown })
                 .decodeFromString(json)
-                .let { OpenApiParser(it).parse() }
+                .let { OpenApiV2Parser(it).parse() }
 
-        fun parse(openApi: SwaggerObject): AST = OpenApiParser(openApi).parse()
+        fun parse(openApi: SwaggerObject): AST = OpenApiV2Parser(openApi).parse()
     }
 
     fun parse(): List<Node> =
@@ -58,44 +58,49 @@ class OpenApiParser(private val openApi: SwaggerObject) {
                 val requests = parameters
                     .filter { it.`in` == ParameterLocation.BODY }
                     .flatMap { requestBody ->
-                        (openApi.consumes ?: operation.consumes ?: listOf("application/json")).map { type ->
-                            Endpoint.Request(
-                                Endpoint.Content(
-                                    type = type,
-                                    reference = when (val schema = requestBody.schema) {
-                                        is ReferenceObject -> schema.toReference()
-                                        is SchemaObject -> schema.toReference(
-                                            className(name, "RequestBody")
-                                        )
+                        (openApi.consumes.orEmpty() + operation.consumes.orEmpty())
+                            .distinct()
+                            .ifEmpty { listOf("application/json") }
+                            .map { type ->
+                                Endpoint.Request(
+                                    Endpoint.Content(
+                                        type = type,
+                                        reference = when (val schema = requestBody.schema) {
+                                            is ReferenceObject -> schema.toReference()
+                                            is SchemaObject -> schema.toReference(
+                                                className(name, "RequestBody")
+                                            )
 
-                                        null -> TODO("Not yet implemented")
-                                    },
-                                    isNullable = requestBody.required ?: false
+                                            null -> TODO("Not yet implemented")
+                                        },
+                                        isNullable = !(requestBody.required ?: false)
+                                    )
                                 )
-                            )
-                        }
+                            }
                     }
                     .ifEmpty { listOf(Endpoint.Request(null)) }
                 val responses = operation.responses.orEmpty()
                     .flatMap { (status, res) ->
-                        (openApi.produces ?: operation.produces ?: listOf("application/json")).map { type ->
-                            Endpoint.Response(
-                                status = status.value,
-                                headers = emptyList(),
-                                content = res.resolve().schema?.let { schema ->
-                                    Endpoint.Content(
-                                        type = type,
-                                        reference = when (schema) {
-                                            is ReferenceObject -> schema.toReference()
-                                            is SchemaObject -> schema.toReference(
-                                                className(name, status.value, type, "ResponseBody")
-                                            )
-                                        },
-                                        isNullable = false
-                                    )
-                                }
-                            )
-                        }
+                        (openApi.produces.orEmpty() + operation.produces.orEmpty())
+                            .distinct()
+                            .ifEmpty { listOf("application/json") }.map { type ->
+                                Endpoint.Response(
+                                    status = status.value,
+                                    headers = emptyList(),
+                                    content = res.resolve().schema?.let { schema ->
+                                        Endpoint.Content(
+                                            type = type,
+                                            reference = when (schema) {
+                                                is ReferenceObject -> schema.toReference()
+                                                is SchemaObject -> schema.toReference(
+                                                    className(name, status.value, type, "ResponseBody")
+                                                )
+                                            },
+                                            isNullable = false
+                                        )
+                                    }
+                                )
+                            }
                     }
                     .distinctBy { it.status to it.content }
 

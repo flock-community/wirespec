@@ -1,5 +1,6 @@
 package community.flock.wirespec.openapi.v2
 
+import com.goncalossilva.resources.Resource
 import community.flock.kotlinx.openapi.bindings.v2.OpenAPI
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -9,19 +10,18 @@ import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Identifier
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Custom
 import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive
-import community.flock.wirespec.openapi.IO
 import community.flock.wirespec.openapi.common.Expected
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class OpenApiParserTest {
+class OpenApiV2ParserTest {
 
     @Test
     fun petstore() {
-        val json = IO.readFile("v2/petstore.json")
+        val json = Resource("src/commonTest/resources/v2/petstore.json").readText()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = OpenApiParser.parse(openApi)
+        val ast = OpenApiV2Parser.parse(openApi)
 
         val expectedTypeDefinitions = listOf(
             Type(
@@ -241,10 +241,10 @@ class OpenApiParserTest {
 
     @Test
     fun alias() {
-        val json = IO.readFile("v2/alias.json")
+        val json = Resource("src/commonTest/resources/v2/alias.json").readText()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = OpenApiParser.parse(openApi)
+        val ast = OpenApiV2Parser.parse(openApi)
 
         val expected = listOf(
             Endpoint(
@@ -289,60 +289,60 @@ class OpenApiParserTest {
 
     @Test
     fun objectInRequest() {
-        val json = IO.readFile("v2/object-in-request.json")
+        val json = Resource("src/commonTest/resources/v2/object-in-request.json").readText()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = OpenApiParser.parse(openApi)
+        val ast = OpenApiV2Parser.parse(openApi)
 
         assertEquals(Expected.objectInRequest, ast)
     }
 
     @Test
     fun objectInResponse() {
-        val json = IO.readFile("v2/object-in-response.json")
+        val json = Resource("src/commonTest/resources/v2/object-in-response.json").readText()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = OpenApiParser.parse(openApi)
+        val ast = OpenApiV2Parser.parse(openApi)
 
         assertEquals(Expected.objectInResponse, ast)
     }
 
     @Test
     fun additionalProperties() {
-        val json = IO.readFile("v2/additionalproperties.json")
+        val json = Resource("src/commonTest/resources/v2/additionalproperties.json").readText()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = OpenApiParser.parse(openApi)
+        val ast = OpenApiV2Parser.parse(openApi)
 
         assertEquals(Expected.additionalproperties, ast)
     }
 
     @Test
     fun array() {
-        val json = IO.readFile("v2/array.json")
+        val json = Resource("src/commonTest/resources/v2/array.json").readText()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = OpenApiParser.parse(openApi)
+        val ast = OpenApiV2Parser.parse(openApi)
 
         assertEquals(Expected.array, ast)
     }
 
     @Test
     fun allOf() {
-        val json = IO.readFile("v2/allof.json")
+        val json = Resource("src/commonTest/resources/v2/allof.json").readText()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = OpenApiParser.parse(openApi)
+        val ast = OpenApiV2Parser.parse(openApi)
 
         assertEquals(Expected.allOf, ast)
     }
 
     @Test
     fun enum() {
-        val json = IO.readFile("v2/enum.json")
+        val json = Resource("src/commonTest/resources/v2/enum.json").readText()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = OpenApiParser.parse(openApi)
+        val ast = OpenApiV2Parser.parse(openApi)
 
         assertEquals(Expected.enum, ast)
     }

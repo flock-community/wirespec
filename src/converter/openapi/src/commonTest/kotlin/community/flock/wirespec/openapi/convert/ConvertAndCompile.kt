@@ -1,21 +1,21 @@
 package community.flock.wirespec.openapi.convert
 
+import com.goncalossilva.resources.Resource
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.utils.noLogger
-import community.flock.wirespec.openapi.IO
 import io.kotest.assertions.arrow.core.shouldBeRight
-import org.junit.Test
-import community.flock.wirespec.openapi.v2.OpenApiParser.Companion as OpenApiV2Parser
-import community.flock.wirespec.openapi.v3.OpenApiParser.Companion as OpenApiV3Parser
+import kotlin.test.Test
+import community.flock.wirespec.openapi.v2.OpenApiV2Parser.Companion as OpenApiV2Parser
+import community.flock.wirespec.openapi.v3.OpenApiV3Parser.Companion as OpenApiV3Parser
 
 class ConvertAndCompile {
 
     @Test
     fun testV2ConversionAndCompilation() {
-        val input = IO.readFile("v2/petstore.json")
+        val input = Resource("src/commonTest/resources/v2/petstore.json").readText()
         val ast = OpenApiV2Parser.parse(input, true)
         val wirespec = WirespecEmitter().emit(ast).joinToString("\n") { it.result }
         WirespecSpec.compile(wirespec)(noLogger)(KotlinEmitter()).shouldBeRight()
@@ -23,7 +23,7 @@ class ConvertAndCompile {
 
     @Test
     fun testV3ConversionAndCompilation() {
-        val input = IO.readFile("v3/petstore.json")
+        val input = Resource("src/commonTest/resources/v3/petstore.json").readText()
         val ast = OpenApiV3Parser.parse(input, true)
         val wirespec = WirespecEmitter().emit(ast).joinToString("\n") { it.result }
         WirespecSpec.compile(wirespec)(noLogger)(KotlinEmitter()).shouldBeRight()

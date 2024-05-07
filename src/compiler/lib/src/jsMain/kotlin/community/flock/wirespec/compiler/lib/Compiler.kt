@@ -12,8 +12,8 @@ import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.parse.Parser
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.openapi.v2.OpenApiParser as OpenApiParserV2
-import community.flock.wirespec.openapi.v3.OpenApiParser as OpenApiParserV3
+import community.flock.wirespec.openapi.v2.OpenApiV2Parser
+import community.flock.wirespec.openapi.v3.OpenApiV3Parser
 
 @JsExport
 abstract class Compiler {
@@ -81,7 +81,7 @@ interface ParserInterface {
 
 @JsExport
 object OpenApiV2Parser {
-    fun parse(source: String): Array<WsNode> = OpenApiParserV2.parse(source).produce()
+    fun parse(source: String): Array<WsNode> = OpenApiV2Parser.parse(source).produce()
 }
 
 
@@ -90,7 +90,7 @@ object OpenApiV2ToTypescript {
     val logger = object : Logger() {}
     private val emitter = TypeScriptEmitter(logger)
     fun compile(source: String): Array<WsCompiledFile> {
-        val ast = OpenApiParserV2.parse(source)
+        val ast = OpenApiV2Parser.parse(source)
         return emitter.emit(ast)
             .map { (file, value) -> WsCompiledFile(file, value) }
             .toTypedArray()
@@ -102,7 +102,7 @@ object OpenApiV2ToWirespec {
     val logger = object : Logger() {}
     private val emitter = WirespecEmitter(logger)
     fun compile(source: String): Array<WsCompiledFile> {
-        val ast = OpenApiParserV2.parse(source)
+        val ast = OpenApiV2Parser.parse(source)
         return emitter.emit(ast)
             .map { (file, value) -> WsCompiledFile(file, value) }
             .toTypedArray()
@@ -112,7 +112,7 @@ object OpenApiV2ToWirespec {
 
 @JsExport
 object OpenApiV3Parser {
-    fun parse(source: String): Array<WsNode> = OpenApiParserV3.parse(source).produce()
+    fun parse(source: String): Array<WsNode> = OpenApiV3Parser.parse(source).produce()
 }
 
 @JsExport
@@ -120,7 +120,7 @@ object OpenApiV3ToTypescript {
     val logger = object : Logger() {}
     private val emitter = TypeScriptEmitter(logger)
     fun compile(source: String): Array<WsCompiledFile> {
-        val ast = OpenApiParserV3.parse(source)
+        val ast = OpenApiV3Parser.parse(source)
         return emitter.emit(ast)
             .map { (file, value) -> WsCompiledFile(file, value) }
             .toTypedArray()
@@ -132,7 +132,7 @@ object OpenApiV3ToWirespec {
     val logger = object : Logger() {}
     private val emitter = WirespecEmitter(logger)
     fun compile(source: String): Array<WsCompiledFile> {
-        val ast = OpenApiParserV3.parse(source)
+        val ast = OpenApiV3Parser.parse(source)
         return emitter.emit(ast)
             .map { (file, value) -> WsCompiledFile(file, value) }
             .toTypedArray()
