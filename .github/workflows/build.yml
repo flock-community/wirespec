@@ -68,8 +68,7 @@ jobs:
     if: github.event_name == 'release' && github.event.action == 'created'
 
     needs:
-      - build-all-but-mac
-      - build-mac
+      - build-all
 
     outputs:
       version: ${{steps.version.outputs.version}}
