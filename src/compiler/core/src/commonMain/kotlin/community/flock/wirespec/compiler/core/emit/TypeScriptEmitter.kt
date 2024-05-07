@@ -7,6 +7,8 @@ import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
@@ -25,11 +27,11 @@ class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emi
     """.trimMargin()
 
     override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> name
-        is Enum -> name
-        is Refined -> name
-        is Type -> name
-        is Union -> name
+        is Endpoint -> identifier.emit()
+        is Enum -> identifier.emit()
+        is Refined -> identifier.emit()
+        is Type -> identifier.emit()
+        is Union -> identifier.emit()
     }
 
     override fun emit(ast: AST): List<Emitted> =
@@ -43,50 +45,48 @@ class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emi
         }
 
     override fun Type.emit(ast: AST) =
-        """export type ${name.sanitizeSymbol()} = {
+        """export type ${identifier.sanitizeSymbol()} = {
             |${shape.emit()}
             |}
             |
             |""".trimMargin()
 
-    override fun Enum.emit() = "export type ${name.sanitizeSymbol()} = ${entries.joinToString(" | ") { """"$it"""" }}\n"
+    override fun Enum.emit() =
+        "export type ${identifier.sanitizeSymbol()} = ${entries.joinToString(" | ") { """"$it"""" }}\n"
 
     override fun Type.Shape.emit() = value.joinToString(",\n") { it.emit() }
 
-    override fun Type.Shape.Field.emit() =
+    override fun Field.emit() =
         "${SPACER}\"${identifier.emit()}\"${if (isNullable) "?" else ""}: ${reference.emit()}"
 
-    override fun Type.Shape.Field.Identifier.emit() = value
-
-
-    private fun Type.Shape.Field.Reference.emitSymbol() = when (this) {
-        is Type.Shape.Field.Reference.Unit -> "void"
-        is Type.Shape.Field.Reference.Any -> "any"
-        is Type.Shape.Field.Reference.Custom -> value.sanitizeSymbol()
-        is Type.Shape.Field.Reference.Primitive -> when (type) {
-            Type.Shape.Field.Reference.Primitive.Type.String -> "string"
-            Type.Shape.Field.Reference.Primitive.Type.Integer -> "number"
-            Type.Shape.Field.Reference.Primitive.Type.Number -> "number"
-            Type.Shape.Field.Reference.Primitive.Type.Boolean -> "boolean"
+    private fun Field.Reference.emitSymbol() = when (this) {
+        is Field.Reference.Unit -> "void"
+        is Field.Reference.Any -> "any"
+        is Field.Reference.Custom -> value.sanitizeSymbol()
+        is Field.Reference.Primitive -> when (type) {
+            Field.Reference.Primitive.Type.String -> "string"
+            Field.Reference.Primitive.Type.Integer -> "number"
+            Field.Reference.Primitive.Type.Number -> "number"
+            Field.Reference.Primitive.Type.Boolean -> "boolean"
         }
     }
 
-    override fun Type.Shape.Field.Reference.emit() = emitSymbol()
+    override fun Field.Reference.emit() = emitSymbol()
         .let { if (isIterable) "$it[]" else it }
         .let { if (isMap) "Record<string, $it>" else it }
 
     override fun Refined.emit() =
-        """export type ${name.sanitizeSymbol()} = string;
-            |const regExp$name = ${validator.emit()};
-            |export const validate$name = (value: string): value is ${name.sanitizeSymbol()} => 
-            |${SPACER}regExp$name.test(value);
+        """export type ${identifier.sanitizeSymbol()} = string;
+            |const regExp${identifier.emit()} = ${validator.emit()};
+            |export const validate${identifier.emit()} = (value: string): value is ${identifier.sanitizeSymbol()} => 
+            |${SPACER}regExp${identifier.emit()}.test(value);
             |""".trimMargin()
 
     override fun Refined.Validator.emit() = "/${value.drop(1).dropLast(1)}/g"
 
     override fun Endpoint.emit() =
         """
-          |export module ${name.sanitizeSymbol()} {
+          |export module ${identifier.sanitizeSymbol()} {
           |${SPACER}export const PATH = "/${
             path.joinToString("/") {
                 when (it) {
@@ -116,7 +116,7 @@ class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emi
         }
           |${SPACER}export type Handler = (request:Request) => Promise<Response>
           |${SPACER}export type Call = {
-          |${SPACER}${SPACER}${name.sanitizeSymbol().firstToLower()}: Handler
+          |${SPACER}${SPACER}${identifier.sanitizeSymbol().firstToLower()}: Handler
           |${SPACER}}
           |${
             requests.distinct().joinToString("\n") {
@@ -142,7 +142,8 @@ class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emi
           |
         """.trimMargin()
 
-    override fun Union.emit() = "export type ${name.sanitizeSymbol()} = ${entries.joinToString(" | ") { it.emit() }}\n"
+    override fun Union.emit() =
+        "export type ${identifier.sanitizeSymbol()} = ${entries.joinToString(" | ") { it.emit() }}\n"
 
     private fun List<Endpoint.Segment>.emitType() = "`${joinToString("") { "/" + it.emitType() }}`"
 
@@ -155,45 +156,52 @@ class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emi
     private fun Endpoint.Response.emitName() =
         "Response" + status.firstToUpper() + (content?.emitContentType() ?: "Undefined")
 
-    private fun List<Type.Shape.Field>.emitMap() = joinToString(", ") {
+    private fun Endpoint.Content.emitContentType() = type
+        .substringBefore(";")
+        .split("/", "-")
+        .joinToString("") { it.firstToUpper() }
+        .replace("+", "")
+
+    private fun List<Field>.emitMap() = joinToString(", ") {
         "\"${it.identifier.emit()}\": props.${
-            it.identifier.emit().sanitizeSymbol().firstToLower()
+            it.identifier.sanitizeSymbol().firstToLower()
         }"
     }
 
     private fun List<Endpoint.Segment>.emitPath() = "/" + joinToString("/") { it.emit() }
     private fun Endpoint.Segment.emit(): String = when (this) {
         is Endpoint.Segment.Literal -> value
-        is Endpoint.Segment.Param -> "\${props.${identifier.value.sanitizeSymbol().firstToLower()}}"
+        is Endpoint.Segment.Param -> "\${props.${identifier.sanitizeSymbol().firstToLower()}}"
     }
 
     private fun Endpoint.joinParameters(
         content: Endpoint.Content? = null,
         response: Endpoint.Response?
-    ): List<Type.Shape.Field> {
+    ): List<Field> {
         val pathField = path
             .filterIsInstance<Endpoint.Segment.Param>()
-            .map { Type.Shape.Field(it.identifier, it.reference, false) }
+            .map { Field(it.identifier, it.reference, false) }
         val parameters = response?.headers ?: (pathField + query + headers + cookies)
         return parameters
             .plus(content?.reference?.toField("body", false))
             .filterNotNull()
             .map {
                 it.copy(
-                    identifier = Type.Shape.Field.Identifier(
-                        it.identifier.value.sanitizeSymbol().firstToLower()
+                    identifier = Identifier(
+                        it.identifier.sanitizeSymbol().firstToLower()
                     )
                 )
             }
     }
 
-    private fun String.sanitizeSymbol() = this
-        .asSequence()
+    private fun Identifier.sanitizeSymbol() = value.sanitizeSymbol()
+
+    private fun String.sanitizeSymbol() = asSequence()
         .filter { it.isLetterOrDigit() || listOf('_').contains(it) }
         .joinToString("")
 
-    private fun Type.Shape.Field.Reference.toField(identifier: String, isNullable: Boolean) = Type.Shape.Field(
-        Type.Shape.Field.Identifier(identifier),
+    private fun Field.Reference.toField(identifier: String, isNullable: Boolean) = Field(
+        Identifier(identifier),
         this,
         isNullable
     )

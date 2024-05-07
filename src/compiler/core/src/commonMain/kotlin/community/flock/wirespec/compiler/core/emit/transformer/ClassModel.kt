@@ -8,7 +8,7 @@ sealed interface ClassModel {
 
 data class TypeClass(
     override val name: String,
-    val fields: List<Field>,
+    val fields: List<FieldClass>,
     val supers: List<Reference> = emptyList(),
 ) : ClassModel
 
@@ -43,7 +43,7 @@ data class EndpointClass(
 ) : ClassModel {
     data class RequestClass(
         val name: String,
-        val fields: List<Field>,
+        val fields: List<FieldClass>,
         val requestAllArgsConstructor: RequestAllArgsConstructor,
         val requestParameterConstructor: RequestParameterConstructor,
         val supers: List<Reference>,
@@ -78,7 +78,7 @@ data class EndpointClass(
 
     data class ResponseClass(
         val name: String,
-        val fields: List<Field>,
+        val fields: List<FieldClass>,
         val responseAllArgsConstructor: ResponseAllArgsConstructor,
         val responseParameterConstructor: ResponseParameterConstructor,
         val `super`: Reference,
@@ -130,7 +130,7 @@ data class EndpointClass(
     }
 }
 
-data class Field(
+data class FieldClass(
     val identifier: String,
     val reference: Reference,
     val isOverride: Boolean = false,

@@ -2,16 +2,16 @@ package community.flock.wirespec.compiler.core.fixture
 
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Field.Reference.Primitive
+import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Identifier
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference.Primitive
 
 object NodeFixtures {
 
     val refined = Refined(
-        name = "UUID",
+        identifier = Identifier("UUID"),
         validator = Refined.Validator(
             "^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}\$"
         )
@@ -19,7 +19,7 @@ object NodeFixtures {
 
 
     val enum = Enum(
-        name = "TodoStatus",
+        identifier = Identifier("TodoStatus"),
         entries = setOf(
             "OPEN",
             "IN_PROGRESS",
@@ -29,7 +29,7 @@ object NodeFixtures {
 
 
     val type = Type(
-        name = "Todo",
+        identifier = Identifier("Todo"),
         shape = Type.Shape(
             value = listOf(
                 Field(
@@ -57,7 +57,7 @@ object NodeFixtures {
     )
 
     val endpoint = Endpoint(
-        name = "",
+        identifier = Identifier(""),
         method = Endpoint.Method.GET,
         path = listOf(Endpoint.Segment.Literal("/todos")),
         query = emptyList(),

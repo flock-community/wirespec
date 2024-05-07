@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.emit.common.Emitter;
 import community.flock.wirespec.compiler.core.parse.Definition;
 import community.flock.wirespec.compiler.core.parse.Endpoint;
 import community.flock.wirespec.compiler.core.parse.Enum;
+import community.flock.wirespec.compiler.core.parse.Field;
 import community.flock.wirespec.compiler.core.parse.Node;
 import community.flock.wirespec.compiler.core.parse.Refined;
 import community.flock.wirespec.compiler.core.parse.Type;
@@ -24,8 +25,8 @@ public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
 
     @NotNull
     @Override
-    public String emitName(Definition definition) {
-        return definition.getName() + "Custom";
+    public String emitName(@NotNull Definition definition) {
+        return definition.getIdentifier() + "Custom";
     }
 
     @NotNull
@@ -35,7 +36,7 @@ public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
                 .stream()
                 .filter(sc -> sc instanceof Type)
                 .map(it -> (Type) it)
-                .map(sc -> new Emitted(emitName(sc), emit(sc, ast)))
+                .map(type -> new Emitted(emitName(type), emit(type, ast)))
                 .collect(Collectors.toList());
     }
 
@@ -83,19 +84,13 @@ public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
 
     @NotNull
     @Override
-    public String emit(@NotNull Type.Shape.Field field) {
+    public String emit(@NotNull Field field) {
         return "";
     }
 
     @NotNull
     @Override
-    public String emit(@NotNull Type.Shape.Field.Identifier identifier) {
-        return "";
-    }
-
-    @NotNull
-    @Override
-    public String emit(@NotNull Type.Shape.Field.Reference reference) {
+    public String emit(@NotNull Field.Reference reference) {
         return "";
     }
 }

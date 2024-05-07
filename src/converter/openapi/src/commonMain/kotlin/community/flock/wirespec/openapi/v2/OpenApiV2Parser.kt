@@ -21,10 +21,11 @@ import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Field.Reference
+import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 import community.flock.wirespec.openapi.Common.className
 import kotlinx.serialization.json.Json
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenapiType
@@ -106,7 +107,7 @@ class OpenApiV2Parser(private val openApi: SwaggerObject) {
 
                 listOf(
                     Endpoint(
-                        name = name,
+                        identifier = Identifier(name),
                         method = method,
                         path = segments,
                         query = query,
@@ -136,7 +137,10 @@ class OpenApiV2Parser(private val openApi: SwaggerObject) {
         val enums: List<Definition> = parameters.flatMap { parameter ->
             when {
                 parameter.enum != null -> listOf(
-                    Enum(className(name, "Parameter", parameter.name), parameter.enum!!.map { it.content }.toSet())
+                    Enum(
+                        Identifier(className(name, "Parameter", parameter.name)),
+                        parameter.enum!!.map { it.content }.toSet()
+                    )
                 )
 
                 else -> emptyList()
@@ -257,7 +261,7 @@ class OpenApiV2Parser(private val openApi: SwaggerObject) {
 
         allOf != null -> listOf(
             Type(
-                name,
+                Identifier(name),
                 Type.Shape(allOf
                     .orEmpty()
                     .flatMap {
@@ -284,7 +288,7 @@ class OpenApiV2Parser(private val openApi: SwaggerObject) {
         enum != null -> enum!!
             .map { it.content }
             .toSet()
-            .let { listOf(Enum(name, it)) }
+            .let { listOf(Enum(Identifier(name), it)) }
 
         else -> when (type) {
             null, OpenapiType.OBJECT -> {
@@ -292,7 +296,7 @@ class OpenApiV2Parser(private val openApi: SwaggerObject) {
                     .flatMap { (key, value) -> value.flatten(className(name, key)) }
 
                 val schema = listOf(
-                    Type(name, Type.Shape(toField(name)))
+                    Type(Identifier(name), Type.Shape(toField(name)))
                 )
                 schema + fields
             }
@@ -409,7 +413,7 @@ class OpenApiV2Parser(private val openApi: SwaggerObject) {
         when (value) {
             is SchemaObject -> {
                 Field(
-                    identifier = Field.Identifier(key),
+                    identifier = Identifier(key),
                     reference = when {
                         value.enum != null -> value.toReference(className(name, key))
                         value.type == OpenapiType.ARRAY -> value.toReference(className(name, key, "Array"))
@@ -421,9 +425,9 @@ class OpenApiV2Parser(private val openApi: SwaggerObject) {
 
             is ReferenceObject -> {
                 Field(
-                    Field.Identifier(key),
-                    value.toReference(),
-                    !(this.required?.contains(key) ?: false)
+                    identifier = Identifier(key),
+                    reference = value.toReference(),
+                    isNullable = !(this.required?.contains(key) ?: false)
                 )
             }
         }
@@ -452,7 +456,7 @@ class OpenApiV2Parser(private val openApi: SwaggerObject) {
                 }
 
             }
-        }.let { Field(Field.Identifier(this.name), it, !(this.required ?: false)) }
+        }.let { Field(Identifier(this.name), it, !(this.required ?: false)) }
 
     private fun Path.toSegments(parameters: List<ParameterObject>) = value.split("/").drop(1).map { segment ->
         val isParam = segment.isNotEmpty() && segment[0] == '{' && segment[segment.length - 1] == '}'
@@ -464,7 +468,7 @@ class OpenApiV2Parser(private val openApi: SwaggerObject) {
                     ?.let { it.type?.toPrimitive() }
                     ?.let {
                         Endpoint.Segment.Param(
-                            Field.Identifier(param),
+                            Identifier(param),
                             Reference.Primitive(it, false)
                         )
                     }

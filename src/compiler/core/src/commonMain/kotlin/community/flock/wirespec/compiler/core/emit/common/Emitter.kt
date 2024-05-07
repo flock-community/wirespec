@@ -9,13 +9,6 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 
-interface Emitters :
-    TypeDefinitionEmitter,
-    EnumDefinitionEmitter,
-    RefinedTypeDefinitionEmitter,
-    EndpointDefinitionEmitter,
-    UnionDefinitionEmitter
-
 abstract class Emitter(
     val logger: Logger,
     val split: Boolean = false
@@ -38,12 +31,6 @@ abstract class Emitter(
             if (split) this
             else listOf(Emitted("NoName", joinToString("\n") { it.result }))
         }
-
-    fun Endpoint.Content.emitContentType() = type
-        .substringBefore(";")
-        .split("/", "-")
-        .joinToString("") { it.firstToUpper() }
-        .replace("+", "")
 
     fun String.spacer(space: Int = 1) = split("\n")
         .joinToString("\n") {

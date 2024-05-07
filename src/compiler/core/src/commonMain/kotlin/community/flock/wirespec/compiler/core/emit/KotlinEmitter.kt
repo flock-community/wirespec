@@ -7,7 +7,7 @@ import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.transformer.ClassModelTransformer.transform
 import community.flock.wirespec.compiler.core.emit.transformer.EndpointClass
 import community.flock.wirespec.compiler.core.emit.transformer.EnumClass
-import community.flock.wirespec.compiler.core.emit.transformer.Field
+import community.flock.wirespec.compiler.core.emit.transformer.FieldClass
 import community.flock.wirespec.compiler.core.emit.transformer.Parameter
 import community.flock.wirespec.compiler.core.emit.transformer.Reference
 import community.flock.wirespec.compiler.core.emit.transformer.RefinedClass
@@ -35,11 +35,11 @@ class KotlinEmitter(
     """.trimMargin()
 
     override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> name
-        is Enum -> name
-        is Refined -> name
-        is Type -> name
-        is Union -> name
+        is Endpoint -> identifier.emit()
+        is Enum -> identifier.emit()
+        is Refined -> identifier.emit()
+        is Type -> identifier.emit()
+        is Union -> identifier.emit()
     }
 
     override fun emit(ast: AST): List<Emitted> =
@@ -254,7 +254,7 @@ class KotlinEmitter(
         Reference.Language.Primitive.Double -> "Double"
     }
 
-    override fun Field.emit(): String = """
+    override fun FieldClass.emit(): String = """
         |${if (isOverride) "override " else ""}val ${identifier.sanitizeKeywords()}: ${reference.emitWrap()}${if (reference.isNullable) " = null" else ""}${if (reference.isOptional) " = null" else ""}
     """.trimMargin()
 

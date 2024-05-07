@@ -2,7 +2,7 @@ package community.flock.wirespec.compiler.core.emit.common
 
 import community.flock.wirespec.compiler.core.emit.transformer.EndpointClass
 import community.flock.wirespec.compiler.core.emit.transformer.EnumClass
-import community.flock.wirespec.compiler.core.emit.transformer.Field
+import community.flock.wirespec.compiler.core.emit.transformer.FieldClass
 import community.flock.wirespec.compiler.core.emit.transformer.Parameter
 import community.flock.wirespec.compiler.core.emit.transformer.Reference
 import community.flock.wirespec.compiler.core.emit.transformer.RefinedClass
@@ -55,7 +55,7 @@ interface ClassModelEmitter {
 
     fun Reference.Language.Primitive.emit(): String
 
-    fun Field.emit(): String
+    fun FieldClass.emit(): String
 
     fun EndpointClass.Path.emit(): String
 

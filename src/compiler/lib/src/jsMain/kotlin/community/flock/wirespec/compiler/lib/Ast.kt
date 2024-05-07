@@ -4,6 +4,8 @@ package community.flock.wirespec.compiler.lib
 
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -20,7 +22,7 @@ fun WsNode.consume(): Node =
 
 fun WsEndpoint.consume(): Endpoint =
     Endpoint(
-        name = name,
+        identifier = Identifier(name),
         method = method.consume(),
         path = path.map { it.consume() },
         query = query.map { it.consume() },
@@ -47,9 +49,9 @@ private fun WsMethod.consume() = when (this) {
     WsMethod.TRACE -> Endpoint.Method.TRACE
 }
 
-private fun WsIdentifier.consume() = Type.Shape.Field.Identifier(value)
+private fun WsIdentifier.consume() = Identifier(value)
 
-private fun WsField.consume() = Type.Shape.Field(
+private fun WsField.consume() = Field(
     identifier = identifier.consume(),
     reference = reference.consume(),
     isNullable = isNullable
@@ -76,23 +78,23 @@ private fun WsContent.consume() =
 
 private fun WsReference.consume() =
     when (this) {
-        is WsAny -> Type.Shape.Field.Reference.Any(
+        is WsAny -> Field.Reference.Any(
             isIterable = isIterable,
             isMap = isMap
         )
 
-        is WsUnit -> Type.Shape.Field.Reference.Unit(
+        is WsUnit -> Field.Reference.Unit(
             isIterable = isIterable,
             isMap = isMap
         )
 
-        is WsCustom -> Type.Shape.Field.Reference.Custom(
+        is WsCustom -> Field.Reference.Custom(
             value = value,
             isIterable = isIterable,
             isMap = isMap
         )
 
-        is WsPrimitive -> Type.Shape.Field.Reference.Primitive(
+        is WsPrimitive -> Field.Reference.Primitive(
             type = type.consume(),
             isIterable = isIterable,
             isMap = isMap
@@ -101,18 +103,18 @@ private fun WsReference.consume() =
 
 private fun WsPrimitiveType.consume() =
     when (this) {
-        WsPrimitiveType.String -> Type.Shape.Field.Reference.Primitive.Type.String
-        WsPrimitiveType.Integer -> Type.Shape.Field.Reference.Primitive.Type.Integer
-        WsPrimitiveType.Number -> Type.Shape.Field.Reference.Primitive.Type.Number
-        WsPrimitiveType.Boolean -> Type.Shape.Field.Reference.Primitive.Type.Boolean
+        WsPrimitiveType.String -> Field.Reference.Primitive.Type.String
+        WsPrimitiveType.Integer -> Field.Reference.Primitive.Type.Integer
+        WsPrimitiveType.Number -> Field.Reference.Primitive.Type.Number
+        WsPrimitiveType.Boolean -> Field.Reference.Primitive.Type.Boolean
     }
 
 
 fun Node.produce(): WsNode =
     when (this) {
-        is Type -> WsType(name, shape.produce())
+        is Type -> WsType(identifier.value, shape.produce())
         is Endpoint -> WsEndpoint(
-            name = name,
+            name = identifier.value,
             method = method.produce(),
             path = path.produce(),
             query = query.produce(),
@@ -122,9 +124,9 @@ fun Node.produce(): WsNode =
             responses = responses.produce(),
         )
 
-        is Enum -> WsEnum(name, entries.toTypedArray())
-        is Refined -> WsRefined(name, validator.value)
-        is Union -> WsUnion(name, entries
+        is Enum -> WsEnum(identifier.value, entries.toTypedArray())
+        is Refined -> WsRefined(identifier.value, validator.value)
+        is Union -> WsUnion(identifier.value, entries
             .map { it.produce() }
             .toTypedArray())
     }
@@ -143,24 +145,24 @@ private fun List<Endpoint.Segment>.produce(): Array<WsSegment> = map {
     }
 }.toTypedArray()
 
-private fun Type.Shape.Field.produce() = WsField(identifier.produce(), reference.produce(), isNullable)
+private fun Field.produce() = WsField(identifier.produce(), reference.produce(), isNullable)
 
-private fun List<Type.Shape.Field>.produce() = map { it.produce() }.toTypedArray()
+private fun List<Field>.produce() = map { it.produce() }.toTypedArray()
 
-private fun Type.Shape.Field.Identifier.produce() = WsIdentifier(this.value)
+private fun Identifier.produce() = WsIdentifier(value)
 
-private fun Type.Shape.Field.Reference.produce() = when (this) {
-    is Type.Shape.Field.Reference.Any -> WsAny(isIterable, isMap)
-    is Type.Shape.Field.Reference.Unit -> WsUnit(isIterable, isMap)
-    is Type.Shape.Field.Reference.Custom -> WsCustom(value, isIterable, isMap)
-    is Type.Shape.Field.Reference.Primitive -> WsPrimitive(type.produce(), isIterable, isMap)
+private fun Field.Reference.produce() = when (this) {
+    is Field.Reference.Any -> WsAny(isIterable, isMap)
+    is Field.Reference.Unit -> WsUnit(isIterable, isMap)
+    is Field.Reference.Custom -> WsCustom(value, isIterable, isMap)
+    is Field.Reference.Primitive -> WsPrimitive(type.produce(), isIterable, isMap)
 }
 
-private fun Type.Shape.Field.Reference.Primitive.Type.produce() = when (this) {
-    Type.Shape.Field.Reference.Primitive.Type.String -> WsPrimitiveType.String
-    Type.Shape.Field.Reference.Primitive.Type.Integer -> WsPrimitiveType.Integer
-    Type.Shape.Field.Reference.Primitive.Type.Number -> WsPrimitiveType.Number
-    Type.Shape.Field.Reference.Primitive.Type.Boolean -> WsPrimitiveType.Boolean
+private fun Field.Reference.Primitive.Type.produce() = when (this) {
+    Field.Reference.Primitive.Type.String -> WsPrimitiveType.String
+    Field.Reference.Primitive.Type.Integer -> WsPrimitiveType.Integer
+    Field.Reference.Primitive.Type.Number -> WsPrimitiveType.Number
+    Field.Reference.Primitive.Type.Boolean -> WsPrimitiveType.Boolean
 }
 
 private fun Endpoint.Method.produce() = when (this) {

@@ -1,5 +1,6 @@
 package community.flock.wirespec.compiler.core.emit
 
+import community.flock.wirespec.compiler.core.addBackticks
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
@@ -8,9 +9,11 @@ import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Field.Reference
+import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
@@ -21,11 +24,11 @@ class ScalaEmitter(
 ) : DefinitionModelEmitter, Emitter(logger) {
 
     override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> "${name}Endpoint"
-        is Enum -> name
-        is Refined -> name
-        is Type -> name
-        is Union -> name
+        is Endpoint -> "${identifier.emit()}Endpoint"
+        is Enum -> identifier.emit()
+        is Refined -> identifier.emit()
+        is Type -> identifier.emit()
+        is Union -> identifier.emit()
     }
 
     override fun emit(ast: AST): List<Emitted> = super.emit(ast)
@@ -40,10 +43,10 @@ class ScalaEmitter(
 
     override fun Type.Shape.emit() = value.joinToString("\n") { it.emit() }.dropLast(1)
 
-    override fun Type.Shape.Field.emit() =
+    override fun Field.emit() =
         "${SPACER}val ${identifier.emit()}: ${if (isNullable) "Option[${reference.emit()}]" else reference.emit()},"
 
-    override fun Type.Shape.Field.Identifier.emit() = if (value in preservedKeywords) "`$value`" else value
+    override fun Identifier.emit() = if (value in preservedKeywords) value.addBackticks() else value
 
     override fun Reference.emit() = when (this) {
         is Reference.Unit -> "Unit"
@@ -61,12 +64,12 @@ class ScalaEmitter(
         fun String.sanitize() = replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }
         """
         |sealed abstract class ${emitName()}(val label: String)
-        |object $name {
+        |object ${identifier.emit()} {
         |${
             entries.joinToString("\n") {
                 """${SPACER}final case object ${
                     it.sanitize().uppercase()
-                } extends $name(label = "$it")"""
+                } extends ${identifier.emit()}(label = "$it")"""
             }
         }
         |}

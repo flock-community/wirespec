@@ -2,16 +2,17 @@ package community.flock.wirespec.openapi.common
 
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Field.Reference
+import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Identifier
-import community.flock.wirespec.compiler.core.parse.Type.Shape.Field.Reference
 import community.flock.wirespec.compiler.core.parse.Union
 
 object Expected {
 
     val objectInRequest = listOf(
         Endpoint(
-            name = "TestWithDashGET",
+            identifier = Identifier("TestWithDashGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "test-with-dash")),
             query = emptyList(),
@@ -39,15 +40,15 @@ object Expected {
             )
         ),
         Type(
-            name = "TestWithDashGETRequestBody",
+            identifier = Identifier("TestWithDashGETRequestBody"),
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("id"),
                         reference = Reference.Primitive(type = Reference.Primitive.Type.String, isIterable = false),
                         isNullable = true
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("nest"),
                         reference = Reference.Custom(value = "TestWithDashGETRequestBodyNest", isIterable = false),
                         isNullable = true
@@ -56,15 +57,15 @@ object Expected {
             )
         ),
         Type(
-            name = "TestWithDashGETRequestBodyNest",
+            identifier = Identifier("TestWithDashGETRequestBodyNest"),
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("a"),
                         reference = Reference.Primitive(type = Reference.Primitive.Type.Number, isIterable = false),
                         isNullable = true
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("b"),
                         reference = Reference.Primitive(type = Reference.Primitive.Type.Number, isIterable = false),
                         isNullable = true
@@ -75,7 +76,7 @@ object Expected {
     )
     val objectInResponse = listOf(
         Endpoint(
-            name = "Test",
+            identifier = Identifier("Test"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "test")),
             query = emptyList(),
@@ -102,10 +103,10 @@ object Expected {
             )
         ),
         Type(
-            name = "Test200ApplicationJsonResponseBody",
+            identifier = Identifier("Test200ApplicationJsonResponseBody"),
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("id"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -113,7 +114,7 @@ object Expected {
                         ),
                         isNullable = true
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("nest"),
                         reference = Reference.Custom(
                             value = "Test200ApplicationJsonResponseBodyNest",
@@ -125,10 +126,10 @@ object Expected {
             )
         ),
         Type(
-            name = "Test200ApplicationJsonResponseBodyNest",
+            identifier = Identifier("Test200ApplicationJsonResponseBodyNest"),
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("a"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number,
@@ -136,7 +137,7 @@ object Expected {
                         ),
                         isNullable = true
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("b"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number,
@@ -150,7 +151,7 @@ object Expected {
     )
     val additionalproperties = listOf(
         Endpoint(
-            name = "AdditionalProperties",
+            identifier = Identifier("AdditionalProperties"),
             method = Endpoint.Method.GET,
             path = listOf(
                 Endpoint.Segment.Literal(value = "additional"),
@@ -196,17 +197,17 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Any(false, true),
+                        reference = Reference.Any(isIterable = false, isMap = true),
                         isNullable = false
                     )
                 )
             )
         ),
         Type(
-            name = "AdditionalProperties404ApplicationJsonResponseBody",
+            identifier = Identifier("AdditionalProperties404ApplicationJsonResponseBody"),
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("code"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Integer,
@@ -214,7 +215,7 @@ object Expected {
                         ),
                         isNullable = true
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -226,10 +227,10 @@ object Expected {
             )
         ),
         Type(
-            name = "Message",
+            identifier = Identifier("Message"),
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("code"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Integer,
@@ -237,7 +238,7 @@ object Expected {
                         ),
                         isNullable = true
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -251,7 +252,7 @@ object Expected {
     )
     val array = listOf(
         Endpoint(
-            name = "ArrayGET",
+            identifier = Identifier("ArrayGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "array")),
             query = emptyList(),
@@ -305,10 +306,10 @@ object Expected {
             )
         ),
         Type(
-            name = "ArrayGET200ApplicationJsonResponseBody",
+            identifier = Identifier("ArrayGET200ApplicationJsonResponseBody"),
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("code"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number,
@@ -316,7 +317,7 @@ object Expected {
                         ),
                         isNullable = true
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -328,10 +329,10 @@ object Expected {
             )
         ),
         Type(
-            name = "MessageArray",
+            identifier = Identifier("MessageArray"),
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("code"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number,
@@ -339,7 +340,7 @@ object Expected {
                         ),
                         isNullable = true
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -354,7 +355,7 @@ object Expected {
 
     val allOf = listOf(
         Endpoint(
-            name = "AllofGET",
+            identifier = Identifier("AllofGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "allof")),
             query = emptyList(),
@@ -382,10 +383,10 @@ object Expected {
             )
         ),
         Type(
-            name = "AllofGET200ApplicationJsonResponseBody",
+            identifier = Identifier("AllofGET200ApplicationJsonResponseBody"),
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("a"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -393,7 +394,7 @@ object Expected {
                         ),
                         isNullable = true
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("b"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -401,7 +402,7 @@ object Expected {
                         ),
                         isNullable = false
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("c"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -409,7 +410,7 @@ object Expected {
                         ),
                         isNullable = true
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("d"),
                         reference = Reference.Custom(
                             value = "AllofGET200ApplicationJsonResponseBodyD",
@@ -421,10 +422,10 @@ object Expected {
             )
         ),
         Type(
-            name = "AllofGET200ApplicationJsonResponseBodyD",
+            identifier = Identifier("AllofGET200ApplicationJsonResponseBodyD"),
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("e"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -437,10 +438,10 @@ object Expected {
             )
         ),
         Type(
-            name = "Foo",
+            identifier = Identifier("Foo"),
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("a"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -452,10 +453,10 @@ object Expected {
             )
         ),
         Type(
-            name = "Bar",
+            identifier = Identifier("Bar"),
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("b"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -470,7 +471,7 @@ object Expected {
 
     val oneOf = listOf(
         Endpoint(
-            name = "OneofGET",
+            identifier = Identifier("OneofGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "oneof")),
             query = emptyList(),
@@ -498,7 +499,7 @@ object Expected {
             )
         ),
         Union(
-            name = "OneofGET200ApplicationJsonResponseBody",
+            identifier = Identifier("OneofGET200ApplicationJsonResponseBody"),
             entries = setOf(
                 Reference.Custom(value = "Foo", isIterable = false, isMap = false),
                 Reference.Custom(value = "Bar", isIterable = false, isMap = false),
@@ -507,10 +508,10 @@ object Expected {
             )
         ),
         Type(
-            name = "OneofGET200ApplicationJsonResponseBody2",
+            identifier = Identifier("OneofGET200ApplicationJsonResponseBody2"),
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("c"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -523,10 +524,10 @@ object Expected {
             )
         ),
         Type(
-            name = "OneofGET200ApplicationJsonResponseBody3",
+            identifier = Identifier("OneofGET200ApplicationJsonResponseBody3"),
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("d"),
                         reference = Reference.Custom(
                             value = "OneofGET200ApplicationJsonResponseBody3D",
@@ -539,10 +540,10 @@ object Expected {
             )
         ),
         Type(
-            name = "OneofGET200ApplicationJsonResponseBody3D",
+            identifier = Identifier("OneofGET200ApplicationJsonResponseBody3D"),
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier(
                             "e"
                         ), reference = Reference.Primitive(
@@ -556,10 +557,10 @@ object Expected {
             )
         ),
         Type(
-            name = "Foo",
+            identifier = Identifier("Foo"),
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("a"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -571,10 +572,10 @@ object Expected {
             )
         ),
         Type(
-            name = "Bar",
+            identifier = Identifier("Bar"),
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("b"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -589,11 +590,11 @@ object Expected {
 
     val enum = listOf(
         Endpoint(
-            name = "EnumGET",
+            identifier = Identifier("EnumGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "enum")),
             query = listOf(
-                Type.Shape.Field(
+                Field(
                     identifier = Identifier("order"),
                     reference = Reference.Custom(value = "EnumGETParameterOrder", isIterable = false, isMap = false),
                     isNullable = true
@@ -632,14 +633,14 @@ object Expected {
             )
         ),
         Enum(
-            name = "EnumGETParameterOrder",
+            identifier = Identifier("EnumGETParameterOrder"),
             entries = setOf("ASC", "DESC")
         ),
         Type(
-            name = "EnumGET201ApplicationJsonResponseBody",
+            identifier = Identifier("EnumGET201ApplicationJsonResponseBody"),
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("code"),
                         reference = Reference.Custom(
                             value = "EnumGET201ApplicationJsonResponseBodyCode",
@@ -647,7 +648,7 @@ object Expected {
                         ),
                         isNullable = false
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -659,14 +660,14 @@ object Expected {
             )
         ),
         Enum(
-            name = "EnumGET201ApplicationJsonResponseBodyCode",
+            identifier = Identifier("EnumGET201ApplicationJsonResponseBodyCode"),
             entries = setOf("WARNING", "ERROR")
         ),
         Type(
-            name = "Message",
+            identifier = Identifier("Message"),
             shape = Type.Shape(
                 value = listOf(
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("code"),
                         reference = Reference.Custom(
                             value = "ErrorType",
@@ -674,7 +675,7 @@ object Expected {
                         ),
                         isNullable = false
                     ),
-                    Type.Shape.Field(
+                    Field(
                         identifier = Identifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -686,7 +687,7 @@ object Expected {
             )
         ),
         Enum(
-            name = "ErrorType",
+            identifier = Identifier("ErrorType"),
             entries = setOf("WARNING", "ERROR")
         )
     )

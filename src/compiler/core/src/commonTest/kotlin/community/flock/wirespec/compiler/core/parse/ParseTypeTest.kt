@@ -26,15 +26,15 @@ class ParseTypeTest {
             .also { it.size shouldBe 1 }
             .first()
             .shouldBeInstanceOf<Type>()
-            .also { it.name shouldBe "Foo" }
+            .also { it.identifier.value shouldBe "Foo" }
             .shape.value
             .also { it.size shouldBe 1 }
             .first()
-            .shouldBeInstanceOf<Type.Shape.Field>()
+            .shouldBeInstanceOf<Field>()
             .run {
-                identifier.shouldBeInstanceOf<Type.Shape.Field.Identifier>().value shouldBe "bar"
-                reference.shouldBeInstanceOf<Type.Shape.Field.Reference.Primitive>().run {
-                    type shouldBe Type.Shape.Field.Reference.Primitive.Type.String
+                identifier.shouldBeInstanceOf<Identifier>().value shouldBe "bar"
+                reference.shouldBeInstanceOf<Field.Reference.Primitive>().run {
+                    type shouldBe Field.Reference.Primitive.Type.String
                     isIterable shouldBe false
                     isMap shouldBe false
                 }
@@ -55,7 +55,7 @@ class ParseTypeTest {
             .also { it.size shouldBe 1 }
             .first()
             .shouldBeInstanceOf<Refined>()
-            .also { it.name shouldBe "DutchPostalCode" }
+            .also { it.identifier.value shouldBe "DutchPostalCode" }
             .validator.shouldBeInstanceOf<Refined.Validator>()
             .value shouldBe "/^([0-9]{4}[A-Z]{2})$/g"
     }
@@ -71,16 +71,15 @@ class ParseTypeTest {
         WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
-            .also { it.size shouldBe 3 }
-            .get(2)
+            .also { it.size shouldBe 3 }[2]
             .shouldBeInstanceOf<Union>()
-            .also { it.name shouldBe "Foo" }
+            .also { it.identifier.value shouldBe "Foo" }
             .entries
             .also { it.size shouldBe 2 }
             .let {
                 val (first, second) = it.toList()
-                first shouldBe Type.Shape.Field.Reference.Custom(value = "Bar", isIterable = false, isMap = false)
-                second shouldBe Type.Shape.Field.Reference.Custom(value = "Bal", isIterable = false, isMap = false)
+                first shouldBe Field.Reference.Custom(value = "Bar", isIterable = false, isMap = false)
+                second shouldBe Field.Reference.Custom(value = "Bal", isIterable = false, isMap = false)
             }
     }
 }
