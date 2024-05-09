@@ -1,171 +1,106 @@
+package community.flock.wirespec.compare
+
 import arrow.core.Either
 import arrow.core.NonEmptyList
 import arrow.core.left
 import arrow.core.mapOrAccumulate
 import arrow.core.nel
 import arrow.core.raise.either
+import arrow.core.raise.ensure
+import arrow.core.raise.zipOrAccumulate
 import arrow.core.right
-import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
-import community.flock.wirespec.compiler.core.parse.Enum
-import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.core.parse.Union
 
-
-sealed interface Validated {
-    val braking: Boolean
-    val message: String
-}
-
-sealed interface DefinitionValidated : Validated {
-    val definition: Definition
-}
-
-data class RemovedDefinitionValidated(
-    override val definition: Definition
-) : DefinitionValidated {
-    override val braking: Boolean = true
-    override val message: String = "Removed definition ${definition.name}"
-}
-
-data class AddedDefinitionValidated(
-    override val definition: Definition
-) : DefinitionValidated {
-    override val braking: Boolean = false
-    override val message: String = "Added definition ${definition.name}"
-}
-
-sealed interface TypeValidated : Validated {
-    val field: Paired<Type.Shape.Field>
-}
-
-data class RemovedFieldTypeValidated(
-    override val field: Paired<Type.Shape.Field>,
-) : TypeValidated {
-    override val braking = true
-    override val message = "Removed field ${field.left?.identifier?.value}"
-}
-
-data class AddedFieldTypeValidated(
-    override val field: Paired<Type.Shape.Field>,
-) : TypeValidated {
-    override val braking = true
-    override val message = "Added field ${field.right?.identifier?.value}"
-}
-
-data class ChangedFieldTypeValidated(
-    override val field: Paired<Type.Shape.Field>
-) : TypeValidated {
-    override val braking = false
-    override val message = "Changed field ${field.left?.printReference()} to ${field.right?.printReference()}"
-}
-
-sealed interface EndpointValidated : Validated {
-    val endpoint: Paired<Endpoint>
-}
-
-data class PathEndpointValidated(
-    override val endpoint: Paired<Endpoint>
-) : EndpointValidated {
-    override val braking = true
-    override val message = "Changed path ${endpoint.left?.printPath()} to ${endpoint.right?.printPath()}"
-}
-
-data class MethodEndpointValidated(
-    override val endpoint: Paired<Endpoint>
-) : EndpointValidated {
-    override val braking = true
-    override val message = "Changed method ${endpoint.left?.method} to ${endpoint.right?.method}"
-}
-
-
-data object Unknown : Validated {
-    override val braking: Boolean
-        get() = TODO("Not yet implemented")
-    override val message: String
-        get() = TODO("Not yet implemented")
-}
 
 object Compare {
 
-    fun compare(left: List<Definition>, right: List<Definition>): Either<NonEmptyList<Validated>, List<Any>> {
+    fun compare(left: List<Definition>, right: List<Definition>): Either<NonEmptyList<Validation>, List<Any>> {
         val list = (left to right).pairBy { it.name }
         return list.mapOrAccumulate {
-            when {
-                it.left == it.right -> true.right().bind()
-                it.right == null -> RemovedDefinitionValidated(it.left!!).left().bind()
-                it.left == null -> AddedDefinitionValidated(it.right!!).left().bind()
-                it.left != it.right -> compareDefinition(it).bindNel()
-                else -> Unknown.left().bind()
+            when (it) {
+                is Paired.Left -> RemovedDefinitionValidation(it.left).left().bind()
+                is Paired.Right -> AddedDefinitionValidation(it.right).left().bind()
+                is Paired.Both -> when {
+                    it.left == it.right -> true.right().bind()
+                    it.left is Type && it.right is Type -> compareType(it.left, it.right).bindNel()
+                    it.left is Endpoint && it.right is Endpoint -> compare(it.left, it.right).bindNel()
+                    else -> TODO()
+                }
             }
         }
     }
 
-    private fun compareDefinition(paired: Paired<Definition>): Either<NonEmptyList<Validated>, Any> {
-        return when (paired.left) {
-            is Type -> compareType(paired as Paired<Type>)
-            is Endpoint -> compareEndpoint(paired as Paired<Endpoint>)
-            is Enum -> TODO()
-            is Refined -> TODO()
-            is Union -> TODO()
-            null -> TODO()
+    fun compareType(left: Type, right: Type): Either<NonEmptyList<FieldValidation>, List<Boolean>> {
+        val paired = (left.shape.value to right.shape.value).pairBy { it.identifier.value }
+        return paired.mapOrAccumulate {
+            it.compareField().bindNel()
         }
     }
 
-    fun compareType(paired: Paired<Type>): Either<NonEmptyList<TypeValidated>, Any> {
-        val list =
-            (paired.left?.shape?.value.orEmpty() to paired.right?.shape?.value.orEmpty()).pairBy { it.identifier.value }
-        return list.mapOrAccumulate {
+    private fun Paired<Type.Shape.Field>.compareField(): Either<NonEmptyList<FieldValidation>, Boolean> = when (this) {
+        is Paired.Left -> RemovedFieldValidation(left).nel().left()
+        is Paired.Right -> AddedFieldValidation(right).nel().left()
+        is Paired.Both -> either {
+            zipOrAccumulate(
+                { ensure(left.isNullable == right.isNullable) { ChangedNullableFieldValidation(left, right) } },
+                {
+                    ensure(left.reference.isIterable == right.reference.isIterable) {
+                        ChangedIterableFieldValidation(
+                            left,
+                            right
+                        )
+                    }
+                },
+                {
+                    ensure(left.reference.isMap == right.reference.isMap) {
+                        ChangedMapFieldValidation(
+                            left,
+                            right
+                        )
+                    }
+                },
+                {
+                    ensure(left.reference.value == right.reference.value) {
+                        ChangedReferenceFieldValidation(
+                            left,
+                            right
+                        )
+                    }
+                }
+            ) { _, _, _, _ -> true }
+        }
+    }
+
+
+    private fun compare(left: Endpoint, right: Endpoint): Either<NonEmptyList<Validation>, Any> = either {
+        zipOrAccumulate(
+            { ensure(left.method == right.method) { MethodEndpointValidation(left, right) } },
+            { ensure(left.path == right.path) { PathEndpointValidation(left, right) } },
+            { (left.query to right.query).pairBy { it.identifier.value }.mapOrAccumulate { it.compareField().bindNel() } },
+            { (left.headers to right.headers).pairBy { it.identifier.value }.mapOrAccumulate { it.compareField().bindNel() } },
+        )
+        { _, _, _, _ -> true }
+    }
+
+    sealed class Paired<A> {
+        class Left<A>(val left: A) : Paired<A>()
+        class Right<A>(val right: A) : Paired<A>()
+        class Both<A>(val left: A, val right: A) : Paired<A>()
+    }
+
+    inline fun <A> Pair<List<A>, List<A>>.pairBy(f: (a: A) -> Any): List<Paired<A>> {
+        val leftMap = first.groupBy { f(it) }
+        val rightMap = second.groupBy { f(it) }
+        val allKeys = leftMap.keys + rightMap.keys
+        return allKeys.map {
             when {
-                it.left == it.right -> true.right().bind()
-                it.right == null -> RemovedFieldTypeValidated(it).left().bind()
-                it.left == null -> AddedFieldTypeValidated(it).left().bind()
-                it.left.isNullable != it.right.isNullable -> ChangedFieldTypeValidated(it).left().bind()
-                it.left.reference != it.right.reference -> ChangedFieldTypeValidated(it).left().bind()
-                else -> error("")
+                leftMap[it] == null && rightMap[it] != null -> Paired.Right(rightMap[it]!!.first())
+                leftMap[it] != null && rightMap[it] == null -> Paired.Left(leftMap[it]!!.first())
+                else -> Paired.Both(leftMap[it]!!.first(), rightMap[it]!!.first())
             }
-        }
-    }
-
-    fun compareEndpoint(paired: Paired<Endpoint>): Either<NonEmptyList<EndpointValidated>, Any> = either {
-        val list = buildList {
-            if (paired.left?.method != paired.right?.method) add(MethodEndpointValidated(paired))
-            if (paired.left?.path != paired.right?.path) add(PathEndpointValidated(paired))
-        }
-        if(list.isNotEmpty())
-            raise(list.toNonEmptyListOrNull() ?: error(""))
-        else
-            Either.Right(true).bind()
+        }.toList()
     }
 }
 
-data class Paired<A>(val left: A?, val right: A?)
-
-private fun <A> Pair<List<A>, List<A>>.pairBy(f: (a: A) -> Any): List<Paired<A>> {
-    val leftMap = first.groupBy { f(it) }
-    val rightMap = second.groupBy { f(it) }
-    val allKeys = leftMap.keys + rightMap.keys
-    return allKeys.map {
-        when {
-            leftMap.containsKey(it) && rightMap.containsKey(it) -> Paired(leftMap[it]!!.first(), rightMap[it]!!.first())
-            leftMap.containsKey(it) -> Paired(leftMap[it]!!.first(), null)
-            rightMap.containsKey(it) -> Paired(null, rightMap[it]!!.first())
-            else -> error("")
-        }
-    }
-}
-
-fun Type.Shape.Field.printReference() = buildString {
-    append(reference.value)
-    if (reference.isIterable) append("[]")
-    if (isNullable) append("?")
-}
-
-fun Endpoint.printPath() = "/" + path.map {
-    when (it) {
-        is Endpoint.Segment.Literal -> it.value
-        is Endpoint.Segment.Param -> it.identifier.value
-    }
-}.joinToString("/")

@@ -1,14 +1,5 @@
 package community.flock.wirespec.compare
 
-import AddedDefinitionValidated
-import AddedFieldTypeValidated
-import ChangedFieldTypeValidated
-import Compare
-import MethodEndpointValidated
-import PathEndpointValidated
-import RemovedDefinitionValidated
-import RemovedFieldTypeValidated
-import Validated
 import arrow.core.Either
 import arrow.core.NonEmptyList
 import arrow.core.getOrElse
@@ -42,6 +33,9 @@ class CompareTest {
             |type Baz {
             |   baz: Number
             |}
+            |
+            |enum Enum { A, B }
+            |
         """.trimMargin()
 
         val res = Compare.compare(
@@ -50,11 +44,11 @@ class CompareTest {
         )
 
         res.toResult() shouldBeLeft listOf(
-            AssertionResult(RemovedDefinitionValidated::class, "Removed definition Bar"),
-            AssertionResult(AddedDefinitionValidated::class, "Added definition Baz"),
+            AssertionResult(RemovedDefinitionValidation::class, "Removed definition Bar"),
+            AssertionResult(AddedDefinitionValidation::class, "Added definition Baz"),
+            AssertionResult(AddedDefinitionValidation::class, "Added definition Enum"),
         )
     }
-
 
     @Test
     fun testAddRemoveTypeField() {
@@ -76,8 +70,8 @@ class CompareTest {
         )
 
         res.toResult() shouldBeLeft listOf(
-            AssertionResult(RemovedFieldTypeValidated::class, "Removed field bar"),
-            AssertionResult(AddedFieldTypeValidated::class, "Added field baz"),
+            AssertionResult(RemovedFieldValidation::class, "Removed field bar"),
+            AssertionResult(AddedFieldValidation::class, "Added field baz"),
         )
     }
 
@@ -95,33 +89,39 @@ class CompareTest {
             |}
         """.trimMargin()
 
-        (left to right).compare().toResult() shouldBeLeft listOf(
-            AssertionResult(ChangedFieldTypeValidated::class, "Changed field Number to String[]?"),
+        val res = (left to right).compare()
+
+        res.toResult() shouldBeLeft listOf(
+            AssertionResult(ChangedNullableFieldValidation::class, "Changed field from nullable false to true"),
+            AssertionResult(ChangedIterableFieldValidation::class, "Changed field from iterable false to true"),
+            AssertionResult(ChangedReferenceFieldValidation::class, "Changed field Number to String"),
         )
     }
 
     @Test
     fun testEndpoint() {
         val left = """
-            |endpoint GetTodos GET /todos -> {
+            |endpoint GetTodos GET /todos?{done:Boolean}#{x:String} -> {
             |   200 -> String
             |}
         """.trimMargin()
 
         val right = """
-            |endpoint GetTodos POST /todo -> {
+            |endpoint GetTodos POST /todo?{dont:Boolean}#{x:Boolean} -> {
             |   200 -> String
             |}
         """.trimMargin()
 
         (left to right).compare().toResult() shouldBeLeft listOf(
-            AssertionResult(MethodEndpointValidated::class, "Changed method GET to POST"),
-            AssertionResult(PathEndpointValidated::class, "Changed path /todos to /todo"),
+            AssertionResult(MethodEndpointValidation::class, "Changed method GET to POST"),
+            AssertionResult(PathEndpointValidation::class, "Changed path /todos to /todo"),
+            AssertionResult(RemovedFieldValidation::class, "Removed field done"),
+            AssertionResult(AddedFieldValidation::class, "Added field dont"),
+            AssertionResult(ChangedReferenceFieldValidation::class, "Changed field String to Boolean"),
         )
     }
 
 }
-
 
 private fun String.parse() = WirespecSpec.parse(this)(noLogger).getOrElse { error("Cannot parse $it") }
 
@@ -132,7 +132,7 @@ fun Pair<String, String>.compare() =
         second.parse().filterIsInstance<Definition>()
     )
 
-fun Either<NonEmptyList<Validated>, *>.toResult() =
+fun Either<NonEmptyList<Validation>, *>.toResult() =
     this.mapLeft {
         it.map { AssertionResult(it::class, it.message) }
     }
