@@ -27,42 +27,48 @@ object Compare {
             is Paired.Right -> AddedDefinitionValidation(key, right).nel().left()
             is Paired.Both -> when {
                 left == right -> true.right()
-                left is Type && right is Type -> compareType(left, right)
+                left is Type && right is Type -> (this as Paired.Both<Type>).compareType()
                 left is Endpoint && right is Endpoint -> (this as Paired.Both<Endpoint>).compareEndpoint()
                 else -> TODO()
             }
         }
 
-    private fun compareType(left: Type, right: Type): Either<NonEmptyList<FieldValidation>, List<Boolean>> {
+    private fun Paired.Both<Type>.compareType(): Either<NonEmptyList<FieldValidation>, List<Boolean>> {
         val paired = (left.shape.value to right.shape.value).pairBy { it.identifier.value }
-        return paired.mapOrAccumulate { it.compareField().bindNel() }
+        return paired.mapOrAccumulate { it.compareField(key).bindNel() }
     }
 
-    private fun Paired<Type.Shape.Field>.compareField(): Either<NonEmptyList<FieldValidation>, Boolean> = when (this) {
-        is Paired.Left -> RemovedFieldValidation(key, left).nel().left()
-        is Paired.Right -> AddedFieldValidation(key, right).nel().left()
+    private fun Paired<Type.Shape.Field>.compareField(definitionKey:String): Either<NonEmptyList<FieldValidation>, Boolean> = when (this) {
+        is Paired.Left -> RemovedFieldValidation("${definitionKey}.${key}", left).nel().left()
+        is Paired.Right -> AddedFieldValidation("${definitionKey}.${key}", right).nel().left()
         is Paired.Both -> either {
             zipOrAccumulate(
-                { ensure(left.isNullable == right.isNullable) { ChangedNullableFieldValidation(key, left, right) } },
+                { ensure(left.isNullable == right.isNullable) { ChangedNullableFieldValidation("${definitionKey}.${key}", left, right) } },
                 {
                     ensure(left.reference.isIterable == right.reference.isIterable) {
-                        ChangedIterableFieldValidation(key, left, right)
+                        ChangedIterableFieldValidation("${definitionKey}.${key}", left, right)
                     }
                 },
                 {
                     ensure(left.reference.isMap == right.reference.isMap) {
-                        ChangedMapFieldValidation(key, left, right)
+                        ChangedMapFieldValidation("${definitionKey}.${key}", left, right)
                     }
                 },
                 {
                     ensure(left.reference.value == right.reference.value) {
-                        ChangedReferenceFieldValidation(key, left, right)
+                        ChangedReferenceFieldValidation("${definitionKey}.${key}", left, right)
                     }
                 }
             ) { _, _, _, _ -> true }
         }
     }
 
+//    private fun Paired.Both<Endpoint.Content>.compareContent(definitionKey:String): Either<NonEmptyList<FieldValidation>, List<Boolean>> =
+//        when (this) {
+//            is Paired.Left -> RemovedFieldValidation("${definitionKey}.${key}", left).nel().left()
+//            is Paired.Right -> AddedFieldValidation("${definitionKey}.${key}", right).nel().left()
+//            else -> {}
+//        }
 
     private fun Paired.Both<Endpoint>.compareEndpoint(): Either<NonEmptyList<Validation>, Any> = either {
         zipOrAccumulate(
@@ -70,14 +76,22 @@ object Compare {
             { ensure(left.path == right.path) { PathEndpointValidation(key, left, right) } },
             {
                 (left.query to right.query).pairBy { it.identifier.value }
-                    .mapOrAccumulate { it.compareField().bindNel() }
+                    .mapOrAccumulate { it.compareField(key).bindNel() }
             },
             {
                 (left.headers to right.headers).pairBy { it.identifier.value }
-                    .mapOrAccumulate { it.compareField().bindNel() }
+                    .mapOrAccumulate { it.compareField(key).bindNel() }
             },
+            {
+                (left.cookies to right.cookies).pairBy { it.identifier.value }
+                    .mapOrAccumulate { it.compareField(key).bindNel() }
+            },
+//            {
+//                (left.requests to right.requests).pairBy { it.content?.reference.value }
+//                    .mapOrAccumulate { it.compareField(key).bindNel() }
+//            },
         )
-        { _, _, _, _ -> true }
+        { _, _, _, _, _ -> true }
     }
 
     sealed class Paired<A> {

@@ -44,9 +44,9 @@ class CompareTest {
         )
 
         res.toResult() shouldBeLeft listOf(
-            AssertionResult(RemovedDefinitionValidation::class, "Removed definition Bar"),
-            AssertionResult(AddedDefinitionValidation::class, "Added definition Baz"),
-            AssertionResult(AddedDefinitionValidation::class, "Added definition Enum"),
+            AssertionResult(RemovedDefinitionValidation::class, "Bar","Removed definition Bar"),
+            AssertionResult(AddedDefinitionValidation::class, "Baz","Added definition Baz"),
+            AssertionResult(AddedDefinitionValidation::class, "Enum", "Added definition Enum"),
         )
     }
 
@@ -70,8 +70,8 @@ class CompareTest {
         )
 
         res.toResult() shouldBeLeft listOf(
-            AssertionResult(RemovedFieldValidation::class, "Removed field bar"),
-            AssertionResult(AddedFieldValidation::class, "Added field baz"),
+            AssertionResult(RemovedFieldValidation::class, "Foo.bar","Removed field bar"),
+            AssertionResult(AddedFieldValidation::class, "Foo.baz","Added field baz"),
         )
     }
 
@@ -92,9 +92,9 @@ class CompareTest {
         val res = (left to right).compare()
 
         res.toResult() shouldBeLeft listOf(
-            AssertionResult(ChangedNullableFieldValidation::class, "Changed field from nullable false to true"),
-            AssertionResult(ChangedIterableFieldValidation::class, "Changed field from iterable false to true"),
-            AssertionResult(ChangedReferenceFieldValidation::class, "Changed field Number to String"),
+            AssertionResult(ChangedNullableFieldValidation::class, "Foo.bar","Changed field from nullable false to true"),
+            AssertionResult(ChangedIterableFieldValidation::class, "Foo.bar","Changed field from iterable false to true"),
+            AssertionResult(ChangedReferenceFieldValidation::class, "Foo.bar","Changed field Number to String"),
         )
     }
 
@@ -113,11 +113,11 @@ class CompareTest {
         """.trimMargin()
 
         (left to right).compare().toResult() shouldBeLeft listOf(
-            AssertionResult(MethodEndpointValidation::class, "Changed method GET to POST"),
-            AssertionResult(PathEndpointValidation::class, "Changed path /todos to /todo"),
-            AssertionResult(RemovedFieldValidation::class, "Removed field done"),
-            AssertionResult(AddedFieldValidation::class, "Added field dont"),
-            AssertionResult(ChangedReferenceFieldValidation::class, "Changed field String to Boolean"),
+            AssertionResult(MethodEndpointValidation::class, "GetTodos", "Changed method GET to POST"),
+            AssertionResult(PathEndpointValidation::class, "GetTodos", "Changed path /todos to /todo"),
+            AssertionResult(RemovedFieldValidation::class, "GetTodos.done", "Removed field done"),
+            AssertionResult(AddedFieldValidation::class, "GetTodos.dont", "Added field dont"),
+            AssertionResult(ChangedReferenceFieldValidation::class, "GetTodos.x", "Changed field String to Boolean"),
         )
     }
 
@@ -134,11 +134,12 @@ fun Pair<String, String>.compare() =
 
 fun Either<NonEmptyList<Validation>, *>.toResult() =
     this.mapLeft {
-        it.map { AssertionResult(it::class, it.message) }
+        it.map { AssertionResult(it::class, it.key, it.message) }
     }
 
 
 data class AssertionResult(
-    val className: KClass<*>? = null,
-    val info: String? = null
+    val className: KClass<*>?,
+    val key: String,
+    val info: String?
 )
