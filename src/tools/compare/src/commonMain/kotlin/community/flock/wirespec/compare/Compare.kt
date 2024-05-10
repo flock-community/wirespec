@@ -85,20 +85,20 @@ object Compare {
     }
 
     sealed class Paired<A> {
-        class Left<A>(val left: A) : Paired<A>()
-        class Right<A>(val right: A) : Paired<A>()
-        class Both<A>(val left: A, val right: A) : Paired<A>()
+        class Left<A>(val key:String, val left: A) : Paired<A>()
+        class Right<A>(val key:String, val right: A) : Paired<A>()
+        class Both<A>(val key:String, val left: A, val right: A) : Paired<A>()
     }
 
-    inline fun <A> Pair<List<A>, List<A>>.pairBy(f: (a: A) -> Any): List<Paired<A>> {
+    inline fun <A> Pair<List<A>, List<A>>.pairBy(f: (a: A) -> String): List<Paired<A>> {
         val leftMap = first.groupBy { f(it) }
         val rightMap = second.groupBy { f(it) }
         val allKeys = leftMap.keys + rightMap.keys
         return allKeys.map {
             when {
-                leftMap[it] == null && rightMap[it] != null -> Paired.Right(rightMap[it]!!.first())
-                leftMap[it] != null && rightMap[it] == null -> Paired.Left(leftMap[it]!!.first())
-                else -> Paired.Both(leftMap[it]!!.first(), rightMap[it]!!.first())
+                leftMap[it] == null && rightMap[it] != null -> Paired.Right(it, rightMap[it]!!.first())
+                leftMap[it] != null && rightMap[it] == null -> Paired.Left(it, leftMap[it]!!.first())
+                else -> Paired.Both(it, leftMap[it]!!.first(), rightMap[it]!!.first())
             }
         }.toList()
     }
