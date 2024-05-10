@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Type
 
 sealed interface Validation {
+    val key: String
     val braking: Boolean
     val message: String
 }
@@ -14,6 +15,7 @@ sealed interface DefinitionValidation : Validation {
 }
 
 data class RemovedDefinitionValidation(
+    override val key: String,
     override val definition: Definition
 ) : DefinitionValidation {
     override val braking: Boolean = true
@@ -21,6 +23,7 @@ data class RemovedDefinitionValidation(
 }
 
 data class AddedDefinitionValidation(
+    override val key: String,
     override val definition: Definition
 ) : DefinitionValidation {
     override val braking: Boolean = false
@@ -29,6 +32,7 @@ data class AddedDefinitionValidation(
 
 sealed interface FieldValidation : Validation
 data class RemovedFieldValidation(
+    override val key: String,
     val field: Type.Shape.Field,
 ) : FieldValidation {
     override val braking = true
@@ -36,6 +40,7 @@ data class RemovedFieldValidation(
 }
 
 data class AddedFieldValidation(
+    override val key: String,
     val field: Type.Shape.Field,
 ) : FieldValidation {
     override val braking = true
@@ -43,6 +48,7 @@ data class AddedFieldValidation(
 }
 
 data class ChangedNullableFieldValidation(
+    override val key: String,
     val left: Type.Shape.Field,
     val right: Type.Shape.Field
 ) : FieldValidation {
@@ -51,6 +57,7 @@ data class ChangedNullableFieldValidation(
 }
 
 data class ChangedIterableFieldValidation(
+    override val key: String,
     val left: Type.Shape.Field,
     val right: Type.Shape.Field
 ) : FieldValidation {
@@ -59,6 +66,7 @@ data class ChangedIterableFieldValidation(
 }
 
 data class ChangedMapFieldValidation(
+    override val key: String,
     val left: Type.Shape.Field,
     val right: Type.Shape.Field
 ) : FieldValidation {
@@ -68,6 +76,7 @@ data class ChangedMapFieldValidation(
 
 
 data class ChangedReferenceFieldValidation(
+    override val key: String,
     val left: Type.Shape.Field,
     val right: Type.Shape.Field
 ) : FieldValidation {
@@ -78,6 +87,7 @@ data class ChangedReferenceFieldValidation(
 sealed interface EndpointValidation : Validation
 
 data class PathEndpointValidation(
+    override val key: String,
     val left: Endpoint,
     val right: Endpoint,
 ) : EndpointValidation {
@@ -86,6 +96,7 @@ data class PathEndpointValidation(
 }
 
 data class MethodEndpointValidation(
+    override val key: String,
     val left: Endpoint,
     val right: Endpoint,
 ) : EndpointValidation {
@@ -95,16 +106,12 @@ data class MethodEndpointValidation(
 
 
 data object Unknown : Validation {
+    override val key: String
+        get() = TODO("Not yet implemented")
     override val braking: Boolean
         get() = TODO("Not yet implemented")
     override val message: String
         get() = TODO("Not yet implemented")
-}
-
-fun Type.Shape.Field.printReference() = buildString {
-    append(reference.value)
-    if (reference.isIterable) append("[]")
-    if (isNullable) append("?")
 }
 
 fun Endpoint.printPath() = "/" + path.map {
