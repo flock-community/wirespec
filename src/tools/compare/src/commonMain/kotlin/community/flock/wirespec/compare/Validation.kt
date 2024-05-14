@@ -31,6 +31,7 @@ data class AddedDefinitionValidation(
 }
 
 sealed interface FieldValidation : Validation
+
 data class RemovedFieldValidation(
     override val key: String,
     val field: Type.Shape.Field,
@@ -56,34 +57,6 @@ data class ChangedNullableFieldValidation(
     override val message = "Changed field from nullable ${left.isNullable} to ${right.isNullable}"
 }
 
-data class ChangedIterableFieldValidation(
-    override val key: String,
-    val left: Type.Shape.Field,
-    val right: Type.Shape.Field
-) : FieldValidation {
-    override val braking = true
-    override val message = "Changed field from iterable ${left.reference.isIterable} to ${right.reference.isIterable}"
-}
-
-data class ChangedMapFieldValidation(
-    override val key: String,
-    val left: Type.Shape.Field,
-    val right: Type.Shape.Field
-) : FieldValidation {
-    override val braking = true
-    override val message = "Changed field from iterable ${left.reference.isMap} to ${right.reference.isMap}"
-}
-
-
-data class ChangedReferenceFieldValidation(
-    override val key: String,
-    val left: Type.Shape.Field,
-    val right: Type.Shape.Field
-) : FieldValidation {
-    override val braking = true
-    override val message = "Changed field ${left.reference.value} to ${right.reference.value}"
-}
-
 sealed interface EndpointValidation : Validation
 
 data class PathEndpointValidation(
@@ -104,6 +77,96 @@ data class MethodEndpointValidation(
     override val message = "Changed method ${left.method} to ${right.method}"
 }
 
+interface RequestValidation: Validation {
+    val request: Endpoint.Request
+}
+
+data class RemovedRequestValidation(
+    override val key: String,
+    override val request: Endpoint.Request
+) : RequestValidation {
+    override val braking: Boolean = true
+    override val message: String = "Removed definition ${request.content?.type}"
+}
+
+data class AddedRequestValidation(
+    override val key: String,
+    override val request: Endpoint.Request
+) : RequestValidation {
+    override val braking: Boolean = false
+    override val message: String = "Added definition  ${request.content?.type}"
+}
+
+interface ReferenceValidation: Validation
+
+data class RemovedReferenceValidation(
+    override val key: String,
+    val reference: Type.Shape.Field.Reference
+) : ReferenceValidation {
+    override val braking: Boolean = true
+    override val message: String = "Removed definition ${reference.value}"
+}
+
+data class AddedReferenceValidation(
+    override val key: String,
+    val reference: Type.Shape.Field.Reference
+) : ReferenceValidation {
+    override val braking: Boolean = false
+    override val message: String = "Added definition  ${reference.value}"
+}
+
+data class ChangedIterableReferenceValidation(
+    override val key: String,
+    val left: Type.Shape.Field.Reference,
+    val right: Type.Shape.Field.Reference
+) : ReferenceValidation {
+    override val braking = true
+    override val message = "Changed field from iterable ${left.isIterable} to ${right.isIterable}"
+}
+
+data class ChangedMapReferenceValidation(
+    override val key: String,
+    val left: Type.Shape.Field.Reference,
+    val right: Type.Shape.Field.Reference,
+) : ReferenceValidation {
+    override val braking = true
+    override val message = "Changed field from iterable ${left.isMap} to ${right.isMap}"
+}
+
+data class ChangedValueReferenceValidation(
+    override val key: String,
+    val left: Type.Shape.Field.Reference,
+    val right: Type.Shape.Field.Reference,
+) : ReferenceValidation {
+    override val braking = true
+    override val message = "Changed field ${left.value} to ${right.value}"
+}
+interface ContentValidation: Validation
+
+data class RemovedContentValidation(
+    override val key: String,
+    val content: Endpoint.Content
+) : ContentValidation {
+    override val braking: Boolean = true
+    override val message: String = "Removed definition ${content.type}"
+}
+
+data class AddedContentValidation(
+    override val key: String,
+    val content: Endpoint.Content
+) : ContentValidation {
+    override val braking: Boolean = false
+    override val message: String = "Added definition  ${content.type}"
+}
+
+data class ChangedTypeContentValidation(
+    override val key: String,
+    val left: Endpoint.Content,
+    val right: Endpoint.Content
+) : ContentValidation {
+    override val braking: Boolean = false
+    override val message: String = "Changed type from ${left.type} to ${right.type}"
+}
 
 data object Unknown : Validation {
     override val key: String

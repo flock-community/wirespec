@@ -38,37 +38,81 @@ object Compare {
         return paired.mapOrAccumulate { it.compareField(key).bindNel() }
     }
 
-    private fun Paired<Type.Shape.Field>.compareField(definitionKey:String): Either<NonEmptyList<FieldValidation>, Boolean> = when (this) {
-        is Paired.Left -> RemovedFieldValidation("${definitionKey}.${key}", left).nel().left()
-        is Paired.Right -> AddedFieldValidation("${definitionKey}.${key}", right).nel().left()
-        is Paired.Both -> either {
-            zipOrAccumulate(
-                { ensure(left.isNullable == right.isNullable) { ChangedNullableFieldValidation("${definitionKey}.${key}", left, right) } },
-                {
-                    ensure(left.reference.isIterable == right.reference.isIterable) {
-                        ChangedIterableFieldValidation("${definitionKey}.${key}", left, right)
-                    }
-                },
-                {
-                    ensure(left.reference.isMap == right.reference.isMap) {
-                        ChangedMapFieldValidation("${definitionKey}.${key}", left, right)
-                    }
-                },
-                {
-                    ensure(left.reference.value == right.reference.value) {
-                        ChangedReferenceFieldValidation("${definitionKey}.${key}", left, right)
-                    }
-                }
-            ) { _, _, _, _ -> true }
+    private fun Paired<Type.Shape.Field>.compareField(definitionKey: String): Either<NonEmptyList<FieldValidation>, Boolean> =
+        when (this) {
+            is Paired.Left -> RemovedFieldValidation("${definitionKey}.${key}", left).nel().left()
+            is Paired.Right -> AddedFieldValidation("${definitionKey}.${key}", right).nel().left()
+            is Paired.Both -> either {
+                zipOrAccumulate(
+                    {
+                        ensure(left.isNullable == right.isNullable) {
+                            ChangedNullableFieldValidation("${definitionKey}.${key}", left, right)
+                        }
+                    },
+                    {
+                        into { it.reference }.compareReference("${definitionKey}.${key}")
+                    },
+                ) { _, _ -> true }
+            }
         }
-    }
 
-//    private fun Paired.Both<Endpoint.Content>.compareContent(definitionKey:String): Either<NonEmptyList<FieldValidation>, List<Boolean>> =
-//        when (this) {
-//            is Paired.Left -> RemovedFieldValidation("${definitionKey}.${key}", left).nel().left()
-//            is Paired.Right -> AddedFieldValidation("${definitionKey}.${key}", right).nel().left()
-//            else -> {}
-//        }
+    private fun Paired<Type.Shape.Field.Reference>.compareReference(definitionKey: String): Either<NonEmptyList<ReferenceValidation>, Boolean> =
+        when (this) {
+            is Paired.Left -> RemovedReferenceValidation("${definitionKey}.${key}", left).nel().left()
+            is Paired.Right -> AddedReferenceValidation("${definitionKey}.${key}", right).nel().left()
+            is Paired.Both -> either {
+                zipOrAccumulate(
+                    {
+                        ensure(left.isIterable == right.isIterable) {
+                            ChangedIterableReferenceValidation("${definitionKey}.${key}", left, right)
+                        }
+                    },
+                    {
+                        ensure(left.isMap == right.isMap) {
+                            ChangedMapReferenceValidation("${definitionKey}.${key}", left, right)
+                        }
+                    },
+                    {
+                        ensure(left.value == right.value) {
+                            ChangedValueReferenceValidation("${definitionKey}.${key}", left, right)
+                        }
+                    }
+                ) { _, _, _ -> true }
+            }
+        }
+
+    private fun Paired<Endpoint.Request>.compareRequest(definitionKey: String): Either<NonEmptyList<Validation>, Boolean> =
+        when (this) {
+            is Paired.Left -> RemovedRequestValidation("${definitionKey}.${key}", left).nel().left()
+            is Paired.Right -> AddedRequestValidation("${definitionKey}.${key}", right).nel().left()
+            is Paired.Both -> when {
+                left.content ==  right.content -> true.right()
+                else -> into { it.content ?: error("") }.compareContent("${definitionKey}.${key}")
+            }
+        }
+
+    private fun Paired<Endpoint.Content>.compareContent(definitionKey: String): Either<NonEmptyList<ContentValidation>, Boolean> =
+        when (this) {
+            is Paired.Left -> RemovedContentValidation("${definitionKey}.${key}", left).nel().left()
+            is Paired.Right -> AddedContentValidation("${definitionKey}.${key}", right).nel().left()
+            is Paired.Both -> either {
+                zipOrAccumulate(
+                    {
+                        ensure(left.type == right.type) {
+                            ChangedTypeContentValidation(
+                                "${definitionKey}.${key}",
+                                left,
+                                right
+                            )
+                        }
+                    },
+                    {
+                        into { it.reference }.compareReference("${definitionKey}.${key}")
+                    },
+                    { _, _ -> true }
+                )
+            }
+        }
 
     private fun Paired.Both<Endpoint>.compareEndpoint(): Either<NonEmptyList<Validation>, Any> = either {
         zipOrAccumulate(
@@ -86,31 +130,13 @@ object Compare {
                 (left.cookies to right.cookies).pairBy { it.identifier.value }
                     .mapOrAccumulate { it.compareField(key).bindNel() }
             },
-//            {
-//                (left.requests to right.requests).pairBy { it.content?.reference.value }
-//                    .mapOrAccumulate { it.compareField(key).bindNel() }
-//            },
+            {
+                (left.requests to right.requests).pairBy { it.content?.type.orEmpty() }
+                    .mapOrAccumulate { it.compareRequest(key).bindNel() }
+            },
         )
-        { _, _, _, _, _ -> true }
+        { _, _, _, _, _, _ -> true }
     }
 
-    sealed class Paired<A> {
-        class Left<A>(val key: String, val left: A) : Paired<A>()
-        class Right<A>(val key: String, val right: A) : Paired<A>()
-        class Both<A>(val key: String, val left: A, val right: A) : Paired<A>()
-    }
-
-    inline fun <A> Pair<List<A>, List<A>>.pairBy(f: (a: A) -> String): List<Paired<A>> {
-        val leftMap = first.groupBy { f(it) }
-        val rightMap = second.groupBy { f(it) }
-        val allKeys = leftMap.keys + rightMap.keys
-        return allKeys.map {
-            when {
-                leftMap[it] == null && rightMap[it] != null -> Paired.Right(it, rightMap[it]!!.first())
-                leftMap[it] != null && rightMap[it] == null -> Paired.Left(it, leftMap[it]!!.first())
-                else -> Paired.Both(it, leftMap[it]!!.first(), rightMap[it]!!.first())
-            }
-        }.toList()
-    }
 }
 
