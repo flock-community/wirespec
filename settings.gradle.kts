@@ -3,10 +3,12 @@ pluginManagement {
     val kotlinVersion = "1.9.10"
     val shadowVersion = "7.1.2"
     val kotestVersion = "5.7.2"
+    val serializationVersion = "1.9.21"
 
     plugins {
         kotlin("multiplatform") version kotlinVersion
         kotlin("jvm") version kotlinVersion
+        kotlin("plugin.serialization") version serializationVersion
         id("com.github.johnrengelman.shadow") version shadowVersion
         id("io.kotest.multiplatform") version kotestVersion
     }
@@ -43,4 +45,5 @@ include(
     "src:integration:jackson",
     "src:integration:wirespec",
     "src:generator",
+    "src:converter:avro",
 )
