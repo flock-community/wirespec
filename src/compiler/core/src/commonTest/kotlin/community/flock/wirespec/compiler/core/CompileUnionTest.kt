@@ -71,7 +71,7 @@ class CompileUnionTest {
                 account.second shouldBe """
                     |package community.flock.wirespec.generated;
                     |
-                    |sealed interface UserAccount permits UserAccountPassword, UserAccountToken {}
+                    |public sealed interface UserAccount permits UserAccountPassword, UserAccountToken {}
                     |
                 """.trimMargin()
 
