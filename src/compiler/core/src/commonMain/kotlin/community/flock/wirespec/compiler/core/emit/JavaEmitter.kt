@@ -119,7 +119,7 @@ class JavaEmitter(
     override fun Union.emit() = transform().emit()
 
     override fun UnionClass.emit(): String = """
-        |sealed interface $name permits ${entries.joinToString(", ")} {}
+        |public sealed interface $name permits ${entries.joinToString(", ")} {}
     """.trimMargin()
 
     override fun Endpoint.emit() = transform().emit()
