@@ -147,12 +147,14 @@ sealed interface Reference {
     val isNullable: Boolean
     val isIterable: Boolean
     val isOptional: Boolean
+    val isInternal: Boolean
 
     data class Language(
         val primitive: Primitive,
         override val isNullable: Boolean = false,
         override val isIterable: Boolean = false,
         override val isOptional: Boolean = false,
+        override val isInternal: Boolean = false,
         val generics: Generics = Generics()
     ) : Reference {
         enum class Primitive { Any, Unit, String, Integer, Long, Double, Number, Boolean, Map, List }
@@ -163,6 +165,7 @@ sealed interface Reference {
         override val isNullable: Boolean = false,
         override val isIterable: Boolean = false,
         override val isOptional: Boolean = false,
+        override val isInternal: Boolean = false,
         val generics: Generics = Generics()
     ) : Reference
 
@@ -171,6 +174,7 @@ sealed interface Reference {
         override val isNullable: Boolean = false,
         override val isIterable: Boolean = false,
         override val isOptional: Boolean = false,
+        override val isInternal: Boolean = false,
         val generics: Generics = Generics()
     ) : Reference
 

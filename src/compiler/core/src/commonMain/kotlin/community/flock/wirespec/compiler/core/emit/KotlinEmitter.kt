@@ -234,7 +234,7 @@ class KotlinEmitter(
         "Wirespec.${name}${generics.emit()}"
 
     override fun Reference.Custom.emit(): String = """
-        |${name.sanitizeSymbol()}${generics.emit()}
+        |${if(internalClasses.contains(name) && !isInternal) "${packageName}." else ""}${name.sanitizeSymbol()}${generics.emit()}
     """.trimMargin()
 
     override fun Reference.Language.emit(): String = """
@@ -285,6 +285,10 @@ class KotlinEmitter(
             "object", "open", "package", "return", "super",
             "this", "throw", "true", "try", "typealias",
             "typeof", "val", "var", "when", "while"
+        )
+
+        private val internalClasses = listOf(
+            "Request", "Response"
         )
     }
 

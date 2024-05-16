@@ -14,7 +14,7 @@ class CompileEndpointTest {
 
     private val logger = noLogger
 
-    private val compiler = compile(
+    private val compiledTodo = compile(
         """
         |endpoint Todo GET /todo ? {done:Boolean} # {auth:String} -> {
         |  200 -> Todo 
@@ -22,6 +22,20 @@ class CompileEndpointTest {
         |type Todo {
         |  name: String,
         |  done: Boolean
+        |}
+        """.trimMargin()
+    )
+
+    private val compiledReqRes = compile(
+        """
+        |endpoint Todo POST Request /reqres -> {
+        |  200 -> Response 
+        |}
+        |type Request {
+        |  name: String
+        |}
+        |type Response {
+        |  name: String
         |}
         """.trimMargin()
     )
@@ -88,8 +102,80 @@ class CompileEndpointTest {
             |
         """.trimMargin()
 
-        compiler(KotlinEmitter(logger = logger)) shouldBeRight kotlin
+        compiledTodo(KotlinEmitter(logger = logger)) shouldBeRight kotlin
     }
+
+
+    @Test
+    fun testEndpointReqResKotlin() {
+        val kotlin = """
+            |package community.flock.wirespec.generated
+            |
+            |import community.flock.wirespec.Wirespec
+            |
+            |interface TodoEndpoint : Wirespec.Endpoint {
+            |  sealed interface Request<T> : Wirespec.Request<T>
+            |  data class RequestApplicationJson(
+            |    override val path: String,
+            |    override val method: Wirespec.Method,
+            |    override val query: Map<String, List<Any?>>,
+            |    override val headers: Map<String, List<Any?>>,
+            |    override val content: Wirespec.Content<community.flock.wirespec.generated.Request>
+            |  ) : Request<community.flock.wirespec.generated.Request> {
+            |    constructor(body: community.flock.wirespec.generated.Request) : this(
+            |      path = "/reqres",
+            |      method = Wirespec.Method.POST,
+            |      query = mapOf<String, List<Any?>>(),
+            |      headers = mapOf<String, List<Any?>>(),
+            |      content = Wirespec.Content("application/json", body)
+            |    )
+            |  }
+            |
+            |  sealed interface Response<T> : Wirespec.Response<T>
+            |  sealed interface Response2XX<T> : Response<T>
+            |  sealed interface Response200<T> : Response2XX<T>
+            |  data class Response200ApplicationJson(override val status: Int, override val headers: Map<String, List<Any?>>, override val content: Wirespec.Content<community.flock.wirespec.generated.Response>) : Response200<community.flock.wirespec.generated.Response> {
+            |    constructor(body: community.flock.wirespec.generated.Response) : this(
+            |      status = 200,
+            |      headers = mapOf<String, List<Any?>>(),
+            |      content = Wirespec.Content("application/json", body)
+            |    )
+            |  }
+            |  companion object {
+            |    const val PATH = "/reqres"
+            |    const val METHOD = "POST"
+            |    fun <B> REQUEST_MAPPER(contentMapper: Wirespec.ContentMapper<B>) = { request: Wirespec.Request<B> ->
+            |      when {
+            |        request.content?.type == "application/json" -> contentMapper
+            |          .read<community.flock.wirespec.generated.Request>(request.content!!, Wirespec.getType(community.flock.wirespec.generated.Request::class.java, false))
+            |          .let { RequestApplicationJson(request.path, request.method, request.query, request.headers, it) }
+            |        else -> error("Cannot map request")
+            |      }
+            |    }
+            |    fun <B> RESPONSE_MAPPER(contentMapper: Wirespec.ContentMapper<B>) = { response: Wirespec.Response<B> ->
+            |      when {
+            |        response.status == 200 && response.content?.type == "application/json" -> contentMapper
+            |          .read<community.flock.wirespec.generated.Response>(response.content!!, Wirespec.getType(community.flock.wirespec.generated.Response::class.java, false))
+            |          .let { Response200ApplicationJson(response.status, response.headers, it) }
+            |        else -> error("Cannot map response with status ${'$'}{response.status}")
+            |      }
+            |    }
+            |  }
+            |  suspend fun todo(request: Request<*>): Response<*>
+            |}
+            |data class Request(
+            |  val name: String
+            |)
+            |data class Response(
+            |  val name: String
+            |)
+            |
+        """.trimMargin()
+
+        compiledReqRes(KotlinEmitter(logger = logger)).map { println(it); it } shouldBeRight kotlin
+    }
+
+
 
     @Test
     fun testEndpointJava() {
@@ -234,7 +320,153 @@ class CompileEndpointTest {
             |
         """.trimMargin()
 
-        compiler(JavaEmitter(logger = logger)) shouldBeRight java
+        compiledTodo(JavaEmitter(logger = logger)) shouldBeRight java
+    }
+
+    @Test
+    fun testEndpointJavaReqRes() {
+        val java = """
+            |package community.flock.wirespec.generated;
+            |
+            |import community.flock.wirespec.Wirespec;
+            |
+            |import java.util.concurrent.CompletableFuture;
+            |import java.util.function.Function;
+            |
+            |public interface TodoEndpoint extends Wirespec.Endpoint {
+            |  static String PATH = "/reqres";
+            |  static String METHOD = "POST";
+            |
+            |  sealed interface Request<T> extends Wirespec.Request<T> {
+            |  }
+            |
+            |  final class RequestApplicationJson implements Request<community.flock.wirespec.generated.Request> {
+            |    private final String path;
+            |    private final Wirespec.Method method;
+            |    private final java.util.Map<String, java.util.List<Object>> query;
+            |    private final java.util.Map<String, java.util.List<Object>> headers;
+            |    private final Wirespec.Content<community.flock.wirespec.generated.Request> content;
+            |
+            |    public RequestApplicationJson(
+            |      String path,
+            |      Wirespec.Method method,
+            |      java.util.Map<String, java.util.List<Object>> query,
+            |      java.util.Map<String, java.util.List<Object>> headers,
+            |      Wirespec.Content<community.flock.wirespec.generated.Request> content
+            |    ) {
+            |      this.path = path;
+            |      this.method = method;
+            |      this.query = query;
+            |      this.headers = headers;
+            |      this.content = content;
+            |    }
+            |
+            |    public RequestApplicationJson(
+            |      community.flock.wirespec.generated.Request body
+            |    ) {
+            |      this.path = "/" + "reqres";
+            |      this.method = Wirespec.Method.POST;
+            |      this.query = java.util.Map.ofEntries();
+            |      this.headers = java.util.Map.ofEntries();
+            |      this.content = new Wirespec.Content("application/json", body);
+            |    }
+            |
+            |    @Override
+            |    public String getPath() {
+            |      return path;
+            |    }
+            |
+            |    @Override
+            |    public Wirespec.Method getMethod() {
+            |      return method;
+            |    }
+            |
+            |    @Override
+            |    public java.util.Map<String, java.util.List<Object>> getQuery() {
+            |      return query;
+            |    }
+            |
+            |    @Override
+            |    public java.util.Map<String, java.util.List<Object>> getHeaders() {
+            |      return headers;
+            |    }
+            |
+            |    @Override
+            |    public Wirespec.Content<community.flock.wirespec.generated.Request> getContent() {
+            |      return content;
+            |    }
+            |  }
+            |
+            |  sealed interface Response<T> extends Wirespec.Response<T> {
+            |  };
+            |
+            |  sealed interface Response2XX<T> extends Response<T> {
+            |  };
+            |
+            |  sealed interface Response200<T> extends Response2XX<T> {
+            |  };
+            |
+            |  final class Response200ApplicationJson implements Response200<community.flock.wirespec.generated.Response> {
+            |    private final int status;
+            |    private final java.util.Map<String, java.util.List<Object>> headers;
+            |    private final Wirespec.Content<community.flock.wirespec.generated.Response> content;
+            |
+            |    public Response200ApplicationJson(int status, java.util.Map<String, java.util.List<Object>> headers, Wirespec.Content<community.flock.wirespec.generated.Response> content) {
+            |      this.status = status;
+            |      this.headers = headers;
+            |      this.content = content;
+            |    }
+            |
+            |    public Response200ApplicationJson(
+            |      community.flock.wirespec.generated.Response body
+            |    ) {
+            |      this.status = 200;
+            |      this.headers = java.util.Map.ofEntries();
+            |      this.content = new Wirespec.Content("application/json", body);
+            |    }
+            |
+            |    @Override
+            |    public int getStatus() {
+            |      return status;
+            |    }
+            |
+            |    @Override
+            |    public java.util.Map<String, java.util.List<Object>> getHeaders() {
+            |      return headers;
+            |    }
+            |
+            |    @Override
+            |    public Wirespec.Content<community.flock.wirespec.generated.Response> getContent() {
+            |      return content;
+            |    }
+            |  }
+            |
+            |  static <B, Req extends Request<?>> Function<Wirespec.Request<B>, Req> REQUEST_MAPPER(Wirespec.ContentMapper<B> contentMapper) {
+            |    return request -> {
+            |      if (request.getContent().type().equals("application/json")) {
+            |        Wirespec.Content<community.flock.wirespec.generated.Request> content = contentMapper.read(request.getContent(), Wirespec.getType(community.flock.wirespec.generated.Request.class, false));
+            |        return (Req) new RequestApplicationJson(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders(), content);
+            |      }
+            |      throw new IllegalStateException("Unknown response type");
+            |    };
+            |  }
+            |  static <B, Res extends Response<?>> Function<Wirespec.Response<B>, Res> RESPONSE_MAPPER(Wirespec.ContentMapper<B> contentMapper) {
+            |    return response -> {
+            |      if (response.getStatus() == 200 && response.getContent().type().equals("application/json")) {
+            |        Wirespec.Content<community.flock.wirespec.generated.Response> content = contentMapper.read(response.getContent(), Wirespec.getType(community.flock.wirespec.generated.Response.class, false));
+            |        return (Res) new Response200ApplicationJson(response.getStatus(), response.getHeaders(), content);
+            |      }
+            |      throw new IllegalStateException("Unknown response type");
+            |    };
+            |  }
+            |
+            |  public CompletableFuture<Response<?>> todo(Request<?> request);
+            |
+            |}
+            |
+        """.trimMargin()
+
+        compiledReqRes(JavaEmitter(logger = logger)) shouldBeRight java
     }
 
     @Test
@@ -252,7 +484,7 @@ class CompileEndpointTest {
             |
         """.trimMargin()
 
-        compiler(ScalaEmitter(logger = logger)) shouldBeRight scala
+        compiledTodo(ScalaEmitter(logger = logger)) shouldBeRight scala
     }
 
     @Test
@@ -287,7 +519,7 @@ class CompileEndpointTest {
             |
         """.trimMargin()
 
-        compiler(TypeScriptEmitter(logger = logger)) shouldBeRight ts
+        compiledTodo(TypeScriptEmitter(logger = logger)) shouldBeRight ts
     }
 
     @Test
@@ -304,7 +536,7 @@ class CompileEndpointTest {
             |
         """.trimMargin()
 
-        compiler(WirespecEmitter(logger = logger)) shouldBeRight wirespec
+        compiledTodo(WirespecEmitter(logger = logger)) shouldBeRight wirespec
     }
 
     private fun compile(source: String) = { emitter: Emitter ->
