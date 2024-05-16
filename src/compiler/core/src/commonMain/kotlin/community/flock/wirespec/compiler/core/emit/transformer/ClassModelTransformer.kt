@@ -291,7 +291,7 @@ object ClassModelTransformer : Transformer {
                         content = it.content?.transform(),
                         isIterable = it.content?.reference?.isIterable ?: false,
                         responseReference = Reference.Custom(
-                            className("Request", it.content.name()),
+                            name = className("Request", it.content.name()),
                             isInternal = true
                         )
                     )

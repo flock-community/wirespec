@@ -49,5 +49,8 @@ abstract class Emitter(
         fun AST.hasEndpoints() = any { it is Endpoint }
         fun String.isInt() = toIntOrNull() != null
         fun String.isStatusCode() = toIntOrNull()?.let { it in 0..599 } ?: false
+        val internalClasses = setOf(
+            "Request", "Response"
+        )
     }
 }

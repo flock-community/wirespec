@@ -289,7 +289,7 @@ class JavaEmitter(
         .let { if (isOptional) "java.util.Optional<$it>" else it }
 
     override fun Reference.Custom.emit(): String = """
-        |${if(internalClasses.contains(name) && !isInternal) "${packageName}." else ""}${name.sanitizeSymbol()}${generics.emit()}
+        |${if (name in internalClasses && !isInternal) "${packageName}." else ""}${name.sanitizeSymbol()}${generics.emit()}
     """.trimMargin()
 
 
@@ -364,10 +364,6 @@ class JavaEmitter(
             "class", "finally", "long", "strictfp", "volatile",
             "const", "float", "native", "super", "while",
             "true", "false"
-        )
-
-        private val internalClasses = listOf(
-            "Request", "Response"
         )
     }
 }
