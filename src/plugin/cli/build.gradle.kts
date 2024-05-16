@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsTargetDsl
 plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
-    id("com.github.johnrengelman.shadow")
+    id("com.github.johnrengelman.shadow") version "7.1.2"
     id("com.goncalossilva.resources") version "0.4.0"
     id("io.kotest.multiplatform")
 }
@@ -24,16 +24,9 @@ repositories {
 
 kotlin {
     val projectName = name
-    val buildAll = "WIRESPEC_BUILD_ALL".fromEnv()
-    val buildMacX86 = buildAll || "WIRESPEC_BUILD_MAC_X86".fromEnv()
-    val buildMacArm = buildAll || "WIRESPEC_BUILD_MAC_ARM".fromEnv()
-    val buildLinux = buildAll || "WIRESPEC_BUILD_LINUX".fromEnv()
-    val buildNothing = !buildMacX86 && !buildMacArm && !buildLinux
-    val buildJvm = buildAll || "WIRESPEC_BUILD_JVM".fromEnv() || buildNothing
-
-    if (buildMacX86) macosX64 { build() }
-    if (buildMacArm) macosArm64 { build() }
-    if (buildLinux) linuxX64 { build() }
+    macosX64 { build() }
+    macosArm64 { build() }
+    linuxX64 { build() }
     js(IR) { build() }
     jvm {
         withJava()
@@ -81,28 +74,20 @@ kotlin {
         val desktopMain by creating {
             dependsOn(commonMain)
         }
-        if (buildMacX86) {
-            val macosX64Main by getting {
-                dependsOn(desktopMain)
-            }
+        val macosX64Main by getting {
+            dependsOn(desktopMain)
         }
-        if (buildMacArm) {
-            val macosArm64Main by getting {
-                dependsOn(desktopMain)
-            }
+        val macosArm64Main by getting {
+            dependsOn(desktopMain)
         }
-        if (buildLinux) {
-            val linuxX64Main by getting {
-                dependsOn(desktopMain)
-            }
+        val linuxX64Main by getting {
+            dependsOn(desktopMain)
         }
-        if (buildJvm) {
-            val jvmMain by getting {
-                dependsOn(commonMain)
-            }
+        val jvmMain by getting {
+            dependsOn(commonMain)
         }
         val jsMain by getting {
-            dependencies{
+            dependencies {
                 implementation(project(":src:compiler:lib"))
             }
             dependsOn(commonMain)
@@ -110,11 +95,11 @@ kotlin {
     }
 }
 
-fun String.fromEnv() = let(System::getenv).toBoolean()
-
-fun KotlinNativeTargetWithHostTests.build() = binaries {
-    executable {
-        entryPoint = "community.flock.wirespec.plugin.cli.main"
+fun KotlinNativeTargetWithHostTests.build() {
+    binaries {
+        executable {
+            entryPoint = "community.flock.wirespec.plugin.cli.main"
+        }
     }
 }
 

@@ -3,41 +3,32 @@
 all:
 	$(shell pwd)/scripts/all.sh
 
-compile:
-	$(shell pwd)/scripts/compile.sh
-
-compile-types:
-	$(shell pwd)/scripts/compileTypes.sh
-
 build:
 	$(shell pwd)/scripts/build.sh
-
-test:
-	$(shell pwd)/scripts/test.sh
-
-image:
-	$(shell pwd)/scripts/image.sh
 
 clean:
 	$(shell pwd)/scripts/clean.sh
 
-mac:
-	$(shell pwd)/scripts/mac.sh
+compile:
+	./gradlew assemble
 
-linux:
-	$(shell pwd)/scripts/linux.sh
-
-jvm:
-	$(shell pwd)/scripts/jvm.sh
+compile-types:
+	$(shell pwd)/scripts/compileTypes.sh
 
 example:
 	$(shell pwd)/scripts/example.sh
+
+image:
+	$(shell pwd)/scripts/image.sh
 
 local:
 	$(shell pwd)/scripts/local.sh
 
 publish:
-	$(shell pwd)/scripts/publish.sh
+	./gradlew publish
+
+test:
+	$(shell pwd)/scripts/test.sh
 
 update:
-	$(shell pwd)/scripts/update.sh
+	npm install -g @vscode/vsce

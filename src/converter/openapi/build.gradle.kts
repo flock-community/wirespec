@@ -4,7 +4,6 @@ import Libraries.KOTEST_ASSERTIONS_ARROW
 plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
-    id("com.github.johnrengelman.shadow") apply false
     id("com.goncalossilva.resources") version "0.4.0"
 }
 

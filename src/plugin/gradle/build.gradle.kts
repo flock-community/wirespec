@@ -1,6 +1,6 @@
 plugins {
     `java-gradle-plugin`
-    id("org.jetbrains.kotlin.jvm")
+    kotlin("jvm")
 }
 
 group = "${Settings.GROUP_ID}.plugin.gradle"

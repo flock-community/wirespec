@@ -1,6 +1,6 @@
 plugins {
     java
-    id("org.jetbrains.kotlin.jvm")
+    kotlin("jvm")
     id("de.benediktritter.maven-plugin-development") version "0.4.1"
 }
 

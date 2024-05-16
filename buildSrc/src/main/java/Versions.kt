@@ -9,7 +9,6 @@ object Versions {
     const val KOTLIN_COMPILER = "1.9"
     const val ARROW = "1.2.1"
     const val CLI = "4.2.1"
-    const val INTELLIJ = "1.15.0"
     const val KOTEST = "5.7.2"
     const val KOTEST_ARROW = "1.4.0"
 }
@@ -22,9 +21,3 @@ object Libraries {
     const val KOTEST_ASSERTIONS = "io.kotest:kotest-assertions-core:$KOTEST"
     const val KOTEST_ASSERTIONS_ARROW = "io.kotest.extensions:kotest-assertions-arrow:$KOTEST_ARROW"
 }
-
-object Plugins {
-    val intellij = Plugin("org.jetbrains.intellij", Versions.INTELLIJ)
-}
-
-data class Plugin(val name: String, val version: String)

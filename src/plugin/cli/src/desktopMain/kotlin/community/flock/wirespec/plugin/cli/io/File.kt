@@ -1,5 +1,3 @@
-@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
-
 package community.flock.wirespec.plugin.cli.io
 
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.IOException.FileReadException
@@ -7,6 +5,7 @@ import community.flock.wirespec.compiler.core.exceptions.WirespecException.IOExc
 import community.flock.wirespec.plugin.FullFilePath
 import community.flock.wirespec.plugin.Reader
 import kotlinx.cinterop.ByteVar
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.toKString
@@ -18,17 +17,18 @@ import platform.posix.fputs
 import platform.posix.mkdir
 import platform.posix.opendir
 
+@OptIn(ExperimentalForeignApi::class)
 actual abstract class File actual constructor(actual val path: FullFilePath) : Reader, Copy {
 
     actual override fun read() = StringBuilder().apply {
         fopen(path.toString(), "r")?.let { file ->
             try {
                 memScoped {
-                    val buffer = allocArray<ByteVar>(bufferLength)
-                    var line = fgets(buffer, bufferLength, file)?.toKString()
+                    val buffer = allocArray<ByteVar>(BUFFER_LENGTH)
+                    var line = fgets(buffer, BUFFER_LENGTH, file)?.toKString()
                     while (line != null) {
                         append(line)
-                        line = fgets(buffer, bufferLength, file)?.toKString()
+                        line = fgets(buffer, BUFFER_LENGTH, file)?.toKString()
                     }
                 }
             } finally {
@@ -55,6 +55,6 @@ actual abstract class File actual constructor(actual val path: FullFilePath) : R
     private fun makeDir(dir: String) = mkdir(dir, 493u)
 
     companion object {
-        private const val bufferLength = 64 * 1024
+        private const val BUFFER_LENGTH = 64 * 1024
     }
 }
