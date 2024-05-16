@@ -9,7 +9,6 @@ import community.flock.wirespec.compiler.core.exceptions.WirespecException.Compi
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.Tokens
 import community.flock.wirespec.compiler.core.tokenize.removeWhiteSpace
-import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.WirespecDefinition
 import community.flock.wirespec.compiler.utils.Logger
 
@@ -31,7 +30,7 @@ class TokenProvider(private val logger: Logger, list: NonEmptyList<Token>) {
         }
 
     fun Token.shouldBeDefined(): Either<WirespecException, Unit> = either {
-        if (!definitionNames.contains(value)) {
+        if (value !in definitionNames) {
             raise(ParserException.DefinitionNotExistsException(value, coordinates))
         }
     }

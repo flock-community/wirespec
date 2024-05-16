@@ -220,6 +220,7 @@ object ClassModelFixtures {
                         Reference.Custom(
                             name = "Request",
                             isNullable = false,
+                            isInternal = true,
                             generics = Reference.Generics(
                                 listOf(
                                     Reference.Custom(
@@ -419,6 +420,7 @@ object ClassModelFixtures {
                         Reference.Custom(
                             name = "Request",
                             isNullable = false,
+                            isInternal = true,
                             generics = Reference.Generics(
                                 listOf(
                                     Reference.Custom(
@@ -603,6 +605,7 @@ object ClassModelFixtures {
                         Reference.Custom(
                             name = "Request",
                             isNullable = false,
+                            isInternal = true,
                             generics = Reference.Generics(
                                 listOf(
                                     Reference.Custom(
@@ -627,6 +630,7 @@ object ClassModelFixtures {
                     ),
                     `super` = Reference.Custom(
                         name = "Response",
+                        isInternal = true,
                         generics = Reference.Generics(
                             listOf(
                                 Reference.Custom("T")
@@ -645,6 +649,7 @@ object ClassModelFixtures {
                     ),
                     Reference.Custom(
                         name = "Response",
+                        isInternal = true,
                         generics = Reference.Generics(
                             listOf(
                                 Reference.Custom("T")

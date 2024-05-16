@@ -274,7 +274,8 @@ class JavaEmitter(
 
     override fun Reference.Generics.emit(): String = references
         .takeIf { it.isNotEmpty() }
-        ?.joinToString(", ", "<", ">") { it.emitWrap() }
+        ?.map { it.emitWrap() }
+        ?.joinToString(", ", "<", ">") { it }
         .orEmpty()
 
     override fun Reference.emit(): String = when (this) {
@@ -288,7 +289,7 @@ class JavaEmitter(
         .let { if (isOptional) "java.util.Optional<$it>" else it }
 
     override fun Reference.Custom.emit(): String = """
-        |${name.sanitizeSymbol()}${generics.emit()}
+        |${if (name in internalClasses && !isInternal) "${packageName}." else ""}${name.sanitizeSymbol()}${generics.emit()}
     """.trimMargin()
 
 

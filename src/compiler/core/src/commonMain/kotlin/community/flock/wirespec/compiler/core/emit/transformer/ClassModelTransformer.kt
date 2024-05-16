@@ -273,6 +273,7 @@ object ClassModelTransformer : Transformer {
                     supers = listOf(
                         Reference.Custom(
                             name = className("Request"),
+                            isInternal = true,
                             generics = Reference.Generics(
                                 listOf(
                                     it.content?.reference?.transform(it.content.isNullable, false)
@@ -289,7 +290,10 @@ object ClassModelTransformer : Transformer {
                     EndpointClass.RequestMapper.RequestCondition(
                         content = it.content?.transform(),
                         isIterable = it.content?.reference?.isIterable ?: false,
-                        responseReference = Reference.Custom(className("Request", it.content.name()))
+                        responseReference = Reference.Custom(
+                            name = className("Request", it.content.name()),
+                            isInternal = true
+                        )
                     )
                 }
             ),
@@ -301,7 +305,8 @@ object ClassModelTransformer : Transformer {
                         content = it.content?.transform(),
                         isIterable = it.content?.reference?.isIterable ?: false,
                         responseReference = Reference.Custom(
-                            name = className("Response", it.status, it.content.name())
+                            name = className("Response", it.status, it.content.name()),
+                            isInternal = true
                         )
                     )
                 }
@@ -313,6 +318,7 @@ object ClassModelTransformer : Transformer {
                     EndpointClass.ResponseInterface(
                         name = Reference.Custom(
                             name = className("Response", it),
+                            isInternal = true,
                             generics = Reference.Generics(
                                 listOf(
                                     Reference.Custom("T")
@@ -321,6 +327,7 @@ object ClassModelTransformer : Transformer {
                         ),
                         `super` = Reference.Custom(
                             name = "Response",
+                            isInternal = true,
                             generics = Reference.Generics(
                                 listOf(
                                     Reference.Custom("T")
@@ -336,6 +343,7 @@ object ClassModelTransformer : Transformer {
                     EndpointClass.ResponseInterface(
                         name = Reference.Custom(
                             name = className("Response", it),
+                            isInternal = true,
                             generics = Reference.Generics(
                                 listOf(
                                     Reference.Custom("T")
@@ -344,6 +352,7 @@ object ClassModelTransformer : Transformer {
                         ),
                         `super` = Reference.Custom(
                             name = className("Response", it.groupStatus()),
+                            isInternal = true,
                             generics = Reference.Generics(
                                 listOf(
                                     Reference.Custom("T")
@@ -487,6 +496,7 @@ object ClassModelTransformer : Transformer {
                             )
                         ),
                         isNullable = false,
+                        isInternal = true
                     ),
                     statusCode = it.status,
                     content = it.content?.transform(),

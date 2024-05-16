@@ -197,7 +197,7 @@ class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emi
     private fun Identifier.sanitizeSymbol() = value.sanitizeSymbol()
 
     private fun String.sanitizeSymbol() = asSequence()
-        .filter { it.isLetterOrDigit() || listOf('_').contains(it) }
+        .filter { it.isLetterOrDigit() || it in listOf('_') }
         .joinToString("")
 
     private fun Field.Reference.toField(identifier: String, isNullable: Boolean) = Field(

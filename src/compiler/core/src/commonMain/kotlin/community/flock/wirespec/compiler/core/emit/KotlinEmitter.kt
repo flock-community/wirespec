@@ -234,7 +234,7 @@ class KotlinEmitter(
         "Wirespec.${name}${generics.emit()}"
 
     override fun Reference.Custom.emit(): String = """
-        |${name.sanitizeSymbol()}${generics.emit()}
+        |${if (name in internalClasses && !isInternal) "${packageName}." else ""}${name.sanitizeSymbol()}${generics.emit()}
     """.trimMargin()
 
     override fun Reference.Language.emit(): String = """
