@@ -5,7 +5,6 @@ import Libraries.KOTEST_ASSERTIONS_ARROW
 plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
-    id("com.github.johnrengelman.shadow") apply false
 }
 
 group = "${Settings.GROUP_ID}.compare"
