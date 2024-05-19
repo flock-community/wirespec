@@ -2,6 +2,7 @@
 
 package community.flock.wirespec.compiler.lib
 
+import community.flock.wirespec.compiler.core.parse.Comment
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
@@ -22,8 +23,8 @@ fun WsNode.consume(): Node =
 
 fun WsEndpoint.consume(): Endpoint =
     Endpoint(
-        comment = null,
-        identifier = Identifier(name),
+        comment = comment?.let { Comment(it)  },
+        identifier = Identifier(identifier),
         method = method.consume(),
         path = path.map { it.consume() },
         query = query.map { it.consume() },
@@ -51,6 +52,30 @@ private fun WsMethod.consume() = when (this) {
 }
 
 private fun WsIdentifier.consume() = Identifier(value)
+
+private fun WsEnum.consume() = Enum(
+    identifier = Identifier(identifier),
+    comment = comment?.let { Comment(it)  },
+    entries = entries.toSet()
+)
+
+private fun WsRefined.consume() = Refined(
+    identifier = Identifier(identifier),
+    comment = comment?.let { Comment(it)  },
+    validator = Refined.Validator(validator)
+)
+
+private fun WsType.consume() = Type(
+    identifier = Identifier(identifier),
+    comment = comment?.let { Comment(it)  },
+    shape = Type.Shape(shape.value.map { it.consume() })
+)
+
+private fun WsUnion.consume() = Union(
+    identifier = Identifier(identifier),
+    comment = comment?.let { Comment(it)  },
+    entries = entries.map { it.consume() }.toSet()
+)
 
 private fun WsField.consume() = Field(
     identifier = identifier.consume(),
@@ -113,9 +138,13 @@ private fun WsPrimitiveType.consume() =
 
 fun Node.produce(): WsNode =
     when (this) {
-        is Type -> WsType(identifier.value, shape.produce())
+        is Type -> WsType(
+            identifier = identifier.value,
+            comment = comment?.value,
+            shape = shape.produce())
         is Endpoint -> WsEndpoint(
-            name = identifier.value,
+            identifier = identifier.value,
+            comment = comment?.value,
             method = method.produce(),
             path = path.produce(),
             query = query.produce(),
@@ -125,9 +154,20 @@ fun Node.produce(): WsNode =
             responses = responses.produce(),
         )
 
-        is Enum -> WsEnum(identifier.value, entries.toTypedArray())
-        is Refined -> WsRefined(identifier.value, validator.value)
-        is Union -> WsUnion(identifier.value, entries
+        is Enum -> WsEnum(
+            identifier = identifier.value,
+            comment = comment?.value,
+            entries = entries.toTypedArray()
+        )
+        is Refined -> WsRefined(
+            identifier = identifier.value,
+            comment = comment?.value,
+            validator = validator.value
+        )
+        is Union -> WsUnion(
+            identifier = identifier.value,
+            comment = comment?.value,
+            entries = entries
             .map { it.produce() }
             .toTypedArray())
     }
@@ -193,18 +233,23 @@ private fun List<Endpoint.Response>.produce() = map { it.produce() }.toTypedArra
 
 @JsExport
 sealed interface WsNode {
-    val name: String
+    val identifier: String
 }
 
 @JsExport
-data class WsType(override val name: String, val shape: WsShape) : WsNode
+data class WsType(
+    override val identifier: String,
+    val comment: String?,
+    val shape: WsShape
+) : WsNode
 
 @JsExport
 data class WsShape(val value: Array<WsField>)
 
 @JsExport
 data class WsEndpoint(
-    override val name: String,
+    override val identifier: String,
+    val comment: String?,
     val method: WsMethod,
     val path: Array<WsSegment>,
     val query: Array<WsField>,
@@ -215,13 +260,25 @@ data class WsEndpoint(
 ) : WsNode
 
 @JsExport
-data class WsEnum(override val name: String, val entries: Array<String>) : WsNode
+data class WsEnum(
+    override val identifier: String,
+    val comment: String?,
+    val entries: Array<String>
+) : WsNode
 
 @JsExport
-data class WsUnion(override val name: String, val entries: Array<WsReference>) : WsNode
+data class WsUnion(
+    override val identifier: String,
+    val comment: String?,
+    val entries: Array<WsReference>
+) : WsNode
 
 @JsExport
-data class WsRefined(override val name: String, val validator: String) : WsNode
+data class WsRefined(
+    override val identifier: String,
+    val comment: String?,
+    val validator: String
+) : WsNode
 
 @JsExport
 enum class WsMethod { GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH, TRACE }
