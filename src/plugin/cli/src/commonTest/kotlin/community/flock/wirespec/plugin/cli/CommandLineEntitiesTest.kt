@@ -92,4 +92,5 @@ class CommandLineEntitiesTest {
             it.debug shouldBe false
         })(arrayOf("convert", "openapiv2", "-o", "output", "-l", "Kotlin"))
     }
+
 }

@@ -17,6 +17,7 @@ data class CompilerArguments(
 sealed interface Operation {
     data object Compile : Operation
     data class Convert(val format: Format) : Operation
+    data class Serve(val port: Int) : Operation
 }
 
 enum class Format {

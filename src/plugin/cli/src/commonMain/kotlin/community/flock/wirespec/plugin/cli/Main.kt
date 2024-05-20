@@ -34,7 +34,10 @@ import community.flock.wirespec.plugin.cli.io.File
 import community.flock.wirespec.plugin.cli.io.JavaFile
 import community.flock.wirespec.plugin.cli.io.JsonFile
 import community.flock.wirespec.plugin.cli.io.KotlinFile
+import community.flock.wirespec.plugin.cli.io.Request
+import community.flock.wirespec.plugin.cli.io.Response
 import community.flock.wirespec.plugin.cli.io.ScalaFile
+import community.flock.wirespec.plugin.cli.io.Server
 import community.flock.wirespec.plugin.cli.io.TypeScriptFile
 import community.flock.wirespec.plugin.cli.io.WirespecFile
 import community.flock.wirespec.plugin.utils.orNull
@@ -96,6 +99,12 @@ fun compile(arguments: CompilerArguments) {
                 if (input.extension == FileExtension.Wirespec) WirespecFile(input)
                     .let { it.wirespec(languages, packageName, it.path.out(packageName, output), logger) }
                 else error("Path $input is not a Wirespec file")
+        }
+
+        is Operation.Serve -> {
+            println("Start server")
+            fun handler(request: Request) = Response("Hello Wirespec!")
+            Server(::handler).start(operation.port)
         }
     }
 }
