@@ -3,6 +3,8 @@
 package community.flock.wirespec.plugin.npm
 
 import Generator.generate
+import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
+import community.flock.kotlinx.openapi.bindings.v3.OpenAPIObject
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
@@ -51,13 +53,22 @@ fun generate(source: String, type: String): WsStringResult = WirespecSpec
 fun emit(ast: Array<WsNode>, emitter: Emitters, packageName: String) = ast
     .map { it.consume() }
     .let {
+
         when (emitter) {
             Emitters.TYPESCRIPT -> TypeScriptEmitter().emit(it)
             Emitters.JAVA -> JavaEmitter(packageName).emit(it)
             Emitters.KOTLIN -> KotlinEmitter(packageName).emit(it)
             Emitters.SCALA -> ScalaEmitter(packageName).emit(it)
-            Emitters.OPENAPI_V2 -> listOf(Emitted("openapi", Json.encodeToString(OpenApiV2Emitter().emit(it))))
-            Emitters.OPENAPI_V3 -> listOf(Emitted("openapi", Json.encodeToString(OpenApiV3Emitter().emit(it))))
+            Emitters.OPENAPI_V2 -> {
+                val res = OpenApiV2Emitter().emit(it)
+                val json = Json.encodeToJsonElement(SwaggerObject.serializer(), res)
+                listOf(Emitted("openapi", json.toString()))
+            }
+            Emitters.OPENAPI_V3 -> {
+                val res = OpenApiV3Emitter().emit(it)
+                val json = Json.encodeToJsonElement(OpenAPIObject.serializer(), res)
+                listOf(Emitted("openapi", json.toString()))
+            }
         }
     }
     .map { it.produce() }

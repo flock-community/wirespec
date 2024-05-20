@@ -3,6 +3,7 @@ import Versions.KOTLIN_COMPILER
 plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
+    id("com.goncalossilva.resources") version "0.4.0"
 }
 
 group = "${Settings.GROUP_ID}.plugin.npm"
@@ -32,7 +33,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("community.flock.kotlinx.openapi.bindings:kotlin-openapi-bindings:0.0.24")
+                implementation("community.flock.kotlinx.openapi.bindings:kotlin-openapi-bindings:0.0.25")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:compiler:lib"))
@@ -43,6 +44,11 @@ kotlin {
         }
         val jsMain by getting {
             dependsOn(commonMain)
+            dependencies{
+                implementation(kotlin("test-annotations-common"))
+                implementation(kotlin("test-junit"))
+                implementation("com.goncalossilva:resources:0.4.0")
+            }
         }
     }
 }
