@@ -46,7 +46,7 @@ kotlin {
                 api(KOTLIN_STDLIB)
                 api(ARROW_CORE)
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
-                implementation("community.flock.kotlinx.openapi.bindings:kotlin-openapi-bindings:0.0.25")
+                implementation("community.flock.kotlinx.openapi.bindings:kotlin-openapi-bindings:0.0.24")
             }
         }
         commonTest {
