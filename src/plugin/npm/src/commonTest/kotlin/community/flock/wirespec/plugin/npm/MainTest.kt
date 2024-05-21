@@ -6,21 +6,19 @@ import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.lib.produce
 import community.flock.wirespec.compiler.utils.noLogger
 import kotlin.test.Test
-import kotlin.test.assertTrue
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 class MainTest {
 
     @Test
     fun testEmit() {
-        val wirespecFile = Resource("src/commonTest/resources/person.ws").readText()
-        println(wirespecFile)
-        val res = WirespecSpec.parse(wirespecFile)(noLogger).getOrNull()
-        println(res)
-        if(res != null){
-            val test = emit(res.produce(), Emitters.OPENAPI_V2, "")
-            assertTrue { test.first().result.startsWith("""{"swagger":"2.0"""") }
-        }
-
-
+        val file = Resource("src/commonTest/resources/person.ws").readText()
+        val res = WirespecSpec.parse(file)(noLogger).getOrNull()
+        assertNotNull(res)
+        val openApiV2 = emit(res.produce(), Emitters.OPENAPI_V2, "")
+        val openApiV3 = emit(res.produce(), Emitters.OPENAPI_V3, "")
+        assertEquals("""{"swagger":"2.0"""", openApiV2.first().result.substring(0, 16))
+        assertEquals("""{"openapi":"3.0.0"""", openApiV3.first().result.substring(0, 18))
     }
 }
