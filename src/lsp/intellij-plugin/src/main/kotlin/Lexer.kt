@@ -4,7 +4,8 @@ import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.core.tokenize.types.Arrow
-import community.flock.wirespec.compiler.core.tokenize.types.Brackets
+import community.flock.wirespec.compiler.core.tokenize.types.SquareBrackets
+import community.flock.wirespec.compiler.core.tokenize.types.CurlyBrackets
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
 import community.flock.wirespec.compiler.core.tokenize.types.Comma
 import community.flock.wirespec.compiler.core.tokenize.types.CustomRegex
@@ -65,7 +66,8 @@ class Lexer : IntellijLexer() {
                 is QuestionMark -> Types.QUESTION_MARK
                 is Hash -> Types.HASH
                 is ForwardSlash -> Types.FORWARD_SLASH
-                is Brackets -> Types.BRACKETS
+                is SquareBrackets -> Types.BRACKETS
+                is CurlyBrackets -> Types.BRACKETS
                 is CustomValue -> Types.CUSTOM_VALUE
                 is WsComment -> Types.COMMENT
                 is Invalid -> Types.INVALID

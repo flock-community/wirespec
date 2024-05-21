@@ -6,7 +6,7 @@ import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
 import community.flock.wirespec.compiler.core.parse.Field.Reference
 import community.flock.wirespec.compiler.core.tokenize.types.Arrow
-import community.flock.wirespec.compiler.core.tokenize.types.Brackets
+import community.flock.wirespec.compiler.core.tokenize.types.SquareBrackets
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
@@ -201,7 +201,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
         val previousToken = token
         eatToken().bind()
         token.log()
-        val isIterable = (token.type is Brackets).also { if (it) eatToken().bind() }
+        val isIterable = (token.type is SquareBrackets).also { if (it) eatToken().bind() }
         when (wsType) {
             is WsString -> Reference.Primitive(Reference.Primitive.Type.String, isIterable)
 

@@ -2,7 +2,7 @@ package community.flock.wirespec.compiler.core.tokenize
 
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.tokenize.types.Arrow
-import community.flock.wirespec.compiler.core.tokenize.types.Brackets
+import community.flock.wirespec.compiler.core.tokenize.types.SquareBrackets
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
 import community.flock.wirespec.compiler.core.tokenize.types.Comma
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
@@ -57,7 +57,7 @@ class TokenizeEndpointTest {
 
         val expected = listOf(
             WsEndpointDef, CustomType, Method, Path, ForwardSlash, LeftCurly, CustomValue, Colon, WsString,
-            RightCurly, Arrow, LeftCurly, StatusCode, Arrow, CustomType, Brackets, StatusCode, Arrow, CustomType,
+            RightCurly, Arrow, LeftCurly, StatusCode, Arrow, CustomType, SquareBrackets, StatusCode, Arrow, CustomType,
             RightCurly, EndOfProgram,
         )
 
@@ -100,7 +100,7 @@ class TokenizeEndpointTest {
         val expected = listOf(
             WsEndpointDef, CustomType, Method, Path, QuestionMark, LeftCurly, CustomValue, Colon,
             WsString, Comma, CustomValue, Colon, WsString, RightCurly, Arrow, LeftCurly,
-            StatusCode, Arrow, CustomType, Brackets, RightCurly, EndOfProgram,
+            StatusCode, Arrow, CustomType, SquareBrackets, RightCurly, EndOfProgram,
         )
 
         WirespecSpec.tokenize(source).removeWhiteSpace()
@@ -122,7 +122,7 @@ class TokenizeEndpointTest {
         val expected = listOf(
             WsEndpointDef, CustomType, Method, Path, Hash, LeftCurly, CustomValue, Colon,
             WsString, Comma, CustomValue, Colon, WsString, RightCurly, Arrow, LeftCurly,
-            StatusCode, Arrow, CustomType, Brackets, RightCurly, EndOfProgram,
+            StatusCode, Arrow, CustomType, SquareBrackets, RightCurly, EndOfProgram,
         )
 
         WirespecSpec.tokenize(source).removeWhiteSpace()

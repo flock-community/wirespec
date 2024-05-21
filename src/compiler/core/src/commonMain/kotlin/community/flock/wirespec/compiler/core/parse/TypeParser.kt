@@ -4,9 +4,10 @@ import arrow.core.Either
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
-import community.flock.wirespec.compiler.core.tokenize.types.Brackets
+import community.flock.wirespec.compiler.core.tokenize.types.SquareBrackets
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
 import community.flock.wirespec.compiler.core.tokenize.types.Comma
+import community.flock.wirespec.compiler.core.tokenize.types.CurlyBrackets
 import community.flock.wirespec.compiler.core.tokenize.types.CustomRegex
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
@@ -106,33 +107,44 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         val previousToken = token
         eatToken().bind()
         token.log()
-        val isIterable = (token.type is Brackets).also { if (it) eatToken().bind() }
+        val isIterable = (token.type is SquareBrackets).also { if (it) eatToken().bind() }
+        val isMap = (token.type is CurlyBrackets).also { if (it) eatToken().bind() }
         when (wsType) {
             is WsString -> Field.Reference.Primitive(
-                Field.Reference.Primitive.Type.String,
-                isIterable
+                type = Field.Reference.Primitive.Type.String,
+                isIterable = isIterable,
+                isMap = isMap
             )
 
             is WsInteger -> Field.Reference.Primitive(
-                Field.Reference.Primitive.Type.Integer,
-                isIterable
+                type = Field.Reference.Primitive.Type.Integer,
+                isIterable = isIterable,
+                isMap = isMap
             )
 
             is WsNumber -> Field.Reference.Primitive(
-                Field.Reference.Primitive.Type.Number,
-                isIterable
+                type = Field.Reference.Primitive.Type.Number,
+                isIterable = isIterable,
+                isMap = isMap
             )
 
             is WsBoolean -> Field.Reference.Primitive(
-                Field.Reference.Primitive.Type.Boolean,
-                isIterable
+                type = Field.Reference.Primitive.Type.Boolean,
+                isIterable = isIterable,
+                isMap = isMap
             )
 
-            is WsUnit -> Field.Reference.Unit(isIterable)
+            is WsUnit -> Field.Reference.Unit(
+                isIterable = isIterable,
+                isMap = isMap
+            )
 
             is CustomType -> {
                 previousToken.shouldBeDefined().bind()
-                Field.Reference.Custom(value, isIterable)
+                Field.Reference.Custom(
+                    value = value,
+                    isIterable = isIterable,
+                    isMap = isMap)
             }
         }
     }

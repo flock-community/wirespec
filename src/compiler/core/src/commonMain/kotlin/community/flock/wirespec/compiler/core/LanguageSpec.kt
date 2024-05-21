@@ -1,9 +1,10 @@
 package community.flock.wirespec.compiler.core
 
 import community.flock.wirespec.compiler.core.tokenize.types.Arrow
-import community.flock.wirespec.compiler.core.tokenize.types.Brackets
+import community.flock.wirespec.compiler.core.tokenize.types.SquareBrackets
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
 import community.flock.wirespec.compiler.core.tokenize.types.Comma
+import community.flock.wirespec.compiler.core.tokenize.types.CurlyBrackets
 import community.flock.wirespec.compiler.core.tokenize.types.CustomRegex
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
@@ -54,7 +55,8 @@ object WirespecSpec : LanguageSpec {
         Regex("^,") to Comma,
         Regex("^\\?") to QuestionMark,
         Regex("^#") to Hash,
-        Regex("^\\[\\]") to Brackets,
+        Regex("^\\[\\]") to SquareBrackets,
+        Regex("^\\{\\}") to CurlyBrackets,
         Regex("^String") to WsString,
         Regex("^Integer") to WsInteger,
         Regex("^Number") to WsNumber,
