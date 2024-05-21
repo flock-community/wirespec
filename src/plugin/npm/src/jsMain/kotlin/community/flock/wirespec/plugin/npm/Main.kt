@@ -3,6 +3,8 @@
 package community.flock.wirespec.plugin.npm
 
 import Generator.generate
+import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
+import community.flock.kotlinx.openapi.bindings.v3.OpenAPIObject
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
@@ -19,7 +21,6 @@ import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.openapi.v2.OpenApiV2Emitter
 import community.flock.wirespec.openapi.v3.OpenApiV3Emitter
 import community.flock.wirespec.plugin.cli.main
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 @JsExport
@@ -56,8 +57,15 @@ fun emit(ast: Array<WsNode>, emitter: Emitters, packageName: String) = ast
             Emitters.JAVA -> JavaEmitter(packageName).emit(it)
             Emitters.KOTLIN -> KotlinEmitter(packageName).emit(it)
             Emitters.SCALA -> ScalaEmitter(packageName).emit(it)
-            Emitters.OPENAPI_V2 -> listOf(Emitted("openapi", Json.encodeToString(OpenApiV2Emitter().emit(it))))
-            Emitters.OPENAPI_V3 -> listOf(Emitted("openapi", Json.encodeToString(OpenApiV3Emitter().emit(it))))
+            Emitters.OPENAPI_V2 -> listOf(it)
+                .map { OpenApiV2Emitter().emit(it) }
+                .map { Json.encodeToString(SwaggerObject.serializer(), it) }
+                .map { Emitted("openapi", it) }
+
+            Emitters.OPENAPI_V3 -> listOf(it)
+                .map { OpenApiV3Emitter().emit(it) }
+                .map { Json.encodeToString(OpenAPIObject.serializer(), it) }
+                .map { Emitted("openapi", it) }
         }
     }
     .map { it.produce() }

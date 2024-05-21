@@ -3,6 +3,7 @@ import Versions.KOTLIN_COMPILER
 plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
+    id("com.goncalossilva.resources") version "0.4.0"
 }
 
 group = "${Settings.GROUP_ID}.plugin.npm"
@@ -43,6 +44,11 @@ kotlin {
         }
         val jsMain by getting {
             dependsOn(commonMain)
+            dependencies{
+                implementation(kotlin("test-annotations-common"))
+                implementation(kotlin("test-junit"))
+                implementation("com.goncalossilva:resources:0.4.0")
+            }
         }
     }
 }
