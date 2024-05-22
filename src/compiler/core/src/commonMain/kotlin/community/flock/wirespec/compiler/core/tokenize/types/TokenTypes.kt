@@ -11,8 +11,7 @@ data object Comma : TokenType
 data object QuestionMark : TokenType
 data object Hash : TokenType
 data object ForwardSlash : TokenType
-data object SquareBrackets : TokenType
-data object CurlyBrackets : TokenType
+data object Brackets : TokenType
 data object CustomValue : TokenType
 data object WsComment : TokenType
 data object Invalid : TokenType

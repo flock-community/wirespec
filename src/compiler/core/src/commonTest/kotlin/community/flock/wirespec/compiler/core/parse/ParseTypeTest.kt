@@ -36,7 +36,7 @@ class ParseTypeTest {
                 reference.shouldBeInstanceOf<Field.Reference.Primitive>().run {
                     type shouldBe Field.Reference.Primitive.Type.String
                     isIterable shouldBe false
-                    isMap shouldBe false
+                    isDictionary shouldBe false
                 }
                 isNullable shouldBe false
             }
@@ -78,8 +78,8 @@ class ParseTypeTest {
             .also { it.size shouldBe 2 }
             .let {
                 val (first, second) = it.toList()
-                first shouldBe Field.Reference.Custom(value = "Bar", isIterable = false, isMap = false)
-                second shouldBe Field.Reference.Custom(value = "Bal", isIterable = false, isMap = false)
+                first shouldBe Field.Reference.Custom(value = "Bar", isIterable = false, isDictionary = false)
+                second shouldBe Field.Reference.Custom(value = "Bal", isIterable = false, isDictionary = false)
             }
     }
 }

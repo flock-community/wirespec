@@ -276,7 +276,7 @@ class OpenApiV2ParserTest {
                         headers = emptyList(),
                         content = Endpoint.Content(
                             type = "application/json",
-                            reference = Custom(value = "Foo", isIterable = false, isMap = false),
+                            reference = Custom(value = "Foo", isIterable = false, isDictionary = false),
                             isNullable = false
                         )
                     )
@@ -292,7 +292,7 @@ class OpenApiV2ParserTest {
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = false,
-                                isMap = false
+                                isDictionary = false
                             ),
                             isNullable = true
                         )

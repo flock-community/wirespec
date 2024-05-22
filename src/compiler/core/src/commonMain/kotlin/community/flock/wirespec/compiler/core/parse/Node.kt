@@ -22,18 +22,18 @@ data class Type(
 data class Field(val identifier: Identifier, val reference: Reference, val isNullable: Boolean) {
     sealed interface Reference : Value<String> {
         val isIterable: Boolean
-        val isMap: Boolean
+        val isDictionary: Boolean
 
         data class Any(
             override val isIterable: Boolean,
-            override val isMap: Boolean = false,
+            override val isDictionary: Boolean = false,
         ) : Reference {
             override val value = "Any"
         }
 
         data class Unit(
             override val isIterable: Boolean,
-            override val isMap: Boolean = false,
+            override val isDictionary: Boolean = false,
         ) : Reference {
             override val value = "Unit"
         }
@@ -41,13 +41,13 @@ data class Field(val identifier: Identifier, val reference: Reference, val isNul
         data class Custom(
             override val value: String,
             override val isIterable: Boolean,
-            override val isMap: Boolean = false
+            override val isDictionary: Boolean = false
         ) : Reference
 
         data class Primitive(
             val type: Type,
             override val isIterable: Boolean = false,
-            override val isMap: Boolean = false
+            override val isDictionary: Boolean = false
         ) : Reference {
             enum class Type { String, Integer, Number, Boolean }
 

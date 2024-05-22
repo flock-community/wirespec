@@ -23,7 +23,7 @@ fun WsNode.consume(): Node =
 
 fun WsEndpoint.consume(): Endpoint =
     Endpoint(
-        comment = comment?.let { Comment(it)  },
+        comment = comment?.let { Comment(it) },
         identifier = Identifier(identifier),
         method = method.consume(),
         path = path.map { it.consume() },
@@ -55,25 +55,25 @@ private fun WsIdentifier.consume() = Identifier(value)
 
 private fun WsEnum.consume() = Enum(
     identifier = Identifier(identifier),
-    comment = comment?.let { Comment(it)  },
+    comment = comment?.let { Comment(it) },
     entries = entries.toSet()
 )
 
 private fun WsRefined.consume() = Refined(
     identifier = Identifier(identifier),
-    comment = comment?.let { Comment(it)  },
+    comment = comment?.let { Comment(it) },
     validator = Refined.Validator(validator)
 )
 
 private fun WsType.consume() = Type(
     identifier = Identifier(identifier),
-    comment = comment?.let { Comment(it)  },
+    comment = comment?.let { Comment(it) },
     shape = Type.Shape(shape.value.map { it.consume() })
 )
 
 private fun WsUnion.consume() = Union(
     identifier = Identifier(identifier),
-    comment = comment?.let { Comment(it)  },
+    comment = comment?.let { Comment(it) },
     entries = entries.map { it.consume() }.toSet()
 )
 
@@ -106,24 +106,24 @@ private fun WsReference.consume() =
     when (this) {
         is WsAny -> Field.Reference.Any(
             isIterable = isIterable,
-            isMap = isMap
+            isDictionary = isMap
         )
 
         is WsUnit -> Field.Reference.Unit(
             isIterable = isIterable,
-            isMap = isMap
+            isDictionary = isMap
         )
 
         is WsCustom -> Field.Reference.Custom(
             value = value,
             isIterable = isIterable,
-            isMap = isMap
+            isDictionary = isMap
         )
 
         is WsPrimitive -> Field.Reference.Primitive(
             type = type.consume(),
             isIterable = isIterable,
-            isMap = isMap
+            isDictionary = isMap
         )
     }
 
@@ -141,7 +141,9 @@ fun Node.produce(): WsNode =
         is Type -> WsType(
             identifier = identifier.value,
             comment = comment?.value,
-            shape = shape.produce())
+            shape = shape.produce()
+        )
+
         is Endpoint -> WsEndpoint(
             identifier = identifier.value,
             comment = comment?.value,
@@ -159,17 +161,19 @@ fun Node.produce(): WsNode =
             comment = comment?.value,
             entries = entries.toTypedArray()
         )
+
         is Refined -> WsRefined(
             identifier = identifier.value,
             comment = comment?.value,
             validator = validator.value
         )
+
         is Union -> WsUnion(
             identifier = identifier.value,
             comment = comment?.value,
             entries = entries
-            .map { it.produce() }
-            .toTypedArray())
+                .map { it.produce() }
+                .toTypedArray())
     }
 
 fun List<Node>.produce(): Array<WsNode> =
@@ -193,10 +197,10 @@ private fun List<Field>.produce() = map { it.produce() }.toTypedArray()
 private fun Identifier.produce() = WsIdentifier(value)
 
 private fun Field.Reference.produce() = when (this) {
-    is Field.Reference.Any -> WsAny(isIterable, isMap)
-    is Field.Reference.Unit -> WsUnit(isIterable, isMap)
-    is Field.Reference.Custom -> WsCustom(value, isIterable, isMap)
-    is Field.Reference.Primitive -> WsPrimitive(type.produce(), isIterable, isMap)
+    is Field.Reference.Any -> WsAny(isIterable, isDictionary)
+    is Field.Reference.Unit -> WsUnit(isIterable, isDictionary)
+    is Field.Reference.Custom -> WsCustom(value, isIterable, isDictionary)
+    is Field.Reference.Primitive -> WsPrimitive(type.produce(), isIterable, isDictionary)
 }
 
 private fun Field.Reference.Primitive.Type.produce() = when (this) {

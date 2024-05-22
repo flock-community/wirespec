@@ -124,7 +124,7 @@ class ParseEndpointTest {
                         reference = Primitive(
                             type = String,
                             isIterable = false,
-                            isMap = false,
+                            isDictionary = false,
                         )
                     )
                 )

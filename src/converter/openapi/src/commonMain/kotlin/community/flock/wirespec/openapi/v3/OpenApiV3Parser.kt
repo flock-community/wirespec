@@ -431,7 +431,7 @@ class OpenApiV3Parser(private val openApi: OpenAPIObject) {
         resolveSchemaObject().let { (referencingObject, schema) ->
             when {
                 schema.additionalProperties != null -> when (val additionalProperties = schema.additionalProperties!!) {
-                    is BooleanObject -> Reference.Any(isIterable = false, isMap = true)
+                    is BooleanObject -> Reference.Any(isIterable = false, isDictionary = true)
                     is ReferenceObject -> additionalProperties.toReference().toMap()
                     is SchemaObject -> additionalProperties.toReference(getReference()).toMap()
                 }
@@ -439,13 +439,13 @@ class OpenApiV3Parser(private val openApi: OpenAPIObject) {
                 schema.enum != null -> Reference.Custom(
                     className(referencingObject.getReference()),
                     isIterable = false,
-                    isMap = false
+                    isDictionary = false
                 )
 
                 schema.type.isPrimitive() -> Reference.Primitive(
                     schema.type!!.toPrimitive(),
                     isIterable = false,
-                    isMap = false
+                    isDictionary = false
                 )
 
                 else -> when (schema.type) {
@@ -464,12 +464,12 @@ class OpenApiV3Parser(private val openApi: OpenAPIObject) {
 
     private fun SchemaObject.toReference(name: String): Reference = when {
         additionalProperties != null -> when (val additionalProperties = additionalProperties!!) {
-            is BooleanObject -> Reference.Any(isIterable = false, isMap = true)
+            is BooleanObject -> Reference.Any(isIterable = false, isDictionary = true)
             is ReferenceObject -> additionalProperties.toReference().toMap()
             is SchemaObject -> additionalProperties
                 .takeIf { it.type.isPrimitive() || it.properties != null }
                 ?.run { toReference(name).toMap() }
-                ?: Reference.Any(isIterable = false, isMap = true)
+                ?: Reference.Any(isIterable = false, isDictionary = true)
         }
 
         enum != null -> Reference.Custom(name, false, additionalProperties != null)
@@ -629,8 +629,8 @@ private fun Reference.toIterable() = when (this) {
 }
 
 private fun Reference.toMap() = when (this) {
-    is Reference.Custom -> copy(isMap = true)
-    is Reference.Any -> copy(isMap = true)
-    is Reference.Primitive -> copy(isMap = true)
-    is Reference.Unit -> copy(isMap = true)
+    is Reference.Custom -> copy(isDictionary = true)
+    is Reference.Any -> copy(isDictionary = true)
+    is Reference.Primitive -> copy(isDictionary = true)
+    is Reference.Unit -> copy(isDictionary = true)
 }
