@@ -20,6 +20,8 @@ data class Type(
 }
 
 data class Field(val identifier: Identifier, val reference: Reference, val isNullable: Boolean) {
+    val isNotNullable = !isNullable
+
     sealed interface Reference : Value<String> {
         val isIterable: Boolean
         val isDictionary: Boolean

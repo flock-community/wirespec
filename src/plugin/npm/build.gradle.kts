@@ -39,7 +39,7 @@ kotlin {
                 implementation(project(":src:compiler:lib"))
                 implementation(project(":src:plugin:cli"))
                 implementation(project(":src:converter:openapi"))
-                implementation(project(":src:generator"))
+                implementation(project(":src:tools:generator"))
             }
         }
         val jsMain by getting {
