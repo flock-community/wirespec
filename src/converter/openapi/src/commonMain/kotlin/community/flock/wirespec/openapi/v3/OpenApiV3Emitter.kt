@@ -179,7 +179,7 @@ class OpenApiV3Emitter {
             is Field.Reference.Any -> error("Cannot map Any")
             is Field.Reference.Unit -> error("Cannot map Unit")
         }
-        if (isMap) {
+        if (isDictionary) {
             return SchemaObject(
                 type = OpenApiType.OBJECT,
                 additionalProperties = ref

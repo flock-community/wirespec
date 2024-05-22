@@ -21,7 +21,7 @@ object Generator {
         val ref = Reference.Custom(
             value = type.removeSuffix("[]"),
             isIterable = type.endsWith("[]"),
-            isMap = false
+            isDictionary = false
         )
         return generate(ref, random)
     }

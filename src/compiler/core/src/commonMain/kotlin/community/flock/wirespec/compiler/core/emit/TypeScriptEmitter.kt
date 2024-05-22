@@ -73,7 +73,7 @@ class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emi
 
     override fun Field.Reference.emit() = emitSymbol()
         .let { if (isIterable) "$it[]" else it }
-        .let { if (isMap) "Record<string, $it>" else it }
+        .let { if (isDictionary) "Record<string, $it>" else it }
 
     override fun Refined.emit() =
         """export type ${identifier.sanitizeSymbol()} = string;

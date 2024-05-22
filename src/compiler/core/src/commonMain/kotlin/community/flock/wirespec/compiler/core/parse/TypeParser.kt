@@ -91,48 +91,70 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
             is Colon -> eatToken().bind()
             else -> raise(WrongTokenException<Colon>(token).also { eatToken().bind() })
         }
+        val isDict = when (token.type) {
+            is LeftCurly -> true.also { eatToken().bind() }
+            else -> false
+        }
         when (val type = token.type) {
             is WirespecType -> Field(
                 identifier = identifier,
-                reference = parseFieldValue(type, token.value).bind(),
+                reference = parseFieldValue(type, token.value, isDict).bind(),
                 isNullable = (token.type is QuestionMark).also { if (it) eatToken().bind() }
-            )
+            ).also {
+                if (isDict) {
+                    when (token.type) {
+                        is RightCurly -> eatToken().bind()
+                        else -> raise(WrongTokenException<RightCurly>(token).also { eatToken().bind() })
+                    }
+                }
+            }
 
             else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
         }
     }
 
-    private fun TokenProvider.parseFieldValue(wsType: WirespecType, value: String) = either {
+    private fun TokenProvider.parseFieldValue(wsType: WirespecType, value: String, isDict: Boolean) = either {
         val previousToken = token
         eatToken().bind()
         token.log()
         val isIterable = (token.type is Brackets).also { if (it) eatToken().bind() }
         when (wsType) {
             is WsString -> Field.Reference.Primitive(
-                Field.Reference.Primitive.Type.String,
-                isIterable
+                type = Field.Reference.Primitive.Type.String,
+                isIterable = isIterable,
+                isDictionary = isDict
             )
 
             is WsInteger -> Field.Reference.Primitive(
-                Field.Reference.Primitive.Type.Integer,
-                isIterable
+                type = Field.Reference.Primitive.Type.Integer,
+                isIterable = isIterable,
+                isDictionary = isDict
             )
 
             is WsNumber -> Field.Reference.Primitive(
-                Field.Reference.Primitive.Type.Number,
-                isIterable
+                type = Field.Reference.Primitive.Type.Number,
+                isIterable = isIterable,
+                isDictionary = isDict
             )
 
             is WsBoolean -> Field.Reference.Primitive(
-                Field.Reference.Primitive.Type.Boolean,
-                isIterable
+                type = Field.Reference.Primitive.Type.Boolean,
+                isIterable = isIterable,
+                isDictionary = isDict
             )
 
-            is WsUnit -> Field.Reference.Unit(isIterable)
+            is WsUnit -> Field.Reference.Unit(
+                isIterable = isIterable,
+                isDictionary = isDict
+            )
 
             is CustomType -> {
                 previousToken.shouldBeDefined().bind()
-                Field.Reference.Custom(value, isIterable)
+                Field.Reference.Custom(
+                    value = value,
+                    isIterable = isIterable,
+                    isDictionary = isDict
+                )
             }
         }
     }

@@ -171,7 +171,7 @@ object Expected {
                 Endpoint.Request(
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(value = "Message", isIterable = false, isMap = true),
+                        reference = Reference.Custom(value = "Message", isIterable = false, isDictionary = true),
                         isNullable = true
                     )
                 )
@@ -182,7 +182,7 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(value = "Message", isIterable = false, isMap = true),
+                        reference = Reference.Custom(value = "Message", isIterable = false, isDictionary = true),
                         isNullable = false
                     )
                 ),
@@ -194,7 +194,7 @@ object Expected {
                         reference = Reference.Custom(
                             value = "AdditionalProperties404ApplicationJsonResponseBody",
                             isIterable = false,
-                            isMap = true
+                            isDictionary = true
                         ),
                         isNullable = false
                     )
@@ -204,7 +204,7 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Any(isIterable = false, isMap = true),
+                        reference = Reference.Any(isIterable = false, isDictionary = true),
                         isNullable = false
                     )
                 )
@@ -272,7 +272,7 @@ object Expected {
                 Endpoint.Request(
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(value = "Message", isIterable = true, isMap = false),
+                        reference = Reference.Custom(value = "Message", isIterable = true, isDictionary = false),
                         isNullable = true
                     )
                 )
@@ -286,7 +286,7 @@ object Expected {
                         reference = Reference.Custom(
                             value = "ArrayGET200ApplicationJsonResponseBody",
                             isIterable = true,
-                            isMap = false
+                            isDictionary = false
                         ),
                         isNullable = false
                     )
@@ -296,7 +296,7 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(value = "MessageArray", isIterable = true, isMap = false),
+                        reference = Reference.Custom(value = "MessageArray", isIterable = true, isDictionary = false),
                         isNullable = false
                     )
                 ),
@@ -308,7 +308,7 @@ object Expected {
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isIterable = true,
-                            isMap = false
+                            isDictionary = false
                         ),
                         isNullable = false
                     )
@@ -388,7 +388,7 @@ object Expected {
                         reference = Reference.Custom(
                             value = "AllofGET200ApplicationJsonResponseBody",
                             isIterable = false,
-                            isMap = false
+                            isDictionary = false
                         ),
                         isNullable = false
                     )
@@ -445,7 +445,7 @@ object Expected {
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isIterable = false,
-                            isMap = false
+                            isDictionary = false
                         ),
                         isNullable = true
                     )
@@ -509,7 +509,7 @@ object Expected {
                         reference = Reference.Custom(
                             value = "OneofGET200ApplicationJsonResponseBody",
                             isIterable = false,
-                            isMap = false
+                            isDictionary = false
                         ),
                         isNullable = false
                     )
@@ -520,10 +520,18 @@ object Expected {
             comment = null,
             identifier = Identifier("OneofGET200ApplicationJsonResponseBody"),
             entries = setOf(
-                Reference.Custom(value = "Foo", isIterable = false, isMap = false),
-                Reference.Custom(value = "Bar", isIterable = false, isMap = false),
-                Reference.Custom(value = "OneofGET200ApplicationJsonResponseBody2", isIterable = false, isMap = false),
-                Reference.Custom(value = "OneofGET200ApplicationJsonResponseBody3", isIterable = false, isMap = false)
+                Reference.Custom(value = "Foo", isIterable = false, isDictionary = false),
+                Reference.Custom(value = "Bar", isIterable = false, isDictionary = false),
+                Reference.Custom(
+                    value = "OneofGET200ApplicationJsonResponseBody2",
+                    isIterable = false,
+                    isDictionary = false
+                ),
+                Reference.Custom(
+                    value = "OneofGET200ApplicationJsonResponseBody3",
+                    isIterable = false,
+                    isDictionary = false
+                )
             )
         ),
         Type(
@@ -536,7 +544,7 @@ object Expected {
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isIterable = false,
-                            isMap = false
+                            isDictionary = false
                         ),
                         isNullable = true
                     )
@@ -553,7 +561,7 @@ object Expected {
                         reference = Reference.Custom(
                             value = "OneofGET200ApplicationJsonResponseBody3D",
                             isIterable = false,
-                            isMap = false
+                            isDictionary = false
                         ),
                         isNullable = true
                     )
@@ -571,7 +579,7 @@ object Expected {
                         ), reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isIterable = false,
-                            isMap = false
+                            isDictionary = false
                         ),
                         isNullable = true
                     )
@@ -621,7 +629,11 @@ object Expected {
             query = listOf(
                 Field(
                     identifier = Identifier("order"),
-                    reference = Reference.Custom(value = "EnumGETParameterOrder", isIterable = false, isMap = false),
+                    reference = Reference.Custom(
+                        value = "EnumGETParameterOrder",
+                        isIterable = false,
+                        isDictionary = false
+                    ),
                     isNullable = true
                 )
             ),
@@ -638,7 +650,7 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(value = "Message", isIterable = false, isMap = false),
+                        reference = Reference.Custom(value = "Message", isIterable = false, isDictionary = false),
                         isNullable = false
                     )
                 ),
@@ -650,7 +662,7 @@ object Expected {
                         reference = Reference.Custom(
                             value = "EnumGET201ApplicationJsonResponseBody",
                             isIterable = false,
-                            isMap = false
+                            isDictionary = false
                         ),
                         isNullable = false
                     )
