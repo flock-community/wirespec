@@ -91,23 +91,33 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
             is Colon -> eatToken().bind()
             else -> raise(WrongTokenException<Colon>(token).also { eatToken().bind() })
         }
+        val isDict = when (token.type) {
+            is LeftCurly -> true.also { eatToken().bind() }
+            else -> false
+        }
         when (val type = token.type) {
             is WirespecType -> Field(
                 identifier = identifier,
-                reference = parseFieldValue(type, token.value).bind(),
+                reference = parseFieldValue(type, token.value, isDict).bind(),
                 isNullable = (token.type is QuestionMark).also { if (it) eatToken().bind() }
-            )
+            ).also {
+                if (isDict) {
+                    when (token.type) {
+                        is RightCurly -> eatToken().bind()
+                        else -> raise(WrongTokenException<RightCurly>(token).also { eatToken().bind() })
+                    }
+                }
+            }
 
             else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
         }
     }
 
-    private fun TokenProvider.parseFieldValue(wsType: WirespecType, value: String) = either {
+    private fun TokenProvider.parseFieldValue(wsType: WirespecType, value: String, isDict: Boolean) = either {
         val previousToken = token
         eatToken().bind()
         token.log()
         val isIterable = (token.type is Brackets).also { if (it) eatToken().bind() }
-        val isDict = false
         when (wsType) {
             is WsString -> Field.Reference.Primitive(
                 type = Field.Reference.Primitive.Type.String,

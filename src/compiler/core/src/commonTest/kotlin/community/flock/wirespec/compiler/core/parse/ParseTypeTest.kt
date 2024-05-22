@@ -16,7 +16,7 @@ class ParseTypeTest {
     fun testTypeParser() {
         val source = """
             type Foo {
-                bar: String
+                bar: {String[]}
             }
         """.trimIndent()
 
@@ -35,8 +35,8 @@ class ParseTypeTest {
                 identifier.shouldBeInstanceOf<Identifier>().value shouldBe "bar"
                 reference.shouldBeInstanceOf<Field.Reference.Primitive>().run {
                     type shouldBe Field.Reference.Primitive.Type.String
-                    isIterable shouldBe false
-                    isDictionary shouldBe false
+                    isIterable shouldBe true
+                    isDictionary shouldBe true
                 }
                 isNullable shouldBe false
             }
