@@ -13,6 +13,7 @@ import community.flock.kotlinx.openapi.bindings.v2.SchemaObject
 import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v2.StatusCode
 import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
+import community.flock.kotlinx.openapi.bindings.v2.HeaderObject
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -103,6 +104,12 @@ class OpenApiV2Emitter {
                 .associate {
                     StatusCode(it.status) to ResponseObject(
                         description = "$identifier ${it.status} response",
+                        headers = it.headers.associate {
+                            it.identifier.value to HeaderObject(
+                                type = it.reference.value,
+                                items = if(it.reference.isIterable) it.reference.emit() else null
+                            )
+                        },
                         schema = it.content
                             ?.takeIf { content -> content.reference !is Field.Reference.Unit }
                             ?.let { content ->
