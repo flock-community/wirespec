@@ -4,6 +4,7 @@ import arrow.core.Either
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.Decorators
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.utils.Logger
@@ -26,6 +27,9 @@ abstract class BaseMojo : AbstractMojo() {
 
     @Parameter
     protected var packageName: String = DEFAULT_PACKAGE_STRING
+
+    @Parameter
+    protected var decorators: Decorators = Decorators()
 
     @Parameter(defaultValue = "\${project}", readonly = true, required = true)
     protected lateinit var project: MavenProject

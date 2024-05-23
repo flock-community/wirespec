@@ -55,12 +55,12 @@ open class CompileMojo : BaseMojo() {
     }
 
     private fun FilesContent.compileKotlin() {
-        KotlinEmitter(packageName, logger)
+        KotlinEmitter(packageName, decorators, logger)
             .apply { compile(logger, this).writeToJvmFiles(FileExtension.Kotlin, KotlinShared) }
     }
 
     private fun FilesContent.compileJava() {
-        JavaEmitter(packageName, logger)
+        JavaEmitter(packageName, decorators, logger)
             .apply { compile(logger, this).writeToJvmFiles(FileExtension.Java, JavaShared) }
     }
 

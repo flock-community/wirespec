@@ -39,8 +39,17 @@ open class WirespecPluginExtension @Inject constructor(val objectFactory: Object
             var output: String = ""
         }
 
+        data class Decorators(
+            var declaration:String? = null,
+            var endpoint:String? = null,
+        )
+
         abstract class JvmLanguage : HasTargetDirectory() {
             var packageName: String = DEFAULT_PACKAGE_STRING
+            var decorators: Decorators = Decorators()
+            fun decorators(action: Action<in Decorators>) {
+                decorators = Decorators().also(action::execute)
+            }
         }
 
         class Kotlin : JvmLanguage()

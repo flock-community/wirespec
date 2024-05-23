@@ -6,6 +6,7 @@ val logback_version: String by project
 
 plugins {
     kotlin("jvm") version "1.9.24"
+    kotlin("plugin.serialization") version "2.0.0"
     id("io.ktor.plugin") version "2.3.9"
     id("community.flock.wirespec.plugin.gradle") version "0.0.0-SNAPSHOT"
 }
@@ -28,6 +29,7 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation:$ktor_version")
     implementation("io.ktor:ktor-serialization-jackson:$ktor_version")
     implementation("ch.qos.logback:logback-classic:$logback_version")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     testImplementation("io.ktor:ktor-server-tests-jvm")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
 }
@@ -53,5 +55,8 @@ wirespec {
     kotlin {
         packageName = "community.flock.wirespec.generated.kotlin"
         output = "${layout.buildDirectory.get()}/generated"
+        decorators {
+            declaration = "@kotlinx.serialization.Serializable"
+        }
     }
 }

@@ -47,10 +47,10 @@ class ConvertMojo : CompileMojo() {
 
         languages?.map {
             when (it) {
-                Java -> JavaEmitter(packageName, logger)
+                Java -> JavaEmitter(packageName, decorators, logger)
                     .apply { emit(ast).writeToJvmFiles(FileExtension.Java, JavaShared) }
 
-                Kotlin -> KotlinEmitter(packageName, logger)
+                Kotlin -> KotlinEmitter(packageName, decorators, logger)
                     .apply { emit(ast).writeToJvmFiles(FileExtension.Kotlin, KotlinShared, fileName) }
 
                 Scala -> ScalaEmitter(packageName, logger)

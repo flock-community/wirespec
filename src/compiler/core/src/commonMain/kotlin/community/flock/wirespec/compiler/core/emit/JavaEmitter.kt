@@ -2,8 +2,10 @@ package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.emit.common.ClassModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.Decorators
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.emitDecorator
 import community.flock.wirespec.compiler.core.emit.transformer.ClassModelTransformer.transform
 import community.flock.wirespec.compiler.core.emit.transformer.EndpointClass
 import community.flock.wirespec.compiler.core.emit.transformer.EnumClass
@@ -23,8 +25,10 @@ import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
+
 class JavaEmitter(
     val packageName: String = DEFAULT_PACKAGE_STRING,
+    val decorators: Decorators = Decorators(),
     logger: Logger = noLogger,
 ) : ClassModelEmitter, Emitter(logger, true) {
 
@@ -73,7 +77,7 @@ class JavaEmitter(
     override fun Type.emit(ast: AST) = transform(ast).emit()
 
     override fun TypeClass.emit() = """
-        |public record ${name.sanitizeSymbol()} (
+        |${decorators.declaration.emitDecorator()}public record ${name.sanitizeSymbol()} (
         |${fields.joinToString(",\n") { it.emit() }.spacer()}
         |) ${if (supers.isNotEmpty()) "implements ${supers.joinToString(", ") { it.emit() }} " else ""}{
         |};
@@ -82,7 +86,7 @@ class JavaEmitter(
     override fun Refined.emit() = transform().emit()
 
     override fun RefinedClass.emit() = """
-        |public record ${name.sanitizeSymbol()} (String value) implements Wirespec.Refined {
+        |${decorators.declaration.emitDecorator()}public record ${name.sanitizeSymbol()} (String value) implements Wirespec.Refined {
         |${SPACER}@Override
         |${SPACER}public String toString() { return value; }
         |${SPACER}public static boolean validate($name record) {
@@ -103,7 +107,7 @@ class JavaEmitter(
     override fun Enum.emit() = transform().emit()
 
     override fun EnumClass.emit(): String = """
-        |public enum ${name.sanitizeSymbol()} implements Wirespec.Enum {
+        |${decorators.declaration.emitDecorator()}public enum ${name.sanitizeSymbol()} implements Wirespec.Enum {
         |${entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"${it}\")" }.spacer()};
         |${SPACER}public final String label;
         |${SPACER}${name.sanitizeSymbol()}(String label) {
@@ -119,13 +123,13 @@ class JavaEmitter(
     override fun Union.emit() = transform().emit()
 
     override fun UnionClass.emit(): String = """
-        |public sealed interface $name permits ${entries.joinToString(", ")} {}
+        |${decorators.declaration.emitDecorator()}public sealed interface $name permits ${entries.joinToString(", ")} {}
     """.trimMargin()
 
     override fun Endpoint.emit() = transform().emit()
 
     override fun EndpointClass.emit() = """
-        |public interface ${name.sanitizeSymbol()} extends Wirespec.Endpoint {
+        |${decorators.endpoint.emitDecorator()}public interface ${name.sanitizeSymbol()} extends Wirespec.Endpoint {
         |${SPACER}static String PATH = "$path";
         |${SPACER}static String METHOD = "$method";
         |

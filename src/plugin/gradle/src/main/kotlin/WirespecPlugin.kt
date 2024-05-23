@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
+import community.flock.wirespec.compiler.core.emit.common.Decorators
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.shared.JavaShared
@@ -69,10 +70,10 @@ class WirespecPlugin : Plugin<Project> {
 
         project.task("wirespec").doLast { _: Task? ->
             extension.kotlin?.apply {
-                KotlinEmitter(packageName, logger).emit(output, Kotlin, PackageName(packageName), KotlinShared)
+                KotlinEmitter(packageName, Decorators(decorators.declaration, decorators.endpoint), logger).emit(output, Kotlin, PackageName(packageName), KotlinShared)
             }
             extension.java?.apply {
-                JavaEmitter(packageName, logger).emit(output, Java, PackageName(packageName), JavaShared)
+                JavaEmitter(packageName, Decorators(decorators.declaration, decorators.endpoint), logger).emit(output, Java, PackageName(packageName), JavaShared)
             }
             extension.scala?.apply {
                 ScalaEmitter(packageName, logger).emit(output, Scala, PackageName(packageName), ScalaShared)

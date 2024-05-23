@@ -40,6 +40,7 @@ import community.flock.wirespec.plugin.cli.io.WirespecFile
 import community.flock.wirespec.plugin.utils.orNull
 import community.flock.wirespec.openapi.v2.OpenApiV2Parser as OpenApiParserV2
 import community.flock.wirespec.openapi.v3.OpenApiV3Parser as OpenApiParserV3
+import community.flock.wirespec.compiler.core.emit.common.Decorators
 
 fun main(args: Array<String>) {
     (0..20)
@@ -134,8 +135,8 @@ private fun Set<Language>.emitters(packageName: PackageName, path: ((FileExtensi
     map {
         val (packageString) = packageName
         when (it) {
-            Java -> JavaEmitter(packageString, logger) to path?.let { JavaFile(it(FileExtension.Java)) }
-            Kotlin -> KotlinEmitter(packageString, logger) to path?.let { KotlinFile(it(FileExtension.Kotlin)) }
+            Java -> JavaEmitter(packageString, Decorators(), logger) to path?.let { JavaFile(it(FileExtension.Java)) }
+            Kotlin -> KotlinEmitter(packageString, Decorators(), logger) to path?.let { KotlinFile(it(FileExtension.Kotlin)) }
             Scala -> ScalaEmitter(packageString, logger) to path?.let { ScalaFile(it(FileExtension.Scala)) }
             TypeScript -> TypeScriptEmitter(logger) to path?.let { TypeScriptFile(it(FileExtension.TypeScript)) }
             Wirespec -> WirespecEmitter(logger) to path?.let { WirespecFile(it(FileExtension.Wirespec)) }
