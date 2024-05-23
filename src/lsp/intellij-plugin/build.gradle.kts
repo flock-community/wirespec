@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 plugins {
-    java
+    kotlin("multiplatform") apply false
     kotlin("jvm")
     id("org.jetbrains.intellij") version "1.17.3"
 }

@@ -1,7 +1,7 @@
 import Libraries.KOTLIN_REFLECT
 
 plugins {
-    java
+    kotlin("multiplatform") apply false
     kotlin("jvm")
     id("de.benediktritter.maven-plugin-development") version "0.4.3"
 }
