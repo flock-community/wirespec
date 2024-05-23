@@ -5,6 +5,7 @@ import Versions.KOTEST_ARROW
 import Versions.KOTLIN
 
 object Versions {
+    const val JAVA = "17"
     const val KOTLIN = "1.9.24"
     const val KOTLIN_COMPILER = "1.9"
     const val ARROW = "1.2.1"

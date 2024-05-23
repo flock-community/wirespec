@@ -43,7 +43,6 @@ kotlin {
             }
         }
         val jsMain by getting {
-            dependsOn(commonMain)
             dependencies {
                 implementation(kotlin("test-annotations-common"))
                 implementation(kotlin("test-junit"))

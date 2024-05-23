@@ -43,7 +43,7 @@ tasks.withType<KotlinCompile> {
 sourceSets {
     main {
         java {
-            srcDir("${buildDir}/generated")
+            srcDir("${layout.buildDirectory.get()}/generated")
         }
     }
 }
@@ -52,6 +52,6 @@ wirespec {
     input = "$projectDir/src/main/wirespec"
     kotlin {
         packageName = "community.flock.wirespec.generated.kotlin"
-        output = "$buildDir/generated"
+        output = "${layout.buildDirectory.get()}/generated"
     }
 }

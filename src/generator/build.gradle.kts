@@ -1,3 +1,5 @@
+import Versions.JAVA
+
 plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
@@ -22,7 +24,7 @@ kotlin {
         withJava()
         java {
             toolchain {
-                languageVersion.set(JavaLanguageVersion.of(17))
+                languageVersion.set(JavaLanguageVersion.of(JAVA))
             }
         }
     }

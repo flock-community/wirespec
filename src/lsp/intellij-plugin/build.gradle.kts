@@ -3,7 +3,7 @@
 plugins {
     java
     kotlin("jvm")
-    id("org.jetbrains.intellij") version "1.15.0"
+    id("org.jetbrains.intellij") version "1.17.3"
 }
 
 group = "${Settings.GROUP_ID}.lsp.intellij-plugin"

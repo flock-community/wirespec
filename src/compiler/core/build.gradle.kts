@@ -2,6 +2,7 @@ import Libraries.ARROW_CORE
 import Libraries.KOTEST_ASSERTIONS
 import Libraries.KOTEST_ASSERTIONS_ARROW
 import Libraries.KOTLIN_STDLIB
+import Versions.JAVA
 import Versions.KOTLIN_COMPILER
 
 plugins {
@@ -28,7 +29,7 @@ kotlin {
         withJava()
         java {
             toolchain {
-                languageVersion.set(JavaLanguageVersion.of(17))
+                languageVersion.set(JavaLanguageVersion.of(JAVA))
             }
         }
     }

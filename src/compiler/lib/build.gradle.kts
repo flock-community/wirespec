@@ -1,3 +1,4 @@
+import Versions.JAVA
 import Versions.KOTLIN_COMPILER
 
 plugins {
@@ -26,7 +27,7 @@ kotlin {
         withJava()
         java {
             toolchain {
-                languageVersion.set(JavaLanguageVersion.of(17))
+                languageVersion.set(JavaLanguageVersion.of(JAVA))
             }
         }
     }
@@ -45,7 +46,6 @@ kotlin {
             }
         }
         val jsMain by getting {
-            dependsOn(commonMain)
             dependencies {
                 implementation(kotlin("test-annotations-common"))
                 implementation(kotlin("test-junit"))
