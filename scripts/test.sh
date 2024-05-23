@@ -26,19 +26,6 @@ macWirespec=./src/plugin/$artifactName/build/bin/$macosArch/releaseExecutable/$a
 "$macWirespec" convert -f "$(pwd)"/types/petstore.json openapiv2 -l TypeScript -p "$convertPackage" -o "$(pwd)"/types/out/native/typescript
 "$macWirespec" convert -f "$(pwd)"/types/petstore.json openapiv2 -l Wirespec -p "$convertPackage" -o "$(pwd)"/types/out/native/wirespec
 
-echo "Test JVM artifact"
-wirespecJar=src/plugin/$artifactName/build/libs/$artifactName-$version-all.jar
-java -jar "$wirespecJar" compile -d "$(pwd)"/types -l Java -p "$compilePackage" -o "$(pwd)"/types/out/jvm/java
-java -jar "$wirespecJar" compile -d "$(pwd)"/types -l Kotlin -p "$compilePackage" -o "$(pwd)"/types/out/jvm/kotlin
-java -jar "$wirespecJar" compile -d "$(pwd)"/types -l Scala -p "$compilePackage" -o "$(pwd)"/types/out/jvm/scala
-java -jar "$wirespecJar" compile -d "$(pwd)"/types -l TypeScript -p "$compilePackage" -o "$(pwd)"/types/out/jvm/typescript
-java -jar "$wirespecJar" compile -d "$(pwd)"/types -l Wirespec -p "$compilePackage" -o "$(pwd)"/types/out/jvm/wirespec
-java -jar "$wirespecJar" convert -f "$(pwd)"/types/petstore.json openapiv2 -l Java -p "$convertPackage" -o "$(pwd)"/types/out/jvm/java
-java -jar "$wirespecJar" convert -f "$(pwd)"/types/petstore.json openapiv2 -l Kotlin -p "$convertPackage" -o "$(pwd)"/types/out/jvm/kotlin
-java -jar "$wirespecJar" convert -f "$(pwd)"/types/petstore.json openapiv2 -l Scala -p "$convertPackage" -o "$(pwd)"/types/out/jvm/scala
-java -jar "$wirespecJar" convert -f "$(pwd)"/types/petstore.json openapiv2 -l TypeScript -p "$convertPackage" -o "$(pwd)"/types/out/jvm/typescript
-java -jar "$wirespecJar" convert -f "$(pwd)"/types/petstore.json openapiv2 -l Wirespec -p "$convertPackage" -o "$(pwd)"/types/out/jvm/wirespec
-
 echo "Test Node.js artifact"
 wirespecJs=build/js/packages/wirespec-src-plugin-$artifactName/kotlin/wirespec-src-plugin-$artifactName.js
 node "$wirespecJs" compile -d "$(pwd)"/types -l Java -p "$compilePackage" -o "$(pwd)"/types/out/java

@@ -5,7 +5,7 @@ val kotlin_version: String by project
 val logback_version: String by project
 
 plugins {
-    kotlin("jvm") version "1.9.23"
+    kotlin("jvm") version "1.9.24"
     id("io.ktor.plugin") version "2.3.9"
     id("community.flock.wirespec.plugin.gradle") version "0.0.0-SNAPSHOT"
 }
