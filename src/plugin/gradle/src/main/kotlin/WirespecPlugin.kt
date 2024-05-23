@@ -24,11 +24,11 @@ import community.flock.wirespec.plugin.FileExtension.TypeScript
 import community.flock.wirespec.plugin.FileExtension.Wirespec
 import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.toDirectory
-import java.io.BufferedReader
-import java.io.File
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+import java.io.BufferedReader
+import java.io.File
 import kotlin.streams.asSequence
 
 class WirespecPlugin : Plugin<Project> {
@@ -67,7 +67,7 @@ class WirespecPlugin : Plugin<Project> {
                 }
         }
 
-        project.task("wirespec").doFirst { _: Task? ->
+        project.task("wirespec").doLast { _: Task? ->
             extension.kotlin?.apply {
                 KotlinEmitter(packageName, logger).emit(output, Kotlin, PackageName(packageName), KotlinShared)
             }
