@@ -1,3 +1,5 @@
+import Versions.JAVA
+
 plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
@@ -15,7 +17,6 @@ kotlin {
     macosX64()
     macosArm64()
     linuxX64()
-    mingwX64()
     js(IR) {
         nodejs()
     }
@@ -23,7 +24,7 @@ kotlin {
         withJava()
         java {
             toolchain {
-                languageVersion.set(JavaLanguageVersion.of(17))
+                languageVersion.set(JavaLanguageVersion.of(JAVA))
             }
         }
     }

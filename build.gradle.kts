@@ -1,13 +1,14 @@
 import org.jetbrains.dokka.gradle.DokkaTask
 
 plugins {
+    kotlin("multiplatform") apply false
     kotlin("jvm") apply false
     id("maven-publish")
     id("signing")
     id("org.jetbrains.dokka") version "1.8.10"
 }
 
-val dokkaOutputDir = "$buildDir/dokka"
+val dokkaOutputDir = "${layout.buildDirectory.get()}/dokka"
 
 val deleteDokkaOutputDir by tasks.register<Delete>("deleteDokkaOutputDirectory") {
     delete(dokkaOutputDir)

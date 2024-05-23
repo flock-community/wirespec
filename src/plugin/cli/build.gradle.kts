@@ -2,15 +2,14 @@ import Libraries.CLI_LIB
 import Libraries.KOTEST_ASSERTIONS
 import Libraries.KOTEST_ASSERTIONS_ARROW
 import Libraries.KOTEST_ENGINE
+import Versions.JAVA
 import Versions.KOTLIN_COMPILER
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithHostTests
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsTargetDsl
 
 plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
-    id("com.github.johnrengelman.shadow") version "7.1.2"
     id("com.goncalossilva.resources") version "0.4.0"
     id("io.kotest.multiplatform")
 }
@@ -23,7 +22,6 @@ repositories {
 }
 
 kotlin {
-    val projectName = name
     macosX64 { build() }
     macosArm64 { build() }
     linuxX64 { build() }
@@ -32,17 +30,7 @@ kotlin {
         withJava()
         java {
             toolchain {
-                languageVersion.set(JavaLanguageVersion.of(17))
-            }
-        }
-        tasks {
-            getByName<ShadowJar>("shadowJar") {
-                archiveBaseName.set(projectName)
-                mergeServiceFiles()
-                manifest { attributes(mapOf("Main-Class" to "community.flock.wirespec.plugin.cli.MainKt")) }
-            }
-            build {
-                dependsOn("shadowJar")
+                languageVersion.set(JavaLanguageVersion.of(JAVA))
             }
         }
     }

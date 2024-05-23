@@ -1,6 +1,7 @@
 plugins {
-    `java-gradle-plugin`
+    kotlin("multiplatform") apply false
     kotlin("jvm")
+    `java-gradle-plugin`
 }
 
 group = "${Settings.GROUP_ID}.plugin.gradle"

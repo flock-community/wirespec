@@ -1,5 +1,6 @@
 import Libraries.KOTEST_ASSERTIONS
 import Libraries.KOTEST_ASSERTIONS_ARROW
+import Versions.JAVA
 
 plugins {
     kotlin("multiplatform")
@@ -19,7 +20,6 @@ kotlin {
     macosX64()
     macosArm64()
     linuxX64()
-    mingwX64()
     js(IR) {
         nodejs()
     }
@@ -27,7 +27,7 @@ kotlin {
         withJava()
         java {
             toolchain {
-                languageVersion.set(JavaLanguageVersion.of(17))
+                languageVersion.set(JavaLanguageVersion.of(JAVA))
             }
         }
     }
