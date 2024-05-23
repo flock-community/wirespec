@@ -29,6 +29,8 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.openapi.Common.className
 import kotlinx.serialization.json.Json
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenapiType
+import community.flock.kotlinx.openapi.bindings.v2.HeaderObject
+import community.flock.kotlinx.openapi.bindings.v2.HeaderOrReferenceObject
 
 class OpenApiV2Parser(private val openApi: SwaggerObject) {
 
@@ -85,10 +87,20 @@ class OpenApiV2Parser(private val openApi: SwaggerObject) {
                         (openApi.produces.orEmpty() + operation.produces.orEmpty())
                             .distinct()
                             .ifEmpty { listOf("application/json") }.map { type ->
+                                val r = res.resolve()
                                 Endpoint.Response(
                                     status = status.value,
-                                    headers = emptyList(),
-                                    content = res.resolve().schema?.let { schema ->
+                                    headers = r.headers
+                                        ?.map { (identifier, h) -> h.resolve().let { x ->  Field(
+                                            identifier = Identifier(identifier),
+                                            reference = when(x.type){
+                                                "array" -> x.items?.resolve()?.toReference(identifier) ?: error("Item cannot be null")
+                                                else -> Reference.Primitive(x.type.mapType(), false, false)
+                                            },
+                                            isNullable = true
+                                        )}}
+                                        .orEmpty(),
+                                    content = r.schema?.let { schema ->
                                         Endpoint.Content(
                                             type = type,
                                             reference = when (schema) {
@@ -121,6 +133,14 @@ class OpenApiV2Parser(private val openApi: SwaggerObject) {
 
             }
         }
+
+    private fun String.mapType() = when(this) {
+        "string" -> Reference.Primitive.Type.String
+        "number" -> Reference.Primitive.Type.Number
+        "integer" -> Reference.Primitive.Type.Integer
+        "boolean" -> Reference.Primitive.Type.Boolean
+        else -> error("Cannot map type")
+    }
 
     private fun parseParameters() = openApi.flatMapRequests { req ->
         val parameters = req.pathItem.resolveParameters() + req.operation.resolveParameters()
@@ -243,6 +263,12 @@ class OpenApiV2Parser(private val openApi: SwaggerObject) {
         when (this) {
             is ResponseObject -> this
             is ReferenceObject -> this.resolveResponseObject()
+        }
+
+    private fun HeaderOrReferenceObject.resolve(): HeaderObject =
+        when (this) {
+            is HeaderObject -> this
+            is ReferenceObject -> error("Headers cannot be referenced in open api v2")
         }
 
     private fun ParameterOrReferenceObject.resolve(): ParameterObject =
