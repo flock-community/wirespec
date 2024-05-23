@@ -3,7 +3,7 @@ import Libraries.KOTLIN_REFLECT
 plugins {
     java
     kotlin("jvm")
-    id("de.benediktritter.maven-plugin-development") version "0.4.1"
+    id("de.benediktritter.maven-plugin-development") version "0.4.3"
 }
 
 group = "${Settings.GROUP_ID}.plugin.maven"
