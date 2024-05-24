@@ -66,7 +66,7 @@ object WirespecSpec : LanguageSpec {
         Regex("^[a-z`][a-zA-Z0-9`]*") to CustomValue,
         Regex("^[A-Z][a-zA-Z_]*") to CustomType,
         Regex("^/[a-zA-Z-_]+") to Path,
-        Regex("^\\/*\\*[\\s\\S]*\\*\\/") to WsComment,
+        Regex("^\\/\\*(\\*(?!\\/)|[^*])*\\*\\/") to WsComment,
         Regex("^/") to ForwardSlash,
         Regex("^.") to Invalid // Catch all regular expression if none of the above matched
     )
