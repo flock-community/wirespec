@@ -59,26 +59,15 @@ kotlin {
                 implementation(KOTEST_ASSERTIONS_ARROW)
             }
         }
-        val desktopMain by creating {
-            dependsOn(commonMain)
-        }
-        val macosX64Main by getting {
-            dependsOn(desktopMain)
-        }
-        val macosArm64Main by getting {
-            dependsOn(desktopMain)
-        }
-        val linuxX64Main by getting {
-            dependsOn(desktopMain)
-        }
-        val jvmMain by getting {
-            dependsOn(commonMain)
-        }
+        val nativeMain by creating {}
+        val macosX64Main by getting {}
+        val macosArm64Main by getting {}
+        val linuxX64Main by getting {}
+        val jvmMain by getting {}
         val jsMain by getting {
             dependencies {
                 implementation(project(":src:compiler:lib"))
             }
-            dependsOn(commonMain)
         }
     }
 }
