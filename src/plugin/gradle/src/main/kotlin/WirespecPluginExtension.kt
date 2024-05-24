@@ -1,9 +1,9 @@
 package community.flock.wirespec.plugin.gradle
 
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_STRING
-import javax.inject.Inject
 import org.gradle.api.Action
 import org.gradle.api.model.ObjectFactory
+import javax.inject.Inject
 
 open class WirespecPluginExtension @Inject constructor(val objectFactory: ObjectFactory) {
 
@@ -40,8 +40,8 @@ open class WirespecPluginExtension @Inject constructor(val objectFactory: Object
         }
 
         data class Decorators(
-            var type:String? = null,
-            var endpoint:String? = null,
+            var type: String? = null,
+            var endpoint: String? = null,
         )
 
         abstract class JvmLanguage : HasTargetDirectory() {
