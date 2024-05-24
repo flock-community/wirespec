@@ -1,5 +1,3 @@
-import Versions.JAVA
-import Versions.KOTLIN_COMPILER
 
 plugins {
     kotlin("multiplatform")
@@ -7,8 +5,8 @@ plugins {
     id("com.goncalossilva.resources") version "0.4.0"
 }
 
-group = "${Settings.GROUP_ID}.compiler"
-version = Settings.version
+group = "${libs.versions.group.id.get()}.compiler"
+version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.get()
 
 repositories {
     mavenCentral()
@@ -27,14 +25,14 @@ kotlin {
         withJava()
         java {
             toolchain {
-                languageVersion.set(JavaLanguageVersion.of(JAVA))
+                languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get()))
             }
         }
     }
 
     sourceSets.all {
         languageSettings.apply {
-            languageVersion = KOTLIN_COMPILER
+            languageVersion = libs.versions.kotlin.compiler.get()
         }
     }
 

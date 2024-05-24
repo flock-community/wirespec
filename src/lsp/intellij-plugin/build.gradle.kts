@@ -6,8 +6,8 @@ plugins {
     id("org.jetbrains.intellij") version "1.17.3"
 }
 
-group = "${Settings.GROUP_ID}.lsp.intellij-plugin"
-version = Settings.version
+group = "${libs.versions.group.id.get()}.lsp.intellij-plugin"
+version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.get()
 
 repositories {
     mavenCentral()

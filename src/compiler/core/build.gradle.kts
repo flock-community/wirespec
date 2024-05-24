@@ -1,18 +1,11 @@
-import Libraries.ARROW_CORE
-import Libraries.KOTEST_ASSERTIONS
-import Libraries.KOTEST_ASSERTIONS_ARROW
-import Libraries.KOTLIN_STDLIB
-import Versions.JAVA
-import Versions.KOTLIN_COMPILER
-
 plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
     id("io.kotest.multiplatform")
 }
 
-group = "${Settings.GROUP_ID}.compiler"
-version = Settings.version
+group = "${libs.versions.group.id.get()}.compiler"
+version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.get()
 
 repositories {
     mavenCentral()
@@ -29,22 +22,22 @@ kotlin {
         withJava()
         java {
             toolchain {
-                languageVersion.set(JavaLanguageVersion.of(JAVA))
+                languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get()))
             }
         }
     }
 
     sourceSets.all {
         languageSettings.apply {
-            languageVersion = KOTLIN_COMPILER
+            languageVersion = libs.versions.kotlin.compiler.get()
         }
     }
 
     sourceSets {
         commonMain {
             dependencies {
-                api(KOTLIN_STDLIB)
-                api(ARROW_CORE)
+                api(libs.kotlin.stdlib)
+                api(libs.arrow.core)
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
                 implementation("community.flock.kotlinx.openapi.bindings:kotlin-openapi-bindings:0.0.24")
             }
@@ -53,8 +46,7 @@ kotlin {
             dependencies {
                 implementation(kotlin("test-annotations-common"))
                 implementation(kotlin("test-junit"))
-                implementation(KOTEST_ASSERTIONS)
-                implementation(KOTEST_ASSERTIONS_ARROW)
+                implementation(libs.bundles.kotest)
             }
         }
     }

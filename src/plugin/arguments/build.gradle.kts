@@ -1,12 +1,10 @@
-import Versions.JAVA
-
 plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
 }
 
-group = "${Settings.GROUP_ID}.plugin.arguments"
-version = Settings.version
+group = "${libs.versions.group.id.get()}.plugin.arguments"
+version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.get()
 
 kotlin {
     macosX64()
@@ -19,7 +17,7 @@ kotlin {
         withJava()
         java {
             toolchain {
-                languageVersion.set(JavaLanguageVersion.of(JAVA))
+                languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get()))
             }
         }
     }

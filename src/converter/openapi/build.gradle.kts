@@ -1,15 +1,11 @@
-import Libraries.KOTEST_ASSERTIONS
-import Libraries.KOTEST_ASSERTIONS_ARROW
-import Versions.JAVA
-
 plugins {
     kotlin("multiplatform")
     kotlin("jvm") apply false
     id("com.goncalossilva.resources") version "0.4.0"
 }
 
-group = "${Settings.GROUP_ID}.converter"
-version = Settings.version
+group = "${libs.versions.group.id.get()}.converter"
+version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.get()
 
 repositories {
     mavenCentral()
@@ -27,7 +23,7 @@ kotlin {
         withJava()
         java {
             toolchain {
-                languageVersion.set(JavaLanguageVersion.of(JAVA))
+                languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get()))
             }
         }
     }
@@ -45,8 +41,7 @@ kotlin {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
                 implementation(kotlin("test-junit"))
-                implementation(KOTEST_ASSERTIONS)
-                implementation(KOTEST_ASSERTIONS_ARROW)
+                implementation(libs.bundles.kotest)
             }
         }
         val jvmTest by getting {
