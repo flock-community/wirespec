@@ -77,7 +77,7 @@ class JavaEmitter(
     override fun Type.emit(ast: AST) = transform(ast).emit()
 
     override fun TypeClass.emit() = """
-        |${decorators.declaration.emitDecorator()}public record ${name.sanitizeSymbol()} (
+        |${decorators.type.emitDecorator()}public record ${name.sanitizeSymbol()} (
         |${fields.joinToString(",\n") { it.emit() }.spacer()}
         |) ${if (supers.isNotEmpty()) "implements ${supers.joinToString(", ") { it.emit() }} " else ""}{
         |};
@@ -86,7 +86,7 @@ class JavaEmitter(
     override fun Refined.emit() = transform().emit()
 
     override fun RefinedClass.emit() = """
-        |${decorators.declaration.emitDecorator()}public record ${name.sanitizeSymbol()} (String value) implements Wirespec.Refined {
+        |${decorators.type.emitDecorator()}public record ${name.sanitizeSymbol()} (String value) implements Wirespec.Refined {
         |${SPACER}@Override
         |${SPACER}public String toString() { return value; }
         |${SPACER}public static boolean validate($name record) {
@@ -107,7 +107,7 @@ class JavaEmitter(
     override fun Enum.emit() = transform().emit()
 
     override fun EnumClass.emit(): String = """
-        |${decorators.declaration.emitDecorator()}public enum ${name.sanitizeSymbol()} implements Wirespec.Enum {
+        |${decorators.type.emitDecorator()}public enum ${name.sanitizeSymbol()} implements Wirespec.Enum {
         |${entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"${it}\")" }.spacer()};
         |${SPACER}public final String label;
         |${SPACER}${name.sanitizeSymbol()}(String label) {
@@ -123,7 +123,7 @@ class JavaEmitter(
     override fun Union.emit() = transform().emit()
 
     override fun UnionClass.emit(): String = """
-        |${decorators.declaration.emitDecorator()}public sealed interface $name permits ${entries.joinToString(", ")} {}
+        |${decorators.type.emitDecorator()}public sealed interface $name permits ${entries.joinToString(", ")} {}
     """.trimMargin()
 
     override fun Endpoint.emit() = transform().emit()

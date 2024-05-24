@@ -1,7 +1,7 @@
 package community.flock.wirespec.compiler.core.emit.common
 
 data class Decorators(
-    val declaration:String? = null,
+    val type:String? = null,
     val endpoint:String? = null,
 )
 

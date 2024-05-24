@@ -70,10 +70,10 @@ class WirespecPlugin : Plugin<Project> {
 
         project.task("wirespec").doLast { _: Task? ->
             extension.kotlin?.apply {
-                KotlinEmitter(packageName, Decorators(decorators.declaration, decorators.endpoint), logger).emit(output, Kotlin, PackageName(packageName), KotlinShared)
+                KotlinEmitter(packageName, Decorators(decorators.type, decorators.endpoint), logger).emit(output, Kotlin, PackageName(packageName), KotlinShared)
             }
             extension.java?.apply {
-                JavaEmitter(packageName, Decorators(decorators.declaration, decorators.endpoint), logger).emit(output, Java, PackageName(packageName), JavaShared)
+                JavaEmitter(packageName, Decorators(decorators.type, decorators.endpoint), logger).emit(output, Java, PackageName(packageName), JavaShared)
             }
             extension.scala?.apply {
                 ScalaEmitter(packageName, logger).emit(output, Scala, PackageName(packageName), ScalaShared)

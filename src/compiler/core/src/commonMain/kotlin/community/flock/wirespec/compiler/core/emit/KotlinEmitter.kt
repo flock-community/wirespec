@@ -60,7 +60,7 @@ class KotlinEmitter(
     override fun Type.emit(ast: AST) = transform(ast).emit()
 
     override fun TypeClass.emit() = """
-        |${decorators.declaration.emitDecorator()}data class ${name.sanitizeSymbol()}(
+        |${decorators.type.emitDecorator()}data class ${name.sanitizeSymbol()}(
         |${fields.joinToString(",\n") { it.emit() }.spacer()}
         |)${if (supers.isNotEmpty()) ": ${supers.joinToString(", ") { it.emit() }}" else ""}
         """.trimMargin()
@@ -68,7 +68,7 @@ class KotlinEmitter(
     override fun Refined.emit() = transform().emit()
 
     override fun RefinedClass.emit() = """
-        |${decorators.declaration.emitDecorator()}data class ${name.sanitizeSymbol()}(override val value: String): Wirespec.Refined {
+        |${decorators.type.emitDecorator()}data class ${name.sanitizeSymbol()}(override val value: String): Wirespec.Refined {
         |${SPACER}override fun toString() = value
         |}
         |
@@ -82,7 +82,7 @@ class KotlinEmitter(
     override fun EnumClass.emit() = run {
         fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_").sanitizeFirstIsDigit()
         """
-            |${decorators.declaration.emitDecorator()}enum class ${name.sanitizeSymbol()} (val label: String): Wirespec.Enum {
+            |${decorators.type.emitDecorator()}enum class ${name.sanitizeSymbol()} (val label: String): Wirespec.Enum {
             |${entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }.spacer()};
             |${SPACER}override fun toString(): String {
             |${SPACER}${SPACER}return label
@@ -94,7 +94,7 @@ class KotlinEmitter(
     override fun Union.emit() = transform().emit()
 
     override fun UnionClass.emit(): String = """
-        |${decorators.declaration.emitDecorator()}sealed interface $name
+        |${decorators.type.emitDecorator()}sealed interface $name
     """.trimMargin()
 
     override fun Endpoint.emit() = transform().emit()

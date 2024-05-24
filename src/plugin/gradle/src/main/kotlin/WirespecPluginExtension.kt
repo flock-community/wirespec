@@ -40,7 +40,7 @@ open class WirespecPluginExtension @Inject constructor(val objectFactory: Object
         }
 
         data class Decorators(
-            var declaration:String? = null,
+            var type:String? = null,
             var endpoint:String? = null,
         )
 
