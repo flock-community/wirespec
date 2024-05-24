@@ -16,8 +16,8 @@ class ParseTest {
     fun testParserWithCorrectInput() {
         val source = """
             |type Bla {
-            |  foo: String,
-            |  bar: String
+            |  foo1: String,
+            |  bar2: String
             |}
 
         """.trimMargin()
