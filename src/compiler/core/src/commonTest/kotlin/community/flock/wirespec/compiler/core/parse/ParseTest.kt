@@ -29,6 +29,22 @@ class ParseTest {
     }
 
     @Test
+    fun testParserWithDigits() {
+        val source = """
+            |type Bla {
+            |  foo1: String,
+            |  bar2: String
+            |}
+
+        """.trimMargin()
+
+        WirespecSpec.tokenize(source)
+            .let(parser()::parse)
+            .shouldBeRight()
+            .size shouldBe 1
+    }
+
+    @Test
     fun testParserWithFaultyInput() {
         val source = """
             |type Bla {
