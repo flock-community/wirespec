@@ -1,7 +1,10 @@
 package community.flock.wirespec.openapi.v2
 
+import community.flock.kotlinx.openapi.bindings.v2.Type as OpenapiType
 import arrow.core.filterIsInstance
 import community.flock.kotlinx.openapi.bindings.v2.BooleanObject
+import community.flock.kotlinx.openapi.bindings.v2.HeaderObject
+import community.flock.kotlinx.openapi.bindings.v2.HeaderOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v2.OpenAPI
 import community.flock.kotlinx.openapi.bindings.v2.OperationObject
 import community.flock.kotlinx.openapi.bindings.v2.ParameterLocation
@@ -28,7 +31,6 @@ import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.openapi.Common.className
 import kotlinx.serialization.json.Json
-import community.flock.kotlinx.openapi.bindings.v2.Type as OpenapiType
 
 class OpenApiV2Parser(private val openApi: SwaggerObject) {
 
@@ -81,14 +83,17 @@ class OpenApiV2Parser(private val openApi: SwaggerObject) {
                     }
                     .ifEmpty { listOf(Endpoint.Request(null)) }
                 val responses = operation.responses.orEmpty()
+                    .mapValues { it.value.resolve() }
                     .flatMap { (status, res) ->
                         (openApi.produces.orEmpty() + operation.produces.orEmpty())
                             .distinct()
                             .ifEmpty { listOf("application/json") }.map { type ->
                                 Endpoint.Response(
                                     status = status.value,
-                                    headers = emptyList(),
-                                    content = res.resolve().schema?.let { schema ->
+                                    headers = res.headers
+                                        ?.map { (identifier, header) -> header.resolve().toField(identifier) }
+                                        .orEmpty(),
+                                    content = res.schema?.let { schema ->
                                         Endpoint.Content(
                                             type = type,
                                             reference = when (schema) {
@@ -121,6 +126,14 @@ class OpenApiV2Parser(private val openApi: SwaggerObject) {
 
             }
         }
+
+    private fun String.mapType() = when (this.lowercase()) {
+        "string" -> Reference.Primitive.Type.String
+        "number" -> Reference.Primitive.Type.Number
+        "integer" -> Reference.Primitive.Type.Integer
+        "boolean" -> Reference.Primitive.Type.Boolean
+        else -> error("Cannot map type: $this")
+    }
 
     private fun parseParameters() = openApi.flatMapRequests { req ->
         val parameters = req.pathItem.resolveParameters() + req.operation.resolveParameters()
@@ -243,6 +256,12 @@ class OpenApiV2Parser(private val openApi: SwaggerObject) {
         when (this) {
             is ResponseObject -> this
             is ReferenceObject -> this.resolveResponseObject()
+        }
+
+    private fun HeaderOrReferenceObject.resolve(): HeaderObject =
+        when (this) {
+            is HeaderObject -> this
+            is ReferenceObject -> error("Headers cannot be referenced in open api v2")
         }
 
     private fun ParameterOrReferenceObject.resolve(): ParameterObject =
@@ -411,6 +430,18 @@ class OpenApiV2Parser(private val openApi: SwaggerObject) {
         OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean
         else -> error("Type is not a primitive")
     }
+
+    private fun HeaderObject.toField(identifier: String) =
+        Field(
+            identifier = Identifier(identifier),
+            reference = when (type) {
+                "array" -> items?.resolve()?.toReference(identifier)
+                    ?: error("Item cannot be null")
+
+                else -> Reference.Primitive(type.mapType(), false, false)
+            },
+            isNullable = true
+        )
 
     private fun SchemaObject.toField(name: String) = properties.orEmpty().map { (key, value) ->
         when (value) {
