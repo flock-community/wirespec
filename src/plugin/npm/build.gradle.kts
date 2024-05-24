@@ -1,6 +1,5 @@
 plugins {
     kotlin("multiplatform")
-    kotlin("jvm") apply false
     id("com.goncalossilva.resources") version "0.4.0"
 }
 

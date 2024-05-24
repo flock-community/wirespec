@@ -1,6 +1,5 @@
 plugins {
     kotlin("multiplatform")
-    kotlin("jvm") apply false
 }
 
 group = "${libs.versions.group.id.get()}.generator"

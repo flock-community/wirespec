@@ -1,7 +1,6 @@
 plugins {
     kotlin("multiplatform")
-    kotlin("jvm") apply false
-    id("io.kotest.multiplatform")
+    alias(libs.plugins.kotest)
 }
 
 group = "${libs.versions.group.id.get()}.compiler"

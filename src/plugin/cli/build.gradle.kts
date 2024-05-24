@@ -3,9 +3,8 @@ import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsTargetDsl
 
 plugins {
     kotlin("multiplatform")
-    kotlin("jvm") apply false
     id("com.goncalossilva.resources") version "0.4.0"
-    id("io.kotest.multiplatform")
+    alias(libs.plugins.kotest)
 }
 
 group = "${libs.versions.group.id.get()}.plugin.cli"
