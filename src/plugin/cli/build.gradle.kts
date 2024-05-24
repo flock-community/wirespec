@@ -1,21 +1,14 @@
-import Libraries.CLI_LIB
-import Libraries.KOTEST_ASSERTIONS
-import Libraries.KOTEST_ASSERTIONS_ARROW
-import Libraries.KOTEST_ENGINE
-import Versions.JAVA
-import Versions.KOTLIN_COMPILER
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithHostTests
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsTargetDsl
 
 plugins {
     kotlin("multiplatform")
-    kotlin("jvm") apply false
     id("com.goncalossilva.resources") version "0.4.0"
-    id("io.kotest.multiplatform")
+    alias(libs.plugins.kotest)
 }
 
-group = "${Settings.GROUP_ID}.plugin.cli"
-version = Settings.version
+group = "${libs.versions.group.id.get()}.plugin.cli"
+version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.get()
 
 repositories {
     mavenCentral()
@@ -30,14 +23,14 @@ kotlin {
         withJava()
         java {
             toolchain {
-                languageVersion.set(JavaLanguageVersion.of(JAVA))
+                languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get()))
             }
         }
     }
 
     sourceSets.all {
         languageSettings.apply {
-            languageVersion = KOTLIN_COMPILER
+            languageVersion = libs.versions.kotlin.compiler.get()
         }
     }
 
@@ -47,38 +40,25 @@ kotlin {
                 implementation(project(":src:plugin:arguments"))
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:converter:openapi"))
-                implementation(CLI_LIB)
+                implementation(libs.clikt)
             }
         }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test-annotations-common"))
                 implementation(kotlin("test-junit"))
-                implementation(KOTEST_ENGINE)
-                implementation(KOTEST_ASSERTIONS)
-                implementation(KOTEST_ASSERTIONS_ARROW)
+                implementation(libs.bundles.kotest)
             }
         }
-        val desktopMain by creating {
-            dependsOn(commonMain)
-        }
-        val macosX64Main by getting {
-            dependsOn(desktopMain)
-        }
-        val macosArm64Main by getting {
-            dependsOn(desktopMain)
-        }
-        val linuxX64Main by getting {
-            dependsOn(desktopMain)
-        }
-        val jvmMain by getting {
-            dependsOn(commonMain)
-        }
+        val nativeMain by creating {}
+        val macosX64Main by getting {}
+        val macosArm64Main by getting {}
+        val linuxX64Main by getting {}
+        val jvmMain by getting {}
         val jsMain by getting {
             dependencies {
                 implementation(project(":src:compiler:lib"))
             }
-            dependsOn(commonMain)
         }
     }
 }

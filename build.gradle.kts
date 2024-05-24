@@ -2,7 +2,6 @@ import org.jetbrains.dokka.gradle.DokkaTask
 
 plugins {
     kotlin("multiplatform") apply false
-    kotlin("jvm") apply false
     id("maven-publish")
     id("signing")
     id("org.jetbrains.dokka") version "1.8.10"

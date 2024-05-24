@@ -1,0 +1,28 @@
+[versions]
+group_id = "community.flock.wirespec"
+from_env = "VERSION"
+default = "0.0.0-SNAPSHOT"
+kotlin = "1.9.24"
+kotlin_compiler = "1.9"
+java = "17"
+arrow = "1.2.1"
+clikt = "4.2.1"
+kotest = "5.7.2"
+kotest_arrow = "1.4.0"
+
+[libraries]
+kotlin_stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+kotlin_reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+arrow_core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
+clikt = { module = "com.github.ajalt.clikt:clikt", version.ref = "clikt" }
+kotest_engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
+kotest_assertions = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+kotest_assertions_arrow = { module = "io.kotest.extensions:kotest-assertions-arrow", version.ref = "kotest_arrow" }
+
+[bundles]
+kotest = ["kotest_engine", "kotest_assertions", "kotest_assertions_arrow"]
+
+[plugins]
+kotlin_multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin_jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotest = { id = "io.kotest.multiplatform", version.ref = "kotest" }

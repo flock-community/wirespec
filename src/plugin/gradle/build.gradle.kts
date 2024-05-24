@@ -4,8 +4,8 @@ plugins {
     `java-gradle-plugin`
 }
 
-group = "${Settings.GROUP_ID}.plugin.gradle"
-version = Settings.version
+group = "${libs.versions.group.id.get()}.plugin.gradle"
+version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.get()
 
 repositories {
     mavenCentral()
@@ -22,7 +22,7 @@ java {
 
 gradlePlugin {
     val kotlin by plugins.creating {
-        id = "${Settings.GROUP_ID}.plugin.gradle"
+        id = "${libs.versions.group.id.get()}.plugin.gradle"
         implementationClass = "community.flock.wirespec.plugin.gradle.WirespecPlugin"
         displayName = "Wirespec gradle plugin"
         description = "Plugin for compiling Wirespec files"

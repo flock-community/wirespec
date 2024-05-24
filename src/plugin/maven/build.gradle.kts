@@ -1,13 +1,11 @@
-import Libraries.KOTLIN_REFLECT
-
 plugins {
     kotlin("multiplatform") apply false
     kotlin("jvm")
     id("de.benediktritter.maven-plugin-development") version "0.4.3"
 }
 
-group = "${Settings.GROUP_ID}.plugin.maven"
-version = Settings.version
+group = "${libs.versions.group.id.get()}.plugin.maven"
+version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.get()
 
 repositories {
     mavenCentral()
@@ -17,7 +15,7 @@ dependencies {
     implementation(project(":src:compiler:core"))
     implementation(project(":src:converter:openapi"))
     implementation(project(":src:plugin:arguments"))
-    implementation(KOTLIN_REFLECT)
+    implementation(libs.kotlin.reflect)
     implementation("org.apache.maven:maven-plugin-api:3.9.1")
     implementation("org.apache.maven.plugin-tools:maven-plugin-annotations:3.8.1")
     implementation("org.apache.maven:maven-project:2.2.1")

@@ -1,13 +1,10 @@
-import Versions.JAVA
-
 plugins {
     kotlin("multiplatform")
-    kotlin("jvm") apply false
     id("com.goncalossilva.resources") version "0.4.0"
 }
 
-group = "${Settings.GROUP_ID}.integration"
-version = Settings.version
+group = "${libs.versions.group.id.get()}.integration"
+version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.get()
 
 repositories {
     mavenCentral()
@@ -19,7 +16,7 @@ kotlin {
         withJava()
         java {
             toolchain {
-                languageVersion.set(JavaLanguageVersion.of(JAVA))
+                languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get()))
             }
         }
     }

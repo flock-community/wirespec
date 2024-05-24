@@ -1,12 +1,10 @@
 pluginManagement {
 
     val kotlinVersion = "1.9.24"
-    val kotestVersion = "5.7.2"
 
     plugins {
         kotlin("multiplatform") version kotlinVersion
         kotlin("jvm") version kotlinVersion
-        id("io.kotest.multiplatform") version kotestVersion
     }
 
     repositories {
