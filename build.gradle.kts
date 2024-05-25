@@ -7,18 +7,6 @@ plugins {
     id("org.jetbrains.dokka") version "1.8.10"
 }
 
-val dokkaOutputDir = "${layout.buildDirectory.get()}/dokka"
-
-val deleteDokkaOutputDir by tasks.register<Delete>("deleteDokkaOutputDirectory") {
-    delete(dokkaOutputDir)
-}
-
-val javadocJar = tasks.register<Jar>("javadocJar") {
-    dependsOn(deleteDokkaOutputDir, tasks.dokkaHtml)
-    archiveClassifier.set("javadoc")
-    from(dokkaOutputDir)
-}
-
 repositories {
     mavenCentral()
 }
@@ -27,10 +15,6 @@ allprojects {
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
     apply(plugin = "org.jetbrains.dokka")
-
-    tasks.getByName<DokkaTask>("dokkaHtml") {
-        outputDirectory.set(file(dokkaOutputDir))
-    }
 
     signing {
         setRequired { System.getenv("VERSION") != null }
@@ -56,7 +40,6 @@ allprojects {
                 }
             }
             withType<MavenPublication> {
-                artifact(javadocJar)
                 pom {
                     name.set("Wirespec")
                     description.set("Type safe wires made easy")
