@@ -1,17 +1,18 @@
+import org.jetbrains.dokka.gradle.DokkaMultiModuleTask
 import org.jetbrains.dokka.gradle.DokkaTask
 
 plugins {
     kotlin("multiplatform") apply false
     id("maven-publish")
     id("signing")
-    id("org.jetbrains.dokka") version "1.8.10"
+    id("org.jetbrains.dokka") version "1.9.20"
 }
 
 repositories {
     mavenCentral()
 }
 
-allprojects {
+subprojects {
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
     apply(plugin = "org.jetbrains.dokka")
@@ -40,6 +41,13 @@ allprojects {
                 }
             }
             withType<MavenPublication> {
+
+                // Stub javadoc.jar artifact
+                artifact(tasks.register("${name}JavadocJar", Jar::class) {
+                    archiveClassifier.set("javadoc")
+                    archiveAppendix.set(this@withType.name)
+                })
+
                 pom {
                     name.set("Wirespec")
                     description.set("Type safe wires made easy")
