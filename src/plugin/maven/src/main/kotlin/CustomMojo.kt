@@ -46,7 +46,7 @@ class CustomMojo : BaseMojo() {
             classpathElements.add(project.build.outputDirectory)
             classpathElements.add(project.build.testOutputDirectory)
             val urls = classpathElements.indices
-                .map { File(classpathElements[it] as String).toURL() }
+                .map { File(classpathElements[it] as String).toURI().toURL() }
                 .toTypedArray()
             return java.net.URLClassLoader(urls, javaClass.getClassLoader())
         } catch (e: Exception) {
