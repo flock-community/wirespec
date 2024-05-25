@@ -17,6 +17,10 @@ application {
     mainClass.set("community.flock.wirespec.examples.app.ApplicationKt")
 }
 
+kotlin {
+    jvmToolchain(17)
+}
+
 repositories {
     mavenCentral()
     mavenLocal()
