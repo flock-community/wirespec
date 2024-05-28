@@ -8,7 +8,7 @@ let client: LanguageClient;
 export const activate = (context: ExtensionContext) => {
   console.log("Activating...");
 
-  const serverModule = context.asAbsolutePath(path.join("node_modules", "wirespec-server", "index.js"));
+  const serverModule = context.asAbsolutePath(path.join("build", "server.js"));
 
   const nodeModule = { module: serverModule, transport: TransportKind.ipc };
 

@@ -53,13 +53,13 @@ jobs:
       - name: Archive vscode extension
         uses: actions/upload-artifact@v3
         with:
-          name: wirespec-client-vscode
-          path: src/lsp/node/client/build/wirespec-client-vscode-*.vsix
+          name: wirespec-vscode
+          path: src/ide/vscode/wirespec-client-vscode-*.vsix
       - name: Archive Intellij plugin
         uses: actions/upload-artifact@v3
         with:
           name: wirespec-intellij-plugin
-          path: src/lsp/intellij-plugin/build/distributions/intellij-plugin-*.zip
+          path: src/ide/intellij-plugin/build/distributions/intellij-plugin-*.zip
 
   version:
 
@@ -102,7 +102,7 @@ jobs:
           cache: gradle
       - name: Run
         run: |
-          ./gradlew :src:lsp:intellij-plugin:publishPlugin
+          ./gradlew :src:ide:intellij-plugin:publishPlugin
 
   release-vscode:
 
@@ -127,17 +127,12 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE
       - uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 18
       - name: Build lib
         run: |
           ./gradlew :src:compiler:lib:build
-      - name: Build server
-        working-directory: ./src/lsp/node/server
-        run: |
-          npm i
-          npm run build
-      - name: Build extension
-        working-directory: ./src/lsp/node/client
+      - name: Build vscode extension
+        working-directory: ./src/ide/vscode
         run: |
           npm i
           npm run build 

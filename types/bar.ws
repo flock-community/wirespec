@@ -4,5 +4,11 @@ type Nullable {
 
 type Iterable {
     list: String[],
-    maybeList: String[]?
+    maybeList: Hello[]?
 }
+
+type Hello {
+    maybeString: String?,
+}
+
+
