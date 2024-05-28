@@ -82,11 +82,6 @@ class WirespecPlugin : Plugin<Project> {
         project.task("wirespec").doLast { _: Task? ->
             extension.custom?.apply {
                 val ext = FileExtension.values().find { it.value == this.extention }?: error("No file extension")
-
-                val packageNameField = emitter?.javaClass?.getDeclaredField("packageName")
-                packageNameField?.setAccessible(true)
-                packageNameField?.set(emitter, packageName)
-
                 emitter?.emit(
                     input,
                     output,

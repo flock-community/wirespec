@@ -44,6 +44,10 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
 }
 
+tasks.withType<KotlinCompile> {
+    dependsOn("wirespec")
+}
+
 sourceSets {
     main {
         java {
@@ -69,7 +73,7 @@ wirespec {
     }
 }
 
-class KotlinSerializableEmitter : KotlinEmitter() {
+class KotlinSerializableEmitter : KotlinEmitter("community.flock.wirespec.generated.kotlin") {
 
     override fun Type.emit(ast: AST) = """
     |@kotlinx.serialization.Serializable
