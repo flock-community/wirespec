@@ -15,7 +15,7 @@ import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
-class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emitter(logger) {
+open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emitter(logger) {
 
     override fun Definition.emitName(): String = when (this) {
         is Endpoint -> identifier.emit()

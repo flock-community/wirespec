@@ -18,7 +18,7 @@ import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
-class ScalaEmitter(
+open class ScalaEmitter(
     private val packageName: String = DEFAULT_PACKAGE_STRING,
     logger: Logger = noLogger
 ) : DefinitionModelEmitter, Emitter(logger) {
