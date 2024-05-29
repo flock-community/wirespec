@@ -1,17 +1,18 @@
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { createConnection, DiagnosticSeverity, SemanticTokensBuilder, TextDocuments } from "vscode-languageserver";
-import { WsToken, WsToTypeScript } from "wirespec";
 import { ServerCapabilities } from "vscode-languageserver-protocol/lib/common/protocol";
-
 import { Range, SemanticTokensLegend } from "vscode-languageserver-types";
 
-const wsToTs = new WsToTypeScript();
+import { community } from "wirespec";
+import tokenize = community.flock.wirespec.plugin.npm.tokenize
+import parse = community.flock.wirespec.plugin.npm.parse
+import WsToken = community.flock.wirespec.compiler.lib.WsToken
 
 const getCompilerErrors = (text) => {
-  const error = wsToTs.compile(text).error;
+  const {errors} = parse(text);
 
-  if (error) {
-    const { index, length, value } = error;
+  if (errors?.[0]) {
+    const { index, length, value } = errors[0];
     return [{ index, length, value }];
   } else return [];
 };
@@ -106,14 +107,14 @@ documents.onDidOpen(async (change) => {
 connection.onRequest(async (method, params) => {
   // @ts-ignore
   const doc = documents.get(params.textDocument.uri);
-  const tokens = wsToTs.tokenize(doc.getText()).tokens;
+  const tokens = tokenize(doc.getText());
 
   if (
     tokens &&
     (method === "textDocument/semanticTokens/full" || method === "textDocument/semanticTokens/full/delta")
   ) {
     const builder = new SemanticTokensBuilder();
-    tokens.value.map(mapCoordinates).forEach(({ line, position, length, type, modifier }) => {
+    tokens.map(mapCoordinates).forEach(({ line, position, length, type, modifier }) => {
       builder.push(line, position, length, type?.value, modifier?.value);
     });
     return builder.build();
@@ -125,8 +126,8 @@ connection.onDefinition((params) => {
   const doc = documents.get(uri);
 
   if (params) {
-    const tokens = wsToTs.tokenize(doc.getText()).tokens;
-    const token = tokens.value
+    const tokens = tokenize(doc.getText());
+    const token = tokens
       .map(mapCoordinates)
       .find(
         (it) =>
@@ -136,7 +137,7 @@ connection.onDefinition((params) => {
       );
     if (token) {
       if (token.type?.name === "type") {
-        return tokens.value
+        return tokens
           .map(mapCoordinates)
           .filter((it) => it.value === token.value)
           .map((it) => ({

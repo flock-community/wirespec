@@ -37,6 +37,12 @@ enum class Emitters {
 fun cli(args: Array<String>) = main(args)
 
 @JsExport
+fun tokenize(source: String) = WirespecSpec
+    .tokenize(source)
+    .map { it.produce() }
+    .toTypedArray()
+
+@JsExport
 fun parse(source: String) = WirespecSpec
     .tokenize(source)
     .let { Parser(noLogger).parse(it).produce() }
