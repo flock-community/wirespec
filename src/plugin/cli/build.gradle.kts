@@ -1,5 +1,7 @@
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithHostTests
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsTargetDsl
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("multiplatform")
@@ -15,6 +17,14 @@ repositories {
 }
 
 kotlin {
+    targets.configureEach {
+        compilations.configureEach {
+            compilerOptions.configure {
+                freeCompilerArgs.add("-Xexpect-actual-classes")
+            }
+        }
+    }
+
     macosX64 { build() }
     macosArm64 { build() }
     linuxX64 { build() }

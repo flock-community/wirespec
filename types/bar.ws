@@ -8,7 +8,5 @@ type Iterable {
 }
 
 type Hello {
-    maybeString: String?,
+    maybeString: String?
 }
-
-
