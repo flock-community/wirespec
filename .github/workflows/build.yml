@@ -130,7 +130,7 @@ jobs:
           node-version: 18
       - name: Build lib
         run: |
-          ./gradlew :src:compiler:lib:build
+          ./gradlew :src:plugin:npm:build
       - name: Build vscode extension
         working-directory: ./src/ide/vscode
         run: |
