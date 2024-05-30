@@ -205,7 +205,7 @@ jobs:
                     :src:plugin:maven:publish \
                     :src:plugin:arguments:publish \
                     :src:integration:jackson:publish \
-                    :src:generator:publish
+                    :src:tools:generator:publish
 
   release-lib-npm:
 
