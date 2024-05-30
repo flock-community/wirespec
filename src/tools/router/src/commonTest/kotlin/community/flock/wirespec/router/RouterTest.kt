@@ -5,6 +5,8 @@ import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.utils.noLogger
+import community.flock.wirespec.router.match
+import community.flock.wirespec.router.router
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

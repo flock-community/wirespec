@@ -1,4 +1,4 @@
-package community.flock.wirespec.generator
+package community.flock.wirespec.router
 
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
