@@ -40,6 +40,7 @@ kotlin {
             dependencies {
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:converter:openapi"))
+                implementation(project(":src:tools:router"))
             }
         }
         val jsMain by getting {
