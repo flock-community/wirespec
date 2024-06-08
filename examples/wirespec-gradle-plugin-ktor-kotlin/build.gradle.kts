@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import community.flock.wirespec.plugin.Language
 
 val ktor_version: String by project
 val kotlin_version: String by project
@@ -38,6 +39,10 @@ dependencies {
 
 tasks.withType<KotlinCompile> {
     dependsOn("wirespec")
+}
+
+tasks.withType<KotlinCompile> {
+    dependsOn("wirespec")
     kotlinOptions {
         freeCompilerArgs += "-Xjsr305=strict"
         jvmTarget = "17"
@@ -57,5 +62,6 @@ wirespec {
         input = "$projectDir/src/main/wirespec"
         output = "${layout.buildDirectory.get()}/generated"
         packageName = "community.flock.wirespec.generated.kotlin"
+        languages = listOf(Language.Kotlin)
     }
 }

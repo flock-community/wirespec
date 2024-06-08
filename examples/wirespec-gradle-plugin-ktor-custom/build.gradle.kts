@@ -48,6 +48,14 @@ tasks.withType<KotlinCompile> {
     dependsOn("wirespec")
 }
 
+tasks.withType<KotlinCompile> {
+    dependsOn("wirespec")
+    kotlinOptions {
+        freeCompilerArgs += "-Xjsr305=strict"
+        jvmTarget = "17"
+    }
+}
+
 sourceSets {
     main {
         java {
