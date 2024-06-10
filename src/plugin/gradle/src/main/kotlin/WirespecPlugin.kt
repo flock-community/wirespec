@@ -39,7 +39,6 @@ class WirespecPlugin : Plugin<Project> {
     private fun Array<File>.parse() = this
         .map { it.name.split(".").first() to it.bufferedReader(Charsets.UTF_8) }
         .map { (name, reader) -> name to WirespecSpec.parse(reader.collectToString())(logger) }
-    private fun List<Emitted>.writeFiles() = this
 
     private fun compile(input: String, emitter: Emitter) =
         input
