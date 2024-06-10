@@ -11,6 +11,7 @@ import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.shared.JavaShared
 import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
+import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
 import community.flock.wirespec.compiler.core.emit.shared.Shared
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.utils.noLogger
@@ -116,7 +117,7 @@ class WirespecPlugin : Plugin<Project> {
                         output,
                         Scala,
                         PackageName(packageName),
-                        KotlinShared
+                        ScalaShared
                     )
                 }
                 if (Language.TypeScript in languages) {
@@ -125,7 +126,7 @@ class WirespecPlugin : Plugin<Project> {
                         output,
                         TypeScript,
                         PackageName(packageName),
-                        KotlinShared
+                        null
                     )
                 }
                 if (Language.Wirespec in languages) {
@@ -135,7 +136,7 @@ class WirespecPlugin : Plugin<Project> {
                             output,
                             Wirespec,
                             PackageName(packageName),
-                            KotlinShared
+                            null
                         )
                 }
             }
