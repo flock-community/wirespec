@@ -4,6 +4,8 @@ import community.flock.wirespec.compiler.core.emit.transformer.ClassModelTransfo
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.plugin.Language
+
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 val ktor_version: String by project
@@ -74,9 +76,9 @@ wirespec {
 
     compile {
         input = "$projectDir/src/main/wirespec"
-        output = "${layout.buildDirectory.get()}/generated"
-        packageName = "community.flock.wirespec.generated.java"
-        languages = listOf(Language.Java)
+        output = "${layout.buildDirectory.get()}/typescript"
+        packageName = ""
+        languages = listOf(Language.TypeScript)
     }
 
     custom {
