@@ -71,6 +71,14 @@ buildscript{
 }
 
 wirespec {
+
+    compile {
+        input = "$projectDir/src/main/wirespec"
+        output = "${layout.buildDirectory.get()}/generated"
+        packageName = "community.flock.wirespec.generated.java"
+        languages = listOf(Language.Java)
+    }
+
     custom {
         input = "$projectDir/src/main/wirespec"
         output = "${layout.buildDirectory.get()}/generated"
