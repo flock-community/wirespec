@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 artifactName="cli"
-version="0.0.0-SNAPSHOT"
 
 macosArch=macosX64
 archSpecific=""

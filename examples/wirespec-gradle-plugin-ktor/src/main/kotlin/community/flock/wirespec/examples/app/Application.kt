@@ -2,7 +2,7 @@ package community.flock.wirespec.examples.app
 
 import community.flock.wirespec.examples.app.todo.TodoRepository
 import community.flock.wirespec.examples.app.todo.todoModule
-import io.ktor.serialization.jackson.jackson
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
@@ -18,7 +18,7 @@ fun main() {
 
 fun Application.config() {
     install(ContentNegotiation) {
-        jackson()
+        json()
     }
 }
 

@@ -23,7 +23,7 @@ import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
-class JavaEmitter(
+open class JavaEmitter(
     val packageName: String = DEFAULT_PACKAGE_STRING,
     logger: Logger = noLogger,
 ) : ClassModelEmitter, Emitter(logger, true) {
