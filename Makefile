@@ -1,5 +1,6 @@
 .PHONY: *
 
+# The first command will be invoked with `make` only and should be `all`
 all:
 	$(shell pwd)/scripts/all.sh
 

@@ -19,4 +19,4 @@ tasks.build {
 }
 ```
 
-According to the [actual build.gradle.kts](app/build.gradle.kts) file.
+According to the [actual build.gradle.kts](build.gradle.kts) file.

@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.plugin.Language
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -48,13 +49,9 @@ dependencies {
 
 tasks.withType<KotlinCompile> {
     dependsOn("wirespec")
-}
-
-tasks.withType<KotlinCompile> {
-    dependsOn("wirespec")
-    kotlinOptions {
-        freeCompilerArgs += "-Xjsr305=strict"
-        jvmTarget = "17"
+    compilerOptions {
+        freeCompilerArgs.add("-Xjsr305=strict")
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
@@ -66,14 +63,13 @@ sourceSets {
     }
 }
 
-buildscript{
-    dependencies{
+buildscript {
+    dependencies {
         classpath("community.flock.wirespec.compiler:core-jvm:0.0.0-SNAPSHOT")
     }
 }
 
 wirespec {
-
     compile {
         input = "$projectDir/src/main/wirespec"
         output = "${layout.buildDirectory.get()}/typescript"
