@@ -56,7 +56,7 @@ class WirespecPlugin : Plugin<Project> {
                 else listOf(Emitted(name, result.first().result))
             }
 
-    private fun BufferedReader.collectToString() = lines().asSequence().joinToString("")
+    private fun BufferedReader.collectToString() = lines().asSequence().joinToString("\n")
 
     override fun apply(project: Project) {
         val extension = project.extensions.create("wirespec", WirespecPluginExtension::class.java)
