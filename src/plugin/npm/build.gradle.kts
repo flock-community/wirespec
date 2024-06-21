@@ -37,12 +37,14 @@ kotlin {
                 implementation(project(":src:plugin:cli"))
                 implementation(project(":src:converter:openapi"))
                 implementation(project(":src:tools:generator"))
+                implementation(project(":src:tools:router"))
             }
         }
         val jsMain by getting {
             dependencies {
                 implementation(kotlin("test-annotations-common"))
                 implementation(kotlin("test-junit"))
+                implementation(libs.bundles.kotest)
                 implementation("com.goncalossilva:resources:0.4.0")
             }
         }

@@ -135,45 +135,51 @@ private fun WsPrimitiveType.consume() =
         WsPrimitiveType.Boolean -> Field.Reference.Primitive.Type.Boolean
     }
 
+fun Endpoint.produce() = WsEndpoint(
+    identifier = identifier.value,
+    comment = comment?.value,
+    method = method.produce(),
+    path = path.produce(),
+    query = query.produce(),
+    headers = headers.produce(),
+    cookies = cookies.produce(),
+    requests = requests.produce(),
+    responses = responses.produce(),
+)
+
+fun Type.produce() = WsType(
+    identifier = identifier.value,
+    comment = comment?.value,
+    shape = shape.produce()
+)
+
+fun Enum.produce() = WsEnum(
+    identifier = identifier.value,
+    comment = comment?.value,
+    entries = entries.toTypedArray()
+)
+
+fun Refined.produce() = WsRefined(
+    identifier = identifier.value,
+    comment = comment?.value,
+    validator = validator.value
+)
+
+fun Union.produce() = WsUnion(
+    identifier = identifier.value,
+    comment = comment?.value,
+    entries = entries
+        .map { it.produce() }
+        .toTypedArray()
+)
 
 fun Node.produce(): WsNode =
     when (this) {
-        is Type -> WsType(
-            identifier = identifier.value,
-            comment = comment?.value,
-            shape = shape.produce()
-        )
-
-        is Endpoint -> WsEndpoint(
-            identifier = identifier.value,
-            comment = comment?.value,
-            method = method.produce(),
-            path = path.produce(),
-            query = query.produce(),
-            headers = headers.produce(),
-            cookies = cookies.produce(),
-            requests = requests.produce(),
-            responses = responses.produce(),
-        )
-
-        is Enum -> WsEnum(
-            identifier = identifier.value,
-            comment = comment?.value,
-            entries = entries.toTypedArray()
-        )
-
-        is Refined -> WsRefined(
-            identifier = identifier.value,
-            comment = comment?.value,
-            validator = validator.value
-        )
-
-        is Union -> WsUnion(
-            identifier = identifier.value,
-            comment = comment?.value,
-            entries = entries
-                .map { it.produce() }
-                .toTypedArray())
+        is Type -> produce()
+        is Endpoint -> produce()
+        is Enum -> produce()
+        is Refined -> produce()
+        is Union -> produce()
     }
 
 fun List<Node>.produce(): Array<WsNode> =

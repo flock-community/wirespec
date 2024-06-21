@@ -3,6 +3,7 @@
 package community.flock.wirespec.plugin.npm
 
 import Generator.generate
+import WsRouter
 import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPIObject
 import community.flock.wirespec.compiler.core.WirespecSpec
@@ -21,7 +22,10 @@ import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.openapi.v2.OpenApiV2Emitter
 import community.flock.wirespec.openapi.v3.OpenApiV3Emitter
 import community.flock.wirespec.plugin.cli.main
+import community.flock.wirespec.router.Route
+import community.flock.wirespec.router.router
 import kotlinx.serialization.json.Json
+import produce
 
 @JsExport
 enum class Emitters {
@@ -76,3 +80,10 @@ fun emit(ast: Array<WsNode>, emitter: Emitters, packageName: String) = ast
     }
     .map { it.produce() }
     .toTypedArray()
+
+@JsExport
+fun router(ast: Array<WsNode>): WsRouter = ast
+    .map { it.consume() }
+    .router()
+    .produce()
+

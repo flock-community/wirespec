@@ -18,7 +18,6 @@ class TestLib {
     @Test
     fun testProduceConsume(){
         val source = Resource("src/jsTest/resources/person.ws").readText()
-        println(source)
         val res = WirespecSpec.parse(source)(noLogger)
         res.map { ast ->
             val output = ast.produce()
@@ -26,4 +25,5 @@ class TestLib {
             assertEquals(input, ast)
         }
     }
+
 }

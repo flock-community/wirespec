@@ -1,10 +1,8 @@
-
 plugins {
     kotlin("multiplatform")
-    id("com.goncalossilva.resources") version "0.4.0"
 }
 
-group = "${libs.versions.group.id.get()}.compiler"
+group = "${libs.versions.group.id.get()}.router"
 version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.get()
 
 repositories {
@@ -12,13 +10,11 @@ repositories {
 }
 
 kotlin {
+    macosX64()
+    macosArm64()
+    linuxX64()
     js(IR) {
         nodejs()
-        generateTypeScriptDefinitions()
-        binaries.library()
-        compilations["main"].packageJson {
-            customField("name", "@flock/wirespec-lib")
-        }
     }
     jvm {
         withJava()
@@ -28,26 +24,17 @@ kotlin {
             }
         }
     }
-
-    sourceSets.all {
-        languageSettings.apply {
-            languageVersion = libs.versions.kotlin.compiler.get()
-        }
-    }
-
     sourceSets {
-        val commonMain by getting {
+        commonMain {
             dependencies {
                 implementation(project(":src:compiler:core"))
-                implementation(project(":src:converter:openapi"))
-                implementation(project(":src:tools:router"))
             }
         }
-        val jsMain by getting {
+        commonTest {
             dependencies {
+                implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
                 implementation(kotlin("test-junit"))
-                implementation("com.goncalossilva:resources:0.4.0")
             }
         }
     }
