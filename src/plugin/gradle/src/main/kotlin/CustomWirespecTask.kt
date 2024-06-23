@@ -25,12 +25,12 @@ abstract class CustomWirespecTask : BaseWirespecTask() {
 
     @get:Optional
     @get:Input
-    @get:Option(option = "shared", description = "shared")
+    @get:Option(option = "shared", description = "shared code")
     abstract val shared: Property<String>
 
     @get:Optional
     @get:Input
-    @get:Option(option = "shared", description = "shared")
+    @get:Option(option = "extension", description = "file extension")
     abstract val extension: Property<String>
 
     @Internal

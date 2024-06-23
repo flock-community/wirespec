@@ -1,8 +1,15 @@
 package community.flock.wirespec.plugin.maven
 
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.shared.JavaShared
+import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
+import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
+import community.flock.wirespec.compiler.core.emit.shared.Shared
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.plugin.Language
+import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.compile
+import community.flock.wirespec.plugin.toDirectory
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
@@ -26,6 +33,9 @@ class CustomMojo : BaseMojo() {
     @Parameter(required = false)
     private var split: Boolean = false
 
+    @Parameter
+    protected var shared: Language? = null
+
     override fun execute() {
         project.addCompileSourceRoot(output)
         val emitter = try {
@@ -35,6 +45,19 @@ class CustomMojo : BaseMojo() {
         } catch (e: Exception) {
             e.printStackTrace()
             throw e
+        }
+        if(shared != null){
+            val defaultPkg = PackageName("community.flock.wirespec")
+            val sharedSource = when(shared){
+                Language.Java -> JavaShared
+                Language.Kotlin -> KotlinShared
+                Language.Scala -> ScalaShared
+                else -> error("No sharde availible for: $shared")
+            }
+            File(output).resolve(defaultPkg.toDirectory()).apply {
+                mkdirs()
+                resolve("Wirespec.$extension").writeText(sharedSource.source)
+            }
         }
         getFilesContent().compile(logger, emitter)
             .also { File(output).mkdirs() }
