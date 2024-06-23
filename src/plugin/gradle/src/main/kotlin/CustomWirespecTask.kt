@@ -1,7 +1,6 @@
 package community.flock.wirespec.plugin.gradle
 
 import community.flock.wirespec.compiler.core.emit.common.Emitter
-import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
 import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.compile
 import community.flock.wirespec.plugin.toDirectory

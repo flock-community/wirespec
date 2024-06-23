@@ -1,6 +1,5 @@
 package community.flock.wirespec.plugin.gradle
 
-import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.mapEmitter
