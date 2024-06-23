@@ -26,7 +26,6 @@ public class TodoIt {
     void shouldReturnDefaultMessage() throws Exception {
         MvcResult mvcResult =  mockMvc
                 .perform(get("/todos"))
-                .andDo(print())
                 .andExpect(request().asyncStarted())
                 .andReturn();
 

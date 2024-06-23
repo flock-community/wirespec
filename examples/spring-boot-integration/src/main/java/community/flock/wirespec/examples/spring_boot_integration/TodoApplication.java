@@ -1,9 +1,9 @@
 package community.flock.wirespec.examples.spring_boot_integration;
 
+import community.flock.wirespec.integration.spring.configuration.WirespecConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import community.flock.wirespec.integration.spring.annotations.WirespecConfiguration;
 import org.springframework.context.annotation.Import;
 
 @SpringBootApplication
