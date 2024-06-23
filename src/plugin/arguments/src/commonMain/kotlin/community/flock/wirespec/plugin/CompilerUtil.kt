@@ -23,7 +23,9 @@ fun FilesContent.parse(logger: Logger): List<Pair<String, List<Node>>> =
         .map { (name, result) ->
             name to when (result) {
                 is Either.Right -> result.value
-                is Either.Left -> error("compile error")
+                is Either.Left -> {
+                    error("compile error: ${result.value}")
+                }
             }
         }
 

@@ -6,14 +6,21 @@ import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.mapEmitter
 import community.flock.wirespec.plugin.parse
 import community.flock.wirespec.plugin.writeToFiles
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
 
 abstract class CompileWirespecTask : BaseWirespecTask() {
+
+    @get:InputDirectory
+    @get:Option(option = "input", description = "input directory")
+    abstract val input: DirectoryProperty
 
     @get:Input
     @get:Option(option = "languages", description = "languages list")
@@ -24,6 +31,11 @@ abstract class CompileWirespecTask : BaseWirespecTask() {
     @get:Option(option = "shared", description = "emit shared class")
     abstract val shared: Property<Boolean>
 
+    @Internal
+    protected fun getFilesContent(): FilesContent = input.asFileTree
+        .map { it.name.split(".").first() to it.readText(Charsets.UTF_8) }
+        .map { (name, reader) -> name to reader }
+
     @TaskAction
     fun action() {
         val packageNameValue = packageName.map { PackageName(it) }.get()
@@ -32,9 +44,6 @@ abstract class CompileWirespecTask : BaseWirespecTask() {
             .map { it.mapEmitter(packageNameValue, wirespecLogger) }
             .forEach { (emitter, sharedData, ext) ->
                 ast.forEach { (fileName, ast) ->
-                    println("-------")
-                    println(fileName)
-                    println("-------")
                     emitter.emit(ast).forEach {
                         it.writeToFiles(
                             output.asFile.get(),

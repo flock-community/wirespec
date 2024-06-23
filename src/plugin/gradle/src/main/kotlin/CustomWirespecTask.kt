@@ -5,13 +5,20 @@ import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firs
 import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.compile
 import community.flock.wirespec.plugin.toDirectory
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
 
 abstract class CustomWirespecTask : BaseWirespecTask() {
+
+    @get:InputDirectory
+    @get:Option(option = "input", description = "input directory")
+    abstract val input: DirectoryProperty
 
     @get:Input
     @get:Option(option = "emitter", description = "emitter")
@@ -26,6 +33,11 @@ abstract class CustomWirespecTask : BaseWirespecTask() {
     @get:Input
     @get:Option(option = "shared", description = "shared")
     abstract val extension: Property<String>
+
+    @Internal
+    protected fun getFilesContent(): FilesContent = input.asFileTree
+        .map { it.name.split(".").first() to it.readText(Charsets.UTF_8) }
+        .map { (name, reader) -> name to reader }
 
     @TaskAction
     fun custom() {
