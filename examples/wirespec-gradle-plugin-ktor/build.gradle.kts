@@ -70,7 +70,6 @@ buildscript {
     }
 }
 
-
 tasks.register<CustomWirespecTask>("wirespec-kotlin") {
     input = layout.projectDirectory.dir("/src/main/wirespec")
     output = layout.buildDirectory.dir("generated"
