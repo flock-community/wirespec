@@ -43,6 +43,6 @@ private enum class Reported {
     TOKENIZED, PARSED, VALIDATED, EMITTED;
 
     fun report(logger: Logger): (Any) -> Unit = {
-        logger.log("********** $name **********\n$it\n########## $name ##########")
+        logger.info("********** $name **********\n$it\n########## $name ##########")
     }
 }

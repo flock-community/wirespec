@@ -5,14 +5,14 @@ The gradle plugin can be use compile wirespec
 ## Usage
 
 ```kts
-tasks.register<CompileWirespecTask>("wirespec-aigentic-kotlin") {
+tasks.register<CompileWirespecTask>("wirespec-kotlin") {
     input = layout.projectDirectory.dir("wirespec")
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.custom"
     languages = listOf(Language.Kotlin)
 }
 
-tasks.register<ConvertWirespecTask>("wirespec-aigentic-openapi") {
+tasks.register<ConvertWirespecTask>("wirespec-openapi") {
     input = layout.projectDirectory.file("openapi/petstorev3.json")
     output = layout.buildDirectory.dir("generated")
     format = Format.OpenApiV3
@@ -20,7 +20,7 @@ tasks.register<ConvertWirespecTask>("wirespec-aigentic-openapi") {
     languages = listOf(Language.Kotlin)
 }
 
-tasks.register<CustomWirespecTask>("wirespec-aigentic") {
+tasks.register<CustomWirespecTask>("wirespec-custom") {
     input = layout.projectDirectory.dir("wirespec")
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.wirespec"

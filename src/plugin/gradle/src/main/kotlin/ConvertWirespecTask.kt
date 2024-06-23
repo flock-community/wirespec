@@ -64,7 +64,7 @@ abstract class ConvertWirespecTask : BaseWirespecTask() {
                         output.asFile.get(),
                         packageNameValue,
                         if (shared.getOrElse(true)) sharedData else null,
-                        fileName,
+                        if(!emitter.split) fileName else null,
                         ext
                     )
                 }

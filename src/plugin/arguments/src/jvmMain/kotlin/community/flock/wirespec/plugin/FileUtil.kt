@@ -12,11 +12,12 @@ fun Emitted.writeToFiles(
     fileName: String? = null,
     ext: FileExtension
 ) {
-    writeFile(output, packageName, fileName ?: typeName, ext).writeText(result)
     if (shared != null) {
         val sharedPackageName = PackageName("community.flock.wirespec")
         writeFile(output, sharedPackageName, Wirespec.name, ext).writeText(shared.source)
     }
+    writeFile(output, packageName, fileName ?: typeName, ext).writeText(result)
+
 }
 
 private fun writeFile(output: File, packageName: PackageName?, fileName: String, ext: FileExtension) =

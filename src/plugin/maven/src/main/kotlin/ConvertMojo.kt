@@ -5,6 +5,7 @@ import community.flock.wirespec.openapi.v2.OpenApiV2Parser
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Format.OpenApiV2
 import community.flock.wirespec.plugin.Format.OpenApiV3
+import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.mapEmitter
 import community.flock.wirespec.plugin.writeToFiles
 import org.apache.maven.plugins.annotations.LifecyclePhase
@@ -22,6 +23,9 @@ class ConvertMojo : CompileMojo() {
     private var strict: Boolean = true
 
     override fun execute() {
+        project.addCompileSourceRoot(output)
+        val outputFile = File(output)
+        val packageNameValue = PackageName(packageName)
         val fileName = input.split("/")
             .last()
             .substringBeforeLast(".")
@@ -41,7 +45,7 @@ class ConvertMojo : CompileMojo() {
                         outputFile,
                         packageNameValue,
                         if (shared) sharedData else null,
-                        fileName,
+                        if(!emitter.split) fileName else null,
                         ext
                     )
                 }

@@ -18,7 +18,7 @@ abstract class Emitter(
 
     open fun emit(ast: AST): List<Emitted> = ast
         .map {
-            logger.log("Emitting Node $it")
+            logger.info("Emitting Node $it")
             when (it) {
                 is Type -> Emitted(it.emitName(), it.emit(ast))
                 is Endpoint -> Emitted(it.emitName(), it.emit())

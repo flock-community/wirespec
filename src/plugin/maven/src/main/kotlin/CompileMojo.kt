@@ -1,12 +1,14 @@
 package community.flock.wirespec.plugin.maven
 
 import community.flock.wirespec.plugin.Language
+import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.mapEmitter
 import community.flock.wirespec.plugin.parse
 import community.flock.wirespec.plugin.writeToFiles
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
+import java.io.File
 
 @Mojo(name = "compile", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
 open class CompileMojo : BaseMojo() {
@@ -18,6 +20,9 @@ open class CompileMojo : BaseMojo() {
     protected var shared: Boolean = true
 
     override fun execute() {
+        project.addCompileSourceRoot(output)
+        val outputFile = File(output)
+        val packageNameValue = PackageName(packageName)
         val content = getFilesContent().parse(logger)
         languages
             ?.map { it.mapEmitter(packageNameValue, logger) }
@@ -28,7 +33,7 @@ open class CompileMojo : BaseMojo() {
                             outputFile,
                             packageNameValue,
                             if (shared) sharedData else null,
-                            fileName,
+                            if(!emitter.split) fileName else null,
                             ext
                         )
                     }

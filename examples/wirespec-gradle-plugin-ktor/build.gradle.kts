@@ -5,6 +5,8 @@ import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.plugin.Language
+import community.flock.wirespec.plugin.gradle.CustomWirespecTask
+import community.flock.wirespec.plugin.gradle.CompileWirespecTask
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -71,18 +73,18 @@ buildscript {
 }
 
 tasks.register<CustomWirespecTask>("wirespec-kotlin") {
-    input = layout.projectDirectory.dir("/src/main/wirespec")
-    output = layout.buildDirectory.dir("generated"
+    input = layout.projectDirectory.dir("src/main/wirespec")
+    output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.generated.kotlin"
-    emitter = KotlinSerializableEmitter()
-    shared = KotlinShared
-    extention = "kt"
+    emitter = KotlinSerializableEmitter::class.java
+    shared = KotlinShared.source
+    extension = "kt"
 }
 
 tasks.register<CompileWirespecTask>("wirespec-typescript") {
-    input = layout.projectDirectory.dir("/src/main/wirespec")
-    output = layout.buildDirectory.dir("generated"
-    packageName = "community.flock.aigentic.kotlin"
+    input = layout.projectDirectory.dir("src/main/wirespec")
+    output = layout.buildDirectory.dir("generated")
+    packageName = "community.flock.wirespec.kotlin"
     languages = listOf(Language.Kotlin)
 }
 
