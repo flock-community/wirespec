@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.plugin.PackageName
 import java.io.BufferedReader
 import java.io.File
 import java.util.stream.Collectors
@@ -30,28 +31,17 @@ abstract class BaseMojo : AbstractMojo() {
     @Parameter(defaultValue = "\${project}", readonly = true, required = true)
     protected lateinit var project: MavenProject
 
+    val outputFile = File(output)
+    val packageNameValue = PackageName(packageName)
+
     protected val logger = object : Logger() {
         override fun warn(s: String) = log.warn(s)
         override fun log(s: String) = log.info(s)
     }
 
     protected fun getFilesContent(): FilesContent = (File(input).listFiles() ?: arrayOf<File>())
-        .map { it.name.split(".").first() to it.bufferedReader(Charsets.UTF_8) }
-        .map { (name, reader) -> name to reader.collectToString() }
+        .map { it.name.split(".").first() to it }
+        .map { (name, reader) -> name to reader.readText(Charsets.UTF_8) }
 
-    protected fun FilesContent.compile(logger: Logger, emitter: Emitter) =
-        map { (name, source) -> name to WirespecSpec.compile(source)(logger)(emitter) }
-            .map { (name, result) ->
-                name to when (result) {
-                    is Either.Right -> result.value
-                    is Either.Left -> error("compile error")
-                }
-            }
-            .flatMap { (name, results) ->
-                if (emitter.split) results
-                else listOf(Emitted(name, results.first().result))
-            }
 
-    private fun BufferedReader.collectToString() =
-        lines().collect(Collectors.joining())
 }

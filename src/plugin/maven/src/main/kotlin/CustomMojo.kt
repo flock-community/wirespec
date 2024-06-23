@@ -2,6 +2,7 @@ package community.flock.wirespec.plugin.maven
 
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.plugin.compile
 import java.io.File
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
@@ -20,7 +21,7 @@ class CustomMojo : BaseMojo() {
     private lateinit var emitterClass: String
 
     @Parameter(required = true)
-    private lateinit var extention: String
+    private lateinit var extension: String
 
     @Parameter(required = false)
     private var split: Boolean = false
@@ -34,10 +35,9 @@ class CustomMojo : BaseMojo() {
             e.printStackTrace()
             throw e
         }
-
         getFilesContent().compile(logger, emitter)
             .also { File(output).mkdirs() }
-            .forEach { (name, result) -> File("$output/$name.$extention").writeText(result) }
+            .forEach { (name, result) -> File(output).resolve("$name.$extension").writeText(result) }
     }
 
     private fun getClassLoader(project: MavenProject): ClassLoader {
