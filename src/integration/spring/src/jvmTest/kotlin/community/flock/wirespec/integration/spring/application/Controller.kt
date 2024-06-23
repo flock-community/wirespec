@@ -1,6 +1,6 @@
 package community.flock.wirespec.integration.spring.application
 
-import community.flock.wirespec.integration.spring.annotations.parsePathParams
+import community.flock.wirespec.integration.spring.web.parsePathParams
 import community.flock.wirespec.integration.spring.generated.AddPetEndpoint
 import community.flock.wirespec.integration.spring.generated.DeletePetEndpoint
 import community.flock.wirespec.integration.spring.generated.GetPetByIdEndpoint

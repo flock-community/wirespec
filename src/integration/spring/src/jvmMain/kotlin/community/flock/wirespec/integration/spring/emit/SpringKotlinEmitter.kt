@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
 class SpringKotlinEmitter(logger: Logger = noLogger,): KotlinEmitter(logger = logger) {
+
     override fun callAnnotation(endpointClass: EndpointClass): String {
         return when(endpointClass.method.uppercase()){
             "GET" -> "@org.springframework.web.bind.annotation.GetMapping(\"${endpointClass.path}\")\n"

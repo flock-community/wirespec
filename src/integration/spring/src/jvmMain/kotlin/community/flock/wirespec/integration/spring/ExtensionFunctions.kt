@@ -7,7 +7,7 @@ import java.lang.reflect.Method
 import kotlin.reflect.full.companionObjectInstance
 
 object ExtensionFunctions {
-    fun Class<*>.isKotlinClass(): Boolean = declaredAnnotations.any {
+    private fun Class<*>.isKotlinClass(): Boolean = declaredAnnotations.any {
         it.annotationClass.qualifiedName == "kotlin.Metadata"
     }
 
@@ -17,10 +17,6 @@ object ExtensionFunctions {
         } else {
             this
         }
-
-    fun Class<*>.getStaticField(name: String): Field? {
-        return this.getStaticClass().getDeclaredField(name).apply { setAccessible(true) }
-    }
 
     fun Class<*>.getStaticMethode(name: String): Method? {
         return this.getStaticClass().methods.find { it.name == name }

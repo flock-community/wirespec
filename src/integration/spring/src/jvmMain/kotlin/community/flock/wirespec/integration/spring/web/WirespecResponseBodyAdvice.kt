@@ -1,4 +1,4 @@
-package community.flock.wirespec.integration.spring.annotations
+package community.flock.wirespec.integration.spring.web
 
 import community.flock.wirespec.Wirespec
 import org.springframework.core.MethodParameter

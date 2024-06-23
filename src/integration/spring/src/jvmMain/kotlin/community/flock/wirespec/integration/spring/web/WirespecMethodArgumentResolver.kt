@@ -1,8 +1,7 @@
-package community.flock.wirespec.integration.spring.annotations
+package community.flock.wirespec.integration.spring.web
 
 
 import community.flock.wirespec.Wirespec
-import community.flock.wirespec.integration.spring.JacksonContentMapper
 import community.flock.wirespec.integration.spring.annotations.ExtensionFunctions.getStaticMethode
 import community.flock.wirespec.integration.spring.annotations.ExtensionFunctions.invoke
 import jakarta.servlet.http.HttpServletRequest
@@ -16,7 +15,8 @@ import org.springframework.web.util.pattern.PathPatternParser
 import java.io.BufferedReader
 import kotlin.reflect.full.companionObjectInstance
 
-class WirespecMethodArgumentResolver(private val contentMapper: JacksonContentMapper) : HandlerMethodArgumentResolver {
+class WirespecMethodArgumentResolver(private val contentMapper: Wirespec.ContentMapper<BufferedReader>) : HandlerMethodArgumentResolver {
+
     override fun supportsParameter(parameter: MethodParameter): Boolean {
         return Wirespec.Request::class.java.isAssignableFrom(parameter.parameterType)
     }
@@ -40,7 +40,6 @@ class WirespecMethodArgumentResolver(private val contentMapper: JacksonContentMa
 
         }
         return static.invoke(requestMapper, contentMapper, wirespecRequest)
-
     }
 }
 
