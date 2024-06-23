@@ -7,17 +7,32 @@ This module offers Spring configuration which can bind Wirespec endpoints as req
 ```xml
 <dependency>
     <groupId>community.flock.wirespec.integration</groupId>
-    <artifactId>spring</artifactId>
+    <artifactId>spring-jvm</artifactId>
     <version>{VERSION}</version>
 </dependency>
 ```
 
 ## Usage
+Use the custom Java or Kotlin spring emitters to generate the endpoint classes
+- [SpringJavaEmitter.kt](src%2FjvmMain%2Fkotlin%2Fcommunity%2Fflock%2Fwirespec%2Fintegration%2Fspring%2Femit%2FSpringJavaEmitter.kt)
+- [SpringJavaEmitter.kt](src%2FjvmMain%2Fkotlin%2Fcommunity%2Fflock%2Fwirespec%2Fintegration%2Fspring%2Femit%2FSpringJavaEmitter.kt)
 
-The generated Wirespec Endpoint needs to be implemented a Controller class. By annotating this class with `@WirespecController` all the endpoints are automatically added as request mappings.  
+Load the wirspec spring configuration 
+- [WirespecConfiguration.kt](src%2FjvmMain%2Fkotlin%2Fcommunity%2Fflock%2Fwirespec%2Fintegration%2Fspring%2Fconfiguration%2FWirespecConfiguration.kt)
 
 ```java
-@WirespecController
+@SpringBootApplication
+@Import(WirespecConfiguration.class)
+public class TodoApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(TodoApplication.class, args);
+    }
+}
+
+```
+
+```java
+@RestController
 class TodoController implements GetTodosEndpoint {
 
     private final TodoService service;
