@@ -47,18 +47,23 @@
                     <execution>
                         <id>java</id>
                         <goals>
-                            <goal>generate</goal>
+                            <goal>custom</goal>
                         </goals>
                         <configuration>
                             <input>${project.basedir}/src/main/wirespec</input>
                             <output>${project.build.directory}/generated-sources</output>
-                            <languages>
-                                <language>Java</language>
-                            </languages>
-                            <shared>true</shared>
+                            <emitterClass>community.flock.wirespec.integration.spring.emit.SpringJavaEmitter</emitterClass>
+                            <extension>java</extension>
                         </configuration>
                     </execution>
                 </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>community.flock.wirespec.integration</groupId>
+                        <artifactId>spring-jvm</artifactId>
+                        <version>0.0.0-SNAPSHOT</version>
+                    </dependency>
+                </dependencies>
             </plugin>
         </plugins>
     </build>

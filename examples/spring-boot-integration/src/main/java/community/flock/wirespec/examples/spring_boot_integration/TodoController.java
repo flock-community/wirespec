@@ -28,7 +28,7 @@ class TodoController implements GetTodosEndpoint, GetTodoByIdEndpoint, CreateTod
                 todoInput.done()
         );
         service.create(todo);
-        var res = new CreateTodoEndpoint.Response200ApplicationJson(Map.of(), todo);
+        var res = new CreateTodoEndpoint.Response200ApplicationJson(todo);
         return CompletableFuture.completedFuture(res);
     }
 
@@ -40,10 +40,10 @@ class TodoController implements GetTodosEndpoint, GetTodoByIdEndpoint, CreateTod
     @Override
     public CompletableFuture<GetTodoByIdEndpoint.Response<?>> getTodoById(GetTodoByIdEndpoint.Request<?> request) {
         var id = switch (request){
-            case GetTodoByIdEndpoint.RequestVoid req -> req.getPath();
+            case GetTodoByIdEndpoint.RequestUnit req -> req.getPath();
         };
         System.out.println(id);
-        var res = new GetTodoByIdEndpoint.Response200ApplicationJson(Map.of(), service.store.get(0));
+        var res = new GetTodoByIdEndpoint.Response200ApplicationJson(service.store.get(0));
         return CompletableFuture.completedFuture(res);
     }
 
@@ -54,7 +54,7 @@ class TodoController implements GetTodosEndpoint, GetTodoByIdEndpoint, CreateTod
 
     @Override
     public CompletableFuture<GetTodosEndpoint.Response<?>> getTodos(GetTodosEndpoint.Request<?> request) {
-        var res = new GetTodosEndpoint.Response200ApplicationJson(Map.of(), service.store);
+        var res = new GetTodosEndpoint.Response200ApplicationJson(service.store);
         return CompletableFuture.completedFuture(res);
     }
 }

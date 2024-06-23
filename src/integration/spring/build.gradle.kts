@@ -2,15 +2,12 @@ import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 plugins {
     kotlin("multiplatform")
-    kotlin("jvm") apply false
-    id("com.github.johnrengelman.shadow") apply false
-    `maven-publish`
     id("org.springframework.boot") version "3.1.3"
     id("io.spring.dependency-management") version "1.1.3"
 }
 
-group = "${Settings.GROUP_ID}.integration"
-version = Settings.version
+group = "${libs.versions.group.id.get()}.integration"
+version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.get()
 
 repositories {
     mavenCentral()
@@ -30,11 +27,9 @@ kotlin {
     }
 
     sourceSets {
-        tasks.getByName<BootJar>("bootJar") {
-            enabled = false
-        }
         val jvmMain by getting {
             dependencies {
+                compileOnly(project(":src:compiler:core"))
                 compileOnly(project(":src:integration:wirespec"))
                 implementation(project(":src:integration:jackson"))
                 implementation("org.springframework.boot:spring-boot-starter-web")
@@ -51,6 +46,5 @@ kotlin {
                 implementation("org.springframework.boot:spring-boot-starter-test")
             }
         }
-
     }
 }
