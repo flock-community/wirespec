@@ -9,9 +9,7 @@ import org.springframework.context.annotation.Import;
 @SpringBootApplication
 @Import(WirespecConfiguration.class)
 public class TodoApplication {
-
     public static void main(String[] args) {
         SpringApplication.run(TodoApplication.class, args);
     }
-
 }

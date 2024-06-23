@@ -17,40 +17,9 @@ import org.springframework.web.util.pattern.PathPatternParser
 @Import(WirespecResponseBodyAdvice::class, WirespecWebMvcConfiguration::class)
 open class WirespecConfiguration {
 
-
     @Bean
-    open fun contentMapper(objectMapper: ObjectMapper) = JacksonContentMapper(objectMapper)
-
-    @Bean
-    open fun registerWirespecController(
-        contentMapper: JacksonContentMapper,
-        applicationContext: ApplicationContext,
-        requestMappingHandlerMapping: RequestMappingHandlerMapping
-    ): List<String> {
-        val options = RequestMappingInfo.BuilderConfiguration()
-            .apply {
-                patternParser = PathPatternParser()
-            }
-
-        return applicationContext.getBeansWithAnnotation(WirespecController::class.java)
-            .flatMap { controller ->
-                controller.value.javaClass.interfaces.toList()
-                    .filter { Wirespec.Endpoint::class.java.isAssignableFrom(it) }
-                    .map { endpoint ->
-                        val path = endpoint.getStaticField("PATH")?.get(endpoint) as String
-                        val method = endpoint.getStaticField("METHOD")?.get(endpoint) as String
-                        val requestMappingWirespec = RequestMappingInfo
-                            .paths(path)
-                            .methods(RequestMethod.valueOf(method))
-                            .options(options)
-                            .build();
-                        val ignoredMethods = listOf("REQUEST_MAPPER", "RESPONSE_MAPPER")
-                        val func = endpoint.methods.first { !ignoredMethods.contains(it.name) }
-                        requestMappingHandlerMapping.registerMapping(requestMappingWirespec, controller.value, func)
-                        path
-                    }
-            }
+    open fun contentMapper(objectMapper: ObjectMapper) {
+        JacksonContentMapper(objectMapper)
     }
-
 
 }

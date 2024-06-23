@@ -53,6 +53,7 @@
                             <input>${project.basedir}/src/main/wirespec</input>
                             <output>${project.build.directory}/generated-sources</output>
                             <emitterClass>community.flock.wirespec.integration.spring.emit.SpringJavaEmitter</emitterClass>
+                            <shared>Java</shared>
                             <extension>java</extension>
                         </configuration>
                     </execution>

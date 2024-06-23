@@ -1,13 +1,13 @@
 package community.flock.wirespec.integration.spring.application
 
-import community.flock.wirespec.integration.spring.annotations.WirespecController
 import community.flock.wirespec.integration.spring.annotations.parsePathParams
 import community.flock.wirespec.integration.spring.generated.AddPetEndpoint
 import community.flock.wirespec.integration.spring.generated.DeletePetEndpoint
 import community.flock.wirespec.integration.spring.generated.GetPetByIdEndpoint
 import community.flock.wirespec.integration.spring.generated.UpdatePetEndpoint
+import org.springframework.web.bind.annotation.RestController
 
-@WirespecController
+@RestController
 class Controller(
     private val service: Service
 ) : AddPetEndpoint, GetPetByIdEndpoint, UpdatePetEndpoint, DeletePetEndpoint {

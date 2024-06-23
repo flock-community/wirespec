@@ -1,14 +1,12 @@
 package community.flock.wirespec.examples.spring_boot_integration;
 
-
 import community.flock.wirespec.generated.*;
-import community.flock.wirespec.integration.spring.annotations.WirespecController;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-@WirespecController
+@RestController
 class TodoController implements GetTodosEndpoint, GetTodoByIdEndpoint, CreateTodoEndpoint, UpdateTodoEndpoint, DeleteTodoEndpoint {
 
     private final TodoService service;

@@ -106,7 +106,8 @@ interface AddPetEndpoint : Wirespec.Endpoint {
       }
     }
   }
-  suspend fun addPet(request: Request<*>): Response<*>
+  @org.springframework.web.bind.annotation.PostMapping("/pet")
+suspend fun addPet(request: Request<*>): Response<*>
 }
 interface UpdatePetEndpoint : Wirespec.Endpoint {
   sealed interface Request<T> : Wirespec.Request<T>
@@ -230,7 +231,8 @@ interface UpdatePetEndpoint : Wirespec.Endpoint {
       }
     }
   }
-  suspend fun updatePet(request: Request<*>): Response<*>
+  @org.springframework.web.bind.annotation.PutMapping("/pet")
+suspend fun updatePet(request: Request<*>): Response<*>
 }
 interface FindPetsByStatusEndpoint : Wirespec.Endpoint {
   sealed interface Request<T> : Wirespec.Request<T>
@@ -298,7 +300,8 @@ interface FindPetsByStatusEndpoint : Wirespec.Endpoint {
       }
     }
   }
-  suspend fun findPetsByStatus(request: Request<*>): Response<*>
+  @org.springframework.web.bind.annotation.GetMapping("/pet/findByStatus")
+suspend fun findPetsByStatus(request: Request<*>): Response<*>
 }
 interface FindPetsByTagsEndpoint : Wirespec.Endpoint {
   sealed interface Request<T> : Wirespec.Request<T>
@@ -366,7 +369,8 @@ interface FindPetsByTagsEndpoint : Wirespec.Endpoint {
       }
     }
   }
-  suspend fun findPetsByTags(request: Request<*>): Response<*>
+  @org.springframework.web.bind.annotation.GetMapping("/pet/findByTags")
+suspend fun findPetsByTags(request: Request<*>): Response<*>
 }
 interface GetPetByIdEndpoint : Wirespec.Endpoint {
   sealed interface Request<T> : Wirespec.Request<T>
@@ -443,7 +447,8 @@ interface GetPetByIdEndpoint : Wirespec.Endpoint {
       }
     }
   }
-  suspend fun getPetById(request: Request<*>): Response<*>
+  @org.springframework.web.bind.annotation.GetMapping("/pet/{petId}")
+suspend fun getPetById(request: Request<*>): Response<*>
 }
 interface UpdatePetWithFormEndpoint : Wirespec.Endpoint {
   sealed interface Request<T> : Wirespec.Request<T>
@@ -489,7 +494,8 @@ interface UpdatePetWithFormEndpoint : Wirespec.Endpoint {
       }
     }
   }
-  suspend fun updatePetWithForm(request: Request<*>): Response<*>
+  @org.springframework.web.bind.annotation.PostMapping("/pet/{petId}")
+suspend fun updatePetWithForm(request: Request<*>): Response<*>
 }
 interface DeletePetEndpoint : Wirespec.Endpoint {
   sealed interface Request<T> : Wirespec.Request<T>
@@ -535,7 +541,8 @@ interface DeletePetEndpoint : Wirespec.Endpoint {
       }
     }
   }
-  suspend fun deletePet(request: Request<*>): Response<*>
+  @org.springframework.web.bind.annotation.DeleteMapping("/pet/{petId}")
+suspend fun deletePet(request: Request<*>): Response<*>
 }
 interface UploadFileEndpoint : Wirespec.Endpoint {
   sealed interface Request<T> : Wirespec.Request<T>
@@ -585,7 +592,8 @@ interface UploadFileEndpoint : Wirespec.Endpoint {
       }
     }
   }
-  suspend fun uploadFile(request: Request<*>): Response<*>
+  @org.springframework.web.bind.annotation.PostMapping("/pet/{petId}/uploadImage")
+suspend fun uploadFile(request: Request<*>): Response<*>
 }
 interface GetInventoryEndpoint : Wirespec.Endpoint {
   sealed interface Request<T> : Wirespec.Request<T>
@@ -633,7 +641,8 @@ interface GetInventoryEndpoint : Wirespec.Endpoint {
       }
     }
   }
-  suspend fun getInventory(request: Request<*>): Response<*>
+  @org.springframework.web.bind.annotation.GetMapping("/store/inventory")
+suspend fun getInventory(request: Request<*>): Response<*>
 }
 interface PlaceOrderEndpoint : Wirespec.Endpoint {
   sealed interface Request<T> : Wirespec.Request<T>
@@ -729,7 +738,8 @@ interface PlaceOrderEndpoint : Wirespec.Endpoint {
       }
     }
   }
-  suspend fun placeOrder(request: Request<*>): Response<*>
+  @org.springframework.web.bind.annotation.PostMapping("/store/order")
+suspend fun placeOrder(request: Request<*>): Response<*>
 }
 interface GetOrderByIdEndpoint : Wirespec.Endpoint {
   sealed interface Request<T> : Wirespec.Request<T>
@@ -806,7 +816,8 @@ interface GetOrderByIdEndpoint : Wirespec.Endpoint {
       }
     }
   }
-  suspend fun getOrderById(request: Request<*>): Response<*>
+  @org.springframework.web.bind.annotation.GetMapping("/store/order/{orderId}")
+suspend fun getOrderById(request: Request<*>): Response<*>
 }
 interface DeleteOrderEndpoint : Wirespec.Endpoint {
   sealed interface Request<T> : Wirespec.Request<T>
@@ -861,7 +872,8 @@ interface DeleteOrderEndpoint : Wirespec.Endpoint {
       }
     }
   }
-  suspend fun deleteOrder(request: Request<*>): Response<*>
+  @org.springframework.web.bind.annotation.DeleteMapping("/store/order/{orderId}")
+suspend fun deleteOrder(request: Request<*>): Response<*>
 }
 interface CreateUserEndpoint : Wirespec.Endpoint {
   sealed interface Request<T> : Wirespec.Request<T>
@@ -956,7 +968,8 @@ interface CreateUserEndpoint : Wirespec.Endpoint {
       }
     }
   }
-  suspend fun createUser(request: Request<*>): Response<*>
+  @org.springframework.web.bind.annotation.PostMapping("/user")
+suspend fun createUser(request: Request<*>): Response<*>
 }
 interface CreateUsersWithListInputEndpoint : Wirespec.Endpoint {
   sealed interface Request<T> : Wirespec.Request<T>
@@ -1025,7 +1038,8 @@ interface CreateUsersWithListInputEndpoint : Wirespec.Endpoint {
       }
     }
   }
-  suspend fun createUsersWithListInput(request: Request<*>): Response<*>
+  @org.springframework.web.bind.annotation.PostMapping("/user/createWithList")
+suspend fun createUsersWithListInput(request: Request<*>): Response<*>
 }
 interface LoginUserEndpoint : Wirespec.Endpoint {
   sealed interface Request<T> : Wirespec.Request<T>
@@ -1093,7 +1107,8 @@ interface LoginUserEndpoint : Wirespec.Endpoint {
       }
     }
   }
-  suspend fun loginUser(request: Request<*>): Response<*>
+  @org.springframework.web.bind.annotation.GetMapping("/user/login")
+suspend fun loginUser(request: Request<*>): Response<*>
 }
 interface LogoutUserEndpoint : Wirespec.Endpoint {
   sealed interface Request<T> : Wirespec.Request<T>
@@ -1138,7 +1153,8 @@ interface LogoutUserEndpoint : Wirespec.Endpoint {
       }
     }
   }
-  suspend fun logoutUser(request: Request<*>): Response<*>
+  @org.springframework.web.bind.annotation.GetMapping("/user/logout")
+suspend fun logoutUser(request: Request<*>): Response<*>
 }
 interface GetUserByNameEndpoint : Wirespec.Endpoint {
   sealed interface Request<T> : Wirespec.Request<T>
@@ -1215,7 +1231,8 @@ interface GetUserByNameEndpoint : Wirespec.Endpoint {
       }
     }
   }
-  suspend fun getUserByName(request: Request<*>): Response<*>
+  @org.springframework.web.bind.annotation.GetMapping("/user/{username}")
+suspend fun getUserByName(request: Request<*>): Response<*>
 }
 interface UpdateUserEndpoint : Wirespec.Endpoint {
   sealed interface Request<T> : Wirespec.Request<T>
@@ -1298,7 +1315,8 @@ interface UpdateUserEndpoint : Wirespec.Endpoint {
       }
     }
   }
-  suspend fun updateUser(request: Request<*>): Response<*>
+  @org.springframework.web.bind.annotation.PutMapping("/user/{username}")
+suspend fun updateUser(request: Request<*>): Response<*>
 }
 interface DeleteUserEndpoint : Wirespec.Endpoint {
   sealed interface Request<T> : Wirespec.Request<T>
@@ -1353,7 +1371,8 @@ interface DeleteUserEndpoint : Wirespec.Endpoint {
       }
     }
   }
-  suspend fun deleteUser(request: Request<*>): Response<*>
+  @org.springframework.web.bind.annotation.DeleteMapping("/user/{username}")
+suspend fun deleteUser(request: Request<*>): Response<*>
 }
 enum class FindPetsByStatusParameterStatus (val label: String): Wirespec.Enum {
   available("available"),
