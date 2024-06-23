@@ -48,7 +48,8 @@ dependencies {
 }
 
 tasks.withType<KotlinCompile> {
-    dependsOn("wirespec")
+    dependsOn("wirespec-kotlin")
+    dependsOn("wirespec-typescript")
     compilerOptions {
         freeCompilerArgs.add("-Xjsr305=strict")
         jvmTarget.set(JvmTarget.JVM_17)
@@ -69,22 +70,21 @@ buildscript {
     }
 }
 
-wirespec {
-    compile {
-        input = "$projectDir/src/main/wirespec"
-        output = "${layout.buildDirectory.get()}/typescript"
-        packageName = ""
-        languages = listOf(Language.TypeScript)
-    }
 
-    custom {
-        input = "$projectDir/src/main/wirespec"
-        output = "${layout.buildDirectory.get()}/generated"
-        packageName = "community.flock.wirespec.generated.kotlin"
-        emitter = KotlinSerializableEmitter()
-        shared = KotlinShared
-        extention = "kt"
-    }
+tasks.register<CustomWirespecTask>("wirespec-kotlin") {
+    input = layout.projectDirectory.dir("/src/main/wirespec")
+    output = layout.buildDirectory.dir("generated"
+    packageName = "community.flock.wirespec.generated.kotlin"
+    emitter = KotlinSerializableEmitter()
+    shared = KotlinShared
+    extention = "kt"
+}
+
+tasks.register<CompileWirespecTask>("wirespec-typescript") {
+    input = layout.projectDirectory.dir("/src/main/wirespec")
+    output = layout.buildDirectory.dir("generated"
+    packageName = "community.flock.aigentic.kotlin"
+    languages = listOf(Language.Kotlin)
 }
 
 class KotlinSerializableEmitter : KotlinEmitter("community.flock.wirespec.generated.kotlin") {

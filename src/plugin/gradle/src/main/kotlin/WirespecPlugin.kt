@@ -18,8 +18,7 @@ import kotlin.io.path.Path
 import kotlin.streams.asSequence
 
 class WirespecPlugin : Plugin<Project> {
-
     override fun apply(project: Project) {
-        println("Wirespec plugin")
+        project.tasks.create("wirespec", CompileWirespecTask::class.java)
     }
 }
