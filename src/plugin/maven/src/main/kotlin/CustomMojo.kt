@@ -38,6 +38,10 @@ class CustomMojo : BaseMojo() {
 
     override fun execute() {
         project.addCompileSourceRoot(output)
+        val ext = extension
+        val defaultPkg = PackageName("community.flock.wirespec")
+        val emitterPkg = packageName.let { PackageName(it) }
+
         val emitter = try {
             val clazz = getClassLoader(project).loadClass(emitterClass)
             val constructor = clazz.getConstructor(Logger::class.java, Boolean::class.java)
@@ -47,7 +51,7 @@ class CustomMojo : BaseMojo() {
             throw e
         }
         if(shared != null){
-            val defaultPkg = PackageName("community.flock.wirespec")
+
             val sharedSource = when(shared){
                 Language.Java -> JavaShared
                 Language.Kotlin -> KotlinShared
@@ -56,12 +60,12 @@ class CustomMojo : BaseMojo() {
             }
             File(output).resolve(defaultPkg.toDirectory()).apply {
                 mkdirs()
-                resolve("Wirespec.$extension").writeText(sharedSource.source)
+                resolve("Wirespec.$ext").writeText(sharedSource.source)
             }
         }
         getFilesContent().compile(logger, emitter)
-            .also { File(output).mkdirs() }
-            .forEach { (name, result) -> File(output).resolve("$name.$extension").writeText(result) }
+            .also { File(output).resolve(emitterPkg.toDirectory()).mkdirs() }
+            .forEach { (name, result) -> File(output).resolve(emitterPkg.toDirectory()).resolve("$name.$extension").writeText(result) }
     }
 
     private fun getClassLoader(project: MavenProject): ClassLoader {
