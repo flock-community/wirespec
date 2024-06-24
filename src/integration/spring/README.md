@@ -1,6 +1,6 @@
 # Spring integration lib
 
-This module offers Spring configuration which can bind Wirespec endpoints as request mappings.
+This module offers Spring configuration which binds Wirespec endpoints as request mappings.
 
 ## Install
 
@@ -13,9 +13,9 @@ This module offers Spring configuration which can bind Wirespec endpoints as req
 ```
 
 ## Usage
-Use the custom Java or Kotlin spring emitters to generate the endpoint classes
+Use the custom Java or Kotlin spring emitters to generate wirespec spring enabled endpoint interfaces
 - [SpringJavaEmitter.kt](src%2FjvmMain%2Fkotlin%2Fcommunity%2Fflock%2Fwirespec%2Fintegration%2Fspring%2Femit%2FSpringJavaEmitter.kt)
-- [SpringJavaEmitter.kt](src%2FjvmMain%2Fkotlin%2Fcommunity%2Fflock%2Fwirespec%2Fintegration%2Fspring%2Femit%2FSpringJavaEmitter.kt)
+- [SpringKotlinEmitter.kt](src%2FjvmMain%2Fkotlin%2Fcommunity%2Fflock%2Fwirespec%2Fintegration%2Fspring%2Femit%2FSpringKotlinEmitter.kt)
 
 Load the wirspec spring configuration 
 - [WirespecConfiguration.kt](src%2FjvmMain%2Fkotlin%2Fcommunity%2Fflock%2Fwirespec%2Fintegration%2Fspring%2Fconfiguration%2FWirespecConfiguration.kt)
