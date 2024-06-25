@@ -1,5 +1,6 @@
 package community.flock.wirespec.plugin.gradle
 
+import community.flock.wirespec.plugin.FilesContent
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.mapEmitter
@@ -41,15 +42,15 @@ abstract class CompileWirespecTask : BaseWirespecTask() {
         val ast = getFilesContent().parse(wirespecLogger)
         languages.get()
             .map { it.mapEmitter(packageNameValue, wirespecLogger) }
-            .forEach { (emitter, sharedData, ext) ->
+            .forEach { (emitter, ext, sharedData) ->
                 ast.forEach { (fileName, ast) ->
                     emitter.emit(ast).forEach {
                         it.writeToFiles(
-                            output.asFile.get(),
-                            packageNameValue,
-                            if (shared.getOrElse(true)) sharedData else null,
-                            if(!emitter.split) fileName else null,
-                            ext
+                            output = output.asFile.get(),
+                            packageName = packageNameValue,
+                            shared = if (shared.getOrElse(true)) sharedData else null,
+                            fileName = if (emitter.split) null else fileName,
+                            ext = ext
                         )
                     }
                 }

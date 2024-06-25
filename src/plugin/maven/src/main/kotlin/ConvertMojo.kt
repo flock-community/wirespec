@@ -2,16 +2,17 @@ package community.flock.wirespec.plugin.maven
 
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
 import community.flock.wirespec.openapi.v2.OpenApiV2Parser
+import community.flock.wirespec.openapi.v3.OpenApiV3Parser
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Format.OpenApiV2
 import community.flock.wirespec.plugin.Format.OpenApiV3
 import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.mapEmitter
 import community.flock.wirespec.plugin.writeToFiles
+import java.io.File
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
-import java.io.File
 
 @Mojo(name = "convert", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
 class ConvertMojo : CompileMojo() {
@@ -34,25 +35,21 @@ class ConvertMojo : CompileMojo() {
         val json = File(input).readText()
         val ast = when (format) {
             OpenApiV2 -> OpenApiV2Parser.parse(json, !strict)
-            OpenApiV3 -> community.flock.wirespec.openapi.v3.OpenApiV3Parser.parse(json, !strict)
+            OpenApiV3 -> OpenApiV3Parser.parse(json, !strict)
         }
 
         languages
             ?.map { it.mapEmitter(packageNameValue, logger) }
-            ?.forEach { (emitter, sharedData, ext) ->
+            ?.forEach { (emitter, ext, sharedData) ->
                 emitter.emit(ast).forEach {
                     it.writeToFiles(
-                        outputFile,
-                        packageNameValue,
-                        if (shared) sharedData else null,
-                        if(!emitter.split) fileName else null,
-                        ext
+                        output = outputFile,
+                        packageName = packageNameValue,
+                        shared = if (shared) sharedData else null,
+                        fileName = if (emitter.split) null else fileName,
+                        ext = ext
                     )
                 }
             }
-
-
     }
-
-
 }

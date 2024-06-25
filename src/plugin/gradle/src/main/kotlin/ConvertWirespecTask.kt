@@ -1,6 +1,8 @@
 package community.flock.wirespec.plugin.gradle
 
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
+import community.flock.wirespec.openapi.v2.OpenApiV2Parser
+import community.flock.wirespec.openapi.v3.OpenApiV3Parser
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Format.OpenApiV2
 import community.flock.wirespec.plugin.Format.OpenApiV3
@@ -52,20 +54,20 @@ abstract class ConvertWirespecTask : BaseWirespecTask() {
         val json = input.asFile.get().readText()
 
         val ast = when (format.get()) {
-            OpenApiV2 -> community.flock.wirespec.openapi.v2.OpenApiV2Parser.parse(json, strict.getOrElse(false))
-            OpenApiV3 -> community.flock.wirespec.openapi.v3.OpenApiV3Parser.parse(json, strict.getOrElse(false))
+            OpenApiV2 -> OpenApiV2Parser.parse(json, strict.getOrElse(false))
+            OpenApiV3 -> OpenApiV3Parser.parse(json, strict.getOrElse(false))
         }
 
         languages.get()
             .map { it.mapEmitter(packageNameValue, wirespecLogger) }
-            .forEach { (emitter, sharedData, ext) ->
+            .forEach { (emitter, ext, sharedData) ->
                 emitter.emit(ast).forEach {
                     it.writeToFiles(
-                        output.asFile.get(),
-                        packageNameValue,
-                        if (shared.getOrElse(true)) sharedData else null,
-                        if(!emitter.split) fileName else null,
-                        ext
+                        output = output.asFile.get(),
+                        packageName = packageNameValue,
+                        shared = if (shared.getOrElse(true)) sharedData else null,
+                        fileName = if (emitter.split) null else fileName,
+                        ext = ext,
                     )
                 }
             }

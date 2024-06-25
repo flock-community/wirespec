@@ -1,6 +1,6 @@
 # Gradle plugin
 
-The gradle plugin can be use compile wirespec
+The gradle plugin can be used to compile wirespec
 
 ## Usage
 

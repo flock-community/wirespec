@@ -4,11 +4,11 @@ import community.flock.wirespec.compiler.core.emit.transformer.ClassModelTransfo
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.plugin.FileExtension
 import community.flock.wirespec.plugin.Language
-import community.flock.wirespec.plugin.gradle.CustomWirespecTask
 import community.flock.wirespec.plugin.gradle.CompileWirespecTask
+import community.flock.wirespec.plugin.gradle.CustomWirespecTask
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 val ktor_version: String by project
@@ -78,7 +78,7 @@ tasks.register<CustomWirespecTask>("wirespec-kotlin") {
     packageName = "community.flock.wirespec.generated.kotlin"
     emitter = KotlinSerializableEmitter::class.java
     shared = KotlinShared.source
-    extension = "kt"
+    extension = FileExtension.Kotlin.value
 }
 
 tasks.register<CompileWirespecTask>("wirespec-typescript") {

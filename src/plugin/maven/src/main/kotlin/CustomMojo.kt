@@ -4,18 +4,17 @@ import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.shared.JavaShared
 import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
 import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
-import community.flock.wirespec.compiler.core.emit.shared.Shared
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.compile
 import community.flock.wirespec.plugin.toDirectory
+import java.io.File
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.plugins.annotations.ResolutionScope
 import org.apache.maven.project.MavenProject
-import java.io.File
 
 @Mojo(
     name = "custom",
@@ -34,29 +33,28 @@ class CustomMojo : BaseMojo() {
     private var split: Boolean = false
 
     @Parameter
-    protected var shared: Language? = null
+    private var shared: Language? = null
 
     override fun execute() {
         project.addCompileSourceRoot(output)
         val ext = extension
         val defaultPkg = PackageName("community.flock.wirespec")
-        val emitterPkg = packageName.let { PackageName(it) }
+        val emitterPkg = PackageName(packageName)
 
         val emitter = try {
-            val clazz = getClassLoader(project).loadClass(emitterClass)
-            val constructor = clazz.getConstructor(Logger::class.java, Boolean::class.java)
-            constructor.newInstance(logger, split) as Emitter
+            getClassLoader(project)
+                .loadClass(emitterClass)
+                .getConstructor(Logger::class.java, Boolean::class.java)
+                .newInstance(logger, split) as Emitter
         } catch (e: Exception) {
-            e.printStackTrace()
-            throw e
+            throw e.also { it.printStackTrace() }
         }
-        if(shared != null){
-
-            val sharedSource = when(shared){
+        if (shared != null) {
+            val sharedSource = when (shared) {
                 Language.Java -> JavaShared
                 Language.Kotlin -> KotlinShared
                 Language.Scala -> ScalaShared
-                else -> error("No sharde availible for: $shared")
+                else -> error("No shared available for: $shared")
             }
             File(output).resolve(defaultPkg.toDirectory()).apply {
                 mkdirs()
@@ -65,14 +63,17 @@ class CustomMojo : BaseMojo() {
         }
         getFilesContent().compile(logger, emitter)
             .also { File(output).resolve(emitterPkg.toDirectory()).mkdirs() }
-            .forEach { (name, result) -> File(output).resolve(emitterPkg.toDirectory()).resolve("$name.$extension").writeText(result) }
+            .forEach { (name, result) ->
+                File(output).resolve(emitterPkg.toDirectory()).resolve("$name.$extension").writeText(result)
+            }
     }
 
     private fun getClassLoader(project: MavenProject): ClassLoader {
         try {
-            val classpathElements = project.compileClasspathElements
-            classpathElements.add(project.build.outputDirectory)
-            classpathElements.add(project.build.testOutputDirectory)
+            val classpathElements = project.compileClasspathElements.apply {
+                add(project.build.outputDirectory)
+                add(project.build.testOutputDirectory)
+            }
             val urls = classpathElements.indices
                 .map { File(classpathElements[it] as String).toURI().toURL() }
                 .toTypedArray()

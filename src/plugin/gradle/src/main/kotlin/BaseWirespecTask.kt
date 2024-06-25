@@ -9,8 +9,6 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.options.Option
 
-typealias FilesContent = List<Pair<String, String>>
-
 abstract class BaseWirespecTask : DefaultTask() {
 
     @get:OutputDirectory
@@ -23,9 +21,17 @@ abstract class BaseWirespecTask : DefaultTask() {
 
     @Internal
     val wirespecLogger = object : Logger() {
-        override fun debug(s: String) { logger.debug(s) }
-        override fun info(s: String) { logger.info(s) }
-        override fun warn(s: String) { logger.warn(s) }
+        override fun debug(s: String) {
+            logger.debug(s)
+        }
+
+        override fun info(s: String) {
+            logger.info(s)
+        }
+
+        override fun warn(s: String) {
+            logger.warn(s)
+        }
     }
 
 }
