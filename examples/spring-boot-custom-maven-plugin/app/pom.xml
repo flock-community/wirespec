@@ -53,7 +53,7 @@
                             <input>${project.basedir}/src/main/wirespec</input>
                             <output>${project.build.directory}/generated-sources/java/hello</output>
                             <emitterClass>community.flock.wirespec.emit.CustomEmitter</emitterClass>
-                            <extention>java</extention>
+                            <extension>java</extension>
                             <split>true</split>
                         </configuration>
                     </execution>

@@ -52,7 +52,7 @@ class TokenProvider(private val logger: Logger, list: NonEmptyList<Token>) {
         val prev = previousToken?.run { "Eating: '$value', " } ?: ""
         val curr = token.run { "Current: '$value'" }
         val next = nextToken?.run { ", Next: '$value'" } ?: ""
-        logger.log("$prev$curr$next")
+        logger.debug("$prev$curr$next")
     }
 
     private fun nextToken() = runCatching { tokenIterator.next() }.getOrNull()

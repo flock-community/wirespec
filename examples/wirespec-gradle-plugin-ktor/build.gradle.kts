@@ -4,9 +4,11 @@ import community.flock.wirespec.compiler.core.emit.transformer.ClassModelTransfo
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.plugin.FileExtension
 import community.flock.wirespec.plugin.Language
+import community.flock.wirespec.plugin.gradle.CompileWirespecTask
+import community.flock.wirespec.plugin.gradle.CustomWirespecTask
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 val ktor_version: String by project
@@ -48,7 +50,8 @@ dependencies {
 }
 
 tasks.withType<KotlinCompile> {
-    dependsOn("wirespec")
+    dependsOn("wirespec-kotlin")
+    dependsOn("wirespec-typescript")
     compilerOptions {
         freeCompilerArgs.add("-Xjsr305=strict")
         jvmTarget.set(JvmTarget.JVM_17)
@@ -69,22 +72,20 @@ buildscript {
     }
 }
 
-wirespec {
-    compile {
-        input = "$projectDir/src/main/wirespec"
-        output = "${layout.buildDirectory.get()}/typescript"
-        packageName = ""
-        languages = listOf(Language.TypeScript)
-    }
+tasks.register<CustomWirespecTask>("wirespec-kotlin") {
+    input = layout.projectDirectory.dir("src/main/wirespec")
+    output = layout.buildDirectory.dir("generated")
+    packageName = "community.flock.wirespec.generated.kotlin"
+    emitter = KotlinSerializableEmitter::class.java
+    shared = KotlinShared.source
+    extension = FileExtension.Kotlin.value
+}
 
-    custom {
-        input = "$projectDir/src/main/wirespec"
-        output = "${layout.buildDirectory.get()}/generated"
-        packageName = "community.flock.wirespec.generated.kotlin"
-        emitter = KotlinSerializableEmitter()
-        shared = KotlinShared
-        extention = "kt"
-    }
+tasks.register<CompileWirespecTask>("wirespec-typescript") {
+    input = layout.projectDirectory.dir("src/main/wirespec")
+    output = layout.buildDirectory.dir("generated")
+    packageName = "community.flock.wirespec.kotlin"
+    languages = listOf(Language.Kotlin)
 }
 
 class KotlinSerializableEmitter : KotlinEmitter("community.flock.wirespec.generated.kotlin") {
