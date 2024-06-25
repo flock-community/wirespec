@@ -30,7 +30,7 @@ import community.flock.wirespec.compiler.core.parse.Union
 import kotlinx.serialization.json.JsonPrimitive
 import community.flock.kotlinx.openapi.bindings.v3.Type as OpenApiType
 
-class OpenApiV3Emitter {
+object OpenApiV3Emitter {
     data class Options(
         val title: String,
         val version: String

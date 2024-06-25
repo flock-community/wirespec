@@ -64,12 +64,12 @@ fun emit(ast: Array<WsNode>, emitter: Emitters, packageName: String) = ast
             Emitters.KOTLIN -> KotlinEmitter(packageName).emit(it)
             Emitters.SCALA -> ScalaEmitter(packageName).emit(it)
             Emitters.OPENAPI_V2 -> listOf(it)
-                .map { OpenApiV2Emitter().emit(it) }
+                .map { OpenApiV2Emitter.emit(it) }
                 .map { Json.encodeToString(SwaggerObject.serializer(), it) }
                 .map { Emitted("openapi", it) }
 
             Emitters.OPENAPI_V3 -> listOf(it)
-                .map { OpenApiV3Emitter().emit(it) }
+                .map { OpenApiV3Emitter.emit(it) }
                 .map { Json.encodeToString(OpenAPIObject.serializer(), it) }
                 .map { Emitted("openapi", it) }
         }

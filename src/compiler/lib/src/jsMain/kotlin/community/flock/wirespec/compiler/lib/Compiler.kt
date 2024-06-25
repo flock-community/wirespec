@@ -11,23 +11,19 @@ import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.parse.Parser
 import community.flock.wirespec.compiler.core.tokenize.tokenize
-import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.openapi.v2.OpenApiV2Parser
 import community.flock.wirespec.openapi.v3.OpenApiV3Parser
 
 @JsExport
 abstract class Compiler {
 
-    protected fun preCompile(source: String) = WirespecSpec.compile(source)(logger)
+    protected fun preCompile(source: String) = WirespecSpec.compile(source)(noLogger)
 
     fun tokenize(source: String) = WirespecSpec.tokenize(source).produce()
 
     fun parse(source: String) = WirespecSpec.tokenize(source)
-        .let { Parser(logger).parse(it).produce() }
-
-    companion object {
-        protected val logger = object : Logger() {}
-    }
+        .let { Parser(noLogger).parse(it).produce() }
 }
 
 @JsExport
@@ -35,7 +31,7 @@ class WsToKotlin : Compiler() {
     fun compile(source: String) = preCompile(source)(kotlinEmitter).produce()
 
     companion object {
-        private val kotlinEmitter = KotlinEmitter(logger = logger)
+        private val kotlinEmitter = KotlinEmitter(logger = noLogger)
     }
 }
 
@@ -44,7 +40,7 @@ class WsToTypeScript : Compiler() {
     fun compile(source: String) = preCompile(source)(typeScriptEmitter).produce()
 
     companion object {
-        private val typeScriptEmitter = TypeScriptEmitter(logger)
+        private val typeScriptEmitter = TypeScriptEmitter(noLogger)
     }
 }
 
@@ -53,7 +49,7 @@ class WsToScala : Compiler() {
     fun compile(source: String) = preCompile(source)(typeScriptEmitter).produce()
 
     companion object {
-        private val typeScriptEmitter = ScalaEmitter(logger = logger)
+        private val typeScriptEmitter = ScalaEmitter(logger = noLogger)
     }
 }
 
@@ -62,7 +58,7 @@ class WsToJava : Compiler() {
     fun compile(source: String) = preCompile(source)(typeScriptEmitter).produce()
 
     companion object {
-        private val typeScriptEmitter = JavaEmitter(logger = logger)
+        private val typeScriptEmitter = JavaEmitter(logger = noLogger)
     }
 }
 
@@ -71,7 +67,7 @@ class WsToWirespec : Compiler() {
     fun compile(source: String) = preCompile(source)(wirespecEmitter).produce()
 
     companion object {
-        private val wirespecEmitter = WirespecEmitter(logger)
+        private val wirespecEmitter = WirespecEmitter(noLogger)
     }
 }
 
@@ -87,8 +83,7 @@ object OpenApiV2Parser {
 
 @JsExport
 object OpenApiV2ToTypescript {
-    val logger = object : Logger() {}
-    private val emitter = TypeScriptEmitter(logger)
+    private val emitter = TypeScriptEmitter(noLogger)
     fun compile(source: String): Array<WsCompiledFile> {
         val ast = OpenApiV2Parser.parse(source)
         return emitter.emit(ast)
@@ -99,8 +94,7 @@ object OpenApiV2ToTypescript {
 
 @JsExport
 object OpenApiV2ToWirespec {
-    val logger = object : Logger() {}
-    private val emitter = WirespecEmitter(logger)
+    private val emitter = WirespecEmitter(noLogger)
     fun compile(source: String): Array<WsCompiledFile> {
         val ast = OpenApiV2Parser.parse(source)
         return emitter.emit(ast)
@@ -117,8 +111,7 @@ object OpenApiV3Parser {
 
 @JsExport
 object OpenApiV3ToTypescript {
-    val logger = object : Logger() {}
-    private val emitter = TypeScriptEmitter(logger)
+    private val emitter = TypeScriptEmitter(noLogger)
     fun compile(source: String): Array<WsCompiledFile> {
         val ast = OpenApiV3Parser.parse(source)
         return emitter.emit(ast)
@@ -129,8 +122,7 @@ object OpenApiV3ToTypescript {
 
 @JsExport
 object OpenApiV3ToWirespec {
-    val logger = object : Logger() {}
-    private val emitter = WirespecEmitter(logger)
+    private val emitter = WirespecEmitter(noLogger)
     fun compile(source: String): Array<WsCompiledFile> {
         val ast = OpenApiV3Parser.parse(source)
         return emitter.emit(ast)
