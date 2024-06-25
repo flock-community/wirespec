@@ -26,9 +26,9 @@ import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Field.Reference
 import community.flock.wirespec.compiler.core.parse.Identifier
-import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.openapi.Common.className
+import community.flock.wirespec.openapi.Common.filterNotNullValues
 import kotlinx.serialization.json.Json
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenapiType
 
@@ -38,8 +38,13 @@ object OpenApiV2Parser {
         OpenAPI(json = Json { prettyPrint = true; ignoreUnknownKeys = ignoreUnknown })
             .decodeFromString(json).parse()
 
-    fun SwaggerObject.parse(): AST =
-        parseEndpoints() + parseParameters() + parseRequestBody() + parseResponseBody() + parseDefinitions()
+    fun SwaggerObject.parse(): AST = listOf(
+        parseEndpoints(),
+        parseParameters(),
+        parseRequestBody(),
+        parseResponseBody(),
+        parseDefinitions(),
+    ).reduce(AST::plus)
 
     private fun SwaggerObject.parseEndpoints(): AST = paths
         .flatMap { (path, pathItem) ->
@@ -146,7 +151,7 @@ object OpenApiV2Parser {
                 else -> emptyList()
             }
         }
-        val types: List<Node> = operation.parameters
+        val types: AST = operation.parameters
             ?.map { resolve(it) }
             ?.filter { it.`in` == ParameterLocation.BODY }
             ?.flatMap { param ->
@@ -262,7 +267,7 @@ object OpenApiV2Parser {
             is ReferenceObject -> resolveParameterObject(parameterOrReference)
         }
 
-    private fun SwaggerObject.flatten(schemaObject: SchemaObject, name: String): List<Node> = when {
+    private fun SwaggerObject.flatten(schemaObject: SchemaObject, name: String): AST = when {
         schemaObject.additionalProperties != null -> when (schemaObject.additionalProperties) {
             is BooleanObject -> emptyList()
             else -> schemaObject.additionalProperties
@@ -324,7 +329,7 @@ object OpenApiV2Parser {
         }
     }
 
-    private fun SwaggerObject.flatten(schemaOrReference: SchemaOrReferenceObject, name: String): List<Node> =
+    private fun SwaggerObject.flatten(schemaOrReference: SchemaOrReferenceObject, name: String): AST =
         when (schemaOrReference) {
             is SchemaObject -> flatten(schemaOrReference, name)
             is ReferenceObject -> emptyList()
@@ -535,7 +540,7 @@ object OpenApiV2Parser {
         val type: String
     )
 
-    private fun <T> SwaggerObject.flatMapRequests(f: FlattenRequest.() -> List<T>) = paths
+    private fun SwaggerObject.flatMapRequests(f: FlattenRequest.() -> AST) = paths
         .flatMap { (path, pathItem) ->
             pathItem.toOperationList()
                 .flatMap { (method, operation) ->
@@ -562,7 +567,7 @@ object OpenApiV2Parser {
         val type: String
     )
 
-    private fun <T> SwaggerObject.flatMapResponses(f: FlattenResponse.() -> List<T>) = paths
+    private fun SwaggerObject.flatMapResponses(f: FlattenResponse.() -> AST) = paths
         .flatMap { (path, pathItem) ->
             pathItem.toOperationList()
                 .flatMap { (method, operation) ->
@@ -584,9 +589,6 @@ object OpenApiV2Parser {
         }
         .flatMap(f)
 }
-
-private fun <K, V> Map<K, V?>.filterNotNullValues(): Map<K, V> =
-    mapNotNull { (key, value) -> value?.let { key to it } }.toMap()
 
 private fun OpenapiType?.isPrimitive() = when (this) {
     OpenapiType.STRING -> true

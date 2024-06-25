@@ -1,3 +1,5 @@
+package community.flock.wirespec.generator
+
 import community.flock.kotlinx.rgxgen.RgxGen
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
@@ -73,7 +75,7 @@ object Generator {
         return def.shape.value
             .fold<Field, Map<String, JsonElement>>(emptyMap()) { acc, cur ->
                 cur.identifier.value.let { value ->
-                    val fieldSeed = typeSeed + value.sumOf { it -> it.code }
+                    val fieldSeed = typeSeed + value.sumOf { it.code }
                     val fieldRandom = Random(fieldSeed)
                     acc.plus(value to generateReference(cur.reference, fieldRandom))
                 }

@@ -36,17 +36,15 @@ object OpenApiV3Emitter {
         val version: String
     )
 
-    fun emit(ast: AST, options: Options? = null): OpenAPIObject {
-        return OpenAPIObject(
-            openapi = "3.0.0",
-            info = InfoObject(
-                title = options?.title ?: "Wirespec",
-                version = options?.version ?: "0.0.0"
-            ),
-            paths = ast.emitPaths(),
-            components = ast.emitComponents()
-        )
-    }
+    fun emit(ast: AST, options: Options? = null) = OpenAPIObject(
+        openapi = "3.0.0",
+        info = InfoObject(
+            title = options?.title ?: "Wirespec",
+            version = options?.version ?: "0.0.0"
+        ),
+        paths = ast.emitPaths(),
+        components = ast.emitComponents()
+    )
 
     private fun AST.emitComponents() = this
         .filterIsInstance<Definition>()
@@ -163,37 +161,34 @@ object OpenApiV3Emitter {
 
     private fun Field.emitSchema(): Pair<String, SchemaOrReferenceObject> = identifier.value to reference.emitSchema()
 
-    private fun Field.Reference.emitHeader(): HeaderOrReferenceObject {
-        return when (this) {
-            is Field.Reference.Custom -> ReferenceObject(ref = Ref("#/components/headers/${value}"))
-            is Field.Reference.Primitive -> HeaderObject(schema = emitSchema())
-            is Field.Reference.Any -> error("Cannot map Any")
-            is Field.Reference.Unit -> error("Cannot map Unit")
-        }
+    private fun Field.Reference.emitHeader() = when (this) {
+        is Field.Reference.Custom -> ReferenceObject(ref = Ref("#/components/headers/${value}"))
+        is Field.Reference.Primitive -> HeaderObject(schema = emitSchema())
+        is Field.Reference.Any -> error("Cannot map Any")
+        is Field.Reference.Unit -> error("Cannot map Unit")
     }
 
-    private fun Field.Reference.emitSchema(): SchemaOrReferenceObject {
-        val ref = when (this) {
+    private fun Field.Reference.emitSchema(): SchemaOrReferenceObject =
+        when (this) {
             is Field.Reference.Custom -> ReferenceObject(ref = Ref("#/components/schemas/${value}"))
             is Field.Reference.Primitive -> SchemaObject(type = type.emitType())
             is Field.Reference.Any -> error("Cannot map Any")
             is Field.Reference.Unit -> error("Cannot map Unit")
-        }
-        if (isDictionary) {
-            return SchemaObject(
-                type = OpenApiType.OBJECT,
-                additionalProperties = ref
-            )
-        }
-        if (isIterable) {
-            return SchemaObject(
-                type = OpenApiType.ARRAY,
-                items = ref,
-            )
-        }
-        return ref
-    }
+        }.let {
+            when {
+                isDictionary -> SchemaObject(
+                    type = OpenApiType.OBJECT,
+                    additionalProperties = it
+                )
 
+                isIterable -> SchemaObject(
+                    type = OpenApiType.ARRAY,
+                    items = it,
+                )
+
+                else -> it
+            }
+        }
 
     private fun Field.Reference.Primitive.Type.emitType(): OpenApiType = when (this) {
         Field.Reference.Primitive.Type.String -> OpenApiType.STRING
@@ -206,6 +201,4 @@ object OpenApiV3Emitter {
         MediaType(type) to MediaTypeObject(
             schema = reference.emitSchema()
         )
-
-
 }

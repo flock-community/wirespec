@@ -2,7 +2,7 @@
 
 package community.flock.wirespec.plugin.npm
 
-import Generator.generate
+import arrow.core.curried
 import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPIObject
 import community.flock.wirespec.compiler.core.WirespecSpec
@@ -18,9 +18,11 @@ import community.flock.wirespec.compiler.lib.WsStringResult
 import community.flock.wirespec.compiler.lib.consume
 import community.flock.wirespec.compiler.lib.produce
 import community.flock.wirespec.compiler.utils.noLogger
+import community.flock.wirespec.generator.Generator.generate
 import community.flock.wirespec.openapi.v2.OpenApiV2Emitter
 import community.flock.wirespec.openapi.v3.OpenApiV3Emitter
 import community.flock.wirespec.plugin.cli.main
+import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.json.Json
 
 @JsExport
@@ -45,12 +47,13 @@ fun tokenize(source: String) = WirespecSpec
 @JsExport
 fun parse(source: String) = WirespecSpec
     .tokenize(source)
-    .let { Parser(noLogger).parse(it).produce() }
+    .let(Parser(noLogger)::parse)
+    .produce()
 
 @JsExport
 fun generate(source: String, type: String): WsStringResult = WirespecSpec
     .tokenize(source)
-    .let { Parser(noLogger).parse(it) }
+    .let(Parser(noLogger)::parse)
     .map { it.generate(type).toString() }
     .produce()
 
@@ -64,15 +67,17 @@ fun emit(ast: Array<WsNode>, emitter: Emitters, packageName: String) = ast
             Emitters.KOTLIN -> KotlinEmitter(packageName).emit(it)
             Emitters.SCALA -> ScalaEmitter(packageName).emit(it)
             Emitters.OPENAPI_V2 -> listOf(it)
-                .map { OpenApiV2Emitter.emit(it) }
-                .map { Json.encodeToString(SwaggerObject.serializer(), it) }
-                .map { Emitted("openapi", it) }
+                .map(OpenApiV2Emitter::emit)
+                .map(encode(SwaggerObject.serializer()))
+                .map(::Emitted.curried()("openapi")::invoke)
 
             Emitters.OPENAPI_V3 -> listOf(it)
-                .map { OpenApiV3Emitter.emit(it) }
-                .map { Json.encodeToString(OpenAPIObject.serializer(), it) }
-                .map { Emitted("openapi", it) }
+                .map(OpenApiV3Emitter::emit)
+                .map(encode(OpenAPIObject.serializer()))
+                .map(::Emitted.curried()("openapi")::invoke)
         }
     }
     .map { it.produce() }
     .toTypedArray()
+
+private fun <T> encode(serializer: SerializationStrategy<T>) = { value: T -> Json.encodeToString(serializer, value) }
