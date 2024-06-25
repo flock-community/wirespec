@@ -73,7 +73,7 @@ open class JavaEmitter(
     override fun Type.emit(ast: AST) = transform(ast).emit()
 
     override fun TypeClass.emit() = """
-        |public record ${name.sanitizeSymbol()} (
+        |${typeAnnotation()}public record ${name.sanitizeSymbol()} (
         |${fields.joinToString(",\n") { it.emit() }.spacer()}
         |) ${if (supers.isNotEmpty()) "implements ${supers.joinToString(", ") { it.emit() }} " else ""}{
         |};
@@ -82,7 +82,7 @@ open class JavaEmitter(
     override fun Refined.emit() = transform().emit()
 
     override fun RefinedClass.emit() = """
-        |public record ${name.sanitizeSymbol()} (String value) implements Wirespec.Refined {
+        |${refinedAnnotation()}public record ${name.sanitizeSymbol()} (String value) implements Wirespec.Refined {
         |${SPACER}@Override
         |${SPACER}public String toString() { return value; }
         |${SPACER}public static boolean validate($name record) {
@@ -103,7 +103,7 @@ open class JavaEmitter(
     override fun Enum.emit() = transform().emit()
 
     override fun EnumClass.emit(): String = """
-        |public enum ${name.sanitizeSymbol()} implements Wirespec.Enum {
+        |${enumAnnotation()}public enum ${name.sanitizeSymbol()} implements Wirespec.Enum {
         |${entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"${it}\")" }.spacer()};
         |${SPACER}public final String label;
         |${SPACER}${name.sanitizeSymbol()}(String label) {
@@ -119,13 +119,13 @@ open class JavaEmitter(
     override fun Union.emit() = transform().emit()
 
     override fun UnionClass.emit(): String = """
-        |public sealed interface $name permits ${entries.joinToString(", ")} {}
+        |${unionAnnotation()}public sealed interface $name permits ${entries.joinToString(", ")} {}
     """.trimMargin()
 
     override fun Endpoint.emit() = transform().emit()
 
     override fun EndpointClass.emit() = """
-        |public interface ${name.sanitizeSymbol()} extends Wirespec.Endpoint {
+        |${endpointAnnotation()}public interface ${name.sanitizeSymbol()} extends Wirespec.Endpoint {
         |${SPACER}static String PATH = "$path";
         |${SPACER}static String METHOD = "$method";
         |
@@ -144,7 +144,7 @@ open class JavaEmitter(
         |${requestMapper.emit().spacer()}
         |${responseMapper.emit().spacer()}
         |
-        |${SPACER}public CompletableFuture<Response<?>> ${functionName}(Request<?> request);
+        |${SPACER}${callAnnotation(this)}public CompletableFuture<Response<?>> ${functionName}(Request<?> request);
         |
         |}
     """.trimMargin()

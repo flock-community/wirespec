@@ -24,7 +24,7 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
 open class KotlinEmitter(
-    private val packageName: String = DEFAULT_PACKAGE_STRING,
+    var packageName: String = DEFAULT_PACKAGE_STRING,
     logger: Logger = noLogger,
 ) : ClassModelEmitter, Emitter(logger, false) {
 
@@ -57,7 +57,7 @@ open class KotlinEmitter(
     override fun Type.emit(ast: AST) = transform(ast).emit()
 
     override fun TypeClass.emit() = """
-        |data class ${name.sanitizeSymbol()}(
+        |${typeAnnotation()}data class ${name.sanitizeSymbol()}(
         |${fields.joinToString(",\n") { it.emit() }.spacer()}
         |)${if (supers.isNotEmpty()) ": ${supers.joinToString(", ") { it.emit() }}" else ""}
         """.trimMargin()
@@ -65,7 +65,7 @@ open class KotlinEmitter(
     override fun Refined.emit() = transform().emit()
 
     override fun RefinedClass.emit() = """
-        |data class ${name.sanitizeSymbol()}(override val value: String): Wirespec.Refined {
+        |${refinedAnnotation()}data class ${name.sanitizeSymbol()}(override val value: String): Wirespec.Refined {
         |${SPACER}override fun toString() = value
         |}
         |
@@ -79,7 +79,7 @@ open class KotlinEmitter(
     override fun EnumClass.emit() = run {
         fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_").sanitizeFirstIsDigit()
         """
-            |enum class ${name.sanitizeSymbol()} (val label: String): Wirespec.Enum {
+            |${enumAnnotation()}enum class ${name.sanitizeSymbol()} (val label: String): Wirespec.Enum {
             |${entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }.spacer()};
             |${SPACER}override fun toString(): String {
             |${SPACER}${SPACER}return label
@@ -91,13 +91,13 @@ open class KotlinEmitter(
     override fun Union.emit() = transform().emit()
 
     override fun UnionClass.emit(): String = """
-        |sealed interface $name
+        |${unionAnnotation()}sealed interface $name
     """.trimMargin()
 
     override fun Endpoint.emit() = transform().emit()
 
     override fun EndpointClass.emit() = """
-        |interface ${name.sanitizeSymbol()} : ${supers.joinToString(", ") { it.emitWrap() }} {
+        |${endpointAnnotation()}interface ${name.sanitizeSymbol()} : ${supers.joinToString(", ") { it.emitWrap() }} {
         |${SPACER}sealed interface Request<T> : Wirespec.Request<T>
         |${requestClasses.joinToString("\n") { it.emit() }.spacer()}
         |
@@ -110,7 +110,7 @@ open class KotlinEmitter(
         |${requestMapper.emit().spacer(2)}
         |${responseMapper.emit().spacer(2)}
         |${SPACER}}
-        |${SPACER}suspend fun ${functionName}(request: Request<*>): Response<*>
+        |${SPACER}${callAnnotation(this)}suspend fun ${functionName}(request: Request<*>): Response<*>
         |}
         """.trimMargin()
 

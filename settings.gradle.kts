@@ -35,5 +35,6 @@ include(
     "src:converter:openapi",
     "src:integration:jackson",
     "src:integration:wirespec",
+    "src:integration:spring",
     "src:tools:generator",
 )

@@ -11,6 +11,13 @@ import community.flock.wirespec.compiler.core.emit.transformer.UnionClass
 
 interface ClassModelEmitter {
 
+    fun typeAnnotation() = ""
+    fun enumAnnotation() = ""
+    fun refinedAnnotation() = ""
+    fun unionAnnotation() = ""
+    fun endpointAnnotation() = ""
+    fun callAnnotation(endpointClass: EndpointClass) = ""
+
     fun TypeClass.emit(): String
 
     fun RefinedClass.emit(): String
