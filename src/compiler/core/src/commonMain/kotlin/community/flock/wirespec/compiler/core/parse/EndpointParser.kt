@@ -191,10 +191,11 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
 
     private fun TokenProvider.parseContent(wsType: WirespecType, value: String) = either {
         token.log()
+        val reference = parseReference(wsType, value).bind()
         if(wsType == WsUnit) null
         else Endpoint.Content(
             type = "application/json",
-            reference = parseReference(wsType, value).bind(),
+            reference = reference,
         )
     }
 
