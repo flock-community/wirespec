@@ -1,5 +1,6 @@
 package community.flock.wirespec.openapi.v2
 
+import community.flock.kotlinx.openapi.bindings.v2.HeaderObject
 import community.flock.kotlinx.openapi.bindings.v2.InfoObject
 import community.flock.kotlinx.openapi.bindings.v2.OperationObject
 import community.flock.kotlinx.openapi.bindings.v2.ParameterLocation
@@ -13,7 +14,6 @@ import community.flock.kotlinx.openapi.bindings.v2.SchemaObject
 import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v2.StatusCode
 import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
-import community.flock.kotlinx.openapi.bindings.v2.HeaderObject
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -23,7 +23,7 @@ import community.flock.wirespec.compiler.core.parse.Type
 import kotlinx.serialization.json.JsonPrimitive
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenApiType
 
-class OpenApiV2Emitter {
+object OpenApiV2Emitter {
 
     fun emit(ast: AST): SwaggerObject =
         SwaggerObject(
@@ -80,52 +80,49 @@ class OpenApiV2Emitter {
     private fun List<Endpoint>.emit(method: Endpoint.Method): OperationObject? =
         filter { it.method == method }.map { it.emit() }.firstOrNull()
 
-    private fun Endpoint.emit(): OperationObject {
-        val operationObject = OperationObject(
-            operationId = identifier.value,
-            consumes = requests.mapNotNull { it.content?.type }.distinct().ifEmpty { null },
-            produces = responses.mapNotNull { it.content?.type }.distinct().ifEmpty { null },
-            parameters = requests
-                .mapNotNull { it.content }
-                .take(1)
-                .map {
-                    ParameterObject(
-                        `in` = ParameterLocation.BODY,
-                        name = "RequestBody",
-                        schema = it.reference.emit(),
-                        required = !it.isNullable,
-                    )
-                } + query.map { it.emitParameter(ParameterLocation.QUERY) } + headers.map {
-                it.emitParameter(
-                    ParameterLocation.HEADER
+    private fun Endpoint.emit() = OperationObject(
+        operationId = identifier.value,
+        consumes = requests.mapNotNull { it.content?.type }.distinct().ifEmpty { null },
+        produces = responses.mapNotNull { it.content?.type }.distinct().ifEmpty { null },
+        parameters = requests
+            .mapNotNull { it.content }
+            .take(1)
+            .map {
+                ParameterObject(
+                    `in` = ParameterLocation.BODY,
+                    name = "RequestBody",
+                    schema = it.reference.emit(),
+                    required = !it.isNullable,
                 )
-            },
-            responses = responses
-                .associate {
-                    StatusCode(it.status) to ResponseObject(
-                        description = "$identifier ${it.status} response",
-                        headers = it.headers.associate {
-                            it.identifier.value to HeaderObject(
-                                type = it.reference.value,
-                                items = if(it.reference.isIterable) it.reference.emit() else null
-                            )
-                        },
-                        schema = it.content
-                            ?.takeIf { content -> content.reference !is Field.Reference.Unit }
-                            ?.let { content ->
-                                when (content.reference.isIterable) {
-                                    false -> content.reference.emit()
-                                    true -> SchemaObject(
-                                        type = OpenApiType.ARRAY,
-                                        items = content.reference.emit()
-                                    )
-                                }
+            } + query.map { it.emitParameter(ParameterLocation.QUERY) } + headers.map {
+            it.emitParameter(
+                ParameterLocation.HEADER
+            )
+        },
+        responses = responses
+            .associate { response ->
+                StatusCode(response.status) to ResponseObject(
+                    description = "$identifier ${response.status} response",
+                    headers = response.headers.associate {
+                        it.identifier.value to HeaderObject(
+                            type = it.reference.value,
+                            items = if (it.reference.isIterable) it.reference.emit() else null
+                        )
+                    },
+                    schema = response.content
+                        ?.takeIf { content -> content.reference !is Field.Reference.Unit }
+                        ?.let { content ->
+                            when (content.reference.isIterable) {
+                                false -> content.reference.emit()
+                                true -> SchemaObject(
+                                    type = OpenApiType.ARRAY,
+                                    items = content.reference.emit()
+                                )
                             }
-                    )
-                }
-        )
-        return operationObject
-    }
+                        }
+                )
+            }
+    )
 
     private fun List<Endpoint.Segment>.emitSegment() = "/" + joinToString("/") {
         when (it) {
@@ -153,26 +150,12 @@ class OpenApiV2Emitter {
 
         )
 
-    fun Field.Reference.emit(): SchemaOrReferenceObject {
-        val ref = when (this) {
-            is Field.Reference.Custom -> ReferenceObject(ref = Ref("#/definitions/${value}"))
-            is Field.Reference.Primitive -> SchemaObject(
-                type = type.emitType(),
-            )
-
-            is Field.Reference.Any -> error("Cannot map Any")
-            is Field.Reference.Unit -> error("Cannot map Unit")
-        }
-
-        return if (isIterable) {
-            SchemaObject(
-                type = OpenApiType.ARRAY,
-                items = ref,
-            )
-        } else {
-            ref
-        }
-    }
+    fun Field.Reference.emit(): SchemaOrReferenceObject = when (this) {
+        is Field.Reference.Custom -> ReferenceObject(ref = Ref("#/definitions/${value}"))
+        is Field.Reference.Primitive -> SchemaObject(type = type.emitType())
+        is Field.Reference.Any -> error("Cannot map Any")
+        is Field.Reference.Unit -> error("Cannot map Unit")
+    }.let { if (isIterable) SchemaObject(type = OpenApiType.ARRAY, items = it) else it }
 
 
     private fun Field.Reference.Primitive.Type.emitType(): OpenApiType = when (this) {
@@ -182,15 +165,11 @@ class OpenApiV2Emitter {
         Field.Reference.Primitive.Type.Boolean -> OpenApiType.BOOLEAN
     }
 
-    private fun Field.Reference.emitType(): OpenApiType =
-        if (isIterable) {
-            OpenApiType.ARRAY
-        } else {
-            when (this) {
-                is Field.Reference.Primitive -> type.emitType()
-                is Field.Reference.Custom -> OpenApiType.OBJECT
-                is Field.Reference.Any -> OpenApiType.OBJECT
-                is Field.Reference.Unit -> OpenApiType.OBJECT
-            }
+    private fun Field.Reference.emitType() =
+        if (isIterable) OpenApiType.ARRAY else when (this) {
+            is Field.Reference.Primitive -> type.emitType()
+            is Field.Reference.Custom -> OpenApiType.OBJECT
+            is Field.Reference.Any -> OpenApiType.OBJECT
+            is Field.Reference.Unit -> OpenApiType.OBJECT
         }
 }
