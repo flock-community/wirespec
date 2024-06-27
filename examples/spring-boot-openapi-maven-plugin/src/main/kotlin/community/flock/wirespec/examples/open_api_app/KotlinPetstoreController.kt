@@ -1,4 +1,4 @@
-package community.flock.wirespec.examples.open_api_app.kotlin
+package community.flock.wirespec.examples.open_api_app
 
 import community.flock.wirespec.generated.kotlin.v3.AddPetEndpoint
 import community.flock.wirespec.generated.kotlin.v3.FindPetsByStatusEndpoint

@@ -1,37 +1,35 @@
-package community.flock.wirespec.examples.open_api_app.java
+package community.flock.wirespec.examples.open_api_app
 
 import community.flock.wirespec.Wirespec
-import community.flock.wirespec.generated.java.v3.AddPetEndpoint
-import community.flock.wirespec.generated.java.v3.FindPetsByStatusEndpoint
+import community.flock.wirespec.generated.kotlin.v3.AddPetEndpoint
+import community.flock.wirespec.generated.kotlin.v3.FindPetsByStatusEndpoint
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
 import org.springframework.web.client.RestTemplate
 import java.net.URI
-import java.util.concurrent.CompletableFuture
-import java.util.function.Function
+import kotlin.reflect.typeOf
 
-interface JavaPetstoreClient : AddPetEndpoint, FindPetsByStatusEndpoint
+interface KotlinPetstoreClient : AddPetEndpoint, FindPetsByStatusEndpoint
 
 @Configuration
-class JavaPetClientConfiguration {
+class KotlinPetClientConfiguration {
 
     @Bean
-    fun javaPetstoreClient(
+    fun kotlinPetstoreClient(
         restTemplate: RestTemplate,
         contentMapper: Wirespec.ContentMapper<ByteArray>
-    ): JavaPetstoreClient =
-
-        object : JavaPetstoreClient {
+    ): KotlinPetstoreClient =
+        object : KotlinPetstoreClient {
             fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> handle(
                 request: Req,
-                responseMapper: (Wirespec.ContentMapper<ByteArray>) -> Function<Wirespec.Response<ByteArray>, Res>
-            ): CompletableFuture<Res> = restTemplate.execute(
+                responseMapper: (Wirespec.ContentMapper<ByteArray>) -> (Wirespec.Response<ByteArray>) -> Res
+            ) = restTemplate.execute(
                 URI("https://6467e16be99f0ba0a819fd68.mockapi.io${request.path}"),
                 HttpMethod.valueOf(request.method.name),
                 { req ->
                     request.content
-                        ?.let { contentMapper.write(it) }
+                        ?.let { contentMapper.write(it, typeOf<Any>()) }
                         ?.let { req.body.write(it.body) }
                 },
                 { res ->
@@ -42,16 +40,15 @@ class JavaPetClientConfiguration {
                         override val headers = res.headers
                         override val content = content
                     }
-                    CompletableFuture.completedFuture(responseMapper(contentMapper).apply(response))
+                    responseMapper(contentMapper)(response)
                 }
             ) ?: error("No response")
 
-
-            override fun addPet(request: AddPetEndpoint.Request<*>): CompletableFuture<AddPetEndpoint.Response<*>> {
+            override suspend fun addPet(request: AddPetEndpoint.Request<*>): AddPetEndpoint.Response<*> {
                 return handle(request, AddPetEndpoint::RESPONSE_MAPPER)
             }
 
-            override fun findPetsByStatus(request: FindPetsByStatusEndpoint.Request<*>): CompletableFuture<FindPetsByStatusEndpoint.Response<*>> {
+            override suspend fun findPetsByStatus(request: FindPetsByStatusEndpoint.Request<*>): FindPetsByStatusEndpoint.Response<*> {
                 return handle(request, FindPetsByStatusEndpoint::RESPONSE_MAPPER)
             }
         }

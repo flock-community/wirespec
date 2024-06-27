@@ -1,6 +1,7 @@
 package community.flock.wirespec.integration.jackson.kotlin.generated
 
 import community.flock.wirespec.Wirespec
+import kotlin.reflect.typeOf
 
 data class TodoId(override val value: String): Wirespec.Refined {
   override fun toString() = value

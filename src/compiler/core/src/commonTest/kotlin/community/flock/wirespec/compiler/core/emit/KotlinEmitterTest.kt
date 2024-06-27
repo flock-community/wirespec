@@ -35,6 +35,7 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated
             |
             |import community.flock.wirespec.Wirespec
+            |import kotlin.reflect.typeOf
             |
             |data class UUID(override val value: String): Wirespec.Refined {
             |  override fun toString() = value
@@ -54,6 +55,7 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated
             |
             |import community.flock.wirespec.Wirespec
+            |import kotlin.reflect.typeOf
             |
             |enum class TodoStatus (val label: String): Wirespec.Enum {
             |  OPEN("OPEN"),
@@ -153,13 +155,13 @@ class KotlinEmitterTest {
             |    fun <B> REQUEST_MAPPER(contentMapper: Wirespec.ContentMapper<B>) = { request: Wirespec.Request<B> ->
             |      when {
             |        request.content?.type == "application/json" -> contentMapper
-            |          .read<Pet>(request.content!!, Wirespec.getType(Pet::class.java, false))
+            |          .read<Pet>(request.content!!, typeOf<Pet>())
             |          .let { RequestApplicationJson(request.path, request.method, request.query, request.headers, it) }
             |        request.content?.type == "application/xml" -> contentMapper
-            |          .read<Pet>(request.content!!, Wirespec.getType(Pet::class.java, false))
+            |          .read<Pet>(request.content!!, typeOf<Pet>())
             |          .let { RequestApplicationXml(request.path, request.method, request.query, request.headers, it) }
             |        request.content?.type == "application/x-www-form-urlencoded" -> contentMapper
-            |          .read<Pet>(request.content!!, Wirespec.getType(Pet::class.java, false))
+            |          .read<Pet>(request.content!!, typeOf<Pet>())
             |          .let { RequestApplicationXWwwFormUrlencoded(request.path, request.method, request.query, request.headers, it) }
             |        else -> error("Cannot map request")
             |      }
@@ -167,10 +169,10 @@ class KotlinEmitterTest {
             |    fun <B> RESPONSE_MAPPER(contentMapper: Wirespec.ContentMapper<B>) = { response: Wirespec.Response<B> ->
             |      when {
             |        response.status == 200 && response.content?.type == "application/xml" -> contentMapper
-            |          .read<Pet>(response.content!!, Wirespec.getType(Pet::class.java, false))
+            |          .read<Pet>(response.content!!, typeOf<Pet>())
             |          .let { Response200ApplicationXml(response.status, response.headers, it) }
             |        response.status == 200 && response.content?.type == "application/json" -> contentMapper
-            |          .read<Pet>(response.content!!, Wirespec.getType(Pet::class.java, false))
+            |          .read<Pet>(response.content!!, typeOf<Pet>())
             |          .let { Response200ApplicationJson(response.status, response.headers, it) }
             |        response.status == 405 && response.content == null -> Response405Unit(response.status, response.headers, null)
             |        else -> error("Cannot map response with status ${'$'}{response.status}")
