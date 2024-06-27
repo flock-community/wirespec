@@ -63,6 +63,7 @@ class CompilerTest {
             package community.flock.wirespec.generated
             
             import community.flock.wirespec.Wirespec
+            import kotlin.reflect.typeOf
             
             data class Name(override val value: String): Wirespec.Refined {
               override fun toString() = value

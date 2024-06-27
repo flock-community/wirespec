@@ -31,6 +31,7 @@ open class KotlinEmitter(
     val import = """
         |
         |import community.flock.wirespec.Wirespec
+        |import kotlin.reflect.typeOf
         |
     """.trimMargin()
 
@@ -184,7 +185,7 @@ open class KotlinEmitter(
         else
             """
                 |request.content?.type == "${content.type}" -> contentMapper
-                |  .read<${content.reference.emitWrap()}>(request.content!!, Wirespec.getType(${content.reference.emit()}::class.java, ${isIterable}))
+                |  .read<${content.reference.emitWrap()}>(request.content!!, typeOf<${content.reference.emitWrap()}>())
                 |  .let { ${responseReference.emitWrap()}(request.path, request.method, request.query, request.headers, it) }
             """.trimMargin()
 
@@ -205,7 +206,7 @@ open class KotlinEmitter(
         else
             """
                 |${if (statusCode.isInt()) "response.status == $statusCode && " else ""}response.content?.type == "${content.type}" -> contentMapper
-                |  .read<${content.reference.emitWrap()}>(response.content!!, Wirespec.getType(${content.reference.emit()}::class.java, false))
+                |  .read<${content.reference.emitWrap()}>(response.content!!, typeOf<${content.reference.emitWrap()}>())
                 |  .let { ${responseReference.emitWrap()}(response.status, response.headers, it) }
             """.trimMargin()
 

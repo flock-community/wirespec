@@ -107,38 +107,6 @@
                             <shared>false</shared>
                         </configuration>
                     </execution>
-                    <execution>
-                        <id>java-v2</id>
-                        <goals>
-                            <goal>convert</goal>
-                        </goals>
-                        <configuration>
-                            <input>${project.basedir}/src/main/openapi/petstorev2.json</input>
-                            <output>${project.build.directory}/generated-sources</output>
-                            <packageName>community.flock.wirespec.generated.java.v2</packageName>
-                            <format>OpenApiV2</format>
-                            <languages>
-                                <language>Java</language>
-                            </languages>
-                            <shared>false</shared>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>java-v3</id>
-                        <goals>
-                            <goal>convert</goal>
-                        </goals>
-                        <configuration>
-                            <input>${project.basedir}/src/main/openapi/petstorev3.json</input>
-                            <output>${project.build.directory}/generated-sources</output>
-                            <packageName>community.flock.wirespec.generated.java.v3</packageName>
-                            <format>OpenApiV3</format>
-                            <languages>
-                                <language>Java</language>
-                            </languages>
-                            <shared>false</shared>
-                        </configuration>
-                    </execution>
                 </executions>
             </plugin>
             <plugin>

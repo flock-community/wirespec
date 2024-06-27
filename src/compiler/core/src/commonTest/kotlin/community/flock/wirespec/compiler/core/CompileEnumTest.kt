@@ -28,6 +28,7 @@ class CompileEnumTest {
             |package community.flock.wirespec.generated
             |
             |import community.flock.wirespec.Wirespec
+            |import kotlin.reflect.typeOf
             |
             |enum class MyAwesomeEnum (val label: String): Wirespec.Enum {
             |  ONE("ONE"),

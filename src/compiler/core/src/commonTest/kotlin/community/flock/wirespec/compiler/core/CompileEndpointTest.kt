@@ -46,6 +46,7 @@ class CompileEndpointTest {
             |package community.flock.wirespec.generated
             |
             |import community.flock.wirespec.Wirespec
+            |import kotlin.reflect.typeOf
             |
             |interface TodoEndpoint : Wirespec.Endpoint {
             |  sealed interface Request<T> : Wirespec.Request<T>
@@ -87,7 +88,7 @@ class CompileEndpointTest {
             |    fun <B> RESPONSE_MAPPER(contentMapper: Wirespec.ContentMapper<B>) = { response: Wirespec.Response<B> ->
             |      when {
             |        response.status == 200 && response.content?.type == "application/json" -> contentMapper
-            |          .read<Todo>(response.content!!, Wirespec.getType(Todo::class.java, false))
+            |          .read<Todo>(response.content!!, typeOf<Todo>())
             |          .let { Response200ApplicationJson(response.status, response.headers, it) }
             |        else -> error("Cannot map response with status ${'$'}{response.status}")
             |      }
@@ -112,6 +113,7 @@ class CompileEndpointTest {
             |package community.flock.wirespec.generated
             |
             |import community.flock.wirespec.Wirespec
+            |import kotlin.reflect.typeOf
             |
             |interface TodoEndpoint : Wirespec.Endpoint {
             |  sealed interface Request<T> : Wirespec.Request<T>
@@ -147,7 +149,7 @@ class CompileEndpointTest {
             |    fun <B> REQUEST_MAPPER(contentMapper: Wirespec.ContentMapper<B>) = { request: Wirespec.Request<B> ->
             |      when {
             |        request.content?.type == "application/json" -> contentMapper
-            |          .read<community.flock.wirespec.generated.Request>(request.content!!, Wirespec.getType(community.flock.wirespec.generated.Request::class.java, false))
+            |          .read<community.flock.wirespec.generated.Request>(request.content!!, typeOf<community.flock.wirespec.generated.Request>())
             |          .let { RequestApplicationJson(request.path, request.method, request.query, request.headers, it) }
             |        else -> error("Cannot map request")
             |      }
@@ -155,7 +157,7 @@ class CompileEndpointTest {
             |    fun <B> RESPONSE_MAPPER(contentMapper: Wirespec.ContentMapper<B>) = { response: Wirespec.Response<B> ->
             |      when {
             |        response.status == 200 && response.content?.type == "application/json" -> contentMapper
-            |          .read<community.flock.wirespec.generated.Response>(response.content!!, Wirespec.getType(community.flock.wirespec.generated.Response::class.java, false))
+            |          .read<community.flock.wirespec.generated.Response>(response.content!!, typeOf<community.flock.wirespec.generated.Response>())
             |          .let { Response200ApplicationJson(response.status, response.headers, it) }
             |        else -> error("Cannot map response with status ${'$'}{response.status}")
             |      }
