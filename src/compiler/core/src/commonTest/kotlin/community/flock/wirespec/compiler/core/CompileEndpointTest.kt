@@ -16,7 +16,7 @@ class CompileEndpointTest {
 
     private val compiledTodo = compile(
         """
-        |endpoint Todo GET /todo ? {done:Boolean} # {auth:String} -> {
+        |endpoint Todo GET /v1/todo ? {done:Boolean} # {auth:String} -> {
         |  200 -> Todo 
         |}
         |type Todo {
@@ -58,7 +58,7 @@ class CompileEndpointTest {
             |    override val content: Wirespec.Content<Unit>? = null
             |  ) : Request<Unit> {
             |    constructor(done: Boolean, auth: String) : this(
-            |      path = "/todo",
+            |      path = "/v1/todo",
             |      method = Wirespec.Method.GET,
             |      query = mapOf<String, List<Any?>>("done" to listOf(done)),
             |      headers = mapOf<String, List<Any?>>("auth" to listOf(auth)),
@@ -77,7 +77,7 @@ class CompileEndpointTest {
             |    )
             |  }
             |  companion object {
-            |    const val PATH = "/todo"
+            |    const val PATH = "/v1/todo"
             |    const val METHOD = "GET"
             |    fun <B> REQUEST_MAPPER(contentMapper: Wirespec.ContentMapper<B>) = { request: Wirespec.Request<B> ->
             |      when {
@@ -190,7 +190,7 @@ class CompileEndpointTest {
             |import java.util.function.Function;
             |
             |public interface TodoEndpoint extends Wirespec.Endpoint {
-            |  static String PATH = "/todo";
+            |  static String PATH = "/v1/todo";
             |  static String METHOD = "GET";
             |
             |  sealed interface Request<T> extends Wirespec.Request<T> {
@@ -221,7 +221,7 @@ class CompileEndpointTest {
             |      Boolean done,
             |      String auth
             |    ) {
-            |      this.path = "/" + "todo";
+            |      this.path = "/" + "v1" + "/" + "todo";
             |      this.method = Wirespec.Method.GET;
             |      this.query = java.util.Map.ofEntries(java.util.Map.entry("done", java.util.List.of(done)));
             |      this.headers = java.util.Map.ofEntries(java.util.Map.entry("auth", java.util.List.of(auth)));
@@ -499,9 +499,9 @@ class CompileEndpointTest {
             |  export type Response<T> = { status:number, headers?: Record<string, any[]>, content?:Content<T> }
             |}
             |export module Todo {
-            |  export const PATH = "/todo"
+            |  export const PATH = "/v1/todo"
             |  export const METHOD = "GET"
-            |  type RequestUndefined = { path: `/todo`, method: "GET", headers: {  "auth": string}, query: {  "done": boolean} } 
+            |  type RequestUndefined = { path: `/v1/todo`, method: "GET", headers: {  "auth": string}, query: {  "done": boolean} } 
             |  export type Request = RequestUndefined
             |  type Response200ApplicationJson = { status: 200, content: { type: "application/json", body: Todo } }
             |  export type Response = Response200ApplicationJson
@@ -509,7 +509,7 @@ class CompileEndpointTest {
             |  export type Call = {
             |    todo: Handler
             |  }
-            |  export const requestUndefined = (props:{  "done": boolean,  "auth": string}) => ({path: `/todo`, method: "GET", query: {"done": props.done}, headers: {"auth": props.auth}} as const)
+            |  export const requestUndefined = (props:{  "done": boolean,  "auth": string}) => ({path: `/v1/todo`, method: "GET", query: {"done": props.done}, headers: {"auth": props.auth}} as const)
             |  export const response200ApplicationJson = (props:{  "body": Todo}) => ({status: 200, headers: {}, content: {type: "application/json", body: props.body}} as const)
             |}
             |
@@ -527,7 +527,7 @@ class CompileEndpointTest {
     @Test
     fun testEndpointWirespec() {
         val wirespec = """
-            |endpoint Todo GET /todo ? {done: Boolean} -> {
+            |endpoint Todo GET /v1/todo ? {done: Boolean} -> {
             |  200 -> Todo
             |}
             |
