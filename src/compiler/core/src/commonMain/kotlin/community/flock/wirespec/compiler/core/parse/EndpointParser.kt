@@ -47,12 +47,26 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
             else -> raise(WrongTokenException<Method>(token))
         }.also { eatToken().bind() }
 
+        val isDict = when (token.type) {
+            is LeftCurly -> true.also { eatToken().bind() }
+            else -> false
+        }
+
         val requests = listOf(
             when (token.type) {
-                is WirespecType -> parseReference(token.type as WirespecType, token.value).bind()
+                is WirespecType -> parseReference(token.type as WirespecType, token.value, isDict).bind()
                 else -> null
             }
-        ).map {
+        )
+            .also {
+                if (isDict) {
+                    when (token.type) {
+                        is RightCurly -> eatToken().bind()
+                        else -> raise(WrongTokenException<RightCurly>(token).also { eatToken().bind() })
+                    }
+                }
+            }
+            .map {
             Endpoint.Request(
                 content = it?.let {
                     Endpoint.Content(
@@ -143,9 +157,20 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
             is Colon -> eatToken().bind()
             else -> raise(WrongTokenException<Colon>(token))
         }
+        val isDict = when (token.type) {
+            is LeftCurly -> true.also { eatToken().bind() }
+            else -> false
+        }
         val reference = when (token.type) {
-            is WirespecType -> parseReference(token.type as WirespecType, token.value).bind()
+            is WirespecType -> parseReference(token.type as WirespecType, token.value, isDict).bind()
             else -> raise(WrongTokenException<WirespecType>(token))
+        }.also {
+            if (isDict) {
+                when (token.type) {
+                    is RightCurly -> eatToken().bind()
+                    else -> raise(WrongTokenException<RightCurly>(token).also { eatToken().bind() })
+                }
+            }
         }
         when (token.type) {
             is RightCurly -> eatToken().bind()
@@ -182,35 +207,63 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
         }
         eatToken().bind()
         token.log()
+        val isDict = when (token.type) {
+            is LeftCurly -> true.also { eatToken().bind() }
+            else -> false
+        }
         val content = when (token.type) {
-            is WirespecType -> parseContent(token.type as WirespecType, token.value).bind()
+            is WirespecType -> parseContent(token.type as WirespecType, token.value, isDict).bind()
             else -> raise(WrongTokenException<WirespecType>(token))
+        }.also {
+            if (isDict) {
+                when (token.type) {
+                    is RightCurly -> eatToken().bind()
+                    else -> raise(WrongTokenException<RightCurly>(token).also { eatToken().bind() })
+                }
+            }
         }
         Endpoint.Response(status = statusCode, headers = emptyList(), content = content)
     }
 
-    private fun TokenProvider.parseContent(wsType: WirespecType, value: String) = either {
+    private fun TokenProvider.parseContent(wsType: WirespecType, value: String, isDict:Boolean) = either {
         token.log()
-        val reference = parseReference(wsType, value).bind()
-        if(reference is Reference.Unit) null
+        val reference = parseReference(wsType, value, isDict).bind()
+        if (reference is Reference.Unit) null
         else Endpoint.Content(
             type = "application/json",
             reference = reference,
         )
     }
 
-    private fun TokenProvider.parseReference(wsType: WirespecType, value: String) = either {
+    private fun TokenProvider.parseReference(wsType: WirespecType, value: String, isDict: Boolean) = either {
         val previousToken = token
         eatToken().bind()
         token.log()
         val isIterable = (token.type is Brackets).also { if (it) eatToken().bind() }
         when (wsType) {
-            is WsString -> Reference.Primitive(Reference.Primitive.Type.String, isIterable)
+            is WsString -> Reference.Primitive(
+                type = Reference.Primitive.Type.String,
+                isIterable = isIterable,
+                isDictionary = isDict,
+            )
 
-            is WsInteger -> Reference.Primitive(Reference.Primitive.Type.Integer, isIterable)
-            is WsNumber -> Reference.Primitive(Reference.Primitive.Type.Number, isIterable)
+            is WsInteger -> Reference.Primitive(
+                type = Reference.Primitive.Type.Integer,
+                isIterable = isIterable,
+                isDictionary = isDict,
+            )
 
-            is WsBoolean -> Reference.Primitive(Reference.Primitive.Type.Boolean, isIterable)
+            is WsNumber -> Reference.Primitive(
+                type = Reference.Primitive.Type.Number,
+                isIterable = isIterable,
+                isDictionary = isDict,
+            )
+
+            is WsBoolean -> Reference.Primitive(
+                type = Reference.Primitive.Type.Boolean,
+                isIterable = isIterable,
+                isDictionary = isDict,
+            )
 
             is WsUnit -> Reference.Unit(isIterable)
 

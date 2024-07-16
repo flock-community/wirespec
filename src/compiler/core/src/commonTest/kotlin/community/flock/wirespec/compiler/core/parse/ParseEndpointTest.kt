@@ -10,7 +10,9 @@ import community.flock.wirespec.compiler.core.parse.Field.Reference.Primitive.Ty
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldNotBeEmpty
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -192,5 +194,26 @@ class ParseEndpointTest {
                     isNullable shouldBe false
                 }
             }
+    }
+
+    @Test
+    fun testDictionaryResponse() {
+        val source = """
+            endpoint GetTodos GET /todos ? {done:{String}} # {token:{String}} -> {
+                200 -> {String}
+            }
+        """.trimIndent()
+
+        WirespecSpec.tokenize(source)
+            .let(parser()::parse)
+            .shouldBeRight()
+            .also { it.size shouldBe 1 }[0]
+            .shouldBeInstanceOf<Endpoint>().run {
+                responses.shouldNotBeEmpty()
+                responses.first().content?.reference?.isDictionary?.shouldBeTrue()
+                query.first().reference.isDictionary.shouldBeTrue()
+                headers.first().reference.isDictionary.shouldBeTrue()
+            }
+
     }
 }
