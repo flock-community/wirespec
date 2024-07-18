@@ -122,7 +122,7 @@ open class JavaEmitter(
     override fun Channel.emit(): String =
         """
             |interface ${identifier.emit()}Channel {
-            |   fun invoke(message: ${reference.transform(isNullable, false).emitWrap()})
+            |   void invoke(${reference.transform(isNullable, false).emitWrap()} message)
             |}
         """.trimMargin()
 

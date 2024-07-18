@@ -96,7 +96,7 @@ open class KotlinEmitter(
     override fun Channel.emit(): String =
         """
             |interface ${identifier.emit()}Channel {
-            |   void invoke(${reference.transform(isNullable, false).emitWrap()} message)
+            |   fun invoke(message: ${reference.transform(isNullable, false).emitWrap()})
             |}
         """.trimMargin()
 
