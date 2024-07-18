@@ -1,10 +1,10 @@
-package community.flock.wirespec.lsp.intellij_plugin
+package community.flock.wirespec.ide.intellij
 
 import com.intellij.lang.cacheBuilder.DefaultWordsScanner
 import com.intellij.lang.cacheBuilder.WordsScanner
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
-import community.flock.wirespec.lsp.intellij_plugin.parser.CustomTypeElement
+import community.flock.wirespec.ide.intellij.parser.CustomTypeElement
 import com.intellij.lang.findUsages.FindUsagesProvider as IntellijFindUsagesProvider
 
 class FindUsagesProvider : IntellijFindUsagesProvider {

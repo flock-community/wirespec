@@ -1,20 +1,20 @@
-package community.flock.wirespec.lsp.intellij_plugin.parser
+package community.flock.wirespec.ide.intellij.parser
 
 import com.intellij.lang.ASTNode
 import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiParser
 import com.intellij.psi.tree.IElementType
-import community.flock.wirespec.lsp.intellij_plugin.Language
-import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.CUSTOM_TYPE
-import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.ENDPOINT_DEF
-import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.ENUM_DEF
-import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.LEFT_CURLY
-import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.RIGHT_CURLY
-import community.flock.wirespec.lsp.intellij_plugin.Types.Companion.TYPE_DEF
-import community.flock.wirespec.lsp.intellij_plugin.parser.Parser.Body
-import community.flock.wirespec.lsp.intellij_plugin.parser.Parser.CustomTypeDef
-import community.flock.wirespec.lsp.intellij_plugin.parser.Parser.CustomTypeRef
-import community.flock.wirespec.lsp.intellij_plugin.parser.Parser.TypeDef
+import community.flock.wirespec.ide.intellij.Language
+import community.flock.wirespec.ide.intellij.Types.Companion.CUSTOM_TYPE
+import community.flock.wirespec.ide.intellij.Types.Companion.ENDPOINT_DEF
+import community.flock.wirespec.ide.intellij.Types.Companion.ENUM_DEF
+import community.flock.wirespec.ide.intellij.Types.Companion.LEFT_CURLY
+import community.flock.wirespec.ide.intellij.Types.Companion.RIGHT_CURLY
+import community.flock.wirespec.ide.intellij.Types.Companion.TYPE_DEF
+import community.flock.wirespec.ide.intellij.parser.Parser.Body
+import community.flock.wirespec.ide.intellij.parser.Parser.CustomTypeDef
+import community.flock.wirespec.ide.intellij.parser.Parser.CustomTypeRef
+import community.flock.wirespec.ide.intellij.parser.Parser.TypeDef
 
 class Parser : PsiParser {
 

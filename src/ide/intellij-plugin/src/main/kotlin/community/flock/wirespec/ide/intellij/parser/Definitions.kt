@@ -1,4 +1,4 @@
-package community.flock.wirespec.lsp.intellij_plugin.parser
+package community.flock.wirespec.ide.intellij.parser
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.lang.ASTNode
@@ -8,14 +8,14 @@ import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
-import community.flock.wirespec.lsp.intellij_plugin.File
-import community.flock.wirespec.lsp.intellij_plugin.Language
-import community.flock.wirespec.lsp.intellij_plugin.Lexer
-import community.flock.wirespec.lsp.intellij_plugin.parser.Parser.Body
-import community.flock.wirespec.lsp.intellij_plugin.parser.Parser.CustomTypeDef
-import community.flock.wirespec.lsp.intellij_plugin.parser.Parser.CustomTypeRef
-import community.flock.wirespec.lsp.intellij_plugin.parser.Parser.EndpointDef
-import community.flock.wirespec.lsp.intellij_plugin.parser.Parser.TypeDef
+import community.flock.wirespec.ide.intellij.File
+import community.flock.wirespec.ide.intellij.Language
+import community.flock.wirespec.ide.intellij.Lexer
+import community.flock.wirespec.ide.intellij.parser.Parser.Body
+import community.flock.wirespec.ide.intellij.parser.Parser.CustomTypeDef
+import community.flock.wirespec.ide.intellij.parser.Parser.CustomTypeRef
+import community.flock.wirespec.ide.intellij.parser.Parser.EndpointDef
+import community.flock.wirespec.ide.intellij.parser.Parser.TypeDef
 
 class ParserDefinition : ParserDefinition {
     override fun createLexer(project: Project): Lexer = Lexer()

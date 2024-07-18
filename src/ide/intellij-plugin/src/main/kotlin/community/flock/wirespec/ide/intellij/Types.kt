@@ -1,4 +1,4 @@
-package community.flock.wirespec.lsp.intellij_plugin
+package community.flock.wirespec.ide.intellij
 
 import com.intellij.psi.tree.IElementType
 

@@ -1,4 +1,4 @@
-package community.flock.wirespec.lsp.intellij_plugin
+package community.flock.wirespec.ide.intellij
 
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.tokenize.Token

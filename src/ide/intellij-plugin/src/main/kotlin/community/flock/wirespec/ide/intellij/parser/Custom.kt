@@ -1,4 +1,4 @@
-package community.flock.wirespec.lsp.intellij_plugin.parser
+package community.flock.wirespec.ide.intellij.parser
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.lang.ASTNode
@@ -10,9 +10,9 @@ import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
-import community.flock.wirespec.lsp.intellij_plugin.FileType
-import community.flock.wirespec.lsp.intellij_plugin.Icons
-import community.flock.wirespec.lsp.intellij_plugin.Reference
+import community.flock.wirespec.ide.intellij.FileType
+import community.flock.wirespec.ide.intellij.Icons
+import community.flock.wirespec.ide.intellij.Reference
 
 abstract class CustomTypeElement(ast: ASTNode) : ASTWrapperPsiElement(ast), PsiNamedElement {
 

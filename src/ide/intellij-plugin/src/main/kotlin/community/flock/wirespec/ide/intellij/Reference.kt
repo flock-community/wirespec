@@ -1,4 +1,4 @@
-package community.flock.wirespec.lsp.intellij_plugin
+package community.flock.wirespec.ide.intellij
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -6,8 +6,8 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiReferenceBase
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
-import community.flock.wirespec.lsp.intellij_plugin.parser.CustomTypeElement
-import community.flock.wirespec.lsp.intellij_plugin.parser.CustomTypeElementDef
+import community.flock.wirespec.ide.intellij.parser.CustomTypeElement
+import community.flock.wirespec.ide.intellij.parser.CustomTypeElementDef
 
 class Reference<A : CustomTypeElement>(element: A) : PsiReferenceBase<A>(element, TextRange(0, element.textLength)) {
 
