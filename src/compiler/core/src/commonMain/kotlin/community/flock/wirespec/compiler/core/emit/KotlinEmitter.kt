@@ -14,6 +14,7 @@ import community.flock.wirespec.compiler.core.emit.transformer.RefinedClass
 import community.flock.wirespec.compiler.core.emit.transformer.TypeClass
 import community.flock.wirespec.compiler.core.emit.transformer.UnionClass
 import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -36,12 +37,18 @@ open class KotlinEmitter(
     """.trimMargin()
 
     override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> identifier.emit()
+        is Endpoint -> "${identifier.emit()}Endpoint"
+        is Channel -> "${identifier.emit()}Channel"
         is Enum -> identifier.emit()
         is Refined -> identifier.emit()
         is Type -> identifier.emit()
         is Union -> identifier.emit()
     }
+
+    override fun notYetImplemented() =
+        """// TODO("Not yet implemented")
+            |
+        """.trimMargin()
 
     override fun emit(ast: AST): List<Emitted> =
         super.emit(ast).map {
@@ -91,6 +98,13 @@ open class KotlinEmitter(
 
     override fun Union.emit() = transform().emit()
 
+    override fun Channel.emit(): String =
+        """
+            |interface ${identifier.emit()}Channel {
+            |   operator fun invoke(message: ${reference.transform(isNullable, false).emitWrap()})
+            |}
+        """.trimMargin()
+
     override fun UnionClass.emit(): String = """
         |sealed interface $name
     """.trimMargin()
@@ -123,9 +137,7 @@ open class KotlinEmitter(
          |}
     """.trimMargin()
 
-    override fun EndpointClass.RequestClass.RequestAllArgsConstructor.emit(): String {
-        TODO("Not yet implemented")
-    }
+    override fun EndpointClass.RequestClass.RequestAllArgsConstructor.emit() = notYetImplemented()
 
     override fun EndpointClass.RequestClass.RequestParameterConstructor.emit(): String = """
         |constructor(${parameters.joinToString(", ") { it.emit() }}) : this(
@@ -147,9 +159,7 @@ open class KotlinEmitter(
         |}
     """.trimMargin()
 
-    override fun EndpointClass.ResponseClass.ResponseAllArgsConstructor.emit(): String {
-        TODO("Not yet implemented")
-    }
+    override fun EndpointClass.ResponseClass.ResponseAllArgsConstructor.emit() = notYetImplemented()
 
     override fun EndpointClass.ResponseClass.ResponseParameterConstructor.emit(): String = """
         |constructor(${parameters.joinToString(", ") { it.emit() }}) : this(

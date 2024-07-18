@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -25,11 +26,17 @@ open class ScalaEmitter(
 
     override fun Definition.emitName(): String = when (this) {
         is Endpoint -> "${identifier.emit()}Endpoint"
+        is Channel -> "${identifier.emit()}Channel"
         is Enum -> identifier.emit()
         is Refined -> identifier.emit()
         is Type -> identifier.emit()
         is Union -> identifier.emit()
     }
+
+    override fun notYetImplemented() =
+        """// TODO("Not yet implemented")
+            |
+        """.trimMargin()
 
     override fun emit(ast: AST): List<Emitted> = super.emit(ast)
         .map { Emitted(it.typeName, if (packageName.isBlank()) "" else "package $packageName\n\n${it.result}") }
@@ -47,6 +54,8 @@ open class ScalaEmitter(
         "${SPACER}val ${identifier.emit()}: ${if (isNullable) "Option[${reference.emit()}]" else reference.emit()},"
 
     override fun Identifier.emit() = if (value in preservedKeywords) value.addBackticks() else value
+
+    override fun Channel.emit() = notYetImplemented()
 
     override fun Reference.emit() = when (this) {
         is Reference.Unit -> "Unit"
@@ -90,15 +99,9 @@ open class ScalaEmitter(
         """${SPACER}${SPACER}val regex = new scala.util.matching.Regex(""$value"")
             |${SPACER}${SPACER}regex.findFirstIn(that.value)""".trimMargin()
 
-    override fun Endpoint.emit() =
-        """// TODO("Not yet implemented")
-            |
-        """.trimMargin()
+    override fun Endpoint.emit() = notYetImplemented()
 
-    override fun Union.emit() =
-        """// TODO("Not yet implemented")
-            |
-        """.trimMargin()
+    override fun Union.emit() = notYetImplemented()
 
     companion object {
         private val preservedKeywords = listOf(

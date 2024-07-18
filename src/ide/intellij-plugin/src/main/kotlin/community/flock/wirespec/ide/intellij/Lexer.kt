@@ -32,6 +32,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.WsNumber
 import community.flock.wirespec.compiler.core.tokenize.types.WsString
 import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsUnit
+import community.flock.wirespec.compiler.core.tokenize.types.WsChannelDef
 import com.intellij.lexer.LexerBase as IntellijLexer
 
 class Lexer : IntellijLexer() {
@@ -70,6 +71,7 @@ class Lexer : IntellijLexer() {
         is WsTypeDef -> Types.TYPE_DEF
         is WsEnumTypeDef -> Types.ENUM_DEF
         is WsEndpointDef -> Types.ENDPOINT_DEF
+        is WsChannelDef -> Types.CHANNEL_DEF
         is WsString -> Types.STRING
         is WsInteger -> Types.INTEGER
         is WsNumber -> Types.NUMBER

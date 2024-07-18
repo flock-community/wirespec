@@ -14,6 +14,7 @@ import community.flock.wirespec.compiler.core.emit.transformer.RefinedClass
 import community.flock.wirespec.compiler.core.emit.transformer.TypeClass
 import community.flock.wirespec.compiler.core.emit.transformer.UnionClass
 import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -61,11 +62,17 @@ open class JavaEmitter(
 
     override fun Definition.emitName(): String = when (this) {
         is Endpoint -> "${identifier.emit()}Endpoint"
+        is Channel -> "${identifier.emit()}Channel"
         is Enum -> identifier.emit()
         is Refined -> identifier.emit()
         is Type -> identifier.emit()
         is Union -> identifier.emit()
     }
+
+    override fun notYetImplemented() =
+        """// TODO("Not yet implemented")
+            |
+        """.trimMargin()
 
     override fun emit(ast: AST): List<Emitted> = super.emit(ast)
         .map { Emitted(it.typeName.sanitizeSymbol(), "$pkg${importWireSpec(ast)}${importJava(ast)}${it.result}\n") }
@@ -117,6 +124,13 @@ open class JavaEmitter(
     """.trimMargin()
 
     override fun Union.emit() = transform().emit()
+
+    override fun Channel.emit(): String =
+        """
+            |interface ${identifier.emit()}Channel {
+            |   void invoke(${reference.transform(isNullable, false).emitWrap()} message)
+            |}
+        """.trimMargin()
 
     override fun UnionClass.emit(): String = """
         |public sealed interface $name permits ${entries.joinToString(", ")} {}

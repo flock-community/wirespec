@@ -101,6 +101,13 @@ data class Endpoint(
     data class Content(val type: String, val reference: Field.Reference, val isNullable: Boolean = false)
 }
 
+data class Channel(
+    override val comment: Comment?,
+    override val identifier: Identifier,
+    val isNullable: Boolean,
+    val reference: Field.Reference,
+): Definition
+
 @JvmInline
 value class Comment(override val value: String) : Value<String>
 

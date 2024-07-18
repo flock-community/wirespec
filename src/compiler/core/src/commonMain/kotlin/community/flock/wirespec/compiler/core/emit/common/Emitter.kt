@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.emit.common
 
 import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -16,6 +17,8 @@ abstract class Emitter(
 
     abstract fun Definition.emitName(): String
 
+    abstract fun notYetImplemented(): String
+
     open fun emit(ast: AST): List<Emitted> = ast
         .map {
             logger.info("Emitting Node $it")
@@ -25,6 +28,7 @@ abstract class Emitter(
                 is Enum -> Emitted(it.emitName(), it.emit())
                 is Refined -> Emitted(it.emitName(), it.emit())
                 is Union -> Emitted(it.emitName(), it.emit())
+                is Channel -> Emitted(it.emitName(), it.emit())
             }
         }
         .run {

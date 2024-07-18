@@ -18,7 +18,8 @@ private interface Transformer :
     RefinedTransformer<RefinedClass>,
     UnionTransformer<UnionClass>,
     EnumTransformer<EnumClass>,
-    EndpointTransformer<EndpointClass>
+    EndpointTransformer<EndpointClass>,
+    FieldTransformer<Reference>
 
 object ClassModelTransformer : Transformer {
 
@@ -510,31 +511,7 @@ object ClassModelTransformer : Transformer {
         )
     }
 
-    private fun Field.transformParameter() =
-        Parameter(
-            identifier = identifier.value,
-            reference = reference.transform(false, isNullable),
-        )
-
-    private fun Identifier.transform() =
-        value
-            .split("-", ".")
-            .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
-            .joinToString("")
-
-    private fun Endpoint.Content?.name() = this?.type
-        ?.substringBefore(";")
-        ?.split("/", "-")
-        ?.joinToString("") { it.firstToUpper() }
-        ?.replace("+", "")
-        ?: "Unit"
-
-    private fun Endpoint.Content.transform() = EndpointClass.Content(
-        type = this.type,
-        reference = this.reference.transform(isNullable, false),
-    )
-
-    private fun Field.Reference.transform(isNullable: Boolean, isOptional: Boolean) =
+    override fun Field.Reference.transform(isNullable: Boolean, isOptional: Boolean): Reference =
         when (this) {
             is Field.Reference.Unit -> Reference.Language(
                 Reference.Language.Primitive.Unit,
@@ -559,6 +536,30 @@ object ClassModelTransformer : Transformer {
                     Field.Reference.Primitive.Type.Boolean -> Reference.Language.Primitive.Boolean
                 }.let { Reference.Language(it, isNullable, isIterable, isOptional) }
         }
+
+    private fun Field.transformParameter() =
+        Parameter(
+            identifier = identifier.value,
+            reference = reference.transform(false, isNullable),
+        )
+
+    private fun Identifier.transform() =
+        value
+            .split("-", ".")
+            .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
+            .joinToString("")
+
+    private fun Endpoint.Content?.name() = this?.type
+        ?.substringBefore(";")
+        ?.split("/", "-")
+        ?.joinToString("") { it.firstToUpper() }
+        ?.replace("+", "")
+        ?: "Unit"
+
+    private fun Endpoint.Content.transform() = EndpointClass.Content(
+        type = this.type,
+        reference = this.reference.transform(isNullable, false),
+    )
 
     private fun Endpoint.Segment.transform(): EndpointClass.Path.Segment =
         when (this) {

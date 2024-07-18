@@ -58,6 +58,52 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         }.let(Type::Shape)
     }
 
+    fun TokenProvider.parseFieldValue(wsType: WirespecType, value: String, isDict: Boolean) = either {
+        val previousToken = token
+        eatToken().bind()
+        token.log()
+        val isIterable = (token.type is Brackets).also { if (it) eatToken().bind() }
+        when (wsType) {
+            is WsString -> Field.Reference.Primitive(
+                type = Field.Reference.Primitive.Type.String,
+                isIterable = isIterable,
+                isDictionary = isDict
+            )
+
+            is WsInteger -> Field.Reference.Primitive(
+                type = Field.Reference.Primitive.Type.Integer,
+                isIterable = isIterable,
+                isDictionary = isDict
+            )
+
+            is WsNumber -> Field.Reference.Primitive(
+                type = Field.Reference.Primitive.Type.Number,
+                isIterable = isIterable,
+                isDictionary = isDict
+            )
+
+            is WsBoolean -> Field.Reference.Primitive(
+                type = Field.Reference.Primitive.Type.Boolean,
+                isIterable = isIterable,
+                isDictionary = isDict
+            )
+
+            is WsUnit -> Field.Reference.Unit(
+                isIterable = isIterable,
+                isDictionary = isDict
+            )
+
+            is CustomType -> {
+                previousToken.shouldBeDefined().bind()
+                Field.Reference.Custom(
+                    value = value,
+                    isIterable = isIterable,
+                    isDictionary = isDict
+                )
+            }
+        }
+    }
+
     private fun TokenProvider.parseTypeDefinition(comment: Comment?, typeName: Identifier) = either {
         eatToken().bind()
         token.log()
@@ -110,52 +156,6 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
             }
 
             else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
-        }
-    }
-
-    private fun TokenProvider.parseFieldValue(wsType: WirespecType, value: String, isDict: Boolean) = either {
-        val previousToken = token
-        eatToken().bind()
-        token.log()
-        val isIterable = (token.type is Brackets).also { if (it) eatToken().bind() }
-        when (wsType) {
-            is WsString -> Field.Reference.Primitive(
-                type = Field.Reference.Primitive.Type.String,
-                isIterable = isIterable,
-                isDictionary = isDict
-            )
-
-            is WsInteger -> Field.Reference.Primitive(
-                type = Field.Reference.Primitive.Type.Integer,
-                isIterable = isIterable,
-                isDictionary = isDict
-            )
-
-            is WsNumber -> Field.Reference.Primitive(
-                type = Field.Reference.Primitive.Type.Number,
-                isIterable = isIterable,
-                isDictionary = isDict
-            )
-
-            is WsBoolean -> Field.Reference.Primitive(
-                type = Field.Reference.Primitive.Type.Boolean,
-                isIterable = isIterable,
-                isDictionary = isDict
-            )
-
-            is WsUnit -> Field.Reference.Unit(
-                isIterable = isIterable,
-                isDictionary = isDict
-            )
-
-            is CustomType -> {
-                previousToken.shouldBeDefined().bind()
-                Field.Reference.Custom(
-                    value = value,
-                    isIterable = isIterable,
-                    isDictionary = isDict
-                )
-            }
         }
     }
 

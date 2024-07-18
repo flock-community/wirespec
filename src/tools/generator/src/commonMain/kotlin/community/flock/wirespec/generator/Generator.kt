@@ -2,6 +2,7 @@ package community.flock.wirespec.generator
 
 import community.flock.kotlinx.rgxgen.RgxGen
 import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -104,13 +105,12 @@ object Generator {
         return generate(type, random)
     }
 
-    private fun AST.generateObject(def: Definition, random: Random): JsonElement {
-        return when (def) {
-            is Type -> generateType(def, random)
-            is Refined -> generateRefined(def, random)
-            is Enum -> generateEnum(def, random)
-            is Union -> generateUnion(def, random)
-            is Endpoint -> throw NotImplementedError("Endpoint cannot be generated")
-        }
+    private fun AST.generateObject(def: Definition, random: Random): JsonElement = when (def) {
+        is Type -> generateType(def, random)
+        is Refined -> generateRefined(def, random)
+        is Enum -> generateEnum(def, random)
+        is Union -> generateUnion(def, random)
+        is Endpoint -> throw NotImplementedError("Endpoint cannot be generated")
+        is Channel -> throw NotImplementedError("Channel cannot be generated")
     }
 }

@@ -29,6 +29,7 @@ sealed interface WirespecDefinition : Keyword
 data object WsTypeDef : WirespecDefinition
 data object WsEnumTypeDef : WirespecDefinition
 data object WsEndpointDef : WirespecDefinition
+data object WsChannelDef : WirespecDefinition
 
 sealed interface WirespecType : Keyword
 data object WsString : WirespecType

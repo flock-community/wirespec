@@ -29,6 +29,7 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import kotlinx.serialization.json.JsonPrimitive
 import community.flock.kotlinx.openapi.bindings.v3.Type as OpenApiType
+import community.flock.wirespec.compiler.core.parse.Channel
 
 object OpenApiV3Emitter {
     data class Options(
@@ -56,6 +57,7 @@ object OpenApiV3Emitter {
                 is Type -> it.emit()
                 is Union -> it.emit()
                 is Endpoint -> error("Cannot emit endpoint")
+                is Channel -> error("Cannot emit channel")
             }
         }
         .let { ComponentsObject(it) }
