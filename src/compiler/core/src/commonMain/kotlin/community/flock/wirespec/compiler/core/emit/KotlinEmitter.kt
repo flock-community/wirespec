@@ -101,10 +101,9 @@ open class KotlinEmitter(
     override fun Channel.emit(): String =
         """
             |interface ${identifier.emit()}Channel {
-            |   fun invoke(message: ${reference.transform(isNullable, false).emitWrap()})
+            |   operator fun invoke(message: ${reference.transform(isNullable, false).emitWrap()})
             |}
         """.trimMargin()
-
 
     override fun UnionClass.emit(): String = """
         |sealed interface $name
