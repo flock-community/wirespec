@@ -18,99 +18,72 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlin.random.Random
 
-object Generator {
+fun AST.generate(type: String, random: Random = Random.Default): JsonElement = Reference.Custom(
+    value = type.removeSuffix("[]"),
+    isIterable = type.endsWith("[]"),
+    isDictionary = false
+).let { generate(it, random) }
 
-    fun AST.generate(type: String, random: Random = Random.Default): JsonElement {
-        val ref = Reference.Custom(
-            value = type.removeSuffix("[]"),
-            isIterable = type.endsWith("[]"),
-            isDictionary = false
-        )
-        return generate(ref, random)
+fun AST.generate(type: Reference, random: Random = Random.Default): JsonElement = resolveReference(type)
+    .let { if (type.isIterable) generateIterator(it, random) else generateObject(it, random) }
+
+private fun AST.resolveReference(type: Reference) = filterIsInstance<Definition>()
+    .find { it.identifier.value == type.value }
+    ?: error("Definition not found in AST: $type")
+
+private fun AST.generateIterator(def: Definition, random: Random): JsonElement = (0..random.nextInt(10))
+    .map { generateObject(def, random) }
+    .let(::JsonArray)
+
+private fun AST.generateReference(ref: Reference, random: Random) = when (ref) {
+    is Reference.Primitive -> when (ref.type) {
+        Reference.Primitive.Type.String -> RgxGen.parse("\\w{1,50}").generate(random).let(::JsonPrimitive)
+        Reference.Primitive.Type.Integer -> random.nextInt().let(::JsonPrimitive)
+        Reference.Primitive.Type.Number -> random.nextDouble().let(::JsonPrimitive)
+        Reference.Primitive.Type.Boolean -> random.nextBoolean().let(::JsonPrimitive)
     }
 
-    fun AST.generate(type: Reference, random: Random = Random.Default): JsonElement {
-        val def = resolveReference(type)
-        return if (type.isIterable) {
-            generateIterator(def, random)
-        } else {
-            generateObject(def, random)
+    is Reference.Custom -> resolveReference(ref)
+        .let { if (ref.isIterable) generateIterator(it, random) else generateObject(it, random) }
+
+    is Reference.Unit -> JsonNull
+    is Reference.Any -> throw NotImplementedError("Cannot generate Any")
+}
+
+private fun AST.generateType(def: Type, random: Random): JsonObject = random.nextInt().let { typeSeed ->
+    def.shape.value
+        .fold<Field, Map<String, JsonElement>>(emptyMap()) { acc, cur ->
+            cur.identifier.value.let { value ->
+                val fieldSeed = typeSeed + value.sumOf { it.code }
+                val fieldRandom = Random(fieldSeed)
+                acc.plus(value to generateReference(cur.reference, fieldRandom))
+            }
         }
-    }
+        .let(::JsonObject)
+}
 
-    private fun AST.resolveReference(type: Reference) =
-        this
-            .filterIsInstance<Definition>()
-            .find { it.identifier.value == type.value }
-            ?: error("Definition not found in AST: $type")
+private fun randomRegex(regex: String, random: Random) = RgxGen
+    .parse(regex.substring(1, regex.length - 2))
+    .generate(random)
 
-    private fun AST.generateIterator(def: Definition, random: Random): JsonElement =
-        (0..random.nextInt(10))
-            .map { generateObject(def, random) }
-            .let(::JsonArray)
+private fun generateRefined(def: Refined, random: Random) = randomRegex(def.validator.value, random)
+    .let(::JsonPrimitive)
 
-    private fun AST.generateReference(ref: Reference, random: Random): JsonElement =
-        when (ref) {
-            is Reference.Primitive -> when (ref.type) {
-                Reference.Primitive.Type.String -> RgxGen.parse("\\w{1,50}").generate(random).let(::JsonPrimitive)
-                Reference.Primitive.Type.Integer -> random.nextInt().let(::JsonPrimitive)
-                Reference.Primitive.Type.Number -> random.nextDouble().let(::JsonPrimitive)
-                Reference.Primitive.Type.Boolean -> random.nextBoolean().let(::JsonPrimitive)
-            }
+private fun generateEnum(def: Enum, random: Random) = random
+    .nextInt(def.entries.size)
+    .let(def.entries.toList()::get)
+    .let(::JsonPrimitive)
 
-            is Reference.Custom -> {
-                val def = resolveReference(ref)
-                if (ref.isIterable) {
-                    generateIterator(def, random)
-                } else {
-                    generateObject(def, random)
-                }
-            }
+private fun AST.generateUnion(def: Union, random: Random) = random
+    .nextInt(def.entries.size)
+    .let(def.entries.toList()::get)
+    .let { generate(it, random) }
 
-            is Reference.Unit -> JsonNull
-            is Reference.Any -> throw NotImplementedError("Cannot generate Any")
-        }
-
-    private fun AST.generateType(def: Type, random: Random): JsonObject {
-        val typeSeed = random.nextInt()
-        return def.shape.value
-            .fold<Field, Map<String, JsonElement>>(emptyMap()) { acc, cur ->
-                cur.identifier.value.let { value ->
-                    val fieldSeed = typeSeed + value.sumOf { it.code }
-                    val fieldRandom = Random(fieldSeed)
-                    acc.plus(value to generateReference(cur.reference, fieldRandom))
-                }
-            }
-            .let(::JsonObject)
-    }
-
-    private fun randomRegex(regex: String, random: Random): String {
-        val rgxgen = RgxGen.parse(regex.substring(1, regex.length - 2))
-        return rgxgen.generate(random)
-    }
-
-    private fun generateRefined(def: Refined, random: Random): JsonPrimitive {
-        val regex = def.validator.value
-        return randomRegex(regex, random).let(::JsonPrimitive)
-    }
-
-    private fun generateEnum(def: Enum, random: Random): JsonPrimitive {
-        val index = random.nextInt(def.entries.size)
-        return def.entries.toList()[index].let(::JsonPrimitive)
-    }
-
-    private fun AST.generateUnion(def: Union, random: Random): JsonElement {
-        val index = random.nextInt(def.entries.size)
-        val type = def.entries.toList()[index]
-        return generate(type, random)
-    }
-
-    private fun AST.generateObject(def: Definition, random: Random): JsonElement = when (def) {
-        is Type -> generateType(def, random)
-        is Refined -> generateRefined(def, random)
-        is Enum -> generateEnum(def, random)
-        is Union -> generateUnion(def, random)
-        is Endpoint -> throw NotImplementedError("Endpoint cannot be generated")
-        is Channel -> throw NotImplementedError("Channel cannot be generated")
-    }
+private fun AST.generateObject(def: Definition, random: Random) = when (def) {
+    is Type -> generateType(def, random)
+    is Refined -> generateRefined(def, random)
+    is Enum -> generateEnum(def, random)
+    is Union -> generateUnion(def, random)
+    is Endpoint -> throw NotImplementedError("Endpoint cannot be generated")
+    is Channel -> throw NotImplementedError("Channel cannot be generated")
 }

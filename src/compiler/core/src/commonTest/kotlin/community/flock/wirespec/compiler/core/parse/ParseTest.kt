@@ -2,7 +2,7 @@ package community.flock.wirespec.compiler.core.parse
 
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.tokenize.tokenize
-import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
@@ -10,7 +10,7 @@ import kotlin.test.Test
 
 class ParseTest {
 
-    private fun parser() = Parser(object : Logger(false) {})
+    private fun parser() = Parser(noLogger)
 
     @Test
     fun testParserWithCorrectInput() {
@@ -102,8 +102,8 @@ class ParseTest {
         WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight().filterIsInstance<Definition>().map { it.comment?.value } shouldBe listOf(
-                "/**\n * This is comment 1\n */",
-                "/**\n * This is comment 2\n */",
-            )
+            "/**\n * This is comment 1\n */",
+            "/**\n * This is comment 2\n */",
+        )
     }
 }
