@@ -1,4 +1,4 @@
-package community.flock.wirespec.lsp.intellij_plugin
+package community.flock.wirespec.ide.intellij
 
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.tokenize.Token
@@ -36,59 +36,54 @@ import com.intellij.lexer.LexerBase as IntellijLexer
 
 class Lexer : IntellijLexer() {
 
-    private var buffer: CharSequence = ""
+    private var bufferSequence: CharSequence = ""
     private var index = 0
     private var state = 0
     private var tokens: List<Token> = emptyList()
 
     override fun start(buffer: CharSequence, startOffset: Int, endOffset: Int, initialState: Int) {
-        this.buffer = buffer
-        this.index = 0
-        this.state = initialState
-        this.tokens = WirespecSpec.tokenize(buffer.toString()).filterNot { it.type is EndOfProgram }
-
+        bufferSequence = buffer
+        index = 0
+        state = initialState
+        tokens = WirespecSpec.tokenize(buffer.toString()).filterNot { it.type is EndOfProgram }
     }
 
-    override fun getBufferSequence() = buffer
+    override fun getBufferSequence() = bufferSequence
 
     override fun getState() = state
 
-    override fun getTokenType() =
-        if (index == tokens.size) null
-        else {
-            val token = tokens[index]
-            when (token.type) {
-                is LeftCurly -> Types.LEFT_CURLY
-                is RightCurly -> Types.RIGHT_CURLY
-                is Colon -> Types.COLON
-                is Comma -> Types.COMMA
-                is QuestionMark -> Types.QUESTION_MARK
-                is Hash -> Types.HASH
-                is ForwardSlash -> Types.FORWARD_SLASH
-                is Brackets -> Types.BRACKETS
-                is CustomValue -> Types.CUSTOM_VALUE
-                is WsComment -> Types.COMMENT
-                is Invalid -> Types.INVALID
-                is EndOfProgram -> Types.END_OF_PROGRAM
-                is WhiteSpace -> Types.WHITE_SPACE
-                is WsTypeDef -> Types.TYPE_DEF
-                is WsEnumTypeDef -> Types.ENUM_DEF
-                is WsEndpointDef -> Types.ENDPOINT_DEF
-                is WsString -> Types.STRING
-                is WsInteger -> Types.INTEGER
-                is WsNumber -> Types.NUMBER
-                is WsBoolean -> Types.BOOLEAN
-                is CustomType -> Types.CUSTOM_TYPE
-                is WsUnit -> Types.UNIT
-                is Method -> Types.METHOD
-                is Path -> Types.PATH
-                is StatusCode -> Types.STATUS_CODE
-                is Arrow -> Types.ARROW
-                is Equals -> Types.EQUALS
-                is Pipe -> Types.PIPE
-                is CustomRegex -> Types.CUSTOM_REGEX
-            }
-        }
+    override fun getTokenType() = when (tokens.getOrNull(index)?.type) {
+        null -> null
+        is LeftCurly -> Types.LEFT_CURLY
+        is RightCurly -> Types.RIGHT_CURLY
+        is Colon -> Types.COLON
+        is Comma -> Types.COMMA
+        is QuestionMark -> Types.QUESTION_MARK
+        is Hash -> Types.HASH
+        is ForwardSlash -> Types.FORWARD_SLASH
+        is Brackets -> Types.BRACKETS
+        is CustomValue -> Types.CUSTOM_VALUE
+        is WsComment -> Types.COMMENT
+        is Invalid -> Types.INVALID
+        is EndOfProgram -> Types.END_OF_PROGRAM
+        is WhiteSpace -> Types.WHITE_SPACE
+        is WsTypeDef -> Types.TYPE_DEF
+        is WsEnumTypeDef -> Types.ENUM_DEF
+        is WsEndpointDef -> Types.ENDPOINT_DEF
+        is WsString -> Types.STRING
+        is WsInteger -> Types.INTEGER
+        is WsNumber -> Types.NUMBER
+        is WsBoolean -> Types.BOOLEAN
+        is CustomType -> Types.CUSTOM_TYPE
+        is WsUnit -> Types.UNIT
+        is Method -> Types.METHOD
+        is Path -> Types.PATH
+        is StatusCode -> Types.STATUS_CODE
+        is Arrow -> Types.ARROW
+        is Equals -> Types.EQUALS
+        is Pipe -> Types.PIPE
+        is CustomRegex -> Types.CUSTOM_REGEX
+    }
 
     override fun getTokenStart() = tokens[index]
         .coordinates
@@ -100,11 +95,10 @@ class Lexer : IntellijLexer() {
         .idx
 
     override fun advance() {
-        index++
-        state = index
+        state = ++index
     }
 
-    override fun getBufferEnd() = buffer.toString().length
+    override fun getBufferEnd() = bufferSequence.toString().length
 
 }
 

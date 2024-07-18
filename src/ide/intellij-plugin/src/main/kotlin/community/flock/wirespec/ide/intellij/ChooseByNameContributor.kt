@@ -1,4 +1,4 @@
-package community.flock.wirespec.lsp.intellij_plugin
+package community.flock.wirespec.ide.intellij
 
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.project.Project
@@ -7,15 +7,16 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
+import community.flock.wirespec.ide.intellij.parser.CustomTypeElementDef
+import community.flock.wirespec.ide.intellij.parser.TypeDefElement
 import com.intellij.navigation.ChooseByNameContributor as IntellijChooseByNameContributor
-
 
 class ChooseByNameContributor : IntellijChooseByNameContributor {
 
     private lateinit var map: Map<String, PsiElement>
 
     override fun getNames(project: Project, includeNonProjectItems: Boolean) = FileTypeIndex
-        .getFiles(FileType.INSTANCE, GlobalSearchScope.allScope(project))
+        .getFiles(FileType, GlobalSearchScope.allScope(project))
         .map(PsiManager.getInstance(project)::findFile)
         .flatMap { file ->
             PsiTreeUtil.getChildrenOfType(file, TypeDefElement::class.java).orEmpty()
