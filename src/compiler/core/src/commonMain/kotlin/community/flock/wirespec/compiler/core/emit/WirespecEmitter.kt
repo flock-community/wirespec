@@ -24,8 +24,10 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
         is Refined -> identifier.emit()
         is Type -> identifier.emit()
         is Union -> identifier.emit()
-        is Channel -> TODO()
+        is Channel -> identifier.emit()
     }
+
+    override fun notYetImplemented() = "\n"
 
     override fun Type.emit(ast: AST) = """
         |type ${identifier.emit()} {

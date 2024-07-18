@@ -69,6 +69,11 @@ open class JavaEmitter(
         is Union -> identifier.emit()
     }
 
+    override fun notYetImplemented() =
+        """// TODO("Not yet implemented")
+            |
+        """.trimMargin()
+
     override fun emit(ast: AST): List<Emitted> = super.emit(ast)
         .map { Emitted(it.typeName.sanitizeSymbol(), "$pkg${importWireSpec(ast)}${importJava(ast)}${it.result}\n") }
 
@@ -119,6 +124,7 @@ open class JavaEmitter(
     """.trimMargin()
 
     override fun Union.emit() = transform().emit()
+
     override fun Channel.emit(): String =
         """
             |interface ${identifier.emit()}Channel {

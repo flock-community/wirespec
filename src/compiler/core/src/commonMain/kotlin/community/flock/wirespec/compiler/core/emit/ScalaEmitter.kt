@@ -26,12 +26,17 @@ open class ScalaEmitter(
 
     override fun Definition.emitName(): String = when (this) {
         is Endpoint -> "${identifier.emit()}Endpoint"
+        is Channel -> "${identifier.emit()}Channel"
         is Enum -> identifier.emit()
         is Refined -> identifier.emit()
         is Type -> identifier.emit()
         is Union -> identifier.emit()
-        is Channel -> TODO()
     }
+
+    override fun notYetImplemented() =
+        """// TODO("Not yet implemented")
+            |
+        """.trimMargin()
 
     override fun emit(ast: AST): List<Emitted> = super.emit(ast)
         .map { Emitted(it.typeName, if (packageName.isBlank()) "" else "package $packageName\n\n${it.result}") }
@@ -50,9 +55,7 @@ open class ScalaEmitter(
 
     override fun Identifier.emit() = if (value in preservedKeywords) value.addBackticks() else value
 
-    override fun Channel.emit(): String {
-        TODO("Not yet implemented")
-    }
+    override fun Channel.emit() = notYetImplemented()
 
     override fun Reference.emit() = when (this) {
         is Reference.Unit -> "Unit"
@@ -96,15 +99,9 @@ open class ScalaEmitter(
         """${SPACER}${SPACER}val regex = new scala.util.matching.Regex(""$value"")
             |${SPACER}${SPACER}regex.findFirstIn(that.value)""".trimMargin()
 
-    override fun Endpoint.emit() =
-        """// TODO("Not yet implemented")
-            |
-        """.trimMargin()
+    override fun Endpoint.emit() = notYetImplemented()
 
-    override fun Union.emit() =
-        """// TODO("Not yet implemented")
-            |
-        """.trimMargin()
+    override fun Union.emit() = notYetImplemented()
 
     companion object {
         private val preservedKeywords = listOf(

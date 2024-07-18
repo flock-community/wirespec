@@ -33,8 +33,13 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
         is Refined -> identifier.emit()
         is Type -> identifier.emit()
         is Union -> identifier.emit()
-        is Channel -> TODO()
+        is Channel -> identifier.emit()
     }
+
+    override fun notYetImplemented() =
+        """// TODO("Not yet implemented")
+            |
+        """.trimMargin()
 
     override fun emit(ast: AST): List<Emitted> =
         super.emit(ast).map {
@@ -147,9 +152,7 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
     override fun Union.emit() =
         "export type ${identifier.sanitizeSymbol()} = ${entries.joinToString(" | ") { it.emit() }}\n"
 
-    override fun Channel.emit(): String {
-        TODO("Not yet implemented")
-    }
+    override fun Channel.emit() = notYetImplemented()
 
     private fun List<Endpoint.Segment>.emitType() = "`${joinToString("") { "/" + it.emitType() }}`"
 

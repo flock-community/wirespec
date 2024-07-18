@@ -24,7 +24,6 @@ class Parser : PsiParser {
     object CustomTypeRef : IElementType("CUSTOM_TYPE_REF", Language)
     object Body : IElementType("BODY", Language)
 
-
     override fun parse(root: IElementType, builder: PsiBuilder): ASTNode = builder.apply {
         mark().also {
             builder.parse()

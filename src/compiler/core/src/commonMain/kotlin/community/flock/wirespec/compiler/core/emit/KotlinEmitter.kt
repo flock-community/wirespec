@@ -45,6 +45,11 @@ open class KotlinEmitter(
         is Union -> identifier.emit()
     }
 
+    override fun notYetImplemented() =
+        """// TODO("Not yet implemented")
+            |
+        """.trimMargin()
+
     override fun emit(ast: AST): List<Emitted> =
         super.emit(ast).map {
             Emitted(
@@ -133,9 +138,7 @@ open class KotlinEmitter(
          |}
     """.trimMargin()
 
-    override fun EndpointClass.RequestClass.RequestAllArgsConstructor.emit(): String {
-        TODO("Not yet implemented")
-    }
+    override fun EndpointClass.RequestClass.RequestAllArgsConstructor.emit() = notYetImplemented()
 
     override fun EndpointClass.RequestClass.RequestParameterConstructor.emit(): String = """
         |constructor(${parameters.joinToString(", ") { it.emit() }}) : this(
@@ -157,9 +160,7 @@ open class KotlinEmitter(
         |}
     """.trimMargin()
 
-    override fun EndpointClass.ResponseClass.ResponseAllArgsConstructor.emit(): String {
-        TODO("Not yet implemented")
-    }
+    override fun EndpointClass.ResponseClass.ResponseAllArgsConstructor.emit() = notYetImplemented()
 
     override fun EndpointClass.ResponseClass.ResponseParameterConstructor.emit(): String = """
         |constructor(${parameters.joinToString(", ") { it.emit() }}) : this(

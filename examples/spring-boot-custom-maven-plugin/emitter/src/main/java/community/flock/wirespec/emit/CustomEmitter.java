@@ -3,6 +3,7 @@ package community.flock.wirespec.emit;
 import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter;
 import community.flock.wirespec.compiler.core.emit.common.Emitted;
 import community.flock.wirespec.compiler.core.emit.common.Emitter;
+import community.flock.wirespec.compiler.core.parse.Channel;
 import community.flock.wirespec.compiler.core.parse.Definition;
 import community.flock.wirespec.compiler.core.parse.Endpoint;
 import community.flock.wirespec.compiler.core.parse.Enum;
@@ -31,6 +32,12 @@ public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
 
     @NotNull
     @Override
+    public String notYetImplemented() {
+        return "";
+    }
+
+    @NotNull
+    @Override
     public List<Emitted> emit(@NotNull List<? extends Node> ast) {
         return ast
                 .stream()
@@ -43,31 +50,37 @@ public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
     @NotNull
     @Override
     public String emit(@NotNull Endpoint endpoint) {
-        return "";
+        return notYetImplemented();
+    }
+
+    @NotNull
+    @Override
+    public String emit(@NotNull Channel channel) {
+        return notYetImplemented();
     }
 
     @NotNull
     @Override
     public String emit(@NotNull Enum anEnum) {
-        return "";
+        return notYetImplemented();
     }
 
     @NotNull
     @Override
     public String emit(@NotNull Union aUnion) {
-        return "";
+        return notYetImplemented();
     }
 
     @NotNull
     @Override
     public String emit(@NotNull Refined refined) {
-        return "";
+        return notYetImplemented();
     }
 
     @NotNull
     @Override
     public String emit(@NotNull Refined.Validator validator) {
-        return "";
+        return notYetImplemented();
     }
 
     @NotNull
@@ -79,18 +92,18 @@ public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
     @NotNull
     @Override
     public String emit(@NotNull Type.Shape shape) {
-        return "";
+        return notYetImplemented();
     }
 
     @NotNull
     @Override
     public String emit(@NotNull Field field) {
-        return "";
+        return notYetImplemented();
     }
 
     @NotNull
     @Override
     public String emit(@NotNull Field.Reference reference) {
-        return "";
+        return notYetImplemented();
     }
 }
