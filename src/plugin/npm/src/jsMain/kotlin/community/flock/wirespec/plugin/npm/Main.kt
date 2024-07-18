@@ -18,7 +18,7 @@ import community.flock.wirespec.compiler.lib.WsStringResult
 import community.flock.wirespec.compiler.lib.consume
 import community.flock.wirespec.compiler.lib.produce
 import community.flock.wirespec.compiler.utils.noLogger
-import community.flock.wirespec.generator.Generator.generate
+import community.flock.wirespec.generator.generate
 import community.flock.wirespec.openapi.v2.OpenApiV2Emitter
 import community.flock.wirespec.openapi.v3.OpenApiV3Emitter
 import community.flock.wirespec.plugin.cli.main

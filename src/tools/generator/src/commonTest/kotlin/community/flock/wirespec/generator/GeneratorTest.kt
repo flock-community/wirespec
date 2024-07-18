@@ -4,7 +4,6 @@ import arrow.core.getOrElse
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.utils.noLogger
-import community.flock.wirespec.generator.Generator.generate
 import kotlinx.serialization.json.jsonArray
 import kotlin.random.Random
 import kotlin.test.Test
