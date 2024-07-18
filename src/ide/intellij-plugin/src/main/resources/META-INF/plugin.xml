@@ -44,7 +44,7 @@
 
         <lang.parserDefinition
                 language="wirespec"
-                implementationClass="community.flock.wirespec.lsp.intellij_plugin.ParserDefinition"/>
+                implementationClass="community.flock.wirespec.lsp.intellij_plugin.parser.ParserDefinition"/>
 
         <lang.findUsagesProvider
                 language="wirespec"

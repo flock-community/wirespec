@@ -3,7 +3,7 @@ package community.flock.wirespec.lsp.intellij_plugin
 import com.intellij.psi.tree.IElementType
 
 interface Types {
-    class ElementType(debugName: String) : IElementType(debugName, Language.INSTANCE)
+    class ElementType(debugName: String) : IElementType(debugName, Language)
 
     companion object {
         val LEFT_CURLY = ElementType("LEFT_CURLY")

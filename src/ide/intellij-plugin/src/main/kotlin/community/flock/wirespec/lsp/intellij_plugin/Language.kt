@@ -3,9 +3,6 @@ package community.flock.wirespec.lsp.intellij_plugin
 
 import com.intellij.lang.Language as IntellijLanguage
 
-class Language : IntellijLanguage("wirespec") {
-
-    companion object {
-        val INSTANCE: Language = Language()
-    }
+object Language : IntellijLanguage("wirespec") {
+    private fun readResolve(): Any = Language
 }
