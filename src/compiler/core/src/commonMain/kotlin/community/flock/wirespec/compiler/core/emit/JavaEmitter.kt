@@ -62,11 +62,11 @@ open class JavaEmitter(
 
     override fun Definition.emitName(): String = when (this) {
         is Endpoint -> "${identifier.emit()}Endpoint"
+        is Channel -> "${identifier.emit()}Channel"
         is Enum -> identifier.emit()
         is Refined -> identifier.emit()
         is Type -> identifier.emit()
         is Union -> identifier.emit()
-        is Channel -> TODO()
     }
 
     override fun emit(ast: AST): List<Emitted> = super.emit(ast)
