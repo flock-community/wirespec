@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -29,6 +30,7 @@ open class ScalaEmitter(
         is Refined -> identifier.emit()
         is Type -> identifier.emit()
         is Union -> identifier.emit()
+        is Channel -> TODO()
     }
 
     override fun emit(ast: AST): List<Emitted> = super.emit(ast)
@@ -47,6 +49,10 @@ open class ScalaEmitter(
         "${SPACER}val ${identifier.emit()}: ${if (isNullable) "Option[${reference.emit()}]" else reference.emit()},"
 
     override fun Identifier.emit() = if (value in preservedKeywords) value.addBackticks() else value
+
+    override fun Channel.emit(): String {
+        TODO("Not yet implemented")
+    }
 
     override fun Reference.emit() = when (this) {
         is Reference.Unit -> "Unit"

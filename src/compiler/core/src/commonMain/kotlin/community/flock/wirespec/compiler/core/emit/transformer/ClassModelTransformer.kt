@@ -534,7 +534,7 @@ object ClassModelTransformer : Transformer {
         reference = this.reference.transform(isNullable, false),
     )
 
-    private fun Field.Reference.transform(isNullable: Boolean, isOptional: Boolean) =
+    fun Field.Reference.transform(isNullable: Boolean, isOptional: Boolean) =
         when (this) {
             is Field.Reference.Unit -> Reference.Language(
                 Reference.Language.Primitive.Unit,

@@ -22,6 +22,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.StatusCode
 import community.flock.wirespec.compiler.core.tokenize.types.TokenType
 import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpaceExceptNewLine
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
+import community.flock.wirespec.compiler.core.tokenize.types.WsChannelDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsComment
 import community.flock.wirespec.compiler.core.tokenize.types.WsEndpointDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsEnumTypeDef
@@ -43,6 +44,7 @@ object WirespecSpec : LanguageSpec {
         Regex("^type") to WsTypeDef,
         Regex("^enum") to WsEnumTypeDef,
         Regex("^endpoint") to WsEndpointDef,
+        Regex("^channel") to WsChannelDef,
         Regex("^[^\\S\\r\\n]+") to WhiteSpaceExceptNewLine,
         Regex("^[\\r\\n]") to NewLine,
         Regex("^\\{") to LeftCurly,

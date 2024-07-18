@@ -4,6 +4,7 @@ import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -32,6 +33,7 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
         is Refined -> identifier.emit()
         is Type -> identifier.emit()
         is Union -> identifier.emit()
+        is Channel -> TODO()
     }
 
     override fun emit(ast: AST): List<Emitted> =
@@ -144,6 +146,10 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
 
     override fun Union.emit() =
         "export type ${identifier.sanitizeSymbol()} = ${entries.joinToString(" | ") { it.emit() }}\n"
+
+    override fun Channel.emit(): String {
+        TODO("Not yet implemented")
+    }
 
     private fun List<Endpoint.Segment>.emitType() = "`${joinToString("") { "/" + it.emitType() }}`"
 

@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.emit.common
 
 import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Identifier
@@ -15,7 +16,8 @@ interface Emitters :
     RefinedTypeDefinitionEmitter,
     EndpointDefinitionEmitter,
     UnionDefinitionEmitter,
-    IdentifierEmitter
+    IdentifierEmitter,
+    ChannelDefinitionEmitter
 
 interface TypeDefinitionEmitter {
     fun Type.emit(ast: AST): String
@@ -35,6 +37,10 @@ interface EndpointDefinitionEmitter {
 
 interface UnionDefinitionEmitter {
     fun Union.emit(): String
+}
+
+interface ChannelDefinitionEmitter {
+    fun Channel.emit(): String
 }
 
 interface IdentifierEmitter {

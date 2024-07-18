@@ -4,6 +4,7 @@ import community.flock.wirespec.compiler.core.addBackticks
 import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -23,6 +24,7 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
         is Refined -> identifier.emit()
         is Type -> identifier.emit()
         is Union -> identifier.emit()
+        is Channel -> TODO()
     }
 
     override fun Type.emit(ast: AST) = """
@@ -36,8 +38,9 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
 
     override fun Field.emit() = "${identifier.emit()}: ${reference.emit()}${if (isNullable) "?" else ""}"
 
-
     override fun Identifier.emit() = if (value in preservedKeywords) value.addBackticks() else value
+
+    override fun Channel.emit(): String = "channel ${identifier.emit()} -> ${reference.emit()}"
 
     override fun Field.Reference.emit(): String = when (this) {
         is Field.Reference.Unit -> "Unit"

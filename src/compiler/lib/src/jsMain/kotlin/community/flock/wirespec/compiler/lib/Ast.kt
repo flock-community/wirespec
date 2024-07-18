@@ -2,6 +2,7 @@
 
 package community.flock.wirespec.compiler.lib
 
+import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Comment
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -19,6 +20,7 @@ fun WsNode.consume(): Node =
         is WsRefined -> consume()
         is WsType -> consume()
         is WsUnion -> consume()
+        is WsChannel -> consume()
     }
 
 fun WsEndpoint.consume(): Endpoint =
@@ -76,6 +78,14 @@ private fun WsUnion.consume() = Union(
     comment = comment?.let { Comment(it) },
     entries = entries.map { it.consume() }.toSet()
 )
+
+private fun WsChannel.consume() = Channel(
+    identifier = Identifier(identifier),
+    comment = comment?.let { Comment(it) },
+    reference = reference.consume(),
+    isNullable = isNullable
+)
+
 
 private fun WsField.consume() = Field(
     identifier = identifier.consume(),
@@ -174,6 +184,13 @@ fun Node.produce(): WsNode =
             entries = entries
                 .map { it.produce() }
                 .toTypedArray())
+
+        is Channel -> WsChannel(
+            identifier = identifier.value,
+            comment = comment?.value,
+            reference = reference.produce(),
+            isNullable = isNullable
+        )
     }
 
 fun List<Node>.produce(): Array<WsNode> =
@@ -275,6 +292,14 @@ data class WsUnion(
     override val identifier: String,
     val comment: String?,
     val entries: Array<WsReference>
+) : WsNode
+
+@JsExport
+data class WsChannel(
+    override val identifier: String,
+    val comment: String?,
+    val reference: WsReference,
+    val isNullable: Boolean
 ) : WsNode
 
 @JsExport

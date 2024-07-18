@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.emit.common
 
 import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -25,6 +26,7 @@ abstract class Emitter(
                 is Enum -> Emitted(it.emitName(), it.emit())
                 is Refined -> Emitted(it.emitName(), it.emit())
                 is Union -> Emitted(it.emitName(), it.emit())
+                is Channel -> TODO()
             }
         }
         .run {

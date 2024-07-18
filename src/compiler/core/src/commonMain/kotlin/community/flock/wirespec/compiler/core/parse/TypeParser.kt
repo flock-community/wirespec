@@ -113,7 +113,7 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         }
     }
 
-    private fun TokenProvider.parseFieldValue(wsType: WirespecType, value: String, isDict: Boolean) = either {
+    fun TokenProvider.parseFieldValue(wsType: WirespecType, value: String, isDict: Boolean) = either {
         val previousToken = token
         eatToken().bind()
         token.log()

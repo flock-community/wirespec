@@ -22,6 +22,7 @@ interface Types {
         val TYPE_DEF = ElementType("TYPE_DEF")
         val ENUM_DEF = ElementType("ENUM_DEF")
         val ENDPOINT_DEF = ElementType("ENDPOINT_DEF")
+        val CHANNEL_DEF = ElementType("CHANNEL_DEF")
         val STRING = ElementType("STRING")
         val INTEGER = ElementType("INTEGER")
         val NUMBER = ElementType("NUMBER")
