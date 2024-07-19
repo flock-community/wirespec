@@ -1,6 +1,7 @@
 package community.flock.wirespec.convert.wsdl
 
 import com.goncalossilva.resources.Resource
+import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import kotlin.test.Test
 
 class WsdlParserTest {
@@ -16,7 +17,8 @@ class WsdlParserTest {
     fun testCountryInfoService() {
         val resource = Resource("src/commonTest/resources/country-info-service.wsdl")
         val ast = WsdlParser.parse(resource.readText())
-        println(ast)
+        val kotlin = KotlinEmitter().emit(ast)
+        println(kotlin)
     }
 
     @Test

@@ -23,9 +23,9 @@ data class Schema(
 data class Element(
     val name: String,
     val type: String? = null,
-    val minOccurs: String? = null,
-    val maxOccurs: String? = null,
-    val nillable: String? = null,
+    val minOccurs: String? = "1",
+    val maxOccurs: String? = "1",
+    val nillable: Boolean? = null,
     val complexType: List<ComplexType> = emptyList()
 )
 
