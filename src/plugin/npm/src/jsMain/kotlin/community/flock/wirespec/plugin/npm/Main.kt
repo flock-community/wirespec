@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
+import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.parse.Parser
 import community.flock.wirespec.compiler.core.tokenize.tokenize
@@ -20,17 +21,26 @@ import community.flock.wirespec.compiler.lib.produce
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.generator.generate
 import community.flock.wirespec.openapi.v2.OpenApiV2Emitter
+import community.flock.wirespec.openapi.v2.OpenApiV2Parser
 import community.flock.wirespec.openapi.v3.OpenApiV3Emitter
+import community.flock.wirespec.openapi.v3.OpenApiV3Parser
 import community.flock.wirespec.plugin.cli.main
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.json.Json
 
 @JsExport
 enum class Emitters {
+    WIRESPEC,
     TYPESCRIPT,
     JAVA,
     KOTLIN,
     SCALA,
+    OPENAPI_V2,
+    OPENAPI_V3,
+}
+
+@JsExport
+enum class Converters {
     OPENAPI_V2,
     OPENAPI_V3,
 }
@@ -51,6 +61,12 @@ fun parse(source: String) = WirespecSpec
     .produce()
 
 @JsExport
+fun convert(source: String, converters: Converters) = when (converters) {
+    Converters.OPENAPI_V2 -> OpenApiV3Parser.parse(source).produce()
+    Converters.OPENAPI_V3 -> OpenApiV2Parser.parse(source).produce()
+}
+
+@JsExport
 fun generate(source: String, type: String): WsStringResult = WirespecSpec
     .tokenize(source)
     .let(Parser(noLogger)::parse)
@@ -62,6 +78,7 @@ fun emit(ast: Array<WsNode>, emitter: Emitters, packageName: String) = ast
     .map { it.consume() }
     .let {
         when (emitter) {
+            Emitters.WIRESPEC -> WirespecEmitter().emit(it)
             Emitters.TYPESCRIPT -> TypeScriptEmitter().emit(it)
             Emitters.JAVA -> JavaEmitter(packageName).emit(it)
             Emitters.KOTLIN -> KotlinEmitter(packageName).emit(it)
