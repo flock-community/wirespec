@@ -1,6 +1,6 @@
 plugins {
     kotlin("multiplatform")
-    id("com.goncalossilva.resources") version "0.4.0"
+    alias(libs.plugins.kotlinx.resources)
     kotlin("plugin.serialization") version "2.0.0-RC1"
 }
 
@@ -38,10 +38,8 @@ kotlin {
         }
         commonTest {
             dependencies {
-                implementation("com.goncalossilva:resources:0.4.0")
-                implementation(kotlin("test-common"))
-                implementation(kotlin("test-annotations-common"))
-                implementation(kotlin("test-junit"))
+                implementation(libs.kotlinx.resources)
+                implementation(kotlin("test"))
                 implementation(libs.bundles.kotest)
             }
         }
