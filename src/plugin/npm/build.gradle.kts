@@ -1,6 +1,6 @@
 plugins {
     kotlin("multiplatform")
-    id("com.goncalossilva.resources") version "0.4.0"
+    alias(libs.plugins.kotlinx.resources)
 }
 
 group = "${libs.versions.group.id.get()}.plugin.npm"
@@ -30,8 +30,8 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("community.flock.kotlinx.openapi.bindings:kotlin-openapi-bindings:0.0.24")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+                implementation(libs.kotlinx.openapi.bindings)
+                implementation(libs.kotlinx.serialization)
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:compiler:lib"))
                 implementation(project(":src:plugin:cli"))
@@ -41,9 +41,8 @@ kotlin {
         }
         val jsMain by getting {
             dependencies {
-                implementation(kotlin("test-annotations-common"))
-                implementation(kotlin("test-junit"))
-                implementation("com.goncalossilva:resources:0.4.0")
+                implementation(kotlin("test"))
+                implementation(libs.kotlinx.resources)
             }
         }
     }

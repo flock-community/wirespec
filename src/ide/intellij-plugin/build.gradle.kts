@@ -3,7 +3,7 @@
 plugins {
     kotlin("multiplatform") apply false
     kotlin("jvm")
-    id("org.jetbrains.intellij") version "1.17.3"
+    alias(libs.plugins.intellij)
 }
 
 group = "${libs.versions.group.id.get()}.lsp.intellij-plugin"

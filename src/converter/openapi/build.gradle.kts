@@ -1,6 +1,6 @@
 plugins {
     kotlin("multiplatform")
-    id("com.goncalossilva.resources") version "0.4.0"
+    alias(libs.plugins.kotlinx.resources)
 }
 
 group = "${libs.versions.group.id.get()}.converter"
@@ -30,24 +30,20 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":src:compiler:core"))
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
-                implementation("community.flock.kotlinx.openapi.bindings:kotlin-openapi-bindings:0.0.24")
+                implementation(libs.kotlinx.serialization)
+                implementation(libs.kotlinx.openapi.bindings)
             }
         }
         commonTest {
             dependencies {
-                implementation("com.goncalossilva:resources:0.4.0")
-                implementation(kotlin("test-common"))
-                implementation(kotlin("test-annotations-common"))
-                implementation(kotlin("test-junit"))
+                implementation(libs.kotlinx.resources)
+                implementation(kotlin("test"))
                 implementation(libs.bundles.kotest)
             }
         }
         val jvmTest by getting {
             dependencies {
-                implementation("com.fasterxml.jackson.core:jackson-databind:2.9.8")
-                implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2")
-
+                implementation(libs.bundles.jackson)
             }
         }
     }

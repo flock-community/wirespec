@@ -37,14 +37,13 @@ kotlin {
             dependencies {
                 api(libs.kotlin.stdlib)
                 api(libs.arrow.core)
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
-                implementation("community.flock.kotlinx.openapi.bindings:kotlin-openapi-bindings:0.0.24")
+                implementation(libs.kotlinx.serialization)
+                implementation(libs.kotlinx.openapi.bindings)
             }
         }
         commonTest {
             dependencies {
-                implementation(kotlin("test-annotations-common"))
-                implementation(kotlin("test-junit"))
+                implementation(kotlin("test"))
                 implementation(libs.bundles.kotest)
             }
         }

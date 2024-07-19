@@ -1,6 +1,3 @@
-import org.jetbrains.dokka.gradle.DokkaMultiModuleTask
-import org.jetbrains.dokka.gradle.DokkaTask
-
 plugins {
     kotlin("multiplatform") apply false
     id("maven-publish")

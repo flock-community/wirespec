@@ -3,8 +3,8 @@ import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsTargetDsl
 
 plugins {
     kotlin("multiplatform")
-    id("com.goncalossilva.resources") version "0.4.0"
     alias(libs.plugins.kotest)
+    alias(libs.plugins.kotlinx.resources)
 }
 
 group = "${libs.versions.group.id.get()}.plugin.cli"
@@ -53,8 +53,7 @@ kotlin {
         }
         val commonTest by getting {
             dependencies {
-                implementation(kotlin("test-annotations-common"))
-                implementation(kotlin("test-junit"))
+                implementation(kotlin("test"))
                 implementation(libs.bundles.kotest)
             }
         }

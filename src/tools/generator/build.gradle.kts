@@ -29,15 +29,13 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":src:compiler:core"))
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
-                implementation("community.flock.kotlinx.rgxgen:kotlin-rgxgen:0.0.1")
+                implementation(libs.kotlinx.serialization)
+                implementation(libs.kotlinx.rgxgen)
             }
         }
         commonTest {
             dependencies {
-                implementation(kotlin("test-common"))
-                implementation(kotlin("test-annotations-common"))
-                implementation(kotlin("test-junit"))
+                implementation(kotlin("test"))
             }
         }
     }

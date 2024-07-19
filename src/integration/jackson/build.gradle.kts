@@ -1,6 +1,6 @@
 plugins {
     kotlin("multiplatform")
-    id("com.goncalossilva.resources") version "0.4.0"
+    alias(libs.plugins.kotlinx.resources)
 }
 
 group = "${libs.versions.group.id.get()}.integration"
@@ -37,13 +37,12 @@ kotlin {
         val jvmMain by getting {
             dependencies {
                 implementation(project(":src:compiler:core"))
-                compileOnly("com.fasterxml.jackson.core:jackson-databind:2.16.1")
+                compileOnly(libs.bundles.jackson)
             }
         }
         val jvmTest by getting {
             dependencies {
-                implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")
-                implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2")
+                implementation(libs.bundles.jackson)
             }
         }
     }

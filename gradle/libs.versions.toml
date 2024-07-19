@@ -1,28 +1,53 @@
 [versions]
-group_id = "community.flock.wirespec"
-from_env = "VERSION"
-default = "0.0.0-SNAPSHOT"
-kotlin = "1.9.24"
-kotlin_compiler = "1.9"
-java = "17"
 arrow = "1.2.1"
 clikt = "4.2.1"
+default = "0.0.0-SNAPSHOT"
+from_env = "VERSION"
+group_id = "community.flock.wirespec"
+intellij = "1.17.3"
+jackson_databind = "2.16.1"
+jackson_kotlin = "2.14.2"
+java = "17"
 kotest = "5.7.2"
 kotest_arrow = "1.4.0"
+kotlin = "2.0.0"
+kotlin_compiler = "2.0"
+kotlinx_openapi_bindings = "0.0.24"
+kotlinx_resources = "0.9.0"
+kotlinx_rgxgen = "0.0.1"
+kotlinx_serialization = "1.5.1"
+maven_plugin = "0.4.3"
+maven_plugin_api = "3.9.1"
+maven_plugin_tools = "3.8.1"
+maven_project = "2.2.1"
 
 [libraries]
-kotlin_stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
-kotlin_reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 arrow_core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
 clikt = { module = "com.github.ajalt.clikt:clikt", version.ref = "clikt" }
-kotest_engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
+jackson_databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson_databind" }
+jackson_kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson_kotlin" }
 kotest_assertions = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 kotest_assertions_arrow = { module = "io.kotest.extensions:kotest-assertions-arrow", version.ref = "kotest_arrow" }
+kotest_engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
+kotlin_reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+kotlin_stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+kotlinx_openapi_bindings = { module = "community.flock.kotlinx.openapi.bindings:kotlin-openapi-bindings", version.ref = "kotlinx_openapi_bindings" }
+kotlinx_resources = { module = "com.goncalossilva:resources", version.ref = "kotlinx_resources" }
+kotlinx_rgxgen = { module = "community.flock.kotlinx.rgxgen:kotlin-rgxgen", version.ref = "kotlinx_rgxgen" }
+kotlinx_serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx_serialization" }
+maven_plugin_api = { module = "org.apache.maven:maven-plugin-api", version.ref = "maven_plugin_api" }
+maven_plugin_tools = { module = "org.apache.maven.plugin-tools:maven-plugin-annotations", version.ref = "maven_plugin_tools" }
+maven_project = { module = "org.apache.maven:maven-project", version.ref = "maven_project" }
 
 [bundles]
+jackson = ["jackson_databind", "jackson_kotlin"]
 kotest = ["kotest_engine", "kotest_assertions", "kotest_assertions_arrow"]
+maven_plugin = ["maven_plugin_api", "maven_plugin_tools", "maven_project"]
 
 [plugins]
-kotlin_multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
-kotlin_jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+intellij = { id = "org.jetbrains.intellij", version.ref = "intellij" }
 kotest = { id = "io.kotest.multiplatform", version.ref = "kotest" }
+kotlin_jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin_multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlinx_resources = { id = "com.goncalossilva.resources", version.ref = "kotlinx_resources" }
+maven_plugin = { id = "de.benediktritter.maven-plugin-development", version.ref = "maven_plugin" }
