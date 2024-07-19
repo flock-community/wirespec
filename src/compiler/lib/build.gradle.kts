@@ -1,7 +1,6 @@
-
 plugins {
     kotlin("multiplatform")
-    id("com.goncalossilva.resources") version "0.4.0"
+    alias(libs.plugins.kotlinx.resources)
 }
 
 group = "${libs.versions.group.id.get()}.compiler"
@@ -44,9 +43,8 @@ kotlin {
         }
         val jsMain by getting {
             dependencies {
-                implementation(kotlin("test-annotations-common"))
-                implementation(kotlin("test-junit"))
-                implementation("com.goncalossilva:resources:0.4.0")
+                implementation(kotlin("test"))
+                implementation(libs.kotlinx.resources)
             }
         }
     }

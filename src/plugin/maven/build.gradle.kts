@@ -1,7 +1,7 @@
 plugins {
     kotlin("multiplatform") apply false
     kotlin("jvm")
-    id("de.benediktritter.maven-plugin-development") version "0.4.3"
+    alias(libs.plugins.maven.plugin)
 }
 
 group = "${libs.versions.group.id.get()}.plugin.maven"
@@ -20,9 +20,7 @@ dependencies {
     implementation(project(":src:converter:openapi"))
     implementation(project(":src:plugin:arguments"))
     implementation(libs.kotlin.reflect)
-    implementation("org.apache.maven:maven-plugin-api:3.9.1")
-    implementation("org.apache.maven.plugin-tools:maven-plugin-annotations:3.8.1")
-    implementation("org.apache.maven:maven-project:2.2.1")
+    implementation(libs.bundles.maven.plugin)
 }
 
 java {
