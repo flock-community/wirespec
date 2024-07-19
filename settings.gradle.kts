@@ -26,6 +26,7 @@ include(
     "src:plugin:gradle",
     "src:converter:avro",
     "src:converter:openapi",
+    "src:converter:wsdl",
     "src:integration:avro",
     "src:integration:jackson",
     "src:integration:wirespec",
