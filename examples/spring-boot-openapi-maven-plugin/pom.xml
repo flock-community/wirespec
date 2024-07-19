@@ -14,7 +14,7 @@
     <description>Demo project for Wirespec</description>
     <properties>
         <java.version>17</java.version>
-        <kotlin.version>1.9.24</kotlin.version>
+        <kotlin.version>2.0.0</kotlin.version>
     </properties>
     <dependencies>
         <dependency>
