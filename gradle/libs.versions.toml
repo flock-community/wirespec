@@ -1,24 +1,24 @@
 [versions]
-arrow = "1.2.1"
-clikt = "4.2.1"
+arrow = "1.2.4"
+clikt = "4.4.0"
 default = "0.0.0-SNAPSHOT"
 from_env = "VERSION"
 group_id = "community.flock.wirespec"
-intellij = "1.17.3"
+intellij = "1.17.4"
 jackson_databind = "2.16.1"
 jackson_kotlin = "2.14.2"
 java = "17"
-kotest = "5.7.2"
+kotest = "5.9.1"
 kotest_arrow = "1.4.0"
 kotlin = "2.0.0"
 kotlin_compiler = "2.0"
 kotlinx_openapi_bindings = "0.0.24"
 kotlinx_resources = "0.9.0"
 kotlinx_rgxgen = "0.0.1"
-kotlinx_serialization = "1.5.1"
+kotlinx_serialization = "1.7.1"
 maven_plugin = "0.4.3"
-maven_plugin_api = "3.9.1"
-maven_plugin_tools = "3.8.1"
+maven_plugin_api = "3.9.8"
+maven_plugin_annotations = "3.13.1"
 maven_project = "2.2.1"
 
 [libraries]
@@ -36,13 +36,13 @@ kotlinx_resources = { module = "com.goncalossilva:resources", version.ref = "kot
 kotlinx_rgxgen = { module = "community.flock.kotlinx.rgxgen:kotlin-rgxgen", version.ref = "kotlinx_rgxgen" }
 kotlinx_serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx_serialization" }
 maven_plugin_api = { module = "org.apache.maven:maven-plugin-api", version.ref = "maven_plugin_api" }
-maven_plugin_tools = { module = "org.apache.maven.plugin-tools:maven-plugin-annotations", version.ref = "maven_plugin_tools" }
+maven_plugin_annotations = { module = "org.apache.maven.plugin-tools:maven-plugin-annotations", version.ref = "maven_plugin_annotations" }
 maven_project = { module = "org.apache.maven:maven-project", version.ref = "maven_project" }
 
 [bundles]
 jackson = ["jackson_databind", "jackson_kotlin"]
 kotest = ["kotest_engine", "kotest_assertions", "kotest_assertions_arrow"]
-maven_plugin = ["maven_plugin_api", "maven_plugin_tools", "maven_project"]
+maven_plugin = ["maven_plugin_api", "maven_plugin_annotations", "maven_project"]
 
 [plugins]
 intellij = { id = "org.jetbrains.intellij", version.ref = "intellij" }
