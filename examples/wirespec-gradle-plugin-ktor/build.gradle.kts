@@ -8,29 +8,24 @@ import community.flock.wirespec.plugin.FileExtension
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.gradle.CompileWirespecTask
 import community.flock.wirespec.plugin.gradle.CustomWirespecTask
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-val ktor_version: String by project
-val kotlin_version: String by project
-val logback_version: String by project
-
 plugins {
-    kotlin("jvm") version "2.0.0"
-    kotlin("plugin.serialization") version "2.0.0-RC3"
-    id("io.ktor.plugin") version "2.3.9"
-    id("community.flock.wirespec.plugin.gradle") version "0.0.0-SNAPSHOT"
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ktor)
+    alias(libs.plugins.wirespec)
 }
 
 group = "community.flock.wirespec.example-gradle_plugin"
-version = "0.0.0-SNAPSHOT"
+version = libs.versions.default.get()
 
 application {
     mainClass.set("community.flock.wirespec.examples.app.ApplicationKt")
 }
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(libs.versions.java.get().toInt())
 }
 
 repositories {
@@ -39,14 +34,10 @@ repositories {
 }
 
 dependencies {
-    implementation("io.ktor:ktor-server-core-jvm")
-    implementation("io.ktor:ktor-server-netty-jvm")
-    implementation("io.ktor:ktor-server-content-negotiation:$ktor_version")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
-    implementation("ch.qos.logback:logback-classic:$logback_version")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.0-RC")
-    testImplementation("io.ktor:ktor-server-tests-jvm")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+    implementation(libs.bundles.ktor)
+    implementation(libs.logback)
+    testImplementation(kotlin("test"))
+    testImplementation(libs.bundles.ktor.test)
 }
 
 tasks.withType<KotlinCompile> {
@@ -54,7 +45,6 @@ tasks.withType<KotlinCompile> {
     dependsOn("wirespec-typescript")
     compilerOptions {
         freeCompilerArgs.add("-Xjsr305=strict")
-        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
@@ -68,7 +58,7 @@ sourceSets {
 
 buildscript {
     dependencies {
-        classpath("community.flock.wirespec.compiler:core-jvm:0.0.0-SNAPSHOT")
+        classpath(libs.wirespec.compiler)
     }
 }
 
