@@ -4,7 +4,7 @@
 <idea-plugin>
 
     <!-- Unique id for this plugin. Must stay constant for the life of the plugin. -->
-    <id>community.flock.wirespec.ide.intellij</id>
+    <id>community.flock.wirespec.lsp.intellij_plugin</id>
 
     <!-- Text to display as name on Preferences/Settings | Plugin page -->
     <name>Wirespec</name>

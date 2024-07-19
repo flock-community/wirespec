@@ -1,10 +1,12 @@
-FROM debian:latest
+FROM debian:12-slim
 
 RUN mkdir -p /app/types/
 
 COPY src/plugin/cli/build/bin/linuxX64/releaseExecutable/cli.kexe /app/wirespec
 
 WORKDIR /app
+
+SHELL ["/bin/bash", "-c"]
 
 CMD /app/wirespec compile -d $(pwd)/types -l Java -o $(pwd)/types/out/docker/java && \
     /app/wirespec compile -d $(pwd)/types -l Kotlin -o $(pwd)/types/out/docker/kotlin && \
