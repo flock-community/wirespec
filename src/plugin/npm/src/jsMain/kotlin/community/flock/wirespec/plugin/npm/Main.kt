@@ -62,8 +62,8 @@ fun parse(source: String) = WirespecSpec
 
 @JsExport
 fun convert(source: String, converters: Converters) = when (converters) {
-    Converters.OPENAPI_V2 -> OpenApiV3Parser.parse(source).produce()
-    Converters.OPENAPI_V3 -> OpenApiV2Parser.parse(source).produce()
+    Converters.OPENAPI_V2 -> OpenApiV2Parser.parse(source).produce()
+    Converters.OPENAPI_V3 -> OpenApiV3Parser.parse(source).produce()
 }
 
 @JsExport
