@@ -27,6 +27,7 @@ class SyntaxHighlighter : SyntaxHighlighterBase() {
         Types.UNIT -> arrayOf(KEYWORD)
         Types.TYPE_DEF -> arrayOf(KEYWORD)
         Types.ENDPOINT_DEF -> arrayOf(KEYWORD)
+        Types.CHANNEL_DEF -> arrayOf(KEYWORD)
         Types.ENUM_DEF -> arrayOf(KEYWORD)
         Types.LEFT_CURLY -> arrayOf(BRACKETS)
         Types.RIGHT_CURLY -> arrayOf(BRACKETS)
