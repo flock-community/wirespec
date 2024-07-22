@@ -15,15 +15,22 @@ object WsdlParser {
 
     fun parse(xml: String): AST {
         val res = XML { autoPolymorphic = true }.decodeFromString<Definitions>(xml)
-        return res.types
+        val complexTypes = res.types
             .flatMap { it.schema }
             .flatMap { it.complexType }
             .map { it.toType() }
+
+        val elementTypes = res.types
+            .flatMap { it.schema }
+            .flatMap { it.element }
+            .flatMap { elm -> elm.complexType.map { it.toType(elm.name) } }
+
+        return (complexTypes + elementTypes).filter { it.shape.value.isNotEmpty() }
     }
 
-    fun ComplexType.toType() = Type(
+    fun ComplexType.toType(name:String? = null) = Type(
         comment = null,
-        identifier = Identifier(name ?: "NO_NAME"),
+        identifier = Identifier(this.name ?: name ?: "NO_NAME"),
         shape = Type.Shape(sequence.flatMap { it.element }.map { it.toField() })
     )
 

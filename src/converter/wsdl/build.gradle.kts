@@ -45,9 +45,11 @@ kotlin {
         }
         val jvmTest by getting {
             dependencies {
-                implementation("com.fasterxml.jackson.core:jackson-databind:2.9.8")
-                implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2")
+                implementation(kotlin("test"))
+                implementation("com.squareup.okhttp3:okhttp:4.12.0")
+                implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.17.1")
             }
         }
     }
+
 }
