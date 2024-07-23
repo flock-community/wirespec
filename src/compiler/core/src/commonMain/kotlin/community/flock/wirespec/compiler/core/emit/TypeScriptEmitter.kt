@@ -125,6 +125,7 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
           |${SPACER}export type Call = {
           |${SPACER}${SPACER}${identifier.sanitizeSymbol().firstToLower()}: Handler
           |${SPACER}}
+          |${SPACER}export const call = (handler:Handler) => ({METHOD, PATH, handler})
           |${
             requests.distinct().joinToString("\n") {
                 "${SPACER}export const ${it.emitName().firstToLower()} = (${
