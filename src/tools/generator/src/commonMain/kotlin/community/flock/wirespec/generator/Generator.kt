@@ -24,8 +24,8 @@ fun AST.generate(type: String, random: Random = Random.Default): JsonElement = R
     isDictionary = false
 ).let { generate(it, random) }
 
-fun AST.generate(type: Reference, random: Random = Random.Default): JsonElement = resolveReference(type)
-    .let { if (type.isIterable) generateIterator(it, random) else generateObject(it, random) }
+fun AST.generate(type: Reference, random: Random = Random.Default): JsonElement =
+    generateReference(type, random)
 
 private fun AST.resolveReference(type: Reference) = filterIsInstance<Definition>()
     .find { it.identifier.value == type.value }

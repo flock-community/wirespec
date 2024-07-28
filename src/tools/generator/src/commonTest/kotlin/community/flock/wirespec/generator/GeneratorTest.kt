@@ -3,8 +3,11 @@ package community.flock.wirespec.generator
 import arrow.core.getOrElse
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
+import community.flock.wirespec.compiler.core.parse.Field.Reference.Primitive
+import community.flock.wirespec.compiler.core.parse.Field.Reference.Primitive.Type
 import community.flock.wirespec.compiler.utils.noLogger
 import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonPrimitive
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -52,6 +55,15 @@ class GeneratorTest {
         val res = ast.generate("Address", random)
         val expect = """{"street":"HQp4YEz0","houseNumber":2133997452,"postalCode":"7542RZ"}"""
         assertEquals(expect, res.toString())
+    }
+
+    @Test
+    fun generatePrimitive() {
+        val ast = parser(src)
+        val random = Random(0L)
+        val res = ast.generate(Primitive(Type.String, false, false), random)
+        val expect = "ZKN8V5p8ktkmmMX"
+        assertEquals(expect, res.jsonPrimitive.content)
     }
 
     @Test
