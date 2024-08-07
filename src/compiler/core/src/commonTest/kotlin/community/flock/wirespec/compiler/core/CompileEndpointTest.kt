@@ -509,6 +509,7 @@ class CompileEndpointTest {
             |  export type Call = {
             |    todo: Handler
             |  }
+            |  export const call = (handler:Handler) => ({METHOD, PATH, handler})
             |  export const requestUndefined = (props:{  "done": boolean,  "auth": string}) => ({path: `/v1/todo`, method: "GET", query: {"done": props.done}, headers: {"auth": props.auth}} as const)
             |  export const response200ApplicationJson = (props:{  "body": Todo}) => ({status: 200, headers: {}, content: {type: "application/json", body: props.body}} as const)
             |}
