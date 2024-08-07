@@ -5,6 +5,7 @@ import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiParser
 import com.intellij.psi.tree.IElementType
 import community.flock.wirespec.ide.intellij.Language
+import community.flock.wirespec.ide.intellij.Types.Companion.CHANNEL_DEF
 import community.flock.wirespec.ide.intellij.Types.Companion.CUSTOM_TYPE
 import community.flock.wirespec.ide.intellij.Types.Companion.ENDPOINT_DEF
 import community.flock.wirespec.ide.intellij.Types.Companion.ENUM_DEF
@@ -19,6 +20,7 @@ import community.flock.wirespec.ide.intellij.parser.Parser.TypeDef
 class Parser : PsiParser {
 
     object TypeDef : IElementType("TYPE_DEF", Language)
+    object ChannelDef : IElementType("CHANNEL_DEF", Language)
     object EndpointDef : IElementType("ENDPOINT_DEF", Language)
     object CustomTypeDef : IElementType("CUSTOM_TYPE_DEF", Language)
     object CustomTypeRef : IElementType("CUSTOM_TYPE_REF", Language)
@@ -50,7 +52,7 @@ private fun PsiBuilder.parse(): Unit = when {
 }
 
 private fun PsiBuilder.def() = when (tokenType) {
-    TYPE_DEF, ENDPOINT_DEF, ENUM_DEF -> true
+    TYPE_DEF, CHANNEL_DEF, ENDPOINT_DEF, ENUM_DEF -> true
     else -> false
 }
 
