@@ -19,13 +19,17 @@ abstract class BaseMojo : AbstractMojo() {
     @Parameter
     protected var packageName: String = DEFAULT_PACKAGE_STRING
 
+    @Parameter
+    protected var logLevel: Logger.Level? = null
+
     @Parameter(defaultValue = "\${project}", readonly = true, required = true)
     protected lateinit var project: MavenProject
 
-    protected val logger = object : Logger() {
-        override fun warn(s: String) = log.warn(s)
-        override fun info(s: String) = log.info(s)
+    protected val logger = object : Logger(logLevel) {
         override fun debug(s: String) = log.debug(s)
+        override fun info(s: String) = log.info(s)
+        override fun warn(s: String) = log.warn(s)
+        override fun error(s: String) = log.error(s)
     }
 
     protected fun getFilesContent(): FilesContent = (File(input).listFiles() ?: arrayOf<File>())

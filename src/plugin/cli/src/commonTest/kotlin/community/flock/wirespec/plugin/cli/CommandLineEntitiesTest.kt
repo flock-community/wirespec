@@ -1,6 +1,7 @@
 package community.flock.wirespec.plugin.cli
 
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_STRING
+import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
 import community.flock.wirespec.plugin.Console
 import community.flock.wirespec.plugin.FileExtension
 import community.flock.wirespec.plugin.Format
@@ -14,7 +15,6 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeTypeOf
 import kotlin.test.Test
 
-@OptIn(ExperimentalStdlibApi::class)
 class CommandLineEntitiesTest {
 
     @Test
@@ -27,10 +27,10 @@ class CommandLineEntitiesTest {
                     Options.OutputDir -> "output"
                     Options.Language -> "Wirespec"
                     Options.PackageName -> "packageName"
+                    Options.LogLevel -> "error"
                     // To enable flags they only need the flag name. Therefore, the 'argument' part is null.
                     Options.Shared -> null
                     Options.Strict -> null
-                    Options.Debug -> null
                 }
             )
         }.filterNot { it == "-f" }.toTypedArray()
@@ -40,9 +40,9 @@ class CommandLineEntitiesTest {
             it.output?.value shouldBe "output"
             it.languages shouldBe setOf(Wirespec)
             it.packageName.value shouldBe "packageName"
+            it.logLevel shouldBe ERROR
             it.shared.also(::println) shouldBe true
             it.strict shouldBe true
-            it.debug shouldBe true
         }, {})(arrayOf("compile") + opts)
     }
 
@@ -54,9 +54,9 @@ class CommandLineEntitiesTest {
             it.output.shouldBeNull()
             it.languages shouldBe setOf(Kotlin)
             it.packageName.value shouldBe DEFAULT_PACKAGE_STRING
+            it.logLevel shouldBe ERROR
             it.shared shouldBe false
             it.strict shouldBe false
-            it.debug shouldBe false
         }, {})(arrayOf("compile", "-l", "Kotlin"))
     }
 
@@ -71,9 +71,9 @@ class CommandLineEntitiesTest {
             it.output.shouldBeNull()
             it.languages shouldBe setOf(Wirespec)
             it.packageName.value shouldBe DEFAULT_PACKAGE_STRING
+            it.logLevel shouldBe ERROR
             it.shared shouldBe false
             it.strict shouldBe false
-            it.debug shouldBe false
         })(arrayOf("convert", "-f", "swagger.json", "openapiv2"))
     }
 
@@ -87,9 +87,9 @@ class CommandLineEntitiesTest {
             it.output?.value shouldBe "output"
             it.languages shouldBe setOf(Kotlin)
             it.packageName.value shouldBe DEFAULT_PACKAGE_STRING
+            it.logLevel shouldBe ERROR
             it.shared shouldBe false
             it.strict shouldBe false
-            it.debug shouldBe false
         })(arrayOf("convert", "openapiv2", "-o", "output", "-l", "Kotlin"))
     }
 }
