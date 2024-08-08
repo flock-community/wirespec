@@ -8,13 +8,11 @@ import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import io.kotest.assertions.arrow.core.shouldBeRight
 import kotlin.test.Test
 
-class CompileEnumTest {
+class CompileChannelTest {
 
     private val compiler = compile(
         """
-        enum MyAwesomeEnum {
-          ONE, Two, THREE_MORE
-        }
+        channel Queue -> String
         """.trimIndent()
     )
 
@@ -23,16 +21,8 @@ class CompileEnumTest {
         val kotlin = """
             |package community.flock.wirespec.generated
             |
-            |import community.flock.wirespec.Wirespec
-            |import kotlin.reflect.typeOf
-            |
-            |enum class MyAwesomeEnum (val label: String): Wirespec.Enum {
-            |  ONE("ONE"),
-            |  Two("Two"),
-            |  THREE_MORE("THREE_MORE");
-            |  override fun toString(): String {
-            |    return label
-            |  }
+            |interface QueueChannel {
+            |   operator fun invoke(message: String)
             |}
             |
         """.trimMargin()
@@ -45,20 +35,8 @@ class CompileEnumTest {
         val java = """
             |package community.flock.wirespec.generated;
             |
-            |import community.flock.wirespec.Wirespec;
-            |
-            |public enum MyAwesomeEnum implements Wirespec.Enum {
-            |  ONE("ONE"),
-            |  Two("Two"),
-            |  THREE_MORE("THREE_MORE");
-            |  public final String label;
-            |  MyAwesomeEnum(String label) {
-            |    this.label = label;
-            |  }
-            |  @Override
-            |  public String toString() {
-            |    return label;
-            |  }
+            |interface QueueChannel {
+            |   void invoke(String message)
             |}
             |
         """.trimMargin()
@@ -71,12 +49,7 @@ class CompileEnumTest {
         val scala = """
             |package community.flock.wirespec.generated
             |
-            |sealed abstract class MyAwesomeEnum(val label: String)
-            |object MyAwesomeEnum {
-            |  final case object ONE extends MyAwesomeEnum(label = "ONE")
-            |  final case object TWO extends MyAwesomeEnum(label = "Two")
-            |  final case object THREE_MORE extends MyAwesomeEnum(label = "THREE_MORE")
-            |}
+            |// TODO("Not yet implemented")
             |
         """.trimMargin()
 
@@ -86,7 +59,7 @@ class CompileEnumTest {
     @Test
     fun typeScript() {
         val ts = """
-            |export type MyAwesomeEnum = "ONE" | "Two" | "THREE_MORE"
+            |// TODO("Not yet implemented")
             |
         """.trimMargin()
 
@@ -96,10 +69,7 @@ class CompileEnumTest {
     @Test
     fun wirespec() {
         val wirespec = """
-            |enum MyAwesomeEnum {
-            |  ONE, Two, THREE_MORE
-            |}
-            |
+            |channel Queue -> String
         """.trimMargin()
 
         compiler(WirespecEmitter()) shouldBeRight wirespec

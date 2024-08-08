@@ -67,7 +67,9 @@ open class ScalaEmitter(
             Reference.Primitive.Type.Number -> "Double"
             Reference.Primitive.Type.Boolean -> "Boolean"
         }
-    }.let { if (isIterable) "List[$it]" else it }
+    }
+        .let { if (isIterable) "List[$it]" else it }
+        .let { if (isDictionary) "Map[String, $it]" else it }
 
     override fun Enum.emit() = run {
         fun String.sanitize() = replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }

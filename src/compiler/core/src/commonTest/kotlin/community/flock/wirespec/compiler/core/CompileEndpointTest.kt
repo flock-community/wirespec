@@ -5,39 +5,35 @@ import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
-import community.flock.wirespec.compiler.core.emit.common.Emitter
-import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
 import kotlin.test.Test
 
 class CompileEndpointTest {
 
-    private val logger = noLogger
-
     private val compiledTodo = compile(
         """
-        |endpoint Todo GET /v1/todo ? {done:Boolean} # {auth:String} -> {
-        |  200 -> Todo 
-        |}
-        |type Todo {
-        |  name: String,
-        |  done: Boolean
-        |}
-        """.trimMargin()
+        endpoint Todo GET /v1/todo ? {done:Boolean} # {auth:String} -> {
+          200 -> Todo 
+        }
+        type Todo {
+          name: String,
+          done: Boolean
+        }
+        """.trimIndent()
     )
 
     private val compiledReqRes = compile(
         """
-        |endpoint Todo POST Request /reqres -> {
-        |  200 -> Response 
-        |}
-        |type Request {
-        |  name: String
-        |}
-        |type Response {
-        |  name: String
-        |}
-        """.trimMargin()
+        endpoint Todo POST Request /reqres -> {
+          200 -> Response 
+        }
+        type Request {
+          name: String
+        }
+        type Response {
+          name: String
+        }
+        """.trimIndent()
     )
 
     @Test
@@ -103,7 +99,7 @@ class CompileEndpointTest {
             |
         """.trimMargin()
 
-        compiledTodo(KotlinEmitter(logger = logger)) shouldBeRight kotlin
+        compiledTodo(KotlinEmitter()) shouldBeRight kotlin
     }
 
 
@@ -174,10 +170,8 @@ class CompileEndpointTest {
             |
         """.trimMargin()
 
-        compiledReqRes(KotlinEmitter(logger = logger)).map { println(it); it } shouldBeRight kotlin
+        compiledReqRes(KotlinEmitter()) shouldBeRight kotlin
     }
-
-
 
     @Test
     fun testEndpointJava() {
@@ -322,7 +316,7 @@ class CompileEndpointTest {
             |
         """.trimMargin()
 
-        compiledTodo(JavaEmitter(logger = logger)) shouldBeRight java
+        compiledTodo(JavaEmitter()) shouldBeRight java
     }
 
     @Test
@@ -468,7 +462,7 @@ class CompileEndpointTest {
             |
         """.trimMargin()
 
-        compiledReqRes(JavaEmitter(logger = logger)) shouldBeRight java
+        compiledReqRes(JavaEmitter()) shouldBeRight java
     }
 
     @Test
@@ -486,7 +480,7 @@ class CompileEndpointTest {
             |
         """.trimMargin()
 
-        compiledTodo(ScalaEmitter(logger = logger)) shouldBeRight scala
+        compiledTodo(ScalaEmitter()) shouldBeRight scala
     }
 
     @Test
@@ -522,7 +516,7 @@ class CompileEndpointTest {
             |
         """.trimMargin()
 
-        compiledTodo(TypeScriptEmitter(logger = logger)) shouldBeRight ts
+        compiledTodo(TypeScriptEmitter()) shouldBeRight ts
     }
 
     @Test
@@ -539,12 +533,6 @@ class CompileEndpointTest {
             |
         """.trimMargin()
 
-        compiledTodo(WirespecEmitter(logger = logger)) shouldBeRight wirespec
-    }
-
-    private fun compile(source: String) = { emitter: Emitter ->
-        WirespecSpec.compile(source)(logger)(emitter)
-            .map { it.first().result }
-            .onLeft(::println)
+        compiledTodo(WirespecEmitter()) shouldBeRight wirespec
     }
 }

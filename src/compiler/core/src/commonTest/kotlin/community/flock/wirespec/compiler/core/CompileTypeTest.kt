@@ -2,110 +2,112 @@ package community.flock.wirespec.compiler.core
 
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
+import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
-import community.flock.wirespec.compiler.core.emit.common.Emitter
-import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
-import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
 class CompileTypeTest {
 
-    private val logger = noLogger
-
     private val compiler = compile(
         """
-            |type User {
-            |  `type`: String,
-            |  username: String,
-            |  password: String
-            |}
-        """.trimMargin()
+        type Request {
+          `type`: String,
+          url: String,
+          body: String?,
+          params: String[],
+          headers: { String }
+        }
+        """.trimIndent()
     )
 
     @Test
-    fun testTypeKotlin() {
-        val expected =
-            """
-                |package community.flock.wirespec.generated
-                |
-                |data class User(
-                |  val type: String,
-                |  val username: String,
-                |  val password: String
-                |)
-                |
-            """.trimMargin()
+    fun kotlin() {
+        val kotlin = """
+            |package community.flock.wirespec.generated
+            |
+            |data class Request(
+            |  val type: String,
+            |  val url: String,
+            |  val body: String? = null,
+            |  val params: List<String>,
+            |  val headers: Map<String, String>
+            |)
+            |
+        """.trimMargin()
 
-        compiler(KotlinEmitter(logger = logger))
-            .shouldBeRight()
-            .apply {
-                first().second shouldBe expected
-            }
+        compiler(KotlinEmitter()) shouldBeRight kotlin
     }
 
     @Test
-    fun testTypeJava() {
+    fun java() {
+        val java = """
+            |package community.flock.wirespec.generated;
+            |
+            |public record Request (
+            |  String type,
+            |  String url,
+            |  java.util.Optional<String> body,
+            |  java.util.List<String> params,
+            |  java.util.Map<String, String> headers
+            |) {
+            |};
+            |
+        """.trimMargin()
 
-        compiler(JavaEmitter(logger = logger))
-            .shouldBeRight()
-            .apply {
-                val (user) = this
-
-                user.first shouldBe "User"
-                user.second shouldBe """
-                    |package community.flock.wirespec.generated;
-                    |
-                    |public record User (
-                    |  String type,
-                    |  String username,
-                    |  String password
-                    |) {
-                    |};
-                    |
-                """.trimMargin()
-            }
+        compiler(JavaEmitter()) shouldBeRight java
     }
 
     @Test
-    fun testTypeTypeScript() {
+    fun scala() {
+        val scala = """
+            |package community.flock.wirespec.generated
+            |
+            |case class Request(
+            |  val `type`: String,
+            |  val url: String,
+            |  val body: Option[String],
+            |  val params: List[String],
+            |  val headers: Map[String, String]
+            |)
+            |
+            |
+        """.trimMargin()
 
-        compiler(TypeScriptEmitter(logger = logger))
-            .shouldBeRight()
-            .apply {
-                first().second shouldBe """
-                    |export type User = {
-                    |  "type": string,
-                    |  "username": string,
-                    |  "password": string
-                    |}
-                    |
-                    |
-                """.trimMargin()
-            }
+        compiler(ScalaEmitter()) shouldBeRight scala
     }
 
     @Test
-    fun testTypeWireSpec() {
+    fun typeScript() {
+        val ts = """
+            |export type Request = {
+            |  "type": string,
+            |  "url": string,
+            |  "body"?: string,
+            |  "params": string[],
+            |  "headers": Record<string, string>
+            |}
+            |
+            |
+        """.trimMargin()
 
-        compiler(WirespecEmitter(logger = logger))
-            .shouldBeRight()
-            .apply {
-                first().second shouldBe """
-                    |type User {
-                    |  `type`: String,
-                    |  username: String,
-                    |  password: String
-                    |}
-                    |
-                """.trimMargin()
-            }
+        compiler(TypeScriptEmitter()) shouldBeRight ts
     }
 
-    private fun compile(source: String) = { emitter: Emitter ->
-        WirespecSpec.compile(source)(logger)(emitter)
-            .map { emittedList -> emittedList.map { it.typeName to it.result } }
-            .onLeft(::println)
+    @Test
+    fun wireSpec() {
+        val wirespec = """
+            |type Request {
+            |  `type`: String,
+            |  url: String,
+            |  body: String?,
+            |  params: String[],
+            |  headers: { String }
+            |}
+            |
+        """.trimMargin()
+
+        compiler(WirespecEmitter()) shouldBeRight wirespec
     }
 }
