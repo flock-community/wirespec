@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static java.util.Collections.emptyList;
+
 @Repository
 public class TodoRepository {
 
@@ -18,7 +20,8 @@ public class TodoRepository {
                     new Todo(
                             new TodoId(uuid),
                             "Name",
-                            true
+                            true,
+                            emptyList()
                     )
             )
     );

@@ -301,6 +301,7 @@ open class JavaEmitter(
     private fun Reference.emitWrap(): String = emit()
         .let { if (isIterable) "java.util.List<$it>" else it }
         .let { if (isOptional) "java.util.Optional<$it>" else it }
+        .let { if (isDictionary) "java.util.Map<String, $it>" else it }
 
     override fun Reference.Custom.emit(): String = """
         |${if (name in internalClasses && !isInternal) "${packageName}." else ""}${name.sanitizeSymbol()}${generics.emit()}

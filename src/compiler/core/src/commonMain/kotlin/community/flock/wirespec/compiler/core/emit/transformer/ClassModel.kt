@@ -146,6 +146,7 @@ data class Parameter(
 sealed interface Reference {
     val isNullable: Boolean
     val isIterable: Boolean
+    val isDictionary: Boolean
     val isOptional: Boolean
     val isInternal: Boolean
 
@@ -153,6 +154,7 @@ sealed interface Reference {
         val primitive: Primitive,
         override val isNullable: Boolean = false,
         override val isIterable: Boolean = false,
+        override val isDictionary: Boolean = false,
         override val isOptional: Boolean = false,
         override val isInternal: Boolean = false,
         val generics: Generics = Generics()
@@ -164,6 +166,7 @@ sealed interface Reference {
         val name: String,
         override val isNullable: Boolean = false,
         override val isIterable: Boolean = false,
+        override val isDictionary: Boolean = false,
         override val isOptional: Boolean = false,
         override val isInternal: Boolean = false,
         val generics: Generics = Generics()
@@ -173,6 +176,7 @@ sealed interface Reference {
         val name: String,
         override val isNullable: Boolean = false,
         override val isIterable: Boolean = false,
+        override val isDictionary: Boolean = false,
         override val isOptional: Boolean = false,
         override val isInternal: Boolean = false,
         val generics: Generics = Generics()

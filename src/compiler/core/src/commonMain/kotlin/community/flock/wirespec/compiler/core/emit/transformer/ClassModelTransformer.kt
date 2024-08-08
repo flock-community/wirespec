@@ -514,27 +514,44 @@ object ClassModelTransformer : Transformer {
     override fun Field.Reference.transform(isNullable: Boolean, isOptional: Boolean): Reference =
         when (this) {
             is Field.Reference.Unit -> Reference.Language(
-                Reference.Language.Primitive.Unit,
-                isNullable,
-                isIterable,
-                isOptional
+                primitive = Reference.Language.Primitive.Unit,
+                isNullable = isNullable,
+                isIterable = isIterable,
+                isDictionary = isDictionary,
+                isOptional = isOptional
             )
 
             is Field.Reference.Any -> Reference.Language(
-                Reference.Language.Primitive.Any,
-                isNullable,
-                isIterable,
-                isOptional
+                primitive = Reference.Language.Primitive.Any,
+                isNullable = isNullable,
+                isIterable = isIterable,
+                isDictionary = isDictionary,
+                isOptional = isOptional
             )
 
-            is Field.Reference.Custom -> Reference.Custom(value, isNullable, isIterable, isOptional)
+            is Field.Reference.Custom -> Reference.Custom(
+                name = value,
+                isNullable = isNullable,
+                isIterable = isIterable,
+                isDictionary = isDictionary,
+                isOptional = isOptional
+            )
+
             is Field.Reference.Primitive ->
                 when (type) {
                     Field.Reference.Primitive.Type.String -> Reference.Language.Primitive.String
                     Field.Reference.Primitive.Type.Integer -> Reference.Language.Primitive.Long
                     Field.Reference.Primitive.Type.Number -> Reference.Language.Primitive.Double
                     Field.Reference.Primitive.Type.Boolean -> Reference.Language.Primitive.Boolean
-                }.let { Reference.Language(it, isNullable, isIterable, isOptional) }
+                }.let {
+                    Reference.Language(
+                        primitive = it,
+                        isNullable = isNullable,
+                        isIterable = isIterable,
+                        isDictionary = isDictionary,
+                        isOptional = isOptional
+                    )
+                }
         }
 
     private fun Field.transformParameter() =

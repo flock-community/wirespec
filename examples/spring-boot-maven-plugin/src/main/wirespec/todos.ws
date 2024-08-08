@@ -3,7 +3,8 @@ type TodoId /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\
 type Todo {
     id: TodoId,
     name: String,
-    done: Boolean
+    done: Boolean,
+    tags: String[]
 }
 
 type TodoInput {
@@ -12,6 +13,5 @@ type TodoInput {
 }
 
 type Error {
-    code: String,
-    description: String
+    codeMap: { String }
 }

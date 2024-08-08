@@ -240,6 +240,7 @@ open class KotlinEmitter(
         .let { if (isIterable) "List<$it>" else it }
         .let { if (isNullable) "$it?" else it }
         .let { if (isOptional) "$it?" else it }
+        .let { if (isDictionary) "Map<String, $it>" else it }
 
     override fun Reference.Wirespec.emit(): String =
         "Wirespec.${name}${generics.emit()}"

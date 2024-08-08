@@ -32,7 +32,7 @@ class CompileTypeTest {
             |  val url: String,
             |  val body: String? = null,
             |  val params: List<String>,
-            |  val headers: String
+            |  val headers: Map<String, String>
             |)
             |
         """.trimMargin()
@@ -50,7 +50,7 @@ class CompileTypeTest {
             |  String url,
             |  java.util.Optional<String> body,
             |  java.util.List<String> params,
-            |  String headers
+            |  java.util.Map<String, String> headers
             |) {
             |};
             |
