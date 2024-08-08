@@ -23,9 +23,10 @@ abstract class BaseMojo : AbstractMojo() {
     protected lateinit var project: MavenProject
 
     protected val logger = object : Logger() {
-        override fun warn(s: String) = log.warn(s)
-        override fun info(s: String) = log.info(s)
-        override fun debug(s: String) = log.debug(s)
+        override fun debug(string: String) = log.debug(string)
+        override fun info(string: String) = log.info(string)
+        override fun warn(string: String) = log.warn(string)
+        override fun error(string: String) = log.error(string)
     }
 
     protected fun getFilesContent(): FilesContent = (File(input).listFiles() ?: arrayOf<File>())

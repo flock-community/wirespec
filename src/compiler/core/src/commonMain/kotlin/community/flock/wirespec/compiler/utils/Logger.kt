@@ -1,18 +1,47 @@
 package community.flock.wirespec.compiler.utils
 
-open class Logger(private val enableLogging: Boolean = false) {
+import community.flock.wirespec.compiler.utils.Logger.Level.DEBUG
+import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
+import community.flock.wirespec.compiler.utils.Logger.Level.INFO
+import community.flock.wirespec.compiler.utils.Logger.Level.WARN
 
-    open fun debug(s: String) = if (enableLogging) println(s) else Unit
+open class Logger(logLevel: Level? = ERROR) {
 
-    open fun info(s: String) = if (enableLogging) println(s) else Unit
+    open val isDebug = when (logLevel) {
+        null -> false
+        DEBUG, INFO, WARN, ERROR -> true
+    }
 
-    open fun warn(s: String) = println(s)
+    open val isInfo = when (logLevel) {
+        null, DEBUG -> false
+        INFO, WARN, ERROR -> true
+    }
 
-    fun info(s: String, block: () -> String) = run {
-        info(s)
-        block()
+    open val isWarn = when (logLevel) {
+        null, DEBUG, INFO -> false
+        WARN, ERROR -> true
+    }
+
+    open val isError = when (logLevel) {
+        null, DEBUG, INFO, WARN -> false
+        ERROR -> true
+    }
+
+    open fun debug(string: String) = string logIf isDebug
+    open fun info(string: String) = string logIf isInfo
+    open fun warn(string: String) = string logIf isWarn
+    open fun error(string: String) = string logIf isError
+
+    private infix fun String.logIf(b: Boolean) = if (b) println(this) else Unit
+
+    enum class Level {
+        DEBUG, INFO, WARN, ERROR;
+
+        companion object {
+            override fun toString() = entries.joinToString(", ")
+        }
     }
 
 }
 
-val noLogger = object : Logger(false) {}
+val noLogger = object : Logger(logLevel = null) {}

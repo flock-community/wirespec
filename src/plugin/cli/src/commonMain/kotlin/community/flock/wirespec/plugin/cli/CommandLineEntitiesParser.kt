@@ -11,6 +11,11 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.enum
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_STRING
+import community.flock.wirespec.compiler.utils.Logger.Level
+import community.flock.wirespec.compiler.utils.Logger.Level.DEBUG
+import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
+import community.flock.wirespec.compiler.utils.Logger.Level.INFO
+import community.flock.wirespec.compiler.utils.Logger.Level.WARN
 import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.Console
 import community.flock.wirespec.plugin.Format
@@ -29,9 +34,9 @@ enum class Options(vararg val flags: String) {
     OutputDir("-o", "--output-dir"),
     Language("-l", "--language"),
     PackageName("-p", "--package"),
+    LogLevel("--log-level"),
     Shared("--shared"),
     Strict("--strict"),
-    Debug("--debug"),
 }
 
 class WirespecCli : NoOpCliktCommand(name = "wirespec") {
@@ -48,16 +53,24 @@ private abstract class CommonOptions : CliktCommand() {
     val inputDir by option(*Options.InputDir.flags, help = "Input directory")
     val outputDir by option(*Options.OutputDir.flags, help = "Output directory")
     val packageName by option(*Options.PackageName.flags, help = "Package name").default(DEFAULT_PACKAGE_STRING)
+    val logLevel by option(*Options.LogLevel.flags, help = "Log level: $Level").default("$ERROR")
     val shared by option(*Options.Shared.flags, help = "Generate shared wirespec code").flag(default = false)
     val strict by option(*Options.Strict.flags, help = "Strict mode").flag()
-    val debug by option(*Options.Debug.flags, help = "Debug mode").flag()
 
-    fun getInput(inputDir: String?): Input =
+    fun getInput(inputDir: String? = null): Input =
         if (inputDir != null && inputFile != null) error("Choose either a file or a directory. Not Both.")
         else inputFile
             ?.let(FullFilePath.Companion::parse)
             ?: inputDir?.let(::FullDirPath)
             ?: Console
+
+    fun String.toLogLevel() = when (trim().uppercase()) {
+        "DEBUG" -> DEBUG
+        "INFO" -> INFO
+        "WARN" -> WARN
+        "ERROR" -> ERROR
+        else -> error("Choose one of these log levels: $Level")
+    }
 }
 
 private class Compile(private val block: (CompilerArguments) -> Unit) : CommonOptions() {
@@ -73,9 +86,9 @@ private class Compile(private val block: (CompilerArguments) -> Unit) : CommonOp
             output = Output(outputDir),
             languages = languages.toSet(),
             packageName = PackageName(packageName),
+            logLevel = logLevel.toLogLevel(),
             shared = shared,
             strict = strict,
-            debug = debug,
         ).let(block)
     }
 }
@@ -95,9 +108,9 @@ private class Convert(private val block: (CompilerArguments) -> Unit) : CommonOp
             output = Output(outputDir),
             languages = languages.toSet().ifEmpty { setOf(Wirespec) },
             packageName = PackageName(packageName),
+            logLevel = logLevel.toLogLevel(),
             shared = shared,
             strict = strict,
-            debug = debug,
         ).let(block)
     }
 }
