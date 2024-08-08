@@ -5,14 +5,10 @@ import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
-import community.flock.wirespec.compiler.core.emit.common.Emitter
-import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
 import kotlin.test.Test
 
 class CompileEnumTest {
-
-    private val logger = noLogger
 
     private val compiler = compile(
         """
@@ -23,7 +19,7 @@ class CompileEnumTest {
     )
 
     @Test
-    fun testEnumKotlin() {
+    fun kotlin() {
         val kotlin = """
             |package community.flock.wirespec.generated
             |
@@ -41,11 +37,11 @@ class CompileEnumTest {
             |
         """.trimMargin()
 
-        compiler(KotlinEmitter(logger = logger)) shouldBeRight kotlin
+        compiler(KotlinEmitter()) shouldBeRight kotlin
     }
 
     @Test
-    fun testEnumJava() {
+    fun java() {
         val java = """
             |package community.flock.wirespec.generated;
             |
@@ -67,51 +63,45 @@ class CompileEnumTest {
             |
         """.trimMargin()
 
-        compiler(JavaEmitter(logger = logger)) shouldBeRight java
+        compiler(JavaEmitter()) shouldBeRight java
     }
 
     @Test
-    fun testEnumScala() {
+    fun scala() {
         val scala = """
-            package community.flock.wirespec.generated
-            
-            sealed abstract class MyAwesomeEnum(val label: String)
-            object MyAwesomeEnum {
-              final case object ONE extends MyAwesomeEnum(label = "ONE")
-              final case object TWO extends MyAwesomeEnum(label = "Two")
-              final case object THREE_MORE extends MyAwesomeEnum(label = "THREE_MORE")
-            }
+            |package community.flock.wirespec.generated
+            |
+            |sealed abstract class MyAwesomeEnum(val label: String)
+            |object MyAwesomeEnum {
+            |  final case object ONE extends MyAwesomeEnum(label = "ONE")
+            |  final case object TWO extends MyAwesomeEnum(label = "Two")
+            |  final case object THREE_MORE extends MyAwesomeEnum(label = "THREE_MORE")
+            |}
+            |
+        """.trimMargin()
 
-        """.trimIndent()
-
-        compiler(ScalaEmitter(logger = logger)) shouldBeRight scala
+        compiler(ScalaEmitter()) shouldBeRight scala
     }
 
     @Test
-    fun testEnumTypeScript() {
+    fun typeScript() {
         val ts = """
-            export type MyAwesomeEnum = "ONE" | "Two" | "THREE_MORE"
+            |export type MyAwesomeEnum = "ONE" | "Two" | "THREE_MORE"
+            |
+        """.trimMargin()
 
-        """.trimIndent()
-
-        compiler(TypeScriptEmitter(logger = logger)) shouldBeRight ts
+        compiler(TypeScriptEmitter()) shouldBeRight ts
     }
 
     @Test
-    fun testEnumWirespec() {
+    fun wirespec() {
         val wirespec = """
-            enum MyAwesomeEnum {
-              ONE, Two, THREE_MORE
-            }
-        
-        """.trimIndent()
+            |enum MyAwesomeEnum {
+            |  ONE, Two, THREE_MORE
+            |}
+            |
+        """.trimMargin()
 
-        compiler(WirespecEmitter(logger = logger)) shouldBeRight wirespec
-    }
-
-    private fun compile(source: String) = { emitter: Emitter ->
-        WirespecSpec.compile(source)(logger)(emitter)
-            .map { it.first().result }
-            .onLeft(::println)
+        compiler(WirespecEmitter()) shouldBeRight wirespec
     }
 }

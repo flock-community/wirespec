@@ -54,7 +54,9 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
             Field.Reference.Primitive.Type.Number -> "Number"
             Field.Reference.Primitive.Type.Boolean -> "Boolean"
         }
-    }.let { if (isIterable) "$it[]" else it }
+    }
+        .let { if (isIterable) "$it[]" else it }
+        .let { if (isDictionary) "{ $it }" else it }
 
     override fun Enum.emit() =
         "enum ${identifier.emit()} {\n${SPACER}${entries.joinToString(", ") { it.capitalize() }}\n}\n"

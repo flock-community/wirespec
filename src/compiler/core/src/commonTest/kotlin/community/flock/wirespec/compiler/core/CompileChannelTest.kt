@@ -8,17 +8,11 @@ import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import io.kotest.assertions.arrow.core.shouldBeRight
 import kotlin.test.Test
 
-class CompileTypeTest {
+class CompileChannelTest {
 
     private val compiler = compile(
         """
-        type Request {
-          `type`: String,
-          url: String,
-          body: String?,
-          params: String[],
-          headers: { String }
-        }
+        channel Queue -> String
         """.trimIndent()
     )
 
@@ -27,13 +21,9 @@ class CompileTypeTest {
         val kotlin = """
             |package community.flock.wirespec.generated
             |
-            |data class Request(
-            |  val type: String,
-            |  val url: String,
-            |  val body: String? = null,
-            |  val params: List<String>,
-            |  val headers: String
-            |)
+            |interface QueueChannel {
+            |   operator fun invoke(message: String)
+            |}
             |
         """.trimMargin()
 
@@ -45,14 +35,9 @@ class CompileTypeTest {
         val java = """
             |package community.flock.wirespec.generated;
             |
-            |public record Request (
-            |  String type,
-            |  String url,
-            |  java.util.Optional<String> body,
-            |  java.util.List<String> params,
-            |  String headers
-            |) {
-            |};
+            |interface QueueChannel {
+            |   void invoke(String message)
+            |}
             |
         """.trimMargin()
 
@@ -64,14 +49,7 @@ class CompileTypeTest {
         val scala = """
             |package community.flock.wirespec.generated
             |
-            |case class Request(
-            |  val `type`: String,
-            |  val url: String,
-            |  val body: Option[String],
-            |  val params: List[String],
-            |  val headers: Map[String, String]
-            |)
-            |
+            |// TODO("Not yet implemented")
             |
         """.trimMargin()
 
@@ -81,14 +59,7 @@ class CompileTypeTest {
     @Test
     fun typeScript() {
         val ts = """
-            |export type Request = {
-            |  "type": string,
-            |  "url": string,
-            |  "body"?: string,
-            |  "params": string[],
-            |  "headers": Record<string, string>
-            |}
-            |
+            |// TODO("Not yet implemented")
             |
         """.trimMargin()
 
@@ -96,16 +67,9 @@ class CompileTypeTest {
     }
 
     @Test
-    fun wireSpec() {
+    fun wirespec() {
         val wirespec = """
-            |type Request {
-            |  `type`: String,
-            |  url: String,
-            |  body: String?,
-            |  params: String[],
-            |  headers: { String }
-            |}
-            |
+            |channel Queue -> String
         """.trimMargin()
 
         compiler(WirespecEmitter()) shouldBeRight wirespec

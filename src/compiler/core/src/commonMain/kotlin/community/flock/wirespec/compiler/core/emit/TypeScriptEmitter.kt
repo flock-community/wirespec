@@ -66,7 +66,7 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
     override fun Field.emit() =
         "${SPACER}\"${identifier.emit()}\"${if (isNullable) "?" else ""}: ${reference.emit()}"
 
-    private fun Field.Reference.emitSymbol() = when (this) {
+    override fun Field.Reference.emit() = when (this) {
         is Field.Reference.Unit -> "void"
         is Field.Reference.Any -> "any"
         is Field.Reference.Custom -> value.sanitizeSymbol()
@@ -77,8 +77,6 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
             Field.Reference.Primitive.Type.Boolean -> "boolean"
         }
     }
-
-    override fun Field.Reference.emit() = emitSymbol()
         .let { if (isIterable) "$it[]" else it }
         .let { if (isDictionary) "Record<string, $it>" else it }
 
