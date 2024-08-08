@@ -1,6 +1,7 @@
 package community.flock.wirespec.plugin
 
 import community.flock.wirespec.compiler.core.Value
+import community.flock.wirespec.compiler.utils.Logger
 import kotlin.jvm.JvmInline
 
 data class CompilerArguments(
@@ -9,9 +10,9 @@ data class CompilerArguments(
     val output: Output?,
     val languages: Set<Language>,
     val packageName: PackageName,
+    val logLevel: Logger.Level,
     val shared: Boolean,
     val strict: Boolean,
-    val debug: Boolean,
 )
 
 sealed interface Operation {
