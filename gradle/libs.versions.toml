@@ -4,7 +4,7 @@ clikt = "4.4.0"
 default = "0.0.0-SNAPSHOT"
 from_env = "VERSION"
 group_id = "community.flock.wirespec"
-intellij = "1.17.4"
+intellij = "2.0.0"
 jackson_databind = "2.16.1"
 jackson_kotlin = "2.14.2"
 java = "17"
@@ -45,7 +45,7 @@ kotest = ["kotest_engine", "kotest_assertions", "kotest_assertions_arrow"]
 maven_plugin = ["maven_plugin_api", "maven_plugin_annotations", "maven_project"]
 
 [plugins]
-intellij = { id = "org.jetbrains.intellij", version.ref = "intellij" }
+intellij = { id = "org.jetbrains.intellij.platform", version.ref = "intellij" }
 kotest = { id = "io.kotest.multiplatform", version.ref = "kotest" }
 kotlin_jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin_multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }

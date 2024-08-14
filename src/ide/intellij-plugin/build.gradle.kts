@@ -1,5 +1,3 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 plugins {
     kotlin("multiplatform") apply false
     kotlin("jvm")
@@ -15,21 +13,34 @@ kotlin {
 
 repositories {
     mavenCentral()
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
 dependencies {
+    dependencies {
+        intellijPlatform {
+            intellijIdeaCommunity("2024.2")
+            pluginVerifier()
+            zipSigner()
+            instrumentationTools()
+        }
+
+    }
     implementation(project(":src:compiler:core"))
 }
 
-// See https://github.com/JetBrains/gradle-intellij-plugin/
-intellij {
-    version.set("2024.1")
-    type.set("IC")
-}
-
-tasks.publishPlugin {
-    channels.set(listOf("stable"))
-    token.set(System.getenv("JETBRAINS_TOKEN"))
+intellijPlatform {
+    pluginVerification {
+        ides {
+            recommended()
+        }
+    }
+    publishing {
+        token = System.getenv("JETBRAINS_TOKEN")
+        channels = listOf("stable")
+    }
 }
 
 tasks {
