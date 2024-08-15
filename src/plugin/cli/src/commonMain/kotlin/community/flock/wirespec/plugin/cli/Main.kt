@@ -58,7 +58,7 @@ fun compile(arguments: CompilerArguments) {
     val languages = arguments.languages
     val packageName = arguments.packageName
 
-    val logger = Logger(arguments.debug)
+    val logger = Logger(arguments.logLevel)
 
     when (val operation = arguments.operation) {
         is Operation.Convert -> {

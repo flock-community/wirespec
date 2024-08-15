@@ -21,17 +21,10 @@ abstract class BaseWirespecTask : DefaultTask() {
 
     @Internal
     val wirespecLogger = object : Logger() {
-        override fun debug(s: String) {
-            logger.debug(s)
-        }
-
-        override fun info(s: String) {
-            logger.info(s)
-        }
-
-        override fun warn(s: String) {
-            logger.warn(s)
-        }
+        override fun debug(string: String) = logger.debug(string)
+        override fun info(string: String) = logger.info(string)
+        override fun warn(string: String) = logger.warn(string)
+        override fun error(string: String) = logger.error(string)
     }
 
 }
