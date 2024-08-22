@@ -23,8 +23,8 @@ import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Field.Reference
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.openapi.Common.className
@@ -118,7 +118,7 @@ object OpenApiV3Parser {
                     identifier = Identifier(name),
                     method = method,
                     path = segments,
-                    query = query,
+                    queries = query,
                     headers = headers,
                     cookies = cookies,
                     requests = requests,
@@ -373,7 +373,8 @@ object OpenApiV3Parser {
                     comment = null,
                     identifier = Identifier(name),
                     shape = Type.Shape(schemaObject.allOf.orEmpty().flatMap { toField(resolve(it), name) }
-                        .distinctBy { it.identifier })
+                        .distinctBy { it.identifier }),
+                    extends = emptyList(),
                 )
             )
                 .plus(
@@ -402,7 +403,8 @@ object OpenApiV3Parser {
                         Type(
                             comment = null,
                             identifier = Identifier(name),
-                            shape = Type.Shape(toField(schemaObject, name))
+                            shape = Type.Shape(toField(schemaObject, name)),
+                            extends = emptyList(),
                         )
                     )
 

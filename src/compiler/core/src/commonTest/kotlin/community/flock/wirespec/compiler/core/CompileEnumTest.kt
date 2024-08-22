@@ -10,13 +10,11 @@ import kotlin.test.Test
 
 class CompileEnumTest {
 
-    private val compiler = compile(
-        """
-        enum MyAwesomeEnum {
-          ONE, Two, THREE_MORE
-        }
-        """.trimIndent()
-    )
+    private val compiler = """
+        |enum MyAwesomeEnum {
+        |  ONE, Two, THREE_MORE
+        |}
+    """.trimMargin().let(::compile)
 
     @Test
     fun kotlin() {

@@ -10,11 +10,9 @@ import kotlin.test.Test
 
 class CompileChannelTest {
 
-    private val compiler = compile(
-        """
-        channel Queue -> String
-        """.trimIndent()
-    )
+    private val compiler = """
+        |channel Queue -> String
+    """.trimMargin().let(::compile)
 
     @Test
     fun kotlin() {

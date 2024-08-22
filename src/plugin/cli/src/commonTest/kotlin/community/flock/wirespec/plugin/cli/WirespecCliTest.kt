@@ -91,12 +91,12 @@ class WirespecCliTest {
 
         val expected = """
             |data class Pet(
-            |  val id: Long? = null,
-            |  val category: Category? = null,
+            |  val id: Long?,
+            |  val category: Category?,
             |  val name: String,
             |  val photoUrls: List<String>,
-            |  val tags: List<Tag>? = null,
-            |  val status: PetStatus? = null
+            |  val tags: List<Tag>?,
+            |  val status: PetStatus?
             |)
             """.trimMargin()
 
@@ -128,8 +128,8 @@ class WirespecCliTest {
             |  val namespace: String,
             |  val `object`: String,
             |  val relation: String,
-            |  val subject_id: String? = null,
-            |  val subject_set: SubjectSet? = null
+            |  val subject_id: String?,
+            |  val subject_set: SubjectSet?
             |)
             """.trimMargin()
 
@@ -157,15 +157,15 @@ class WirespecCliTest {
         val file = TypeScriptFile(path).read()
 
         val expected = """
-            export type Pet = {
-              "id"?: number,
-              "category"?: Category,
-              "name": string,
-              "photoUrls": string[],
-              "tags"?: Tag[],
-              "status"?: PetStatus
-            }
-            """.trimIndent()
+            |export type Pet = {
+            |  "id"?: number,
+            |  "category"?: Category,
+            |  "name": string,
+            |  "photoUrls": string[],
+            |  "tags"?: Tag[],
+            |  "status"?: PetStatus
+            |}
+        """.trimMargin()
 
         file shouldContain expected
     }

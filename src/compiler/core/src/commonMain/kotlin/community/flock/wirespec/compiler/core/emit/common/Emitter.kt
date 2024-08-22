@@ -39,14 +39,13 @@ abstract class Emitter(
     fun String.spacer(space: Int = 1) = split("\n")
         .joinToString("\n") {
             if (it.isNotBlank()) {
-                "${(1..space).joinToString("") { SPACER }}$it"
+                "${(1..space).joinToString("") { "$Spacer" }}$it"
             } else {
                 it
             }
         }
 
     companion object {
-        const val SPACER = "  "
         fun String.firstToUpper() = replaceFirstChar(Char::uppercase)
         fun String.firstToLower() = replaceFirstChar(Char::lowercase)
         fun AST.needImports() = any { it is Endpoint || it is Enum || it is Refined }

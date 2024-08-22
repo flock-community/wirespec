@@ -15,10 +15,10 @@ class ParseTypeTest {
     @Test
     fun testTypeParser() {
         val source = """
-            type Foo {
-                bar: {String[]}
-            }
-        """.trimIndent()
+            |type Foo {
+            |    bar: {String[]}
+            |}
+        """.trimMargin()
 
         WirespecSpec.tokenize(source)
             .let(parser()::parse)
@@ -33,8 +33,8 @@ class ParseTypeTest {
             .shouldBeInstanceOf<Field>()
             .run {
                 identifier.shouldBeInstanceOf<Identifier>().value shouldBe "bar"
-                reference.shouldBeInstanceOf<Field.Reference.Primitive>().run {
-                    type shouldBe Field.Reference.Primitive.Type.String
+                reference.shouldBeInstanceOf<Reference.Primitive>().run {
+                    type shouldBe Reference.Primitive.Type.String
                     isIterable shouldBe true
                     isDictionary shouldBe true
                 }
@@ -46,8 +46,8 @@ class ParseTypeTest {
     @Test
     fun testRefinedParser() {
         val source = """
-            type DutchPostalCode /^([0-9]{4}[A-Z]{2})$/g
-        """.trimIndent()
+            |type DutchPostalCode /^([0-9]{4}[A-Z]{2})$/g
+        """.trimMargin()
 
         WirespecSpec.tokenize(source)
             .let(parser()::parse)
@@ -63,10 +63,10 @@ class ParseTypeTest {
     @Test
     fun testUnionParser() {
         val source = """
-            type Bar { str: String }
-            type Bal { str: String }
-            type Foo = Bar | Bal
-        """.trimIndent()
+            |type Bar { str: String }
+            |type Bal { str: String }
+            |type Foo = Bar | Bal
+        """.trimMargin()
 
         WirespecSpec.tokenize(source)
             .let(parser()::parse)
@@ -78,8 +78,8 @@ class ParseTypeTest {
             .also { it.size shouldBe 2 }
             .let {
                 val (first, second) = it.toList()
-                first shouldBe Field.Reference.Custom(value = "Bar", isIterable = false, isDictionary = false)
-                second shouldBe Field.Reference.Custom(value = "Bal", isIterable = false, isDictionary = false)
+                first shouldBe Reference.Custom(value = "Bar", isIterable = false, isDictionary = false)
+                second shouldBe Reference.Custom(value = "Bal", isIterable = false, isDictionary = false)
             }
     }
 }

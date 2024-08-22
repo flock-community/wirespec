@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.emit
 import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
@@ -10,6 +11,7 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
@@ -20,10 +22,10 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
 
     private val endpointBase = """
         |export module Wirespec {
-        |${SPACER}export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
-        |${SPACER}export type Content<T> = { type:string, body:T }
-        |${SPACER}export type Request<T> = { path:string, method: Method, query?: Record<string, any[]>, headers?: Record<string, any[]>, content?:Content<T> }
-        |${SPACER}export type Response<T> = { status:number, headers?: Record<string, any[]>, content?:Content<T> }
+        |${Spacer}export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
+        |${Spacer}export type Content<T> = { type:string, body:T }
+        |${Spacer}export type Request<T> = { path:string, method: Method, query?: Record<string, any[]>, headers?: Record<string, any[]>, content?:Content<T> }
+        |${Spacer}export type Response<T> = { status:number, headers?: Record<string, any[]>, content?:Content<T> }
         |}
     """.trimMargin()
 
@@ -64,17 +66,17 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
     override fun Type.Shape.emit() = value.joinToString(",\n") { it.emit() }
 
     override fun Field.emit() =
-        "${SPACER}\"${identifier.emit()}\"${if (isNullable) "?" else ""}: ${reference.emit()}"
+        "${Spacer}\"${identifier.emit()}\"${if (isNullable) "?" else ""}: ${reference.emit()}"
 
-    override fun Field.Reference.emit() = when (this) {
-        is Field.Reference.Unit -> "void"
-        is Field.Reference.Any -> "any"
-        is Field.Reference.Custom -> value.sanitizeSymbol()
-        is Field.Reference.Primitive -> when (type) {
-            Field.Reference.Primitive.Type.String -> "string"
-            Field.Reference.Primitive.Type.Integer -> "number"
-            Field.Reference.Primitive.Type.Number -> "number"
-            Field.Reference.Primitive.Type.Boolean -> "boolean"
+    override fun Reference.emit() = when (this) {
+        is Reference.Unit -> "void"
+        is Reference.Any -> "any"
+        is Reference.Custom -> value.sanitizeSymbol()
+        is Reference.Primitive -> when (type) {
+            Reference.Primitive.Type.String -> "string"
+            Reference.Primitive.Type.Integer -> "number"
+            Reference.Primitive.Type.Number -> "number"
+            Reference.Primitive.Type.Boolean -> "boolean"
         }
     }
         .let { if (isIterable) "$it[]" else it }
@@ -84,7 +86,7 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
         """export type ${identifier.sanitizeSymbol()} = string;
             |const regExp${identifier.emit()} = ${validator.emit()};
             |export const validate${identifier.emit()} = (value: string): value is ${identifier.sanitizeSymbol()} => 
-            |${SPACER}regExp${identifier.emit()}.test(value);
+            |${Spacer}regExp${identifier.emit()}.test(value);
             |""".trimMargin()
 
     override fun Refined.Validator.emit() = "/${value.drop(1).dropLast(1)}/g"
@@ -92,51 +94,51 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
     override fun Endpoint.emit() =
         """
           |export module ${identifier.sanitizeSymbol()} {
-          |${SPACER}export const PATH = "/${
+          |${Spacer}export const PATH = "/${
             path.joinToString("/") {
                 when (it) {
                     is Endpoint.Segment.Literal -> it.value; is Endpoint.Segment.Param -> ":${it.identifier.value}"
                 }
             }
         }"
-          |${SPACER}export const METHOD = "${method.name}"
+          |${Spacer}export const METHOD = "${method.name}"
           |${
             requests.toSet().joinToString("\n") {
-                "${SPACER}type ${it.emitName()} = { path: ${path.emitType()}, method: \"${method}\", headers: {${
+                "${Spacer}type ${it.emitName()} = { path: ${path.emitType()}, method: \"${method}\", headers: {${
                     headers.joinToString(",") { it.emit() }
                 }}, query: {${
-                    query.map { it.emit() }.joinToString(",")
+                    queries.map { it.emit() }.joinToString(",")
                 }}${it.content?.let { ", content: { type: \"${it.type}\", body: ${it.reference.emit()} }" } ?: ""} } "
             }
         }
-          |${SPACER}export type Request = ${
+          |${Spacer}export type Request = ${
             requests.toSet().joinToString(" | ") { it.emitName() }.ifEmpty { "undefined" }
         }
           |${
             responses.toSet()
-                .joinToString("\n") { "${SPACER}type ${it.emitName()} = { status: ${if (it.status.isInt()) it.status else "string"}${it.content?.let { ", content: { type: \"${it.type}\", body: ${it.reference.emit()} }" } ?: ""} }" }
+                .joinToString("\n") { "${Spacer}type ${it.emitName()} = { status: ${if (it.status.isInt()) it.status else "string"}${it.content?.let { ", content: { type: \"${it.type}\", body: ${it.reference.emit()} }" } ?: ""} }" }
         }
-          |${SPACER}export type Response = ${
+          |${Spacer}export type Response = ${
             responses.toSet().joinToString(" | ") { it.emitName() }.ifEmpty { "undefined" }
         }
-          |${SPACER}export type Handler = (request:Request) => Promise<Response>
-          |${SPACER}export type Call = {
-          |${SPACER}${SPACER}${identifier.sanitizeSymbol().firstToLower()}: Handler
-          |${SPACER}}
-          |${SPACER}export const call = (handler:Handler) => ({METHOD, PATH, handler})
+          |${Spacer}export type Handler = (request:Request) => Promise<Response>
+          |${Spacer}export type Call = {
+          |${Spacer(2)}${identifier.sanitizeSymbol().firstToLower()}: Handler
+          |${Spacer}}
+          |${Spacer}export const call = (handler:Handler) => ({METHOD, PATH, handler})
           |${
             requests.distinct().joinToString("\n") {
-                "${SPACER}export const ${it.emitName().firstToLower()} = (${
+                "${Spacer}export const ${it.emitName().firstToLower()} = (${
                     joinParameters(
                         it.content,
                         null
                     ).takeIf { it.isNotEmpty() }?.joinToString(",", "props:{", "}") { it.emit() }.orEmpty()
-                }) => ({path: `${path.emitPath()}`, method: \"${method.name}\", query: {${query.emitMap()}}, headers: {${headers.emitMap()}}${it.content?.let { ", content: {type: \"${it.type}\", body: props.body}" } ?: ""}} as const)"
+                }) => ({path: `${path.emitPath()}`, method: \"${method.name}\", query: {${queries.emitMap()}}, headers: {${headers.emitMap()}}${it.content?.let { ", content: {type: \"${it.type}\", body: props.body}" } ?: ""}} as const)"
             }
         }
           |${
             responses.distinct().joinToString("\n") {
-                "${SPACER}export const ${it.emitName().firstToLower()} = (${
+                "${Spacer}export const ${it.emitName().firstToLower()} = (${
                     joinParameters(
                         it.content,
                         it
@@ -189,7 +191,7 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
         val pathField = path
             .filterIsInstance<Endpoint.Segment.Param>()
             .map { Field(it.identifier, it.reference, false) }
-        val parameters = response?.headers ?: (pathField + query + headers + cookies)
+        val parameters = response?.headers ?: (pathField + queries + headers + cookies)
         return parameters
             .plus(content?.reference?.toField("body", false))
             .filterNotNull()
@@ -208,7 +210,7 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
         .filter { it.isLetterOrDigit() || it in listOf('_') }
         .joinToString("")
 
-    private fun Field.Reference.toField(identifier: String, isNullable: Boolean) = Field(
+    private fun Reference.toField(identifier: String, isNullable: Boolean) = Field(
         Identifier(identifier),
         this,
         isNullable

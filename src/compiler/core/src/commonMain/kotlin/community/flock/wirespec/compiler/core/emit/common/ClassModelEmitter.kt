@@ -1,26 +1,53 @@
 package community.flock.wirespec.compiler.core.emit.common
 
+import community.flock.wirespec.compiler.core.emit.transformer.ClassReference
 import community.flock.wirespec.compiler.core.emit.transformer.EndpointClass
 import community.flock.wirespec.compiler.core.emit.transformer.EnumClass
 import community.flock.wirespec.compiler.core.emit.transformer.FieldClass
 import community.flock.wirespec.compiler.core.emit.transformer.Parameter
-import community.flock.wirespec.compiler.core.emit.transformer.Reference
 import community.flock.wirespec.compiler.core.emit.transformer.RefinedClass
 import community.flock.wirespec.compiler.core.emit.transformer.TypeClass
 import community.flock.wirespec.compiler.core.emit.transformer.UnionClass
 
-interface ClassModelEmitter {
+interface ClassModelEmitter :
+    TypeClassEmitter,
+    EnumClassEmitter,
+    RefinedClassEmitter,
+    LegacyEndpointClassEmitter,
+    UnionClassEmitter {
 
+    fun Parameter.emit(): String
+
+    fun ClassReference.Generics.emit(): String
+
+    fun ClassReference.Custom.emit(): String
+
+    fun ClassReference.Language.emit(): String
+
+    fun ClassReference.Language.Primitive.emit(): String
+
+    fun FieldClass.emit(): String
+
+    fun ClassReference.emit(): String
+
+    fun ClassReference.Wirespec.emit(): String
+}
+
+interface TypeClassEmitter {
     fun TypeClass.emit(): String
+}
 
+interface EnumClassEmitter {
+    fun EnumClass.emit(): String
+}
+
+interface RefinedClassEmitter {
     fun RefinedClass.emit(): String
 
     fun RefinedClass.Validator.emit(): String
+}
 
-    fun EnumClass.emit(): String
-
-    fun UnionClass.emit(): String
-
+interface LegacyEndpointClassEmitter {
     fun EndpointClass.emit(): String
 
     fun EndpointClass.RequestClass.emit(): String
@@ -45,23 +72,11 @@ interface ClassModelEmitter {
 
     fun EndpointClass.ResponseMapper.ResponseCondition.emit(): String
 
-    fun Parameter.emit(): String
-
-    fun Reference.Generics.emit(): String
-
-    fun Reference.Custom.emit(): String
-
-    fun Reference.Language.emit(): String
-
-    fun Reference.Language.Primitive.emit(): String
-
-    fun FieldClass.emit(): String
-
     fun EndpointClass.Path.emit(): String
 
     fun EndpointClass.Content.emit(): String
+}
 
-    fun Reference.emit(): String
-
-    fun Reference.Wirespec.emit(): String
+interface UnionClassEmitter {
+    fun UnionClass.emit(): String
 }

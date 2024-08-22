@@ -5,14 +5,15 @@ import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Field.Reference
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
@@ -41,17 +42,17 @@ open class ScalaEmitter(
     override fun emit(ast: AST): List<Emitted> = super.emit(ast)
         .map { Emitted(it.typeName, if (packageName.isBlank()) "" else "package $packageName\n\n${it.result}") }
 
-    override fun Type.emit(ast: AST) =
-        """case class ${emitName()}(
-            |${shape.emit()}
-            |)
-            |
-            |""".trimMargin()
+    override fun Type.emit(ast: AST) = """
+        |case class ${emitName()}(
+        |${shape.emit()}
+        |)
+        |
+    """.trimMargin()
 
     override fun Type.Shape.emit() = value.joinToString("\n") { it.emit() }.dropLast(1)
 
     override fun Field.emit() =
-        "${SPACER}val ${identifier.emit()}: ${if (isNullable) "Option[${reference.emit()}]" else reference.emit()},"
+        "${Spacer}val ${identifier.emit()}: ${if (isNullable) "Option[${reference.emit()}]" else reference.emit()},"
 
     override fun Identifier.emit() = if (value in preservedKeywords) value.addBackticks() else value
 
@@ -78,7 +79,7 @@ open class ScalaEmitter(
         |object ${identifier.emit()} {
         |${
             entries.joinToString("\n") {
-                """${SPACER}final case object ${
+                """${Spacer}final case object ${
                     it.sanitize().uppercase()
                 } extends ${identifier.emit()}(label = "$it")"""
             }
@@ -89,17 +90,17 @@ open class ScalaEmitter(
 
     override fun Refined.emit() =
         """case class ${emitName()}(val value: String) {
-            |${SPACER}implicit class ${emitName()}Ops(val that: ${emitName()}) {
+            |${Spacer}implicit class ${emitName()}Ops(val that: ${emitName()}) {
             |${validator.emit()}
-            |${SPACER}}
+            |${Spacer}}
             |}
             |
             |""".trimMargin()
 
 
     override fun Refined.Validator.emit() =
-        """${SPACER}${SPACER}val regex = new scala.util.matching.Regex(""$value"")
-            |${SPACER}${SPACER}regex.findFirstIn(that.value)""".trimMargin()
+        """${Spacer(2)}val regex = new scala.util.matching.Regex(""$value"")
+            |${Spacer(2)}regex.findFirstIn(that.value)""".trimMargin()
 
     override fun Endpoint.emit() = notYetImplemented()
 
@@ -107,45 +108,14 @@ open class ScalaEmitter(
 
     companion object {
         private val preservedKeywords = listOf(
-            "abstract",
-            "case",
-            "catch",
-            "class",
-            "def",
-            "do",
-            "else",
-            "extends",
-            "false",
-            "final",
-            "finally",
-            "for",
-            "forSome",
-            "if",
-            "implicit",
-            "import",
-            "lazy",
-            "match",
-            "new",
-            "null",
-            "object",
-            "override",
-            "package",
-            "private",
-            "protected",
-            "return",
-            "sealed",
-            "super",
-            "this",
-            "throw",
-            "trait",
-            "true",
-            "try",
-            "type",
-            "val",
-            "var",
-            "while",
-            "with",
-            "yield",
+            "abstract", "case", "catch", "class", "def",
+            "do", "else", "extends", "false", "final",
+            "finally", "for", "forSome", "if", "implicit",
+            "import", "lazy", "match", "new", "null",
+            "object", "override", "package", "private", "protected",
+            "return", "sealed", "super", "this", "throw",
+            "trait", "true", "try", "type", "val",
+            "var", "while", "with", "yield",
         )
     }
 }

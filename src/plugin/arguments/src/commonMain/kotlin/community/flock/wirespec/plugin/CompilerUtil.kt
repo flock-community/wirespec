@@ -10,7 +10,7 @@ import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.shared.JavaShared
-import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
+import community.flock.wirespec.compiler.core.emit.shared.KotlinLegacyShared
 import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
 import community.flock.wirespec.compiler.core.emit.shared.Shared
 import community.flock.wirespec.compiler.core.parse
@@ -41,7 +41,12 @@ data class LanguageEmitter(val emitter: Emitter, val extension: FileExtension, v
 fun Language.mapEmitter(packageName: PackageName, logger: Logger) =
     when (this) {
         Language.Java -> LanguageEmitter(JavaEmitter(packageName.value, logger), FileExtension.Java, JavaShared)
-        Language.Kotlin -> LanguageEmitter(KotlinEmitter(packageName.value, logger), FileExtension.Kotlin, KotlinShared)
+        Language.Kotlin -> LanguageEmitter(
+            KotlinEmitter(packageName.value, logger),
+            FileExtension.Kotlin,
+            KotlinLegacyShared
+        )
+
         Language.Scala -> LanguageEmitter(ScalaEmitter(packageName.value, logger), FileExtension.Scala, ScalaShared)
         Language.TypeScript -> LanguageEmitter(TypeScriptEmitter(logger), FileExtension.TypeScript)
         Language.Wirespec -> LanguageEmitter(WirespecEmitter(logger), FileExtension.Wirespec)

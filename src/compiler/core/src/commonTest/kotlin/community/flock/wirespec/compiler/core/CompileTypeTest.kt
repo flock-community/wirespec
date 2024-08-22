@@ -10,17 +10,15 @@ import kotlin.test.Test
 
 class CompileTypeTest {
 
-    private val compiler = compile(
-        """
-        type Request {
-          `type`: String,
-          url: String,
-          body: String?,
-          params: String[],
-          headers: { String }
-        }
-        """.trimIndent()
-    )
+    private val compiler = """
+        |type Request {
+        |  `type`: String,
+        |  url: String,
+        |  body: String?,
+        |  params: String[],
+        |  headers: { String }
+        |}
+    """.trimMargin().let(::compile)
 
     @Test
     fun kotlin() {
@@ -30,7 +28,7 @@ class CompileTypeTest {
             |data class Request(
             |  val type: String,
             |  val url: String,
-            |  val body: String? = null,
+            |  val body: String?,
             |  val params: List<String>,
             |  val headers: Map<String, String>
             |)
@@ -71,7 +69,6 @@ class CompileTypeTest {
             |  val params: List[String],
             |  val headers: Map[String, String]
             |)
-            |
             |
         """.trimMargin()
 

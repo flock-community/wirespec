@@ -5,9 +5,9 @@ import community.flock.kotlinx.openapi.bindings.v2.OpenAPI
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Field.Reference.Custom
-import community.flock.wirespec.compiler.core.parse.Field.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Reference.Custom
+import community.flock.wirespec.compiler.core.parse.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.openapi.common.Expected
@@ -46,7 +46,8 @@ class OpenApiV2ParserTest {
                             isNullable = true
                         )
                     )
-                )
+                ),
+                extends = emptyList(),
             ),
             Type(
                 comment = null,
@@ -64,7 +65,8 @@ class OpenApiV2ParserTest {
                             isNullable = true
                         )
                     )
-                )
+                ),
+                extends = emptyList(),
             ),
             Type(
                 comment = null,
@@ -102,7 +104,8 @@ class OpenApiV2ParserTest {
                             isNullable = true
                         )
                     )
-                )
+                ),
+                extends = emptyList(),
             ),
             Type(
                 comment = null,
@@ -120,7 +123,8 @@ class OpenApiV2ParserTest {
                             isNullable = true
                         )
                     )
-                )
+                ),
+                extends = emptyList(),
             ),
             Type(
                 comment = null,
@@ -158,7 +162,8 @@ class OpenApiV2ParserTest {
                             isNullable = true
                         )
                     )
-                )
+                ),
+                extends = emptyList(),
             ),
             Type(
                 comment = null,
@@ -206,7 +211,8 @@ class OpenApiV2ParserTest {
                             isNullable = true
                         )
                     )
-                )
+                ),
+                extends = emptyList(),
             )
         )
 
@@ -267,7 +273,7 @@ class OpenApiV2ParserTest {
                 identifier = Identifier("AlisaGET"),
                 method = Endpoint.Method.GET,
                 path = listOf(Endpoint.Segment.Literal(value = "alisa")),
-                query = emptyList(),
+                queries = emptyList(),
                 headers = emptyList(),
                 cookies = emptyList(),
                 requests = listOf(Endpoint.Request(content = null)),
@@ -298,7 +304,8 @@ class OpenApiV2ParserTest {
                             isNullable = true
                         )
                     )
-                )
+                ),
+                extends = emptyList(),
             )
         )
         assertEquals(expected, ast)
@@ -331,7 +338,7 @@ class OpenApiV2ParserTest {
         val openApi = OpenAPI.decodeFromString(json)
         val ast = openApi.parse()
 
-        assertEquals(Expected.additionalproperties, ast)
+        assertEquals(Expected.additionalProperties, ast)
     }
 
     @Test

@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.emit
 import community.flock.wirespec.compiler.core.addBackticks
 import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
@@ -10,6 +11,7 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
@@ -36,7 +38,7 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
         |""".trimMargin()
 
 
-    override fun Type.Shape.emit() = value.joinToString(",\n") { "$SPACER${it.emit()}" }
+    override fun Type.Shape.emit() = value.joinToString(",\n") { "$Spacer${it.emit()}" }
 
     override fun Field.emit() = "${identifier.emit()}: ${reference.emit()}${if (isNullable) "?" else ""}"
 
@@ -44,22 +46,22 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
 
     override fun Channel.emit(): String = "channel ${identifier.emit()} -> ${reference.emit()}"
 
-    override fun Field.Reference.emit(): String = when (this) {
-        is Field.Reference.Unit -> "Unit"
-        is Field.Reference.Any -> "Any"
-        is Field.Reference.Custom -> value
-        is Field.Reference.Primitive -> when (type) {
-            Field.Reference.Primitive.Type.String -> "String"
-            Field.Reference.Primitive.Type.Integer -> "Integer"
-            Field.Reference.Primitive.Type.Number -> "Number"
-            Field.Reference.Primitive.Type.Boolean -> "Boolean"
+    override fun Reference.emit(): String = when (this) {
+        is Reference.Unit -> "Unit"
+        is Reference.Any -> "Any"
+        is Reference.Custom -> value
+        is Reference.Primitive -> when (type) {
+            Reference.Primitive.Type.String -> "String"
+            Reference.Primitive.Type.Integer -> "Integer"
+            Reference.Primitive.Type.Number -> "Number"
+            Reference.Primitive.Type.Boolean -> "Boolean"
         }
     }
         .let { if (isIterable) "$it[]" else it }
         .let { if (isDictionary) "{ $it }" else it }
 
     override fun Enum.emit() =
-        "enum ${identifier.emit()} {\n${SPACER}${entries.joinToString(", ") { it.capitalize() }}\n}\n"
+        "enum ${identifier.emit()} {\n${Spacer}${entries.joinToString(", ") { it.capitalize() }}\n}\n"
 
     override fun Refined.emit() = "type ${identifier.emit()} ${validator.emit()}\n"
 
@@ -67,8 +69,8 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
 
     override fun Endpoint.emit() =
         """
-            |endpoint ${identifier.emit()} ${method}${requests.emitRequest()} ${path.emitPath()}${query.emitQuery()} -> {
-            |${responses.joinToString("\n") { "$SPACER${it.status.fixStatus()} -> ${it.content?.reference?.emit() ?: "Unit"}${if (it.content?.isNullable == true) "?" else ""}" }}
+            |endpoint ${identifier.emit()} ${method}${requests.emitRequest()} ${path.emitPath()}${queries.emitQuery()} -> {
+            |${responses.joinToString("\n") { "$Spacer${it.status.fixStatus()} -> ${it.content?.reference?.emit() ?: "Unit"}${if (it.content?.isNullable == true) "?" else ""}" }}
             |}
             |
         """.trimMargin()
