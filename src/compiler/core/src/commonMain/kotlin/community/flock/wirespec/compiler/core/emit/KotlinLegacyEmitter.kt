@@ -63,7 +63,7 @@ open class KotlinLegacyEmitter(
             )
         }
 
-    override fun Type.emit(ast: AST) = transform(ast).emit()
+    override fun emit(type: Type, ast: AST) = type.transform(ast).emit()
 
     override fun TypeClass.emit() = """
         |data class ${name.sanitizeSymbol()}(
@@ -71,7 +71,7 @@ open class KotlinLegacyEmitter(
         |)${if (supers.isNotEmpty()) ": ${supers.joinToString(", ") { it.emit() }}" else ""}
         """.trimMargin()
 
-    override fun Refined.emit() = transform().emit()
+    override fun emit(refined: Refined) = refined.transform().emit()
 
     override fun RefinedClass.emit() = """
         |data class ${name.sanitizeSymbol()}(override val value: String): Wirespec.Refined {
@@ -83,7 +83,7 @@ open class KotlinLegacyEmitter(
 
     override fun RefinedClass.Validator.emit() = "Regex(\"\"$value\"\").matches(value)"
 
-    override fun Enum.emit() = transform().emit()
+    override fun emit(enum: Enum) = enum.transform().emit()
 
     override fun EnumClass.emit() = run {
         fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_").sanitizeFirstIsDigit()
@@ -97,12 +97,12 @@ open class KotlinLegacyEmitter(
         """.trimMargin()
     }
 
-    override fun Union.emit() = transform().emit()
+    override fun emit(union: Union) = union.transform().emit()
 
-    override fun Channel.emit(): String =
+    override fun emit(channel: Channel): String =
         """
-            |interface ${identifier.emit()}Channel {
-            |   operator fun invoke(message: ${reference.transform(isNullable, false).emitWrap()})
+            |interface ${channel.identifier.emit()}Channel {
+            |   operator fun invoke(message: ${channel.reference.transform(channel.isNullable, false).emitWrap()})
             |}
         """.trimMargin()
 
@@ -110,7 +110,7 @@ open class KotlinLegacyEmitter(
         |sealed interface $name
     """.trimMargin()
 
-    override fun Endpoint.emit() = transform().emit()
+    override fun emit(endpoint: Endpoint) = endpoint.transform().emit()
 
     override fun EndpointClass.emit() = """
         |interface ${name.sanitizeSymbol()} : ${supers.joinToString(", ") { it.emitWrap() }} {

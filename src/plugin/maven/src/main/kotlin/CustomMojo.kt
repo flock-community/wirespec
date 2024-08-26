@@ -2,7 +2,7 @@ package community.flock.wirespec.plugin.maven
 
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.shared.JavaShared
-import community.flock.wirespec.compiler.core.emit.shared.KotlinLegacyShared
+import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
 import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.plugin.Language
@@ -52,7 +52,7 @@ class CustomMojo : BaseMojo() {
         if (shared != null) {
             val sharedSource = when (shared) {
                 Language.Java -> JavaShared
-                Language.Kotlin -> KotlinLegacyShared
+                Language.Kotlin -> KotlinShared
                 Language.Scala -> ScalaShared
                 else -> error("No shared available for: $shared")
             }

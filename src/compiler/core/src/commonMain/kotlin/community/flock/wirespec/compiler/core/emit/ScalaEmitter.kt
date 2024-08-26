@@ -42,9 +42,9 @@ open class ScalaEmitter(
     override fun emit(ast: AST): List<Emitted> = super.emit(ast)
         .map { Emitted(it.typeName, if (packageName.isBlank()) "" else "package $packageName\n\n${it.result}") }
 
-    override fun Type.emit(ast: AST) = """
-        |case class ${emitName()}(
-        |${shape.emit()}
+    override fun emit(type: Type, ast: AST) = """
+        |case class ${type.emitName()}(
+        |${type.shape.emit()}
         |)
         |
     """.trimMargin()
@@ -56,7 +56,7 @@ open class ScalaEmitter(
 
     override fun Identifier.emit() = if (value in preservedKeywords) value.addBackticks() else value
 
-    override fun Channel.emit() = notYetImplemented()
+    override fun emit(channel: Channel) = notYetImplemented()
 
     override fun Reference.emit() = when (this) {
         is Reference.Unit -> "Unit"
@@ -72,26 +72,26 @@ open class ScalaEmitter(
         .let { if (isIterable) "List[$it]" else it }
         .let { if (isDictionary) "Map[String, $it]" else it }
 
-    override fun Enum.emit() = run {
-        fun String.sanitize() = replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }
+    override fun emit(enum: Enum) = enum.run {
+        fun String.sanitize() = this.replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }
         """
-        |sealed abstract class ${emitName()}(val label: String)
-        |object ${identifier.emit()} {
+        |sealed abstract class ${this.emitName()}(val label: String)
+        |object ${this.identifier.emit()} {
         |${
-            entries.joinToString("\n") {
+            this.entries.joinToString("\n") {
                 """${Spacer}final case object ${
                     it.sanitize().uppercase()
-                } extends ${identifier.emit()}(label = "$it")"""
+                } extends ${this.identifier.emit()}(label = "$it")"""
             }
         }
         |}
         |""".trimMargin()
     }
 
-    override fun Refined.emit() =
-        """case class ${emitName()}(val value: String) {
-            |${Spacer}implicit class ${emitName()}Ops(val that: ${emitName()}) {
-            |${validator.emit()}
+    override fun emit(refined: Refined) =
+        """case class ${refined.emitName()}(val value: String) {
+            |${Spacer}implicit class ${refined.emitName()}Ops(val that: ${refined.emitName()}) {
+            |${refined.validator.emit()}
             |${Spacer}}
             |}
             |
@@ -102,9 +102,9 @@ open class ScalaEmitter(
         """${Spacer(2)}val regex = new scala.util.matching.Regex(""$value"")
             |${Spacer(2)}regex.findFirstIn(that.value)""".trimMargin()
 
-    override fun Endpoint.emit() = notYetImplemented()
+    override fun emit(endpoint: Endpoint) = notYetImplemented()
 
-    override fun Union.emit() = notYetImplemented()
+    override fun emit(union: Union) = notYetImplemented()
 
     companion object {
         private val preservedKeywords = listOf(

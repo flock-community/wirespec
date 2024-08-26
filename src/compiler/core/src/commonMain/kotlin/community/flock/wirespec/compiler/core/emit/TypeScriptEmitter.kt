@@ -53,15 +53,15 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
             )
         }
 
-    override fun Type.emit(ast: AST) =
-        """export type ${identifier.sanitizeSymbol()} = {
-            |${shape.emit()}
+    override fun emit(type: Type, ast: AST) =
+        """export type ${type.identifier.sanitizeSymbol()} = {
+            |${type.shape.emit()}
             |}
             |
             |""".trimMargin()
 
-    override fun Enum.emit() =
-        "export type ${identifier.sanitizeSymbol()} = ${entries.joinToString(" | ") { """"$it"""" }}\n"
+    override fun emit(enum: Enum) =
+        "export type ${enum.identifier.sanitizeSymbol()} = ${enum.entries.joinToString(" | ") { """"$it"""" }}\n"
 
     override fun Type.Shape.emit() = value.joinToString(",\n") { it.emit() }
 
@@ -82,64 +82,64 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
         .let { if (isIterable) "$it[]" else it }
         .let { if (isDictionary) "Record<string, $it>" else it }
 
-    override fun Refined.emit() =
-        """export type ${identifier.sanitizeSymbol()} = string;
-            |const regExp${identifier.emit()} = ${validator.emit()};
-            |export const validate${identifier.emit()} = (value: string): value is ${identifier.sanitizeSymbol()} => 
-            |${Spacer}regExp${identifier.emit()}.test(value);
+    override fun emit(refined: Refined) =
+        """export type ${refined.identifier.sanitizeSymbol()} = string;
+            |const regExp${refined.identifier.emit()} = ${refined.validator.emit()};
+            |export const validate${refined.identifier.emit()} = (value: string): value is ${refined.identifier.sanitizeSymbol()} => 
+            |${Spacer}regExp${refined.identifier.emit()}.test(value);
             |""".trimMargin()
 
     override fun Refined.Validator.emit() = "/${value.drop(1).dropLast(1)}/g"
 
-    override fun Endpoint.emit() =
+    override fun emit(endpoint: Endpoint) =
         """
-          |export module ${identifier.sanitizeSymbol()} {
+          |export module ${endpoint.identifier.sanitizeSymbol()} {
           |${Spacer}export const PATH = "/${
-            path.joinToString("/") {
+            endpoint.path.joinToString("/") {
                 when (it) {
                     is Endpoint.Segment.Literal -> it.value; is Endpoint.Segment.Param -> ":${it.identifier.value}"
                 }
             }
         }"
-          |${Spacer}export const METHOD = "${method.name}"
+          |${Spacer}export const METHOD = "${endpoint.method.name}"
           |${
-            requests.toSet().joinToString("\n") {
-                "${Spacer}type ${it.emitName()} = { path: ${path.emitType()}, method: \"${method}\", headers: {${
-                    headers.joinToString(",") { it.emit() }
+            endpoint.requests.toSet().joinToString("\n") {
+                "${Spacer}type ${it.emitName()} = { path: ${endpoint.path.emitType()}, method: \"${endpoint.method}\", headers: {${
+                    endpoint.headers.joinToString(",") { it.emit() }
                 }}, query: {${
-                    queries.map { it.emit() }.joinToString(",")
+                    endpoint.queries.map { it.emit() }.joinToString(",")
                 }}${it.content?.let { ", content: { type: \"${it.type}\", body: ${it.reference.emit()} }" } ?: ""} } "
             }
         }
           |${Spacer}export type Request = ${
-            requests.toSet().joinToString(" | ") { it.emitName() }.ifEmpty { "undefined" }
+            endpoint.requests.toSet().joinToString(" | ") { it.emitName() }.ifEmpty { "undefined" }
         }
           |${
-            responses.toSet()
+            endpoint.responses.toSet()
                 .joinToString("\n") { "${Spacer}type ${it.emitName()} = { status: ${if (it.status.isInt()) it.status else "string"}${it.content?.let { ", content: { type: \"${it.type}\", body: ${it.reference.emit()} }" } ?: ""} }" }
         }
           |${Spacer}export type Response = ${
-            responses.toSet().joinToString(" | ") { it.emitName() }.ifEmpty { "undefined" }
+            endpoint.responses.toSet().joinToString(" | ") { it.emitName() }.ifEmpty { "undefined" }
         }
           |${Spacer}export type Handler = (request:Request) => Promise<Response>
           |${Spacer}export type Call = {
-          |${Spacer(2)}${identifier.sanitizeSymbol().firstToLower()}: Handler
+          |${Spacer(2)}${endpoint.identifier.sanitizeSymbol().firstToLower()}: Handler
           |${Spacer}}
           |${Spacer}export const call = (handler:Handler) => ({METHOD, PATH, handler})
           |${
-            requests.distinct().joinToString("\n") {
+            endpoint.requests.distinct().joinToString("\n") {
                 "${Spacer}export const ${it.emitName().firstToLower()} = (${
-                    joinParameters(
+                    endpoint.joinParameters(
                         it.content,
                         null
                     ).takeIf { it.isNotEmpty() }?.joinToString(",", "props:{", "}") { it.emit() }.orEmpty()
-                }) => ({path: `${path.emitPath()}`, method: \"${method.name}\", query: {${queries.emitMap()}}, headers: {${headers.emitMap()}}${it.content?.let { ", content: {type: \"${it.type}\", body: props.body}" } ?: ""}} as const)"
+                }) => ({path: `${endpoint.path.emitPath()}`, method: \"${endpoint.method.name}\", query: {${endpoint.queries.emitMap()}}, headers: {${endpoint.headers.emitMap()}}${it.content?.let { ", content: {type: \"${it.type}\", body: props.body}" } ?: ""}} as const)"
             }
         }
           |${
-            responses.distinct().joinToString("\n") {
+            endpoint.responses.distinct().joinToString("\n") {
                 "${Spacer}export const ${it.emitName().firstToLower()} = (${
-                    joinParameters(
+                    endpoint.joinParameters(
                         it.content,
                         it
                     ).takeIf { it.isNotEmpty() }?.joinToString(",", "props:{", "}") { it.emit() }.orEmpty()
@@ -150,10 +150,10 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
           |
         """.trimMargin()
 
-    override fun Union.emit() =
-        "export type ${identifier.sanitizeSymbol()} = ${entries.joinToString(" | ") { it.emit() }}\n"
+    override fun emit(union: Union) =
+        "export type ${union.identifier.sanitizeSymbol()} = ${union.entries.joinToString(" | ") { it.emit() }}\n"
 
-    override fun Channel.emit() = notYetImplemented()
+    override fun emit(channel: Channel) = notYetImplemented()
 
     private fun List<Endpoint.Segment>.emitType() = "`${joinToString("") { "/" + it.emitType() }}`"
 

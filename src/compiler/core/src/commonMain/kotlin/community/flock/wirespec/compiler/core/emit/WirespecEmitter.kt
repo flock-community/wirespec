@@ -31,9 +31,9 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
 
     override fun notYetImplemented() = "\n"
 
-    override fun Type.emit(ast: AST) = """
-        |type ${identifier.emit()} {
-        |${shape.emit()}
+    override fun emit(type: Type, ast: AST) = """
+        |type ${type.identifier.emit()} {
+        |${type.shape.emit()}
         |}
         |""".trimMargin()
 
@@ -44,7 +44,7 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
 
     override fun Identifier.emit() = if (value in preservedKeywords) value.addBackticks() else value
 
-    override fun Channel.emit(): String = "channel ${identifier.emit()} -> ${reference.emit()}"
+    override fun emit(channel: Channel): String = "channel ${channel.identifier.emit()} -> ${channel.reference.emit()}"
 
     override fun Reference.emit(): String = when (this) {
         is Reference.Unit -> "Unit"
@@ -60,22 +60,22 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
         .let { if (isIterable) "$it[]" else it }
         .let { if (isDictionary) "{ $it }" else it }
 
-    override fun Enum.emit() =
-        "enum ${identifier.emit()} {\n${Spacer}${entries.joinToString(", ") { it.capitalize() }}\n}\n"
+    override fun emit(enum: Enum) =
+        "enum ${enum.identifier.emit()} {\n${Spacer}${enum.entries.joinToString(", ") { it.capitalize() }}\n}\n"
 
-    override fun Refined.emit() = "type ${identifier.emit()} ${validator.emit()}\n"
+    override fun emit(refined: Refined) = "type ${refined.identifier.emit()} ${refined.validator.emit()}\n"
 
     override fun Refined.Validator.emit() = "/${value.drop(1).dropLast(1)}/g"
 
-    override fun Endpoint.emit() =
-        """
-            |endpoint ${identifier.emit()} ${method}${requests.emitRequest()} ${path.emitPath()}${queries.emitQuery()} -> {
-            |${responses.joinToString("\n") { "$Spacer${it.status.fixStatus()} -> ${it.content?.reference?.emit() ?: "Unit"}${if (it.content?.isNullable == true) "?" else ""}" }}
-            |}
-            |
-        """.trimMargin()
+    override fun emit(endpoint: Endpoint) = """
+        |endpoint ${endpoint.identifier.emit()} ${endpoint.method}${endpoint.requests.emitRequest()} ${endpoint.path.emitPath()}${endpoint.queries.emitQuery()} -> {
+        |${endpoint.responses.joinToString("\n") { "$Spacer${it.status.fixStatus()} -> ${it.content?.reference?.emit() ?: "Unit"}${if (it.content?.isNullable == true) "?" else ""}" }}
+        |}
+        |
+    """.trimMargin()
 
-    override fun Union.emit() = "type ${identifier.emit()} = ${entries.joinToString(" | ") { it.emit() }}\n"
+    override fun emit(union: Union) =
+        "type ${union.identifier.emit()} = ${union.entries.joinToString(" | ") { it.emit() }}\n"
 
     private fun String.fixStatus(): String = when (this) {
         "default" -> "200"

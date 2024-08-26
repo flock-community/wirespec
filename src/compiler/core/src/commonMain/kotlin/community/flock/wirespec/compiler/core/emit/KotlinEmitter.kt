@@ -59,10 +59,10 @@ open class KotlinEmitter(
             )
         }
 
-    override fun Type.emit(ast: AST) = """
-        |data class ${emitName()}(
-        |${shape.emit()}
-        |)${extends.run { if (isEmpty()) "" else " : ${joinToString(", ") { it.emit() }}" }}
+    override fun emit(type: Type, ast: AST) = """
+        |data class ${type.emitName()}(
+        |${type.shape.emit()}
+        |)${type.extends.run { if (isEmpty()) "" else " : ${joinToString(", ") { it.emit() }}" }}
     """.trimMargin()
 
     override fun Type.Shape.emit() = value.joinToString("\n") { "${Spacer}val ${it.emit()}," }.dropLast(1)
@@ -86,56 +86,79 @@ open class KotlinEmitter(
 
     override fun Identifier.emit() = if (value in preservedKeywords) value.addBackticks() else value
 
-    override fun Refined.emit() = """
-        |data class ${identifier.value.sanitizeSymbol()}(override val value: String): Wirespec.Refined {
+    override fun emit(refined: Refined) = """
+        |data class ${refined.identifier.value.sanitizeSymbol()}(override val value: String): Wirespec.Refined {
         |${Spacer}override fun toString() = value
         |}
         |
-        |fun ${identifier.value}.validate() = ${validator.emit()}
+        |fun ${refined.identifier.value}.validate() = ${refined.validator.emit()}
     """.trimMargin()
 
     override fun Refined.Validator.emit() = "Regex(\"\"$value\"\").matches(value)"
 
-    override fun Enum.emit() = """
-        |enum class ${identifier.value.sanitizeSymbol()} (val label: String): Wirespec.Enum {
-        |${entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }.spacer()};
+    override fun emit(enum: Enum) = """
+        |enum class ${enum.identifier.value.sanitizeSymbol()} (val label: String): Wirespec.Enum {
+        |${enum.entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }.spacer()};
         |${Spacer}override fun toString(): String {
         |${Spacer(2)}return label
         |${Spacer}}
         |}
     """.trimMargin()
 
-    override fun Union.emit() = """
-        |sealed interface ${emitName()}
+    override fun emit(union: Union) = """
+        |sealed interface ${union.emitName()}
     """.trimMargin()
 
-    override fun Channel.emit() = """
-        |interface ${identifier.emit()}Channel {
-        |   operator fun invoke(message: ${reference.emitWrap(isNullable)})
+    override fun emit(channel: Channel) = """
+        |interface ${channel.identifier.emit()}Channel {
+        |   operator fun invoke(message: ${channel.reference.emitWrap(channel.isNullable)})
         |}
     """.trimMargin()
 
-    override fun Endpoint.emit() = """
-        |object ${identifier.emit()} {
+    override fun emit(endpoint: Endpoint) = """
+        |object ${endpoint.identifier.emit()} {
         |${Spacer}interface Endpoint : Wirespec.Endpoint {
-        |${requests.joinToString("\n") { it.emit(this) }}
+        |${endpoint.pathParams.emitObject("Path", "Wirespec.Path") { it.emit() }}
         |
-        |${Spacer(2)}sealed interface Response<T> : Wirespec.Response<T>
-        |${responses.joinToString("\n") { "${Spacer(2)}sealed interface Response${it.status[0]}XX<T> : Response<T>" }}
+        |${endpoint.queries.emitObject("Queries", "Wirespec.Queries") { it.emit() }}
         |
-        |${responses.joinToString("\n") { it.emit() }}
+        |${endpoint.headers.emitObject("Headers", "Wirespec.Request.Headers") { it.emit() }}
+        |
+        |${endpoint.requests.joinToString("\n") { it.emit(endpoint) }}
+        |
+        |${Spacer(2)}sealed interface Response<T: Any> : Wirespec.Response<T>
+        |${endpoint.emitResponseInterfaces()}
+        |
+        |${endpoint.responses.joinToString("\n") { it.emit() }}
         |
         |${Spacer(2)}companion object {
-        |${Spacer(3)}const val PATH_TEMPLATE = "/${path.joinToString("/") { it.emit() }}"
-        |${Spacer(3)}const val METHOD_VALUE = "$method"
+        |${Spacer(3)}const val PATH_TEMPLATE = "/${endpoint.path.joinToString("/") { it.emit() }}"
+        |${Spacer(3)}const val METHOD_VALUE = "${endpoint.method}"
         |${Spacer(2)}}
         |
         |${Spacer(2)}interface Handler {
-        |${Spacer(3)}suspend fun putTodo(request: Request): Response<*>
+        |${Spacer(3)}suspend fun ${endpoint.identifier.emit().firstToLower()}(request: Request): Response<*>
         |${Spacer(2)}}
         |${Spacer}}
         |}
     """.trimMargin()
+
+    private fun Endpoint.emitResponseInterfaces() = responses
+        .distinctBy { it.status[0] }
+        .joinToString("\n") { "${Spacer(2)}sealed interface Response${it.status[0]}XX<T: Any> : Response<T>" }
+
+    private fun <E> List<E>.emitObject(name: String, extends: String, block: (E) -> String) =
+        if (isEmpty()) "${Spacer(2)}data object $name : $extends"
+        else """
+            |${Spacer(2)}data class $name(
+            |${joinToString(",\n") { "${Spacer(3)}val ${block(it)}" }},
+            |${Spacer(2)}) : $extends
+        """.trimMargin()
+
+    private fun <E> List<E>.emitParams(pure: Boolean = true, block: (E) -> String) =
+        if (isEmpty()) ""
+        else joinToString(",\n") { block(it) }
+            .let { if (pure) "$it, " else "($it)" }
 
     fun Endpoint.Request.emit(endpoint: Endpoint) = """
         |${Spacer(2)}data class Request(
@@ -145,16 +168,11 @@ open class KotlinEmitter(
         |${Spacer(3)}override val headers: Headers,
         |${Spacer(3)}override val body: ${content.emit()},
         |${Spacer(2)}) : Wirespec.Request<${content.emit()}> {
-        |${Spacer(3)}constructor(
-        |${Spacer(4)}${endpoint.path.filterIsInstance<Endpoint.Segment.Param>().joinToString(",\n") { it.emit() }},
-        |${Spacer(4)}${endpoint.queries.joinToString(",\n") { it.emit() }},
-        |${Spacer(4)}${endpoint.headers.joinToString(",\n") { it.emit() }},
-        |${Spacer(4)}body: ${content.emit()},
-        |${Spacer(3)}) : this(
-        |${Spacer(4)}path = Path(id),
-        |${Spacer(4)}method = Wirespec.Method.PUT,
-        |${Spacer(4)}queries = Queries(done),
-        |${Spacer(4)}headers = Headers(token),
+        |${Spacer(3)}constructor(${endpoint.pathParams.emitParams { it.emit() }}${endpoint.queries.emitParams { it.emit() }}${endpoint.headers.emitParams { it.emit() }}body: ${content.emit()}) : this(
+        |${Spacer(4)}path = Path${endpoint.pathParams.emitParams(false) { it.identifier.emit() }},
+        |${Spacer(4)}method = Wirespec.Method.${endpoint.method.name},
+        |${Spacer(4)}queries = Queries${endpoint.queries.emitParams(false) { it.identifier.emit() }},
+        |${Spacer(4)}headers = Headers${endpoint.headers.emitParams(false) { it.identifier.emit() }},
         |${Spacer(4)}body = body,
         |${Spacer(3)})
         |${Spacer(2)}}
@@ -175,6 +193,8 @@ open class KotlinEmitter(
             is Endpoint.Segment.Literal -> value
             is Endpoint.Segment.Param -> "{${identifier.emit()}}"
         }
+
+    private val Endpoint.pathParams get() = path.filterIsInstance<Endpoint.Segment.Param>()
 
     private fun Endpoint.Segment.Param.emit() = "${identifier.emit()}: ${reference.emit()}"
 

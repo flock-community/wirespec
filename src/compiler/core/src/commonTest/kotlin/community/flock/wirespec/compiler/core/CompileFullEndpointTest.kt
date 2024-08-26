@@ -8,7 +8,7 @@ import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import io.kotest.assertions.arrow.core.shouldBeRight
 import kotlin.test.Test
 
-class CompileEndpointTest {
+class CompileFullEndpointTest {
 
     private val compiler = """
         |endpoint PutTodo PUT PotentialTodoDto /todos/{id: String}
@@ -45,6 +45,18 @@ class CompileEndpointTest {
             |
             |object PutTodo {
             |  interface Endpoint : Wirespec.Endpoint {
+            |    data class Path(
+            |      val id: String,
+            |    ) : Wirespec.Path
+            |
+            |    data class Queries(
+            |      val done: Boolean,
+            |    ) : Wirespec.Queries
+            |
+            |    data class Headers(
+            |      val token: Token,
+            |    ) : Wirespec.Request.Headers
+            |
             |    data class Request(
             |      override val path: Path,
             |      override val method: Wirespec.Method,
@@ -52,12 +64,7 @@ class CompileEndpointTest {
             |      override val headers: Headers,
             |      override val body: PotentialTodoDto,
             |    ) : Wirespec.Request<PotentialTodoDto> {
-            |      constructor(
-            |        id: String,
-            |        done: Boolean,
-            |        token: Token,
-            |        body: PotentialTodoDto,
-            |      ) : this(
+            |      constructor(id: String, done: Boolean, token: Token, body: PotentialTodoDto) : this(
             |        path = Path(id),
             |        method = Wirespec.Method.PUT,
             |        queries = Queries(done),
@@ -66,9 +73,9 @@ class CompileEndpointTest {
             |      )
             |    }
             |
-            |    sealed interface Response<T> : Wirespec.Response<T>
-            |    sealed interface Response2XX<T> : Response<T>
-            |    sealed interface Response5XX<T> : Response<T>
+            |    sealed interface Response<T: Any> : Wirespec.Response<T>
+            |    sealed interface Response2XX<T: Any> : Response<T>
+            |    sealed interface Response5XX<T: Any> : Response<T>
             |
             |    data class Response200(override val body: TodoDto) : Response2XX<TodoDto> {
             |      override val status = 200

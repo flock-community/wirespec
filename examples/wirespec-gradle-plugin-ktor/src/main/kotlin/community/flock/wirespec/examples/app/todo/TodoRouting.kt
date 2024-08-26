@@ -1,9 +1,9 @@
 package community.flock.wirespec.examples.app.todo
 
-import community.flock.wirespec.generated.kotlin.DeleteTodoByIdEndpoint
-import community.flock.wirespec.generated.kotlin.GetTodoByIdEndpoint
-import community.flock.wirespec.generated.kotlin.GetTodosEndpoint
-import community.flock.wirespec.generated.kotlin.PostTodoEndpoint
+import community.flock.wirespec.generated.kotlin.DeleteTodoById
+import community.flock.wirespec.generated.kotlin.GetTodoById
+import community.flock.wirespec.generated.kotlin.GetTodos
+import community.flock.wirespec.generated.kotlin.PostTodo
 import community.flock.wirespec.generated.kotlin.PotentialTodoDto
 import community.flock.wirespec.generated.kotlin.TodoId
 import io.ktor.server.application.Application
@@ -20,34 +20,34 @@ fun Application.todoModule(todoRepository: TodoRepository) {
     val handler = TodoHandler(todoRepository)
 
     routing {
-        get(GetTodosEndpoint.PATH) {
+        get(GetTodos.Endpoint.PATH_TEMPLATE) {
             handler
-                .getTodos(GetTodosEndpoint.RequestUnit())
-                .content.body
+                .getTodos(GetTodos.Endpoint.Request(Unit))
+                .body
                 .let { call.respond(it) }
         }
 
-        get(GetTodoByIdEndpoint.PATH) {
+        get(GetTodoById.Endpoint.PATH_TEMPLATE) {
             val id = call.parameters["id"]!!
             handler
-                .getTodoById(GetTodoByIdEndpoint.RequestUnit(TodoId(id)))
-                .content.body
+                .getTodoById(GetTodoById.Endpoint.Request(TodoId(id), Unit))
+                .body
                 .let { call.respond(it) }
         }
 
-        post(PostTodoEndpoint.PATH) {
+        post(PostTodo.Endpoint.PATH_TEMPLATE) {
             val todo = call.receive<PotentialTodoDto>()
             handler
-                .postTodo(PostTodoEndpoint.RequestApplicationJson(todo))
-                .content.body
+                .postTodo(PostTodo.Endpoint.Request(todo))
+                .body
                 .let { call.respond(it) }
         }
 
-        delete(DeleteTodoByIdEndpoint.PATH) {
+        delete(DeleteTodoById.Endpoint.PATH_TEMPLATE) {
             val id = call.parameters["id"]!!
             handler
-                .deleteTodoById(DeleteTodoByIdEndpoint.RequestUnit(TodoId(id)))
-                .content.body
+                .deleteTodoById(DeleteTodoById.Endpoint.Request(TodoId(id), Unit))
+                .body
                 .let { call.respond(it) }
         }
     }

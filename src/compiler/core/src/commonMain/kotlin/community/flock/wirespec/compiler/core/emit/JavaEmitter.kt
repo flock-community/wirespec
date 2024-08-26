@@ -78,7 +78,7 @@ open class JavaEmitter(
     override fun emit(ast: AST): List<Emitted> = super.emit(ast)
         .map { Emitted(it.typeName.sanitizeSymbol(), "$pkg${importWireSpec(ast)}${importJava(ast)}${it.result}\n") }
 
-    override fun Type.emit(ast: AST) = transform(ast).emit()
+    override fun emit(type: Type, ast: AST) = type.transform(ast).emit()
 
     override fun TypeClass.emit() = """
         |public record ${name.sanitizeSymbol()} (
@@ -87,7 +87,7 @@ open class JavaEmitter(
         |};
     """.trimMargin()
 
-    override fun Refined.emit() = transform().emit()
+    override fun emit(refined: Refined) = refined.transform().emit()
 
     override fun RefinedClass.emit() = """
         |public record ${name.sanitizeSymbol()} (String value) implements Wirespec.Refined {
@@ -108,7 +108,7 @@ open class JavaEmitter(
         """.trimMargin()
     }
 
-    override fun Enum.emit() = transform().emit()
+    override fun emit(enum: Enum) = enum.transform().emit()
 
     override fun EnumClass.emit(): String = """
         |public enum ${name.sanitizeSymbol()} implements Wirespec.Enum {
@@ -124,12 +124,12 @@ open class JavaEmitter(
         |}
     """.trimMargin()
 
-    override fun Union.emit() = transform().emit()
+    override fun emit(union: Union) = union.transform().emit()
 
-    override fun Channel.emit(): String =
+    override fun emit(channel: Channel): String =
         """
-            |interface ${identifier.emit()}Channel {
-            |   void invoke(${reference.transform(isNullable, false).emitWrap()} message)
+            |interface ${channel.identifier.emit()}Channel {
+            |   void invoke(${channel.reference.transform(channel.isNullable, false).emitWrap()} message)
             |}
         """.trimMargin()
 
@@ -137,7 +137,7 @@ open class JavaEmitter(
         |public sealed interface $name permits ${entries.joinToString(", ")} {}
     """.trimMargin()
 
-    override fun Endpoint.emit() = transform().emit()
+    override fun emit(endpoint: Endpoint) = endpoint.transform().emit()
 
     override fun EndpointClass.emit() = """
         |public interface ${name.sanitizeSymbol()} extends Wirespec.Endpoint {
