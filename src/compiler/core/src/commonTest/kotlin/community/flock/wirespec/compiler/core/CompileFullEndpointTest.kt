@@ -57,13 +57,15 @@ class CompileFullEndpointTest {
             |      val token: Token,
             |    ) : Wirespec.Request.Headers
             |
-            |    data class Request(
+            |    sealed interface Request<T: Any> : Wirespec.Request<T>
+            |
+            |    data class RequestApplicationJson(
             |      override val path: Path,
             |      override val method: Wirespec.Method,
             |      override val queries: Queries,
             |      override val headers: Headers,
             |      override val body: PotentialTodoDto,
-            |    ) : Wirespec.Request<PotentialTodoDto> {
+            |    ) : Request<PotentialTodoDto> {
             |      constructor(id: String, done: Boolean, token: Token, body: PotentialTodoDto) : this(
             |        path = Path(id),
             |        method = Wirespec.Method.PUT,
@@ -77,12 +79,12 @@ class CompileFullEndpointTest {
             |    sealed interface Response2XX<T: Any> : Response<T>
             |    sealed interface Response5XX<T: Any> : Response<T>
             |
-            |    data class Response200(override val body: TodoDto) : Response2XX<TodoDto> {
+            |    data class Response200ApplicationJson(override val body: TodoDto) : Response2XX<TodoDto> {
             |      override val status = 200
             |      override val headers = Headers
             |      data object Headers : Wirespec.Response.Headers
             |    }
-            |    data class Response500(override val body: Error) : Response5XX<Error> {
+            |    data class Response500ApplicationJson(override val body: Error) : Response5XX<Error> {
             |      override val status = 500
             |      override val headers = Headers
             |      data object Headers : Wirespec.Response.Headers
@@ -94,7 +96,7 @@ class CompileFullEndpointTest {
             |    }
             |
             |    interface Handler {
-            |      suspend fun putTodo(request: Request): Response<*>
+            |      suspend fun putTodo(request: Request<*>): Response<*>
             |    }
             |  }
             |}

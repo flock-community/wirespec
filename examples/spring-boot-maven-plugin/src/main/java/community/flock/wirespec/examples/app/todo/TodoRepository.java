@@ -13,12 +13,12 @@ import static java.util.Collections.emptyList;
 @Repository
 public class TodoRepository {
 
-    private final String uuid = "f20ad876-c6a8-48b8-9a23-71787c1ae34a";
+    private static final String UUID = "f20ad876-c6a8-48b8-9a23-71787c1ae34a";
     private final HashMap<String, Todo> todos = new HashMap<>(
             Map.of(
-                    uuid,
+                    UUID,
                     new Todo(
-                            new TodoId(uuid),
+                            new TodoId(UUID),
                             "Name",
                             true,
                             emptyList()

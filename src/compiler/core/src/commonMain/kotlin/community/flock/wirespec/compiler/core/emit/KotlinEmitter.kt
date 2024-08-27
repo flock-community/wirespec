@@ -124,6 +124,8 @@ open class KotlinEmitter(
         |
         |${endpoint.headers.emitObject("Headers", "Wirespec.Request.Headers") { it.emit() }}
         |
+        |${Spacer(2)}sealed interface Request<T: Any> : Wirespec.Request<T>
+        |
         |${endpoint.requests.joinToString("\n") { it.emit(endpoint) }}
         |
         |${Spacer(2)}sealed interface Response<T: Any> : Wirespec.Response<T>
@@ -137,7 +139,7 @@ open class KotlinEmitter(
         |${Spacer(2)}}
         |
         |${Spacer(2)}interface Handler {
-        |${Spacer(3)}suspend fun ${endpoint.identifier.emit().firstToLower()}(request: Request): Response<*>
+        |${Spacer(3)}suspend fun ${endpoint.identifier.emit().firstToLower()}(request: Request<*>): Response<*>
         |${Spacer(2)}}
         |${Spacer}}
         |}
@@ -161,13 +163,13 @@ open class KotlinEmitter(
             .let { if (pure) "$it, " else "($it)" }
 
     fun Endpoint.Request.emit(endpoint: Endpoint) = """
-        |${Spacer(2)}data class Request(
+        |${Spacer(2)}data class Request${content.name()}(
         |${Spacer(3)}override val path: Path,
         |${Spacer(3)}override val method: Wirespec.Method,
         |${Spacer(3)}override val queries: Queries,
         |${Spacer(3)}override val headers: Headers,
         |${Spacer(3)}override val body: ${content.emit()},
-        |${Spacer(2)}) : Wirespec.Request<${content.emit()}> {
+        |${Spacer(2)}) : Request<${content.emit()}> {
         |${Spacer(3)}constructor(${endpoint.pathParams.emitParams { it.emit() }}${endpoint.queries.emitParams { it.emit() }}${endpoint.headers.emitParams { it.emit() }}body: ${content.emit()}) : this(
         |${Spacer(4)}path = Path${endpoint.pathParams.emitParams(false) { it.identifier.emit() }},
         |${Spacer(4)}method = Wirespec.Method.${endpoint.method.name},
@@ -179,8 +181,8 @@ open class KotlinEmitter(
     """.trimMargin()
 
     fun Endpoint.Response.emit() = """
-        |${Spacer(2)}data class Response$status(override val body: ${content.emit()}) : Response${status[0]}XX<${content.emit()}> {
-        |${Spacer(3)}override val status = $status
+        |${Spacer(2)}data class Response$status${content.name()}(override val body: ${content.emit()}) : Response${status[0]}XX<${content.emit()}> {
+        |${Spacer(3)}override val status = ${status.fixStatus()}
         |${Spacer(3)}override val headers = Headers
         |${Spacer(3)}data object Headers : Wirespec.Response.Headers
         |${Spacer(2)}}
@@ -202,6 +204,18 @@ open class KotlinEmitter(
         .let { if (isIterable) "List<$it>" else it }
         .let { if (isNullable) "$it?" else it }
         .let { if (isDictionary) "Map<String, $it>" else it }
+
+    private fun Endpoint.Content?.name() = this?.type
+        ?.substringBefore(";")
+        ?.split("/", "-")
+        ?.joinToString("") { it.firstToUpper() }
+        ?.replace("+", "")
+        ?: "Unit"
+
+    private fun String.fixStatus(): String = when (this) {
+        "default" -> "200"
+        else -> this
+    }
 
     private fun String.sanitizeSymbol() = this
         .split(".", " ")

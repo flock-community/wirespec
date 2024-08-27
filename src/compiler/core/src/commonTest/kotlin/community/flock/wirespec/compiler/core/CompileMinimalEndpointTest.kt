@@ -35,13 +35,15 @@ class CompileMinimalEndpointTest {
             |
             |    data object Headers : Wirespec.Request.Headers
             |
-            |    data class Request(
+            |    sealed interface Request<T: Any> : Wirespec.Request<T>
+            |
+            |    data class RequestUnit(
             |      override val path: Path,
             |      override val method: Wirespec.Method,
             |      override val queries: Queries,
             |      override val headers: Headers,
             |      override val body: Unit,
-            |    ) : Wirespec.Request<Unit> {
+            |    ) : Request<Unit> {
             |      constructor(body: Unit) : this(
             |        path = Path,
             |        method = Wirespec.Method.GET,
@@ -54,7 +56,7 @@ class CompileMinimalEndpointTest {
             |    sealed interface Response<T: Any> : Wirespec.Response<T>
             |    sealed interface Response2XX<T: Any> : Response<T>
             |
-            |    data class Response200(override val body: List<TodoDto>) : Response2XX<List<TodoDto>> {
+            |    data class Response200ApplicationJson(override val body: List<TodoDto>) : Response2XX<List<TodoDto>> {
             |      override val status = 200
             |      override val headers = Headers
             |      data object Headers : Wirespec.Response.Headers
@@ -66,7 +68,7 @@ class CompileMinimalEndpointTest {
             |    }
             |
             |    interface Handler {
-            |      suspend fun getTodos(request: Request): Response<*>
+            |      suspend fun getTodos(request: Request<*>): Response<*>
             |    }
             |  }
             |}

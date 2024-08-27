@@ -25,32 +25,35 @@ class TodoHandler(liveTodoRepository: TodoRepository) : TodoApi {
         override val todoRepository = liveTodoRepository
     }
 
-    override suspend fun getTodos(request: GetTodos.Endpoint.Request) =
-        context.getAllTodos()
+    override suspend fun getTodos(request: GetTodos.Endpoint.Request<*>) = when (request) {
+        is GetTodos.Endpoint.RequestUnit -> context.getAllTodos()
             .map { it.produce() }
-            .let(GetTodos.Endpoint::Response200)
+            .let(GetTodos.Endpoint::Response200ApplicationJson)
+    }
 
-
-    override suspend fun getTodoById(request: GetTodoById.Endpoint.Request) =
-        request.path.id
+    override suspend fun getTodoById(request: GetTodoById.Endpoint.Request<*>) = when (request) {
+        is GetTodoById.Endpoint.RequestUnit -> request.path.id
             .also { if (!it.validate()) throw TodoIdNotValidException(it.value) }
             .let { Todo.Id(it.value) }
             .let { context.getTodoById(it) }
             .produce()
-            .let(GetTodoById.Endpoint::Response200)
+            .let(GetTodoById.Endpoint::Response200ApplicationJson)
+    }
 
-    override suspend fun postTodo(request: PostTodo.Endpoint.Request) =
-        request.body
+    override suspend fun postTodo(request: PostTodo.Endpoint.Request<*>) = when (request) {
+        is PostTodo.Endpoint.RequestApplicationJson -> request.body
             .consume()
             .let { context.saveTodo(it) }
             .produce()
-            .let(PostTodo.Endpoint::Response200)
+            .let(PostTodo.Endpoint::Response200ApplicationJson)
+    }
 
-    override suspend fun deleteTodoById(request: DeleteTodoById.Endpoint.Request) =
-        request.path.id
+    override suspend fun deleteTodoById(request: DeleteTodoById.Endpoint.Request<*>) = when (request) {
+        is DeleteTodoById.Endpoint.RequestUnit -> request.path.id
             .also { if (!it.validate()) throw TodoIdNotValidException(it.value) }
             .let { Todo.Id(it.value) }
             .let { context.deleteTodoById(it) }
             .produce()
-            .let(DeleteTodoById.Endpoint::Response200)
+            .let(DeleteTodoById.Endpoint::Response200ApplicationJson)
+    }
 }

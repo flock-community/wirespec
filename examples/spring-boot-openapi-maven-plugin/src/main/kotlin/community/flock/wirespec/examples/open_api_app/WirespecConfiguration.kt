@@ -14,22 +14,11 @@ class WirespecConfiguration {
 
     @Bean
     fun contentMapper(objectMapper: ObjectMapper) =
-        object : Wirespec.ContentMapper<ByteArray> {
-            override fun <T> read(
-                content: Wirespec.Content<ByteArray>,
-                valueType: KType,
-            ): Wirespec.Content<T> = content.let {
-                val type = objectMapper.constructType(valueType.javaType)
-                val obj: T = objectMapper.readValue(content.body, type)
-                Wirespec.Content(it.type, obj)
+        object : Wirespec.Mapper<ByteArray> {
+            override fun <T : Any> read(raw: ByteArray, kType: KType): T = with(objectMapper) {
+                readValue(raw, constructType(kType.javaType))
             }
 
-            override fun <T> write(
-                content: Wirespec.Content<T>,
-                valueType: KType,
-            ): Wirespec.Content<ByteArray> = content.let {
-                val bytes = objectMapper.writeValueAsBytes(content.body)
-                Wirespec.Content(it.type, bytes)
-            }
+            override fun <T : Any> write(t: T, kType: KType) = objectMapper.writeValueAsBytes(t)
         }
 }
