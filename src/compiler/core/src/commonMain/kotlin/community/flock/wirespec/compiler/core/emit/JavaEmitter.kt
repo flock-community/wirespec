@@ -204,7 +204,7 @@ open class JavaEmitter(
     override fun EndpointClass.RequestMapper.emit(): String = """
         |static <B, Req extends Request<?>> Function<Wirespec.Request<B>, Req> $name(Wirespec.ContentMapper<B> contentMapper) {
         |${Spacer}return request -> {
-        |${this.conditions.joinToString("\n") { it.emit() }.spacer(2)}
+        |${conditions.joinToString("\n") { it.emit() }.spacer(2)}
         |${Spacer(2)}throw new IllegalStateException("Unknown response type");
         |${Spacer}};
         |}

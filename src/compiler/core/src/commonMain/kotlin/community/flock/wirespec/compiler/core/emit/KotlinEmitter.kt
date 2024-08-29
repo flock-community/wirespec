@@ -136,6 +136,7 @@ open class KotlinEmitter(
         |${Spacer(2)}companion object {
         |${Spacer(3)}const val PATH_TEMPLATE = "/${endpoint.path.joinToString("/") { it.emit() }}"
         |${Spacer(3)}const val METHOD_VALUE = "${endpoint.method}"
+        |${endpoint.requests.emitRequestMappers()}
         |${Spacer(2)}}
         |
         |${Spacer(2)}interface Handler {
@@ -187,6 +188,20 @@ open class KotlinEmitter(
         |${Spacer(3)}data object Headers : Wirespec.Response.Headers
         |${Spacer(2)}}
     """.trimMargin()
+
+    private fun List<Endpoint.Request>.emitRequestMappers(): String = """
+        |${Spacer(3)}fun <B : Any> REQUEST_MAPPER(contentMapper: Wirespec.Mapper<B>) = { request: Wirespec.Request<B> ->
+        |${Spacer(4)}when (request) {
+        |${Spacer(5)}${joinToString("\n") { it.emitRequestMapper() }}
+        |${Spacer(5)}else -> error("Cannot map request")
+        |${Spacer(4)}}
+        |${Spacer(3)}}
+    """.trimMargin()
+
+    private fun Endpoint.Request.emitRequestMapper(): String = content?.name()
+        ?.let { "is Request$it -> Request$it(request.path, request.method, request.queries, request.headers, request.body)" }
+        ?: "is RequestUnit -> RequestUnit(request.path, request.method, request.queries, request.headers, Unit)"
+
 
     private fun Endpoint.Content?.emit() = this?.reference?.emit() ?: "Unit"
 

@@ -86,7 +86,7 @@
                             <packageName>community.flock.wirespec.generated.kotlin.v2</packageName>
                             <format>OpenApiV2</format>
                             <languages>
-                                <language>Kotlin</language>
+                                <language>KotlinLegacy</language>
                             </languages>
                             <shared>true</shared>
                         </configuration>
@@ -102,7 +102,7 @@
                             <packageName>community.flock.wirespec.generated.kotlin.v3</packageName>
                             <format>OpenApiV3</format>
                             <languages>
-                                <language>Kotlin</language>
+                                <language>KotlinLegacy</language>
                             </languages>
                             <shared>false</shared>
                         </configuration>

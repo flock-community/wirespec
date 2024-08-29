@@ -93,6 +93,12 @@ class CompileFullEndpointTest {
             |    companion object {
             |      const val PATH_TEMPLATE = "/todos/{id}"
             |      const val METHOD_VALUE = "PUT"
+            |      fun <B : Any> REQUEST_MAPPER(contentMapper: Wirespec.Mapper<B>) = { request: Wirespec.Request<B> ->
+            |        when (request) {
+            |          is RequestApplicationJson -> RequestApplicationJson(request.path, request.method, request.queries, request.headers, request.body)
+            |          else -> error("Cannot map request")
+            |        }
+            |      }
             |    }
             |
             |    interface Handler {

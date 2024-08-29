@@ -183,11 +183,11 @@ open class KotlinLegacyEmitter(
 
     override fun EndpointClass.RequestMapper.emit(): String = """
         |fun <B> $name(contentMapper: Wirespec.ContentMapper<B>) = { request: Wirespec.Request<B> ->
-         |${Spacer}when {
-         |${this.conditions.joinToString("\n") { it.emit() }.spacer(2)}
-         |${Spacer(2)}else -> error("Cannot map request")
-         |${Spacer}}
-         |}
+        |${Spacer}when {
+        |${conditions.joinToString("\n") { it.emit() }.spacer(2)}
+        |${Spacer(2)}else -> error("Cannot map request")
+        |${Spacer}}
+        |}
     """.trimMargin()
 
     override fun EndpointClass.RequestMapper.RequestCondition.emit(): String =
@@ -203,7 +203,7 @@ open class KotlinLegacyEmitter(
     override fun EndpointClass.ResponseMapper.emit(): String = """
          |fun <B> $name(contentMapper: Wirespec.ContentMapper<B>) = { response: Wirespec.Response<B> ->
          |${Spacer}when {
-         |${this.conditions.joinToString("\n") { it.emit() }.spacer(2)}
+         |${conditions.joinToString("\n") { it.emit() }.spacer(2)}
          |${Spacer(2)}else -> error("Cannot map response with status ${'$'}{response.status}")
          |${Spacer}}
          |}

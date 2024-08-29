@@ -73,15 +73,15 @@ open class ScalaEmitter(
         .let { if (isDictionary) "Map[String, $it]" else it }
 
     override fun emit(enum: Enum) = enum.run {
-        fun String.sanitize() = this.replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }
+        fun String.sanitize() = replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }
         """
-        |sealed abstract class ${this.emitName()}(val label: String)
-        |object ${this.identifier.emit()} {
+        |sealed abstract class ${emitName()}(val label: String)
+        |object ${identifier.emit()} {
         |${
-            this.entries.joinToString("\n") {
+            entries.joinToString("\n") {
                 """${Spacer}final case object ${
                     it.sanitize().uppercase()
-                } extends ${this.identifier.emit()}(label = "$it")"""
+                } extends ${identifier.emit()}(label = "$it")"""
             }
         }
         |}

@@ -65,6 +65,12 @@ class CompileMinimalEndpointTest {
             |    companion object {
             |      const val PATH_TEMPLATE = "/todos"
             |      const val METHOD_VALUE = "GET"
+            |      fun <B : Any> REQUEST_MAPPER(contentMapper: Wirespec.Mapper<B>) = { request: Wirespec.Request<B> ->
+            |        when (request) {
+            |          is RequestUnit -> RequestUnit(request.path, request.method, request.queries, request.headers, Unit)
+            |          else -> error("Cannot map request")
+            |        }
+            |      }
             |    }
             |
             |    interface Handler {
