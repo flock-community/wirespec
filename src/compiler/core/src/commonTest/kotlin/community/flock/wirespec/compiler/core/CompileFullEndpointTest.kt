@@ -43,67 +43,57 @@ class CompileFullEndpointTest {
             |import community.flock.wirespec.Wirespec
             |import kotlin.reflect.typeOf
             |
-            |object PutTodo {
-            |  interface Endpoint : Wirespec.Endpoint {
-            |    data class Path(
-            |      val id: String,
-            |    ) : Wirespec.Path
+            |object PutTodoEndpoint : Wirespec.Endpoint {
+            |  data class Path(
+            |    val id: String,
+            |  ) : Wirespec.Path
             |
-            |    data class Queries(
-            |      val done: Boolean,
-            |    ) : Wirespec.Queries
+            |  data class Queries(
+            |    val done: Boolean,
+            |  ) : Wirespec.Queries
             |
-            |    data class Headers(
-            |      val token: Token,
-            |    ) : Wirespec.Request.Headers
+            |  data class Headers(
+            |    val token: Token,
+            |  ) : Wirespec.Request.Headers
             |
-            |    sealed interface Request<T: Any> : Wirespec.Request<T>
+            |  sealed interface Request<T: Any> : Wirespec.Request<T>
             |
-            |    data class RequestApplicationJson(
-            |      override val path: Path,
-            |      override val method: Wirespec.Method,
-            |      override val queries: Queries,
-            |      override val headers: Headers,
-            |      override val body: PotentialTodoDto,
-            |    ) : Request<PotentialTodoDto> {
-            |      constructor(id: String, done: Boolean, token: Token, body: PotentialTodoDto) : this(
-            |        path = Path(id),
-            |        method = Wirespec.Method.PUT,
-            |        queries = Queries(done),
-            |        headers = Headers(token),
-            |        body = body,
-            |      )
-            |    }
+            |  data class RequestApplicationJson(
+            |    override val path: Path,
+            |    override val method: Wirespec.Method,
+            |    override val queries: Queries,
+            |    override val headers: Headers,
+            |    override val body: PotentialTodoDto,
+            |  ) : Request<PotentialTodoDto> {
+            |    constructor(id: String, done: Boolean, token: Token, body: PotentialTodoDto) : this(
+            |      path = Path(id),
+            |      method = Wirespec.Method.PUT,
+            |      queries = Queries(done),
+            |      headers = Headers(token),
+            |      body = body,
+            |    )
+            |  }
             |
-            |    sealed interface Response<T: Any> : Wirespec.Response<T>
-            |    sealed interface Response2XX<T: Any> : Response<T>
-            |    sealed interface Response5XX<T: Any> : Response<T>
+            |  sealed interface Response<T: Any> : Wirespec.Response<T>
+            |  sealed interface Response2XX<T: Any> : Response<T>
+            |  sealed interface Response5XX<T: Any> : Response<T>
             |
-            |    data class Response200ApplicationJson(override val body: TodoDto) : Response2XX<TodoDto> {
-            |      override val status = 200
-            |      override val headers = Headers
-            |      data object Headers : Wirespec.Response.Headers
-            |    }
-            |    data class Response500ApplicationJson(override val body: Error) : Response5XX<Error> {
-            |      override val status = 500
-            |      override val headers = Headers
-            |      data object Headers : Wirespec.Response.Headers
-            |    }
+            |  data class Response200ApplicationJson(override val body: TodoDto) : Response2XX<TodoDto> {
+            |    override val status = 200
+            |    override val headers = Headers
+            |    data object Headers : Wirespec.Response.Headers
+            |  }
+            |  data class Response500ApplicationJson(override val body: Error) : Response5XX<Error> {
+            |    override val status = 500
+            |    override val headers = Headers
+            |    data object Headers : Wirespec.Response.Headers
+            |  }
             |
-            |    companion object {
-            |      const val PATH_TEMPLATE = "/todos/{id}"
-            |      const val METHOD_VALUE = "PUT"
-            |      fun <B : Any> REQUEST_MAPPER(contentMapper: Wirespec.Mapper<B>) = { request: Wirespec.Request<B> ->
-            |        when (request) {
-            |          is RequestApplicationJson -> RequestApplicationJson(request.path, request.method, request.queries, request.headers, request.body)
-            |          else -> error("Cannot map request")
-            |        }
-            |      }
-            |    }
+            |  const val PATH_TEMPLATE = "/todos/{id}"
+            |  const val METHOD_VALUE = "PUT"
             |
-            |    interface Handler {
-            |      suspend fun putTodo(request: Request<*>): Response<*>
-            |    }
+            |  interface Handler {
+            |    suspend fun putTodo(request: Request<*>): Response<*>
             |  }
             |}
             |data class PotentialTodoDto(

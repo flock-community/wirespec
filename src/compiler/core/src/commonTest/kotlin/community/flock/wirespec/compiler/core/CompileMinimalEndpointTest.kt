@@ -27,55 +27,45 @@ class CompileMinimalEndpointTest {
             |import community.flock.wirespec.Wirespec
             |import kotlin.reflect.typeOf
             |
-            |object GetTodos {
-            |  interface Endpoint : Wirespec.Endpoint {
-            |    data object Path : Wirespec.Path
+            |object GetTodosEndpoint : Wirespec.Endpoint {
+            |  data object Path : Wirespec.Path
             |
-            |    data object Queries : Wirespec.Queries
+            |  data object Queries : Wirespec.Queries
             |
-            |    data object Headers : Wirespec.Request.Headers
+            |  data object Headers : Wirespec.Request.Headers
             |
-            |    sealed interface Request<T: Any> : Wirespec.Request<T>
+            |  sealed interface Request<T: Any> : Wirespec.Request<T>
             |
-            |    data class RequestUnit(
-            |      override val path: Path,
-            |      override val method: Wirespec.Method,
-            |      override val queries: Queries,
-            |      override val headers: Headers,
-            |      override val body: Unit,
-            |    ) : Request<Unit> {
-            |      constructor(body: Unit) : this(
-            |        path = Path,
-            |        method = Wirespec.Method.GET,
-            |        queries = Queries,
-            |        headers = Headers,
-            |        body = body,
-            |      )
-            |    }
+            |  data class RequestUnit(
+            |    override val path: Path,
+            |    override val method: Wirespec.Method,
+            |    override val queries: Queries,
+            |    override val headers: Headers,
+            |    override val body: Unit,
+            |  ) : Request<Unit> {
+            |    constructor(body: Unit) : this(
+            |      path = Path,
+            |      method = Wirespec.Method.GET,
+            |      queries = Queries,
+            |      headers = Headers,
+            |      body = body,
+            |    )
+            |  }
             |
-            |    sealed interface Response<T: Any> : Wirespec.Response<T>
-            |    sealed interface Response2XX<T: Any> : Response<T>
+            |  sealed interface Response<T: Any> : Wirespec.Response<T>
+            |  sealed interface Response2XX<T: Any> : Response<T>
             |
-            |    data class Response200ApplicationJson(override val body: List<TodoDto>) : Response2XX<List<TodoDto>> {
-            |      override val status = 200
-            |      override val headers = Headers
-            |      data object Headers : Wirespec.Response.Headers
-            |    }
+            |  data class Response200ApplicationJson(override val body: List<TodoDto>) : Response2XX<List<TodoDto>> {
+            |    override val status = 200
+            |    override val headers = Headers
+            |    data object Headers : Wirespec.Response.Headers
+            |  }
             |
-            |    companion object {
-            |      const val PATH_TEMPLATE = "/todos"
-            |      const val METHOD_VALUE = "GET"
-            |      fun <B : Any> REQUEST_MAPPER(contentMapper: Wirespec.Mapper<B>) = { request: Wirespec.Request<B> ->
-            |        when (request) {
-            |          is RequestUnit -> RequestUnit(request.path, request.method, request.queries, request.headers, Unit)
-            |          else -> error("Cannot map request")
-            |        }
-            |      }
-            |    }
+            |  const val PATH_TEMPLATE = "/todos"
+            |  const val METHOD_VALUE = "GET"
             |
-            |    interface Handler {
-            |      suspend fun getTodos(request: Request<*>): Response<*>
-            |    }
+            |  interface Handler {
+            |    suspend fun getTodos(request: Request<*>): Response<*>
             |  }
             |}
             |data class TodoDto(

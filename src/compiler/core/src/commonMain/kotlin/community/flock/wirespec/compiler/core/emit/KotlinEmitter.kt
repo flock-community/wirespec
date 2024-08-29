@@ -116,46 +116,41 @@ open class KotlinEmitter(
     """.trimMargin()
 
     override fun emit(endpoint: Endpoint) = """
-        |object ${endpoint.identifier.emit()} {
-        |${Spacer}interface Endpoint : Wirespec.Endpoint {
+        |object ${endpoint.identifier.emit()}Endpoint : Wirespec.Endpoint {
         |${endpoint.pathParams.emitObject("Path", "Wirespec.Path") { it.emit() }}
         |
         |${endpoint.queries.emitObject("Queries", "Wirespec.Queries") { it.emit() }}
         |
         |${endpoint.headers.emitObject("Headers", "Wirespec.Request.Headers") { it.emit() }}
         |
-        |${Spacer(2)}sealed interface Request<T: Any> : Wirespec.Request<T>
+        |${Spacer}sealed interface Request<T: Any> : Wirespec.Request<T>
         |
         |${endpoint.requests.joinToString("\n") { it.emit(endpoint) }}
         |
-        |${Spacer(2)}sealed interface Response<T: Any> : Wirespec.Response<T>
+        |${Spacer}sealed interface Response<T: Any> : Wirespec.Response<T>
         |${endpoint.emitResponseInterfaces()}
         |
         |${endpoint.responses.joinToString("\n") { it.emit() }}
         |
-        |${Spacer(2)}companion object {
-        |${Spacer(3)}const val PATH_TEMPLATE = "/${endpoint.path.joinToString("/") { it.emit() }}"
-        |${Spacer(3)}const val METHOD_VALUE = "${endpoint.method}"
-        |${endpoint.requests.emitRequestMappers()}
-        |${Spacer(2)}}
+        |${Spacer}const val PATH_TEMPLATE = "/${endpoint.path.joinToString("/") { it.emit() }}"
+        |${Spacer}const val METHOD_VALUE = "${endpoint.method}"
         |
-        |${Spacer(2)}interface Handler {
-        |${Spacer(3)}suspend fun ${endpoint.identifier.emit().firstToLower()}(request: Request<*>): Response<*>
-        |${Spacer(2)}}
+        |${Spacer}interface Handler {
+        |${Spacer(2)}suspend fun ${endpoint.identifier.emit().firstToLower()}(request: Request<*>): Response<*>
         |${Spacer}}
         |}
     """.trimMargin()
 
     private fun Endpoint.emitResponseInterfaces() = responses
         .distinctBy { it.status[0] }
-        .joinToString("\n") { "${Spacer(2)}sealed interface Response${it.status[0]}XX<T: Any> : Response<T>" }
+        .joinToString("\n") { "${Spacer}sealed interface Response${it.status[0]}XX<T: Any> : Response<T>" }
 
     private fun <E> List<E>.emitObject(name: String, extends: String, block: (E) -> String) =
-        if (isEmpty()) "${Spacer(2)}data object $name : $extends"
+        if (isEmpty()) "${Spacer}data object $name : $extends"
         else """
-            |${Spacer(2)}data class $name(
-            |${joinToString(",\n") { "${Spacer(3)}val ${block(it)}" }},
-            |${Spacer(2)}) : $extends
+            |${Spacer}data class $name(
+            |${joinToString(",\n") { "${Spacer(2)}val ${block(it)}" }},
+            |${Spacer}) : $extends
         """.trimMargin()
 
     private fun <E> List<E>.emitParams(pure: Boolean = true, block: (E) -> String) =
@@ -164,44 +159,30 @@ open class KotlinEmitter(
             .let { if (pure) "$it, " else "($it)" }
 
     fun Endpoint.Request.emit(endpoint: Endpoint) = """
-        |${Spacer(2)}data class Request${content.name()}(
-        |${Spacer(3)}override val path: Path,
-        |${Spacer(3)}override val method: Wirespec.Method,
-        |${Spacer(3)}override val queries: Queries,
-        |${Spacer(3)}override val headers: Headers,
-        |${Spacer(3)}override val body: ${content.emit()},
-        |${Spacer(2)}) : Request<${content.emit()}> {
-        |${Spacer(3)}constructor(${endpoint.pathParams.emitParams { it.emit() }}${endpoint.queries.emitParams { it.emit() }}${endpoint.headers.emitParams { it.emit() }}body: ${content.emit()}) : this(
-        |${Spacer(4)}path = Path${endpoint.pathParams.emitParams(false) { it.identifier.emit() }},
-        |${Spacer(4)}method = Wirespec.Method.${endpoint.method.name},
-        |${Spacer(4)}queries = Queries${endpoint.queries.emitParams(false) { it.identifier.emit() }},
-        |${Spacer(4)}headers = Headers${endpoint.headers.emitParams(false) { it.identifier.emit() }},
-        |${Spacer(4)}body = body,
-        |${Spacer(3)})
-        |${Spacer(2)}}
+        |${Spacer}data class Request${content.name()}(
+        |${Spacer(2)}override val path: Path,
+        |${Spacer(2)}override val method: Wirespec.Method,
+        |${Spacer(2)}override val queries: Queries,
+        |${Spacer(2)}override val headers: Headers,
+        |${Spacer(2)}override val body: ${content.emit()},
+        |${Spacer}) : Request<${content.emit()}> {
+        |${Spacer(2)}constructor(${endpoint.pathParams.emitParams { it.emit() }}${endpoint.queries.emitParams { it.emit() }}${endpoint.headers.emitParams { it.emit() }}body: ${content.emit()}) : this(
+        |${Spacer(3)}path = Path${endpoint.pathParams.emitParams(false) { it.identifier.emit() }},
+        |${Spacer(3)}method = Wirespec.Method.${endpoint.method.name},
+        |${Spacer(3)}queries = Queries${endpoint.queries.emitParams(false) { it.identifier.emit() }},
+        |${Spacer(3)}headers = Headers${endpoint.headers.emitParams(false) { it.identifier.emit() }},
+        |${Spacer(3)}body = body,
+        |${Spacer(2)})
+        |${Spacer}}
     """.trimMargin()
 
     fun Endpoint.Response.emit() = """
-        |${Spacer(2)}data class Response$status${content.name()}(override val body: ${content.emit()}) : Response${status[0]}XX<${content.emit()}> {
-        |${Spacer(3)}override val status = ${status.fixStatus()}
-        |${Spacer(3)}override val headers = Headers
-        |${Spacer(3)}data object Headers : Wirespec.Response.Headers
-        |${Spacer(2)}}
+        |${Spacer}data class Response$status${content.name()}(override val body: ${content.emit()}) : Response${status[0]}XX<${content.emit()}> {
+        |${Spacer(2)}override val status = ${status.fixStatus()}
+        |${Spacer(2)}override val headers = Headers
+        |${Spacer(2)}data object Headers : Wirespec.Response.Headers
+        |${Spacer}}
     """.trimMargin()
-
-    private fun List<Endpoint.Request>.emitRequestMappers(): String = """
-        |${Spacer(3)}fun <B : Any> REQUEST_MAPPER(contentMapper: Wirespec.Mapper<B>) = { request: Wirespec.Request<B> ->
-        |${Spacer(4)}when (request) {
-        |${Spacer(5)}${joinToString("\n") { it.emitRequestMapper() }}
-        |${Spacer(5)}else -> error("Cannot map request")
-        |${Spacer(4)}}
-        |${Spacer(3)}}
-    """.trimMargin()
-
-    private fun Endpoint.Request.emitRequestMapper(): String = content?.name()
-        ?.let { "is Request$it -> Request$it(request.path, request.method, request.queries, request.headers, request.body)" }
-        ?: "is RequestUnit -> RequestUnit(request.path, request.method, request.queries, request.headers, Unit)"
-
 
     private fun Endpoint.Content?.emit() = this?.reference?.emit() ?: "Unit"
 

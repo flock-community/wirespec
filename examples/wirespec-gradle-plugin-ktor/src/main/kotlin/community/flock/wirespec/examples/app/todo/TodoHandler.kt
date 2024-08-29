@@ -7,17 +7,17 @@ import community.flock.wirespec.examples.app.todo.TodoService.deleteTodoById
 import community.flock.wirespec.examples.app.todo.TodoService.getAllTodos
 import community.flock.wirespec.examples.app.todo.TodoService.getTodoById
 import community.flock.wirespec.examples.app.todo.TodoService.saveTodo
-import community.flock.wirespec.generated.kotlin.DeleteTodoById
-import community.flock.wirespec.generated.kotlin.GetTodoById
-import community.flock.wirespec.generated.kotlin.GetTodos
-import community.flock.wirespec.generated.kotlin.PostTodo
+import community.flock.wirespec.generated.kotlin.DeleteTodoByIdEndpoint
+import community.flock.wirespec.generated.kotlin.GetTodoByIdEndpoint
+import community.flock.wirespec.generated.kotlin.GetTodosEndpoint
+import community.flock.wirespec.generated.kotlin.PostTodoEndpoint
 import community.flock.wirespec.generated.kotlin.validate
 
 private interface TodoApi :
-    GetTodos.Endpoint.Handler,
-    GetTodoById.Endpoint.Handler,
-    PostTodo.Endpoint.Handler,
-    DeleteTodoById.Endpoint.Handler
+    GetTodosEndpoint.Handler,
+    GetTodoByIdEndpoint.Handler,
+    PostTodoEndpoint.Handler,
+    DeleteTodoByIdEndpoint.Handler
 
 class TodoHandler(liveTodoRepository: TodoRepository) : TodoApi {
 
@@ -25,35 +25,35 @@ class TodoHandler(liveTodoRepository: TodoRepository) : TodoApi {
         override val todoRepository = liveTodoRepository
     }
 
-    override suspend fun getTodos(request: GetTodos.Endpoint.Request<*>) = when (request) {
-        is GetTodos.Endpoint.RequestUnit -> context.getAllTodos()
+    override suspend fun getTodos(request: GetTodosEndpoint.Request<*>) = when (request) {
+        is GetTodosEndpoint.RequestUnit -> context.getAllTodos()
             .map { it.produce() }
-            .let(GetTodos.Endpoint::Response200ApplicationJson)
+            .let(GetTodosEndpoint::Response200ApplicationJson)
     }
 
-    override suspend fun getTodoById(request: GetTodoById.Endpoint.Request<*>) = when (request) {
-        is GetTodoById.Endpoint.RequestUnit -> request.path.id
+    override suspend fun getTodoById(request: GetTodoByIdEndpoint.Request<*>) = when (request) {
+        is GetTodoByIdEndpoint.RequestUnit -> request.path.id
             .also { if (!it.validate()) throw TodoIdNotValidException(it.value) }
             .let { Todo.Id(it.value) }
             .let { context.getTodoById(it) }
             .produce()
-            .let(GetTodoById.Endpoint::Response200ApplicationJson)
+            .let(GetTodoByIdEndpoint::Response200ApplicationJson)
     }
 
-    override suspend fun postTodo(request: PostTodo.Endpoint.Request<*>) = when (request) {
-        is PostTodo.Endpoint.RequestApplicationJson -> request.body
+    override suspend fun postTodo(request: PostTodoEndpoint.Request<*>) = when (request) {
+        is PostTodoEndpoint.RequestApplicationJson -> request.body
             .consume()
             .let { context.saveTodo(it) }
             .produce()
-            .let(PostTodo.Endpoint::Response200ApplicationJson)
+            .let(PostTodoEndpoint::Response200ApplicationJson)
     }
 
-    override suspend fun deleteTodoById(request: DeleteTodoById.Endpoint.Request<*>) = when (request) {
-        is DeleteTodoById.Endpoint.RequestUnit -> request.path.id
+    override suspend fun deleteTodoById(request: DeleteTodoByIdEndpoint.Request<*>) = when (request) {
+        is DeleteTodoByIdEndpoint.RequestUnit -> request.path.id
             .also { if (!it.validate()) throw TodoIdNotValidException(it.value) }
             .let { Todo.Id(it.value) }
             .let { context.deleteTodoById(it) }
             .produce()
-            .let(DeleteTodoById.Endpoint::Response200ApplicationJson)
+            .let(DeleteTodoByIdEndpoint::Response200ApplicationJson)
     }
 }
