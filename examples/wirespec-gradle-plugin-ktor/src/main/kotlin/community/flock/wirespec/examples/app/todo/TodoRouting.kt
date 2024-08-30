@@ -22,7 +22,7 @@ fun Application.todoModule(todoRepository: TodoRepository) {
     routing {
         get(GetTodosEndpoint.PATH_TEMPLATE) {
             handler
-                .getTodos(GetTodosEndpoint.RequestUnit(Unit))
+                .getTodos(GetTodosEndpoint.Request(Unit))
                 .body
                 .let { call.respond(it) }
         }
@@ -30,7 +30,7 @@ fun Application.todoModule(todoRepository: TodoRepository) {
         get(GetTodoByIdEndpoint.PATH_TEMPLATE) {
             val id = call.parameters["id"]!!
             handler
-                .getTodoById(GetTodoByIdEndpoint.RequestUnit(TodoId(id), Unit))
+                .getTodoById(GetTodoByIdEndpoint.Request(TodoId(id), Unit))
                 .body
                 .let { call.respond(it) }
         }
@@ -38,7 +38,7 @@ fun Application.todoModule(todoRepository: TodoRepository) {
         post(PostTodoEndpoint.PATH_TEMPLATE) {
             val todo = call.receive<PotentialTodoDto>()
             handler
-                .postTodo(PostTodoEndpoint.RequestApplicationJson(todo))
+                .postTodo(PostTodoEndpoint.Request(todo))
                 .body
                 .let { call.respond(it) }
         }
@@ -46,7 +46,7 @@ fun Application.todoModule(todoRepository: TodoRepository) {
         delete(DeleteTodoByIdEndpoint.PATH_TEMPLATE) {
             val id = call.parameters["id"]!!
             handler
-                .deleteTodoById(DeleteTodoByIdEndpoint.RequestUnit(TodoId(id), Unit))
+                .deleteTodoById(DeleteTodoByIdEndpoint.Request(TodoId(id), Unit))
                 .body
                 .let { call.respond(it) }
         }

@@ -56,15 +56,13 @@ class CompileFullEndpointTest {
             |    val token: Token,
             |  ) : Wirespec.Request.Headers
             |
-            |  sealed interface Request<T: Any> : Wirespec.Request<T>
-            |
-            |  data class RequestApplicationJson(
-            |    override val path: Path,
-            |    override val method: Wirespec.Method,
-            |    override val queries: Queries,
-            |    override val headers: Headers,
-            |    override val body: PotentialTodoDto,
-            |  ) : Request<PotentialTodoDto> {
+            |  data class Request(
+            |    val path: Path,
+            |    val method: Wirespec.Method,
+            |    val queries: Queries,
+            |    val headers: Headers,
+            |    val body: PotentialTodoDto,
+            |  ) {
             |    constructor(id: String, done: Boolean, token: Token, body: PotentialTodoDto) : this(
             |      path = Path(id),
             |      method = Wirespec.Method.PUT,
@@ -74,16 +72,33 @@ class CompileFullEndpointTest {
             |    )
             |  }
             |
+            |  fun Wirespec.Serializer<String>.externalizeRequest(request: Request): Wirespec.RawRequest =
+            |    Wirespec.RawRequest(
+            |      path = listOf("todos", request.path.id.toString()),
+            |      method = request.method.name,
+            |      queries = mapOf("done" to listOf(serialize(request.queries.done, typeOf<Boolean>()))),
+            |      headers = mapOf("token" to listOf(serialize(request.headers.token, typeOf<Token>()))),
+            |      body = serialize(request.body, typeOf<PotentialTodoDto>()),
+            |    )
+            |
+            |  fun Wirespec.Deserializer<String>.consumeRequest(request: Wirespec.RawRequest): Request =
+            |    Request(
+            |      id = deserialize(request.path[1], typeOf<String>()),
+            |      done = deserialize(requireNotNull(request.queries["done"]?.get(0)) { "done is null" }, typeOf<Boolean>()),
+            |      token = deserialize(requireNotNull(request.headers["token"]?.get(0)) { "token is null" }, typeOf<Token>()),
+            |      body = deserialize(requireNotNull(request.body) { "body is null" }, typeOf<PotentialTodoDto>()),
+            |    )
+            |
             |  sealed interface Response<T: Any> : Wirespec.Response<T>
             |  sealed interface Response2XX<T: Any> : Response<T>
             |  sealed interface Response5XX<T: Any> : Response<T>
             |
-            |  data class Response200ApplicationJson(override val body: TodoDto) : Response2XX<TodoDto> {
+            |  data class Response200(override val body: TodoDto) : Response2XX<TodoDto> {
             |    override val status = 200
             |    override val headers = Headers
             |    data object Headers : Wirespec.Response.Headers
             |  }
-            |  data class Response500ApplicationJson(override val body: Error) : Response5XX<Error> {
+            |  data class Response500(override val body: Error) : Response5XX<Error> {
             |    override val status = 500
             |    override val headers = Headers
             |    data object Headers : Wirespec.Response.Headers
@@ -93,7 +108,7 @@ class CompileFullEndpointTest {
             |  const val METHOD_VALUE = "PUT"
             |
             |  interface Handler {
-            |    suspend fun putTodo(request: Request<*>): Response<*>
+            |    suspend fun putTodo(request: Request): Response<*>
             |  }
             |}
             |data class PotentialTodoDto(

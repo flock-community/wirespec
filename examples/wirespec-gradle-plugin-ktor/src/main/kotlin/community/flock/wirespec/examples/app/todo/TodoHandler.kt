@@ -25,35 +25,31 @@ class TodoHandler(liveTodoRepository: TodoRepository) : TodoApi {
         override val todoRepository = liveTodoRepository
     }
 
-    override suspend fun getTodos(request: GetTodosEndpoint.Request<*>) = when (request) {
-        is GetTodosEndpoint.RequestUnit -> context.getAllTodos()
+    override suspend fun getTodos(request: GetTodosEndpoint.Request): GetTodosEndpoint.Response200 =
+        context.getAllTodos()
             .map { it.produce() }
-            .let(GetTodosEndpoint::Response200ApplicationJson)
-    }
+            .let(GetTodosEndpoint::Response200)
 
-    override suspend fun getTodoById(request: GetTodoByIdEndpoint.Request<*>) = when (request) {
-        is GetTodoByIdEndpoint.RequestUnit -> request.path.id
+    override suspend fun getTodoById(request: GetTodoByIdEndpoint.Request): GetTodoByIdEndpoint.Response200 =
+        request.path.id
             .also { if (!it.validate()) throw TodoIdNotValidException(it.value) }
             .let { Todo.Id(it.value) }
             .let { context.getTodoById(it) }
             .produce()
-            .let(GetTodoByIdEndpoint::Response200ApplicationJson)
-    }
+            .let(GetTodoByIdEndpoint::Response200)
 
-    override suspend fun postTodo(request: PostTodoEndpoint.Request<*>) = when (request) {
-        is PostTodoEndpoint.RequestApplicationJson -> request.body
+    override suspend fun postTodo(request: PostTodoEndpoint.Request): PostTodoEndpoint.Response200 =
+        request.body
             .consume()
             .let { context.saveTodo(it) }
             .produce()
-            .let(PostTodoEndpoint::Response200ApplicationJson)
-    }
+            .let(PostTodoEndpoint::Response200)
 
-    override suspend fun deleteTodoById(request: DeleteTodoByIdEndpoint.Request<*>) = when (request) {
-        is DeleteTodoByIdEndpoint.RequestUnit -> request.path.id
+    override suspend fun deleteTodoById(request: DeleteTodoByIdEndpoint.Request): DeleteTodoByIdEndpoint.Response200 =
+        request.path.id
             .also { if (!it.validate()) throw TodoIdNotValidException(it.value) }
             .let { Todo.Id(it.value) }
             .let { context.deleteTodoById(it) }
             .produce()
-            .let(DeleteTodoByIdEndpoint::Response200ApplicationJson)
-    }
+            .let(DeleteTodoByIdEndpoint::Response200)
 }

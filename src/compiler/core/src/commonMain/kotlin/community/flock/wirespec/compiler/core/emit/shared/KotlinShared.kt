@@ -16,8 +16,8 @@ data object KotlinShared : Shared {
         |${Spacer}interface Queries
         |${Spacer}interface Headers
         |${Spacer}enum class Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
-        |${Spacer}interface Request<T : Any> { val path: Path; val method: Method; val queries: Queries; val headers: Headers; val body: T?; interface Headers : Wirespec.Headers }
-        |${Spacer}interface Response<T : Any> { val status: Int; val headers: Headers; val body: T?; interface Headers : Wirespec.Headers }
+        |${Spacer}interface Request<T : Any> { val path: Path; val method: Method; val queries: Queries; val headers: Headers; val body: T; interface Headers : Wirespec.Headers }
+        |${Spacer}interface Response<T : Any> { val status: Int; val headers: Headers; val body: T; interface Headers : Wirespec.Headers }
         |${Spacer}interface Serialization<RAW : Any> : Serializer<RAW>, Deserializer<RAW>
         |${Spacer}interface Serializer<RAW : Any> { fun <T : Any> serialize(t: T, kType: KType): RAW }
         |${Spacer}interface Deserializer<RAW> { fun <T : Any> deserialize(raw: RAW, kType: KType): T }

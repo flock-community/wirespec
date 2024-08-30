@@ -73,8 +73,8 @@ tasks.register<CustomWirespecTask>("wirespec-kotlin") {
 tasks.register<CompileWirespecTask>("wirespec-typescript") {
     input = layout.projectDirectory.dir("src/main/wirespec")
     output = layout.buildDirectory.dir("generated")
-    packageName = "community.flock.wirespec.kotlin"
-    languages = listOf(Language.Kotlin)
+    packageName = "community.flock.wirespec.generated.typescript"
+    languages = listOf(Language.TypeScript)
 }
 
 class KotlinSerializableEmitter : KotlinEmitter("community.flock.wirespec.generated.kotlin") {

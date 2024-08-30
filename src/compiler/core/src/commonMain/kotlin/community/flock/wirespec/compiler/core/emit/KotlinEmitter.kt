@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.Spacer
+import community.flock.wirespec.compiler.core.orNull
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
@@ -123,8 +124,6 @@ open class KotlinEmitter(
         |
         |${endpoint.headers.emitObject("Headers", "Wirespec.Request.Headers") { it.emit() }}
         |
-        |${Spacer}sealed interface Request<T: Any> : Wirespec.Request<T>
-        |
         |${endpoint.requests.joinToString("\n") { it.emit(endpoint) }}
         |
         |${Spacer}sealed interface Response<T: Any> : Wirespec.Response<T>
@@ -136,7 +135,7 @@ open class KotlinEmitter(
         |${Spacer}const val METHOD_VALUE = "${endpoint.method}"
         |
         |${Spacer}interface Handler {
-        |${Spacer(2)}suspend fun ${endpoint.identifier.emit().firstToLower()}(request: Request<*>): Response<*>
+        |${Spacer(2)}suspend fun ${endpoint.identifier.emit().firstToLower()}(request: Request): Response<*>
         |${Spacer}}
         |}
     """.trimMargin()
@@ -153,36 +152,72 @@ open class KotlinEmitter(
             |${Spacer}) : $extends
         """.trimMargin()
 
-    private fun <E> List<E>.emitParams(pure: Boolean = true, block: (E) -> String) =
-        if (isEmpty()) ""
-        else joinToString(",\n") { block(it) }
-            .let { if (pure) "$it, " else "($it)" }
-
     fun Endpoint.Request.emit(endpoint: Endpoint) = """
-        |${Spacer}data class Request${content.name()}(
-        |${Spacer(2)}override val path: Path,
-        |${Spacer(2)}override val method: Wirespec.Method,
-        |${Spacer(2)}override val queries: Queries,
-        |${Spacer(2)}override val headers: Headers,
-        |${Spacer(2)}override val body: ${content.emit()},
-        |${Spacer}) : Request<${content.emit()}> {
-        |${Spacer(2)}constructor(${endpoint.pathParams.emitParams { it.emit() }}${endpoint.queries.emitParams { it.emit() }}${endpoint.headers.emitParams { it.emit() }}body: ${content.emit()}) : this(
-        |${Spacer(3)}path = Path${endpoint.pathParams.emitParams(false) { it.identifier.emit() }},
+        |${Spacer}data class Request(
+        |${Spacer(2)}val path: Path,
+        |${Spacer(2)}val method: Wirespec.Method,
+        |${Spacer(2)}val queries: Queries,
+        |${Spacer(2)}val headers: Headers,
+        |${Spacer(2)}val body: ${content.emit()},
+        |${Spacer}) {
+        |${Spacer(2)}constructor(${emitParams(endpoint)}) : this(
+        |${Spacer(3)}path = Path${endpoint.pathParams.joinToString { it.identifier.emit() }.brace()},
         |${Spacer(3)}method = Wirespec.Method.${endpoint.method.name},
-        |${Spacer(3)}queries = Queries${endpoint.queries.emitParams(false) { it.identifier.emit() }},
-        |${Spacer(3)}headers = Headers${endpoint.headers.emitParams(false) { it.identifier.emit() }},
+        |${Spacer(3)}queries = Queries${endpoint.queries.joinToString { it.identifier.emit() }.brace()},
+        |${Spacer(3)}headers = Headers${endpoint.headers.joinToString { it.identifier.emit() }.brace()},
         |${Spacer(3)}body = body,
         |${Spacer(2)})
         |${Spacer}}
+        |
+        |${Spacer}fun Wirespec.Serializer<String>.externalizeRequest(request: Request): Wirespec.RawRequest =
+        |${Spacer(2)}Wirespec.RawRequest(
+        |${Spacer(3)}path = listOf("${endpoint.pathLiterals.joinToString { it.value }}"${endpoint.pathParams.emitIdentifiers()}),
+        |${Spacer(3)}method = request.method.name,
+        |${Spacer(3)}queries = mapOf(${endpoint.queries.joinToString { it.emitSerialized("queries") }}),
+        |${Spacer(3)}headers = mapOf(${endpoint.headers.joinToString { it.emitSerialized("headers") }}),
+        |${Spacer(3)}body = serialize(request.body, typeOf<${content.emit()}>()),
+        |${Spacer(2)})
+        |
+        |${Spacer}fun Wirespec.Deserializer<String>.consumeRequest(request: Wirespec.RawRequest): Request =
+        |${Spacer(2)}Request(
+        |${emitDeserializedParams(endpoint)}
+        |${Spacer(2)})
     """.trimMargin()
 
     fun Endpoint.Response.emit() = """
-        |${Spacer}data class Response$status${content.name()}(override val body: ${content.emit()}) : Response${status[0]}XX<${content.emit()}> {
+        |${Spacer}data class Response$status(override val body: ${content.emit()}) : Response${status[0]}XX<${content.emit()}> {
         |${Spacer(2)}override val status = ${status.fixStatus()}
         |${Spacer(2)}override val headers = Headers
         |${Spacer(2)}data object Headers : Wirespec.Response.Headers
         |${Spacer}}
     """.trimMargin()
+
+    private fun Endpoint.Request.emitParams(endpoint: Endpoint) = listOfNotNull(
+        endpoint.pathParams.joinToString { it.emit() }.orNull(),
+        endpoint.queries.joinToString { it.emit() }.orNull(),
+        endpoint.headers.joinToString { it.emit() }.orNull(),
+        "body: ${content.emit()}"
+    ).joinToString()
+
+    private fun Endpoint.Request.emitDeserializedParams(endpoint: Endpoint) = listOfNotNull(
+        endpoint.pathParams.joinToString { it.emitDeserialized() }.orNull(),
+        endpoint.queries.joinToString { it.emitDeserialized("queries") }.orNull(),
+        endpoint.headers.joinToString { it.emitDeserialized("headers") }.orNull(),
+        """body = deserialize(requireNotNull(request.body) { "body is null" }, typeOf<${content.emit()}>()),"""
+    ).joinToString(",\n") { "${Spacer(3)}$it" }
+
+    private fun Field.emitSerialized(fields: String) =
+        """"${identifier.emit()}" to listOf(serialize(request.$fields.${identifier.emit()}, typeOf<${reference.emit()}>()))"""
+
+    private fun Endpoint.Segment.Param.emitDeserialized() =
+        """${identifier.emit()} = deserialize(request.path[1], typeOf<${reference.emit()}>())"""
+
+    private fun Field.emitDeserialized(fields: String) =
+        """${identifier.emit()} = deserialize(requireNotNull(request.$fields["${identifier.emit()}"]?.get(0)) { "${identifier.emit()} is null" }, typeOf<${reference.emit()}>())"""
+
+    private fun List<Endpoint.Segment.Param>.emitIdentifiers() =
+        if (isEmpty()) ""
+        else ", ${joinToString { "request.path.${it.identifier.value}.toString()" }}"
 
     private fun Endpoint.Content?.emit() = this?.reference?.emit() ?: "Unit"
 
@@ -192,21 +227,19 @@ open class KotlinEmitter(
             is Endpoint.Segment.Param -> "{${identifier.emit()}}"
         }
 
+    private val Endpoint.pathLiterals get() = path.filterIsInstance<Endpoint.Segment.Literal>()
     private val Endpoint.pathParams get() = path.filterIsInstance<Endpoint.Segment.Param>()
 
     private fun Endpoint.Segment.Param.emit() = "${identifier.emit()}: ${reference.emit()}"
+
+    private fun String.brace() = wrap("(", ")")
+    private fun String.wrap(prefix: String, postfix: String) =
+        if (isEmpty()) "" else "$prefix$this$postfix"
 
     private fun Reference.emitWrap(isNullable: Boolean): String = value
         .let { if (isIterable) "List<$it>" else it }
         .let { if (isNullable) "$it?" else it }
         .let { if (isDictionary) "Map<String, $it>" else it }
-
-    private fun Endpoint.Content?.name() = this?.type
-        ?.substringBefore(";")
-        ?.split("/", "-")
-        ?.joinToString("") { it.firstToUpper() }
-        ?.replace("+", "")
-        ?: "Unit"
 
     private fun String.fixStatus(): String = when (this) {
         "default" -> "200"

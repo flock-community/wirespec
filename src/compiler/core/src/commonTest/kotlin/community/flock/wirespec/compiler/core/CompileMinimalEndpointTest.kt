@@ -34,15 +34,13 @@ class CompileMinimalEndpointTest {
             |
             |  data object Headers : Wirespec.Request.Headers
             |
-            |  sealed interface Request<T: Any> : Wirespec.Request<T>
-            |
-            |  data class RequestUnit(
-            |    override val path: Path,
-            |    override val method: Wirespec.Method,
-            |    override val queries: Queries,
-            |    override val headers: Headers,
-            |    override val body: Unit,
-            |  ) : Request<Unit> {
+            |  data class Request(
+            |    val path: Path,
+            |    val method: Wirespec.Method,
+            |    val queries: Queries,
+            |    val headers: Headers,
+            |    val body: Unit,
+            |  ) {
             |    constructor(body: Unit) : this(
             |      path = Path,
             |      method = Wirespec.Method.GET,
@@ -52,10 +50,24 @@ class CompileMinimalEndpointTest {
             |    )
             |  }
             |
+            |  fun Wirespec.Serializer<String>.externalizeRequest(request: Request): Wirespec.RawRequest =
+            |    Wirespec.RawRequest(
+            |      path = listOf("todos"),
+            |      method = request.method.name,
+            |      queries = mapOf(),
+            |      headers = mapOf(),
+            |      body = serialize(request.body, typeOf<Unit>()),
+            |    )
+            |
+            |  fun Wirespec.Deserializer<String>.consumeRequest(request: Wirespec.RawRequest): Request =
+            |    Request(
+            |      body = deserialize(requireNotNull(request.body) { "body is null" }, typeOf<Unit>()),
+            |    )
+            |
             |  sealed interface Response<T: Any> : Wirespec.Response<T>
             |  sealed interface Response2XX<T: Any> : Response<T>
             |
-            |  data class Response200ApplicationJson(override val body: List<TodoDto>) : Response2XX<List<TodoDto>> {
+            |  data class Response200(override val body: List<TodoDto>) : Response2XX<List<TodoDto>> {
             |    override val status = 200
             |    override val headers = Headers
             |    data object Headers : Wirespec.Response.Headers
@@ -65,7 +77,7 @@ class CompileMinimalEndpointTest {
             |  const val METHOD_VALUE = "GET"
             |
             |  interface Handler {
-            |    suspend fun getTodos(request: Request<*>): Response<*>
+            |    suspend fun getTodos(request: Request): Response<*>
             |  }
             |}
             |data class TodoDto(

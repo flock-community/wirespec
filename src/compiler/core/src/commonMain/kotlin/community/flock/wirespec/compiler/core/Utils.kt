@@ -7,3 +7,5 @@ fun String.hasBackticks() = length > 1 && startsWith('`') && endsWith('`')
 fun String.removeFirstAndLastChar() = substring(1 until length - 1)
 
 fun String.addBackticks() = "`$this`"
+
+fun String.orNull() = ifBlank { null }
