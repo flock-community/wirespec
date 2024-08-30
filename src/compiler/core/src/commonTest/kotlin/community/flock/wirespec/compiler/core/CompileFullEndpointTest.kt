@@ -104,6 +104,31 @@ class CompileFullEndpointTest {
             |    data object Headers : Wirespec.Response.Headers
             |  }
             |
+            |  fun Wirespec.Serializer<String>.produceResponse(response: Response<*>): Wirespec.RawResponse =
+            |    when(response) {
+            |      is Response200 -> Wirespec.RawResponse(
+            |        statusCode = response.status,
+            |        headers = mapOf(),
+            |        body = serialize(response.body, typeOf<TodoDto>()),
+            |      )
+            |      is Response500 -> Wirespec.RawResponse(
+            |        statusCode = response.status,
+            |        headers = mapOf(),
+            |        body = serialize(response.body, typeOf<Error>()),
+            |      )
+            |    }
+            |
+            |  fun Wirespec.Deserializer<String>.internalizeResponse(response: Wirespec.RawResponse): Response<*> =
+            |    when (response.statusCode) {
+            |      200 -> Response200(
+            |        body = deserialize(requireNotNull(response.body) { "body is null" }, typeOf<TodoDto>()),
+            |      )
+            |      500 -> Response500(
+            |        body = deserialize(requireNotNull(response.body) { "body is null" }, typeOf<Error>()),
+            |      )
+            |      else -> error(String(Character.toChars(0x1F92E)))
+            |    }
+            |
             |  const val PATH_TEMPLATE = "/todos/{id}"
             |  const val METHOD_VALUE = "PUT"
             |

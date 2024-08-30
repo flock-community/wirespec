@@ -131,6 +131,17 @@ open class KotlinEmitter(
         |
         |${endpoint.responses.joinToString("\n") { it.emit() }}
         |
+        |${Spacer}fun Wirespec.Serializer<String>.produceResponse(response: Response<*>): Wirespec.RawResponse =
+        |${Spacer(2)}when(response) {
+        |${endpoint.responses.joinToString("\n") { it.emitSerialized() }}
+        |${Spacer(2)}}
+        |
+        |${Spacer}fun Wirespec.Deserializer<String>.internalizeResponse(response: Wirespec.RawResponse): Response<*> =
+        |${Spacer(2)}when (response.statusCode) {
+        |${endpoint.responses.joinToString("\n") { it.emitDeserialized() }}
+        |${Spacer(3)}else -> error(String(Character.toChars(0x1F92E)))
+        |${Spacer(2)}}
+        |
         |${Spacer}const val PATH_TEMPLATE = "/${endpoint.path.joinToString("/") { it.emit() }}"
         |${Spacer}const val METHOD_VALUE = "${endpoint.method}"
         |
@@ -205,6 +216,20 @@ open class KotlinEmitter(
         endpoint.headers.joinToString { it.emitDeserialized("headers") }.orNull(),
         """body = deserialize(requireNotNull(request.body) { "body is null" }, typeOf<${content.emit()}>()),"""
     ).joinToString(",\n") { "${Spacer(3)}$it" }
+
+    private fun Endpoint.Response.emitSerialized() = """
+        |${Spacer(3)}is Response$status -> Wirespec.RawResponse(
+        |${Spacer(4)}statusCode = response.status,
+        |${Spacer(4)}headers = mapOf(),
+        |${Spacer(4)}body = serialize(response.body, typeOf<${content.emit()}>()),
+        |${Spacer(3)})
+    """.trimMargin()
+
+    private fun Endpoint.Response.emitDeserialized() = """
+        |${Spacer(3)}$status -> Response$status(
+        |${Spacer(4)}body = deserialize(requireNotNull(response.body) { "body is null" }, typeOf<${content.emit()}>()),
+        |${Spacer(3)})
+    """.trimMargin()
 
     private fun Field.emitSerialized(fields: String) =
         """"${identifier.emit()}" to listOf(serialize(request.$fields.${identifier.emit()}, typeOf<${reference.emit()}>()))"""

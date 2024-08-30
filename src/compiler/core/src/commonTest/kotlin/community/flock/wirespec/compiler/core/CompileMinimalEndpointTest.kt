@@ -73,6 +73,23 @@ class CompileMinimalEndpointTest {
             |    data object Headers : Wirespec.Response.Headers
             |  }
             |
+            |  fun Wirespec.Serializer<String>.produceResponse(response: Response<*>): Wirespec.RawResponse =
+            |    when(response) {
+            |      is Response200 -> Wirespec.RawResponse(
+            |        statusCode = response.status,
+            |        headers = mapOf(),
+            |        body = serialize(response.body, typeOf<List<TodoDto>>()),
+            |      )
+            |    }
+            |
+            |  fun Wirespec.Deserializer<String>.internalizeResponse(response: Wirespec.RawResponse): Response<*> =
+            |    when (response.statusCode) {
+            |      200 -> Response200(
+            |        body = deserialize(requireNotNull(response.body) { "body is null" }, typeOf<List<TodoDto>>()),
+            |      )
+            |      else -> error(String(Character.toChars(0x1F92E)))
+            |    }
+            |
             |  const val PATH_TEMPLATE = "/todos"
             |  const val METHOD_VALUE = "GET"
             |
