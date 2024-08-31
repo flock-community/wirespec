@@ -34,35 +34,25 @@ class CompileMinimalEndpointTest {
             |
             |  data object Headers : Wirespec.Request.Headers
             |
-            |  data class Request(
-            |    val path: Path,
-            |    val method: Wirespec.Method,
-            |    val queries: Queries,
-            |    val headers: Headers,
-            |    val body: Unit,
-            |  ) {
-            |    constructor(body: Unit) : this(
-            |      path = Path,
-            |      method = Wirespec.Method.GET,
-            |      queries = Queries,
-            |      headers = Headers,
-            |      body = body,
-            |    )
+            |  object Request : Wirespec.Request<Unit> {
+            |    override val path = Path
+            |    override val method = Wirespec.Method.GET
+            |    override val queries = Queries
+            |    override val headers = Headers
+            |    override val body = Unit
             |  }
             |
-            |  fun Wirespec.Serializer<String>.externalizeRequest(request: Request): Wirespec.RawRequest =
+            |  fun externalizeRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
             |    Wirespec.RawRequest(
             |      path = listOf("todos"),
             |      method = request.method.name,
             |      queries = mapOf(),
             |      headers = mapOf(),
-            |      body = serialize(request.body, typeOf<Unit>()),
+            |      body = serialization.serialize(request.body, typeOf<Unit>()),
             |    )
             |
-            |  fun Wirespec.Deserializer<String>.consumeRequest(request: Wirespec.RawRequest): Request =
-            |    Request(
-            |      body = deserialize(requireNotNull(request.body) { "body is null" }, typeOf<Unit>()),
-            |    )
+            |  fun consumeRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
+            |    Request
             |
             |  sealed interface Response<T: Any> : Wirespec.Response<T>
             |  sealed interface Response2XX<T: Any> : Response<T>
@@ -73,19 +63,19 @@ class CompileMinimalEndpointTest {
             |    data object Headers : Wirespec.Response.Headers
             |  }
             |
-            |  fun Wirespec.Serializer<String>.produceResponse(response: Response<*>): Wirespec.RawResponse =
+            |  fun produceResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
             |    when(response) {
             |      is Response200 -> Wirespec.RawResponse(
             |        statusCode = response.status,
             |        headers = mapOf(),
-            |        body = serialize(response.body, typeOf<List<TodoDto>>()),
+            |        body = serialization.serialize(response.body, typeOf<List<TodoDto>>()),
             |      )
             |    }
             |
-            |  fun Wirespec.Deserializer<String>.internalizeResponse(response: Wirespec.RawResponse): Response<*> =
+            |  fun internalizeResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
             |    when (response.statusCode) {
             |      200 -> Response200(
-            |        body = deserialize(requireNotNull(response.body) { "body is null" }, typeOf<List<TodoDto>>()),
+            |        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<List<TodoDto>>()),
             |      )
             |      else -> error(String(Character.toChars(0x1F92E)))
             |    }

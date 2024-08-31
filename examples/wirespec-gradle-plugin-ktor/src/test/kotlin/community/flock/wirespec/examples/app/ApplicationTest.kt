@@ -1,6 +1,6 @@
 package community.flock.wirespec.examples.app
 
-import community.flock.wirespec.examples.app.todo.TodoRepository
+import community.flock.wirespec.examples.app.todo.LiveTodoRepository
 import community.flock.wirespec.examples.app.todo.todoModule
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
@@ -14,7 +14,7 @@ class ApplicationTest {
     fun testRoot() = testApplication {
         application {
             config()
-            todoModule(TodoRepository)
+            todoModule(LiveTodoRepository())
         }
 
         client.get("/todos").apply {

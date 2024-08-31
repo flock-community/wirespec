@@ -1,15 +1,11 @@
 package community.flock.wirespec.examples.app.todo
 
-interface TodoContext : HasTodoRepository
+interface TodoService : HasTodoRepository
 
-object TodoService {
+fun TodoService.getAllTodos() = todoRepository.getAllTodos()
 
-    fun TodoContext.getAllTodos() = todoRepository.getAllTodos()
+fun TodoService.getTodoById(id: Todo.Id) = todoRepository.getTodoById(id)
 
-    fun TodoContext.getTodoById(id: Todo.Id) = todoRepository.getTodoById(id)
+fun TodoService.saveTodo(todo: Todo) = todoRepository.saveTodo(todo)
 
-    fun TodoContext.saveTodo(todo: Todo) = todoRepository.saveTodo(todo)
-
-    fun TodoContext.deleteTodoById(id: Todo.Id) = todoRepository.deleteTodoById(id)
-
-}
+fun TodoService.deleteTodoById(id: Todo.Id) = todoRepository.deleteTodoById(id)

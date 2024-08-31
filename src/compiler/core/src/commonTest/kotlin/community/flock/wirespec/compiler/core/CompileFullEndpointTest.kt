@@ -56,37 +56,33 @@ class CompileFullEndpointTest {
             |    val token: Token,
             |  ) : Wirespec.Request.Headers
             |
-            |  data class Request(
-            |    val path: Path,
-            |    val method: Wirespec.Method,
-            |    val queries: Queries,
-            |    val headers: Headers,
-            |    val body: PotentialTodoDto,
-            |  ) {
-            |    constructor(id: String, done: Boolean, token: Token, body: PotentialTodoDto) : this(
-            |      path = Path(id),
-            |      method = Wirespec.Method.PUT,
-            |      queries = Queries(done),
-            |      headers = Headers(token),
-            |      body = body,
-            |    )
+            |  class Request(
+            |    id: String,
+            |    done: Boolean,
+            |    token: Token,
+            |    override val body: PotentialTodoDto,
+            |  ) : Wirespec.Request<PotentialTodoDto> {
+            |    override val path = Path(id)
+            |    override val method = Wirespec.Method.PUT
+            |    override val queries = Queries(done)
+            |    override val headers = Headers(token)
             |  }
             |
-            |  fun Wirespec.Serializer<String>.externalizeRequest(request: Request): Wirespec.RawRequest =
+            |  fun externalizeRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
             |    Wirespec.RawRequest(
             |      path = listOf("todos", request.path.id.toString()),
             |      method = request.method.name,
-            |      queries = mapOf("done" to listOf(serialize(request.queries.done, typeOf<Boolean>()))),
-            |      headers = mapOf("token" to listOf(serialize(request.headers.token, typeOf<Token>()))),
-            |      body = serialize(request.body, typeOf<PotentialTodoDto>()),
+            |      queries = mapOf("done" to listOf(serialization.serialize(request.queries.done, typeOf<Boolean>()))),
+            |      headers = mapOf("token" to listOf(serialization.serialize(request.headers.token, typeOf<Token>()))),
+            |      body = serialization.serialize(request.body, typeOf<PotentialTodoDto>()),
             |    )
             |
-            |  fun Wirespec.Deserializer<String>.consumeRequest(request: Wirespec.RawRequest): Request =
+            |  fun consumeRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
             |    Request(
-            |      id = deserialize(request.path[1], typeOf<String>()),
-            |      done = deserialize(requireNotNull(request.queries["done"]?.get(0)) { "done is null" }, typeOf<Boolean>()),
-            |      token = deserialize(requireNotNull(request.headers["token"]?.get(0)) { "token is null" }, typeOf<Token>()),
-            |      body = deserialize(requireNotNull(request.body) { "body is null" }, typeOf<PotentialTodoDto>()),
+            |      id = serialization.deserialize(request.path[1], typeOf<String>()),
+            |      done = serialization.deserialize(requireNotNull(request.queries["done"]?.get(0)) { "done is null" }, typeOf<Boolean>()),
+            |      token = serialization.deserialize(requireNotNull(request.headers["token"]?.get(0)) { "token is null" }, typeOf<Token>()),
+            |      body = serialization.deserialize(requireNotNull(request.body) { "body is null" }, typeOf<PotentialTodoDto>()),
             |    )
             |
             |  sealed interface Response<T: Any> : Wirespec.Response<T>
@@ -104,27 +100,27 @@ class CompileFullEndpointTest {
             |    data object Headers : Wirespec.Response.Headers
             |  }
             |
-            |  fun Wirespec.Serializer<String>.produceResponse(response: Response<*>): Wirespec.RawResponse =
+            |  fun produceResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
             |    when(response) {
             |      is Response200 -> Wirespec.RawResponse(
             |        statusCode = response.status,
             |        headers = mapOf(),
-            |        body = serialize(response.body, typeOf<TodoDto>()),
+            |        body = serialization.serialize(response.body, typeOf<TodoDto>()),
             |      )
             |      is Response500 -> Wirespec.RawResponse(
             |        statusCode = response.status,
             |        headers = mapOf(),
-            |        body = serialize(response.body, typeOf<Error>()),
+            |        body = serialization.serialize(response.body, typeOf<Error>()),
             |      )
             |    }
             |
-            |  fun Wirespec.Deserializer<String>.internalizeResponse(response: Wirespec.RawResponse): Response<*> =
+            |  fun internalizeResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
             |    when (response.statusCode) {
             |      200 -> Response200(
-            |        body = deserialize(requireNotNull(response.body) { "body is null" }, typeOf<TodoDto>()),
+            |        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<TodoDto>()),
             |      )
             |      500 -> Response500(
-            |        body = deserialize(requireNotNull(response.body) { "body is null" }, typeOf<Error>()),
+            |        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<Error>()),
             |      )
             |      else -> error(String(Character.toChars(0x1F92E)))
             |    }

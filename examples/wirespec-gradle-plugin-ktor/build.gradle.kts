@@ -34,6 +34,7 @@ repositories {
 
 dependencies {
     implementation(libs.bundles.ktor)
+    implementation(libs.jackson)
     implementation(libs.logback)
     testImplementation(kotlin("test"))
     testImplementation(libs.bundles.ktor.test)
