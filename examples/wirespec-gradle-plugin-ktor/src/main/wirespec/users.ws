@@ -2,18 +2,18 @@ type UserDto {
     name: String
 }
 
-endpoint GetUsers GET /users -> {
+endpoint GetUsers GET /api/users -> {
     200 -> UserDto[]
 }
 
-endpoint GetUserByName GET /users/{name: String} -> {
+endpoint GetUserByName GET /api/users/{name: String} -> {
     200 -> UserDto
 }
 
-endpoint PostUser POST UserDto /users -> {
+endpoint PostUser POST UserDto /api/users -> {
     200 -> UserDto
 }
 
-endpoint DeleteUserByName DELETE /users/{name: String} -> {
+endpoint DeleteUserByName DELETE /api/users/{name: String} -> {
     200 -> UserDto
 }

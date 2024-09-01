@@ -77,7 +77,7 @@ class CompileMinimalEndpointTest {
             |      200 -> Response200(
             |        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<List<TodoDto>>()),
             |      )
-            |      else -> error(String(Character.toChars(0x1F92E)))
+            |      else -> error("Cannot internalize response with status: ${'$'}{response.statusCode}")
             |    }
             |
             |  const val PATH_TEMPLATE = "/todos"

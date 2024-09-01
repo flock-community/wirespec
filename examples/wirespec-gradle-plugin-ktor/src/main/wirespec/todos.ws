@@ -16,20 +16,20 @@ type Error {
     description: String
 }
 
-endpoint GetTodos GET /todos -> {
+endpoint GetTodos GET /api/todos -> {
     200 -> TodoDto[]
 }
 
-endpoint GetTodoById GET /todos/{id: TodoId} -> {
+endpoint GetTodoById GET /api/todos/{id: TodoId} -> {
     200 -> TodoDto
     404 -> Error
 }
 
-endpoint PostTodo POST PotentialTodoDto /todos -> {
+endpoint PostTodo POST PotentialTodoDto /api/todos -> {
     200 -> TodoDto
 }
 
-endpoint DeleteTodoById DELETE /todos/{id: TodoId} -> {
+endpoint DeleteTodoById DELETE /api/todos/{id: TodoId} -> {
     200 -> TodoDto
     404 -> Error
 }

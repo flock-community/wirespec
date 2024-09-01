@@ -122,7 +122,7 @@ class CompileFullEndpointTest {
             |      500 -> Response500(
             |        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<Error>()),
             |      )
-            |      else -> error(String(Character.toChars(0x1F92E)))
+            |      else -> error("Cannot internalize response with status: ${'$'}{response.statusCode}")
             |    }
             |
             |  const val PATH_TEMPLATE = "/todos/{id}"
