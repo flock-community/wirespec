@@ -64,38 +64,38 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         token.log()
         val isIterable = (token.type is Brackets).also { if (it) eatToken().bind() }
         when (wsType) {
-            is WsString -> Field.Reference.Primitive(
-                type = Field.Reference.Primitive.Type.String,
+            is WsString -> Reference.Primitive(
+                type = Reference.Primitive.Type.String,
                 isIterable = isIterable,
                 isDictionary = isDict
             )
 
-            is WsInteger -> Field.Reference.Primitive(
-                type = Field.Reference.Primitive.Type.Integer,
+            is WsInteger -> Reference.Primitive(
+                type = Reference.Primitive.Type.Integer,
                 isIterable = isIterable,
                 isDictionary = isDict
             )
 
-            is WsNumber -> Field.Reference.Primitive(
-                type = Field.Reference.Primitive.Type.Number,
+            is WsNumber -> Reference.Primitive(
+                type = Reference.Primitive.Type.Number,
                 isIterable = isIterable,
                 isDictionary = isDict
             )
 
-            is WsBoolean -> Field.Reference.Primitive(
-                type = Field.Reference.Primitive.Type.Boolean,
+            is WsBoolean -> Reference.Primitive(
+                type = Reference.Primitive.Type.Boolean,
                 isIterable = isIterable,
                 isDictionary = isDict
             )
 
-            is WsUnit -> Field.Reference.Unit(
+            is WsUnit -> Reference.Unit(
                 isIterable = isIterable,
                 isDictionary = isDict
             )
 
             is CustomType -> {
                 previousToken.shouldBeDefined().bind()
-                Field.Reference.Custom(
+                Reference.Custom(
                     value = value,
                     isIterable = isIterable,
                     isDictionary = isDict
@@ -112,6 +112,7 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
                 comment = comment,
                 identifier = typeName,
                 shape = parseTypeShape().bind(),
+                extends = emptyList(),
             )
 
             is CustomRegex -> Refined(
@@ -163,16 +164,16 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is CustomType -> mutableListOf<Field.Reference>().apply {
+            is CustomType -> mutableListOf<Reference>().apply {
                 token.shouldBeDefined().bind()
-                add(Field.Reference.Custom(token.value, false))
+                add(Reference.Custom(token.value, false))
                 eatToken().bind()
                 while (token.type == Pipe) {
                     eatToken().bind()
                     when (token.type) {
                         is CustomType -> {
                             token.shouldBeDefined().bind()
-                            add(Field.Reference.Custom(token.value, false)).also { eatToken().bind() }
+                            add(Reference.Custom(token.value, false)).also { eatToken().bind() }
                         }
 
                         else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })

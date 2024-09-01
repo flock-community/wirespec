@@ -1,9 +1,9 @@
 package community.flock.wirespec.examples.app.common
 
-interface Consumer<DTO : Any, DOMAIN : Any> {
+fun interface Consumer<DTO : Any, DOMAIN : Any> {
     fun DTO.consume(): DOMAIN
 }
 
-interface Producer<DOMAIN, DTO> {
+fun interface Producer<DOMAIN : Any, DTO : Any> {
     fun DOMAIN.produce(): DTO
 }

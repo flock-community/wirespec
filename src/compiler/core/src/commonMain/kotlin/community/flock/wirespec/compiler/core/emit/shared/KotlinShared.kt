@@ -1,6 +1,6 @@
 package community.flock.wirespec.compiler.core.emit.shared
 
-import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.SPACER
+import community.flock.wirespec.compiler.core.emit.common.Spacer
 
 data object KotlinShared : Shared {
     override val source = """
@@ -9,14 +9,21 @@ data object KotlinShared : Shared {
         |import kotlin.reflect.KType
         |
         |object Wirespec {
-        |${SPACER}interface Enum
-        |${SPACER}interface Endpoint
-        |${SPACER}interface Refined { val value: String }
-        |${SPACER}enum class Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
-        |${SPACER}data class Content<T> (val type:String, val body:T )
-        |${SPACER}interface Request<T> { val path:String; val method: Method; val query: Map<String, List<Any?>>; val headers: Map<String, List<Any?>>; val content:Content<T>? }
-        |${SPACER}interface Response<T> { val status:Int; val headers: Map<String, List<Any?>>; val content:Content<T>? }
-        |${SPACER}interface ContentMapper<B> { fun <T> read(content: Content<B>, valueType: KType): Content<T> fun <T> write(content: Content<T>, valueType: KType): Content<B> }
+        |${Spacer}interface Enum
+        |${Spacer}interface Endpoint
+        |${Spacer}interface Refined { val value: String }
+        |${Spacer}interface Path
+        |${Spacer}interface Queries
+        |${Spacer}interface Headers
+        |${Spacer}enum class Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
+        |${Spacer}interface Request<T : Any> { val path: Path; val method: Method; val queries: Queries; val headers: Headers; val body: T; interface Headers : Wirespec.Headers }
+        |${Spacer}interface Response<T : Any> { val status: Int; val headers: Headers; val body: T; interface Headers : Wirespec.Headers }
+        |${Spacer}interface Serialization<RAW : Any> : Serializer<RAW>, Deserializer<RAW>
+        |${Spacer}interface Serializer<RAW : Any> { fun <T : Any> serialize(t: T, kType: KType): RAW }
+        |${Spacer}interface Deserializer<RAW> { fun <T : Any> deserialize(raw: RAW, kType: KType): T }
+        |${Spacer}interface Http { val headers: Map<String, List<String>>; val body: String? }
+        |${Spacer}data class RawRequest(val method: String, val path: List<String>, val queries: Map<String, List<String>>, override val headers: Map<String, List<String>>, override val body: String?, ) : Http
+        |${Spacer}data class RawResponse(val statusCode: Int, override val headers: Map<String, List<String>>, override val body: String?, ) : Http
         |}
     """.trimMargin()
 }

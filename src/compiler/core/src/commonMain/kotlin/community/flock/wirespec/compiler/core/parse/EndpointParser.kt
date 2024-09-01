@@ -4,7 +4,6 @@ import arrow.core.Either
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
-import community.flock.wirespec.compiler.core.parse.Field.Reference
 import community.flock.wirespec.compiler.core.tokenize.types.Arrow
 import community.flock.wirespec.compiler.core.tokenize.types.Brackets
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
@@ -67,16 +66,16 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
                 }
             }
             .map {
-            Endpoint.Request(
-                content = it?.let {
-                    Endpoint.Content(
-                        type = "application/json",
-                        reference = it,
-                        isNullable = false
-                    )
-                }
-            )
-        }
+                Endpoint.Request(
+                    content = it?.let {
+                        Endpoint.Content(
+                            type = "application/json",
+                            reference = it,
+                            isNullable = false
+                        )
+                    }
+                )
+            }
 
         val segments = mutableListOf<Endpoint.Segment>().apply {
             while (token.type !is QuestionMark && token.type !is Hash && token.type !is Arrow) {
@@ -125,7 +124,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
             identifier = name,
             method = method,
             path = segments,
-            query = queryParams,
+            queries = queryParams,
             headers = headers,
             cookies = emptyList(),
             requests = requests,
@@ -225,7 +224,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
         Endpoint.Response(status = statusCode, headers = emptyList(), content = content)
     }
 
-    private fun TokenProvider.parseContent(wsType: WirespecType, value: String, isDict:Boolean) = either {
+    private fun TokenProvider.parseContent(wsType: WirespecType, value: String, isDict: Boolean) = either {
         token.log()
         val reference = parseReference(wsType, value, isDict).bind()
         if (reference is Reference.Unit) null

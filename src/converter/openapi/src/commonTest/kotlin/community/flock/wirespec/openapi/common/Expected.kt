@@ -3,8 +3,8 @@ package community.flock.wirespec.openapi.common
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Field.Reference
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 
@@ -16,7 +16,7 @@ object Expected {
             identifier = Identifier("TestWithDashGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "test-with-dash")),
-            query = emptyList(),
+            queries = emptyList(),
             headers = emptyList(),
             cookies = emptyList(),
             requests = listOf(
@@ -56,7 +56,8 @@ object Expected {
                         isNullable = true
                     )
                 )
-            )
+            ),
+            extends = emptyList(),
         ),
         Type(
             comment = null,
@@ -74,7 +75,8 @@ object Expected {
                         isNullable = true
                     )
                 )
-            )
+            ),
+            extends = emptyList(),
         )
     )
     val objectInResponse = listOf(
@@ -83,7 +85,7 @@ object Expected {
             identifier = Identifier("Test"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "test")),
-            query = emptyList(),
+            queries = emptyList(),
             headers = emptyList(),
             cookies = emptyList(),
             requests = listOf(
@@ -128,7 +130,8 @@ object Expected {
                         isNullable = true
                     )
                 )
-            )
+            ),
+            extends = emptyList(),
         ),
         Type(
             comment = null,
@@ -152,10 +155,11 @@ object Expected {
                         isNullable = true
                     )
                 )
-            )
+            ),
+            extends = emptyList(),
         )
     )
-    val additionalproperties = listOf(
+    val additionalProperties = listOf(
         Endpoint(
             comment = null,
             identifier = Identifier("AdditionalProperties"),
@@ -164,7 +168,7 @@ object Expected {
                 Endpoint.Segment.Literal(value = "additional"),
                 Endpoint.Segment.Literal(value = "properties")
             ),
-            query = emptyList(),
+            queries = emptyList(),
             headers = emptyList(),
             cookies = emptyList(),
             requests = listOf(
@@ -232,7 +236,8 @@ object Expected {
                         isNullable = true
                     )
                 )
-            )
+            ),
+            extends = emptyList(),
         ),
         Type(
             comment = null,
@@ -256,7 +261,8 @@ object Expected {
                         isNullable = true
                     )
                 )
-            )
+            ),
+            extends = emptyList(),
         )
     )
     val array = listOf(
@@ -265,7 +271,7 @@ object Expected {
             identifier = Identifier("ArrayGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "array")),
-            query = emptyList(),
+            queries = emptyList(),
             headers = emptyList(),
             cookies = emptyList(),
             requests = listOf(
@@ -337,7 +343,8 @@ object Expected {
                         isNullable = true
                     )
                 )
-            )
+            ),
+            extends = emptyList(),
         ),
         Type(
             comment = null,
@@ -361,7 +368,8 @@ object Expected {
                         isNullable = true
                     )
                 )
-            )
+            ),
+            extends = emptyList(),
         )
     )
 
@@ -371,7 +379,7 @@ object Expected {
             identifier = Identifier("AllofGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "allof")),
-            query = emptyList(),
+            queries = emptyList(),
             headers = emptyList(),
             cookies = emptyList(),
             requests = listOf(
@@ -433,7 +441,8 @@ object Expected {
                         isNullable = true
                     )
                 )
-            )
+            ),
+            extends = emptyList(),
         ),
         Type(
             comment = null,
@@ -450,7 +459,8 @@ object Expected {
                         isNullable = true
                     )
                 )
-            )
+            ),
+            extends = emptyList(),
         ),
         Type(
             comment = null,
@@ -466,7 +476,8 @@ object Expected {
                         isNullable = true
                     )
                 )
-            )
+            ),
+            extends = emptyList(),
         ),
         Type(
             comment = null,
@@ -482,7 +493,8 @@ object Expected {
                         isNullable = false
                     )
                 )
-            )
+            ),
+            extends = emptyList(),
         )
     )
 
@@ -492,7 +504,7 @@ object Expected {
             identifier = Identifier("OneofGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "oneof")),
-            query = emptyList(),
+            queries = emptyList(),
             headers = emptyList(),
             cookies = emptyList(),
             requests = listOf(
@@ -549,7 +561,8 @@ object Expected {
                         isNullable = true
                     )
                 )
-            )
+            ),
+            extends = emptyList(),
         ),
         Type(
             comment = null,
@@ -566,7 +579,8 @@ object Expected {
                         isNullable = true
                     )
                 )
-            )
+            ),
+            extends = emptyList(),
         ),
         Type(
             comment = null,
@@ -584,7 +598,8 @@ object Expected {
                         isNullable = true
                     )
                 )
-            )
+            ),
+            extends = emptyList(),
         ),
         Type(
             comment = null,
@@ -600,7 +615,8 @@ object Expected {
                         isNullable = true
                     )
                 )
-            )
+            ),
+            extends = emptyList(),
         ),
         Type(
             comment = null,
@@ -616,7 +632,8 @@ object Expected {
                         isNullable = false
                     )
                 )
-            )
+            ),
+            extends = emptyList(),
         )
     )
 
@@ -626,7 +643,7 @@ object Expected {
             identifier = Identifier("EnumGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "enum")),
-            query = listOf(
+            queries = listOf(
                 Field(
                     identifier = Identifier("order"),
                     reference = Reference.Custom(
@@ -696,7 +713,8 @@ object Expected {
                         isNullable = true
                     )
                 )
-            )
+            ),
+            extends = emptyList(),
         ),
         Enum(
             comment = null,
@@ -725,7 +743,8 @@ object Expected {
                         isNullable = true
                     )
                 )
-            )
+            ),
+            extends = emptyList(),
         ),
         Enum(
             comment = null,

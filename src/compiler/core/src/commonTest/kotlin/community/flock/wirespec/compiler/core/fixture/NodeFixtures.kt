@@ -3,8 +3,8 @@ package community.flock.wirespec.compiler.core.fixture
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Field.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 
@@ -56,7 +56,8 @@ object NodeFixtures {
                     isNullable = false,
                 )
             )
-        )
+        ),
+        extends = emptyList(),
     )
 
     val endpoint = Endpoint(
@@ -64,7 +65,7 @@ object NodeFixtures {
         identifier = Identifier(""),
         method = Endpoint.Method.GET,
         path = listOf(Endpoint.Segment.Literal("/todos")),
-        query = emptyList(),
+        queries = emptyList(),
         headers = emptyList(),
         cookies = emptyList(),
         requests = emptyList(),

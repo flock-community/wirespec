@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
@@ -19,7 +20,7 @@ private interface Transformer :
     UnionTransformer<UnionClass>,
     EnumTransformer<EnumClass>,
     EndpointTransformer<EndpointClass>,
-    FieldTransformer<Reference>
+    FieldTransformer<ClassReference>
 
 object ClassModelTransformer : Transformer {
 
@@ -38,13 +39,13 @@ object ClassModelTransformer : Transformer {
                     union.entries
                         .map {
                             when (it) {
-                                is Field.Reference.Custom -> it.value
+                                is Reference.Custom -> it.value
                                 else -> error("Any Unit of Primitive cannot be part of Union")
                             }
                         }
                         .contains(identifier.value)
                 }
-                .map { Reference.Custom(it.identifier.value) }
+                .map { ClassReference.Custom(it.identifier.value) }
         )
 
     override fun Refined.transform(): RefinedClass =
@@ -71,7 +72,7 @@ object ClassModelTransformer : Transformer {
         val pathField = path
             .filterIsInstance<Endpoint.Segment.Param>()
             .map { Field(it.identifier, it.reference, false) }
-        val parameters = pathField + query + headers + cookies
+        val parameters = pathField + queries + headers + cookies
         return EndpointClass(
             name = className(identifier.value, "Endpoint"),
             path = path.joinToString("/", "/") {
@@ -88,8 +89,8 @@ object ClassModelTransformer : Transformer {
                     fields = listOf(
                         FieldClass(
                             identifier = "path",
-                            reference = Reference.Language(
-                                primitive = Reference.Language.Primitive.String,
+                            reference = ClassReference.Language(
+                                primitive = ClassReference.Language.Primitive.String,
                                 isNullable = false,
                             ),
                             isOverride = true,
@@ -98,28 +99,28 @@ object ClassModelTransformer : Transformer {
                         ),
                         FieldClass(
                             identifier = "method",
-                            reference = Reference.Wirespec("Method"),
+                            reference = ClassReference.Wirespec("Method"),
                             isOverride = true,
                             isPrivate = true,
                             isFinal = true,
                         ),
                         FieldClass(
                             identifier = "query",
-                            reference = Reference.Language(
-                                primitive = Reference.Language.Primitive.Map,
-                                generics = Reference.Generics(
+                            reference = ClassReference.Language(
+                                primitive = ClassReference.Language.Primitive.Map,
+                                generics = ClassReference.Generics(
                                     listOf(
-                                        Reference.Language(
-                                            primitive = Reference.Language.Primitive.String,
+                                        ClassReference.Language(
+                                            primitive = ClassReference.Language.Primitive.String,
                                             isNullable = false
                                         ),
-                                        Reference.Language(
-                                            primitive = Reference.Language.Primitive.List,
+                                        ClassReference.Language(
+                                            primitive = ClassReference.Language.Primitive.List,
                                             isNullable = false,
-                                            generics = Reference.Generics(
+                                            generics = ClassReference.Generics(
                                                 listOf(
-                                                    Reference.Language(
-                                                        primitive = Reference.Language.Primitive.Any,
+                                                    ClassReference.Language(
+                                                        primitive = ClassReference.Language.Primitive.Any,
                                                         isNullable = true
                                                     )
                                                 )
@@ -134,21 +135,21 @@ object ClassModelTransformer : Transformer {
                         ),
                         FieldClass(
                             identifier = "headers",
-                            reference = Reference.Language(
-                                primitive = Reference.Language.Primitive.Map,
-                                generics = Reference.Generics(
+                            reference = ClassReference.Language(
+                                primitive = ClassReference.Language.Primitive.Map,
+                                generics = ClassReference.Generics(
                                     listOf(
-                                        Reference.Language(
-                                            primitive = Reference.Language.Primitive.String,
+                                        ClassReference.Language(
+                                            primitive = ClassReference.Language.Primitive.String,
                                             isNullable = false
                                         ),
-                                        Reference.Language(
-                                            primitive = Reference.Language.Primitive.List,
+                                        ClassReference.Language(
+                                            primitive = ClassReference.Language.Primitive.List,
                                             isNullable = false,
-                                            generics = Reference.Generics(
+                                            generics = ClassReference.Generics(
                                                 listOf(
-                                                    Reference.Language(
-                                                        primitive = Reference.Language.Primitive.Any,
+                                                    ClassReference.Language(
+                                                        primitive = ClassReference.Language.Primitive.Any,
                                                         isNullable = true
                                                     )
                                                 )
@@ -163,13 +164,13 @@ object ClassModelTransformer : Transformer {
                         ),
                         FieldClass(
                             identifier = "content",
-                            reference = Reference.Wirespec(
+                            reference = ClassReference.Wirespec(
                                 name = "Content",
                                 isNullable = it.content == null,
-                                generics = Reference.Generics(
+                                generics = ClassReference.Generics(
                                     listOf(
                                         it.content?.reference?.transform(it.content.isNullable, false)
-                                            ?: Reference.Language(Reference.Language.Primitive.Unit)
+                                            ?: ClassReference.Language(ClassReference.Language.Primitive.Unit)
                                     )
                                 )
                             ),
@@ -183,32 +184,32 @@ object ClassModelTransformer : Transformer {
                         parameters = listOf(
                             Parameter(
                                 identifier = "path",
-                                reference = Reference.Language(
-                                    primitive = Reference.Language.Primitive.String,
+                                reference = ClassReference.Language(
+                                    primitive = ClassReference.Language.Primitive.String,
                                     isNullable = false
                                 )
                             ),
                             Parameter(
                                 identifier = "method",
-                                reference = Reference.Wirespec("Method", false)
+                                reference = ClassReference.Wirespec("Method", false)
                             ),
                             Parameter(
                                 identifier = "query",
-                                reference = Reference.Language(
-                                    primitive = Reference.Language.Primitive.Map,
-                                    generics = Reference.Generics(
+                                reference = ClassReference.Language(
+                                    primitive = ClassReference.Language.Primitive.Map,
+                                    generics = ClassReference.Generics(
                                         listOf(
-                                            Reference.Language(
-                                                primitive = Reference.Language.Primitive.String,
+                                            ClassReference.Language(
+                                                primitive = ClassReference.Language.Primitive.String,
                                                 isNullable = false
                                             ),
-                                            Reference.Language(
-                                                primitive = Reference.Language.Primitive.List,
+                                            ClassReference.Language(
+                                                primitive = ClassReference.Language.Primitive.List,
                                                 isNullable = false,
-                                                generics = Reference.Generics(
+                                                generics = ClassReference.Generics(
                                                     listOf(
-                                                        Reference.Language(
-                                                            primitive = Reference.Language.Primitive.Any,
+                                                        ClassReference.Language(
+                                                            primitive = ClassReference.Language.Primitive.Any,
                                                             isNullable = true
                                                         )
                                                     )
@@ -220,21 +221,21 @@ object ClassModelTransformer : Transformer {
                             ),
                             Parameter(
                                 identifier = "headers",
-                                reference = Reference.Language(
-                                    primitive = Reference.Language.Primitive.Map,
-                                    generics = Reference.Generics(
+                                reference = ClassReference.Language(
+                                    primitive = ClassReference.Language.Primitive.Map,
+                                    generics = ClassReference.Generics(
                                         listOf(
-                                            Reference.Language(
-                                                primitive = Reference.Language.Primitive.String,
+                                            ClassReference.Language(
+                                                primitive = ClassReference.Language.Primitive.String,
                                                 isNullable = false
                                             ),
-                                            Reference.Language(
-                                                primitive = Reference.Language.Primitive.List,
+                                            ClassReference.Language(
+                                                primitive = ClassReference.Language.Primitive.List,
                                                 isNullable = false,
-                                                generics = Reference.Generics(
+                                                generics = ClassReference.Generics(
                                                     listOf(
-                                                        Reference.Language(
-                                                            primitive = Reference.Language.Primitive.Any,
+                                                        ClassReference.Language(
+                                                            primitive = ClassReference.Language.Primitive.Any,
                                                             isNullable = true
                                                         )
                                                     )
@@ -246,13 +247,13 @@ object ClassModelTransformer : Transformer {
                             ),
                             Parameter(
                                 identifier = "content",
-                                reference = Reference.Wirespec(
+                                reference = ClassReference.Wirespec(
                                     name = "Content",
                                     isNullable = it.content == null,
-                                    generics = Reference.Generics(
+                                    generics = ClassReference.Generics(
                                         listOf(
                                             it.content?.reference?.transform(it.content.isNullable, false)
-                                                ?: Reference.Language(Reference.Language.Primitive.Unit)
+                                                ?: ClassReference.Language(ClassReference.Language.Primitive.Unit)
                                         )
                                     )
                                 )
@@ -268,17 +269,17 @@ object ClassModelTransformer : Transformer {
                         content = it.content?.transform(),
                         path = EndpointClass.Path(path.map { it.transform() }),
                         method = method.name,
-                        query = query.map { it.identifier.value },
+                        query = queries.map { it.identifier.value },
                         headers = headers.map { it.identifier.value },
                     ),
                     supers = listOf(
-                        Reference.Custom(
+                        ClassReference.Custom(
                             name = className("Request"),
                             isInternal = true,
-                            generics = Reference.Generics(
+                            generics = ClassReference.Generics(
                                 listOf(
                                     it.content?.reference?.transform(it.content.isNullable, false)
-                                        ?: Reference.Language(Reference.Language.Primitive.Unit)
+                                        ?: ClassReference.Language(ClassReference.Language.Primitive.Unit)
                                 )
                             )
                         )
@@ -291,7 +292,7 @@ object ClassModelTransformer : Transformer {
                     EndpointClass.RequestMapper.RequestCondition(
                         content = it.content?.transform(),
                         isIterable = it.content?.reference?.isIterable ?: false,
-                        responseReference = Reference.Custom(
+                        responseReference = ClassReference.Custom(
                             name = className("Request", it.content.name()),
                             isInternal = true
                         )
@@ -305,7 +306,7 @@ object ClassModelTransformer : Transformer {
                         statusCode = it.status,
                         content = it.content?.transform(),
                         isIterable = it.content?.reference?.isIterable ?: false,
-                        responseReference = Reference.Custom(
+                        responseReference = ClassReference.Custom(
                             name = className("Response", it.status, it.content.name()),
                             isInternal = true
                         )
@@ -317,21 +318,21 @@ object ClassModelTransformer : Transformer {
                 .distinct()
                 .map {
                     EndpointClass.ResponseInterface(
-                        name = Reference.Custom(
+                        name = ClassReference.Custom(
                             name = className("Response", it),
                             isInternal = true,
-                            generics = Reference.Generics(
+                            generics = ClassReference.Generics(
                                 listOf(
-                                    Reference.Custom("T")
+                                    ClassReference.Custom("T")
                                 )
                             )
                         ),
-                        `super` = Reference.Custom(
+                        `super` = ClassReference.Custom(
                             name = "Response",
                             isInternal = true,
-                            generics = Reference.Generics(
+                            generics = ClassReference.Generics(
                                 listOf(
-                                    Reference.Custom("T")
+                                    ClassReference.Custom("T")
                                 )
                             )
                         )
@@ -342,21 +343,21 @@ object ClassModelTransformer : Transformer {
                 .distinct()
                 .map {
                     EndpointClass.ResponseInterface(
-                        name = Reference.Custom(
+                        name = ClassReference.Custom(
                             name = className("Response", it),
                             isInternal = true,
-                            generics = Reference.Generics(
+                            generics = ClassReference.Generics(
                                 listOf(
-                                    Reference.Custom("T")
+                                    ClassReference.Custom("T")
                                 )
                             )
                         ),
-                        `super` = Reference.Custom(
+                        `super` = ClassReference.Custom(
                             name = className("Response", it.groupStatus()),
                             isInternal = true,
-                            generics = Reference.Generics(
+                            generics = ClassReference.Generics(
                                 listOf(
-                                    Reference.Custom("T")
+                                    ClassReference.Custom("T")
                                 )
                             )
                         )
@@ -368,8 +369,8 @@ object ClassModelTransformer : Transformer {
                     fields = listOf(
                         FieldClass(
                             identifier = "status",
-                            reference = Reference.Language(
-                                primitive = Reference.Language.Primitive.Integer
+                            reference = ClassReference.Language(
+                                primitive = ClassReference.Language.Primitive.Integer
                             ),
                             isOverride = true,
                             isFinal = true,
@@ -377,22 +378,22 @@ object ClassModelTransformer : Transformer {
                         ),
                         FieldClass(
                             identifier = "headers",
-                            reference = Reference.Language(
-                                primitive = Reference.Language.Primitive.Map,
+                            reference = ClassReference.Language(
+                                primitive = ClassReference.Language.Primitive.Map,
                                 isNullable = false,
-                                generics = Reference.Generics(
+                                generics = ClassReference.Generics(
                                     listOf(
-                                        Reference.Language(
-                                            primitive = Reference.Language.Primitive.String,
+                                        ClassReference.Language(
+                                            primitive = ClassReference.Language.Primitive.String,
                                             isNullable = false
                                         ),
-                                        Reference.Language(
-                                            primitive = Reference.Language.Primitive.List,
+                                        ClassReference.Language(
+                                            primitive = ClassReference.Language.Primitive.List,
                                             isNullable = false,
-                                            generics = Reference.Generics(
+                                            generics = ClassReference.Generics(
                                                 listOf(
-                                                    Reference.Language(
-                                                        primitive = Reference.Language.Primitive.Any,
+                                                    ClassReference.Language(
+                                                        primitive = ClassReference.Language.Primitive.Any,
                                                         isNullable = true
                                                     )
                                                 )
@@ -407,13 +408,13 @@ object ClassModelTransformer : Transformer {
                         ),
                         FieldClass(
                             identifier = "content",
-                            reference = Reference.Wirespec(
+                            reference = ClassReference.Wirespec(
                                 name = "Content",
                                 isNullable = it.content == null,
-                                generics = Reference.Generics(
+                                generics = ClassReference.Generics(
                                     listOf(
                                         it.content?.reference?.transform(it.content.isNullable, false)
-                                            ?: Reference.Language(Reference.Language.Primitive.Unit)
+                                            ?: ClassReference.Language(ClassReference.Language.Primitive.Unit)
                                     )
                                 )
                             ),
@@ -428,26 +429,26 @@ object ClassModelTransformer : Transformer {
                         parameters = listOf(
                             Parameter(
                                 identifier = "status",
-                                reference = Reference.Language(Reference.Language.Primitive.Integer)
+                                reference = ClassReference.Language(ClassReference.Language.Primitive.Integer)
                             ),
                             Parameter(
                                 identifier = "headers",
-                                reference = Reference.Language(
-                                    primitive = Reference.Language.Primitive.Map,
+                                reference = ClassReference.Language(
+                                    primitive = ClassReference.Language.Primitive.Map,
                                     isNullable = false,
-                                    generics = Reference.Generics(
+                                    generics = ClassReference.Generics(
                                         listOf(
-                                            Reference.Language(
-                                                primitive = Reference.Language.Primitive.String,
+                                            ClassReference.Language(
+                                                primitive = ClassReference.Language.Primitive.String,
                                                 isNullable = false,
                                             ),
-                                            Reference.Language(
-                                                primitive = Reference.Language.Primitive.List,
+                                            ClassReference.Language(
+                                                primitive = ClassReference.Language.Primitive.List,
                                                 isNullable = false,
-                                                generics = Reference.Generics(
+                                                generics = ClassReference.Generics(
                                                     listOf(
-                                                        Reference.Language(
-                                                            primitive = Reference.Language.Primitive.Any,
+                                                        ClassReference.Language(
+                                                            primitive = ClassReference.Language.Primitive.Any,
                                                             isNullable = true
                                                         )
                                                     )
@@ -459,13 +460,13 @@ object ClassModelTransformer : Transformer {
                             ),
                             Parameter(
                                 identifier = "content",
-                                reference = Reference.Wirespec(
+                                reference = ClassReference.Wirespec(
                                     name = "Content",
                                     isNullable = it.content == null,
-                                    generics = Reference.Generics(
+                                    generics = ClassReference.Generics(
                                         listOf(
                                             it.content?.reference?.transform(it.content.isNullable, false)
-                                                ?: Reference.Language(Reference.Language.Primitive.Unit)
+                                                ?: ClassReference.Language(ClassReference.Language.Primitive.Unit)
                                         )
                                     )
                                 )
@@ -479,7 +480,7 @@ object ClassModelTransformer : Transformer {
                         parameters = listOf(
                             if (!it.status.isInt()) Parameter(
                                 "status",
-                                Reference.Language(Reference.Language.Primitive.Integer)
+                                ClassReference.Language(ClassReference.Language.Primitive.Integer)
                             ) else null
                         )
                             .plus(it.headers.map { it.transformParameter() })
@@ -488,12 +489,12 @@ object ClassModelTransformer : Transformer {
                         headers = it.headers.map { it.identifier.value },
                         content = it.content?.transform(),
                     ),
-                    `super` = Reference.Custom(
+                    `super` = ClassReference.Custom(
                         name = className("Response", it.status),
-                        generics = Reference.Generics(
+                        generics = ClassReference.Generics(
                             listOf(
                                 it.content?.reference?.transform(it.content.isNullable, false)
-                                    ?: Reference.Language(Reference.Language.Primitive.Unit)
+                                    ?: ClassReference.Language(ClassReference.Language.Primitive.Unit)
                             )
                         ),
                         isNullable = false,
@@ -504,32 +505,32 @@ object ClassModelTransformer : Transformer {
                 )
             },
             supers = listOf(
-                Reference.Wirespec(
+                ClassReference.Wirespec(
                     name = "Endpoint"
                 )
             )
         )
     }
 
-    override fun Field.Reference.transform(isNullable: Boolean, isOptional: Boolean): Reference =
+    override fun Reference.transform(isNullable: Boolean, isOptional: Boolean): ClassReference =
         when (this) {
-            is Field.Reference.Unit -> Reference.Language(
-                primitive = Reference.Language.Primitive.Unit,
+            is Reference.Unit -> ClassReference.Language(
+                primitive = ClassReference.Language.Primitive.Unit,
                 isNullable = isNullable,
                 isIterable = isIterable,
                 isDictionary = isDictionary,
                 isOptional = isOptional
             )
 
-            is Field.Reference.Any -> Reference.Language(
-                primitive = Reference.Language.Primitive.Any,
+            is Reference.Any -> ClassReference.Language(
+                primitive = ClassReference.Language.Primitive.Any,
                 isNullable = isNullable,
                 isIterable = isIterable,
                 isDictionary = isDictionary,
                 isOptional = isOptional
             )
 
-            is Field.Reference.Custom -> Reference.Custom(
+            is Reference.Custom -> ClassReference.Custom(
                 name = value,
                 isNullable = isNullable,
                 isIterable = isIterable,
@@ -537,14 +538,14 @@ object ClassModelTransformer : Transformer {
                 isOptional = isOptional
             )
 
-            is Field.Reference.Primitive ->
+            is Reference.Primitive ->
                 when (type) {
-                    Field.Reference.Primitive.Type.String -> Reference.Language.Primitive.String
-                    Field.Reference.Primitive.Type.Integer -> Reference.Language.Primitive.Long
-                    Field.Reference.Primitive.Type.Number -> Reference.Language.Primitive.Double
-                    Field.Reference.Primitive.Type.Boolean -> Reference.Language.Primitive.Boolean
+                    Reference.Primitive.Type.String -> ClassReference.Language.Primitive.String
+                    Reference.Primitive.Type.Integer -> ClassReference.Language.Primitive.Long
+                    Reference.Primitive.Type.Number -> ClassReference.Language.Primitive.Double
+                    Reference.Primitive.Type.Boolean -> ClassReference.Language.Primitive.Boolean
                 }.let {
-                    Reference.Language(
+                    ClassReference.Language(
                         primitive = it,
                         isNullable = isNullable,
                         isIterable = isIterable,
@@ -589,7 +590,7 @@ object ClassModelTransformer : Transformer {
             it.firstToUpper()
         }
 
-    private fun Field.Reference.toField(identifier: String, isNullable: Boolean = false) = Field(
+    private fun Reference.toField(identifier: String, isNullable: Boolean = false) = Field(
         Identifier(identifier),
         this,
         isNullable

@@ -1,40 +1,36 @@
 package community.flock.wirespec.compiler.core
 
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
-import community.flock.wirespec.compiler.core.emit.KotlinEmitter
+import community.flock.wirespec.compiler.core.emit.KotlinLegacyEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import io.kotest.assertions.arrow.core.shouldBeRight
 import kotlin.test.Test
 
-class CompileEndpointTest {
+class CompileLegacyEndpointTest {
 
-    private val compiledTodo = compile(
-        """
-        endpoint Todo GET /v1/todo ? {done:Boolean} # {auth:String} -> {
-          200 -> Todo 
-        }
-        type Todo {
-          name: String,
-          done: Boolean
-        }
-        """.trimIndent()
-    )
+    private val compiledTodo = """
+        |endpoint Todo GET /v1/todo ? {done:Boolean} # {auth:String} -> {
+        |  200 -> Todo 
+        |}
+        |type Todo {
+        |  name: String,
+        |  done: Boolean
+        |}
+    """.trimMargin().let(::compile)
 
-    private val compiledReqRes = compile(
-        """
-        endpoint Todo POST Request /reqres -> {
-          200 -> Response 
-        }
-        type Request {
-          name: String
-        }
-        type Response {
-          name: String
-        }
-        """.trimIndent()
-    )
+    private val compiledReqRes = """
+        |endpoint Todo POST Request /reqres -> {
+        |  200 -> Response 
+        |}
+        |type Request {
+        |  name: String
+        |}
+        |type Response {
+        |  name: String
+        |}
+    """.trimMargin().let(::compile)
 
     @Test
     fun testEndpointKotlin() {
@@ -99,7 +95,7 @@ class CompileEndpointTest {
             |
         """.trimMargin()
 
-        compiledTodo(KotlinEmitter()) shouldBeRight kotlin
+        compiledTodo(KotlinLegacyEmitter()) shouldBeRight kotlin
     }
 
 
@@ -170,7 +166,7 @@ class CompileEndpointTest {
             |
         """.trimMargin()
 
-        compiledReqRes(KotlinEmitter()) shouldBeRight kotlin
+        compiledReqRes(KotlinLegacyEmitter()) shouldBeRight kotlin
     }
 
     @Test
@@ -476,7 +472,6 @@ class CompileEndpointTest {
             |  val name: String,
             |  val done: Boolean
             |)
-            |
             |
         """.trimMargin()
 

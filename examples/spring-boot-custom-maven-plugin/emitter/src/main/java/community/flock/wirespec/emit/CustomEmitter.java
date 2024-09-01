@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.parse.Endpoint;
 import community.flock.wirespec.compiler.core.parse.Enum;
 import community.flock.wirespec.compiler.core.parse.Field;
 import community.flock.wirespec.compiler.core.parse.Node;
+import community.flock.wirespec.compiler.core.parse.Reference;
 import community.flock.wirespec.compiler.core.parse.Refined;
 import community.flock.wirespec.compiler.core.parse.Type;
 import community.flock.wirespec.compiler.core.parse.Union;
@@ -16,7 +17,6 @@ import community.flock.wirespec.compiler.utils.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
 
@@ -41,10 +41,10 @@ public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
     public List<Emitted> emit(@NotNull List<? extends Node> ast) {
         return ast
                 .stream()
-                .filter(sc -> sc instanceof Type)
+                .filter(Type.class::isInstance)
                 .map(it -> (Type) it)
                 .map(type -> new Emitted(emitName(type), emit(type, ast)))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @NotNull
@@ -103,7 +103,7 @@ public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
 
     @NotNull
     @Override
-    public String emit(@NotNull Field.Reference reference) {
+    public String emit(@NotNull Reference reference) {
         return notYetImplemented();
     }
 }

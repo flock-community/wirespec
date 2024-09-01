@@ -1,6 +1,6 @@
 package community.flock.wirespec.examples.app
 
-import community.flock.wirespec.examples.app.todo.TodoRepository
+import community.flock.wirespec.examples.app.todo.LiveTodoRepository
 import community.flock.wirespec.examples.app.todo.todoModule
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
@@ -23,5 +23,5 @@ fun Application.config() {
 }
 
 fun Application.app() {
-    todoModule(TodoRepository)
+    todoModule(LiveTodoRepository())
 }

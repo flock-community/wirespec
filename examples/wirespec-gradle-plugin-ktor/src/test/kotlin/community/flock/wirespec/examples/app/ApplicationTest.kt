@@ -1,6 +1,6 @@
 package community.flock.wirespec.examples.app
 
-import community.flock.wirespec.examples.app.todo.TodoRepository
+import community.flock.wirespec.examples.app.todo.LiveTodoRepository
 import community.flock.wirespec.examples.app.todo.todoModule
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
@@ -14,10 +14,10 @@ class ApplicationTest {
     fun testRoot() = testApplication {
         application {
             config()
-            todoModule(TodoRepository)
+            todoModule(LiveTodoRepository())
         }
 
-        client.get("/todos").apply {
+        client.get("/api/todos").apply {
             val expected = """[{"id":{"value":"8132b795-143f-4afb-8c8a-0608cb63c79c"},"name":"Name","done":true}]"""
             assertEquals(HttpStatusCode.OK, status)
             assertEquals(expected, bodyAsText())

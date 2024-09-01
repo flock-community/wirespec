@@ -4,7 +4,11 @@ import community.flock.wirespec.generated.kotlin.v3.AddPetEndpoint
 import community.flock.wirespec.generated.kotlin.v3.FindPetsByStatusEndpoint
 import community.flock.wirespec.generated.kotlin.v3.FindPetsByStatusParameterStatus
 import community.flock.wirespec.generated.kotlin.v3.Pet
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/kotlin/pets")

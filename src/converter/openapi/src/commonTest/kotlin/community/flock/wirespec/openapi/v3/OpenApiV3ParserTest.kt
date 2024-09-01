@@ -5,9 +5,9 @@ import community.flock.kotlinx.openapi.bindings.v3.OpenAPI
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Field.Reference
-import community.flock.wirespec.compiler.core.parse.Field.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Reference
+import community.flock.wirespec.compiler.core.parse.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.openapi.common.Expected
@@ -90,7 +90,8 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         )
                     )
-                )
+                ),
+                extends = emptyList(),
             ),
             Enum(
                 comment = null,
@@ -126,7 +127,8 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         )
                     )
-                )
+                ),
+                extends = emptyList(),
             ),
             Type(
                 comment = null,
@@ -170,7 +172,8 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         )
                     )
-                )
+                ),
+                extends = emptyList(),
             ),
             Type(
                 comment = null,
@@ -196,7 +199,8 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         )
                     )
-                )
+                ),
+                extends = emptyList(),
             ),
             Type(
                 comment = null,
@@ -276,7 +280,8 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         )
                     )
-                )
+                ),
+                extends = emptyList(),
             ),
             Type(
                 comment = null,
@@ -302,7 +307,8 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         )
                     )
-                )
+                ),
+                extends = emptyList(),
             ),
             Type(
                 comment = null,
@@ -364,7 +370,8 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         )
                     )
-                )
+                ),
+                extends = emptyList(),
             ),
             Enum(
                 comment = null,
@@ -404,7 +411,8 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         )
                     )
-                )
+                ),
+                extends = emptyList(),
             )
         )
 
@@ -418,7 +426,7 @@ class OpenApiV3ParserTest {
             identifier = Identifier("GetInventory"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "store"), Endpoint.Segment.Literal(value = "inventory")),
-            query = emptyList(),
+            queries = emptyList(),
             headers = emptyList(),
             cookies = emptyList(),
             requests = listOf(Endpoint.Request(content = null)),
@@ -457,7 +465,7 @@ class OpenApiV3ParserTest {
                     ),
                     Endpoint.Segment.Literal("ingredients"),
                 ),
-                query = listOf(),
+                queries = listOf(),
                 headers = listOf(),
                 cookies = listOf(),
                 requests = listOf(
@@ -485,7 +493,8 @@ class OpenApiV3ParserTest {
                         Field(Identifier("name"), Primitive(Primitive.Type.String, false), true),
                         Field(Identifier("quantity"), Primitive(Primitive.Type.String, false), true),
                     )
-                )
+                ),
+                extends = emptyList(),
             ),
         )
         assertEquals(expect, ast)
@@ -508,7 +517,7 @@ class OpenApiV3ParserTest {
                 path = listOf(
                     Endpoint.Segment.Literal("todos")
                 ),
-                query = listOf(
+                queries = listOf(
                     Field(Identifier("completed"), Primitive(type = Primitive.Type.Boolean, isIterable = false), true)
                 ),
                 headers = listOf(
@@ -538,7 +547,7 @@ class OpenApiV3ParserTest {
                 path = listOf(
                     Endpoint.Segment.Literal("todos"),
                 ),
-                query = listOf(),
+                queries = listOf(),
                 headers = listOf(
                     Field(Identifier("x-user"), Primitive(type = Primitive.Type.Boolean, isIterable = false), true)
                 ),
@@ -584,7 +593,7 @@ class OpenApiV3ParserTest {
                     Endpoint.Segment.Literal("todos"),
                     Endpoint.Segment.Param(Identifier("id"), Primitive(Primitive.Type.String, false))
                 ),
-                query = listOf(),
+                queries = listOf(),
                 headers = listOf(),
                 cookies = listOf(),
                 requests = listOf(
@@ -619,7 +628,8 @@ class OpenApiV3ParserTest {
                         Field(Identifier("title"), Primitive(Primitive.Type.String, false), true),
                         Field(Identifier("completed"), Primitive(Primitive.Type.Boolean, false), true)
                     )
-                )
+                ),
+                extends = emptyList(),
             ),
             Type(
                 comment = null,
@@ -631,7 +641,8 @@ class OpenApiV3ParserTest {
                         Field(Identifier("completed"), Primitive(Primitive.Type.Boolean, false), true),
                         Field(Identifier("alert"), Reference.Custom("TodoAlert", false), true),
                     )
-                )
+                ),
+                extends = emptyList(),
             ),
             Type(
                 comment = null,
@@ -641,7 +652,8 @@ class OpenApiV3ParserTest {
                         Field(Identifier("code"), Primitive(Primitive.Type.String, false), true),
                         Field(Identifier("message"), Reference.Custom("TodoAlertMessage", false), true),
                     )
-                )
+                ),
+                extends = emptyList(),
             ),
             Type(
                 comment = null,
@@ -651,7 +663,8 @@ class OpenApiV3ParserTest {
                         Field(Identifier("key"), Primitive(Primitive.Type.String, false), true),
                         Field(Identifier("value"), Primitive(Primitive.Type.String, false), true),
                     )
-                )
+                ),
+                extends = emptyList(),
             ),
             Type(
                 comment = null,
@@ -662,7 +675,8 @@ class OpenApiV3ParserTest {
                         Field(Identifier("title"), Primitive(Primitive.Type.String, false), true),
                         Field(Identifier("nested"), Primitive(Primitive.Type.Boolean, false), true),
                     )
-                )
+                ),
+                extends = emptyList(),
             ),
             Type(
                 comment = null,
@@ -672,7 +686,8 @@ class OpenApiV3ParserTest {
                         Field(Identifier("code"), Primitive(Primitive.Type.String, false), true),
                         Field(Identifier("message"), Primitive(Primitive.Type.String, false), true),
                     )
-                )
+                ),
+                extends = emptyList(),
             ),
         )
 
@@ -710,7 +725,7 @@ class OpenApiV3ParserTest {
         val openApi = OpenAPI.decodeFromString(json)
         val ast = openApi.parse()
 
-        assertEquals(Expected.additionalproperties, ast)
+        assertEquals(Expected.additionalProperties, ast)
 
         println(ast)
     }

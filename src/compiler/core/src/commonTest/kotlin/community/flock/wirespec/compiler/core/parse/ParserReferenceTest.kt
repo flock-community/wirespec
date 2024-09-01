@@ -17,11 +17,11 @@ class ParserReferenceTest {
     @Test
     fun shouldHaveSelfRef() {
         val source = """
-            type Self {
-              self: Self
-            }
+            |type Self {
+            |  self: Self
+            |}
 
-        """.trimIndent()
+        """.trimMargin()
 
         compile(source)
             .shouldBeRight()
@@ -30,10 +30,10 @@ class ParserReferenceTest {
     @Test
     fun shouldNotFindReferenceInType() {
         val source = """
-            type Foo {
-              bar: Bar
-            }
-        """.trimIndent()
+            |type Foo {
+            |  bar: Bar
+            |}
+        """.trimMargin()
 
         compile(source)
             .shouldBeLeft()
@@ -51,10 +51,10 @@ class ParserReferenceTest {
     @Test
     fun shouldNotFindReferenceInEndpointRequest() {
         val source = """
-            endpoint FooPoint POST Foo /foo -> {
-              200 -> Bar
-            }
-        """.trimIndent()
+            |endpoint FooPoint POST Foo /foo -> {
+            |  200 -> Bar
+            |}
+        """.trimMargin()
 
         compile(source)
             .shouldBeLeft()
@@ -71,11 +71,11 @@ class ParserReferenceTest {
     @Test
     fun shouldNotFindReferenceInEndpointResponse() {
         val source = """
-            type Foo { str:String }
-            endpoint FooPoint POST Foo /foo -> {
-              200 -> Bar
-            }
-        """.trimIndent()
+            |type Foo { str:String }
+            |endpoint FooPoint POST Foo /foo -> {
+            |  200 -> Bar
+            |}
+        """.trimMargin()
 
         compile(source)
             .shouldBeLeft()
@@ -92,8 +92,8 @@ class ParserReferenceTest {
     @Test
     fun shouldNotFindReferenceInEnum() {
         val source = """
-            type Foo = Bar
-        """.trimIndent()
+            |type Foo = Bar
+        """.trimMargin()
 
         compile(source)
             .shouldBeLeft()
@@ -110,9 +110,9 @@ class ParserReferenceTest {
     @Test
     fun shouldNotFindReferenceInEnumSecond() {
         val source = """
-            type Bar { str:String }
-            type Foo = Bar | Baz
-        """.trimIndent()
+            |type Bar { str:String }
+            |type Foo = Bar | Baz
+        """.trimMargin()
 
         compile(source)
             .shouldBeLeft()

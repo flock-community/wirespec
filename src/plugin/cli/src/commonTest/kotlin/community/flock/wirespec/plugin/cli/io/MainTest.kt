@@ -14,6 +14,6 @@ class MainTest {
 
     @Test
     fun testLanguages() {
-        Language.toString() shouldBe "Java, Kotlin, Scala, TypeScript, Wirespec"
+        Language.toString() shouldBe "Java, Kotlin, KotlinLegacy, Scala, TypeScript, Wirespec"
     }
 }

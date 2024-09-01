@@ -9,7 +9,7 @@ sealed interface ClassModel {
 data class TypeClass(
     override val name: String,
     val fields: List<FieldClass>,
-    val supers: List<Reference> = emptyList(),
+    val supers: List<ClassReference> = emptyList(),
 ) : ClassModel
 
 data class RefinedClass(
@@ -39,14 +39,14 @@ data class EndpointClass(
     val responseClasses: List<ResponseClass>,
     val requestMapper: RequestMapper,
     val responseMapper: ResponseMapper,
-    val supers: List<Reference>
+    val supers: List<ClassReference>
 ) : ClassModel {
     data class RequestClass(
         val name: String,
         val fields: List<FieldClass>,
         val requestAllArgsConstructor: RequestAllArgsConstructor,
         val requestParameterConstructor: RequestParameterConstructor,
-        val supers: List<Reference>,
+        val supers: List<ClassReference>,
     ) {
         data class RequestAllArgsConstructor(
             val name: String,
@@ -71,7 +71,7 @@ data class EndpointClass(
     ) {
         data class RequestCondition(
             val content: Content?,
-            val responseReference: Reference,
+            val responseReference: ClassReference,
             val isIterable: Boolean,
         )
     }
@@ -81,7 +81,7 @@ data class EndpointClass(
         val fields: List<FieldClass>,
         val responseAllArgsConstructor: ResponseAllArgsConstructor,
         val responseParameterConstructor: ResponseParameterConstructor,
-        val `super`: Reference,
+        val `super`: ClassReference,
         val statusCode: String,
         val content: Content? = null
     ) {
@@ -102,8 +102,8 @@ data class EndpointClass(
     }
 
     data class ResponseInterface(
-        val name: Reference,
-        val `super`: Reference,
+        val name: ClassReference,
+        val `super`: ClassReference,
     )
 
     data class ResponseMapper(
@@ -113,14 +113,14 @@ data class EndpointClass(
         data class ResponseCondition(
             val statusCode: String,
             val content: Content?,
-            val responseReference: Reference,
+            val responseReference: ClassReference,
             val isIterable: Boolean,
         )
     }
 
     data class Content(
         val type: String,
-        val reference: Reference
+        val reference: ClassReference
     )
 
     data class Path(override val value: List<Segment>) : Value<List<Path.Segment>> {
@@ -132,7 +132,7 @@ data class EndpointClass(
 
 data class FieldClass(
     val identifier: String,
-    val reference: Reference,
+    val reference: ClassReference,
     val isOverride: Boolean = false,
     val isPrivate: Boolean = false,
     val isFinal: Boolean = false,
@@ -140,10 +140,10 @@ data class FieldClass(
 
 data class Parameter(
     val identifier: String,
-    val reference: Reference,
+    val reference: ClassReference,
 )
 
-sealed interface Reference {
+sealed interface ClassReference {
     val isNullable: Boolean
     val isIterable: Boolean
     val isDictionary: Boolean
@@ -158,7 +158,7 @@ sealed interface Reference {
         override val isOptional: Boolean = false,
         override val isInternal: Boolean = false,
         val generics: Generics = Generics()
-    ) : Reference {
+    ) : ClassReference {
         enum class Primitive { Any, Unit, String, Integer, Long, Double, Number, Boolean, Map, List }
     }
 
@@ -170,7 +170,7 @@ sealed interface Reference {
         override val isOptional: Boolean = false,
         override val isInternal: Boolean = false,
         val generics: Generics = Generics()
-    ) : Reference
+    ) : ClassReference
 
     data class Wirespec(
         val name: String,
@@ -180,9 +180,9 @@ sealed interface Reference {
         override val isOptional: Boolean = false,
         override val isInternal: Boolean = false,
         val generics: Generics = Generics()
-    ) : Reference
+    ) : ClassReference
 
     data class Generics(
-        val references: List<Reference> = emptyList()
+        val references: List<ClassReference> = emptyList()
     )
 }

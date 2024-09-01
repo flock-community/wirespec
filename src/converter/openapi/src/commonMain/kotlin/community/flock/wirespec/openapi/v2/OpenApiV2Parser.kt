@@ -24,8 +24,8 @@ import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Field.Reference
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.openapi.Common.className
 import community.flock.wirespec.openapi.Common.filterNotNullValues
@@ -114,7 +114,7 @@ object OpenApiV2Parser {
                         identifier = Identifier(name),
                         method = method,
                         path = segments,
-                        query = query,
+                        queries = query,
                         headers = headers,
                         cookies = emptyList(),
                         requests = requests,
@@ -289,7 +289,8 @@ object OpenApiV2Parser {
                             is ReferenceObject -> toField(resolve(resolveSchemaObject(it)), it.getReference())
                         }
                     }
-                    .distinctBy { it.identifier })
+                    .distinctBy { it.identifier }),
+                extends = emptyList(),
             )
         ).plus(schemaObject.allOf!!.flatMap {
             when (it) {
@@ -314,7 +315,12 @@ object OpenApiV2Parser {
                     .flatMap { (key, value) -> flatten(value, className(name, key)) }
 
                 val schema = listOf(
-                    Type(comment = null, identifier = Identifier(name), shape = Type.Shape(toField(schemaObject, name)))
+                    Type(
+                        comment = null,
+                        identifier = Identifier(name),
+                        shape = Type.Shape(toField(schemaObject, name)),
+                        extends = emptyList(),
+                    )
                 )
                 schema + fields
             }

@@ -20,16 +20,17 @@ import community.flock.kotlinx.openapi.bindings.v3.SchemaObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v3.StatusCode
 import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import kotlinx.serialization.json.JsonPrimitive
 import community.flock.kotlinx.openapi.bindings.v3.Type as OpenApiType
-import community.flock.wirespec.compiler.core.parse.Channel
 
 object OpenApiV3Emitter {
     data class Options(
@@ -116,7 +117,7 @@ object OpenApiV3Emitter {
     private fun Endpoint.emit(): OperationObject = OperationObject(
         operationId = identifier.value,
         parameters = path.filterIsInstance<Endpoint.Segment.Param>()
-            .map { it.emitParameter() } + query.map { it.emitParameter(ParameterLocation.QUERY) } + headers.map {
+            .map { it.emitParameter() } + queries.map { it.emitParameter(ParameterLocation.QUERY) } + headers.map {
             it.emitParameter(
                 ParameterLocation.HEADER
             )
@@ -163,19 +164,19 @@ object OpenApiV3Emitter {
 
     private fun Field.emitSchema(): Pair<String, SchemaOrReferenceObject> = identifier.value to reference.emitSchema()
 
-    private fun Field.Reference.emitHeader() = when (this) {
-        is Field.Reference.Custom -> ReferenceObject(ref = Ref("#/components/headers/${value}"))
-        is Field.Reference.Primitive -> HeaderObject(schema = emitSchema())
-        is Field.Reference.Any -> error("Cannot map Any")
-        is Field.Reference.Unit -> error("Cannot map Unit")
+    private fun Reference.emitHeader() = when (this) {
+        is Reference.Custom -> ReferenceObject(ref = Ref("#/components/headers/${value}"))
+        is Reference.Primitive -> HeaderObject(schema = emitSchema())
+        is Reference.Any -> error("Cannot map Any")
+        is Reference.Unit -> error("Cannot map Unit")
     }
 
-    private fun Field.Reference.emitSchema(): SchemaOrReferenceObject =
+    private fun Reference.emitSchema(): SchemaOrReferenceObject =
         when (this) {
-            is Field.Reference.Custom -> ReferenceObject(ref = Ref("#/components/schemas/${value}"))
-            is Field.Reference.Primitive -> SchemaObject(type = type.emitType())
-            is Field.Reference.Any -> error("Cannot map Any")
-            is Field.Reference.Unit -> error("Cannot map Unit")
+            is Reference.Custom -> ReferenceObject(ref = Ref("#/components/schemas/${value}"))
+            is Reference.Primitive -> SchemaObject(type = type.emitType())
+            is Reference.Any -> error("Cannot map Any")
+            is Reference.Unit -> error("Cannot map Unit")
         }.let {
             when {
                 isDictionary -> SchemaObject(
@@ -192,11 +193,11 @@ object OpenApiV3Emitter {
             }
         }
 
-    private fun Field.Reference.Primitive.Type.emitType(): OpenApiType = when (this) {
-        Field.Reference.Primitive.Type.String -> OpenApiType.STRING
-        Field.Reference.Primitive.Type.Integer -> OpenApiType.INTEGER
-        Field.Reference.Primitive.Type.Number -> OpenApiType.NUMBER
-        Field.Reference.Primitive.Type.Boolean -> OpenApiType.BOOLEAN
+    private fun Reference.Primitive.Type.emitType(): OpenApiType = when (this) {
+        Reference.Primitive.Type.String -> OpenApiType.STRING
+        Reference.Primitive.Type.Integer -> OpenApiType.INTEGER
+        Reference.Primitive.Type.Number -> OpenApiType.NUMBER
+        Reference.Primitive.Type.Boolean -> OpenApiType.BOOLEAN
     }
 
     private fun Endpoint.Content.emit(): Pair<MediaType, MediaTypeObject> =

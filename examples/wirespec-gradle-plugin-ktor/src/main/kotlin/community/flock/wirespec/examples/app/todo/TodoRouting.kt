@@ -20,34 +20,34 @@ fun Application.todoModule(todoRepository: TodoRepository) {
     val handler = TodoHandler(todoRepository)
 
     routing {
-        get(GetTodosEndpoint.PATH) {
+        get(GetTodosEndpoint.PATH_TEMPLATE) {
             handler
-                .getTodos(GetTodosEndpoint.RequestUnit())
-                .content.body
+                .getTodos(GetTodosEndpoint.Request)
+                .body
                 .let { call.respond(it) }
         }
 
-        get(GetTodoByIdEndpoint.PATH) {
+        get(GetTodoByIdEndpoint.PATH_TEMPLATE) {
             val id = call.parameters["id"]!!
             handler
-                .getTodoById(GetTodoByIdEndpoint.RequestUnit(TodoId(id)))
-                .content.body
+                .getTodoById(GetTodoByIdEndpoint.Request(TodoId(id)))
+                .body
                 .let { call.respond(it) }
         }
 
-        post(PostTodoEndpoint.PATH) {
+        post(PostTodoEndpoint.PATH_TEMPLATE) {
             val todo = call.receive<PotentialTodoDto>()
             handler
-                .postTodo(PostTodoEndpoint.RequestApplicationJson(todo))
-                .content.body
+                .postTodo(PostTodoEndpoint.Request(todo))
+                .body
                 .let { call.respond(it) }
         }
 
-        delete(DeleteTodoByIdEndpoint.PATH) {
+        delete(DeleteTodoByIdEndpoint.PATH_TEMPLATE) {
             val id = call.parameters["id"]!!
             handler
-                .deleteTodoById(DeleteTodoByIdEndpoint.RequestUnit(TodoId(id)))
-                .content.body
+                .deleteTodoById(DeleteTodoByIdEndpoint.Request(TodoId(id)))
+                .body
                 .let { call.respond(it) }
         }
     }

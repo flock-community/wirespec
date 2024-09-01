@@ -23,12 +23,12 @@ abstract class Emitter(
         .map {
             logger.info("Emitting Node $it")
             when (it) {
-                is Type -> Emitted(it.emitName(), it.emit(ast))
-                is Endpoint -> Emitted(it.emitName(), it.emit())
-                is Enum -> Emitted(it.emitName(), it.emit())
-                is Refined -> Emitted(it.emitName(), it.emit())
-                is Union -> Emitted(it.emitName(), it.emit())
-                is Channel -> Emitted(it.emitName(), it.emit())
+                is Type -> Emitted(it.emitName(), emit(it, ast))
+                is Endpoint -> Emitted(it.emitName(), emit(it))
+                is Enum -> Emitted(it.emitName(), emit(it))
+                is Refined -> Emitted(it.emitName(), emit(it))
+                is Union -> Emitted(it.emitName(), emit(it))
+                is Channel -> Emitted(it.emitName(), emit(it))
             }
         }
         .run {
@@ -39,14 +39,13 @@ abstract class Emitter(
     fun String.spacer(space: Int = 1) = split("\n")
         .joinToString("\n") {
             if (it.isNotBlank()) {
-                "${(1..space).joinToString("") { SPACER }}$it"
+                "${(1..space).joinToString("") { "$Spacer" }}$it"
             } else {
                 it
             }
         }
 
     companion object {
-        const val SPACER = "  "
         fun String.firstToUpper() = replaceFirstChar(Char::uppercase)
         fun String.firstToLower() = replaceFirstChar(Char::lowercase)
         fun AST.needImports() = any { it is Endpoint || it is Enum || it is Refined }

@@ -18,6 +18,7 @@ import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import kotlinx.serialization.json.JsonPrimitive
@@ -94,7 +95,7 @@ object OpenApiV2Emitter {
                     schema = it.reference.emit(),
                     required = !it.isNullable,
                 )
-            } + query.map { it.emitParameter(ParameterLocation.QUERY) } + headers.map {
+            } + queries.map { it.emitParameter(ParameterLocation.QUERY) } + headers.map {
             it.emitParameter(
                 ParameterLocation.HEADER
             )
@@ -110,7 +111,7 @@ object OpenApiV2Emitter {
                         )
                     },
                     schema = response.content
-                        ?.takeIf { content -> content.reference !is Field.Reference.Unit }
+                        ?.takeIf { content -> content.reference !is Reference.Unit }
                         ?.let { content ->
                             when (content.reference.isIterable) {
                                 false -> content.reference.emit()
@@ -150,26 +151,26 @@ object OpenApiV2Emitter {
 
         )
 
-    fun Field.Reference.emit(): SchemaOrReferenceObject = when (this) {
-        is Field.Reference.Custom -> ReferenceObject(ref = Ref("#/definitions/${value}"))
-        is Field.Reference.Primitive -> SchemaObject(type = type.emitType())
-        is Field.Reference.Any -> error("Cannot map Any")
-        is Field.Reference.Unit -> error("Cannot map Unit")
+    fun Reference.emit(): SchemaOrReferenceObject = when (this) {
+        is Reference.Custom -> ReferenceObject(ref = Ref("#/definitions/${value}"))
+        is Reference.Primitive -> SchemaObject(type = type.emitType())
+        is Reference.Any -> error("Cannot map Any")
+        is Reference.Unit -> error("Cannot map Unit")
     }.let { if (isIterable) SchemaObject(type = OpenApiType.ARRAY, items = it) else it }
 
 
-    private fun Field.Reference.Primitive.Type.emitType(): OpenApiType = when (this) {
-        Field.Reference.Primitive.Type.String -> OpenApiType.STRING
-        Field.Reference.Primitive.Type.Integer -> OpenApiType.INTEGER
-        Field.Reference.Primitive.Type.Number -> OpenApiType.NUMBER
-        Field.Reference.Primitive.Type.Boolean -> OpenApiType.BOOLEAN
+    private fun Reference.Primitive.Type.emitType(): OpenApiType = when (this) {
+        Reference.Primitive.Type.String -> OpenApiType.STRING
+        Reference.Primitive.Type.Integer -> OpenApiType.INTEGER
+        Reference.Primitive.Type.Number -> OpenApiType.NUMBER
+        Reference.Primitive.Type.Boolean -> OpenApiType.BOOLEAN
     }
 
-    private fun Field.Reference.emitType() =
+    private fun Reference.emitType() =
         if (isIterable) OpenApiType.ARRAY else when (this) {
-            is Field.Reference.Primitive -> type.emitType()
-            is Field.Reference.Custom -> OpenApiType.OBJECT
-            is Field.Reference.Any -> OpenApiType.OBJECT
-            is Field.Reference.Unit -> OpenApiType.OBJECT
+            is Reference.Primitive -> type.emitType()
+            is Reference.Custom -> OpenApiType.OBJECT
+            is Reference.Any -> OpenApiType.OBJECT
+            is Reference.Unit -> OpenApiType.OBJECT
         }
 }

@@ -20,27 +20,27 @@ interface Emitters :
     ChannelDefinitionEmitter
 
 interface TypeDefinitionEmitter {
-    fun Type.emit(ast: AST): String
+    fun emit(type: Type, ast: AST): String
 }
 
 interface EnumDefinitionEmitter {
-    fun Enum.emit(): String
+    fun emit(enum: Enum): String
 }
 
 interface RefinedTypeDefinitionEmitter {
-    fun Refined.emit(): String
+    fun emit(refined: Refined): String
 }
 
 interface EndpointDefinitionEmitter {
-    fun Endpoint.emit(): String
+    fun emit(endpoint: Endpoint): String
 }
 
 interface UnionDefinitionEmitter {
-    fun Union.emit(): String
+    fun emit(union: Union): String
 }
 
 interface ChannelDefinitionEmitter {
-    fun Channel.emit(): String
+    fun emit(channel: Channel): String
 }
 
 interface IdentifierEmitter {

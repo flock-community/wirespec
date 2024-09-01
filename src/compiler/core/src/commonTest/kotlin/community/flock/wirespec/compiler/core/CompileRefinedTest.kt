@@ -10,11 +10,9 @@ import kotlin.test.Test
 
 class CompileRefinedTest {
 
-    private val compiler = compile(
-        """
-        type TodoId /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}/g
-        """.trimIndent()
-    )
+    private val compiler = """
+        |type TodoId /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}/g
+    """.trimMargin().let(::compile)
 
     @Test
     fun kotlin() {

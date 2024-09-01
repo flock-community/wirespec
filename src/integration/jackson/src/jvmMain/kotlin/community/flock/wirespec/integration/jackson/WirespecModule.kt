@@ -90,7 +90,7 @@ private class EnumSerializer(x: Class<Wirespec.Enum>? = null) : StdSerializer<Wi
  * @see Wirespec.Refined
  * @see WirespecModule
  */
-class RefinedDeserializer(val vc: Class<*>) : StdDeserializer<Wirespec.Refined>(vc) {
+class RefinedDeserializer(private val vc: Class<*>) : StdDeserializer<Wirespec.Refined>(vc) {
     @Throws(IOException::class, JsonProcessingException::class)
     override fun deserialize(jp: JsonParser, ctxt: DeserializationContext): Wirespec.Refined {
         val node = jp.codec.readTree<JsonNode>(jp)
@@ -104,7 +104,7 @@ class RefinedDeserializer(val vc: Class<*>) : StdDeserializer<Wirespec.Refined>(
  * @see Wirespec.Enum
  * @see WirespecModule
  */
-class EnumDeserializer(val vc: Class<*>) : StdDeserializer<Enum<*>>(vc) {
+class EnumDeserializer(private val vc: Class<*>) : StdDeserializer<Enum<*>>(vc) {
     @Throws(IOException::class, JsonProcessingException::class)
     override fun deserialize(jp: JsonParser, ctxt: DeserializationContext): Enum<*> {
         val node = jp.codec.readTree<JsonNode>(jp)
@@ -128,59 +128,46 @@ private class WirespecDeserializerModifier : BeanDeserializerModifier() {
         type: JavaType,
         beanDesc: BeanDescription,
         deserializer: JsonDeserializer<*>
-    ): JsonDeserializer<*> {
+    ): JsonDeserializer<*> =
         if (Wirespec.Enum::class.java.isAssignableFrom(beanDesc.beanClass)) {
-            return super.modifyDeserializer(config, beanDesc, EnumDeserializer(beanDesc.beanClass))
+            super.modifyDeserializer(config, beanDesc, EnumDeserializer(beanDesc.beanClass))
+        } else {
+            super.modifyEnumDeserializer(config, type, beanDesc, deserializer)
         }
-        return super.modifyEnumDeserializer(config, type, beanDesc, deserializer)
-    }
 
     override fun modifyDeserializer(
         config: DeserializationConfig,
         beanDesc: BeanDescription,
         deserializer: JsonDeserializer<*>
-    ): JsonDeserializer<*> {
+    ): JsonDeserializer<*> =
         if (Wirespec.Refined::class.java.isAssignableFrom(beanDesc.beanClass)) {
-            return super.modifyDeserializer(config, beanDesc, RefinedDeserializer(beanDesc.beanClass))
+            super.modifyDeserializer(config, beanDesc, RefinedDeserializer(beanDesc.beanClass))
+        } else {
+            super.modifyDeserializer(config, beanDesc, deserializer)
         }
-        return super.modifyDeserializer(config, beanDesc, deserializer)
-    }
 }
 
 internal class JavaReservedKeywordNamingStrategy : PropertyNamingStrategy() {
 
-    override fun nameForGetterMethod(config: MapperConfig<*>, method: AnnotatedMethod, defaultName: String): String {
-        if (Record::class.java.isAssignableFrom(method.declaringClass)) {
-            return translate(defaultName)
-        }
-        return defaultName
-    }
+    override fun nameForGetterMethod(config: MapperConfig<*>, method: AnnotatedMethod, defaultName: String): String =
+        if (Record::class.java.isAssignableFrom(method.declaringClass)) translate(defaultName)
+        else defaultName
 
-    override fun nameForSetterMethod(config: MapperConfig<*>, method: AnnotatedMethod, defaultName: String): String {
-        if (Record::class.java.isAssignableFrom(method.declaringClass)) {
-            return translate(defaultName)
-        }
-        return defaultName
-    }
+    override fun nameForSetterMethod(config: MapperConfig<*>, method: AnnotatedMethod, defaultName: String): String =
+        if (Record::class.java.isAssignableFrom(method.declaringClass)) translate(defaultName)
+        else defaultName
 
     override fun nameForConstructorParameter(
         config: MapperConfig<*>,
         ctorParam: AnnotatedParameter,
         defaultName: String
-    ): String {
-        if (Record::class.java.isAssignableFrom(ctorParam.owner.rawType)) {
-            return translate(defaultName)
-        }
-        return defaultName
-    }
+    ): String =
+        if (Record::class.java.isAssignableFrom(ctorParam.owner.rawType)) translate(defaultName)
+        else defaultName
 
     private fun translate(property: String): String {
         val keywords = JavaEmitter.reservedKeywords.map { "_$it" }
-        return if (property in keywords) {
-            property.drop(1)
-        } else {
-            property
-        }
+        return if (property in keywords) property.drop(1) else property
     }
 }
 

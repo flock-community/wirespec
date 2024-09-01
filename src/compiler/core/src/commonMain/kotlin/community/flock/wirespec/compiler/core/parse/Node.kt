@@ -14,47 +14,48 @@ sealed interface Definition : Node {
 data class Type(
     override val comment: Comment?,
     override val identifier: Identifier,
-    val shape: Shape
+    val shape: Shape,
+    val extends: List<Reference>,
 ) : Definition {
     data class Shape(override val value: List<Field>) : Value<List<Field>>
 }
 
-data class Field(val identifier: Identifier, val reference: Reference, val isNullable: Boolean) {
-    sealed interface Reference : Value<String> {
-        val isIterable: Boolean
-        val isDictionary: Boolean
+sealed interface Reference : Value<String> {
+    val isIterable: Boolean
+    val isDictionary: Boolean
 
-        data class Any(
-            override val isIterable: Boolean,
-            override val isDictionary: Boolean = false,
-        ) : Reference {
-            override val value = "Any"
-        }
+    data class Any(
+        override val isIterable: Boolean,
+        override val isDictionary: Boolean = false,
+    ) : Reference {
+        override val value = "Any"
+    }
 
-        data class Unit(
-            override val isIterable: Boolean,
-            override val isDictionary: Boolean = false,
-        ) : Reference {
-            override val value = "Unit"
-        }
+    data class Unit(
+        override val isIterable: Boolean,
+        override val isDictionary: Boolean = false,
+    ) : Reference {
+        override val value = "Unit"
+    }
 
-        data class Custom(
-            override val value: String,
-            override val isIterable: Boolean,
-            override val isDictionary: Boolean = false
-        ) : Reference
+    data class Custom(
+        override val value: String,
+        override val isIterable: Boolean,
+        override val isDictionary: Boolean = false
+    ) : Reference
 
-        data class Primitive(
-            val type: Type,
-            override val isIterable: Boolean = false,
-            override val isDictionary: Boolean = false
-        ) : Reference {
-            enum class Type { String, Integer, Number, Boolean }
+    data class Primitive(
+        val type: Type,
+        override val isIterable: Boolean = false,
+        override val isDictionary: Boolean = false
+    ) : Reference {
+        enum class Type { String, Integer, Number, Boolean }
 
-            override val value = type.name
-        }
+        override val value = type.name
     }
 }
+
+data class Field(val identifier: Identifier, val reference: Reference, val isNullable: Boolean)
 
 data class Enum(
     override val comment: Comment?,
@@ -65,7 +66,7 @@ data class Enum(
 data class Union(
     override val comment: Comment?,
     override val identifier: Identifier,
-    val entries: Set<Field.Reference>,
+    val entries: Set<Reference>,
 ) : Definition
 
 data class Refined(
@@ -81,7 +82,7 @@ data class Endpoint(
     override val identifier: Identifier,
     val method: Method,
     val path: List<Segment>,
-    val query: List<Field>,
+    val queries: List<Field>,
     val headers: List<Field>,
     val cookies: List<Field>,
     val requests: List<Request>,
@@ -92,21 +93,21 @@ data class Endpoint(
         data class Literal(override val value: String) : Value<String>, Segment
         data class Param(
             val identifier: Identifier,
-            val reference: Field.Reference
+            val reference: Reference
         ) : Segment
     }
 
     data class Request(val content: Content?)
     data class Response(val status: String, val headers: List<Field>, val content: Content?)
-    data class Content(val type: String, val reference: Field.Reference, val isNullable: Boolean = false)
+    data class Content(val type: String, val reference: Reference, val isNullable: Boolean = false)
 }
 
 data class Channel(
     override val comment: Comment?,
     override val identifier: Identifier,
     val isNullable: Boolean,
-    val reference: Field.Reference,
-): Definition
+    val reference: Reference,
+) : Definition
 
 @JvmInline
 value class Comment(override val value: String) : Value<String>

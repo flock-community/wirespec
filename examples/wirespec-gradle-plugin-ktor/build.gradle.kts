@@ -1,6 +1,5 @@
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
-import community.flock.wirespec.compiler.core.emit.transformer.ClassModelTransformer.transform
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -35,6 +34,7 @@ repositories {
 
 dependencies {
     implementation(libs.bundles.ktor)
+    implementation(libs.jackson)
     implementation(libs.logback)
     testImplementation(kotlin("test"))
     testImplementation(libs.bundles.ktor.test)
@@ -74,19 +74,19 @@ tasks.register<CustomWirespecTask>("wirespec-kotlin") {
 tasks.register<CompileWirespecTask>("wirespec-typescript") {
     input = layout.projectDirectory.dir("src/main/wirespec")
     output = layout.buildDirectory.dir("generated")
-    packageName = "community.flock.wirespec.kotlin"
-    languages = listOf(Language.Kotlin)
+    packageName = "community.flock.wirespec.generated.typescript"
+    languages = listOf(Language.TypeScript)
 }
 
 class KotlinSerializableEmitter : KotlinEmitter("community.flock.wirespec.generated.kotlin") {
 
-    override fun Type.emit(ast: AST) = """
-    |@kotlinx.serialization.Serializable
-    |${transform(ast).emit()}
+    override fun emit(type: Type, ast: AST): String = """
+        |@kotlinx.serialization.Serializable
+        |${super.emit(type, ast)}
     """.trimMargin()
 
-    override fun Refined.emit() = """
-    |@kotlinx.serialization.Serializable
-    |${transform().emit()}
+    override fun emit(refined: Refined): String = """
+        |@kotlinx.serialization.Serializable
+        |${super.emit(refined)}
     """.trimMargin()
 }

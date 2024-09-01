@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Node
+import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
@@ -29,7 +30,7 @@ fun WsEndpoint.consume(): Endpoint =
         identifier = Identifier(identifier),
         method = method.consume(),
         path = path.map { it.consume() },
-        query = query.map { it.consume() },
+        queries = query.map { it.consume() },
         headers = query.map { it.consume() },
         cookies = query.map { it.consume() },
         requests = requests.map { it.consume() },
@@ -70,7 +71,8 @@ private fun WsRefined.consume() = Refined(
 private fun WsType.consume() = Type(
     identifier = Identifier(identifier),
     comment = comment?.let { Comment(it) },
-    shape = Type.Shape(shape.value.map { it.consume() })
+    shape = Type.Shape(shape.value.map { it.consume() }),
+    extends = emptyList(),
 )
 
 private fun WsUnion.consume() = Union(
@@ -114,23 +116,23 @@ private fun WsContent.consume() =
 
 private fun WsReference.consume() =
     when (this) {
-        is WsAny -> Field.Reference.Any(
+        is WsAny -> Reference.Any(
             isIterable = isIterable,
             isDictionary = isMap
         )
 
-        is WsUnit -> Field.Reference.Unit(
+        is WsUnit -> Reference.Unit(
             isIterable = isIterable,
             isDictionary = isMap
         )
 
-        is WsCustom -> Field.Reference.Custom(
+        is WsCustom -> Reference.Custom(
             value = value,
             isIterable = isIterable,
             isDictionary = isMap
         )
 
-        is WsPrimitive -> Field.Reference.Primitive(
+        is WsPrimitive -> Reference.Primitive(
             type = type.consume(),
             isIterable = isIterable,
             isDictionary = isMap
@@ -139,10 +141,10 @@ private fun WsReference.consume() =
 
 private fun WsPrimitiveType.consume() =
     when (this) {
-        WsPrimitiveType.String -> Field.Reference.Primitive.Type.String
-        WsPrimitiveType.Integer -> Field.Reference.Primitive.Type.Integer
-        WsPrimitiveType.Number -> Field.Reference.Primitive.Type.Number
-        WsPrimitiveType.Boolean -> Field.Reference.Primitive.Type.Boolean
+        WsPrimitiveType.String -> Reference.Primitive.Type.String
+        WsPrimitiveType.Integer -> Reference.Primitive.Type.Integer
+        WsPrimitiveType.Number -> Reference.Primitive.Type.Number
+        WsPrimitiveType.Boolean -> Reference.Primitive.Type.Boolean
     }
 
 
@@ -159,7 +161,7 @@ fun Node.produce(): WsNode =
             comment = comment?.value,
             method = method.produce(),
             path = path.produce(),
-            query = query.produce(),
+            query = queries.produce(),
             headers = headers.produce(),
             cookies = cookies.produce(),
             requests = requests.produce(),
@@ -213,18 +215,18 @@ private fun List<Field>.produce() = map { it.produce() }.toTypedArray()
 
 private fun Identifier.produce() = WsIdentifier(value)
 
-private fun Field.Reference.produce() = when (this) {
-    is Field.Reference.Any -> WsAny(isIterable, isDictionary)
-    is Field.Reference.Unit -> WsUnit(isIterable, isDictionary)
-    is Field.Reference.Custom -> WsCustom(value, isIterable, isDictionary)
-    is Field.Reference.Primitive -> WsPrimitive(type.produce(), isIterable, isDictionary)
+private fun Reference.produce() = when (this) {
+    is Reference.Any -> WsAny(isIterable, isDictionary)
+    is Reference.Unit -> WsUnit(isIterable, isDictionary)
+    is Reference.Custom -> WsCustom(value, isIterable, isDictionary)
+    is Reference.Primitive -> WsPrimitive(type.produce(), isIterable, isDictionary)
 }
 
-private fun Field.Reference.Primitive.Type.produce() = when (this) {
-    Field.Reference.Primitive.Type.String -> WsPrimitiveType.String
-    Field.Reference.Primitive.Type.Integer -> WsPrimitiveType.Integer
-    Field.Reference.Primitive.Type.Number -> WsPrimitiveType.Number
-    Field.Reference.Primitive.Type.Boolean -> WsPrimitiveType.Boolean
+private fun Reference.Primitive.Type.produce() = when (this) {
+    Reference.Primitive.Type.String -> WsPrimitiveType.String
+    Reference.Primitive.Type.Integer -> WsPrimitiveType.Integer
+    Reference.Primitive.Type.Number -> WsPrimitiveType.Number
+    Reference.Primitive.Type.Boolean -> WsPrimitiveType.Boolean
 }
 
 private fun Endpoint.Method.produce() = when (this) {
