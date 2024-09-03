@@ -145,8 +145,8 @@ open class KotlinEmitter(
         |${Spacer}const val PATH_TEMPLATE = "/${endpoint.path.joinToString("/") { it.emit() }}"
         |${Spacer}const val METHOD_VALUE = "${endpoint.method}"
         |${Spacer}class Client(serialization: Wirespec.Serialization<String>): Wirespec.Client<Request, Response<*>> { 
-        |${Spacer(2)}override val internalize = { response: Wirespec.RawResponse -> internalizeResponse(serialization, request)}
-        |${Spacer(2)}override val externalize = { request: Request<*> -> externalizeRequest(serialization, response)}
+        |${Spacer(2)}override val internalize = { response: Wirespec.RawResponse -> internalizeResponse(serialization, response)}
+        |${Spacer(2)}override val externalize = { request: Request -> externalizeRequest(serialization, request)}
         |${Spacer}}
         |${Spacer}class Server(serialization: Wirespec.Serialization<String>): Wirespec.Server<Request, Response<*>> { 
         |${Spacer(2)}override val consume = { request: Wirespec.RawRequest -> consumeRequest(serialization, request)}
@@ -213,7 +213,10 @@ open class KotlinEmitter(
     ).joinToString(",\n").let { if (it.isBlank()) "object Request : Wirespec.Request<${content.emit()}> {" else "class Request(\n$it\n${Spacer}) : Wirespec.Request<${content.emit()}> {" }
 
     private fun Endpoint.Request.emitDeserializedParams(endpoint: Endpoint) = listOfNotNull(
-        endpoint.pathParams.withIndex().joinToString { it.value.emitDeserialized(endpoint.pathLiterals.size + it.index) }.orNull(),
+        endpoint.path.mapIndexed { index, segment ->  when(segment){
+            is Endpoint.Segment.Literal -> null
+            is Endpoint.Segment.Param -> segment.emitDeserialized(index)
+        }}.filterNotNull().joinToString(),
         endpoint.queries.joinToString { it.emitDeserialized("queries") }.orNull(),
         endpoint.headers.joinToString { it.emitDeserialized("headers") }.orNull(),
         content?.let { """${Spacer(3)}body = serialization.deserialize(requireNotNull(request.body) { "body is null" }, typeOf<${it.emit()}>()),""" }
