@@ -9,11 +9,11 @@ object Serialization : Wirespec.Serialization<String> {
 
     private val mapper = jacksonObjectMapper()
 
-    override fun <T : Any> serialize(t: T, kType: KType): String =
+    override fun <T> serialize(t: T, kType: KType): String =
         mapper.writeValueAsString(t)
 
     @OptIn(ExperimentalStdlibApi::class)
-    override fun <T : Any> deserialize(raw: String, kType: KType): T =
+    override fun <T> deserialize(raw: String, kType: KType): T =
         mapper.constructType(kType.javaType)
             .let { mapper.readValue(raw, it) }
 

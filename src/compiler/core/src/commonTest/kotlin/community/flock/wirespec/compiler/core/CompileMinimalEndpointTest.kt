@@ -82,9 +82,22 @@ class CompileMinimalEndpointTest {
             |
             |  const val PATH_TEMPLATE = "/todos"
             |  const val METHOD_VALUE = "GET"
-            |
-            |  interface Handler {
+            |  class Client(serialization: Wirespec.Serialization<String>): Wirespec.Client<Request, Response<*>> { 
+            |    override val internalize = { response: Wirespec.RawResponse -> internalizeResponse(serialization, request)}
+            |    override val externalize = { request: Request<*> -> externalizeRequest(serialization, response)}
+            |  }
+            |  class Server(serialization: Wirespec.Serialization<String>): Wirespec.Server<Request, Response<*>> { 
+            |    override val consume = { request: Wirespec.RawRequest -> consumeRequest(serialization, request)}
+            |    override val produce = { response: Response<*> -> produceResponse(serialization, response)}
+            |  }
+            |  interface Handler: Wirespec.Handler {
             |    suspend fun getTodos(request: Request): Response<*>
+            |    companion object: Wirespec.Instance<Request, Response<*>> {
+            |      override val path = PATH_TEMPLATE
+            |      override val method = METHOD_VALUE
+            |      override val client = {serialization: Wirespec.Serialization<String> -> Client(serialization)}
+            |      override val server = {serialization: Wirespec.Serialization<String> -> Server(serialization)}
+            |    }
             |  }
             |}
             |data class TodoDto(

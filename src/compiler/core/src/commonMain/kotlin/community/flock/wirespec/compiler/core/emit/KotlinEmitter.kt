@@ -144,9 +144,22 @@ open class KotlinEmitter(
         |
         |${Spacer}const val PATH_TEMPLATE = "/${endpoint.path.joinToString("/") { it.emit() }}"
         |${Spacer}const val METHOD_VALUE = "${endpoint.method}"
-        |
-        |${Spacer}interface Handler {
+        |${Spacer}class Client(serialization: Wirespec.Serialization<String>): Wirespec.Client<Request, Response<*>> { 
+        |${Spacer(2)}override val internalize = { response: Wirespec.RawResponse -> internalizeResponse(serialization, request)}
+        |${Spacer(2)}override val externalize = { request: Request<*> -> externalizeRequest(serialization, response)}
+        |${Spacer}}
+        |${Spacer}class Server(serialization: Wirespec.Serialization<String>): Wirespec.Server<Request, Response<*>> { 
+        |${Spacer(2)}override val consume = { request: Wirespec.RawRequest -> consumeRequest(serialization, request)}
+        |${Spacer(2)}override val produce = { response: Response<*> -> produceResponse(serialization, response)}
+        |${Spacer}}
+        |${Spacer}interface Handler: Wirespec.Handler {
         |${Spacer(2)}suspend fun ${endpoint.identifier.emit().firstToLower()}(request: Request): Response<*>
+        |${Spacer(2)}companion object: Wirespec.Instance<Request, Response<*>> {
+        |${Spacer(3)}override val path = PATH_TEMPLATE
+        |${Spacer(3)}override val method = METHOD_VALUE
+        |${Spacer(3)}override val client = {serialization: Wirespec.Serialization<String> -> Client(serialization)}
+        |${Spacer(3)}override val server = {serialization: Wirespec.Serialization<String> -> Server(serialization)}
+        |${Spacer(2)}}
         |${Spacer}}
         |}
     """.trimMargin()
