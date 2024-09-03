@@ -20,30 +20,30 @@ interface UserClient :
     PostUserEndpoint.Handler,
     DeleteUserByNameEndpoint.Handler
 
-class LiveUserClient(private val client: HttpClient = HttpClient()) : UserClient {
+class LiveUserClient(private val httpClient: HttpClient = HttpClient()) : UserClient {
 
     override suspend fun getUsers(request: GetUsersEndpoint.Request) =
-        GetUsersEndpoint.externalizeRequest(Serialization, request)
-            .let(::handle)
-            .let { GetUsersEndpoint.internalizeResponse(Serialization, it) }
+        with(GetUsersEndpoint.Handler.client(Serialization)) {
+            externalize(request).let(::handle).let(::internalize)
+        }
 
     override suspend fun getUserByName(request: GetUserByNameEndpoint.Request) =
-        GetUserByNameEndpoint.externalizeRequest(Serialization, request)
-            .let(::handle)
-            .let { GetUserByNameEndpoint.internalizeResponse(Serialization, it) }
+        with(GetUserByNameEndpoint.Handler.client(Serialization)) {
+            externalize(request).let(::handle).let(::internalize)
+        }
 
     override suspend fun postUser(request: PostUserEndpoint.Request) =
-        PostUserEndpoint.externalizeRequest(Serialization, request)
-            .let(::handle)
-            .let { PostUserEndpoint.internalizeResponse(Serialization, it) }
+        with(PostUserEndpoint.Handler.client(Serialization)) {
+            externalize(request).let(::handle).let(::internalize)
+        }
 
     override suspend fun deleteUserByName(request: DeleteUserByNameEndpoint.Request) =
-        DeleteUserByNameEndpoint.externalizeRequest(Serialization, request)
-            .let(::handle)
-            .let { DeleteUserByNameEndpoint.internalizeResponse(Serialization, it) }
+        with(DeleteUserByNameEndpoint.Handler.client(Serialization)) {
+            externalize(request).let(::handle).let(::internalize)
+        }
 
     private fun handle(request: Wirespec.RawRequest): Wirespec.RawResponse = runBlocking {
-        val response = client.request("http://localhost:8080/") {
+        val response = httpClient.request("http://localhost:8080/") {
             method = HttpMethod.parse(request.method)
             url {
                 path(*request.path.toTypedArray())

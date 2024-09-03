@@ -80,23 +80,19 @@ class CompileMinimalEndpointTest {
             |      else -> error("Cannot internalize response with status: ${'$'}{response.statusCode}")
             |    }
             |
-            |  const val PATH_TEMPLATE = "/todos"
-            |  const val METHOD_VALUE = "GET"
-            |  class Client(serialization: Wirespec.Serialization<String>): Wirespec.Client<Request, Response<*>> { 
-            |    override val internalize = { response: Wirespec.RawResponse -> internalizeResponse(serialization, response)}
-            |    override val externalize = { request: Request -> externalizeRequest(serialization, request)}
-            |  }
-            |  class Server(serialization: Wirespec.Serialization<String>): Wirespec.Server<Request, Response<*>> { 
-            |    override val consume = { request: Wirespec.RawRequest -> consumeRequest(serialization, request)}
-            |    override val produce = { response: Response<*> -> produceResponse(serialization, response)}
-            |  }
             |  interface Handler: Wirespec.Handler {
             |    suspend fun getTodos(request: Request): Response<*>
-            |    companion object: Wirespec.Instance<Request, Response<*>> {
-            |      override val path = PATH_TEMPLATE
-            |      override val method = METHOD_VALUE
-            |      override val client = {serialization: Wirespec.Serialization<String> -> Client(serialization)}
-            |      override val server = {serialization: Wirespec.Serialization<String> -> Server(serialization)}
+            |    companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
+            |      override val pathTemplate = "/todos"
+            |      override val method = "GET"
+            |      override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
+            |        override fun consume(request: Wirespec.RawRequest) = consumeRequest(serialization, request)
+            |        override fun produce(response: Response<*>) = produceResponse(serialization, response)
+            |      }
+            |      override fun client(serialization: Wirespec.Serialization<String>) = object : Wirespec.ClientEdge<Request, Response<*>> {
+            |        override fun internalize(response: Wirespec.RawResponse) = internalizeResponse(serialization, response)
+            |        override fun externalize(request: Request) = externalizeRequest(serialization, request)
+            |      }
             |    }
             |  }
             |}

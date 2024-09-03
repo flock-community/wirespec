@@ -142,23 +142,19 @@ open class KotlinEmitter(
         |${Spacer(3)}else -> error("Cannot internalize response with status: ${'$'}{response.statusCode}")
         |${Spacer(2)}}
         |
-        |${Spacer}const val PATH_TEMPLATE = "/${endpoint.path.joinToString("/") { it.emit() }}"
-        |${Spacer}const val METHOD_VALUE = "${endpoint.method}"
-        |${Spacer}class Client(serialization: Wirespec.Serialization<String>): Wirespec.Client<Request, Response<*>> { 
-        |${Spacer(2)}override val internalize = { response: Wirespec.RawResponse -> internalizeResponse(serialization, response)}
-        |${Spacer(2)}override val externalize = { request: Request -> externalizeRequest(serialization, request)}
-        |${Spacer}}
-        |${Spacer}class Server(serialization: Wirespec.Serialization<String>): Wirespec.Server<Request, Response<*>> { 
-        |${Spacer(2)}override val consume = { request: Wirespec.RawRequest -> consumeRequest(serialization, request)}
-        |${Spacer(2)}override val produce = { response: Response<*> -> produceResponse(serialization, response)}
-        |${Spacer}}
         |${Spacer}interface Handler: Wirespec.Handler {
         |${Spacer(2)}suspend fun ${endpoint.identifier.emit().firstToLower()}(request: Request): Response<*>
-        |${Spacer(2)}companion object: Wirespec.Instance<Request, Response<*>> {
-        |${Spacer(3)}override val path = PATH_TEMPLATE
-        |${Spacer(3)}override val method = METHOD_VALUE
-        |${Spacer(3)}override val client = {serialization: Wirespec.Serialization<String> -> Client(serialization)}
-        |${Spacer(3)}override val server = {serialization: Wirespec.Serialization<String> -> Server(serialization)}
+        |${Spacer(2)}companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
+        |${Spacer(3)}override val pathTemplate = "/${endpoint.path.joinToString("/") { it.emit() }}"
+        |${Spacer(3)}override val method = "${endpoint.method}"
+        |${Spacer(3)}override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
+        |${Spacer(4)}override fun consume(request: Wirespec.RawRequest) = consumeRequest(serialization, request)
+        |${Spacer(4)}override fun produce(response: Response<*>) = produceResponse(serialization, response)
+        |${Spacer(3)}}
+        |${Spacer(3)}override fun client(serialization: Wirespec.Serialization<String>) = object : Wirespec.ClientEdge<Request, Response<*>> {
+        |${Spacer(4)}override fun internalize(response: Wirespec.RawResponse) = internalizeResponse(serialization, response)
+        |${Spacer(4)}override fun externalize(request: Request) = externalizeRequest(serialization, request)
+        |${Spacer(3)}}
         |${Spacer(2)}}
         |${Spacer}}
         |}
@@ -186,7 +182,7 @@ open class KotlinEmitter(
         |
         |${Spacer}fun externalizeRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
         |${Spacer(2)}Wirespec.RawRequest(
-        |${Spacer(3)}path = listOf(${endpoint.path.map { when(it){ is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier()} }.joinToString () }),
+        |${Spacer(3)}path = listOf(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
         |${Spacer(3)}method = request.method.name,
         |${Spacer(3)}queries = mapOf(${endpoint.queries.joinToString { it.emitSerialized("queries") }}),
         |${Spacer(3)}headers = mapOf(${endpoint.headers.joinToString { it.emitSerialized("headers") }}),
@@ -213,10 +209,7 @@ open class KotlinEmitter(
     ).joinToString(",\n").let { if (it.isBlank()) "object Request : Wirespec.Request<${content.emit()}> {" else "class Request(\n$it\n${Spacer}) : Wirespec.Request<${content.emit()}> {" }
 
     private fun Endpoint.Request.emitDeserializedParams(endpoint: Endpoint) = listOfNotNull(
-        endpoint.path.mapIndexed { index, segment ->  when(segment){
-            is Endpoint.Segment.Literal -> null
-            is Endpoint.Segment.Param -> segment.emitDeserialized(index)
-        }}.filterNotNull().joinToString(),
+        endpoint.indexedPathParams.joinToString { it.emitDeserialized() }.orNull(),
         endpoint.queries.joinToString { it.emitDeserialized("queries") }.orNull(),
         endpoint.headers.joinToString { it.emitDeserialized("headers") }.orNull(),
         content?.let { """${Spacer(3)}body = serialization.deserialize(requireNotNull(request.body) { "body is null" }, typeOf<${it.emit()}>()),""" }
@@ -239,8 +232,8 @@ open class KotlinEmitter(
     private fun Field.emitSerialized(fields: String) =
         """"${identifier.emit()}" to listOf(serialization.serialize(request.$fields.${identifier.emit()}, typeOf<${reference.emit()}>()))"""
 
-    private fun Endpoint.Segment.Param.emitDeserialized(idx: Int) =
-        """${Spacer(3)}${identifier.emit()} = serialization.deserialize(request.path[${idx}], typeOf<${reference.emit()}>())"""
+    private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
+        """${Spacer(3)}${value.identifier.emit()} = serialization.deserialize(request.path[${index}], typeOf<${value.reference.emit()}>())"""
 
     private fun Field.emitDeserialized(fields: String) =
         """${Spacer(3)}${identifier.emit()} = serialization.deserialize(requireNotNull(request.$fields["${identifier.emit()}"]?.get(0)) { "${identifier.emit()} is null" }, typeOf<${reference.emit()}>())"""
@@ -255,8 +248,14 @@ open class KotlinEmitter(
             is Endpoint.Segment.Param -> "{${identifier.emit()}}"
         }
 
-    private val Endpoint.pathLiterals get() = path.filterIsInstance<Endpoint.Segment.Literal>()
     private val Endpoint.pathParams get() = path.filterIsInstance<Endpoint.Segment.Param>()
+    private val Endpoint.indexedPathParams
+        get() = path.withIndex().mapNotNull { (idx, segment) ->
+            when (segment) {
+                is Endpoint.Segment.Literal -> null
+                is Endpoint.Segment.Param -> IndexedValue(idx, segment)
+            }
+        }
 
     private fun Endpoint.Segment.Param.emit() = "${identifier.emit()}: ${reference.emit()}"
 
