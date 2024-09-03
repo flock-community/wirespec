@@ -186,7 +186,7 @@ open class KotlinEmitter(
         |
         |${Spacer}fun externalizeRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
         |${Spacer(2)}Wirespec.RawRequest(
-        |${Spacer(3)}path = listOf(${endpoint.pathLiterals.joinToString { """"${it.value}"""" }}${endpoint.pathParams.emitIdentifiers()}),
+        |${Spacer(3)}path = listOf(${endpoint.path.map { when(it){ is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier()} }.joinToString () }),
         |${Spacer(3)}method = request.method.name,
         |${Spacer(3)}queries = mapOf(${endpoint.queries.joinToString { it.emitSerialized("queries") }}),
         |${Spacer(3)}headers = mapOf(${endpoint.headers.joinToString { it.emitSerialized("headers") }}),
@@ -245,9 +245,7 @@ open class KotlinEmitter(
     private fun Field.emitDeserialized(fields: String) =
         """${Spacer(3)}${identifier.emit()} = serialization.deserialize(requireNotNull(request.$fields["${identifier.emit()}"]?.get(0)) { "${identifier.emit()} is null" }, typeOf<${reference.emit()}>())"""
 
-    private fun List<Endpoint.Segment.Param>.emitIdentifiers() =
-        if (isEmpty()) ""
-        else ", ${joinToString { "request.path.${it.identifier.value}.toString()" }}"
+    private fun Endpoint.Segment.Param.emitIdentifier() = "request.path.${identifier.value}.toString()"
 
     private fun Endpoint.Content?.emit() = this?.reference?.emit() ?: "Unit"
 
