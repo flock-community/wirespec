@@ -46,8 +46,8 @@ class CompileMinimalEndpointTest {
             |    Wirespec.RawRequest(
             |      path = listOf("todos"),
             |      method = request.method.name,
-            |      queries = mapOf(),
-            |      headers = mapOf(),
+            |      queries = emptyMap(),
+            |      headers = emptyMap(),
             |      body = serialization.serialize(request.body, typeOf<Unit>()),
             |    )
             |

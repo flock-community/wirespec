@@ -39,7 +39,7 @@ data object KotlinShared : Shared {
         |${Spacer}interface Response<T : Any> { val status: Int; val headers: Headers; val body: T; interface Headers : Wirespec.Headers }
         |${Spacer}interface Serialization<RAW : Any> : Serializer<RAW>, Deserializer<RAW>
         |${Spacer}interface Serializer<RAW : Any> { fun <T> serialize(t: T, kType: KType): RAW }
-        |${Spacer}interface Deserializer<RAW> { fun <T> deserialize(raw: RAW, kType: KType): T }
+        |${Spacer}interface Deserializer<RAW: Any> { fun <T> deserialize(raw: RAW, kType: KType): T }
         |${Spacer}data class RawRequest(val method: String, val path: List<String>, val queries: Map<String, List<String>>, val headers: Map<String, List<String>>, val body: String?) 
         |${Spacer}data class RawResponse(val statusCode: Int, val headers: Map<String, List<String>>, val body: String?)
         |}

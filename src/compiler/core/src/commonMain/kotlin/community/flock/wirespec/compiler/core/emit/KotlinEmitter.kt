@@ -49,6 +49,7 @@ open class KotlinEmitter(
 
     override fun emit(ast: AST): List<Emitted> =
         super.emit(ast).map {
+            listOf("", null).filterNotNull()
             Emitted(
                 typeName = it.typeName.sanitizeSymbol(),
                 result = """
@@ -177,15 +178,15 @@ open class KotlinEmitter(
         |${Spacer(2)}override val path = Path${endpoint.pathParams.joinToString { it.identifier.emit() }.brace()}
         |${Spacer(2)}override val method = Wirespec.Method.${endpoint.method.name}
         |${Spacer(2)}override val queries = Queries${endpoint.queries.joinToString { it.identifier.emit() }.brace()}
-        |${Spacer(2)}override val headers = Headers${endpoint.headers.joinToString { it.identifier.emit() }.brace()}${if (content == null) "\n${Spacer(2)}override val body = ${content.emit()}" else ""}
+        |${Spacer(2)}override val headers = Headers${endpoint.headers.joinToString { it.identifier.emit() }.brace()}${if (content == null) "\n${Spacer(2)}override val body = Unit" else ""}
         |${Spacer}}
         |
         |${Spacer}fun externalizeRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
         |${Spacer(2)}Wirespec.RawRequest(
         |${Spacer(3)}path = listOf(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
         |${Spacer(3)}method = request.method.name,
-        |${Spacer(3)}queries = mapOf(${endpoint.queries.joinToString { it.emitSerialized("queries") }}),
-        |${Spacer(3)}headers = mapOf(${endpoint.headers.joinToString { it.emitSerialized("headers") }}),
+        |${Spacer(3)}queries = ${if(endpoint.queries.isNotEmpty()) "listOf(${endpoint.queries.joinToString { it.emitSerialized("queries") }}).filterNotNull().toMap()" else "emptyMap()"},
+        |${Spacer(3)}headers = ${if(endpoint.headers.isNotEmpty()) "listOf(${endpoint.headers.joinToString { it.emitSerialized("headers") }}).filterNotNull().toMap()" else "emptyMap()"},
         |${Spacer(3)}body = serialization.serialize(request.body, typeOf<${content.emit()}>()),
         |${Spacer(2)})
         |
@@ -219,7 +220,7 @@ open class KotlinEmitter(
         |${Spacer(3)}is Response$status -> Wirespec.RawResponse(
         |${Spacer(4)}statusCode = response.status,
         |${Spacer(4)}headers = mapOf(),
-        |${Spacer(4)}body = serialization.serialize(response.body, typeOf<${content.emit()}>()),
+        |${Spacer(4)}body = ${if(content != null) "serialization.serialize(response.body, typeOf<${content.emit()}>())" else "null"},
         |${Spacer(3)})
     """.trimMargin()
 
@@ -230,13 +231,16 @@ open class KotlinEmitter(
     """.trimMargin()
 
     private fun Field.emitSerialized(fields: String) =
-        """"${identifier.emit()}" to listOf(serialization.serialize(request.$fields.${identifier.emit()}, typeOf<${reference.emit()}>()))"""
+        """request.$fields.${identifier.emit()}?.let{"${identifier.emit()}" to serialization.serialize(it, typeOf<${reference.emit()}>()).let(::listOf)}"""
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
         """${Spacer(3)}${value.identifier.emit()} = serialization.deserialize(request.path[${index}], typeOf<${value.reference.emit()}>())"""
 
     private fun Field.emitDeserialized(fields: String) =
-        """${Spacer(3)}${identifier.emit()} = serialization.deserialize(requireNotNull(request.$fields["${identifier.emit()}"]?.get(0)) { "${identifier.emit()} is null" }, typeOf<${reference.emit()}>())"""
+        if(isNullable)
+            """${Spacer(3)}${identifier.emit()} = request.$fields["${identifier.emit()}"]?.get(0)?.let{ serialization.deserialize(it, typeOf<${reference.emit()}>()) }"""
+        else
+            """${Spacer(3)}${identifier.emit()} = serialization.deserialize(requireNotNull(request.$fields["${identifier.emit()}"]?.get(0)) { "${identifier.emit()} is null" }, typeOf<${reference.emit()}>())"""
 
     private fun Endpoint.Segment.Param.emitIdentifier() = "request.path.${identifier.value}.toString()"
 

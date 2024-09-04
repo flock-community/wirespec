@@ -72,8 +72,8 @@ class CompileFullEndpointTest {
             |    Wirespec.RawRequest(
             |      path = listOf("todos", request.path.id.toString()),
             |      method = request.method.name,
-            |      queries = mapOf("done" to listOf(serialization.serialize(request.queries.done, typeOf<Boolean>()))),
-            |      headers = mapOf("token" to listOf(serialization.serialize(request.headers.token, typeOf<Token>()))),
+            |      queries = listOf(request.queries.done?.let{"done" to serialization.serialize(it, typeOf<Boolean>()).let(::listOf)}).filterNotNull().toMap(),
+            |      headers = listOf(request.headers.token?.let{"token" to serialization.serialize(it, typeOf<Token>()).let(::listOf)}).filterNotNull().toMap(),
             |      body = serialization.serialize(request.body, typeOf<PotentialTodoDto>()),
             |    )
             |
