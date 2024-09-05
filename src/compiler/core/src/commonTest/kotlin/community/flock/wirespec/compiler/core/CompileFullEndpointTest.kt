@@ -72,8 +72,8 @@ class CompileFullEndpointTest {
             |    Wirespec.RawRequest(
             |      path = listOf("todos", request.path.id.toString()),
             |      method = request.method.name,
-            |      queries = mapOf("done" to listOf(serialization.serialize(request.queries.done, typeOf<Boolean>()))),
-            |      headers = mapOf("token" to listOf(serialization.serialize(request.headers.token, typeOf<Token>()))),
+            |      queries = listOf(request.queries.done?.let{"done" to serialization.serialize(it, typeOf<Boolean>()).let(::listOf)}).filterNotNull().toMap(),
+            |      headers = listOf(request.headers.token?.let{"token" to serialization.serialize(it, typeOf<Token>()).let(::listOf)}).filterNotNull().toMap(),
             |      body = serialization.serialize(request.body, typeOf<PotentialTodoDto>()),
             |    )
             |
@@ -125,11 +125,20 @@ class CompileFullEndpointTest {
             |      else -> error("Cannot internalize response with status: ${'$'}{response.statusCode}")
             |    }
             |
-            |  const val PATH_TEMPLATE = "/todos/{id}"
-            |  const val METHOD_VALUE = "PUT"
-            |
-            |  interface Handler {
+            |  interface Handler: Wirespec.Handler {
             |    suspend fun putTodo(request: Request): Response<*>
+            |    companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
+            |      override val pathTemplate = "/todos/{id}"
+            |      override val method = "PUT"
+            |      override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
+            |        override fun consume(request: Wirespec.RawRequest) = consumeRequest(serialization, request)
+            |        override fun produce(response: Response<*>) = produceResponse(serialization, response)
+            |      }
+            |      override fun client(serialization: Wirespec.Serialization<String>) = object : Wirespec.ClientEdge<Request, Response<*>> {
+            |        override fun internalize(response: Wirespec.RawResponse) = internalizeResponse(serialization, response)
+            |        override fun externalize(request: Request) = externalizeRequest(serialization, request)
+            |      }
+            |    }
             |  }
             |}
             |data class PotentialTodoDto(

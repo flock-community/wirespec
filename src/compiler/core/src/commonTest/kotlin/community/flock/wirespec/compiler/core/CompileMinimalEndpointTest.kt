@@ -46,8 +46,8 @@ class CompileMinimalEndpointTest {
             |    Wirespec.RawRequest(
             |      path = listOf("todos"),
             |      method = request.method.name,
-            |      queries = mapOf(),
-            |      headers = mapOf(),
+            |      queries = emptyMap(),
+            |      headers = emptyMap(),
             |      body = serialization.serialize(request.body, typeOf<Unit>()),
             |    )
             |
@@ -80,11 +80,20 @@ class CompileMinimalEndpointTest {
             |      else -> error("Cannot internalize response with status: ${'$'}{response.statusCode}")
             |    }
             |
-            |  const val PATH_TEMPLATE = "/todos"
-            |  const val METHOD_VALUE = "GET"
-            |
-            |  interface Handler {
+            |  interface Handler: Wirespec.Handler {
             |    suspend fun getTodos(request: Request): Response<*>
+            |    companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
+            |      override val pathTemplate = "/todos"
+            |      override val method = "GET"
+            |      override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
+            |        override fun consume(request: Wirespec.RawRequest) = consumeRequest(serialization, request)
+            |        override fun produce(response: Response<*>) = produceResponse(serialization, response)
+            |      }
+            |      override fun client(serialization: Wirespec.Serialization<String>) = object : Wirespec.ClientEdge<Request, Response<*>> {
+            |        override fun internalize(response: Wirespec.RawResponse) = internalizeResponse(serialization, response)
+            |        override fun externalize(request: Request) = externalizeRequest(serialization, request)
+            |      }
+            |    }
             |  }
             |}
             |data class TodoDto(
