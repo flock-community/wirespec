@@ -3,7 +3,6 @@ package community.flock.wirespec.integration.jackson.kotlin
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import community.flock.wirespec.integration.jackson.WirespecModule
 import community.flock.wirespec.integration.jackson.kotlin.generated.Todo
 import community.flock.wirespec.integration.jackson.kotlin.generated.TodoCategory
 import community.flock.wirespec.integration.jackson.kotlin.generated.TodoId
@@ -23,7 +22,7 @@ class WirespecModuleKotlinTest {
 
     val objectMapper = ObjectMapper()
         .registerKotlinModule()
-        .registerModules(WirespecModule())
+        .registerModules(WirespecModuleKotlin())
 
     @Test
     fun serializeRefined(){

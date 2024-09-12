@@ -1,7 +1,8 @@
 package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.emit.common.ClassModelEmitter
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.Spacer
@@ -26,7 +27,7 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
 open class JavaEmitter(
-    val packageName: String = DEFAULT_PACKAGE_STRING,
+    val packageName: String = DEFAULT_GENERATED_PACKAGE_STRING,
     logger: Logger = noLogger,
 ) : ClassModelEmitter, Emitter(logger, true) {
 
@@ -42,7 +43,7 @@ open class JavaEmitter(
 
     private fun importWireSpec(ast: AST) = if (ast.needImports()) {
         """
-        |import community.flock.wirespec.Wirespec;
+        |import $DEFAULT_SHARED_PACKAGE_STRING.java.Wirespec;
         |
         |
         """.trimMargin()

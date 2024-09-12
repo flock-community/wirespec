@@ -1,11 +1,11 @@
 package community.flock.wirespec.examples.app.todo
 
-import community.flock.wirespec.Wirespec
 import community.flock.wirespec.examples.app.common.Serialization
 import community.flock.wirespec.generated.kotlin.DeleteTodoByIdEndpoint
 import community.flock.wirespec.generated.kotlin.GetTodoByIdEndpoint
 import community.flock.wirespec.generated.kotlin.GetTodosEndpoint
 import community.flock.wirespec.generated.kotlin.PostTodoEndpoint
+import community.flock.wirespec.kotlin.Wirespec
 import io.ktor.http.HttpMethod
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall

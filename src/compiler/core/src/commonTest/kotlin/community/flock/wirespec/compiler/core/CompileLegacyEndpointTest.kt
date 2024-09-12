@@ -174,7 +174,7 @@ class CompileLegacyEndpointTest {
         val java = """
             |package community.flock.wirespec.generated;
             |
-            |import community.flock.wirespec.Wirespec;
+            |import community.flock.wirespec.java.Wirespec;
             |
             |import java.util.concurrent.CompletableFuture;
             |import java.util.function.Function;
@@ -320,7 +320,7 @@ class CompileLegacyEndpointTest {
         val java = """
             |package community.flock.wirespec.generated;
             |
-            |import community.flock.wirespec.Wirespec;
+            |import community.flock.wirespec.java.Wirespec;
             |
             |import java.util.concurrent.CompletableFuture;
             |import java.util.function.Function;

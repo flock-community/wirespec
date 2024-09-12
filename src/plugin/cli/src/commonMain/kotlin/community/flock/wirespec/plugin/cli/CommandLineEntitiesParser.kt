@@ -10,7 +10,7 @@ import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.enum
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.utils.Logger.Level
 import community.flock.wirespec.compiler.utils.Logger.Level.DEBUG
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
@@ -52,7 +52,7 @@ private abstract class CommonOptions : CliktCommand() {
     private val inputFile by option(*Options.InputFile.flags, help = "Input file")
     val inputDir by option(*Options.InputDir.flags, help = "Input directory")
     val outputDir by option(*Options.OutputDir.flags, help = "Output directory")
-    val packageName by option(*Options.PackageName.flags, help = "Package name").default(DEFAULT_PACKAGE_STRING)
+    val packageName by option(*Options.PackageName.flags, help = "Package name").default(DEFAULT_GENERATED_PACKAGE_STRING)
     val logLevel by option(*Options.LogLevel.flags, help = "Log level: $Level").default("$ERROR")
     val shared by option(*Options.Shared.flags, help = "Generate shared wirespec code").flag(default = false)
     val strict by option(*Options.Strict.flags, help = "Strict mode").flag()

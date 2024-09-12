@@ -1,6 +1,6 @@
 package community.flock.wirespec.examples.app.common
 
-import community.flock.wirespec.Wirespec
+import community.flock.wirespec.kotlin.Wirespec
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.request

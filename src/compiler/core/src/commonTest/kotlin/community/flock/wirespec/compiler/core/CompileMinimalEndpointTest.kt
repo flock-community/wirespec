@@ -24,7 +24,7 @@ class CompileMinimalEndpointTest {
         val kotlin = """
             |package community.flock.wirespec.generated
             |
-            |import community.flock.wirespec.Wirespec
+            |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |
             |object GetTodosEndpoint : Wirespec.Endpoint {
@@ -110,7 +110,7 @@ class CompileMinimalEndpointTest {
         val java = """
             |package community.flock.wirespec.generated;
             |
-            |import community.flock.wirespec.Wirespec;
+            |import community.flock.wirespec.java.Wirespec;
             |
             |import java.util.concurrent.CompletableFuture;
             |import java.util.function.Function;
