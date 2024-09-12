@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACK
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.Keywords
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.emit.transformer.ClassModelTransformer.transform
 import community.flock.wirespec.compiler.core.emit.transformer.ClassReference
@@ -368,8 +369,8 @@ open class JavaEmitter(
 
     private fun String.sanitizeSymbol() = replace(".", "").replace(" ", "_")
 
-    companion object {
-        val reservedKeywords = listOf(
+    companion object : Keywords {
+        override val reservedKeywords = setOf(
             "abstract", "continue", "for", "new", "switch",
             "assert", "default", "goto", "package", "synchronized",
             "boolean", "do", "if", "private", "this",

@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.emit.common.DEFAULT_SHARED_PACKAGE
 import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.Keywords
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.orNull
 import community.flock.wirespec.compiler.core.parse.AST
@@ -316,8 +317,8 @@ open class KotlinEmitter(
 
     private fun String.sanitizeKeywords() = if (this in reservedKeywords) "`$this`" else this
 
-    companion object {
-        val reservedKeywords = listOf(
+    companion object : Keywords {
+        override val reservedKeywords = setOf(
             "as", "break", "class", "continue", "do",
             "else", "false", "for", "fun", "if",
             "in", "interface", "internal", "is", "null",

@@ -11,18 +11,18 @@ import kotlin.test.Test
 
 class GenerateTestClasses {
 
-    val basePkg = "community.flock.wirespec.integration.jackson"
-    val javaPkg = "${basePkg}.java.generated"
-    val kotlinPkg = "${basePkg}.kotlin.generated"
+    private val basePkg = "community.flock.wirespec.integration.jackson"
+    private val javaPkg = "${basePkg}.java.generated"
+    private val kotlinPkg = "${basePkg}.kotlin.generated"
 
-    val javaEmitter = JavaEmitter(javaPkg)
-    val kotlinEmitter = KotlinEmitter(kotlinPkg)
+    private val javaEmitter = JavaEmitter(javaPkg)
+    private val kotlinEmitter = KotlinEmitter(kotlinPkg)
 
-    fun pkgToPath(pkg: String) = pkg.split(".").joinToString("/")
+    private fun pkgToPath(pkg: String) = pkg.split(".").joinToString("/")
 
-    val baseDir = File("src/jvmTest")
-    val javaDir = baseDir.resolve("java").resolve(pkgToPath(javaPkg))
-    val kotlinDir = baseDir.resolve("kotlin").resolve(pkgToPath(kotlinPkg))
+    private val baseDir = File("src/jvmTest")
+    private val javaDir = baseDir.resolve("java").resolve(pkgToPath(javaPkg))
+    private val kotlinDir = baseDir.resolve("kotlin").resolve(pkgToPath(kotlinPkg))
 
     @Test
     fun generate() {

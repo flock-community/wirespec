@@ -18,7 +18,9 @@ import com.fasterxml.jackson.databind.introspect.AnnotatedParameter
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
+import community.flock.wirespec.integration.jackson.common.translater
 import community.flock.wirespec.kotlin.Wirespec
+import kotlin.reflect.KClass
 
 
 /**
@@ -63,7 +65,8 @@ class WirespecModuleKotlin : SimpleModule() {
  * @see WirespecModuleKotlin
  */
 private class RefinedSerializer(x: Class<Wirespec.Refined>? = null) : StdSerializer<Wirespec.Refined>(x) {
-    override fun serialize(value: Wirespec.Refined, gen: JsonGenerator, provider: SerializerProvider) = gen.writeString(value.value)
+    override fun serialize(value: Wirespec.Refined, gen: JsonGenerator, provider: SerializerProvider) =
+        gen.writeString(value.value)
 }
 
 /**
@@ -73,7 +76,8 @@ private class RefinedSerializer(x: Class<Wirespec.Refined>? = null) : StdSeriali
  * @see WirespecModuleKotlin
  */
 private class EnumSerializer(x: Class<Wirespec.Enum>? = null) : StdSerializer<Wirespec.Enum>(x) {
-    override fun serialize(value: Wirespec.Enum, gen: JsonGenerator, provider: SerializerProvider) = gen.writeString(value.toString())
+    override fun serialize(value: Wirespec.Enum, gen: JsonGenerator, provider: SerializerProvider) =
+        gen.writeString(value.toString())
 }
 
 /**
@@ -82,11 +86,11 @@ private class EnumSerializer(x: Class<Wirespec.Enum>? = null) : StdSerializer<Wi
  * @see Wirespec.Refined
  * @see WirespecModuleKotlin
  */
-class RefinedDeserializer(private val vc: Class<*>) : StdDeserializer<Wirespec.Refined>(vc) {
-    override fun deserialize(jp: JsonParser, ctxt: DeserializationContext): Wirespec.Refined {
-        val node = jp.codec.readTree<JsonNode>(jp)
-        return vc.declaredConstructors.first().newInstance(node.asText()) as Wirespec.Refined
-    }
+private class RefinedDeserializer(private val vc: Class<*>) : StdDeserializer<Wirespec.Refined>(vc) {
+    override fun deserialize(jp: JsonParser, ctxt: DeserializationContext): Wirespec.Refined = jp
+        .codec
+        .readTree<JsonNode>(jp)
+        .run { vc.declaredConstructors.first().newInstance(asText()) as Wirespec.Refined }
 }
 
 /**
@@ -95,15 +99,11 @@ class RefinedDeserializer(private val vc: Class<*>) : StdDeserializer<Wirespec.R
  * @see Wirespec.Enum
  * @see WirespecModuleKotlin
  */
-class EnumDeserializer(private val vc: Class<*>) : StdDeserializer<Enum<*>>(vc) {
-    override fun deserialize(jp: JsonParser, ctxt: DeserializationContext): Enum<*> {
-        val node = jp.codec.readTree<JsonNode>(jp)
-        return vc.enumConstants.find {
-             it.javaClass
-                .getDeclaredMethod("toString")
-                .invoke(it) == node.asText()
-        } as Enum<*>
-    }
+private class EnumDeserializer(private val vc: Class<*>) : StdDeserializer<Enum<*>>(vc) {
+    override fun deserialize(jp: JsonParser, ctxt: DeserializationContext): Enum<*> = jp
+        .codec
+        .readTree<JsonNode>(jp)
+        .run { vc.enumConstants.find { it.javaClass.getDeclaredMethod("toString").invoke(it) == asText() } as Enum<*> }
 }
 
 /**
@@ -118,46 +118,40 @@ private class WirespecDeserializerModifier : BeanDeserializerModifier() {
         type: JavaType,
         beanDesc: BeanDescription,
         deserializer: JsonDeserializer<*>
-    ): JsonDeserializer<*> =
-        if (Wirespec.Enum::class.java.isAssignableFrom(beanDesc.beanClass)) {
-            super.modifyDeserializer(config, beanDesc, EnumDeserializer(beanDesc.beanClass))
-        } else {
-            super.modifyEnumDeserializer(config, type, beanDesc, deserializer)
-        }
+    ): JsonDeserializer<*> = when (Wirespec.Enum::class.java.isAssignableFrom(beanDesc.beanClass)) {
+        true -> super.modifyDeserializer(config, beanDesc, EnumDeserializer(beanDesc.beanClass))
+        false -> super.modifyEnumDeserializer(config, type, beanDesc, deserializer)
+    }
 
     override fun modifyDeserializer(
         config: DeserializationConfig,
         beanDesc: BeanDescription,
         deserializer: JsonDeserializer<*>
-    ): JsonDeserializer<*> =
-        if (Wirespec.Refined::class.java.isAssignableFrom(beanDesc.beanClass)) {
-            super.modifyDeserializer(config, beanDesc, RefinedDeserializer(beanDesc.beanClass))
-        } else {
-            super.modifyDeserializer(config, beanDesc, deserializer)
-        }
+    ): JsonDeserializer<*> = when (Wirespec.Refined::class.java.isAssignableFrom(beanDesc.beanClass)) {
+        true -> super.modifyDeserializer(config, beanDesc, RefinedDeserializer(beanDesc.beanClass))
+        false -> super.modifyDeserializer(config, beanDesc, deserializer)
+    }
 }
 
-internal class KotlinReservedKeywordNamingStrategy : PropertyNamingStrategy() {
+private class KotlinReservedKeywordNamingStrategy : PropertyNamingStrategy() {
+
+    private val translate = translater(KotlinEmitter)
 
     override fun nameForGetterMethod(config: MapperConfig<*>, method: AnnotatedMethod, defaultName: String): String =
-        if (Record::class.java.isAssignableFrom(method.declaringClass)) translate(defaultName)
-        else defaultName
+        defaultName.translateIfDataClass(method.declaringClass.kotlin)
 
     override fun nameForSetterMethod(config: MapperConfig<*>, method: AnnotatedMethod, defaultName: String): String =
-        if (Record::class.java.isAssignableFrom(method.declaringClass)) translate(defaultName)
-        else defaultName
+        defaultName.translateIfDataClass(method.declaringClass.kotlin)
 
     override fun nameForConstructorParameter(
         config: MapperConfig<*>,
         ctorParam: AnnotatedParameter,
         defaultName: String
-    ): String =
-        if (Record::class.java.isAssignableFrom(ctorParam.owner.rawType)) translate(defaultName)
-        else defaultName
+    ) = defaultName.translateIfDataClass(ctorParam.owner.rawType.kotlin)
 
-    private fun translate(property: String): String {
-        val keywords = KotlinEmitter.reservedKeywords.map { "_$it" }
-        return if (property in keywords) property.drop(1) else property
+    private fun String.translateIfDataClass(clazz: KClass<*>) = when (clazz.isData) {
+        true -> translate()
+        false -> this
     }
 }
 
