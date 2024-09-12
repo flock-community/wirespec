@@ -1,6 +1,6 @@
 package community.flock.wirespec.plugin.cli
 
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
 import community.flock.wirespec.plugin.Console
 import community.flock.wirespec.plugin.FileExtension
@@ -53,7 +53,7 @@ class CommandLineEntitiesTest {
             it.input.shouldBeTypeOf<Console>()
             it.output.shouldBeNull()
             it.languages shouldBe setOf(Kotlin)
-            it.packageName.value shouldBe DEFAULT_PACKAGE_STRING
+            it.packageName.value shouldBe DEFAULT_GENERATED_PACKAGE_STRING
             it.logLevel shouldBe ERROR
             it.shared shouldBe false
             it.strict shouldBe false
@@ -70,7 +70,7 @@ class CommandLineEntitiesTest {
             }
             it.output.shouldBeNull()
             it.languages shouldBe setOf(Wirespec)
-            it.packageName.value shouldBe DEFAULT_PACKAGE_STRING
+            it.packageName.value shouldBe DEFAULT_GENERATED_PACKAGE_STRING
             it.logLevel shouldBe ERROR
             it.shared shouldBe false
             it.strict shouldBe false
@@ -86,7 +86,7 @@ class CommandLineEntitiesTest {
             it.input.shouldBeTypeOf<Console>()
             it.output?.value shouldBe "output"
             it.languages shouldBe setOf(Kotlin)
-            it.packageName.value shouldBe DEFAULT_PACKAGE_STRING
+            it.packageName.value shouldBe DEFAULT_GENERATED_PACKAGE_STRING
             it.logLevel shouldBe ERROR
             it.shared shouldBe false
             it.strict shouldBe false

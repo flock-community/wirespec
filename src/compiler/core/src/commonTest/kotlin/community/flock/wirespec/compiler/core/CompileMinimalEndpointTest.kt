@@ -24,7 +24,7 @@ class CompileMinimalEndpointTest {
         val kotlin = """
             |package community.flock.wirespec.generated
             |
-            |import community.flock.wirespec.Wirespec
+            |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |
             |object GetTodosEndpoint : Wirespec.Endpoint {
@@ -42,7 +42,7 @@ class CompileMinimalEndpointTest {
             |    override val body = Unit
             |  }
             |
-            |  fun externalizeRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
+            |  fun toRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
             |    Wirespec.RawRequest(
             |      path = listOf("todos"),
             |      method = request.method.name,
@@ -51,7 +51,7 @@ class CompileMinimalEndpointTest {
             |      body = serialization.serialize(request.body, typeOf<Unit>()),
             |    )
             |
-            |  fun consumeRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
+            |  fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
             |    Request
             |
             |  sealed interface Response<T: Any> : Wirespec.Response<T>
@@ -63,7 +63,7 @@ class CompileMinimalEndpointTest {
             |    data object Headers : Wirespec.Response.Headers
             |  }
             |
-            |  fun produceResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
+            |  fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
             |    when(response) {
             |      is Response200 -> Wirespec.RawResponse(
             |        statusCode = response.status,
@@ -72,12 +72,12 @@ class CompileMinimalEndpointTest {
             |      )
             |    }
             |
-            |  fun internalizeResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
+            |  fun fromResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
             |    when (response.statusCode) {
             |      200 -> Response200(
             |        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<List<TodoDto>>()),
             |      )
-            |      else -> error("Cannot internalize response with status: ${'$'}{response.statusCode}")
+            |      else -> error("Cannot match response with status: ${'$'}{response.statusCode}")
             |    }
             |
             |  interface Handler: Wirespec.Handler {
@@ -86,12 +86,12 @@ class CompileMinimalEndpointTest {
             |      override val pathTemplate = "/todos"
             |      override val method = "GET"
             |      override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
-            |        override fun consume(request: Wirespec.RawRequest) = consumeRequest(serialization, request)
-            |        override fun produce(response: Response<*>) = produceResponse(serialization, response)
+            |        override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
+            |        override fun to(response: Response<*>) = toResponse(serialization, response)
             |      }
             |      override fun client(serialization: Wirespec.Serialization<String>) = object : Wirespec.ClientEdge<Request, Response<*>> {
-            |        override fun internalize(response: Wirespec.RawResponse) = internalizeResponse(serialization, response)
-            |        override fun externalize(request: Request) = externalizeRequest(serialization, request)
+            |        override fun to(request: Request) = toRequest(serialization, request)
+            |        override fun from(response: Wirespec.RawResponse) = fromResponse(serialization, response)
             |      }
             |    }
             |  }
@@ -110,7 +110,7 @@ class CompileMinimalEndpointTest {
         val java = """
             |package community.flock.wirespec.generated;
             |
-            |import community.flock.wirespec.Wirespec;
+            |import community.flock.wirespec.java.Wirespec;
             |
             |import java.util.concurrent.CompletableFuture;
             |import java.util.function.Function;

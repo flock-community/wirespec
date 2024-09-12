@@ -2,7 +2,6 @@ package community.flock.wirespec.integration.jackson.java;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import community.flock.wirespec.integration.jackson.WirespecModule;
 import community.flock.wirespec.integration.jackson.java.generated.Todo;
 import community.flock.wirespec.integration.jackson.java.generated.TodoCategory;
 import community.flock.wirespec.integration.jackson.java.generated.TodoId;
@@ -22,7 +21,7 @@ public class WirespecModuleJavaTest {
     String json = "{\"id\":\"123\",\"name\":\"Do It now\",\"final\":false,\"category\":\"WORK\"}";
 
     ObjectMapper objectMapper = new ObjectMapper()
-            .registerModules(new WirespecModule());
+            .registerModules(new WirespecModuleJava());
 
     @Test
     public void serializeJavaRefined() throws JsonProcessingException {

@@ -17,21 +17,21 @@ class LiveUserClient(private val wirespec: WirespecClient) : UserClient {
 
     override suspend fun getUsers(request: GetUsersEndpoint.Request) =
         with(GetUsersEndpoint.Handler.client(Serialization)) {
-            externalize(request).let(wirespec::handle).let(::internalize)
+            to(request).let(wirespec::handle).let(::from)
         }
 
     override suspend fun getUserByName(request: GetUserByNameEndpoint.Request) =
         with(GetUserByNameEndpoint.Handler.client(Serialization)) {
-            externalize(request).let(wirespec::handle).let(::internalize)
+            to(request).let(wirespec::handle).let(::from)
         }
 
     override suspend fun postUser(request: PostUserEndpoint.Request) =
         with(PostUserEndpoint.Handler.client(Serialization)) {
-            externalize(request).let(wirespec::handle).let(::internalize)
+            to(request).let(wirespec::handle).let(::from)
         }
 
     override suspend fun deleteUserByName(request: DeleteUserByNameEndpoint.Request) =
         with(DeleteUserByNameEndpoint.Handler.client(Serialization)) {
-            externalize(request).let(wirespec::handle).let(::internalize)
+            to(request).let(wirespec::handle).let(::from)
         }
 }

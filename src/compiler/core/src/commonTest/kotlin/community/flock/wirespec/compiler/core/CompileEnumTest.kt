@@ -21,7 +21,7 @@ class CompileEnumTest {
         val kotlin = """
             |package community.flock.wirespec.generated
             |
-            |import community.flock.wirespec.Wirespec
+            |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |
             |enum class MyAwesomeEnum (val label: String): Wirespec.Enum {
@@ -43,7 +43,7 @@ class CompileEnumTest {
         val java = """
             |package community.flock.wirespec.generated;
             |
-            |import community.flock.wirespec.Wirespec;
+            |import community.flock.wirespec.java.Wirespec;
             |
             |public enum MyAwesomeEnum implements Wirespec.Enum {
             |  ONE("ONE"),

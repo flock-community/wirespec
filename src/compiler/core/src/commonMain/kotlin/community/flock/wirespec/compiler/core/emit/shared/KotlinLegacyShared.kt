@@ -1,10 +1,11 @@
 package community.flock.wirespec.compiler.core.emit.shared
 
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 
 data object KotlinLegacyShared : Shared {
     override val source = """
-        |package community.flock.wirespec
+        |package $DEFAULT_SHARED_PACKAGE_STRING
         |
         |import kotlin.reflect.KType
         |

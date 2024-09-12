@@ -1,11 +1,12 @@
 package community.flock.wirespec.compiler.core.emit.shared
 
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 
 
 data object JavaShared : Shared {
     override val source = """
-        |package community.flock.wirespec;
+        |package $DEFAULT_SHARED_PACKAGE_STRING.java;
         |
         |import java.lang.reflect.Type;
         |import java.lang.reflect.ParameterizedType;

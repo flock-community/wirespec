@@ -1,6 +1,6 @@
 package community.flock.wirespec.plugin.maven
 
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.plugin.FilesContent
 import java.io.File
@@ -17,7 +17,7 @@ abstract class BaseMojo : AbstractMojo() {
     protected lateinit var output: String
 
     @Parameter
-    protected var packageName: String = DEFAULT_PACKAGE_STRING
+    protected var packageName: String = DEFAULT_GENERATED_PACKAGE_STRING
 
     @Parameter(defaultValue = "\${project}", readonly = true, required = true)
     protected lateinit var project: MavenProject

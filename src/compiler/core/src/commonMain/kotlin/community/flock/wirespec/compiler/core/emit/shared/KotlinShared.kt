@@ -1,10 +1,11 @@
 package community.flock.wirespec.compiler.core.emit.shared
 
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 
 data object KotlinShared : Shared {
     override val source = """
-        |package community.flock.wirespec
+        |package $DEFAULT_SHARED_PACKAGE_STRING.kotlin
         |
         |import kotlin.reflect.KType
         |
@@ -17,12 +18,12 @@ data object KotlinShared : Shared {
         |${Spacer}interface Headers
         |${Spacer}interface Handler
         |interface ServerEdge<Req: Request<*>, Res: Response<*>> { 
-        |  fun consume(request: RawRequest): Req  
-        |  fun produce(response: Res): RawResponse
+        |  fun from(request: RawRequest): Req  
+        |  fun to(response: Res): RawResponse
         |}
         |interface ClientEdge<Req: Request<*>, Res: Response<*>> { 
-        |  fun internalize(response: RawResponse): Res  
-        |  fun externalize(request: Req): RawRequest
+        |  fun to(request: Req): RawRequest
+        |  fun from(response: RawResponse): Res  
         |}
         |interface Client<Req : Request<*>, Res : Response<*>> {
         |  val pathTemplate: String

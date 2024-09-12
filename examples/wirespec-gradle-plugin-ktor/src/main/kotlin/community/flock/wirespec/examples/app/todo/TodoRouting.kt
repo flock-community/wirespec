@@ -1,11 +1,11 @@
 package community.flock.wirespec.examples.app.todo
 
-import community.flock.wirespec.Wirespec
 import community.flock.wirespec.examples.app.common.Serialization
 import community.flock.wirespec.generated.kotlin.DeleteTodoByIdEndpoint
 import community.flock.wirespec.generated.kotlin.GetTodoByIdEndpoint
 import community.flock.wirespec.generated.kotlin.GetTodosEndpoint
 import community.flock.wirespec.generated.kotlin.PostTodoEndpoint
+import community.flock.wirespec.kotlin.Wirespec
 import io.ktor.http.HttpMethod
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
@@ -27,7 +27,7 @@ fun Application.todoModule(todoRepository: TodoRepository) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
                     call.toRawRequest()
-                        .let(server(Serialization)::consume)
+                        .let(server(Serialization)::from)
                         .let { handler.getTodos(it) }
                         .run { call.respond(body) }
                 }
@@ -38,7 +38,7 @@ fun Application.todoModule(todoRepository: TodoRepository) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
                     call.toRawRequest()
-                        .let(server(Serialization)::consume)
+                        .let(server(Serialization)::from)
                         .let { handler.getTodoById(it) }
                         .run { call.respond(body) }
                 }
@@ -49,7 +49,7 @@ fun Application.todoModule(todoRepository: TodoRepository) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
                     call.toRawRequest()
-                        .let(server(Serialization)::consume)
+                        .let(server(Serialization)::from)
                         .let { handler.postTodo(it) }
                         .run { call.respond(body) }
                 }
@@ -60,7 +60,7 @@ fun Application.todoModule(todoRepository: TodoRepository) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
                     call.toRawRequest()
-                        .let(server(Serialization)::consume)
+                        .let(server(Serialization)::from)
                         .let { handler.deleteTodoById(it) }
                         .run { call.respond(body) }
                 }

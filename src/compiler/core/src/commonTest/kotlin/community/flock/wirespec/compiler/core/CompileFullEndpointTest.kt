@@ -40,7 +40,7 @@ class CompileFullEndpointTest {
         val kotlin = """
             |package community.flock.wirespec.generated
             |
-            |import community.flock.wirespec.Wirespec
+            |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |
             |object PutTodoEndpoint : Wirespec.Endpoint {
@@ -68,7 +68,7 @@ class CompileFullEndpointTest {
             |    override val headers = Headers(token)
             |  }
             |
-            |  fun externalizeRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
+            |  fun toRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
             |    Wirespec.RawRequest(
             |      path = listOf("todos", request.path.id.toString()),
             |      method = request.method.name,
@@ -77,7 +77,7 @@ class CompileFullEndpointTest {
             |      body = serialization.serialize(request.body, typeOf<PotentialTodoDto>()),
             |    )
             |
-            |  fun consumeRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
+            |  fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
             |    Request(
             |      id = serialization.deserialize(request.path[1], typeOf<String>()),
             |      done = serialization.deserialize(requireNotNull(request.queries["done"]?.get(0)) { "done is null" }, typeOf<Boolean>()),
@@ -100,7 +100,7 @@ class CompileFullEndpointTest {
             |    data object Headers : Wirespec.Response.Headers
             |  }
             |
-            |  fun produceResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
+            |  fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
             |    when(response) {
             |      is Response200 -> Wirespec.RawResponse(
             |        statusCode = response.status,
@@ -114,7 +114,7 @@ class CompileFullEndpointTest {
             |      )
             |    }
             |
-            |  fun internalizeResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
+            |  fun fromResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
             |    when (response.statusCode) {
             |      200 -> Response200(
             |        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<TodoDto>()),
@@ -122,7 +122,7 @@ class CompileFullEndpointTest {
             |      500 -> Response500(
             |        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<Error>()),
             |      )
-            |      else -> error("Cannot internalize response with status: ${'$'}{response.statusCode}")
+            |      else -> error("Cannot match response with status: ${'$'}{response.statusCode}")
             |    }
             |
             |  interface Handler: Wirespec.Handler {
@@ -131,12 +131,12 @@ class CompileFullEndpointTest {
             |      override val pathTemplate = "/todos/{id}"
             |      override val method = "PUT"
             |      override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
-            |        override fun consume(request: Wirespec.RawRequest) = consumeRequest(serialization, request)
-            |        override fun produce(response: Response<*>) = produceResponse(serialization, response)
+            |        override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
+            |        override fun to(response: Response<*>) = toResponse(serialization, response)
             |      }
             |      override fun client(serialization: Wirespec.Serialization<String>) = object : Wirespec.ClientEdge<Request, Response<*>> {
-            |        override fun internalize(response: Wirespec.RawResponse) = internalizeResponse(serialization, response)
-            |        override fun externalize(request: Request) = externalizeRequest(serialization, request)
+            |        override fun to(request: Request) = toRequest(serialization, request)
+            |        override fun from(response: Wirespec.RawResponse) = fromResponse(serialization, response)
             |      }
             |    }
             |  }
@@ -168,7 +168,7 @@ class CompileFullEndpointTest {
         val java = """
             |package community.flock.wirespec.generated;
             |
-            |import community.flock.wirespec.Wirespec;
+            |import community.flock.wirespec.java.Wirespec;
             |
             |import java.util.concurrent.CompletableFuture;
             |import java.util.function.Function;

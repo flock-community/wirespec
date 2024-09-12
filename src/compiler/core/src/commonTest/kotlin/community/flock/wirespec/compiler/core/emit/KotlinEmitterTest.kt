@@ -33,7 +33,7 @@ class KotlinEmitterTest {
         val expected = """
             |package community.flock.wirespec.generated
             |
-            |import community.flock.wirespec.Wirespec
+            |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |
             |data class UUID(override val value: String): Wirespec.Refined {
@@ -53,7 +53,7 @@ class KotlinEmitterTest {
         val expected = """
             |package community.flock.wirespec.generated
             |
-            |import community.flock.wirespec.Wirespec
+            |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |
             |enum class TodoStatus (val label: String): Wirespec.Enum {

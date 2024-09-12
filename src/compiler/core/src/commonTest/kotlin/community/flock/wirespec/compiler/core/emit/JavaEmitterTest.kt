@@ -35,7 +35,7 @@ class JavaEmitterTest {
         val expected = """
             |package community.flock.wirespec.generated;
             |
-            |import community.flock.wirespec.Wirespec;
+            |import community.flock.wirespec.java.Wirespec;
             |
             |public record UUID (String value) implements Wirespec.Refined {
             |  @Override
@@ -58,7 +58,7 @@ class JavaEmitterTest {
         val expected = """
             |package community.flock.wirespec.generated;
             |
-            |import community.flock.wirespec.Wirespec;
+            |import community.flock.wirespec.java.Wirespec;
             |
             |public enum TodoStatus implements Wirespec.Enum {
             |  OPEN("OPEN"),

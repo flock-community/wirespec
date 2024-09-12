@@ -1,8 +1,7 @@
-package community.flock.wirespec.integration.jackson
+package community.flock.wirespec.integration.jackson.kotlin
 
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.BeanDescription
 import com.fasterxml.jackson.databind.DeserializationConfig
 import com.fasterxml.jackson.databind.DeserializationContext
@@ -18,9 +17,8 @@ import com.fasterxml.jackson.databind.introspect.AnnotatedMethod
 import com.fasterxml.jackson.databind.introspect.AnnotatedParameter
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
-import community.flock.wirespec.Wirespec
-import community.flock.wirespec.compiler.core.emit.JavaEmitter
-import java.io.IOException
+import community.flock.wirespec.compiler.core.emit.KotlinEmitter
+import community.flock.wirespec.kotlin.Wirespec
 
 
 /**
@@ -46,15 +44,15 @@ import java.io.IOException
  *
  * @see Wirespec.Refined
  */
-class WirespecModule : SimpleModule() {
+class WirespecModuleKotlin : SimpleModule() {
 
-    override fun getModuleName(): String = "Wirespec Jackson Module"
+    override fun getModuleName(): String = "Wirespec Jackson Module for Kotlin"
 
     init {
         addSerializer(Wirespec.Refined::class.java, RefinedSerializer())
         addSerializer(Wirespec.Enum::class.java, EnumSerializer())
         setDeserializerModifier(WirespecDeserializerModifier())
-        setNamingStrategy(JavaReservedKeywordNamingStrategy())
+        setNamingStrategy(KotlinReservedKeywordNamingStrategy())
     }
 }
 
@@ -62,36 +60,29 @@ class WirespecModule : SimpleModule() {
  * Serializer that flattens any Wirespec.Refined wrapped String value during serialization.
  *
  * @see Wirespec.Refined
- * @see WirespecModule
+ * @see WirespecModuleKotlin
  */
 private class RefinedSerializer(x: Class<Wirespec.Refined>? = null) : StdSerializer<Wirespec.Refined>(x) {
-
-    override fun serialize(value: Wirespec.Refined, gen: JsonGenerator, provider: SerializerProvider) {
-        return gen.writeString(value.value)
-    }
+    override fun serialize(value: Wirespec.Refined, gen: JsonGenerator, provider: SerializerProvider) = gen.writeString(value.value)
 }
 
 /**
  * Serializer Wirespec.Enum classes.
  *
  * @see Wirespec.Enum
- * @see WirespecModule
+ * @see WirespecModuleKotlin
  */
 private class EnumSerializer(x: Class<Wirespec.Enum>? = null) : StdSerializer<Wirespec.Enum>(x) {
-
-    override fun serialize(value: Wirespec.Enum, gen: JsonGenerator, provider: SerializerProvider) {
-        return gen.writeString(value.toString())
-    }
+    override fun serialize(value: Wirespec.Enum, gen: JsonGenerator, provider: SerializerProvider) = gen.writeString(value.toString())
 }
 
 /**
  * Deserializer Wirespec.Refined classes.
  *
  * @see Wirespec.Refined
- * @see WirespecModule
+ * @see WirespecModuleKotlin
  */
 class RefinedDeserializer(private val vc: Class<*>) : StdDeserializer<Wirespec.Refined>(vc) {
-    @Throws(IOException::class, JsonProcessingException::class)
     override fun deserialize(jp: JsonParser, ctxt: DeserializationContext): Wirespec.Refined {
         val node = jp.codec.readTree<JsonNode>(jp)
         return vc.declaredConstructors.first().newInstance(node.asText()) as Wirespec.Refined
@@ -102,17 +93,16 @@ class RefinedDeserializer(private val vc: Class<*>) : StdDeserializer<Wirespec.R
  * Deserializer Wirespec.Enum classes.
  *
  * @see Wirespec.Enum
- * @see WirespecModule
+ * @see WirespecModuleKotlin
  */
 class EnumDeserializer(private val vc: Class<*>) : StdDeserializer<Enum<*>>(vc) {
-    @Throws(IOException::class, JsonProcessingException::class)
     override fun deserialize(jp: JsonParser, ctxt: DeserializationContext): Enum<*> {
         val node = jp.codec.readTree<JsonNode>(jp)
-        val enum = vc.enumConstants.find {
-            val toString = it.javaClass.getDeclaredMethod("toString")
-            toString.invoke(it) == node.asText()
-        }
-        return enum as Enum<*>
+        return vc.enumConstants.find {
+             it.javaClass
+                .getDeclaredMethod("toString")
+                .invoke(it) == node.asText()
+        } as Enum<*>
     }
 }
 
@@ -120,7 +110,7 @@ class EnumDeserializer(private val vc: Class<*>) : StdDeserializer<Enum<*>>(vc) 
  * Jackson modifier intercept the deserialization of Wirespec.Enum and Wirespec.Refined and modifies the deserializer
  *
  * @see Wirespec.Enum
- * @see WirespecModule
+ * @see WirespecModuleKotlin
  */
 private class WirespecDeserializerModifier : BeanDeserializerModifier() {
     override fun modifyEnumDeserializer(
@@ -147,7 +137,7 @@ private class WirespecDeserializerModifier : BeanDeserializerModifier() {
         }
 }
 
-internal class JavaReservedKeywordNamingStrategy : PropertyNamingStrategy() {
+internal class KotlinReservedKeywordNamingStrategy : PropertyNamingStrategy() {
 
     override fun nameForGetterMethod(config: MapperConfig<*>, method: AnnotatedMethod, defaultName: String): String =
         if (Record::class.java.isAssignableFrom(method.declaringClass)) translate(defaultName)
@@ -166,7 +156,7 @@ internal class JavaReservedKeywordNamingStrategy : PropertyNamingStrategy() {
         else defaultName
 
     private fun translate(property: String): String {
-        val keywords = JavaEmitter.reservedKeywords.map { "_$it" }
+        val keywords = KotlinEmitter.reservedKeywords.map { "_$it" }
         return if (property in keywords) property.drop(1) else property
     }
 }

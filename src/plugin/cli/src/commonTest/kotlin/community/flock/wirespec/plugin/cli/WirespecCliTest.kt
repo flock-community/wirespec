@@ -1,6 +1,6 @@
 package community.flock.wirespec.plugin.cli
 
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.plugin.FileName
 import community.flock.wirespec.plugin.FullFilePath
 import community.flock.wirespec.plugin.cli.io.JavaFile
@@ -17,7 +17,7 @@ class WirespecCliTest {
 
     @Test
     fun testCliOutput() {
-        val packageDir = DEFAULT_PACKAGE_STRING.replace(".", "/")
+        val packageDir = DEFAULT_GENERATED_PACKAGE_STRING.replace(".", "/")
         val input = "${inputDir}/wirespec"
         val output = outputDir()
 
