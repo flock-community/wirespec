@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACK
 import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.Keywords
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
@@ -54,7 +55,7 @@ open class ScalaEmitter(
     override fun Field.emit() =
         "${Spacer}val ${identifier.emit()}: ${if (isNullable) "Option[${reference.emit()}]" else reference.emit()},"
 
-    override fun Identifier.emit() = if (value in preservedKeywords) value.addBackticks() else value
+    override fun Identifier.emit() = if (value in reservedKeywords) value.addBackticks() else value
 
     override fun emit(channel: Channel) = notYetImplemented()
 
@@ -106,8 +107,8 @@ open class ScalaEmitter(
 
     override fun emit(union: Union) = notYetImplemented()
 
-    companion object {
-        private val preservedKeywords = listOf(
+    companion object : Keywords {
+        override val reservedKeywords = setOf(
             "abstract", "case", "catch", "class", "def",
             "do", "else", "extends", "false", "final",
             "finally", "for", "forSome", "if", "implicit",

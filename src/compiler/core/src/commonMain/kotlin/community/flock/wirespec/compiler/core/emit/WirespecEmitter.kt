@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.emit
 import community.flock.wirespec.compiler.core.addBackticks
 import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.Keywords
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
@@ -42,7 +43,7 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
 
     override fun Field.emit() = "${identifier.emit()}: ${reference.emit()}${if (isNullable) "?" else ""}"
 
-    override fun Identifier.emit() = if (value in preservedKeywords) value.addBackticks() else value
+    override fun Identifier.emit() = if (value in reservedKeywords) value.addBackticks() else value
 
     override fun emit(channel: Channel): String = "channel ${channel.identifier.emit()} -> ${channel.reference.emit()}"
 
@@ -99,8 +100,8 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
 
     private fun String.capitalize() = replaceFirstChar { it.uppercase() }
 
-    companion object {
-        private val preservedKeywords = listOf(
+    companion object : Keywords {
+        override val reservedKeywords = setOf(
             "type", "enum", "endpoint"
         )
     }

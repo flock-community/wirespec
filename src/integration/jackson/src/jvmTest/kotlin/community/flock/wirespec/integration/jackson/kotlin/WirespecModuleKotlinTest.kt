@@ -11,16 +11,16 @@ import kotlin.test.assertEquals
 
 class WirespecModuleKotlinTest {
 
-    val todo = Todo(
+    private val todo = Todo(
         id = TodoId("123"),
         name = "Do It now",
         final = false,
         category = TodoCategory.LIFE
     )
 
-    val json = "{\"id\":\"123\",\"name\":\"Do It now\",\"final\":false,\"category\":\"LIFE\"}"
+    private val json = "{\"id\":\"123\",\"name\":\"Do It now\",\"final\":false,\"category\":\"LIFE\"}"
 
-    val objectMapper = ObjectMapper()
+    private val objectMapper: ObjectMapper = ObjectMapper()
         .registerKotlinModule()
         .registerModules(WirespecModuleKotlin())
 
