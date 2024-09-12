@@ -21,9 +21,15 @@ kotlin {
         }
     }
     sourceSets {
-        commonMain {
+        val commonMain by getting {
             dependencies {
                 implementation(project(":src:compiler:core"))
+            }
+        }
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(libs.bundles.kotest)
             }
         }
     }
