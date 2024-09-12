@@ -27,7 +27,7 @@ fun Application.todoModule(todoRepository: TodoRepository) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
                     call.toRawRequest()
-                        .let(server(Serialization)::consume)
+                        .let(server(Serialization)::from)
                         .let { handler.getTodos(it) }
                         .run { call.respond(body) }
                 }
@@ -38,7 +38,7 @@ fun Application.todoModule(todoRepository: TodoRepository) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
                     call.toRawRequest()
-                        .let(server(Serialization)::consume)
+                        .let(server(Serialization)::from)
                         .let { handler.getTodoById(it) }
                         .run { call.respond(body) }
                 }
@@ -49,7 +49,7 @@ fun Application.todoModule(todoRepository: TodoRepository) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
                     call.toRawRequest()
-                        .let(server(Serialization)::consume)
+                        .let(server(Serialization)::from)
                         .let { handler.postTodo(it) }
                         .run { call.respond(body) }
                 }
@@ -60,7 +60,7 @@ fun Application.todoModule(todoRepository: TodoRepository) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
                     call.toRawRequest()
-                        .let(server(Serialization)::consume)
+                        .let(server(Serialization)::from)
                         .let { handler.deleteTodoById(it) }
                         .run { call.respond(body) }
                 }

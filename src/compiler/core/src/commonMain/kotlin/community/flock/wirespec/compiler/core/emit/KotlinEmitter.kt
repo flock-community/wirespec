@@ -133,15 +133,15 @@ open class KotlinEmitter(
         |
         |${endpoint.responses.joinToString("\n") { it.emit() }}
         |
-        |${Spacer}fun produceResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
+        |${Spacer}fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
         |${Spacer(2)}when(response) {
         |${endpoint.responses.joinToString("\n") { it.emitSerialized() }}
         |${Spacer(2)}}
         |
-        |${Spacer}fun internalizeResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
+        |${Spacer}fun fromResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
         |${Spacer(2)}when (response.statusCode) {
         |${endpoint.responses.joinToString("\n") { it.emitDeserialized() }}
-        |${Spacer(3)}else -> error("Cannot internalize response with status: ${'$'}{response.statusCode}")
+        |${Spacer(3)}else -> error("Cannot match response with status: ${'$'}{response.statusCode}")
         |${Spacer(2)}}
         |
         |${Spacer}interface Handler: Wirespec.Handler {
@@ -150,12 +150,12 @@ open class KotlinEmitter(
         |${Spacer(3)}override val pathTemplate = "/${endpoint.path.joinToString("/") { it.emit() }}"
         |${Spacer(3)}override val method = "${endpoint.method}"
         |${Spacer(3)}override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
-        |${Spacer(4)}override fun consume(request: Wirespec.RawRequest) = consumeRequest(serialization, request)
-        |${Spacer(4)}override fun produce(response: Response<*>) = produceResponse(serialization, response)
+        |${Spacer(4)}override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
+        |${Spacer(4)}override fun to(response: Response<*>) = toResponse(serialization, response)
         |${Spacer(3)}}
         |${Spacer(3)}override fun client(serialization: Wirespec.Serialization<String>) = object : Wirespec.ClientEdge<Request, Response<*>> {
-        |${Spacer(4)}override fun internalize(response: Wirespec.RawResponse) = internalizeResponse(serialization, response)
-        |${Spacer(4)}override fun externalize(request: Request) = externalizeRequest(serialization, request)
+        |${Spacer(4)}override fun to(request: Request) = toRequest(serialization, request)
+        |${Spacer(4)}override fun from(response: Wirespec.RawResponse) = fromResponse(serialization, response)
         |${Spacer(3)}}
         |${Spacer(2)}}
         |${Spacer}}
@@ -184,7 +184,7 @@ open class KotlinEmitter(
     }${if (content == null) "\n${Spacer(2)}override val body = Unit" else ""}
         |${Spacer}}
         |
-        |${Spacer}fun externalizeRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
+        |${Spacer}fun toRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
         |${Spacer(2)}Wirespec.RawRequest(
         |${Spacer(3)}path = listOf(${
         endpoint.path.joinToString {
@@ -215,7 +215,7 @@ open class KotlinEmitter(
         |${Spacer(3)}body = serialization.serialize(request.body, typeOf<${content.emit()}>()),
         |${Spacer(2)})
         |
-        |${Spacer}fun consumeRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
+        |${Spacer}fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
         |${Spacer(2)}Request${emitDeserializedParams(endpoint)}
     """.trimMargin()
 
