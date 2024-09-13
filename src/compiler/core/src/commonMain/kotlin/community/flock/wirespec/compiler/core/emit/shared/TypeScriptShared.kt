@@ -12,7 +12,7 @@ data object TypeScriptShared : Shared {
         |${Spacer}export type Request<T> = { path: Record<string, string>, method: Method, query?: Record<string, any>, headers?: Record<string, any>, content?:Content<T> }
         |${Spacer}export type Response<T> = { status:number, headers?: Record<string, any[]>, content?:Content<T> }
         |${Spacer}export type Serialization = { serialize: <T>(type: T) => string; deserialize: <T>(raw: string | undefined) => T }
-        |${Spacer}export type Client<REQ extends Request<any>, RES extends Response<any>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (request: RawResponse) => RES }
+        |${Spacer}export type Client<REQ extends Request<any>, RES extends Response<any>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
         |${Spacer}export type Server<REQ extends Request<any>, RES extends Response<any>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
         |}
     """.trimMargin()

@@ -9,4 +9,6 @@ dir="$(dirname -- "$0")"
   (cd "$dir"/../examples/wirespec-gradle-plugin-ktor && make build) &&
   (cd "$dir"/../examples/spring-boot-maven-plugin && make build) &&
   (cd "$dir"/../examples/spring-boot-custom-maven-plugin &&  make build) &&
-  (cd "$dir"/../examples/spring-boot-openapi-maven-plugin && make build)
+  (cd "$dir"/../examples/spring-boot-openapi-maven-plugin && make build) &&
+  (cd "$dir"/../examples/npm-expres && make build)
+
