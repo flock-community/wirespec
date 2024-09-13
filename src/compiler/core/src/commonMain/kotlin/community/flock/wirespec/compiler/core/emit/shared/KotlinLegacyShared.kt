@@ -21,4 +21,3 @@ data object KotlinLegacyShared : Shared {
         |}
     """.trimMargin()
 }
-
