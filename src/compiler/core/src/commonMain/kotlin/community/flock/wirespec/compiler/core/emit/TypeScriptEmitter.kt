@@ -163,12 +163,18 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
         |})
     """.trimMargin()
 
+    private fun Endpoint.emitPathArray() = path.joinToString(", ", "[", "]") {
+        when(it){
+            is Endpoint.Segment.Literal -> """"${it.value}""""
+            is Endpoint.Segment.Param -> """request.path.${it.identifier}"""
+        }
+    }
     private fun Endpoint.emitClientTo() = """
         |to: (request) => ({
-        |${Spacer(1)}method: "PUT",
-        |${Spacer(1)}path: ["todos", request.path.id],
-        |${Spacer(1)}queries: {"done": [serialization.serialize(request.queries.done)]},
-        |${Spacer(1)}headers: {"token": [serialization.serialize(request.headers.token)]},
+        |${Spacer(1)}method: "${method.name.uppercase()}",
+        |${Spacer(1)}path: ${emitPathArray()},
+        |${Spacer(1)}queries: {${queries.joinToString { it.emitSerialize("queries") }}},
+        |${Spacer(1)}headers: {${headers.joinToString { it.emitSerialize("headers") }}},
         |${Spacer(1)}body: serialization.serialize(request.body)
         |})
     """.trimMargin()
@@ -204,13 +210,13 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
         |${Spacer(1)}return {
         |${Spacer(2)}method: "${method.name.uppercase()}",
         |${Spacer(2)}path: { 
-        |${indexedPathParams.joinToString(","){ it.emitDeserialized() }.prependIndent(Spacer(3)) }
+        |${indexedPathParams.joinToString(","){ it.emitDeserialize() }.prependIndent(Spacer(3)) }
         |${Spacer(2)}},
         |${Spacer(2)}queries: {
-        |${queries.joinToString(","){ it.emitDeserialized("queries").prependIndent(Spacer(3)) } }
+        |${queries.joinToString(","){ it.emitDeserialize("queries").prependIndent(Spacer(3)) } }
         |${Spacer(2)}},
         |${Spacer(2)}headers: {
-        |${headers.joinToString(","){ it.emitDeserialized("headers").prependIndent(Spacer(3)) } }
+        |${headers.joinToString(","){ it.emitDeserialize("headers").prependIndent(Spacer(3)) } }
         |${Spacer(2)}},
         |${Spacer(2)}body: serialization.deserialize(request.body)
         |${Spacer(1)}}
@@ -227,11 +233,12 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
 
 
 
-    private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
+    private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialize() =
         """${value.identifier.emit()}: serialization.deserialize(request.path[${index}])"""
 
-    private fun Field.emitDeserialized(fields: String) =
+    private fun Field.emitDeserialize(fields: String) =
         """${identifier.emit()}: serialization.deserialize(request.$fields.${identifier.emit()}[0])"""
 
-
+    private fun Field.emitSerialize(fields: String) =
+        """${identifier.emit()}: [serialization.serialize(request.$fields.${identifier.emit()})]"""
 }

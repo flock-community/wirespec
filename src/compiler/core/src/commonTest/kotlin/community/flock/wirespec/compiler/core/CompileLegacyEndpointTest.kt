@@ -518,10 +518,10 @@ class CompileLegacyEndpointTest {
             |  }
             |  export const client: Wirespec.Client<Request, Response> = (serialization: Wirespec.Serialization) => ({
             |    to: (request) => ({
-            |      method: "PUT",
-            |      path: ["todos", request.path.id],
-            |      queries: {"done": [serialization.serialize(request.queries.done)]},
-            |      headers: {"token": [serialization.serialize(request.headers.token)]},
+            |      method: "GET",
+            |      path: ["v1", "todo"],
+            |      queries: {done: [serialization.serialize(request.queries.done)]},
+            |      headers: {auth: [serialization.serialize(request.headers.auth)]},
             |      body: serialization.serialize(request.body)
             |    }),
             |    from: (response) => {

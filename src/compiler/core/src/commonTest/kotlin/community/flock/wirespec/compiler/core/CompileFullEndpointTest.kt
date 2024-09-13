@@ -438,8 +438,8 @@ class CompileFullEndpointTest {
             |    to: (request) => ({
             |      method: "PUT",
             |      path: ["todos", request.path.id],
-            |      queries: {"done": [serialization.serialize(request.queries.done)]},
-            |      headers: {"token": [serialization.serialize(request.headers.token)]},
+            |      queries: {done: [serialization.serialize(request.queries.done)]},
+            |      headers: {token: [serialization.serialize(request.headers.token)]},
             |      body: serialization.serialize(request.body)
             |    }),
             |    from: (response) => {

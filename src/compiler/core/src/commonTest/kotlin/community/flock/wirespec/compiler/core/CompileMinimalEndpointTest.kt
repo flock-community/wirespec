@@ -302,10 +302,10 @@ class CompileMinimalEndpointTest {
             |  }
             |  export const client: Wirespec.Client<Request, Response> = (serialization: Wirespec.Serialization) => ({
             |    to: (request) => ({
-            |      method: "PUT",
-            |      path: ["todos", request.path.id],
-            |      queries: {"done": [serialization.serialize(request.queries.done)]},
-            |      headers: {"token": [serialization.serialize(request.headers.token)]},
+            |      method: "GET",
+            |      path: ["todos"],
+            |      queries: {},
+            |      headers: {},
             |      body: serialization.serialize(request.body)
             |    }),
             |    from: (response) => {
