@@ -11,7 +11,7 @@ clean:
 	$(shell pwd)/scripts/clean.sh
 
 compile:
-	./gradlew assemble --no-configuration-cache
+	./gradlew assemble
 
 compile-types:
 	$(shell pwd)/scripts/compileTypes.sh
@@ -26,7 +26,7 @@ local:
 	$(shell pwd)/scripts/local.sh
 
 publish:
-	./gradlew publish --no-configuration-cache
+	./gradlew publish
 
 test:
 	$(shell pwd)/scripts/test.sh

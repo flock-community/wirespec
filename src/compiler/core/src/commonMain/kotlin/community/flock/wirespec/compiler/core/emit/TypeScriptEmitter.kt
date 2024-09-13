@@ -4,6 +4,7 @@ import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.Spacer
+import community.flock.wirespec.compiler.core.emit.shared.TypeScriptShared
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
@@ -19,15 +20,6 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
 open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emitter(logger) {
-
-    private val endpointBase = """
-        |export module Wirespec {
-        |${Spacer}export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
-        |${Spacer}export type Content<T> = { type:string, body:T }
-        |${Spacer}export type Request<T> = { path:string, method: Method, query?: Record<string, any[]>, headers?: Record<string, any[]>, content?:Content<T> }
-        |${Spacer}export type Response<T> = { status:number, headers?: Record<string, any[]>, content?:Content<T> }
-        |}
-    """.trimMargin()
 
     override fun Definition.emitName(): String = when (this) {
         is Endpoint -> identifier.emit()
@@ -47,7 +39,7 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
         super.emit(ast).map {
             Emitted(
                 it.typeName.sanitizeSymbol(), """
-                    |${if (ast.hasEndpoints()) endpointBase else ""}
+                    |${if (ast.hasEndpoints()) TypeScriptShared.source else ""}
                     |${it.result}
             """.trimMargin().trimStart()
             )
@@ -64,6 +56,9 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
         "export type ${enum.identifier.sanitizeSymbol()} = ${enum.entries.joinToString(" | ") { """"$it"""" }}\n"
 
     override fun Type.Shape.emit() = value.joinToString(",\n") { it.emit() }
+
+    internal fun Endpoint.Segment.Param.emit() =
+        "${Spacer}\"${identifier.emit()}\": ${reference.emit()}"
 
     override fun Field.emit() =
         "${Spacer}\"${identifier.emit()}\"${if (isNullable) "?" else ""}: ${reference.emit()}"
@@ -94,58 +89,17 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
     override fun emit(endpoint: Endpoint) =
         """
           |export module ${endpoint.identifier.sanitizeSymbol()} {
-          |${Spacer}export const PATH = "/${
-            endpoint.path.joinToString("/") {
-                when (it) {
-                    is Endpoint.Segment.Literal -> it.value; is Endpoint.Segment.Param -> ":${it.identifier.value}"
-                }
-            }
-        }"
-          |${Spacer}export const METHOD = "${endpoint.method.name}"
-          |${
-            endpoint.requests.toSet().joinToString("\n") {
-                "${Spacer}type ${it.emitName()} = { path: ${endpoint.path.emitType()}, method: \"${endpoint.method}\", headers: {${
-                    endpoint.headers.joinToString(",") { it.emit() }
-                }}, query: {${
-                    endpoint.queries.map { it.emit() }.joinToString(",")
-                }}${it.content?.let { ", content: { type: \"${it.type}\", body: ${it.reference.emit()} }" } ?: ""} } "
-            }
-        }
-          |${Spacer}export type Request = ${
-            endpoint.requests.toSet().joinToString(" | ") { it.emitName() }.ifEmpty { "undefined" }
-        }
-          |${
-            endpoint.responses.toSet()
-                .joinToString("\n") { "${Spacer}type ${it.emitName()} = { status: ${if (it.status.isInt()) it.status else "string"}${it.content?.let { ", content: { type: \"${it.type}\", body: ${it.reference.emit()} }" } ?: ""} }" }
-        }
-          |${Spacer}export type Response = ${
-            endpoint.responses.toSet().joinToString(" | ") { it.emitName() }.ifEmpty { "undefined" }
-        }
-          |${Spacer}export type Handler = (request:Request) => Promise<Response>
-          |${Spacer}export type Call = {
-          |${Spacer(2)}${endpoint.identifier.sanitizeSymbol().firstToLower()}: Handler
+          |${endpoint.pathParams.emitType("Path") { it.emit() }}
+          |${endpoint.queries.emitType("Queries") { it.emit() }}
+          |${endpoint.headers.emitType("Headers") { it.emit() }}
+          |${endpoint.requests.first().emitType(endpoint)}
+          |${endpoint.responses.toSet().joinToString("\n") {  it.emitType() }}
+          |${Spacer}export type Response = ${endpoint.responses.toSet().joinToString(" | ") { it.emitName() }}
+          |${Spacer}export type Handler = {
+          |${Spacer(2)}${endpoint.identifier.sanitizeSymbol().firstToLower()}: (request:Request) => Promise<Response>
           |${Spacer}}
-          |${Spacer}export const call = (handler:Handler) => ({METHOD, PATH, handler})
-          |${
-            endpoint.requests.distinct().joinToString("\n") {
-                "${Spacer}export const ${it.emitName().firstToLower()} = (${
-                    endpoint.joinParameters(
-                        it.content,
-                        null
-                    ).takeIf { it.isNotEmpty() }?.joinToString(",", "props:{", "}") { it.emit() }.orEmpty()
-                }) => ({path: `${endpoint.path.emitPath()}`, method: \"${endpoint.method.name}\", query: {${endpoint.queries.emitMap()}}, headers: {${endpoint.headers.emitMap()}}${it.content?.let { ", content: {type: \"${it.type}\", body: props.body}" } ?: ""}} as const)"
-            }
-        }
-          |${
-            endpoint.responses.distinct().joinToString("\n") {
-                "${Spacer}export const ${it.emitName().firstToLower()} = (${
-                    endpoint.joinParameters(
-                        it.content,
-                        it
-                    ).takeIf { it.isNotEmpty() }?.joinToString(",", "props:{", "}") { it.emit() }.orEmpty()
-                }) => ({status: ${if (it.status.isInt()) it.status else "`${it.status}`"}, headers: {${it.headers.emitMap()}}${it.content?.let { ", content: {type: \"${it.type}\", body: props.body}" } ?: ""}} as const)"
-            }
-        }
+          |${endpoint.emitClient().prependIndent(Spacer(1))}
+          |${endpoint.emitServer().prependIndent(Spacer(1))}
           |}
           |
         """.trimMargin()
@@ -155,54 +109,40 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
 
     override fun emit(channel: Channel) = notYetImplemented()
 
-    private fun List<Endpoint.Segment>.emitType() = "`${joinToString("") { "/" + it.emitType() }}`"
+    private fun <E> List<E>.emitType(name: String, block: (E) -> String) =
+        if(isEmpty()) "${Spacer}type $name = {}"
+        else
+        """
+            |${Spacer}type $name = {
+            |${joinToString(",\n") { "${Spacer(1)}${block(it)}" }},
+            |${Spacer}}
+        """.trimMargin()
 
-    private fun Endpoint.Segment.emitType() = when (this) {
-        is Endpoint.Segment.Literal -> value
-        is Endpoint.Segment.Param -> "${"$"}{${reference.emit()}}"
-    }
+    private fun Endpoint.Request.emitName() = "Request"
 
-    private fun Endpoint.Request.emitName() = "Request" + (content?.emitContentType() ?: "Undefined")
-    private fun Endpoint.Response.emitName() =
-        "Response" + status.firstToUpper() + (content?.emitContentType() ?: "Undefined")
+    private fun Endpoint.Request.emitReference() = content?.reference?.emit() ?: "undefined"
 
-    private fun Endpoint.Content.emitContentType() = type
-        .substringBefore(";")
-        .split("/", "-")
-        .joinToString("") { it.firstToUpper() }
-        .replace("+", "")
+    private fun Endpoint.Request.emitType(endpoint: Endpoint) ="""
+      |${Spacer}export type ${emitName()} = { 
+      |${Spacer(2)}path: Path
+      |${Spacer(2)}method: "${endpoint.method}"
+      |${Spacer(2)}queries: Queries
+      |${Spacer(2)}headers: Headers
+      |${Spacer(2)}body: ${emitReference()}
+      |${Spacer}}
+    """.trimIndent()
 
-    private fun List<Field>.emitMap() = joinToString(", ") {
-        "\"${it.identifier.emit()}\": props.${
-            it.identifier.sanitizeSymbol().firstToLower()
-        }"
-    }
+    private fun Endpoint.Response.emitName() = "Response" + status.firstToUpper()
 
-    private fun List<Endpoint.Segment>.emitPath() = "/" + joinToString("/") { it.emit() }
-    private fun Endpoint.Segment.emit(): String = when (this) {
-        is Endpoint.Segment.Literal -> value
-        is Endpoint.Segment.Param -> "\${props.${identifier.sanitizeSymbol().firstToLower()}}"
-    }
+    private fun Endpoint.Response.emitReference() = content?.reference?.emit() ?: "undefined"
 
-    private fun Endpoint.joinParameters(
-        content: Endpoint.Content? = null,
-        response: Endpoint.Response?
-    ): List<Field> {
-        val pathField = path
-            .filterIsInstance<Endpoint.Segment.Param>()
-            .map { Field(it.identifier, it.reference, false) }
-        val parameters = response?.headers ?: (pathField + queries + headers + cookies)
-        return parameters
-            .plus(content?.reference?.toField("body", false))
-            .filterNotNull()
-            .map {
-                it.copy(
-                    identifier = Identifier(
-                        it.identifier.sanitizeSymbol().firstToLower()
-                    )
-                )
-            }
-    }
+    private fun Endpoint.Response.emitType() ="""
+      |${Spacer}export type ${emitName()} = { 
+      |${Spacer(2)}status: $status
+      |${Spacer(2)}headers: {${headers.joinToString { it.emit() }}}
+      |${Spacer(2)}body: ${emitReference()}
+      |${Spacer}}
+    """.trimIndent()
 
     private fun Identifier.sanitizeSymbol() = value.sanitizeSymbol()
 
@@ -215,6 +155,83 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
         this,
         isNullable
     )
+
+    private fun Endpoint.emitClient() = """
+        |export const client: Wirespec.Client<Request, Response> = (serialization: Wirespec.Serialization) => ({
+        |${emitClientTo().prependIndent(Spacer(1))},
+        |${emitClientFrom().prependIndent(Spacer(1))}
+        |})
+    """.trimMargin()
+
+    private fun Endpoint.emitClientTo() = """
+        |to: (request) => ({
+        |${Spacer(1)}method: "PUT",
+        |${Spacer(1)}path: ["todos", request.path.id],
+        |${Spacer(1)}queries: {"done": [serialization.serialize(request.queries.done)]},
+        |${Spacer(1)}headers: {"token": [serialization.serialize(request.headers.token)]},
+        |${Spacer(1)}body: serialization.serialize(request.body)
+        |})
+    """.trimMargin()
+
+    private fun Endpoint.emitClientFrom() = """
+        |from: (response) => {
+        |${Spacer(1)}switch (response.status) {
+        |${responses.joinToString("\n") { it.emitClientFromResponse() }.prependIndent(Spacer(2))}
+        |${Spacer(2)}default:
+        |${Spacer(3)}throw new Error(`Cannot internalize response with status: ${'$'}{response.status}`);
+        |${Spacer(1)}}
+        |}
+    """.trimMargin()
+
+    private fun Endpoint.Response.emitClientFromResponse() = """
+        |case ${status}:
+        |${Spacer(1)}return {
+        |${Spacer(2)}status: ${status},
+        |${Spacer(2)}headers: {},
+        |${Spacer(2)}body: serialization.deserialize<${emitReference()}>(response.body)
+        |${Spacer(1)}};
+    """.trimMargin()
+
+    private fun Endpoint.emitServer() = """
+        |export const server:Wirespec.Server<Request, Response> = (serialization: Wirespec.Serialization) => ({
+        |${emitServerFrom().prependIndent(Spacer(1))},
+        |${emitServerTo().prependIndent(Spacer(1))}
+        |})
+    """.trimMargin()
+
+    private fun Endpoint.emitServerFrom() = """
+        |from: (request) => {
+        |${Spacer(1)}return {
+        |${Spacer(2)}method: "${method.name.uppercase()}",
+        |${Spacer(2)}path: { 
+        |${indexedPathParams.joinToString(","){ it.emitDeserialized() }.prependIndent(Spacer(3)) }
+        |${Spacer(2)}},
+        |${Spacer(2)}queries: {
+        |${queries.joinToString(","){ it.emitDeserialized("queries").prependIndent(Spacer(3)) } }
+        |${Spacer(2)}},
+        |${Spacer(2)}headers: {
+        |${headers.joinToString(","){ it.emitDeserialized("headers").prependIndent(Spacer(3)) } }
+        |${Spacer(2)}},
+        |${Spacer(2)}body: serialization.deserialize(request.body)
+        |${Spacer(1)}}
+        |}
+    """.trimMargin()
+
+    private fun Endpoint.emitServerTo() = """
+        |to: (response) => ({
+        |${Spacer(1)}status: response.status,
+        |${Spacer(1)}headers: {},
+        |${Spacer(1)}body: serialization.serialize(response.body),
+        |})
+    """.trimMargin()
+
+
+
+    private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
+        """${value.identifier.emit()}: serialization.deserialize(request.path[${index}])"""
+
+    private fun Field.emitDeserialized(fields: String) =
+        """${identifier.emit()}: serialization.deserialize(request.$fields.${identifier.emit()}[0])"""
 
 
 }
