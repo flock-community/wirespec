@@ -51,7 +51,6 @@ open class KotlinEmitter(
 
     override fun emit(ast: AST): List<Emitted> =
         super.emit(ast).map {
-            listOf("", null).filterNotNull()
             Emitted(
                 typeName = it.typeName.sanitizeSymbol(),
                 result = """

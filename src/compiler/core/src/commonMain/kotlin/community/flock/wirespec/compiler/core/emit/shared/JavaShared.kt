@@ -8,6 +8,7 @@ data object JavaShared : Shared {
         |package $DEFAULT_SHARED_PACKAGE_STRING.java;
         |
         |import java.lang.reflect.Type;
+        |import java.lang.reflect.ParameterizedType;
         |import java.util.List;
         |import java.util.Map;
         |
@@ -35,7 +36,7 @@ data object JavaShared : Shared {
         |${Spacer}interface Server<Req extends Request<?>, Res extends Response<?>> {
         |${Spacer(2)}String getPathTemplate();
         |${Spacer(2)}String getMethod();
-        |${Spacer(2)}ServerEdge<Req, Res> server(Serialization<String> serialization);
+        |${Spacer(2)}ServerEdge<Req, Res> getServer(Serialization<String> serialization);
         |${Spacer}}
         |${Spacer}enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
         |${Spacer}interface Request<T> { Path getPath(); Method getMethod(); Queries getQueries(); Headers getHeaders(); T getBody(); interface Headers extends Wirespec.Headers {} }
@@ -45,6 +46,18 @@ data object JavaShared : Shared {
         |${Spacer}interface Deserializer<RAW> { <T> T deserialize(RAW raw, Type type); }
         |${Spacer}record RawRequest(String method, List<String> path, Map<String, List<String>> queries, Map<String, List<String>> headers, String body) {} 
         |${Spacer}record RawResponse(int statusCode, Map<String, List<String>> headers, String body) {}
+        |${Spacer}static Type getType(final Class<?> type, final boolean isIterable) {
+        |${Spacer(2)}if(isIterable) {
+        |${Spacer(3)}return new ParameterizedType() {
+        |${Spacer(4)}public Type getRawType() {return java.util.List.class;}
+        |${Spacer(4)}public Type[] getActualTypeArguments() {Class<?>[] types = {type};return types;}
+        |${Spacer(4)}public Type getOwnerType() {return null;}
+        |${Spacer(3)}};
+        |${Spacer(2)}}
+        |${Spacer(2)}else {
+        |${Spacer(3)}return type;
+        |${Spacer(2)}}
+        |${Spacer}}
         |}
         |
     """.trimMargin()

@@ -203,7 +203,7 @@ Other examples can be found [here](examples/README.md)
 
 ## Dependencies
 
-* JDK 17
+* JDK 21
 * Node 16
 * Docker
 

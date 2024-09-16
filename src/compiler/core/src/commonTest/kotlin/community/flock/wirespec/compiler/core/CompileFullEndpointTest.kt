@@ -172,95 +172,105 @@ class CompileFullEndpointTest {
             |
             |interface PutTodoEndpoint extends Wirespec.Endpoint {
             |  public record Path(
-            |    String id,
-            |  ) extends Wirespec.Path
+            |    String id
+            |  ) implements Wirespec.Path {}
             |
             |  public record Queries(
-            |    Boolean done,
-            |  ) extends Wirespec.Queries
+            |    Boolean done
+            |  ) implements Wirespec.Queries {}
             |
-            |  public record Headers(
-            |    Token token,
-            |  ) extends Wirespec.Request.Headers
+            |  public record RequestHeaders(
+            |    Token token
+            |  ) implements Wirespec.Request.Headers {}
             |
-            |  public static class Request extends Wirespec.Request<PotentialTodoDto> {
-            |    @Override Path path;
-            |    @Override Wirespec.Method method;
-            |    @Override Queries queries;
-            |    @Override Headers headers;
-            |    @Override PotentialTodoDto body;
+            |  public static class Request implements Wirespec.Request<PotentialTodoDto> {
+            |    private final Path path;
+            |    private final Wirespec.Method method;
+            |    private final Queries queries;
+            |    private final RequestHeaders headers;
+            |    private final PotentialTodoDto body;
             |    public Request(String id, Boolean done, Token token, PotentialTodoDto body) {
             |      this.path = new Path(id);
             |      this.method = Wirespec.Method.PUT;
             |      this.queries = new Queries(done);
-            |      this.headers = new Headers(token);
+            |      this.headers = new RequestHeaders(token);
             |      this.body = body;
             |    }
+            |    @Override public Path getPath() { return path; }
+            |    @Override public Wirespec.Method getMethod() { return method; }
+            |    @Override public Queries getQueries() { return queries; }
+            |    @Override public RequestHeaders getHeaders() { return headers; }
+            |    @Override public PotentialTodoDto getBody() { return body; }
             |  }
             |
-            |  Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
-            |    return new Wirespec.RawRequest(
-            |      listOf("todos", request.path.id.toString()),
-            |      request.method.name,
-            |      Map.of(request.queries.done?.let{"done" to serialization.serialize(it, Boolean::class).let(::listOf)}).filterNotNull().toMap(),
-            |      Map.of(request.headers.token?.let{"token" to serialization.serialize(it, Token::class).let(::listOf)}).filterNotNull().toMap(),
-            |      serialization.serialize(request.body, PotentialTodoDto::class)
-            |    );
+            |  public sealed interface Response<T> extends Wirespec.Response<T> {}
+            |  public sealed interface Response2XX<T> extends Response<T> {}
+            |  public sealed interface Response5XX<T> extends Response<T> {}
+            |
+            |  public record Response200(@Override TodoDto body) implements Response2XX<TodoDto> {
+            |    @Override public int getStatus() { return 200; }
+            |    @Override public Headers getHeaders() { return new Headers(); }
+            |    @Override public TodoDto getBody() { return body; }
+            |    public static class Headers implements Wirespec.Response.Headers {}
             |  }
-            |
-            |  Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
-            |    return new Request(
-            |      serialization.deserialize(request.path.get(1), String::class),
-            |      serialization.deserialize(request.queries.get("done").get(0), Boolean::class),
-            |      serialization.deserialize(request.headers.get("token").get(0), Token::class),
-            |      serialization.deserialize(request.body, PotentialTodoDto::class)
-            |    );
+            |  public record Response500(@Override Error body) implements Response5XX<Error> {
+            |    @Override public int getStatus() { return 500; }
+            |    @Override public Headers getHeaders() { return new Headers(); }
+            |    @Override public Error getBody() { return body; }
+            |    public static class Headers implements Wirespec.Response.Headers {}
             |  }
-            |
-            |  public sealed interface Response<T> extends Wirespec.Response<T>
-            |  public sealed interface Response2XX<T> extends Response<T>
-            |  public sealed interface Response5XX<T> extends Response<T>
-            |
-            |  public record Response200(@Override TodoDto body) extends Response2XX<TodoDto> {
-            |    @Override int status = 200;
-            |    @Override Headers headers = new Headers();
-            |    public static class Headers extends Wirespec.Response.Headers
-            |  }
-            |  public record Response500(@Override Error body) extends Response5XX<Error> {
-            |    @Override int status = 500;
-            |    @Override Headers headers = new Headers();
-            |    public static class Headers extends Wirespec.Response.Headers
-            |  }
-            |
-            |  Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
-            |    return switch (response) {
-            |      case Response200 r -> new Wirespec.RawResponse(r.status, mapOf(), serialization.serialize(r.body, TodoDto::class));
-            |      case Response500 r -> new Wirespec.RawResponse(r.status, mapOf(), serialization.serialize(r.body, Error::class));
-            |    }
-            |
-            |  Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
-            |    return switch (response.statusCode) {
-            |      case 200 r -> new Response200(serialization.deserialize(r.body, TodoDto::class));
-            |      case 500 r -> new Response500(serialization.deserialize(r.body, Error::class));
-            |      default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode);
-            |    }
             |
             |  interface Handler extends Wirespec.Handler {
+            |
+            |    public static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
+            |      return new Wirespec.RawRequest(
+            |        request.method.name(),
+            |        java.util.List.of("todos", request.path.id.toString()),
+            |        Map.of(request.queries.done?.let{"done" to serialization.serialize(it, Wirespec.getType(Boolean.class, false).let(::listOf)}).filterNotNull().toMap(),
+            |        Map.of(request.headers.token?.let{"token" to serialization.serialize(it, Wirespec.getType(Token.class, false).let(::listOf)}).filterNotNull().toMap(),
+            |        serialization.serialize(request.getBody(), Wirespec.getType(PotentialTodoDto.class, false))
+            |      );
+            |    }
+            |
+            |    public static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
+            |      return new Request(
+            |        serialization.deserialize(request.path().get(1), Wirespec.getType(String.class, false)),
+            |        serialization.deserialize(request.queries.get("done").get(0), Wirespec.getType(Boolean.class, false)),
+            |        serialization.deserialize(request.headers.get("token").get(0), Wirespec.getType(Token.class, false)),
+            |        serialization.deserialize(request.body(), Wirespec.getType(PotentialTodoDto.class, false))
+            |      );
+            |    }
+            |
+            |    public static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
+            |      return switch (response) {
+            |        case Response200 r -> new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, false)));
+            |        case Response500 r -> new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(Error.class, false)));
+            |      };
+            |    }
+            |
+            |    public static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
+            |      return switch (response.statusCode()) {
+            |        case 200 -> new Response200(serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, false)));
+            |        case 500 -> new Response500(serialization.deserialize(response.body(), Wirespec.getType(Error.class, false)));
+            |        default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+            |      };
+            |    }
+            |
             |    java.util.concurrent.CompletableFuture<Response<?>> putTodo(Request request);
-            |    public static class Handlers extends Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
-            |      @Override String pathTemplate = "/todos/{id}";
-            |      @Override String method = "PUT";
-            |      @Override Wirespec.ServerEdge<Request, Response<?>> server(Wirespec.Serialization<String> serialization) {
+            |    public static class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
+            |      @Override public String getPathTemplate() { return "/todos/{id}"; }
+            |      @Override public String getMethod() { return "PUT"; }
+            |      @Override public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization<String> serialization) {
             |        return new Wirespec.ServerEdge<Request, Response<?>>() {
-            |          @Override Request from(Wirespec.RawRequest request) { return fromRequest(serialization, request); }
-            |          @Override Wirespec.RawResponse to(Response<?> response) { return toResponse(serialization, response); }
-            |        }
+            |          @Override public Request from(Wirespec.RawRequest request) { return fromRequest(serialization, request); }
+            |          @Override public Wirespec.RawResponse to(Response<?> response) { return toResponse(serialization, response); }
+            |        };
             |      }
-            |      @Override Wirespec.ClientEdge<Request, Response<?> client(Wirespec.Serialization<String> serialization) {
+            |      @Override public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization<String> serialization) {
             |        return new Wirespec.ClientEdge<Request, Response<?>>() {
-            |          @Override Wirespec.RawRequest to(Request request) { return toRequest(serialization, request); }
-            |          @Override Response<?> from(Wirespec.RawResponse response) { return fromResponse(serialization, response); }
-            |        }
+            |          @Override public Wirespec.RawRequest to(Request request) { return toRequest(serialization, request); }
+            |          @Override public Response<?> from(Wirespec.RawResponse response) { return fromResponse(serialization, response); }
+            |        };
             |      }
             |    }
             |  }
