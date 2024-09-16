@@ -1,6 +1,4 @@
 .PHONY: *
 
 build:
-	npm install
-	npm run generate
-	npm test
+	npm install && npm run generate && npm test
