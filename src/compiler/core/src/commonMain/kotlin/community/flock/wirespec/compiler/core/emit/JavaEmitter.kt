@@ -281,21 +281,6 @@ open class JavaEmitter(
 
     private fun Endpoint.Content?.emit() = this?.reference?.emit() ?: "Void"
 
-    private fun Endpoint.Segment.emit() =
-        when (this) {
-            is Endpoint.Segment.Literal -> value
-            is Endpoint.Segment.Param -> "{${identifier.emit()}}"
-        }
-
-    private val Endpoint.pathParams get() = path.filterIsInstance<Endpoint.Segment.Param>()
-    private val Endpoint.indexedPathParams
-        get() = path.withIndex().mapNotNull { (idx, segment) ->
-            when (segment) {
-                is Endpoint.Segment.Literal -> null
-                is Endpoint.Segment.Param -> IndexedValue(idx, segment)
-            }
-        }
-
     private fun Endpoint.Segment.Param.emit() = "${reference.emit()} ${identifier.emit()}"
 
     private fun Reference.emitWrap(isNullable: Boolean): String = value
