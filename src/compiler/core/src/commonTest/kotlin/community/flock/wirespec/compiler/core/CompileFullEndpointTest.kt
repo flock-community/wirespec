@@ -170,7 +170,7 @@ class CompileFullEndpointTest {
             |
             |import community.flock.wirespec.java.Wirespec;
             |
-            |interface PutTodoEndpoint extends Wirespec.Endpoint {
+            |public interface PutTodoEndpoint extends Wirespec.Endpoint {
             |  public record Path(
             |    String id
             |  ) implements Wirespec.Path {}

@@ -112,7 +112,7 @@ class CompileMinimalEndpointTest {
             |
             |import community.flock.wirespec.java.Wirespec;
             |
-            |interface GetTodosEndpoint extends Wirespec.Endpoint {
+            |public interface GetTodosEndpoint extends Wirespec.Endpoint {
             |  public static class Path implements Wirespec.Path {}
             |
             |  public static class Queries implements Wirespec.Queries {}

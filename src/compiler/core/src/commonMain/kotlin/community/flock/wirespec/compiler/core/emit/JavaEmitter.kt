@@ -130,7 +130,7 @@ open class JavaEmitter(
     """.trimMargin()
 
     override fun emit(endpoint: Endpoint) = """
-        |interface ${endpoint.identifier.emit()}Endpoint extends Wirespec.Endpoint {
+        |public interface ${endpoint.identifier.emit()}Endpoint extends Wirespec.Endpoint {
         |${endpoint.pathParams.emitObject("Path", "Wirespec.Path") { it.emit() }}
         |
         |${endpoint.queries.emitObject("Queries", "Wirespec.Queries") { it.emit() }}
