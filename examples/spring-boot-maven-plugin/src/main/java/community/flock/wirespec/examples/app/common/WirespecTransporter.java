@@ -1,35 +1,36 @@
 package community.flock.wirespec.examples.app.common;
 
-import community.flock.wirespec.java.Wirespec;
-import org.springframework.http.HttpMethod;
+import community.flock.wirespec.java.Wirespec.RawRequest;
+import community.flock.wirespec.java.Wirespec.RawResponse;
 import org.springframework.http.RequestEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
 
-import java.net.URI;
 import java.util.concurrent.CompletableFuture;
 
+import static java.net.URI.create;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.springframework.http.HttpMethod.valueOf;
+import static org.springframework.util.CollectionUtils.toMultiValueMap;
 
 @Component
-public class WirespecHandler {
+public class WirespecTransporter {
 
     private final RestTemplate restTemplate;
 
-    public WirespecHandler(RestTemplate restTemplate) {
+    public WirespecTransporter(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 
-    public CompletableFuture<Wirespec.RawResponse> handle(Wirespec.RawRequest request) {
+    public CompletableFuture<RawResponse> transport(RawRequest request) {
         var req = new RequestEntity<>(
                 request.body(),
-                CollectionUtils.toMultiValueMap(request.headers()),
-                HttpMethod.valueOf(request.method()),
-                URI.create(request.path().stream().reduce((acc, cur) -> acc + "/" + cur).orElse(""))
+                toMultiValueMap(request.headers()),
+                valueOf(request.method()),
+                create(request.path().stream().reduce((acc, cur) -> acc + "/" + cur).orElse(""))
         );
         var res = restTemplate.exchange(req, String.class);
-        return completedFuture(new Wirespec.RawResponse(
+        return completedFuture(new RawResponse(
                 res.getStatusCode().value(),
                 res.getHeaders(),
                 res.getBody()

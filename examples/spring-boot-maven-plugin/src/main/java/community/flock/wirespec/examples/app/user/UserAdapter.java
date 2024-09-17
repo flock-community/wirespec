@@ -4,14 +4,14 @@ import java.util.List;
 
 public interface UserAdapter {
     interface Module {
-        UserAdapter getUserAdapter();
+        UserAdapter userAdapter();
     }
 
     List<User> getAllUsers();
 
-    User getUserByName(String name);
+    User getUserByName(final String name);
 
-    User saveUser(User user);
+    User saveUser(final User user);
 
-    User deleteUserByName(String name);
+    User deleteUserByName(final String name);
 }

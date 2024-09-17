@@ -7,12 +7,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserConverter implements Converter<User, UserDto> {
     @Override
-    public User internalize(UserDto userDto) {
+    public User internalize(final UserDto userDto) {
         return new User(userDto.name());
     }
 
     @Override
-    public UserDto externalize(User user) {
+    public UserDto externalize(final User user) {
         return new UserDto(user.name());
     }
 }

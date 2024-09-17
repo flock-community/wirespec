@@ -1,5 +1,5 @@
 package community.flock.wirespec.examples.app.common;
 
-public interface Externalizer<DOMAIN, DTO> {
-    DTO externalize(DOMAIN domain);
+public interface Externalizer<I, E> {
+    E externalize(I domain);
 }

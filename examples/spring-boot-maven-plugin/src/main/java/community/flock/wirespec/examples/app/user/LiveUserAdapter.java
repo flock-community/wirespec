@@ -14,6 +14,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import static java.lang.Thread.currentThread;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Component
@@ -22,7 +23,7 @@ public class LiveUserAdapter implements UserAdapter {
     private final UserClient client;
     private final UserConverter converter;
 
-    public LiveUserAdapter(UserClient client, UserConverter converter) {
+    public LiveUserAdapter(final UserClient client, final UserConverter converter) {
         this.client = client;
         this.converter = converter;
     }
@@ -34,7 +35,7 @@ public class LiveUserAdapter implements UserAdapter {
         };
     }
 
-    public User getUserByName(String name) {
+    public User getUserByName(final String name) {
         var res = complete(client.getUserByName(new GetUserByNameEndpoint.Request(name)));
         return switch (res) {
             case GetUserByNameEndpoint.Response200 r -> converter.internalize(r.getBody());
@@ -42,7 +43,7 @@ public class LiveUserAdapter implements UserAdapter {
         };
     }
 
-    public User saveUser(User user) {
+    public User saveUser(final User user) {
         var res = complete(client.postUser(new PostUserEndpoint.Request(converter.externalize(user))));
         return switch (res) {
             case PostUserEndpoint.Response200 r -> converter.internalize(r.getBody());
@@ -50,7 +51,7 @@ public class LiveUserAdapter implements UserAdapter {
         };
     }
 
-    public User deleteUserByName(String name) {
+    public User deleteUserByName(final String name) {
         var res = complete(client.deleteUserByName(new DeleteUserByNameEndpoint.Request(name)));
         return switch (res) {
             case DeleteUserByNameEndpoint.Response200 r -> converter.internalize(r.getBody());
@@ -58,10 +59,13 @@ public class LiveUserAdapter implements UserAdapter {
         };
     }
 
-    private <T> T complete(CompletableFuture<T> future) {
+    private <T> T complete(final CompletableFuture<T> future) {
         try {
             return future.get(10L, SECONDS);
-        } catch (ExecutionException | InterruptedException | TimeoutException e) {
+        } catch (ExecutionException | TimeoutException e) {
+            throw new CallInterrupted(e);
+        } catch (InterruptedException e) {
+            currentThread().interrupt();
             throw new CallInterrupted(e);
         }
     }

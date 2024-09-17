@@ -2,6 +2,7 @@ package community.flock.wirespec.examples.app.common;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import community.flock.wirespec.examples.app.exception.SerializationException;
 import community.flock.wirespec.java.Wirespec;
 import org.springframework.stereotype.Component;
 
@@ -21,18 +22,16 @@ public class WirespecSerializer implements Wirespec.Serialization<String> {
         try {
             return objectMapper.writeValueAsString(t);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new SerializationException(e);
         }
     }
 
     @Override
     public <T> T deserialize(String s, Type type) {
         try {
-            var t = objectMapper.constructType(type);
-            objectMapper.readValue(s, t);
-            return null;
+            return objectMapper.readValue(s, objectMapper.constructType(type));
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new SerializationException(e);
         }
     }
 }

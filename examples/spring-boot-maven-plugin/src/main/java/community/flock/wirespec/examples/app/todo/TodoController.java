@@ -1,5 +1,6 @@
 package community.flock.wirespec.examples.app.todo;
 
+import community.flock.wirespec.examples.app.exception.NotFound;
 import community.flock.wirespec.generated.java.Error;
 import community.flock.wirespec.generated.java.Todo;
 import community.flock.wirespec.generated.java.TodoId;
@@ -22,25 +23,25 @@ import static java.util.Collections.emptyList;
 @RequestMapping("/todos")
 class TodoController {
 
-    private final TodoRepository repository;
+    private final TodoService service;
 
-    TodoController(final TodoRepository repository) {
-        this.repository = repository;
+    public TodoController(TodoService service) {
+        this.service = service;
     }
 
     @GetMapping
     public List<Todo> getAllTodos() {
-        return repository.getAllTodos();
+        return service.getAllTodos();
     }
 
     @GetMapping("/{id}")
     public Todo getTodoById(@PathVariable final String id) {
         final var todoId = new TodoId(id);
-        final var maybeTodo = repository.getTodoById(todoId);
+        final var maybeTodo = service.getTodoById(todoId);
         if (maybeTodo == null) {
             final var errorMap = Map.of("404", "Not Found");
             final var error = new Error(errorMap).toString();
-            throw new RuntimeException(error);
+            throw new NotFound(error);
         }
         return maybeTodo;
     }
@@ -49,11 +50,11 @@ class TodoController {
     public Todo postTodo(@RequestBody final TodoInput input) {
         final var todoId = new TodoId(UUID.randomUUID().toString());
         final var todo = new Todo(todoId, input.name(), input.done(), emptyList());
-        return repository.saveTodo(todo);
+        return service.saveTodo(todo);
     }
 
     @DeleteMapping("/{id}")
     public Todo deleteById(@PathVariable final String id) {
-        return repository.deleteTodoById(new TodoId(id));
+        return service.deleteTodoById(new TodoId(id));
     }
 }
