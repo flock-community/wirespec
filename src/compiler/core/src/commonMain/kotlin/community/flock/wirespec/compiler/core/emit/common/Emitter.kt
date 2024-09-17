@@ -45,6 +45,29 @@ abstract class Emitter(
             }
         }
 
+    internal fun Endpoint.Segment.emit() =
+        when (this) {
+            is Endpoint.Segment.Literal -> value
+            is Endpoint.Segment.Param -> "{${identifier.emit()}}"
+        }
+
+    internal fun Endpoint.Segment.emitMap() =
+        when (this) {
+            is Endpoint.Segment.Literal -> value
+            is Endpoint.Segment.Param -> "${'$'}{props.${identifier.emit()}}"
+        }
+
+
+    internal val Endpoint.pathParams get() = path.filterIsInstance<Endpoint.Segment.Param>()
+
+    internal val Endpoint.indexedPathParams
+        get() = path.withIndex().mapNotNull { (idx, segment) ->
+            when (segment) {
+                is Endpoint.Segment.Literal -> null
+                is Endpoint.Segment.Param -> IndexedValue(idx, segment)
+            }
+        }
+
     companion object {
         fun String.firstToUpper() = replaceFirstChar(Char::uppercase)
         fun String.firstToLower() = replaceFirstChar(Char::lowercase)

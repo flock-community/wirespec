@@ -483,24 +483,82 @@ class CompileLegacyEndpointTest {
         val ts = """
             |export module Wirespec {
             |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
+            |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string[]>, headers: Record<string, string[]>, body?: string }
+            |  export type RawResponse = { status: number, headers: Record<string, string[]>, body?: string }
             |  export type Content<T> = { type:string, body:T }
-            |  export type Request<T> = { path:string, method: Method, query?: Record<string, any[]>, headers?: Record<string, any[]>, content?:Content<T> }
+            |  export type Request<T> = { path: Record<string, string>, method: Method, query?: Record<string, any>, headers?: Record<string, any>, content?:Content<T> }
             |  export type Response<T> = { status:number, headers?: Record<string, any[]>, content?:Content<T> }
+            |  export type Serialization = { serialize: <T>(type: T) => string; deserialize: <T>(raw: string | undefined) => T }
+            |  export type Client<REQ extends Request<any>, RES extends Response<any>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
+            |  export type Server<REQ extends Request<any>, RES extends Response<any>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
             |}
             |export module Todo {
-            |  export const PATH = "/v1/todo"
-            |  export const METHOD = "GET"
-            |  type RequestUndefined = { path: `/v1/todo`, method: "GET", headers: {  "auth": string}, query: {  "done": boolean} } 
-            |  export type Request = RequestUndefined
-            |  type Response200ApplicationJson = { status: 200, content: { type: "application/json", body: Todo } }
-            |  export type Response = Response200ApplicationJson
-            |  export type Handler = (request:Request) => Promise<Response>
-            |  export type Call = {
-            |    todo: Handler
+            |  type Path = {}
+            |  type Queries = {
+            |    "done": boolean,
             |  }
-            |  export const call = (handler:Handler) => ({METHOD, PATH, handler})
-            |  export const requestUndefined = (props:{  "done": boolean,  "auth": string}) => ({path: `/v1/todo`, method: "GET", query: {"done": props.done}, headers: {"auth": props.auth}} as const)
-            |  export const response200ApplicationJson = (props:{  "body": Todo}) => ({status: 200, headers: {}, content: {type: "application/json", body: props.body}} as const)
+            |  type Headers = {
+            |    "auth": string,
+            |  }
+            |  export type Request = { 
+            |    path: Path
+            |    method: "GET"
+            |    queries: Queries
+            |    headers: Headers
+            |    body: undefined
+            |  }
+            |  export type Response200 = { 
+            |    status: 200
+            |    headers: {}
+            |    body: Todo
+            |  }
+            |  export type Response = Response200
+            |  export type Handler = {
+            |    todo: (request:Request) => Promise<Response>
+            |  }
+            |  export const client: Wirespec.Client<Request, Response> = (serialization: Wirespec.Serialization) => ({
+            |    to: (request) => ({
+            |      method: "GET",
+            |      path: ["v1", "todo"],
+            |      queries: {done: [serialization.serialize(request.queries.done)]},
+            |      headers: {auth: [serialization.serialize(request.headers.auth)]},
+            |      body: serialization.serialize(request.body)
+            |    }),
+            |    from: (response) => {
+            |      switch (response.status) {
+            |        case 200:
+            |          return {
+            |            status: 200,
+            |            headers: {},
+            |            body: serialization.deserialize<Todo>(response.body)
+            |          };
+            |        default:
+            |          throw new Error(`Cannot internalize response with status: ${'$'}{response.status}`);
+            |      }
+            |    }
+            |  })
+            |  export const server:Wirespec.Server<Request, Response> = (serialization: Wirespec.Serialization) => ({
+            |    from: (request) => {
+            |      return {
+            |        method: "GET",
+            |        path: { 
+            |      
+            |        },
+            |        queries: {
+            |          done: serialization.deserialize(request.queries.done[0])
+            |        },
+            |        headers: {
+            |          auth: serialization.deserialize(request.headers.auth[0])
+            |        },
+            |        body: serialization.deserialize(request.body)
+            |      }
+            |    },
+            |    to: (response) => ({
+            |      status: response.status,
+            |      headers: {},
+            |      body: serialization.serialize(response.body),
+            |    })
+            |  })
             |}
             |
             |export type Todo = {
