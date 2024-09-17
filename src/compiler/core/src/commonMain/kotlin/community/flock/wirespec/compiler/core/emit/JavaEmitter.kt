@@ -139,7 +139,7 @@ open class JavaEmitter(
         |
         |${endpoint.requests.joinToString("\n") { it.emit(endpoint) }}
         |
-        |${Spacer}public sealed interface Response<T> extends Wirespec.Response<T> {}
+        |${Spacer}sealed interface Response<T> extends Wirespec.Response<T> {}
         |${endpoint.emitResponseInterfaces()}
         |
         |${endpoint.responses.joinToString("\n") { it.emit() }}
@@ -148,13 +148,13 @@ open class JavaEmitter(
         |
         |${endpoint.requests.joinToString("\n") { it.emitRequestFunctions(endpoint) }}
         |
-        |${Spacer(2)}public static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
+        |${Spacer(2)}static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
         |${Spacer(3)}return switch (response) {
         |${endpoint.responses.joinToString("\n") { it.emitSerialized() }}
         |${Spacer(3)}};
         |${Spacer(2)}}
         |
-        |${Spacer(2)}public static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
+        |${Spacer(2)}static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
         |${Spacer(3)}return switch (response.statusCode()) {
         |${endpoint.responses.joinToString("\n") { it.emitDeserialized() }}
         |${Spacer(4)}default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
@@ -162,17 +162,17 @@ open class JavaEmitter(
         |${Spacer(2)}}
         |
         |${Spacer(2)}java.util.concurrent.CompletableFuture<Response<?>> ${endpoint.identifier.emit().firstToLower()}(Request request);
-        |${Spacer(2)}public static class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
+        |${Spacer(2)}class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
         |${Spacer(3)}@Override public String getPathTemplate() { return "/${endpoint.path.joinToString("/") { it.emit() }}"; }
         |${Spacer(3)}@Override public String getMethod() { return "${endpoint.method}"; }
         |${Spacer(3)}@Override public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization<String> serialization) {
-        |${Spacer(4)}return new Wirespec.ServerEdge<Request, Response<?>>() {
+        |${Spacer(4)}return new Wirespec.ServerEdge<>() {
         |${Spacer(5)}@Override public Request from(Wirespec.RawRequest request) { return fromRequest(serialization, request); }
         |${Spacer(5)}@Override public Wirespec.RawResponse to(Response<?> response) { return toResponse(serialization, response); }
         |${Spacer(4)}};
         |${Spacer(3)}}
         |${Spacer(3)}@Override public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization<String> serialization) {
-        |${Spacer(4)}return new Wirespec.ClientEdge<Request, Response<?>>() {
+        |${Spacer(4)}return new Wirespec.ClientEdge<>() {
         |${Spacer(5)}@Override public Wirespec.RawRequest to(Request request) { return toRequest(serialization, request); }
         |${Spacer(5)}@Override public Response<?> from(Wirespec.RawResponse response) { return fromResponse(serialization, response); }
         |${Spacer(4)}};
@@ -184,18 +184,18 @@ open class JavaEmitter(
 
     private fun Endpoint.emitResponseInterfaces() = responses
         .distinctBy { it.status.first() }
-        .joinToString("\n") { "${Spacer}public sealed interface Response${it.status[0]}XX<T> extends Response<T> {}" }
+        .joinToString("\n") { "${Spacer}sealed interface Response${it.status[0]}XX<T> extends Response<T> {}" }
 
     private fun <E> List<E>.emitObject(name: String, extends: String, block: (E) -> String) =
-        if (isEmpty()) "${Spacer}public static class $name implements $extends {}"
+        if (isEmpty()) "${Spacer}class $name implements $extends {}"
         else """
-            |${Spacer}public record $name(
+            |${Spacer}record $name(
             |${joinToString(",\n") { "${Spacer(2)}${block(it)}" }}
             |${Spacer}) implements $extends {}
         """.trimMargin()
 
     fun Endpoint.Request.emit(endpoint: Endpoint) = """
-        |${Spacer}public static class Request implements Wirespec.Request<${content.emit()}> {
+        |${Spacer}class Request implements Wirespec.Request<${content.emit()}> {
         |${Spacer(2)}private final Path path;
         |${Spacer(2)}private final Wirespec.Method method;
         |${Spacer(2)}private final Queries queries;
@@ -211,7 +211,7 @@ open class JavaEmitter(
     """.trimMargin()
 
     private fun Endpoint.Request.emitRequestFunctions(endpoint: Endpoint) = """
-        |${Spacer(2)}public static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
+        |${Spacer(2)}static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
         |${Spacer(3)}return new Wirespec.RawRequest(
         |${Spacer(4)}request.method.name(),
         |${Spacer(4)}java.util.List.of(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
@@ -221,13 +221,13 @@ open class JavaEmitter(
         |${Spacer(3)});
         |${Spacer(2)}}
         |
-        |${Spacer(2)}public static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
+        |${Spacer(2)}static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
         |${Spacer(3)}return new Request(${emitDeserializedParams(endpoint)});
         |${Spacer(2)}}
     """.trimMargin()
 
     fun Endpoint.Response.emit() = """
-        |${Spacer}public record Response$status(@Override ${content.emit()} body) implements Response${status.first()}XX<${content.emit()}> {
+        |${Spacer}record Response$status(@Override ${content.emit()} body) implements Response${status.first()}XX<${content.emit()}> {
         |${Spacer(2)}@Override public int getStatus() { return ${status.fixStatus()}; }
         |${Spacer(2)}@Override public Headers getHeaders() { return new Headers(); }
         |${Spacer(2)}@Override public ${content.emit()} getBody() { return body; }

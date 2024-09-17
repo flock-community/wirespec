@@ -49,14 +49,12 @@ data object JavaShared : Shared {
         |${Spacer}static Type getType(final Class<?> type, final boolean isIterable) {
         |${Spacer(2)}if(isIterable) {
         |${Spacer(3)}return new ParameterizedType() {
-        |${Spacer(4)}public Type getRawType() {return java.util.List.class;}
-        |${Spacer(4)}public Type[] getActualTypeArguments() {Class<?>[] types = {type};return types;}
-        |${Spacer(4)}public Type getOwnerType() {return null;}
+        |${Spacer(4)}public Type getRawType() { return java.util.List.class; }
+        |${Spacer(4)}public Type[] getActualTypeArguments() { return new Class<?>[]{type}; }
+        |${Spacer(4)}public Type getOwnerType() { return null; }
         |${Spacer(3)}};
         |${Spacer(2)}}
-        |${Spacer(2)}else {
-        |${Spacer(3)}return type;
-        |${Spacer(2)}}
+        |${Spacer(2)}else { return type; }
         |${Spacer}}
         |}
         |

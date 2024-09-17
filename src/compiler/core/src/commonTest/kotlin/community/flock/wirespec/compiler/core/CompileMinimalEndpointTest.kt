@@ -113,13 +113,13 @@ class CompileMinimalEndpointTest {
             |import community.flock.wirespec.java.Wirespec;
             |
             |public interface GetTodosEndpoint extends Wirespec.Endpoint {
-            |  public static class Path implements Wirespec.Path {}
+            |  class Path implements Wirespec.Path {}
             |
-            |  public static class Queries implements Wirespec.Queries {}
+            |  class Queries implements Wirespec.Queries {}
             |
-            |  public static class RequestHeaders implements Wirespec.Request.Headers {}
+            |  class RequestHeaders implements Wirespec.Request.Headers {}
             |
-            |  public static class Request implements Wirespec.Request<Void> {
+            |  class Request implements Wirespec.Request<Void> {
             |    private final Path path;
             |    private final Wirespec.Method method;
             |    private final Queries queries;
@@ -139,10 +139,10 @@ class CompileMinimalEndpointTest {
             |    @Override public Void getBody() { return body; }
             |  }
             |
-            |  public sealed interface Response<T> extends Wirespec.Response<T> {}
-            |  public sealed interface Response2XX<T> extends Response<T> {}
+            |  sealed interface Response<T> extends Wirespec.Response<T> {}
+            |  sealed interface Response2XX<T> extends Response<T> {}
             |
-            |  public record Response200(@Override java.util.List<TodoDto> body) implements Response2XX<java.util.List<TodoDto>> {
+            |  record Response200(@Override java.util.List<TodoDto> body) implements Response2XX<java.util.List<TodoDto>> {
             |    @Override public int getStatus() { return 200; }
             |    @Override public Headers getHeaders() { return new Headers(); }
             |    @Override public java.util.List<TodoDto> getBody() { return body; }
@@ -151,7 +151,7 @@ class CompileMinimalEndpointTest {
             |
             |  interface Handler extends Wirespec.Handler {
             |
-            |    public static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
+            |    static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
             |      return new Wirespec.RawRequest(
             |        request.method.name(),
             |        java.util.List.of("todos"),
@@ -161,17 +161,17 @@ class CompileMinimalEndpointTest {
             |      );
             |    }
             |
-            |    public static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
+            |    static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
             |      return new Request();
             |    }
             |
-            |    public static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
+            |    static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
             |      return switch (response) {
             |        case Response200 r -> new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, true)));
             |      };
             |    }
             |
-            |    public static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
+            |    static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
             |      return switch (response.statusCode()) {
             |        case 200 -> new Response200(serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, true)));
             |        default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
@@ -179,17 +179,17 @@ class CompileMinimalEndpointTest {
             |    }
             |
             |    java.util.concurrent.CompletableFuture<Response<?>> getTodos(Request request);
-            |    public static class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
+            |    class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
             |      @Override public String getPathTemplate() { return "/todos"; }
             |      @Override public String getMethod() { return "GET"; }
             |      @Override public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization<String> serialization) {
-            |        return new Wirespec.ServerEdge<Request, Response<?>>() {
+            |        return new Wirespec.ServerEdge<>() {
             |          @Override public Request from(Wirespec.RawRequest request) { return fromRequest(serialization, request); }
             |          @Override public Wirespec.RawResponse to(Response<?> response) { return toResponse(serialization, response); }
             |        };
             |      }
             |      @Override public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization<String> serialization) {
-            |        return new Wirespec.ClientEdge<Request, Response<?>>() {
+            |        return new Wirespec.ClientEdge<>() {
             |          @Override public Wirespec.RawRequest to(Request request) { return toRequest(serialization, request); }
             |          @Override public Response<?> from(Wirespec.RawResponse response) { return fromResponse(serialization, response); }
             |        };
