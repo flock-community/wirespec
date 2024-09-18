@@ -9,7 +9,6 @@ import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 
-
 interface Emitters :
     TypeDefinitionEmitter,
     EnumDefinitionEmitter,

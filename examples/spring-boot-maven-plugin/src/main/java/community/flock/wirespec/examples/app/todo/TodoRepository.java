@@ -2,45 +2,15 @@ package community.flock.wirespec.examples.app.todo;
 
 import community.flock.wirespec.generated.java.Todo;
 import community.flock.wirespec.generated.java.TodoId;
-import org.springframework.stereotype.Repository;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import static java.util.Collections.emptyList;
+public interface TodoRepository {
+    List<Todo> getAllTodos();
 
-@Repository
-public class TodoRepository {
+    Todo getTodoById(final TodoId id);
 
-    private static final String UUID = "f20ad876-c6a8-48b8-9a23-71787c1ae34a";
-    private final HashMap<String, Todo> todos = new HashMap<>(
-            Map.of(
-                    UUID,
-                    new Todo(
-                            new TodoId(UUID),
-                            "Name",
-                            true,
-                            emptyList()
-                    )
-            )
-    );
+    Todo saveTodo(final Todo todo);
 
-    public List<Todo> getAllTodos() {
-        return todos.values().stream().toList();
-    }
-
-    public Todo getTodoById(TodoId id) {
-        return todos.get(id.value());
-    }
-
-    public Todo saveTodo(Todo todo) {
-        todos.put(todo.id().value(), todo);
-        return todo;
-    }
-
-    public Todo deleteTodoById(TodoId id) {
-        return todos.remove(id.value());
-    }
-
+    Todo deleteTodoById(final TodoId id);
 }

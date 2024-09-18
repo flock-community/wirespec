@@ -20,14 +20,6 @@ sealed interface Operation {
     data class Convert(val format: Format) : Operation
 }
 
-enum class Format {
-    OpenApiV2, OpenApiV3;
-
-    companion object {
-        override fun toString() = entries.joinToString()
-    }
-}
-
 @JvmInline
 value class PackageName(override val value: String) : Value<String>
 

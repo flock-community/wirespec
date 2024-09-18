@@ -112,137 +112,90 @@ class CompileMinimalEndpointTest {
             |
             |import community.flock.wirespec.java.Wirespec;
             |
-            |import java.util.concurrent.CompletableFuture;
-            |import java.util.function.Function;
-            |
             |public interface GetTodosEndpoint extends Wirespec.Endpoint {
-            |  static String PATH = "/todos";
-            |  static String METHOD = "GET";
+            |  class Path implements Wirespec.Path {}
             |
-            |  sealed interface Request<T> extends Wirespec.Request<T> {
-            |  }
+            |  class Queries implements Wirespec.Queries {}
             |
-            |  final class RequestUnit implements Request<Void> {
-            |    private final String path;
+            |  class RequestHeaders implements Wirespec.Request.Headers {}
+            |
+            |  class Request implements Wirespec.Request<Void> {
+            |    private final Path path;
             |    private final Wirespec.Method method;
-            |    private final java.util.Map<String, java.util.List<Object>> query;
-            |    private final java.util.Map<String, java.util.List<Object>> headers;
-            |    private final Wirespec.Content<Void> content;
-            |
-            |    public RequestUnit(
-            |      String path,
-            |      Wirespec.Method method,
-            |      java.util.Map<String, java.util.List<Object>> query,
-            |      java.util.Map<String, java.util.List<Object>> headers,
-            |      Wirespec.Content<Void> content
-            |    ) {
-            |      this.path = path;
-            |      this.method = method;
-            |      this.query = query;
-            |      this.headers = headers;
-            |      this.content = content;
-            |    }
-            |
-            |    public RequestUnit(
-            |
-            |    ) {
-            |      this.path = "/" + "todos";
+            |    private final Queries queries;
+            |    private final RequestHeaders headers;
+            |    private final Void body;
+            |    public Request() {
+            |      this.path = new Path();
             |      this.method = Wirespec.Method.GET;
-            |      this.query = java.util.Map.ofEntries();
-            |      this.headers = java.util.Map.ofEntries();
-            |      this.content = null;
+            |      this.queries = new Queries();
+            |      this.headers = new RequestHeaders();
+            |      this.body = null;
             |    }
-            |
-            |    @Override
-            |    public String getPath() {
-            |      return path;
-            |    }
-            |
-            |    @Override
-            |    public Wirespec.Method getMethod() {
-            |      return method;
-            |    }
-            |
-            |    @Override
-            |    public java.util.Map<String, java.util.List<Object>> getQuery() {
-            |      return query;
-            |    }
-            |
-            |    @Override
-            |    public java.util.Map<String, java.util.List<Object>> getHeaders() {
-            |      return headers;
-            |    }
-            |
-            |    @Override
-            |    public Wirespec.Content<Void> getContent() {
-            |      return content;
-            |    }
+            |    @Override public Path getPath() { return path; }
+            |    @Override public Wirespec.Method getMethod() { return method; }
+            |    @Override public Queries getQueries() { return queries; }
+            |    @Override public RequestHeaders getHeaders() { return headers; }
+            |    @Override public Void getBody() { return body; }
             |  }
             |
-            |  sealed interface Response<T> extends Wirespec.Response<T> {
-            |  };
+            |  sealed interface Response<T> extends Wirespec.Response<T> {}
+            |  sealed interface Response2XX<T> extends Response<T> {}
             |
-            |  sealed interface Response2XX<T> extends Response<T> {
-            |  };
-            |
-            |  sealed interface Response200<T> extends Response2XX<T> {
-            |  };
-            |
-            |  final class Response200ApplicationJson implements Response200<java.util.List<TodoDto>> {
-            |    private final int status;
-            |    private final java.util.Map<String, java.util.List<Object>> headers;
-            |    private final Wirespec.Content<java.util.List<TodoDto>> content;
-            |
-            |    public Response200ApplicationJson(int status, java.util.Map<String, java.util.List<Object>> headers, Wirespec.Content<java.util.List<TodoDto>> content) {
-            |      this.status = status;
-            |      this.headers = headers;
-            |      this.content = content;
-            |    }
-            |
-            |    public Response200ApplicationJson(
-            |      java.util.List<TodoDto> body
-            |    ) {
-            |      this.status = 200;
-            |      this.headers = java.util.Map.ofEntries();
-            |      this.content = new Wirespec.Content("application/json", body);
-            |    }
-            |
-            |    @Override
-            |    public int getStatus() {
-            |      return status;
-            |    }
-            |
-            |    @Override
-            |    public java.util.Map<String, java.util.List<Object>> getHeaders() {
-            |      return headers;
-            |    }
-            |
-            |    @Override
-            |    public Wirespec.Content<java.util.List<TodoDto>> getContent() {
-            |      return content;
-            |    }
+            |  record Response200(@Override java.util.List<TodoDto> body) implements Response2XX<java.util.List<TodoDto>> {
+            |    @Override public int getStatus() { return 200; }
+            |    @Override public Headers getHeaders() { return new Headers(); }
+            |    @Override public java.util.List<TodoDto> getBody() { return body; }
+            |    public static class Headers implements Wirespec.Response.Headers {}
             |  }
             |
-            |  static <B, Req extends Request<?>> Function<Wirespec.Request<B>, Req> REQUEST_MAPPER(Wirespec.ContentMapper<B> contentMapper) {
-            |    return request -> {
-            |      if (request.getContent() == null) {
-            |        return (Req) new RequestUnit(request.getPath(), request.getMethod(), request.getQuery(), request.getHeaders(), null);
+            |  interface Handler extends Wirespec.Handler {
+            |
+            |    static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
+            |      return new Wirespec.RawRequest(
+            |        request.method.name(),
+            |        java.util.List.of("todos"),
+            |        java.util.Collections.emptyMap(),
+            |        java.util.Collections.emptyMap(),
+            |        serialization.serialize(request.getBody(), Wirespec.getType(Void.class, false))
+            |      );
+            |    }
+            |
+            |    static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
+            |      return new Request();
+            |    }
+            |
+            |    static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
+            |      return switch (response) {
+            |        case Response200 r -> new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, true)));
+            |      };
+            |    }
+            |
+            |    static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
+            |      return switch (response.statusCode()) {
+            |        case 200 -> new Response200(serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, true)));
+            |        default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+            |      };
+            |    }
+            |
+            |    java.util.concurrent.CompletableFuture<Response<?>> getTodos(Request request);
+            |    class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
+            |      @Override public String getPathTemplate() { return "/todos"; }
+            |      @Override public String getMethod() { return "GET"; }
+            |      @Override public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization<String> serialization) {
+            |        return new Wirespec.ServerEdge<>() {
+            |          @Override public Request from(Wirespec.RawRequest request) { return fromRequest(serialization, request); }
+            |          @Override public Wirespec.RawResponse to(Response<?> response) { return toResponse(serialization, response); }
+            |        };
             |      }
-            |      throw new IllegalStateException("Unknown response type");
-            |    };
-            |  }
-            |  static <B, Res extends Response<?>> Function<Wirespec.Response<B>, Res> RESPONSE_MAPPER(Wirespec.ContentMapper<B> contentMapper) {
-            |    return response -> {
-            |      if (response.getStatus() == 200 && response.getContent().type().equals("application/json")) {
-            |        Wirespec.Content<java.util.List<TodoDto>> content = contentMapper.read(response.getContent(), Wirespec.getType(TodoDto.class, true));
-            |        return (Res) new Response200ApplicationJson(response.getStatus(), response.getHeaders(), content);
+            |      @Override public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization<String> serialization) {
+            |        return new Wirespec.ClientEdge<>() {
+            |          @Override public Wirespec.RawRequest to(Request request) { return toRequest(serialization, request); }
+            |          @Override public Response<?> from(Wirespec.RawResponse response) { return fromResponse(serialization, response); }
+            |        };
             |      }
-            |      throw new IllegalStateException("Unknown response type");
-            |    };
+            |    }
             |  }
-            |
-            |  public CompletableFuture<Response<?>> getTodos(Request<?> request);
-            |
             |}
             |
         """.trimMargin()

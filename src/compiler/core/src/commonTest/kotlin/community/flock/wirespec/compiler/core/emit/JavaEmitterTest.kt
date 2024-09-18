@@ -9,7 +9,7 @@ import kotlin.test.Test
 
 class JavaEmitterTest {
 
-    private val emitter = JavaEmitter()
+    private val emitter = JavaLegacyEmitter()
 
     @Test
     fun testEmitterType() {

@@ -1,6 +1,6 @@
 package community.flock.wirespec.compiler.core
 
-import community.flock.wirespec.compiler.core.emit.JavaEmitter
+import community.flock.wirespec.compiler.core.emit.JavaLegacyEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinLegacyEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
@@ -312,7 +312,7 @@ class CompileLegacyEndpointTest {
             |
         """.trimMargin()
 
-        compiledTodo(JavaEmitter()) shouldBeRight java
+        compiledTodo(JavaLegacyEmitter()) shouldBeRight java
     }
 
     @Test
@@ -458,7 +458,7 @@ class CompileLegacyEndpointTest {
             |
         """.trimMargin()
 
-        compiledReqRes(JavaEmitter()) shouldBeRight java
+        compiledReqRes(JavaLegacyEmitter()) shouldBeRight java
     }
 
     @Test
