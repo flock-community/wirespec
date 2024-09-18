@@ -84,7 +84,7 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
             |${Spacer}regExp${refined.identifier.emit()}.test(value);
             |""".trimMargin()
 
-    override fun Refined.Validator.emit() = "/${value.drop(1).dropLast(1)}/g"
+    override fun Refined.Validator.emit() = value
 
     override fun emit(endpoint: Endpoint) =
         """

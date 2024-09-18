@@ -14,7 +14,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
 import community.flock.wirespec.compiler.core.tokenize.types.Equals
 import community.flock.wirespec.compiler.core.tokenize.types.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.types.Hash
-import community.flock.wirespec.compiler.core.tokenize.types.Invalid
+import community.flock.wirespec.compiler.core.tokenize.types.Character
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.types.Method
 import community.flock.wirespec.compiler.core.tokenize.types.Path
@@ -65,7 +65,7 @@ class Lexer : IntellijLexer() {
         is Brackets -> Types.BRACKETS
         is CustomValue -> Types.CUSTOM_VALUE
         is WsComment -> Types.COMMENT
-        is Invalid -> Types.INVALID
+        is Character -> Types.Character
         is EndOfProgram -> Types.END_OF_PROGRAM
         is WhiteSpace -> Types.WHITE_SPACE
         is WsTypeDef -> Types.TYPE_DEF

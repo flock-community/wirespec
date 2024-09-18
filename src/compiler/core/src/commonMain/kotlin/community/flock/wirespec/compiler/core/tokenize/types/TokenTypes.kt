@@ -14,7 +14,7 @@ data object ForwardSlash : TokenType
 data object Brackets : TokenType
 data object CustomValue : TokenType
 data object WsComment : TokenType
-data object Invalid : TokenType
+data object Character : TokenType
 data object EndOfProgram : TokenType {
     const val VALUE = "EOP"
 }

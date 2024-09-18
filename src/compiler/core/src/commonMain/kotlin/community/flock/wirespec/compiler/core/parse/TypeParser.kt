@@ -7,14 +7,17 @@ import community.flock.wirespec.compiler.core.exceptions.WirespecException.Compi
 import community.flock.wirespec.compiler.core.tokenize.types.Brackets
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
 import community.flock.wirespec.compiler.core.tokenize.types.Comma
-import community.flock.wirespec.compiler.core.tokenize.types.CustomRegex
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
+import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
 import community.flock.wirespec.compiler.core.tokenize.types.Equals
+import community.flock.wirespec.compiler.core.tokenize.types.ForwardSlash
+import community.flock.wirespec.compiler.core.tokenize.types.Keyword
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.types.Pipe
 import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
+import community.flock.wirespec.compiler.core.tokenize.types.WirespecDefinition
 import community.flock.wirespec.compiler.core.tokenize.types.WirespecType
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
 import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
@@ -56,6 +59,15 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
                 else -> raise(WrongTokenException<RightCurly>(token).also { eatToken().bind() })
             }
         }.let(Type::Shape)
+    }
+
+    fun TokenProvider.parseRefinedValidator(validator: Refined.Validator): Either<WirespecException, Refined.Validator> = either {
+        eatToken().bind()
+        token.log()
+        when(token.type){
+            is WirespecDefinition, EndOfProgram -> validator
+            else -> parseRefinedValidator(validator.copy(value = validator.value + token.value)).bind()
+        }
     }
 
     fun TokenProvider.parseFieldValue(wsType: WirespecType, value: String, isDict: Boolean) = either {
@@ -115,11 +127,11 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
                 extends = emptyList(),
             )
 
-            is CustomRegex -> Refined(
+            is ForwardSlash -> Refined(
                 comment = comment,
                 identifier = typeName,
-                validator = Refined.Validator(token.value),
-            ).also { eatToken().bind() }
+                validator = parseRefinedValidator(Refined.Validator("/")).bind(),
+            )
 
             is Equals -> Union(
                 comment = comment,
