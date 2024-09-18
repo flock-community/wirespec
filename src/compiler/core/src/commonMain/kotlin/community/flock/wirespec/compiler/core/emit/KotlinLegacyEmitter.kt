@@ -82,7 +82,7 @@ open class KotlinLegacyEmitter(
         |fun $name.validate() = ${validator.emit()}
     """.trimMargin()
 
-    override fun RefinedClass.Validator.emit() = "Regex(\"\"$value\"\").matches(value)"
+    override fun RefinedClass.Validator.emit() = "Regex(\"\"$expression\"\").matches(value)"
 
     override fun emit(enum: Enum) = enum.transform().emit()
 

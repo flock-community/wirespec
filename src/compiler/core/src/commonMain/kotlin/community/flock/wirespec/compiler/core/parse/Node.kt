@@ -74,7 +74,14 @@ data class Refined(
     override val identifier: Identifier,
     val validator: Validator,
 ) : Definition {
-    data class Validator(override val value: String) : Value<String>
+    data class Validator(override val value: String) : Value<String>{
+        val expression get() =
+            value.split("/")
+                .drop(1)
+                .dropLast(1)
+                .joinToString("/")
+
+    }
 }
 
 data class Endpoint(

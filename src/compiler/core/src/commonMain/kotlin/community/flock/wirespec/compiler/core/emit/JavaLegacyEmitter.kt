@@ -105,7 +105,7 @@ open class JavaLegacyEmitter(
 
     override fun RefinedClass.Validator.emit() = run {
         """
-        |${Spacer}return java.util.regex.Pattern.compile(${value.replace("\\", "\\\\")}).matcher(record.value).find();
+        |${Spacer}return java.util.regex.Pattern.compile(${expression.replace("\\", "\\\\")}).matcher(record.value).find();
         """.trimMargin()
     }
 

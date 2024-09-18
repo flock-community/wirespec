@@ -16,7 +16,13 @@ data class RefinedClass(
     override val name: String,
     val validator: Validator
 ) : ClassModel {
-    data class Validator(override val value: String) : Value<String>
+    data class Validator(override val value: String) : Value<String>{
+        val expression get() = value
+            .split("/")
+            .drop(1)
+            .dropLast(1)
+            .joinToString("/")
+    }
 }
 
 data class EnumClass(
