@@ -46,7 +46,6 @@ const handleFetch = <Req extends Wirespec.Request<any>, Res extends Wirespec.Res
         it.method === rawRequest.method &&
         it.path.join("/") === rawRequest.path.join("/")
     )
-    console.log(rawRequest)
     assert.notEqual(rawResponse, undefined)
     return Promise.resolve(client(serialization).from(rawResponse))
 }
