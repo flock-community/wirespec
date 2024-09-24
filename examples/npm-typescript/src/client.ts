@@ -1,4 +1,4 @@
-import { GetTodoById, GetTodos, PostTodo, Wirespec } from "./gen/Todo";
+import {GetTodoById, GetTodos, PostTodo, Wirespec} from "./gen/Todo";
 import * as assert from "node:assert";
 
 const serialization: Wirespec.Serialization = {
@@ -10,7 +10,11 @@ const serialization: Wirespec.Serialization = {
         }
     },
     serialize<T>(type: T): string {
-        return JSON.stringify(type);
+        if (typeof type === 'string') {
+            return type
+        } else {
+            return JSON.stringify(type);
+        }
     }
 }
 
@@ -35,7 +39,7 @@ const handleFetch = <Req extends Wirespec.Request<any>, Res extends Wirespec.Res
     const mocks = [
         mock("GET", ["api", "todos"], 200, {}, JSON.stringify(body)),
         mock("GET", ["api", "todos", "1"], 200, {}, JSON.stringify(body[0])),
-        mock("POST", ["api", "todos"], 200, {}, JSON.stringify({id:"3", name:"Do more", done:true})),
+        mock("POST", ["api", "todos"], 200, {}, JSON.stringify({id: "3", name: "Do more", done: true})),
     ]
     const rawRequest = client(serialization).to(request)
     const rawResponse: Wirespec.RawResponse = mocks.find(it =>
@@ -67,9 +71,15 @@ const testGetTodoById = async () => {
 }
 
 const testPostTodo = async () => {
-    const request: PostTodo.Request = {method: "POST", path: {}, queries: {}, headers: {}, body: {name:"Do more", done:true}}
+    const request: PostTodo.Request = {
+        method: "POST",
+        path: {},
+        queries: {},
+        headers: {},
+        body: {name: "Do more", done: true}
+    }
     const response = await api.postTodo(request)
-    const expected = {status: 200, headers: {}, body:{id:"3", name:"Do more", done:true}}
+    const expected = {status: 200, headers: {}, body: {id: "3", name: "Do more", done: true}}
     assert.deepEqual(response, expected)
 }
 

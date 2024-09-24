@@ -166,7 +166,7 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
     private fun Endpoint.emitPathArray() = path.joinToString(", ", "[", "]") {
         when(it){
             is Endpoint.Segment.Literal -> """"${it.value}""""
-            is Endpoint.Segment.Param -> """request.path.${it.identifier}"""
+            is Endpoint.Segment.Param -> "serialization.serialize(request.path.${it.identifier})"
         }
     }
     private fun Endpoint.emitClientTo() = """
