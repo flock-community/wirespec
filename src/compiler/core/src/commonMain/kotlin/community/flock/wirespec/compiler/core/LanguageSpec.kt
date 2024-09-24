@@ -2,15 +2,14 @@ package community.flock.wirespec.compiler.core
 
 import community.flock.wirespec.compiler.core.tokenize.types.Arrow
 import community.flock.wirespec.compiler.core.tokenize.types.Brackets
+import community.flock.wirespec.compiler.core.tokenize.types.Character
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
 import community.flock.wirespec.compiler.core.tokenize.types.Comma
-import community.flock.wirespec.compiler.core.tokenize.types.CustomRegex
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.types.Equals
 import community.flock.wirespec.compiler.core.tokenize.types.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.types.Hash
-import community.flock.wirespec.compiler.core.tokenize.types.Character
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.types.Method
 import community.flock.wirespec.compiler.core.tokenize.types.NewLine

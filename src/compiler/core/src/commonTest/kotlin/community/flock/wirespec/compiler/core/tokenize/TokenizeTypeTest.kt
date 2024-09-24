@@ -2,7 +2,6 @@ package community.flock.wirespec.compiler.core.tokenize
 
 import community.flock.wirespec.compiler.core.tokenize.types.Character
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
-import community.flock.wirespec.compiler.core.tokenize.types.CustomRegex
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
@@ -12,8 +11,6 @@ import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.types.Path
 import community.flock.wirespec.compiler.core.tokenize.types.Pipe
 import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
-import community.flock.wirespec.compiler.core.tokenize.types.StartOfProgram
-import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpaceExceptNewLine
 import community.flock.wirespec.compiler.core.tokenize.types.WsString
 import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
 import kotlin.test.Test

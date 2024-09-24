@@ -16,7 +16,7 @@ interface Types {
         val BRACKETS = ElementType("BRACKETS")
         val CUSTOM_VALUE = ElementType("CUSTOM_VALUE")
         val COMMENT = ElementType("COMMENT")
-        val Character = ElementType("CHARACTER")
+        val CHARACTER = ElementType("CHARACTER")
         val END_OF_PROGRAM = ElementType("END_OF_PROGRAM")
         val WHITE_SPACE = ElementType("WHITE_SPACE")
         val TYPE_DEF = ElementType("TYPE_DEF")

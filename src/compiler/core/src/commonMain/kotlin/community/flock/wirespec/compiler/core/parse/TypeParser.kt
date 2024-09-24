@@ -12,11 +12,11 @@ import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
 import community.flock.wirespec.compiler.core.tokenize.types.Equals
 import community.flock.wirespec.compiler.core.tokenize.types.ForwardSlash
-import community.flock.wirespec.compiler.core.tokenize.types.Keyword
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.types.Pipe
 import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
+import community.flock.wirespec.compiler.core.tokenize.types.TypeDefinitionStart
 import community.flock.wirespec.compiler.core.tokenize.types.WirespecDefinition
 import community.flock.wirespec.compiler.core.tokenize.types.WirespecType
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
@@ -61,14 +61,15 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         }.let(Type::Shape)
     }
 
-    fun TokenProvider.parseRefinedValidator(validator: Refined.Validator): Either<WirespecException, Refined.Validator> = either {
-        eatToken().bind()
-        token.log()
-        when(token.type){
-            is WirespecDefinition, EndOfProgram -> validator
-            else -> parseRefinedValidator(validator.copy(value = validator.value + token.value)).bind()
+    private fun TokenProvider.parseRefinedValidator(accumulatedString: String): Either<WirespecException, String> =
+        either {
+            eatToken().bind()
+            token.log()
+            when (token.type) {
+                is WirespecDefinition, EndOfProgram -> accumulatedString
+                else -> parseRefinedValidator(accumulatedString + token.value).bind()
+            }
         }
-    }
 
     fun TokenProvider.parseFieldValue(wsType: WirespecType, value: String, isDict: Boolean) = either {
         val previousToken = token
@@ -130,7 +131,7 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
             is ForwardSlash -> Refined(
                 comment = comment,
                 identifier = typeName,
-                validator = parseRefinedValidator(Refined.Validator("/")).bind(),
+                validator = Refined.Validator(parseRefinedValidator("/").bind()),
             )
 
             is Equals -> Union(
@@ -139,7 +140,7 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
                 entries = parseUnionTypeEntries().bind(),
             )
 
-            else -> raise(WrongTokenException<LeftCurly>(token).also { eatToken().bind() })
+            else -> raise(WrongTokenException<TypeDefinitionStart>(token).also { eatToken().bind() })
         }
     }
 

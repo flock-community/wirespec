@@ -4,7 +4,8 @@ import java.util.List;
 
 public interface UserContext extends UserAdapter.Module {
     class Service {
-        private Service() {}
+        private Service() {
+        }
 
         public static List<User> getAllUsers(final UserContext ctx) {
             return ctx.userAdapter().getAllUsers();

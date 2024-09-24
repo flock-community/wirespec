@@ -1,7 +1,10 @@
 .PHONY: *
 
 build:
-	make clean && npm install && npm run generate && npm test
+	npm run build
 
 clean:
-	rm -rf node_modules
+	npm run clean
+
+update:
+	npm run update

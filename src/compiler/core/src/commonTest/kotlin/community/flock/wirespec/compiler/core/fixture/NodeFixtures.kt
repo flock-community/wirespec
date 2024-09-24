@@ -1,6 +1,5 @@
 package community.flock.wirespec.compiler.core.fixture
 
-import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Identifier
@@ -58,23 +57,5 @@ object NodeFixtures {
             )
         ),
         extends = emptyList(),
-    )
-
-    val endpoint = Endpoint(
-        comment = null,
-        identifier = Identifier(""),
-        method = Endpoint.Method.GET,
-        path = listOf(Endpoint.Segment.Literal("/todos")),
-        queries = emptyList(),
-        headers = emptyList(),
-        cookies = emptyList(),
-        requests = emptyList(),
-        responses = listOf(
-            Endpoint.Response(
-                status = "200",
-                headers = emptyList(),
-                content = null,
-            )
-        ),
     )
 }

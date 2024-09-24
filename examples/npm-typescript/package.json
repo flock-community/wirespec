@@ -3,19 +3,22 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "build": "npm install && npm run generate && npm test",
+    "clean": "npm run clean:node_modules && npm run clean:generated",
+    "clean:node_modules": "npx rimraf ./node_modules",
+    "clean:generated": "npx rimraf ./src/gen",
     "generate": "wirespec compile -d ./wirespec -o ./src/gen -l TypeScript -p ''",
     "test": "npm run test:client && npm run test:server",
     "test:client": "ts-node src/client.ts",
-    "test:server": "ts-node src/server.ts"
+    "test:server": "ts-node src/server.ts",
+    "update": "npx --yes update-ruecksichtslos"
   },
   "author": "",
   "license": "ISC",
   "description": "",
-  "dependencies": {
-    "typescript": "^5.6.2",
-    "wirespec": "../../src/plugin/npm/build/dist/js/productionLibrary"
-  },
   "devDependencies": {
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.2",
+    "wirespec": "file://../../src/plugin/npm/build/dist/js/productionLibrary"
   }
 }
