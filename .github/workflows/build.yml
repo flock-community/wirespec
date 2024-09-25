@@ -30,7 +30,7 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE
       - uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 20
       - name: Run
         run: |
           make build
@@ -127,7 +127,7 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE
       - uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
       - name: Build lib
         run: |
           ./gradlew :src:plugin:npm:build
@@ -229,7 +229,7 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE
       - uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
           registry-url: 'https://registry.npmjs.org'
       - name: Build
         run: |
