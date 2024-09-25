@@ -100,7 +100,7 @@ open class ScalaEmitter(
 
 
     override fun Refined.Validator.emit() =
-        """${Spacer(2)}val regex = new scala.util.matching.Regex(""$value"")
+        """${Spacer(2)}val regex = new scala.util.matching.Regex(${"\"\"\""}$expression${"\"\"\""})
             |${Spacer(2)}regex.findFirstIn(that.value)""".trimMargin()
 
     override fun emit(endpoint: Endpoint) = notYetImplemented()

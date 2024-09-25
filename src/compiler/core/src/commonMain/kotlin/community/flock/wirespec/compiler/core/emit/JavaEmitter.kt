@@ -103,7 +103,7 @@ open class JavaEmitter(
     """.trimMargin()
 
     override fun Refined.Validator.emit() =
-        """${Spacer}return java.util.regex.Pattern.compile(${value.replace("\\", "\\\\")}).matcher(record.value).find();"""
+        """${Spacer}return java.util.regex.Pattern.compile("${expression.replace("\\", "\\\\")}").matcher(record.value).find();"""
 
     override fun emit(enum: Enum) = """
         |public enum ${enum.identifier.value.sanitizeSymbol()} implements Wirespec.Enum {

@@ -1,23 +1,27 @@
 package community.flock.wirespec.compiler.core.tokenize.types
 
-sealed interface TokenType {
-    fun name(): String = this::class.simpleName!!
-}
+fun TokenType.name(): String = this::class.simpleName!!
 
-data object LeftCurly : TokenType
+sealed interface TokenType
 data object RightCurly : TokenType
 data object Colon : TokenType
 data object Comma : TokenType
 data object QuestionMark : TokenType
 data object Hash : TokenType
-data object ForwardSlash : TokenType
 data object Brackets : TokenType
 data object CustomValue : TokenType
 data object WsComment : TokenType
-data object Invalid : TokenType
+data object Character : TokenType
+data object Arrow : TokenType
+data object Pipe : TokenType
 data object EndOfProgram : TokenType {
     const val VALUE = "EOP"
 }
+
+sealed interface TypeDefinitionStart : TokenType
+data object LeftCurly : TypeDefinitionStart
+data object ForwardSlash : TypeDefinitionStart
+data object Equals : TypeDefinitionStart
 
 sealed interface WhiteSpace : TokenType
 data object WhiteSpaceExceptNewLine : WhiteSpace
@@ -44,8 +48,3 @@ data object Method : Keyword
 data object Path : Keyword
 
 data object StatusCode : Keyword
-data object Arrow : Keyword
-data object Equals : Keyword
-data object Pipe : Keyword
-
-data object CustomRegex : TokenType

@@ -66,7 +66,7 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
 
     override fun emit(refined: Refined) = "type ${refined.identifier.emit()} ${refined.validator.emit()}\n"
 
-    override fun Refined.Validator.emit() = "/${value.drop(1).dropLast(1)}/g"
+    override fun Refined.Validator.emit() = value
 
     override fun emit(endpoint: Endpoint) = """
         |endpoint ${endpoint.identifier.emit()} ${endpoint.method}${endpoint.requests.emitRequest()} ${endpoint.path.emitPath()}${endpoint.queries.emitQuery()} -> {

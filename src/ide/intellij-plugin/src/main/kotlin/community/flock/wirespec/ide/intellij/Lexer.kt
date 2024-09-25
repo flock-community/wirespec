@@ -5,16 +5,15 @@ import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.core.tokenize.types.Arrow
 import community.flock.wirespec.compiler.core.tokenize.types.Brackets
+import community.flock.wirespec.compiler.core.tokenize.types.Character
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
 import community.flock.wirespec.compiler.core.tokenize.types.Comma
-import community.flock.wirespec.compiler.core.tokenize.types.CustomRegex
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
 import community.flock.wirespec.compiler.core.tokenize.types.Equals
 import community.flock.wirespec.compiler.core.tokenize.types.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.types.Hash
-import community.flock.wirespec.compiler.core.tokenize.types.Invalid
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.types.Method
 import community.flock.wirespec.compiler.core.tokenize.types.Path
@@ -24,6 +23,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.types.StatusCode
 import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpace
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
+import community.flock.wirespec.compiler.core.tokenize.types.WsChannelDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsComment
 import community.flock.wirespec.compiler.core.tokenize.types.WsEndpointDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsEnumTypeDef
@@ -32,7 +32,6 @@ import community.flock.wirespec.compiler.core.tokenize.types.WsNumber
 import community.flock.wirespec.compiler.core.tokenize.types.WsString
 import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsUnit
-import community.flock.wirespec.compiler.core.tokenize.types.WsChannelDef
 import com.intellij.lexer.LexerBase as IntellijLexer
 
 class Lexer : IntellijLexer() {
@@ -65,7 +64,7 @@ class Lexer : IntellijLexer() {
         is Brackets -> Types.BRACKETS
         is CustomValue -> Types.CUSTOM_VALUE
         is WsComment -> Types.COMMENT
-        is Invalid -> Types.INVALID
+        is Character -> Types.CHARACTER
         is EndOfProgram -> Types.END_OF_PROGRAM
         is WhiteSpace -> Types.WHITE_SPACE
         is WsTypeDef -> Types.TYPE_DEF
@@ -84,7 +83,6 @@ class Lexer : IntellijLexer() {
         is Arrow -> Types.ARROW
         is Equals -> Types.EQUALS
         is Pipe -> Types.PIPE
-        is CustomRegex -> Types.CUSTOM_REGEX
     }
 
     override fun getTokenStart() = tokens[index]

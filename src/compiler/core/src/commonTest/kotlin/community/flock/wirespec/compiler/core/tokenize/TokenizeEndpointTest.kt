@@ -9,7 +9,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
 import community.flock.wirespec.compiler.core.tokenize.types.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.types.Hash
-import community.flock.wirespec.compiler.core.tokenize.types.Invalid
+import community.flock.wirespec.compiler.core.tokenize.types.Character
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.types.Method
 import community.flock.wirespec.compiler.core.tokenize.types.Path
@@ -25,12 +25,11 @@ class TokenizeEndpointTest {
     @Test
     fun testStatusCodeTokenize() = testTokenizer(
         """000 099 100 199 200 299 300 399 400 499 500 599 600 699""",
-        Invalid, Invalid, Invalid, Invalid, Invalid, Invalid,
+        Character, Character, Character, Character, Character, Character,
         StatusCode, StatusCode, StatusCode, StatusCode, StatusCode,
         StatusCode, StatusCode, StatusCode, StatusCode, StatusCode,
-        Invalid, Invalid, Invalid, Invalid, Invalid, Invalid,
+        Character, Character, Character, Character, Character, Character,
         EndOfProgram,
-        noInvalid = false,
     )
 
     @Test

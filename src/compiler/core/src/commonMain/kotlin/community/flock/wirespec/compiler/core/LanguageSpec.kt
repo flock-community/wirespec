@@ -2,15 +2,14 @@ package community.flock.wirespec.compiler.core
 
 import community.flock.wirespec.compiler.core.tokenize.types.Arrow
 import community.flock.wirespec.compiler.core.tokenize.types.Brackets
+import community.flock.wirespec.compiler.core.tokenize.types.Character
 import community.flock.wirespec.compiler.core.tokenize.types.Colon
 import community.flock.wirespec.compiler.core.tokenize.types.Comma
-import community.flock.wirespec.compiler.core.tokenize.types.CustomRegex
 import community.flock.wirespec.compiler.core.tokenize.types.CustomType
 import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.types.Equals
 import community.flock.wirespec.compiler.core.tokenize.types.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.types.Hash
-import community.flock.wirespec.compiler.core.tokenize.types.Invalid
 import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.types.Method
 import community.flock.wirespec.compiler.core.tokenize.types.NewLine
@@ -63,13 +62,12 @@ object WirespecSpec : LanguageSpec {
         Regex("^Boolean") to WsBoolean,
         Regex("^Unit") to WsUnit,
         Regex("^GET|^POST|^PUT|^DELETE|^OPTIONS|^HEAD|^PATCH|^TRACE") to Method,
-        Regex("^/.*/g") to CustomRegex,
         Regex("^[1-5][0-9][0-9]") to StatusCode,
         Regex("^[a-z`][a-zA-Z0-9`]*") to CustomValue,
         Regex("^[A-Z][a-zA-Z0-9_]*") to CustomType,
         Regex("^/[a-zA-Z0-9-_]+") to Path,
         Regex("^\\/\\*(\\*(?!\\/)|[^*])*\\*\\/") to WsComment,
         Regex("^/") to ForwardSlash,
-        Regex("^.") to Invalid // Catch all regular expression if none of the above matched
+        Regex("^.") to Character // Catch all regular expression if none of the above matched
     )
 }
