@@ -4,8 +4,10 @@ import community.flock.wirespec.compiler.core.emit.common.DEFAULT_SHARED_PACKAGE
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 
 data object JavaLegacyShared : Shared {
+    override val packageString: String = DEFAULT_SHARED_PACKAGE_STRING
+
     override val source = """
-        |package $DEFAULT_SHARED_PACKAGE_STRING.java;
+        |package $packageString;
         |
         |import java.lang.reflect.Type;
         |import java.lang.reflect.ParameterizedType;

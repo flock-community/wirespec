@@ -1,9 +1,12 @@
 package community.flock.wirespec.plugin.maven
 
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.shared.JavaLegacyShared
 import community.flock.wirespec.compiler.core.emit.shared.JavaShared
+import community.flock.wirespec.compiler.core.emit.shared.KotlinLegacyShared
 import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
 import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
+import community.flock.wirespec.compiler.core.emit.shared.TypeScriptShared
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.PackageName
@@ -38,7 +41,6 @@ class CustomMojo : BaseMojo() {
     override fun execute() {
         project.addCompileSourceRoot(output)
         val ext = extension
-        val defaultPkg = PackageName("community.flock.wirespec")
         val emitterPkg = PackageName(packageName)
 
         val emitter = try {
@@ -49,16 +51,20 @@ class CustomMojo : BaseMojo() {
         } catch (e: Exception) {
             throw e.also { it.printStackTrace() }
         }
-        if (shared != null) {
-            val sharedSource = when (shared) {
+        shared?.let {
+            when (it) {
                 Language.Java -> JavaShared
                 Language.Kotlin -> KotlinShared
                 Language.Scala -> ScalaShared
-                else -> error("No shared available for: $shared")
+                Language.JavaLegacy -> JavaLegacyShared
+                Language.KotlinLegacy -> KotlinLegacyShared
+                Language.TypeScript -> TypeScriptShared
+                Language.Wirespec -> null
             }
-            File(output).resolve(defaultPkg.toDirectory()).apply {
+        }?.also {
+            File(output).resolve(PackageName(it.packageString).toDirectory()).apply {
                 mkdirs()
-                resolve("Wirespec.$ext").writeText(sharedSource.source)
+                resolve("Wirespec.$ext").writeText(it.source)
             }
         }
         getFilesContent().compile(logger, emitter)

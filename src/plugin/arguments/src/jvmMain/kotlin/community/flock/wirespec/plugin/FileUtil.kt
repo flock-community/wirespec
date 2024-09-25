@@ -13,7 +13,7 @@ fun Emitted.writeToFiles(
     ext: FileExtension
 ) {
     if (shared != null) {
-        val sharedPackageName = PackageName("community.flock.wirespec")
+        val sharedPackageName = PackageName(shared.packageString)
         writeFile(output, sharedPackageName, Wirespec.name, ext).writeText(shared.source)
     }
     writeFile(output, packageName, fileName ?: typeName, ext).writeText(result)

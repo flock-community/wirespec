@@ -26,8 +26,13 @@ abstract class CustomWirespecTask : BaseWirespecTask() {
 
     @get:Optional
     @get:Input
-    @get:Option(option = "shared", description = "shared code")
-    abstract val shared: Property<String>
+    @get:Option(option = "sharedPackage", description = "shared package name")
+    abstract val sharedPackage: Property<String>
+
+    @get:Optional
+    @get:Input
+    @get:Option(option = "sharedSource", description = "shared code")
+    abstract val sharedSource: Property<String>
 
     @get:Optional
     @get:Input
@@ -56,9 +61,9 @@ abstract class CustomWirespecTask : BaseWirespecTask() {
         getFilesContent()
             .compile(wirespecLogger, emitter)
             .also {
-                output.dir(defaultPkg.toDirectory()).get().asFile.apply {
+                output.dir(PackageName(sharedPackage.get()).toDirectory()).get().asFile.apply {
                     mkdirs()
-                    resolve("Wirespec.$ext").writeText(shared.get())
+                    resolve("Wirespec.$ext").writeText(sharedSource.get())
                 }
             }
             .onEach { (name, result) ->

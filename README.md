@@ -204,7 +204,7 @@ Other examples can be found [here](examples/README.md)
 ## Dependencies
 
 * JDK 21
-* Node 16
+* Node 20
 * Docker
 
 Clone this repository and run (n *nix systems):

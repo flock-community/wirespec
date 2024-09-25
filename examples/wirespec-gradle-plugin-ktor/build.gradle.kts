@@ -67,7 +67,8 @@ tasks.register<CustomWirespecTask>("wirespec-kotlin") {
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.generated.kotlin"
     emitter = KotlinSerializableEmitter::class.java
-    shared = KotlinShared.source
+    sharedPackage = KotlinShared.packageString
+    sharedSource = KotlinShared.source
     extension = FileExtension.Kotlin.value
 }
 
