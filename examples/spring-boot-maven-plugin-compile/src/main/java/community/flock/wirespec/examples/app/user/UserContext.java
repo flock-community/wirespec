@@ -7,8 +7,8 @@ public interface UserContext extends UserAdapter.Module {
         private Service() {
         }
 
-        public static List<User> getAllUsers(final UserContext ctx) {
-            return ctx.userAdapter().getAllUsers();
+        public static List<User> getAllUsers(final UserContext ctx, final String name) {
+            return ctx.userAdapter().getAllUsers(name);
         }
 
         public static User getUserByName(final UserContext ctx, final String name) {

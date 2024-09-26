@@ -2,7 +2,9 @@ type UserDto {
     name: String
 }
 
-endpoint GetUsers GET /api/users -> {
+endpoint GetUsers GET /api/users
+  ?{name: String}
+  #{version: String} -> {
     200 -> UserDto[]
 }
 

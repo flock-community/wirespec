@@ -7,7 +7,7 @@ public interface UserAdapter {
         UserAdapter userAdapter();
     }
 
-    List<User> getAllUsers();
+    List<User> getAllUsers(String name);
 
     User getUserByName(final String name);
 

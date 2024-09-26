@@ -10,4 +10,5 @@ public interface UserClient extends
         GetUserByNameEndpoint.Handler,
         PostUserEndpoint.Handler,
         DeleteUserByNameEndpoint.Handler {
+    String version = "1.0.0";
 }

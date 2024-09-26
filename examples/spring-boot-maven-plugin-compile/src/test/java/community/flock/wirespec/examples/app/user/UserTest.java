@@ -9,7 +9,6 @@ import static community.flock.wirespec.examples.app.user.UserContext.Service.get
 import static community.flock.wirespec.examples.app.user.UserContext.Service.getUserByName;
 import static community.flock.wirespec.examples.app.user.UserContext.Service.saveUser;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class UserTest {
     private interface Context extends UserContext {
@@ -18,8 +17,8 @@ class UserTest {
     @Test
     void testGetAllUsers() {
         testContext(it -> {
-            var users = getAllUsers(it);
-            assertFalse(users.isEmpty());
+            var users = getAllUsers(it, "name");
+            assertEquals(1, users.size());
         });
     }
 

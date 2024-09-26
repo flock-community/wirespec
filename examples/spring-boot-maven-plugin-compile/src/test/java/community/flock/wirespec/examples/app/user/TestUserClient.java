@@ -15,11 +15,15 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public class TestUserClient implements UserClient {
 
-    private final Set<UserDto> users = new HashSet<>(Set.of(new UserDto("name")));
+    private final Set<UserDto> users = new HashSet<>(Set.of(
+            new UserDto("name"),
+            new UserDto("other name")
+    ));
 
     @Override
     public CompletableFuture<GetUsersEndpoint.Response<?>> getUsers(GetUsersEndpoint.Request request) {
-        return completedFuture(new GetUsersEndpoint.Response200(users.stream().toList()));
+        var filtered = users.stream().filter(it -> Objects.equals(it.name(), request.getQueries().name())).toList();
+        return completedFuture(new GetUsersEndpoint.Response200(filtered));
     }
 
     @Override

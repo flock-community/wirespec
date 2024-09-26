@@ -28,8 +28,8 @@ public class LiveUserAdapter implements UserAdapter {
         this.converter = converter;
     }
 
-    public List<User> getAllUsers() {
-        var res = complete(client.getUsers(new GetUsersEndpoint.Request()));
+    public List<User> getAllUsers(String name) {
+        var res = complete(client.getUsers(new GetUsersEndpoint.Request(name, UserClient.version)));
         return switch (res) {
             case GetUsersEndpoint.Response200 r -> converter.internalize(r.getBody());
         };
