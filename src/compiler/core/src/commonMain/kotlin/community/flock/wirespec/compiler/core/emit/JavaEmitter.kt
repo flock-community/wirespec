@@ -149,9 +149,8 @@ open class JavaEmitter(
         |${endpoint.requests.joinToString("\n") { it.emitRequestFunctions(endpoint) }}
         |
         |${Spacer(2)}static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
-        |${Spacer(3)}return switch (response) {
         |${endpoint.responses.joinToString("\n") { it.emitSerialized() }}
-        |${Spacer(3)}};
+        |${Spacer(2)}else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());};
         |${Spacer(2)}}
         |
         |${Spacer(2)}static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
@@ -262,7 +261,7 @@ open class JavaEmitter(
     ).joinToString(",\n").let { if (it.isBlank()) "" else "\n$it\n${Spacer(3)}" }
 
     private fun Endpoint.Response.emitSerialized() =
-        """${Spacer(4)}case Response$status r -> new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), ${if (content != null) "serialization.serialize(r.body, Wirespec.getType(${content.reference.emitType("Void")}.class, ${content.reference.isIterable}))" else "null"});"""
+        """${Spacer(3)}if (response instanceof Response$status r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), ${if (content != null) "serialization.serialize(r.body, Wirespec.getType(${content.reference.emitType("Void")}.class, ${content.reference.isIterable}))" else "null"}); }"""
 
     private fun Endpoint.Response.emitDeserialized() =
         """${Spacer(4)}case $status -> new Response$status(${if (content != null) "serialization.deserialize(response.body(), Wirespec.getType(${content.reference.emitType("Void")}.class, ${content.reference.isIterable}))" else "null"});"""
