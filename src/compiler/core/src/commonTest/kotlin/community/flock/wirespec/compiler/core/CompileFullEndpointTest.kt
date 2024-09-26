@@ -226,8 +226,8 @@ class CompileFullEndpointTest {
             |      return new Wirespec.RawRequest(
             |        request.method.name(),
             |        java.util.List.of("todos", request.path.id.toString()),
-            |        Map.of(request.queries.done?.let{"done" to serialization.serialize(it, Wirespec.getType(Boolean.class, false).let(::listOf)}).filterNotNull().toMap(),
-            |        Map.of(request.headers.token?.let{"token" to serialization.serialize(it, Wirespec.getType(Token.class, false).let(::listOf)}).filterNotNull().toMap(),
+            |        java.util.Map.of("done", java.util.List.of(serialization.serialize(request.queries.done, Wirespec.getType(Boolean.class, false)))),
+            |        java.util.Map.of("token", java.util.List.of(serialization.serialize(request.headers.token, Wirespec.getType(Token.class, false)))),
             |        serialization.serialize(request.getBody(), Wirespec.getType(PotentialTodoDto.class, false))
             |      );
             |    }
@@ -235,8 +235,8 @@ class CompileFullEndpointTest {
             |    static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
             |      return new Request(
             |        serialization.deserialize(request.path().get(1), Wirespec.getType(String.class, false)),
-            |        serialization.deserialize(request.queries.get("done").get(0), Wirespec.getType(Boolean.class, false)),
-            |        serialization.deserialize(request.headers.get("token").get(0), Wirespec.getType(Token.class, false)),
+            |        serialization.deserialize(request.queries().get("done").get(0), Wirespec.getType(Boolean.class, false)),
+            |        serialization.deserialize(request.headers().get("token").get(0), Wirespec.getType(Token.class, false)),
             |        serialization.deserialize(request.body(), Wirespec.getType(PotentialTodoDto.class, false))
             |      );
             |    }

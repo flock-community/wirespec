@@ -4,8 +4,10 @@ import community.flock.wirespec.compiler.core.emit.common.DEFAULT_SHARED_PACKAGE
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 
 data object KotlinShared : Shared {
+    override val packageString: String = "$DEFAULT_SHARED_PACKAGE_STRING.kotlin"
+
     override val source = """
-        |package $DEFAULT_SHARED_PACKAGE_STRING.kotlin
+        |package $packageString
         |
         |import kotlin.reflect.KType
         |

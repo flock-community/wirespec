@@ -1,8 +1,11 @@
 package community.flock.wirespec.compiler.core.emit.shared
 
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 
 data object TypeScriptShared : Shared {
+    override val packageString: String = DEFAULT_SHARED_PACKAGE_STRING
+
     override val source = """
         |export module Wirespec {
         |${Spacer}export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"

@@ -215,8 +215,8 @@ open class JavaEmitter(
         |${Spacer(3)}return new Wirespec.RawRequest(
         |${Spacer(4)}request.method.name(),
         |${Spacer(4)}java.util.List.of(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
-        |${Spacer(4)}${if (endpoint.queries.isNotEmpty()) "Map.of(${endpoint.queries.joinToString { it.emitSerialized("queries") }}).filterNotNull().toMap()" else "java.util.Collections.emptyMap()"},
-        |${Spacer(4)}${if (endpoint.headers.isNotEmpty()) "Map.of(${endpoint.headers.joinToString { it.emitSerialized("headers") }}).filterNotNull().toMap()" else "java.util.Collections.emptyMap()"},
+        |${Spacer(4)}${if (endpoint.queries.isNotEmpty()) "java.util.Map.of(${endpoint.queries.joinToString { it.emitSerialized("queries") }}))" else "java.util.Collections.emptyMap()"},
+        |${Spacer(4)}${if (endpoint.headers.isNotEmpty()) "java.util.Map.of(${endpoint.headers.joinToString { it.emitSerialized("headers") }}))" else "java.util.Collections.emptyMap()"},
         |${Spacer(4)}serialization.serialize(request.getBody(), Wirespec.getType(${content.emit()}.class, ${content?.reference?.isIterable ?: false}))
         |${Spacer(3)});
         |${Spacer(2)}}
@@ -268,14 +268,13 @@ open class JavaEmitter(
         """${Spacer(4)}case $status -> new Response$status(${if (content != null) "serialization.deserialize(response.body(), Wirespec.getType(${content.reference.emitType("Void")}.class, ${content.reference.isIterable}))" else "null"});"""
 
     private fun Field.emitSerialized(fields: String) =
-        """request.$fields.${identifier.emit()}?.let{"${identifier.emit()}" to serialization.serialize(it, Wirespec.getType(${reference.emit()}.class, ${reference.isIterable}).let(::listOf)}"""
+        """"${identifier.emit()}", java.util.List.of(serialization.serialize(request.$fields.${identifier.emit()}, Wirespec.getType(${reference.emit()}.class, ${reference.isIterable}))"""
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
         """${Spacer(4)}serialization.deserialize(request.path().get(${index}), Wirespec.getType(${value.reference.emit()}.class, ${value.reference.isIterable}))"""
 
     private fun Field.emitDeserialized(fields: String) =
-        if (isNullable) """${Spacer(4)}request.$fields["${identifier.emit()}"]?.get(0)?.let{ serialization.deserialize(it, Wirespec.getType(${reference.emit()}.class, ${reference.isIterable})) }"""
-        else """${Spacer(4)}serialization.deserialize(request.$fields.get("${identifier.emit()}").get(0), Wirespec.getType(${reference.emit()}.class, ${reference.isIterable}))"""
+        """${Spacer(4)}serialization.deserialize(request.$fields().get("${identifier.emit()}").get(0), Wirespec.getType(${reference.emit()}.class, ${reference.isIterable}))"""
 
     private fun Endpoint.Segment.Param.emitIdentifier() = "request.path.${identifier.value}.toString()"
 
