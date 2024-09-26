@@ -171,15 +171,15 @@ class CompileFullEndpointTest {
             |import community.flock.wirespec.java.Wirespec;
             |
             |public interface PutTodoEndpoint extends Wirespec.Endpoint {
-            |  record Path(
+            |  public record Path(
             |    String id
             |  ) implements Wirespec.Path {}
             |
-            |  record Queries(
+            |  public record Queries(
             |    Boolean done
             |  ) implements Wirespec.Queries {}
             |
-            |  record RequestHeaders(
+            |  public record RequestHeaders(
             |    Token token
             |  ) implements Wirespec.Request.Headers {}
             |
@@ -207,17 +207,17 @@ class CompileFullEndpointTest {
             |  sealed interface Response2XX<T> extends Response<T> {}
             |  sealed interface Response5XX<T> extends Response<T> {}
             |
-            |  record Response200(@Override TodoDto body) implements Response2XX<TodoDto> {
+            |  record Response200(TodoDto body) implements Response2XX<TodoDto> {
             |    @Override public int getStatus() { return 200; }
             |    @Override public Headers getHeaders() { return new Headers(); }
             |    @Override public TodoDto getBody() { return body; }
-            |    public static class Headers implements Wirespec.Response.Headers {}
+            |    class Headers implements Wirespec.Response.Headers {}
             |  }
-            |  record Response500(@Override Error body) implements Response5XX<Error> {
+            |  record Response500(Error body) implements Response5XX<Error> {
             |    @Override public int getStatus() { return 500; }
             |    @Override public Headers getHeaders() { return new Headers(); }
             |    @Override public Error getBody() { return body; }
-            |    public static class Headers implements Wirespec.Response.Headers {}
+            |    class Headers implements Wirespec.Response.Headers {}
             |  }
             |
             |  interface Handler extends Wirespec.Handler {
@@ -225,33 +225,36 @@ class CompileFullEndpointTest {
             |    static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
             |      return new Wirespec.RawRequest(
             |        request.method.name(),
-            |        java.util.List.of("todos", request.path.id.toString()),
-            |        java.util.Map.of("done", serialization.serialize(request.queries.done, Wirespec.getType(Boolean.class, false))),
-            |        java.util.Map.of("token", serialization.serialize(request.headers.token, Wirespec.getType(Token.class, false))),
+            |        java.util.List.of("todos", serialization.serialize(request.path.id, Wirespec.getType(String.class, false))),
+            |        java.util.Map.ofEntries(java.util.Map.entry("done", serialization.serialize(request.queries.done, Wirespec.getType(Boolean.class, false)))),
+            |        java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serialize(request.headers.token, Wirespec.getType(Token.class, false)))),
             |        serialization.serialize(request.getBody(), Wirespec.getType(PotentialTodoDto.class, false))
             |      );
             |    }
             |
             |    static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
             |      return new Request(
-            |        serialization.deserialize(request.path().get(1), Wirespec.getType(String.class, false)),
-            |        serialization.deserialize(request.queries().get("done"), Wirespec.getType(Boolean.class, false)),
-            |        serialization.deserialize(request.headers().get("token"), Wirespec.getType(Token.class, false)),
+            |        serialization.<String>deserialize(request.path().get(1), Wirespec.getType(String.class, false)),
+            |        java.util.Optional.ofNullable(request.queries().get("done")).map(it -> serialization.<Boolean>deserialize(it, Wirespec.getType(Boolean.class, false))).get(),
+            |        java.util.Optional.ofNullable(request.headers().get("token")).map(it -> serialization.<Token>deserialize(it, Wirespec.getType(Token.class, false))).get(),
             |        serialization.deserialize(request.body(), Wirespec.getType(PotentialTodoDto.class, false))
             |      );
             |    }
             |
             |    static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
-            |      return switch (response) {
-            |        case Response200 r -> new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, false)));
-            |        case Response500 r -> new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(Error.class, false)));
-            |      };
+            |      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, false))); }
+            |      if (response instanceof Response500 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(Error.class, false))); }
+            |      else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
             |    }
             |
             |    static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
             |      return switch (response.statusCode()) {
-            |        case 200 -> new Response200(serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, false)));
-            |        case 500 -> new Response500(serialization.deserialize(response.body(), Wirespec.getType(Error.class, false)));
+            |        case 200 -> new Response200(
+            |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, false))
+            |      );
+            |        case 500 -> new Response500(
+            |        serialization.deserialize(response.body(), Wirespec.getType(Error.class, false))
+            |      );
             |        default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
             |      };
             |    }

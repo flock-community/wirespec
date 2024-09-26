@@ -142,11 +142,11 @@ class CompileMinimalEndpointTest {
             |  sealed interface Response<T> extends Wirespec.Response<T> {}
             |  sealed interface Response2XX<T> extends Response<T> {}
             |
-            |  record Response200(@Override java.util.List<TodoDto> body) implements Response2XX<java.util.List<TodoDto>> {
+            |  record Response200(java.util.List<TodoDto> body) implements Response2XX<java.util.List<TodoDto>> {
             |    @Override public int getStatus() { return 200; }
             |    @Override public Headers getHeaders() { return new Headers(); }
             |    @Override public java.util.List<TodoDto> getBody() { return body; }
-            |    public static class Headers implements Wirespec.Response.Headers {}
+            |    class Headers implements Wirespec.Response.Headers {}
             |  }
             |
             |  interface Handler extends Wirespec.Handler {
@@ -166,14 +166,15 @@ class CompileMinimalEndpointTest {
             |    }
             |
             |    static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
-            |      return switch (response) {
-            |        case Response200 r -> new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, true)));
-            |      };
+            |      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, true))); }
+            |      else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
             |    }
             |
             |    static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
             |      return switch (response.statusCode()) {
-            |        case 200 -> new Response200(serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, true)));
+            |        case 200 -> new Response200(
+            |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, true))
+            |      );
             |        default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
             |      };
             |    }
