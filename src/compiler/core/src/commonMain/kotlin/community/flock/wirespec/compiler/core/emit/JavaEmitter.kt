@@ -70,7 +70,7 @@ open class JavaEmitter(
     override fun Type.Shape.emit() = value.joinToString("\n") { "${Spacer}${it.emit()}," }.dropLast(1)
 
     override fun Field.emit() =
-        "${if (isNullable) "java.util.Optional<${reference.emit()}>" else reference.emit()} ${identifier.emit()}"
+        "${if (isNullable) "java.util.Optional<${reference.emit()}>" else reference.emit()} ${identifier.emit().firstToLower()}"
 
     override fun Reference.emit() = emitType()
         .let { if (isIterable) "java.util.List<$it>" else it }
@@ -88,10 +88,10 @@ open class JavaEmitter(
         }
     }
 
-    override fun Identifier.emit() = if (value in reservedKeywords) "_$value" else value
+    override fun Identifier.emit() = value.sanitizeSymbol()
 
     override fun emit(refined: Refined) = """
-        |public record ${refined.identifier.value.sanitizeSymbol()} (String value) implements Wirespec.Refined {
+        |public record ${refined.identifier.emit()} (String value) implements Wirespec.Refined {
         |${Spacer}@Override
         |${Spacer}public String toString() { return value; }
         |${Spacer}public static boolean validate(${refined.emitName()} record) {
@@ -106,10 +106,10 @@ open class JavaEmitter(
         """${Spacer}return java.util.regex.Pattern.compile("${expression.replace("\\", "\\\\")}").matcher(record.value).find();"""
 
     override fun emit(enum: Enum) = """
-        |public enum ${enum.identifier.value.sanitizeSymbol()} implements Wirespec.Enum {
+        |public enum ${enum.identifier.emit()} implements Wirespec.Enum {
         |${enum.entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }.spacer()};
         |${Spacer}public final String label;
-        |${Spacer}${enum.identifier.value.sanitizeSymbol()}(String label) {
+        |${Spacer}${enum.identifier.emit()}(String label) {
         |${Spacer(2)}this.label = label;
         |${Spacer}}
         |${Spacer}@Override
@@ -215,8 +215,8 @@ open class JavaEmitter(
         |${Spacer(3)}return new Wirespec.RawRequest(
         |${Spacer(4)}request.method.name(),
         |${Spacer(4)}java.util.List.of(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
-        |${Spacer(4)}${if (endpoint.queries.isNotEmpty()) "java.util.Map.of(${endpoint.queries.joinToString { it.emitSerialized("queries") }}))" else "java.util.Collections.emptyMap()"},
-        |${Spacer(4)}${if (endpoint.headers.isNotEmpty()) "java.util.Map.of(${endpoint.headers.joinToString { it.emitSerialized("headers") }}))" else "java.util.Collections.emptyMap()"},
+        |${Spacer(4)}${if (endpoint.queries.isNotEmpty()) "java.util.Map.of(${endpoint.queries.joinToString { it.emitSerialized("queries") }})" else "java.util.Collections.emptyMap()"},
+        |${Spacer(4)}${if (endpoint.headers.isNotEmpty()) "java.util.Map.of(${endpoint.headers.joinToString { it.emitSerialized("headers") }})" else "java.util.Collections.emptyMap()"},
         |${Spacer(4)}serialization.serialize(request.getBody(), Wirespec.getType(${content.emit()}.class, ${content?.reference?.isIterable ?: false}))
         |${Spacer(3)});
         |${Spacer(2)}}
@@ -245,10 +245,10 @@ open class JavaEmitter(
             ).joinToString()
         }) {\n${Spacer(3)}${
             listOfNotNull(
-                endpoint.pathParams.joinToString { it.identifier.emit() }.let { "this.path = new Path($it);" },
+                endpoint.pathParams.joinToString { it.identifier.emit().firstToLower() }.let { "this.path = new Path($it);" },
                 "this.method = Wirespec.Method.${endpoint.method.name};",
-                endpoint.queries.joinToString { it.identifier.emit() }.let { "this.queries = new Queries($it);" },
-                endpoint.headers.joinToString { it.identifier.emit() }
+                endpoint.queries.joinToString { it.identifier.emit().firstToLower() }.let { "this.queries = new Queries($it);" },
+                endpoint.headers.joinToString { it.identifier.emit().firstToLower() }
                     .let { "this.headers = new RequestHeaders($it);" },
                 "this.body = ${content?.let { "body" } ?: "null"};"
             ).joinToString("\n${Spacer(3)}")
@@ -268,19 +268,19 @@ open class JavaEmitter(
         """${Spacer(4)}case $status -> new Response$status(${if (content != null) "serialization.deserialize(response.body(), Wirespec.getType(${content.reference.emitType("Void")}.class, ${content.reference.isIterable}))" else "null"});"""
 
     private fun Field.emitSerialized(fields: String) =
-        """"${identifier.emit()}", java.util.List.of(serialization.serialize(request.$fields.${identifier.emit()}, Wirespec.getType(${reference.emit()}.class, ${reference.isIterable}))"""
+        """"${identifier.value}", java.util.List.of(serialization.serialize(request.$fields.${identifier.emit().firstToLower()}, Wirespec.getType(${reference.emit()}.class, ${reference.isIterable})))"""
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
         """${Spacer(4)}serialization.deserialize(request.path().get(${index}), Wirespec.getType(${value.reference.emit()}.class, ${value.reference.isIterable}))"""
 
     private fun Field.emitDeserialized(fields: String) =
-        """${Spacer(4)}serialization.deserialize(request.$fields().get("${identifier.emit()}").get(0), Wirespec.getType(${reference.emit()}.class, ${reference.isIterable}))"""
+        """${Spacer(4)}serialization.deserialize(request.$fields().get("${identifier.emit().firstToLower()}").get(0), Wirespec.getType(${reference.emit()}.class, ${reference.isIterable}))"""
 
-    private fun Endpoint.Segment.Param.emitIdentifier() = "request.path.${identifier.value}.toString()"
+    private fun Endpoint.Segment.Param.emitIdentifier() = "serialization.deserialize(request.path.${identifier.emit()})"
 
     private fun Endpoint.Content?.emit() = this?.reference?.emit() ?: "Void"
 
-    private fun Endpoint.Segment.Param.emit() = "${reference.emit()} ${identifier.emit()}"
+    private fun Endpoint.Segment.Param.emit() = "${reference.emit()} ${identifier.emit().firstToLower()}"
 
     private fun Reference.emitWrap(isNullable: Boolean): String = value
         .let { if (isIterable) "List<$it>" else it }
@@ -293,7 +293,7 @@ open class JavaEmitter(
     }
 
     private fun String.sanitizeSymbol() = this
-        .split(".", " ")
+        .split(".", " ", "-")
         .joinToString("") { it.firstToUpper() }
         .asSequence()
         .filter { it.isLetterOrDigit() || it in listOf('_') }
