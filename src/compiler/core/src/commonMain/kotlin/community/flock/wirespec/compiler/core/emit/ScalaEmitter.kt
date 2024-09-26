@@ -32,7 +32,7 @@ open class ScalaEmitter(
         is Enum -> identifier.emit()
         is Refined -> identifier.emit()
         is Type -> identifier.emit()
-        is Union -> identifier.emit()
+        is Union -> "${identifier.emit()}Union"
     }
 
     override fun notYetImplemented() =
