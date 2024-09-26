@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>community.flock.wirespec.example.maven</groupId>
-        <artifactId>examples</artifactId>
+        <artifactId>maven-spring-custom</artifactId>
         <version>0.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>spring-boot-maven-plugin-compile</artifactId>
+    <artifactId>app</artifactId>
 
     <dependencies>
         <dependency>
@@ -32,32 +33,44 @@
                 <groupId>community.flock.wirespec.plugin.maven</groupId>
                 <artifactId>wirespec-maven-plugin</artifactId>
                 <version>0.0.0-SNAPSHOT</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>community.flock.wirespec.example.maven</groupId>
+                        <artifactId>emitter</artifactId>
+                        <version>0.0.0-SNAPSHOT</version>
+                    </dependency>
+                </dependencies>
                 <executions>
                     <execution>
-                        <id>typescript</id>
+                        <id>custom</id>
                         <goals>
-                            <goal>compile</goal>
+                            <goal>custom</goal>
                         </goals>
                         <configuration>
                             <input>${project.basedir}/src/main/wirespec</input>
-                            <output>${project.basedir}/src/main/typescript/generated</output>
-                            <languages>
-                                <language>TypeScript</language>
-                            </languages>
+                            <output>${project.build.directory}/generated-sources/java/hello</output>
+                            <emitterClass>community.flock.wirespec.emit.CustomEmitter</emitterClass>
+                            <extension>java</extension>
+                            <split>true</split>
                         </configuration>
                     </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
                     <execution>
-                        <id>java</id>
+                        <id>add-source</id>
                         <goals>
-                            <goal>compile</goal>
+                            <goal>add-source</goal>
                         </goals>
+                        <phase>generate-sources</phase>
                         <configuration>
-                            <input>${project.basedir}/src/main/wirespec</input>
-                            <output>${project.build.directory}/generated-sources</output>
-                            <packageName>community.flock.wirespec.generated.java</packageName>
-                            <languages>
-                                <language>Java</language>
-                            </languages>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources/java</source>
+                            </sources>
                         </configuration>
                     </execution>
                 </executions>

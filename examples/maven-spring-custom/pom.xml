@@ -4,17 +4,15 @@
 
     <parent>
         <groupId>community.flock.wirespec.example.maven</groupId>
-        <artifactId>spring-boot-maven-plugin-custom-emitter</artifactId>
+        <artifactId>examples</artifactId>
         <version>0.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>emitter</artifactId>
+    <artifactId>maven-spring-custom</artifactId>
+    <packaging>pom</packaging>
 
-    <dependencies>
-        <dependency>
-            <groupId>community.flock.wirespec.compiler</groupId>
-            <artifactId>core-jvm</artifactId>
-            <version>0.0.0-SNAPSHOT</version>
-        </dependency>
-    </dependencies>
+    <modules>
+        <module>app</module>
+        <module>emitter</module>
+    </modules>
 </project>
