@@ -3,7 +3,7 @@
 Here you can find examples of how to use:
 
 * [A custom Emitter](spring-boot-maven-plugin-custom-emitter/README.md)
-* [The Gradle Plugin](wirespec-gradle-plugin-ktor/README.md)
+* [The Gradle Plugin](wirespec-gradle-ktor/README.md)
 * [The Maven Plugin](spring-boot-maven-plugin-compile/README.md)
 * [And convert an OpenAPI Specification](spring-boot-maven-plugin-convert/README.md)
 
