@@ -13,9 +13,9 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>spring-boot-maven-plugin-custom-emitter</module>
-        <module>spring-boot-maven-plugin-compile</module>
-        <module>spring-boot-maven-plugin-convert</module>
+        <module>maven-spring-compile</module>
+        <module>maven-spring-convert</module>
+        <module>maven-spring-custom</module>
     </modules>
 
     <properties>
