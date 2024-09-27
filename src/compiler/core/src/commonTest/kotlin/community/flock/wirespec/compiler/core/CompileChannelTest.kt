@@ -47,7 +47,9 @@ class CompileChannelTest {
         val scala = """
             |package community.flock.wirespec.generated
             |
-            |// TODO("Not yet implemented")
+            |trait QueueChannel {
+            |  def invoke(message: String)
+            |}
             |
         """.trimMargin()
 

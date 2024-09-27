@@ -286,26 +286,123 @@ class CompileFullEndpointTest {
         val scala = """
             |package community.flock.wirespec.generated
             |
-            |// TODO("Not yet implemented")
+            |trait PutTodoEndpoint extends Wirespec.Endpoint {
+            |  case class Path(
+            |    id: String
+            |  ) extends Wirespec.Path
+            |
+            |  case class Queries(
+            |    done: Boolean
+            |  ) extends Wirespec.Queries
+            |
+            |  case class Headers(
+            |    token: Token
+            |  ) extends Wirespec.Request.Headers
+            |
+            |  case class Request(
+            |    id: String,
+            |    done: Boolean,
+            |    token: Token,
+            |    override val body: PotentialTodoDto
+            |  ) extends Wirespec.Request[PotentialTodoDto] {
+            |    override val path = Path(id)
+            |    override val method = Wirespec.Method.PUT
+            |    override val queries = Queries(done)
+            |    override val headers = Headers(token)
+            |  }
+            |
+            |  def toRequest(serialization: Wirespec.Serializer[String], request: Request): Wirespec.RawRequest =
+            |    Wirespec.RawRequest(
+            |      path = List("todos", request.path.id.toString),
+            |      method = request.method.name,
+            |      queries = List(request.queries.done.let{"done" -> serialization.serialize(it, typeOf[Boolean]).let(List(_))}).filterNotNull().toMap,
+            |      headers = List(request.headers.token.let{"token" -> serialization.serialize(it, typeOf[Token]).let(List(_))}).filterNotNull().toMap,
+            |      body = serialization.serialize(request.body, typeOf[PotentialTodoDto])
+            |    )
+            |
+            |  def fromRequest(serialization: Wirespec.Deserializer[String], request: Wirespec.RawRequest): Request =
+            |    Request(
+            |      id = serialization.deserialize(request.path(1), typeOf[String]),
+            |      done = serialization.deserialize(requireNotNull(request.queries("done").headOption) { "done is null" }, typeOf[Boolean]),
+            |      token = serialization.deserialize(requireNotNull(request.headers("token").headOption) { "token is null" }, typeOf[Token]),
+            |      body = serialization.deserialize(requireNotNull(request.body) { "body is null" }, typeOf[PotentialTodoDto])
+            |    )
+            |
+            |  sealed trait Response[T] extends Wirespec.Response[T]
+            |  sealed trait Response2XX[T] extends Response[T]
+            |  sealed trait Response5XX[T] extends Response[T]
+            |
+            |  case class Response200(override val body: TodoDto) extends Response2XX[TodoDto] {
+            |    override val status = 200
+            |    override val headers = Headers
+            |    case object Headers extends Wirespec.Response.Headers
+            |  }
+            |  case class Response500(override val body: Error) extends Response5XX[Error] {
+            |    override val status = 500
+            |    override val headers = Headers
+            |    case object Headers extends Wirespec.Response.Headers
+            |  }
+            |
+            |  def toResponse(serialization: Wirespec.Serializer[String], response: Response[_]): Wirespec.RawResponse =
+            |    response match {
+            |      case r: Response200 => Wirespec.RawResponse(
+            |        statusCode = r.status,
+            |        headers = Map.empty,
+            |        body = serialization.serialize(r.body, typeOf[TodoDto])
+            |      )
+            |      case r: Response500 => Wirespec.RawResponse(
+            |        statusCode = r.status,
+            |        headers = Map.empty,
+            |        body = serialization.serialize(r.body, typeOf[Error])
+            |      )
+            |    }
+            |
+            |  def fromResponse(serialization: Wirespec.Deserializer[String], response: Wirespec.RawResponse): Response[_] =
+            |    response.statusCode match {
+            |      case 200 => Response200(
+            |        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf[TodoDto])
+            |      )
+            |      case 500 => Response500(
+            |        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf[Error])
+            |      )
+            |      case _ => throw new IllegalStateException(s"Cannot match response with status: ${'$'}{response.statusCode}")
+            |    }
+            |
+            |  trait Handler extends Wirespec.Handler {
+            |    def putTodo(request: Request): Response[_]
+            |    object Handler extends Wirespec.Server[Request, Response[_]] with Wirespec.Client[Request, Response[_]] {
+            |      override val pathTemplate = "/todos/{id}"
+            |      override val method = "PUT"
+            |      override def server(serialization: Wirespec.Serialization[String]) = new Wirespec.ServerEdge[Request, Response[_]] {
+            |        override def from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
+            |        override def to(response: Response[_]) = toResponse(serialization, response)
+            |      }
+            |      override def client(serialization: Wirespec.Serialization[String]) = new Wirespec.ClientEdge[Request, Response[_]] {
+            |        override def to(request: Request) = toRequest(serialization, request)
+            |        override def from(response: Wirespec.RawResponse) = fromResponse(serialization, response)
+            |      }
+            |    }
+            |  }
+            |}
             |
             |case class PotentialTodoDto(
-            |  val name: String,
-            |  val done: Boolean
+            |  name: String,
+            |  done: Boolean
             |)
             |
             |case class Token(
-            |  val iss: String
+            |  iss: String
             |)
             |
             |case class TodoDto(
-            |  val id: String,
-            |  val name: String,
-            |  val done: Boolean
+            |  id: String,
+            |  name: String,
+            |  done: Boolean
             |)
             |
             |case class Error(
-            |  val code: Long,
-            |  val description: String
+            |  code: Long,
+            |  description: String
             |)
             |
         """.trimMargin()
