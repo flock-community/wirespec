@@ -5,6 +5,7 @@ pluginManagement {
     plugins {
         kotlin("multiplatform") version kotlinVersion
         kotlin("jvm") version kotlinVersion
+        kotlin("plugin.serialization") version kotlinVersion
     }
 
     repositories {
@@ -33,7 +34,9 @@ include(
     "src:plugin:npm",
     "src:plugin:gradle",
     "src:converter:openapi",
+    "src:converter:avro",
     "src:integration:jackson",
     "src:integration:wirespec",
     "src:tools:generator",
+    "src:generator",
 )
