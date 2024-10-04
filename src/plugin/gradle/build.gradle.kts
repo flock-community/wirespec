@@ -1,6 +1,5 @@
 plugins {
-    kotlin("multiplatform") apply false
-    kotlin("jvm")
+    alias(libs.plugins.kotlin.jvm)
     `java-gradle-plugin`
 }
 

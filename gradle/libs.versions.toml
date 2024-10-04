@@ -2,6 +2,7 @@
 arrow = "1.2.4"
 clikt = "4.4.0"
 default = "0.0.0-SNAPSHOT"
+dokka = "1.9.20"
 from_env = "VERSION"
 group_id = "community.flock.wirespec"
 intellij = "2.0.0"
@@ -45,6 +46,7 @@ kotest = ["kotest_engine", "kotest_assertions", "kotest_assertions_arrow"]
 maven_plugin = ["maven_plugin_api", "maven_plugin_annotations", "maven_project"]
 
 [plugins]
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 intellij = { id = "org.jetbrains.intellij.platform", version.ref = "intellij" }
 kotest = { id = "io.kotest.multiplatform", version.ref = "kotest" }
 kotlin_jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
