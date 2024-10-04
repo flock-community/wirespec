@@ -513,6 +513,17 @@ class CompileLegacyEndpointTest {
             |    body: Todo
             |  }
             |  export type Response = Response200
+            |  const request: Request = (props: {done: boolean, auth: string}) => {
+            |    path: {}
+            |    method: "GET"
+            |    queries: {done: props.done}
+            |    headers: {auth: props.auth}
+            |    body: props.body
+            |  }
+            |  const request200: Response200 = (props: {body: Todo}) => {
+            |    headers: {auth: props.auth}
+            |    body: props.body
+            |  }
             |  export type Handler = {
             |    todo: (request:Request) => Promise<Response>
             |  }

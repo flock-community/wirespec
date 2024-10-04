@@ -5,6 +5,9 @@ import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
@@ -15,6 +18,11 @@ abstract class Emitter(
     val split: Boolean = false
 ) : Emitters {
 
+    data class Param(
+        val identifier: Identifier,
+        val reference: Reference,
+        val isNullable: Boolean,
+    )
     abstract fun Definition.emitName(): String
 
     abstract fun notYetImplemented(): String
@@ -67,6 +75,16 @@ abstract class Emitter(
                 is Endpoint.Segment.Param -> IndexedValue(idx, segment)
             }
         }
+
+    internal fun Endpoint.Request.paramList(endpoint:Endpoint):List<Param> =
+        endpoint.pathParams.map { it.toParam() } + endpoint.queries.map { it.toParam() } + endpoint.headers.map { it.toParam() } + listOfNotNull(content?.toParam())
+
+    internal fun Endpoint.Response.paramList():List<Param> =
+        headers.map { it.toParam() } + listOfNotNull(content?.toParam())
+
+    private fun Endpoint.Segment.Param.toParam() = Param(identifier ,reference, false)
+    private fun Endpoint.Content.toParam() = Param(Identifier("body"), reference, isNullable)
+    private fun Field.toParam() = Param(identifier, reference, isNullable)
 
     companion object {
         fun String.firstToUpper() = replaceFirstChar(Char::uppercase)

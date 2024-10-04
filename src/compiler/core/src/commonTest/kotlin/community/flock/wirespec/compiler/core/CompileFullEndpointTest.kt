@@ -355,6 +355,21 @@ class CompileFullEndpointTest {
             |    body: Error
             |  }
             |  export type Response = Response200 | Response500
+            |  const request: Request = (props: {id: string, done: boolean, token: Token, body: PotentialTodoDto}) => {
+            |    path: {id: props.id}
+            |    method: "PUT"
+            |    queries: {done: props.done}
+            |    headers: {token: props.token}
+            |    body: props.body
+            |  }
+            |  const request200: Response200 = (props: {body: TodoDto}) => {
+            |    headers: {token: props.token}
+            |    body: props.body
+            |  }
+            |  const request500: Response500 = (props: {body: Error}) => {
+            |    headers: {token: props.token}
+            |    body: props.body
+            |  }
             |  export type Handler = {
             |    putTodo: (request:Request) => Promise<Response>
             |  }

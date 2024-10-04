@@ -95,6 +95,8 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
           |${endpoint.requests.first().emitType(endpoint)}
           |${endpoint.responses.toSet().joinToString("\n") {  it.emitType() }}
           |${Spacer}export type Response = ${endpoint.responses.toSet().joinToString(" | ") { it.emitName() }}
+          |${endpoint.requests.first().emitFunction(endpoint)}
+          |${endpoint.responses.joinToString("\n") { it.emitFunction(endpoint) }}
           |${Spacer}export type Handler = {
           |${Spacer(2)}${endpoint.identifier.sanitizeSymbol().firstToLower()}: (request:Request) => Promise<Response>
           |${Spacer}}
@@ -131,6 +133,27 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
       |${Spacer(2)}body: ${emitReference()}
       |${Spacer}}
     """.trimIndent()
+
+    private fun Endpoint.Request.emitFunction(endpoint: Endpoint) ="""
+      |${Spacer}const request: Request = (props: ${paramList(endpoint).joinToObject { it.emit() }}) => {
+      |${Spacer(2)}path: ${endpoint.pathParams.joinToObject{ "${it.identifier.emit()}: props.${it.identifier.emit()}"}}
+      |${Spacer(2)}method: "${endpoint.method}"
+      |${Spacer(2)}queries: ${endpoint.queries.joinToObject{ "${it.identifier.emit()}: props.${it.identifier.emit()}"}}
+      |${Spacer(2)}headers: ${endpoint.headers.joinToObject{ "${it.identifier.emit()}: props.${it.identifier.emit()}"}}
+      |${Spacer(2)}body: props.body
+      |${Spacer}}
+    """.trimIndent()
+
+    private fun Endpoint.Response.emitFunction(endpoint: Endpoint) ="""
+      |${Spacer}const request${status.firstToUpper()}: Response${status.firstToUpper()} = (props: ${paramList().joinToObject { it.emit() }}) => {
+      |${Spacer(2)}headers: ${endpoint.headers.joinToObject{ "${it.identifier.emit()}: props.${it.identifier.emit()}"}}
+      |${Spacer(2)}body: props.body
+      |${Spacer}}
+    """.trimIndent()
+
+    private  fun <T> Iterable<T>.joinToObject( transform: ((T) -> CharSequence)) = joinToString(", ", "{", "}", transform = transform)
+
+    private fun Param.emit() = "${identifier.emit()}${if(isNullable) "?" else ""}: ${reference.emit()}"
 
     private fun Endpoint.Response.emitName() = "Response" + status.firstToUpper()
 
