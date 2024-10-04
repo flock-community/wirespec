@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithHostTests
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsTargetDsl
 
 plugins {
-    kotlin("multiplatform")
+    alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotest)
     alias(libs.plugins.kotlinx.resources)
 }
