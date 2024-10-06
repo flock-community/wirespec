@@ -88,7 +88,7 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
 
     override fun emit(endpoint: Endpoint) =
         """
-          |export module ${endpoint.identifier.sanitizeSymbol()} {
+          |export namespace ${endpoint.identifier.sanitizeSymbol()} {
           |${endpoint.pathParams.emitType("Path") { it.emit() }}
           |${endpoint.queries.emitType("Queries") { it.emit() }}
           |${endpoint.headers.emitType("Headers") { it.emit() }}
@@ -135,20 +135,21 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
     """.trimIndent()
 
     private fun Endpoint.Request.emitFunction(endpoint: Endpoint) ="""
-      |${Spacer}const request: Request = (props: ${paramList(endpoint).joinToObject { it.emit() }}) => {
-      |${Spacer(2)}path: ${endpoint.pathParams.joinToObject{ "${it.identifier.emit()}: props.${it.identifier.emit()}"}}
-      |${Spacer(2)}method: "${endpoint.method}"
-      |${Spacer(2)}queries: ${endpoint.queries.joinToObject{ "${it.identifier.emit()}: props.${it.identifier.emit()}"}}
-      |${Spacer(2)}headers: ${endpoint.headers.joinToObject{ "${it.identifier.emit()}: props.${it.identifier.emit()}"}}
-      |${Spacer(2)}body: props.body
-      |${Spacer}}
+      |${Spacer}export const request = (${paramList(endpoint).takeIf { it.isNotEmpty() }?.let { "props: ${it.joinToObject { it.emit() }}" }.orEmpty()}): Request => ({
+      |${Spacer(2)}path: ${endpoint.pathParams.joinToObject{ "${it.identifier.emit()}: props.${it.identifier.emit()}"}},
+      |${Spacer(2)}method: "${endpoint.method}",
+      |${Spacer(2)}queries: ${endpoint.queries.joinToObject{ "${it.identifier.emit()}: props.${it.identifier.emit()}"}},
+      |${Spacer(2)}headers: ${endpoint.headers.joinToObject{ "${it.identifier.emit()}: props.${it.identifier.emit()}"}},
+      |${Spacer(2)}body: ${content?.let { "props.body" } ?: "undefined"},
+      |${Spacer}})
     """.trimIndent()
 
     private fun Endpoint.Response.emitFunction(endpoint: Endpoint) ="""
-      |${Spacer}const request${status.firstToUpper()}: Response${status.firstToUpper()} = (props: ${paramList().joinToObject { it.emit() }}) => {
-      |${Spacer(2)}headers: ${endpoint.headers.joinToObject{ "${it.identifier.emit()}: props.${it.identifier.emit()}"}}
-      |${Spacer(2)}body: props.body
-      |${Spacer}}
+      |${Spacer}export const response${status.firstToUpper()} = (${paramList().takeIf { it.isNotEmpty() }?.let { "props: ${it.joinToObject { it.emit() }}" }.orEmpty()}): Response${status.firstToUpper()} => ({
+      |${Spacer(2)}status: ${status},
+      |${Spacer(2)}headers: ${endpoint.headers.joinToObject{ "${it.identifier.emit()}: props.${it.identifier.emit()}"}},
+      |${Spacer(2)}body: ${content?.let { "props.body" } ?: "undefined"},
+      |${Spacer}})
     """.trimIndent()
 
     private  fun <T> Iterable<T>.joinToObject( transform: ((T) -> CharSequence)) = joinToString(", ", "{", "}", transform = transform)

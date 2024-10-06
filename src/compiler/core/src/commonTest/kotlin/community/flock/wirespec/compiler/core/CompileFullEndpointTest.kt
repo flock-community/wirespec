@@ -316,7 +316,7 @@ class CompileFullEndpointTest {
     @Test
     fun typeScript() {
         val ts = """
-            |export module Wirespec {
+            |export namespace Wirespec {
             |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
             |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string[]>, headers: Record<string, string[]>, body?: string }
             |  export type RawResponse = { status: number, headers: Record<string, string[]>, body?: string }
@@ -327,7 +327,7 @@ class CompileFullEndpointTest {
             |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
             |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
             |}
-            |export module PutTodo {
+            |export namespace PutTodo {
             |  type Path = {
             |    "id": string,
             |  }
@@ -355,21 +355,23 @@ class CompileFullEndpointTest {
             |    body: Error
             |  }
             |  export type Response = Response200 | Response500
-            |  const request: Request = (props: {id: string, done: boolean, token: Token, body: PotentialTodoDto}) => {
-            |    path: {id: props.id}
-            |    method: "PUT"
-            |    queries: {done: props.done}
-            |    headers: {token: props.token}
-            |    body: props.body
-            |  }
-            |  const request200: Response200 = (props: {body: TodoDto}) => {
-            |    headers: {token: props.token}
-            |    body: props.body
-            |  }
-            |  const request500: Response500 = (props: {body: Error}) => {
-            |    headers: {token: props.token}
-            |    body: props.body
-            |  }
+            |  export const request = (props: {id: string, done: boolean, token: Token, body: PotentialTodoDto}): Request => ({
+            |    path: {id: props.id},
+            |    method: "PUT",
+            |    queries: {done: props.done},
+            |    headers: {token: props.token},
+            |    body: props.body,
+            |  })
+            |  export const response200 = (props: {body: TodoDto}): Response200 => ({
+            |    status: 200,
+            |    headers: {token: props.token},
+            |    body: props.body,
+            |  })
+            |  export const response500 = (props: {body: Error}): Response500 => ({
+            |    status: 500,
+            |    headers: {token: props.token},
+            |    body: props.body,
+            |  })
             |  export type Handler = {
             |    putTodo: (request:Request) => Promise<Response>
             |  }

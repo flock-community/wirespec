@@ -1,11 +1,11 @@
-import { GetTodoById, GetTodos, PostTodo, Wirespec } from "./gen/Todo";
+import {GetTodoById, GetTodos, PostTodo, Wirespec} from "./gen/Todo";
 import * as assert from "node:assert";
 
 const serialization: Wirespec.Serialization = {
     deserialize<T>(raw: string | undefined): T {
-        if(raw){
+        if (raw) {
             return JSON.parse(raw) as T;
-        }else{
+        } else {
             return undefined
         }
     },
@@ -26,28 +26,18 @@ type Api =
 
 const api: Api = {
     postTodo(request: PostTodo.Request): Promise<PostTodo.Response> {
-        return Promise.resolve({
-            status: 200,
-            headers: {},
+        return Promise.resolve(PostTodo.response200({
             body: {
                 id: "3",
                 ...request.body
             }
-        });
+        }));
     },
     getTodos(_: GetTodos.Request): Promise<GetTodos.Response> {
-        return Promise.resolve({
-            status: 200,
-            headers: {},
-            body: body
-        });
+        return Promise.resolve(GetTodos.response200({body}));
     },
     getTodoById(_: GetTodoById.Request): Promise<GetTodoById.Response> {
-        return Promise.resolve({
-            status: 200,
-            headers: {},
-            body: body[0]
-        });
+        return Promise.resolve(GetTodoById.response200({body: body[0]}));
     }
 }
 
@@ -62,7 +52,7 @@ const testGetTodos = async () => {
     const request = server.from(rawRequest)
     const response = await api.getTodos(request)
     const rawResponse = server.to(response)
-    const expected = {status: 200, headers:{}, body: JSON.stringify(body) }
+    const expected = {status: 200, headers: {}, body: JSON.stringify(body)}
     assert.deepEqual(rawResponse, expected)
 }
 
@@ -77,7 +67,7 @@ const testGetTodoById = async () => {
     const request = server.from(rawRequest)
     const response = await api.getTodoById(request)
     const rawResponse = server.to(response)
-    const expected = {status: 200, headers:{}, body: JSON.stringify(body[0]) }
+    const expected = {status: 200, headers: {}, body: JSON.stringify(body[0])}
     assert.deepEqual(rawResponse, expected)
 }
 
@@ -87,13 +77,13 @@ const testPostTodo = async () => {
         path: ["todos"],
         queries: {},
         headers: {},
-        body: JSON.stringify({name:"Do it later", done:false})
+        body: JSON.stringify({name: "Do it later", done: false})
     }
     const server = PostTodo.server(serialization)
     const request = server.from(rawRequest)
     const response = await api.postTodo(request)
     const rawResponse = server.to(response)
-    const expected = {status: 200, headers:{}, body: JSON.stringify({id: "3", name:"Do it later", done:false}) }
+    const expected = {status: 200, headers: {}, body: JSON.stringify({id: "3", name: "Do it later", done: false})}
     assert.deepEqual(rawResponse, expected)
 }
 

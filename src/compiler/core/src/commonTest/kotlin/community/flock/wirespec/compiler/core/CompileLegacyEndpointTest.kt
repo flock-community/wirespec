@@ -481,7 +481,7 @@ class CompileLegacyEndpointTest {
     @Test
     fun testEndpointTypeScript() {
         val ts = """
-            |export module Wirespec {
+            |export namespace Wirespec {
             |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
             |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string[]>, headers: Record<string, string[]>, body?: string }
             |  export type RawResponse = { status: number, headers: Record<string, string[]>, body?: string }
@@ -492,7 +492,7 @@ class CompileLegacyEndpointTest {
             |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
             |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
             |}
-            |export module Todo {
+            |export namespace Todo {
             |  type Path = {}
             |  type Queries = {
             |    "done": boolean,
@@ -513,17 +513,18 @@ class CompileLegacyEndpointTest {
             |    body: Todo
             |  }
             |  export type Response = Response200
-            |  const request: Request = (props: {done: boolean, auth: string}) => {
-            |    path: {}
-            |    method: "GET"
-            |    queries: {done: props.done}
-            |    headers: {auth: props.auth}
-            |    body: props.body
-            |  }
-            |  const request200: Response200 = (props: {body: Todo}) => {
-            |    headers: {auth: props.auth}
-            |    body: props.body
-            |  }
+            |  export const request = (props: {done: boolean, auth: string}): Request => ({
+            |    path: {},
+            |    method: "GET",
+            |    queries: {done: props.done},
+            |    headers: {auth: props.auth},
+            |    body: undefined,
+            |  })
+            |  export const response200 = (props: {body: Todo}): Response200 => ({
+            |    status: 200,
+            |    headers: {auth: props.auth},
+            |    body: props.body,
+            |  })
             |  export type Handler = {
             |    todo: (request:Request) => Promise<Response>
             |  }

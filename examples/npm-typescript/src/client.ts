@@ -57,16 +57,16 @@ const api: Api = {
 }
 
 const testGetTodos = async () => {
-    const request: GetTodos.Request = {method: "GET", path: {}, queries: {}, headers: {}, body: undefined}
+    const request: GetTodos.Request = GetTodos.request()
     const response = await api.getTodos(request)
     const expected = {status: 200, headers: {}, body}
     assert.deepEqual(response, expected)
 }
 
 const testGetTodoById = async () => {
-    const request: GetTodoById.Request = {method: "GET", path: {id: "1"}, queries: {}, headers: {}, body: undefined}
+    const request: GetTodoById.Request = GetTodoById.request({id: "1"})
     const response = await api.getTodoById(request)
-    const expected = {status: 200, headers: {}, body: body[0]}
+    const expected = GetTodoById.response200({body: body[0]})
     assert.deepEqual(response, expected)
 }
 
@@ -79,7 +79,7 @@ const testPostTodo = async () => {
         body: {name: "Do more", done: true}
     }
     const response = await api.postTodo(request)
-    const expected = {status: 200, headers: {}, body: {id: "3", name: "Do more", done: true}}
+    const expected = PostTodo.response200({body: {id: "3", name: "Do more", done: true}})
     assert.deepEqual(response, expected)
 }
 

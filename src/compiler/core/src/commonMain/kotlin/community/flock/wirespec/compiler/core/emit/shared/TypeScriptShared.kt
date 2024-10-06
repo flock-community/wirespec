@@ -7,7 +7,7 @@ data object TypeScriptShared : Shared {
     override val packageString: String = DEFAULT_SHARED_PACKAGE_STRING
 
     override val source = """
-        |export module Wirespec {
+        |export namespace Wirespec {
         |${Spacer}export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
         |${Spacer}export type RawRequest = { method: Method, path: string[], queries: Record<string, string[]>, headers: Record<string, string[]>, body?: string }
         |${Spacer}export type RawResponse = { status: number, headers: Record<string, string[]>, body?: string }
