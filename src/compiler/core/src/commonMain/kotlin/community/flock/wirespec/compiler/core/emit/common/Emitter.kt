@@ -19,10 +19,16 @@ abstract class Emitter(
 ) : Emitters {
 
     data class Param(
+        val type: ParamType,
         val identifier: Identifier,
         val reference: Reference,
         val isNullable: Boolean,
-    )
+    ) {
+        enum class ParamType {
+            PATH, QUERY, HEADER, BODY
+        }
+    }
+
     abstract fun Definition.emitName(): String
 
     abstract fun notYetImplemented(): String
@@ -65,7 +71,6 @@ abstract class Emitter(
             is Endpoint.Segment.Param -> "${'$'}{props.${identifier.emit()}}"
         }
 
-
     internal val Endpoint.pathParams get() = path.filterIsInstance<Endpoint.Segment.Param>()
 
     internal val Endpoint.indexedPathParams
@@ -76,15 +81,21 @@ abstract class Emitter(
             }
         }
 
-    internal fun Endpoint.Request.paramList(endpoint:Endpoint):List<Param> =
-        endpoint.pathParams.map { it.toParam() } + endpoint.queries.map { it.toParam() } + endpoint.headers.map { it.toParam() } + listOfNotNull(content?.toParam())
+    internal fun Endpoint.Request.paramList(endpoint: Endpoint): List<Param> = listOf(
+        endpoint.pathParams.map { it.toParam() },
+        endpoint.queries.map { it.toParam(Param.ParamType.QUERY) },
+        endpoint.headers.map { it.toParam(Param.ParamType.HEADER) },
+        listOfNotNull(content?.toParam()),
+    ).flatten()
 
-    internal fun Endpoint.Response.paramList():List<Param> =
-        headers.map { it.toParam() } + listOfNotNull(content?.toParam())
+    internal fun Endpoint.Response.paramList(): List<Param> = listOf(
+        headers.map { it.toParam(Param.ParamType.HEADER) },
+        listOfNotNull(content?.toParam())
+    ).flatten()
 
-    private fun Endpoint.Segment.Param.toParam() = Param(identifier ,reference, false)
-    private fun Endpoint.Content.toParam() = Param(Identifier("body"), reference, isNullable)
-    private fun Field.toParam() = Param(identifier, reference, isNullable)
+    private fun Endpoint.Segment.Param.toParam() = Param(Param.ParamType.PATH, identifier, reference, false)
+    private fun Endpoint.Content.toParam() = Param(Param.ParamType.BODY, Identifier("body"), reference, isNullable)
+    private fun Field.toParam(type: Param.ParamType) = Param(type, identifier, reference, isNullable)
 
     companion object {
         fun String.firstToUpper() = replaceFirstChar(Char::uppercase)
