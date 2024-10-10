@@ -70,6 +70,20 @@ kotlin {
     }
 }
 
+tasks.withType<Jar> {
+    doFirst {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        manifest {
+            attributes("Main-Class" to "community.flock.wirespec.plugin.cli.MainKt")
+        }
+        val main by kotlin.jvm().compilations.getting
+        val files = main.runtimeDependencyFiles.files
+            .filter { it.name.endsWith("jar") }
+            .map(::zipTree)
+        from(files)
+    }
+}
+
 fun KotlinNativeTargetWithHostTests.build() {
     binaries {
         executable {
