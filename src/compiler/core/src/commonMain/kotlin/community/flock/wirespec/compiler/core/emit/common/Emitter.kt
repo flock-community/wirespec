@@ -1,5 +1,6 @@
 package community.flock.wirespec.compiler.core.emit.common
 
+import community.flock.wirespec.compiler.core.emit.common.Emitter.Param.ParamType
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
@@ -83,19 +84,36 @@ abstract class Emitter(
 
     internal fun Endpoint.Request.paramList(endpoint: Endpoint): List<Param> = listOf(
         endpoint.pathParams.map { it.toParam() },
-        endpoint.queries.map { it.toParam(Param.ParamType.QUERY) },
-        endpoint.headers.map { it.toParam(Param.ParamType.HEADER) },
+        endpoint.queries.map { it.toParam(ParamType.QUERY) },
+        endpoint.headers.map { it.toParam(ParamType.HEADER) },
         listOfNotNull(content?.toParam()),
     ).flatten()
 
     internal fun Endpoint.Response.paramList(): List<Param> = listOf(
-        headers.map { it.toParam(Param.ParamType.HEADER) },
+        headers.map { it.toParam(ParamType.HEADER) },
         listOfNotNull(content?.toParam())
     ).flatten()
 
-    private fun Endpoint.Segment.Param.toParam() = Param(Param.ParamType.PATH, identifier, reference, false)
-    private fun Endpoint.Content.toParam() = Param(Param.ParamType.BODY, Identifier("body"), reference, isNullable)
-    private fun Field.toParam(type: Param.ParamType) = Param(type, identifier, reference, isNullable)
+    private fun Endpoint.Segment.Param.toParam() = Param(
+        type = ParamType.PATH,
+        identifier = identifier,
+        reference = reference,
+        isNullable = false
+    )
+
+    private fun Endpoint.Content.toParam() = Param(
+        type = ParamType.BODY,
+        identifier = Identifier("body"),
+        reference = reference,
+        isNullable = isNullable
+    )
+
+    private fun Field.toParam(type: ParamType) = Param(
+        type = type,
+        identifier = identifier,
+        reference = reference,
+        isNullable = isNullable
+    )
 
     companion object {
         fun String.firstToUpper() = replaceFirstChar(Char::uppercase)
