@@ -6,4 +6,4 @@ dir="$(dirname -- "$0")"
 ./gradlew src:plugin:gradle:publishToMavenLocal &&
   ./gradlew src:plugin:maven:publishToMavenLocal &&
   # build examples
-  (cd "$dir"/../examples && make build)
+  (cd "$dir"/../examples && make clean && make build)

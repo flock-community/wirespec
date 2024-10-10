@@ -222,7 +222,7 @@ class CompileMinimalEndpointTest {
     @Test
     fun typeScript() {
         val ts = """
-            |export module Wirespec {
+            |export namespace Wirespec {
             |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
             |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string[]>, headers: Record<string, string[]>, body?: string }
             |  export type RawResponse = { status: number, headers: Record<string, string[]>, body?: string }
@@ -233,7 +233,7 @@ class CompileMinimalEndpointTest {
             |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
             |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
             |}
-            |export module GetTodos {
+            |export namespace GetTodos {
             |  type Path = {}
             |  type Queries = {}
             |  type Headers = {}
@@ -250,6 +250,18 @@ class CompileMinimalEndpointTest {
             |    body: TodoDto[]
             |  }
             |  export type Response = Response200
+            |  export const request = (): Request => ({
+            |    path: {},
+            |    method: "GET",
+            |    queries: {},
+            |    headers: {},
+            |    body: undefined,
+            |  })
+            |  export const response200 = (props: {body: TodoDto[]}): Response200 => ({
+            |    status: 200,
+            |    headers: {},
+            |    body: props.body,
+            |  })
             |  export type Handler = {
             |    getTodos: (request:Request) => Promise<Response>
             |  }
