@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithHostTests
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsTargetDsl
 
 plugins {
-    kotlin("multiplatform")
+    alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotest)
     alias(libs.plugins.kotlinx.resources)
 }
@@ -67,6 +67,20 @@ kotlin {
                 implementation(project(":src:compiler:lib"))
             }
         }
+    }
+}
+
+tasks.withType<Jar> {
+    doFirst {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        manifest {
+            attributes("Main-Class" to "community.flock.wirespec.plugin.cli.MainKt")
+        }
+        val main by kotlin.jvm().compilations.getting
+        val files = main.runtimeDependencyFiles.files
+            .filter { it.name.endsWith("jar") }
+            .map(::zipTree)
+        from(files)
     }
 }
 

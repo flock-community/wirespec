@@ -1,18 +1,21 @@
 plugins {
-    kotlin("multiplatform") apply false
-    id("maven-publish")
-    id("signing")
-    id("org.jetbrains.dokka") version "1.9.20"
+    alias(libs.plugins.kotlin.multiplatform) apply false
+    alias(libs.plugins.kotlin.jvm) apply false
+    alias(libs.plugins.dokka) apply false
+    `maven-publish`
+    signing
 }
 
 repositories {
     mavenCentral()
 }
 
+val dokka = libs.plugins.dokka.get().pluginId
+
 subprojects {
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
-    apply(plugin = "org.jetbrains.dokka")
+    apply(plugin = dokka)
 
     signing {
         setRequired { System.getenv("VERSION") != null }
@@ -50,8 +53,8 @@ subprojects {
                     description.set("Type safe wires made easy")
                     licenses {
                         license {
-                            name.set("MIT")
-                            url.set("https://opensource.org/licenses/MIT")
+                            name.set("Apache-2.0")
+                            url.set("https://opensource.org/license/apache-2-0")
                         }
                     }
                     url.set("https://flock.community")
@@ -78,4 +81,3 @@ subprojects {
         }
     }
 }
-

@@ -1,12 +1,6 @@
+rootProject.name = "wirespec"
+
 pluginManagement {
-
-    val kotlinVersion = "2.0.0"
-
-    plugins {
-        kotlin("multiplatform") version kotlinVersion
-        kotlin("jvm") version kotlinVersion
-    }
-
     repositories {
         mavenLocal()
         gradlePluginPortal()
@@ -20,8 +14,6 @@ dependencyResolutionManagement {
         gradlePluginPortal()
     }
 }
-
-rootProject.name = "wirespec"
 
 include(
     "src:compiler:core",
