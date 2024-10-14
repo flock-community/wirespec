@@ -7,9 +7,6 @@ all:
 build:
 	$(shell pwd)/scripts/build.sh
 
-yolo:
-	$(shell pwd)/scripts/yolo.sh
-
 clean:
 	$(shell pwd)/scripts/clean.sh
 

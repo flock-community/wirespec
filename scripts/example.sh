@@ -2,8 +2,8 @@
 
 dir="$(dirname -- "$0")"
 
-# publish and build gradle example
-./gradlew src:plugin:gradle:publishToMavenLocal &&
+./gradlew jvmTest &&
+  ./gradlew src:plugin:gradle:publishToMavenLocal &&
   ./gradlew src:plugin:maven:publishToMavenLocal &&
-  # build examples
+  (cd "$dir"/../src/ide/vscode && npm i && npm run build) &&
   (cd "$dir"/../examples && make clean && make build)
