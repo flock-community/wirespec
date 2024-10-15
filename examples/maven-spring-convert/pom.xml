@@ -74,7 +74,7 @@
                 <version>0.0.0-SNAPSHOT</version>
                 <executions>
                     <execution>
-                        <id>kotlin-v2</id>
+                        <id>openapi-v2-to-kotlin</id>
                         <goals>
                             <goal>convert</goal>
                         </goals>
@@ -84,13 +84,13 @@
                             <packageName>community.flock.wirespec.generated.kotlin.v2</packageName>
                             <format>OpenApiV2</format>
                             <languages>
-                                <language>KotlinLegacy</language>
+                                <language>Kotlin</language>
                             </languages>
                             <shared>true</shared>
                         </configuration>
                     </execution>
                     <execution>
-                        <id>kotlin-v3</id>
+                        <id>openapi-v3-to-kotlin</id>
                         <goals>
                             <goal>convert</goal>
                         </goals>
@@ -100,7 +100,7 @@
                             <packageName>community.flock.wirespec.generated.kotlin.v3</packageName>
                             <format>OpenApiV3</format>
                             <languages>
-                                <language>KotlinLegacy</language>
+                                <language>Kotlin</language>
                             </languages>
                             <shared>false</shared>
                         </configuration>

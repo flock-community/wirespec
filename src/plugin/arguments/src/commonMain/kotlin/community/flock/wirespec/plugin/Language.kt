@@ -3,7 +3,7 @@ package community.flock.wirespec.plugin
 import community.flock.wirespec.compiler.core.Value
 
 enum class Language {
-    Java, JavaLegacy, Kotlin, KotlinLegacy, Scala, TypeScript, Wirespec;
+    Java, Kotlin, Scala, TypeScript, Wirespec;
 
     companion object {
         fun toMap() = entries.associateBy { it.name }
