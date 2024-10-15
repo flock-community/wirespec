@@ -1,35 +1,17 @@
-@file:OptIn(ExperimentalStdlibApi::class)
-
 package community.flock.wirespec.examples.openapi.app
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import community.flock.wirespec.Wirespec
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
+import community.flock.wirespec.kotlin.Wirespec
+import org.springframework.stereotype.Component
 import kotlin.reflect.KType
 import kotlin.reflect.javaType
 
-@Configuration
-class WirespecConfiguration {
+@Component
+@OptIn(ExperimentalStdlibApi::class)
+class Serialization(private val objectMapper: ObjectMapper) : Wirespec.Serialization<String> {
+    override fun <T> serialize(t: T, kType: KType): String = objectMapper.writeValueAsString(t)
 
-    @Bean
-    fun contentMapper(objectMapper: ObjectMapper) =
-        object : Wirespec.ContentMapper<ByteArray> {
-            override fun <T> read(
-                content: Wirespec.Content<ByteArray>,
-                valueType: KType,
-            ): Wirespec.Content<T> = content.let {
-                val type = objectMapper.constructType(valueType.javaType)
-                val obj: T = objectMapper.readValue(content.body, type)
-                Wirespec.Content(it.type, obj)
-            }
-
-            override fun <T> write(
-                content: Wirespec.Content<T>,
-                valueType: KType,
-            ): Wirespec.Content<ByteArray> = content.let {
-                val bytes = objectMapper.writeValueAsBytes(content.body)
-                Wirespec.Content(it.type, bytes)
-            }
-        }
+    override fun <T> deserialize(raw: String, kType: KType): T = objectMapper
+        .constructType(kType.javaType)
+        .let { objectMapper.readValue(raw, it) }
 }

@@ -18,20 +18,20 @@ class KotlinPetstoreController(
 
     @PostMapping
     suspend fun create(): Long {
-        val pet = Pet(name = "Pet", photoUrls = emptyList())
-        val req = AddPetEndpoint.RequestApplicationJson(pet)
+        val pet = Pet(name = "Pet", photoUrls = emptyList(), id = null, category = null, tags = null, status = null)
+        val req = AddPetEndpoint.Request(pet)
         return when (val res = kotlinPetstoreClient.addPet(req)) {
-            is AddPetEndpoint.Response200ApplicationJson -> res.content.body.id ?: error("not created")
-            is AddPetEndpoint.Response200ApplicationXml -> res.content.body.id ?: error("not created")
-            is AddPetEndpoint.Response405Unit -> error("Something went wrong")
+            is AddPetEndpoint.Response200 -> res.body.id ?: error("not created")
+            is AddPetEndpoint.Response405 -> error("Something went wrong")
+            else -> error("Something went wrong")
         }
     }
 
     @GetMapping
     suspend fun find(@RequestBody pet: Pet): List<Long> {
-        val req = FindPetsByStatusEndpoint.RequestUnit(status = FindPetsByStatusParameterStatus.available)
+        val req = FindPetsByStatusEndpoint.Request(status = FindPetsByStatusParameterStatus.available)
         return when (val res = kotlinPetstoreClient.findPetsByStatus(req)) {
-            is FindPetsByStatusEndpoint.Response200ApplicationJson -> res.content.body.mapNotNull { it.id }
+            is FindPetsByStatusEndpoint.Response200 -> res.body.mapNotNull { it.id }
             else -> error("No response")
         }
     }

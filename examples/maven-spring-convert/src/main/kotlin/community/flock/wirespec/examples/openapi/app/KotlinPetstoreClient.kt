@@ -1,55 +1,43 @@
 package community.flock.wirespec.examples.openapi.app
 
-import community.flock.wirespec.Wirespec
 import community.flock.wirespec.generated.kotlin.v3.AddPetEndpoint
 import community.flock.wirespec.generated.kotlin.v3.FindPetsByStatusEndpoint
+import community.flock.wirespec.kotlin.Wirespec
 import java.net.URI
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
+import org.springframework.http.RequestEntity
+import org.springframework.stereotype.Component
+import org.springframework.util.CollectionUtils.toMultiValueMap
 import org.springframework.web.client.RestTemplate
-import kotlin.reflect.typeOf
+import org.springframework.web.client.exchange
 
-interface KotlinPetstoreClient : AddPetEndpoint, FindPetsByStatusEndpoint
+interface KotlinPetstoreClient : AddPetEndpoint.Handler, FindPetsByStatusEndpoint.Handler
 
-@Configuration
-class KotlinPetClientConfiguration {
+@Component
+class LiveKotlinPetstoreClient(
+    private val serialization: Wirespec.Serialization<String>,
+    private val client: RestTemplate,
+) : KotlinPetstoreClient {
 
-    @Bean
-    fun kotlinPetstoreClient(
-        restTemplate: RestTemplate,
-        contentMapper: Wirespec.ContentMapper<ByteArray>
-    ): KotlinPetstoreClient =
-        object : KotlinPetstoreClient {
-            fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> handle(
-                request: Req,
-                responseMapper: (Wirespec.ContentMapper<ByteArray>) -> (Wirespec.Response<ByteArray>) -> Res
-            ) = restTemplate.execute(
-                URI("https://6467e16be99f0ba0a819fd68.mockapi.io${request.path}"),
-                HttpMethod.valueOf(request.method.name),
-                { req ->
-                    request.content
-                        ?.let { contentMapper.write(it, typeOf<Any>()) }
-                        ?.let { req.body.write(it.body) }
-                },
-                { res ->
-                    val contentType = res.headers.contentType?.toString() ?: error("No content type")
-                    val content = Wirespec.Content(contentType, res.body.readBytes())
-                    val response = object : Wirespec.Response<ByteArray> {
-                        override val status = res.statusCode.value()
-                        override val headers = res.headers
-                        override val content = content
-                    }
-                    responseMapper(contentMapper)(response)
-                }
-            ) ?: error("No response")
-
-            override suspend fun addPet(request: AddPetEndpoint.Request<*>): AddPetEndpoint.Response<*> {
-                return handle(request, AddPetEndpoint::RESPONSE_MAPPER)
-            }
-
-            override suspend fun findPetsByStatus(request: FindPetsByStatusEndpoint.Request<*>): FindPetsByStatusEndpoint.Response<*> {
-                return handle(request, FindPetsByStatusEndpoint::RESPONSE_MAPPER)
-            }
+    override suspend fun addPet(request: AddPetEndpoint.Request) =
+        with(AddPetEndpoint.Handler.client(serialization)) {
+            to(request).let(::handle).let(::from)
         }
+
+    override suspend fun findPetsByStatus(request: FindPetsByStatusEndpoint.Request) =
+        with(FindPetsByStatusEndpoint.Handler.client(serialization)) {
+            to(request).let(::handle).let(::from)
+        }
+
+    private fun handle(request: Wirespec.RawRequest): Wirespec.RawResponse =
+        RequestEntity
+            .method(
+                HttpMethod.valueOf(request.method),
+                URI("https://6467e16be99f0ba0a819fd68.mockapi.io${request.path}"),
+            )
+            .headers(HttpHeaders(toMultiValueMap(request.headers.mapValues { listOf(it.value) })))
+            .body(request.body ?: Unit)
+            .let { client.exchange<String>(it) }
+            .run { Wirespec.RawResponse(statusCode = statusCode.value(), headers = headers.map { (key, value) -> key to value.first() }.toMap(), body = body) }
 }

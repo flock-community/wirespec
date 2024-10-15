@@ -21,6 +21,9 @@ example:
 image:
 	$(shell pwd)/scripts/image.sh
 
+jvm:
+	./gradlew jvmTest
+
 local:
 	$(shell pwd)/scripts/local.sh
 

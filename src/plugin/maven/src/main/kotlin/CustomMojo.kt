@@ -1,9 +1,7 @@
 package community.flock.wirespec.plugin.maven
 
 import community.flock.wirespec.compiler.core.emit.common.Emitter
-import community.flock.wirespec.compiler.core.emit.shared.JavaLegacyShared
 import community.flock.wirespec.compiler.core.emit.shared.JavaShared
-import community.flock.wirespec.compiler.core.emit.shared.KotlinLegacyShared
 import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
 import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
 import community.flock.wirespec.compiler.core.emit.shared.TypeScriptShared
@@ -64,8 +62,6 @@ class CustomMojo : BaseMojo() {
                 Language.Java -> JavaShared
                 Language.Kotlin -> KotlinShared
                 Language.Scala -> ScalaShared
-                Language.JavaLegacy -> JavaLegacyShared
-                Language.KotlinLegacy -> KotlinLegacyShared
                 Language.TypeScript -> TypeScriptShared
                 Language.Wirespec -> null
             }
