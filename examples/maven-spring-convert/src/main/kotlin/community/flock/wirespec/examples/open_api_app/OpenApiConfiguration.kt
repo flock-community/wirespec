@@ -8,7 +8,5 @@ import org.springframework.web.client.RestTemplate
 class OpenApiConfiguration {
 
     @Bean
-    fun restTemplate(): RestTemplate {
-        return RestTemplate()
-    }
+    fun restTemplate() = RestTemplate()
 }
