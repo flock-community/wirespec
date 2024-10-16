@@ -11,8 +11,6 @@ data object JavaShared : Shared {
         |
         |import java.lang.reflect.Type;
         |import java.lang.reflect.ParameterizedType;
-        |import java.util.List;
-        |import java.util.Map;
         |
         |public interface Wirespec {
         |${Spacer}interface Enum {}
@@ -46,8 +44,8 @@ data object JavaShared : Shared {
         |${Spacer}interface Serialization<RAW> extends Serializer<RAW>, Deserializer<RAW> {}
         |${Spacer}interface Serializer<RAW> { <T> RAW serialize(T t, Type type); }
         |${Spacer}interface Deserializer<RAW> { <T> T deserialize(RAW raw, Type type); }
-        |${Spacer}record RawRequest(String method, List<String> path, Map<String, List<String>> queries, Map<String, List<String>> headers, String body) {} 
-        |${Spacer}record RawResponse(int statusCode, Map<String, List<String>> headers, String body) {}
+        |${Spacer}record RawRequest(String method, java.util.List<String> path, java.util.Map<String, String> queries, java.util.Map<String, String> headers, String body) {} 
+        |${Spacer}record RawResponse(int statusCode, java.util.Map<String, String> headers, String body) {}
         |${Spacer}static Type getType(final Class<?> type, final boolean isIterable) {
         |${Spacer(2)}if(isIterable) {
         |${Spacer(3)}return new ParameterizedType() {

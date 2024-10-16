@@ -1,8 +1,7 @@
 .PHONY: *
 
 # The first command will be invoked with `make` only and should be `all`
-all:
-	$(shell pwd)/scripts/all.sh
+all: build image test example
 
 build:
 	$(shell pwd)/scripts/build.sh

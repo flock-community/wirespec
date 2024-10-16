@@ -29,7 +29,7 @@ type Api =
     PostTodo.Handler
 
 const handleFetch = <Req extends Wirespec.Request<any>, Res extends Wirespec.Response<any>>(client: Wirespec.Client<Req, Res>) => (request: Req): Promise<Res> => {
-    const mock = (method: Wirespec.Method, path: string[], status: number, headers: Record<string, string[]>, body: any) => ({
+    const mock = (method: Wirespec.Method, path: string[], status: number, headers: Record<string, string>, body: any) => ({
         method,
         path,
         status,

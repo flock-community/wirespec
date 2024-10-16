@@ -72,16 +72,16 @@ class CompileFullEndpointTest {
             |    Wirespec.RawRequest(
             |      path = listOf("todos", request.path.id.toString()),
             |      method = request.method.name,
-            |      queries = listOf(request.queries.done?.let{"done" to serialization.serialize(it, typeOf<Boolean>()).let(::listOf)}).filterNotNull().toMap(),
-            |      headers = listOf(request.headers.token?.let{"token" to serialization.serialize(it, typeOf<Token>()).let(::listOf)}).filterNotNull().toMap(),
+            |      queries = listOf(request.queries.done?.let{"done" to serialization.serialize(it, typeOf<Boolean>())}).filterNotNull().toMap(),
+            |      headers = listOf(request.headers.token?.let{"token" to serialization.serialize(it, typeOf<Token>())}).filterNotNull().toMap(),
             |      body = serialization.serialize(request.body, typeOf<PotentialTodoDto>()),
             |    )
             |
             |  fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
             |    Request(
             |      id = serialization.deserialize(request.path[1], typeOf<String>()),
-            |      done = serialization.deserialize(requireNotNull(request.queries["done"]?.get(0)) { "done is null" }, typeOf<Boolean>()),
-            |      token = serialization.deserialize(requireNotNull(request.headers["token"]?.get(0)) { "token is null" }, typeOf<Token>()),
+            |      done = serialization.deserialize(requireNotNull(request.queries["done"]) { "done is null" }, typeOf<Boolean>()),
+            |      token = serialization.deserialize(requireNotNull(request.headers["token"]) { "token is null" }, typeOf<Token>()),
             |      body = serialization.deserialize(requireNotNull(request.body) { "body is null" }, typeOf<PotentialTodoDto>()),
             |    )
             |
@@ -226,8 +226,8 @@ class CompileFullEndpointTest {
             |      return new Wirespec.RawRequest(
             |        request.method.name(),
             |        java.util.List.of("todos", request.path.id.toString()),
-            |        java.util.Map.of("done", java.util.List.of(serialization.serialize(request.queries.done, Wirespec.getType(Boolean.class, false)))),
-            |        java.util.Map.of("token", java.util.List.of(serialization.serialize(request.headers.token, Wirespec.getType(Token.class, false)))),
+            |        java.util.Map.of("done", serialization.serialize(request.queries.done, Wirespec.getType(Boolean.class, false))),
+            |        java.util.Map.of("token", serialization.serialize(request.headers.token, Wirespec.getType(Token.class, false))),
             |        serialization.serialize(request.getBody(), Wirespec.getType(PotentialTodoDto.class, false))
             |      );
             |    }
@@ -235,8 +235,8 @@ class CompileFullEndpointTest {
             |    static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
             |      return new Request(
             |        serialization.deserialize(request.path().get(1), Wirespec.getType(String.class, false)),
-            |        serialization.deserialize(request.queries().get("done").get(0), Wirespec.getType(Boolean.class, false)),
-            |        serialization.deserialize(request.headers().get("token").get(0), Wirespec.getType(Token.class, false)),
+            |        serialization.deserialize(request.queries().get("done"), Wirespec.getType(Boolean.class, false)),
+            |        serialization.deserialize(request.headers().get("token"), Wirespec.getType(Token.class, false)),
             |        serialization.deserialize(request.body(), Wirespec.getType(PotentialTodoDto.class, false))
             |      );
             |    }
@@ -318,8 +318,8 @@ class CompileFullEndpointTest {
         val ts = """
             |export namespace Wirespec {
             |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
-            |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string[]>, headers: Record<string, string[]>, body?: string }
-            |  export type RawResponse = { status: number, headers: Record<string, string[]>, body?: string }
+            |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string>, headers: Record<string, string>, body?: string }
+            |  export type RawResponse = { status: number, headers: Record<string, string>, body?: string }
             |  export type Content<T> = { type:string, body:T }
             |  export type Request<T> = { path: Record<string, unknown>, method: Method, query?: Record<string, unknown>, headers?: Record<string, unknown>, content?:Content<T> }
             |  export type Response<T> = { status:number, headers?: Record<string, unknown[]>, content?:Content<T> }
@@ -379,8 +379,8 @@ class CompileFullEndpointTest {
             |    to: (request) => ({
             |      method: "PUT",
             |      path: ["todos", serialization.serialize(request.path.id)],
-            |      queries: {done: [serialization.serialize(request.queries.done)]},
-            |      headers: {token: [serialization.serialize(request.headers.token)]},
+            |      queries: {done: serialization.serialize(request.queries.done)},
+            |      headers: {token: serialization.serialize(request.headers.token)},
             |      body: serialization.serialize(request.body)
             |    }),
             |    from: (response) => {
@@ -410,10 +410,10 @@ class CompileFullEndpointTest {
             |          id: serialization.deserialize(request.path[1])
             |        },
             |        queries: {
-            |          done: serialization.deserialize(request.queries.done[0])
+            |          done: serialization.deserialize(request.queries.done)
             |        },
             |        headers: {
-            |          token: serialization.deserialize(request.headers.token[0])
+            |          token: serialization.deserialize(request.headers.token)
             |        },
             |        body: serialization.deserialize(request.body)
             |      }

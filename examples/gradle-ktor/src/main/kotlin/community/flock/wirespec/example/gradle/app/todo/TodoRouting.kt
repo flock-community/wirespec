@@ -73,7 +73,9 @@ suspend fun ApplicationCall.toRawRequest() =
     Wirespec.RawRequest(
         method = request.httpMethod.value,
         path = request.path().split("/").filter { it.isNotBlank() },
-        queries = request.queryParameters.toMap(),
-        headers = request.headers.toMap(),
+        queries = request.queryParameters.toMap().toSingleValueMap(),
+        headers = request.headers.toMap().toSingleValueMap(),
         body = receive<String>(),
     )
+
+private fun Map<String, List<String>>.toSingleValueMap() = map{(k, v) -> k to v.first()}.toMap()

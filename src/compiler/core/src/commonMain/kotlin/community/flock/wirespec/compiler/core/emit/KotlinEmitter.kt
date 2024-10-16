@@ -179,39 +179,15 @@ open class KotlinEmitter(
         |${Spacer(2)}override val path = Path${endpoint.pathParams.joinToString { it.identifier.emit() }.brace()}
         |${Spacer(2)}override val method = Wirespec.Method.${endpoint.method.name}
         |${Spacer(2)}override val queries = Queries${endpoint.queries.joinToString { it.identifier.emit() }.brace()}
-        |${Spacer(2)}override val headers = Headers${
-        endpoint.headers.joinToString { it.identifier.emit() }.brace()
-    }${if (content == null) "\n${Spacer(2)}override val body = Unit" else ""}
+        |${Spacer(2)}override val headers = Headers${endpoint.headers.joinToString { it.identifier.emit() }.brace()}${if (content == null) "\n${Spacer(2)}override val body = Unit" else ""}
         |${Spacer}}
         |
         |${Spacer}fun toRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
         |${Spacer(2)}Wirespec.RawRequest(
-        |${Spacer(3)}path = listOf(${
-        endpoint.path.joinToString {
-            when (it) {
-                is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier()
-            }
-        }
-    }),
+        |${Spacer(3)}path = listOf(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
         |${Spacer(3)}method = request.method.name,
-        |${Spacer(3)}queries = ${
-        if (endpoint.queries.isNotEmpty()) "listOf(${
-            endpoint.queries.joinToString {
-                it.emitSerialized(
-                    "queries"
-                )
-            }
-        }).filterNotNull().toMap()" else "emptyMap()"
-    },
-        |${Spacer(3)}headers = ${
-        if (endpoint.headers.isNotEmpty()) "listOf(${
-            endpoint.headers.joinToString {
-                it.emitSerialized(
-                    "headers"
-                )
-            }
-        }).filterNotNull().toMap()" else "emptyMap()"
-    },
+        |${Spacer(3)}queries = ${if (endpoint.queries.isNotEmpty()) "listOf(${endpoint.queries.joinToString { it.emitSerialized("queries") }}).filterNotNull().toMap()" else "emptyMap()"},
+        |${Spacer(3)}headers = ${if (endpoint.headers.isNotEmpty()) "listOf(${endpoint.headers.joinToString { it.emitSerialized("headers") }}).filterNotNull().toMap()" else "emptyMap()"},
         |${Spacer(3)}body = serialization.serialize(request.body, typeOf<${content.emit()}>()),
         |${Spacer(2)})
         |
@@ -257,7 +233,7 @@ open class KotlinEmitter(
     """.trimMargin()
 
     private fun Field.emitSerialized(fields: String) =
-        """request.$fields.${identifier.emit()}?.let{"${identifier.emit()}" to serialization.serialize(it, typeOf<${reference.emit()}>()).let(::listOf)}"""
+        """request.$fields.${identifier.emit()}?.let{"${identifier.emit()}" to serialization.serialize(it, typeOf<${reference.emit()}>())}"""
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
         """${Spacer(3)}${value.identifier.emit()} = serialization.deserialize(request.path[${index}], typeOf<${value.reference.emit()}>())"""
@@ -266,7 +242,7 @@ open class KotlinEmitter(
         if (isNullable)
             """${Spacer(3)}${identifier.emit()} = request.$fields["${identifier.emit()}"]?.get(0)?.let{ serialization.deserialize(it, typeOf<${reference.emit()}>()) }"""
         else
-            """${Spacer(3)}${identifier.emit()} = serialization.deserialize(requireNotNull(request.$fields["${identifier.emit()}"]?.get(0)) { "${identifier.emit()} is null" }, typeOf<${reference.emit()}>())"""
+            """${Spacer(3)}${identifier.emit()} = serialization.deserialize(requireNotNull(request.$fields["${identifier.emit()}"]) { "${identifier.emit()} is null" }, typeOf<${reference.emit()}>())"""
 
     private fun Endpoint.Segment.Param.emitIdentifier() = "request.path.${identifier.value}.toString()"
 

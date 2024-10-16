@@ -483,8 +483,8 @@ class CompileLegacyEndpointTest {
         val ts = """
             |export namespace Wirespec {
             |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
-            |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string[]>, headers: Record<string, string[]>, body?: string }
-            |  export type RawResponse = { status: number, headers: Record<string, string[]>, body?: string }
+            |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string>, headers: Record<string, string>, body?: string }
+            |  export type RawResponse = { status: number, headers: Record<string, string>, body?: string }
             |  export type Content<T> = { type:string, body:T }
             |  export type Request<T> = { path: Record<string, unknown>, method: Method, query?: Record<string, unknown>, headers?: Record<string, unknown>, content?:Content<T> }
             |  export type Response<T> = { status:number, headers?: Record<string, unknown[]>, content?:Content<T> }
@@ -532,8 +532,8 @@ class CompileLegacyEndpointTest {
             |    to: (request) => ({
             |      method: "GET",
             |      path: ["v1", "todo"],
-            |      queries: {done: [serialization.serialize(request.queries.done)]},
-            |      headers: {auth: [serialization.serialize(request.headers.auth)]},
+            |      queries: {done: serialization.serialize(request.queries.done)},
+            |      headers: {auth: serialization.serialize(request.headers.auth)},
             |      body: serialization.serialize(request.body)
             |    }),
             |    from: (response) => {
@@ -557,10 +557,10 @@ class CompileLegacyEndpointTest {
             |      
             |        },
             |        queries: {
-            |          done: serialization.deserialize(request.queries.done[0])
+            |          done: serialization.deserialize(request.queries.done)
             |        },
             |        headers: {
-            |          auth: serialization.deserialize(request.headers.auth[0])
+            |          auth: serialization.deserialize(request.headers.auth)
             |        },
             |        body: serialization.deserialize(request.body)
             |      }
