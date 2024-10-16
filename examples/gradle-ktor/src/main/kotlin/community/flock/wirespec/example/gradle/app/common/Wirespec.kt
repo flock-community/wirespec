@@ -22,13 +22,13 @@ class WirespecClient(private val httpClient: HttpClient = HttpClient()) {
                 path(*request.path.toTypedArray())
             }
             headers {
-                request.headers.forEach { (t, u) -> appendAll(t, u) }
+                request.headers.forEach { (t, u) -> appendAll(t, listOf(u)) }
             }
         }
         response.run {
             Wirespec.RawResponse(
                 statusCode = status.value,
-                headers = headers.entries().associate { it.key to it.value },
+                headers = headers.entries().associate { it.key to it.value.first() },
                 body = body()
             )
         }

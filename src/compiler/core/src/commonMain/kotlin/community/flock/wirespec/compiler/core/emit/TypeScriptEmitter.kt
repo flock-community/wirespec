@@ -253,8 +253,8 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
         """${value.identifier.emit()}: serialization.deserialize(request.path[${index}])"""
 
     private fun Field.emitDeserialize(fields: String) =
-        """${identifier.emit()}: serialization.deserialize(request.$fields.${identifier.emit()}[0])"""
+        """${identifier.emit()}: serialization.deserialize(request.$fields.${identifier.emit()})"""
 
     private fun Field.emitSerialize(fields: String) =
-        """${identifier.emit()}: [serialization.serialize(request.$fields.${identifier.emit()})]"""
+        """${identifier.emit()}: serialization.serialize(request.$fields.${identifier.emit()})"""
 }

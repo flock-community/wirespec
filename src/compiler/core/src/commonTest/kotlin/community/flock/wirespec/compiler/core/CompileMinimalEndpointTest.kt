@@ -224,8 +224,8 @@ class CompileMinimalEndpointTest {
         val ts = """
             |export namespace Wirespec {
             |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
-            |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string[]>, headers: Record<string, string[]>, body?: string }
-            |  export type RawResponse = { status: number, headers: Record<string, string[]>, body?: string }
+            |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string>, headers: Record<string, string>, body?: string }
+            |  export type RawResponse = { status: number, headers: Record<string, string>, body?: string }
             |  export type Content<T> = { type:string, body:T }
             |  export type Request<T> = { path: Record<string, unknown>, method: Method, query?: Record<string, unknown>, headers?: Record<string, unknown>, content?:Content<T> }
             |  export type Response<T> = { status:number, headers?: Record<string, unknown[]>, content?:Content<T> }
