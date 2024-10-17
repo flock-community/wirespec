@@ -32,7 +32,7 @@ public class TestUserClient implements UserClient {
                 .filter(it -> Objects.equals(it.name(), request.getPath().name()))
                 .findFirst()
                 .<GetUserByNameEndpoint.Response<?>>map(GetUserByNameEndpoint.Response200::new)
-                .orElseGet(() -> new GetUserByNameEndpoint.Response404(null));
+                .orElseGet(() -> new GetUserByNameEndpoint.Response404());
 
         return completedFuture(res);
     }
@@ -43,7 +43,7 @@ public class TestUserClient implements UserClient {
         if (users.add(user)) {
             return completedFuture(new PostUserEndpoint.Response200(user));
         } else {
-            return completedFuture(new PostUserEndpoint.Response409(null));
+            return completedFuture(new PostUserEndpoint.Response409());
         }
     }
 
@@ -56,7 +56,7 @@ public class TestUserClient implements UserClient {
                     users.remove(body);
                     return new DeleteUserByNameEndpoint.Response200(body);
                 })
-                .orElseGet(() -> new DeleteUserByNameEndpoint.Response404(null));
+                .orElseGet(() -> new DeleteUserByNameEndpoint.Response404());
 
         return completedFuture(res);
     }
