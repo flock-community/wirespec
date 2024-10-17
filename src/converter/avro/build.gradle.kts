@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlinx.resources)
 }
 
@@ -31,7 +32,6 @@ kotlin {
             dependencies {
                 implementation(project(":src:compiler:core"))
                 implementation(libs.kotlinx.serialization)
-                implementation(libs.kotlinx.openapi.bindings)
             }
         }
         commonTest {
