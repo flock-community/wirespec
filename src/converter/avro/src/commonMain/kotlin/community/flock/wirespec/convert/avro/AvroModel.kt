@@ -29,9 +29,9 @@ object AvroModel {
 
     @Serializable(with = TypeListSerializer::class)
     class TypeList(vararg type: Type) : AbstractList<Type>() {
-        val list = type.toList()
+        private val list = type.toList()
         override val size = list.size
-        override fun get(index: Int) = list.get(index)
+        override fun get(index: Int) = list[index]
     }
 
     @Serializable(with = TypeSerializer::class)

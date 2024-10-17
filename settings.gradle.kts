@@ -29,5 +29,4 @@ include(
     "src:integration:jackson",
     "src:integration:wirespec",
     "src:tools:generator",
-    "src:generator",
 )

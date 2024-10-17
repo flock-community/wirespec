@@ -9,9 +9,9 @@ import community.flock.wirespec.compiler.core.parse.Type
 
 object AvroConverter {
 
-    val nullType = AvroModel.SimpleType("null")
-    fun AvroModel.TypeList.isNullable() = contains(nullType)
-    fun AvroModel.SimpleType.toPrimitive() = when (this.value) {
+    private val nullType = AvroModel.SimpleType("null")
+    private fun AvroModel.TypeList.isNullable() = contains(nullType)
+    private fun AvroModel.SimpleType.toPrimitive() = when (value) {
         "boolean" -> Reference.Primitive.Type.Boolean
         "int" -> Reference.Primitive.Type.Integer
         "long" -> Reference.Primitive.Type.Integer
@@ -19,13 +19,15 @@ object AvroConverter {
         "double" -> Reference.Primitive.Type.Number
         "bytes" -> Reference.Primitive.Type.String
         "string" -> Reference.Primitive.Type.String
-        else -> TODO("primitive not mapped ${this.value}")
+        else -> TODO("primitive not mapped $value")
     }
 
-    fun AvroModel.Type.toReference(isIterable: Boolean = false): Reference = when (this) {
+    private fun AvroModel.Type.toReference(isIterable: Boolean = false): Reference = when (this) {
         is AvroModel.SimpleType -> when (value) {
             "null" -> TODO("Map primitive null")
-            "boolean", "int", "long", "float", "double", "bytes", "string" -> Reference.Primitive(toPrimitive(), isIterable, false)
+            "boolean", "int", "long",
+            "float", "double", "bytes", "string" -> Reference.Primitive(toPrimitive(), isIterable, false)
+
             else -> Reference.Custom(value, isIterable, false)
         }
 
@@ -34,17 +36,14 @@ object AvroConverter {
         is AvroModel.EnumType -> Reference.Custom(name, isIterable, false)
     }
 
-    fun AvroModel.TypeList.toReference(): Reference {
-        val list = minus(nullType)
-        if (list.size != 1) {
-            TODO("Union types are not supported")
-        }
-        return list.first().toReference()
-    }
+    private fun AvroModel.TypeList.toReference() = minus(nullType)
+        .takeIf { it.size == 1 }
+        ?.first()?.toReference()
+        ?: TODO("Union types are not supported")
 
-    fun AvroModel.RecordType.toType() = Type(
+    private fun AvroModel.RecordType.toType() = Type(
         identifier = Identifier(name),
-        shape = Type.Shape(this.fields.map {
+        shape = Type.Shape(fields.map {
             Field(
                 identifier = Identifier(it.name),
                 reference = it.type.toReference(),
@@ -55,7 +54,7 @@ object AvroConverter {
         extends = emptyList()
     )
 
-    fun AvroModel.EnumType.toEnum() = Enum(
+    private fun AvroModel.EnumType.toEnum() = Enum(
         comment = null,
         identifier = Identifier(name),
         entries = symbols.toSet()
