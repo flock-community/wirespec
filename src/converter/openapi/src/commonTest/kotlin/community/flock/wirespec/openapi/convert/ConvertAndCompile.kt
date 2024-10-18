@@ -28,4 +28,12 @@ class ConvertAndCompile {
         val wirespec = WirespecEmitter().emit(ast).joinToString("\n") { it.result }
         WirespecSpec.compile(wirespec)(noLogger)(KotlinEmitter()).shouldBeRight()
     }
+
+    @Test
+    fun testV3Todos() {
+        val input = Resource("src/commonTest/resources/v3/todo.json").readText()
+        val ast = OpenApiV3Parser.parse(input, true)
+        val wirespec = WirespecEmitter().emit(ast).joinToString("\n") { it.result }
+        WirespecSpec.compile(wirespec)(noLogger)(KotlinEmitter()).shouldBeRight()
+    }
 }

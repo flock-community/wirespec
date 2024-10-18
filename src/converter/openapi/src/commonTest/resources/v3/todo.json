@@ -20,7 +20,7 @@
         "operationId": "TodosList",
         "parameters": [
           {
-            "name": "completed",
+            "name": "is-completed",
             "in": "query",
             "required": false,
             "schema": {
