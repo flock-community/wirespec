@@ -63,9 +63,17 @@ open class JavaEmitter(
     override fun emit(type: Type, ast: AST) = """
         |public record ${type.emitName()} (
         |${type.shape.emit()}
-        |)${type.extends.run { if (isEmpty()) "" else " extends ${joinToString(", ") { it.emit() }}" }}${type.union(ast).map { it.identifier.value }.takeIf { it.isNotEmpty() }?.joinToString(", ", "implements ").orEmpty()} {
+        |)${type.extends.run { if (isEmpty()) "" else " extends ${joinToString(", ") { it.emit() }}" }}${type.emitUnion(ast)} {
         |};
     """.trimMargin()
+
+    private fun Type.emitUnion(ast: AST) = ast
+        .filterIsInstance<Union>()
+        .filter { union -> union.entries.filterIsInstance<Reference.Custom>().any { it.value == identifier.value } }
+        .map { it.identifier.value }
+        .takeIf { it.isNotEmpty() }
+        ?.joinToString(", ", "implements ")
+        .orEmpty()
 
     override fun Type.Shape.emit() = value.joinToString("\n") { "${Spacer}${it.emit()}," }.dropLast(1)
 
@@ -79,15 +87,23 @@ open class JavaEmitter(
     private fun Reference.emitType(void:String = "void") = when (this) {
         is Reference.Unit -> void
         is Reference.Any -> "Object"
-        is Reference.Custom -> if (value in internalClasses) "${packageName}.${value.sanitizeSymbol()}" else value.sanitizeSymbol()
-        is Reference.Primitive -> when (type) {
-            Reference.Primitive.Type.String -> "String"
-            Reference.Primitive.Type.Integer -> "Long"
-            Reference.Primitive.Type.Number -> "Double"
-            Reference.Primitive.Type.Boolean -> "Boolean"
-        }
+        is Reference.Custom -> emit()
+        is Reference.Primitive -> emit()
     }
 
+    private fun Reference.Custom.emit() = value
+        .takeIf { it in internalClasses }
+        ?.let { "$packageName." }
+        .orEmpty()
+        .let { "$it$value" }
+        .sanitizeSymbol()
+
+    private fun Reference.Primitive.emit() = when (type) {
+        Reference.Primitive.Type.String -> "String"
+        Reference.Primitive.Type.Integer -> "Long"
+        Reference.Primitive.Type.Number -> "Double"
+        Reference.Primitive.Type.Boolean -> "Boolean"
+    }
 
     override fun Identifier.emit() = value.sanitizeKeywords().sanitizeSymbol()
 
@@ -334,8 +350,3 @@ open class JavaEmitter(
         )
     }
 }
-
-private fun Type.union(ast: AST) = ast
-        .filterIsInstance<Union>()
-        .filter { it.entries.filterIsInstance<Reference.Custom>().map { it.value }.any { it == identifier.value } }
-
