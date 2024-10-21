@@ -233,7 +233,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
       - name: Build
         run: |
-          ./gradlew :src:plugin:npm:build
+          ./gradlew build
       - name: Build
         working-directory: ./src/plugin/npm/build/dist/js/productionLibrary
         run: |
