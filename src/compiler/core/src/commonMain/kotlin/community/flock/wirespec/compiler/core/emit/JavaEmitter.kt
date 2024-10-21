@@ -34,12 +34,12 @@ open class JavaEmitter(
     """.trimMargin()
 
     override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> "${identifier.emit()}Endpoint"
-        is Channel -> "${identifier.emit()}Channel"
-        is Enum -> identifier.emit()
-        is Refined -> identifier.emit()
-        is Type -> identifier.emit()
-        is Union -> identifier.emit()
+        is Endpoint -> "${identifier.emitClassName()}Endpoint"
+        is Channel -> "${identifier.emitClassName()}Channel"
+        is Enum -> identifier.emitClassName()
+        is Refined -> identifier.emitClassName()
+        is Type -> identifier.emitClassName()
+        is Union -> identifier.emitClassName()
     }
 
     override fun notYetImplemented() =
@@ -70,7 +70,7 @@ open class JavaEmitter(
     override fun Type.Shape.emit() = value.joinToString("\n") { "${Spacer}${it.emit()}," }.dropLast(1)
 
     override fun Field.emit() =
-        "${if (isNullable) "java.util.Optional<${reference.emit()}>" else reference.emit()} ${identifier.emit()}"
+        "${if (isNullable) "java.util.Optional<${reference.emit()}>" else reference.emit()} ${identifier.emitVariableName()}"
 
     override fun Reference.emit() = emitType()
         .let { if (isIterable) "java.util.List<$it>" else it }
@@ -88,7 +88,8 @@ open class JavaEmitter(
         }
     }
 
-    override fun Identifier.emit() = if (value in reservedKeywords) "_$value" else value
+    override fun Identifier.emitClassName() = if (value in reservedKeywords) "_$value" else value
+    override fun Identifier.emitVariableName() = if (value in reservedKeywords) "_$value" else value
 
     override fun emit(refined: Refined) = """
         |public record ${refined.identifier.value.sanitizeSymbol()} (String value) implements Wirespec.Refined {
@@ -124,13 +125,13 @@ open class JavaEmitter(
     """.trimMargin()
 
     override fun emit(channel: Channel) = """
-        |interface ${channel.identifier.emit()}Channel {
+        |interface ${channel.identifier.emitClassName()}Channel {
         |   void invoke(${channel.reference.emitWrap(channel.isNullable)} message)
         |}
     """.trimMargin()
 
     override fun emit(endpoint: Endpoint) = """
-        |public interface ${endpoint.identifier.emit()}Endpoint extends Wirespec.Endpoint {
+        |public interface ${endpoint.identifier.emitClassName()}Endpoint extends Wirespec.Endpoint {
         |${endpoint.pathParams.emitObject("Path", "Wirespec.Path") { it.emit() }}
         |
         |${endpoint.queries.emitObject("Queries", "Wirespec.Queries") { it.emit() }}
@@ -183,7 +184,7 @@ open class JavaEmitter(
     """.trimMargin()
 
     override fun emitHandleFunction(endpoint: Endpoint) =
-        "java.util.concurrent.CompletableFuture<Response<?>> ${endpoint.identifier.emit().firstToLower()}(Request request);"
+        "java.util.concurrent.CompletableFuture<Response<?>> ${endpoint.identifier.emitClassName().firstToLower()}(Request request);"
 
     private fun Endpoint.emitResponseInterfaces() = responses
         .distinctBy { it.status.first() }
@@ -248,10 +249,10 @@ open class JavaEmitter(
             ).joinToString()
         }) {\n${Spacer(3)}${
             listOfNotNull(
-                endpoint.pathParams.joinToString { it.identifier.emit() }.let { "this.path = new Path($it);" },
+                endpoint.pathParams.joinToString { it.identifier.emitVariableName() }.let { "this.path = new Path($it);" },
                 "this.method = Wirespec.Method.${endpoint.method.name};",
-                endpoint.queries.joinToString { it.identifier.emit() }.let { "this.queries = new Queries($it);" },
-                endpoint.headers.joinToString { it.identifier.emit() }
+                endpoint.queries.joinToString { it.identifier.emitVariableName() }.let { "this.queries = new Queries($it);" },
+                endpoint.headers.joinToString { it.identifier.emitVariableName() }
                     .let { "this.headers = new RequestHeaders($it);" },
                 "this.body = ${content?.let { "body" } ?: "null"};"
             ).joinToString("\n${Spacer(3)}")
@@ -271,19 +272,19 @@ open class JavaEmitter(
         """${Spacer(4)}case $status -> new Response$status(${if (content != null) "serialization.deserialize(response.body(), Wirespec.getType(${content.reference.emitType("Void")}.class, ${content.reference.isIterable}))" else "null"});"""
 
     private fun Field.emitSerialized(fields: String) =
-        """"${identifier.emit()}", serialization.serialize(request.$fields.${identifier.emit()}, Wirespec.getType(${reference.emit()}.class, ${reference.isIterable}))"""
+        """"${identifier.emitVariableName()}", serialization.serialize(request.$fields.${identifier.emitVariableName()}, Wirespec.getType(${reference.emit()}.class, ${reference.isIterable}))"""
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
         """${Spacer(4)}serialization.deserialize(request.path().get(${index}), Wirespec.getType(${value.reference.emit()}.class, ${value.reference.isIterable}))"""
 
     private fun Field.emitDeserialized(fields: String) =
-        """${Spacer(4)}serialization.deserialize(request.$fields().get("${identifier.emit()}"), Wirespec.getType(${reference.emit()}.class, ${reference.isIterable}))"""
+        """${Spacer(4)}serialization.deserialize(request.$fields().get("${identifier.emitVariableName()}"), Wirespec.getType(${reference.emit()}.class, ${reference.isIterable}))"""
 
     private fun Endpoint.Segment.Param.emitIdentifier() = "request.path.${identifier.value}.toString()"
 
     private fun Endpoint.Content?.emit() = this?.reference?.emit() ?: "Void"
 
-    private fun Endpoint.Segment.Param.emit() = "${reference.emit()} ${identifier.emit()}"
+    private fun Endpoint.Segment.Param.emit() = "${reference.emit()} ${identifier.emitVariableName()}"
 
     private fun Reference.emitWrap(isNullable: Boolean): String = value
         .let { if (isIterable) "List<$it>" else it }
