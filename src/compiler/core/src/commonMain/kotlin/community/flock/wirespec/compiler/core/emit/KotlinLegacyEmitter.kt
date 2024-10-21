@@ -107,6 +107,10 @@ open class KotlinLegacyEmitter(
             |}
         """.trimMargin()
 
+    override fun emitHandleFunction(endpoint: Endpoint): String {
+        TODO("Not yet implemented")
+    }
+
     override fun UnionClass.emit(): String = """
         |sealed interface $name
     """.trimMargin()

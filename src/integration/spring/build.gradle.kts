@@ -1,9 +1,6 @@
-import org.springframework.boot.gradle.tasks.bundling.BootJar
-
 plugins {
-    kotlin("multiplatform")
-    id("org.springframework.boot") version "3.1.3"
-    id("io.spring.dependency-management") version "1.1.3"
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlinx.resources)
 }
 
 group = "${libs.versions.group.id.get()}.integration"
@@ -11,6 +8,7 @@ version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.g
 
 repositories {
     mavenCentral()
+    maven(uri("https://s01.oss.sonatype.org/service/local/repo_groups/public/content"))
 }
 
 kotlin {
@@ -18,24 +16,26 @@ kotlin {
         withJava()
         java {
             toolchain {
-                languageVersion.set(JavaLanguageVersion.of(17))
+                languageVersion.set(JavaLanguageVersion.of(libs.versions.java.get()))
             }
         }
-        testRuns["test"].executionTask.configure {
-            useJUnitPlatform()
-        }
     }
-
     sourceSets {
+        commonTest {
+            dependencies {
+                implementation(project(":src:integration:wirespec"))
+                implementation(kotlin("test-common"))
+                implementation(kotlin("test-annotations-common"))
+                implementation(kotlin("test-junit"))
+            }
+        }
         val jvmMain by getting {
             dependencies {
                 compileOnly(project(":src:compiler:core"))
                 compileOnly(project(":src:integration:wirespec"))
                 implementation(project(":src:integration:jackson"))
-                implementation("org.springframework.boot:spring-boot-starter-web")
-                implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
+                implementation("org.springframework.boot:spring-boot-starter-web:3.2.3")
                 implementation("org.jetbrains.kotlin:kotlin-reflect")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
             }
         }
         val jvmTest by getting {
@@ -43,7 +43,7 @@ kotlin {
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:converter:openapi"))
                 implementation(project(":src:integration:wirespec"))
-                implementation("org.springframework.boot:spring-boot-starter-test")
+                implementation("org.springframework.boot:spring-boot-starter-test:3.2.3")
             }
         }
     }

@@ -1,6 +1,6 @@
-package community.flock.wirespec.integration.spring.web
+package community.flock.wirespec.integration.spring.kotlin.web
 
-import community.flock.wirespec.Wirespec
+import community.flock.wirespec.java.Wirespec
 import org.springframework.core.MethodParameter
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.MediaType
@@ -27,8 +27,9 @@ class WirespecResponseBodyAdvice : ResponseBodyAdvice<Any?> {
         return when (body) {
             is Wirespec.Response<*> -> {
                 response.setStatusCode(HttpStatusCode.valueOf(body.status))
-                body.content?.body
+                body.body
             }
+
             else -> body
         }
     }

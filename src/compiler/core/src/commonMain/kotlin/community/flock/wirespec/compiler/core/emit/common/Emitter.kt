@@ -60,7 +60,7 @@ abstract class Emitter(
             }
         }
 
-    internal fun Endpoint.Segment.emit() =
+    fun Endpoint.Segment.emit() =
         when (this) {
             is Endpoint.Segment.Literal -> value
             is Endpoint.Segment.Param -> "{${identifier.emit()}}"

@@ -126,12 +126,12 @@ open class KotlinEmitter(
         |
         |${endpoint.headers.emitObject("Headers", "Wirespec.Request.Headers") { it.emit() }}
         |
-        |${endpoint.requests.joinToString("\n") { it.emit(endpoint) }}
+        |${endpoint.requests.first().emit(endpoint) }
         |
         |${Spacer}sealed interface Response<T: Any> : Wirespec.Response<T>
         |${endpoint.emitResponseInterfaces()}
         |
-        |${endpoint.responses.joinToString("\n") { it.emit() }}
+        |${endpoint.responses.distinctBy { it.status }.joinToString("\n") { it.emit() }}
         |
         |${Spacer}fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
         |${Spacer(2)}when(response) {
@@ -140,12 +140,12 @@ open class KotlinEmitter(
         |
         |${Spacer}fun fromResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
         |${Spacer(2)}when (response.statusCode) {
-        |${endpoint.responses.joinToString("\n") { it.emitDeserialized() }}
+        |${endpoint.responses.filter { it.status.isStatusCode() }.joinToString("\n") { it.emitDeserialized() }}
         |${Spacer(3)}else -> error("Cannot match response with status: ${'$'}{response.statusCode}")
         |${Spacer(2)}}
         |
         |${Spacer}interface Handler: Wirespec.Handler {
-        |${Spacer(2)}suspend fun ${endpoint.identifier.emit().firstToLower()}(request: Request): Response<*>
+        |${Spacer(2)}${emitHandleFunction(endpoint)}
         |${Spacer(2)}companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
         |${Spacer(3)}override val pathTemplate = "/${endpoint.path.joinToString("/") { it.emit() }}"
         |${Spacer(3)}override val method = "${endpoint.method}"
@@ -161,6 +161,8 @@ open class KotlinEmitter(
         |${Spacer}}
         |}
     """.trimMargin()
+
+    override fun emitHandleFunction(endpoint: Endpoint): String = "suspend fun ${endpoint.identifier.emit().firstToLower()}(request: Request): Response<*>"
 
     private fun Endpoint.emitResponseInterfaces() = responses
         .distinctBy { it.status[0] }
@@ -240,7 +242,7 @@ open class KotlinEmitter(
 
     private fun Field.emitDeserialized(fields: String) =
         if (isNullable)
-            """${Spacer(3)}${identifier.emit()} = request.$fields["${identifier.emit()}"]?.get(0)?.let{ serialization.deserialize(it, typeOf<${reference.emit()}>()) }"""
+            """${Spacer(3)}${identifier.emit()} = request.$fields["${identifier.emit()}"]?.let{ serialization.deserialize(it, typeOf<${reference.emit()}>()) }"""
         else
             """${Spacer(3)}${identifier.emit()} = serialization.deserialize(requireNotNull(request.$fields["${identifier.emit()}"]) { "${identifier.emit()} is null" }, typeOf<${reference.emit()}>())"""
 

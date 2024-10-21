@@ -1,17 +1,16 @@
-package community.flock.wirespec.integration.spring
+package community.flock.wirespec.integration.spring.kotlin
 
-import community.flock.wirespec.integration.spring.emit.SpringKotlinEmitter
+import community.flock.wirespec.integration.spring.kotlin.emit.SpringKotlinEmitter
 import community.flock.wirespec.openapi.v3.OpenApiV3Parser
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import java.io.File
 
 class GenerateTestClasses {
 
-    val basePkg = "community.flock.wirespec.integration.spring"
+    val basePkg = "community.flock.wirespec.integration.spring.kotlin"
     val kotlinPkg = "${basePkg}.generated"
 
-    val kotlinEmitter = SpringKotlinEmitter()
-        .apply { packageName = kotlinPkg }
+    val kotlinEmitter = SpringKotlinEmitter(kotlinPkg)
 
     fun pkgToPath(pkg: String) = pkg.split(".").joinToString("/")
 

@@ -32,6 +32,7 @@ interface RefinedTypeDefinitionEmitter {
 
 interface EndpointDefinitionEmitter {
     fun emit(endpoint: Endpoint): String
+    fun emitHandleFunction(endpoint: Endpoint): String
 }
 
 interface UnionDefinitionEmitter {
