@@ -46,8 +46,10 @@ class CustomMojo : BaseMojo() {
         val emitter = try {
             getClassLoader(project)
                 .loadClass(emitterClass)
-                .getConstructor(Logger::class.java, Boolean::class.java)
-                .newInstance(logger, split) as Emitter
+                .getConstructor(String::class.java, Logger::class.java)
+                .newInstance(emitterPkg.value, logger) as Emitter
+//                .getConstructor(Logger::class.java, Boolean::class.java)
+//                .newInstance(logger, split) as Emitter
         } catch (e: Exception) {
             throw e.also { it.printStackTrace() }
         }

@@ -134,6 +134,10 @@ open class JavaLegacyEmitter(
             |}
         """.trimMargin()
 
+    override fun emitHandleFunction(endpoint: Endpoint): String {
+        TODO("Not yet implemented")
+    }
+
     override fun UnionClass.emit(): String = """
         |public sealed interface $name permits ${entries.joinToString(", ")} {}
     """.trimMargin()

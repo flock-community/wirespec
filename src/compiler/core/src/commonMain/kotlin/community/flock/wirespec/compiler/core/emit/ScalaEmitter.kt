@@ -58,6 +58,9 @@ open class ScalaEmitter(
     override fun Identifier.emit() = if (value in reservedKeywords) value.addBackticks() else value
 
     override fun emit(channel: Channel) = notYetImplemented()
+    override fun emitHandleFunction(endpoint: Endpoint): String {
+        TODO("Not yet implemented")
+    }
 
     override fun Reference.emit() = when (this) {
         is Reference.Unit -> "Unit"

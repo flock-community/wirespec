@@ -177,7 +177,7 @@ open class JavaEmitter(
         |${Spacer(3)}};
         |${Spacer(2)}}
         |
-        |${Spacer(2)}java.util.concurrent.CompletableFuture<Response<?>> ${endpoint.identifier.emit().firstToLower()}(Request request);
+        |${Spacer(2)}${emitHandleFunction(endpoint)}
         |${Spacer(2)}class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
         |${Spacer(3)}@Override public String getPathTemplate() { return "/${endpoint.path.joinToString("/") { it.emit() }}"; }
         |${Spacer(3)}@Override public String getMethod() { return "${endpoint.method}"; }
@@ -197,6 +197,9 @@ open class JavaEmitter(
         |${Spacer}}
         |}
     """.trimMargin()
+
+    override fun emitHandleFunction(endpoint: Endpoint) =
+        "java.util.concurrent.CompletableFuture<Response<?>> ${endpoint.identifier.emit().firstToLower()}(Request request);"
 
     private fun Endpoint.emitResponseInterfaces() = responses
         .distinctBy { it.status.first() }

@@ -74,6 +74,9 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
         |}
         |
     """.trimMargin()
+    override fun emitHandleFunction(endpoint: Endpoint): String {
+        TODO("Not yet implemented")
+    }
 
     override fun emit(union: Union) =
         "type ${union.identifier.emit()} = ${union.entries.joinToString(" | ") { it.emit() }}\n"

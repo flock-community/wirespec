@@ -98,13 +98,16 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
           |${endpoint.requests.first().emitFunction(endpoint)}
           |${endpoint.responses.joinToString("\n") { it.emitFunction(endpoint) }}
           |${Spacer}export type Handler = {
-          |${Spacer(2)}${endpoint.identifier.sanitizeSymbol().firstToLower()}: (request:Request) => Promise<Response>
+          |${Spacer(2)}${emitHandleFunction(endpoint)}
           |${Spacer}}
           |${endpoint.emitClient().prependIndent(Spacer(1))}
           |${endpoint.emitServer().prependIndent(Spacer(1))}
           |}
           |
         """.trimMargin()
+
+    override fun emitHandleFunction(endpoint: Endpoint) =
+        "${endpoint.identifier.sanitizeSymbol().firstToLower()}: (request:Request) => Promise<Response>"
 
     override fun emit(union: Union) =
         "export type ${union.identifier.sanitizeSymbol()} = ${union.entries.joinToString(" | ") { it.emit() }}\n"
