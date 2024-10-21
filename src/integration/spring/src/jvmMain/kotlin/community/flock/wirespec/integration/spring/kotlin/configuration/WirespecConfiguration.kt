@@ -2,7 +2,7 @@ package community.flock.wirespec.integration.spring.kotlin.configuration
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import community.flock.wirespec.integration.jackson.java.WirespecModuleJava
-import community.flock.wirespec.integration.spring.java.web.WirespecResponseBodyAdvice
+import community.flock.wirespec.integration.spring.kotlin.web.WirespecResponseBodyAdvice
 import community.flock.wirespec.java.Wirespec
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

@@ -5,7 +5,7 @@ import community.flock.wirespec.compiler.core.emit.transformer.EndpointClass
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.utils.Logger
 
-class SpringJavaEmitter(logger: Logger, split: Boolean) : JavaEmitter() {
+class SpringJavaEmitter(packageName: String, logger: Logger) : JavaEmitter(packageName, logger) {
     override fun emitHandleFunction(endpoint: Endpoint): String {
         val path = ""
         return when (endpoint.method) {
