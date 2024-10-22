@@ -19,6 +19,7 @@ import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
 import community.flock.wirespec.compiler.core.emit.shared.Shared
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.Node
+import community.flock.wirespec.compiler.core.validate.validate
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.plugin.Language.Java
 import community.flock.wirespec.plugin.Language.JavaLegacy
@@ -41,7 +42,7 @@ fun FilesContent.parse(logger: Logger): List<Pair<String, List<Node>>> =
 
 fun FilesContent.compile(logger: Logger, emitter: Emitter) =
     parse(logger)
-        .map { (name, ast) -> name to emitter.emit(ast) }
+        .map { (name, ast) -> name to ast.validate().let { emitter.emit(it) } }
         .flatMap { (name, results) ->
             if (emitter.split) results
             else listOf(Emitted(name, results.first().result))
