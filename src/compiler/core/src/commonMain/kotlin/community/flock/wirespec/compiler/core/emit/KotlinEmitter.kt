@@ -62,11 +62,13 @@ open class KotlinEmitter(
             )
         }
 
-    override fun emit(type: Type, ast: AST) = """
-        |data class ${type.emitName()}(
-        |${type.shape.emit()}
-        |)${type.extends.run { if (isEmpty()) "" else " : ${joinToString(", ") { it.emit() }}" }}
-    """.trimMargin()
+    override fun emit(type: Type, ast: AST) =
+        if (type.shape.value.isEmpty()) "${Spacer}data object ${type.emitName()}"
+        else """"
+            |data class ${type.emitName()}(
+            |${type.shape.emit()}
+            |)${type.extends.run { if (isEmpty()) "" else " : ${joinToString(", ") { it.emit() }}" }}
+        """.trimMargin()
 
     override fun Type.Shape.emit() = value.joinToString("\n") { "${Spacer}val ${it.emit()}," }.dropLast(1)
 
