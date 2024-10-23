@@ -143,7 +143,7 @@ open class KotlinEmitter(
         |
         |${Spacer}fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
         |${Spacer(2)}when(response) {
-        |${endpoint.responses.joinToString("\n") { it.emitSerialized() }}
+        |${endpoint.responses.distinctBy { it.status }.joinToString("\n") { it.emitSerialized() }}
         |${Spacer(2)}}
         |
         |${Spacer}fun fromResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
