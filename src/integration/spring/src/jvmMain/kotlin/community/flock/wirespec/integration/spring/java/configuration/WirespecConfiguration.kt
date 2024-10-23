@@ -3,7 +3,6 @@ package community.flock.wirespec.integration.spring.java.configuration
 import com.fasterxml.jackson.databind.ObjectMapper
 import community.flock.wirespec.integration.jackson.java.WirespecModuleJava
 import community.flock.wirespec.integration.spring.java.web.WirespecResponseBodyAdvice
-import community.flock.wirespec.integration.spring.kotlin.configuration.WirespecWebMvcConfiguration
 import community.flock.wirespec.java.Wirespec
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -24,6 +23,7 @@ open class WirespecConfiguration {
         }
 
         override fun <T : Any?> deserialize(raw: String?, valueType: Type?): T {
+            if(raw == null) return null as T
             val type = wirespecObjectMapper.constructType(valueType)
             val obj: T = wirespecObjectMapper.readValue(raw, type)
             return obj

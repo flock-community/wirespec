@@ -43,7 +43,6 @@ class CustomMojo : BaseMojo() {
         val ext = extension
         val emitterPkg = PackageName(packageName)
 
-
         val emitter = try {
             val clazz = getClassLoader(project).loadClass(emitterClass)
             val constructor = clazz.constructors.first()

@@ -61,6 +61,7 @@
                             <emitterClass>community.flock.wirespec.integration.spring.java.emit.SpringJavaEmitter</emitterClass>
                             <shared>Java</shared>
                             <extension>java</extension>
+                            <packageName>community.flock.wirespec.generated.examples.spring</packageName>
                         </configuration>
                     </execution>
                 </executions>

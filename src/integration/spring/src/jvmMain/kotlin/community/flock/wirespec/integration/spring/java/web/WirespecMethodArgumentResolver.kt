@@ -1,12 +1,20 @@
 package community.flock.wirespec.integration.spring.java.web
 
 
+import community.flock.wirespec.integration.spring.java.ExtensionFunctions.getStaticClass
+import community.flock.wirespec.integration.spring.java.ExtensionFunctions.getStaticMethode
 import community.flock.wirespec.java.Wirespec
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.core.MethodParameter
 import org.springframework.web.bind.support.WebDataBinderFactory
 import org.springframework.web.context.request.NativeWebRequest
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.method.support.ModelAndViewContainer
+import java.util.Collections
+import java.util.function.Function
+import java.util.stream.Collectors
+
+
 
 class WirespecMethodArgumentResolver(private val wirespecSerialization: Wirespec.Serialization<String>) :
     HandlerMethodArgumentResolver {
@@ -20,38 +28,32 @@ class WirespecMethodArgumentResolver(private val wirespecSerialization: Wirespec
         mavContainer: ModelAndViewContainer?,
         webRequest: NativeWebRequest,
         binderFactory: WebDataBinderFactory?
-    ): Any? {
-        TODO("Not yet implemented")
+    ): Wirespec.Request<*> {
+        val servletRequest = webRequest.nativeRequest as HttpServletRequest
+        val rawRequest = servletRequest.toRawRequest();
+        val declaringClass = parameter.parameterType.declaringClass
+        val handler = declaringClass.declaredClasses.toList().find { it.simpleName == "Handler" }
+        val handlers = handler?.declaredClasses?.toList()?.find { it.simpleName == "Handlers" }
+        val instance = handlers?.newInstance() as Wirespec.Server<*, *>
+        val server = instance.getServer(wirespecSerialization)
+        val request = server.from(rawRequest)
+        return request
     }
-
-//    override fun resolveArgument(
-//        parameter: MethodParameter,
-//        mavContainer: ModelAndViewContainer?,
-//        webRequest: NativeWebRequest,
-//        binderFactory: WebDataBinderFactory?
-//    ): Wirespec.Request<*> {
-//        val request = webRequest.nativeRequest as HttpServletRequest
-//        val static = parameter.parameterType.declaringClass
-//        val requestMapper = static.getStaticMethode("REQUEST_MAPPER") ?: error("request mapper not found")
-//        val wirespecContent = request.contentType?.let { Wirespec.Content(it, request.reader) }
-//        val wirespecRequest = object : Wirespec.Request<BufferedReader> {
-//            override val path = request.requestURI
-//            override val method = Wirespec.Method.valueOf(request.method)
-//            override val query = request.parameterMap.mapValues { it.value.toList() }
-//            override val headers = request.headerNames.toList().associateWith { request.getHeaders(it).toList() }
-//            override val content = wirespecContent
-//
-//        }
-//        return static.invoke(requestMapper, contentMapper, wirespecRequest)
-//    }
-
 }
 
-//fun Wirespec.Request<*>.parsePathParams(): Map<String, String> {
-//    val comp = this.javaClass.declaringClass.kotlin.companionObjectInstance
-//    val path = comp?.javaClass?.getDeclaredField("PATH")?.get(comp) as String? ?: error("cannot find path")
-//    val parser = PathPatternParser()
-//    val result = parser.parse(path)
-//    val info = result.matchAndExtract(PathContainer.parsePath(this.path))
-//    return info?.uriVariables ?: emptyMap()
-//}
+fun HttpServletRequest.toRawRequest():Wirespec.RawRequest {
+    return Wirespec.RawRequest(
+        method,
+        pathInfo.split("/"),
+        queryString?.split("&")
+            ?.map {
+                val x = it.split("=")
+                x[0] to x[1]
+            }
+            ?.toMap()
+            .orEmpty(),
+        getHeaderNames().toList().map { it to getHeader(it) }.toMap(),
+        getReader().lines().collect(Collectors.joining(System.lineSeparator()))
+    )
+}
+

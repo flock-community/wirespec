@@ -1,8 +1,9 @@
 package community.flock.wirespec.examples.spring_boot_integration;
 
-import community.flock.wirespec.generated.Todo;
+import community.flock.wirespec.generated.examples.spring.Todo;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -12,11 +13,13 @@ import static java.util.stream.Collectors.toList;
 @Service
 public class TodoService {
 
-    public List<Todo> store = List.of(
-            new Todo(UUID.randomUUID().toString(), "First todo", false),
-            new Todo(UUID.randomUUID().toString(), "Second todo", false),
-            new Todo(UUID.randomUUID().toString(), "Third todo", false)
-    );
+    public List<Todo> store = new ArrayList<>();
+
+    public TodoService(){
+        store.add(new Todo(UUID.randomUUID().toString(), "First todo", false));
+        store.add(new Todo(UUID.randomUUID().toString(), "Second todo", false));
+        store.add(new Todo(UUID.randomUUID().toString(), "Third todo", false));
+    }
 
     public CompletableFuture<Todo> create(Todo todo) {
         store.add(todo);

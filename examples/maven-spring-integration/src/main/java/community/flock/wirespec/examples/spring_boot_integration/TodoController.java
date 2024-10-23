@@ -1,10 +1,12 @@
 package community.flock.wirespec.examples.spring_boot_integration;
 
-import community.flock.wirespec.generated.*;
+import community.flock.wirespec.generated.examples.spring.*;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+
+import static java.lang.Integer.parseInt;
 
 @RestController
 class TodoController implements GetTodosEndpoint.Handler, GetTodoByIdEndpoint.Handler, CreateTodoEndpoint.Handler, UpdateTodoEndpoint.Handler, DeleteTodoEndpoint.Handler {
@@ -38,10 +40,9 @@ class TodoController implements GetTodosEndpoint.Handler, GetTodoByIdEndpoint.Ha
     @Override
     public CompletableFuture<GetTodoByIdEndpoint.Response<?>> getTodoById(GetTodoByIdEndpoint.Request request) {
         var id = switch (request){
-            case GetTodoByIdEndpoint.Request req -> req.getPath();
+            case GetTodoByIdEndpoint.Request req -> req.getPath().id();
         };
-        System.out.println(id);
-        var res = new GetTodoByIdEndpoint.Response200(service.store.get(0));
+        var res = new GetTodoByIdEndpoint.Response200(service.store.get(parseInt(id)));
         return CompletableFuture.completedFuture(res);
     }
 
