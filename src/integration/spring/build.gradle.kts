@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlinx.resources)
+    id("org.springframework.boot") version "3.3.4"
+    id("io.spring.dependency-management") version "1.1.6"
 }
 
 group = "${libs.versions.group.id.get()}.integration"
@@ -13,6 +15,9 @@ repositories {
 
 kotlin {
     jvm {
+        testRuns["test"].executionTask.configure {
+            useJUnitPlatform()
+        }
         withJava()
         java {
             toolchain {
@@ -24,9 +29,6 @@ kotlin {
         commonTest {
             dependencies {
                 implementation(project(":src:integration:wirespec"))
-                implementation(kotlin("test-common"))
-                implementation(kotlin("test-annotations-common"))
-                implementation(kotlin("test-junit"))
             }
         }
         val jvmMain by getting {
@@ -34,8 +36,11 @@ kotlin {
                 compileOnly(project(":src:integration:wirespec"))
                 compileOnly(project(":src:compiler:core"))
                 implementation(project(":src:integration:jackson"))
-                implementation("org.springframework.boot:spring-boot-starter-web:3.2.3")
+                implementation("org.springframework.boot:spring-boot-starter-web")
+                implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
                 implementation("org.jetbrains.kotlin:kotlin-reflect")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+                runtimeOnly("org.junit.platform:junit-platform-launcher")
             }
         }
         val jvmTest by getting {
@@ -43,7 +48,8 @@ kotlin {
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:converter:openapi"))
                 implementation(project(":src:integration:wirespec"))
-                implementation("org.springframework.boot:spring-boot-starter-test:3.2.3")
+                implementation("org.springframework.boot:spring-boot-starter-test")
+                implementation("org.jetbrains.kotlin:kotlin-test-junit5")
             }
         }
     }

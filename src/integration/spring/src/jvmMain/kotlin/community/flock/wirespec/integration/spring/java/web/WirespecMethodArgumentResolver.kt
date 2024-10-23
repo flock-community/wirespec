@@ -36,8 +36,7 @@ class WirespecMethodArgumentResolver(private val wirespecSerialization: Wirespec
         val handlers = handler?.declaredClasses?.toList()?.find { it.simpleName == "Handlers" }
         val instance = handlers?.newInstance() as Wirespec.Server<*, *>
         val server = instance.getServer(wirespecSerialization)
-        val request = server.from(rawRequest)
-        return request
+        return server.from(rawRequest)
     }
 }
 
@@ -45,12 +44,12 @@ fun HttpServletRequest.toRawRequest():Wirespec.RawRequest {
     return Wirespec.RawRequest(
         method,
         pathInfo.split("/"),
-        queryString?.split("&")
-            ?.map {
-                val x = it.split("=")
-                x[0] to x[1]
+        queryString
+            ?.split("&")
+            ?.associate {
+                val (key, value) = it.split("=")
+                key to value
             }
-            ?.toMap()
             .orEmpty(),
         getHeaderNames().toList().map { it to getHeader(it) }.toMap(),
         getReader().lines().collect(Collectors.joining(System.lineSeparator()))
