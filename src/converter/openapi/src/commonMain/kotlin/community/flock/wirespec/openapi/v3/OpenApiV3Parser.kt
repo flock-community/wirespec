@@ -559,14 +559,14 @@ object OpenApiV3Parser {
         when (val s = parameter.schema) {
             is ReferenceObject -> toReference(s)
             is SchemaObject -> toReference(s, name)
-            null -> TODO("Not yet implemented")
+            null -> Reference.Primitive(Reference.Primitive.Type.String)
         }.let { Field(Identifier(parameter.name), it, !(parameter.required ?: false)) }
 
     private fun OpenAPIObject.toField(header: HeaderObject, identifier: String, name: String) =
         when (val s = header.schema) {
             is ReferenceObject -> toReference(s)
             is SchemaObject -> toReference(s, name)
-            null -> TODO("Not yet implemented")
+            null -> Reference.Primitive(Reference.Primitive.Type.String)
         }.let { Field(Identifier(identifier), it, !(header.required ?: false)) }
 
     private data class FlattenRequest(
