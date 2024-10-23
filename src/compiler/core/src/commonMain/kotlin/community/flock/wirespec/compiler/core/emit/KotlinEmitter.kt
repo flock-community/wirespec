@@ -64,7 +64,7 @@ open class KotlinEmitter(
 
     override fun emit(type: Type, ast: AST) =
         if (type.shape.value.isEmpty()) "${Spacer}data object ${type.emitName()}"
-        else """"
+        else """
             |data class ${type.emitName()}(
             |${type.shape.emit()}
             |)${type.extends.run { if (isEmpty()) "" else " : ${joinToString(", ") { it.emit() }}" }}
