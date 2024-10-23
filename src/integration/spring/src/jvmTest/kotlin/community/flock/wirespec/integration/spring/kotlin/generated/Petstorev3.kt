@@ -408,7 +408,7 @@ object GetPetByIdEndpoint : Wirespec.Endpoint {
 
   fun toRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
-      path = listOf("pet", request.path.petId.toString()),
+      path = listOf("pet", request.path.petId.let{serialization.serialize(it, typeOf<Long>())}),
       method = request.method.name,
       queries = emptyMap(),
       headers = emptyMap(),
@@ -516,7 +516,7 @@ object UpdatePetWithFormEndpoint : Wirespec.Endpoint {
 
   fun toRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
-      path = listOf("pet", request.path.petId.toString()),
+      path = listOf("pet", request.path.petId.let{serialization.serialize(it, typeOf<Long>())}),
       method = request.method.name,
       queries = listOf(request.queries.name?.let{"name" to serialization.serialize(it, typeOf<String>())}, request.queries.status?.let{"status" to serialization.serialize(it, typeOf<String>())}).filterNotNull().toMap(),
       headers = emptyMap(),
@@ -597,7 +597,7 @@ object DeletePetEndpoint : Wirespec.Endpoint {
 
   fun toRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
-      path = listOf("pet", request.path.petId.toString()),
+      path = listOf("pet", request.path.petId.let{serialization.serialize(it, typeOf<Long>())}),
       method = request.method.name,
       queries = emptyMap(),
       headers = listOf(request.headers.api_key?.let{"api_key" to serialization.serialize(it, typeOf<String>())}).filterNotNull().toMap(),
@@ -678,7 +678,7 @@ object UploadFileEndpoint : Wirespec.Endpoint {
 
   fun toRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
-      path = listOf("pet", request.path.petId.toString(), "uploadImage"),
+      path = listOf("pet", request.path.petId.let{serialization.serialize(it, typeOf<Long>())}, "uploadImage"),
       method = request.method.name,
       queries = listOf(request.queries.additionalMetadata?.let{"additionalMetadata" to serialization.serialize(it, typeOf<String>())}).filterNotNull().toMap(),
       headers = emptyMap(),
@@ -916,7 +916,7 @@ object GetOrderByIdEndpoint : Wirespec.Endpoint {
 
   fun toRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
-      path = listOf("store", "order", request.path.orderId.toString()),
+      path = listOf("store", "order", request.path.orderId.let{serialization.serialize(it, typeOf<Long>())}),
       method = request.method.name,
       queries = emptyMap(),
       headers = emptyMap(),
@@ -1020,7 +1020,7 @@ object DeleteOrderEndpoint : Wirespec.Endpoint {
 
   fun toRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
-      path = listOf("store", "order", request.path.orderId.toString()),
+      path = listOf("store", "order", request.path.orderId.let{serialization.serialize(it, typeOf<Long>())}),
       method = request.method.name,
       queries = emptyMap(),
       headers = emptyMap(),
@@ -1428,7 +1428,7 @@ object GetUserByNameEndpoint : Wirespec.Endpoint {
 
   fun toRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
-      path = listOf("user", request.path.username.toString()),
+      path = listOf("user", request.path.username.let{serialization.serialize(it, typeOf<String>())}),
       method = request.method.name,
       queries = emptyMap(),
       headers = emptyMap(),
@@ -1532,7 +1532,7 @@ object UpdateUserEndpoint : Wirespec.Endpoint {
 
   fun toRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
-      path = listOf("user", request.path.username.toString()),
+      path = listOf("user", request.path.username.let{serialization.serialize(it, typeOf<String>())}),
       method = request.method.name,
       queries = emptyMap(),
       headers = emptyMap(),
@@ -1608,7 +1608,7 @@ object DeleteUserEndpoint : Wirespec.Endpoint {
 
   fun toRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
-      path = listOf("user", request.path.username.toString()),
+      path = listOf("user", request.path.username.let{serialization.serialize(it, typeOf<String>())}),
       method = request.method.name,
       queries = emptyMap(),
       headers = emptyMap(),

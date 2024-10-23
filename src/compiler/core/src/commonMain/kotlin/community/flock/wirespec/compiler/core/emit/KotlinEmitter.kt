@@ -282,7 +282,7 @@ open class KotlinEmitter(
         else
             """${Spacer(3)}${identifier.emitVariableName()} = serialization.deserialize(requireNotNull(request.$fields["${identifier.value}"]) { "${identifier.emitVariableName()} is null" }, typeOf<${reference.emit()}>())"""
 
-    private fun Endpoint.Segment.Param.emitIdentifier() = "request.path.${identifier.emitVariableName()}.toString()"
+    private fun Endpoint.Segment.Param.emitIdentifier() = "request.path.${identifier.emitVariableName()}.let{serialization.serialize(it, typeOf<${reference.emit()}>())}"
 
     private fun Endpoint.Content?.emit() = this?.reference?.emit() ?: "Unit"
 

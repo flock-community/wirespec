@@ -2,6 +2,7 @@ package community.flock.wirespec.integration.spring.kotlin.it
 
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import community.flock.wirespec.integration.spring.kotlin.application.Application
 import community.flock.wirespec.integration.spring.kotlin.application.Service
 import community.flock.wirespec.integration.spring.kotlin.generated.Pet

@@ -1,5 +1,6 @@
 package community.flock.wirespec.integration.spring.java.web
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import community.flock.wirespec.java.Wirespec
 import org.springframework.core.MethodParameter
 import org.springframework.http.HttpStatusCode
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice
 
 @ControllerAdvice
-class WirespecResponseBodyAdvice(private val wirespecSerialization: Wirespec.Serialization<String>) : ResponseBodyAdvice<Any?> {
+class WirespecResponseBodyAdvice(private val objectMapper: ObjectMapper,  private val wirespecSerialization: Wirespec.Serialization<String>) : ResponseBodyAdvice<Any?> {
     override fun supports(returnType: MethodParameter, converterType: Class<out HttpMessageConverter<*>?>): Boolean {
         return Wirespec.Response::class.java.isAssignableFrom(returnType.parameterType)
     }
@@ -33,8 +34,7 @@ class WirespecResponseBodyAdvice(private val wirespecSerialization: Wirespec.Ser
             is Wirespec.Response<*> -> {
                 val rawResponse = server.to(body)
                 response.setStatusCode(HttpStatusCode.valueOf(rawResponse.statusCode))
-                response.headers.contentType = MediaType.APPLICATION_JSON
-                rawResponse.body
+                rawResponse.body?.let { objectMapper.readTree(it) }
             }
             else -> body
         }

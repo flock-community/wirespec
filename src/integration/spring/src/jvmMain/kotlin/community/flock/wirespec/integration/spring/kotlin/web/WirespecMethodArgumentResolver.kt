@@ -26,11 +26,7 @@ class WirespecMethodArgumentResolver(private val wirespecSerialization: Wirespec
         val servletRequest = webRequest.nativeRequest as HttpServletRequest
         val rawRequest = servletRequest.toRawRequest();
         val declaringClass = parameter.parameterType.declaringClass
-        val handler =
-            declaringClass.declaredClasses.toList().find { it.simpleName == "Handler" } ?: error("Handler not found")
-        println("+++++++++++++++++")
-        println(handler)
-        println("+++++++++++++++++")
+        val handler = declaringClass.declaredClasses.toList().find { it.simpleName == "Handler" } ?: error("Handler not found")
         val instance = handler.kotlin.companionObjectInstance as Wirespec.Server<*, *>
         val server = instance.server(wirespecSerialization)
         return server.from(rawRequest)
