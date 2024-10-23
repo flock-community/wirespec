@@ -55,11 +55,6 @@ object AddPetEndpoint : Wirespec.Endpoint {
         headers = mapOf(),
         body = serialization.serialize(response.body, typeOf<Pet>()),
       )
-      is Response200 -> Wirespec.RawResponse(
-        statusCode = response.status,
-        headers = mapOf(),
-        body = serialization.serialize(response.body, typeOf<Pet>()),
-      )
       is Response405 -> Wirespec.RawResponse(
         statusCode = response.status,
         headers = mapOf(),
@@ -153,11 +148,6 @@ object UpdatePetEndpoint : Wirespec.Endpoint {
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
-      is Response200 -> Wirespec.RawResponse(
-        statusCode = response.status,
-        headers = mapOf(),
-        body = serialization.serialize(response.body, typeOf<Pet>()),
-      )
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
         headers = mapOf(),
@@ -270,11 +260,6 @@ object FindPetsByStatusEndpoint : Wirespec.Endpoint {
         headers = mapOf(),
         body = serialization.serialize(response.body, typeOf<List<Pet>>()),
       )
-      is Response200 -> Wirespec.RawResponse(
-        statusCode = response.status,
-        headers = mapOf(),
-        body = serialization.serialize(response.body, typeOf<List<Pet>>()),
-      )
       is Response400 -> Wirespec.RawResponse(
         statusCode = response.status,
         headers = mapOf(),
@@ -361,11 +346,6 @@ object FindPetsByTagsEndpoint : Wirespec.Endpoint {
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
-      is Response200 -> Wirespec.RawResponse(
-        statusCode = response.status,
-        headers = mapOf(),
-        body = serialization.serialize(response.body, typeOf<List<Pet>>()),
-      )
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
         headers = mapOf(),
@@ -462,11 +442,6 @@ object GetPetByIdEndpoint : Wirespec.Endpoint {
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
-      is Response200 -> Wirespec.RawResponse(
-        statusCode = response.status,
-        headers = mapOf(),
-        body = serialization.serialize(response.body, typeOf<Pet>()),
-      )
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
         headers = mapOf(),
@@ -980,11 +955,6 @@ object GetOrderByIdEndpoint : Wirespec.Endpoint {
         headers = mapOf(),
         body = serialization.serialize(response.body, typeOf<Order>()),
       )
-      is Response200 -> Wirespec.RawResponse(
-        statusCode = response.status,
-        headers = mapOf(),
-        body = serialization.serialize(response.body, typeOf<Order>()),
-      )
       is Response400 -> Wirespec.RawResponse(
         statusCode = response.status,
         headers = mapOf(),
@@ -1165,11 +1135,6 @@ object CreateUserEndpoint : Wirespec.Endpoint {
         headers = mapOf(),
         body = serialization.serialize(response.body, typeOf<User>()),
       )
-      is Responsedefault -> Wirespec.RawResponse(
-        statusCode = response.status,
-        headers = mapOf(),
-        body = serialization.serialize(response.body, typeOf<User>()),
-      )
     }
 
   fun fromResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
@@ -1243,11 +1208,6 @@ object CreateUsersWithListInputEndpoint : Wirespec.Endpoint {
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
-      is Response200 -> Wirespec.RawResponse(
-        statusCode = response.status,
-        headers = mapOf(),
-        body = serialization.serialize(response.body, typeOf<User>()),
-      )
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
         headers = mapOf(),
@@ -1337,11 +1297,6 @@ object LoginUserEndpoint : Wirespec.Endpoint {
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
-      is Response200 -> Wirespec.RawResponse(
-        statusCode = response.status,
-        headers = mapOf(),
-        body = serialization.serialize(response.body, typeOf<String>()),
-      )
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
         headers = mapOf(),
@@ -1507,11 +1462,6 @@ object GetUserByNameEndpoint : Wirespec.Endpoint {
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
-      is Response200 -> Wirespec.RawResponse(
-        statusCode = response.status,
-        headers = mapOf(),
-        body = serialization.serialize(response.body, typeOf<User>()),
-      )
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
         headers = mapOf(),
