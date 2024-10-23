@@ -3,6 +3,8 @@
 dir="$(dirname -- "$0")"
 
 ./gradlew jvmTest &&
+  ./gradlew src:integration:wirespec:publishToMavenLocal &&
+  ./gradlew src:integration:jackson:publishToMavenLocal &&
   ./gradlew src:integration:spring:publishToMavenLocal &&
   ./gradlew src:plugin:gradle:publishToMavenLocal &&
   ./gradlew src:plugin:maven:publishToMavenLocal &&
