@@ -3,7 +3,9 @@ package community.flock.wirespec.kotlin
 import kotlin.reflect.KType
 
 object Wirespec {
-    interface Enum
+    interface Enum {
+        val label:String
+    }
     interface Endpoint
     interface Refined {
         val value: String

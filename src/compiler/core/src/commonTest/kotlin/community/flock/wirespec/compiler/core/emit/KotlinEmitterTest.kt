@@ -56,7 +56,7 @@ class KotlinEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |
-            |enum class TodoStatus (val label: String): Wirespec.Enum {
+            |enum class TodoStatus (override val label: String): Wirespec.Enum {
             |  OPEN("OPEN"),
             |  IN_PROGRESS("IN_PROGRESS"),
             |  CLOSE("CLOSE");

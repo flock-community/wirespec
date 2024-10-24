@@ -108,7 +108,7 @@ open class KotlinEmitter(
     override fun Refined.Validator.emit() = "Regex(\"\"\"${expression}\"\"\").matches(value)"
 
     override fun emit(enum: Enum) = """
-        |enum class ${enum.identifier.value.sanitizeSymbol()} (val label: String): Wirespec.Enum {
+        |enum class ${enum.identifier.value.sanitizeSymbol()} (override val label: String): Wirespec.Enum {
         |${enum.entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }.spacer()};
         |${Spacer}override fun toString(): String {
         |${Spacer(2)}return label

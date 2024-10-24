@@ -1677,7 +1677,7 @@ suspend fun deleteUser(request: Request): Response<*>
     }
   }
 }
-enum class FindPetsByStatusParameterStatus (val label: String): Wirespec.Enum {
+enum class FindPetsByStatusParameterStatus (override val label: String): Wirespec.Enum {
   available("available"),
   pending("pending"),
   sold("sold");
@@ -1693,7 +1693,7 @@ data class Order(
   val status: OrderStatus?,
   val complete: Boolean?
 )
-enum class OrderStatus (val label: String): Wirespec.Enum {
+enum class OrderStatus (override val label: String): Wirespec.Enum {
   placed("placed"),
   approved("approved"),
   delivered("delivered");
@@ -1738,7 +1738,7 @@ data class Pet(
   val tags: List<Tag>?,
   val status: PetStatus?
 )
-enum class PetStatus (val label: String): Wirespec.Enum {
+enum class PetStatus (override val label: String): Wirespec.Enum {
   available("available"),
   pending("pending"),
   sold("sold");

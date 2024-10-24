@@ -12,7 +12,7 @@ data object KotlinShared : Shared {
         |import kotlin.reflect.KType
         |
         |object Wirespec {
-        |${Spacer}interface Enum
+        |${Spacer}interface Enum { val label: String }
         |${Spacer}interface Endpoint
         |${Spacer}interface Refined { val value: String }
         |${Spacer}interface Path
