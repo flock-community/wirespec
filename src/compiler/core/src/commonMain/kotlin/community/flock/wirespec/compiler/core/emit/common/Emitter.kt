@@ -60,10 +60,16 @@ abstract class Emitter(
             }
         }
 
-    internal fun Endpoint.Segment.emit() =
+    fun Endpoint.Segment.emit() =
         when (this) {
             is Endpoint.Segment.Literal -> value
             is Endpoint.Segment.Param -> "{${identifier.value}}"
+        }
+
+    internal fun Endpoint.Segment.emitMap() =
+        when (this) {
+            is Endpoint.Segment.Literal -> value
+            is Endpoint.Segment.Param -> "${'$'}{props.${identifier.emitClassName()}}"
         }
 
     internal val Endpoint.pathParams get() = path.filterIsInstance<Endpoint.Segment.Param>()

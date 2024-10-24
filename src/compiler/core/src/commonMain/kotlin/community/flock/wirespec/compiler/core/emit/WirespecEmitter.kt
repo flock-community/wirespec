@@ -22,18 +22,18 @@ import community.flock.wirespec.compiler.utils.noLogger
 open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emitter(logger) {
 
     override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> identifier.emit()
-        is Enum -> identifier.emit()
-        is Refined -> identifier.emit()
-        is Type -> identifier.emit()
-        is Union -> identifier.emit()
-        is Channel -> identifier.emit()
+        is Endpoint -> identifier.emitClassName()
+        is Enum -> identifier.emitClassName()
+        is Refined -> identifier.emitClassName()
+        is Type -> identifier.emitClassName()
+        is Union -> identifier.emitClassName()
+        is Channel -> identifier.emitClassName()
     }
 
     override fun notYetImplemented() = "\n"
 
     override fun emit(type: Type, ast: AST) = """
-        |type ${type.identifier.emit()} {
+        |type ${type.identifier.emitClassName()} {
         |${type.shape.emit()}
         |}
         |""".trimMargin()
@@ -41,11 +41,12 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
 
     override fun Type.Shape.emit() = value.joinToString(",\n") { "$Spacer${it.emit()}" }
 
-    override fun Field.emit() = "${identifier.emit()}: ${reference.emit()}${if (isNullable) "?" else ""}"
+    override fun Field.emit() = "${identifier.emitVariableName()}: ${reference.emit()}${if (isNullable) "?" else ""}"
 
-    override fun Identifier.emit() = if (value in reservedKeywords) value.addBackticks() else value
+    override fun Identifier.emitVariableName() = if (value in reservedKeywords) value.addBackticks() else value
+    override fun Identifier.emitClassName() = if (value in reservedKeywords) value.addBackticks() else value
 
-    override fun emit(channel: Channel): String = "channel ${channel.identifier.emit()} -> ${channel.reference.emit()}"
+    override fun emit(channel: Channel): String = "channel ${channel.identifier.emitClassName()} -> ${channel.reference.emit()}"
 
     override fun Reference.emit(): String = when (this) {
         is Reference.Unit -> "Unit"
@@ -62,21 +63,21 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
         .let { if (isDictionary) "{ $it }" else it }
 
     override fun emit(enum: Enum) =
-        "enum ${enum.identifier.emit()} {\n${Spacer}${enum.entries.joinToString(", ") { it.capitalize() }}\n}\n"
+        "enum ${enum.identifier.emitClassName()} {\n${Spacer}${enum.entries.joinToString(", ") { it.capitalize() }}\n}\n"
 
-    override fun emit(refined: Refined) = "type ${refined.identifier.emit()} ${refined.validator.emit()}\n"
+    override fun emit(refined: Refined) = "type ${refined.identifier.emitClassName()} ${refined.validator.emit()}\n"
 
     override fun Refined.Validator.emit() = value
 
     override fun emit(endpoint: Endpoint) = """
-        |endpoint ${endpoint.identifier.emit()} ${endpoint.method}${endpoint.requests.emitRequest()} ${endpoint.path.emitPath()}${endpoint.queries.emitQuery()} -> {
+        |endpoint ${endpoint.identifier.emitClassName()} ${endpoint.method}${endpoint.requests.emitRequest()} ${endpoint.path.emitPath()}${endpoint.queries.emitQuery()} -> {
         |${endpoint.responses.joinToString("\n") { "$Spacer${it.status.fixStatus()} -> ${it.content?.reference?.emit() ?: "Unit"}${if (it.content?.isNullable == true) "?" else ""}" }}
         |}
         |
     """.trimMargin()
 
     override fun emit(union: Union) =
-        "type ${union.identifier.emit()} = ${union.entries.joinToString(" | ") { it.emit() }}\n"
+        "type ${union.identifier.emitClassName()} = ${union.entries.joinToString(" | ") { it.emit() }}\n"
 
     private fun String.fixStatus(): String = when (this) {
         "default" -> "200"

@@ -12,12 +12,12 @@ import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.compile
 import community.flock.wirespec.plugin.toDirectory
-import java.io.File
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.plugins.annotations.ResolutionScope
 import org.apache.maven.project.MavenProject
+import java.io.File
 
 @Mojo(
     name = "custom",
@@ -44,10 +44,18 @@ class CustomMojo : BaseMojo() {
         val emitterPkg = PackageName(packageName)
 
         val emitter = try {
-            getClassLoader(project)
-                .loadClass(emitterClass)
-                .getConstructor(Logger::class.java, Boolean::class.java)
-                .newInstance(logger, split) as Emitter
+            val clazz = getClassLoader(project).loadClass(emitterClass)
+            val constructor = clazz.constructors.first()
+            val args = constructor.parameters
+                .map {
+                    when (it.type) {
+                        String::class.java -> packageName
+                        Boolean::class.java -> split
+                        Logger::class.java -> logger
+                        else -> error("Cannot map constructor parameter")
+                    }
+                }
+            constructor.newInstance(*args.toTypedArray()) as Emitter
         } catch (e: Exception) {
             throw e.also { it.printStackTrace() }
         }
@@ -76,6 +84,7 @@ class CustomMojo : BaseMojo() {
 
     private fun getClassLoader(project: MavenProject): ClassLoader {
         try {
+
             val classpathElements = project.compileClasspathElements.apply {
                 add(project.build.outputDirectory)
                 add(project.build.testOutputDirectory)
@@ -83,6 +92,7 @@ class CustomMojo : BaseMojo() {
             val urls = classpathElements.indices
                 .map { File(classpathElements[it] as String).toURI().toURL() }
                 .toTypedArray()
+
             return java.net.URLClassLoader(urls, javaClass.getClassLoader())
         } catch (e: Exception) {
             log.debug("Couldn't get the classloader.")

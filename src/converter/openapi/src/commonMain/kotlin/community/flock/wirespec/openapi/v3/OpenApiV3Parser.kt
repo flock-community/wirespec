@@ -51,7 +51,7 @@ object OpenApiV3Parser {
         .flatMap { (key, path) ->
             path.toOperationList().map { (method, operation) ->
                 val parameters = resolveParameters(path) + resolveParameters(operation)
-                val segments = toSegments(key, parameters)
+                val segments = toSegments(key, parameters, operation, method)
                 val name = operation.toName() ?: (key.toName() + method.name)
                 val query = parameters
                     .filter { it.`in` == ParameterLocation.QUERY }
@@ -208,12 +208,12 @@ object OpenApiV3Parser {
             }
         }
 
-    private fun OpenAPIObject.toSegments(path: Path, parameters: List<ParameterObject>) =
+    private fun OpenAPIObject.toSegments(path: Path, parameters: List<ParameterObject>, operation: OperationObject, method: Endpoint.Method) =
         path.value.split("/").drop(1).filter { it.isNotBlank() }.map { segment ->
             when (segment.isParam()) {
                 true -> {
                     val param = segment.substring(1, segment.length - 1)
-                    val name = path.toName()
+                    val name = operation.toName() ?: (path.toName() + method.name)
                     parameters
                         .find { it.name == param }
                         ?.schema

@@ -14,13 +14,13 @@ object Wirespec {
     interface Headers
     interface Handler
     interface ServerEdge<Req : Request<*>, Res : Response<*>> {
-        fun consume(request: RawRequest): Req
-        fun produce(response: Res): RawResponse
+        fun from(request: RawRequest): Req
+        fun to(response: Res): RawResponse
     }
 
     interface ClientEdge<Req : Request<*>, Res : Response<*>> {
-        fun internalize(response: RawResponse): Res
-        fun externalize(request: Req): RawRequest
+        fun from(response: RawResponse): Res
+        fun to(request: Req): RawRequest
     }
 
     interface Client<Req : Request<*>, Res : Response<*>> {
@@ -66,10 +66,10 @@ object Wirespec {
     data class RawRequest(
         val method: String,
         val path: List<String>,
-        val queries: Map<String, List<String>>,
-        val headers: Map<String, List<String>>,
+        val queries: Map<String, String>,
+        val headers: Map<String, String>,
         val body: String?
     )
 
-    data class RawResponse(val statusCode: Int, val headers: Map<String, List<String>>, val body: String?)
+    data class RawResponse(val statusCode: Int, val headers: Map<String, String>, val body: String?)
 }
