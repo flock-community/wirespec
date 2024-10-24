@@ -37,7 +37,7 @@ class WirespecMethodArgumentResolver(private val wirespecSerialization: Wirespec
 fun HttpServletRequest.toRawRequest(): Wirespec.RawRequest {
     return Wirespec.RawRequest(
         method,
-        pathInfo.split("/").drop(1),
+        pathInfo?.split("/")?.drop(1) ?: emptyList(),
         queryString
             ?.split("&")
             ?.associate {
