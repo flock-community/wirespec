@@ -148,10 +148,7 @@ open class KotlinEmitter(
         |
         |${Spacer}fun fromResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
         |${Spacer(2)}when (response.statusCode) {
-        |${
-        endpoint.responses.filter { it.status.isStatusCode() }.distinctBy { it.status }
-            .joinToString("\n") { it.emitDeserialized() }
-    }
+        |${endpoint.responses.filter { it.status.isStatusCode() }.distinctBy { it.status }.joinToString("\n") { it.emitDeserialized() }}
         |${Spacer(3)}else -> error("Cannot match response with status: ${'$'}{response.statusCode}")
         |${Spacer(2)}}
         |
@@ -193,39 +190,15 @@ open class KotlinEmitter(
         |${Spacer(2)}override val path = Path${endpoint.pathParams.joinToString { it.identifier.emitVariableName() }.brace()}
         |${Spacer(2)}override val method = Wirespec.Method.${endpoint.method.name}
         |${Spacer(2)}override val queries = Queries${endpoint.queries.joinToString { it.identifier.emitVariableName() }.brace()}
-        |${Spacer(2)}override val headers = Headers${
-        endpoint.headers.joinToString { it.identifier.emitVariableName() }.brace()
-    }${if (content == null) "\n${Spacer(2)}override val body = Unit" else ""}
+        |${Spacer(2)}override val headers = Headers${endpoint.headers.joinToString { it.identifier.emitVariableName() }.brace()}${if (content == null) "\n${Spacer(2)}override val body = Unit" else ""}
         |${Spacer}}
         |
         |${Spacer}fun toRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
         |${Spacer(2)}Wirespec.RawRequest(
-        |${Spacer(3)}path = listOf(${
-        endpoint.path.joinToString {
-            when (it) {
-                is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier()
-            }
-        }
-    }),
+        |${Spacer(3)}path = listOf(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
         |${Spacer(3)}method = request.method.name,
-        |${Spacer(3)}queries = ${
-        if (endpoint.queries.isNotEmpty()) "listOf(${
-            endpoint.queries.joinToString {
-                it.emitSerialized(
-                    "queries"
-                )
-            }
-        }).filterNotNull().toMap()" else "emptyMap()"
-    },
-        |${Spacer(3)}headers = ${
-        if (endpoint.headers.isNotEmpty()) "listOf(${
-            endpoint.headers.joinToString {
-                it.emitSerialized(
-                    "headers"
-                )
-            }
-        }).filterNotNull().toMap()" else "emptyMap()"
-    },
+        |${Spacer(3)}queries = ${if (endpoint.queries.isNotEmpty()) "listOf(${endpoint.queries.joinToString { it.emitSerialized("queries") }}).filterNotNull().toMap()" else "emptyMap()"},
+        |${Spacer(3)}headers = ${if (endpoint.headers.isNotEmpty()) "listOf(${endpoint.headers.joinToString { it.emitSerialized("headers") }}).filterNotNull().toMap()" else "emptyMap()"},
         |${Spacer(3)}body = serialization.serialize(request.body, typeOf<${content.emit()}>()),
         |${Spacer(2)})
         |

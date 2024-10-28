@@ -14,7 +14,7 @@
             <configuration>
                 <input>${project.basedir}/src/main/wirespec</input>
                 <output>${project.build.directory}/generated-sources/java/hello</output>
-                <emitterClass>community.flock.wirespec.emit.CustomEmitter</emitterClass>
+                <emitterClass>community.flock.wirespec.example.maven.custom.emit.CustomEmitter</emitterClass>
                 <extention>java</extention>
                 <split>true</split>
             </configuration>

@@ -106,7 +106,8 @@ open class JavaEmitter(
     }
 
     override fun Identifier.emitClassName() = if (value in reservedKeywords) "_$value" else value
-    override fun Identifier.emitVariableName() = if (value in reservedKeywords) "_$value" else value
+    override fun Identifier.emitVariableName() = value.firstToLower()
+        .let { if (it in reservedKeywords) "_$it" else it }
 
     override fun emit(refined: Refined) = """
         |public record ${refined.identifier.emitClassName()} (String value) implements Wirespec.Refined {
@@ -127,7 +128,7 @@ open class JavaEmitter(
         |public enum ${enum.identifier.emitClassName()} implements Wirespec.Enum {
         |${enum.entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }.spacer()};
         |${Spacer}public final String label;
-        |${Spacer}${enum.identifier.emitVariableName()}(String label) {
+        |${Spacer}${enum.identifier.emitClassName()}(String label) {
         |${Spacer(2)}this.label = label;
         |${Spacer}}
         |${Spacer}@Override
@@ -200,7 +201,7 @@ open class JavaEmitter(
     """.trimMargin()
 
     open fun emitHandleFunction(endpoint: Endpoint) =
-        "java.util.concurrent.CompletableFuture<Response<?>> ${endpoint.identifier.emitClassName().firstToLower()}(Request request);"
+        "java.util.concurrent.CompletableFuture<Response<?>> ${endpoint.identifier.emitVariableName()}(Request request);"
 
     private fun Endpoint.emitResponseInterfaces() = responses
         .distinctBy { it.status.first() }

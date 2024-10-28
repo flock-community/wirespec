@@ -79,25 +79,20 @@ open class ScalaEmitter(
         """
         |sealed abstract class ${emitName()}(val label: String)
         |object ${identifier.emitClassName()} {
-        |${
-            entries.joinToString("\n") {
-                """${Spacer}final case object ${
-                    it.sanitize().uppercase()
-                } extends ${identifier.emitClassName()}(label = "$it")"""
-            }
-        }
+        |${entries.joinToString("\n") { """${Spacer}final case object ${it.sanitize().uppercase()} extends ${identifier.emitClassName()}(label = "$it")""" }}
         |}
         |""".trimMargin()
     }
 
-    override fun emit(refined: Refined) =
-        """case class ${refined.emitName()}(val value: String) {
-            |${Spacer}implicit class ${refined.emitName()}Ops(val that: ${refined.emitName()}) {
-            |${refined.validator.emit()}
-            |${Spacer}}
-            |}
-            |
-            |""".trimMargin()
+    override fun emit(refined: Refined) = """
+        |case class ${refined.emitName()}(val value: String) {
+        |${Spacer}implicit class ${refined.emitName()}Ops(val that: ${refined.emitName()}) {
+        |${refined.validator.emit()}
+        |${Spacer}}
+        |}
+        |
+        |
+    """.trimMargin()
 
 
     override fun Refined.Validator.emit() =
