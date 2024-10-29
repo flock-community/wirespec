@@ -20,11 +20,6 @@ kotlin {
         }
     }
     sourceSets {
-        commonMain {
-            dependencies {
-
-            }
-        }
         commonTest {
             dependencies {
                 implementation(libs.bundles.kotlin.test)

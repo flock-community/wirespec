@@ -43,7 +43,7 @@ kotlin {
         }
         commonTest {
             dependencies {
-                implementation(kotlin("test"))
+                implementation(libs.kotlin.test)
                 implementation(libs.bundles.kotest)
             }
         }

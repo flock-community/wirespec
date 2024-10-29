@@ -8,6 +8,7 @@ logback = "1.4.14"
 kotlinx_serialization = "1.7.0"
 
 [libraries]
+kotlin_test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 ktor_server_core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
 ktor_server_netty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" }
 ktor_server_content_negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
