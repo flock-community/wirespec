@@ -1,8 +1,6 @@
 package community.flock.wirespec.integration.spring.kotlin.emit
 
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
-import community.flock.wirespec.compiler.core.emit.transformer.EndpointClass
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger

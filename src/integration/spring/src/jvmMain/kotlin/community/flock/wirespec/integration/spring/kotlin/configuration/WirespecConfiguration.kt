@@ -11,8 +11,8 @@ import kotlin.reflect.KType
 import kotlin.reflect.javaType
 
 @Configuration
-@Import(WirespecResponseBodyAdvice::class, WirespecWebMvcConfiguration::class)
 @OptIn(ExperimentalStdlibApi::class)
+@Import(WirespecResponseBodyAdvice::class, WirespecWebMvcConfiguration::class)
 open class WirespecConfiguration {
 
     @Bean
@@ -20,16 +20,10 @@ open class WirespecConfiguration {
 
         private val wirespecObjectMapper = objectMapper.copy().registerModule(WirespecModuleKotlin())
 
-        override fun <T> serialize(body: T, kType: KType): String {
-            return wirespecObjectMapper.writeValueAsString(body)
-        }
+        override fun <T> serialize(t: T, kType: KType): String = wirespecObjectMapper.writeValueAsString(t)
 
-        override fun <T> deserialize(raw: String, kType: KType): T {
-            val type = wirespecObjectMapper.constructType(kType.javaType)
-            val obj: T = wirespecObjectMapper.readValue(raw, type)
-            return obj
-        }
-
-
+        override fun <T> deserialize(raw: String, kType: KType): T = wirespecObjectMapper
+            .constructType(kType.javaType)
+            .let { wirespecObjectMapper.readValue(raw, it) }
     }
 }

@@ -9,10 +9,12 @@ intellij = "2.0.0"
 jackson_databind = "2.16.1"
 jackson_kotlin = "2.14.2"
 java = "17"
+junit_launcher = "1.11.3"
 kotest = "5.9.1"
 kotest_arrow = "1.4.0"
 kotlin = "2.0.0"
 kotlin_compiler = "2.0"
+kotlinx_coroutines = "1.9.0"
 kotlinx_openapi_bindings = "0.0.24"
 kotlinx_resources = "0.9.0"
 kotlinx_rgxgen = "0.0.1"
@@ -21,17 +23,25 @@ maven_plugin = "0.4.3"
 maven_plugin_api = "3.9.8"
 maven_plugin_annotations = "3.13.1"
 maven_project = "2.2.1"
+spring_boot = "3.3.4"
+spring_dependency_management = "1.1.6"
 
 [libraries]
 arrow_core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
 clikt = { module = "com.github.ajalt.clikt:clikt", version.ref = "clikt" }
 jackson_databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson_databind" }
 jackson_kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson_kotlin" }
+junit_launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit_launcher" }
 kotest_assertions = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 kotest_assertions_arrow = { module = "io.kotest.extensions:kotest-assertions-arrow", version.ref = "kotest_arrow" }
 kotest_engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
+kotlin_junit = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "kotlin" }
 kotlin_reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlin_stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+kotlin_test_common = { module = "org.jetbrains.kotlin:kotlin-test-common", version.ref = "kotlin" }
+kotlin_test_annotations_common = { module = "org.jetbrains.kotlin:kotlin-test-annotations-common", version.ref = "kotlin" }
+kotlin_test_junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
+kotlinx_coroutines_reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactor", version.ref = "kotlinx_coroutines" }
 kotlinx_openapi_bindings = { module = "community.flock.kotlinx.openapi.bindings:kotlin-openapi-bindings", version.ref = "kotlinx_openapi_bindings" }
 kotlinx_resources = { module = "com.goncalossilva:resources", version.ref = "kotlinx_resources" }
 kotlinx_rgxgen = { module = "community.flock.kotlinx.rgxgen:kotlin-rgxgen", version.ref = "kotlinx_rgxgen" }
@@ -39,9 +49,12 @@ kotlinx_serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-
 maven_plugin_api = { module = "org.apache.maven:maven-plugin-api", version.ref = "maven_plugin_api" }
 maven_plugin_annotations = { module = "org.apache.maven.plugin-tools:maven-plugin-annotations", version.ref = "maven_plugin_annotations" }
 maven_project = { module = "org.apache.maven:maven-project", version.ref = "maven_project" }
+spring_boot_web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring_boot" }
+spring_boot_test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring_boot" }
 
 [bundles]
 jackson = ["jackson_databind", "jackson_kotlin"]
+kotlin_test = ["kotlin_test_common", "kotlin_test_annotations_common", "kotlin_test_junit"]
 kotest = ["kotest_engine", "kotest_assertions", "kotest_assertions_arrow"]
 maven_plugin = ["maven_plugin_api", "maven_plugin_annotations", "maven_project"]
 
@@ -53,3 +66,5 @@ kotlin_jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin_multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinx_resources = { id = "com.goncalossilva.resources", version.ref = "kotlinx_resources" }
 maven_plugin = { id = "de.benediktritter.maven-plugin-development", version.ref = "maven_plugin" }
+spring_boot = { id = "org.springframework.boot", version.ref = "spring_boot" }
+spring_dependency_management = { id = "io.spring.dependency-management", version.ref = "spring_dependency_management" }

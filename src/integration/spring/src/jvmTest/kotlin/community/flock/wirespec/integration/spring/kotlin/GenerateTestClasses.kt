@@ -2,20 +2,20 @@ package community.flock.wirespec.integration.spring.kotlin
 
 import community.flock.wirespec.integration.spring.kotlin.emit.SpringKotlinEmitter
 import community.flock.wirespec.openapi.v3.OpenApiV3Parser
-import kotlin.test.Test
 import java.io.File
+import kotlin.test.Test
 
 class GenerateTestClasses {
 
-    val basePkg = "community.flock.wirespec.integration.spring.kotlin"
-    val kotlinPkg = "${basePkg}.generated"
+    private val basePkg = "community.flock.wirespec.integration.spring.kotlin"
+    private val kotlinPkg = "${basePkg}.generated"
 
-    val kotlinEmitter = SpringKotlinEmitter(kotlinPkg)
+    private val kotlinEmitter = SpringKotlinEmitter(kotlinPkg)
 
-    fun pkgToPath(pkg: String) = pkg.split(".").joinToString("/")
+    private fun pkgToPath(pkg: String) = pkg.split(".").joinToString("/")
 
-    val baseDir = File("src/jvmTest")
-    val outputDir = baseDir.resolve("kotlin").resolve(pkgToPath(kotlinPkg))
+    private val baseDir = File("src/jvmTest")
+    private val outputDir = baseDir.resolve("kotlin").resolve(pkgToPath(kotlinPkg))
 
     @Test
     fun generate() {

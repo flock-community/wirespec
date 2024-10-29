@@ -5,7 +5,6 @@ import community.flock.wirespec.kotlin.Wirespec
 import org.springframework.core.MethodParameter
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.MediaType
-import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageConverter
 import org.springframework.http.server.ServerHttpRequest
 import org.springframework.http.server.ServerHttpResponse
@@ -14,10 +13,13 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice
 import kotlin.reflect.full.companionObjectInstance
 
 @ControllerAdvice
-class WirespecResponseBodyAdvice(private val objectMapper: ObjectMapper, val wirespecSerialization:Wirespec.Serialization<String>) : ResponseBodyAdvice<Any?> {
-    override fun supports(returnType: MethodParameter, converterType: Class<out HttpMessageConverter<*>?>): Boolean {
-        return Wirespec.Response::class.java.isAssignableFrom(returnType.parameterType)
-    }
+class WirespecResponseBodyAdvice(
+    private val objectMapper: ObjectMapper,
+    private val wirespecSerialization: Wirespec.Serialization<String>
+) : ResponseBodyAdvice<Any?> {
+
+    override fun supports(returnType: MethodParameter, converterType: Class<out HttpMessageConverter<*>?>): Boolean =
+        Wirespec.Response::class.java.isAssignableFrom(returnType.parameterType)
 
     override fun beforeBodyWrite(
         body: Any?,
@@ -28,8 +30,11 @@ class WirespecResponseBodyAdvice(private val objectMapper: ObjectMapper, val wir
         response: ServerHttpResponse
     ): Any? {
         val declaringClass = returnType.parameterType.declaringClass
-        val handler = declaringClass.declaredClasses.toList().find { it.simpleName == "Handler" } ?: error("Handler not found")
-        val instance = handler.kotlin.companionObjectInstance as Wirespec.Server<Wirespec.Request<*>, Wirespec.Response<*>>
+        val handler = declaringClass.declaredClasses.toList()
+            .find { it.simpleName == "Handler" }
+            ?: error("Handler not found")
+        val instance = handler
+            .kotlin.companionObjectInstance as Wirespec.Server<Wirespec.Request<*>, Wirespec.Response<*>>
         val server = instance.server(wirespecSerialization)
         return when (body) {
             is Wirespec.Response<*> -> {
@@ -37,6 +42,7 @@ class WirespecResponseBodyAdvice(private val objectMapper: ObjectMapper, val wir
                 response.setStatusCode(HttpStatusCode.valueOf(rawResponse.statusCode))
                 rawResponse.body?.let { objectMapper.readTree(it) }
             }
+
             else -> body
         }
     }

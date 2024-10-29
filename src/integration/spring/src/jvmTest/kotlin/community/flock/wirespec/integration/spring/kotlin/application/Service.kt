@@ -10,7 +10,7 @@ class Service {
     val list = mutableListOf<Pet>()
 
     fun create(pet: Pet): Pet = pet
-        .apply { list.add(this) }
+        .also { list.add(it) }
 
     fun read(id: Long): Pet? = list.find { it.id == id }
 

@@ -12,10 +12,13 @@ import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice
 
 @ControllerAdvice
-class WirespecResponseBodyAdvice(private val objectMapper: ObjectMapper,  private val wirespecSerialization: Wirespec.Serialization<String>) : ResponseBodyAdvice<Any?> {
-    override fun supports(returnType: MethodParameter, converterType: Class<out HttpMessageConverter<*>?>): Boolean {
-        return Wirespec.Response::class.java.isAssignableFrom(returnType.parameterType)
-    }
+class WirespecResponseBodyAdvice(
+    private val objectMapper: ObjectMapper,
+    private val wirespecSerialization: Wirespec.Serialization<String>
+) : ResponseBodyAdvice<Any?> {
+
+    override fun supports(returnType: MethodParameter, converterType: Class<out HttpMessageConverter<*>?>): Boolean =
+        Wirespec.Response::class.java.isAssignableFrom(returnType.parameterType)
 
     override fun beforeBodyWrite(
         body: Any?,
@@ -28,7 +31,7 @@ class WirespecResponseBodyAdvice(private val objectMapper: ObjectMapper,  privat
         val declaringClass = returnType.parameterType.declaringClass
         val handler = declaringClass.declaredClasses.toList().find { it.simpleName == "Handler" }
         val handlers = handler?.declaredClasses?.toList()?.find { it.simpleName == "Handlers" }
-        val instance = handlers?.newInstance() as Wirespec.Server<Wirespec.Request<*>, Wirespec.Response<*>>
+        val instance = handlers?.getDeclaredConstructor()?.newInstance() as Wirespec.Server<Wirespec.Request<*>, Wirespec.Response<*>>
         val server = instance.getServer(wirespecSerialization)
         return when (body) {
             is Wirespec.Response<*> -> {

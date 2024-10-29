@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import community.flock.wirespec.integration.jackson.java.WirespecModuleJava
 import community.flock.wirespec.integration.spring.java.web.WirespecResponseBodyAdvice
 import community.flock.wirespec.java.Wirespec
+import java.lang.reflect.Type
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
-import java.lang.reflect.Type
 
 @Configuration
 @Import(WirespecResponseBodyAdvice::class, WirespecWebMvcConfiguration::class)
@@ -18,15 +18,11 @@ open class WirespecConfiguration {
 
         private val wirespecObjectMapper = objectMapper.copy().registerModule(WirespecModuleJava())
 
-        override fun <T : Any?> serialize(body: T, type: Type?): String {
-            return wirespecObjectMapper.writeValueAsString(body)
-        }
+        override fun <T> serialize(body: T, type: Type?): String = wirespecObjectMapper.writeValueAsString(body)
 
-        override fun <T : Any?> deserialize(raw: String?, valueType: Type?): T {
-            if(raw == null) return null as T
+        override fun <T : Any> deserialize(raw: String?, valueType: Type?): T? = raw?.let {
             val type = wirespecObjectMapper.constructType(valueType)
-            val obj: T = wirespecObjectMapper.readValue(raw, type)
-            return obj
+            wirespecObjectMapper.readValue(it, type)
         }
     }
 }

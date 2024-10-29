@@ -1,8 +1,8 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlinx.resources)
-    id("org.springframework.boot") version "3.3.4"
-    id("io.spring.dependency-management") version "1.1.6"
+    alias(libs.plugins.spring.boot)
+    alias(libs.plugins.spring.dependency.management)
 }
 
 group = "${libs.versions.group.id.get()}.integration"
@@ -33,14 +33,14 @@ kotlin {
         }
         val jvmMain by getting {
             dependencies {
-                compileOnly(project(":src:integration:wirespec"))
                 compileOnly(project(":src:compiler:core"))
+                compileOnly(project(":src:integration:wirespec"))
                 implementation(project(":src:integration:jackson"))
-                implementation("org.springframework.boot:spring-boot-starter-web")
-                implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-                implementation("org.jetbrains.kotlin:kotlin-reflect")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
-                runtimeOnly("org.junit.platform:junit-platform-launcher")
+                implementation(libs.jackson.kotlin)
+                implementation(libs.kotlin.reflect)
+                implementation(libs.kotlinx.coroutines.reactor)
+                implementation(libs.spring.boot.web)
+                runtimeOnly(libs.junit.launcher)
             }
         }
         val jvmTest by getting {
@@ -48,8 +48,8 @@ kotlin {
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:converter:openapi"))
                 implementation(project(":src:integration:wirespec"))
-                implementation("org.springframework.boot:spring-boot-starter-test")
-                implementation("org.jetbrains.kotlin:kotlin-test-junit5")
+                implementation(libs.spring.boot.test)
+                implementation(libs.kotlin.junit)
             }
         }
     }
