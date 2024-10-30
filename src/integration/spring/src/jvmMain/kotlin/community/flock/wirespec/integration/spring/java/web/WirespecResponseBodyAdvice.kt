@@ -30,8 +30,8 @@ class WirespecResponseBodyAdvice(
     ): Any? {
         val declaringClass = returnType.parameterType.declaringClass
         val handler = declaringClass.declaredClasses.toList().find { it.simpleName == "Handler" }
-        val handlers = handler?.declaredClasses?.toList()?.find { it.simpleName == "Handlers" }
-        val instance = handlers?.getDeclaredConstructor()?.newInstance() as Wirespec.Server<Wirespec.Request<*>, Wirespec.Response<*>>
+        val handlers = handler?.declaredClasses?.toList()?.find { it.simpleName == "Handlers" } ?: error("Handlers not found")
+        val instance = handlers.getDeclaredConstructor().newInstance() as Wirespec.Server<Wirespec.Request<*>, Wirespec.Response<*>>
         val server = instance.getServer(wirespecSerialization)
         return when (body) {
             is Wirespec.Response<*> -> {
