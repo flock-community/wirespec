@@ -30,18 +30,18 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(libs.kotlinx.openapi.bindings)
-                implementation(libs.kotlinx.serialization)
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:compiler:lib"))
                 implementation(project(":src:plugin:cli"))
                 implementation(project(":src:converter:openapi"))
                 implementation(project(":src:tools:generator"))
+                implementation(libs.kotlinx.openapi.bindings)
+                implementation(libs.kotlinx.serialization)
             }
         }
         val jsMain by getting {
             dependencies {
-                implementation(kotlin("test"))
+                implementation(libs.kotlin.test)
                 implementation(libs.kotlinx.resources)
             }
         }

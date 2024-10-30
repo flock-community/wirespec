@@ -2,10 +2,11 @@
 
 Here you can find examples of how to use:
 
-* [A custom Emitter](maven-spring-custom/README.md)
 * [The Gradle Plugin](gradle-ktor/README.md)
 * [The Maven Plugin](maven-spring-compile/README.md)
 * [And convert an OpenAPI Specification](maven-spring-convert/README.md)
+* [A custom Emitter](maven-spring-custom/README.md)
+* [The Spring integration](maven-spring-integration/README.md)
 
 ## Integration
 

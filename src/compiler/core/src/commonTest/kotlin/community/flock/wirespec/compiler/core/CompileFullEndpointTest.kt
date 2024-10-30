@@ -70,7 +70,7 @@ class CompileFullEndpointTest {
             |
             |  fun toRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
             |    Wirespec.RawRequest(
-            |      path = listOf("todos", request.path.id.toString()),
+            |      path = listOf("todos", request.path.id.let{serialization.serialize(it, typeOf<String>())}),
             |      method = request.method.name,
             |      queries = listOf(request.queries.done?.let{"done" to serialization.serialize(it, typeOf<Boolean>())}).filterNotNull().toMap(),
             |      headers = listOf(request.headers.token?.let{"token" to serialization.serialize(it, typeOf<Token>())}).filterNotNull().toMap(),

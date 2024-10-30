@@ -24,7 +24,7 @@ class CompileEnumTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |
-            |enum class MyAwesomeEnum (val label: String): Wirespec.Enum {
+            |enum class MyAwesomeEnum (override val label: String): Wirespec.Enum {
             |  ONE("ONE"),
             |  Two("Two"),
             |  THREE_MORE("THREE_MORE");

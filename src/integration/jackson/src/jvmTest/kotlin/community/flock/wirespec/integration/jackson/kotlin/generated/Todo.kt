@@ -22,7 +22,7 @@ data class Error(
   val code: String,
   val description: String
 )
-enum class TodoCategory (val label: String): Wirespec.Enum {
+enum class TodoCategory (override val label: String): Wirespec.Enum {
   WORK("WORK"),
   LIFE("LIFE");
   override fun toString(): String {

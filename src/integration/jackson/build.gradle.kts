@@ -29,9 +29,7 @@ kotlin {
         commonTest {
             dependencies {
                 implementation(project(":src:integration:wirespec"))
-                implementation(kotlin("test-common"))
-                implementation(kotlin("test-annotations-common"))
-                implementation(kotlin("test-junit"))
+                implementation(libs.bundles.kotlin.test)
             }
         }
         val jvmMain by getting {

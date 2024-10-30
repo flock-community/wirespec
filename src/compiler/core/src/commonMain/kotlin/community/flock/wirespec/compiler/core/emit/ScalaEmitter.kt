@@ -27,12 +27,12 @@ open class ScalaEmitter(
 ) : DefinitionModelEmitter, Emitter(logger) {
 
     override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> "${identifier.emit()}Endpoint"
-        is Channel -> "${identifier.emit()}Channel"
-        is Enum -> identifier.emit()
-        is Refined -> identifier.emit()
-        is Type -> identifier.emit()
-        is Union -> identifier.emit()
+        is Endpoint -> "${identifier.emitClassName()}Endpoint"
+        is Channel -> "${identifier.emitClassName()}Channel"
+        is Enum -> identifier.emitClassName()
+        is Refined -> identifier.emitClassName()
+        is Type -> identifier.emitClassName()
+        is Union -> identifier.emitClassName()
     }
 
     override fun notYetImplemented() =
@@ -53,9 +53,10 @@ open class ScalaEmitter(
     override fun Type.Shape.emit() = value.joinToString("\n") { it.emit() }.dropLast(1)
 
     override fun Field.emit() =
-        "${Spacer}val ${identifier.emit()}: ${if (isNullable) "Option[${reference.emit()}]" else reference.emit()},"
+        "${Spacer}val ${identifier.emitVariableName()}: ${if (isNullable) "Option[${reference.emit()}]" else reference.emit()},"
 
-    override fun Identifier.emit() = if (value in reservedKeywords) value.addBackticks() else value
+    override fun Identifier.emitClassName() = if (value in reservedKeywords) value.addBackticks() else value
+    override fun Identifier.emitVariableName() = if (value in reservedKeywords) value.addBackticks() else value
 
     override fun emit(channel: Channel) = notYetImplemented()
 
@@ -77,26 +78,21 @@ open class ScalaEmitter(
         fun String.sanitize() = replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }
         """
         |sealed abstract class ${emitName()}(val label: String)
-        |object ${identifier.emit()} {
-        |${
-            entries.joinToString("\n") {
-                """${Spacer}final case object ${
-                    it.sanitize().uppercase()
-                } extends ${identifier.emit()}(label = "$it")"""
-            }
-        }
+        |object ${identifier.emitClassName()} {
+        |${entries.joinToString("\n") { """${Spacer}final case object ${it.sanitize().uppercase()} extends ${identifier.emitClassName()}(label = "$it")""" }}
         |}
         |""".trimMargin()
     }
 
-    override fun emit(refined: Refined) =
-        """case class ${refined.emitName()}(val value: String) {
-            |${Spacer}implicit class ${refined.emitName()}Ops(val that: ${refined.emitName()}) {
-            |${refined.validator.emit()}
-            |${Spacer}}
-            |}
-            |
-            |""".trimMargin()
+    override fun emit(refined: Refined) = """
+        |case class ${refined.emitName()}(val value: String) {
+        |${Spacer}implicit class ${refined.emitName()}Ops(val that: ${refined.emitName()}) {
+        |${refined.validator.emit()}
+        |${Spacer}}
+        |}
+        |
+        |
+    """.trimMargin()
 
 
     override fun Refined.Validator.emit() =
