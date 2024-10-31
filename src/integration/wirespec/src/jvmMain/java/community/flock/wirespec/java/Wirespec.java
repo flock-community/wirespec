@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface Wirespec {
-    interface Enum {}
+    interface Enum { String getLabel(); }
     interface Endpoint {}
     interface Refined { String getValue(); }
     interface Path {}

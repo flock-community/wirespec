@@ -57,6 +57,10 @@ class CompileEnumTest {
             |  public String toString() {
             |    return label;
             |  }
+            |  @Override
+            |  public String getLabel() {
+            |    return label;
+            |  }
             |}
             |
         """.trimMargin()
