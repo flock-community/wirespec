@@ -5,13 +5,12 @@ import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.component1
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
-import community.flock.wirespec.compiler.core.emit.JavaLegacyEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
-import community.flock.wirespec.compiler.core.emit.KotlinLegacyEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
+import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.plugin.CompilerArguments
@@ -23,9 +22,7 @@ import community.flock.wirespec.plugin.FullDirPath
 import community.flock.wirespec.plugin.FullFilePath
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.Language.Java
-import community.flock.wirespec.plugin.Language.JavaLegacy
 import community.flock.wirespec.plugin.Language.Kotlin
-import community.flock.wirespec.plugin.Language.KotlinLegacy
 import community.flock.wirespec.plugin.Language.Scala
 import community.flock.wirespec.plugin.Language.TypeScript
 import community.flock.wirespec.plugin.Language.Wirespec
@@ -134,14 +131,12 @@ private fun Reader.wirespec(
         }
 }
 
-private fun Set<Language>.emitters(packageName: PackageName, path: ((FileExtension) -> FullFilePath)?, logger: Logger) =
+private fun Set<Language>.emitters(packageName: PackageName, path: ((FileExtension) -> FullFilePath)?, logger: Logger): List<Pair<Emitter, File?>> =
     map {
         val (packageString) = packageName
         when (it) {
             Java -> JavaEmitter(packageString, logger) to path?.let { JavaFile(it(FileExtension.Java)) }
-            JavaLegacy -> JavaLegacyEmitter(packageString, logger) to path?.let { JavaFile(it(FileExtension.Java)) }
             Kotlin -> KotlinEmitter(packageString, logger) to path?.let { KotlinFile(it(FileExtension.Kotlin)) }
-            KotlinLegacy -> KotlinLegacyEmitter(packageString, logger) to path?.let { KotlinFile(it(FileExtension.Kotlin)) }
             Scala -> ScalaEmitter(packageString, logger) to path?.let { ScalaFile(it(FileExtension.Scala)) }
             TypeScript -> TypeScriptEmitter(logger) to path?.let { TypeScriptFile(it(FileExtension.TypeScript)) }
             Wirespec -> WirespecEmitter(logger) to path?.let { WirespecFile(it(FileExtension.Wirespec)) }
