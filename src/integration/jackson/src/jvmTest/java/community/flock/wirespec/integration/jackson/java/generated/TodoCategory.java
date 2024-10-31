@@ -14,5 +14,7 @@ public enum TodoCategory implements Wirespec.Enum {
     return label;
   }
   @Override
-  public String getLabel() { return label; }
+  public String getLabel() {
+    return label;
+  }
 }
