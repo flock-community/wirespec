@@ -131,7 +131,6 @@ private fun Reader.wirespec(
         }
 }
 
-// TODO("Infer return type correctly")
 private fun Set<Language>.emitters(packageName: PackageName, path: ((FileExtension) -> FullFilePath)?, logger: Logger): List<Pair<Emitter, File?>> =
     map {
         val (packageString) = packageName

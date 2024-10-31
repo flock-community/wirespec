@@ -39,5 +39,5 @@ class LiveKotlinPetstoreClient(
             .headers(HttpHeaders(toMultiValueMap(request.headers.mapValues { listOf(it.value) })))
             .body(request.body ?: Unit)
             .let { client.exchange<String>(it) }
-            .run { Wirespec.RawResponse(statusCode = statusCode.value(), headers = headers.map { (key, value) -> key to value.first() }.toMap(), body = body) }
+            .run { Wirespec.RawResponse(statusCode = statusCode.value(), headers = headers.toSingleValueMap(), body = body) }
 }
