@@ -135,6 +135,10 @@ open class JavaEmitter(
         |${Spacer}public String toString() {
         |${Spacer(2)}return label;
         |${Spacer}}
+        |${Spacer}@Override
+        |${Spacer}public String getLabel() {
+        |${Spacer(2)}return label;
+        |${Spacer}}
         |}
     """.trimMargin()
 

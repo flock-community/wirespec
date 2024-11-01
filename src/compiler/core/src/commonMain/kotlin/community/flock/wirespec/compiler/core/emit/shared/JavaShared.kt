@@ -13,7 +13,7 @@ data object JavaShared : Shared {
         |import java.lang.reflect.ParameterizedType;
         |
         |public interface Wirespec {
-        |${Spacer}interface Enum {}
+        |${Spacer}interface Enum { String getLabel(); }
         |${Spacer}interface Endpoint {}
         |${Spacer}interface Refined { String getValue(); }
         |${Spacer}interface Path {}
