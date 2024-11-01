@@ -90,12 +90,13 @@ open class KotlinEmitter(
 
 
     override fun Identifier.emitClassName() = value
+        .sanitizeSymbol()
         .firstToUpper()
 
     override fun Identifier.emitVariableName() = value
         .sanitizeSymbol()
         .firstToLower()
-        .let { if (value in reservedKeywords) it.addBackticks() else it}
+        .sanitizeKeywords()
 
     override fun emit(refined: Refined) = """
         |data class ${refined.identifier.value.sanitizeSymbol()}(override val value: String): Wirespec.Refined {
@@ -286,7 +287,7 @@ open class KotlinEmitter(
 
     private fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_").sanitizeFirstIsDigit()
 
-    private fun String.sanitizeKeywords() = if (this in reservedKeywords) "`$this`" else this
+    private fun String.sanitizeKeywords() = if (this in reservedKeywords) addBackticks() else this
 
     companion object : Keywords {
         override val reservedKeywords = setOf(
