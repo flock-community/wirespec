@@ -105,9 +105,15 @@ open class JavaEmitter(
         Reference.Primitive.Type.Boolean -> "Boolean"
     }
 
-    override fun Identifier.emitClassName() = if (value in reservedKeywords) "_$value" else value
-    override fun Identifier.emitVariableName() = value.firstToLower()
-        .let { if (it in reservedKeywords) "_$it" else it }
+    override fun Identifier.emitClassName() = value
+        .sanitizeSymbol()
+        .firstToUpper()
+
+    override fun Identifier.emitVariableName() = value
+        .sanitizeSymbol()
+        .firstToLower()
+        .sanitizeKeywords()
+
 
     override fun emit(refined: Refined) = """
         |public record ${refined.identifier.emitClassName()} (String value) implements Wirespec.Refined {
@@ -160,25 +166,25 @@ open class JavaEmitter(
         |
         |${endpoint.headers.emitObject("RequestHeaders", "Wirespec.Request.Headers") { it.emit() }}
         |
-        |${endpoint.requests.joinToString("\n") { it.emit(endpoint) }}
+        |${endpoint.requests.first().emit(endpoint) }
         |
         |${Spacer}sealed interface Response<T> extends Wirespec.Response<T> {}
         |${endpoint.emitResponseInterfaces()}
         |
-        |${endpoint.responses.joinToString("\n") { it.emit() }}
+        |${endpoint.responses.distinctBy { it.status }.joinToString("\n") { it.emit() }}
         |
         |${Spacer}interface Handler extends Wirespec.Handler {
         |
-        |${endpoint.requests.joinToString("\n") { it.emitRequestFunctions(endpoint) }}
+        |${endpoint.requests.first().emitRequestFunctions(endpoint)}
         |
         |${Spacer(2)}static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
-        |${endpoint.responses.joinToString("\n") { it.emitSerialized() }}
+        |${endpoint.responses.distinctBy { it.status }.joinToString("\n") { it.emitSerialized() }}
         |${Spacer(3)}else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
         |${Spacer(2)}}
         |
         |${Spacer(2)}static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
         |${Spacer(3)}return switch (response.statusCode()) {
-        |${endpoint.responses.filter { it.status.isStatusCode() }.joinToString("\n") { it.emitDeserialized() }}
+        |${endpoint.responses.distinctBy { it.status }.filter { it.status.isStatusCode() }.joinToString("\n") { it.emitDeserialized() }}
         |${Spacer(4)}default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
         |${Spacer(3)}};
         |${Spacer(2)}}
