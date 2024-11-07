@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.addBackticks
+import community.flock.wirespec.compiler.core.concatGenerics
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
@@ -184,9 +185,9 @@ open class KotlinEmitter(
         .joinToString("\n") { "${Spacer}sealed interface Response${it}XX<T: Any> : Response<T>" }
 
     private fun Endpoint.emitResponseInterfaces() = responses
-        .mapNotNull { it.content?.reference?.value }
+        .map { it.content.emit() }
         .distinct()
-        .joinToString("\n") { "${Spacer}sealed interface Response$it : Response<$it>" }
+        .joinToString("\n") { "${Spacer}sealed interface Response${it.concatGenerics()} : Response<$it>" }
 
     private fun <E> List<E>.emitObject(name: String, extends: String, block: (E) -> String) =
         if (isEmpty()) "${Spacer}data object $name : $extends"
@@ -218,7 +219,7 @@ open class KotlinEmitter(
     """.trimMargin()
 
     fun Endpoint.Response.emit() = """
-        |${Spacer}data class Response$status(override val body: ${content.emit()}) : Response${status[0]}XX<${content.emit()}>${content?.reference?.value?.let { ", Response$it" }} {
+        |${Spacer}data class Response$status(override val body: ${content.emit()}) : Response${status[0]}XX<${content.emit()}>, Response${content.emit().concatGenerics()} {
         |${Spacer(2)}override val status = ${status.fixStatus()}
         |${Spacer(2)}override val headers = Headers
         |${Spacer(2)}data object Headers : Wirespec.Response.Headers

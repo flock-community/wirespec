@@ -28,6 +28,7 @@ class WirespecCliTest {
         val expected = """
             |package community.flock.wirespec.generated
             |
+            |
             |data class Bla(
             |  val yolo: String,
             |  val `class`: Boolean

@@ -215,14 +215,16 @@ class CompileFullEndpointTest {
             |  sealed interface Response<T> extends Wirespec.Response<T> {}
             |  sealed interface Response2XX<T> extends Response<T> {}
             |  sealed interface Response5XX<T> extends Response<T> {}
+            |  sealed interface ResponseTodoDto extends Response<TodoDto> {}
+            |  sealed interface ResponseError extends Response<Error> {}
             |
-            |  record Response200(TodoDto body) implements Response2XX<TodoDto> {
+            |  record Response200(TodoDto body) implements Response2XX<TodoDto>, ResponseTodoDto {
             |    @Override public int getStatus() { return 200; }
             |    @Override public Headers getHeaders() { return new Headers(); }
             |    @Override public TodoDto getBody() { return body; }
             |    class Headers implements Wirespec.Response.Headers {}
             |  }
-            |  record Response500(Error body) implements Response5XX<Error> {
+            |  record Response500(Error body) implements Response5XX<Error>, ResponseError {
             |    @Override public int getStatus() { return 500; }
             |    @Override public Headers getHeaders() { return new Headers(); }
             |    @Override public Error getBody() { return body; }

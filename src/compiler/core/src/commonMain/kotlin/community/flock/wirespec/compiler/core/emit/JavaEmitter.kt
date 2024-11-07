@@ -1,5 +1,6 @@
 package community.flock.wirespec.compiler.core.emit
 
+import community.flock.wirespec.compiler.core.concatGenerics
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
@@ -169,6 +170,7 @@ open class JavaEmitter(
         |${endpoint.requests.first().emit(endpoint) }
         |
         |${Spacer}sealed interface Response<T> extends Wirespec.Response<T> {}
+        |${endpoint.emitStatusInterfaces()}
         |${endpoint.emitResponseInterfaces()}
         |
         |${endpoint.responses.distinctBy { it.status }.joinToString("\n") { it.emit() }}
@@ -213,9 +215,15 @@ open class JavaEmitter(
     open fun emitHandleFunction(endpoint: Endpoint) =
         "java.util.concurrent.CompletableFuture<Response<?>> ${endpoint.identifier.emitVariableName()}(Request request);"
 
+    private fun Endpoint.emitStatusInterfaces() = responses
+        .map { it.status.first() }
+        .distinct()
+        .joinToString("\n") { "${Spacer}sealed interface Response${it}XX<T> extends Response<T> {}" }
+
     private fun Endpoint.emitResponseInterfaces() = responses
-        .distinctBy { it.status.first() }
-        .joinToString("\n") { "${Spacer}sealed interface Response${it.status[0]}XX<T> extends Response<T> {}" }
+        .map { it.content.emit() }
+        .distinct()
+        .joinToString("\n") { "${Spacer}sealed interface Response${it.concatGenerics()} extends Response<$it> {}" }
 
     private fun <E> List<E>.emitObject(name: String, extends: String, block: (E) -> String) =
         if (isEmpty()) "${Spacer}class $name implements $extends {}"
@@ -263,7 +271,7 @@ open class JavaEmitter(
             headers.joinToString { it.emit() }.orNull(),
             content?.let { "${it.emit()} body" }
         ).joinToString()
-        }) implements Response${status.first()}XX<${content.emit()}> {
+        }) implements Response${status.first()}XX<${content.emit()}>, Response${content.emit().concatGenerics()} {
         |${Spacer(2)}@Override public int getStatus() { return ${status.fixStatus()}; }
         |${Spacer(2)}${headers.joinToString { it.identifier.emitVariableName() }.let { "@Override public Headers getHeaders() { return new Headers($it); }" }}
         |${Spacer(2)}@Override public ${content.emit()} getBody() { return ${if(content == null) "null" else "body"}; }

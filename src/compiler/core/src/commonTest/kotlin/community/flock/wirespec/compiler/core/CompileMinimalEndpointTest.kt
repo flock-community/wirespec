@@ -58,9 +58,9 @@ class CompileMinimalEndpointTest {
             |
             |  sealed interface Response2XX<T: Any> : Response<T>
             |
-            |  sealed interface ResponseTodoDto : Response<TodoDto>
+            |  sealed interface ResponseListTodoDto : Response<List<TodoDto>>
             |
-            |  data class Response200(override val body: List<TodoDto>) : Response2XX<List<TodoDto>>, ResponseTodoDto {
+            |  data class Response200(override val body: List<TodoDto>) : Response2XX<List<TodoDto>>, ResponseListTodoDto {
             |    override val status = 200
             |    override val headers = Headers
             |    data object Headers : Wirespec.Response.Headers
@@ -145,8 +145,9 @@ class CompileMinimalEndpointTest {
             |
             |  sealed interface Response<T> extends Wirespec.Response<T> {}
             |  sealed interface Response2XX<T> extends Response<T> {}
+            |  sealed interface ResponseListTodoDto extends Response<java.util.List<TodoDto>> {}
             |
-            |  record Response200(java.util.List<TodoDto> body) implements Response2XX<java.util.List<TodoDto>> {
+            |  record Response200(java.util.List<TodoDto> body) implements Response2XX<java.util.List<TodoDto>>, ResponseListTodoDto {
             |    @Override public int getStatus() { return 200; }
             |    @Override public Headers getHeaders() { return new Headers(); }
             |    @Override public java.util.List<TodoDto> getBody() { return body; }
