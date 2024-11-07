@@ -25,7 +25,6 @@ class CompileTypeTest {
         val kotlin = """
             |package community.flock.wirespec.generated
             |
-            |
             |data class Request(
             |  val type: String,
             |  val url: String,

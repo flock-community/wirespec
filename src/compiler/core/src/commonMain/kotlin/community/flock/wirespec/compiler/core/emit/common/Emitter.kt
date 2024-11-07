@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Identifier.Type.Class
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -69,7 +70,7 @@ abstract class Emitter(
     internal fun Endpoint.Segment.emitMap() =
         when (this) {
             is Endpoint.Segment.Literal -> value
-            is Endpoint.Segment.Param -> "${'$'}{props.${identifier.emitClassName()}}"
+            is Endpoint.Segment.Param -> "${'$'}{props.${identifier.emit(Class)}}"
         }
 
     internal val Endpoint.pathParams get() = path.filterIsInstance<Endpoint.Segment.Param>()

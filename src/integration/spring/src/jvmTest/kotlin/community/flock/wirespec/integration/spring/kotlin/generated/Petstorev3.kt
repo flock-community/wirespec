@@ -96,6 +96,7 @@ suspend fun addPet(request: Request): Response<*>
     }
   }
 }
+
 object UpdatePetEndpoint : Wirespec.Endpoint {
   data object Path : Wirespec.Path
 
@@ -217,6 +218,7 @@ suspend fun updatePet(request: Request): Response<*>
     }
   }
 }
+
 object FindPetsByStatusEndpoint : Wirespec.Endpoint {
   data object Path : Wirespec.Path
 
@@ -313,6 +315,7 @@ suspend fun findPetsByStatus(request: Request): Response<*>
     }
   }
 }
+
 object FindPetsByTagsEndpoint : Wirespec.Endpoint {
   data object Path : Wirespec.Path
 
@@ -409,6 +412,7 @@ suspend fun findPetsByTags(request: Request): Response<*>
     }
   }
 }
+
 object GetPetByIdEndpoint : Wirespec.Endpoint {
   data class Path(
     val petId: Long,
@@ -519,6 +523,7 @@ suspend fun getPetById(request: Request): Response<*>
     }
   }
 }
+
 object UpdatePetWithFormEndpoint : Wirespec.Endpoint {
   data class Path(
     val petId: Long,
@@ -604,6 +609,7 @@ suspend fun updatePetWithForm(request: Request): Response<*>
     }
   }
 }
+
 object DeletePetEndpoint : Wirespec.Endpoint {
   data class Path(
     val petId: Long,
@@ -688,6 +694,7 @@ suspend fun deletePet(request: Request): Response<*>
     }
   }
 }
+
 object UploadFileEndpoint : Wirespec.Endpoint {
   data class Path(
     val petId: Long,
@@ -773,6 +780,7 @@ suspend fun uploadFile(request: Request): Response<*>
     }
   }
 }
+
 object GetInventoryEndpoint : Wirespec.Endpoint {
   data object Path : Wirespec.Path
 
@@ -847,6 +855,7 @@ suspend fun getInventory(request: Request): Response<*>
     }
   }
 }
+
 object PlaceOrderEndpoint : Wirespec.Endpoint {
   data object Path : Wirespec.Path
 
@@ -940,6 +949,7 @@ suspend fun placeOrder(request: Request): Response<*>
     }
   }
 }
+
 object GetOrderByIdEndpoint : Wirespec.Endpoint {
   data class Path(
     val orderId: Long,
@@ -1050,6 +1060,7 @@ suspend fun getOrderById(request: Request): Response<*>
     }
   }
 }
+
 object DeleteOrderEndpoint : Wirespec.Endpoint {
   data class Path(
     val orderId: Long,
@@ -1144,6 +1155,7 @@ suspend fun deleteOrder(request: Request): Response<*>
     }
   }
 }
+
 object CreateUserEndpoint : Wirespec.Endpoint {
   data object Path : Wirespec.Path
 
@@ -1219,6 +1231,7 @@ suspend fun createUser(request: Request): Response<*>
     }
   }
 }
+
 object CreateUsersWithListInputEndpoint : Wirespec.Endpoint {
   data object Path : Wirespec.Path
 
@@ -1309,6 +1322,7 @@ suspend fun createUsersWithListInput(request: Request): Response<*>
     }
   }
 }
+
 object LoginUserEndpoint : Wirespec.Endpoint {
   data object Path : Wirespec.Path
 
@@ -1406,6 +1420,7 @@ suspend fun loginUser(request: Request): Response<*>
     }
   }
 }
+
 object LogoutUserEndpoint : Wirespec.Endpoint {
   data object Path : Wirespec.Path
 
@@ -1478,6 +1493,7 @@ suspend fun logoutUser(request: Request): Response<*>
     }
   }
 }
+
 object GetUserByNameEndpoint : Wirespec.Endpoint {
   data class Path(
     val username: String,
@@ -1588,6 +1604,7 @@ suspend fun getUserByName(request: Request): Response<*>
     }
   }
 }
+
 object UpdateUserEndpoint : Wirespec.Endpoint {
   data class Path(
     val username: String,
@@ -1667,6 +1684,7 @@ suspend fun updateUser(request: Request): Response<*>
     }
   }
 }
+
 object DeleteUserEndpoint : Wirespec.Endpoint {
   data class Path(
     val username: String,
@@ -1761,6 +1779,7 @@ suspend fun deleteUser(request: Request): Response<*>
     }
   }
 }
+
 enum class FindPetsByStatusParameterStatus (override val label: String): Wirespec.Enum {
   available("available"),
   pending("pending"),
@@ -1778,6 +1797,7 @@ data class Order(
   val status: OrderStatus?,
   val complete: Boolean?
 )
+
 enum class OrderStatus (override val label: String): Wirespec.Enum {
   placed("placed"),
   approved("approved"),
@@ -1829,6 +1849,7 @@ data class Pet(
   val tags: List<Tag>?,
   val status: PetStatus?
 )
+
 enum class PetStatus (override val label: String): Wirespec.Enum {
   available("available"),
   pending("pending"),

@@ -25,6 +25,7 @@ data class Error(
   val code: String,
   val description: String
 )
+
 enum class TodoCategory (override val label: String): Wirespec.Enum {
   WORK("WORK"),
   LIFE("LIFE");

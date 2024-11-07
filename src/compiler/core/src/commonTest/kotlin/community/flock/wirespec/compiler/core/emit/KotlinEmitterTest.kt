@@ -15,7 +15,6 @@ class KotlinEmitterTest {
         val expected = """
             |package community.flock.wirespec.generated
             |
-            |
             |data class Todo(
             |  val name: String,
             |  val description: String?,
