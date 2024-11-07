@@ -26,4 +26,11 @@ class UtilsTest {
         "type".addBackticks() shouldBe "`type`"
     }
 
+    @Test
+    fun testConcatGenerics() {
+        "List<String>".concatGenerics() shouldBe "ListString"
+        "Map<String, List<String>>".concatGenerics() shouldBe "MapStringListString"
+        "java.util.List<String>".concatGenerics() shouldBe "ListString"
+    }
+
 }

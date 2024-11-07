@@ -14,6 +14,7 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Identifier.Type.*
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -27,12 +28,12 @@ open class ScalaEmitter(
 ) : DefinitionModelEmitter, Emitter(logger) {
 
     override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> "${identifier.emitClassName()}Endpoint"
-        is Channel -> "${identifier.emitClassName()}Channel"
-        is Enum -> identifier.emitClassName()
-        is Refined -> identifier.emitClassName()
-        is Type -> identifier.emitClassName()
-        is Union -> identifier.emitClassName()
+        is Endpoint -> "${identifier.emit(Field)}Endpoint"
+        is Channel -> "${identifier.emit(Field)}Channel"
+        is Enum -> identifier.emit(Field)
+        is Refined -> identifier.emit(Field)
+        is Type -> identifier.emit(Field)
+        is Union -> identifier.emit(Field)
     }
 
     override fun notYetImplemented() =
@@ -53,10 +54,9 @@ open class ScalaEmitter(
     override fun Type.Shape.emit() = value.joinToString("\n") { it.emit() }.dropLast(1)
 
     override fun Field.emit() =
-        "${Spacer}val ${identifier.emitVariableName()}: ${if (isNullable) "Option[${reference.emit()}]" else reference.emit()},"
+        "${Spacer}val ${identifier.emit(Field)}: ${if (isNullable) "Option[${reference.emit()}]" else reference.emit()},"
 
-    override fun Identifier.emitClassName() = if (value in reservedKeywords) value.addBackticks() else value
-    override fun Identifier.emitVariableName() = if (value in reservedKeywords) value.addBackticks() else value
+    override fun Identifier.emit(type: Identifier.Type) = if (value in reservedKeywords) value.addBackticks() else value
 
     override fun emit(channel: Channel) = notYetImplemented()
 
@@ -78,8 +78,8 @@ open class ScalaEmitter(
         fun String.sanitize() = replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }
         """
         |sealed abstract class ${emitName()}(val label: String)
-        |object ${identifier.emitClassName()} {
-        |${entries.joinToString("\n") { """${Spacer}final case object ${it.sanitize().uppercase()} extends ${identifier.emitClassName()}(label = "$it")""" }}
+        |object ${identifier.emit(Field)} {
+        |${entries.joinToString("\n") { """${Spacer}final case object ${it.sanitize().uppercase()} extends ${identifier.emit(Class)}(label = "$it")""" }}
         |}
         |""".trimMargin()
     }

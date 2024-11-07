@@ -34,15 +34,20 @@ object AddPetEndpoint : Wirespec.Endpoint {
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
+
   sealed interface Response2XX<T: Any> : Response<T>
   sealed interface Response4XX<T: Any> : Response<T>
 
-  data class Response200(override val body: Pet) : Response2XX<Pet> {
+  sealed interface ResponsePet : Response<Pet>
+  sealed interface ResponseUnit : Response<Unit>
+
+  data class Response200(override val body: Pet) : Response2XX<Pet>, ResponsePet {
     override val status = 200
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
   }
-  data class Response405(override val body: Unit) : Response4XX<Unit> {
+
+  data class Response405(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 405
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
@@ -91,6 +96,7 @@ suspend fun addPet(request: Request): Response<*>
     }
   }
 }
+
 object UpdatePetEndpoint : Wirespec.Endpoint {
   data object Path : Wirespec.Path
 
@@ -122,25 +128,32 @@ object UpdatePetEndpoint : Wirespec.Endpoint {
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
+
   sealed interface Response2XX<T: Any> : Response<T>
   sealed interface Response4XX<T: Any> : Response<T>
 
-  data class Response200(override val body: Pet) : Response2XX<Pet> {
+  sealed interface ResponsePet : Response<Pet>
+  sealed interface ResponseUnit : Response<Unit>
+
+  data class Response200(override val body: Pet) : Response2XX<Pet>, ResponsePet {
     override val status = 200
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
   }
-  data class Response400(override val body: Unit) : Response4XX<Unit> {
+
+  data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
   }
-  data class Response404(override val body: Unit) : Response4XX<Unit> {
+
+  data class Response404(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 404
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
   }
-  data class Response405(override val body: Unit) : Response4XX<Unit> {
+
+  data class Response405(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 405
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
@@ -205,6 +218,7 @@ suspend fun updatePet(request: Request): Response<*>
     }
   }
 }
+
 object FindPetsByStatusEndpoint : Wirespec.Endpoint {
   data object Path : Wirespec.Path
 
@@ -239,15 +253,20 @@ object FindPetsByStatusEndpoint : Wirespec.Endpoint {
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
+
   sealed interface Response2XX<T: Any> : Response<T>
   sealed interface Response4XX<T: Any> : Response<T>
 
-  data class Response200(override val body: List<Pet>) : Response2XX<List<Pet>> {
+  sealed interface ResponseListPet : Response<List<Pet>>
+  sealed interface ResponseUnit : Response<Unit>
+
+  data class Response200(override val body: List<Pet>) : Response2XX<List<Pet>>, ResponseListPet {
     override val status = 200
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
   }
-  data class Response400(override val body: Unit) : Response4XX<Unit> {
+
+  data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
@@ -296,6 +315,7 @@ suspend fun findPetsByStatus(request: Request): Response<*>
     }
   }
 }
+
 object FindPetsByTagsEndpoint : Wirespec.Endpoint {
   data object Path : Wirespec.Path
 
@@ -330,15 +350,20 @@ object FindPetsByTagsEndpoint : Wirespec.Endpoint {
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
+
   sealed interface Response2XX<T: Any> : Response<T>
   sealed interface Response4XX<T: Any> : Response<T>
 
-  data class Response200(override val body: List<Pet>) : Response2XX<List<Pet>> {
+  sealed interface ResponseListPet : Response<List<Pet>>
+  sealed interface ResponseUnit : Response<Unit>
+
+  data class Response200(override val body: List<Pet>) : Response2XX<List<Pet>>, ResponseListPet {
     override val status = 200
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
   }
-  data class Response400(override val body: Unit) : Response4XX<Unit> {
+
+  data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
@@ -387,6 +412,7 @@ suspend fun findPetsByTags(request: Request): Response<*>
     }
   }
 }
+
 object GetPetByIdEndpoint : Wirespec.Endpoint {
   data class Path(
     val petId: Long,
@@ -421,20 +447,26 @@ object GetPetByIdEndpoint : Wirespec.Endpoint {
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
+
   sealed interface Response2XX<T: Any> : Response<T>
   sealed interface Response4XX<T: Any> : Response<T>
 
-  data class Response200(override val body: Pet) : Response2XX<Pet> {
+  sealed interface ResponsePet : Response<Pet>
+  sealed interface ResponseUnit : Response<Unit>
+
+  data class Response200(override val body: Pet) : Response2XX<Pet>, ResponsePet {
     override val status = 200
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
   }
-  data class Response400(override val body: Unit) : Response4XX<Unit> {
+
+  data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
   }
-  data class Response404(override val body: Unit) : Response4XX<Unit> {
+
+  data class Response404(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 404
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
@@ -491,6 +523,7 @@ suspend fun getPetById(request: Request): Response<*>
     }
   }
 }
+
 object UpdatePetWithFormEndpoint : Wirespec.Endpoint {
   data class Path(
     val petId: Long,
@@ -530,9 +563,12 @@ object UpdatePetWithFormEndpoint : Wirespec.Endpoint {
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
+
   sealed interface Response4XX<T: Any> : Response<T>
 
-  data class Response405(override val body: Unit) : Response4XX<Unit> {
+  sealed interface ResponseUnit : Response<Unit>
+
+  data class Response405(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 405
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
@@ -573,6 +609,7 @@ suspend fun updatePetWithForm(request: Request): Response<*>
     }
   }
 }
+
 object DeletePetEndpoint : Wirespec.Endpoint {
   data class Path(
     val petId: Long,
@@ -611,9 +648,12 @@ object DeletePetEndpoint : Wirespec.Endpoint {
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
+
   sealed interface Response4XX<T: Any> : Response<T>
 
-  data class Response400(override val body: Unit) : Response4XX<Unit> {
+  sealed interface ResponseUnit : Response<Unit>
+
+  data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
@@ -654,6 +694,7 @@ suspend fun deletePet(request: Request): Response<*>
     }
   }
 }
+
 object UploadFileEndpoint : Wirespec.Endpoint {
   data class Path(
     val petId: Long,
@@ -693,9 +734,12 @@ object UploadFileEndpoint : Wirespec.Endpoint {
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
+
   sealed interface Response2XX<T: Any> : Response<T>
 
-  data class Response200(override val body: ApiResponse) : Response2XX<ApiResponse> {
+  sealed interface ResponseApiResponse : Response<ApiResponse>
+
+  data class Response200(override val body: ApiResponse) : Response2XX<ApiResponse>, ResponseApiResponse {
     override val status = 200
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
@@ -736,6 +780,7 @@ suspend fun uploadFile(request: Request): Response<*>
     }
   }
 }
+
 object GetInventoryEndpoint : Wirespec.Endpoint {
   data object Path : Wirespec.Path
 
@@ -764,9 +809,12 @@ object GetInventoryEndpoint : Wirespec.Endpoint {
     Request
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
+
   sealed interface Response2XX<T: Any> : Response<T>
 
-  data class Response200(override val body: Map<String, Long>) : Response2XX<Map<String, Long>> {
+  sealed interface ResponseMapStringLong : Response<Map<String, Long>>
+
+  data class Response200(override val body: Map<String, Long>) : Response2XX<Map<String, Long>>, ResponseMapStringLong {
     override val status = 200
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
@@ -807,6 +855,7 @@ suspend fun getInventory(request: Request): Response<*>
     }
   }
 }
+
 object PlaceOrderEndpoint : Wirespec.Endpoint {
   data object Path : Wirespec.Path
 
@@ -838,15 +887,20 @@ object PlaceOrderEndpoint : Wirespec.Endpoint {
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
+
   sealed interface Response2XX<T: Any> : Response<T>
   sealed interface Response4XX<T: Any> : Response<T>
 
-  data class Response200(override val body: Order) : Response2XX<Order> {
+  sealed interface ResponseOrder : Response<Order>
+  sealed interface ResponseUnit : Response<Unit>
+
+  data class Response200(override val body: Order) : Response2XX<Order>, ResponseOrder {
     override val status = 200
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
   }
-  data class Response405(override val body: Unit) : Response4XX<Unit> {
+
+  data class Response405(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 405
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
@@ -895,6 +949,7 @@ suspend fun placeOrder(request: Request): Response<*>
     }
   }
 }
+
 object GetOrderByIdEndpoint : Wirespec.Endpoint {
   data class Path(
     val orderId: Long,
@@ -929,20 +984,26 @@ object GetOrderByIdEndpoint : Wirespec.Endpoint {
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
+
   sealed interface Response2XX<T: Any> : Response<T>
   sealed interface Response4XX<T: Any> : Response<T>
 
-  data class Response200(override val body: Order) : Response2XX<Order> {
+  sealed interface ResponseOrder : Response<Order>
+  sealed interface ResponseUnit : Response<Unit>
+
+  data class Response200(override val body: Order) : Response2XX<Order>, ResponseOrder {
     override val status = 200
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
   }
-  data class Response400(override val body: Unit) : Response4XX<Unit> {
+
+  data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
   }
-  data class Response404(override val body: Unit) : Response4XX<Unit> {
+
+  data class Response404(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 404
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
@@ -999,6 +1060,7 @@ suspend fun getOrderById(request: Request): Response<*>
     }
   }
 }
+
 object DeleteOrderEndpoint : Wirespec.Endpoint {
   data class Path(
     val orderId: Long,
@@ -1033,14 +1095,18 @@ object DeleteOrderEndpoint : Wirespec.Endpoint {
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
+
   sealed interface Response4XX<T: Any> : Response<T>
 
-  data class Response400(override val body: Unit) : Response4XX<Unit> {
+  sealed interface ResponseUnit : Response<Unit>
+
+  data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
   }
-  data class Response404(override val body: Unit) : Response4XX<Unit> {
+
+  data class Response404(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 404
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
@@ -1089,6 +1155,7 @@ suspend fun deleteOrder(request: Request): Response<*>
     }
   }
 }
+
 object CreateUserEndpoint : Wirespec.Endpoint {
   data object Path : Wirespec.Path
 
@@ -1120,9 +1187,12 @@ object CreateUserEndpoint : Wirespec.Endpoint {
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
+
   sealed interface ResponsedXX<T: Any> : Response<T>
 
-  data class Responsedefault(override val body: User) : ResponsedXX<User> {
+  sealed interface ResponseUser : Response<User>
+
+  data class Responsedefault(override val body: User) : ResponsedXX<User>, ResponseUser {
     override val status = 200
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
@@ -1161,6 +1231,7 @@ suspend fun createUser(request: Request): Response<*>
     }
   }
 }
+
 object CreateUsersWithListInputEndpoint : Wirespec.Endpoint {
   data object Path : Wirespec.Path
 
@@ -1192,15 +1263,20 @@ object CreateUsersWithListInputEndpoint : Wirespec.Endpoint {
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
+
   sealed interface Response2XX<T: Any> : Response<T>
   sealed interface ResponsedXX<T: Any> : Response<T>
 
-  data class Response200(override val body: User) : Response2XX<User> {
+  sealed interface ResponseUser : Response<User>
+  sealed interface ResponseUnit : Response<Unit>
+
+  data class Response200(override val body: User) : Response2XX<User>, ResponseUser {
     override val status = 200
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
   }
-  data class Responsedefault(override val body: Unit) : ResponsedXX<Unit> {
+
+  data class Responsedefault(override val body: Unit) : ResponsedXX<Unit>, ResponseUnit {
     override val status = 200
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
@@ -1246,6 +1322,7 @@ suspend fun createUsersWithListInput(request: Request): Response<*>
     }
   }
 }
+
 object LoginUserEndpoint : Wirespec.Endpoint {
   data object Path : Wirespec.Path
 
@@ -1281,15 +1358,20 @@ object LoginUserEndpoint : Wirespec.Endpoint {
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
+
   sealed interface Response2XX<T: Any> : Response<T>
   sealed interface Response4XX<T: Any> : Response<T>
 
-  data class Response200(override val body: String) : Response2XX<String> {
+  sealed interface ResponseString : Response<String>
+  sealed interface ResponseUnit : Response<Unit>
+
+  data class Response200(override val body: String) : Response2XX<String>, ResponseString {
     override val status = 200
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
   }
-  data class Response400(override val body: Unit) : Response4XX<Unit> {
+
+  data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
@@ -1338,6 +1420,7 @@ suspend fun loginUser(request: Request): Response<*>
     }
   }
 }
+
 object LogoutUserEndpoint : Wirespec.Endpoint {
   data object Path : Wirespec.Path
 
@@ -1366,9 +1449,12 @@ object LogoutUserEndpoint : Wirespec.Endpoint {
     Request
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
+
   sealed interface ResponsedXX<T: Any> : Response<T>
 
-  data class Responsedefault(override val body: Unit) : ResponsedXX<Unit> {
+  sealed interface ResponseUnit : Response<Unit>
+
+  data class Responsedefault(override val body: Unit) : ResponsedXX<Unit>, ResponseUnit {
     override val status = 200
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
@@ -1407,6 +1493,7 @@ suspend fun logoutUser(request: Request): Response<*>
     }
   }
 }
+
 object GetUserByNameEndpoint : Wirespec.Endpoint {
   data class Path(
     val username: String,
@@ -1441,20 +1528,26 @@ object GetUserByNameEndpoint : Wirespec.Endpoint {
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
+
   sealed interface Response2XX<T: Any> : Response<T>
   sealed interface Response4XX<T: Any> : Response<T>
 
-  data class Response200(override val body: User) : Response2XX<User> {
+  sealed interface ResponseUser : Response<User>
+  sealed interface ResponseUnit : Response<Unit>
+
+  data class Response200(override val body: User) : Response2XX<User>, ResponseUser {
     override val status = 200
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
   }
-  data class Response400(override val body: Unit) : Response4XX<Unit> {
+
+  data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
   }
-  data class Response404(override val body: Unit) : Response4XX<Unit> {
+
+  data class Response404(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 404
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
@@ -1511,6 +1604,7 @@ suspend fun getUserByName(request: Request): Response<*>
     }
   }
 }
+
 object UpdateUserEndpoint : Wirespec.Endpoint {
   data class Path(
     val username: String,
@@ -1546,9 +1640,12 @@ object UpdateUserEndpoint : Wirespec.Endpoint {
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
+
   sealed interface ResponsedXX<T: Any> : Response<T>
 
-  data class Responsedefault(override val body: Unit) : ResponsedXX<Unit> {
+  sealed interface ResponseUnit : Response<Unit>
+
+  data class Responsedefault(override val body: Unit) : ResponsedXX<Unit>, ResponseUnit {
     override val status = 200
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
@@ -1587,6 +1684,7 @@ suspend fun updateUser(request: Request): Response<*>
     }
   }
 }
+
 object DeleteUserEndpoint : Wirespec.Endpoint {
   data class Path(
     val username: String,
@@ -1621,14 +1719,18 @@ object DeleteUserEndpoint : Wirespec.Endpoint {
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
+
   sealed interface Response4XX<T: Any> : Response<T>
 
-  data class Response400(override val body: Unit) : Response4XX<Unit> {
+  sealed interface ResponseUnit : Response<Unit>
+
+  data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
   }
-  data class Response404(override val body: Unit) : Response4XX<Unit> {
+
+  data class Response404(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 404
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
@@ -1677,6 +1779,7 @@ suspend fun deleteUser(request: Request): Response<*>
     }
   }
 }
+
 enum class FindPetsByStatusParameterStatus (override val label: String): Wirespec.Enum {
   available("available"),
   pending("pending"),
@@ -1685,6 +1788,7 @@ enum class FindPetsByStatusParameterStatus (override val label: String): Wirespe
     return label
   }
 }
+
 data class Order(
   val id: Long?,
   val petId: Long?,
@@ -1693,6 +1797,7 @@ data class Order(
   val status: OrderStatus?,
   val complete: Boolean?
 )
+
 enum class OrderStatus (override val label: String): Wirespec.Enum {
   placed("placed"),
   approved("approved"),
@@ -1701,21 +1806,25 @@ enum class OrderStatus (override val label: String): Wirespec.Enum {
     return label
   }
 }
+
 data class Customer(
   val id: Long?,
   val username: String?,
   val address: List<Address>?
 )
+
 data class Address(
   val street: String?,
   val city: String?,
   val state: String?,
   val zip: String?
 )
+
 data class Category(
   val id: Long?,
   val name: String?
 )
+
 data class User(
   val id: Long?,
   val username: String?,
@@ -1726,10 +1835,12 @@ data class User(
   val phone: String?,
   val userStatus: Long?
 )
+
 data class Tag(
   val id: Long?,
   val name: String?
 )
+
 data class Pet(
   val id: Long?,
   val name: String,
@@ -1738,6 +1849,7 @@ data class Pet(
   val tags: List<Tag>?,
   val status: PetStatus?
 )
+
 enum class PetStatus (override val label: String): Wirespec.Enum {
   available("available"),
   pending("pending"),
@@ -1746,6 +1858,7 @@ enum class PetStatus (override val label: String): Wirespec.Enum {
     return label
   }
 }
+
 data class ApiResponse(
   val code: Long?,
   val type: String?,

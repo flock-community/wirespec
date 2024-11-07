@@ -74,13 +74,8 @@ data class Refined(
     override val identifier: Identifier,
     val validator: Validator,
 ) : Definition {
-    data class Validator(override val value: String) : Value<String>{
-        val expression get() =
-            value.split("/")
-                .drop(1)
-                .dropLast(1)
-                .joinToString("/")
-
+    data class Validator(override val value: String) : Value<String> {
+        val expression = value.split("/").drop(1).dropLast(1).joinToString("/")
     }
 }
 
@@ -120,6 +115,8 @@ data class Channel(
 value class Comment(override val value: String) : Value<String>
 
 class Identifier private constructor(override val value: String) : Value<String> {
+
+    enum class Type { Class, Field }
 
     override fun toString(): String = value
 

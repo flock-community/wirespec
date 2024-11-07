@@ -6,7 +6,7 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
 class SpringKotlinEmitter(packageName: String, logger: Logger = noLogger) : KotlinEmitter(packageName, logger) {
-     override fun emitHandleFunction(endpoint: Endpoint): String {
+    override fun emitHandleFunction(endpoint: Endpoint): String {
         val path = "/${endpoint.path.joinToString("/") { it.emit() }}"
         val annotation = when (endpoint.method) {
             Endpoint.Method.GET -> "@org.springframework.web.bind.annotation.GetMapping(\"${path}\")\n"

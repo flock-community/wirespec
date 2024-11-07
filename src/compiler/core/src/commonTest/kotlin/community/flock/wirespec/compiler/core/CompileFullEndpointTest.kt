@@ -86,15 +86,20 @@ class CompileFullEndpointTest {
             |    )
             |
             |  sealed interface Response<T: Any> : Wirespec.Response<T>
+            |
             |  sealed interface Response2XX<T: Any> : Response<T>
             |  sealed interface Response5XX<T: Any> : Response<T>
             |
-            |  data class Response200(override val body: TodoDto) : Response2XX<TodoDto> {
+            |  sealed interface ResponseTodoDto : Response<TodoDto>
+            |  sealed interface ResponseError : Response<Error>
+            |
+            |  data class Response200(override val body: TodoDto) : Response2XX<TodoDto>, ResponseTodoDto {
             |    override val status = 200
             |    override val headers = Headers
             |    data object Headers : Wirespec.Response.Headers
             |  }
-            |  data class Response500(override val body: Error) : Response5XX<Error> {
+            |
+            |  data class Response500(override val body: Error) : Response5XX<Error>, ResponseError {
             |    override val status = 500
             |    override val headers = Headers
             |    data object Headers : Wirespec.Response.Headers
@@ -141,18 +146,22 @@ class CompileFullEndpointTest {
             |    }
             |  }
             |}
+            |
             |data class PotentialTodoDto(
             |  val name: String,
             |  val done: Boolean
             |)
+            |
             |data class Token(
             |  val iss: String
             |)
+            |
             |data class TodoDto(
             |  val id: String,
             |  val name: String,
             |  val done: Boolean
             |)
+            |
             |data class Error(
             |  val code: Long,
             |  val description: String
@@ -206,14 +215,16 @@ class CompileFullEndpointTest {
             |  sealed interface Response<T> extends Wirespec.Response<T> {}
             |  sealed interface Response2XX<T> extends Response<T> {}
             |  sealed interface Response5XX<T> extends Response<T> {}
+            |  sealed interface ResponseTodoDto extends Response<TodoDto> {}
+            |  sealed interface ResponseError extends Response<Error> {}
             |
-            |  record Response200(TodoDto body) implements Response2XX<TodoDto> {
+            |  record Response200(TodoDto body) implements Response2XX<TodoDto>, ResponseTodoDto {
             |    @Override public int getStatus() { return 200; }
             |    @Override public Headers getHeaders() { return new Headers(); }
             |    @Override public TodoDto getBody() { return body; }
             |    class Headers implements Wirespec.Response.Headers {}
             |  }
-            |  record Response500(Error body) implements Response5XX<Error> {
+            |  record Response500(Error body) implements Response5XX<Error>, ResponseError {
             |    @Override public int getStatus() { return 500; }
             |    @Override public Headers getHeaders() { return new Headers(); }
             |    @Override public Error getBody() { return body; }
