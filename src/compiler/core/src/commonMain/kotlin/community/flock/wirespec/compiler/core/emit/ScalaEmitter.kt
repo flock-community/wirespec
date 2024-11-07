@@ -35,12 +35,12 @@ open class ScalaEmitter(
     """.trimMargin()
 
     override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> "${identifier.emit(Field)}Endpoint"
-        is Channel -> "${identifier.emit(Field)}Channel"
-        is Enum -> identifier.emit(Field)
-        is Refined -> identifier.emit(Field)
-        is Type -> identifier.emit(Field)
-        is Union -> identifier.emit(Field)
+        is Endpoint -> "${identifier.emit(Class)}Endpoint"
+        is Channel -> "${identifier.emit(Class)}Channel"
+        is Enum -> identifier.emit(Class)
+        is Refined -> identifier.emit(Class)
+        is Type -> identifier.emit(Class)
+        is Union -> identifier.emit(Class)
     }
 
     override fun notYetImplemented() =
@@ -94,7 +94,7 @@ open class ScalaEmitter(
         fun String.sanitize() = replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }
         """
         |sealed abstract class ${emitName()}(val label: String)
-        |object ${identifier.emit(Field)} {
+        |object ${identifier.emit(Class)} {
         |${entries.joinToString("\n") { """${Spacer}final case object ${it.sanitize().uppercase()} extends ${identifier.emit(Class)}(label = "$it")""" }}
         |}
         |""".trimMargin()
