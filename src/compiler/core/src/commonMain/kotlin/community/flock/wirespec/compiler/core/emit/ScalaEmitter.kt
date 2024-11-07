@@ -2,6 +2,7 @@ package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.addBackticks
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
@@ -27,6 +28,12 @@ open class ScalaEmitter(
     logger: Logger = noLogger
 ) : DefinitionModelEmitter, Emitter(logger) {
 
+    open val import = """
+        |
+        |import $DEFAULT_SHARED_PACKAGE_STRING.scala.Wirespec
+        |
+    """.trimMargin()
+
     override fun Definition.emitName(): String = when (this) {
         is Endpoint -> "${identifier.emit(Field)}Endpoint"
         is Channel -> "${identifier.emit(Field)}Channel"
@@ -41,8 +48,17 @@ open class ScalaEmitter(
             |
         """.trimMargin()
 
-    override fun emit(ast: AST): List<Emitted> = super.emit(ast)
-        .map { Emitted(it.typeName, if (packageName.isBlank()) "" else "package $packageName\n\n${it.result}") }
+    override fun emit(ast: AST): List<Emitted> =
+        super.emit(ast).map { (typeName, result) ->
+            Emitted(
+                typeName = typeName,
+                result = """
+                    |${if (packageName.isBlank()) "" else "package $packageName"}
+                    |${if (ast.needImports()) import else ""}
+                    |${result}
+                """.trimMargin().trimStart()
+            )
+        }
 
     override fun emit(type: Type, ast: AST) = """
         |case class ${type.emitName()}(
@@ -90,7 +106,6 @@ open class ScalaEmitter(
         |${refined.validator.emit()}
         |${Spacer}}
         |}
-        |
         |
     """.trimMargin()
 

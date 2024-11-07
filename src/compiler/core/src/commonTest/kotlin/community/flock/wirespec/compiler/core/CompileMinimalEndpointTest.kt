@@ -214,6 +214,8 @@ class CompileMinimalEndpointTest {
         val scala = """
             |package community.flock.wirespec.generated
             |
+            |import community.flock.wirespec.scala.Wirespec
+            |
             |// TODO("Not yet implemented")
             |
             |case class TodoDto(

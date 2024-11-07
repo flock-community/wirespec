@@ -60,13 +60,14 @@ class CompileRefinedTest {
         val scala = """
             |package community.flock.wirespec.generated
             |
+            |import community.flock.wirespec.scala.Wirespec
+            |
             |case class TodoId(val value: String) {
             |  implicit class TodoIdOps(val that: TodoId) {
             |    val regex = new scala.util.matching.Regex(""${'"'}^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}""${'"'})
             |    regex.findFirstIn(that.value)
             |  }
             |}
-            |
             |
         """.trimMargin()
 

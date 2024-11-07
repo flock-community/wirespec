@@ -73,6 +73,8 @@ class CompileEnumTest {
         val scala = """
             |package community.flock.wirespec.generated
             |
+            |import community.flock.wirespec.scala.Wirespec
+            |
             |sealed abstract class MyAwesomeEnum(val label: String)
             |object MyAwesomeEnum {
             |  final case object ONE extends MyAwesomeEnum(label = "ONE")
