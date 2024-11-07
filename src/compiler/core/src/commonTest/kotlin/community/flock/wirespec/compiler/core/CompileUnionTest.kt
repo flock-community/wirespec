@@ -31,13 +31,16 @@ class CompileUnionTest {
             |package community.flock.wirespec.generated
             |
             |sealed interface UserAccount
+            |
             |data class UserAccountPassword(
             |  val username: String,
             |  val password: String
             |) : UserAccount
+            |
             |data class UserAccountToken(
             |  val token: String
             |) : UserAccount
+            |
             |data class User(
             |  val username: String,
             |  val account: UserAccount

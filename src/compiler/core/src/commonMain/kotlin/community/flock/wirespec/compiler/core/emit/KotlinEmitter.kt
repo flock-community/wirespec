@@ -65,6 +65,7 @@ open class KotlinEmitter(
     override fun emit(type: Type, ast: AST) =
         if (type.shape.value.isEmpty()) "${Spacer}data object ${type.emitName()}"
         else """
+            |
             |data class ${type.emitName()}(
             |${type.shape.emit()}
             |)${type.extends.run { if (isEmpty()) "" else " : ${joinToString(", ") { it.emit() }}" }}
@@ -138,9 +139,12 @@ open class KotlinEmitter(
         |${endpoint.requests.first().emit(endpoint)}
         |
         |${Spacer}sealed interface Response<T: Any> : Wirespec.Response<T>
+        |
+        |${endpoint.emitStatusInterfaces()}
+        |
         |${endpoint.emitResponseInterfaces()}
         |
-        |${endpoint.responses.distinctBy { it.status }.joinToString("\n") { it.emit() }}
+        |${endpoint.responses.distinctBy { it.status }.joinToString("\n\n") { it.emit() }}
         |
         |${Spacer}fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
         |${Spacer(2)}when(response) {
@@ -174,9 +178,15 @@ open class KotlinEmitter(
     open fun emitHandleFunction(endpoint: Endpoint): String =
         "suspend fun ${endpoint.identifier.emitClassName().firstToLower()}(request: Request): Response<*>"
 
+    private fun Endpoint.emitStatusInterfaces() = responses
+        .map { it.status[0] }
+        .distinct()
+        .joinToString("\n") { "${Spacer}sealed interface Response${it}XX<T: Any> : Response<T>" }
+
     private fun Endpoint.emitResponseInterfaces() = responses
-        .distinctBy { it.status[0] }
-        .joinToString("\n") { "${Spacer}sealed interface Response${it.status[0]}XX<T: Any> : Response<T>" }
+        .mapNotNull { it.content?.reference?.value }
+        .distinct()
+        .joinToString("\n") { "${Spacer}sealed interface Response$it : Response<$it>" }
 
     private fun <E> List<E>.emitObject(name: String, extends: String, block: (E) -> String) =
         if (isEmpty()) "${Spacer}data object $name : $extends"
@@ -208,7 +218,7 @@ open class KotlinEmitter(
     """.trimMargin()
 
     fun Endpoint.Response.emit() = """
-        |${Spacer}data class Response$status(override val body: ${content.emit()}) : Response${status[0]}XX<${content.emit()}> {
+        |${Spacer}data class Response$status(override val body: ${content.emit()}) : Response${status[0]}XX<${content.emit()}>${content?.reference?.value?.let { ", Response$it" }} {
         |${Spacer(2)}override val status = ${status.fixStatus()}
         |${Spacer(2)}override val headers = Headers
         |${Spacer(2)}data object Headers : Wirespec.Response.Headers

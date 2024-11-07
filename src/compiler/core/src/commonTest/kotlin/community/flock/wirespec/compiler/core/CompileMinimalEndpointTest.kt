@@ -55,9 +55,12 @@ class CompileMinimalEndpointTest {
             |    Request
             |
             |  sealed interface Response<T: Any> : Wirespec.Response<T>
+            |
             |  sealed interface Response2XX<T: Any> : Response<T>
             |
-            |  data class Response200(override val body: List<TodoDto>) : Response2XX<List<TodoDto>> {
+            |  sealed interface ResponseTodoDto : Response<TodoDto>
+            |
+            |  data class Response200(override val body: List<TodoDto>) : Response2XX<List<TodoDto>>, ResponseTodoDto {
             |    override val status = 200
             |    override val headers = Headers
             |    data object Headers : Wirespec.Response.Headers
@@ -96,6 +99,7 @@ class CompileMinimalEndpointTest {
             |    }
             |  }
             |}
+            |
             |data class TodoDto(
             |  val description: String
             |)
