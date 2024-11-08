@@ -2,6 +2,7 @@ package community.flock.wirespec.plugin.maven
 
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
 import community.flock.wirespec.plugin.FilesContent
 import java.io.File
 import org.apache.maven.plugin.AbstractMojo
@@ -22,7 +23,7 @@ abstract class BaseMojo : AbstractMojo() {
     @Parameter(defaultValue = "\${project}", readonly = true, required = true)
     protected lateinit var project: MavenProject
 
-    protected val logger = object : Logger() {
+    protected val logger = object : Logger(ERROR) {
         override fun debug(string: String) = log.debug(string)
         override fun info(string: String) = log.info(string)
         override fun warn(string: String) = log.warn(string)

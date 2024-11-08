@@ -5,32 +5,32 @@ import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
 import community.flock.wirespec.compiler.utils.Logger.Level.INFO
 import community.flock.wirespec.compiler.utils.Logger.Level.WARN
 
-open class Logger(logLevel: Level? = ERROR) {
+open class Logger(logLevel: Level?) {
 
-    open val isDebug = when (logLevel) {
-        null -> false
+    open val shouldDebugLog = when (logLevel) {
+        DEBUG -> true
+        null, INFO, WARN, ERROR -> false
+    }
+
+    open val shouldInfoLog = when (logLevel) {
+        DEBUG, INFO -> true
+        null, WARN, ERROR -> false
+    }
+
+    open val shouldWarnLog = when (logLevel) {
+        DEBUG, INFO, WARN-> true
+        null, ERROR -> false
+    }
+
+    open val shouldErrorLog = when (logLevel) {
         DEBUG, INFO, WARN, ERROR -> true
+        null  -> false
     }
 
-    open val isInfo = when (logLevel) {
-        null, DEBUG -> false
-        INFO, WARN, ERROR -> true
-    }
-
-    open val isWarn = when (logLevel) {
-        null, DEBUG, INFO -> false
-        WARN, ERROR -> true
-    }
-
-    open val isError = when (logLevel) {
-        null, DEBUG, INFO, WARN -> false
-        ERROR -> true
-    }
-
-    open fun debug(string: String) = string logIf isDebug
-    open fun info(string: String) = string logIf isInfo
-    open fun warn(string: String) = string logIf isWarn
-    open fun error(string: String) = string logIf isError
+    open fun debug(string: String) = string logIf shouldDebugLog
+    open fun info(string: String) = string logIf shouldInfoLog
+    open fun warn(string: String) = string logIf shouldWarnLog
+    open fun error(string: String) = string logIf shouldErrorLog
 
     private infix fun String.logIf(b: Boolean) = if (b) println(this) else Unit
 
@@ -41,7 +41,6 @@ open class Logger(logLevel: Level? = ERROR) {
             override fun toString() = entries.joinToString(", ")
         }
     }
-
 }
 
 val noLogger = object : Logger(logLevel = null) {}

@@ -1,6 +1,7 @@
 package community.flock.wirespec.plugin.gradle
 
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
@@ -20,7 +21,7 @@ abstract class BaseWirespecTask : DefaultTask() {
     abstract val packageName: Property<String>
 
     @Internal
-    val wirespecLogger = object : Logger() {
+    val wirespecLogger = object : Logger(ERROR) {
         override fun debug(string: String) = logger.debug(string)
         override fun info(string: String) = logger.info(string)
         override fun warn(string: String) = logger.warn(string)
