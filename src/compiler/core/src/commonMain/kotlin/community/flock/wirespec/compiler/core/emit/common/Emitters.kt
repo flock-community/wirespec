@@ -43,5 +43,5 @@ interface ChannelDefinitionEmitter {
 }
 
 interface IdentifierEmitter {
-    fun Identifier.emit(type: Identifier.Type) = value
+    fun emit(identifier: Identifier): String
 }

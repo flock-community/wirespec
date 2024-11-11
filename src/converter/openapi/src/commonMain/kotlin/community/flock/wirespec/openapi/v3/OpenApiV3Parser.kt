@@ -20,10 +20,11 @@ import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceOrBooleanObject
 import community.flock.kotlinx.openapi.bindings.v3.StatusCode
 import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.ClassIdentifier
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
@@ -115,7 +116,7 @@ object OpenApiV3Parser {
 
                 Endpoint(
                     comment = null,
-                    identifier = Identifier(name),
+                    identifier = ClassIdentifier(name),
                     method = method,
                     path = segments,
                     queries = query,
@@ -221,7 +222,7 @@ object OpenApiV3Parser {
                         ?.let { toReference(it, className(name, "Parameter", param)) }
                         ?.let {
                             Endpoint.Segment.Param(
-                                Identifier(param),
+                                FieldIdentifier(param),
                                 it
                             )
                         }
@@ -350,7 +351,7 @@ object OpenApiV3Parser {
             schemaObject.oneOf != null || schemaObject.anyOf != null -> listOf(
                 Union(
                     comment = null,
-                    identifier = Identifier(name),
+                    identifier = ClassIdentifier(name),
                     entries = schemaObject.oneOf!!
                         .mapIndexed { index, it ->
                             when (it) {
@@ -371,7 +372,7 @@ object OpenApiV3Parser {
             schemaObject.allOf != null -> listOf(
                 Type(
                     comment = null,
-                    identifier = Identifier(name),
+                    identifier = ClassIdentifier(name),
                     shape = Type.Shape(schemaObject.allOf.orEmpty().flatMap { toField(resolve(it), name) }
                         .distinctBy { it.identifier }),
                     extends = emptyList(),
@@ -392,7 +393,7 @@ object OpenApiV3Parser {
             schemaObject.enum != null -> schemaObject.enum!!
                 .map { it.content }
                 .toSet()
-                .let { listOf(Enum(comment = null, identifier = Identifier(name), entries = it)) }
+                .let { listOf(Enum(comment = null, identifier = ClassIdentifier(name), entries = it)) }
 
             else -> when (schemaObject.type) {
                 null, OpenapiType.OBJECT -> {
@@ -402,7 +403,7 @@ object OpenApiV3Parser {
                     val schema = listOf(
                         Type(
                             comment = null,
-                            identifier = Identifier(name),
+                            identifier = ClassIdentifier(name),
                             shape = Type.Shape(toField(schemaObject, name)),
                             extends = emptyList(),
                         )
@@ -535,7 +536,7 @@ object OpenApiV3Parser {
             when (value) {
                 is SchemaObject -> {
                     Field(
-                        identifier = Identifier(key),
+                        identifier = FieldIdentifier(key),
                         reference = when {
                             value.enum != null -> toReference(value, className(name, key))
                             value.type == OpenapiType.ARRAY -> toReference(value, className(name, key, "Array"))
@@ -547,7 +548,7 @@ object OpenApiV3Parser {
 
                 is ReferenceObject -> {
                     Field(
-                        Identifier(key),
+                        FieldIdentifier(key),
                         Reference.Custom(className(value.getReference()), false),
                         !(schema.required?.contains(key) ?: false)
                     )
@@ -560,14 +561,14 @@ object OpenApiV3Parser {
             is ReferenceObject -> toReference(s)
             is SchemaObject -> toReference(s, name)
             null -> Reference.Primitive(Reference.Primitive.Type.String)
-        }.let { Field(Identifier(parameter.name), it, !(parameter.required ?: false)) }
+        }.let { Field(FieldIdentifier(parameter.name), it, !(parameter.required ?: false)) }
 
     private fun OpenAPIObject.toField(header: HeaderObject, identifier: String, name: String) =
         when (val s = header.schema) {
             is ReferenceObject -> toReference(s)
             is SchemaObject -> toReference(s, name)
             null -> Reference.Primitive(Reference.Primitive.Type.String)
-        }.let { Field(Identifier(identifier), it, !(header.required ?: false)) }
+        }.let { Field(FieldIdentifier(identifier), it, !(header.required ?: false)) }
 
     private data class FlattenRequest(
         val path: Path,

@@ -16,12 +16,12 @@ class EnumParser(logger: Logger) : AbstractParser(logger) {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is CustomType -> parseEnumTypeDefinition(comment, Identifier(token.value)).bind()
+            is CustomType -> parseEnumTypeDefinition(comment, ClassIdentifier(token.value)).bind()
             else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
         }
     }
 
-    private fun TokenProvider.parseEnumTypeDefinition(comment: Comment?, typeName: Identifier) = either {
+    private fun TokenProvider.parseEnumTypeDefinition(comment: Comment?, typeName: ClassIdentifier) = either {
         eatToken().bind()
         token.log()
         when (token.type) {

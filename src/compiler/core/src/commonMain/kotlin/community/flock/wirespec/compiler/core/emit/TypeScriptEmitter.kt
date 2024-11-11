@@ -12,7 +12,6 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Identifier
-import community.flock.wirespec.compiler.core.parse.Identifier.Type.*
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -23,12 +22,12 @@ import community.flock.wirespec.compiler.utils.noLogger
 open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emitter(logger) {
 
     override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> identifier.emit(Class)
-        is Enum -> identifier.emit(Class)
-        is Refined -> identifier.emit(Class)
-        is Type -> identifier.emit(Class)
-        is Union -> identifier.emit(Class)
-        is Channel -> identifier.emit(Class)
+        is Endpoint -> emit(identifier)
+        is Enum -> emit(identifier)
+        is Refined -> emit(identifier)
+        is Type -> emit(identifier)
+        is Union -> emit(identifier)
+        is Channel -> emit(identifier)
     }
 
     override fun notYetImplemented() =
@@ -59,10 +58,10 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
     override fun Type.Shape.emit() = value.joinToString(",\n") { it.emit() }
 
     internal fun Endpoint.Segment.Param.emit() =
-        "${Spacer}\"${identifier.emit(Field)}\": ${reference.emit()}"
+        "${Spacer}\"${emit(identifier)}\": ${reference.emit()}"
 
     override fun Field.emit() =
-        "${Spacer}\"${identifier.emit(Field)}\"${if (isNullable) "?" else ""}: ${reference.emit()}"
+        "${Spacer}\"${emit(identifier)}\"${if (isNullable) "?" else ""}: ${reference.emit()}"
 
     override fun Reference.emit() = when (this) {
         is Reference.Unit -> "void"
@@ -80,9 +79,9 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
 
     override fun emit(refined: Refined) =
         """export type ${refined.identifier.sanitizeSymbol()} = string;
-            |const regExp${refined.identifier.emit(Class)} = ${refined.validator.emit()};
-            |export const validate${refined.identifier.emit(Class)} = (value: string): value is ${refined.identifier.sanitizeSymbol()} => 
-            |${Spacer}regExp${refined.identifier.emit(Class)}.test(value);
+            |const regExp${emit(refined.identifier)} = ${refined.validator.emit()};
+            |export const validate${emit(refined.identifier)} = (value: string): value is ${refined.identifier.sanitizeSymbol()} => 
+            |${Spacer}regExp${emit(refined.identifier)}.test(value);
             |""".trimMargin()
 
     override fun Refined.Validator.emit() = value
@@ -113,6 +112,8 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
     override fun emit(union: Union) =
         "export type ${union.identifier.sanitizeSymbol()} = ${union.entries.joinToString(" | ") { it.emit() }}\n"
 
+    override fun emit(identifier: Identifier) = identifier.value
+
     override fun emit(channel: Channel) = notYetImplemented()
 
     private fun <E> List<E>.emitType(name: String, block: (E) -> String) =
@@ -138,10 +139,10 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
 
     private fun Endpoint.Request.emitFunction(endpoint: Endpoint) = """
       |${Spacer}export const request = (${paramList(endpoint).takeIf { it.isNotEmpty() }?.let { "props: ${it.joinToObject { it.emit() }}" }.orEmpty()}): Request => ({
-      |${Spacer(2)}path: ${endpoint.pathParams.joinToObject { "${it.identifier.emit(Field)}: props.${it.identifier.emit(Field)}" }},
+      |${Spacer(2)}path: ${endpoint.pathParams.joinToObject { "${emit(it.identifier)}: props.${emit(it.identifier)}" }},
       |${Spacer(2)}method: "${endpoint.method}",
-      |${Spacer(2)}queries: ${endpoint.queries.joinToObject { "${it.identifier.emit(Field)}: props.${it.identifier.emit(Field)}" }},
-      |${Spacer(2)}headers: ${endpoint.headers.joinToObject { "${it.identifier.emit(Field)}: props.${it.identifier.emit(Field)}" }},
+      |${Spacer(2)}queries: ${endpoint.queries.joinToObject { "${emit(it.identifier)}: props.${emit(it.identifier)}" }},
+      |${Spacer(2)}headers: ${endpoint.headers.joinToObject { "${emit(it.identifier)}: props.${emit(it.identifier)}" }},
       |${Spacer(2)}body: ${content?.let { "props.body" } ?: "undefined"},
       |${Spacer}})
     """.trimIndent()
@@ -149,7 +150,7 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
     private fun Endpoint.Response.emitFunction(endpoint: Endpoint) = """
       |${Spacer}export const response${status.firstToUpper()} = (${paramList().takeIf { it.isNotEmpty() }?.let { "props: ${it.joinToObject { it.emit() }}" }.orEmpty()}): Response${status.firstToUpper()} => ({
       |${Spacer(2)}status: ${status},
-      |${Spacer(2)}headers: ${endpoint.headers.joinToObject { "${it.identifier.emit(Field)}: props.${it.identifier.emit(Field)}" }},
+      |${Spacer(2)}headers: ${endpoint.headers.joinToObject { "${emit(it.identifier)}: props.${emit(it.identifier)}" }},
       |${Spacer(2)}body: ${content?.let { "props.body" } ?: "undefined"},
       |${Spacer}})
     """.trimIndent()
@@ -157,7 +158,7 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
     private fun <T> Iterable<T>.joinToObject(transform: ((T) -> CharSequence)) =
         joinToString(", ", "{", "}", transform = transform)
 
-    private fun Param.emit() = "${identifier.emit(Field)}${if (isNullable) "?" else ""}: ${reference.emit()}"
+    private fun Param.emit() = "${emit(identifier)}${if (isNullable) "?" else ""}: ${reference.emit()}"
 
     private fun Endpoint.Response.emitName() = "Response" + status.firstToUpper()
 
@@ -187,7 +188,7 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
     private fun Endpoint.emitPathArray() = path.joinToString(", ", "[", "]") {
         when (it) {
             is Endpoint.Segment.Literal -> """"${it.value}""""
-            is Endpoint.Segment.Param -> "serialization.serialize(request.path.${it.identifier})"
+            is Endpoint.Segment.Param -> "serialization.serialize(request.path.${emit(it.identifier)})"
         }
     }
 
@@ -254,11 +255,11 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
     """.trimMargin()
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialize() =
-        """${value.identifier.emit(Field)}: serialization.deserialize(request.path[${index}])"""
+        """${emit(value.identifier)}: serialization.deserialize(request.path[${index}])"""
 
     private fun Field.emitDeserialize(fields: String) =
-        """${identifier.emit(Field)}: serialization.deserialize(request.$fields.${identifier.emit(Field)})"""
+        """${emit(identifier)}: serialization.deserialize(request.$fields.${emit(identifier)})"""
 
     private fun Field.emitSerialize(fields: String) =
-        """${identifier.emit(Field)}: serialization.serialize(request.$fields.${identifier.emit(Field)})"""
+        """${emit(identifier)}: serialization.serialize(request.$fields.${emit(identifier)})"""
 }

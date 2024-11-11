@@ -13,7 +13,7 @@ sealed interface Definition : Node {
 
 data class Type(
     override val comment: Comment?,
-    override val identifier: Identifier,
+    override val identifier: ClassIdentifier,
     val shape: Shape,
     val extends: List<Reference>,
 ) : Definition {
@@ -55,23 +55,23 @@ sealed interface Reference : Value<String> {
     }
 }
 
-data class Field(val identifier: Identifier, val reference: Reference, val isNullable: Boolean)
+data class Field(val identifier: FieldIdentifier, val reference: Reference, val isNullable: Boolean)
 
 data class Enum(
     override val comment: Comment?,
-    override val identifier: Identifier,
+    override val identifier: ClassIdentifier,
     val entries: Set<String>,
 ) : Definition
 
 data class Union(
     override val comment: Comment?,
-    override val identifier: Identifier,
+    override val identifier: ClassIdentifier,
     val entries: Set<Reference>,
 ) : Definition
 
 data class Refined(
     override val comment: Comment?,
-    override val identifier: Identifier,
+    override val identifier: ClassIdentifier,
     val validator: Validator,
 ) : Definition {
     data class Validator(override val value: String) : Value<String> {
@@ -81,7 +81,7 @@ data class Refined(
 
 data class Endpoint(
     override val comment: Comment?,
-    override val identifier: Identifier,
+    override val identifier: ClassIdentifier,
     val method: Method,
     val path: List<Segment>,
     val queries: List<Field>,
@@ -94,7 +94,7 @@ data class Endpoint(
     sealed interface Segment {
         data class Literal(override val value: String) : Value<String>, Segment
         data class Param(
-            val identifier: Identifier,
+            val identifier: FieldIdentifier,
             val reference: Reference
         ) : Segment
     }
@@ -106,7 +106,7 @@ data class Endpoint(
 
 data class Channel(
     override val comment: Comment?,
-    override val identifier: Identifier,
+    override val identifier: ClassIdentifier,
     val isNullable: Boolean,
     val reference: Reference,
 ) : Definition
@@ -114,26 +114,10 @@ data class Channel(
 @JvmInline
 value class Comment(override val value: String) : Value<String>
 
-class Identifier private constructor(override val value: String) : Value<String> {
-
-    enum class Type { Class, Field }
-
-    override fun toString(): String = value
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || this::class != other::class) return false
-
-        other as Identifier
-
-        return value == other.value
-    }
-
-    override fun hashCode(): Int = value.hashCode()
-
-    companion object {
-        operator fun invoke(value: String) = value
-            .removeBackticks()
-            .let(::Identifier)
-    }
+sealed class Identifier(name: String) : Value<String> {
+    override val value = name.removeBackticks()
 }
+
+data class ClassIdentifier(private val name: String) : Identifier(name)
+
+data class FieldIdentifier(private val name: String) : Identifier(name)

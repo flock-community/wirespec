@@ -7,8 +7,8 @@ import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Identifier
-import community.flock.wirespec.compiler.core.parse.Identifier.Type.Class
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -70,7 +70,7 @@ abstract class Emitter(
     internal fun Endpoint.Segment.emitMap() =
         when (this) {
             is Endpoint.Segment.Literal -> value
-            is Endpoint.Segment.Param -> "${'$'}{props.${identifier.emit(Class)}}"
+            is Endpoint.Segment.Param -> "${'$'}{props.${emit(identifier)}}"
         }
 
     internal val Endpoint.pathParams get() = path.filterIsInstance<Endpoint.Segment.Param>()
@@ -104,7 +104,7 @@ abstract class Emitter(
 
     private fun Endpoint.Content.toParam() = Param(
         type = ParamType.BODY,
-        identifier = Identifier("body"),
+        identifier = FieldIdentifier("body"),
         reference = reference,
         isNullable = isNullable
     )
@@ -121,7 +121,6 @@ abstract class Emitter(
         fun String.firstToLower() = replaceFirstChar(Char::lowercase)
         fun AST.needImports() = any { it is Endpoint || it is Enum || it is Refined }
         fun AST.hasEndpoints() = any { it is Endpoint }
-        fun String.isInt() = toIntOrNull() != null
         fun String.isStatusCode() = toIntOrNull()?.let { it in 0..599 } ?: false
         val internalClasses = setOf(
             "Request", "Response"

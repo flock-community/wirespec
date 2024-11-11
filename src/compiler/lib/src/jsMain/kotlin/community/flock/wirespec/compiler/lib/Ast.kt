@@ -3,11 +3,12 @@
 package community.flock.wirespec.compiler.lib
 
 import community.flock.wirespec.compiler.core.parse.Channel
+import community.flock.wirespec.compiler.core.parse.ClassIdentifier
 import community.flock.wirespec.compiler.core.parse.Comment
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
@@ -27,7 +28,7 @@ fun WsNode.consume(): Node =
 fun WsEndpoint.consume(): Endpoint =
     Endpoint(
         comment = comment?.let { Comment(it) },
-        identifier = Identifier(identifier),
+        identifier = ClassIdentifier(identifier),
         method = method.consume(),
         path = path.map { it.consume() },
         queries = query.map { it.consume() },
@@ -40,7 +41,10 @@ fun WsEndpoint.consume(): Endpoint =
 private fun WsSegment.consume() =
     when (this) {
         is WsLiteral -> Endpoint.Segment.Literal(value)
-        is WsParam -> Endpoint.Segment.Param(identifier.consume(), reference.consume())
+        is WsParam -> Endpoint.Segment.Param(
+            identifier = identifier.consume(),
+            reference = reference.consume()
+        )
     }
 
 private fun WsMethod.consume() = when (this) {
@@ -54,35 +58,36 @@ private fun WsMethod.consume() = when (this) {
     WsMethod.TRACE -> Endpoint.Method.TRACE
 }
 
-private fun WsIdentifier.consume() = Identifier(value)
+private fun WsClassIdentifier.consume() = ClassIdentifier(value)
+private fun WsFieldIdentifier.consume() = FieldIdentifier(value)
 
 private fun WsEnum.consume() = Enum(
-    identifier = Identifier(identifier),
+    identifier = ClassIdentifier(identifier),
     comment = comment?.let { Comment(it) },
     entries = entries.toSet()
 )
 
 private fun WsRefined.consume() = Refined(
-    identifier = Identifier(identifier),
+    identifier = ClassIdentifier(identifier),
     comment = comment?.let { Comment(it) },
     validator = Refined.Validator(validator)
 )
 
 private fun WsType.consume() = Type(
-    identifier = Identifier(identifier),
+    identifier = ClassIdentifier(identifier),
     comment = comment?.let { Comment(it) },
     shape = Type.Shape(shape.value.map { it.consume() }),
     extends = emptyList(),
 )
 
 private fun WsUnion.consume() = Union(
-    identifier = Identifier(identifier),
+    identifier = ClassIdentifier(identifier),
     comment = comment?.let { Comment(it) },
     entries = entries.map { it.consume() }.toSet()
 )
 
 private fun WsChannel.consume() = Channel(
-    identifier = Identifier(identifier),
+    identifier = ClassIdentifier(identifier),
     comment = comment?.let { Comment(it) },
     reference = reference.consume(),
     isNullable = isNullable
@@ -213,7 +218,8 @@ private fun Field.produce() = WsField(identifier.produce(), reference.produce(),
 
 private fun List<Field>.produce() = map { it.produce() }.toTypedArray()
 
-private fun Identifier.produce() = WsIdentifier(value)
+private fun ClassIdentifier.produce() = WsClassIdentifier(value)
+private fun FieldIdentifier.produce() = WsFieldIdentifier(value)
 
 private fun Reference.produce() = when (this) {
     is Reference.Any -> WsAny(isIterable, isDictionary)
@@ -322,7 +328,7 @@ data class WsLiteral(val value: String) : WsSegment
 
 @JsExport
 data class WsParam(
-    val identifier: WsIdentifier,
+    val identifier: WsFieldIdentifier,
     val reference: WsReference
 ) : WsSegment
 
@@ -331,10 +337,16 @@ data class WsParam(
 data class Shape(val value: Array<WsField>)
 
 @JsExport
-data class WsField(val identifier: WsIdentifier, val reference: WsReference, val isNullable: Boolean)
+data class WsField(val identifier: WsFieldIdentifier, val reference: WsReference, val isNullable: Boolean)
 
 @JsExport
-data class WsIdentifier(val value: String)
+sealed interface WsIdentifier
+
+@JsExport
+data class WsClassIdentifier(val value: String) : WsIdentifier
+
+@JsExport
+data class WsFieldIdentifier(val value: String) : WsIdentifier
 
 @JsExport
 sealed interface WsReference {

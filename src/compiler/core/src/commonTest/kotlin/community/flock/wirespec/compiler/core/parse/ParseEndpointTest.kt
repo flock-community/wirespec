@@ -120,7 +120,7 @@ class ParseEndpointTest {
                 method shouldBe GET
                 path shouldBe listOf(
                     Literal("todos"), Endpoint.Segment.Param(
-                        identifier = Identifier("id"),
+                        identifier = FieldIdentifier("id"),
                         reference = Primitive(
                             type = String,
                             isIterable = false,

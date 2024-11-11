@@ -2,10 +2,11 @@ package community.flock.wirespec.openapi.v3
 
 import com.goncalossilva.resources.Resource
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPI
+import community.flock.wirespec.compiler.core.parse.ClassIdentifier
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.Type
@@ -27,16 +28,16 @@ class OpenApiV3ParserTest {
         val expect = listOf(
             Enum(
                 comment = null,
-                identifier = Identifier("FindPetsByStatusParameterStatus"),
+                identifier = ClassIdentifier("FindPetsByStatusParameterStatus"),
                 entries = setOf("available", "pending", "sold")
             ),
             Type(
                 comment = null,
-                identifier = Identifier("Order"),
+                identifier = ClassIdentifier("Order"),
                 shape = Shape(
                     value = listOf(
                         Field(
-                            identifier = Identifier("id"),
+                            identifier = FieldIdentifier("id"),
                             reference = Primitive(
                                 type = Primitive.Type.Integer,
                                 isIterable = false,
@@ -45,7 +46,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("petId"),
+                            identifier = FieldIdentifier("petId"),
                             reference = Primitive(
                                 type = Primitive.Type.Integer,
                                 isIterable = false,
@@ -54,7 +55,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("quantity"),
+                            identifier = FieldIdentifier("quantity"),
                             reference = Primitive(
                                 type = Primitive.Type.Integer,
                                 isIterable = false,
@@ -63,7 +64,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("shipDate"),
+                            identifier = FieldIdentifier("shipDate"),
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = false,
@@ -72,7 +73,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("status"),
+                            identifier = FieldIdentifier("status"),
                             reference = Reference.Custom(
                                 value = "OrderStatus",
                                 isIterable = false,
@@ -81,7 +82,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("complete"),
+                            identifier = FieldIdentifier("complete"),
                             reference = Primitive(
                                 type = Primitive.Type.Boolean,
                                 isIterable = false,
@@ -95,16 +96,16 @@ class OpenApiV3ParserTest {
             ),
             Enum(
                 comment = null,
-                identifier = Identifier("OrderStatus"),
+                identifier = ClassIdentifier("OrderStatus"),
                 entries = setOf("placed", "approved", "delivered"),
             ),
             Type(
                 comment = null,
-                identifier = Identifier("Customer"),
+                identifier = ClassIdentifier("Customer"),
                 shape = Shape(
                     value = listOf(
                         Field(
-                            identifier = Identifier("id"),
+                            identifier = FieldIdentifier("id"),
                             reference = Primitive(
                                 type = Primitive.Type.Integer,
                                 isIterable = false,
@@ -113,7 +114,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("username"),
+                            identifier = FieldIdentifier("username"),
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = false,
@@ -122,7 +123,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("address"),
+                            identifier = FieldIdentifier("address"),
                             reference = Reference.Custom(value = "Address", isIterable = true, isDictionary = false),
                             isNullable = true
                         )
@@ -132,11 +133,11 @@ class OpenApiV3ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = Identifier("Address"),
+                identifier = ClassIdentifier("Address"),
                 shape = Shape(
                     value = listOf(
                         Field(
-                            identifier = Identifier("street"),
+                            identifier = FieldIdentifier("street"),
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = false,
@@ -145,7 +146,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("city"),
+                            identifier = FieldIdentifier("city"),
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = false,
@@ -154,7 +155,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("state"),
+                            identifier = FieldIdentifier("state"),
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = false,
@@ -163,7 +164,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("zip"),
+                            identifier = FieldIdentifier("zip"),
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = false,
@@ -177,11 +178,11 @@ class OpenApiV3ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = Identifier("Category"),
+                identifier = ClassIdentifier("Category"),
                 shape = Shape(
                     value = listOf(
                         Field(
-                            identifier = Identifier("id"),
+                            identifier = FieldIdentifier("id"),
                             reference = Primitive(
                                 type = Primitive.Type.Integer,
                                 isIterable = false,
@@ -190,7 +191,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("name"),
+                            identifier = FieldIdentifier("name"),
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = false,
@@ -204,11 +205,11 @@ class OpenApiV3ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = Identifier("User"),
+                identifier = ClassIdentifier("User"),
                 shape = Shape(
                     value = listOf(
                         Field(
-                            identifier = Identifier("id"),
+                            identifier = FieldIdentifier("id"),
                             reference = Primitive(
                                 type = Primitive.Type.Integer,
                                 isIterable = false,
@@ -217,7 +218,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("username"),
+                            identifier = FieldIdentifier("username"),
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = false,
@@ -226,7 +227,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("firstName"),
+                            identifier = FieldIdentifier("firstName"),
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = false,
@@ -235,7 +236,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("lastName"),
+                            identifier = FieldIdentifier("lastName"),
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = false,
@@ -244,7 +245,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("email"),
+                            identifier = FieldIdentifier("email"),
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = false,
@@ -253,7 +254,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("password"),
+                            identifier = FieldIdentifier("password"),
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = false,
@@ -262,7 +263,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("phone"),
+                            identifier = FieldIdentifier("phone"),
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = false,
@@ -271,7 +272,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("userStatus"),
+                            identifier = FieldIdentifier("userStatus"),
                             reference = Primitive(
                                 type = Primitive.Type.Integer,
                                 isIterable = false,
@@ -285,11 +286,11 @@ class OpenApiV3ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = Identifier("Tag"),
+                identifier = ClassIdentifier("Tag"),
                 shape = Shape(
                     value = listOf(
                         Field(
-                            identifier = Identifier("id"),
+                            identifier = FieldIdentifier("id"),
                             reference = Primitive(
                                 type = Primitive.Type.Integer,
                                 isIterable = false,
@@ -298,7 +299,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("name"),
+                            identifier = FieldIdentifier("name"),
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = false,
@@ -312,11 +313,11 @@ class OpenApiV3ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = Identifier("Pet"),
+                identifier = ClassIdentifier("Pet"),
                 shape = Shape(
                     value = listOf(
                         Field(
-                            identifier = Identifier("id"),
+                            identifier = FieldIdentifier("id"),
                             reference = Primitive(
                                 type = Primitive.Type.Integer,
                                 isIterable = false,
@@ -325,7 +326,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("name"),
+                            identifier = FieldIdentifier("name"),
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = false,
@@ -334,7 +335,7 @@ class OpenApiV3ParserTest {
                             isNullable = false
                         ),
                         Field(
-                            identifier = Identifier("category"),
+                            identifier = FieldIdentifier("category"),
                             reference = Reference.Custom(
                                 value = "Category",
                                 isIterable = false,
@@ -343,7 +344,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("photoUrls"),
+                            identifier = FieldIdentifier("photoUrls"),
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = true,
@@ -352,7 +353,7 @@ class OpenApiV3ParserTest {
                             isNullable = false
                         ),
                         Field(
-                            identifier = Identifier("tags"),
+                            identifier = FieldIdentifier("tags"),
                             reference = Reference.Custom(
                                 value = "Tag",
                                 isIterable = true,
@@ -361,7 +362,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("status"),
+                            identifier = FieldIdentifier("status"),
                             reference = Reference.Custom(
                                 value = "PetStatus",
                                 isIterable = false,
@@ -375,16 +376,16 @@ class OpenApiV3ParserTest {
             ),
             Enum(
                 comment = null,
-                identifier = Identifier("PetStatus"),
+                identifier = ClassIdentifier("PetStatus"),
                 entries = setOf("available", "pending", "sold"),
             ),
             Type(
                 comment = null,
-                identifier = Identifier("ApiResponse"),
+                identifier = ClassIdentifier("ApiResponse"),
                 shape = Shape(
                     value = listOf(
                         Field(
-                            identifier = Identifier("code"),
+                            identifier = FieldIdentifier("code"),
                             reference = Primitive(
                                 type = Primitive.Type.Integer,
                                 isIterable = false,
@@ -393,7 +394,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("type"),
+                            identifier = FieldIdentifier("type"),
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = false,
@@ -402,7 +403,7 @@ class OpenApiV3ParserTest {
                             isNullable = true
                         ),
                         Field(
-                            identifier = Identifier("message"),
+                            identifier = FieldIdentifier("message"),
                             reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = false,
@@ -423,7 +424,7 @@ class OpenApiV3ParserTest {
 
         val expectedEndpoint = Endpoint(
             comment = null,
-            identifier = Identifier("GetInventory"),
+            identifier = ClassIdentifier("GetInventory"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "store"), Endpoint.Segment.Literal(value = "inventory")),
             queries = emptyList(),
@@ -455,12 +456,12 @@ class OpenApiV3ParserTest {
         val expect = listOf(
             Endpoint(
                 comment = null,
-                identifier = Identifier("PizzasPizzaIdIngredientsGET"),
+                identifier = ClassIdentifier("PizzasPizzaIdIngredientsGET"),
                 method = Endpoint.Method.GET,
                 path = listOf(
                     Endpoint.Segment.Literal("pizzas"),
                     Endpoint.Segment.Param(
-                        Identifier("pizzaId"),
+                        FieldIdentifier("pizzaId"),
                         Primitive(type = Primitive.Type.String, isIterable = false)
                     ),
                     Endpoint.Segment.Literal("ingredients"),
@@ -486,12 +487,12 @@ class OpenApiV3ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = Identifier("Ingredient"),
+                identifier = ClassIdentifier("Ingredient"),
                 shape = Shape(
                     listOf(
-                        Field(Identifier("id"), Primitive(Primitive.Type.String, false), true),
-                        Field(Identifier("name"), Primitive(Primitive.Type.String, false), true),
-                        Field(Identifier("quantity"), Primitive(Primitive.Type.String, false), true),
+                        Field(FieldIdentifier("id"), Primitive(Primitive.Type.String, false), true),
+                        Field(FieldIdentifier("name"), Primitive(Primitive.Type.String, false), true),
+                        Field(FieldIdentifier("quantity"), Primitive(Primitive.Type.String, false), true),
                     )
                 ),
                 extends = emptyList(),
@@ -512,16 +513,16 @@ class OpenApiV3ParserTest {
         val expect = listOf(
             Endpoint(
                 comment = null,
-                identifier = Identifier("TodosList"),
+                identifier = ClassIdentifier("TodosList"),
                 method = Endpoint.Method.GET,
                 path = listOf(
                     Endpoint.Segment.Literal("todos")
                 ),
                 queries = listOf(
-                    Field(Identifier("completed"), Primitive(type = Primitive.Type.Boolean, isIterable = false), true)
+                    Field(FieldIdentifier("completed"), Primitive(type = Primitive.Type.Boolean, isIterable = false), true)
                 ),
                 headers = listOf(
-                    Field(Identifier("x-user"), Primitive(type = Primitive.Type.Boolean, isIterable = false), true)
+                    Field(FieldIdentifier("x-user"), Primitive(type = Primitive.Type.Boolean, isIterable = false), true)
                 ),
                 cookies = listOf(),
                 requests = listOf(
@@ -542,14 +543,14 @@ class OpenApiV3ParserTest {
             ),
             Endpoint(
                 comment = null,
-                identifier = Identifier("TodosPOST"),
+                identifier = ClassIdentifier("TodosPOST"),
                 method = Endpoint.Method.POST,
                 path = listOf(
                     Endpoint.Segment.Literal("todos"),
                 ),
                 queries = listOf(),
                 headers = listOf(
-                    Field(Identifier("x-user"), Primitive(type = Primitive.Type.Boolean, isIterable = false), true)
+                    Field(FieldIdentifier("x-user"), Primitive(type = Primitive.Type.Boolean, isIterable = false), true)
                 ),
                 cookies = listOf(),
                 requests = listOf(
@@ -587,11 +588,11 @@ class OpenApiV3ParserTest {
             ),
             Endpoint(
                 comment = null,
-                identifier = Identifier("TodosIdGET"),
+                identifier = ClassIdentifier("TodosIdGET"),
                 method = Endpoint.Method.GET,
                 path = listOf(
                     Endpoint.Segment.Literal("todos"),
-                    Endpoint.Segment.Param(Identifier("id"), Primitive(Primitive.Type.String, false))
+                    Endpoint.Segment.Param(FieldIdentifier("id"), Primitive(Primitive.Type.String, false))
                 ),
                 queries = listOf(),
                 headers = listOf(),
@@ -622,69 +623,69 @@ class OpenApiV3ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = Identifier("Todo_input"),
+                identifier = ClassIdentifier("Todo_input"),
                 shape = Shape(
                     listOf(
-                        Field(Identifier("title"), Primitive(Primitive.Type.String, false), true),
-                        Field(Identifier("completed"), Primitive(Primitive.Type.Boolean, false), true)
+                        Field(FieldIdentifier("title"), Primitive(Primitive.Type.String, false), true),
+                        Field(FieldIdentifier("completed"), Primitive(Primitive.Type.Boolean, false), true)
                     )
                 ),
                 extends = emptyList(),
             ),
             Type(
                 comment = null,
-                identifier = Identifier("Todo"),
+                identifier = ClassIdentifier("Todo"),
                 shape = Shape(
                     listOf(
-                        Field(Identifier("id"), Primitive(Primitive.Type.String, false), true),
-                        Field(Identifier("title"), Primitive(Primitive.Type.String, false), true),
-                        Field(Identifier("completed"), Primitive(Primitive.Type.Boolean, false), true),
-                        Field(Identifier("alert"), Reference.Custom("TodoAlert", false), true),
+                        Field(FieldIdentifier("id"), Primitive(Primitive.Type.String, false), true),
+                        Field(FieldIdentifier("title"), Primitive(Primitive.Type.String, false), true),
+                        Field(FieldIdentifier("completed"), Primitive(Primitive.Type.Boolean, false), true),
+                        Field(FieldIdentifier("alert"), Reference.Custom("TodoAlert", false), true),
                     )
                 ),
                 extends = emptyList(),
             ),
             Type(
                 comment = null,
-                identifier = Identifier("TodoAlert"),
+                identifier = ClassIdentifier("TodoAlert"),
                 shape = Shape(
                     listOf(
-                        Field(Identifier("code"), Primitive(Primitive.Type.String, false), true),
-                        Field(Identifier("message"), Reference.Custom("TodoAlertMessage", false), true),
+                        Field(FieldIdentifier("code"), Primitive(Primitive.Type.String, false), true),
+                        Field(FieldIdentifier("message"), Reference.Custom("TodoAlertMessage", false), true),
                     )
                 ),
                 extends = emptyList(),
             ),
             Type(
                 comment = null,
-                identifier = Identifier("TodoAlertMessage"),
+                identifier = ClassIdentifier("TodoAlertMessage"),
                 shape = Shape(
                     listOf(
-                        Field(Identifier("key"), Primitive(Primitive.Type.String, false), true),
-                        Field(Identifier("value"), Primitive(Primitive.Type.String, false), true),
+                        Field(FieldIdentifier("key"), Primitive(Primitive.Type.String, false), true),
+                        Field(FieldIdentifier("value"), Primitive(Primitive.Type.String, false), true),
                     )
                 ),
                 extends = emptyList(),
             ),
             Type(
                 comment = null,
-                identifier = Identifier("TodosnestedArray"),
+                identifier = ClassIdentifier("TodosnestedArray"),
                 shape = Shape(
                     listOf(
-                        Field(Identifier("id"), Primitive(Primitive.Type.String, false), true),
-                        Field(Identifier("title"), Primitive(Primitive.Type.String, false), true),
-                        Field(Identifier("nested"), Primitive(Primitive.Type.Boolean, false), true),
+                        Field(FieldIdentifier("id"), Primitive(Primitive.Type.String, false), true),
+                        Field(FieldIdentifier("title"), Primitive(Primitive.Type.String, false), true),
+                        Field(FieldIdentifier("nested"), Primitive(Primitive.Type.Boolean, false), true),
                     )
                 ),
                 extends = emptyList(),
             ),
             Type(
                 comment = null,
-                identifier = Identifier("Error"),
+                identifier = ClassIdentifier("Error"),
                 shape = Shape(
                     listOf(
-                        Field(Identifier("code"), Primitive(Primitive.Type.String, false), true),
-                        Field(Identifier("message"), Primitive(Primitive.Type.String, false), true),
+                        Field(FieldIdentifier("code"), Primitive(Primitive.Type.String, false), true),
+                        Field(FieldIdentifier("message"), Primitive(Primitive.Type.String, false), true),
                     )
                 ),
                 extends = emptyList(),

@@ -1,9 +1,10 @@
 package community.flock.wirespec.openapi.common
 
+import community.flock.wirespec.compiler.core.parse.ClassIdentifier
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
@@ -13,7 +14,7 @@ object Expected {
     val objectInRequest = listOf(
         Endpoint(
             comment = null,
-            identifier = Identifier("TestWithDashGET"),
+            identifier = ClassIdentifier("TestWithDashGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "test-with-dash")),
             queries = emptyList(),
@@ -42,16 +43,16 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = Identifier("TestWithDashGETRequestBody"),
+            identifier = ClassIdentifier("TestWithDashGETRequestBody"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
-                        identifier = Identifier("id"),
+                        identifier = FieldIdentifier("id"),
                         reference = Reference.Primitive(type = Reference.Primitive.Type.String, isIterable = false),
                         isNullable = true
                     ),
                     Field(
-                        identifier = Identifier("nest"),
+                        identifier = FieldIdentifier("nest"),
                         reference = Reference.Custom(value = "TestWithDashGETRequestBodyNest", isIterable = false),
                         isNullable = true
                     )
@@ -61,16 +62,16 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = Identifier("TestWithDashGETRequestBodyNest"),
+            identifier = ClassIdentifier("TestWithDashGETRequestBodyNest"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
-                        identifier = Identifier("a"),
+                        identifier = FieldIdentifier("a"),
                         reference = Reference.Primitive(type = Reference.Primitive.Type.Number, isIterable = false),
                         isNullable = true
                     ),
                     Field(
-                        identifier = Identifier("b"),
+                        identifier = FieldIdentifier("b"),
                         reference = Reference.Primitive(type = Reference.Primitive.Type.Number, isIterable = false),
                         isNullable = true
                     )
@@ -82,7 +83,7 @@ object Expected {
     val objectInResponse = listOf(
         Endpoint(
             comment = null,
-            identifier = Identifier("Test"),
+            identifier = ClassIdentifier("Test"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "test")),
             queries = emptyList(),
@@ -110,11 +111,11 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = Identifier("Test200ApplicationJsonResponseBody"),
+            identifier = ClassIdentifier("Test200ApplicationJsonResponseBody"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
-                        identifier = Identifier("id"),
+                        identifier = FieldIdentifier("id"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isIterable = false
@@ -122,7 +123,7 @@ object Expected {
                         isNullable = true
                     ),
                     Field(
-                        identifier = Identifier("nest"),
+                        identifier = FieldIdentifier("nest"),
                         reference = Reference.Custom(
                             value = "Test200ApplicationJsonResponseBodyNest",
                             isIterable = false
@@ -135,11 +136,11 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = Identifier("Test200ApplicationJsonResponseBodyNest"),
+            identifier = ClassIdentifier("Test200ApplicationJsonResponseBodyNest"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
-                        identifier = Identifier("a"),
+                        identifier = FieldIdentifier("a"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number,
                             isIterable = false
@@ -147,7 +148,7 @@ object Expected {
                         isNullable = true
                     ),
                     Field(
-                        identifier = Identifier("b"),
+                        identifier = FieldIdentifier("b"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number,
                             isIterable = false
@@ -162,7 +163,7 @@ object Expected {
     val additionalProperties = listOf(
         Endpoint(
             comment = null,
-            identifier = Identifier("AdditionalProperties"),
+            identifier = ClassIdentifier("AdditionalProperties"),
             method = Endpoint.Method.GET,
             path = listOf(
                 Endpoint.Segment.Literal(value = "additional"),
@@ -216,11 +217,11 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = Identifier("AdditionalProperties404ApplicationJsonResponseBody"),
+            identifier = ClassIdentifier("AdditionalProperties404ApplicationJsonResponseBody"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
-                        identifier = Identifier("code"),
+                        identifier = FieldIdentifier("code"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Integer,
                             isIterable = false
@@ -228,7 +229,7 @@ object Expected {
                         isNullable = true
                     ),
                     Field(
-                        identifier = Identifier("text"),
+                        identifier = FieldIdentifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isIterable = false
@@ -241,11 +242,11 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = Identifier("Message"),
+            identifier = ClassIdentifier("Message"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
-                        identifier = Identifier("code"),
+                        identifier = FieldIdentifier("code"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Integer,
                             isIterable = false
@@ -253,7 +254,7 @@ object Expected {
                         isNullable = true
                     ),
                     Field(
-                        identifier = Identifier("text"),
+                        identifier = FieldIdentifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isIterable = false
@@ -268,7 +269,7 @@ object Expected {
     val array = listOf(
         Endpoint(
             comment = null,
-            identifier = Identifier("ArrayGET"),
+            identifier = ClassIdentifier("ArrayGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "array")),
             queries = emptyList(),
@@ -323,11 +324,11 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = Identifier("ArrayGET200ApplicationJsonResponseBody"),
+            identifier = ClassIdentifier("ArrayGET200ApplicationJsonResponseBody"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
-                        identifier = Identifier("code"),
+                        identifier = FieldIdentifier("code"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number,
                             isIterable = false
@@ -335,7 +336,7 @@ object Expected {
                         isNullable = true
                     ),
                     Field(
-                        identifier = Identifier("text"),
+                        identifier = FieldIdentifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isIterable = false
@@ -348,11 +349,11 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = Identifier("MessageArray"),
+            identifier = ClassIdentifier("MessageArray"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
-                        identifier = Identifier("code"),
+                        identifier = FieldIdentifier("code"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number,
                             isIterable = false
@@ -360,7 +361,7 @@ object Expected {
                         isNullable = true
                     ),
                     Field(
-                        identifier = Identifier("text"),
+                        identifier = FieldIdentifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isIterable = false
@@ -376,7 +377,7 @@ object Expected {
     val allOf = listOf(
         Endpoint(
             comment = null,
-            identifier = Identifier("AllofGET"),
+            identifier = ClassIdentifier("AllofGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "allof")),
             queries = emptyList(),
@@ -405,11 +406,11 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = Identifier("AllofGET200ApplicationJsonResponseBody"),
+            identifier = ClassIdentifier("AllofGET200ApplicationJsonResponseBody"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
-                        identifier = Identifier("a"),
+                        identifier = FieldIdentifier("a"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isIterable = false
@@ -417,7 +418,7 @@ object Expected {
                         isNullable = true
                     ),
                     Field(
-                        identifier = Identifier("b"),
+                        identifier = FieldIdentifier("b"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isIterable = false
@@ -425,7 +426,7 @@ object Expected {
                         isNullable = false
                     ),
                     Field(
-                        identifier = Identifier("c"),
+                        identifier = FieldIdentifier("c"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isIterable = false
@@ -433,7 +434,7 @@ object Expected {
                         isNullable = true
                     ),
                     Field(
-                        identifier = Identifier("d"),
+                        identifier = FieldIdentifier("d"),
                         reference = Reference.Custom(
                             value = "AllofGET200ApplicationJsonResponseBodyD",
                             isIterable = false
@@ -446,11 +447,11 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = Identifier("AllofGET200ApplicationJsonResponseBodyD"),
+            identifier = ClassIdentifier("AllofGET200ApplicationJsonResponseBodyD"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
-                        identifier = Identifier("e"),
+                        identifier = FieldIdentifier("e"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isIterable = false,
@@ -464,11 +465,11 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = Identifier("Foo"),
+            identifier = ClassIdentifier("Foo"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
-                        identifier = Identifier("a"),
+                        identifier = FieldIdentifier("a"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isIterable = false
@@ -481,11 +482,11 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = Identifier("Bar"),
+            identifier = ClassIdentifier("Bar"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
-                        identifier = Identifier("b"),
+                        identifier = FieldIdentifier("b"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isIterable = false
@@ -501,7 +502,7 @@ object Expected {
     val oneOf = listOf(
         Endpoint(
             comment = null,
-            identifier = Identifier("OneofGET"),
+            identifier = ClassIdentifier("OneofGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "oneof")),
             queries = emptyList(),
@@ -530,7 +531,7 @@ object Expected {
         ),
         Union(
             comment = null,
-            identifier = Identifier("OneofGET200ApplicationJsonResponseBody"),
+            identifier = ClassIdentifier("OneofGET200ApplicationJsonResponseBody"),
             entries = setOf(
                 Reference.Custom(value = "Foo", isIterable = false, isDictionary = false),
                 Reference.Custom(value = "Bar", isIterable = false, isDictionary = false),
@@ -548,11 +549,11 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = Identifier("OneofGET200ApplicationJsonResponseBody2"),
+            identifier = ClassIdentifier("OneofGET200ApplicationJsonResponseBody2"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
-                        identifier = Identifier("c"),
+                        identifier = FieldIdentifier("c"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isIterable = false,
@@ -566,11 +567,11 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = Identifier("OneofGET200ApplicationJsonResponseBody3"),
+            identifier = ClassIdentifier("OneofGET200ApplicationJsonResponseBody3"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
-                        identifier = Identifier("d"),
+                        identifier = FieldIdentifier("d"),
                         reference = Reference.Custom(
                             value = "OneofGET200ApplicationJsonResponseBody3D",
                             isIterable = false,
@@ -584,11 +585,11 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = Identifier("OneofGET200ApplicationJsonResponseBody3D"),
+            identifier = ClassIdentifier("OneofGET200ApplicationJsonResponseBody3D"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
-                        identifier = Identifier(
+                        identifier = FieldIdentifier(
                             "e"
                         ), reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
@@ -603,11 +604,11 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = Identifier("Foo"),
+            identifier = ClassIdentifier("Foo"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
-                        identifier = Identifier("a"),
+                        identifier = FieldIdentifier("a"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isIterable = false
@@ -620,11 +621,11 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = Identifier("Bar"),
+            identifier = ClassIdentifier("Bar"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
-                        identifier = Identifier("b"),
+                        identifier = FieldIdentifier("b"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isIterable = false
@@ -640,12 +641,12 @@ object Expected {
     val enum = listOf(
         Endpoint(
             comment = null,
-            identifier = Identifier("EnumGET"),
+            identifier = ClassIdentifier("EnumGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "enum")),
             queries = listOf(
                 Field(
-                    identifier = Identifier("order"),
+                    identifier = FieldIdentifier("order"),
                     reference = Reference.Custom(
                         value = "EnumGETParameterOrder",
                         isIterable = false,
@@ -688,16 +689,16 @@ object Expected {
         ),
         Enum(
             comment = null,
-            identifier = Identifier("EnumGETParameterOrder"),
+            identifier = ClassIdentifier("EnumGETParameterOrder"),
             entries = setOf("ASC", "DESC")
         ),
         Type(
             comment = null,
-            identifier = Identifier("EnumGET201ApplicationJsonResponseBody"),
+            identifier = ClassIdentifier("EnumGET201ApplicationJsonResponseBody"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
-                        identifier = Identifier("code"),
+                        identifier = FieldIdentifier("code"),
                         reference = Reference.Custom(
                             value = "EnumGET201ApplicationJsonResponseBodyCode",
                             isIterable = false
@@ -705,7 +706,7 @@ object Expected {
                         isNullable = false
                     ),
                     Field(
-                        identifier = Identifier("text"),
+                        identifier = FieldIdentifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isIterable = false
@@ -718,16 +719,16 @@ object Expected {
         ),
         Enum(
             comment = null,
-            identifier = Identifier("EnumGET201ApplicationJsonResponseBodyCode"),
+            identifier = ClassIdentifier("EnumGET201ApplicationJsonResponseBodyCode"),
             entries = setOf("WARNING", "ERROR")
         ),
         Type(
             comment = null,
-            identifier = Identifier("Message"),
+            identifier = ClassIdentifier("Message"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
-                        identifier = Identifier("code"),
+                        identifier = FieldIdentifier("code"),
                         reference = Reference.Custom(
                             value = "ErrorType",
                             isIterable = true
@@ -735,7 +736,7 @@ object Expected {
                         isNullable = false
                     ),
                     Field(
-                        identifier = Identifier("text"),
+                        identifier = FieldIdentifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isIterable = false
@@ -748,7 +749,7 @@ object Expected {
         ),
         Enum(
             comment = null,
-            identifier = Identifier("ErrorType"),
+            identifier = ClassIdentifier("ErrorType"),
             entries = setOf("WARNING", "ERROR")
         )
     )

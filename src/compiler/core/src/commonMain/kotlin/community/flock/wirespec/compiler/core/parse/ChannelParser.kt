@@ -21,12 +21,12 @@ class ChannelParser(logger: Logger) : AbstractParser(logger) {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is CustomType -> parseChannelDefinition(comment, Identifier(token.value)).bind()
+            is CustomType -> parseChannelDefinition(comment, ClassIdentifier(token.value)).bind()
             else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
         }
     }
 
-    private fun TokenProvider.parseChannelDefinition(comment: Comment?, identifier: Identifier) = either {
+    private fun TokenProvider.parseChannelDefinition(comment: Comment?, identifier: ClassIdentifier) = either {
         eatToken().bind()
 
         when (token.type) {
