@@ -106,22 +106,13 @@ class AvroJavaEmitter(packageName: String, logger: Logger) : JavaEmitter(package
             { index, field ->
                 when (val reference = field.reference) {
                     is Reference.Custom -> when {
-                        reference.isIterable -> "record.put(${index}, data.${field.identifier.emit(Identifier.Type.Field)}().stream().map(it -> ${field.reference.value}.Avro.to(it)).toList());"
-                        else -> "record.put(${index}, ${field.reference.emit()}.Avro.to(data.${
-                            field.identifier.emit(
-                                Identifier.Type.Field
-                            )
-                        }()));"
+                        reference.isIterable -> "record.put(${index}, data.${emit(field.identifier)}().stream().map(it -> ${field.reference.value}.Avro.to(it)).toList());"
+                        else -> "record.put(${index}, ${field.reference.emit()}.Avro.to(data.${emit(field.identifier)}()));"
                     }
 
                     is Reference.Primitive -> when {
-                        reference.origin == "bytes" -> "record.put(${index}, java.nio.ByteBuffer.wrap(data.${
-                            field.identifier.emit(
-                                Identifier.Type.Field
-                            )
-                        }().getBytes()));"
-
-                        else -> "record.put(${index}, data.${field.identifier.emit(Identifier.Type.Field)}()${if (field.isNullable) ".orElse(null)" else ""});"
+                        reference.origin == "bytes" -> "record.put(${index}, java.nio.ByteBuffer.wrap(data.${emit(field.identifier)}().getBytes()));"
+                        else -> "record.put(${index}, data.${emit(field.identifier)}()${if (field.isNullable) ".orElse(null)" else ""});"
                     }
 
                     else -> TODO()
