@@ -328,7 +328,7 @@ open class JavaEmitter(
         """${Spacer(4)}java.util.Optional.ofNullable(request.$fields().get("${identifier.value}")).map(it -> serialization.<${reference.emit()}>deserialize(it, Wirespec.getType(${reference.emitType()}.class, ${reference.isIterable})))${if(!isNullable) ".get()" else ""}"""
 
     private fun Field.emitSerializedMap(fields: String) =
-        """java.util.Map.entry("${identifier.value}", serialization.serialize(response.$fields.${identifier.emit(Field)}, Wirespec.getType(${reference.emitType()}.class, ${reference.isIterable})))"""
+        """java.util.Map.entry("${identifier.value}", serialization.serialize(response.$fields.${emit(identifier)}, Wirespec.getType(${reference.emitType()}.class, ${reference.isIterable})))"""
 
     private fun Endpoint.Segment.Param.emitIdentifier() = "serialization.serialize(request.path.${emit(identifier).firstToLower()}, Wirespec.getType(${reference.emitType()}.class, ${reference.isIterable}))"
 
@@ -338,8 +338,8 @@ open class JavaEmitter(
     private fun Endpoint.Segment.Param.emit() = "${reference.emit()} ${emit(identifier)}"
 
     private fun Reference.emitWrap(isNullable: Boolean): String = value
-        .let { if (isIterable) "java.util.Optional<$it>" else it }
-        .let { if (isNullable) "java.util.List<$it>" else it }
+        .let { if (isNullable) "java.util.Optional<$it>" else it }
+        .let { if (isIterable) "java.util.List<$it>" else it }
         .let { if (isDictionary) "java.util.Map<String, $it>" else it }
 
 
