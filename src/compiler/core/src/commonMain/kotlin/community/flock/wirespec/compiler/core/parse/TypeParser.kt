@@ -32,7 +32,7 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is CustomType -> parseTypeDefinition(comment, Identifier(token.value)).bind()
+            is CustomType -> parseTypeDefinition(comment, DefinitionIdentifier(token.value)).bind()
             else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
         }
     }
@@ -42,11 +42,11 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         token.log()
         when (token.type) {
             is CustomValue -> mutableListOf<Field>().apply {
-                add(parseField(Identifier(token.value)).bind())
+                add(parseField(FieldIdentifier(token.value)).bind())
                 while (token.type == Comma) {
                     eatToken().bind()
                     when (token.type) {
-                        is CustomValue -> add(parseField(Identifier(token.value)).bind())
+                        is CustomValue -> add(parseField(FieldIdentifier(token.value)).bind())
                         else -> raise(WrongTokenException<CustomValue>(token).also { eatToken().bind() })
                     }
                 }
@@ -117,7 +117,7 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         }
     }
 
-    private fun TokenProvider.parseTypeDefinition(comment: Comment?, typeName: Identifier) = either {
+    private fun TokenProvider.parseTypeDefinition(comment: Comment?, typeName: DefinitionIdentifier) = either {
         eatToken().bind()
         token.log()
         when (token.type) {
@@ -144,7 +144,7 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         }
     }
 
-    private fun TokenProvider.parseField(identifier: Identifier) = either {
+    private fun TokenProvider.parseField(identifier: FieldIdentifier) = either {
         eatToken().bind()
         token.log()
         when (token.type) {

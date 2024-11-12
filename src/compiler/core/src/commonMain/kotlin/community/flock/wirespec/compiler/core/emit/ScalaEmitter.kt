@@ -15,7 +15,6 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Identifier
-import community.flock.wirespec.compiler.core.parse.Identifier.Type.*
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -35,12 +34,12 @@ open class ScalaEmitter(
     """.trimMargin()
 
     override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> "${identifier.emit(Class)}Endpoint"
-        is Channel -> "${identifier.emit(Class)}Channel"
-        is Enum -> identifier.emit(Class)
-        is Refined -> identifier.emit(Class)
-        is Type -> identifier.emit(Class)
-        is Union -> identifier.emit(Class)
+        is Endpoint -> "${emit(identifier)}Endpoint"
+        is Channel -> "${emit(identifier)}Channel"
+        is Enum -> emit(identifier)
+        is Refined -> emit(identifier)
+        is Type -> emit(identifier)
+        is Union -> emit(identifier)
     }
 
     override fun notYetImplemented() =
@@ -70,9 +69,10 @@ open class ScalaEmitter(
     override fun Type.Shape.emit() = value.joinToString("\n") { it.emit() }.dropLast(1)
 
     override fun Field.emit() =
-        "${Spacer}val ${identifier.emit(Field)}: ${if (isNullable) "Option[${reference.emit()}]" else reference.emit()},"
+        "${Spacer}val ${emit(identifier)}: ${if (isNullable) "Option[${reference.emit()}]" else reference.emit()},"
 
-    override fun Identifier.emit(type: Identifier.Type) = if (value in reservedKeywords) value.addBackticks() else value
+    override fun emit(identifier: Identifier) =
+        identifier.run { if (value in reservedKeywords) value.addBackticks() else value }
 
     override fun emit(channel: Channel) = notYetImplemented()
 
@@ -94,8 +94,8 @@ open class ScalaEmitter(
         fun String.sanitize() = replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }
         """
         |sealed abstract class ${emitName()}(val label: String)
-        |object ${identifier.emit(Class)} {
-        |${entries.joinToString("\n") { """${Spacer}final case object ${it.sanitize().uppercase()} extends ${identifier.emit(Class)}(label = "$it")""" }}
+        |object ${emit(identifier)} {
+        |${entries.joinToString("\n") { """${Spacer}final case object ${it.sanitize().uppercase()} extends ${emit(identifier)}(label = "$it")""" }}
         |}
         |""".trimMargin()
     }

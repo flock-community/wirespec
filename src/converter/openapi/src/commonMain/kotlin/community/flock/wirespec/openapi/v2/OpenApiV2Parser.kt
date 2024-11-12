@@ -21,10 +21,11 @@ import community.flock.kotlinx.openapi.bindings.v2.StatusCode
 import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
+import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.openapi.Common.className
@@ -111,7 +112,7 @@ object OpenApiV2Parser {
                 listOf(
                     Endpoint(
                         comment = null,
-                        identifier = Identifier(name),
+                        identifier = DefinitionIdentifier(name),
                         method = method,
                         path = segments,
                         queries = query,
@@ -143,7 +144,7 @@ object OpenApiV2Parser {
                 parameter.enum != null -> listOf(
                     Enum(
                         comment = null,
-                        identifier = Identifier(className(name, "Parameter", parameter.name)),
+                        identifier = DefinitionIdentifier(className(name, "Parameter", parameter.name)),
                         entries = parameter.enum!!.map { it.content }.toSet()
                     )
                 )
@@ -280,7 +281,7 @@ object OpenApiV2Parser {
         schemaObject.allOf != null -> listOf(
             Type(
                 comment = null,
-                identifier = Identifier(name),
+                identifier = DefinitionIdentifier(name),
                 shape = Type.Shape(schemaObject.allOf
                     .orEmpty()
                     .flatMap {
@@ -307,7 +308,7 @@ object OpenApiV2Parser {
         schemaObject.enum != null -> schemaObject.enum!!
             .map { it.content }
             .toSet()
-            .let { listOf(Enum(comment = null, identifier = Identifier(name), entries = it)) }
+            .let { listOf(Enum(comment = null, identifier = DefinitionIdentifier(name), entries = it)) }
 
         else -> when (schemaObject.type) {
             null, OpenapiType.OBJECT -> {
@@ -317,7 +318,7 @@ object OpenApiV2Parser {
                 val schema = listOf(
                     Type(
                         comment = null,
-                        identifier = Identifier(name),
+                        identifier = DefinitionIdentifier(name),
                         shape = Type.Shape(toField(schemaObject, name)),
                         extends = emptyList(),
                     )
@@ -444,7 +445,7 @@ object OpenApiV2Parser {
 
     private fun SwaggerObject.toField(header: HeaderObject, identifier: String) =
         Field(
-            identifier = Identifier(identifier),
+            identifier = FieldIdentifier(identifier),
             reference = when (header.type) {
                 "array" -> header.items?.let { resolve(it) }?.let { toReference(it, identifier) }
                     ?: error("Item cannot be null")
@@ -459,7 +460,7 @@ object OpenApiV2Parser {
             when (value) {
                 is SchemaObject -> {
                     Field(
-                        identifier = Identifier(key),
+                        identifier = FieldIdentifier(key),
                         reference = when {
                             value.enum != null -> toReference(value, className(name, key))
                             value.type == OpenapiType.ARRAY -> toReference(value, className(name, key, "Array"))
@@ -471,7 +472,7 @@ object OpenApiV2Parser {
 
                 is ReferenceObject -> {
                     Field(
-                        identifier = Identifier(key),
+                        identifier = FieldIdentifier(key),
                         reference = toReference(value),
                         isNullable = !(schema.required?.contains(key) ?: false)
                     )
@@ -500,7 +501,7 @@ object OpenApiV2Parser {
                 }
 
             }
-        }.let { Field(Identifier(parameter.name), it, !(parameter.required ?: false)) }
+        }.let { Field(FieldIdentifier(parameter.name), it, !(parameter.required ?: false)) }
 
     private fun Path.toSegments(parameters: List<ParameterObject>) = value.split("/").drop(1).map { segment ->
         val isParam = segment.isNotEmpty() && segment[0] == '{' && segment[segment.length - 1] == '}'
@@ -512,7 +513,7 @@ object OpenApiV2Parser {
                     ?.let { it.type?.toPrimitive() }
                     ?.let {
                         Endpoint.Segment.Param(
-                            Identifier(param),
+                            FieldIdentifier(param),
                             Reference.Primitive(it, false)
                         )
                     }

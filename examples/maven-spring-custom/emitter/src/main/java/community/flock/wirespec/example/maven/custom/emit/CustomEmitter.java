@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.parse.Definition;
 import community.flock.wirespec.compiler.core.parse.Endpoint;
 import community.flock.wirespec.compiler.core.parse.Enum;
 import community.flock.wirespec.compiler.core.parse.Field;
+import community.flock.wirespec.compiler.core.parse.Identifier;
 import community.flock.wirespec.compiler.core.parse.Node;
 import community.flock.wirespec.compiler.core.parse.Reference;
 import community.flock.wirespec.compiler.core.parse.Refined;
@@ -27,7 +28,7 @@ public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
     @NotNull
     @Override
     public String emitName(@NotNull Definition definition) {
-        return definition.getIdentifier() + "Custom";
+        return emit(definition.getIdentifier()) + "Custom";
     }
 
     @NotNull
@@ -67,7 +68,7 @@ public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
 
     @NotNull
     @Override
-    public String emit(@NotNull Union aUnion) {
+    public String emit(@NotNull Union union) {
         return notYetImplemented();
     }
 
@@ -105,5 +106,11 @@ public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
     @Override
     public String emit(@NotNull Reference reference) {
         return notYetImplemented();
+    }
+
+    @NotNull
+    @Override
+    public String emit(@NotNull Identifier identifier) {
+        return identifier.getValue();
     }
 }
