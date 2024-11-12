@@ -2,7 +2,7 @@ package community.flock.wirespec.openapi.v3
 
 import com.goncalossilva.resources.Resource
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPI
-import community.flock.wirespec.compiler.core.parse.ClassIdentifier
+import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
@@ -28,12 +28,12 @@ class OpenApiV3ParserTest {
         val expect = listOf(
             Enum(
                 comment = null,
-                identifier = ClassIdentifier("FindPetsByStatusParameterStatus"),
+                identifier = DefinitionIdentifier("FindPetsByStatusParameterStatus"),
                 entries = setOf("available", "pending", "sold")
             ),
             Type(
                 comment = null,
-                identifier = ClassIdentifier("Order"),
+                identifier = DefinitionIdentifier("Order"),
                 shape = Shape(
                     value = listOf(
                         Field(
@@ -96,12 +96,12 @@ class OpenApiV3ParserTest {
             ),
             Enum(
                 comment = null,
-                identifier = ClassIdentifier("OrderStatus"),
+                identifier = DefinitionIdentifier("OrderStatus"),
                 entries = setOf("placed", "approved", "delivered"),
             ),
             Type(
                 comment = null,
-                identifier = ClassIdentifier("Customer"),
+                identifier = DefinitionIdentifier("Customer"),
                 shape = Shape(
                     value = listOf(
                         Field(
@@ -133,7 +133,7 @@ class OpenApiV3ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = ClassIdentifier("Address"),
+                identifier = DefinitionIdentifier("Address"),
                 shape = Shape(
                     value = listOf(
                         Field(
@@ -178,7 +178,7 @@ class OpenApiV3ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = ClassIdentifier("Category"),
+                identifier = DefinitionIdentifier("Category"),
                 shape = Shape(
                     value = listOf(
                         Field(
@@ -205,7 +205,7 @@ class OpenApiV3ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = ClassIdentifier("User"),
+                identifier = DefinitionIdentifier("User"),
                 shape = Shape(
                     value = listOf(
                         Field(
@@ -286,7 +286,7 @@ class OpenApiV3ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = ClassIdentifier("Tag"),
+                identifier = DefinitionIdentifier("Tag"),
                 shape = Shape(
                     value = listOf(
                         Field(
@@ -313,7 +313,7 @@ class OpenApiV3ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = ClassIdentifier("Pet"),
+                identifier = DefinitionIdentifier("Pet"),
                 shape = Shape(
                     value = listOf(
                         Field(
@@ -376,12 +376,12 @@ class OpenApiV3ParserTest {
             ),
             Enum(
                 comment = null,
-                identifier = ClassIdentifier("PetStatus"),
+                identifier = DefinitionIdentifier("PetStatus"),
                 entries = setOf("available", "pending", "sold"),
             ),
             Type(
                 comment = null,
-                identifier = ClassIdentifier("ApiResponse"),
+                identifier = DefinitionIdentifier("ApiResponse"),
                 shape = Shape(
                     value = listOf(
                         Field(
@@ -424,7 +424,7 @@ class OpenApiV3ParserTest {
 
         val expectedEndpoint = Endpoint(
             comment = null,
-            identifier = ClassIdentifier("GetInventory"),
+            identifier = DefinitionIdentifier("GetInventory"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "store"), Endpoint.Segment.Literal(value = "inventory")),
             queries = emptyList(),
@@ -456,7 +456,7 @@ class OpenApiV3ParserTest {
         val expect = listOf(
             Endpoint(
                 comment = null,
-                identifier = ClassIdentifier("PizzasPizzaIdIngredientsGET"),
+                identifier = DefinitionIdentifier("PizzasPizzaIdIngredientsGET"),
                 method = Endpoint.Method.GET,
                 path = listOf(
                     Endpoint.Segment.Literal("pizzas"),
@@ -487,7 +487,7 @@ class OpenApiV3ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = ClassIdentifier("Ingredient"),
+                identifier = DefinitionIdentifier("Ingredient"),
                 shape = Shape(
                     listOf(
                         Field(FieldIdentifier("id"), Primitive(Primitive.Type.String, false), true),
@@ -513,7 +513,7 @@ class OpenApiV3ParserTest {
         val expect = listOf(
             Endpoint(
                 comment = null,
-                identifier = ClassIdentifier("TodosList"),
+                identifier = DefinitionIdentifier("TodosList"),
                 method = Endpoint.Method.GET,
                 path = listOf(
                     Endpoint.Segment.Literal("todos")
@@ -543,7 +543,7 @@ class OpenApiV3ParserTest {
             ),
             Endpoint(
                 comment = null,
-                identifier = ClassIdentifier("TodosPOST"),
+                identifier = DefinitionIdentifier("TodosPOST"),
                 method = Endpoint.Method.POST,
                 path = listOf(
                     Endpoint.Segment.Literal("todos"),
@@ -588,7 +588,7 @@ class OpenApiV3ParserTest {
             ),
             Endpoint(
                 comment = null,
-                identifier = ClassIdentifier("TodosIdGET"),
+                identifier = DefinitionIdentifier("TodosIdGET"),
                 method = Endpoint.Method.GET,
                 path = listOf(
                     Endpoint.Segment.Literal("todos"),
@@ -623,7 +623,7 @@ class OpenApiV3ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = ClassIdentifier("Todo_input"),
+                identifier = DefinitionIdentifier("Todo_input"),
                 shape = Shape(
                     listOf(
                         Field(FieldIdentifier("title"), Primitive(Primitive.Type.String, false), true),
@@ -634,7 +634,7 @@ class OpenApiV3ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = ClassIdentifier("Todo"),
+                identifier = DefinitionIdentifier("Todo"),
                 shape = Shape(
                     listOf(
                         Field(FieldIdentifier("id"), Primitive(Primitive.Type.String, false), true),
@@ -647,7 +647,7 @@ class OpenApiV3ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = ClassIdentifier("TodoAlert"),
+                identifier = DefinitionIdentifier("TodoAlert"),
                 shape = Shape(
                     listOf(
                         Field(FieldIdentifier("code"), Primitive(Primitive.Type.String, false), true),
@@ -658,7 +658,7 @@ class OpenApiV3ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = ClassIdentifier("TodoAlertMessage"),
+                identifier = DefinitionIdentifier("TodoAlertMessage"),
                 shape = Shape(
                     listOf(
                         Field(FieldIdentifier("key"), Primitive(Primitive.Type.String, false), true),
@@ -669,7 +669,7 @@ class OpenApiV3ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = ClassIdentifier("TodosnestedArray"),
+                identifier = DefinitionIdentifier("TodosnestedArray"),
                 shape = Shape(
                     listOf(
                         Field(FieldIdentifier("id"), Primitive(Primitive.Type.String, false), true),
@@ -681,7 +681,7 @@ class OpenApiV3ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = ClassIdentifier("Error"),
+                identifier = DefinitionIdentifier("Error"),
                 shape = Shape(
                     listOf(
                         Field(FieldIdentifier("code"), Primitive(Primitive.Type.String, false), true),

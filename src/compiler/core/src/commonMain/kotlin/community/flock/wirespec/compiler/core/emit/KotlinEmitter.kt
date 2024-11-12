@@ -12,8 +12,8 @@ import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.orNull
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
-import community.flock.wirespec.compiler.core.parse.ClassIdentifier
 import community.flock.wirespec.compiler.core.parse.Definition
+import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
@@ -92,7 +92,7 @@ open class KotlinEmitter(
         .let { if (isDictionary) "Map<String, $it>" else it }
 
     override fun emit(identifier: Identifier) = when (identifier) {
-        is ClassIdentifier -> identifier.value.sanitizeSymbol().firstToUpper()
+        is DefinitionIdentifier -> identifier.value.sanitizeSymbol().firstToUpper()
         is FieldIdentifier -> identifier.value.sanitizeSymbol().firstToLower().sanitizeKeywords()
     }
 

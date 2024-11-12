@@ -32,7 +32,7 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is CustomType -> parseTypeDefinition(comment, ClassIdentifier(token.value)).bind()
+            is CustomType -> parseTypeDefinition(comment, DefinitionIdentifier(token.value)).bind()
             else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
         }
     }
@@ -117,7 +117,7 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         }
     }
 
-    private fun TokenProvider.parseTypeDefinition(comment: Comment?, typeName: ClassIdentifier) = either {
+    private fun TokenProvider.parseTypeDefinition(comment: Comment?, typeName: DefinitionIdentifier) = either {
         eatToken().bind()
         token.log()
         when (token.type) {

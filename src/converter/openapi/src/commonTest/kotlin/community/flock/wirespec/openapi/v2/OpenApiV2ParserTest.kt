@@ -2,7 +2,7 @@ package community.flock.wirespec.openapi.v2
 
 import com.goncalossilva.resources.Resource
 import community.flock.kotlinx.openapi.bindings.v2.OpenAPI
-import community.flock.wirespec.compiler.core.parse.ClassIdentifier
+import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
@@ -28,7 +28,7 @@ class OpenApiV2ParserTest {
         val expectedTypeDefinitions = listOf(
             Type(
                 comment = null,
-                identifier = ClassIdentifier("ApiResponse"),
+                identifier = DefinitionIdentifier("ApiResponse"),
                 shape = Shape(
                     value = listOf(
                         Field(
@@ -52,7 +52,7 @@ class OpenApiV2ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = ClassIdentifier("Category"),
+                identifier = DefinitionIdentifier("Category"),
                 shape = Shape(
                     value = listOf(
                         Field(
@@ -71,7 +71,7 @@ class OpenApiV2ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = ClassIdentifier("Pet"),
+                identifier = DefinitionIdentifier("Pet"),
                 shape = Shape(
                     value = listOf(
                         Field(
@@ -110,7 +110,7 @@ class OpenApiV2ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = ClassIdentifier("Tag"),
+                identifier = DefinitionIdentifier("Tag"),
                 shape = Shape(
                     value = listOf(
                         Field(
@@ -129,7 +129,7 @@ class OpenApiV2ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = ClassIdentifier("Order"),
+                identifier = DefinitionIdentifier("Order"),
                 shape = Shape(
                     value = listOf(
                         Field(
@@ -168,7 +168,7 @@ class OpenApiV2ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = ClassIdentifier("User"),
+                identifier = DefinitionIdentifier("User"),
                 shape = Shape(
                     value = listOf(
                         Field(
@@ -220,12 +220,12 @@ class OpenApiV2ParserTest {
         val expectedEnumDefinitions = listOf(
             Enum(
                 comment = null,
-                identifier = ClassIdentifier("PetStatus"),
+                identifier = DefinitionIdentifier("PetStatus"),
                 entries = setOf("available", "pending", "sold")
             ),
             Enum(
                 comment = null,
-                identifier = ClassIdentifier("OrderStatus"),
+                identifier = DefinitionIdentifier("OrderStatus"),
                 entries = setOf("placed", "approved", "delivered")
             )
         )
@@ -271,7 +271,7 @@ class OpenApiV2ParserTest {
         val expected = listOf(
             Endpoint(
                 comment = null,
-                identifier = ClassIdentifier("AlisaGET"),
+                identifier = DefinitionIdentifier("AlisaGET"),
                 method = Endpoint.Method.GET,
                 path = listOf(Endpoint.Segment.Literal(value = "alisa")),
                 queries = emptyList(),
@@ -292,7 +292,7 @@ class OpenApiV2ParserTest {
             ),
             Type(
                 comment = null,
-                identifier = ClassIdentifier("Foo"),
+                identifier = DefinitionIdentifier("Foo"),
                 shape = Shape(
                     value = listOf(
                         Field(

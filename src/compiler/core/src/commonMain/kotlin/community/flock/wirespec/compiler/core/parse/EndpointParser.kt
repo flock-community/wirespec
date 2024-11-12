@@ -33,12 +33,12 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is CustomType -> parseEndpointDefinition(comment, ClassIdentifier(token.value)).bind()
+            is CustomType -> parseEndpointDefinition(comment, DefinitionIdentifier(token.value)).bind()
             else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
         }
     }
 
-    private fun TokenProvider.parseEndpointDefinition(comment: Comment?, name: ClassIdentifier) = either {
+    private fun TokenProvider.parseEndpointDefinition(comment: Comment?, name: DefinitionIdentifier) = either {
         eatToken().bind()
         token.log()
         val method = when (token.type) {

@@ -13,7 +13,7 @@ sealed interface Definition : Node {
 
 data class Type(
     override val comment: Comment?,
-    override val identifier: ClassIdentifier,
+    override val identifier: DefinitionIdentifier,
     val shape: Shape,
     val extends: List<Reference>,
 ) : Definition {
@@ -59,19 +59,19 @@ data class Field(val identifier: FieldIdentifier, val reference: Reference, val 
 
 data class Enum(
     override val comment: Comment?,
-    override val identifier: ClassIdentifier,
+    override val identifier: DefinitionIdentifier,
     val entries: Set<String>,
 ) : Definition
 
 data class Union(
     override val comment: Comment?,
-    override val identifier: ClassIdentifier,
+    override val identifier: DefinitionIdentifier,
     val entries: Set<Reference>,
 ) : Definition
 
 data class Refined(
     override val comment: Comment?,
-    override val identifier: ClassIdentifier,
+    override val identifier: DefinitionIdentifier,
     val validator: Validator,
 ) : Definition {
     data class Validator(override val value: String) : Value<String> {
@@ -81,7 +81,7 @@ data class Refined(
 
 data class Endpoint(
     override val comment: Comment?,
-    override val identifier: ClassIdentifier,
+    override val identifier: DefinitionIdentifier,
     val method: Method,
     val path: List<Segment>,
     val queries: List<Field>,
@@ -106,7 +106,7 @@ data class Endpoint(
 
 data class Channel(
     override val comment: Comment?,
-    override val identifier: ClassIdentifier,
+    override val identifier: DefinitionIdentifier,
     val isNullable: Boolean,
     val reference: Reference,
 ) : Definition
@@ -118,6 +118,6 @@ sealed class Identifier(name: String) : Value<String> {
     override val value = name.removeBackticks()
 }
 
-data class ClassIdentifier(private val name: String) : Identifier(name)
+data class DefinitionIdentifier(private val name: String) : Identifier(name)
 
 data class FieldIdentifier(private val name: String) : Identifier(name)

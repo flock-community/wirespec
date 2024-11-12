@@ -20,8 +20,8 @@ import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceOrBooleanObj
 import community.flock.kotlinx.openapi.bindings.v2.StatusCode
 import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
 import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.parse.ClassIdentifier
 import community.flock.wirespec.compiler.core.parse.Definition
+import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
@@ -112,7 +112,7 @@ object OpenApiV2Parser {
                 listOf(
                     Endpoint(
                         comment = null,
-                        identifier = ClassIdentifier(name),
+                        identifier = DefinitionIdentifier(name),
                         method = method,
                         path = segments,
                         queries = query,
@@ -144,7 +144,7 @@ object OpenApiV2Parser {
                 parameter.enum != null -> listOf(
                     Enum(
                         comment = null,
-                        identifier = ClassIdentifier(className(name, "Parameter", parameter.name)),
+                        identifier = DefinitionIdentifier(className(name, "Parameter", parameter.name)),
                         entries = parameter.enum!!.map { it.content }.toSet()
                     )
                 )
@@ -281,7 +281,7 @@ object OpenApiV2Parser {
         schemaObject.allOf != null -> listOf(
             Type(
                 comment = null,
-                identifier = ClassIdentifier(name),
+                identifier = DefinitionIdentifier(name),
                 shape = Type.Shape(schemaObject.allOf
                     .orEmpty()
                     .flatMap {
@@ -308,7 +308,7 @@ object OpenApiV2Parser {
         schemaObject.enum != null -> schemaObject.enum!!
             .map { it.content }
             .toSet()
-            .let { listOf(Enum(comment = null, identifier = ClassIdentifier(name), entries = it)) }
+            .let { listOf(Enum(comment = null, identifier = DefinitionIdentifier(name), entries = it)) }
 
         else -> when (schemaObject.type) {
             null, OpenapiType.OBJECT -> {
@@ -318,7 +318,7 @@ object OpenApiV2Parser {
                 val schema = listOf(
                     Type(
                         comment = null,
-                        identifier = ClassIdentifier(name),
+                        identifier = DefinitionIdentifier(name),
                         shape = Type.Shape(toField(schemaObject, name)),
                         extends = emptyList(),
                     )

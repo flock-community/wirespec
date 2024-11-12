@@ -3,8 +3,8 @@
 package community.flock.wirespec.compiler.lib
 
 import community.flock.wirespec.compiler.core.parse.Channel
-import community.flock.wirespec.compiler.core.parse.ClassIdentifier
 import community.flock.wirespec.compiler.core.parse.Comment
+import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
@@ -28,7 +28,7 @@ fun WsNode.consume(): Node =
 fun WsEndpoint.consume(): Endpoint =
     Endpoint(
         comment = comment?.let { Comment(it) },
-        identifier = ClassIdentifier(identifier),
+        identifier = DefinitionIdentifier(identifier),
         method = method.consume(),
         path = path.map { it.consume() },
         queries = query.map { it.consume() },
@@ -58,36 +58,36 @@ private fun WsMethod.consume() = when (this) {
     WsMethod.TRACE -> Endpoint.Method.TRACE
 }
 
-private fun WsClassIdentifier.consume() = ClassIdentifier(value)
+private fun WsClassIdentifier.consume() = DefinitionIdentifier(value)
 private fun WsFieldIdentifier.consume() = FieldIdentifier(value)
 
 private fun WsEnum.consume() = Enum(
-    identifier = ClassIdentifier(identifier),
+    identifier = DefinitionIdentifier(identifier),
     comment = comment?.let { Comment(it) },
     entries = entries.toSet()
 )
 
 private fun WsRefined.consume() = Refined(
-    identifier = ClassIdentifier(identifier),
+    identifier = DefinitionIdentifier(identifier),
     comment = comment?.let { Comment(it) },
     validator = Refined.Validator(validator)
 )
 
 private fun WsType.consume() = Type(
-    identifier = ClassIdentifier(identifier),
+    identifier = DefinitionIdentifier(identifier),
     comment = comment?.let { Comment(it) },
     shape = Type.Shape(shape.value.map { it.consume() }),
     extends = emptyList(),
 )
 
 private fun WsUnion.consume() = Union(
-    identifier = ClassIdentifier(identifier),
+    identifier = DefinitionIdentifier(identifier),
     comment = comment?.let { Comment(it) },
     entries = entries.map { it.consume() }.toSet()
 )
 
 private fun WsChannel.consume() = Channel(
-    identifier = ClassIdentifier(identifier),
+    identifier = DefinitionIdentifier(identifier),
     comment = comment?.let { Comment(it) },
     reference = reference.consume(),
     isNullable = isNullable
@@ -218,7 +218,7 @@ private fun Field.produce() = WsField(identifier.produce(), reference.produce(),
 
 private fun List<Field>.produce() = map { it.produce() }.toTypedArray()
 
-private fun ClassIdentifier.produce() = WsClassIdentifier(value)
+private fun DefinitionIdentifier.produce() = WsClassIdentifier(value)
 private fun FieldIdentifier.produce() = WsFieldIdentifier(value)
 
 private fun Reference.produce() = when (this) {
