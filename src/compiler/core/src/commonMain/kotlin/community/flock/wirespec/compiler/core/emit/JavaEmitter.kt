@@ -223,6 +223,7 @@ open class JavaEmitter(
         .joinToString("\n") { "${Spacer}sealed interface Response${it}XX<T> extends Response<T> {}" }
 
     private fun Endpoint.emitResponseInterfaces() = responses
+        .distinctBy { it.status }
         .map { it.content.emit() }
         .distinct()
         .joinToString("\n") { "${Spacer}sealed interface Response${it.concatGenerics()} extends Response<$it> {}" }
@@ -313,7 +314,7 @@ open class JavaEmitter(
     ).joinToString(",\n").let { if (it.isBlank()) "" else "\n$it\n${Spacer(3)}" }
 
     private fun Endpoint.Response.emitSerialized() =
-        """${Spacer(3)}if (response instanceof Response${status.firstToUpper()} r) { return new Wirespec.RawResponse(r.getStatus(), ${if(headers.isNotEmpty())"java.util.Map.ofEntries(${headers.joinToString { it.emitSerializedMap("headers") }})" else "java.util.Collections.emptyMap()"}, ${if (content != null) "serialization.serialize(r.body, Wirespec.getType(${content.reference.emitType("Void")}.class, ${content.reference.isIterable}))" else "null"}); }"""
+        """${Spacer(3)}if (response instanceof Response${status.firstToUpper()} r) { return new Wirespec.RawResponse(r.getStatus(), ${if(headers.isNotEmpty())"java.util.Map.ofEntries(${headers.joinToString { it.emitSerializedHeader() }})" else "java.util.Collections.emptyMap()"}, ${if (content != null) "serialization.serialize(r.body, Wirespec.getType(${content.reference.emitType("Void")}.class, ${content.reference.isIterable}))" else "null"}); }"""
 
     private fun Endpoint.Response.emitDeserialized() =
         """${Spacer(4)}case $status -> new Response${status.firstToUpper()}(${this.emitDeserializedParams()});"""
@@ -327,8 +328,8 @@ open class JavaEmitter(
     private fun Field.emitDeserialized(fields: String) =
         """${Spacer(4)}java.util.Optional.ofNullable(request.$fields().get("${identifier.value}")).map(it -> serialization.<${reference.emit()}>deserialize(it, Wirespec.getType(${reference.emitType()}.class, ${reference.isIterable})))${if(!isNullable) ".get()" else ""}"""
 
-    private fun Field.emitSerializedMap(fields: String) =
-        """java.util.Map.entry("${identifier.value}", serialization.serialize(response.$fields.${emit(identifier)}, Wirespec.getType(${reference.emitType()}.class, ${reference.isIterable})))"""
+    private fun Field.emitSerializedHeader() =
+        """java.util.Map.entry("${identifier.value}", serialization.serialize(r.getHeaders().${emit(identifier)}(), Wirespec.getType(${reference.emitType()}.class, ${reference.isIterable})))"""
 
     private fun Endpoint.Segment.Param.emitIdentifier() = "serialization.serialize(request.path.${emit(identifier).firstToLower()}, Wirespec.getType(${reference.emitType()}.class, ${reference.isIterable}))"
 
