@@ -32,8 +32,9 @@ public class AvroExampleService implements TestAvroRecordChannel {
         template.send(TOPIC, avro);
     }
 
-    public void listen(TestAvroRecordChannel listener) {
+    public void listen(String groupId, TestAvroRecordChannel listener) {
         var containerProps = new ContainerProperties(TOPIC);
+        containerProps.setGroupId(groupId);
         var container = new KafkaMessageListenerContainer<>(kafkaConsumerFactory, containerProps);
         container.setupMessageListener((MessageListener<String, GenericData.Record>) data -> {
             var message = TestAvroRecord.Avro.from(data.value());

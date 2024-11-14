@@ -69,7 +69,7 @@ class AvroTestApplicationTests {
     @Test
     void sendTest() throws InterruptedException {
 
-        var latch = new CountDownLatch(1);
+        var latch = new CountDownLatch(2);
 
         var record = new TestAvroRecord(
                 new TestAvroMetadata("321", 1L),
@@ -91,7 +91,12 @@ class AvroTestApplicationTests {
                 )
         );
 
-        service.listen(message -> {
+        service.listen("group1", message -> {
+            assertEquals(record, message);
+            latch.countDown();
+        });
+
+        service.listen("group2", message -> {
             assertEquals(record, message);
             latch.countDown();
         });
