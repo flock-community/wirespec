@@ -66,17 +66,20 @@ object OpenApiV3Parser {
                 val requests = operation.requestBody?.let { resolve(it) }
                     ?.let { requestBody ->
                         requestBody.content?.map { (mediaType, mediaObject) ->
-                            Endpoint.Request(
-                                Endpoint.Content(
-                                    type = mediaType.value,
-                                    reference = when (val schema = mediaObject.schema) {
-                                        is ReferenceObject -> toReference(schema)
-                                        is SchemaObject -> toReference(schema, className(name, "RequestBody"))
-                                        null -> TODO("Not yet implemented")
-                                    },
-                                    isNullable = !(requestBody.required ?: false)
+                            val reference = when (val schema = mediaObject.schema) {
+                                is ReferenceObject -> toReference(schema)
+                                is SchemaObject -> toReference(schema, className(name, "RequestBody"))
+                                null -> null
+                            }
+                            reference?.let {
+                                Endpoint.Request(
+                                    Endpoint.Content(
+                                        type = mediaType.value,
+                                        reference = reference,
+                                        isNullable = !(requestBody.required ?: false)
+                                    )
                                 )
-                            )
+                            } ?: Endpoint.Request(null)
                         }
                     }
                     ?: listOf(Endpoint.Request(null))
@@ -209,7 +212,12 @@ object OpenApiV3Parser {
             }
         }
 
-    private fun OpenAPIObject.toSegments(path: Path, parameters: List<ParameterObject>, operation: OperationObject, method: Endpoint.Method) =
+    private fun OpenAPIObject.toSegments(
+        path: Path,
+        parameters: List<ParameterObject>,
+        operation: OperationObject,
+        method: Endpoint.Method,
+    ) =
         path.value.split("/").drop(1).filter { it.isNotBlank() }.map { segment ->
             when (segment.isParam()) {
                 true -> {
@@ -574,7 +582,7 @@ object OpenApiV3Parser {
         val path: Path,
         val pathItem: PathItemObject,
         val method: Endpoint.Method,
-        val operation: OperationObject
+        val operation: OperationObject,
     )
 
     private fun OpenAPIObject.flatMapRequests(f: FlattenRequest.() -> AST) = paths
