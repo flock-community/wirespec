@@ -39,15 +39,17 @@ class AvroKotlinEmitterTest {
             |    companion object {
             |      val SCHEMA = org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"identifier\",\"namespace\":\"packageName\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"}]}");
             |
-            |      fun from(org.apache.avro.generic.GenericData.Record record) {
+            |      @JvmStatic
+            |      fun from(record: org.apache.avro.generic.GenericData.Record): Identifier {
             |        return Identifier(
-            |          (String) record.get(0).toString()
+            |          record.get(0).toString() as String
             |        );
             |      }
-            |    
-            |      to(Identifier data) {
+            |
+            |      @JvmStatic
+            |      fun to(model: Identifier ): org.apache.avro.generic.GenericData.Record {
             |        val record = org.apache.avro.generic.GenericData.Record(SCHEMA);
-            |        record.put(0, data.name());
+            |        record.put(0, model.name);
             |        return record;
             |      }
             |    }
@@ -86,13 +88,15 @@ class AvroKotlinEmitterTest {
             |    companion object {
             |
             |       val SCHEMA: org.apache.avro.Schema = org.apache.avro.Schema.Parser().parse("{\"type\":\"enum\",\"name\":\"identifier\",\"symbols\":[\"ONE\",\"TWO\",\"THREE\"]}");
-            |       
-            |       fun from(org.apache.avro.generic.GenericData.EnumSymbol record) {
+            |
+            |       @JvmStatic
+            |       fun from(record: org.apache.avro.generic.GenericData.EnumSymbol): Identifier {
             |         return Identifier.valueOf(record.toString());
             |       }
-            |       
-            |       fun to(Identifier data) {
-            |         return org.apache.avro.generic.GenericData.EnumSymbol(SCHEMA, data.name());
+            |
+            |       @JvmStatic
+            |       fun to(model: Identifier): org.apache.avro.generic.GenericData.EnumSymbol {
+            |         return org.apache.avro.generic.GenericData.EnumSymbol(SCHEMA, model.name);
             |       }
             |     }
             |  }

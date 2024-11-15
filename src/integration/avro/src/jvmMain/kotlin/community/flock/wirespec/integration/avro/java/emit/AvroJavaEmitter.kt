@@ -20,7 +20,16 @@ class AvroJavaEmitter(packageName: String, logger: Logger) : JavaEmitter(package
         ?: error("Cannot emit avro: ${type.identifier.value}")
 
 
-    override fun emitTypeFunctionBody(type: Type, ast: AST) = """
+    override fun emit(type: Type, ast: AST) = """
+        |public record ${type.emitName()} (
+        |${type.shape.emit()}
+        |)${type.extends.run { if (isEmpty()) "" else " extends ${joinToString(", ") { it.emit() }}" }}${type.emitUnion(ast)} {
+        |${emitTypeFunctionBody(type, ast)}
+        |};
+        |
+    """.trimMargin()
+
+    private fun emitTypeFunctionBody(type: Type, ast: AST) = """
         |  public static class Avro {
         |    
         |    public static final org.apache.avro.Schema SCHEMA = 
@@ -41,7 +50,26 @@ class AvroJavaEmitter(packageName: String, logger: Logger) : JavaEmitter(package
         |
     """.trimMargin()
 
-    override fun emitEnumFunctionBody(enum: Enum, ast: AST) = """
+    override fun emit(enum: Enum, ast: AST) = """
+        |public enum ${emit(enum.identifier)} implements Wirespec.Enum {
+        |${enum.entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }.spacer()};
+        |${Spacer}public final String label;
+        |${Spacer}${emit(enum.identifier)}(String label) {
+        |${Spacer(2)}this.label = label;
+        |${Spacer}}
+        |${Spacer}@Override
+        |${Spacer}public String toString() {
+        |${Spacer(2)}return label;
+        |${Spacer}}
+        |${Spacer}@Override
+        |${Spacer}public String getLabel() {
+        |${Spacer(2)}return label;
+        |${Spacer}}
+        |${emitEnumFunctionBody(enum, ast)}}
+        |
+    """.trimMargin()
+
+     private fun emitEnumFunctionBody(enum: Enum, ast: AST) = """
         |  public static class Avro {
         |
         |    public static final org.apache.avro.Schema SCHEMA = 

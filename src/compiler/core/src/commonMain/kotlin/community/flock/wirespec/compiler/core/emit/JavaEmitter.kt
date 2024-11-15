@@ -66,11 +66,9 @@ open class JavaEmitter(
         |public record ${type.emitName()} (
         |${type.shape.emit()}
         |)${type.extends.run { if (isEmpty()) "" else " extends ${joinToString(", ") { it.emit() }}" }}${type.emitUnion(ast)} {
-        |${emitTypeFunctionBody(type, ast)}};
+        |};
         |
     """.trimMargin()
-
-    open fun emitTypeFunctionBody(type: Type, ast: AST) = ""
 
     fun Type.emitUnion(ast: AST) = ast
         .filterIsInstance<Union>()
@@ -148,11 +146,9 @@ open class JavaEmitter(
         |${Spacer}public String getLabel() {
         |${Spacer(2)}return label;
         |${Spacer}}
-        |${emitEnumFunctionBody(enum, ast)}}
+        |}
         |
     """.trimMargin()
-
-    open fun emitEnumFunctionBody(enum: Enum, ast: AST) = ""
 
     override fun emit(union: Union) = """
         |public sealed interface ${union.emitName()} permits ${union.entries.joinToString { it.value }} {}
@@ -354,7 +350,7 @@ open class JavaEmitter(
         else -> this
     }
 
-    private fun String.sanitizeSymbol() = this
+    open fun String.sanitizeSymbol() = this
         .split(".", " ", "-")
         .joinToString("") { it.firstToUpper() }
         .asSequence()
@@ -362,11 +358,11 @@ open class JavaEmitter(
         .joinToString("")
         .sanitizeFirstIsDigit()
 
-    private fun String.sanitizeFirstIsDigit() = if (firstOrNull()?.isDigit() == true) "_${this}" else this
+    open fun String.sanitizeFirstIsDigit() = if (firstOrNull()?.isDigit() == true) "_${this}" else this
 
-    private fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_").sanitizeFirstIsDigit()
+    open fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_").sanitizeFirstIsDigit()
 
-    private fun String.sanitizeKeywords() = if (this in reservedKeywords) "_$this" else this
+    open fun String.sanitizeKeywords() = if (this in reservedKeywords) "_$this" else this
 
     companion object : Keywords {
         override val reservedKeywords = setOf(

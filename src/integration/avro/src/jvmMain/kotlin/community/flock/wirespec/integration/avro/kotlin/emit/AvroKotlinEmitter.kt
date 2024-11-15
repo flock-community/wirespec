@@ -43,7 +43,7 @@ class AvroKotlinEmitter(val packageName: String, logger: Logger) : KotlinEmitter
         |          ${type.shape.value.mapIndexed(emitFrom(ast)).joinToString(",\n${Spacer(5)}")}
         |        );
         |      }
-        |      
+        |
         |      @JvmStatic
         |      fun to(model: ${type.emitName()} ): org.apache.avro.generic.GenericData.Record {
         |        val record = org.apache.avro.generic.GenericData.Record(SCHEMA);
@@ -71,12 +71,12 @@ class AvroKotlinEmitter(val packageName: String, logger: Logger) : KotlinEmitter
         |    companion object {
         |
         |       val SCHEMA: org.apache.avro.Schema = org.apache.avro.Schema.Parser().parse("${emitAvroSchema(enum, ast)}");
-        |       
+        |
         |       @JvmStatic
         |       fun from(record: org.apache.avro.generic.GenericData.EnumSymbol): ${enum.emitName()} {
         |         return ${enum.emitName()}.valueOf(record.toString());
         |       }
-        |       
+        |
         |       @JvmStatic
         |       fun to(model: ${enum.emitName()}): org.apache.avro.generic.GenericData.EnumSymbol {
         |         return org.apache.avro.generic.GenericData.EnumSymbol(SCHEMA, model.name);
