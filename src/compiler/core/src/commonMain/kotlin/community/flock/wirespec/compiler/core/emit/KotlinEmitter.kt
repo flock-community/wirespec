@@ -75,9 +75,12 @@ open class KotlinEmitter(
 
     override fun Type.Shape.emit() = value.joinToString("\n") { "${Spacer}val ${it.emit()}," }.dropLast(1)
 
-    override fun Field.emit() = "${emit(identifier)}: ${reference.emit()}${if (isNullable) "?" else ""}"
+    override fun Field.emit() = "${emit(identifier)}: ${emitType()}"
 
-    override fun Reference.emit() = when (this) {
+    open fun Field.emitType() =
+        "${reference.emit()}${if (isNullable) "?" else ""}"
+
+    open fun Reference.emitType() = when (this) {
         is Reference.Unit -> "Unit"
         is Reference.Any -> "Any"
         is Reference.Custom -> value
@@ -88,6 +91,8 @@ open class KotlinEmitter(
             Reference.Primitive.Type.Boolean -> "Boolean"
         }
     }
+
+    override fun Reference.emit() = emitType()
         .let { if (isIterable) "List<$it>" else it }
         .let { if (isDictionary) "Map<String, $it>" else it }
 
@@ -288,7 +293,7 @@ open class KotlinEmitter(
         else -> this
     }
 
-    private fun String.sanitizeSymbol() = this
+    open fun String.sanitizeSymbol() = this
         .split(".", " ")
         .joinToString("") { it.firstToUpper() }
         .asSequence()
@@ -296,11 +301,11 @@ open class KotlinEmitter(
         .joinToString("")
         .sanitizeFirstIsDigit()
 
-    private fun String.sanitizeFirstIsDigit() = if (firstOrNull()?.isDigit() == true) "_${this}" else this
+    open fun String.sanitizeFirstIsDigit() = if (firstOrNull()?.isDigit() == true) "_${this}" else this
 
-    private fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_").sanitizeFirstIsDigit()
+    open fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_").sanitizeFirstIsDigit()
 
-    private fun String.sanitizeKeywords() = if (this in reservedKeywords) addBackticks() else this
+    open fun String.sanitizeKeywords() = if (this in reservedKeywords) addBackticks() else this
 
     companion object : Keywords {
         override val reservedKeywords = setOf(

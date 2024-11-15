@@ -2,14 +2,12 @@ package community.flock.wirespec.converter.avro
 
 import com.goncalossilva.resources.Resource
 import community.flock.wirespec.compiler.core.parse.Channel
-
-import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Identifier
-import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Definition
+import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
+import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Reference
-import community.flock.wirespec.converter.avro.AvroConverter.flatten
+import community.flock.wirespec.compiler.core.parse.Type
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -22,7 +20,7 @@ class AvroParserTest {
         val resource = Resource("src/commonTest/resources/customer.avsc")
             .apply { assertTrue(exists()) }
 
-        val ast  = AvroParser.parse(resource.readText())
+        val ast = AvroParser.parse(resource.readText())
 
     }
 
@@ -34,7 +32,7 @@ class AvroParserTest {
         try {
             AvroParser.parse(resource.readText())
             assertEquals(true, false)
-        } catch (e:Exception){
+        } catch (e: Exception) {
             assertEquals("Cannot have multiple SimpleTypes in Union", e.message)
         }
     }
@@ -47,7 +45,7 @@ class AvroParserTest {
 
         try {
             AvroParser.parse(resource.readText())
-        } catch (e:Exception){
+        } catch (e: Exception) {
             assertEquals("Cannot have multiple SimpleTypes in Union", e.message)
         }
     }
@@ -67,12 +65,12 @@ class AvroParserTest {
         assertEquals(
             Type(
                 comment = null,
-                identifier = Identifier("User"),
+                identifier = DefinitionIdentifier("User"),
                 extends = emptyList(),
                 shape = Type.Shape(
-                    value = listOf(
+                    listOf(
                         Field(
-                            identifier = Identifier(value = "id"),
+                            identifier = FieldIdentifier("id"),
                             reference = Reference.Primitive(
                                 type = Reference.Primitive.Type.Integer,
                                 origin = "int",
@@ -82,7 +80,7 @@ class AvroParserTest {
                             isNullable = false
                         ),
                         Field(
-                            identifier = Identifier(value = "username"),
+                            identifier = FieldIdentifier("username"),
                             reference = Reference.Primitive(
                                 type = Reference.Primitive.Type.String,
                                 origin = "string",
@@ -92,7 +90,7 @@ class AvroParserTest {
                             isNullable = false
                         ),
                         Field(
-                            identifier = Identifier(value = "passwordHash"),
+                            identifier = FieldIdentifier("passwordHash"),
                             reference = Reference.Primitive(
                                 type = Reference.Primitive.Type.String,
                                 origin = "string",
@@ -102,7 +100,7 @@ class AvroParserTest {
                             isNullable = false
                         ),
                         Field(
-                            identifier = Identifier(value = "signupDate"),
+                            identifier = FieldIdentifier("signupDate"),
                             reference = Reference.Primitive(
                                 type = Reference.Primitive.Type.Integer,
                                 origin = "long",
@@ -112,27 +110,27 @@ class AvroParserTest {
                             isNullable = false
                         ),
                         Field(
-                            identifier = Identifier(value = "emailAddresses"),
+                            identifier = FieldIdentifier("emailAddresses"),
                             reference = Reference.Custom(
-                                value = "EmailAddress",
+                                "EmailAddress",
                                 isIterable = true,
                                 isDictionary = false
                             ),
                             isNullable = false
                         ),
                         Field(
-                            identifier = Identifier(value = "twitterAccounts"),
+                            identifier = FieldIdentifier("twitterAccounts"),
                             reference = Reference.Custom(
-                                value = "TwitterAccount",
+                                "TwitterAccount",
                                 isIterable = true,
                                 isDictionary = false
                             ),
                             isNullable = false
                         ),
                         Field(
-                            identifier = Identifier(value = "toDoItems"),
+                            identifier = FieldIdentifier("toDoItems"),
                             reference = Reference.Custom(
-                                value = "ToDoItem",
+                                "ToDoItem",
                                 isIterable = true,
                                 isDictionary = false
                             ),
@@ -147,10 +145,10 @@ class AvroParserTest {
         assertEquals(
             Channel(
                 comment = null,
-                identifier = Identifier("User"),
+                identifier = DefinitionIdentifier("User"),
                 isNullable = false,
                 reference = Reference.Custom(
-                    value = "User",
+                    "User",
                     isIterable = false,
                 )
             ),

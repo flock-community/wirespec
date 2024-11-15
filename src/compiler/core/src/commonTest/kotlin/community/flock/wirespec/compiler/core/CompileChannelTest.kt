@@ -34,7 +34,7 @@ class CompileChannelTest {
             |package community.flock.wirespec.generated;
             |
             |interface QueueChannel {
-            |   void invoke(String message)
+            |   void invoke(String message);
             |}
             |
         """.trimMargin()
