@@ -20,7 +20,7 @@ repositories {
 dependencies {
     dependencies {
         intellijPlatform {
-            intellijIdeaCommunity("2024.2")
+            intellijIdeaCommunity("2024.3")
             pluginVerifier()
             zipSigner()
             instrumentationTools()
