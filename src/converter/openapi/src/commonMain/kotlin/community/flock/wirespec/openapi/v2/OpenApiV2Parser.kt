@@ -366,7 +366,7 @@ object OpenApiV2Parser {
 
                 else -> when (schema.type) {
                     OpenapiType.ARRAY -> when (val items = schema.items) {
-                        is ReferenceObject -> Reference.Custom(className(items.getReference()), true)
+                        is ReferenceObject -> toReference(items).toIterable()
                         is SchemaObject -> toReference(items, className(reference.getReference(), "Array")).toIterable()
                         null -> error("items cannot be null when type is array: ${reference.ref}")
                     }

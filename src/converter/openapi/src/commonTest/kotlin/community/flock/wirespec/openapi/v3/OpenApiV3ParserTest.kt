@@ -2,6 +2,7 @@ package community.flock.wirespec.openapi.v3
 
 import com.goncalossilva.resources.Resource
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPI
+import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -1039,7 +1040,11 @@ class OpenApiV3ParserTest {
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier(name = "id"),
-                            reference = Primitive(type=Primitive.Type.String, isIterable = false, isDictionary = false),
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = false,
+                                isDictionary = false
+                            ),
                             isNullable = false
                         ), Field(
                             identifier = FieldIdentifier(name = "status"),
@@ -1128,6 +1133,52 @@ class OpenApiV3ParserTest {
                                 isDictionary = false
                             ),
                             isNullable = true
+                        )
+                    )
+                ),
+                extends = emptyList()
+            )
+        )
+        assertEquals(expected, ast)
+    }
+
+    @Test
+    fun deeparraysimpl() {
+        val json = Resource("src/commonTest/resources/v3/deeparraysimple.json").readText()
+
+        val openApi = OpenAPI.decodeFromString(json)
+        val ast = openApi.parse()
+
+        val expected: AST = listOf(
+            Type(
+                comment = null,
+                identifier = DefinitionIdentifier(name = "User"),
+                shape = Shape(
+                    value = listOf(
+                        Field(
+                            identifier = FieldIdentifier(name = "email"),
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = false,
+                                isDictionary = false
+                            ),
+                            isNullable = false
+                        ), Field(
+                            identifier = FieldIdentifier(name = "name"),
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = false,
+                                isDictionary = false
+                            ),
+                            isNullable = true
+                        ), Field(
+                            identifier = FieldIdentifier(name = "permissions"),
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = true,
+                                isDictionary = false
+                            ),
+                            isNullable = false
                         )
                     )
                 ),

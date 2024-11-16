@@ -279,7 +279,7 @@ object Expected {
                 Endpoint.Request(
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(value = "Message", isIterable = true, isDictionary = false),
+                        reference = Reference.Custom(value = "MessageArray", isIterable = true, isDictionary = false),
                         isNullable = true
                     )
                 )

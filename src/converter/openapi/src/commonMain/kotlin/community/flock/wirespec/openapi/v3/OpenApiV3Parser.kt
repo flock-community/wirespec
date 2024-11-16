@@ -466,16 +466,14 @@ object OpenApiV3Parser {
                     isDictionary = false
                 )
 
-                else -> when (schema.type) {
-                    OpenapiType.ARRAY -> when (val items = schema.items) {
-                        is ReferenceObject -> Reference.Custom(className(items.getReference()), true) // is ReferenceObject -> toReference(items).toIterable()
-                        is SchemaObject -> Reference.Custom(className(referencingObject.getReference(), "Array"), true)
-                        null -> error("items cannot be null when type is array: ${reference.ref}")
-                    }
-
-                    else -> Reference.Custom(className(referencingObject.getReference()), false)
-
+                schema.type == OpenapiType.ARRAY -> when (val items = schema.items) {
+                    is ReferenceObject -> toReference(items).toIterable()
+                    is SchemaObject -> Reference.Custom(className(referencingObject.getReference(), "Array"), true)
+                    null -> error("items cannot be null when type is array: ${reference.ref}")
                 }
+
+                else -> Reference.Custom(className(referencingObject.getReference()), false)
+
             }
         }
 
@@ -584,15 +582,6 @@ object OpenApiV3Parser {
                 }
             }
         }
-
-    fun OpenAPIObject.resolveRef(referenceObject: ReferenceObject): SchemaObject {
-        val (_, _, type, name) = referenceObject.ref.value.split("/")
-        val x = when (type) {
-            "schemas" -> resolveSchemaObject(referenceObject).second
-            else -> error("Cannot resolve reference: ${referenceObject.ref.value}")
-        }
-        return x
-    }
 
     private fun OpenAPIObject.toField(parameter: ParameterObject, name: String) =
         when (val s = parameter.schema) {
