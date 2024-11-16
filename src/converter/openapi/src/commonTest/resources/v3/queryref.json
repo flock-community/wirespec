@@ -1,0 +1,63 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Object in response",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/responseref": {
+      "get": {
+        "parameters": [
+          {
+            "in" : "query",
+            "name" : "embed",
+            "schema" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string",
+                "enum" : [ "links" ]
+              }
+            }
+          },
+          {
+            "in": "query",
+            "name": "embedRef",
+            "schema": {
+              "$ref": "#/components/schemas/EmbedParams"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "test": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "EmbedParams": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+            "links"
+          ]
+        }
+      }
+    }
+  }
+}

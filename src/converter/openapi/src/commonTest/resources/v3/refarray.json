@@ -1,0 +1,82 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Object in response",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/refarray": {
+      "get": {
+        "responses": {
+          "200" : {
+            "$ref" : "#/components/responses/ProposalsResponse"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "responses": {
+      "ProposalsResponse" : {
+        "description" : "Proposals",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "type" : "object",
+              "required" : [ "proposals", "count" ],
+              "properties" : {
+                "proposals" : {
+                  "$ref" : "#/components/schemas/ArrayOfProposals"
+                },
+                "count" : {
+                  "type" : "integer",
+                  "format" : "int64"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ArrayOfProposals" : {
+        "type" : "array",
+        "items" : {
+          "$ref" : "#/components/schemas/Proposal"
+        }
+      },
+      "Proposal" : {
+        "type" : "object",
+        "required" : [ "id", "status", "author", "updatedAt" ],
+        "properties" : {
+          "id" : {
+            "$ref" : "#/components/schemas/EntityId"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/ProposalStatus"
+          },
+          "author" : {
+            "type" : "string"
+          },
+          "reviewer" : {
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "EntityId" : {
+        "type" : "string",
+        "pattern" : "^\\d+$",
+        "example" : "1234",
+        "readOnly" : true
+      },
+      "ProposalStatus" : {
+        "type" : "string",
+        "x-extensible-enum" : [ "OPEN", "APPROVED", "REJECTED" ]
+      }
+    }
+  }
+}

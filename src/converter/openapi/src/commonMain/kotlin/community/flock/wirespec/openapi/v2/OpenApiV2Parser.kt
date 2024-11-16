@@ -98,7 +98,7 @@ object OpenApiV2Parser {
                                                 is ReferenceObject -> toReference(schema)
                                                 is SchemaObject -> toReference(
                                                     schema,
-                                                    className(name, status.value, type, "ResponseBody")
+                                                    className(name, status.value, "ResponseBody")
                                                 )
                                             },
                                             isNullable = false
@@ -178,10 +178,10 @@ object OpenApiV2Parser {
         val name = operation.toName() ?: (path.toName() + method.name)
         when (schema) {
             is SchemaObject -> when (schema.type) {
-                null, OpenapiType.OBJECT -> flatten(schema, className(name, statusCode.value, type, "ResponseBody"))
+                null, OpenapiType.OBJECT -> flatten(schema, className(name, statusCode.value, "ResponseBody"))
 
                 OpenapiType.ARRAY -> schema.items
-                    ?.let { flatten(it, className(name, statusCode.value, type, "ResponseBody")) }
+                    ?.let { flatten(it, className(name, statusCode.value, "ResponseBody")) }
                     .orEmpty()
 
                 else -> emptyList()
@@ -366,7 +366,7 @@ object OpenApiV2Parser {
 
                 else -> when (schema.type) {
                     OpenapiType.ARRAY -> when (val items = schema.items) {
-                        is ReferenceObject -> Reference.Custom(className(items.getReference()), true)
+                        is ReferenceObject -> toReference(items).toIterable()
                         is SchemaObject -> toReference(items, className(reference.getReference(), "Array")).toIterable()
                         null -> error("items cannot be null when type is array: ${reference.ref}")
                     }

@@ -1,0 +1,48 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Object in response",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/refprimary": {
+      "get": {
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ProposalsResponse"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "responses": {
+      "ProposalsResponse": {
+        "description": "Proposals",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/EntityId"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Address": {
+        "type": "object",
+        "properties": {
+          "entityId": {
+            "$ref": "#/components/schemas/EntityId"
+          }
+        }
+      },
+      "EntityId": {
+        "type": "string",
+        "pattern": "^\\d+$",
+        "example": "1234",
+        "readOnly": true
+      }
+    }
+  }
+}

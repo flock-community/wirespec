@@ -101,7 +101,7 @@ object Expected {
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(
-                            value = "Test200ApplicationJsonResponseBody",
+                            value = "Test200ResponseBody",
                             isIterable = false
                         ),
                         isNullable = false
@@ -111,7 +111,7 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = DefinitionIdentifier("Test200ApplicationJsonResponseBody"),
+            identifier = DefinitionIdentifier("Test200ResponseBody"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
@@ -125,7 +125,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("nest"),
                         reference = Reference.Custom(
-                            value = "Test200ApplicationJsonResponseBodyNest",
+                            value = "Test200ResponseBodyNest",
                             isIterable = false
                         ),
                         isNullable = true
@@ -136,7 +136,7 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = DefinitionIdentifier("Test200ApplicationJsonResponseBodyNest"),
+            identifier = DefinitionIdentifier("Test200ResponseBodyNest"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
@@ -197,7 +197,7 @@ object Expected {
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(
-                            value = "AdditionalProperties404ApplicationJsonResponseBody",
+                            value = "AdditionalProperties404ResponseBody",
                             isIterable = false,
                             isDictionary = true
                         ),
@@ -217,7 +217,7 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = DefinitionIdentifier("AdditionalProperties404ApplicationJsonResponseBody"),
+            identifier = DefinitionIdentifier("AdditionalProperties404ResponseBody"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
@@ -279,7 +279,7 @@ object Expected {
                 Endpoint.Request(
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(value = "Message", isIterable = true, isDictionary = false),
+                        reference = Reference.Custom(value = "MessageArray", isIterable = true, isDictionary = false),
                         isNullable = true
                     )
                 )
@@ -291,7 +291,7 @@ object Expected {
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(
-                            value = "ArrayGET200ApplicationJsonResponseBody",
+                            value = "ArrayGET200ResponseBody",
                             isIterable = true,
                             isDictionary = false
                         ),
@@ -324,7 +324,7 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = DefinitionIdentifier("ArrayGET200ApplicationJsonResponseBody"),
+            identifier = DefinitionIdentifier("ArrayGET200ResponseBody"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
@@ -395,7 +395,7 @@ object Expected {
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(
-                            value = "AllofGET200ApplicationJsonResponseBody",
+                            value = "AllofGET200ResponseBody",
                             isIterable = false,
                             isDictionary = false
                         ),
@@ -406,7 +406,7 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = DefinitionIdentifier("AllofGET200ApplicationJsonResponseBody"),
+            identifier = DefinitionIdentifier("AllofGET200ResponseBody"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
@@ -436,7 +436,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("d"),
                         reference = Reference.Custom(
-                            value = "AllofGET200ApplicationJsonResponseBodyD",
+                            value = "AllofGET200ResponseBodyD",
                             isIterable = false
                         ),
                         isNullable = true
@@ -447,7 +447,7 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = DefinitionIdentifier("AllofGET200ApplicationJsonResponseBodyD"),
+            identifier = DefinitionIdentifier("AllofGET200ResponseBodyD"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
@@ -520,7 +520,7 @@ object Expected {
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(
-                            value = "OneofGET200ApplicationJsonResponseBody",
+                            value = "OneofGET200ResponseBody",
                             isIterable = false,
                             isDictionary = false
                         ),
@@ -531,17 +531,17 @@ object Expected {
         ),
         Union(
             comment = null,
-            identifier = DefinitionIdentifier("OneofGET200ApplicationJsonResponseBody"),
+            identifier = DefinitionIdentifier("OneofGET200ResponseBody"),
             entries = setOf(
                 Reference.Custom(value = "Foo", isIterable = false, isDictionary = false),
                 Reference.Custom(value = "Bar", isIterable = false, isDictionary = false),
                 Reference.Custom(
-                    value = "OneofGET200ApplicationJsonResponseBody2",
+                    value = "OneofGET200ResponseBody2",
                     isIterable = false,
                     isDictionary = false
                 ),
                 Reference.Custom(
-                    value = "OneofGET200ApplicationJsonResponseBody3",
+                    value = "OneofGET200ResponseBody3",
                     isIterable = false,
                     isDictionary = false
                 )
@@ -549,7 +549,7 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = DefinitionIdentifier("OneofGET200ApplicationJsonResponseBody2"),
+            identifier = DefinitionIdentifier("OneofGET200ResponseBody2"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
@@ -567,13 +567,13 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = DefinitionIdentifier("OneofGET200ApplicationJsonResponseBody3"),
+            identifier = DefinitionIdentifier("OneofGET200ResponseBody3"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("d"),
                         reference = Reference.Custom(
-                            value = "OneofGET200ApplicationJsonResponseBody3D",
+                            value = "OneofGET200ResponseBody3D",
                             isIterable = false,
                             isDictionary = false
                         ),
@@ -585,7 +585,7 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = DefinitionIdentifier("OneofGET200ApplicationJsonResponseBody3D"),
+            identifier = DefinitionIdentifier("OneofGET200ResponseBody3D"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
@@ -678,7 +678,7 @@ object Expected {
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(
-                            value = "EnumGET201ApplicationJsonResponseBody",
+                            value = "EnumGET201ResponseBody",
                             isIterable = false,
                             isDictionary = false
                         ),
@@ -694,13 +694,13 @@ object Expected {
         ),
         Type(
             comment = null,
-            identifier = DefinitionIdentifier("EnumGET201ApplicationJsonResponseBody"),
+            identifier = DefinitionIdentifier("EnumGET201ResponseBody"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("code"),
                         reference = Reference.Custom(
-                            value = "EnumGET201ApplicationJsonResponseBodyCode",
+                            value = "EnumGET201ResponseBodyCode",
                             isIterable = false
                         ),
                         isNullable = false
@@ -719,7 +719,7 @@ object Expected {
         ),
         Enum(
             comment = null,
-            identifier = DefinitionIdentifier("EnumGET201ApplicationJsonResponseBodyCode"),
+            identifier = DefinitionIdentifier("EnumGET201ResponseBodyCode"),
             entries = setOf("WARNING", "ERROR")
         ),
         Type(

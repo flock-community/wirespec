@@ -2,6 +2,7 @@ package community.flock.wirespec.openapi.v3
 
 import com.goncalossilva.resources.Resource
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPI
+import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -519,7 +520,11 @@ class OpenApiV3ParserTest {
                     Endpoint.Segment.Literal("todos")
                 ),
                 queries = listOf(
-                    Field(FieldIdentifier("completed"), Primitive(type = Primitive.Type.Boolean, isIterable = false), true)
+                    Field(
+                        FieldIdentifier("completed"),
+                        Primitive(type = Primitive.Type.Boolean, isIterable = false),
+                        true
+                    )
                 ),
                 headers = listOf(
                     Field(FieldIdentifier("x-user"), Primitive(type = Primitive.Type.Boolean, isIterable = false), true)
@@ -775,5 +780,411 @@ class OpenApiV3ParserTest {
         val ast = openApi.parse()
 
         assertEquals(Expected.enum, ast)
+    }
+
+    @Test
+    fun responseref() {
+        val json = Resource("src/commonTest/resources/v3/responseref.json").readText()
+
+        val openApi = OpenAPI.decodeFromString(json)
+        val ast = openApi.parse()
+
+        val expected = listOf(
+            Endpoint(
+                comment = null,
+                identifier = DefinitionIdentifier(name = "ResponserefGET"),
+                method = Endpoint.Method.GET,
+                path = listOf(Endpoint.Segment.Literal(value = "responseref")),
+                queries = emptyList(),
+                headers = emptyList(),
+                cookies = emptyList(),
+                requests = listOf(
+                    Endpoint.Request(content = null)
+                ),
+                responses = listOf(
+                    Endpoint.Response(
+                        status = "201",
+                        headers = emptyList(),
+                        content = Endpoint.Content(
+                            type = "application/json",
+                            reference = Reference.Custom(
+                                value = "Address",
+                                isIterable = false,
+                                isDictionary = false
+                            ),
+                            isNullable = false
+                        )
+                    ),
+                    Endpoint.Response(
+                        status = "202",
+                        headers = emptyList(),
+                        content = Endpoint.Content(
+                            type = "application/json",
+                            reference = Reference.Custom(
+                                value = "ResponserefGET202ResponseBody",
+                                isIterable = false,
+                                isDictionary = false
+                            ),
+                            isNullable = false
+                        )
+                    )
+                )
+            ),
+            Type(
+                comment = null,
+                identifier = DefinitionIdentifier(
+                    name = "ResponserefGET202ResponseBody"
+                ),
+                shape = Shape(
+                    value = listOf(
+                        Field(
+                            identifier = FieldIdentifier(name = "me"),
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = false,
+                                isDictionary = false
+                            ),
+                            isNullable = true
+                        )
+                    )
+                ),
+                extends = emptyList()
+            ),
+            Type(
+                comment = null,
+                identifier = DefinitionIdentifier(name = "Address"),
+                shape = Shape(
+                    value = listOf(
+                        Field(
+                            identifier = FieldIdentifier(name = "streetName"),
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = false,
+                                isDictionary = false
+                            ),
+                            isNullable = false
+                        ),
+                        Field(
+                            identifier = FieldIdentifier(name = "houseNumber"),
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = false,
+                                isDictionary = false
+                            ), isNullable = true
+                        ),
+                        Field(
+                            identifier = FieldIdentifier(
+                                name = "houseNumberExtension"
+                            ),
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = false,
+                                isDictionary = false
+                            ),
+                            isNullable = true
+                        )
+                    )
+                ),
+                extends = emptyList()
+            )
+        )
+        assertEquals(expected, ast)
+    }
+
+    @Test
+    fun queryref() {
+        val json = Resource("src/commonTest/resources/v3/queryref.json").readText()
+
+        val openApi = OpenAPI.decodeFromString(json)
+        val ast = openApi.parse()
+
+        val expected = listOf(
+            Endpoint(
+                comment = null,
+                identifier = DefinitionIdentifier(name = "ResponserefGET"),
+                method = Endpoint.Method.GET,
+                path = listOf(Endpoint.Segment.Literal(value = "responseref")),
+                queries = listOf(
+                    Field(
+                        identifier = FieldIdentifier(name = "embed"),
+                        reference = Reference.Custom(
+                            value = "ResponserefGETParameterEmbedArray",
+                            isIterable = true,
+                            isDictionary = false
+                        ), isNullable = true
+                    ), Field(
+                        identifier = FieldIdentifier(name = "embedRef"),
+                        reference = Reference.Custom(
+                            value = "EmbedParamsArray",
+                            isIterable = true,
+                            isDictionary = false
+                        ),
+                        isNullable = true
+                    )
+                ),
+                headers = emptyList(),
+                cookies = emptyList(),
+                requests = listOf(Endpoint.Request(content = null)),
+                responses = listOf(
+                    Endpoint.Response(
+                        status = "201",
+                        headers = emptyList(),
+                        content = Endpoint.Content(
+                            type = "application/json",
+                            reference = Reference.Custom(
+                                value = "ResponserefGET201ResponseBody",
+                                isIterable = false,
+                                isDictionary = false
+                            ),
+                            isNullable = false
+                        )
+                    )
+                )
+            ),
+            Enum(
+                comment = null, identifier = DefinitionIdentifier(
+                    name = "ResponserefGETParameterEmbedArray"
+                ),
+                entries = setOf("links")
+            ),
+            Type(
+                comment = null,
+                identifier = DefinitionIdentifier(name = "ResponserefGET201ResponseBody"),
+                shape = Shape(
+                    value = listOf(
+                        Field(
+                            identifier = FieldIdentifier(name = "test"),
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = false,
+                                isDictionary = false
+                            ),
+                            isNullable = true
+                        )
+                    )
+                ),
+                extends = emptyList()
+            ),
+            Enum(
+                comment = null,
+                identifier = DefinitionIdentifier(name = "EmbedParamsArray"),
+                entries = setOf("links")
+            )
+        )
+        assertEquals(expected, ast)
+    }
+
+    @Test
+    fun refarray() {
+        val json = Resource("src/commonTest/resources/v3/refarray.json").readText()
+
+        val openApi = OpenAPI.decodeFromString(json)
+        val ast = openApi.parse()
+
+        val expected = listOf(
+            Endpoint(
+                comment = null,
+                identifier = DefinitionIdentifier(name = "RefarrayGET"),
+                method = Endpoint.Method.GET,
+                path = listOf(Endpoint.Segment.Literal(value = "refarray")),
+                queries = emptyList(),
+                headers = emptyList(),
+                cookies = emptyList(),
+                requests = listOf(Endpoint.Request(content = null)),
+                responses = listOf(
+                    Endpoint.Response(
+                        status = "200",
+                        headers = emptyList(),
+                        content = Endpoint.Content(
+                            type = "application/json",
+                            reference = Reference.Custom(
+                                value = "RefarrayGET200ResponseBody",
+                                isIterable = false,
+                                isDictionary = false
+                            ),
+                            isNullable = false
+                        )
+                    )
+                )
+            ),
+            Type(
+                comment = null,
+                identifier = DefinitionIdentifier(name = "RefarrayGET200ResponseBody"),
+                shape = Shape(
+                    value = listOf(
+                        Field(
+                            identifier = FieldIdentifier(name = "proposals"),
+                            reference = Reference.Custom(
+                                value = "Proposal",
+                                isIterable = true,
+                                isDictionary = false
+                            ),
+                            isNullable = false
+                        ), Field(
+                            identifier = FieldIdentifier(name = "count"),
+                            reference = Primitive(
+                                type = Primitive.Type.Integer,
+                                isIterable = false,
+                                isDictionary = false
+                            ),
+                            isNullable = false
+                        )
+                    )
+                ),
+                extends = emptyList()
+            ),
+            Type(
+                comment = null,
+                identifier = DefinitionIdentifier(name = "Proposal"),
+                shape = Shape(
+                    value = listOf(
+                        Field(
+                            identifier = FieldIdentifier(name = "id"),
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = false,
+                                isDictionary = false
+                            ),
+                            isNullable = false
+                        ), Field(
+                            identifier = FieldIdentifier(name = "status"),
+                            reference = Reference.Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = false,
+                                isDictionary = false
+                            ),
+                            isNullable = false
+                        ), Field(
+                            identifier = FieldIdentifier(name = "author"),
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = false,
+                                isDictionary = false
+                            ),
+                            isNullable = false
+                        ), Field(
+                            identifier = FieldIdentifier(name = "reviewer"),
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = false,
+                                isDictionary = false
+                            ),
+                            isNullable = true
+                        ), Field(
+                            identifier = FieldIdentifier(name = "updatedAt"),
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = false,
+                                isDictionary = false
+                            ),
+                            isNullable = false
+                        )
+                    )
+                ),
+                extends = emptyList()
+            )
+        )
+        assertEquals(expected, ast)
+    }
+
+    @Test
+    fun refprimary() {
+        val json = Resource("src/commonTest/resources/v3/refprimary.json").readText()
+
+        val openApi = OpenAPI.decodeFromString(json)
+        val ast = openApi.parse()
+
+        val expected = listOf(
+            Endpoint(
+                comment = null,
+                identifier = DefinitionIdentifier(name = "RefprimaryGET"),
+                method = Endpoint.Method.GET,
+                path = listOf(Endpoint.Segment.Literal(value = "refprimary")),
+                queries = emptyList(),
+                headers = emptyList(),
+                cookies = emptyList(),
+                requests = listOf(Endpoint.Request(content = null)),
+                responses = listOf(
+                    Endpoint.Response(
+                        status = "200",
+                        headers = emptyList(),
+                        content = Endpoint.Content(
+                            type = "application/json",
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = false,
+                                isDictionary = false
+                            ),
+                            isNullable = false
+                        )
+                    )
+                )
+            ),
+            Type(
+                comment = null,
+                identifier = DefinitionIdentifier(name = "Address"),
+                shape = Shape(
+                    value = listOf(
+                        Field(
+                            identifier = FieldIdentifier(name = "entityId"),
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = false,
+                                isDictionary = false
+                            ),
+                            isNullable = true
+                        )
+                    )
+                ),
+                extends = emptyList()
+            )
+        )
+        assertEquals(expected, ast)
+    }
+
+    @Test
+    fun deeparraysimpl() {
+        val json = Resource("src/commonTest/resources/v3/deeparraysimple.json").readText()
+
+        val openApi = OpenAPI.decodeFromString(json)
+        val ast = openApi.parse()
+
+        val expected: AST = listOf(
+            Type(
+                comment = null,
+                identifier = DefinitionIdentifier(name = "User"),
+                shape = Shape(
+                    value = listOf(
+                        Field(
+                            identifier = FieldIdentifier(name = "email"),
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = false,
+                                isDictionary = false
+                            ),
+                            isNullable = false
+                        ), Field(
+                            identifier = FieldIdentifier(name = "name"),
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = false,
+                                isDictionary = false
+                            ),
+                            isNullable = true
+                        ), Field(
+                            identifier = FieldIdentifier(name = "permissions"),
+                            reference = Primitive(
+                                type = Primitive.Type.String,
+                                isIterable = true,
+                                isDictionary = false
+                            ),
+                            isNullable = false
+                        )
+                    )
+                ),
+                extends = emptyList()
+            )
+        )
+        assertEquals(expected, ast)
     }
 }
