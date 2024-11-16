@@ -51,7 +51,7 @@ class AvroJavaEmitterTest {
             |      return record;
             |    }
             |  }
-            |}
+            |};
             |
         """.trimMargin()
         val actual = emitter.emit(ast)

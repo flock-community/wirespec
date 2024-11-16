@@ -47,7 +47,6 @@ class AvroJavaEmitter(packageName: String, logger: Logger) : JavaEmitter(package
         |      return record;
         |    }
         |  }
-        |
     """.trimMargin()
 
     override fun emit(enum: Enum, ast: AST) = """
@@ -65,7 +64,8 @@ class AvroJavaEmitter(packageName: String, logger: Logger) : JavaEmitter(package
         |${Spacer}public String getLabel() {
         |${Spacer(2)}return label;
         |${Spacer}}
-        |${emitEnumFunctionBody(enum, ast)}}
+        |${emitEnumFunctionBody(enum, ast)}
+        |}
         |
     """.trimMargin()
 
@@ -83,7 +83,6 @@ class AvroJavaEmitter(packageName: String, logger: Logger) : JavaEmitter(package
         |      return new org.apache.avro.generic.GenericData.EnumSymbol(SCHEMA, data.name());
         |    }
         |  }
-        |
     """.trimMargin()
 
     val emitTo: (ast: AST) -> (index: Int, field: Field) -> String =
