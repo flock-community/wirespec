@@ -98,7 +98,7 @@ object OpenApiV2Parser {
                                                 is ReferenceObject -> toReference(schema)
                                                 is SchemaObject -> toReference(
                                                     schema,
-                                                    className(name, status.value, type, "ResponseBody")
+                                                    className(name, status.value, "ResponseBody")
                                                 )
                                             },
                                             isNullable = false
@@ -178,10 +178,10 @@ object OpenApiV2Parser {
         val name = operation.toName() ?: (path.toName() + method.name)
         when (schema) {
             is SchemaObject -> when (schema.type) {
-                null, OpenapiType.OBJECT -> flatten(schema, className(name, statusCode.value, type, "ResponseBody"))
+                null, OpenapiType.OBJECT -> flatten(schema, className(name, statusCode.value, "ResponseBody"))
 
                 OpenapiType.ARRAY -> schema.items
-                    ?.let { flatten(it, className(name, statusCode.value, type, "ResponseBody")) }
+                    ?.let { flatten(it, className(name, statusCode.value, "ResponseBody")) }
                     .orEmpty()
 
                 else -> emptyList()

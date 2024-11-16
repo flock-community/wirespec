@@ -1,0 +1,70 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Object in response",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/responseref": {
+      "get": {
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/AddressResponse"
+          },
+          "202": {
+            "$ref": "#/components/responses/MeResponse"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "responses": {
+      "AddressResponse": {
+        "description": "An Address",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Address"
+            }
+          }
+        }
+      },
+      "MeResponse": {
+        "description": "An Address",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "me": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Address": {
+        "type": "object",
+        "required": [
+          "streetName"
+        ],
+        "properties": {
+          "streetName": {
+            "type": "string"
+          },
+          "houseNumber": {
+            "pattern": "^[\\d-]+$",
+            "type": "string"
+          },
+          "houseNumberExtension": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
