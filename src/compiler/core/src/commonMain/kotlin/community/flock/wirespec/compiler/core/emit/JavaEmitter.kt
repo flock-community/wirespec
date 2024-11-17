@@ -156,7 +156,7 @@ open class JavaEmitter(
     """.trimMargin()
 
     override fun emit(channel: Channel) = """
-        |interface ${emit(channel.identifier)}Channel {
+        |public interface ${emit(channel.identifier)}Channel {
         |   void invoke(${channel.reference.emitWrap(channel.isNullable)} message);
         |}
         |
