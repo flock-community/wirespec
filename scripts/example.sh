@@ -2,7 +2,10 @@
 
 dir="$(dirname -- "$0")"
 
-./gradlew src:converter:avro:publishToMavenLocal \
+./gradlew \
+  jvmTest \
+  jsTest \
+  src:converter:avro:publishToMavenLocal \
   src:compiler:core:publishToMavenLocal \
   src:integration:avro:publishToMavenLocal \
   src:integration:wirespec:publishToMavenLocal \
