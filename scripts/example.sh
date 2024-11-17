@@ -3,8 +3,8 @@
 dir="$(dirname -- "$0")"
 
 ./gradlew \
-  jvmTest \
-  jsTest \
+  jvmBuild \
+  src:plugin:npm:build \
   src:converter:avro:publishToMavenLocal \
   src:compiler:core:publishToMavenLocal \
   src:integration:avro:publishToMavenLocal \
