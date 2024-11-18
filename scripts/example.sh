@@ -10,6 +10,7 @@ dir="$(dirname -- "$0")"
   src:integration:wirespec:publishToMavenLocal \
   src:integration:jackson:publishToMavenLocal \
   src:integration:spring:publishToMavenLocal \
+  src:plugin:arguments:publishToMavenLocal \
   src:plugin:gradle:publishToMavenLocal \
   src:plugin:maven:publishToMavenLocal &&
 (cd "$dir"/../src/ide/vscode && npm i && npm run build) &&
