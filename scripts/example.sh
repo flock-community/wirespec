@@ -3,9 +3,8 @@
 dir="$(dirname -- "$0")"
 
 ./gradlew \
-  src:plugin:npm:build \
-  src:plugin:arguments:build \
-  src:plugin:cli:build \
+  src:compiler:build \
+  src:plugin:build \
   src:converter:avro:publishToMavenLocal \
   src:compiler:core:publishToMavenLocal \
   src:integration:avro:publishToMavenLocal \
