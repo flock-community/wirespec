@@ -4,10 +4,13 @@ dir="$(dirname -- "$0")"
 
 ./gradlew \
   src:converter:openapi:jvmJar \
-  src:converter:avro:jvmJar \
   src:plugin:arguments:jvmJar \
-  src:plugin:npm:jsNodeProductionLibraryDistribution \
+  src:converter:avro:jvmJar \
+  src:converter:avro:publishToMavenLocal \
+  src:integration:avro:publishToMavenLocal \
+  src:integration:spring:publishToMavenLocal \
   src:plugin:gradle:publishToMavenLocal \
-  src:plugin:maven:publishToMavenLocal &&
+  src:plugin:maven:publishToMavenLocal \
+  src:plugin:npm:jsNodeProductionLibraryDistribution &&
 (cd "$dir"/../src/ide/vscode && npm i && npm run build) &&
 (cd "$dir"/../examples && make clean && make build)
