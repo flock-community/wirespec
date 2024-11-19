@@ -8,6 +8,7 @@ dir="$(dirname -- "$0")"
   src:converter:avro:jvmJar \
   src:converter:avro:publishToMavenLocal \
   src:integration:avro:publishToMavenLocal \
+  src:integration:jackson:publishToMavenLocal \
   src:integration:spring:publishToMavenLocal \
   src:plugin:gradle:publishToMavenLocal \
   src:plugin:maven:publishToMavenLocal \
