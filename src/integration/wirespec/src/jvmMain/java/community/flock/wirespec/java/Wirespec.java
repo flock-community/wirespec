@@ -23,12 +23,12 @@ public interface Wirespec {
     }
     interface Client<Req extends Request<?>, Res extends Response<?>> {
         String getPathTemplate();
-        String getMethod();
+        Method getMethod();
         ClientEdge<Req, Res> getClient(Serialization<String> serialization);
     }
     interface Server<Req extends Request<?>, Res extends Response<?>> {
         String getPathTemplate();
-        String getMethod();
+        Method getMethod();
         ServerEdge<Req, Res> getServer(Serialization<String> serialization);
     }
     enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
