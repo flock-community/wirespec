@@ -30,12 +30,12 @@ data object JavaShared : Shared {
         |${Spacer}}
         |${Spacer}interface Client<Req extends Request<?>, Res extends Response<?>> {
         |${Spacer(2)}String getPathTemplate();
-        |${Spacer(2)}String getMethod();
+        |${Spacer(2)}Method getMethod();
         |${Spacer(2)}ClientEdge<Req, Res> getClient(Serialization<String> serialization);
         |${Spacer}}
         |${Spacer}interface Server<Req extends Request<?>, Res extends Response<?>> {
         |${Spacer(2)}String getPathTemplate();
-        |${Spacer(2)}String getMethod();
+        |${Spacer(2)}Method getMethod();
         |${Spacer(2)}ServerEdge<Req, Res> getServer(Serialization<String> serialization);
         |${Spacer}}
         |${Spacer}enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }

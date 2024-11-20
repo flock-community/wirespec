@@ -29,12 +29,12 @@ data object KotlinShared : Shared {
         |${Spacer}}
         |${Spacer}interface Client<Req : Request<*>, Res : Response<*>> {
         |${Spacer(2)}val pathTemplate: String
-        |${Spacer(2)}val method: String
+        |${Spacer(2)}val method: Method
         |${Spacer(2)}fun client(serialization: Serialization<String>): ClientEdge<Req, Res>
         |${Spacer}}
         |${Spacer}interface Server<Req : Request<*>, Res : Response<*>> {
         |${Spacer(2)}val pathTemplate: String
-        |${Spacer(2)}val method: String
+        |${Spacer(2)}val method: Method
         |${Spacer(2)}fun server(serialization: Serialization<String>): ServerEdge<Req, Res>
         |${Spacer}}
         |${Spacer}enum class Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }

@@ -27,13 +27,13 @@ object Wirespec {
 
     interface Client<Req : Request<*>, Res : Response<*>> {
         val pathTemplate: String
-        val method: String
+        val method: Method
         fun client(serialization: Serialization<String>): ClientEdge<Req, Res>
     }
 
     interface Server<Req : Request<*>, Res : Response<*>> {
         val pathTemplate: String
-        val method: String
+        val method: Method
         fun server(serialization: Serialization<String>): ServerEdge<Req, Res>
     }
 
