@@ -24,6 +24,7 @@ maven_plugin_api = "3.9.8"
 maven_plugin_annotations = "3.13.1"
 maven_project = "2.2.1"
 spring_boot = "3.3.4"
+spring_webflux = "6.1.13"
 spring_dependency_management = "1.1.6"
 
 [libraries]
@@ -51,6 +52,7 @@ maven_plugin_api = { module = "org.apache.maven:maven-plugin-api", version.ref =
 maven_plugin_annotations = { module = "org.apache.maven.plugin-tools:maven-plugin-annotations", version.ref = "maven_plugin_annotations" }
 maven_project = { module = "org.apache.maven:maven-project", version.ref = "maven_project" }
 spring_boot_web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring_boot" }
+spring_webflux = { module = "org.springframework:spring-webflux", version.ref = "spring_webflux" }
 spring_boot_test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring_boot" }
 
 [bundles]

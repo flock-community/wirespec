@@ -40,6 +40,7 @@ kotlin {
                 implementation(libs.kotlin.reflect)
                 implementation(libs.kotlinx.coroutines.reactor)
                 implementation(libs.spring.boot.web)
+                implementation(libs.spring.webflux)
                 runtimeOnly(libs.junit.launcher)
             }
         }
