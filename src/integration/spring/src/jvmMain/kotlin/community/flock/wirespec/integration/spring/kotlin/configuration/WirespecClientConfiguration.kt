@@ -19,7 +19,7 @@ open class WirespecClientConfiguration(
     open fun defaultWebClient(): WebClient = WebClient.builder().build()
 
     @Bean
-    open fun wirespecHandler(webClient: WebClient): WirespecClient = WirespecClient(
+    open fun wirespecClient(webClient: WebClient): WirespecClient = WirespecClient(
         client = webClient,
         wirespecSerde = serialization
     )
