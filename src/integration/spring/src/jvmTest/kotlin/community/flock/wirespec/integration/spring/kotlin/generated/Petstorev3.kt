@@ -1,7 +1,6 @@
 package community.flock.wirespec.integration.spring.kotlin.generated
 
 import community.flock.wirespec.kotlin.Wirespec
-import community.flock.wirespec.kotlin.Wirespec.Method.*
 import kotlin.reflect.typeOf
 
 object AddPetEndpoint : Wirespec.Endpoint {
@@ -15,7 +14,7 @@ object AddPetEndpoint : Wirespec.Endpoint {
     override val body: Pet,
   ) : Wirespec.Request<Pet> {
     override val path = Path
-    override val method = POST
+    override val method = Wirespec.Method.POST
     override val queries = Queries
     override val headers = Headers
   }
@@ -85,7 +84,7 @@ object AddPetEndpoint : Wirespec.Endpoint {
 suspend fun addPet(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/pet"
-      override val method = POST
+      override val method = Wirespec.Method.POST
       override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
@@ -109,7 +108,7 @@ object UpdatePetEndpoint : Wirespec.Endpoint {
     override val body: Pet,
   ) : Wirespec.Request<Pet> {
     override val path = Path
-    override val method = PUT
+    override val method = Wirespec.Method.PUT
     override val queries = Queries
     override val headers = Headers
   }
@@ -207,7 +206,7 @@ object UpdatePetEndpoint : Wirespec.Endpoint {
 suspend fun updatePet(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/pet"
-      override val method = PUT
+      override val method = Wirespec.Method.PUT
       override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
@@ -233,7 +232,7 @@ object FindPetsByStatusEndpoint : Wirespec.Endpoint {
     status: FindPetsByStatusParameterStatus?
   ) : Wirespec.Request<Unit> {
     override val path = Path
-    override val method = GET
+    override val method = Wirespec.Method.GET
     override val queries = Queries(status)
     override val headers = Headers
     override val body = Unit
@@ -304,7 +303,7 @@ object FindPetsByStatusEndpoint : Wirespec.Endpoint {
 suspend fun findPetsByStatus(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/pet/findByStatus"
-      override val method = GET
+      override val method = Wirespec.Method.GET
       override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
@@ -330,7 +329,7 @@ object FindPetsByTagsEndpoint : Wirespec.Endpoint {
     tags: List<String>?
   ) : Wirespec.Request<Unit> {
     override val path = Path
-    override val method = GET
+    override val method = Wirespec.Method.GET
     override val queries = Queries(tags)
     override val headers = Headers
     override val body = Unit
@@ -401,7 +400,7 @@ object FindPetsByTagsEndpoint : Wirespec.Endpoint {
 suspend fun findPetsByTags(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/pet/findByTags"
-      override val method = GET
+      override val method = Wirespec.Method.GET
       override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
@@ -427,7 +426,7 @@ object GetPetByIdEndpoint : Wirespec.Endpoint {
     petId: Long
   ) : Wirespec.Request<Unit> {
     override val path = Path(petId)
-    override val method = GET
+    override val method = Wirespec.Method.GET
     override val queries = Queries
     override val headers = Headers
     override val body = Unit
@@ -512,7 +511,7 @@ object GetPetByIdEndpoint : Wirespec.Endpoint {
 suspend fun getPetById(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/pet/{petId}"
-      override val method = GET
+      override val method = Wirespec.Method.GET
       override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
@@ -542,7 +541,7 @@ object UpdatePetWithFormEndpoint : Wirespec.Endpoint {
     name: String?,     status: String?
   ) : Wirespec.Request<Unit> {
     override val path = Path(petId)
-    override val method = POST
+    override val method = Wirespec.Method.POST
     override val queries = Queries(name, status)
     override val headers = Headers
     override val body = Unit
@@ -598,7 +597,7 @@ object UpdatePetWithFormEndpoint : Wirespec.Endpoint {
 suspend fun updatePetWithForm(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/pet/{petId}"
-      override val method = POST
+      override val method = Wirespec.Method.POST
       override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
@@ -627,7 +626,7 @@ object DeletePetEndpoint : Wirespec.Endpoint {
     api_key: String?
   ) : Wirespec.Request<Unit> {
     override val path = Path(petId)
-    override val method = DELETE
+    override val method = Wirespec.Method.DELETE
     override val queries = Queries
     override val headers = Headers(api_key)
     override val body = Unit
@@ -683,7 +682,7 @@ object DeletePetEndpoint : Wirespec.Endpoint {
 suspend fun deletePet(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/pet/{petId}"
-      override val method = DELETE
+      override val method = Wirespec.Method.DELETE
       override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
@@ -713,7 +712,7 @@ object UploadFileEndpoint : Wirespec.Endpoint {
     override val body: String,
   ) : Wirespec.Request<String> {
     override val path = Path(petId)
-    override val method = POST
+    override val method = Wirespec.Method.POST
     override val queries = Queries(additionalMetadata)
     override val headers = Headers
   }
@@ -769,7 +768,7 @@ object UploadFileEndpoint : Wirespec.Endpoint {
 suspend fun uploadFile(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/pet/{petId}/uploadImage"
-      override val method = POST
+      override val method = Wirespec.Method.POST
       override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
@@ -791,7 +790,7 @@ object GetInventoryEndpoint : Wirespec.Endpoint {
 
   object Request : Wirespec.Request<Unit> {
     override val path = Path
-    override val method = GET
+    override val method = Wirespec.Method.GET
     override val queries = Queries
     override val headers = Headers
     override val body = Unit
@@ -844,7 +843,7 @@ object GetInventoryEndpoint : Wirespec.Endpoint {
 suspend fun getInventory(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/store/inventory"
-      override val method = GET
+      override val method = Wirespec.Method.GET
       override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
@@ -868,7 +867,7 @@ object PlaceOrderEndpoint : Wirespec.Endpoint {
     override val body: Order,
   ) : Wirespec.Request<Order> {
     override val path = Path
-    override val method = POST
+    override val method = Wirespec.Method.POST
     override val queries = Queries
     override val headers = Headers
   }
@@ -938,7 +937,7 @@ object PlaceOrderEndpoint : Wirespec.Endpoint {
 suspend fun placeOrder(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/store/order"
-      override val method = POST
+      override val method = Wirespec.Method.POST
       override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
@@ -964,7 +963,7 @@ object GetOrderByIdEndpoint : Wirespec.Endpoint {
     orderId: Long
   ) : Wirespec.Request<Unit> {
     override val path = Path(orderId)
-    override val method = GET
+    override val method = Wirespec.Method.GET
     override val queries = Queries
     override val headers = Headers
     override val body = Unit
@@ -1049,7 +1048,7 @@ object GetOrderByIdEndpoint : Wirespec.Endpoint {
 suspend fun getOrderById(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/store/order/{orderId}"
-      override val method = GET
+      override val method = Wirespec.Method.GET
       override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
@@ -1075,7 +1074,7 @@ object DeleteOrderEndpoint : Wirespec.Endpoint {
     orderId: Long
   ) : Wirespec.Request<Unit> {
     override val path = Path(orderId)
-    override val method = DELETE
+    override val method = Wirespec.Method.DELETE
     override val queries = Queries
     override val headers = Headers
     override val body = Unit
@@ -1144,7 +1143,7 @@ object DeleteOrderEndpoint : Wirespec.Endpoint {
 suspend fun deleteOrder(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/store/order/{orderId}"
-      override val method = DELETE
+      override val method = Wirespec.Method.DELETE
       override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
@@ -1168,7 +1167,7 @@ object CreateUserEndpoint : Wirespec.Endpoint {
     override val body: User,
   ) : Wirespec.Request<User> {
     override val path = Path
-    override val method = POST
+    override val method = Wirespec.Method.POST
     override val queries = Queries
     override val headers = Headers
   }
@@ -1220,7 +1219,7 @@ object CreateUserEndpoint : Wirespec.Endpoint {
 suspend fun createUser(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/user"
-      override val method = POST
+      override val method = Wirespec.Method.POST
       override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
@@ -1244,7 +1243,7 @@ object CreateUsersWithListInputEndpoint : Wirespec.Endpoint {
     override val body: List<User>,
   ) : Wirespec.Request<List<User>> {
     override val path = Path
-    override val method = POST
+    override val method = Wirespec.Method.POST
     override val queries = Queries
     override val headers = Headers
   }
@@ -1311,7 +1310,7 @@ object CreateUsersWithListInputEndpoint : Wirespec.Endpoint {
 suspend fun createUsersWithListInput(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/user/createWithList"
-      override val method = POST
+      override val method = Wirespec.Method.POST
       override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
@@ -1338,7 +1337,7 @@ object LoginUserEndpoint : Wirespec.Endpoint {
     username: String?,     password: String?
   ) : Wirespec.Request<Unit> {
     override val path = Path
-    override val method = GET
+    override val method = Wirespec.Method.GET
     override val queries = Queries(username, password)
     override val headers = Headers
     override val body = Unit
@@ -1409,7 +1408,7 @@ object LoginUserEndpoint : Wirespec.Endpoint {
 suspend fun loginUser(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/user/login"
-      override val method = GET
+      override val method = Wirespec.Method.GET
       override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
@@ -1431,7 +1430,7 @@ object LogoutUserEndpoint : Wirespec.Endpoint {
 
   object Request : Wirespec.Request<Unit> {
     override val path = Path
-    override val method = GET
+    override val method = Wirespec.Method.GET
     override val queries = Queries
     override val headers = Headers
     override val body = Unit
@@ -1482,7 +1481,7 @@ object LogoutUserEndpoint : Wirespec.Endpoint {
 suspend fun logoutUser(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/user/logout"
-      override val method = GET
+      override val method = Wirespec.Method.GET
       override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
@@ -1508,7 +1507,7 @@ object GetUserByNameEndpoint : Wirespec.Endpoint {
     username: String
   ) : Wirespec.Request<Unit> {
     override val path = Path(username)
-    override val method = GET
+    override val method = Wirespec.Method.GET
     override val queries = Queries
     override val headers = Headers
     override val body = Unit
@@ -1593,7 +1592,7 @@ object GetUserByNameEndpoint : Wirespec.Endpoint {
 suspend fun getUserByName(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/user/{username}"
-      override val method = GET
+      override val method = Wirespec.Method.GET
       override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
@@ -1620,7 +1619,7 @@ object UpdateUserEndpoint : Wirespec.Endpoint {
     override val body: User,
   ) : Wirespec.Request<User> {
     override val path = Path(username)
-    override val method = PUT
+    override val method = Wirespec.Method.PUT
     override val queries = Queries
     override val headers = Headers
   }
@@ -1673,7 +1672,7 @@ object UpdateUserEndpoint : Wirespec.Endpoint {
 suspend fun updateUser(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/user/{username}"
-      override val method = PUT
+      override val method = Wirespec.Method.PUT
       override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
@@ -1699,7 +1698,7 @@ object DeleteUserEndpoint : Wirespec.Endpoint {
     username: String
   ) : Wirespec.Request<Unit> {
     override val path = Path(username)
-    override val method = DELETE
+    override val method = Wirespec.Method.DELETE
     override val queries = Queries
     override val headers = Headers
     override val body = Unit
@@ -1768,7 +1767,7 @@ object DeleteUserEndpoint : Wirespec.Endpoint {
 suspend fun deleteUser(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/user/{username}"
-      override val method = DELETE
+      override val method = Wirespec.Method.DELETE
       override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)

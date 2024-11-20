@@ -162,7 +162,7 @@ open class KotlinEmitter(
         |${Spacer(2)}${emitHandleFunction(endpoint)}
         |${Spacer(2)}companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
         |${Spacer(3)}override val pathTemplate = "/${endpoint.path.joinToString("/") { it.emit() }}"
-        |${Spacer(3)}override val method = "${endpoint.method}"
+        |${Spacer(3)}override val method = Wirespec.Method.${endpoint.method}
         |${Spacer(3)}override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
         |${Spacer(4)}override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         |${Spacer(4)}override fun to(response: Response<*>) = toResponse(serialization, response)
