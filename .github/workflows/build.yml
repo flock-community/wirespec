@@ -204,7 +204,9 @@ jobs:
                     :src:plugin:gradle:publish \
                     :src:plugin:maven:publish \
                     :src:plugin:arguments:publish \
+                    :src:integration:wirespec:publish \
                     :src:integration:jackson:publish \
+                    :src:integration:spring:publish \
                     :src:tools:generator:publish
 
   release-lib-npm:
