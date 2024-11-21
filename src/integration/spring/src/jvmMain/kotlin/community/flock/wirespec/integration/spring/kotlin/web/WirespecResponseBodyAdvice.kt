@@ -40,7 +40,11 @@ class WirespecResponseBodyAdvice(
             is Wirespec.Response<*> -> {
                 val rawResponse = server.to(body)
                 response.setStatusCode(HttpStatusCode.valueOf(rawResponse.statusCode))
-                rawResponse.body?.let { objectMapper.readTree(it) }
+                if(rawResponse.body == null) {
+                    Unit
+                } else {
+                    objectMapper.readTree(rawResponse.body)
+                }
             }
 
             else -> body

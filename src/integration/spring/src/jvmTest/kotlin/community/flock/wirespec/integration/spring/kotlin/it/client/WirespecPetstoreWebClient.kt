@@ -1,0 +1,26 @@
+package community.flock.wirespec.integration.spring.kotlin.it.client
+
+import community.flock.wirespec.integration.spring.kotlin.client.WirespecWebClient
+import community.flock.wirespec.integration.spring.kotlin.generated.*
+import org.springframework.stereotype.Component
+
+@Component
+class WirespecPetstoreWebClient(
+    private val wirespecWebClient: WirespecWebClient
+): AddPetEndpoint.Handler, UpdatePetEndpoint.Handler, GetPetByIdEndpoint.Handler, DeletePetEndpoint.Handler, FindPetsByTagsEndpoint.Handler {
+
+    override suspend fun getPetById(request: GetPetByIdEndpoint.Request): GetPetByIdEndpoint.Response<*> =
+        wirespecWebClient.send(request, GetPetByIdEndpoint.Handler)
+
+    override suspend fun addPet(request: AddPetEndpoint.Request): AddPetEndpoint.Response<*> =
+        wirespecWebClient.send(request, AddPetEndpoint.Handler)
+
+    override suspend fun updatePet(request: UpdatePetEndpoint.Request): UpdatePetEndpoint.Response<*> =
+        wirespecWebClient.send(request, UpdatePetEndpoint.Handler)
+
+    override suspend fun deletePet(request: DeletePetEndpoint.Request): DeletePetEndpoint.Response<*> =
+        wirespecWebClient.send(request, DeletePetEndpoint.Handler)
+
+    override suspend fun findPetsByTags(request: FindPetsByTagsEndpoint.Request): FindPetsByTagsEndpoint.Response<*> =
+        wirespecWebClient.send(request, FindPetsByTagsEndpoint.Handler)
+}

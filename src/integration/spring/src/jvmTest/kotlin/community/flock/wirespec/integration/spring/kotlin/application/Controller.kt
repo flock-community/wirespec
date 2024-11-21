@@ -1,15 +1,12 @@
 package community.flock.wirespec.integration.spring.kotlin.application
 
-import community.flock.wirespec.integration.spring.kotlin.generated.AddPetEndpoint
-import community.flock.wirespec.integration.spring.kotlin.generated.DeletePetEndpoint
-import community.flock.wirespec.integration.spring.kotlin.generated.GetPetByIdEndpoint
-import community.flock.wirespec.integration.spring.kotlin.generated.UpdatePetEndpoint
+import community.flock.wirespec.integration.spring.kotlin.generated.*
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class Controller(
     private val service: Service
-) : AddPetEndpoint.Handler, GetPetByIdEndpoint.Handler, UpdatePetEndpoint.Handler, DeletePetEndpoint.Handler {
+) : AddPetEndpoint.Handler, GetPetByIdEndpoint.Handler, UpdatePetEndpoint.Handler, DeletePetEndpoint.Handler, FindPetsByTagsEndpoint.Handler {
 
     override suspend fun addPet(request: AddPetEndpoint.Request): AddPetEndpoint.Response<*> {
         service.create(request.body)
@@ -33,5 +30,8 @@ class Controller(
             DeletePetEndpoint.Response400(Unit)
         }
     }
+
+    override suspend fun findPetsByTags(request: FindPetsByTagsEndpoint.Request): FindPetsByTagsEndpoint.Response<*> =
+        FindPetsByTagsEndpoint.Response200(emptyList())
 
 }
