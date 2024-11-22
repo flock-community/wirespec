@@ -1,5 +1,7 @@
 package community.flock.wirespec.integration.spring.kotlin.web
 
+import community.flock.wirespec.integration.spring.shared.extractPath
+import community.flock.wirespec.integration.spring.shared.extractQueries
 import community.flock.wirespec.kotlin.Wirespec
 import jakarta.servlet.http.HttpServletRequest
 import java.util.stream.Collectors
@@ -36,14 +38,8 @@ class WirespecMethodArgumentResolver(
 
 fun HttpServletRequest.toRawRequest(): Wirespec.RawRequest = Wirespec.RawRequest(
     method = method,
-    path = pathInfo?.split("/")?.drop(1) ?: emptyList(),
-    queries = queryString
-        ?.split("&")
-        ?.associate {
-            val (key, value) = it.split("=")
-            key to value
-        }
-        .orEmpty(),
+    path = extractPath(),
+    queries = extractQueries(),
     headers = headerNames.toList().associateWith(::getHeader),
     body = reader.lines().collect(Collectors.joining(System.lineSeparator()))
 )
