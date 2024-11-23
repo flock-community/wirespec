@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.emit
 import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToLower
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.emit.shared.TypeScriptShared
 import community.flock.wirespec.compiler.core.parse.AST
@@ -179,7 +180,8 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
         .joinToString("")
 
     private fun Endpoint.emitClient() = """
-        |export const client: Wirespec.Client<Request, Response> = (serialization: Wirespec.Serialization) => ({
+        |export const client: Wirespec.Client<Request, Response, Handler> = (serialization: Wirespec.Serialization) => ({
+        |${Spacer}name: "${identifier.sanitizeSymbol().firstToLower()}",
         |${emitClientTo().prependIndent(Spacer(1))},
         |${emitClientFrom().prependIndent(Spacer(1))}
         |})
@@ -222,7 +224,8 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
     """.trimMargin()
 
     private fun Endpoint.emitServer() = """
-        |export const server:Wirespec.Server<Request, Response> = (serialization: Wirespec.Serialization) => ({
+        |export const server:Wirespec.Server<Request, Response, Handler> = (serialization: Wirespec.Serialization) => ({
+        |${Spacer}name: "${identifier.sanitizeSymbol().firstToLower()}",
         |${emitServerFrom().prependIndent(Spacer(1))},
         |${emitServerTo().prependIndent(Spacer(1))}
         |})
