@@ -241,25 +241,25 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
         val isIterable = (token.type is Brackets).also { if (it) eatToken().bind() }
         when (wsType) {
             is WsString -> Reference.Primitive(
-                type = Reference.Primitive.Type.String,
+                type = Reference.Primitive.Type.String(),
                 isIterable = isIterable,
                 isDictionary = isDict,
             )
 
             is WsInteger -> Reference.Primitive(
-                type = Reference.Primitive.Type.Integer,
+                type = Reference.Primitive.Type.Integer(),
                 isIterable = isIterable,
                 isDictionary = isDict,
             )
 
             is WsNumber -> Reference.Primitive(
-                type = Reference.Primitive.Type.Number,
+                type = Reference.Primitive.Type.Number(),
                 isIterable = isIterable,
                 isDictionary = isDict,
             )
 
             is WsBoolean -> Reference.Primitive(
-                type = Reference.Primitive.Type.Boolean,
+                type = Reference.Primitive.Type.Boolean(),
                 isIterable = isIterable,
                 isDictionary = isDict,
             )

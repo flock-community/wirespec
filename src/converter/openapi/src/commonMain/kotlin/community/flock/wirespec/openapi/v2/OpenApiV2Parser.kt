@@ -197,10 +197,10 @@ object OpenApiV2Parser {
         .flatMap { flatten(it.value, className(it.key)) }
 
     private fun String.mapType() = when (lowercase()) {
-        "string" -> Reference.Primitive.Type.String
-        "number" -> Reference.Primitive.Type.Number
-        "integer" -> Reference.Primitive.Type.Integer
-        "boolean" -> Reference.Primitive.Type.Boolean
+        "string" -> Reference.Primitive.Type.String()
+        "number" -> Reference.Primitive.Type.Number()
+        "integer" -> Reference.Primitive.Type.Integer()
+        "boolean" -> Reference.Primitive.Type.Boolean()
         else -> error("Cannot map type: $this")
     }
 
@@ -436,10 +436,10 @@ object OpenApiV2Parser {
     private fun ReferenceObject.getReference() = ref.value.split("/")[2]
 
     private fun OpenapiType.toPrimitive() = when (this) {
-        OpenapiType.STRING -> Reference.Primitive.Type.String
-        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer
-        OpenapiType.NUMBER -> Reference.Primitive.Type.Number
-        OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean
+        OpenapiType.STRING -> Reference.Primitive.Type.String()
+        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer()
+        OpenapiType.NUMBER -> Reference.Primitive.Type.Number()
+        OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean()
         else -> error("Type is not a primitive")
     }
 

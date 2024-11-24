@@ -188,10 +188,10 @@ object OpenApiV2Emitter: Emitter(noLogger) {
 
 
     private fun Reference.Primitive.Type.emitType(): OpenApiType = when (this) {
-        Reference.Primitive.Type.String -> OpenApiType.STRING
-        Reference.Primitive.Type.Integer -> OpenApiType.INTEGER
-        Reference.Primitive.Type.Number -> OpenApiType.NUMBER
-        Reference.Primitive.Type.Boolean -> OpenApiType.BOOLEAN
+        is Reference.Primitive.Type.String -> OpenApiType.STRING
+        is Reference.Primitive.Type.Integer -> OpenApiType.INTEGER
+        is Reference.Primitive.Type.Number -> OpenApiType.NUMBER
+        is Reference.Primitive.Type.Boolean -> OpenApiType.BOOLEAN
     }
 
     private fun Reference.emitType() =
