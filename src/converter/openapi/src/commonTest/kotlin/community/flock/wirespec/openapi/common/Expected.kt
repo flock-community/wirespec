@@ -35,7 +35,7 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Primitive(type = Reference.Primitive.Type.String, isIterable = false),
+                        reference = Reference.Primitive(type = Reference.Primitive.Type.String(), isIterable = false),
                         isNullable = false
                     )
                 )
@@ -48,7 +48,7 @@ object Expected {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("id"),
-                        reference = Reference.Primitive(type = Reference.Primitive.Type.String, isIterable = false),
+                        reference = Reference.Primitive(type = Reference.Primitive.Type.String(), isIterable = false),
                         isNullable = true
                     ),
                     Field(
@@ -67,12 +67,12 @@ object Expected {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("a"),
-                        reference = Reference.Primitive(type = Reference.Primitive.Type.Number, isIterable = false),
+                        reference = Reference.Primitive(type = Reference.Primitive.Type.Number(), isIterable = false),
                         isNullable = true
                     ),
                     Field(
                         identifier = FieldIdentifier("b"),
-                        reference = Reference.Primitive(type = Reference.Primitive.Type.Number, isIterable = false),
+                        reference = Reference.Primitive(type = Reference.Primitive.Type.Number(), isIterable = false),
                         isNullable = true
                     )
                 )
@@ -117,7 +117,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("id"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String,
+                            type = Reference.Primitive.Type.String(),
                             isIterable = false
                         ),
                         isNullable = true
@@ -142,7 +142,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("a"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.Number,
+                            type = Reference.Primitive.Type.Number(),
                             isIterable = false
                         ),
                         isNullable = true
@@ -150,7 +150,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("b"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.Number,
+                            type = Reference.Primitive.Type.Number(),
                             isIterable = false
                         ),
                         isNullable = true
@@ -223,7 +223,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("code"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.Integer,
+                            type = Reference.Primitive.Type.Integer(),
                             isIterable = false
                         ),
                         isNullable = true
@@ -231,7 +231,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("text"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String,
+                            type = Reference.Primitive.Type.String(),
                             isIterable = false
                         ),
                         isNullable = true
@@ -248,7 +248,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("code"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.Integer,
+                            type = Reference.Primitive.Type.Integer(),
                             isIterable = false
                         ),
                         isNullable = true
@@ -256,7 +256,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("text"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String,
+                            type = Reference.Primitive.Type.String(),
                             isIterable = false
                         ),
                         isNullable = true
@@ -313,7 +313,7 @@ object Expected {
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String,
+                            type = Reference.Primitive.Type.String(),
                             isIterable = true,
                             isDictionary = false
                         ),
@@ -330,7 +330,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("code"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.Number,
+                            type = Reference.Primitive.Type.Number(),
                             isIterable = false
                         ),
                         isNullable = true
@@ -338,7 +338,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("text"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String,
+                            type = Reference.Primitive.Type.String(),
                             isIterable = false
                         ),
                         isNullable = true
@@ -355,7 +355,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("code"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.Number,
+                            type = Reference.Primitive.Type.Number(),
                             isIterable = false
                         ),
                         isNullable = true
@@ -363,7 +363,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("text"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String,
+                            type = Reference.Primitive.Type.String(),
                             isIterable = false
                         ),
                         isNullable = true
@@ -412,7 +412,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("a"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String,
+                            type = Reference.Primitive.Type.String(),
                             isIterable = false
                         ),
                         isNullable = true
@@ -420,7 +420,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("b"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String,
+                            type = Reference.Primitive.Type.String(),
                             isIterable = false
                         ),
                         isNullable = false
@@ -428,7 +428,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("c"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String,
+                            type = Reference.Primitive.Type.String(),
                             isIterable = false
                         ),
                         isNullable = true
@@ -453,7 +453,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("e"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String,
+                            type = Reference.Primitive.Type.String(),
                             isIterable = false,
                             isDictionary = false
                         ),
@@ -471,7 +471,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("a"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String,
+                            type = Reference.Primitive.Type.String(),
                             isIterable = false
                         ),
                         isNullable = true
@@ -488,7 +488,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("b"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String,
+                            type = Reference.Primitive.Type.String(),
                             isIterable = false
                         ),
                         isNullable = false
@@ -555,7 +555,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("c"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String,
+                            type = Reference.Primitive.Type.String(),
                             isIterable = false,
                             isDictionary = false
                         ),
@@ -592,7 +592,7 @@ object Expected {
                         identifier = FieldIdentifier(
                             "e"
                         ), reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String,
+                            type = Reference.Primitive.Type.String(),
                             isIterable = false,
                             isDictionary = false
                         ),
@@ -610,7 +610,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("a"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String,
+                            type = Reference.Primitive.Type.String(),
                             isIterable = false
                         ),
                         isNullable = true
@@ -627,7 +627,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("b"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String,
+                            type = Reference.Primitive.Type.String(),
                             isIterable = false
                         ),
                         isNullable = false
@@ -708,7 +708,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("text"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String,
+                            type = Reference.Primitive.Type.String(),
                             isIterable = false
                         ),
                         isNullable = true
@@ -738,7 +738,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("text"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String,
+                            type = Reference.Primitive.Type.String(),
                             isIterable = false
                         ),
                         isNullable = true

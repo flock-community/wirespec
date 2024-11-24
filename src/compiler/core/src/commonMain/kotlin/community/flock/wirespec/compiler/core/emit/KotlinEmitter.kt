@@ -79,10 +79,10 @@ open class KotlinEmitter(
         is Reference.Any -> "Any"
         is Reference.Custom -> value
         is Reference.Primitive -> when (type) {
-            Reference.Primitive.Type.String -> "String"
-            Reference.Primitive.Type.Integer -> "Long"
-            Reference.Primitive.Type.Number -> "Double"
-            Reference.Primitive.Type.Boolean -> "Boolean"
+            is Reference.Primitive.Type.String -> "String"
+            is Reference.Primitive.Type.Integer -> "Long"
+            is Reference.Primitive.Type.Number -> "Double"
+            is Reference.Primitive.Type.Boolean -> "Boolean"
         }
     }
         .let { if (isIterable) "List<$it>" else it }

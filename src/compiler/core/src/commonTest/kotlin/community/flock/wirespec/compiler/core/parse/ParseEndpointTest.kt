@@ -4,8 +4,6 @@ import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse.Endpoint.Method.GET
 import community.flock.wirespec.compiler.core.parse.Endpoint.Method.POST
 import community.flock.wirespec.compiler.core.parse.Endpoint.Segment.Literal
-import community.flock.wirespec.compiler.core.parse.Reference.Primitive
-import community.flock.wirespec.compiler.core.parse.Reference.Primitive.Type.String
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
@@ -121,8 +119,8 @@ class ParseEndpointTest {
                 path shouldBe listOf(
                     Literal("todos"), Endpoint.Segment.Param(
                         identifier = FieldIdentifier("id"),
-                        reference = Primitive(
-                            type = String,
+                        reference = Reference.Primitive(
+                            type = Reference.Primitive.Type.String(),
                             isIterable = false,
                             isDictionary = false,
                         )
@@ -154,12 +152,12 @@ class ParseEndpointTest {
                 val (one, two) = it
                 one.run {
                     identifier.value shouldBe "name"
-                    reference.shouldBeInstanceOf<Primitive>().type shouldBe String
+                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String()
                     isNullable shouldBe false
                 }
                 two.run {
                     identifier.value shouldBe "date"
-                    reference.shouldBeInstanceOf<Primitive>().type shouldBe String
+                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String()
                     isNullable shouldBe false
                 }
             }
@@ -183,12 +181,12 @@ class ParseEndpointTest {
                 val (one, two) = it
                 one.run {
                     identifier.value shouldBe "name"
-                    reference.shouldBeInstanceOf<Primitive>().type shouldBe String
+                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String()
                     isNullable shouldBe false
                 }
                 two.run {
                     identifier.value shouldBe "date"
-                    reference.shouldBeInstanceOf<Primitive>().type shouldBe String
+                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String()
                     isNullable shouldBe false
                 }
             }
