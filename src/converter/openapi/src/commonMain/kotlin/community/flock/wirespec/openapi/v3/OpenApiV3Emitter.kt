@@ -202,7 +202,7 @@ object OpenApiV3Emitter : Emitter(noLogger) {
     private fun Reference.emitSchema(): SchemaOrReferenceObject =
         when (this) {
             is Reference.Custom -> ReferenceObject(ref = Ref("#/components/schemas/${value}"))
-            is Reference.Primitive -> SchemaObject(type = type.emitType())
+            is Reference.Primitive -> SchemaObject(type = type.emitType(), format = type.subType)
             is Reference.Any -> error("Cannot map Any")
             is Reference.Unit -> error("Cannot map Unit")
         }.let {
