@@ -461,7 +461,7 @@ object OpenApiV3Parser {
                 )
 
                 schema.type.isPrimitive() -> Reference.Primitive(
-                    schema.type!!.toPrimitive(),
+                    schema.type!!.toPrimitive(schema.format),
                     isIterable = false,
                     isDictionary = false
                 )
@@ -502,7 +502,7 @@ object OpenApiV3Parser {
         schema.enum != null -> Reference.Custom(name, false, schema.additionalProperties != null)
         else -> when (val type = schema.type) {
             OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Reference.Primitive(
-                type.toPrimitive(),
+                type.toPrimitive(schema.format),
                 false,
                 schema.additionalProperties != null
             )
@@ -550,11 +550,11 @@ object OpenApiV3Parser {
         .split("/").getOrNull(3)
         ?: error("Wrong reference: ${ref.value}")
 
-    private fun OpenapiType.toPrimitive() = when (this) {
-        OpenapiType.STRING -> Reference.Primitive.Type.String()
-        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer()
-        OpenapiType.NUMBER -> Reference.Primitive.Type.Number()
-        OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean()
+    private fun OpenapiType.toPrimitive(format: String?) = when (this) {
+        OpenapiType.STRING -> Reference.Primitive.Type.String(format)
+        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer(format)
+        OpenapiType.NUMBER -> Reference.Primitive.Type.Number(format)
+        OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean(format)
         else -> error("Type is not a primitive")
     }
 
