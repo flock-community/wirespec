@@ -1,4 +1,4 @@
-package community.flock.wirespec.examples.maven.spring.integration;
+package community.flock.wirespec.examples.maven.spring.integration.controller;
 
 import community.flock.wirespec.generated.examples.spring.CreateTodoEndpoint;
 import community.flock.wirespec.generated.examples.spring.DeleteTodoEndpoint;
