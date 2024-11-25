@@ -19,6 +19,6 @@ public class TodoWebClient implements GetTodosEndpoint.Handler {
 
   @Override
   public CompletableFuture<GetTodosEndpoint.Response<?>> getTodos(GetTodosEndpoint.Request request) {
-    return wirespecWebClient.send(request, new GetTodosEndpoint.Handler.Handlers());
+    return wirespecWebClient.send(request);
   }
 }

@@ -3,7 +3,6 @@ package community.flock.wirespec.examples.maven.spring.integration;
 import community.flock.wirespec.integration.spring.java.configuration.EnableWirespec;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Import;
 
 @SpringBootApplication
 @EnableWirespec
