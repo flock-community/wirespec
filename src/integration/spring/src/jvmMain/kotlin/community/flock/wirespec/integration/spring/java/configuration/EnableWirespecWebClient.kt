@@ -1,4 +1,4 @@
-package community.flock.wirespec.integration.spring.kotlin.configuration
+package community.flock.wirespec.integration.spring.java.configuration
 
 import org.springframework.context.annotation.Import
 

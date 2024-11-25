@@ -1,27 +1,34 @@
-package community.flock.wirespec.integration.spring.kotlin.client
+package community.flock.wirespec.integration.spring.java.client
 
-import community.flock.wirespec.kotlin.Wirespec
-import community.flock.wirespec.kotlin.Wirespec.Serialization
-import kotlinx.coroutines.reactor.awaitSingle
+import community.flock.wirespec.java.Wirespec
+import community.flock.wirespec.java.Wirespec.Serialization
 import org.springframework.http.HttpMethod
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
+import java.util.concurrent.CompletableFuture
 
 class WirespecWebClient(
     private val client: WebClient,
     private val wirespecSerde: Serialization<String>,
 ) {
-    suspend fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> send(
+    fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> send(
         request: Req,
         endpoint: Wirespec.Client<Req, Res>,
-    ): Res =
-        with(endpoint.client(wirespecSerde)) { executeRequest(to(request), client).let(::from) }
+    ): CompletableFuture<Res> {
 
-    private suspend fun executeRequest(
+        val clientEdge = endpoint.getClient(wirespecSerde)
+        val rawRequest = clientEdge.to(request)
+
+        return executeRequest(rawRequest, client).thenApply {
+            clientEdge.from(it)
+        }
+    }
+
+    private fun executeRequest(
         request: Wirespec.RawRequest,
         client: WebClient,
-    ): Wirespec.RawResponse = client
+    ): CompletableFuture<Wirespec.RawResponse> = client
         .method(HttpMethod.valueOf(request.method))
         .uri { uriBuilder ->
             uriBuilder
@@ -37,9 +44,9 @@ class WirespecWebClient(
             response.bodyToMono(String::class.java)
                 .map { body ->
                     Wirespec.RawResponse(
-                        statusCode = response.statusCode().value(),
-                        headers = response.headers().asHttpHeaders().toSingleValueMap(),
-                        body = body
+                        response.statusCode().value(),
+                        response.headers().asHttpHeaders().toSingleValueMap(),
+                        body
                     )
                 }
         }
@@ -47,13 +54,13 @@ class WirespecWebClient(
             when (throwable) {
                 is WebClientResponseException ->
                     Wirespec.RawResponse(
-                        statusCode = throwable.statusCode.value(),
-                        headers = throwable.headers.toSingleValueMap(),
-                        body = throwable.responseBodyAsString
+                        throwable.statusCode.value(),
+                        throwable.headers.toSingleValueMap(),
+                        throwable.responseBodyAsString
                     ).let { Mono.just(it) }
 
                 else -> Mono.error(throwable)
             }
-        }
-        .awaitSingle()
+        }.toFuture()
+
 }
