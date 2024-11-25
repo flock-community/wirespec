@@ -38,8 +38,6 @@ const mocks = [
     mock("POST", ["api", "todos"], 200, {}, JSON.stringify({ id: "3", name: "Do more", done: true }))
 ];
 
-
-
 type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (k: infer I) => void ? I : never;
 type Api<Han extends any> =  Wirespec.Api<Wirespec.Request<any>, Wirespec.Response<any>, Han>
 type WebClient = <Apis extends Api<any>[]>(...apis: Apis) => UnionToIntersection<Apis[number] extends Api<infer Han> ? Han : never>;
