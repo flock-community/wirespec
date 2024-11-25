@@ -1,5 +1,6 @@
 import { GetTodoById, GetTodos, PostTodo, Wirespec } from "./gen/Todo";
 import * as assert from "node:assert";
+import Client = Wirespec.Client;
 
 const serialization: Wirespec.Serialization = {
     deserialize<T>(raw: string | undefined): T {
@@ -38,29 +39,28 @@ const mocks = [
 ];
 
 type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (k: infer I) => void ? I : never;
-type Handler = <Clients extends Wirespec.Client<Wirespec.Request<unknown>, Wirespec.Response<unknown>, any>[]>(...clients: Clients) => UnionToIntersection<(Clients[number] extends Wirespec.Client<Wirespec.Request<unknown>, Wirespec.Response<unknown>, infer Han> ? Han : never)>;
+type Api = <Apis extends Wirespec.Api<Wirespec.Request<any>, Wirespec.Response<any>, any>[]>(...apis: Apis) => UnionToIntersection<(Apis[number] extends Wirespec.Api<Wirespec.Request<any>, Wirespec.Response<any>, infer Han> ? Han : never)>;
 
-const webClient:Handler = (...clients) => {
-    const activeClients = clients.map(client => client(serialization))
+const webClient:Api = (...apis) => {
+    const activeClients:Record<string, ReturnType<Client<Wirespec.Request<any>, Wirespec.Response<any>, any>>> = apis.reduce((acc, cur) => ({...acc, [cur.name] : cur.client(serialization)}), {})
     const proxy = new Proxy({}, {
         get: (_, prop) => {
-            const handler = activeClients.find(it => it.name === prop);
+            const client = activeClients[prop as keyof typeof activeClients];
             return (req:Wirespec.Request<unknown>) => {
-                const rawRequest = handler.to(req);
+                const rawRequest = client.to(req);
                 const rawResponse: Wirespec.RawResponse = mocks.find(it =>
                     it.method === rawRequest.method &&
                     it.path.join("/") === rawRequest.path.join("/")
                 );
                 assert.notEqual(rawResponse, undefined);
-                return Promise.resolve(handler.from(rawResponse));
+                return Promise.resolve(client.from(rawResponse));
             }
         },
     });
-    return proxy as ReturnType<Handler>
+    return proxy as ReturnType<Api>
 }
 
-const api = webClient(PostTodo.client, GetTodos.client, GetTodoById.client)
-
+const api = webClient(PostTodo.api, GetTodos.api, GetTodoById.api)
 
 const testGetTodos = async () => {
     const request: GetTodos.Request = GetTodos.request();

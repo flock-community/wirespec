@@ -103,6 +103,13 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
           |${Spacer}}
           |${endpoint.emitClient().prependIndent(Spacer(1))}
           |${endpoint.emitServer().prependIndent(Spacer(1))}
+          |${Spacer}export const api: Wirespec.Api<Request, Response, Handler> = {
+          |${Spacer(2)}name: "${endpoint.identifier.sanitizeSymbol().firstToLower()}",
+          |${Spacer(2)}method: "${endpoint.method.name}",
+          |${Spacer(2)}path: "${endpoint.path.joinToString("/") { it.emit() }}",
+          |${Spacer(2)}server,
+          |${Spacer(2)}client
+          |${Spacer}}
           |}
           |
         """.trimMargin()
@@ -181,7 +188,6 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
 
     private fun Endpoint.emitClient() = """
         |export const client: Wirespec.Client<Request, Response, Handler> = (serialization: Wirespec.Serialization) => ({
-        |${Spacer}name: "${identifier.sanitizeSymbol().firstToLower()}",
         |${emitClientTo().prependIndent(Spacer(1))},
         |${emitClientFrom().prependIndent(Spacer(1))}
         |})
@@ -225,7 +231,6 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
 
     private fun Endpoint.emitServer() = """
         |export const server:Wirespec.Server<Request, Response, Handler> = (serialization: Wirespec.Serialization) => ({
-        |${Spacer}name: "${identifier.sanitizeSymbol().firstToLower()}",
         |${emitServerFrom().prependIndent(Spacer(1))},
         |${emitServerTo().prependIndent(Spacer(1))}
         |})
