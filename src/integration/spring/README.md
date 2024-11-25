@@ -104,33 +104,48 @@ public class Application {
 ```java
 @Configuration
 public class WirespecClientConfig {
-    @Bean("wirespecSpringWebClient")
-    public WebClient webClient(
-        WebClient.Builder builder,
-        ServiceConfig config
-    ) {
-        return builder.baseUrl(config.getUrl()).build();
-    }
+
+  @Bean("wirespecSpringWebClient")
+  public WebClient webClient(
+      WebClient.Builder builder
+  ) {
+    return builder.baseUrl("http://localhost:8080").build();
+  }
 }
+
 ```
 
 3. Use the WirespecWebClient in your API client:
 
 ```java
 @Component
-public class WeatherServiceClient implements GetForecastEndpoint.Handler {
-    private final WirespecWebClient wirespecWebClient;
+public class TodoWebClient implements GetTodosEndpoint.Handler {
 
-    public WeatherServiceClient(WirespecWebClient wirespecWebClient) {
-        this.wirespecWebClient = wirespecWebClient;
-    }
-    
-    @Override
-    public CompletableFuture<GetForecastEndpoint.Response<?>> getForecast(
-            GetForecastEndpoint.Request request
-    ) {
-        return wirespecWebClient.handleRequest(request, GetForecastEndpoint.Handler.class);
-    }
+  private final WirespecWebClient wirespecWebClient;
+
+  @Autowired
+  public TodoWebClient(WirespecWebClient wirespecWebClient) {
+    this.wirespecWebClient = wirespecWebClient;
+  }
+
+  @Override
+  public CompletableFuture<GetTodosEndpoint.Response<?>> getTodos(GetTodosEndpoint.Request request) {
+    return wirespecWebClient.send(request);
+  }
+}
+```
+
+## Both Controller and WebClient support
+
+Use the following annotation to enable both Wirespec Controller and WebClient support:
+
+```java
+@SpringBootApplication
+@EnableWirespec
+public class Application {
+  public static void main(String[] args) {
+    SpringApplication.run(Application.class, args);
+  }
 }
 ```
 
