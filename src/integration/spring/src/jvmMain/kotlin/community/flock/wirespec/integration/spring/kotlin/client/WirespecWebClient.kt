@@ -7,16 +7,20 @@ import org.springframework.http.HttpMethod
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
+import kotlin.reflect.full.companionObjectInstance
 
 class WirespecWebClient(
     private val client: WebClient,
     private val wirespecSerde: Serialization<String>,
 ) {
-    suspend fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> send(
-        request: Req,
-        endpoint: Wirespec.Client<Req, Res>,
-    ): Res =
-        with(endpoint.client(wirespecSerde)) { executeRequest(to(request), client).let(::from) }
+    suspend fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> send(request: Req, ): Res {
+        val declaringClass= request::class.java.declaringClass
+        val handler = declaringClass.declaredClasses.toList()
+            .find { it.simpleName == "Handler" }
+            ?: error("Handler not found")
+        val instance = handler.kotlin.companionObjectInstance as Wirespec.Client<Req, Res>
+        return with(instance.client(wirespecSerde)) { executeRequest(to(request), client).let(::from) }
+    }
 
     private suspend fun executeRequest(
         request: Wirespec.RawRequest,
