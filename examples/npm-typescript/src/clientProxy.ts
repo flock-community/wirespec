@@ -1,6 +1,6 @@
-import { GetTodoById, GetTodos, PostTodo, Wirespec } from "./gen/Todo";
+import {GetTodoById, GetTodos, PostTodo, Wirespec} from "./gen/Todo";
+import {GetUsers} from "./gen/User";
 import * as assert from "node:assert";
-import Client = Wirespec.Client;
 
 const serialization: Wirespec.Serialization = {
     deserialize<T>(raw: string | undefined): T {
@@ -38,15 +38,17 @@ const mocks = [
     mock("POST", ["api", "todos"], 200, {}, JSON.stringify({ id: "3", name: "Do more", done: true }))
 ];
 
-type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (k: infer I) => void ? I : never;
-type Api<Han extends any> =  Wirespec.Api<Wirespec.Request<any>, Wirespec.Response<any>, Han>
-type WebClient = <Apis extends Api<any>[]>(...apis: Apis) => UnionToIntersection<Apis[number] extends Api<infer Han> ? Han : never>;
+type ApiClient<REQ, RES> = (req: REQ) => Promise<RES>;
+type WebClient = <Apis extends Wirespec.Api<Wirespec.Request<unknown>, Wirespec.Response<unknown>>[]>(...apis: Apis) => {
+    [K in Apis[number]['name']]: Extract<Apis[number], { name: K }> extends Wirespec.Api<infer Req, infer Res> ?
+        ApiClient<Req, Res> : never
+};
 
 const webClient:WebClient = (...apis) => {
-    const activeClients:Record<string, ReturnType<Client<Wirespec.Request<any>, Wirespec.Response<any>, any>>> = apis.reduce((acc, cur) => ({...acc, [cur.name] : cur.client(serialization)}), {})
     const proxy = new Proxy({}, {
         get: (_, prop) => {
-            const client = activeClients[prop as keyof typeof activeClients];
+            const api = apis.find(it => it.name === prop);
+            const client = api.client(serialization);
             return (req:Wirespec.Request<unknown>) => {
                 const rawRequest = client.to(req);
                 const rawResponse: Wirespec.RawResponse = mocks.find(it =>
@@ -56,12 +58,13 @@ const webClient:WebClient = (...apis) => {
                 assert.notEqual(rawResponse, undefined);
                 return Promise.resolve(client.from(rawResponse));
             }
+
         },
     });
-    return proxy as ReturnType<WebClient>
+    return proxy as any
 }
 
-const api = webClient(PostTodo.api, GetTodos.api, GetTodoById.api)
+const api = webClient(PostTodo.api, GetTodos.api, GetTodoById.api, GetUsers.api)
 
 const testGetTodos = async () => {
     const request: GetTodos.Request = GetTodos.request();

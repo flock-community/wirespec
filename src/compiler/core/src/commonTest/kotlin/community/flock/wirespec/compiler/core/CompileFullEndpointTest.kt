@@ -340,9 +340,9 @@ class CompileFullEndpointTest {
             |  export type Request<T> = { path: Record<string, unknown>, method: Method, query?: Record<string, unknown>, headers?: Record<string, unknown>, content?:Content<T> }
             |  export type Response<T> = { status:number, headers?: Record<string, unknown[]>, content?:Content<T> }
             |  export type Serialization = { serialize: <T>(type: T) => string; deserialize: <T>(raw: string | undefined) => T }
-            |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>, HAN> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
-            |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>, HAN> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
-            |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>, HAN> = { name: string; method: Method, path: string, client: Client<REQ, RES, HAN>; server: Server<REQ, RES, HAN> }
+            |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
+            |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
+            |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
             |}
             |export namespace PutTodo {
             |  type Path = {
@@ -392,7 +392,7 @@ class CompileFullEndpointTest {
             |  export type Handler = {
             |    putTodo: (request:Request) => Promise<Response>
             |  }
-            |  export const client: Wirespec.Client<Request, Response, Handler> = (serialization: Wirespec.Serialization) => ({
+            |  export const client: Wirespec.Client<Request, Response> = (serialization: Wirespec.Serialization) => ({
             |    to: (request) => ({
             |      method: "PUT",
             |      path: ["todos", serialization.serialize(request.path.id)],
@@ -419,7 +419,7 @@ class CompileFullEndpointTest {
             |      }
             |    }
             |  })
-            |  export const server:Wirespec.Server<Request, Response, Handler> = (serialization: Wirespec.Serialization) => ({
+            |  export const server:Wirespec.Server<Request, Response> = (serialization: Wirespec.Serialization) => ({
             |    from: (request) => {
             |      return {
             |        method: "PUT",
@@ -441,13 +441,13 @@ class CompileFullEndpointTest {
             |      body: serialization.serialize(response.body),
             |    })
             |  })
-            |  export const api: Wirespec.Api<Request, Response, Handler> = {
+            |  export const api = {
             |    name: "putTodo",
             |    method: "PUT",
-            |    path: "todos/{id}",
+            |    path: "todos/:id",
             |    server,
             |    client
-            |  }
+            |  } as const
             |}
             |
             |export type PotentialTodoDto = {

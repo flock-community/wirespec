@@ -61,7 +61,7 @@ abstract class Emitter(
             }
         }
 
-    fun Endpoint.Segment.emit() =
+    open fun Endpoint.Segment.emit() =
         when (this) {
             is Endpoint.Segment.Literal -> value
             is Endpoint.Segment.Param -> "{${identifier.value}}"
