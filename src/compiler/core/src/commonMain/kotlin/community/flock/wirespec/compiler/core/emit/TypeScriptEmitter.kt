@@ -98,7 +98,6 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
           |${Spacer}export type Response = ${endpoint.responses.toSet().joinToString(" | ") { it.emitName() }}
           |${endpoint.requests.first().emitFunction(endpoint)}
           |${endpoint.responses.joinToString("\n") { it.emitFunction(endpoint) }}
-          |${Spacer}export type Call = (request:Request) => Promise<Response>
           |${Spacer}export type Handler = {
           |${Spacer(2)}${emitHandleFunction(endpoint)}
           |${Spacer}}
@@ -117,7 +116,7 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
 
 
     private fun emitHandleFunction(endpoint: Endpoint) =
-        "${endpoint.identifier.sanitizeSymbol().firstToLower()}: Call"
+        "${endpoint.identifier.sanitizeSymbol().firstToLower()}: (request:Request) => Promise<Response>"
 
     override fun emit(union: Union) =
         "export type ${union.identifier.sanitizeSymbol()} = ${union.entries.joinToString(" | ") { it.emit() }}\n"

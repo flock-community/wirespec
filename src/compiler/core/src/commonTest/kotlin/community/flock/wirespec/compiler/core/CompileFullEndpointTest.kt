@@ -342,7 +342,7 @@ class CompileFullEndpointTest {
             |  export type Serialization = { serialize: <T>(type: T) => string; deserialize: <T>(raw: string | undefined) => T }
             |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
             |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
-            |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>, HAN> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
+            |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
             |}
             |export namespace PutTodo {
             |  type Path = {
@@ -441,13 +441,13 @@ class CompileFullEndpointTest {
             |      body: serialization.serialize(response.body),
             |    })
             |  })
-            |  export const api: Wirespec.Api<Request, Response, Handler> = {
+            |  export const api = {
             |    name: "putTodo",
             |    method: "PUT",
             |    path: "todos/{id}",
             |    server,
             |    client
-            |  }
+            |  } as const
             |}
             |
             |export type PotentialTodoDto = {
