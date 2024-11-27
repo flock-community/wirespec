@@ -2,18 +2,7 @@ import {GetTodoById, GetTodos, PostTodo, Wirespec} from "./gen/Todo";
 import {GetUsers} from "./gen/User";
 import * as assert from "node:assert";
 
-type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
-type RawRequest = { method: Method, path: string[], queries: Record<string, string>, headers: Record<string, string>, body?: string }
-type RawResponse = { status: number, headers: Record<string, string>, body?: string }
-type Content<T> = { type:string, body:T }
-type Request<T> = { path: Record<string, unknown>, method: Method, query?: Record<string, unknown>, headers?: Record<string, unknown>, content?:Content<T> }
-type Response<T> = { status:number, headers?: Record<string, unknown[]>, content?:Content<T> }
-type Serialization = { serialize: <T>(type: T) => string; deserialize: <T>(raw: string | undefined) => T }
-type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
-type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
-type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
-
-const serialization: Serialization = {
+const serialization: Wirespec.Serialization = {
     deserialize<T>(raw: string | undefined): T {
         if (raw === undefined) {
             return undefined;
@@ -35,7 +24,7 @@ const body = [
     { id: "2", name: "Do it tomorrow", done: false }
 ];
 
-const mock = (method: Method, path: string[], status: number, headers: Record<string, string>, body: any) => ({
+const mock = (method: Wirespec.Method, path: string[], status: number, headers: Record<string, string>, body: any) => ({
     method,
     path,
     status,
@@ -50,8 +39,8 @@ const mocks = [
 ];
 
 type ApiClient<REQ, RES> = (req: REQ) => Promise<RES>;
-type WebClient = <Apis extends Api<Request<unknown>, Response<unknown>>[]>(...apis: Apis) => {
-    [K in Apis[number]['name']]: Extract<Apis[number], { name: K }> extends Api<infer Req, infer Res> ?
+type WebClient = <Apis extends Wirespec.Api<Wirespec.Request<unknown>, Wirespec.Response<unknown>>[]>(...apis: Apis) => {
+    [K in Apis[number]['name']]: Extract<Apis[number], { name: K }> extends Wirespec.Api<infer Req, infer Res> ?
         ApiClient<Req, Res> : never
 };
 
