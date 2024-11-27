@@ -51,10 +51,9 @@ const mocks = [
 
 type ApiClient<REQ, RES> = (req: REQ) => Promise<RES>;
 type WebClient = <Apis extends Api<Request<unknown>, Response<unknown>>[]>(...apis: Apis) => {
-    [K in Apis[number]['name']]: Extract<Apis[number], { name: K }> extends Api<infer ReqType, infer ResType> ?
-        ApiClient<ReqType, ResType> : never
+    [K in Apis[number]['name']]: Extract<Apis[number], { name: K }> extends Api<infer Req, infer Res> ?
+        ApiClient<Req, Res> : never
 };
-
 
 const webClient:WebClient = (...apis) => {
     const proxy = new Proxy({}, {

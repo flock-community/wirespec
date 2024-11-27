@@ -114,6 +114,11 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
           |
         """.trimMargin()
 
+    override fun Endpoint.Segment.emit() =
+        when (this) {
+            is Endpoint.Segment.Literal -> value
+            is Endpoint.Segment.Param -> ":${identifier.value}"
+        }
 
     private fun emitHandleFunction(endpoint: Endpoint) =
         "${endpoint.identifier.sanitizeSymbol().firstToLower()}: (request:Request) => Promise<Response>"

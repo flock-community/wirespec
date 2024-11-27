@@ -444,7 +444,7 @@ class CompileFullEndpointTest {
             |  export const api = {
             |    name: "putTodo",
             |    method: "PUT",
-            |    path: "todos/{id}",
+            |    path: "todos/:id",
             |    server,
             |    client
             |  } as const
