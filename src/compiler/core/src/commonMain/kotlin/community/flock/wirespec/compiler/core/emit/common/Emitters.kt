@@ -23,7 +23,7 @@ interface TypeDefinitionEmitter {
 }
 
 interface EnumDefinitionEmitter {
-    fun emit(enum: Enum): String
+    fun emit(enum: Enum, ast: AST): String
 }
 
 interface RefinedTypeDefinitionEmitter {

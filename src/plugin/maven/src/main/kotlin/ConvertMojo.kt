@@ -4,9 +4,8 @@ import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firs
 import community.flock.wirespec.compiler.core.validate.validate
 import community.flock.wirespec.openapi.v2.OpenApiV2Parser
 import community.flock.wirespec.openapi.v3.OpenApiV3Parser
+import community.flock.wirespec.converter.avro.AvroParser
 import community.flock.wirespec.plugin.Format
-import community.flock.wirespec.plugin.Format.OpenApiV2
-import community.flock.wirespec.plugin.Format.OpenApiV3
 import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.mapEmitter
 import community.flock.wirespec.plugin.writeToFiles
@@ -35,8 +34,9 @@ class ConvertMojo : CompileMojo() {
 
         val json = File(input).readText()
         val ast = when (format) {
-            OpenApiV2 -> OpenApiV2Parser.parse(json, !strict).validate()
-            OpenApiV3 -> OpenApiV3Parser.parse(json, !strict).validate()
+            Format.OpenApiV2 -> OpenApiV2Parser.parse(json, !strict).validate()
+            Format.OpenApiV3 -> OpenApiV3Parser.parse(json, !strict).validate()
+            Format.Avro -> AvroParser.parse(json).validate()
         }
 
         languages
