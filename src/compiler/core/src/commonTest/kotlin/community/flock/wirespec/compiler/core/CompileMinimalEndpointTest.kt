@@ -238,9 +238,9 @@ class CompileMinimalEndpointTest {
             |  export type Request<T> = { path: Record<string, unknown>, method: Method, query?: Record<string, unknown>, headers?: Record<string, unknown>, content?:Content<T> }
             |  export type Response<T> = { status:number, headers?: Record<string, unknown[]>, content?:Content<T> }
             |  export type Serialization = { serialize: <T>(type: T) => string; deserialize: <T>(raw: string | undefined) => T }
-            |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>, HAN> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
-            |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>, HAN> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
-            |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>, HAN> = { name: string; method: Method, path: string, client: Client<REQ, RES, HAN>; server: Server<REQ, RES, HAN> }
+            |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
+            |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
+            |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>, HAN> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
             |}
             |export namespace GetTodos {
             |  type Path = {}
@@ -274,7 +274,7 @@ class CompileMinimalEndpointTest {
             |  export type Handler = {
             |    getTodos: (request:Request) => Promise<Response>
             |  }
-            |  export const client: Wirespec.Client<Request, Response, Handler> = (serialization: Wirespec.Serialization) => ({
+            |  export const client: Wirespec.Client<Request, Response> = (serialization: Wirespec.Serialization) => ({
             |    to: (request) => ({
             |      method: "GET",
             |      path: ["todos"],
@@ -295,7 +295,7 @@ class CompileMinimalEndpointTest {
             |      }
             |    }
             |  })
-            |  export const server:Wirespec.Server<Request, Response, Handler> = (serialization: Wirespec.Serialization) => ({
+            |  export const server:Wirespec.Server<Request, Response> = (serialization: Wirespec.Serialization) => ({
             |    from: (request) => {
             |      return {
             |        method: "GET",

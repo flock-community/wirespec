@@ -98,24 +98,26 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
           |${Spacer}export type Response = ${endpoint.responses.toSet().joinToString(" | ") { it.emitName() }}
           |${endpoint.requests.first().emitFunction(endpoint)}
           |${endpoint.responses.joinToString("\n") { it.emitFunction(endpoint) }}
+          |${Spacer}export type Call = (request:Request) => Promise<Response>
           |${Spacer}export type Handler = {
           |${Spacer(2)}${emitHandleFunction(endpoint)}
           |${Spacer}}
           |${endpoint.emitClient().prependIndent(Spacer(1))}
           |${endpoint.emitServer().prependIndent(Spacer(1))}
-          |${Spacer}export const api: Wirespec.Api<Request, Response, Handler> = {
+          |${Spacer}export const api = {
           |${Spacer(2)}name: "${endpoint.identifier.sanitizeSymbol().firstToLower()}",
           |${Spacer(2)}method: "${endpoint.method.name}",
           |${Spacer(2)}path: "${endpoint.path.joinToString("/") { it.emit() }}",
           |${Spacer(2)}server,
           |${Spacer(2)}client
-          |${Spacer}}
+          |${Spacer}} as const
           |}
           |
         """.trimMargin()
 
+
     private fun emitHandleFunction(endpoint: Endpoint) =
-        "${endpoint.identifier.sanitizeSymbol().firstToLower()}: (request:Request) => Promise<Response>"
+        "${endpoint.identifier.sanitizeSymbol().firstToLower()}: Call"
 
     override fun emit(union: Union) =
         "export type ${union.identifier.sanitizeSymbol()} = ${union.entries.joinToString(" | ") { it.emit() }}\n"
@@ -187,7 +189,7 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
         .joinToString("")
 
     private fun Endpoint.emitClient() = """
-        |export const client: Wirespec.Client<Request, Response, Handler> = (serialization: Wirespec.Serialization) => ({
+        |export const client: Wirespec.Client<Request, Response> = (serialization: Wirespec.Serialization) => ({
         |${emitClientTo().prependIndent(Spacer(1))},
         |${emitClientFrom().prependIndent(Spacer(1))}
         |})
@@ -230,7 +232,7 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
     """.trimMargin()
 
     private fun Endpoint.emitServer() = """
-        |export const server:Wirespec.Server<Request, Response, Handler> = (serialization: Wirespec.Serialization) => ({
+        |export const server:Wirespec.Server<Request, Response> = (serialization: Wirespec.Serialization) => ({
         |${emitServerFrom().prependIndent(Spacer(1))},
         |${emitServerTo().prependIndent(Spacer(1))}
         |})
