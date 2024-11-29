@@ -19,6 +19,8 @@ import community.flock.kotlinx.openapi.bindings.v3.ResponseObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v3.StatusCode
+import community.flock.wirespec.compiler.core.emit.common.AstEmitter
+import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
@@ -29,16 +31,23 @@ import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
+import community.flock.wirespec.openapi.Common.json
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 import community.flock.kotlinx.openapi.bindings.v3.Type as OpenApiType
 
-object OpenApiV3Emitter {
+object OpenApiV3Emitter : AstEmitter {
     data class Options(
         val title: String,
-        val version: String
+        val version: String,
     )
 
-    fun emit(ast: AST, options: Options? = null) = OpenAPIObject(
+    override val split = false
+
+    override fun emit(ast: AST): List<Emitted> =
+        listOf(Emitted("OpenAPIObject", json.encodeToString(emitOpenAPIObject(ast, null))))
+
+    fun emitOpenAPIObject(ast: AST, options: Options? = null) = OpenAPIObject(
         openapi = "3.0.0",
         info = InfoObject(
             title = options?.title ?: "Wirespec",
@@ -91,7 +100,7 @@ object OpenApiV3Emitter {
 
     private fun Type.emit(): SchemaObject =
         SchemaObject(
-
+            description = comment?.value,
             properties = shape.value.associate { it.emitSchema() },
             required = shape.value
                 .filter { !it.isNullable }
@@ -101,12 +110,14 @@ object OpenApiV3Emitter {
 
     private fun Enum.emit(): SchemaObject =
         SchemaObject(
+            description = comment?.value,
             type = OpenApiType.STRING,
             enum = entries.map { JsonPrimitive(it) }
         )
 
     private fun Union.emit(): SchemaObject =
         SchemaObject(
+            description = comment?.value,
             type = OpenApiType.STRING,
             oneOf = entries.map { it.emitSchema() }
         )
@@ -116,6 +127,7 @@ object OpenApiV3Emitter {
 
     private fun Endpoint.emit(): OperationObject = OperationObject(
         operationId = identifier.value,
+        description = comment?.value,
         parameters = path.filterIsInstance<Endpoint.Segment.Param>()
             .map { it.emitParameter() } + queries.map { it.emitParameter(ParameterLocation.QUERY) } + headers.map {
             it.emitParameter(
@@ -123,7 +135,7 @@ object OpenApiV3Emitter {
             )
         },
         requestBody = RequestBodyObject(
-            content = requests.mapNotNull { it.content?.emit() }.toMap().ifEmpty { null },
+            content = requests.mapNotNull { it.content?.emit() }.toMap().ifEmpty { emptyMap() },
             required = !requests.any { it.content?.isNullable ?: false }
         ),
         responses = responses
@@ -131,7 +143,7 @@ object OpenApiV3Emitter {
             .map { (statusCode, res) ->
                 StatusCode(statusCode) to ResponseObject(
                     headers = res.flatMap { it.headers }.associate { it.emitHeader() },
-                    description = "$identifier $statusCode response",
+                    description = "${identifier.value} $statusCode response",
                     content = res
                         .mapNotNull { it.content }
                         .associate { it.emit() }

@@ -2,6 +2,7 @@ package community.flock.wirespec.compiler.core.parse
 
 import community.flock.wirespec.compiler.core.Value
 import community.flock.wirespec.compiler.core.removeBackticks
+import community.flock.wirespec.compiler.core.removeCommentMarkers
 import kotlin.jvm.JvmInline
 
 sealed interface Node
@@ -112,7 +113,10 @@ data class Channel(
 ) : Definition
 
 @JvmInline
-value class Comment(override val value: String) : Value<String>
+value class Comment(private val comment: String) : Value<String> {
+    override val value: String
+        get() = comment.removeCommentMarkers()
+}
 
 sealed class Identifier(name: String) : Value<String> {
     override val value = name.removeBackticks()

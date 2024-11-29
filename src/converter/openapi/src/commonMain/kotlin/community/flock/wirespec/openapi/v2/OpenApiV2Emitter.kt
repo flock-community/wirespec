@@ -14,6 +14,8 @@ import community.flock.kotlinx.openapi.bindings.v2.SchemaObject
 import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v2.StatusCode
 import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
+import community.flock.wirespec.compiler.core.emit.common.AstEmitter
+import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -21,12 +23,19 @@ import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.openapi.Common.json
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenApiType
 
-object OpenApiV2Emitter {
+object OpenApiV2Emitter: AstEmitter {
 
-    fun emit(ast: AST): SwaggerObject =
+    override val split: Boolean = false
+
+    override fun emit(ast: AST): List<Emitted> =
+        listOf(Emitted("SwaggerObject", json.encodeToString(emitSwaggerObject(ast))))
+
+    fun emitSwaggerObject(ast: AST): SwaggerObject =
         SwaggerObject(
             swagger = "2.0",
             info = InfoObject(
@@ -83,6 +92,7 @@ object OpenApiV2Emitter {
 
     private fun Endpoint.emit() = OperationObject(
         operationId = identifier.value,
+        description = comment?.value,
         consumes = requests.mapNotNull { it.content?.type }.distinct().ifEmpty { null },
         produces = responses.mapNotNull { it.content?.type }.distinct().ifEmpty { null },
         parameters = requests
@@ -103,7 +113,7 @@ object OpenApiV2Emitter {
         responses = responses
             .associate { response ->
                 StatusCode(response.status) to ResponseObject(
-                    description = "$identifier ${response.status} response",
+                    description = comment?.value ?: "${identifier.value} ${response.status} response",
                     headers = response.headers.associate {
                         it.identifier.value to HeaderObject(
                             type = it.reference.value,

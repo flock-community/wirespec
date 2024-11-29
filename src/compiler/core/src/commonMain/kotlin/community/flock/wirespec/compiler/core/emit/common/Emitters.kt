@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 
 interface Emitters :
+    AstEmitter,
     TypeDefinitionEmitter,
     EnumDefinitionEmitter,
     RefinedTypeDefinitionEmitter,
@@ -17,6 +18,11 @@ interface Emitters :
     UnionDefinitionEmitter,
     IdentifierEmitter,
     ChannelDefinitionEmitter
+
+interface AstEmitter {
+    val split: Boolean
+    fun emit(ast: AST): List<Emitted>
+}
 
 interface TypeDefinitionEmitter {
     fun emit(type: Type, ast: AST): String

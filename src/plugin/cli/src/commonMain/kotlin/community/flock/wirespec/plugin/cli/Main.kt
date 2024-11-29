@@ -9,10 +9,12 @@ import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
+import community.flock.wirespec.compiler.core.emit.common.AstEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
-import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.openapi.v2.OpenApiV2Emitter
+import community.flock.wirespec.openapi.v3.OpenApiV3Emitter
 import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.Console
 import community.flock.wirespec.plugin.FileExtension
@@ -21,11 +23,7 @@ import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.FullDirPath
 import community.flock.wirespec.plugin.FullFilePath
 import community.flock.wirespec.plugin.Language
-import community.flock.wirespec.plugin.Language.Java
-import community.flock.wirespec.plugin.Language.Kotlin
-import community.flock.wirespec.plugin.Language.Scala
-import community.flock.wirespec.plugin.Language.TypeScript
-import community.flock.wirespec.plugin.Language.Wirespec
+import community.flock.wirespec.plugin.Language.*
 import community.flock.wirespec.plugin.Operation
 import community.flock.wirespec.plugin.Output
 import community.flock.wirespec.plugin.PackageName
@@ -131,7 +129,7 @@ private fun Reader.wirespec(
         }
 }
 
-private fun Set<Language>.emitters(packageName: PackageName, path: ((FileExtension) -> FullFilePath)?, logger: Logger): List<Pair<Emitter, File?>> =
+private fun Set<Language>.emitters(packageName: PackageName, path: ((FileExtension) -> FullFilePath)?, logger: Logger): List<Pair<AstEmitter, File?>> =
     map {
         val (packageString) = packageName
         when (it) {
@@ -140,6 +138,8 @@ private fun Set<Language>.emitters(packageName: PackageName, path: ((FileExtensi
             Scala -> ScalaEmitter(packageString, logger) to path?.let { ScalaFile(it(FileExtension.Scala)) }
             TypeScript -> TypeScriptEmitter(logger) to path?.let { TypeScriptFile(it(FileExtension.TypeScript)) }
             Wirespec -> WirespecEmitter(logger) to path?.let { WirespecFile(it(FileExtension.Wirespec)) }
+            OpenAPIV2 -> OpenApiV2Emitter to path?.let { JsonFile(it(FileExtension.Json)) }
+            OpenAPIV3 -> OpenApiV3Emitter to path?.let { JsonFile(it(FileExtension.Json)) }
         }
     }
 

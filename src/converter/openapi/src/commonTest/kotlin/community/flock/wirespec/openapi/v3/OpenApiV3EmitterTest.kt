@@ -18,7 +18,7 @@ class OpenApiV3EmitterTest {
         val petstoreOpenAPi = OpenAPI.decodeFromString(petstoreJson)
         val petstoreAst = petstoreOpenAPi.parse()
 
-        val petstoreConvertedOpenAPi = OpenApiV3Emitter.emit(petstoreAst)
+        val petstoreConvertedOpenAPi = OpenApiV3Emitter.emitOpenAPIObject(petstoreAst, null)
         val petstoreConvertedOpenAPiAst = petstoreConvertedOpenAPi.parse()
 
         assertEquals(petstoreAst, petstoreConvertedOpenAPiAst)

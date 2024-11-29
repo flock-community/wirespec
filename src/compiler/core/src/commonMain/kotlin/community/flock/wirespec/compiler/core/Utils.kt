@@ -16,4 +16,6 @@ fun String.removeJavaPrefix() = removePrefix("java.util.")
 
 fun String.removeAngularBrackets() = filterNot { it == '<' || it == '>' }
 
-fun String.removeCommasAndSpaces() = filterNot { it == ',' || it == ' '}
+fun String.removeCommasAndSpaces() = filterNot { it == ',' || it == ' ' }
+
+fun String.removeCommentMarkers(): String = removePrefix("/*").removeSuffix("*/").trim()
