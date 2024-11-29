@@ -115,7 +115,8 @@ data class Channel(
 @JvmInline
 value class Comment(private val comment: String) : Value<String> {
     override val value: String
-        get() = comment.removeCommentMarkers()
+        get() =
+            comment.removeCommentMarkers()
 }
 
 sealed class Identifier(name: String) : Value<String> {

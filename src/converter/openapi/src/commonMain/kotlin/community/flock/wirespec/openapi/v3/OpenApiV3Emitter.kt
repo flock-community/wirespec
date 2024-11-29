@@ -135,7 +135,7 @@ object OpenApiV3Emitter : AstEmitter {
             )
         },
         requestBody = RequestBodyObject(
-            content = requests.mapNotNull { it.content?.emit() }.toMap().ifEmpty { emptyMap() },
+            content = requests.mapNotNull { it.content?.emit() }.toMap().ifEmpty { null },
             required = !requests.any { it.content?.isNullable ?: false }
         ),
         responses = responses
