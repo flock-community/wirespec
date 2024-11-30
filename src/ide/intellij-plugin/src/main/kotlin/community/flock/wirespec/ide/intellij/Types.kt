@@ -35,6 +35,5 @@ interface Types {
         val ARROW = ElementType("ARROW")
         val EQUALS = ElementType("EQUALS")
         val PIPE = ElementType("PIPE")
-        val CUSTOM_REGEX = ElementType("CUSTOM_REGEX")
     }
 }
