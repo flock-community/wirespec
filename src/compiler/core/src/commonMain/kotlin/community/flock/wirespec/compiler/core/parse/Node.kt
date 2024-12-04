@@ -113,10 +113,11 @@ data class Channel(
 ) : Definition
 
 @JvmInline
-value class Comment(private val comment: String) : Value<String> {
-    override val value: String
-        get() =
-            comment.removeCommentMarkers()
+value class Comment private constructor(override val value: String) : Value<String> {
+
+    companion object {
+        operator fun invoke(comment: String) = Comment(comment.removeCommentMarkers())
+    }
 }
 
 sealed class Identifier(name: String) : Value<String> {
