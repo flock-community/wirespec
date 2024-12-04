@@ -19,33 +19,49 @@ import community.flock.kotlinx.openapi.bindings.v3.ResponseObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v3.StatusCode
-import community.flock.wirespec.compiler.core.emit.common.AstEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
+import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
+import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.openapi.Common.json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 import community.flock.kotlinx.openapi.bindings.v3.Type as OpenApiType
 
-object OpenApiV3Emitter : AstEmitter {
+object OpenApiV3Emitter : Emitter(noLogger) {
     data class Options(
         val title: String,
         val version: String,
     )
 
-    override val split = false
+    override val singleLineComment = ""
 
     override fun emit(ast: AST): List<Emitted> =
         listOf(Emitted("OpenAPIObject", json.encodeToString(emitOpenAPIObject(ast, null))))
+
+    override fun emit(type: Type, ast: AST) = notYetImplemented()
+
+    override fun emit(enum: Enum) = notYetImplemented()
+
+    override fun emit(refined: Refined) = notYetImplemented()
+
+    override fun emit(endpoint: Endpoint) = notYetImplemented()
+
+    override fun emit(union: Union) = notYetImplemented()
+
+    override fun emit(identifier: Identifier) = notYetImplemented()
+
+    override fun emit(channel: Channel) = notYetImplemented()
 
     fun emitOpenAPIObject(ast: AST, options: Options? = null) = OpenAPIObject(
         openapi = "3.0.0",

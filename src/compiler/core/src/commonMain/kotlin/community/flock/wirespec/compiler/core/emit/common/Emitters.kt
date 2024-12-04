@@ -10,19 +10,14 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 
 interface Emitters :
-    AstEmitter,
     TypeDefinitionEmitter,
     EnumDefinitionEmitter,
     RefinedTypeDefinitionEmitter,
     EndpointDefinitionEmitter,
     UnionDefinitionEmitter,
     IdentifierEmitter,
-    ChannelDefinitionEmitter
-
-interface AstEmitter {
-    val split: Boolean
-    fun emit(ast: AST): List<Emitted>
-}
+    ChannelDefinitionEmitter,
+    NotYetImplemented
 
 interface TypeDefinitionEmitter {
     fun emit(type: Type, ast: AST): String
@@ -50,4 +45,9 @@ interface ChannelDefinitionEmitter {
 
 interface IdentifierEmitter {
     fun emit(identifier: Identifier): String
+}
+
+interface NotYetImplemented {
+    val singleLineComment: String
+    fun notYetImplemented() = "$singleLineComment TODO(\"Not yet implemented\")\n"
 }

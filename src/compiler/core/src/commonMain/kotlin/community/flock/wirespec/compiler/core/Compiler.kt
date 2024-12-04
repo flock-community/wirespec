@@ -7,8 +7,8 @@ import community.flock.wirespec.compiler.core.Reported.EMITTED
 import community.flock.wirespec.compiler.core.Reported.PARSED
 import community.flock.wirespec.compiler.core.Reported.TOKENIZED
 import community.flock.wirespec.compiler.core.Reported.VALIDATED
-import community.flock.wirespec.compiler.core.emit.common.AstEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
+import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.optimize.optimize
 import community.flock.wirespec.compiler.core.parse.AST
@@ -30,7 +30,7 @@ fun LanguageSpec.parse(source: String): (Logger) -> Either<NonEmptyList<Wirespec
             .also((VALIDATED::report)(logger))
     }
 
-fun LanguageSpec.compile(source: String): (Logger) -> (AstEmitter) -> Either<Nel<WirespecException>, List<Emitted>> =
+fun LanguageSpec.compile(source: String): (Logger) -> (Emitter) -> Either<Nel<WirespecException>, List<Emitted>> =
     { logger ->
         { emitter ->
             parse(source)(logger)

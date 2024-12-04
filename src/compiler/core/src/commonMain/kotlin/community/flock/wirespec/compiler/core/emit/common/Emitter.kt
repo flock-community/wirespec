@@ -17,8 +17,8 @@ import community.flock.wirespec.compiler.utils.Logger
 
 abstract class Emitter(
     val logger: Logger,
-    override val split: Boolean = false
-): Emitters {
+    val split: Boolean = false,
+) : Emitters {
 
     data class Param(
         val type: ParamType,
@@ -31,11 +31,9 @@ abstract class Emitter(
         }
     }
 
-    abstract fun Definition.emitName(): String
+    open fun Definition.emitName(): String = notYetImplemented()
 
-    abstract fun notYetImplemented(): String
-
-    override fun emit(ast: AST): List<Emitted> = ast
+    open fun emit(ast: AST): List<Emitted> = ast
         .map {
             logger.info("Emitting Node $it")
             when (it) {

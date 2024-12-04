@@ -114,7 +114,6 @@ data class Channel(
 
 @JvmInline
 value class Comment private constructor(override val value: String) : Value<String> {
-
     companion object {
         operator fun invoke(comment: String) = Comment(comment.removeCommentMarkers())
     }
