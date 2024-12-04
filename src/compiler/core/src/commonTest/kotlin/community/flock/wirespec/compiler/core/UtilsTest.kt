@@ -33,4 +33,17 @@ class UtilsTest {
         "java.util.List<String>".concatGenerics() shouldBe "ListString"
     }
 
+    @Test
+    fun testRemoveCommentMarkers() {
+        "/* Simple comment */".removeCommentMarkers() shouldBe "Simple comment"
+        "/*    Padded    */".removeCommentMarkers() shouldBe "Padded"
+        "/**/".removeCommentMarkers() shouldBe ""
+
+        """/* Multiple
+           | Lines
+           | Here */""".trimMargin().removeCommentMarkers() shouldBe """Multiple
+           | Lines
+           | Here""".trimMargin()
+    }
+
 }

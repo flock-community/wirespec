@@ -3,7 +3,6 @@ package community.flock.wirespec.compiler.core.emit
 import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
-import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToLower
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.emit.shared.TypeScriptShared
 import community.flock.wirespec.compiler.core.parse.AST
@@ -31,10 +30,7 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
         is Channel -> emit(identifier)
     }
 
-    override fun notYetImplemented() =
-        """// TODO("Not yet implemented")
-            |
-        """.trimMargin()
+    override val singleLineComment = "//"
 
     override fun emit(ast: AST): List<Emitted> =
         super.emit(ast).map {

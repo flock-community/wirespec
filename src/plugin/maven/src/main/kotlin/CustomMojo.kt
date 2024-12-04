@@ -64,6 +64,8 @@ class CustomMojo : BaseMojo() {
                 Language.Scala -> ScalaShared
                 Language.TypeScript -> TypeScriptShared
                 Language.Wirespec -> null
+                Language.OpenAPIV2 -> null
+                Language.OpenAPIV3 -> null
             }
         }?.also {
             File(output).resolve(PackageName(it.packageString).toDirectory()).apply {

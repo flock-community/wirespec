@@ -84,12 +84,12 @@ fun emit(ast: Array<WsNode>, emitter: Emitters, packageName: String) = ast
             Emitters.KOTLIN -> KotlinEmitter(packageName).emit(it)
             Emitters.SCALA -> ScalaEmitter(packageName).emit(it)
             Emitters.OPENAPI_V2 -> listOf(it)
-                .map(OpenApiV2Emitter::emit)
+                .map(OpenApiV2Emitter::emitSwaggerObject)
                 .map(encode(SwaggerObject.serializer()))
                 .map(::Emitted.curried()("openapi")::invoke)
 
             Emitters.OPENAPI_V3 -> listOf(it)
-                .map(OpenApiV3Emitter::emit)
+                .map{ast -> OpenApiV3Emitter.emitOpenAPIObject(ast, null)}
                 .map(encode(OpenAPIObject.serializer()))
                 .map(::Emitted.curried()("openapi")::invoke)
         }

@@ -17,8 +17,12 @@ import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.validate.validate
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.openapi.v2.OpenApiV2Emitter
+import community.flock.wirespec.openapi.v3.OpenApiV3Emitter
 import community.flock.wirespec.plugin.Language.Java
 import community.flock.wirespec.plugin.Language.Kotlin
+import community.flock.wirespec.plugin.Language.OpenAPIV2
+import community.flock.wirespec.plugin.Language.OpenAPIV3
 import community.flock.wirespec.plugin.Language.Scala
 import community.flock.wirespec.plugin.Language.TypeScript
 import community.flock.wirespec.plugin.Language.Wirespec
@@ -51,4 +55,6 @@ fun Language.mapEmitter(packageName: PackageName, logger: Logger) =
         Scala -> LanguageEmitter(ScalaEmitter(packageName.value, logger), FileExtension.Scala, ScalaShared)
         TypeScript -> LanguageEmitter(TypeScriptEmitter(logger), FileExtension.TypeScript)
         Wirespec -> LanguageEmitter(WirespecEmitter(logger), FileExtension.Wirespec)
+        OpenAPIV2 -> LanguageEmitter(OpenApiV2Emitter, FileExtension.Json)
+        OpenAPIV3 -> LanguageEmitter(OpenApiV3Emitter, FileExtension.Json)
     }

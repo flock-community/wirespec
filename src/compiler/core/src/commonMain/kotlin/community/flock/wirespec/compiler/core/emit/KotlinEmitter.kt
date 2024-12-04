@@ -47,10 +47,7 @@ open class KotlinEmitter(
         is Union -> emit(identifier)
     }
 
-    override fun notYetImplemented() =
-        """// TODO("Not yet implemented")
-            |
-        """.trimMargin()
+    override val singleLineComment = "//"
 
     override fun emit(ast: AST): List<Emitted> =
         super.emit(ast).map { (typeName, result) ->

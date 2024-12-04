@@ -1,6 +1,7 @@
 package community.flock.wirespec.openapi
 
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
+import kotlinx.serialization.json.Json
 
 object Common {
     fun className(vararg arg: String) = arg
@@ -9,4 +10,8 @@ object Common {
 
     fun <K, V> Map<K, V?>.filterNotNullValues(): Map<K, V> =
         mapNotNull { (key, value) -> value?.let { key to it } }.toMap()
+
+    val json = Json {
+        prettyPrint = true
+    }
 }
