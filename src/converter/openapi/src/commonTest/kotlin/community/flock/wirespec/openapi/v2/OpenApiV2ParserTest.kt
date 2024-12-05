@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Reference.Custom
 import community.flock.wirespec.compiler.core.parse.Reference.Primitive
+import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.openapi.common.Expected
 import community.flock.wirespec.openapi.v2.OpenApiV2Parser.parse
@@ -37,12 +38,12 @@ class OpenApiV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("type"),
-                            reference = Primitive(type = Primitive.Type.String(), isIterable = false),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
                             isNullable = true
                         ),
                         Field(
                             identifier = FieldIdentifier("message"),
-                            reference = Primitive(type = Primitive.Type.String(), isIterable = false),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
                             isNullable = true
                         )
                     )
@@ -61,7 +62,7 @@ class OpenApiV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("name"),
-                            reference = Primitive(type = Primitive.Type.String(), isIterable = false),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
                             isNullable = true
                         )
                     )
@@ -85,12 +86,12 @@ class OpenApiV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("name"),
-                            reference = Primitive(type = Primitive.Type.String(), isIterable = false),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
                             isNullable = false
                         ),
                         Field(
                             identifier = FieldIdentifier("photoUrls"),
-                            reference = Primitive(type = Primitive.Type.String(), isIterable = true),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = true),
                             isNullable = false
                         ),
                         Field(
@@ -119,7 +120,7 @@ class OpenApiV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("name"),
-                            reference = Primitive(type = Primitive.Type.String(), isIterable = false),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
                             isNullable = true
                         )
                     )
@@ -148,7 +149,7 @@ class OpenApiV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("shipDate"),
-                            reference = Primitive(type = Primitive.Type.String(), isIterable = false),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
                             isNullable = true
                         ),
                         Field(
@@ -177,32 +178,32 @@ class OpenApiV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("username"),
-                            reference = Primitive(type = Primitive.Type.String(), isIterable = false),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
                             isNullable = true
                         ),
                         Field(
                             identifier = FieldIdentifier("firstName"),
-                            reference = Primitive(type = Primitive.Type.String(), isIterable = false),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
                             isNullable = true
                         ),
                         Field(
                             identifier = FieldIdentifier("lastName"),
-                            reference = Primitive(type = Primitive.Type.String(), isIterable = false),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
                             isNullable = true
                         ),
                         Field(
                             identifier = FieldIdentifier("email"),
-                            reference = Primitive(type = Primitive.Type.String(), isIterable = false),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
                             isNullable = true
                         ),
                         Field(
                             identifier = FieldIdentifier("password"),
-                            reference = Primitive(type = Primitive.Type.String(), isIterable = false),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
                             isNullable = true
                         ),
                         Field(
                             identifier = FieldIdentifier("phone"),
-                            reference = Primitive(type = Primitive.Type.String(), isIterable = false),
+                            reference = Primitive(type = Primitive.Type.String, isIterable = false),
                             isNullable = true
                         ),
                         Field(
@@ -297,7 +298,7 @@ class OpenApiV2ParserTest {
                         Field(
                             identifier = FieldIdentifier("a"),
                             reference = Primitive(
-                                type = Primitive.Type.String(),
+                                type = Primitive.Type.String,
                                 isIterable = false,
                                 isDictionary = false
                             ),
