@@ -14,7 +14,7 @@ import kotlin.reflect.javaType
 @Configuration
 @OptIn(ExperimentalStdlibApi::class)
 @Import(WirespecResponseBodyAdvice::class, WirespecWebMvcConfiguration::class)
-open class WirespecConfiguration {
+open class WirespecSerializationConfiguration {
 
     @Bean
     open fun wirespecSerialization(objectMapper: ObjectMapper) = object : Wirespec.Serialization<String> {

@@ -1,4 +1,4 @@
-package community.flock.wirespec.examples.maven.spring.integration;
+package community.flock.wirespec.examples.maven.spring.integration.controller;
 
 import community.flock.wirespec.generated.examples.spring.CreateTodoEndpoint;
 import community.flock.wirespec.generated.examples.spring.DeleteTodoEndpoint;
@@ -7,6 +7,7 @@ import community.flock.wirespec.generated.examples.spring.GetTodosEndpoint;
 import community.flock.wirespec.generated.examples.spring.Todo;
 import community.flock.wirespec.generated.examples.spring.UpdateTodoEndpoint;
 import org.springframework.web.bind.annotation.RestController;
+import community.flock.wirespec.examples.maven.spring.integration.service.TodoService;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;

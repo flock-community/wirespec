@@ -1,4 +1,4 @@
-package community.flock.wirespec.examples.maven.spring.integration;
+package community.flock.wirespec.examples.maven.spring.integration.service;
 
 import community.flock.wirespec.generated.examples.spring.Todo;
 import org.springframework.stereotype.Service;

@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Import
 
 @Configuration
 @Import(WirespecResponseBodyAdvice::class, WirespecWebMvcConfiguration::class)
-open class WirespecConfiguration {
+open class WirespecSerializationConfiguration {
 
     @Bean
     open fun wirespecSerialization(objectMapper: ObjectMapper) = object : Wirespec.Serialization<String> {

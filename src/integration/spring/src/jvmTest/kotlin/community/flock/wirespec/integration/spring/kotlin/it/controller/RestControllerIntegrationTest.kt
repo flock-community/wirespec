@@ -1,9 +1,7 @@
-package community.flock.wirespec.integration.spring.kotlin.it
+package community.flock.wirespec.integration.spring.kotlin.it.controller
 
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
-import community.flock.wirespec.integration.spring.kotlin.application.Application
 import community.flock.wirespec.integration.spring.kotlin.application.Service
 import community.flock.wirespec.integration.spring.kotlin.generated.Pet
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -25,9 +23,9 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 
-@SpringBootTest(classes = [Application::class])
+@SpringBootTest
 @AutoConfigureMockMvc
-class IntegrationTest {
+class RestControllerIntegrationTest {
 
     @Autowired
     lateinit var mockMvc: MockMvc
@@ -38,9 +36,8 @@ class IntegrationTest {
     @Autowired
     lateinit var service: Service
 
-
     @Test
-    fun crudIntegrationTest() {
+    fun `CRUD RestController integration test`() {
 
         val pet = Pet(
             id = 1,
@@ -88,6 +85,15 @@ class IntegrationTest {
             .andExpect(status().isBadRequest())
 
         assertEquals(0, service.list.size)
+    }
+
+    @Test
+    fun `query parameters`() {
+        mockMvc
+            .perform(get("/pet/findByTags").param("tags", "Smilodon", "Dodo", "Mammoth"))
+            .asyncDispatch()
+            .andDo(print())
+            .andExpect(status().isOk())
     }
 
     fun ResultActions.asyncDispatch(): ResultActions = mockMvc.perform(asyncDispatch(this.andReturn()))

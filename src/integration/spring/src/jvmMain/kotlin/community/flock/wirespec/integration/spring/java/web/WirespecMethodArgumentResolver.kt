@@ -41,3 +41,4 @@ fun HttpServletRequest.toRawRequest(): Wirespec.RawRequest = Wirespec.RawRequest
     headerNames.toList().associateWith(::getHeader),
     reader.lines().collect(Collectors.joining(System.lineSeparator()))
 )
+

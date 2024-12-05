@@ -1,40 +1,66 @@
-# Spring integration lib
+# Wirespec Spring Integration
 
-This module offers Spring configuration which binds Wirespec endpoints as request mappings.
+A Spring integration library that enables:
+- Spring RestController endpoint generation
+- Spring WebClient integration
 
-## Install
+## Installation
+
+Add the Maven plugin to your `pom.xml`:
 
 ```xml
-<dependency>
-    <groupId>community.flock.wirespec.integration</groupId>
-    <artifactId>spring-jvm</artifactId>
+<plugin>
+    <groupId>community.flock.wirespec.plugin.maven</groupId>
+    <artifactId>wirespec-maven-plugin</artifactId>
     <version>{VERSION}</version>
-</dependency>
+    <executions>
+        <execution>
+            <phase>generate-sources</phase>
+            <id>java</id>
+            <goals>
+                <goal>custom</goal>
+            </goals>
+            <configuration>
+                <input>${maven.multiModuleProjectDirectory}/wirespec</input>
+                <output>${project.build.directory}/generated-sources</output>
+                <packageName>generated.community.flock.wirespec.api</packageName>
+                <emitterClass>community.flock.wirespec.integration.spring.kotlin.emit.SpringJavaEmitter</emitterClass>
+            </configuration>
+        </execution>
+    </executions>
+    <dependencies>
+        <dependency>
+            <groupId>community.flock.wirespec.integration</groupId>
+            <artifactId>spring-jvm</artifactId>
+            <version>{VERSION}</version>
+        </dependency>
+    </dependencies>
+</plugin>
 ```
 
-## Usage
-Use the custom Java or Kotlin spring emitters to generate wirespec spring enabled endpoint interfaces
-- [SpringJavaEmitter.kt](src%2FjvmMain%2Fkotlin%2Fcommunity%2Fflock%2Fwirespec%2Fintegration%2Fspring%2Femit%2FSpringJavaEmitter.kt)
-- [SpringKotlinEmitter.kt](src%2FjvmMain%2Fkotlin%2Fcommunity%2Fflock%2Fwirespec%2Fintegration%2Fspring%2Femit%2FSpringKotlinEmitter.kt)
+Choose your emitter:
+- [SpringJavaEmitter.kt](src/jvmMain/kotlin/community/flock/wirespec/integration/spring/java/emit/SpringJavaEmitter.kt)
+- [SpringKotlinEmitter.kt](src/jvmMain/kotlin/community/flock/wirespec/integration/spring/kotlin/emit/SpringKotlinEmitter.kt)
 
-Load the wirspec spring configuration 
-- [WirespecConfiguration.kt](src%2FjvmMain%2Fkotlin%2Fcommunity%2Fflock%2Fwirespec%2Fintegration%2Fspring%2Fconfiguration%2FWirespecConfiguration.kt)
+## RestController Integration
+
+1. Enable the controller in your Spring Boot application:
 
 ```java
 @SpringBootApplication
-@Import(WirespecConfiguration.class)
-public class TodoApplication {
+@EnableWirespecController
+public class Application {
     public static void main(String[] args) {
-        SpringApplication.run(TodoApplication.class, args);
+        SpringApplication.run(Application.class, args);
     }
 }
-
 ```
+
+2. Implement the generated endpoint interface:
 
 ```java
 @RestController
 class TodoController implements GetTodosEndpoint {
-
     private final TodoService service;
 
     public TodoController(TodoService service) {
@@ -52,10 +78,78 @@ class TodoController implements GetTodosEndpoint {
                 todoInput.done()
         );
         service.create(todo);
-        var res = new CreateTodoEndpoint.Response200ApplicationJson(Map.of(), todo);
-        return CompletableFuture.completedFuture(res);
+        return CompletableFuture.completedFuture(
+            new CreateTodoEndpoint.Response200ApplicationJson(Map.of(), todo)
+        );
     }
 }
 ```
 
-For a more extensive example go to [Spring integration example](examples/spring-boot-integration)
+## WebClient Integration
+
+1. Enable the client in your Spring Boot application:
+
+```java
+@SpringBootApplication
+@EnableWirespecClient
+public class Application {
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+}
+```
+
+2. Configure the WebClient:
+
+```java
+@Configuration
+public class WirespecClientConfig {
+
+  @Bean("wirespecSpringWebClient")
+  public WebClient webClient(
+      WebClient.Builder builder
+  ) {
+    return builder.baseUrl("http://localhost:8080").build();
+  }
+}
+
+```
+
+3. Use the WirespecWebClient in your API client:
+
+```java
+@Component
+public class TodoWebClient implements GetTodosEndpoint.Handler {
+
+  private final WirespecWebClient wirespecWebClient;
+
+  @Autowired
+  public TodoWebClient(WirespecWebClient wirespecWebClient) {
+    this.wirespecWebClient = wirespecWebClient;
+  }
+
+  @Override
+  public CompletableFuture<GetTodosEndpoint.Response<?>> getTodos(GetTodosEndpoint.Request request) {
+    return wirespecWebClient.send(request);
+  }
+}
+```
+
+## Both Controller and WebClient support
+
+Use the following annotation to enable both Wirespec Controller and WebClient support:
+
+```java
+@SpringBootApplication
+@EnableWirespec
+public class Application {
+  public static void main(String[] args) {
+    SpringApplication.run(Application.class, args);
+  }
+}
+```
+
+For more examples, see the:
+
+- [WebClientIntegrationTest](src/jvmTest/kotlin/community/flock/wirespec/integration/spring/kotlin/it/client/WebClientIntegrationTest.kt)
+- [RestControllerIntegrationTest](src/jvmTest/kotlin/community/flock/wirespec/integration/spring/kotlin/it/controller/RestControllerIntegrationTest.kt)
