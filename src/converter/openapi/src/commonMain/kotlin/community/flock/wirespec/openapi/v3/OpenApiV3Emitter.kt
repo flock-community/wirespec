@@ -19,26 +19,51 @@ import community.flock.kotlinx.openapi.bindings.v3.ResponseObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v3.StatusCode
+import community.flock.wirespec.compiler.core.emit.common.Emitted
+import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
+import community.flock.wirespec.compiler.utils.noLogger
+import community.flock.wirespec.openapi.Common.json
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 import community.flock.kotlinx.openapi.bindings.v3.Type as OpenApiType
 
-object OpenApiV3Emitter {
+object OpenApiV3Emitter : Emitter(noLogger) {
     data class Options(
         val title: String,
-        val version: String
+        val version: String,
     )
 
-    fun emit(ast: AST, options: Options? = null) = OpenAPIObject(
+    override val singleLineComment = ""
+
+    override fun emit(ast: AST): List<Emitted> =
+        listOf(Emitted("OpenAPIObject", json.encodeToString(emitOpenAPIObject(ast, null))))
+
+    override fun emit(type: Type, ast: AST) = notYetImplemented()
+
+    override fun emit(enum: Enum) = notYetImplemented()
+
+    override fun emit(refined: Refined) = notYetImplemented()
+
+    override fun emit(endpoint: Endpoint) = notYetImplemented()
+
+    override fun emit(union: Union) = notYetImplemented()
+
+    override fun emit(identifier: Identifier) = notYetImplemented()
+
+    override fun emit(channel: Channel) = notYetImplemented()
+
+    fun emitOpenAPIObject(ast: AST, options: Options? = null) = OpenAPIObject(
         openapi = "3.0.0",
         info = InfoObject(
             title = options?.title ?: "Wirespec",
@@ -91,7 +116,7 @@ object OpenApiV3Emitter {
 
     private fun Type.emit(): SchemaObject =
         SchemaObject(
-
+            description = comment?.value,
             properties = shape.value.associate { it.emitSchema() },
             required = shape.value
                 .filter { !it.isNullable }
@@ -101,12 +126,14 @@ object OpenApiV3Emitter {
 
     private fun Enum.emit(): SchemaObject =
         SchemaObject(
+            description = comment?.value,
             type = OpenApiType.STRING,
             enum = entries.map { JsonPrimitive(it) }
         )
 
     private fun Union.emit(): SchemaObject =
         SchemaObject(
+            description = comment?.value,
             type = OpenApiType.STRING,
             oneOf = entries.map { it.emitSchema() }
         )
@@ -116,6 +143,7 @@ object OpenApiV3Emitter {
 
     private fun Endpoint.emit(): OperationObject = OperationObject(
         operationId = identifier.value,
+        description = comment?.value,
         parameters = path.filterIsInstance<Endpoint.Segment.Param>()
             .map { it.emitParameter() } + queries.map { it.emitParameter(ParameterLocation.QUERY) } + headers.map {
             it.emitParameter(
@@ -131,7 +159,7 @@ object OpenApiV3Emitter {
             .map { (statusCode, res) ->
                 StatusCode(statusCode) to ResponseObject(
                     headers = res.flatMap { it.headers }.associate { it.emitHeader() },
-                    description = "$identifier $statusCode response",
+                    description = "${identifier.value} $statusCode response",
                     content = res
                         .mapNotNull { it.content }
                         .associate { it.emit() }

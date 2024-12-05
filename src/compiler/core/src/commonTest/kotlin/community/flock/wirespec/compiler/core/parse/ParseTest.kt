@@ -84,15 +84,15 @@ class ParseTest {
     @Test
     fun testParserWithDoubleComment() {
         val source = """
-            |/**
-            | * This is comment 1
+            |/*
+            | This is comment 1
             | */
             |type Foo {
             |  foo: String
             |}
             |
-            |/**
-            | * This is comment 2
+            |/*
+            | This is comment 2
             | */
             |type Bar {
             |  bar: String
@@ -102,8 +102,8 @@ class ParseTest {
         WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight().filterIsInstance<Definition>().map { it.comment?.value } shouldBe listOf(
-            "/**\n * This is comment 1\n */",
-            "/**\n * This is comment 2\n */",
+            "This is comment 1",
+            "This is comment 2",
         )
     }
 }

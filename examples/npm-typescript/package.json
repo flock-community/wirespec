@@ -10,7 +10,7 @@
     "clean:generated": "npx rimraf ./src/gen",
     "generate": "wirespec compile -d ./wirespec -o ./src/gen -l TypeScript -p ''",
     "test": "npm run test:client && npm run test:server",
-    "test:client": "ts-node src/client.ts",
+    "test:client": "ts-node src/clientSimple.ts && ts-node src/clientProxy.ts",
     "test:server": "ts-node src/server.ts",
     "update": "npx --yes update-ruecksichtslos"
   },

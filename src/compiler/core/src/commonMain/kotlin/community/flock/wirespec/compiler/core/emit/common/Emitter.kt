@@ -17,7 +17,7 @@ import community.flock.wirespec.compiler.utils.Logger
 
 abstract class Emitter(
     val logger: Logger,
-    val split: Boolean = false
+    val split: Boolean = false,
 ) : Emitters {
 
     data class Param(
@@ -31,9 +31,7 @@ abstract class Emitter(
         }
     }
 
-    abstract fun Definition.emitName(): String
-
-    abstract fun notYetImplemented(): String
+    open fun Definition.emitName(): String = notYetImplemented()
 
     open fun emit(ast: AST): List<Emitted> = ast
         .map {
@@ -61,7 +59,7 @@ abstract class Emitter(
             }
         }
 
-    fun Endpoint.Segment.emit() =
+    open fun Endpoint.Segment.emit() =
         when (this) {
             is Endpoint.Segment.Literal -> value
             is Endpoint.Segment.Param -> "{${identifier.value}}"

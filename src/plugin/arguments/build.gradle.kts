@@ -24,6 +24,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(project(":src:compiler:core"))
+                implementation(project(":src:converter:openapi"))
             }
         }
         val commonTest by getting {

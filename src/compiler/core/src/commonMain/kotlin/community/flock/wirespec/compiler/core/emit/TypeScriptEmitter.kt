@@ -30,10 +30,7 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
         is Channel -> emit(identifier)
     }
 
-    override fun notYetImplemented() =
-        """// TODO("Not yet implemented")
-            |
-        """.trimMargin()
+    override val singleLineComment = "//"
 
     override fun emit(ast: AST): List<Emitted> =
         super.emit(ast).map {
@@ -102,9 +99,22 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
           |${Spacer}}
           |${endpoint.emitClient().prependIndent(Spacer(1))}
           |${endpoint.emitServer().prependIndent(Spacer(1))}
+          |${Spacer}export const api = {
+          |${Spacer(2)}name: "${endpoint.identifier.sanitizeSymbol().firstToLower()}",
+          |${Spacer(2)}method: "${endpoint.method.name}",
+          |${Spacer(2)}path: "${endpoint.path.joinToString("/") { it.emit() }}",
+          |${Spacer(2)}server,
+          |${Spacer(2)}client
+          |${Spacer}} as const
           |}
           |
         """.trimMargin()
+
+    override fun Endpoint.Segment.emit() =
+        when (this) {
+            is Endpoint.Segment.Literal -> value
+            is Endpoint.Segment.Param -> ":${identifier.value}"
+        }
 
     private fun emitHandleFunction(endpoint: Endpoint) =
         "${endpoint.identifier.sanitizeSymbol().firstToLower()}: (request:Request) => Promise<Response>"

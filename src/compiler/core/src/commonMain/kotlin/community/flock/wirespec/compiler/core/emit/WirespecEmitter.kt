@@ -30,7 +30,9 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
         is Channel -> emit(identifier)
     }
 
-    override fun notYetImplemented() = "\n"
+    override val singleLineComment = "\n"
+
+    override fun notYetImplemented() = singleLineComment
 
     override fun emit(type: Type, ast: AST) = """
         |type ${emit(type.identifier)} {
