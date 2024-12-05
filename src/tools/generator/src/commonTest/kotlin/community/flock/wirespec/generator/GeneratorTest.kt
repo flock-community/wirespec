@@ -60,7 +60,7 @@ class GeneratorTest {
     fun generatePrimitive() {
         val ast = parser(src)
         val random = Random(0L)
-        val res = ast.generate(Primitive(Type.String(), isIterable = false, isDictionary = false), random)
+        val res = ast.generate(Primitive(Type.String, isIterable = false, isDictionary = false), random)
         val expect = "ZKN8V5p8ktkmmMX"
         assertEquals(expect, res.jsonPrimitive.content)
     }
