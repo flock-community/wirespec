@@ -34,7 +34,7 @@ class ParseTypeTest {
             .run {
                 identifier.shouldBeInstanceOf<Identifier>().value shouldBe "bar"
                 reference.shouldBeInstanceOf<Reference.Primitive>().run {
-                    type shouldBe Reference.Primitive.Type.String()
+                    type shouldBe Reference.Primitive.Type.String
                     isIterable shouldBe true
                     isDictionary shouldBe true
                 }

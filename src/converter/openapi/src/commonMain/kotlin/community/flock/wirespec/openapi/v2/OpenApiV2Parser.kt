@@ -1,32 +1,8 @@
 package community.flock.wirespec.openapi.v2
 
 import arrow.core.filterIsInstance
-import community.flock.kotlinx.openapi.bindings.v2.BooleanObject
-import community.flock.kotlinx.openapi.bindings.v2.HeaderObject
-import community.flock.kotlinx.openapi.bindings.v2.HeaderOrReferenceObject
-import community.flock.kotlinx.openapi.bindings.v2.OpenAPI
-import community.flock.kotlinx.openapi.bindings.v2.OperationObject
-import community.flock.kotlinx.openapi.bindings.v2.ParameterLocation
-import community.flock.kotlinx.openapi.bindings.v2.ParameterObject
-import community.flock.kotlinx.openapi.bindings.v2.ParameterOrReferenceObject
-import community.flock.kotlinx.openapi.bindings.v2.Path
-import community.flock.kotlinx.openapi.bindings.v2.PathItemObject
-import community.flock.kotlinx.openapi.bindings.v2.ReferenceObject
-import community.flock.kotlinx.openapi.bindings.v2.ResponseObject
-import community.flock.kotlinx.openapi.bindings.v2.ResponseOrReferenceObject
-import community.flock.kotlinx.openapi.bindings.v2.SchemaObject
-import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceObject
-import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceOrBooleanObject
-import community.flock.kotlinx.openapi.bindings.v2.StatusCode
-import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
-import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.parse.Definition
-import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
-import community.flock.wirespec.compiler.core.parse.Endpoint
-import community.flock.wirespec.compiler.core.parse.Enum
-import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.FieldIdentifier
-import community.flock.wirespec.compiler.core.parse.Reference
+import community.flock.kotlinx.openapi.bindings.v2.*
+import community.flock.wirespec.compiler.core.parse.*
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.openapi.Common.className
 import community.flock.wirespec.openapi.Common.filterNotNullValues
@@ -197,10 +173,10 @@ object OpenApiV2Parser {
         .flatMap { flatten(it.value, className(it.key)) }
 
     private fun String.mapType(format: String?) = when (lowercase()) {
-        "string" -> Reference.Primitive.Type.String(format)
-        "number" -> Reference.Primitive.Type.Number(format)
-        "integer" -> Reference.Primitive.Type.Integer(format)
-        "boolean" -> Reference.Primitive.Type.Boolean(format)
+        "string" -> Reference.Primitive.Type.String
+        "number" -> Reference.Primitive.Type.Number(if (format == "float") Reference.Primitive.Type.Precision._32 else Reference.Primitive.Type.Precision._64)
+        "integer" -> Reference.Primitive.Type.Integer(if (format == "int32") Reference.Primitive.Type.Precision._32 else Reference.Primitive.Type.Precision._64)
+        "boolean" -> Reference.Primitive.Type.Boolean
         else -> error("Cannot map type: $this")
     }
 
@@ -282,7 +258,8 @@ object OpenApiV2Parser {
             Type(
                 comment = null,
                 identifier = DefinitionIdentifier(name),
-                shape = Type.Shape(schemaObject.allOf
+                shape = Type.Shape(
+                    schemaObject.allOf
                     .orEmpty()
                     .flatMap {
                         when (it) {
@@ -436,10 +413,10 @@ object OpenApiV2Parser {
     private fun ReferenceObject.getReference() = ref.value.split("/")[2]
 
     private fun OpenapiType.toPrimitive(format: String?) = when (this) {
-        OpenapiType.STRING -> Reference.Primitive.Type.String(format)
-        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer(format)
-        OpenapiType.NUMBER -> Reference.Primitive.Type.Number(format)
-        OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean(format)
+        OpenapiType.STRING -> Reference.Primitive.Type.String
+        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer(if (format == "int32") Reference.Primitive.Type.Precision._32 else Reference.Primitive.Type.Precision._64)
+        OpenapiType.NUMBER -> Reference.Primitive.Type.Number(if (format == "float") Reference.Primitive.Type.Precision._32 else Reference.Primitive.Type.Precision._64)
+        OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean
         else -> error("Type is not a primitive")
     }
 
@@ -450,7 +427,11 @@ object OpenApiV2Parser {
                 "array" -> header.items?.let { resolve(it) }?.let { toReference(it, identifier) }
                     ?: error("Item cannot be null")
 
-                else -> Reference.Primitive(header.type.mapType(header.format), isIterable = false, isDictionary = false)
+                else -> Reference.Primitive(
+                    header.type.mapType(header.format),
+                    isIterable = false,
+                    isDictionary = false
+                )
             },
             isNullable = true
         )

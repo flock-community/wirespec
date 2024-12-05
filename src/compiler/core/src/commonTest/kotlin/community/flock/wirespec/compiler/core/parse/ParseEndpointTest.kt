@@ -120,7 +120,7 @@ class ParseEndpointTest {
                     Literal("todos"), Endpoint.Segment.Param(
                         identifier = FieldIdentifier("id"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String(),
+                            type = Reference.Primitive.Type.String,
                             isIterable = false,
                             isDictionary = false,
                         )
@@ -152,12 +152,12 @@ class ParseEndpointTest {
                 val (one, two) = it
                 one.run {
                     identifier.value shouldBe "name"
-                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String()
+                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String
                     isNullable shouldBe false
                 }
                 two.run {
                     identifier.value shouldBe "date"
-                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String()
+                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String
                     isNullable shouldBe false
                 }
             }
@@ -181,12 +181,12 @@ class ParseEndpointTest {
                 val (one, two) = it
                 one.run {
                     identifier.value shouldBe "name"
-                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String()
+                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String
                     isNullable shouldBe false
                 }
                 two.run {
                     identifier.value shouldBe "date"
-                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String()
+                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String
                     isNullable shouldBe false
                 }
             }

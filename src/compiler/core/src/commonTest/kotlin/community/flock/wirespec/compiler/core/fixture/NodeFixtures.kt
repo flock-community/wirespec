@@ -37,22 +37,22 @@ object NodeFixtures {
             value = listOf(
                 Field(
                     identifier = FieldIdentifier("name"),
-                    reference = Primitive(type = Primitive.Type.String()),
+                    reference = Primitive(type = Primitive.Type.String),
                     isNullable = false,
                 ),
                 Field(
                     identifier = FieldIdentifier("description"),
-                    reference = Primitive(type = Primitive.Type.String()),
+                    reference = Primitive(type = Primitive.Type.String),
                     isNullable = true,
                 ),
                 Field(
                     identifier = FieldIdentifier("notes"),
-                    reference = Primitive(type = Primitive.Type.String(), isIterable = true),
+                    reference = Primitive(type = Primitive.Type.String, isIterable = true),
                     isNullable = false,
                 ),
                 Field(
                     identifier = FieldIdentifier("done"),
-                    reference = Primitive(type = Primitive.Type.Boolean()),
+                    reference = Primitive(type = Primitive.Type.Boolean),
                     isNullable = false,
                 )
             )

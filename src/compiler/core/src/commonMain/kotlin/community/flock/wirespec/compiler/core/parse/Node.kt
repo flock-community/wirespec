@@ -51,19 +51,21 @@ sealed interface Reference : Value<String> {
         override val isDictionary: Boolean = false
     ) : Reference {
         sealed interface Type{
-            val name: kotlin.String; val subType: kotlin.String?
-            data class String(override val subType: kotlin.String? = null):Type {
+            val name: kotlin.String;
+            enum class Precision { _32, _64}
+            data object String : Type {
                 override val name get() = "String"
             }
-            data class Integer(override val subType: kotlin.String? = null):Type {
+            data class Integer (val precision: Precision = Precision._64):Type {
                 override val name get() = "Integer"
             }
-            data class Number(override val subType: kotlin.String? = null):Type {
+            data class Number(val precision: Precision = Precision._64):Type {
                 override val name get() = "Number"
             }
-            data class Boolean(override val subType: kotlin.String? = null):Type {
+            data object Boolean : Type {
                 override val name get() = "Boolean"
             }
+
         }
         override val value = type.name
     }
