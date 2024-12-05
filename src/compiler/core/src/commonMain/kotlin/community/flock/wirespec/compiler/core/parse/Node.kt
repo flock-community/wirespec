@@ -50,8 +50,23 @@ sealed interface Reference : Value<String> {
         override val isIterable: Boolean = false,
         override val isDictionary: Boolean = false
     ) : Reference {
-        enum class Type { String, Integer, Number, Boolean }
+        sealed interface Type{
+            val name: kotlin.String;
+            enum class Precision { _32, _64}
+            data object String : Type {
+                override val name get() = "String"
+            }
+            data class Integer (val precision: Precision = Precision._64):Type {
+                override val name get() = "Integer"
+            }
+            data class Number(val precision: Precision = Precision._64):Type {
+                override val name get() = "Number"
+            }
+            data object Boolean : Type {
+                override val name get() = "Boolean"
+            }
 
+        }
         override val value = type.name
     }
 }

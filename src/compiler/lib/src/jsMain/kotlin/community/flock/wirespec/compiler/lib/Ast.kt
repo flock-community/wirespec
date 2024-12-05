@@ -147,8 +147,8 @@ private fun WsReference.consume() =
 private fun WsPrimitiveType.consume() =
     when (this) {
         WsPrimitiveType.String -> Reference.Primitive.Type.String
-        WsPrimitiveType.Integer -> Reference.Primitive.Type.Integer
-        WsPrimitiveType.Number -> Reference.Primitive.Type.Number
+        WsPrimitiveType.Integer -> Reference.Primitive.Type.Integer()
+        WsPrimitiveType.Number -> Reference.Primitive.Type.Number()
         WsPrimitiveType.Boolean -> Reference.Primitive.Type.Boolean
     }
 
@@ -229,10 +229,10 @@ private fun Reference.produce() = when (this) {
 }
 
 private fun Reference.Primitive.Type.produce() = when (this) {
-    Reference.Primitive.Type.String -> WsPrimitiveType.String
-    Reference.Primitive.Type.Integer -> WsPrimitiveType.Integer
-    Reference.Primitive.Type.Number -> WsPrimitiveType.Number
-    Reference.Primitive.Type.Boolean -> WsPrimitiveType.Boolean
+    is Reference.Primitive.Type.String -> WsPrimitiveType.String
+    is Reference.Primitive.Type.Integer -> WsPrimitiveType.Integer
+    is Reference.Primitive.Type.Number -> WsPrimitiveType.Number
+    is Reference.Primitive.Type.Boolean -> WsPrimitiveType.Boolean
 }
 
 private fun Endpoint.Method.produce() = when (this) {
