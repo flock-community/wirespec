@@ -56,8 +56,14 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
         is Reference.Custom -> value
         is Reference.Primitive -> when (type) {
             is Reference.Primitive.Type.String -> "String"
-            is Reference.Primitive.Type.Integer -> "Integer"
-            is Reference.Primitive.Type.Number -> "Number"
+            is Reference.Primitive.Type.Integer -> when(type.precision){
+                Reference.Primitive.Type.Precision._32 -> "Integer32"
+                else ->"Integer"
+            }
+            is Reference.Primitive.Type.Number -> when(type.precision){
+                Reference.Primitive.Type.Precision._32 -> "Number32"
+                else ->"Number"
+            }
             is Reference.Primitive.Type.Boolean -> "Boolean"
         }
     }

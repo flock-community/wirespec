@@ -2,7 +2,11 @@ package community.flock.wirespec.openapi.v2
 
 import com.goncalossilva.resources.Resource
 import community.flock.kotlinx.openapi.bindings.v2.OpenAPI
-import community.flock.wirespec.compiler.core.parse.*
+import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
+import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Reference.Custom
 import community.flock.wirespec.compiler.core.parse.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.Type.Shape
