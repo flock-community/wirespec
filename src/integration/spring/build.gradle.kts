@@ -34,7 +34,7 @@ kotlin {
         val jvmMain by getting {
             dependencies {
                 compileOnly(project(":src:compiler:core"))
-                compileOnly(project(":src:integration:wirespec"))
+                api(project(":src:integration:wirespec"))
                 implementation(project(":src:integration:jackson"))
                 implementation(libs.jackson.kotlin)
                 implementation(libs.kotlin.reflect)
