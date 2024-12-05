@@ -551,10 +551,10 @@ object OpenApiV3Parser {
         ?: error("Wrong reference: ${ref.value}")
 
     private fun OpenapiType.toPrimitive(format: String?) = when (this) {
-        OpenapiType.STRING -> Reference.Primitive.Type.String(format)
-        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer(format)
-        OpenapiType.NUMBER -> Reference.Primitive.Type.Number(format)
-        OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean(format)
+        OpenapiType.STRING -> Reference.Primitive.Type.String
+        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer(if(format == "int32") Reference.Primitive.Type.Precision._32 else Reference.Primitive.Type.Precision._64 )
+        OpenapiType.NUMBER -> Reference.Primitive.Type.Number(if(format == "float") Reference.Primitive.Type.Precision._32 else Reference.Primitive.Type.Precision._64)
+        OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean
         else -> error("Type is not a primitive")
     }
 
@@ -587,14 +587,14 @@ object OpenApiV3Parser {
         when (val s = parameter.schema) {
             is ReferenceObject -> toReference(s)
             is SchemaObject -> toReference(s, name + if (s.type == OpenapiType.ARRAY) "Array" else "")
-            null -> Reference.Primitive(Reference.Primitive.Type.String())
+            null -> Reference.Primitive(Reference.Primitive.Type.String)
         }.let { Field(FieldIdentifier(parameter.name), it, !(parameter.required ?: false)) }
 
     private fun OpenAPIObject.toField(header: HeaderObject, identifier: String, name: String) =
         when (val s = header.schema) {
             is ReferenceObject -> toReference(s)
             is SchemaObject -> toReference(s, name)
-            null -> Reference.Primitive(Reference.Primitive.Type.String())
+            null -> Reference.Primitive(Reference.Primitive.Type.String)
         }.let { Field(FieldIdentifier(identifier), it, !(header.required ?: false)) }
 
     private data class FlattenRequest(

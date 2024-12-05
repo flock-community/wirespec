@@ -85,7 +85,7 @@ class OpenApiV3ParserTest {
                         Field(
                             identifier = FieldIdentifier("complete"),
                             reference = Primitive(
-                                type = Primitive.Type.Boolean(),
+                                type = Primitive.Type.Boolean,
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -522,12 +522,12 @@ class OpenApiV3ParserTest {
                 queries = listOf(
                     Field(
                         FieldIdentifier("completed"),
-                        Primitive(type = Primitive.Type.Boolean(), isIterable = false),
+                        Primitive(type = Primitive.Type.Boolean, isIterable = false),
                         true
                     )
                 ),
                 headers = listOf(
-                    Field(FieldIdentifier("x-user"), Primitive(type = Primitive.Type.Boolean(), isIterable = false), true)
+                    Field(FieldIdentifier("x-user"), Primitive(type = Primitive.Type.Boolean, isIterable = false), true)
                 ),
                 cookies = listOf(),
                 requests = listOf(
@@ -555,7 +555,7 @@ class OpenApiV3ParserTest {
                 ),
                 queries = listOf(),
                 headers = listOf(
-                    Field(FieldIdentifier("x-user"), Primitive(type = Primitive.Type.Boolean(), isIterable = false), true)
+                    Field(FieldIdentifier("x-user"), Primitive(type = Primitive.Type.Boolean, isIterable = false), true)
                 ),
                 cookies = listOf(),
                 requests = listOf(
@@ -632,7 +632,7 @@ class OpenApiV3ParserTest {
                 shape = Shape(
                     listOf(
                         Field(FieldIdentifier("title"), Primitive(Primitive.Type.String(), false), true),
-                        Field(FieldIdentifier("completed"), Primitive(Primitive.Type.Boolean(), false), true)
+                        Field(FieldIdentifier("completed"), Primitive(Primitive.Type.Boolean, false), true)
                     )
                 ),
                 extends = emptyList(),
@@ -644,7 +644,7 @@ class OpenApiV3ParserTest {
                     listOf(
                         Field(FieldIdentifier("id"), Primitive(Primitive.Type.String(), false), true),
                         Field(FieldIdentifier("title"), Primitive(Primitive.Type.String(), false), true),
-                        Field(FieldIdentifier("completed"), Primitive(Primitive.Type.Boolean(), false), true),
+                        Field(FieldIdentifier("completed"), Primitive(Primitive.Type.Boolean, false), true),
                         Field(FieldIdentifier("alert"), Custom("TodoAlert", false), true),
                     )
                 ),
@@ -679,7 +679,7 @@ class OpenApiV3ParserTest {
                     listOf(
                         Field(FieldIdentifier("id"), Primitive(Primitive.Type.String(), false), true),
                         Field(FieldIdentifier("title"), Primitive(Primitive.Type.String(), false), true),
-                        Field(FieldIdentifier("nested"), Primitive(Primitive.Type.Boolean(), false), true),
+                        Field(FieldIdentifier("nested"), Primitive(Primitive.Type.Boolean, false), true),
                     )
                 ),
                 extends = emptyList(),

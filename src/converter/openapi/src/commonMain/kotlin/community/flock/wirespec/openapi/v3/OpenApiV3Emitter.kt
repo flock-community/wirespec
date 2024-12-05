@@ -202,7 +202,7 @@ object OpenApiV3Emitter : Emitter(noLogger) {
     private fun Reference.emitSchema(): SchemaOrReferenceObject =
         when (this) {
             is Reference.Custom -> ReferenceObject(ref = Ref("#/components/schemas/${value}"))
-            is Reference.Primitive -> SchemaObject(type = type.emitType(), format = type.subType)
+            is Reference.Primitive -> SchemaObject(type = type.emitType(), format = emitFormat())
             is Reference.Any -> error("Cannot map Any")
             is Reference.Unit -> error("Cannot map Unit")
         }.let {
@@ -232,4 +232,23 @@ object OpenApiV3Emitter : Emitter(noLogger) {
         MediaType(type) to MediaTypeObject(
             schema = reference.emitSchema()
         )
+
+    private fun Reference.emitFormat() =
+        when (this) {
+            is Reference.Primitive -> when (val t = type) {
+                is Reference.Primitive.Type.Number -> when (t.precision) {
+                    Reference.Primitive.Type.Precision._32 -> "float"
+                    Reference.Primitive.Type.Precision._64 -> "double"
+                }
+
+                is Reference.Primitive.Type.Integer -> when (t.precision) {
+                    Reference.Primitive.Type.Precision._32 -> "int32"
+                    Reference.Primitive.Type.Precision._64 -> "int64"
+                }
+
+                else -> null
+            }
+
+            else -> null
+        }
 }

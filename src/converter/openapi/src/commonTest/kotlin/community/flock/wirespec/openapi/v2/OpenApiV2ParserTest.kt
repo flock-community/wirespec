@@ -154,7 +154,7 @@ class OpenApiV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("complete"),
-                            reference = Primitive(type = Primitive.Type.Boolean(), isIterable = false),
+                            reference = Primitive(type = Primitive.Type.Boolean, isIterable = false),
                             isNullable = true
                         )
                     )
