@@ -812,9 +812,9 @@ object GetInventoryEndpoint : Wirespec.Endpoint {
 
   sealed interface Response2XX<T: Any> : Response<T>
 
-  sealed interface ResponseMapStringLong : Response<Map<String, Long>>
+  sealed interface ResponseMapStringInt : Response<Map<String, Int>>
 
-  data class Response200(override val body: Map<String, Long>) : Response2XX<Map<String, Long>>, ResponseMapStringLong {
+  data class Response200(override val body: Map<String, Int>) : Response2XX<Map<String, Int>>, ResponseMapStringInt {
     override val status = 200
     override val headers = Headers
     data object Headers : Wirespec.Response.Headers
@@ -825,14 +825,14 @@ object GetInventoryEndpoint : Wirespec.Endpoint {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
         headers = mapOf(),
-        body = serialization.serialize(response.body, typeOf<Map<String, Long>>()),
+        body = serialization.serialize(response.body, typeOf<Map<String, Int>>()),
       )
     }
 
   fun fromResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
     when (response.statusCode) {
       200 -> Response200(
-        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<Map<String, Long>>()),
+        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<Map<String, Int>>()),
       )
       else -> error("Cannot match response with status: ${response.statusCode}")
     }
@@ -1792,7 +1792,7 @@ enum class FindPetsByStatusParameterStatus (override val label: String): Wirespe
 data class Order(
   val id: Long?,
   val petId: Long?,
-  val quantity: Long?,
+  val quantity: Int?,
   val shipDate: String?,
   val status: OrderStatus?,
   val complete: Boolean?
@@ -1833,7 +1833,7 @@ data class User(
   val email: String?,
   val password: String?,
   val phone: String?,
-  val userStatus: Long?
+  val userStatus: Int?
 )
 
 data class Tag(
@@ -1860,7 +1860,7 @@ enum class PetStatus (override val label: String): Wirespec.Enum {
 }
 
 data class ApiResponse(
-  val code: Long?,
+  val code: Int?,
   val type: String?,
   val message: String?
 )
