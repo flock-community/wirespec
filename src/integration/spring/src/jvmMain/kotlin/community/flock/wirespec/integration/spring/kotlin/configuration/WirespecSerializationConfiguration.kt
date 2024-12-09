@@ -31,10 +31,10 @@ open class WirespecSerializationConfiguration {
             }
 
         override fun <T> deserialize(raw: String, kType: KType): T =
-            if (isStringIterable(kType)) {
-                raw.split(stringListDelimiter) as T
-            } else {
-                wirespecObjectMapper
+            when {
+                kType.classifier == String::class -> raw as T
+                isStringIterable(kType) -> raw.split(stringListDelimiter) as T
+                else -> wirespecObjectMapper
                     .constructType(kType.javaType)
                     .let { wirespecObjectMapper.readValue(raw, it) }
             }

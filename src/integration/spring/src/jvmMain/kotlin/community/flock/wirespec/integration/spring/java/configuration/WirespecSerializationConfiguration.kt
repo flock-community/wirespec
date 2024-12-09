@@ -28,6 +28,10 @@ open class WirespecSerializationConfiguration {
 
         override fun <T : Any> deserialize(raw: String?, valueType: Type?): T? = raw?.let {
             when {
+                valueType == String::class.java -> {
+                    @Suppress("UNCHECKED_CAST")
+                    raw as T
+                }
                 isStringIterable(valueType) -> {
                     @Suppress("UNCHECKED_CAST")
                     raw.split(stringListDelimiter) as T
