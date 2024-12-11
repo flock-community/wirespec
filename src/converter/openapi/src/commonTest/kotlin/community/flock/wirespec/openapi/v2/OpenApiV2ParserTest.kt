@@ -230,11 +230,11 @@ class OpenApiV2ParserTest {
             )
         )
 
-//        val typeDefinitions:List<Type> = ast.filterIsInstance<Type>()
-//        assertEquals(expectedTypeDefinitions, typeDefinitions)
-//
-//        val enumDefinitions:List<Enum> = ast.filterIsInstance<Enum>()
-//        assertEquals(enumDefinitions, expectedEnumDefinitions)
+        val typeDefinitions:List<Type> = ast.filterIsInstance<Type>()
+        assertEquals(expectedTypeDefinitions, typeDefinitions)
+
+        val enumDefinitions:List<Enum> = ast.filterIsInstance<Enum>()
+        assertEquals(enumDefinitions, expectedEnumDefinitions)
 
         val endpoints = ast.filterIsInstance<Endpoint>().map { it.identifier.value }
         val expectedEndpoint = listOf(
