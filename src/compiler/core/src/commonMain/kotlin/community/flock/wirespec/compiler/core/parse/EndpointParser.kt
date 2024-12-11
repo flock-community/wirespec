@@ -247,13 +247,19 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
             )
 
             is WsInteger -> Reference.Primitive(
-                type = Reference.Primitive.Type.Integer,
+                type = Reference.Primitive.Type.Integer(when(value) {
+                    "Integer32" -> Reference.Primitive.Type.Precision.P32
+                    else -> Reference.Primitive.Type.Precision.P64
+                }),
                 isIterable = isIterable,
                 isDictionary = isDict,
             )
 
             is WsNumber -> Reference.Primitive(
-                type = Reference.Primitive.Type.Number,
+                type = Reference.Primitive.Type.Number(when(value) {
+                    "Number32" -> Reference.Primitive.Type.Precision.P32
+                    else -> Reference.Primitive.Type.Precision.P64
+                }),
                 isIterable = isIterable,
                 isDictionary = isDict,
             )

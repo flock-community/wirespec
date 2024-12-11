@@ -202,7 +202,7 @@ object OpenApiV3Emitter : Emitter(noLogger) {
     private fun Reference.emitSchema(): SchemaOrReferenceObject =
         when (this) {
             is Reference.Custom -> ReferenceObject(ref = Ref("#/components/schemas/${value}"))
-            is Reference.Primitive -> SchemaObject(type = type.emitType())
+            is Reference.Primitive -> SchemaObject(type = type.emitType(), format = emitFormat())
             is Reference.Any -> error("Cannot map Any")
             is Reference.Unit -> error("Cannot map Unit")
         }.let {
@@ -222,14 +222,33 @@ object OpenApiV3Emitter : Emitter(noLogger) {
         }
 
     private fun Reference.Primitive.Type.emitType(): OpenApiType = when (this) {
-        Reference.Primitive.Type.String -> OpenApiType.STRING
-        Reference.Primitive.Type.Integer -> OpenApiType.INTEGER
-        Reference.Primitive.Type.Number -> OpenApiType.NUMBER
-        Reference.Primitive.Type.Boolean -> OpenApiType.BOOLEAN
+        is Reference.Primitive.Type.String -> OpenApiType.STRING
+        is Reference.Primitive.Type.Integer -> OpenApiType.INTEGER
+        is Reference.Primitive.Type.Number -> OpenApiType.NUMBER
+        is Reference.Primitive.Type.Boolean -> OpenApiType.BOOLEAN
     }
 
     private fun Endpoint.Content.emit(): Pair<MediaType, MediaTypeObject> =
         MediaType(type) to MediaTypeObject(
             schema = reference.emitSchema()
         )
+
+    private fun Reference.emitFormat() =
+        when (this) {
+            is Reference.Primitive -> when (val t = type) {
+                is Reference.Primitive.Type.Number -> when (t.precision) {
+                    Reference.Primitive.Type.Precision.P32 -> "float"
+                    Reference.Primitive.Type.Precision.P64 -> "double"
+                }
+
+                is Reference.Primitive.Type.Integer -> when (t.precision) {
+                    Reference.Primitive.Type.Precision.P32 -> "int32"
+                    Reference.Primitive.Type.Precision.P64 -> "int64"
+                }
+
+                else -> null
+            }
+
+            else -> null
+        }
 }

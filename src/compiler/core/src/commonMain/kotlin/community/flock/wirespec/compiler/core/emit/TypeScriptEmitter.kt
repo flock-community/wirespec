@@ -65,10 +65,10 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
         is Reference.Any -> "any"
         is Reference.Custom -> value.sanitizeSymbol()
         is Reference.Primitive -> when (type) {
-            Reference.Primitive.Type.String -> "string"
-            Reference.Primitive.Type.Integer -> "number"
-            Reference.Primitive.Type.Number -> "number"
-            Reference.Primitive.Type.Boolean -> "boolean"
+            is Reference.Primitive.Type.String -> "string"
+            is Reference.Primitive.Type.Integer -> "number"
+            is Reference.Primitive.Type.Number -> "number"
+            is Reference.Primitive.Type.Boolean -> "boolean"
         }
     }
         .let { if (isIterable) "$it[]" else it }

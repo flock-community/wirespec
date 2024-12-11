@@ -1,6 +1,5 @@
 package community.flock.wirespec.openapi.v3
 
-import community.flock.kotlinx.openapi.bindings.v3.Type as OpenapiType
 import community.flock.kotlinx.openapi.bindings.v3.BooleanObject
 import community.flock.kotlinx.openapi.bindings.v3.HeaderObject
 import community.flock.kotlinx.openapi.bindings.v3.HeaderOrReferenceObject
@@ -32,6 +31,7 @@ import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.openapi.Common.className
 import community.flock.wirespec.openapi.Common.filterNotNullValues
 import kotlinx.serialization.json.Json
+import community.flock.kotlinx.openapi.bindings.v3.Type as OpenapiType
 
 object OpenApiV3Parser {
 
@@ -461,7 +461,7 @@ object OpenApiV3Parser {
                 )
 
                 schema.type.isPrimitive() -> Reference.Primitive(
-                    schema.type!!.toPrimitive(),
+                    schema.type!!.toPrimitive(schema.format),
                     isIterable = false,
                     isDictionary = false
                 )
@@ -502,7 +502,7 @@ object OpenApiV3Parser {
         schema.enum != null -> Reference.Custom(name, false, schema.additionalProperties != null)
         else -> when (val type = schema.type) {
             OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Reference.Primitive(
-                type.toPrimitive(),
+                type.toPrimitive(schema.format),
                 false,
                 schema.additionalProperties != null
             )
@@ -550,10 +550,10 @@ object OpenApiV3Parser {
         .split("/").getOrNull(3)
         ?: error("Wrong reference: ${ref.value}")
 
-    private fun OpenapiType.toPrimitive() = when (this) {
+    private fun OpenapiType.toPrimitive(format: String?) = when (this) {
         OpenapiType.STRING -> Reference.Primitive.Type.String
-        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer
-        OpenapiType.NUMBER -> Reference.Primitive.Type.Number
+        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer(if(format == "int32") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64 )
+        OpenapiType.NUMBER -> Reference.Primitive.Type.Number(if(format == "float") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
         OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean
         else -> error("Type is not a primitive")
     }

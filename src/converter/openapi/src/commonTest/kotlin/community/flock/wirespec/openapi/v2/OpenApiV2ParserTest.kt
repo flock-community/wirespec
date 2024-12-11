@@ -33,7 +33,7 @@ class OpenApiV2ParserTest {
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier("code"),
-                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
+                            reference = Primitive(type = Primitive.Type.Integer(Primitive.Type.Precision.P32), isIterable = false),
                             isNullable = true
                         ),
                         Field(
@@ -57,7 +57,7 @@ class OpenApiV2ParserTest {
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier("id"),
-                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
+                            reference = Primitive(type = Primitive.Type.Integer(), isIterable = false),
                             isNullable = true
                         ),
                         Field(
@@ -76,7 +76,7 @@ class OpenApiV2ParserTest {
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier("id"),
-                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
+                            reference = Primitive(type = Primitive.Type.Integer(), isIterable = false),
                             isNullable = true
                         ),
                         Field(
@@ -115,7 +115,7 @@ class OpenApiV2ParserTest {
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier("id"),
-                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
+                            reference = Primitive(type = Primitive.Type.Integer(), isIterable = false),
                             isNullable = true
                         ),
                         Field(
@@ -134,17 +134,17 @@ class OpenApiV2ParserTest {
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier("id"),
-                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
+                            reference = Primitive(type = Primitive.Type.Integer(), isIterable = false),
                             isNullable = true
                         ),
                         Field(
                             identifier = FieldIdentifier("petId"),
-                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
+                            reference = Primitive(type = Primitive.Type.Integer(), isIterable = false),
                             isNullable = true
                         ),
                         Field(
                             identifier = FieldIdentifier("quantity"),
-                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
+                            reference = Primitive(type = Primitive.Type.Integer(Primitive.Type.Precision.P32), isIterable = false),
                             isNullable = true
                         ),
                         Field(
@@ -173,7 +173,7 @@ class OpenApiV2ParserTest {
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier("id"),
-                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
+                            reference = Primitive(type = Primitive.Type.Integer(), isIterable = false),
                             isNullable = true
                         ),
                         Field(
@@ -208,7 +208,7 @@ class OpenApiV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("userStatus"),
-                            reference = Primitive(type = Primitive.Type.Integer, isIterable = false),
+                            reference = Primitive(type = Primitive.Type.Integer(Primitive.Type.Precision.P32), isIterable = false),
                             isNullable = true
                         )
                     )
@@ -230,10 +230,10 @@ class OpenApiV2ParserTest {
             )
         )
 
-        val typeDefinitions = ast.filterIsInstance<Type>()
+        val typeDefinitions:List<Type> = ast.filterIsInstance<Type>()
         assertEquals(expectedTypeDefinitions, typeDefinitions)
 
-        val enumDefinitions = ast.filterIsInstance<Enum>()
+        val enumDefinitions:List<Enum> = ast.filterIsInstance<Enum>()
         assertEquals(enumDefinitions, expectedEnumDefinitions)
 
         val endpoints = ast.filterIsInstance<Endpoint>().map { it.identifier.value }

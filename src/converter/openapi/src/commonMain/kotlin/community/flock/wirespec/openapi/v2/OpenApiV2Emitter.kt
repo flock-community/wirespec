@@ -68,7 +68,8 @@ object OpenApiV2Emitter: Emitter(noLogger) {
                         ParameterObject(
                             `in` = ParameterLocation.PATH,
                             name = it.identifier.value,
-                            type = it.reference.emitType()
+                            type = it.reference.emitType(),
+                            format = it.reference.emitFormat(),
                         )
                     },
                     get = endpoints.emit(Endpoint.Method.GET),
@@ -134,7 +135,8 @@ object OpenApiV2Emitter: Emitter(noLogger) {
                     description = comment?.value ?: "${identifier.value} ${response.status} response",
                     headers = response.headers.associate {
                         it.identifier.value to HeaderObject(
-                            type = it.reference.value,
+                            type = it.reference.emitType().name,
+                            format = it.reference.emitFormat(),
                             items = if (it.reference.isIterable) it.reference.emit() else null
                         )
                     },
@@ -167,6 +169,7 @@ object OpenApiV2Emitter: Emitter(noLogger) {
             `in` = location,
             name = identifier.value,
             type = reference.emitType(),
+            format = reference.emitFormat(),
             items = when (reference.isIterable) {
                 true -> when (val emit = reference.emit()) {
                     is ReferenceObject -> emit
@@ -181,17 +184,17 @@ object OpenApiV2Emitter: Emitter(noLogger) {
 
     fun Reference.emit(): SchemaOrReferenceObject = when (this) {
         is Reference.Custom -> ReferenceObject(ref = Ref("#/definitions/${value}"))
-        is Reference.Primitive -> SchemaObject(type = type.emitType())
+        is Reference.Primitive ->SchemaObject(type = type.emitType(), format = emitFormat())
         is Reference.Any -> error("Cannot map Any")
         is Reference.Unit -> error("Cannot map Unit")
     }.let { if (isIterable) SchemaObject(type = OpenApiType.ARRAY, items = it) else it }
 
 
     private fun Reference.Primitive.Type.emitType(): OpenApiType = when (this) {
-        Reference.Primitive.Type.String -> OpenApiType.STRING
-        Reference.Primitive.Type.Integer -> OpenApiType.INTEGER
-        Reference.Primitive.Type.Number -> OpenApiType.NUMBER
-        Reference.Primitive.Type.Boolean -> OpenApiType.BOOLEAN
+        is Reference.Primitive.Type.String -> OpenApiType.STRING
+        is Reference.Primitive.Type.Integer -> OpenApiType.INTEGER
+        is Reference.Primitive.Type.Number -> OpenApiType.NUMBER
+        is Reference.Primitive.Type.Boolean -> OpenApiType.BOOLEAN
     }
 
     private fun Reference.emitType() =
@@ -200,5 +203,24 @@ object OpenApiV2Emitter: Emitter(noLogger) {
             is Reference.Custom -> OpenApiType.OBJECT
             is Reference.Any -> OpenApiType.OBJECT
             is Reference.Unit -> OpenApiType.OBJECT
+        }
+
+    private fun Reference.emitFormat() =
+        when (this) {
+            is Reference.Primitive -> when (val t = type) {
+                is Reference.Primitive.Type.Number -> when (t.precision) {
+                    Reference.Primitive.Type.Precision.P32 -> "float"
+                    Reference.Primitive.Type.Precision.P64 -> "double"
+                }
+
+                is Reference.Primitive.Type.Integer -> when (t.precision) {
+                    Reference.Primitive.Type.Precision.P32 -> "int32"
+                    Reference.Primitive.Type.Precision.P64 -> "int64"
+                }
+
+                else -> null
+            }
+
+            else -> null
         }
 }

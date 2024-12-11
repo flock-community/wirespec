@@ -55,10 +55,16 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
         is Reference.Any -> "Any"
         is Reference.Custom -> value
         is Reference.Primitive -> when (type) {
-            Reference.Primitive.Type.String -> "String"
-            Reference.Primitive.Type.Integer -> "Integer"
-            Reference.Primitive.Type.Number -> "Number"
-            Reference.Primitive.Type.Boolean -> "Boolean"
+            is Reference.Primitive.Type.String -> "String"
+            is Reference.Primitive.Type.Integer -> when(type.precision){
+                Reference.Primitive.Type.Precision.P32 -> "Integer32"
+                else ->"Integer"
+            }
+            is Reference.Primitive.Type.Number -> when(type.precision){
+                Reference.Primitive.Type.Precision.P32 -> "Number32"
+                else ->"Number"
+            }
+            is Reference.Primitive.Type.Boolean -> "Boolean"
         }
     }
         .let { if (isIterable) "$it[]" else it }

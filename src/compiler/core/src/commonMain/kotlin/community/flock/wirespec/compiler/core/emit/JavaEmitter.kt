@@ -99,10 +99,16 @@ open class JavaEmitter(
         .sanitizeSymbol()
 
     private fun Reference.Primitive.emit() = when (type) {
-        Reference.Primitive.Type.String -> "String"
-        Reference.Primitive.Type.Integer -> "Long"
-        Reference.Primitive.Type.Number -> "Double"
-        Reference.Primitive.Type.Boolean -> "Boolean"
+        is Reference.Primitive.Type.String -> "String"
+        is Reference.Primitive.Type.Integer -> when(type.precision){
+            Reference.Primitive.Type.Precision.P32 -> "Integer"
+            Reference.Primitive.Type.Precision.P64 -> "Long"
+        }
+        is Reference.Primitive.Type.Number -> when(type.precision){
+            Reference.Primitive.Type.Precision.P32 -> "Float"
+            Reference.Primitive.Type.Precision.P64 -> "Double"
+        }
+        is Reference.Primitive.Type.Boolean -> "Boolean"
     }
 
     override fun emit(identifier: Identifier) = when (identifier) {

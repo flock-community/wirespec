@@ -196,10 +196,10 @@ object OpenApiV2Parser {
         .filter { it.value.additionalProperties == null }
         .flatMap { flatten(it.value, className(it.key)) }
 
-    private fun String.mapType() = when (lowercase()) {
+    private fun String.mapType(format: String?) = when (lowercase()) {
         "string" -> Reference.Primitive.Type.String
-        "number" -> Reference.Primitive.Type.Number
-        "integer" -> Reference.Primitive.Type.Integer
+        "number" -> Reference.Primitive.Type.Number(if (format == "float") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
+        "integer" -> Reference.Primitive.Type.Integer(if (format == "int32") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
         "boolean" -> Reference.Primitive.Type.Boolean
         else -> error("Cannot map type: $this")
     }
@@ -282,7 +282,8 @@ object OpenApiV2Parser {
             Type(
                 comment = null,
                 identifier = DefinitionIdentifier(name),
-                shape = Type.Shape(schemaObject.allOf
+                shape = Type.Shape(
+                    schemaObject.allOf
                     .orEmpty()
                     .flatMap {
                         when (it) {
@@ -359,7 +360,7 @@ object OpenApiV2Parser {
                 )
 
                 schema.type.isPrimitive() -> Reference.Primitive(
-                    schema.type!!.toPrimitive(),
+                    schema.type!!.toPrimitive(schema.format),
                     isIterable = false,
                     isDictionary = false
                 )
@@ -394,7 +395,7 @@ object OpenApiV2Parser {
         schema.enum != null -> Reference.Custom(name, false, schema.additionalProperties != null)
         else -> when (val type = schema.type) {
             OpenapiType.STRING, OpenapiType.INTEGER, OpenapiType.NUMBER, OpenapiType.BOOLEAN ->
-                Reference.Primitive(type.toPrimitive(), false, schema.additionalProperties != null)
+                Reference.Primitive(type.toPrimitive(schema.format), false, schema.additionalProperties != null)
 
             null, OpenapiType.OBJECT ->
                 when {
@@ -435,10 +436,10 @@ object OpenApiV2Parser {
 
     private fun ReferenceObject.getReference() = ref.value.split("/")[2]
 
-    private fun OpenapiType.toPrimitive() = when (this) {
+    private fun OpenapiType.toPrimitive(format: String?) = when (this) {
         OpenapiType.STRING -> Reference.Primitive.Type.String
-        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer
-        OpenapiType.NUMBER -> Reference.Primitive.Type.Number
+        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer(if (format == "int32") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
+        OpenapiType.NUMBER -> Reference.Primitive.Type.Number(if (format == "float") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
         OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean
         else -> error("Type is not a primitive")
     }
@@ -450,7 +451,11 @@ object OpenApiV2Parser {
                 "array" -> header.items?.let { resolve(it) }?.let { toReference(it, identifier) }
                     ?: error("Item cannot be null")
 
-                else -> Reference.Primitive(header.type.mapType(), isIterable = false, isDictionary = false)
+                else -> Reference.Primitive(
+                    header.type.mapType(header.format),
+                    isIterable = false,
+                    isDictionary = false
+                )
             },
             isNullable = true
         )
@@ -486,12 +491,11 @@ object OpenApiV2Parser {
                 parameter.enum != null -> Reference.Custom(className(name, "Parameter", it.name), false)
                 else -> when (val type = it.type) {
                     OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> type
-                        .toPrimitive()
+                        .toPrimitive(it.format)
                         .let { primitive -> Reference.Primitive(primitive, isIterable = false) }
 
                     OpenapiType.ARRAY -> it.items?.let { items -> resolve(items) }
-                        ?.type
-                        ?.toPrimitive()
+                        ?.let { it.type?.toPrimitive(it.format) }
                         ?.let { primitive -> Reference.Primitive(primitive, isIterable = true) }
                         ?: TODO("Not yet implemented")
 
@@ -510,7 +514,7 @@ object OpenApiV2Parser {
                 val param = segment.substring(1, segment.length - 1)
                 parameters
                     .find { it.name == param }
-                    ?.let { it.type?.toPrimitive() }
+                    ?.let { it.type?.toPrimitive(it.format) }
                     ?.let {
                         Endpoint.Segment.Param(
                             FieldIdentifier(param),

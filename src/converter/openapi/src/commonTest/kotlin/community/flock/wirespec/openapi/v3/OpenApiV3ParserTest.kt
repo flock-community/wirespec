@@ -8,7 +8,7 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
-import community.flock.wirespec.compiler.core.parse.Reference
+import community.flock.wirespec.compiler.core.parse.Reference.Custom
 import community.flock.wirespec.compiler.core.parse.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape
@@ -40,7 +40,7 @@ class OpenApiV3ParserTest {
                         Field(
                             identifier = FieldIdentifier("id"),
                             reference = Primitive(
-                                type = Primitive.Type.Integer,
+                                type = Primitive.Type.Integer(Primitive.Type.Precision.P64),
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -49,7 +49,7 @@ class OpenApiV3ParserTest {
                         Field(
                             identifier = FieldIdentifier("petId"),
                             reference = Primitive(
-                                type = Primitive.Type.Integer,
+                                type = Primitive.Type.Integer(Primitive.Type.Precision.P64),
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -58,7 +58,7 @@ class OpenApiV3ParserTest {
                         Field(
                             identifier = FieldIdentifier("quantity"),
                             reference = Primitive(
-                                type = Primitive.Type.Integer,
+                                type = Primitive.Type.Integer(Primitive.Type.Precision.P32),
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -75,7 +75,7 @@ class OpenApiV3ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("status"),
-                            reference = Reference.Custom(
+                            reference = Custom(
                                 value = "OrderStatus",
                                 isIterable = false,
                                 isDictionary = false
@@ -108,7 +108,7 @@ class OpenApiV3ParserTest {
                         Field(
                             identifier = FieldIdentifier("id"),
                             reference = Primitive(
-                                type = Primitive.Type.Integer,
+                                type = Primitive.Type.Integer(Primitive.Type.Precision.P64),
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -125,7 +125,7 @@ class OpenApiV3ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("address"),
-                            reference = Reference.Custom(value = "Address", isIterable = true, isDictionary = false),
+                            reference = Custom(value = "Address", isIterable = true, isDictionary = false),
                             isNullable = true
                         )
                     )
@@ -185,7 +185,7 @@ class OpenApiV3ParserTest {
                         Field(
                             identifier = FieldIdentifier("id"),
                             reference = Primitive(
-                                type = Primitive.Type.Integer,
+                                type = Primitive.Type.Integer(Primitive.Type.Precision.P64),
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -212,7 +212,7 @@ class OpenApiV3ParserTest {
                         Field(
                             identifier = FieldIdentifier("id"),
                             reference = Primitive(
-                                type = Primitive.Type.Integer,
+                                type = Primitive.Type.Integer(Primitive.Type.Precision.P64),
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -275,7 +275,7 @@ class OpenApiV3ParserTest {
                         Field(
                             identifier = FieldIdentifier("userStatus"),
                             reference = Primitive(
-                                type = Primitive.Type.Integer,
+                                type = Primitive.Type.Integer(Primitive.Type.Precision.P32),
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -293,7 +293,7 @@ class OpenApiV3ParserTest {
                         Field(
                             identifier = FieldIdentifier("id"),
                             reference = Primitive(
-                                type = Primitive.Type.Integer,
+                                type = Primitive.Type.Integer(Primitive.Type.Precision.P64),
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -320,7 +320,7 @@ class OpenApiV3ParserTest {
                         Field(
                             identifier = FieldIdentifier("id"),
                             reference = Primitive(
-                                type = Primitive.Type.Integer,
+                                type = Primitive.Type.Integer(Primitive.Type.Precision.P64),
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -337,7 +337,7 @@ class OpenApiV3ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("category"),
-                            reference = Reference.Custom(
+                            reference = Custom(
                                 value = "Category",
                                 isIterable = false,
                                 isDictionary = false
@@ -355,7 +355,7 @@ class OpenApiV3ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("tags"),
-                            reference = Reference.Custom(
+                            reference = Custom(
                                 value = "Tag",
                                 isIterable = true,
                                 isDictionary = false
@@ -364,7 +364,7 @@ class OpenApiV3ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("status"),
-                            reference = Reference.Custom(
+                            reference = Custom(
                                 value = "PetStatus",
                                 isIterable = false,
                                 isDictionary = false
@@ -388,7 +388,7 @@ class OpenApiV3ParserTest {
                         Field(
                             identifier = FieldIdentifier("code"),
                             reference = Primitive(
-                                type = Primitive.Type.Integer,
+                                type = Primitive.Type.Integer(Primitive.Type.Precision.P32),
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -438,7 +438,7 @@ class OpenApiV3ParserTest {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Primitive(type = Primitive.Type.Integer, isIterable = false, isDictionary = true),
+                        reference = Primitive(type = Primitive.Type.Integer(Primitive.Type.Precision.P32), isIterable = false, isDictionary = true),
                         isNullable = false
                     )
                 )
@@ -477,7 +477,7 @@ class OpenApiV3ParserTest {
                     Endpoint.Response(
                         status = "200",
                         headers = emptyList(),
-                        content = Endpoint.Content("application/json", Reference.Custom("Ingredient", true), false)
+                        content = Endpoint.Content("application/json", Custom("Ingredient", true), false)
                     ),
                     Endpoint.Response(
                         status = "404",
@@ -537,12 +537,12 @@ class OpenApiV3ParserTest {
                     Endpoint.Response(
                         status = "200",
                         headers = emptyList(),
-                        content = Endpoint.Content("application/json", Reference.Custom("Todo", true), false)
+                        content = Endpoint.Content("application/json", Custom("Todo", true), false)
                     ),
                     Endpoint.Response(
                         status = "500",
                         headers = emptyList(),
-                        content = Endpoint.Content("application/json", Reference.Custom("Error", false), false)
+                        content = Endpoint.Content("application/json", Custom("Error", false), false)
                     )
                 )
             ),
@@ -562,14 +562,14 @@ class OpenApiV3ParserTest {
                     Endpoint.Request(
                         Endpoint.Content(
                             type = "application/json",
-                            reference = Reference.Custom("Todo_input", false),
+                            reference = Custom("Todo_input", false),
                             isNullable = true
                         )
                     ),
                     Endpoint.Request(
                         Endpoint.Content(
                             type = "application/xml",
-                            reference = Reference.Custom("Todo", false),
+                            reference = Custom("Todo", false),
                             isNullable = true
                         )
                     )
@@ -585,7 +585,7 @@ class OpenApiV3ParserTest {
                         headers = emptyList(),
                         content = Endpoint.Content(
                             type = "application/json",
-                            reference = Reference.Custom("Error", false),
+                            reference = Custom("Error", false),
                             isNullable = false
                         )
                     )
@@ -611,7 +611,7 @@ class OpenApiV3ParserTest {
                         headers = emptyList(),
                         content = Endpoint.Content(
                             type = "application/json",
-                            reference = Reference.Custom("Todo", false),
+                            reference = Custom("Todo", false),
                             isNullable = true
                         )
                     ),
@@ -620,7 +620,7 @@ class OpenApiV3ParserTest {
                         headers = emptyList(),
                         content = Endpoint.Content(
                             type = "application/json",
-                            reference = Reference.Custom("Error", false),
+                            reference = Custom("Error", false),
                             isNullable = false
                         )
                     )
@@ -645,7 +645,7 @@ class OpenApiV3ParserTest {
                         Field(FieldIdentifier("id"), Primitive(Primitive.Type.String, false), true),
                         Field(FieldIdentifier("title"), Primitive(Primitive.Type.String, false), true),
                         Field(FieldIdentifier("completed"), Primitive(Primitive.Type.Boolean, false), true),
-                        Field(FieldIdentifier("alert"), Reference.Custom("TodoAlert", false), true),
+                        Field(FieldIdentifier("alert"), Custom("TodoAlert", false), true),
                     )
                 ),
                 extends = emptyList(),
@@ -656,7 +656,7 @@ class OpenApiV3ParserTest {
                 shape = Shape(
                     listOf(
                         Field(FieldIdentifier("code"), Primitive(Primitive.Type.String, false), true),
-                        Field(FieldIdentifier("message"), Reference.Custom("TodoAlertMessage", false), true),
+                        Field(FieldIdentifier("message"), Custom("TodoAlertMessage", false), true),
                     )
                 ),
                 extends = emptyList(),
@@ -807,7 +807,7 @@ class OpenApiV3ParserTest {
                         headers = emptyList(),
                         content = Endpoint.Content(
                             type = "application/json",
-                            reference = Reference.Custom(
+                            reference = Custom(
                                 value = "Address",
                                 isIterable = false,
                                 isDictionary = false
@@ -820,7 +820,7 @@ class OpenApiV3ParserTest {
                         headers = emptyList(),
                         content = Endpoint.Content(
                             type = "application/json",
-                            reference = Reference.Custom(
+                            reference = Custom(
                                 value = "ResponserefGET202ResponseBody",
                                 isIterable = false,
                                 isDictionary = false
@@ -907,14 +907,14 @@ class OpenApiV3ParserTest {
                 queries = listOf(
                     Field(
                         identifier = FieldIdentifier(name = "embed"),
-                        reference = Reference.Custom(
+                        reference = Custom(
                             value = "ResponserefGETParameterEmbedArray",
                             isIterable = true,
                             isDictionary = false
                         ), isNullable = true
                     ), Field(
                         identifier = FieldIdentifier(name = "embedRef"),
-                        reference = Reference.Custom(
+                        reference = Custom(
                             value = "EmbedParamsArray",
                             isIterable = true,
                             isDictionary = false
@@ -931,7 +931,7 @@ class OpenApiV3ParserTest {
                         headers = emptyList(),
                         content = Endpoint.Content(
                             type = "application/json",
-                            reference = Reference.Custom(
+                            reference = Custom(
                                 value = "ResponserefGET201ResponseBody",
                                 isIterable = false,
                                 isDictionary = false
@@ -997,7 +997,7 @@ class OpenApiV3ParserTest {
                         headers = emptyList(),
                         content = Endpoint.Content(
                             type = "application/json",
-                            reference = Reference.Custom(
+                            reference = Custom(
                                 value = "RefarrayGET200ResponseBody",
                                 isIterable = false,
                                 isDictionary = false
@@ -1014,7 +1014,7 @@ class OpenApiV3ParserTest {
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier(name = "proposals"),
-                            reference = Reference.Custom(
+                            reference = Custom(
                                 value = "Proposal",
                                 isIterable = true,
                                 isDictionary = false
@@ -1023,7 +1023,7 @@ class OpenApiV3ParserTest {
                         ), Field(
                             identifier = FieldIdentifier(name = "count"),
                             reference = Primitive(
-                                type = Primitive.Type.Integer,
+                                type = Primitive.Type.Integer(Primitive.Type.Precision.P64),
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -1048,7 +1048,7 @@ class OpenApiV3ParserTest {
                             isNullable = false
                         ), Field(
                             identifier = FieldIdentifier(name = "status"),
-                            reference = Reference.Primitive(
+                            reference = Primitive(
                                 type = Primitive.Type.String,
                                 isIterable = false,
                                 isDictionary = false
