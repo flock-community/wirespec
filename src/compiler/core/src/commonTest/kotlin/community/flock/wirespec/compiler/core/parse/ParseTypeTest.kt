@@ -87,15 +87,14 @@ class ParseTypeTest {
     fun testIntegerNumberParser() {
         val source = """
             |type Bar { int32: Integer32, int64: Integer[] }
-            |type Foo { num32: Number32, num64: Number64? }
+            |type Foo { num32: Number32, num64: Number? }
         """.trimMargin()
 
         WirespecSpec.tokenize(source)
             .let(parser()::parse)
             .shouldBeRight()
             .also { it.size shouldBe 2 }
-            .let {
-                val (first, second) = it.toList()
+            .let { (first, second) ->
                 first shouldBe Type(
                     comment = null,
                     identifier = DefinitionIdentifier("Bar"),
@@ -106,7 +105,7 @@ class ParseTypeTest {
                                 identifier = FieldIdentifier("int32"),
                                 isNullable = false,
                                 reference = Reference.Primitive(
-                                    type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision._32),
+                                    type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32),
                                     isIterable = false,
                                     isDictionary = false
                                 )
@@ -115,7 +114,7 @@ class ParseTypeTest {
                                 identifier = FieldIdentifier("int64"),
                                 isNullable = false,
                                 reference = Reference.Primitive(
-                                    type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision._64),
+                                    type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P64),
                                     isIterable = true,
                                     isDictionary = false
                                 )
@@ -133,7 +132,7 @@ class ParseTypeTest {
                                 identifier = FieldIdentifier("num32"),
                                 isNullable = false,
                                 reference = Reference.Primitive(
-                                    type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision._32),
+                                    type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P32),
                                     isIterable = false,
                                     isDictionary = false
                                 )
@@ -142,7 +141,7 @@ class ParseTypeTest {
                                 identifier = FieldIdentifier("num64"),
                                 isNullable = true,
                                 reference = Reference.Primitive(
-                                    type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision._64),
+                                    type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P64),
                                     isIterable = false,
                                     isDictionary = false
                                 )

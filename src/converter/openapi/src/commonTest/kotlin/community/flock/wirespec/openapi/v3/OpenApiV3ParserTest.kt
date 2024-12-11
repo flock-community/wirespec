@@ -40,7 +40,7 @@ class OpenApiV3ParserTest {
                         Field(
                             identifier = FieldIdentifier("id"),
                             reference = Primitive(
-                                type = Primitive.Type.Integer(Primitive.Type.Precision._64),
+                                type = Primitive.Type.Integer(Primitive.Type.Precision.P64),
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -49,7 +49,7 @@ class OpenApiV3ParserTest {
                         Field(
                             identifier = FieldIdentifier("petId"),
                             reference = Primitive(
-                                type = Primitive.Type.Integer(Primitive.Type.Precision._64),
+                                type = Primitive.Type.Integer(Primitive.Type.Precision.P64),
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -58,7 +58,7 @@ class OpenApiV3ParserTest {
                         Field(
                             identifier = FieldIdentifier("quantity"),
                             reference = Primitive(
-                                type = Primitive.Type.Integer(Primitive.Type.Precision._32),
+                                type = Primitive.Type.Integer(Primitive.Type.Precision.P32),
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -108,7 +108,7 @@ class OpenApiV3ParserTest {
                         Field(
                             identifier = FieldIdentifier("id"),
                             reference = Primitive(
-                                type = Primitive.Type.Integer(Primitive.Type.Precision._64),
+                                type = Primitive.Type.Integer(Primitive.Type.Precision.P64),
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -185,7 +185,7 @@ class OpenApiV3ParserTest {
                         Field(
                             identifier = FieldIdentifier("id"),
                             reference = Primitive(
-                                type = Primitive.Type.Integer(Primitive.Type.Precision._64),
+                                type = Primitive.Type.Integer(Primitive.Type.Precision.P64),
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -212,7 +212,7 @@ class OpenApiV3ParserTest {
                         Field(
                             identifier = FieldIdentifier("id"),
                             reference = Primitive(
-                                type = Primitive.Type.Integer(Primitive.Type.Precision._64),
+                                type = Primitive.Type.Integer(Primitive.Type.Precision.P64),
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -275,7 +275,7 @@ class OpenApiV3ParserTest {
                         Field(
                             identifier = FieldIdentifier("userStatus"),
                             reference = Primitive(
-                                type = Primitive.Type.Integer(Primitive.Type.Precision._32),
+                                type = Primitive.Type.Integer(Primitive.Type.Precision.P32),
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -293,7 +293,7 @@ class OpenApiV3ParserTest {
                         Field(
                             identifier = FieldIdentifier("id"),
                             reference = Primitive(
-                                type = Primitive.Type.Integer(Primitive.Type.Precision._64),
+                                type = Primitive.Type.Integer(Primitive.Type.Precision.P64),
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -320,7 +320,7 @@ class OpenApiV3ParserTest {
                         Field(
                             identifier = FieldIdentifier("id"),
                             reference = Primitive(
-                                type = Primitive.Type.Integer(Primitive.Type.Precision._64),
+                                type = Primitive.Type.Integer(Primitive.Type.Precision.P64),
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -388,7 +388,7 @@ class OpenApiV3ParserTest {
                         Field(
                             identifier = FieldIdentifier("code"),
                             reference = Primitive(
-                                type = Primitive.Type.Integer(Primitive.Type.Precision._32),
+                                type = Primitive.Type.Integer(Primitive.Type.Precision.P32),
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -438,7 +438,7 @@ class OpenApiV3ParserTest {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Primitive(type = Primitive.Type.Integer(Primitive.Type.Precision._32), isIterable = false, isDictionary = true),
+                        reference = Primitive(type = Primitive.Type.Integer(Primitive.Type.Precision.P32), isIterable = false, isDictionary = true),
                         isNullable = false
                     )
                 )
@@ -1023,7 +1023,7 @@ class OpenApiV3ParserTest {
                         ), Field(
                             identifier = FieldIdentifier(name = "count"),
                             reference = Primitive(
-                                type = Primitive.Type.Integer(Primitive.Type.Precision._64),
+                                type = Primitive.Type.Integer(Primitive.Type.Precision.P64),
                                 isIterable = false,
                                 isDictionary = false
                             ),

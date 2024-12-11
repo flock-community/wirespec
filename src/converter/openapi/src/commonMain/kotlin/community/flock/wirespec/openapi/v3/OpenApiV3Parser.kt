@@ -1,6 +1,5 @@
 package community.flock.wirespec.openapi.v3
 
-import community.flock.kotlinx.openapi.bindings.v3.Type as OpenapiType
 import community.flock.kotlinx.openapi.bindings.v3.BooleanObject
 import community.flock.kotlinx.openapi.bindings.v3.HeaderObject
 import community.flock.kotlinx.openapi.bindings.v3.HeaderOrReferenceObject
@@ -32,6 +31,7 @@ import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.openapi.Common.className
 import community.flock.wirespec.openapi.Common.filterNotNullValues
 import kotlinx.serialization.json.Json
+import community.flock.kotlinx.openapi.bindings.v3.Type as OpenapiType
 
 object OpenApiV3Parser {
 
@@ -552,8 +552,8 @@ object OpenApiV3Parser {
 
     private fun OpenapiType.toPrimitive(format: String?) = when (this) {
         OpenapiType.STRING -> Reference.Primitive.Type.String
-        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer(if(format == "int32") Reference.Primitive.Type.Precision._32 else Reference.Primitive.Type.Precision._64 )
-        OpenapiType.NUMBER -> Reference.Primitive.Type.Number(if(format == "float") Reference.Primitive.Type.Precision._32 else Reference.Primitive.Type.Precision._64)
+        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer(if(format == "int32") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64 )
+        OpenapiType.NUMBER -> Reference.Primitive.Type.Number(if(format == "float") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
         OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean
         else -> error("Type is not a primitive")
     }

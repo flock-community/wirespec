@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.parse
 
 import community.flock.wirespec.compiler.core.Value
+import community.flock.wirespec.compiler.core.parse.Reference.Primitive.Type.Precision.P64
 import community.flock.wirespec.compiler.core.removeBackticks
 import community.flock.wirespec.compiler.core.removeCommentMarkers
 import kotlin.jvm.JvmInline
@@ -50,23 +51,28 @@ sealed interface Reference : Value<String> {
         override val isIterable: Boolean = false,
         override val isDictionary: Boolean = false
     ) : Reference {
-        sealed interface Type{
+        sealed interface Type {
             val name: kotlin.String;
-            enum class Precision { _32, _64}
+
+            enum class Precision { P32, P64 }
             data object String : Type {
-                override val name get() = "String"
+                override val name = "String"
             }
-            data class Integer (val precision: Precision = Precision._64):Type {
-                override val name get() = "Integer"
+
+            data class Integer(val precision: Precision = P64) : Type {
+                override val name = "Integer"
             }
-            data class Number(val precision: Precision = Precision._64):Type {
-                override val name get() = "Number"
+
+            data class Number(val precision: Precision = P64) : Type {
+                override val name = "Number"
             }
+
             data object Boolean : Type {
-                override val name get() = "Boolean"
+                override val name = "Boolean"
             }
 
         }
+
         override val value = type.name
     }
 }

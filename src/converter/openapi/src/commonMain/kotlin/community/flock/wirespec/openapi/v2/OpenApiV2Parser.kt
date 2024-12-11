@@ -198,8 +198,8 @@ object OpenApiV2Parser {
 
     private fun String.mapType(format: String?) = when (lowercase()) {
         "string" -> Reference.Primitive.Type.String
-        "number" -> Reference.Primitive.Type.Number(if (format == "float") Reference.Primitive.Type.Precision._32 else Reference.Primitive.Type.Precision._64)
-        "integer" -> Reference.Primitive.Type.Integer(if (format == "int32") Reference.Primitive.Type.Precision._32 else Reference.Primitive.Type.Precision._64)
+        "number" -> Reference.Primitive.Type.Number(if (format == "float") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
+        "integer" -> Reference.Primitive.Type.Integer(if (format == "int32") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
         "boolean" -> Reference.Primitive.Type.Boolean
         else -> error("Cannot map type: $this")
     }
@@ -438,8 +438,8 @@ object OpenApiV2Parser {
 
     private fun OpenapiType.toPrimitive(format: String?) = when (this) {
         OpenapiType.STRING -> Reference.Primitive.Type.String
-        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer(if (format == "int32") Reference.Primitive.Type.Precision._32 else Reference.Primitive.Type.Precision._64)
-        OpenapiType.NUMBER -> Reference.Primitive.Type.Number(if (format == "float") Reference.Primitive.Type.Precision._32 else Reference.Primitive.Type.Precision._64)
+        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer(if (format == "int32") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
+        OpenapiType.NUMBER -> Reference.Primitive.Type.Number(if (format == "float") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
         OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean
         else -> error("Type is not a primitive")
     }

@@ -80,12 +80,12 @@ open class ScalaEmitter(
         is Reference.Primitive -> when (type) {
             is Reference.Primitive.Type.String -> "String"
             is Reference.Primitive.Type.Integer -> when(type.precision){
-                Reference.Primitive.Type.Precision._32 -> "Int"
-                Reference.Primitive.Type.Precision._64 -> "Long"
+                Reference.Primitive.Type.Precision.P32 -> "Int"
+                Reference.Primitive.Type.Precision.P64 -> "Long"
             }
             is Reference.Primitive.Type.Number -> when(type.precision){
-                Reference.Primitive.Type.Precision._32 -> "Float"
-                Reference.Primitive.Type.Precision._64 -> "Double"
+                Reference.Primitive.Type.Precision.P32 -> "Float"
+                Reference.Primitive.Type.Precision.P64 -> "Double"
             }
             is Reference.Primitive.Type.Boolean -> "Boolean"
         }

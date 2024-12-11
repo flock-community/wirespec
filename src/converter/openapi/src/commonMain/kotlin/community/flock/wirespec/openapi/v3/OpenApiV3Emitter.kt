@@ -237,13 +237,13 @@ object OpenApiV3Emitter : Emitter(noLogger) {
         when (this) {
             is Reference.Primitive -> when (val t = type) {
                 is Reference.Primitive.Type.Number -> when (t.precision) {
-                    Reference.Primitive.Type.Precision._32 -> "float"
-                    Reference.Primitive.Type.Precision._64 -> "double"
+                    Reference.Primitive.Type.Precision.P32 -> "float"
+                    Reference.Primitive.Type.Precision.P64 -> "double"
                 }
 
                 is Reference.Primitive.Type.Integer -> when (t.precision) {
-                    Reference.Primitive.Type.Precision._32 -> "int32"
-                    Reference.Primitive.Type.Precision._64 -> "int64"
+                    Reference.Primitive.Type.Precision.P32 -> "int32"
+                    Reference.Primitive.Type.Precision.P64 -> "int64"
                 }
 
                 else -> null

@@ -85,8 +85,8 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
 
             is WsInteger -> Reference.Primitive(
                 type = Reference.Primitive.Type.Integer(when(value) {
-                    "Integer32" -> Reference.Primitive.Type.Precision._32
-                    else -> Reference.Primitive.Type.Precision._64
+                    "Integer32" -> Reference.Primitive.Type.Precision.P32
+                    else -> Reference.Primitive.Type.Precision.P64
                 }),
                 isIterable = isIterable,
                 isDictionary = isDict
@@ -94,8 +94,8 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
 
             is WsNumber -> Reference.Primitive(
                 type = Reference.Primitive.Type.Number(when(value) {
-                    "Number32" -> Reference.Primitive.Type.Precision._32
-                    else -> Reference.Primitive.Type.Precision._64
+                    "Number32" -> Reference.Primitive.Type.Precision.P32
+                    else -> Reference.Primitive.Type.Precision.P64
                 }),
                 isIterable = isIterable,
                 isDictionary = isDict
