@@ -33,7 +33,7 @@ class OpenApiV2ParserTest {
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier("code"),
-                            reference = Primitive(type = Primitive.Type.Integer(), isIterable = false),
+                            reference = Primitive(type = Primitive.Type.Integer(Primitive.Type.Precision._32), isIterable = false),
                             isNullable = true
                         ),
                         Field(
@@ -144,7 +144,7 @@ class OpenApiV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("quantity"),
-                            reference = Primitive(type = Primitive.Type.Integer(), isIterable = false),
+                            reference = Primitive(type = Primitive.Type.Integer(Primitive.Type.Precision._32), isIterable = false),
                             isNullable = true
                         ),
                         Field(
@@ -208,7 +208,7 @@ class OpenApiV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("userStatus"),
-                            reference = Primitive(type = Primitive.Type.Integer(), isIterable = false),
+                            reference = Primitive(type = Primitive.Type.Integer(Primitive.Type.Precision._32), isIterable = false),
                             isNullable = true
                         )
                     )
