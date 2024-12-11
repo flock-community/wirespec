@@ -67,12 +67,12 @@ object Expected {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("a"),
-                        reference = Reference.Primitive(type = Reference.Primitive.Type.Number, isIterable = false),
+                        reference = Reference.Primitive(type = Reference.Primitive.Type.Number(), isIterable = false),
                         isNullable = true
                     ),
                     Field(
                         identifier = FieldIdentifier("b"),
-                        reference = Reference.Primitive(type = Reference.Primitive.Type.Number, isIterable = false),
+                        reference = Reference.Primitive(type = Reference.Primitive.Type.Number(), isIterable = false),
                         isNullable = true
                     )
                 )
@@ -142,7 +142,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("a"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.Number,
+                            type = Reference.Primitive.Type.Number(),
                             isIterable = false
                         ),
                         isNullable = true
@@ -150,7 +150,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("b"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.Number,
+                            type = Reference.Primitive.Type.Number(),
                             isIterable = false
                         ),
                         isNullable = true
@@ -223,7 +223,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("code"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.Integer,
+                            type = Reference.Primitive.Type.Integer(),
                             isIterable = false
                         ),
                         isNullable = true
@@ -248,7 +248,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("code"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.Integer,
+                            type = Reference.Primitive.Type.Integer(),
                             isIterable = false
                         ),
                         isNullable = true
@@ -330,7 +330,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("code"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.Number,
+                            type = Reference.Primitive.Type.Number(),
                             isIterable = false
                         ),
                         isNullable = true
@@ -355,7 +355,7 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier("code"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.Number,
+                            type = Reference.Primitive.Type.Number(),
                             isIterable = false
                         ),
                         isNullable = true
