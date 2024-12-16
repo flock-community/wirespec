@@ -367,7 +367,7 @@ object OpenApiV3Parser {
                                 is ReferenceObject -> toReference(it)
                                 is SchemaObject -> toReference(it, className(name, index.toString()))
                             }
-
+                                .let { ref -> if (schemaObject.type == OpenapiType.ARRAY) ref.toIterable() else ref }
                         }
                         .toSet()
 
@@ -560,27 +560,45 @@ object OpenApiV3Parser {
     private fun OpenAPIObject.toField(schema: SchemaObject, name: String) =
         schema.properties.orEmpty().map { (key, value) ->
             when (value) {
-                is SchemaObject -> {
-                    Field(
-                        identifier = FieldIdentifier(key),
-                        reference = when {
-                            value.enum != null -> toReference(value, className(name, key))
-                            value.type == OpenapiType.ARRAY -> toReference(value, className(name, key, "Array"))
-                            else -> toReference(value, className(name, key))
-                        },
-                        isNullable = !(schema.required?.contains(key) ?: false)
-                    )
-                }
-
-                is ReferenceObject -> {
-                    Field(
-                        FieldIdentifier(key),
-                        toReference(value),
-                        !(schema.required?.contains(key) ?: false)
-                    )
-                }
+                is SchemaObject -> createField(schema, key, value, name)
+                is ReferenceObject -> createField(schema, key, value)
             }
         }
+
+    private fun OpenAPIObject.createField(schema: SchemaObject, key: String, value: SchemaObject, name: String): Field {
+        val reference = when {
+            value.enum != null -> toReference(value, className(name, key))
+            value.type == OpenapiType.ARRAY -> toReference(value, className(name, key, "Array"))
+            value.anyOf != null || value.oneOf != null -> createUnionReference(value, name, key)
+            else -> toReference(value, className(name, key))
+        }
+        return Field(
+            identifier = FieldIdentifier(key),
+            reference = reference,
+            isNullable = !(schema.required?.contains(key) ?: false)
+        )
+    }
+
+    private fun OpenAPIObject.createField(schema: SchemaObject, key: String, value: ReferenceObject): Field =
+        Field(
+            identifier = FieldIdentifier(key),
+            reference = toReference(value),
+            isNullable = !(schema.required?.contains(key) ?: false)
+        )
+
+    private fun OpenAPIObject.createUnionReference(schema: SchemaObject, name: String, key: String): Reference {
+        val unionRefs = schema.anyOf.orEmpty() + schema.oneOf.orEmpty()
+        val allAreArrays = unionRefs.all { ref ->
+            when (ref) {
+                is ReferenceObject -> resolveSchemaObject(ref).second.type == OpenapiType.ARRAY
+                is SchemaObject -> ref.type == OpenapiType.ARRAY
+            }
+        }
+
+        return toReference(schema, className(name, key)).let { ref ->
+            if (allAreArrays) ref.toIterable() else ref
+        }
+    }
 
     private fun OpenAPIObject.toField(parameter: ParameterObject, name: String) =
         when (val s = parameter.schema) {
