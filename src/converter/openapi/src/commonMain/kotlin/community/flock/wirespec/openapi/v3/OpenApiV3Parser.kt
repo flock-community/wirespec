@@ -361,8 +361,7 @@ object OpenApiV3Parser {
                 Union(
                     comment = null,
                     identifier = DefinitionIdentifier(name),
-                    entries = schemaObject.oneOf
-                        .orEmpty()
+                    entries = (schemaObject.oneOf.orEmpty() + schemaObject.anyOf.orEmpty())
                         .mapIndexed { index, it ->
                             when (it) {
                                 is ReferenceObject -> toReference(it)
@@ -374,7 +373,7 @@ object OpenApiV3Parser {
 
                 )
             )
-                .plus(schemaObject.oneOf.orEmpty().flatMapIndexed { index, it ->
+                .plus((schemaObject.oneOf.orEmpty() + schemaObject.anyOf.orEmpty()).flatMapIndexed { index, it ->
                     when (it) {
                         is ReferenceObject -> emptyList()
                         is SchemaObject -> flatten(it, className(name, index.toString()))
