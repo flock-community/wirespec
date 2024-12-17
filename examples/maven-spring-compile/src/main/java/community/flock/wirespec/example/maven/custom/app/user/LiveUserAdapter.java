@@ -3,7 +3,11 @@ package community.flock.wirespec.example.maven.custom.app.user;
 import community.flock.wirespec.example.maven.custom.app.exception.CallInterrupted;
 import community.flock.wirespec.example.maven.custom.app.exception.Conflict;
 import community.flock.wirespec.example.maven.custom.app.exception.NotFound;
-import community.flock.wirespec.generated.java.*;
+import community.flock.wirespec.generated.java.DeleteUserByNameEndpoint;
+import community.flock.wirespec.generated.java.GetUserByNameEndpoint;
+import community.flock.wirespec.generated.java.GetUsersEndpoint;
+import community.flock.wirespec.generated.java.PostUserEndpoint;
+import community.flock.wirespec.generated.java.UploadImageEndpoint;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

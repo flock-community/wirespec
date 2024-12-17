@@ -2,7 +2,11 @@ package community.flock.wirespec.example.maven.custom.app.user;
 
 import community.flock.wirespec.example.maven.custom.app.common.WirespecSerializer;
 import community.flock.wirespec.example.maven.custom.app.common.WirespecTransporter;
-import community.flock.wirespec.generated.java.*;
+import community.flock.wirespec.generated.java.DeleteUserByNameEndpoint;
+import community.flock.wirespec.generated.java.GetUserByNameEndpoint;
+import community.flock.wirespec.generated.java.GetUsersEndpoint;
+import community.flock.wirespec.generated.java.PostUserEndpoint;
+import community.flock.wirespec.generated.java.UploadImageEndpoint;
 import community.flock.wirespec.java.Wirespec;
 import org.springframework.stereotype.Component;
 
