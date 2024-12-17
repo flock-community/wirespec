@@ -233,6 +233,7 @@ private fun Reference.Primitive.Type.produce() = when (this) {
     is Reference.Primitive.Type.Integer -> WsPrimitiveType.Integer
     is Reference.Primitive.Type.Number -> WsPrimitiveType.Number
     is Reference.Primitive.Type.Boolean -> WsPrimitiveType.Boolean
+    is Reference.Primitive.Type.Bytes -> WsPrimitiveType.String
 }
 
 private fun Endpoint.Method.produce() = when (this) {

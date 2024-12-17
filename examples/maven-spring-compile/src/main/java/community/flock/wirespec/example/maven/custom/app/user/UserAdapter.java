@@ -14,4 +14,6 @@ public interface UserAdapter {
     User saveUser(final User user);
 
     User deleteUserByName(final String name);
+
+    void uploadImage(final String name, byte[] bytes);
 }

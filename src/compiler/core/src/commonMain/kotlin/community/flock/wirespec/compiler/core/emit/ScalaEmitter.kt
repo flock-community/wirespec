@@ -88,6 +88,7 @@ open class ScalaEmitter(
                 Reference.Primitive.Type.Precision.P64 -> "Double"
             }
             is Reference.Primitive.Type.Boolean -> "Boolean"
+            is Reference.Primitive.Type.Bytes -> "Array[Byte]"
         }
     }
         .let { if (isIterable) "List[$it]" else it }

@@ -109,6 +109,7 @@ open class JavaEmitter(
             Reference.Primitive.Type.Precision.P64 -> "Double"
         }
         is Reference.Primitive.Type.Boolean -> "Boolean"
+        is Reference.Primitive.Type.Bytes -> "byte[]"
     }
 
     override fun emit(identifier: Identifier) = when (identifier) {

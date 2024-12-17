@@ -71,6 +71,10 @@ sealed interface Reference : Value<String> {
                 override val name = "Boolean"
             }
 
+            data object Bytes : Type {
+                override val name = "Bytes"
+            }
+
         }
 
         override val value = type.name

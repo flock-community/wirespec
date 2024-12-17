@@ -1,24 +1,20 @@
 package community.flock.wirespec.example.maven.custom.app.user;
 
-import community.flock.wirespec.generated.java.DeleteUserByNameEndpoint;
-import community.flock.wirespec.generated.java.GetUserByNameEndpoint;
-import community.flock.wirespec.generated.java.GetUsersEndpoint;
-import community.flock.wirespec.generated.java.PostUserEndpoint;
-import community.flock.wirespec.generated.java.UserDto;
+import community.flock.wirespec.generated.java.*;
 
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public class TestUserClient implements UserClient {
 
-    private final Set<UserDto> users = new HashSet<>(Set.of(
+    public static final Set<UserDto> users = new HashSet<>(Set.of(
             new UserDto("name"),
             new UserDto("other name")
     ));
+
+    public static final Map<String, byte[]> images = new HashMap<>();
 
     @Override
     public CompletableFuture<GetUsersEndpoint.Response<?>> getUsers(GetUsersEndpoint.Request request) {
@@ -59,5 +55,11 @@ public class TestUserClient implements UserClient {
                 .orElseGet(() -> new DeleteUserByNameEndpoint.Response404());
 
         return completedFuture(res);
+    }
+
+    @Override
+    public CompletableFuture<UploadImageEndpoint.Response<?>> uploadImage(UploadImageEndpoint.Request request) {
+        images.put(request.getPath().name(),  request.getBody());
+        return completedFuture(new UploadImageEndpoint.Response201());
     }
 }

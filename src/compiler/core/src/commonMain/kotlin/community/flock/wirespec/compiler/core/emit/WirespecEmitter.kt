@@ -65,6 +65,7 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
                 else ->"Number"
             }
             is Reference.Primitive.Type.Boolean -> "Boolean"
+            is Reference.Primitive.Type.Bytes -> "Bytes"
         }
     }
         .let { if (isIterable) "$it[]" else it }
