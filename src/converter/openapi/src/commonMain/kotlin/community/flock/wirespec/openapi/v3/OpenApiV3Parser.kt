@@ -503,7 +503,6 @@ object OpenApiV3Parser {
         else -> when (val type = schema.type) {
             OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Reference.Primitive(
                 type.toPrimitive(schema.format),
-                null,
                 false,
                 schema.additionalProperties != null
             )

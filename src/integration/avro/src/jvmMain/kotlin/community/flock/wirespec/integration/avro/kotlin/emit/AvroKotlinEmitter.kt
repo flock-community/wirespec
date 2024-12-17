@@ -1,6 +1,5 @@
 package community.flock.wirespec.integration.avro.kotlin.emit
 
-import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.parse.AST
@@ -96,7 +95,7 @@ class AvroKotlinEmitter(val packageName: String, logger: Logger) : KotlinEmitter
                     }
 
                     is Reference.Primitive -> when {
-                        reference.origin == "bytes" -> "record.put(${index}, java.nio.ByteBuffer.wrap(model.${emit(field.identifier)}.toByteArray()));"
+                        reference.type == Reference.Primitive.Type.Bytes -> "record.put(${index}, java.nio.ByteBuffer.wrap(model.${emit(field.identifier)}.toByteArray()));"
                         else -> "record.put(${index}, model.${emit(field.identifier)});"
                     }
 
@@ -116,7 +115,7 @@ class AvroKotlinEmitter(val packageName: String, logger: Logger) : KotlinEmitter
                     }
 
                     is Reference.Primitive -> when {
-                        reference.origin == "bytes" -> "String((record.get(${index}) as java.nio.ByteBuffer).array())"
+                        reference.type == Reference.Primitive.Type.Bytes -> "String((record.get(${index}) as java.nio.ByteBuffer).array())"
                         reference.type == Reference.Primitive.Type.String -> "record.get(${index}).toString() as ${field.emitType()}"
                         else -> "record.get(${index}) as ${field.emitType()}"
                     }

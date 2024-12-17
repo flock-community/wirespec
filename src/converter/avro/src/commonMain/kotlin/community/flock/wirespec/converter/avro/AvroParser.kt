@@ -3,8 +3,6 @@ package community.flock.wirespec.converter.avro
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
-import community.flock.wirespec.compiler.core.parse.FieldIdentifier
-import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.converter.avro.AvroConverter.flatten
 import kotlinx.serialization.json.Json

@@ -5,7 +5,6 @@ import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
-import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
 
@@ -16,11 +15,11 @@ object AvroConverter {
     fun AvroModel.TypeList.isNullable() = contains(nullType)
     fun AvroModel.SimpleType.toPrimitive() = when (this.value) {
         "boolean" -> Reference.Primitive.Type.Boolean
-        "int" -> Reference.Primitive.Type.Integer
-        "long" -> Reference.Primitive.Type.Integer
-        "float" -> Reference.Primitive.Type.Number
-        "double" -> Reference.Primitive.Type.Number
-        "bytes" -> Reference.Primitive.Type.String
+        "int" -> Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32)
+        "long" -> Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P64)
+        "float" -> Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P32)
+        "double" -> Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P64)
+        "bytes" -> Reference.Primitive.Type.Bytes
         "string" -> Reference.Primitive.Type.String
         else -> TODO("primitive not mapped ${this.value}")
     }
@@ -34,7 +33,6 @@ object AvroConverter {
 
             "boolean", "int", "long", "float", "double", "bytes", "string" -> Reference.Primitive(
                 type = toPrimitive(),
-                origin = value,
                 isIterable = isIterable,
                 isDictionary = false
             )

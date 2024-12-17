@@ -1,25 +1,14 @@
 package community.flock.wirespec.examples.maven.avro;
 
-import com.eventloopsoftware.*;
+import com.eventloopsoftware.TestAvroEnumIdentifier;
+import com.eventloopsoftware.TestAvroOrder;
+import com.eventloopsoftware.TestAvroOrderLines;
+import com.eventloopsoftware.TestAvroRecord;
+import com.eventloopsoftware.TestAvroRefNumber;
 import com.eventloopsoftware.kafka.model.TestAvroMetadata;
-import io.confluent.kafka.serializers.KafkaAvroDeserializer;
-import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig;
-import io.confluent.kafka.serializers.KafkaAvroSerializer;
-import org.apache.avro.generic.GenericData;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.StringDeserializer;
-import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
-import org.springframework.kafka.core.DefaultKafkaProducerFactory;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.listener.ContainerProperties;
-import org.springframework.kafka.listener.KafkaMessageListenerContainer;
-import org.springframework.kafka.listener.MessageListener;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
@@ -28,17 +17,15 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.shaded.org.checkerframework.checker.units.qual.A;
 import org.testcontainers.utility.DockerImageName;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -75,6 +62,7 @@ class AvroTestApplicationTests {
                 new TestAvroMetadata("321", 1L),
                 new TestAvroOrder(
                         "123",
+                        "QR Code".getBytes(),
                         Optional.of(1L),
                         List.of(
                                 new TestAvroRefNumber("ref1", TestAvroEnumIdentifier.REF_1),
@@ -83,21 +71,22 @@ class AvroTestApplicationTests {
 
                         ),
                         List.of(
-                                new TestAvroOrderLines("11", "100"),
-                                new TestAvroOrderLines("22", "200"),
-                                new TestAvroOrderLines("33", "300")
+                                new TestAvroOrderLines("11", 100.0F),
+                                new TestAvroOrderLines("22", 200.0F),
+                                new TestAvroOrderLines("33", 300.0F)
                         ),
                         3L
                 )
         );
 
         service.listen("group1", message -> {
-            assertEquals(record, message);
+            assertRecordEquals(record, message);
             latch.countDown();
         });
 
         service.listen("group2", message -> {
-            assertEquals(record, message);
+            assertRecordEquals(record, message);
+
             latch.countDown();
         });
 
@@ -106,5 +95,14 @@ class AvroTestApplicationTests {
         boolean messageConsumed = latch.await(10, TimeUnit.SECONDS);
         assertTrue(messageConsumed);
 
+    }
+
+    void assertRecordEquals(TestAvroRecord expected, TestAvroRecord actual){
+        assertEquals(expected.metadata(), actual.metadata());
+        assertEquals(expected.order().number(), actual.order().number());
+        assertEquals(expected.order().a_number(), actual.order().a_number());
+        assertEquals(expected.order().created_at(), actual.order().created_at());
+        assertEquals(expected.order().lines(), actual.order().lines());
+        assertArrayEquals(expected.order().qr_code(), actual.order().qr_code());
     }
 }

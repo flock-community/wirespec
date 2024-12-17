@@ -72,8 +72,7 @@ class AvroParserTest {
                         Field(
                             identifier = FieldIdentifier("id"),
                             reference = Reference.Primitive(
-                                type = Reference.Primitive.Type.Integer,
-                                origin = "int",
+                                type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32),
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -83,7 +82,6 @@ class AvroParserTest {
                             identifier = FieldIdentifier("username"),
                             reference = Reference.Primitive(
                                 type = Reference.Primitive.Type.String,
-                                origin = "string",
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -93,7 +91,6 @@ class AvroParserTest {
                             identifier = FieldIdentifier("passwordHash"),
                             reference = Reference.Primitive(
                                 type = Reference.Primitive.Type.String,
-                                origin = "string",
                                 isIterable = false,
                                 isDictionary = false
                             ),
@@ -102,8 +99,7 @@ class AvroParserTest {
                         Field(
                             identifier = FieldIdentifier("signupDate"),
                             reference = Reference.Primitive(
-                                type = Reference.Primitive.Type.Integer,
-                                origin = "long",
+                                type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P64),
                                 isIterable = false,
                                 isDictionary = false
                             ),
