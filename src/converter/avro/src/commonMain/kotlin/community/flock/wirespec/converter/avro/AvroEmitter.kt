@@ -28,14 +28,19 @@ object AvroEmitter {
 
     fun Reference.emit(ast:AST, hasEmitted: MutableList<String>): AvroModel.Type = when (val ref = this) {
         is Reference.Primitive -> {
-            val origin = ref.origin?.let { AvroModel.SimpleType(it) }
-            val type = when(ref.type){
-                Reference.Primitive.Type.String-> AvroModel.SimpleType("string")
-                Reference.Primitive.Type.Integer -> AvroModel.SimpleType("int")
-                Reference.Primitive.Type.Number -> AvroModel.SimpleType("float")
-                Reference.Primitive.Type.Boolean -> AvroModel.SimpleType("boolean")
+            when(val type = ref.type){
+                is Reference.Primitive.Type.String-> AvroModel.SimpleType("string")
+                is Reference.Primitive.Type.Integer -> when(type.precision){
+                    Reference.Primitive.Type.Precision.P32 -> AvroModel.SimpleType("int")
+                    Reference.Primitive.Type.Precision.P64 -> AvroModel.SimpleType("long")
+                }
+                is Reference.Primitive.Type.Number -> when(type.precision){
+                    Reference.Primitive.Type.Precision.P32 -> AvroModel.SimpleType("float")
+                    Reference.Primitive.Type.Precision.P64 -> AvroModel.SimpleType("double")
+                }
+                is Reference.Primitive.Type.Boolean -> AvroModel.SimpleType("boolean")
+                is Reference.Primitive.Type.Bytes -> AvroModel.SimpleType("bytes")
             }
-            origin ?: type
         }
         is Reference.Custom -> {
             when (val def = ast.findType(ref.value)) {

@@ -94,8 +94,8 @@ class AvroJavaEmitter(packageName: String, logger: Logger) : JavaEmitter(package
                         else -> "record.put(${index}, ${field.reference.emit()}.Avro.to(data.${emit(field.identifier)}()));"
                     }
 
-                    is Reference.Primitive -> when {
-                        reference.origin == "bytes" -> "record.put(${index}, java.nio.ByteBuffer.wrap(data.${emit(field.identifier)}().getBytes()));"
+                    is Reference.Primitive -> when(reference.type) {
+                        is Reference.Primitive.Type.Bytes -> "record.put(${index}, java.nio.ByteBuffer.wrap(data.${emit(field.identifier)}()));"
                         else -> "record.put(${index}, data.${emit(field.identifier)}()${if (field.isNullable) ".orElse(null)" else ""});"
                     }
 
@@ -117,7 +117,7 @@ class AvroJavaEmitter(packageName: String, logger: Logger) : JavaEmitter(package
 
                     is Reference.Primitive -> when {
                         field.isNullable -> "(${field.emitType()}) java.util.Optional.ofNullable((${field.reference.emitType()}) record.get(${index}))"
-                        reference.origin == "bytes" -> "(${field.emitType()}) new String(((java.nio.ByteBuffer) record.get(${index})).array())"
+                        reference.type == Reference.Primitive.Type.Bytes -> "(${field.emitType()}) ((java.nio.ByteBuffer) record.get(${index})).array()"
                         reference.type == Reference.Primitive.Type.String -> "(${field.emitType()}) record.get(${index}).toString()"
                         else -> "(${field.emitType()}) record.get(${index})"
                     }

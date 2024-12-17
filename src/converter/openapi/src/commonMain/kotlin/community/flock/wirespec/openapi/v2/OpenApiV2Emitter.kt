@@ -41,7 +41,7 @@ object OpenApiV2Emitter: Emitter(noLogger) {
 
     override fun emit(type: Type, ast: AST) = notYetImplemented()
 
-    override fun emit(enum: Enum) = notYetImplemented()
+    override fun emit(enum: Enum, ast: AST) = notYetImplemented()
 
     override fun emit(refined: Refined) = notYetImplemented()
 

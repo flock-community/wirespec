@@ -14,7 +14,6 @@ import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
 import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
 import community.flock.wirespec.compiler.core.emit.shared.Shared
 import community.flock.wirespec.compiler.core.parse
-import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.validate.validate
 import community.flock.wirespec.compiler.utils.Logger

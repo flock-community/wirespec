@@ -395,7 +395,7 @@ object OpenApiV2Parser {
         schema.enum != null -> Reference.Custom(name, false, schema.additionalProperties != null)
         else -> when (val type = schema.type) {
             OpenapiType.STRING, OpenapiType.INTEGER, OpenapiType.NUMBER, OpenapiType.BOOLEAN ->
-                Reference.Primitive(type.toPrimitive(schema.format), null, false, schema.additionalProperties != null)
+                Reference.Primitive(type.toPrimitive(schema.format), false, schema.additionalProperties != null)
 
             null, OpenapiType.OBJECT ->
                 when {
@@ -518,7 +518,7 @@ object OpenApiV2Parser {
                     ?.let {
                         Endpoint.Segment.Param(
                             FieldIdentifier(param),
-                            Reference.Primitive(it, null, false)
+                            Reference.Primitive(it, false)
                         )
                     }
                     ?: error(" Declared path parameter $param needs to be defined as a path parameter in path or operation level")

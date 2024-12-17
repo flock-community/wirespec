@@ -19,11 +19,11 @@ import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.types.StatusCode
 import community.flock.wirespec.compiler.core.tokenize.types.WirespecType
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
-import community.flock.wirespec.compiler.core.tokenize.types.WsBytes
 import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
 import community.flock.wirespec.compiler.core.tokenize.types.WsNumber
 import community.flock.wirespec.compiler.core.tokenize.types.WsString
 import community.flock.wirespec.compiler.core.tokenize.types.WsUnit
+import community.flock.wirespec.compiler.core.tokenize.types.WsBytes
 import community.flock.wirespec.compiler.utils.Logger
 
 class EndpointParser(logger: Logger) : AbstractParser(logger) {

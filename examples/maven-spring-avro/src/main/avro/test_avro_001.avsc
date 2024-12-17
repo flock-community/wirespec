@@ -19,6 +19,11 @@
             "doc": "Unique identifier of the order"
           },
           {
+            "name": "qr_code",
+            "type": "bytes",
+            "doc": "QR code"
+          },
+          {
             "name": "created_at",
             "type": [
               "null",
@@ -76,12 +81,8 @@
                   },
                   {
                     "name": "amount",
-                    "type": {
-                      "type": "bytes",
-                      "logicalType": "decimal",
-                      "precision": 12,
-                      "scale": 2
-                    }
+                    "type":  "float",
+                    "doc": "Amount"
                   }
                 ]
               }
