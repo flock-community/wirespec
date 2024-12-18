@@ -2,10 +2,13 @@ package community.flock.wirespec.example.maven.custom.app.user;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.Random;
 import java.util.function.Consumer;
 
-import static community.flock.wirespec.example.maven.custom.app.user.UserContext.Service.*;
+import static community.flock.wirespec.example.maven.custom.app.user.UserContext.Service.deleteUserByName;
+import static community.flock.wirespec.example.maven.custom.app.user.UserContext.Service.getAllUsers;
+import static community.flock.wirespec.example.maven.custom.app.user.UserContext.Service.getUserByName;
+import static community.flock.wirespec.example.maven.custom.app.user.UserContext.Service.saveUser;
+import static community.flock.wirespec.example.maven.custom.app.user.UserContext.Service.uploadImageByName;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class UserTest {

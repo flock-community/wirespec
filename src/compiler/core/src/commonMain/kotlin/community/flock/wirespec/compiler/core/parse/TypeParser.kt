@@ -4,7 +4,27 @@ import arrow.core.Either
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
-import community.flock.wirespec.compiler.core.tokenize.types.*
+import community.flock.wirespec.compiler.core.tokenize.types.Brackets
+import community.flock.wirespec.compiler.core.tokenize.types.Colon
+import community.flock.wirespec.compiler.core.tokenize.types.Comma
+import community.flock.wirespec.compiler.core.tokenize.types.CustomType
+import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
+import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
+import community.flock.wirespec.compiler.core.tokenize.types.Equals
+import community.flock.wirespec.compiler.core.tokenize.types.ForwardSlash
+import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
+import community.flock.wirespec.compiler.core.tokenize.types.Pipe
+import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
+import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
+import community.flock.wirespec.compiler.core.tokenize.types.TypeDefinitionStart
+import community.flock.wirespec.compiler.core.tokenize.types.WirespecDefinition
+import community.flock.wirespec.compiler.core.tokenize.types.WirespecType
+import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
+import community.flock.wirespec.compiler.core.tokenize.types.WsBytes
+import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
+import community.flock.wirespec.compiler.core.tokenize.types.WsNumber
+import community.flock.wirespec.compiler.core.tokenize.types.WsString
+import community.flock.wirespec.compiler.core.tokenize.types.WsUnit
 import community.flock.wirespec.compiler.utils.Logger
 
 class TypeParser(logger: Logger) : AbstractParser(logger) {
@@ -71,19 +91,23 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
             )
 
             is WsInteger -> Reference.Primitive(
-                type = Reference.Primitive.Type.Integer(when(value) {
-                    "Integer32" -> Reference.Primitive.Type.Precision.P32
-                    else -> Reference.Primitive.Type.Precision.P64
-                }),
+                type = Reference.Primitive.Type.Integer(
+                    when (value) {
+                        "Integer32" -> Reference.Primitive.Type.Precision.P32
+                        else -> Reference.Primitive.Type.Precision.P64
+                    }
+                ),
                 isIterable = isIterable,
                 isDictionary = isDict
             )
 
             is WsNumber -> Reference.Primitive(
-                type = Reference.Primitive.Type.Number(when(value) {
-                    "Number32" -> Reference.Primitive.Type.Precision.P32
-                    else -> Reference.Primitive.Type.Precision.P64
-                }),
+                type = Reference.Primitive.Type.Number(
+                    when (value) {
+                        "Number32" -> Reference.Primitive.Type.Precision.P32
+                        else -> Reference.Primitive.Type.Precision.P64
+                    }
+                ),
                 isIterable = isIterable,
                 isDictionary = isDict
             )

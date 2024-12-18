@@ -1,6 +1,12 @@
 package community.flock.wirespec.ide.intellij
 
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.*
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.BRACKETS
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.COMMA
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.DOC_COMMENT_MARKUP
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.IDENTIFIER
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.KEYWORD
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.PARAMETER
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.SEMICOLON
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.openapi.project.Project

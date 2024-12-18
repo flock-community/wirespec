@@ -1,8 +1,17 @@
 package community.flock.wirespec.example.maven.custom.app.user;
 
-import community.flock.wirespec.generated.java.*;
+import community.flock.wirespec.generated.java.DeleteUserByNameEndpoint;
+import community.flock.wirespec.generated.java.GetUserByNameEndpoint;
+import community.flock.wirespec.generated.java.GetUsersEndpoint;
+import community.flock.wirespec.generated.java.PostUserEndpoint;
+import community.flock.wirespec.generated.java.UploadImageEndpoint;
+import community.flock.wirespec.generated.java.UserDto;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;

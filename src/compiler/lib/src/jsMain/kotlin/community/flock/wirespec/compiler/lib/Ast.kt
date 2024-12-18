@@ -150,6 +150,7 @@ private fun WsPrimitiveType.consume() =
         WsPrimitiveType.Integer -> Reference.Primitive.Type.Integer()
         WsPrimitiveType.Number -> Reference.Primitive.Type.Number()
         WsPrimitiveType.Boolean -> Reference.Primitive.Type.Boolean
+        WsPrimitiveType.Bytes -> Reference.Primitive.Type.Bytes
     }
 
 
@@ -233,7 +234,7 @@ private fun Reference.Primitive.Type.produce() = when (this) {
     is Reference.Primitive.Type.Integer -> WsPrimitiveType.Integer
     is Reference.Primitive.Type.Number -> WsPrimitiveType.Number
     is Reference.Primitive.Type.Boolean -> WsPrimitiveType.Boolean
-    is Reference.Primitive.Type.Bytes -> WsPrimitiveType.String
+    is Reference.Primitive.Type.Bytes -> WsPrimitiveType.Bytes
 }
 
 private fun Endpoint.Method.produce() = when (this) {
@@ -376,7 +377,7 @@ data class WsPrimitive(
 ) : WsReference
 
 @JsExport
-enum class WsPrimitiveType { String, Integer, Number, Boolean }
+enum class WsPrimitiveType { String, Integer, Number, Boolean, Bytes }
 
 @JsExport
 data class WsRequest(val content: WsContent?)

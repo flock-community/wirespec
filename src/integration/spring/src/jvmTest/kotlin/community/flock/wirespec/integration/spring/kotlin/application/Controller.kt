@@ -1,6 +1,10 @@
 package community.flock.wirespec.integration.spring.kotlin.application
 
-import community.flock.wirespec.integration.spring.kotlin.generated.*
+import community.flock.wirespec.integration.spring.kotlin.generated.AddPetEndpoint
+import community.flock.wirespec.integration.spring.kotlin.generated.DeletePetEndpoint
+import community.flock.wirespec.integration.spring.kotlin.generated.FindPetsByTagsEndpoint
+import community.flock.wirespec.integration.spring.kotlin.generated.GetPetByIdEndpoint
+import community.flock.wirespec.integration.spring.kotlin.generated.UpdatePetEndpoint
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
