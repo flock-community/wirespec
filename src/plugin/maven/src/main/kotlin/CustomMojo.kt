@@ -1,14 +1,21 @@
 package community.flock.wirespec.plugin.maven
 
+import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.shared.JavaShared
 import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
 import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
 import community.flock.wirespec.compiler.core.emit.shared.TypeScriptShared
+import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.validate.validate
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.converter.avro.AvroParser
+import community.flock.wirespec.openapi.v2.OpenApiV2Parser
+import community.flock.wirespec.openapi.v3.OpenApiV3Parser
+import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.PackageName
-import community.flock.wirespec.plugin.compile
+import community.flock.wirespec.plugin.parse
 import community.flock.wirespec.plugin.toDirectory
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
@@ -35,6 +42,12 @@ class CustomMojo : BaseMojo() {
 
     @Parameter
     private var shared: Language? = null
+
+    @Parameter
+    private var format: Format? = null
+
+    @Parameter
+    private var strict: Boolean = true
 
     override fun execute() {
         project.addCompileSourceRoot(output)
@@ -73,7 +86,21 @@ class CustomMojo : BaseMojo() {
                 resolve("Wirespec.$ext").writeText(it.source)
             }
         }
-        getFilesContent().compile(logger, emitter)
+
+        val file = File(input)
+        val ast: List<Pair<String, AST>> =
+            when (format) {
+                Format.OpenApiV2 -> listOf(file.name to OpenApiV2Parser.parse(file.readText(), !strict).validate())
+                Format.OpenApiV3 -> listOf(file.name to OpenApiV3Parser.parse(file.readText(), !strict).validate())
+                Format.Avro -> listOf(file.name to AvroParser.parse(file.readText(), !strict).validate())
+                null -> getFilesContent().parse(logger)
+            }
+
+        ast.map { (name, ast) -> name to ast.validate().let { emitter.emit(it) } }
+            .flatMap { (name, results) ->
+                if (emitter.split) results
+                else listOf(Emitted(name, results.first().result))
+            }
             .also { File(output).resolve(emitterPkg.toDirectory()).mkdirs() }
             .forEach { (name, result) ->
                 File(output).resolve(emitterPkg.toDirectory()).resolve("$name.$extension").writeText(result)

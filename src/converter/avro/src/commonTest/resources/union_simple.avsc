@@ -1,0 +1,16 @@
+{
+  "namespace": "com.example",
+  "type": "record",
+  "name": "MyData",
+  "fields": [
+    {
+      "name": "myField",
+      "type": [
+        "null",
+        "int",
+        "string",
+        "boolean"
+      ]
+    }
+  ]
+}

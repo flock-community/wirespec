@@ -1,0 +1,33 @@
+{
+  "namespace": "com.example",
+  "type": "record",
+  "name": "Wrapper",
+  "fields": [
+    {
+      "name": "complexField",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "RecordA",
+          "fields": [
+            {
+              "name": "name",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "type": "record",
+          "name": "RecordB",
+          "fields": [
+            {
+              "name": "description",
+              "type": "string"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
