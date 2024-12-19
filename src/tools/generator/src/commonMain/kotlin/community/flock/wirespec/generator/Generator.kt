@@ -37,10 +37,10 @@ private fun AST.generateIterator(def: Definition, random: Random): JsonElement =
 
 private fun AST.generateReference(ref: Reference, random: Random) = when (ref) {
     is Reference.Primitive -> when (ref.type) {
-        is Reference.Primitive.Type.String -> RgxGen.parse("\\w{1,50}").generate(random).let(::JsonPrimitive)
         is Reference.Primitive.Type.Integer -> random.nextInt().let(::JsonPrimitive)
         is Reference.Primitive.Type.Number -> random.nextDouble().let(::JsonPrimitive)
         is Reference.Primitive.Type.Boolean -> random.nextBoolean().let(::JsonPrimitive)
+        else -> RgxGen.parse("\\w{1,50}").generate(random).let(::JsonPrimitive)
     }
 
     is Reference.Custom -> resolveReference(ref)

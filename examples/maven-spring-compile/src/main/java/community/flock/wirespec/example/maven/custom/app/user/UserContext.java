@@ -22,5 +22,10 @@ public interface UserContext extends UserAdapter.Module {
         public static User deleteUserByName(final UserContext ctx, final String name) {
             return ctx.userAdapter().deleteUserByName(name);
         }
+
+        public static void uploadImageByName(final UserContext ctx, final String name, final byte[] bytes) {
+            ctx.userAdapter().uploadImage(name, bytes);
+
+        }
     }
 }

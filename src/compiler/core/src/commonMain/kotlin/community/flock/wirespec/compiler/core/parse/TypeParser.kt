@@ -20,6 +20,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.TypeDefinitionStart
 import community.flock.wirespec.compiler.core.tokenize.types.WirespecDefinition
 import community.flock.wirespec.compiler.core.tokenize.types.WirespecType
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
+import community.flock.wirespec.compiler.core.tokenize.types.WsBytes
 import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
 import community.flock.wirespec.compiler.core.tokenize.types.WsNumber
 import community.flock.wirespec.compiler.core.tokenize.types.WsString
@@ -83,20 +84,30 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
                 isDictionary = isDict
             )
 
+            is WsBytes -> Reference.Primitive(
+                type = Reference.Primitive.Type.Bytes,
+                isIterable = isIterable,
+                isDictionary = isDict
+            )
+
             is WsInteger -> Reference.Primitive(
-                type = Reference.Primitive.Type.Integer(when(value) {
-                    "Integer32" -> Reference.Primitive.Type.Precision.P32
-                    else -> Reference.Primitive.Type.Precision.P64
-                }),
+                type = Reference.Primitive.Type.Integer(
+                    when (value) {
+                        "Integer32" -> Reference.Primitive.Type.Precision.P32
+                        else -> Reference.Primitive.Type.Precision.P64
+                    }
+                ),
                 isIterable = isIterable,
                 isDictionary = isDict
             )
 
             is WsNumber -> Reference.Primitive(
-                type = Reference.Primitive.Type.Number(when(value) {
-                    "Number32" -> Reference.Primitive.Type.Precision.P32
-                    else -> Reference.Primitive.Type.Precision.P64
-                }),
+                type = Reference.Primitive.Type.Number(
+                    when (value) {
+                        "Number32" -> Reference.Primitive.Type.Precision.P32
+                        else -> Reference.Primitive.Type.Precision.P64
+                    }
+                ),
                 isIterable = isIterable,
                 isDictionary = isDict
             )

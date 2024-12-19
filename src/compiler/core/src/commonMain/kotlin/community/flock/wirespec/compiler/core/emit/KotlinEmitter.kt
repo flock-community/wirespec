@@ -89,6 +89,7 @@ open class KotlinEmitter(
                 Reference.Primitive.Type.Precision.P64 -> "Double"
             }
             is Reference.Primitive.Type.Boolean -> "Boolean"
+            is Reference.Primitive.Type.Bytes -> "ByteArray"
         }
     }
         .let { if (isIterable) "List<$it>" else it }

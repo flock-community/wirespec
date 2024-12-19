@@ -69,6 +69,7 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
             is Reference.Primitive.Type.Integer -> "number"
             is Reference.Primitive.Type.Number -> "number"
             is Reference.Primitive.Type.Boolean -> "boolean"
+            is Reference.Primitive.Type.Bytes -> "ArrayBuffer"
         }
     }
         .let { if (isIterable) "$it[]" else it }

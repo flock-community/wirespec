@@ -195,6 +195,7 @@ object OpenApiV2Emitter: Emitter(noLogger) {
         is Reference.Primitive.Type.Integer -> OpenApiType.INTEGER
         is Reference.Primitive.Type.Number -> OpenApiType.NUMBER
         is Reference.Primitive.Type.Boolean -> OpenApiType.BOOLEAN
+        is Reference.Primitive.Type.Bytes -> OpenApiType.STRING
     }
 
     private fun Reference.emitType() =
@@ -217,6 +218,8 @@ object OpenApiV2Emitter: Emitter(noLogger) {
                     Reference.Primitive.Type.Precision.P32 -> "int32"
                     Reference.Primitive.Type.Precision.P64 -> "int64"
                 }
+
+                is Reference.Primitive.Type.Bytes -> "binary"
 
                 else -> null
             }

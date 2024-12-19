@@ -22,3 +22,8 @@ endpoint DeleteUserByName DELETE /api/users/{name: String} -> {
     200 -> UserDto
     404 -> Unit
 }
+
+endpoint UploadImage POST Bytes /api/users/{name: String}/image -> {
+    201 -> Unit
+    404 -> Unit
+}

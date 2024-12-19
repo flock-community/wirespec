@@ -8,6 +8,7 @@ import static community.flock.wirespec.example.maven.custom.app.user.UserContext
 import static community.flock.wirespec.example.maven.custom.app.user.UserContext.Service.getAllUsers;
 import static community.flock.wirespec.example.maven.custom.app.user.UserContext.Service.getUserByName;
 import static community.flock.wirespec.example.maven.custom.app.user.UserContext.Service.saveUser;
+import static community.flock.wirespec.example.maven.custom.app.user.UserContext.Service.uploadImageByName;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class UserTest {
@@ -44,6 +45,15 @@ class UserTest {
             saveUser(it, new User("newName"));
             var user = deleteUserByName(it, "newName");
             assertEquals("newName", user.name());
+        });
+    }
+
+    @Test
+    void testUploadImage() {
+        testContext(it -> {
+            byte[] bytes = "Hello World".getBytes();
+            uploadImageByName(it, "newName", bytes);
+            assertEquals(bytes, TestUserClient.images.get("newName"));
         });
     }
 

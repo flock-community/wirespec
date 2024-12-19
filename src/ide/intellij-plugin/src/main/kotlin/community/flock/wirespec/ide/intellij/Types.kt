@@ -27,6 +27,7 @@ interface Types {
         val INTEGER = ElementType("INTEGER")
         val NUMBER = ElementType("NUMBER")
         val BOOLEAN = ElementType("BOOLEAN")
+        val BYTES = ElementType("BYTES")
         val CUSTOM_TYPE = ElementType("CUSTOM_TYPE")
         val UNIT = ElementType("UNIT")
         val METHOD = ElementType("METHOD")

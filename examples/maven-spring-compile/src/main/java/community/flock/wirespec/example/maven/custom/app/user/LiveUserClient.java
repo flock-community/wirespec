@@ -6,6 +6,7 @@ import community.flock.wirespec.generated.java.DeleteUserByNameEndpoint;
 import community.flock.wirespec.generated.java.GetUserByNameEndpoint;
 import community.flock.wirespec.generated.java.GetUsersEndpoint;
 import community.flock.wirespec.generated.java.PostUserEndpoint;
+import community.flock.wirespec.generated.java.UploadImageEndpoint;
 import community.flock.wirespec.java.Wirespec;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +20,7 @@ public class LiveUserClient implements UserClient {
     private final Wirespec.ClientEdge<GetUserByNameEndpoint.Request, GetUserByNameEndpoint.Response<?>> getUserByName;
     private final Wirespec.ClientEdge<PostUserEndpoint.Request, PostUserEndpoint.Response<?>> postUser;
     private final Wirespec.ClientEdge<DeleteUserByNameEndpoint.Request, DeleteUserByNameEndpoint.Response<?>> deleteUserByName;
+    private final Wirespec.ClientEdge<UploadImageEndpoint.Request, UploadImageEndpoint.Response<?>> uploadImage;
 
     public LiveUserClient(final WirespecTransporter transporter,final  WirespecSerializer serializer) {
         this.transporter = transporter;
@@ -26,6 +28,7 @@ public class LiveUserClient implements UserClient {
         this.getUserByName = new GetUserByNameEndpoint.Handler.Handlers().getClient(serializer);
         this.postUser = new PostUserEndpoint.Handler.Handlers().getClient(serializer);
         this.deleteUserByName = new DeleteUserByNameEndpoint.Handler.Handlers().getClient(serializer);
+        this.uploadImage = new UploadImageEndpoint.Handler.Handlers().getClient(serializer);
     }
 
     @Override
@@ -50,5 +53,11 @@ public class LiveUserClient implements UserClient {
     public CompletableFuture<DeleteUserByNameEndpoint.Response<?>> deleteUserByName(final DeleteUserByNameEndpoint.Request request) {
         return transporter.transport(deleteUserByName.to(request))
                 .thenApplyAsync(deleteUserByName::from);
+    }
+
+    @Override
+    public CompletableFuture<UploadImageEndpoint.Response<?>> uploadImage(UploadImageEndpoint.Request request) {
+        return transporter.transport(uploadImage.to(request))
+                .thenApplyAsync(uploadImage::from);
     }
 }

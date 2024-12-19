@@ -1,10 +1,14 @@
 package community.flock.wirespec.integration.spring.kotlin.it.client
 
 import community.flock.wirespec.integration.spring.kotlin.configuration.EnableWirespecWebClient
-import community.flock.wirespec.integration.spring.kotlin.generated.*
+import community.flock.wirespec.integration.spring.kotlin.generated.AddPetEndpoint
+import community.flock.wirespec.integration.spring.kotlin.generated.DeletePetEndpoint
+import community.flock.wirespec.integration.spring.kotlin.generated.FindPetsByTagsEndpoint
+import community.flock.wirespec.integration.spring.kotlin.generated.GetPetByIdEndpoint
+import community.flock.wirespec.integration.spring.kotlin.generated.Pet
+import community.flock.wirespec.integration.spring.kotlin.generated.UpdatePetEndpoint
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
-
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import kotlin.test.assertEquals

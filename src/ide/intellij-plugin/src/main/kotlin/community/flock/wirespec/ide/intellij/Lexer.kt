@@ -23,6 +23,7 @@ import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.types.StatusCode
 import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpace
 import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
+import community.flock.wirespec.compiler.core.tokenize.types.WsBytes
 import community.flock.wirespec.compiler.core.tokenize.types.WsChannelDef
 import community.flock.wirespec.compiler.core.tokenize.types.WsComment
 import community.flock.wirespec.compiler.core.tokenize.types.WsEndpointDef
@@ -75,6 +76,7 @@ class Lexer : IntellijLexer() {
         is WsInteger -> Types.INTEGER
         is WsNumber -> Types.NUMBER
         is WsBoolean -> Types.BOOLEAN
+        is WsBytes -> Types.BYTES
         is CustomType -> Types.CUSTOM_TYPE
         is WsUnit -> Types.UNIT
         is Method -> Types.METHOD

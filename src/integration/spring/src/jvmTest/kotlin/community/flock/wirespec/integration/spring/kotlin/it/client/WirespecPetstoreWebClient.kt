@@ -1,7 +1,11 @@
 package community.flock.wirespec.integration.spring.kotlin.it.client
 
 import community.flock.wirespec.integration.spring.kotlin.client.WirespecWebClient
-import community.flock.wirespec.integration.spring.kotlin.generated.*
+import community.flock.wirespec.integration.spring.kotlin.generated.AddPetEndpoint
+import community.flock.wirespec.integration.spring.kotlin.generated.DeletePetEndpoint
+import community.flock.wirespec.integration.spring.kotlin.generated.FindPetsByTagsEndpoint
+import community.flock.wirespec.integration.spring.kotlin.generated.GetPetByIdEndpoint
+import community.flock.wirespec.integration.spring.kotlin.generated.UpdatePetEndpoint
 import org.springframework.stereotype.Component
 
 @Component

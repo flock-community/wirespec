@@ -7,6 +7,7 @@ import community.flock.wirespec.generated.java.DeleteUserByNameEndpoint;
 import community.flock.wirespec.generated.java.GetUserByNameEndpoint;
 import community.flock.wirespec.generated.java.GetUsersEndpoint;
 import community.flock.wirespec.generated.java.PostUserEndpoint;
+import community.flock.wirespec.generated.java.UploadImageEndpoint;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -56,6 +57,15 @@ public class LiveUserAdapter implements UserAdapter {
         return switch (res) {
             case DeleteUserByNameEndpoint.Response200 r -> converter.internalize(r.getBody());
             case DeleteUserByNameEndpoint.Response404 ignored -> throw new NotFound.User();
+        };
+    }
+
+    @Override
+    public void uploadImage(String name, byte[] bytes) {
+        var res = complete(client.uploadImage(new UploadImageEndpoint.Request(name, bytes)));
+        switch (res) {
+            case UploadImageEndpoint.Response201 ignored -> {}
+            case UploadImageEndpoint.Response404 ignored -> throw new NotFound.User();
         };
     }
 
