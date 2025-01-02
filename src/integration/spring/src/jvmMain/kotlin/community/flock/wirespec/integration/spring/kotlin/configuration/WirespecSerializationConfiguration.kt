@@ -30,17 +30,18 @@ open class WirespecSerializationConfiguration {
             }
 
         override fun <T> serializeQuery(name: String, value: T, kType: KType): Map<String, List<String>> {
-            return when {
+            val res =  when {
                 // TODO check wirespec enum, we need to use label value there
                 isIterableOfObjects(kType) && value is Iterable<*> ->
                     mapOf(name to value.map { wirespecObjectMapper.writeValueAsString(it) })
-                isComplexObject(kType) ->
-                    mapOf(name to listOf(wirespecObjectMapper.writeValueAsString(value)))
                 value is Iterable<*> ->
                     mapOf(name to value.map { it.toString() })
+                isComplexObject(kType) ->
+                    mapOf(name to listOf(wirespecObjectMapper.writeValueAsString(value)))
                 else ->
                     mapOf(name to listOf(value.toString()))
             }
+            return res
         }
 
         override fun <T> deserialize(raw: String, kType: KType): T =
@@ -52,19 +53,32 @@ open class WirespecSerializationConfiguration {
             }
 
         override fun <T> deserializeQuery(name: String, allQueryParams: Map<String, List<String>>, kType: KType): T {
-            TODO("Not yet implemented")
+            // TODO Check nullability
+
+            val deserialized = when {
+                kType.classifier == String::class -> allQueryParams[name] as T
+                allQueryParams[name] is Iterable<*> -> allQueryParams[name] as T
+                else -> error("Unsupported type ${kType.classifier}")
+            }
+
+            return deserialized
         }
     }
 
     private fun isIterableOfObjects(kType: KType): Boolean {
-        val isIterable = (kType.classifier as? KClass<*>)?.let {
-            Iterable::class.isSubclassOf(it)
-        } ?: false
+        val isIterable = isIterable(kType)
 
         return if (isIterable) {
             val elementType = kType.arguments.singleOrNull()?.type?.classifier as? KClass<*>
             elementType?.let { isComplexObject(it) } ?: false
         } else false
+    }
+
+    private fun isIterable(kType: KType): Boolean {
+        val isIterable = (kType.classifier as? KClass<*>)?.let {
+            Iterable::class.isSubclassOf(it)
+        } ?: false
+        return isIterable
     }
 
     private fun isComplexObject(kType: KType): Boolean {
