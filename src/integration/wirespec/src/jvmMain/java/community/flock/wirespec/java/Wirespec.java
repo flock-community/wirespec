@@ -37,7 +37,7 @@ public interface Wirespec {
     interface Serialization<RAW> extends Serializer<RAW>, Deserializer<RAW> {}
     interface Serializer<RAW> { <T> RAW serialize(T t, Type type); }
     interface Deserializer<RAW> { <T> T deserialize(RAW raw, Type type); }
-    record RawRequest(String method, List<String> path, Map<String, String> queries, Map<String, String> headers, String body) {}
+    record RawRequest(String method, List<String> path, Map<String, List<String>> queries, Map<String, String> headers, String body) {}
     record RawResponse(int statusCode, Map<String, String> headers, String body) {}
     static Type getType(final Class<?> type, final boolean isIterable) {
         if(isIterable) {
