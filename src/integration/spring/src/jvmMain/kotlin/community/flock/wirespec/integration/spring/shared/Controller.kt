@@ -19,6 +19,15 @@ fun HttpServletRequest.extractQueries() = queryString
     ?.split("&")
     ?.associate {
         val (key, value) = it.split("=")
-        key to value
+        // TODO here we need to do something with different strategies for arrays and objects
+        key to listOf(value)
     }
     .orEmpty()
+
+
+data class QueryParamSerializationConfig(val arrayFormat: ArrayFormat)
+
+sealed interface ArrayFormat {
+    data object Exploded : ArrayFormat
+    data class Delimited(val delimiter: String) : ArrayFormat
+}

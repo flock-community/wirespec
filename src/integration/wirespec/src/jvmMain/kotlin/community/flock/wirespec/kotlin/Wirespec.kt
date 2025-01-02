@@ -57,18 +57,27 @@ object Wirespec {
     }
 
     interface Serialization<RAW : Any> : Serializer<RAW>, Deserializer<RAW>
-    interface Serializer<RAW : Any> {
+
+    interface QueryParamSerializer {
+        fun <T> serializeQuery(name: String, value: T, kType: KType): Map<String, List<String>>
+    }
+
+    interface Serializer<RAW : Any> : QueryParamSerializer {
         fun <T> serialize(t: T, kType: KType): RAW
     }
 
-    interface Deserializer<RAW : Any> {
+    interface Deserializer<RAW : Any>: QueryParamDeserializer {
         fun <T> deserialize(raw: RAW, kType: KType): T
+    }
+
+    interface QueryParamDeserializer{
+        fun <T> deserializeQuery(name: String, allQueryParams: Map<String, List<String>>, kType: KType): T
     }
 
     data class RawRequest(
         val method: String,
         val path: List<String>,
-        val queries: Map<String, String>,
+        val queries: Map<String, List<String>>,
         val headers: Map<String, String>,
         val body: String?
     )

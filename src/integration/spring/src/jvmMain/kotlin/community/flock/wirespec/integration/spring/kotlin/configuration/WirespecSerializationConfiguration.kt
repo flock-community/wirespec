@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import community.flock.wirespec.integration.jackson.kotlin.WirespecModuleKotlin
 import community.flock.wirespec.integration.spring.kotlin.web.WirespecResponseBodyAdvice
 import community.flock.wirespec.kotlin.Wirespec
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
+import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.javaType
 
 @Configuration
@@ -21,26 +23,67 @@ open class WirespecSerializationConfiguration {
 
         private val wirespecObjectMapper = objectMapper.copy().registerModule(WirespecModuleKotlin())
 
-        private val stringListDelimiter = ","
-
         override fun <T> serialize(t: T, kType: KType): String =
             when {
                 t is String -> t
-                isStringIterable(kType) && t is Iterable<*> -> t.joinToString(stringListDelimiter)
                 else -> wirespecObjectMapper.writeValueAsString(t)
             }
+
+        override fun <T> serializeQuery(name: String, value: T, kType: KType): Map<String, List<String>> {
+            return when {
+                // TODO check wirespec enum, we need to use label value there
+                isIterableOfObjects(kType) && value is Iterable<*> ->
+                    mapOf(name to value.map { wirespecObjectMapper.writeValueAsString(it) })
+                isComplexObject(kType) ->
+                    mapOf(name to listOf(wirespecObjectMapper.writeValueAsString(value)))
+                value is Iterable<*> ->
+                    mapOf(name to value.map { it.toString() })
+                else ->
+                    mapOf(name to listOf(value.toString()))
+            }
+        }
 
         override fun <T> deserialize(raw: String, kType: KType): T =
             when {
                 kType.classifier == String::class -> raw as T
-                isStringIterable(kType) -> raw.split(stringListDelimiter) as T
                 else -> wirespecObjectMapper
                     .constructType(kType.javaType)
                     .let { wirespecObjectMapper.readValue(raw, it) }
             }
+
+        override fun <T> deserializeQuery(name: String, allQueryParams: Map<String, List<String>>, kType: KType): T {
+            TODO("Not yet implemented")
+        }
     }
 
-    fun isStringIterable(kType: KType) =
-        (kType.classifier as? KClass<*>)?.java?.let { Iterable::class.java.isAssignableFrom(it) } == true &&
-                kType.arguments.singleOrNull()?.type?.classifier == String::class
+    private fun isIterableOfObjects(kType: KType): Boolean {
+        val isIterable = (kType.classifier as? KClass<*>)?.let {
+            Iterable::class.isSubclassOf(it)
+        } ?: false
+
+        return if (isIterable) {
+            val elementType = kType.arguments.singleOrNull()?.type?.classifier as? KClass<*>
+            elementType?.let { isComplexObject(it) } ?: false
+        } else false
+    }
+
+    private fun isComplexObject(kType: KType): Boolean {
+        return (kType.classifier as? KClass<*>)?.let { isComplexObject(it) } ?: false
+    }
+
+    private fun isComplexObject(kClass: KClass<*>): Boolean {
+        return when {
+            kClass == String::class -> false
+            kClass == Int::class -> false
+            kClass == Long::class -> false
+            kClass == Float::class -> false
+            kClass == Double::class -> false
+            kClass == Boolean::class -> false
+            kClass == Char::class -> false
+
+//            kClass.isEnum -> false
+            else -> true
+        }
+    }
 }
+
