@@ -16,18 +16,14 @@ fun HttpServletRequest.extractPath() = (if (pathInfo != null) pathInfo else serv
     .filter { it.isNotEmpty() }
 
 fun HttpServletRequest.extractQueries() = queryString
-    ?.split("&")
-    ?.associate {
-        val (key, value) = it.split("=")
-        // TODO here we need to do something with different strategies for arrays and objects
-        key to listOf(value)
+    ?.let { query ->
+        query.split("&").flatMap { param ->
+            val (key, value) = param.split("=", limit = 2)
+            value.split(",").map { key to it }
+        }
+            .groupBy(
+                keySelector = { it.first },
+                valueTransform = { it.second }
+            )
     }
     .orEmpty()
-
-
-data class QueryParamSerializationConfig(val arrayFormat: ArrayFormat)
-
-sealed interface ArrayFormat {
-    data object Exploded : ArrayFormat
-    data class Delimited(val delimiter: String) : ArrayFormat
-}
