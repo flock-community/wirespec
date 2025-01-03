@@ -237,7 +237,7 @@ class CompileFullEndpointTest {
             |      return new Wirespec.RawRequest(
             |        request.method.name(),
             |        java.util.List.of("todos", serialization.serialize(request.path.id, Wirespec.getType(String.class, false))),
-            |        java.util.Map.ofEntries(java.util.Map.entry("done", (request.queries.done != null) ? serialization.serializeQuery(request.queries.done, Wirespec.getType(Boolean.class, false)) : java.util.Collections.emptyList())),
+            |        java.util.Map.ofEntries(java.util.Map.entry("done", serialization.serializeQuery(request.queries.done, Wirespec.getType(Boolean.class, false)))),
             |        java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serialize(request.headers.token, Wirespec.getType(Token.class, false)))),
             |        serialization.serialize(request.getBody(), Wirespec.getType(PotentialTodoDto.class, false))
             |      );
@@ -246,7 +246,7 @@ class CompileFullEndpointTest {
             |    static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
             |      return new Request(
             |        serialization.<String>deserialize(request.path().get(1), Wirespec.getType(String.class, false)),
-            |        java.util.Optional.ofNullable(request.queries().get("done")).map(it -> serialization.deserializeQuery(it, Wirespec.getType(Boolean.class, false))).get(),
+            |        java.util.Optional.ofNullable(request.queries().get("done")).map(it -> serialization.<Boolean>deserializeQuery(it, Wirespec.getType(Boolean.class, false))).get(),
             |        java.util.Optional.ofNullable(request.headers().get("token")).map(it -> serialization.<Token>deserialize(it, Wirespec.getType(Token.class, false))).get(),
             |        serialization.deserialize(request.body(), Wirespec.getType(PotentialTodoDto.class, false))
             |      );

@@ -261,7 +261,7 @@ open class JavaEmitter(
         |${Spacer(3)}return new Wirespec.RawRequest(
         |${Spacer(4)}request.method.name(),
         |${Spacer(4)}java.util.List.of(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
-        |${Spacer(4)}${if (endpoint.queries.isNotEmpty()) "java.util.Map.ofEntries(" + endpoint.queries.joinToString(", ") { it.emitSerializedQuery() } + ")" else "java.util.Collections.emptyMap()"},
+        |${Spacer(4)}${if (endpoint.queries.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.queries.joinToString { it.emitSerializedQuery() }})" else "java.util.Collections.emptyMap()"},
         |${Spacer(4)}${if (endpoint.headers.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.headers.joinToString { it.emitSerialized("headers") }})" else "java.util.Collections.emptyMap()"},
         |${Spacer(4)}serialization.serialize(request.getBody(), Wirespec.getType(${content.emit()}.class, ${content?.reference?.isIterable ?: false}))
         |${Spacer(3)});
@@ -327,7 +327,7 @@ open class JavaEmitter(
         """java.util.Map.entry("${identifier.value}", serialization.serialize(request.$fields.${emit(identifier)}, Wirespec.getType(${reference.emitType()}.class, ${reference.isIterable})))"""
 
     private fun Field.emitSerializedQuery() =
-        """java.util.Map.entry("${emit(identifier)}", (request.queries.${emit(identifier)}${if(!isNullable) " != null" else ""}) ? serialization.serializeQuery(request.queries.${emit(identifier)}, Wirespec.getType(${reference.emitType()}.class, ${reference.isIterable})) : java.util.Collections.emptyList())"""
+        """java.util.Map.entry("${identifier.value}", serialization.serializeQuery(request.queries.${emit(identifier)}, Wirespec.getType(${reference.emitType()}.class, ${reference.isIterable})))"""
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
         """${Spacer(4)}serialization.<${value.reference.emit()}>deserialize(request.path().get(${index}), Wirespec.getType(${value.reference.emitType()}.class, ${value.reference.isIterable}))"""
@@ -336,7 +336,7 @@ open class JavaEmitter(
         """${Spacer(4)}java.util.Optional.ofNullable(request.$fields().get("${identifier.value}")).map(it -> serialization.<${reference.emit()}>deserialize(it, Wirespec.getType(${reference.emitType()}.class, ${reference.isIterable})))${if(!isNullable) ".get()" else ""}"""
 
     private fun Field.emitDeserializedQuery() =
-        """${Spacer(4)}java.util.Optional.ofNullable(request.queries().get("${identifier.value}")).map(it -> serialization.deserializeQuery(it, Wirespec.getType(${reference.emitType()}.class, ${reference.isIterable})))${if(!isNullable) ".get()" else ""}"""
+        """${Spacer(4)}java.util.Optional.ofNullable(request.queries().get("${identifier.value}")).map(it -> serialization.<${reference.emit()}>deserializeQuery(it, Wirespec.getType(${reference.emitType()}.class, ${reference.isIterable})))${if(!isNullable) ".get()" else ""}"""
 
     private fun Field.emitSerializedHeader() =
         """java.util.Map.entry("${identifier.value}", serialization.serialize(r.getHeaders().${emit(identifier)}(), Wirespec.getType(${reference.emitType()}.class, ${reference.isIterable})))"""
