@@ -249,7 +249,7 @@ object FindPetsByStatusEndpoint : Wirespec.Endpoint {
 
   fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
     Request(
-      status = request.queries["status"]?.let{ serialization.deserializeQuery("status", request.queries, typeOf<FindPetsByStatusParameterStatus>()) }
+      status = serialization.deserializeQuery("status", true, request.queries, typeOf<FindPetsByStatusParameterStatus>())
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
@@ -346,7 +346,7 @@ object FindPetsByTagsEndpoint : Wirespec.Endpoint {
 
   fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
     Request(
-      tags = request.queries["tags"]?.let{ serialization.deserializeQuery("tags", request.queries, typeOf<List<String>>()) }
+      tags = serialization.deserializeQuery("tags", true, request.queries, typeOf<List<String>>())
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
@@ -559,7 +559,7 @@ object UpdatePetWithFormEndpoint : Wirespec.Endpoint {
   fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
     Request(
       petId = serialization.deserialize(request.path[1], typeOf<Long>()),
-      name = request.queries["name"]?.let{ serialization.deserializeQuery("name", request.queries, typeOf<String>()) },       status = request.queries["status"]?.let{ serialization.deserializeQuery("status", request.queries, typeOf<String>()) }
+      name = serialization.deserializeQuery("name", true, request.queries, typeOf<String>()),       status = serialization.deserializeQuery("status", true, request.queries, typeOf<String>())
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
@@ -729,7 +729,7 @@ object UploadFileEndpoint : Wirespec.Endpoint {
   fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
     Request(
       petId = serialization.deserialize(request.path[1], typeOf<Long>()),
-      additionalMetadata = request.queries["additionalMetadata"]?.let{ serialization.deserializeQuery("additionalMetadata", request.queries, typeOf<String>()) },
+      additionalMetadata = serialization.deserializeQuery("additionalMetadata", true, request.queries, typeOf<String>()),
       body = serialization.deserialize(requireNotNull(request.body) { "body is null" }, typeOf<String>()),
     )
 
@@ -1354,7 +1354,7 @@ object LoginUserEndpoint : Wirespec.Endpoint {
 
   fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
     Request(
-      username = request.queries["username"]?.let{ serialization.deserializeQuery("username", request.queries, typeOf<String>()) },       password = request.queries["password"]?.let{ serialization.deserializeQuery("password", request.queries, typeOf<String>()) }
+      username = serialization.deserializeQuery("username", true, request.queries, typeOf<String>()),       password = serialization.deserializeQuery("password", true, request.queries, typeOf<String>())
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
