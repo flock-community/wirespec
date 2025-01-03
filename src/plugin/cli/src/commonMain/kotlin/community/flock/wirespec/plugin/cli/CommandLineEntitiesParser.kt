@@ -1,6 +1,9 @@
 package community.flock.wirespec.plugin.cli
 
+import arrow.core.Either
+import arrow.core.EitherNel
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.CliktError
 import com.github.ajalt.clikt.core.NoOpCliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
@@ -11,6 +14,8 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.enum
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.Emitted
+import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.utils.Logger.Level
 import community.flock.wirespec.compiler.utils.Logger.Level.DEBUG
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
@@ -27,6 +32,7 @@ import community.flock.wirespec.plugin.Language.Wirespec
 import community.flock.wirespec.plugin.Operation
 import community.flock.wirespec.plugin.Output
 import community.flock.wirespec.plugin.PackageName
+import community.flock.wirespec.plugin.cli.io.File
 
 enum class Options(vararg val flags: String) {
     InputDir("-d", "--input-dir"),
@@ -42,9 +48,10 @@ enum class Options(vararg val flags: String) {
 class WirespecCli : NoOpCliktCommand(name = "wirespec") {
     companion object {
         fun provide(
-            compile: (CompilerArguments) -> Unit,
-            convert: (CompilerArguments) -> Unit,
-        ): (Array<out String>) -> Unit = WirespecCli().subcommands(Compile(compile), Convert(convert))::main
+            compile: (CompilerArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File?>>>,
+            convert: (CompilerArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File?>>>,
+            write: List<Emitted>.(File?) -> Unit,
+        ): (Array<out String>) -> Unit = WirespecCli().subcommands(Compile(compile, write), Convert(convert, write))::main
     }
 }
 
@@ -58,7 +65,7 @@ private abstract class CommonOptions : CliktCommand() {
     val strict by option(*Options.Strict.flags, help = "Strict mode").flag()
 
     fun getInput(inputDir: String? = null): Input =
-        if (inputDir != null && inputFile != null) error("Choose either a file or a directory. Not Both.")
+        if (inputDir != null && inputFile != null) throw CliktError("Choose either a file or a directory. Not Both.")
         else inputFile
             ?.let(FullFilePath.Companion::parse)
             ?: inputDir?.let(::FullDirPath)
@@ -69,11 +76,14 @@ private abstract class CommonOptions : CliktCommand() {
         "INFO" -> INFO
         "WARN" -> WARN
         "ERROR" -> ERROR
-        else -> error("Choose one of these log levels: $Level")
+        else -> throw CliktError("Choose one of these log levels: $Level")
     }
 }
 
-private class Compile(private val block: (CompilerArguments) -> Unit) : CommonOptions() {
+private class Compile(
+    private val block: (CompilerArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File?>>>,
+    private val write: (List<Emitted>, File?) -> Unit,
+) : CommonOptions() {
 
     private val languages by option(*Options.Language.flags, help = "Language")
         .choice(Language.toMap())
@@ -89,11 +99,19 @@ private class Compile(private val block: (CompilerArguments) -> Unit) : CommonOp
             logLevel = logLevel.toLogLevel(),
             shared = shared,
             strict = strict,
-        ).let(block)
+        ).let(block).forEach {
+            when (it) {
+                is Either.Right -> it.value.let { (result, file) -> write(result, file) }
+                is Either.Left -> throw CliktError(it.value.joinToString { e -> e.message ?: "" })
+            }
+        }
     }
 }
 
-private class Convert(private val block: (CompilerArguments) -> Unit) : CommonOptions() {
+private class Convert(
+    private val block: (CompilerArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File?>>>,
+    private val write: (List<Emitted>, File?) -> Unit,
+) : CommonOptions() {
 
     private val format by argument(help = "Input format").enum<Format>()
     private val languages by option(*Options.Language.flags, help = "Language")
@@ -111,6 +129,11 @@ private class Convert(private val block: (CompilerArguments) -> Unit) : CommonOp
             logLevel = logLevel.toLogLevel(),
             shared = shared,
             strict = strict,
-        ).let(block)
+        ).let(block).forEach {
+            when (it) {
+                is Either.Right -> it.value.let { (result, file) -> write(result, file) }
+                is Either.Left -> echo(it.value, err = true)
+            }
+        }
     }
 }
