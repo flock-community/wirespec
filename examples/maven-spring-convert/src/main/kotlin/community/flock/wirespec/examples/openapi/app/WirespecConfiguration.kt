@@ -16,15 +16,14 @@ class Serialization(private val objectMapper: ObjectMapper) : Wirespec.Serializa
 
     override fun <T> serialize(t: T, kType: KType): String = objectMapper.writeValueAsString(t)
 
-    override fun <T> serializeQuery(name: String, value: T, kType: KType): Map<String, List<String>> =
-        mapOf(name to listOf(objectMapper.writeValueAsString(value)))
+    override fun <T> serializeQuery(value: T, kType: KType): List<String> =
+        listOf(objectMapper.writeValueAsString(value))
 
     override fun <T> deserialize(raw: String, kType: KType): T = objectMapper
         .constructType(kType.javaType)
         .let { objectMapper.readValue(raw, it) }
 
-    override fun <T> deserializeQuery(name: String, allQueryParams: Map<String, List<String>>, kType: KType): T {
-        val firstParam = allQueryParams[name]?.firstOrNull()
-        return objectMapper.constructType(kType.javaType).let { objectMapper.readValue(firstParam, it) }
+    override fun <T> deserializeQuery(values: List<String>, kType: KType): T {
+        return objectMapper.constructType(kType.javaType).let { objectMapper.readValue(values.first(), it) }
     }
 }

@@ -45,21 +45,17 @@ object Serialization : Wirespec.Serialization<String> {
         else -> Json.decodeFromString(Json.serializersModule.serializer(kType), raw) as T
     }
 
-    // TODO handle different cases
     override fun <T> serializeQuery(
-        name: String,
         value: T,
         kType: KType,
-    ): Map<String, List<String>> =
-        mapOf(name to listOf(Json.encodeToString(Json.serializersModule.serializer(kType), value)))
+    ): List<String> =
+        listOf(Json.encodeToString(Json.serializersModule.serializer(kType), value))
 
-    // TODO handle different cases
     override fun <T> deserializeQuery(
-        name: String,
-        allQueryParams: Map<String, List<String>>,
+        values: List<String>,
         kType: KType,
     ): T = when(kType) {
-        String::class.createType() -> allQueryParams[name] as T
-        else -> Json.decodeFromString(Json.serializersModule.serializer(kType), allQueryParams[name]!!.first()) as T
+        String::class.createType() -> values.first() as T
+        else -> Json.decodeFromString(Json.serializersModule.serializer(kType), values.first()) as T
     }
 }

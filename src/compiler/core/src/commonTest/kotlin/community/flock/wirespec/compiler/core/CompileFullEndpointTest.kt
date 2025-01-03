@@ -72,7 +72,7 @@ class CompileFullEndpointTest {
             |    Wirespec.RawRequest(
             |      path = listOf("todos", request.path.id.let{serialization.serialize(it, typeOf<String>())}),
             |      method = request.method.name,
-            |      queries = listOf(request.queries.done?.let{"done" to serialization.serialize(it, typeOf<Boolean>())}).filterNotNull().toMap(),
+            |      queries = (mapOf("done" to (request.queries.done?.let{ serialization.serializeQuery(it, typeOf<Boolean>()) } ?: emptyList()))),
             |      headers = listOf(request.headers.token?.let{"token" to serialization.serialize(it, typeOf<Token>())}).filterNotNull().toMap(),
             |      body = serialization.serialize(request.body, typeOf<PotentialTodoDto>()),
             |    )
@@ -80,7 +80,7 @@ class CompileFullEndpointTest {
             |  fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
             |    Request(
             |      id = serialization.deserialize(request.path[1], typeOf<String>()),
-            |      done = serialization.deserialize(requireNotNull(request.queries["done"]) { "done is null" }, typeOf<Boolean>()),
+            |      done = serialization.deserializeQuery(requireNotNull(request.queries["done"]) { "done is null" }, typeOf<Boolean>()),
             |      token = serialization.deserialize(requireNotNull(request.headers["token"]) { "token is null" }, typeOf<Token>()),
             |      body = serialization.deserialize(requireNotNull(request.body) { "body is null" }, typeOf<PotentialTodoDto>()),
             |    )

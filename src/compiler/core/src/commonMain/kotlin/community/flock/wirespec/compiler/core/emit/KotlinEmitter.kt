@@ -264,7 +264,7 @@ open class KotlinEmitter(
         """request.$fields.${emit(identifier)}?.let{"${identifier.value}" to serialization.serialize(it, typeOf<${reference.emit()}>())}"""
 
     private fun Field.emitSerializedQuery() =
-        """request.queries.${emit(identifier)}?.let{ serialization.serializeQuery("${identifier.value}", it, typeOf<${reference.emit()}>()) } ?: emptyMap()"""
+        """mapOf("${emit(identifier)}" to (request.queries.${emit(identifier)}?.let{ serialization.serializeQuery(it, typeOf<${reference.emit()}>()) } ?: emptyList()))"""
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
         """${Spacer(3)}${emit(value.identifier)} = serialization.deserialize(request.path[${index}], typeOf<${value.reference.emit()}>())"""
@@ -276,7 +276,10 @@ open class KotlinEmitter(
             """${Spacer(3)}${emit(identifier)} = serialization.deserialize(requireNotNull(request.$fields["${identifier.value}"]) { "${emit(identifier)} is null" }, typeOf<${reference.emit()}>())"""
 
     private fun Field.emitDeserializedQuery() =
-        """${Spacer(3)}${emit(identifier)} = serialization.deserializeQuery("${identifier.value}", $isNullable, request.queries, typeOf<${reference.emit()}>())"""
+        if (isNullable)
+            """${Spacer(3)}${emit(identifier)} = request.queries["${identifier.value}"]?.let{ serialization.deserializeQuery(it, typeOf<${reference.emit()}>()) }"""
+        else
+            """${Spacer(3)}${emit(identifier)} = serialization.deserializeQuery(requireNotNull(request.queries["${identifier.value}"]) { "${emit(identifier)} is null" }, typeOf<${reference.emit()}>())"""
 
     private fun Endpoint.Segment.Param.emitIdentifier() =
         "request.path.${emit(identifier)}.let{serialization.serialize(it, typeOf<${reference.emit()}>())}"

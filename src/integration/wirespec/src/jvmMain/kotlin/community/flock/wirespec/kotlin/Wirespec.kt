@@ -59,7 +59,7 @@ object Wirespec {
     interface Serialization<RAW : Any> : Serializer<RAW>, Deserializer<RAW>
 
     interface QueryParamSerializer {
-        fun <T> serializeQuery(name: String, value: T, kType: KType): Map<String, List<String>>
+        fun <T> serializeQuery(value: T, kType: KType): List<String>
     }
 
     interface Serializer<RAW : Any> : QueryParamSerializer {
@@ -71,7 +71,7 @@ object Wirespec {
     }
 
     interface QueryParamDeserializer{
-        fun <T> deserializeQuery(name: String, isNullable: Boolean, allQueryParams: Map<String, List<String>>, kType: KType): T
+        fun <T> deserializeQuery(values: List<String>, kType: KType): T
     }
 
     data class RawRequest(
