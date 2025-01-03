@@ -35,8 +35,10 @@ public interface Wirespec {
     interface Request<T> { Path getPath(); Method getMethod(); Queries getQueries(); Headers getHeaders(); T getBody(); interface Headers extends Wirespec.Headers {} }
     interface Response<T> { int getStatus(); Headers getHeaders(); T getBody(); interface Headers extends Wirespec.Headers {} }
     interface Serialization<RAW> extends Serializer<RAW>, Deserializer<RAW> {}
-    interface Serializer<RAW> { <T> RAW serialize(T t, Type type); }
-    interface Deserializer<RAW> { <T> T deserialize(RAW raw, Type type); }
+    interface QueryParamSerializer { <T> List<String> serializeQuery(T value, Type type); }
+    interface Serializer<RAW> extends QueryParamSerializer { <T> RAW serialize(T t, Type type); }
+    interface QueryParamDeserializer { <T> T deserializeQuery(List<String> values, Type type); }
+    interface Deserializer<RAW> extends QueryParamDeserializer { <T> T deserialize(RAW raw, Type type); }
     record RawRequest(String method, List<String> path, Map<String, List<String>> queries, Map<String, String> headers, String body) {}
     record RawResponse(int statusCode, Map<String, String> headers, String body) {}
     static Type getType(final Class<?> type, final boolean isIterable) {
