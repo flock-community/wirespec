@@ -11,7 +11,7 @@ import jakarta.servlet.http.HttpServletRequest
  *
  * The path ends up in either the pathInfo or servletPath
  */
-fun HttpServletRequest.extractPath() = (if (pathInfo != null) pathInfo else servletPath)
+fun HttpServletRequest.extractPath() = (pathInfo ?: servletPath)
     .split("/")
     .filter { it.isNotEmpty() }
 

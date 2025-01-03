@@ -44,7 +44,7 @@ data object KotlinShared : Shared {
         |${Spacer}interface QueryParamSerializer { fun <T> serializeQuery(name: String, value: T, kType: KType): Map<String, List<String>> }
         |${Spacer}interface Serializer<RAW : Any> : QueryParamSerializer { fun <T> serialize(t: T, kType: KType): RAW }
         |${Spacer}interface Deserializer<RAW: Any> : QueryParamDeserializer { fun <T> deserialize(raw: RAW, kType: KType): T }
-        |${Spacer}interface QueryParamDeserializer { fun <T> deserializeQuery(name: String, allQueryParams: Map<String, List<String>>, kType: KType): T }
+        |${Spacer}interface QueryParamDeserializer { fun <T> deserializeQuery(name: String, isNullable: Boolean, allQueryParams: Map<String, List<String>>, kType: KType): T }
         |${Spacer}data class RawRequest(val method: String, val path: List<String>, val queries: Map<String, List<String>>, val headers: Map<String, String>, val body: String?) 
         |${Spacer}data class RawResponse(val statusCode: Int, val headers: Map<String, String>, val body: String?)
         |}

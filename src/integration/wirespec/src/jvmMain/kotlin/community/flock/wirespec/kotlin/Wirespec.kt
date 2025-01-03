@@ -71,7 +71,7 @@ object Wirespec {
     }
 
     interface QueryParamDeserializer{
-        fun <T> deserializeQuery(name: String, allQueryParams: Map<String, List<String>>, kType: KType): T
+        fun <T> deserializeQuery(name: String, isNullable: Boolean, allQueryParams: Map<String, List<String>>, kType: KType): T
     }
 
     data class RawRequest(
