@@ -43,7 +43,8 @@ data object JavaShared : Shared {
         |${Spacer}enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
         |${Spacer}interface Request<T> { Path getPath(); Method getMethod(); Queries getQueries(); Headers getHeaders(); T getBody(); interface Headers extends Wirespec.Headers {} }
         |${Spacer}interface Response<T> { int getStatus(); Headers getHeaders(); T getBody(); interface Headers extends Wirespec.Headers {} }
-        |${Spacer}interface Serialization<RAW> extends Serializer<RAW>, Deserializer<RAW> {}
+        |${Spacer}interface QueryParamSerialization extends QueryParamSerializer, QueryParamDeserializer {}
+        |${Spacer}interface Serialization<RAW> extends Serializer<RAW>, Deserializer<RAW>, QueryParamSerialization {}
         |${Spacer}interface QueryParamSerializer { <T> List<String> serializeQuery(T value, Type type); }
         |${Spacer}interface Serializer<RAW> extends QueryParamSerializer { <T> RAW serialize(T t, Type type); }
         |${Spacer}interface QueryParamDeserializer { <T> T deserializeQuery(List<String> values, Type type); }
