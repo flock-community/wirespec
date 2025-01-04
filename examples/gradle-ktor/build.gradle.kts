@@ -33,6 +33,7 @@ repositories {
 }
 
 dependencies {
+    implementation(libs.wirespec.integration)
     implementation(libs.bundles.ktor)
     implementation(libs.jackson)
     implementation(libs.logback)

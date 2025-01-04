@@ -56,7 +56,8 @@ object Wirespec {
         interface Headers : Wirespec.Headers
     }
 
-    interface Serialization<RAW : Any> : Serializer<RAW>, Deserializer<RAW>
+    interface Serialization<RAW : Any> : Serializer<RAW>, Deserializer<RAW>, QueryParamSerialization
+    interface QueryParamSerialization: QueryParamSerializer, QueryParamDeserializer
 
     interface QueryParamSerializer {
         fun <T> serializeQuery(value: T, kType: KType): List<String>

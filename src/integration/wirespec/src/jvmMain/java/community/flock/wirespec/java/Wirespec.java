@@ -34,7 +34,8 @@ public interface Wirespec {
     enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
     interface Request<T> { Path getPath(); Method getMethod(); Queries getQueries(); Headers getHeaders(); T getBody(); interface Headers extends Wirespec.Headers {} }
     interface Response<T> { int getStatus(); Headers getHeaders(); T getBody(); interface Headers extends Wirespec.Headers {} }
-    interface Serialization<RAW> extends Serializer<RAW>, Deserializer<RAW> {}
+    interface QueryParamSerialization extends QueryParamSerializer, QueryParamDeserializer {}
+    interface Serialization<RAW> extends Serializer<RAW>, Deserializer<RAW>, QueryParamSerialization {}
     interface QueryParamSerializer { <T> List<String> serializeQuery(T value, Type type); }
     interface Serializer<RAW> extends QueryParamSerializer { <T> RAW serialize(T t, Type type); }
     interface QueryParamDeserializer { <T> T deserializeQuery(List<String> values, Type type); }

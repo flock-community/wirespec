@@ -1,6 +1,7 @@
 package community.flock.wirespec.example.maven.custom.app.common
 
 import community.flock.wirespec.kotlin.Wirespec
+import community.flock.wirespec.kotlin.serde.DefaultQueryParamSerde
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.request
@@ -36,26 +37,12 @@ class WirespecClient(private val httpClient: HttpClient = HttpClient()) {
 }
 
 @Suppress("UNCHECKED_CAST")
-object Serialization : Wirespec.Serialization<String> {
+object Serialization : Wirespec.Serialization<String>, Wirespec.QueryParamSerialization by DefaultQueryParamSerde() {
     override fun <T> serialize(t: T, kType: KType): String =
         Json.encodeToString(Json.serializersModule.serializer(kType), t)
 
     override fun <T> deserialize(raw: String, kType: KType): T = when (kType) {
         String::class.createType() -> raw as T
         else -> Json.decodeFromString(Json.serializersModule.serializer(kType), raw) as T
-    }
-
-    override fun <T> serializeQuery(
-        value: T,
-        kType: KType,
-    ): List<String> =
-        listOf(Json.encodeToString(Json.serializersModule.serializer(kType), value))
-
-    override fun <T> deserializeQuery(
-        values: List<String>,
-        kType: KType,
-    ): T = when(kType) {
-        String::class.createType() -> values.first() as T
-        else -> Json.decodeFromString(Json.serializersModule.serializer(kType), values.first()) as T
     }
 }
