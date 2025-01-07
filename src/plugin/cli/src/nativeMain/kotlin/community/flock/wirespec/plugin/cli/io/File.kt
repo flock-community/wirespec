@@ -4,6 +4,7 @@ import community.flock.wirespec.compiler.core.exceptions.WirespecException.IOExc
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.IOException.FileWriteException
 import community.flock.wirespec.plugin.FullFilePath
 import community.flock.wirespec.plugin.Reader
+import community.flock.wirespec.plugin.Writer
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.allocArray
@@ -18,7 +19,7 @@ import platform.posix.mkdir
 import platform.posix.opendir
 
 @OptIn(ExperimentalForeignApi::class)
-actual abstract class File actual constructor(actual val path: FullFilePath) : Reader, Copy {
+actual abstract class File actual constructor(actual val path: FullFilePath) : Reader, Writer, Copy {
 
     actual override fun read() = StringBuilder().apply {
         fopen(path.toString(), "r")?.let { file ->
@@ -37,7 +38,7 @@ actual abstract class File actual constructor(actual val path: FullFilePath) : R
         } ?: throw FileReadException("Cannot open input file $path")
     }.toString()
 
-    actual fun write(text: String) {
+    actual override fun write(string: String) {
         val directory = path.directory
             .apply {
                 split("/").reduce { acc, cur -> "$acc/$cur".also { opendir(it) ?: makeDir(it) } }
@@ -46,7 +47,7 @@ actual abstract class File actual constructor(actual val path: FullFilePath) : R
         val nativePath = path.copy(directory = directory)
 
         fopen(nativePath.toString(), "w")?.runCatching {
-            let { memScoped { if (fputs(text, it) == EOF) throw FileWriteException("File write error") } }
+            let { memScoped { if (fputs(string, it) == EOF) throw FileWriteException("File write error") } }
             fclose(this)
         } ?: throw FileReadException("Cannot open output file $nativePath")
     }

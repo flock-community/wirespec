@@ -21,7 +21,7 @@ class WirespecCliTest {
         val input = "${inputDir}/wirespec"
         val output = outputDir()
 
-        WirespecCli.provide(::compile, ::convert)(arrayOf("compile", "-d", input, "-o", output, "-l", "Kotlin"))
+        WirespecCli.provide(::compile, ::convert, ::write)(arrayOf("compile", "-d", input, "-o", output, "-l", "Kotlin"))
 
         val file = KotlinFile(FullFilePath("$output/$packageDir", FileName("Type"))).read()
 
@@ -44,7 +44,7 @@ class WirespecCliTest {
         val input = "${inputDir}/wirespec"
         val output = outputDir()
 
-        WirespecCli.provide(::compile, ::convert)(
+        WirespecCli.provide(::compile, ::convert, ::write)(
             arrayOf(
                 "compile",
                 "-d", input,
@@ -76,7 +76,7 @@ class WirespecCliTest {
         val input = "${inputDir}/openapi/petstore.json"
         val output = outputDir()
 
-        WirespecCli.provide(::compile, ::convert)(
+        WirespecCli.provide(::compile, ::convert, ::write)(
             arrayOf(
                 "convert", "openapiv2",
                 "-f", input,
@@ -110,7 +110,7 @@ class WirespecCliTest {
         val input = "${inputDir}/openapi/keto.json"
         val output = outputDir()
 
-        WirespecCli.provide(::compile, ::convert)(
+        WirespecCli.provide(::compile, ::convert, ::write)(
             arrayOf(
                 "convert", "openapiv3",
                 "-f", input,
@@ -143,7 +143,7 @@ class WirespecCliTest {
         val input = "${inputDir}/openapi/petstore.json"
         val output = outputDir()
 
-        WirespecCli.provide(::compile, ::convert)(
+        WirespecCli.provide(::compile, ::convert, ::write)(
             arrayOf(
                 "convert", "openapiv2",
                 "-f", input,

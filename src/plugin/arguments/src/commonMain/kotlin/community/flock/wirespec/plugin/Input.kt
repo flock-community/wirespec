@@ -12,8 +12,7 @@ sealed interface Input
 
 data class FullDirPath(val path: String) : Input
 
-data class FullFilePath(val directory: String, val fileName: FileName, val extension: FileExtension = Wirespec) :
-    Input {
+data class FullFilePath(val directory: String, val fileName: FileName, val extension: FileExtension = Wirespec) : Input {
     companion object {
         fun parse(input: String): FullFilePath {
             val list = input.split("/").let { it.dropLast(1) + it.last().split(".") }

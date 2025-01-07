@@ -1,6 +1,10 @@
 package community.flock.wirespec.plugin.cli
 
 import arrow.core.Either
+import arrow.core.NonEmptyList
+import arrow.core.left
+import arrow.core.nel
+import arrow.core.right
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.component1
@@ -10,8 +14,9 @@ import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
-import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
+import community.flock.wirespec.compiler.core.exceptions.WirespecException
+import community.flock.wirespec.compiler.core.exceptions.WirespecException.IOException.FileReadException
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.openapi.v2.OpenApiV2Emitter
 import community.flock.wirespec.openapi.v3.OpenApiV3Emitter
@@ -50,12 +55,12 @@ fun main(args: Array<String>) {
     (0..20)
         .mapNotNull(args::orNull)
         .toTypedArray()
-        .let(WirespecCli.provide(::compile, ::convert))
+        .let(WirespecCli.provide(::compile, ::convert, ::write))
 }
 
-fun convert(arguments: CompilerArguments): Unit = compile(arguments)
+fun convert(arguments: CompilerArguments): List<Either<NonEmptyList<WirespecException>, Pair<List<Emitted>, File?>>> = compile(arguments)
 
-fun compile(arguments: CompilerArguments) {
+fun compile(arguments: CompilerArguments): List<Either<NonEmptyList<WirespecException>, Pair<List<Emitted>, File?>>> {
 
     val input = arguments.input
     val output = arguments.output
@@ -65,7 +70,7 @@ fun compile(arguments: CompilerArguments) {
 
     val logger = Logger(arguments.logLevel)
 
-    when (val operation = arguments.operation) {
+    return when (val operation = arguments.operation) {
         is Operation.Convert -> {
 
             val fullPath = input as FullFilePath
@@ -86,7 +91,7 @@ fun compile(arguments: CompilerArguments) {
                     )
                 ) to file
                 else results to file
-            }.map { (results, file) -> write(results, file) }
+            }.map { it.right() }
         }
 
         is Operation.Compile -> when (input) {
@@ -95,14 +100,18 @@ fun compile(arguments: CompilerArguments) {
 
             is FullDirPath -> Directory(input.path)
                 .wirespecFiles()
-                .forEach { it.wirespec(languages, packageName, it.path.out(packageName, output), logger) }
+                .flatMap { it.wirespec(languages, packageName, it.path.out(packageName, output), logger) }
 
             is FullFilePath ->
                 if (input.extension == FileExtension.Wirespec) WirespecFile(input)
                     .let { it.wirespec(languages, packageName, it.path.out(packageName, output), logger) }
-                else error("Path $input is not a Wirespec file")
+                else FileReadException("Path $input is not a Wirespec file").nel().left().nel()
         }
     }
+}
+
+fun write(output: List<Emitted>, file: File?) {
+    output.forEach { (name, result) -> file?.copy(FileName(name))?.write(result) ?: print(result) }
 }
 
 private fun Reader.wirespec(
@@ -110,47 +119,39 @@ private fun Reader.wirespec(
     packageName: PackageName,
     path: (FileExtension) -> FullFilePath,
     logger: Logger
-) {
-    read()
-        .let(WirespecSpec::compile)(logger)
-        .let { compiler ->
-            languages.emitters(packageName, path, logger).map { (emitter, file) ->
-                val results = compiler(emitter)
-                if (!emitter.split) results.map {
-                    listOf(
-                        Emitted(
-                            path(FileExtension.Wirespec).fileName.value.firstToUpper(),
-                            it.first().result
-                        )
+) = read()
+    .let(WirespecSpec::compile)(logger)
+    .let { compiler ->
+        languages.emitters(packageName, path, logger).map { (emitter, file) ->
+            val results = compiler(emitter)
+            if (!emitter.split) results.map {
+                listOf(
+                    Emitted(
+                        path(FileExtension.Wirespec).fileName.value.firstToUpper(),
+                        it.first().result
                     )
-                } to file
-                else results to file
-            }
-        }
-        .map { (results, file) ->
-            when (results) {
-                is Either.Right -> write(results.value, file)
-                is Either.Left -> println(results.value)
-            }
-        }
-}
-
-private fun Set<Language>.emitters(packageName: PackageName, path: ((FileExtension) -> FullFilePath)?, logger: Logger): List<Pair<Emitter, File?>> =
-    map {
-        val (packageString) = packageName
-        when (it) {
-            Java -> JavaEmitter(packageString, logger) to path?.let { JavaFile(it(FileExtension.Java)) }
-            Kotlin -> KotlinEmitter(packageString, logger) to path?.let { KotlinFile(it(FileExtension.Kotlin)) }
-            Scala -> ScalaEmitter(packageString, logger) to path?.let { ScalaFile(it(FileExtension.Scala)) }
-            TypeScript -> TypeScriptEmitter(logger) to path?.let { TypeScriptFile(it(FileExtension.TypeScript)) }
-            Wirespec -> WirespecEmitter(logger) to path?.let { WirespecFile(it(FileExtension.Wirespec)) }
-            OpenAPIV2 -> OpenApiV2Emitter to path?.let { JsonFile(it(FileExtension.Json)) }
-            OpenAPIV3 -> OpenApiV3Emitter to path?.let { JsonFile(it(FileExtension.Json)) }
+                )
+            } to file
+            else results to file
         }
     }
+    .map { (results, file) -> results.map { it to file } }
 
-private fun write(output: List<Emitted>, file: File?) {
-    output.forEach { (name, result) -> file?.copy(FileName(name))?.write(result) ?: print(result) }
+private fun Set<Language>.emitters(
+    packageName: PackageName,
+    path: ((FileExtension) -> FullFilePath)?,
+    logger: Logger
+) = map {
+    val (packageString) = packageName
+    when (it) {
+        Java -> JavaEmitter(packageString, logger) to path?.let { JavaFile(it(FileExtension.Java)) }
+        Kotlin -> KotlinEmitter(packageString, logger) to path?.let { KotlinFile(it(FileExtension.Kotlin)) }
+        Scala -> ScalaEmitter(packageString, logger) to path?.let { ScalaFile(it(FileExtension.Scala)) }
+        TypeScript -> TypeScriptEmitter(logger) to path?.let { TypeScriptFile(it(FileExtension.TypeScript)) }
+        Wirespec -> WirespecEmitter(logger) to path?.let { WirespecFile(it(FileExtension.Wirespec)) }
+        OpenAPIV2 -> OpenApiV2Emitter to path?.let { JsonFile(it(FileExtension.Json)) }
+        OpenAPIV3 -> OpenApiV3Emitter to path?.let { JsonFile(it(FileExtension.Json)) }
+    }
 }
 
 private fun FullFilePath.out(packageName: PackageName, output: Output?) = { extension: FileExtension ->
