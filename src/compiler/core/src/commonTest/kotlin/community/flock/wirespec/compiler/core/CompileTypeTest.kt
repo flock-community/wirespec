@@ -14,7 +14,7 @@ class CompileTypeTest {
         |type Request {
         |  `type`: String,
         |  url: String,
-        |  body: String?,
+        |  `BODY_TYPE`: String?,
         |  params: String[],
         |  headers: { String }
         |}
@@ -28,7 +28,7 @@ class CompileTypeTest {
             |data class Request(
             |  val type: String,
             |  val url: String,
-            |  val body: String?,
+            |  val BODY_TYPE: String?,
             |  val params: List<String>,
             |  val headers: Map<String, String>
             |)
@@ -46,7 +46,7 @@ class CompileTypeTest {
             |public record Request (
             |  String type,
             |  String url,
-            |  java.util.Optional<String> body,
+            |  java.util.Optional<String> BODY_TYPE,
             |  java.util.List<String> params,
             |  java.util.Map<String, String> headers
             |) {
@@ -65,7 +65,7 @@ class CompileTypeTest {
             |case class Request(
             |  val `type`: String,
             |  val url: String,
-            |  val body: Option[String],
+            |  val BODY_TYPE: Option[String],
             |  val params: List[String],
             |  val headers: Map[String, String]
             |)
@@ -81,7 +81,7 @@ class CompileTypeTest {
             |export type Request = {
             |  "type": string,
             |  "url": string,
-            |  "body"?: string,
+            |  "BODY_TYPE"?: string,
             |  "params": string[],
             |  "headers": Record<string, string>
             |}
@@ -98,7 +98,7 @@ class CompileTypeTest {
             |type Request {
             |  `type`: String,
             |  url: String,
-            |  body: String?,
+            |  `BODY_TYPE`: String?,
             |  params: String[],
             |  headers: { String }
             |}

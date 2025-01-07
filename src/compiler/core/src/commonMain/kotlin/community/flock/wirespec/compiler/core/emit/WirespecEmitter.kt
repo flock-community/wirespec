@@ -8,9 +8,11 @@ import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
+import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
@@ -44,8 +46,11 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
 
     override fun Field.emit() = "${emit(identifier)}: ${reference.emit()}${if (isNullable) "?" else ""}"
 
-    override fun emit(identifier: Identifier) =
-        identifier.run { if (value in reservedKeywords) value.addBackticks() else value }
+    override fun emit(identifier: Identifier) = when(identifier){
+        is DefinitionIdentifier ->  identifier.run { if (value in reservedKeywords) value.addBackticks() else value }
+        is FieldIdentifier -> identifier.run { if (value in reservedKeywords || value.first().isUpperCase()) value.addBackticks() else value }
+    }
+
 
     override fun emit(channel: Channel): String =
         "channel ${emit(channel.identifier)} -> ${channel.reference.emit()}"
