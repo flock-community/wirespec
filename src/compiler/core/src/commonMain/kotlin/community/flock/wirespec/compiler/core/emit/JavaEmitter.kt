@@ -113,7 +113,7 @@ open class JavaEmitter(
     }
 
     override fun emit(identifier: Identifier) = when (identifier) {
-        is DefinitionIdentifier -> identifier.value.sanitizeSymbol().firstToUpper()
+        is DefinitionIdentifier -> identifier.value.sanitizeSymbol()
         is FieldIdentifier -> identifier.value.sanitizeSymbol().sanitizeKeywords()
     }
 
