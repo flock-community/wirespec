@@ -67,7 +67,7 @@ object WirespecSpec : LanguageSpec {
         Regex("^Unit") to WsUnit,
         Regex("^GET|^POST|^PUT|^DELETE|^OPTIONS|^HEAD|^PATCH|^TRACE") to Method,
         Regex("^[1-5][0-9][0-9]") to StatusCode,
-        Regex("^[a-z`][a-zA-Z0-9`]*") to CustomValue,
+        Regex("^[a-z`][a-zA-Z0-9_`]*") to CustomValue,
         Regex("^[A-Z][a-zA-Z0-9_]*") to CustomType,
         Regex("^/[a-zA-Z0-9-_]+") to Path,
         Regex("^\\/\\*(\\*(?!\\/)|[^*])*\\*\\/") to WsComment,

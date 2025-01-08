@@ -113,8 +113,8 @@ open class JavaEmitter(
     }
 
     override fun emit(identifier: Identifier) = when (identifier) {
-        is DefinitionIdentifier -> identifier.value.sanitizeSymbol().firstToUpper()
-        is FieldIdentifier -> identifier.value.sanitizeSymbol().firstToLower().sanitizeKeywords()
+        is DefinitionIdentifier -> identifier.value.sanitizeSymbol()
+        is FieldIdentifier -> identifier.value.sanitizeSymbol().sanitizeKeywords()
     }
 
     override fun emit(refined: Refined) = """
@@ -354,7 +354,8 @@ open class JavaEmitter(
 
     private fun String.sanitizeSymbol() = this
         .split(".", " ", "-")
-        .joinToString("") { it.firstToUpper() }
+        .mapIndexed { index, s -> if(index > 0) s.firstToUpper() else s }
+        .joinToString("")
         .asSequence()
         .filter { it.isLetterOrDigit() || it in listOf('_') }
         .joinToString("")
