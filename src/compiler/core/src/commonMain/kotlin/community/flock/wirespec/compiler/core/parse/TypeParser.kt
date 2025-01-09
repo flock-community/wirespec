@@ -4,27 +4,27 @@ import arrow.core.Either
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
-import community.flock.wirespec.compiler.core.tokenize.types.Brackets
-import community.flock.wirespec.compiler.core.tokenize.types.Colon
-import community.flock.wirespec.compiler.core.tokenize.types.Comma
-import community.flock.wirespec.compiler.core.tokenize.types.CustomType
-import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
-import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
-import community.flock.wirespec.compiler.core.tokenize.types.Equals
-import community.flock.wirespec.compiler.core.tokenize.types.ForwardSlash
-import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
-import community.flock.wirespec.compiler.core.tokenize.types.Pipe
-import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
-import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
-import community.flock.wirespec.compiler.core.tokenize.types.TypeDefinitionStart
-import community.flock.wirespec.compiler.core.tokenize.types.WirespecDefinition
-import community.flock.wirespec.compiler.core.tokenize.types.WirespecType
-import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
-import community.flock.wirespec.compiler.core.tokenize.types.WsBytes
-import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
-import community.flock.wirespec.compiler.core.tokenize.types.WsNumber
-import community.flock.wirespec.compiler.core.tokenize.types.WsString
-import community.flock.wirespec.compiler.core.tokenize.types.WsUnit
+import community.flock.wirespec.compiler.core.tokenize.Brackets
+import community.flock.wirespec.compiler.core.tokenize.Colon
+import community.flock.wirespec.compiler.core.tokenize.Comma
+import community.flock.wirespec.compiler.core.tokenize.CustomType
+import community.flock.wirespec.compiler.core.tokenize.CustomValue
+import community.flock.wirespec.compiler.core.tokenize.EndOfProgram
+import community.flock.wirespec.compiler.core.tokenize.Equals
+import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
+import community.flock.wirespec.compiler.core.tokenize.LeftCurly
+import community.flock.wirespec.compiler.core.tokenize.Pipe
+import community.flock.wirespec.compiler.core.tokenize.QuestionMark
+import community.flock.wirespec.compiler.core.tokenize.RightCurly
+import community.flock.wirespec.compiler.core.tokenize.TypeDefinitionStart
+import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
+import community.flock.wirespec.compiler.core.tokenize.WirespecType
+import community.flock.wirespec.compiler.core.tokenize.WsBoolean
+import community.flock.wirespec.compiler.core.tokenize.WsBytes
+import community.flock.wirespec.compiler.core.tokenize.WsInteger
+import community.flock.wirespec.compiler.core.tokenize.WsNumber
+import community.flock.wirespec.compiler.core.tokenize.WsString
+import community.flock.wirespec.compiler.core.tokenize.WsUnit
 import community.flock.wirespec.compiler.utils.Logger
 
 class TypeParser(logger: Logger) : AbstractParser(logger) {
@@ -186,7 +186,7 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
                 }
             }
 
-            else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
+            else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })
         }
     }
 
@@ -194,24 +194,24 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is CustomType -> mutableListOf<Reference>().apply {
+            is WirespecType -> mutableListOf<Reference>().apply {
                 token.shouldBeDefined().bind()
                 add(Reference.Custom(token.value, false))
                 eatToken().bind()
                 while (token.type == Pipe) {
                     eatToken().bind()
                     when (token.type) {
-                        is CustomType -> {
+                        is WirespecType -> {
                             token.shouldBeDefined().bind()
                             add(Reference.Custom(token.value, false)).also { eatToken().bind() }
                         }
 
-                        else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
+                        else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })
                     }
                 }
             }
 
-            else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
+            else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })
         }.toSet()
     }
 }

@@ -1,10 +1,10 @@
 package community.flock.wirespec.compiler.core.parse
 
 import community.flock.wirespec.compiler.core.WirespecSpec
+import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.Endpoint.Method.GET
 import community.flock.wirespec.compiler.core.parse.Endpoint.Method.POST
 import community.flock.wirespec.compiler.core.parse.Endpoint.Segment.Literal
-import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.booleans.shouldBeTrue
@@ -16,7 +16,7 @@ import kotlin.test.Test
 
 class ParseEndpointTest {
 
-    private fun parser() = Parser(noLogger)
+    private fun parser(source: String) = WirespecSpec.parse(source)(noLogger)
 
     @Test
     fun testEndpointParser() {
@@ -27,8 +27,7 @@ class ParseEndpointTest {
             |}
         """.trimMargin()
 
-        WirespecSpec.tokenize(source)
-            .let(parser()::parse)
+        parser(source)
             .shouldBeRight()
             .also { it.size shouldBe 2 }[1]
             .shouldBeInstanceOf<Endpoint>()
@@ -53,8 +52,7 @@ class ParseEndpointTest {
             |}
         """.trimMargin()
 
-        WirespecSpec.tokenize(source)
-            .let(parser()::parse)
+        parser(source)
             .shouldBeRight()
             .also { it.size shouldBe 2 }[1]
             .shouldBeInstanceOf<Endpoint>()
@@ -79,8 +77,7 @@ class ParseEndpointTest {
             |}
         """.trimMargin()
 
-        WirespecSpec.tokenize(source)
-            .let(parser()::parse)
+        parser(source)
             .shouldBeRight()
             .also { it.size shouldBe 2 }[1]
             .shouldBeInstanceOf<Endpoint>()
@@ -108,8 +105,7 @@ class ParseEndpointTest {
             |}
         """.trimMargin()
 
-        WirespecSpec.tokenize(source)
-            .let(parser()::parse)
+        parser(source)
             .shouldBeRight()
             .also { it.size shouldBe 2 }[1]
             .shouldBeInstanceOf<Endpoint>()
@@ -143,8 +139,7 @@ class ParseEndpointTest {
             |}
         """.trimMargin()
 
-        WirespecSpec.tokenize(source)
-            .let(parser()::parse)
+        parser(source)
             .shouldBeRight()
             .also { it.size shouldBe 2 }[1]
             .shouldBeInstanceOf<Endpoint>()
@@ -172,8 +167,7 @@ class ParseEndpointTest {
             |}
         """.trimMargin()
 
-        WirespecSpec.tokenize(source)
-            .let(parser()::parse)
+        parser(source)
             .shouldBeRight()
             .also { it.size shouldBe 2 }[1]
             .shouldBeInstanceOf<Endpoint>()
@@ -200,8 +194,7 @@ class ParseEndpointTest {
             |}
         """.trimMargin()
 
-        WirespecSpec.tokenize(source)
-            .let(parser()::parse)
+        parser(source)
             .shouldBeRight()
             .also { it.size shouldBe 1 }[0]
             .shouldBeInstanceOf<Endpoint>().run {

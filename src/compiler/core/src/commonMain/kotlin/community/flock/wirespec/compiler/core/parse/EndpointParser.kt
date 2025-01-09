@@ -4,26 +4,26 @@ import arrow.core.Either
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
-import community.flock.wirespec.compiler.core.tokenize.types.Arrow
-import community.flock.wirespec.compiler.core.tokenize.types.Brackets
-import community.flock.wirespec.compiler.core.tokenize.types.Colon
-import community.flock.wirespec.compiler.core.tokenize.types.CustomType
-import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
-import community.flock.wirespec.compiler.core.tokenize.types.ForwardSlash
-import community.flock.wirespec.compiler.core.tokenize.types.Hash
-import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
-import community.flock.wirespec.compiler.core.tokenize.types.Method
-import community.flock.wirespec.compiler.core.tokenize.types.Path
-import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
-import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
-import community.flock.wirespec.compiler.core.tokenize.types.StatusCode
-import community.flock.wirespec.compiler.core.tokenize.types.WirespecType
-import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
-import community.flock.wirespec.compiler.core.tokenize.types.WsBytes
-import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
-import community.flock.wirespec.compiler.core.tokenize.types.WsNumber
-import community.flock.wirespec.compiler.core.tokenize.types.WsString
-import community.flock.wirespec.compiler.core.tokenize.types.WsUnit
+import community.flock.wirespec.compiler.core.tokenize.Arrow
+import community.flock.wirespec.compiler.core.tokenize.Brackets
+import community.flock.wirespec.compiler.core.tokenize.Colon
+import community.flock.wirespec.compiler.core.tokenize.CustomType
+import community.flock.wirespec.compiler.core.tokenize.CustomValue
+import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
+import community.flock.wirespec.compiler.core.tokenize.Hash
+import community.flock.wirespec.compiler.core.tokenize.LeftCurly
+import community.flock.wirespec.compiler.core.tokenize.Method
+import community.flock.wirespec.compiler.core.tokenize.Path
+import community.flock.wirespec.compiler.core.tokenize.QuestionMark
+import community.flock.wirespec.compiler.core.tokenize.RightCurly
+import community.flock.wirespec.compiler.core.tokenize.StatusCode
+import community.flock.wirespec.compiler.core.tokenize.WirespecType
+import community.flock.wirespec.compiler.core.tokenize.WsBoolean
+import community.flock.wirespec.compiler.core.tokenize.WsBytes
+import community.flock.wirespec.compiler.core.tokenize.WsInteger
+import community.flock.wirespec.compiler.core.tokenize.WsNumber
+import community.flock.wirespec.compiler.core.tokenize.WsString
+import community.flock.wirespec.compiler.core.tokenize.WsUnit
 import community.flock.wirespec.compiler.utils.Logger
 
 class EndpointParser(logger: Logger) : AbstractParser(logger) {
@@ -34,8 +34,8 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is CustomType -> parseEndpointDefinition(comment, DefinitionIdentifier(token.value)).bind()
-            else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
+            is WirespecType -> parseEndpointDefinition(comment, DefinitionIdentifier(token.value)).bind()
+            else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })
         }
     }
 

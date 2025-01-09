@@ -6,11 +6,6 @@ import arrow.core.nonEmptyListOf
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.LanguageSpec
 import community.flock.wirespec.compiler.core.tokenize.Token.Coordinates
-import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
-import community.flock.wirespec.compiler.core.tokenize.types.NewLine
-import community.flock.wirespec.compiler.core.tokenize.types.StartOfProgram
-import community.flock.wirespec.compiler.core.tokenize.types.TokenType
-import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpace
 
 typealias Tokens = NonEmptyList<Token>
 

@@ -1,4 +1,4 @@
-package community.flock.wirespec.compiler.core.tokenize.types
+package community.flock.wirespec.compiler.core.tokenize
 
 fun TokenType.name(): String = this::class.simpleName!!
 
@@ -10,7 +10,7 @@ data object QuestionMark : TokenType
 data object Hash : TokenType
 data object Brackets : TokenType
 data object CustomValue : TokenType
-data object WsComment : TokenType
+data object Comment : TokenType
 data object Character : TokenType
 data object Arrow : TokenType
 data object Pipe : TokenType
@@ -30,22 +30,24 @@ data object StartOfProgram : WhiteSpace
 
 sealed interface Keyword : TokenType
 sealed interface WirespecDefinition : Keyword
-data object WsTypeDef : WirespecDefinition
-data object WsEnumTypeDef : WirespecDefinition
-data object WsEndpointDef : WirespecDefinition
-data object WsChannelDef : WirespecDefinition
+data object TypeDefinition : WirespecDefinition
+data object EnumTypeDefinition : WirespecDefinition
+data object ChannelDefinition : WirespecDefinition
+data object EndpointDefinition : WirespecDefinition
 
-sealed interface WirespecType : Keyword
-data object WsString : WirespecType
-data object WsInteger : WirespecType
-data object WsNumber : WirespecType
-data object WsBoolean : WirespecType
-data object WsBytes : WirespecType
-data object CustomType : WirespecType
-data object WsUnit : WirespecType
+sealed interface ChannelTokenType: TokenType
+data object Method : ChannelTokenType
+data object Path : ChannelTokenType
+data object StatusCode : ChannelTokenType
 
-data object Method : Keyword
-
-data object Path : Keyword
-
-data object StatusCode : Keyword
+sealed interface WirespecType : TokenType
+sealed interface SpecificType: WirespecType
+interface CustomType : WirespecType {
+    val types: Map<String, SpecificType>
+}
+data object WsString : SpecificType
+data object WsInteger : SpecificType
+data object WsNumber : SpecificType
+data object WsBoolean : SpecificType
+data object WsBytes : SpecificType
+data object WsUnit : SpecificType

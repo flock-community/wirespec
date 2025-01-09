@@ -1,6 +1,16 @@
 package community.flock.wirespec.compiler.core.optimize
 
-import arrow.core.NonEmptyList
+import community.flock.wirespec.compiler.core.tokenize.CustomType
+import community.flock.wirespec.compiler.core.tokenize.SpecificType
 import community.flock.wirespec.compiler.core.tokenize.Token
+import community.flock.wirespec.compiler.core.tokenize.Tokens
 
-fun NonEmptyList<Token>.optimize(): NonEmptyList<Token> = this
+fun Tokens.optimize(specificTypes: Map<String, SpecificType>): Tokens = map { it.specify(specificTypes) }
+
+private fun Token.specify(entries: Map<String, SpecificType>) = when (type) {
+    is CustomType -> entries[value]
+        ?.let { copy(type = it) }
+        ?: this
+
+    else -> this
+}

@@ -1,7 +1,7 @@
 package community.flock.wirespec.compiler.core.parse
 
 import community.flock.wirespec.compiler.core.WirespecSpec
-import community.flock.wirespec.compiler.core.tokenize.tokenize
+import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
@@ -10,7 +10,7 @@ import kotlin.test.Test
 
 class ParseChannelTest {
 
-    private fun parser() = Parser(noLogger)
+    private fun parser(source: String) = WirespecSpec.parse(source)(noLogger)
 
     @Test
     fun testChannelParser() {
@@ -19,8 +19,7 @@ class ParseChannelTest {
             |channel TodosChannel -> Todo
         """.trimMargin()
 
-        WirespecSpec.tokenize(source)
-            .let(parser()::parse)
+        parser(source)
             .shouldBeRight()
             .also { it.size shouldBe 2 }[1]
             .shouldBeInstanceOf<Channel>()
@@ -39,8 +38,7 @@ class ParseChannelTest {
             |channel TodosChannel -> Todo?
         """.trimMargin()
 
-        WirespecSpec.tokenize(source)
-            .let(parser()::parse)
+        parser(source)
             .shouldBeRight()
             .also { it.size shouldBe 2 }[1]
             .shouldBeInstanceOf<Channel>()
