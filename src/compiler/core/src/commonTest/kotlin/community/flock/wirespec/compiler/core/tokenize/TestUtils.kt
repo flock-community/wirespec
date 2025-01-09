@@ -1,7 +1,8 @@
 package community.flock.wirespec.compiler.core.tokenize
 
 import community.flock.wirespec.compiler.core.WirespecSpec
-import community.flock.wirespec.compiler.core.tokenize.types.TokenType
+import community.flock.wirespec.compiler.core.WsCustomType
+import community.flock.wirespec.compiler.core.optimize.optimize
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
 
@@ -11,6 +12,7 @@ fun testTokenizer(
     removeWhiteSpace: Boolean = true,
 ) {
     WirespecSpec.tokenize(source)
+        .optimize(WsCustomType.types)
         .run { if (removeWhiteSpace) removeWhiteSpace() else this }
         .shouldNotBeEmpty()
         .apply { size shouldBe expected.size }

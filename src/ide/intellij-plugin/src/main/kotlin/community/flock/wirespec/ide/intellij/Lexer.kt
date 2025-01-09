@@ -1,38 +1,38 @@
 package community.flock.wirespec.ide.intellij
 
 import community.flock.wirespec.compiler.core.WirespecSpec
+import community.flock.wirespec.compiler.core.tokenize.Arrow
+import community.flock.wirespec.compiler.core.tokenize.Brackets
+import community.flock.wirespec.compiler.core.tokenize.ChannelDefinition
+import community.flock.wirespec.compiler.core.tokenize.Character
+import community.flock.wirespec.compiler.core.tokenize.Colon
+import community.flock.wirespec.compiler.core.tokenize.Comma
+import community.flock.wirespec.compiler.core.tokenize.Comment
+import community.flock.wirespec.compiler.core.tokenize.CustomType
+import community.flock.wirespec.compiler.core.tokenize.CustomValue
+import community.flock.wirespec.compiler.core.tokenize.EndOfProgram
+import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
+import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
+import community.flock.wirespec.compiler.core.tokenize.Equals
+import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
+import community.flock.wirespec.compiler.core.tokenize.Hash
+import community.flock.wirespec.compiler.core.tokenize.LeftCurly
+import community.flock.wirespec.compiler.core.tokenize.Method
+import community.flock.wirespec.compiler.core.tokenize.Path
+import community.flock.wirespec.compiler.core.tokenize.Pipe
+import community.flock.wirespec.compiler.core.tokenize.QuestionMark
+import community.flock.wirespec.compiler.core.tokenize.RightCurly
+import community.flock.wirespec.compiler.core.tokenize.StatusCode
 import community.flock.wirespec.compiler.core.tokenize.Token
+import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
+import community.flock.wirespec.compiler.core.tokenize.WhiteSpace
+import community.flock.wirespec.compiler.core.tokenize.WsBoolean
+import community.flock.wirespec.compiler.core.tokenize.WsBytes
+import community.flock.wirespec.compiler.core.tokenize.WsInteger
+import community.flock.wirespec.compiler.core.tokenize.WsNumber
+import community.flock.wirespec.compiler.core.tokenize.WsString
+import community.flock.wirespec.compiler.core.tokenize.WsUnit
 import community.flock.wirespec.compiler.core.tokenize.tokenize
-import community.flock.wirespec.compiler.core.tokenize.types.Arrow
-import community.flock.wirespec.compiler.core.tokenize.types.Brackets
-import community.flock.wirespec.compiler.core.tokenize.types.Character
-import community.flock.wirespec.compiler.core.tokenize.types.Colon
-import community.flock.wirespec.compiler.core.tokenize.types.Comma
-import community.flock.wirespec.compiler.core.tokenize.types.CustomType
-import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
-import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
-import community.flock.wirespec.compiler.core.tokenize.types.Equals
-import community.flock.wirespec.compiler.core.tokenize.types.ForwardSlash
-import community.flock.wirespec.compiler.core.tokenize.types.Hash
-import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
-import community.flock.wirespec.compiler.core.tokenize.types.Method
-import community.flock.wirespec.compiler.core.tokenize.types.Path
-import community.flock.wirespec.compiler.core.tokenize.types.Pipe
-import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
-import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
-import community.flock.wirespec.compiler.core.tokenize.types.StatusCode
-import community.flock.wirespec.compiler.core.tokenize.types.WhiteSpace
-import community.flock.wirespec.compiler.core.tokenize.types.WsBoolean
-import community.flock.wirespec.compiler.core.tokenize.types.WsBytes
-import community.flock.wirespec.compiler.core.tokenize.types.WsChannelDef
-import community.flock.wirespec.compiler.core.tokenize.types.WsComment
-import community.flock.wirespec.compiler.core.tokenize.types.WsEndpointDef
-import community.flock.wirespec.compiler.core.tokenize.types.WsEnumTypeDef
-import community.flock.wirespec.compiler.core.tokenize.types.WsInteger
-import community.flock.wirespec.compiler.core.tokenize.types.WsNumber
-import community.flock.wirespec.compiler.core.tokenize.types.WsString
-import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
-import community.flock.wirespec.compiler.core.tokenize.types.WsUnit
 import com.intellij.lexer.LexerBase as IntellijLexer
 
 class Lexer : IntellijLexer() {
@@ -64,14 +64,14 @@ class Lexer : IntellijLexer() {
         is ForwardSlash -> Types.FORWARD_SLASH
         is Brackets -> Types.BRACKETS
         is CustomValue -> Types.CUSTOM_VALUE
-        is WsComment -> Types.COMMENT
+        is Comment -> Types.COMMENT
         is Character -> Types.CHARACTER
         is EndOfProgram -> Types.END_OF_PROGRAM
         is WhiteSpace -> Types.WHITE_SPACE
-        is WsTypeDef -> Types.TYPE_DEF
-        is WsEnumTypeDef -> Types.ENUM_DEF
-        is WsEndpointDef -> Types.ENDPOINT_DEF
-        is WsChannelDef -> Types.CHANNEL_DEF
+        is TypeDefinition -> Types.TYPE_DEF
+        is EnumTypeDefinition -> Types.ENUM_DEF
+        is EndpointDefinition -> Types.ENDPOINT_DEF
+        is ChannelDefinition -> Types.CHANNEL_DEF
         is WsString -> Types.STRING
         is WsInteger -> Types.INTEGER
         is WsNumber -> Types.NUMBER

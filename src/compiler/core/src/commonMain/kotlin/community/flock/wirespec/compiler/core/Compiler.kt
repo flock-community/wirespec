@@ -17,12 +17,11 @@ import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.core.validate.validate
 import community.flock.wirespec.compiler.utils.Logger
 
-
 fun LanguageSpec.parse(source: String): (Logger) -> Either<NonEmptyList<WirespecException>, AST> =
     { logger ->
         tokenize(source)
             .also((TOKENIZED::report)(logger))
-            .optimize()
+            .optimize(customType.types)
             .also((VALIDATED::report)(logger))
             .let { Parser(logger).parse(it) }
             .also((PARSED::report)(logger))
