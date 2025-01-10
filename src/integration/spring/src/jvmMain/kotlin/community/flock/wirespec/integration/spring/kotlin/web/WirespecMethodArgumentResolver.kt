@@ -40,6 +40,6 @@ fun HttpServletRequest.toRawRequest(): Wirespec.RawRequest = Wirespec.RawRequest
     method = method,
     path = extractPath(),
     queries = extractQueries(),
-    headers = headerNames.toList().associateWith(::getHeader),
+    headers = headerNames.toList().associateWith { getHeaders(it).toList() },
     body = reader.lines().collect(Collectors.joining(System.lineSeparator()))
 )

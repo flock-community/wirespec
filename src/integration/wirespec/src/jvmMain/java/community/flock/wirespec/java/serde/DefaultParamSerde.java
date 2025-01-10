@@ -7,11 +7,11 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.function.Function;
 
-public class DefaultQueryParamSerde implements Wirespec.QueryParamSerializer, Wirespec.QueryParamDeserializer {
+public class DefaultParamSerde implements Wirespec.ParamSerialization {
 
   private final Map<Class<?>, Function<String, Object>> primitiveTypesConversion;
 
-  public DefaultQueryParamSerde() {
+  public DefaultParamSerde() {
     primitiveTypesConversion = new HashMap<>();
     primitiveTypesConversion.put(String.class, s -> s);
     primitiveTypesConversion.put(Integer.class, Integer::parseInt);
@@ -25,7 +25,7 @@ public class DefaultQueryParamSerde implements Wirespec.QueryParamSerializer, Wi
   }
 
   @Override
-  public <T> List<String> serializeQuery(T value, Type type) {
+  public <T> List<String> serializeParam(T value, Type type) {
     if (isList(type)) {
       return ((List<?>) value).stream()
           .map(Object::toString)
@@ -36,7 +36,7 @@ public class DefaultQueryParamSerde implements Wirespec.QueryParamSerializer, Wi
 
   @Override
   @SuppressWarnings("unchecked")
-  public <T> T deserializeQuery(List<String> values, Type type) {
+  public <T> T deserializeParam(List<String> values, Type type) {
     if (isList(type)) {
       return (T) deserializeList(values, type);
     }
