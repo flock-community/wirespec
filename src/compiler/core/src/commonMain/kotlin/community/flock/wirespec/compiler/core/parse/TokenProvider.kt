@@ -8,18 +8,16 @@ import community.flock.wirespec.compiler.core.exceptions.WirespecException.Compi
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.Tokens
 import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
-import community.flock.wirespec.compiler.core.tokenize.removeWhiteSpace
 import community.flock.wirespec.compiler.utils.Logger
 
 class TokenProvider(private val logger: Logger, tokens: Tokens) {
 
-    private val tokenIterator = tokens.tail.iterator()
-
     var token = tokens.head
+
+    private val tokenIterator = tokens.tail.iterator()
     private var nextToken = nextToken()
 
     private val definitionNames: List<String> = tokens
-        .removeWhiteSpace()
         .zipWithNext()
         .mapNotNull { (first, second) ->
             when (first.type) {

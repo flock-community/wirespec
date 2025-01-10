@@ -9,10 +9,14 @@ import community.flock.wirespec.compiler.core.tokenize.Token.Coordinates
 
 typealias Tokens = NonEmptyList<Token>
 
-fun Tokens.removeWhiteSpace(): Tokens = filterNot { it.type is WhiteSpace }.toNonEmptyListOrNull() ?: endToken().nel()
+data class OptimizeOptions(
+    val removeWhitespace: Boolean = true,
+    val specify: Boolean = true,
+)
 
-fun LanguageSpec.tokenize(source: String): Tokens =
+fun LanguageSpec.tokenize(source: String, options: OptimizeOptions = OptimizeOptions()): Tokens =
     tokenize(source, nonEmptyListOf(Token(type = StartOfProgram, value = "", coordinates = Coordinates())))
+        .let(optimize(options))
 
 private tailrec fun LanguageSpec.tokenize(source: String, incompleteTokens: Tokens): Tokens {
     val (token, remaining) = extractToken(source, incompleteTokens.last().coordinates)
@@ -41,5 +45,23 @@ private fun Coordinates.nextCoordinates(type: TokenType, value: String) = when (
 private fun endToken(previousTokenCoordinates: Coordinates = Coordinates()) = Token(
     type = EndOfProgram,
     value = EndOfProgram.VALUE,
-    coordinates = previousTokenCoordinates.nextCoordinates(EndOfProgram, EndOfProgram.VALUE)
+    coordinates = previousTokenCoordinates.nextCoordinates(EndOfProgram, EndOfProgram.VALUE),
 )
+
+private fun LanguageSpec.optimize(options: OptimizeOptions) = { tokens: Tokens ->
+    tokens
+        .runOption(options.removeWhitespace) { removeWhiteSpace() }
+        .runOption(options.specify) { map { it.specify(customType.types) } }
+}
+
+private fun Tokens.runOption(bool: Boolean, block: Tokens.() -> Tokens) = if (bool) block() else this
+
+private fun Tokens.removeWhiteSpace(): Tokens = filterNot { it.type is WhiteSpace }.toNonEmptyListOrNull() ?: endToken().nel()
+
+private fun Token.specify(entries: Map<String, SpecificType>) = when (type) {
+    is CustomType -> entries[value]
+        ?.let { copy(type = it) }
+        ?: this
+
+    else -> this
+}

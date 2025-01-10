@@ -18,6 +18,7 @@ import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.Hash
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.Method
+import community.flock.wirespec.compiler.core.tokenize.OptimizeOptions
 import community.flock.wirespec.compiler.core.tokenize.Path
 import community.flock.wirespec.compiler.core.tokenize.Pipe
 import community.flock.wirespec.compiler.core.tokenize.QuestionMark
@@ -46,7 +47,7 @@ class Lexer : IntellijLexer() {
         bufferSequence = buffer
         index = 0
         state = initialState
-        tokens = WirespecSpec.tokenize(buffer.toString()).filterNot { it.type is EndOfProgram }
+        tokens = WirespecSpec.tokenize(buffer.toString(), OptimizeOptions(removeWhitespace = false)).filterNot { it.type is EndOfProgram }
     }
 
     override fun getBufferSequence() = bufferSequence

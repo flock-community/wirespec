@@ -1,1 +1,3 @@
-enum MyEnum { One, Two, Three }
+enum FirstFourIntegers { Zero, One, Two, Three }
+
+enum CountriesWithUnitInName { UnitedKingdom }
