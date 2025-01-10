@@ -74,7 +74,7 @@ suspend fun ApplicationCall.toRawRequest() =
         method = request.httpMethod.value,
         path = request.path().split("/").filter { it.isNotBlank() },
         queries = request.queryParameters.toMap(),
-        headers = request.headers.toMap().toSingleValueMap(),
+        headers = request.headers.toMap(),
         body = receive<String>(),
     )
 

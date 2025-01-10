@@ -25,7 +25,7 @@ data object KotlinShared : Shared {
         |${Spacer}}
         |${Spacer}interface ClientEdge<Req: Request<*>, Res: Response<*>> { 
         |${Spacer(2)}fun to(request: Req): RawRequest
-        |${Spacer(2)}fun from(response: RawResponse): Res    
+        |${Spacer(2)}fun from(response: RawResponse): Res
         |${Spacer}}
         |${Spacer}interface Client<Req : Request<*>, Res : Response<*>> {
         |${Spacer(2)}val pathTemplate: String

@@ -36,7 +36,7 @@ class LiveKotlinPetstoreClient(
                 HttpMethod.valueOf(request.method),
                 URI("https://6467e16be99f0ba0a819fd68.mockapi.io${request.path}"),
             )
-            .headers(HttpHeaders(toMultiValueMap(request.headers.mapValues { listOf(it.value) })))
+            .headers(HttpHeaders().apply { putAll(request.headers) })
             .body(request.body ?: Unit)
             .let { client.exchange<String>(it) }
             .run { Wirespec.RawResponse(statusCode = statusCode.value(), headers = headers.toSingleValueMap(), body = body) }
