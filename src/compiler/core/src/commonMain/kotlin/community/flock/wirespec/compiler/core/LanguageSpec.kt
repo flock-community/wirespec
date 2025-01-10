@@ -19,6 +19,8 @@ import community.flock.wirespec.compiler.core.tokenize.Method
 import community.flock.wirespec.compiler.core.tokenize.NewLine
 import community.flock.wirespec.compiler.core.tokenize.Path
 import community.flock.wirespec.compiler.core.tokenize.Pipe
+import community.flock.wirespec.compiler.core.tokenize.Precision.P32
+import community.flock.wirespec.compiler.core.tokenize.Precision.P64
 import community.flock.wirespec.compiler.core.tokenize.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.StatusCode
@@ -73,10 +75,10 @@ data object WsCustomType : CustomType {
     override val types = mapOf(
         "Boolean" to WsBoolean,
         "Bytes" to WsBytes,
-        "Integer" to WsInteger,
-        "Integer32" to WsInteger,
-        "Number" to WsNumber,
-        "Number32" to WsNumber,
+        "Integer" to WsInteger(P64),
+        "Integer32" to WsInteger(P32),
+        "Number" to WsNumber(P64),
+        "Number32" to WsNumber(P32),
         "String" to WsString,
         "Unit" to WsUnit,
     )

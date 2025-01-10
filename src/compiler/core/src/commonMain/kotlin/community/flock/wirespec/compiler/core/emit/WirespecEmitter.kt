@@ -51,7 +51,6 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
         is FieldIdentifier -> identifier.run { if (value in reservedKeywords || value.first().isUpperCase()) value.addBackticks() else value }
     }
 
-
     override fun emit(channel: Channel): String =
         "channel ${emit(channel.identifier)} -> ${channel.reference.emit()}"
 
@@ -61,16 +60,16 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
         is Reference.Custom -> value
         is Reference.Primitive -> when (type) {
             is Reference.Primitive.Type.String -> "String"
+            is Reference.Primitive.Type.Boolean -> "Boolean"
+            is Reference.Primitive.Type.Bytes -> "Bytes"
             is Reference.Primitive.Type.Integer -> when(type.precision){
                 Reference.Primitive.Type.Precision.P32 -> "Integer32"
-                else ->"Integer"
+                Reference.Primitive.Type.Precision.P64 -> "Integer"
             }
             is Reference.Primitive.Type.Number -> when(type.precision){
                 Reference.Primitive.Type.Precision.P32 -> "Number32"
-                else ->"Number"
+                Reference.Primitive.Type.Precision.P64 -> "Number"
             }
-            is Reference.Primitive.Type.Boolean -> "Boolean"
-            is Reference.Primitive.Type.Bytes -> "Bytes"
         }
     }
         .let { if (isIterable) "$it[]" else it }

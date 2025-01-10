@@ -11,11 +11,11 @@ import community.flock.wirespec.compiler.core.tokenize.ChannelDefinition
 import community.flock.wirespec.compiler.core.tokenize.Comment
 import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
 import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
+import community.flock.wirespec.compiler.core.tokenize.Precision
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.Tokens
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
-import community.flock.wirespec.compiler.core.tokenize.removeWhiteSpace
 import community.flock.wirespec.compiler.utils.Logger
 
 typealias AST = List<Node>
@@ -32,7 +32,6 @@ class Parser(logger: Logger) : AbstractParser(logger) {
     private val channelParser = ChannelParser(logger)
 
     fun parse(tokens: Tokens): Either<NonEmptyList<WirespecException>, AST> = tokens
-        .removeWhiteSpace()
         .toProvider(logger)
         .parse()
 
@@ -59,4 +58,9 @@ class Parser(logger: Logger) : AbstractParser(logger) {
             else -> raise(WrongTokenException<WirespecDefinition>(token).also { eatToken().bind() })
         }
     }
+}
+
+fun Precision.toPrimitivePrecision() = when (this) {
+    Precision.P32 -> Reference.Primitive.Type.Precision.P32
+    Precision.P64 -> Reference.Primitive.Type.Precision.P64
 }

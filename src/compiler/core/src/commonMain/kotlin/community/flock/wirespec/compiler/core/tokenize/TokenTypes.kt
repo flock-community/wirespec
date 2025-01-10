@@ -35,19 +35,28 @@ data object EnumTypeDefinition : WirespecDefinition
 data object ChannelDefinition : WirespecDefinition
 data object EndpointDefinition : WirespecDefinition
 
-sealed interface ChannelTokenType: TokenType
+sealed interface ChannelTokenType : TokenType
 data object Method : ChannelTokenType
 data object Path : ChannelTokenType
 data object StatusCode : ChannelTokenType
 
 sealed interface WirespecType : TokenType
-sealed interface SpecificType: WirespecType
+sealed interface SpecificType : WirespecType
 interface CustomType : WirespecType {
     val types: Map<String, SpecificType>
 }
+
 data object WsString : SpecificType
-data object WsInteger : SpecificType
-data object WsNumber : SpecificType
 data object WsBoolean : SpecificType
 data object WsBytes : SpecificType
 data object WsUnit : SpecificType
+data class WsInteger(override val precision: Precision) : SpecificType, HasPrecision
+data class WsNumber(override val precision: Precision) : SpecificType, HasPrecision
+
+interface HasPrecision {
+    val precision: Precision
+}
+
+enum class Precision {
+    P32, P64
+}
