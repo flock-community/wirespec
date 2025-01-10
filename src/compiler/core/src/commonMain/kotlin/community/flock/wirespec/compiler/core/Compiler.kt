@@ -10,21 +10,17 @@ import community.flock.wirespec.compiler.core.Reported.VALIDATED
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
-import community.flock.wirespec.compiler.core.optimize.optimize
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Parser
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.core.validate.validate
 import community.flock.wirespec.compiler.utils.Logger
 
-
 fun LanguageSpec.parse(source: String): (Logger) -> Either<NonEmptyList<WirespecException>, AST> =
     { logger ->
         tokenize(source)
             .also((TOKENIZED::report)(logger))
-            .optimize()
-            .also((VALIDATED::report)(logger))
-            .let { Parser(logger).parse(it) }
+            .let(Parser(logger)::parse)
             .also((PARSED::report)(logger))
             .map { it.validate() }
             .also((VALIDATED::report)(logger))

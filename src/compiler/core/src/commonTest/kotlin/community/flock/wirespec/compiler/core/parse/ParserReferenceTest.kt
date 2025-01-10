@@ -1,7 +1,7 @@
 package community.flock.wirespec.compiler.core.parse
 
 import community.flock.wirespec.compiler.core.WirespecSpec
-import community.flock.wirespec.compiler.core.tokenize.tokenize
+import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
@@ -10,9 +10,7 @@ import kotlin.test.Test
 
 class ParserReferenceTest {
 
-    private fun parser() = Parser(noLogger)
-    private fun compile(source: String) = WirespecSpec.tokenize(source)
-        .let(parser()::parse)
+    private fun parser(source: String) = WirespecSpec.parse(source)(noLogger)
 
     @Test
     fun shouldHaveSelfRef() {
@@ -23,7 +21,7 @@ class ParserReferenceTest {
 
         """.trimMargin()
 
-        compile(source)
+        parser(source)
             .shouldBeRight()
     }
 
@@ -35,7 +33,7 @@ class ParserReferenceTest {
             |}
         """.trimMargin()
 
-        compile(source)
+        parser(source)
             .shouldBeLeft()
             .also { it.size shouldBe 1 }
             .first()
@@ -56,7 +54,7 @@ class ParserReferenceTest {
             |}
         """.trimMargin()
 
-        compile(source)
+        parser(source)
             .shouldBeLeft()
             .apply { size shouldBe 1 }
             .apply {
@@ -77,7 +75,7 @@ class ParserReferenceTest {
             |}
         """.trimMargin()
 
-        compile(source)
+        parser(source)
             .shouldBeLeft()
             .apply { size shouldBe 1 }
             .apply {
@@ -95,7 +93,7 @@ class ParserReferenceTest {
             |type Foo = Bar
         """.trimMargin()
 
-        compile(source)
+        parser(source)
             .shouldBeLeft()
             .apply { size shouldBe 1 }
             .apply {
@@ -114,7 +112,7 @@ class ParserReferenceTest {
             |type Foo = Bar | Baz
         """.trimMargin()
 
-        compile(source)
+        parser(source)
             .shouldBeLeft()
             .apply { size shouldBe 1 }
             .apply {

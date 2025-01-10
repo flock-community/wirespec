@@ -4,13 +4,12 @@ import arrow.core.Either
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
-import community.flock.wirespec.compiler.core.tokenize.types.Arrow
-import community.flock.wirespec.compiler.core.tokenize.types.Colon
-import community.flock.wirespec.compiler.core.tokenize.types.CustomType
-import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
-import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
-import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
-import community.flock.wirespec.compiler.core.tokenize.types.WirespecType
+import community.flock.wirespec.compiler.core.tokenize.Arrow
+import community.flock.wirespec.compiler.core.tokenize.Colon
+import community.flock.wirespec.compiler.core.tokenize.LeftCurly
+import community.flock.wirespec.compiler.core.tokenize.QuestionMark
+import community.flock.wirespec.compiler.core.tokenize.RightCurly
+import community.flock.wirespec.compiler.core.tokenize.WirespecType
 import community.flock.wirespec.compiler.utils.Logger
 
 class ChannelParser(logger: Logger) : AbstractParser(logger) {
@@ -21,8 +20,8 @@ class ChannelParser(logger: Logger) : AbstractParser(logger) {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is CustomType -> parseChannelDefinition(comment, DefinitionIdentifier(token.value)).bind()
-            else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
+            is WirespecType -> parseChannelDefinition(comment, DefinitionIdentifier(token.value)).bind()
+            else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })
         }
     }
 
@@ -52,7 +51,7 @@ class ChannelParser(logger: Logger) : AbstractParser(logger) {
                 }
             }
 
-            else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
+            else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })
         }
 
     }

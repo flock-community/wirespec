@@ -1,7 +1,7 @@
 package community.flock.wirespec.compiler.core.parse
 
 import community.flock.wirespec.compiler.core.WirespecSpec
-import community.flock.wirespec.compiler.core.tokenize.tokenize
+import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
@@ -10,7 +10,7 @@ import kotlin.test.Test
 
 class ParseTypeTest {
 
-    private fun parser() = Parser(noLogger)
+    private fun parser(source: String) = WirespecSpec.parse(source)(noLogger)
 
     @Test
     fun testTypeParser() {
@@ -20,8 +20,7 @@ class ParseTypeTest {
             |}
         """.trimMargin()
 
-        WirespecSpec.tokenize(source)
-            .let(parser()::parse)
+        parser(source)
             .shouldBeRight()
             .also { it.size shouldBe 1 }
             .first()
@@ -49,8 +48,7 @@ class ParseTypeTest {
             |type DutchPostalCode /^([0-9]{4}[A-Z]{2})$/g
         """.trimMargin()
 
-        WirespecSpec.tokenize(source)
-            .let(parser()::parse)
+        parser(source)
             .shouldBeRight()
             .also { it.size shouldBe 1 }
             .first()
@@ -68,8 +66,7 @@ class ParseTypeTest {
             |type Foo = Bar | Bal
         """.trimMargin()
 
-        WirespecSpec.tokenize(source)
-            .let(parser()::parse)
+        parser(source)
             .shouldBeRight()
             .also { it.size shouldBe 3 }[2]
             .shouldBeInstanceOf<Union>()
@@ -90,8 +87,7 @@ class ParseTypeTest {
             |type Foo { num32: Number32, num64: Number? }
         """.trimMargin()
 
-        WirespecSpec.tokenize(source)
-            .let(parser()::parse)
+        parser(source)
             .shouldBeRight()
             .also { it.size shouldBe 2 }
             .let { (first, second) ->

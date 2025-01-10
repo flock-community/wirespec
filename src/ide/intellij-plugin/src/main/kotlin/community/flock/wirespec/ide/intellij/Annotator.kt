@@ -12,16 +12,14 @@ import community.flock.wirespec.compiler.core.parse.Parser
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.core.validate.validate
 import community.flock.wirespec.compiler.utils.noLogger
-import kotlinx.coroutines.runBlocking
 
 class Annotator : ExternalAnnotator<List<WirespecException>, List<WirespecException>>() {
 
-    override fun collectInformation(file: PsiFile) = runBlocking {
-        WirespecSpec.tokenize(file.text)
-            .let(Parser(noLogger)::parse)
-            .map(AST::validate)
-            .fold({ it }, { emptyList() })
-    }
+    override fun collectInformation(file: PsiFile) = WirespecSpec
+        .tokenize(file.text)
+        .let(Parser(noLogger)::parse)
+        .map(AST::validate)
+        .fold({ it }, { emptyList() })
 
     override fun doAnnotate(collectedInfo: List<WirespecException>?) = collectedInfo
 

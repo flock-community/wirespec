@@ -34,6 +34,7 @@ endpoint GetTodos GET /todos -> {
 
 endpoint PostTodo POST Todo /todos -> {
     200 -> Todo
+    201 -> Unit
 }
 
 endpoint PutTodo PUT Todo /todos/{id: TodoIdentifier} -> {
@@ -43,5 +44,6 @@ endpoint PutTodo PUT Todo /todos/{id: TodoIdentifier} -> {
 
 endpoint DeleteTodo DELETE /todos/{id: TodoIdentifier} -> {
     200 -> Todo
+    202 -> Unit
     404 -> Error
 }
