@@ -4,7 +4,7 @@ import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 
-class DefaultQueryParamSerde : Wirespec.QueryParamSerialization {
+class DefaultParamSerde : Wirespec.ParamSerialization {
 
     private val primitiveTypesConversion = mapOf<KClass<*>, (String) -> Any>(
         String::class to { this },
@@ -18,13 +18,13 @@ class DefaultQueryParamSerde : Wirespec.QueryParamSerialization {
         Short::class to String::toShort
     )
 
-    override fun <T> serializeQuery(value: T, kType: KType): List<String> = when {
+    override fun <T> serializeParam(value: T, kType: KType): List<String> = when {
         kType.isList() -> (value as List<*>).map { it.toString() }
         else -> listOf(value.toString())
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T> deserializeQuery(values: List<String>, kType: KType): T = when {
+    override fun <T> deserializeParam(values: List<String>, kType: KType): T = when {
         kType.isList() -> deserializeList(values, kType)
         kType.isWirespecEnum() -> deserializeEnum(values, kType.classifierAsKClass())
         else -> deserializePrimitive(values, kType.classifierAsKClass())

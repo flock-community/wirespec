@@ -1,7 +1,7 @@
 package community.flock.wirespec.example.maven.custom.app.common
 
 import community.flock.wirespec.kotlin.Wirespec
-import community.flock.wirespec.kotlin.serde.DefaultQueryParamSerde
+import community.flock.wirespec.kotlin.serde.DefaultParamSerde
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.request
@@ -23,7 +23,7 @@ class WirespecClient(private val httpClient: HttpClient = HttpClient()) {
                 path(*request.path.toTypedArray())
             }
             headers {
-                request.headers.forEach { (t, u) -> appendAll(t, listOf(u)) }
+                request.headers.forEach { (name, values) -> appendAll(name, values) }
             }
         }
         response.run {
@@ -37,7 +37,7 @@ class WirespecClient(private val httpClient: HttpClient = HttpClient()) {
 }
 
 @Suppress("UNCHECKED_CAST")
-object Serialization : Wirespec.Serialization<String>, Wirespec.QueryParamSerialization by DefaultQueryParamSerde() {
+object Serialization : Wirespec.Serialization<String>, Wirespec.ParamSerialization by DefaultParamSerde() {
     override fun <T> serialize(t: T, kType: KType): String =
         Json.encodeToString(Json.serializersModule.serializer(kType), t)
 

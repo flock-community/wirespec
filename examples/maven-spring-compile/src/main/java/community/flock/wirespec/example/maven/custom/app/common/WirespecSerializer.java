@@ -53,7 +53,7 @@ public class WirespecSerializer implements Wirespec.Serialization<String> {
     }
 
     @Override
-    public <T> List<String> serializeQuery(T value, Type type) {
+    public <T> List<String> serializeParam(T value, Type type) {
         if (value == null) {
             return null;
         }
@@ -83,7 +83,7 @@ public class WirespecSerializer implements Wirespec.Serialization<String> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T deserializeQuery(List<String> values, Type type) {
+    public <T> T deserializeParam(List<String> values, Type type) {
         if (values == null || values.isEmpty()) {
             return null;
         }

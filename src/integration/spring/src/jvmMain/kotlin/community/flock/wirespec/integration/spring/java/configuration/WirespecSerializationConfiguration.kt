@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import community.flock.wirespec.integration.jackson.java.WirespecModuleJava
 import community.flock.wirespec.integration.spring.java.web.WirespecResponseBodyAdvice
 import community.flock.wirespec.java.Wirespec
-import community.flock.wirespec.java.serde.DefaultQueryParamSerde
+import community.flock.wirespec.java.serde.DefaultParamSerde
 import java.lang.reflect.Type
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -15,11 +15,12 @@ import org.springframework.context.annotation.Import
 open class WirespecSerializationConfiguration {
 
     @Bean
-    open fun queryParamSerde(): DefaultQueryParamSerde = DefaultQueryParamSerde()
+    open fun queryParamSerde(): DefaultParamSerde =
+        DefaultParamSerde()
 
     @Bean
-    open fun wirespecSerialization(objectMapper: ObjectMapper, queryParamSerde: DefaultQueryParamSerde) =
-        object : Wirespec.Serialization<String> by queryParamSerde {
+    open fun wirespecSerialization(objectMapper: ObjectMapper, paramSerde: DefaultParamSerde): Wirespec.Serialization<String> =
+        object : Wirespec.Serialization<String>, Wirespec.ParamSerialization by paramSerde {
             private val wirespecObjectMapper = objectMapper.copy().registerModule(WirespecModuleJava())
 
             override fun <T> serialize(body: T, type: Type?): String = when {

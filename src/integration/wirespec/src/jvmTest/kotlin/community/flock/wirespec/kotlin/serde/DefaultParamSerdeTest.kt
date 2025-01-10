@@ -5,17 +5,17 @@ import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 import kotlin.test.*
 
-class DefaultQueryParamSerdeTest {
+class DefaultParamSerdeTest {
 
-    private val serde = DefaultQueryParamSerde()
+    private val serde = DefaultParamSerde()
 
     @Test
     fun `should serialize primitive types correctly`() {
         primitiveTestCases().forEach { testCase ->
             assertEquals(
                 testCase.expected,
-                serde.serializeQuery(testCase.value, testCase.type),
-                "Failed to serialize ${testCase.name}: expected ${testCase.expected}, but got ${serde.serializeQuery(testCase.value, testCase.type)}"
+                serde.serializeParam(testCase.value, testCase.type),
+                "Failed to serialize ${testCase.name}: expected ${testCase.expected}, but got ${serde.serializeParam(testCase.value, testCase.type)}"
             )
         }
     }
@@ -25,7 +25,7 @@ class DefaultQueryParamSerdeTest {
         val colors = listOf("red", "blue", "green")
         assertEquals(
             listOf("red", "blue", "green"),
-            serde.serializeQuery(colors, typeOf<List<String>>())
+            serde.serializeParam(colors, typeOf<List<String>>())
         )
     }
 
@@ -33,12 +33,12 @@ class DefaultQueryParamSerdeTest {
     fun `should serialize single Wirespec Enum correctly`() {
         assertEquals(
             listOf("active"),
-            serde.serializeQuery(StatusEnum.ACTIVE, typeOf<StatusEnum>())
+            serde.serializeParam(StatusEnum.ACTIVE, typeOf<StatusEnum>())
         )
 
         assertEquals(
             listOf("pending"),
-            serde.serializeQuery(StatusEnum.PENDING, typeOf<StatusEnum>())
+            serde.serializeParam(StatusEnum.PENDING, typeOf<StatusEnum>())
         )
     }
 
@@ -47,7 +47,7 @@ class DefaultQueryParamSerdeTest {
         val statuses = listOf(StatusEnum.ACTIVE, StatusEnum.INACTIVE)
         assertEquals(
             listOf("active", "inactive"),
-            serde.serializeQuery(statuses, typeOf<List<StatusEnum>>())
+            serde.serializeParam(statuses, typeOf<List<StatusEnum>>())
         )
     }
 
@@ -56,7 +56,7 @@ class DefaultQueryParamSerdeTest {
         primitiveTestCases().forEach { testCase ->
             assertEquals(
                 testCase.value,
-                serde.deserializeQuery(testCase.expected, testCase.type),
+                serde.deserializeParam(testCase.expected, testCase.type),
                 "Failed to deserialize ${testCase.name}: expected ${testCase.value}"
             )
         }
@@ -64,7 +64,7 @@ class DefaultQueryParamSerdeTest {
 
     @Test
     fun `should deserialize array of primitives correctly`() {
-        val result = serde.deserializeQuery<List<String>>(
+        val result = serde.deserializeParam<List<String>>(
             listOf("red", "blue", "green"),
             typeOf<List<String>>()
         )
@@ -73,7 +73,7 @@ class DefaultQueryParamSerdeTest {
 
     @Test
     fun `should deserialize single Wirespec Enum correctly`() {
-        val result = serde.deserializeQuery<StatusEnum>(
+        val result = serde.deserializeParam<StatusEnum>(
             listOf("active"),
             typeOf<StatusEnum>()
         )
@@ -82,7 +82,7 @@ class DefaultQueryParamSerdeTest {
 
     @Test
     fun `should deserialize array of Wirespec Enum correctly`() {
-        val result = serde.deserializeQuery<List<StatusEnum>>(
+        val result = serde.deserializeParam<List<StatusEnum>>(
             listOf("active", "inactive"),
             typeOf<List<StatusEnum>>()
         )
@@ -92,7 +92,7 @@ class DefaultQueryParamSerdeTest {
     @Test
     fun `should throw exception when deserializing missing primitive value`() {
         assertFailsWith<IllegalArgumentException> {
-            serde.deserializeQuery<String>(
+            serde.deserializeParam<String>(
                 emptyList(),
                 typeOf<String>()
             )
@@ -102,7 +102,7 @@ class DefaultQueryParamSerdeTest {
     @Test
     fun `should throw exception when deserializing invalid enum value`() {
         assertFailsWith<IllegalArgumentException> {
-            serde.deserializeQuery<StatusEnum>(
+            serde.deserializeParam<StatusEnum>(
                 listOf("invalid"),
                 typeOf<StatusEnum>()
             )

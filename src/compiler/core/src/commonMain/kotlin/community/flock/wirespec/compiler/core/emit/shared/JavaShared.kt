@@ -43,13 +43,13 @@ data object JavaShared : Shared {
         |${Spacer}enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
         |${Spacer}interface Request<T> { Path getPath(); Method getMethod(); Queries getQueries(); Headers getHeaders(); T getBody(); interface Headers extends Wirespec.Headers {} }
         |${Spacer}interface Response<T> { int getStatus(); Headers getHeaders(); T getBody(); interface Headers extends Wirespec.Headers {} }
-        |${Spacer}interface QueryParamSerialization extends QueryParamSerializer, QueryParamDeserializer {}
-        |${Spacer}interface Serialization<RAW> extends Serializer<RAW>, Deserializer<RAW>, QueryParamSerialization {}
-        |${Spacer}interface QueryParamSerializer { <T> List<String> serializeQuery(T value, Type type); }
-        |${Spacer}interface Serializer<RAW> extends QueryParamSerializer { <T> RAW serialize(T t, Type type); }
-        |${Spacer}interface QueryParamDeserializer { <T> T deserializeQuery(List<String> values, Type type); }
-        |${Spacer}interface Deserializer<RAW> extends QueryParamDeserializer { <T> T deserialize(RAW raw, Type type); }
-        |${Spacer}record RawRequest(String method, List<String> path, Map<String, List<String>> queries, Map<String, String> headers, String body) {} 
+        |${Spacer}interface ParamSerialization extends ParamSerializer, ParamDeserializer {}
+        |${Spacer}interface Serialization<RAW> extends Serializer<RAW>, Deserializer<RAW>, ParamSerialization {}
+        |${Spacer}interface ParamSerializer { <T> List<String> serializeParam(T value, Type type); }
+        |${Spacer}interface Serializer<RAW> extends ParamSerializer { <T> RAW serialize(T t, Type type); }
+        |${Spacer}interface ParamDeserializer { <T> T deserializeParam(List<String> values, Type type); }
+        |${Spacer}interface Deserializer<RAW> extends ParamDeserializer { <T> T deserialize(RAW raw, Type type); }
+        |${Spacer}record RawRequest(String method, List<String> path, Map<String, List<String>> queries, Map<String, List<String>> headers, String body) {} 
         |${Spacer}record RawResponse(int statusCode, Map<String, String> headers, String body) {}
         |${Spacer}static Type getType(final Class<?> type, final boolean isIterable) {
         |${Spacer(2)}if(isIterable) {
