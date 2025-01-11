@@ -16,12 +16,20 @@ import kotlin.reflect.javaType
  */
 @Component
 @OptIn(ExperimentalStdlibApi::class)
-class Serialization(private val objectMapper: ObjectMapper)
-    : Wirespec.Serialization<String>, Wirespec.ParamSerialization by DefaultParamSerialization() {
+class Serialization(private val objectMapper: ObjectMapper) :
+    Wirespec.Serialization<String> {
+
+    private val defaultParamSerialization = DefaultParamSerialization()
 
     override fun <T> serialize(t: T, kType: KType): String = objectMapper.writeValueAsString(t)
 
     override fun <T> deserialize(raw: String, kType: KType): T = objectMapper
         .constructType(kType.javaType)
         .let { objectMapper.readValue(raw, it) }
+
+    override fun <T> serializeParam(value: T, kType: KType): List<String> =
+        defaultParamSerialization.serializeParam(value, kType)
+
+    override fun <T> deserializeParam(values: List<String>, kType: KType): T =
+        defaultParamSerialization.deserializeParam(values, kType)
 }
