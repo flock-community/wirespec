@@ -8,7 +8,6 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Component
-import org.springframework.util.CollectionUtils.toMultiValueMap
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.exchange
 

@@ -5,9 +5,9 @@ import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 import kotlin.test.*
 
-class DefaultParamSerdeTest {
+class DefaultParamSerializationTest {
 
-    private val serde = DefaultParamSerde()
+    private val serde = DefaultParamSerialization()
 
     @Test
     fun `should serialize primitive types correctly`() {
