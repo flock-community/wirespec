@@ -4,7 +4,7 @@ import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 
-class DefaultParamSerde : Wirespec.ParamSerialization {
+class DefaultParamSerialization : Wirespec.ParamSerialization {
 
     private val primitiveTypesConversion = mapOf<KClass<*>, (String) -> Any>(
         String::class to { this },

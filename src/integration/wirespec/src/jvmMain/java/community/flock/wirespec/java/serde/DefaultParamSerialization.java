@@ -4,28 +4,32 @@ import community.flock.wirespec.java.Wirespec;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.Map;
+import java.util.List;
+import java.util.Collections;
+import java.util.Arrays;
 import java.util.function.Function;
 
-public class DefaultParamSerde implements Wirespec.ParamSerialization {
+public interface DefaultParamSerialization extends Wirespec.ParamSerialization {
 
-  private final Map<Class<?>, Function<String, Object>> primitiveTypesConversion;
-
-  public DefaultParamSerde() {
-    primitiveTypesConversion = new HashMap<>();
-    primitiveTypesConversion.put(String.class, s -> s);
-    primitiveTypesConversion.put(Integer.class, Integer::parseInt);
-    primitiveTypesConversion.put(Long.class, Long::parseLong);
-    primitiveTypesConversion.put(Double.class, Double::parseDouble);
-    primitiveTypesConversion.put(Float.class, Float::parseFloat);
-    primitiveTypesConversion.put(Boolean.class, Boolean::parseBoolean);
-    primitiveTypesConversion.put(Character.class, s -> s.charAt(0));
-    primitiveTypesConversion.put(Byte.class, Byte::parseByte);
-    primitiveTypesConversion.put(Short.class, Short::parseShort);
+  static DefaultParamSerialization create() {
+    return new DefaultParamSerialization() {};
   }
 
+  Map<Class<?>, Function<String, Object>> PRIMITIVE_TYPES_CONVERSION = Map.of(
+      String.class, s -> s,
+      Integer.class, Integer::parseInt,
+      Long.class, Long::parseLong,
+      Double.class, Double::parseDouble,
+      Float.class, Float::parseFloat,
+      Boolean.class, Boolean::parseBoolean,
+      Character.class, s -> s.charAt(0),
+      Byte.class, Byte::parseByte,
+      Short.class, Short::parseShort
+  );
+
   @Override
-  public <T> List<String> serializeParam(T value, Type type) {
+  default <T> List<String> serializeParam(T value, Type type) {
     if (isList(type)) {
       return ((List<?>) value).stream()
           .map(Object::toString)
@@ -36,7 +40,7 @@ public class DefaultParamSerde implements Wirespec.ParamSerialization {
 
   @Override
   @SuppressWarnings("unchecked")
-  public <T> T deserializeParam(List<String> values, Type type) {
+  default <T> T deserializeParam(List<String> values, Type type) {
     if (isList(type)) {
       return (T) deserializeList(values, type);
     }
@@ -63,7 +67,7 @@ public class DefaultParamSerde implements Wirespec.ParamSerialization {
     String value = values.stream().findFirst()
         .orElseThrow(() -> new IllegalArgumentException("No value provided for type: " + clazz.getSimpleName()));
 
-    Function<String, Object> converter = primitiveTypesConversion.get(clazz);
+    Function<String, Object> converter = PRIMITIVE_TYPES_CONVERSION.get(clazz);
     if (converter == null) {
       throw new IllegalArgumentException("Unsupported primitive type: " + clazz.getSimpleName());
     }
@@ -71,7 +75,7 @@ public class DefaultParamSerde implements Wirespec.ParamSerialization {
   }
 
   private List<Object> deserializePrimitiveList(List<String> values, Class<?> elementClass) {
-    Function<String, Object> converter = primitiveTypesConversion.get(elementClass);
+    Function<String, Object> converter = PRIMITIVE_TYPES_CONVERSION.get(elementClass);
     if (converter == null) {
       throw new IllegalArgumentException("Unsupported list element type: " + elementClass.getSimpleName());
     }

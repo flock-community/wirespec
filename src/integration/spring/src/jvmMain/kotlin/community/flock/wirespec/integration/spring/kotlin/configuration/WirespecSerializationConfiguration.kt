@@ -5,7 +5,7 @@ import community.flock.wirespec.integration.jackson.kotlin.WirespecModuleKotlin
 import community.flock.wirespec.integration.spring.kotlin.web.WirespecResponseBodyAdvice
 import community.flock.wirespec.kotlin.Wirespec
 import community.flock.wirespec.kotlin.Wirespec.ParamSerialization
-import community.flock.wirespec.kotlin.serde.DefaultParamSerde
+import community.flock.wirespec.kotlin.serde.DefaultParamSerialization
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
@@ -18,7 +18,7 @@ import kotlin.reflect.javaType
 open class WirespecSerializationConfiguration {
 
     @Bean
-    open fun queryParamSerde(): ParamSerialization = DefaultParamSerde()
+    open fun queryParamSerde(): ParamSerialization = DefaultParamSerialization()
 
     @Bean
     open fun wirespecSerialization(
