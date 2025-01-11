@@ -18,6 +18,7 @@ ktor_test_server_tests_jvm = { module = "io.ktor:ktor-server-tests-jvm", version
 jackson = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 wirespec_compiler = { module = "community.flock.wirespec.compiler:core-jvm", version.ref = "default" }
+wirespec_integration = { module = "community.flock.wirespec.integration:wirespec-jvm", version.ref = "default" }
 
 [bundles]
 ktor = ["ktor_server_core", "ktor_server_netty", "ktor_server_content_negotiation", "ktor_client", "ktor_serialization_kotlinx_json"]

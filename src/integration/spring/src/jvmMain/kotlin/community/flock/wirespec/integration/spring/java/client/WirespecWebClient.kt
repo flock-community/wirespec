@@ -42,7 +42,7 @@ class WirespecWebClient(
                 .build()
         }
         .headers { headers ->
-            request.headers.forEach { (key, value) -> headers.add(key, value) }
+            request.headers.forEach { (key, value) -> headers.addAll(key, value) }
         }
         .bodyValue(request.body)
         .exchangeToMono { response ->

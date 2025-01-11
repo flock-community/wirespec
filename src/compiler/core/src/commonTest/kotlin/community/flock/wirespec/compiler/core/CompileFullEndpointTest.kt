@@ -72,16 +72,16 @@ class CompileFullEndpointTest {
             |    Wirespec.RawRequest(
             |      path = listOf("todos", request.path.id.let{serialization.serialize(it, typeOf<String>())}),
             |      method = request.method.name,
-            |      queries = listOf(request.queries.done?.let{"done" to serialization.serialize(it, typeOf<Boolean>())}).filterNotNull().toMap(),
-            |      headers = listOf(request.headers.token?.let{"token" to serialization.serialize(it, typeOf<Token>())}).filterNotNull().toMap(),
+            |      queries = (mapOf("done" to (request.queries.done?.let{ serialization.serializeParam(it, typeOf<Boolean>()) } ?: emptyList()))),
+            |      headers = (mapOf("token" to (request.headers.token?.let{ serialization.serializeParam(it, typeOf<Token>()) } ?: emptyList()))),
             |      body = serialization.serialize(request.body, typeOf<PotentialTodoDto>()),
             |    )
             |
             |  fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
             |    Request(
             |      id = serialization.deserialize(request.path[1], typeOf<String>()),
-            |      done = serialization.deserialize(requireNotNull(request.queries["done"]) { "done is null" }, typeOf<Boolean>()),
-            |      token = serialization.deserialize(requireNotNull(request.headers["token"]) { "token is null" }, typeOf<Token>()),
+            |      done = serialization.deserializeParam(requireNotNull(request.queries["done"]) { "done is null" }, typeOf<Boolean>()),
+            |      token = serialization.deserializeParam(requireNotNull(request.headers["token"]) { "token is null" }, typeOf<Token>()),
             |      body = serialization.deserialize(requireNotNull(request.body) { "body is null" }, typeOf<PotentialTodoDto>()),
             |    )
             |
@@ -237,8 +237,8 @@ class CompileFullEndpointTest {
             |      return new Wirespec.RawRequest(
             |        request.method.name(),
             |        java.util.List.of("todos", serialization.serialize(request.path.id, Wirespec.getType(String.class, false))),
-            |        java.util.Map.ofEntries(java.util.Map.entry("done", serialization.serialize(request.queries.done, Wirespec.getType(Boolean.class, false)))),
-            |        java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serialize(request.headers.token, Wirespec.getType(Token.class, false)))),
+            |        java.util.Map.ofEntries(java.util.Map.entry("done", serialization.serializeParam(request.queries.done, Wirespec.getType(Boolean.class, false)))),
+            |        java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serializeParam(request.headers.token, Wirespec.getType(Token.class, false)))),
             |        serialization.serialize(request.getBody(), Wirespec.getType(PotentialTodoDto.class, false))
             |      );
             |    }
@@ -246,8 +246,8 @@ class CompileFullEndpointTest {
             |    static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
             |      return new Request(
             |        serialization.<String>deserialize(request.path().get(1), Wirespec.getType(String.class, false)),
-            |        java.util.Optional.ofNullable(request.queries().get("done")).map(it -> serialization.<Boolean>deserialize(it, Wirespec.getType(Boolean.class, false))).get(),
-            |        java.util.Optional.ofNullable(request.headers().get("token")).map(it -> serialization.<Token>deserialize(it, Wirespec.getType(Token.class, false))).get(),
+            |        java.util.Optional.ofNullable(request.queries().get("done")).map(it -> serialization.<Boolean>deserializeParam(it, Wirespec.getType(Boolean.class, false))).get(),
+            |        java.util.Optional.ofNullable(request.headers().get("token")).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, false))).get(),
             |        serialization.deserialize(request.body(), Wirespec.getType(PotentialTodoDto.class, false))
             |      );
             |    }

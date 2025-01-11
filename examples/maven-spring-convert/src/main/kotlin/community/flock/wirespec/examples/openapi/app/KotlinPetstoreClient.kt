@@ -8,7 +8,6 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Component
-import org.springframework.util.CollectionUtils.toMultiValueMap
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.exchange
 
@@ -36,7 +35,7 @@ class LiveKotlinPetstoreClient(
                 HttpMethod.valueOf(request.method),
                 URI("https://6467e16be99f0ba0a819fd68.mockapi.io${request.path}"),
             )
-            .headers(HttpHeaders(toMultiValueMap(request.headers.mapValues { listOf(it.value) })))
+            .headers(HttpHeaders().apply { putAll(request.headers) })
             .body(request.body ?: Unit)
             .let { client.exchange<String>(it) }
             .run { Wirespec.RawResponse(statusCode = statusCode.value(), headers = headers.toSingleValueMap(), body = body) }
