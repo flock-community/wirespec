@@ -2,7 +2,6 @@ package community.flock.wirespec.compiler.core.tokenize
 
 import community.flock.wirespec.compiler.core.Value
 import community.flock.wirespec.compiler.core.tokenize.Token.Coordinates.IdxAndLength
-import community.flock.wirespec.compiler.core.tokenize.types.TokenType
 
 data class Token(
     override val value: String,

@@ -3,7 +3,7 @@
 package community.flock.wirespec.compiler.lib
 
 import community.flock.wirespec.compiler.core.tokenize.Token
-import community.flock.wirespec.compiler.core.tokenize.types.name
+import community.flock.wirespec.compiler.core.tokenize.name
 
 fun Token.produce() = WsToken(
     type = type.name(),

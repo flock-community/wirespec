@@ -1,23 +1,6 @@
 package community.flock.wirespec.compiler.core.tokenize
 
-import community.flock.wirespec.compiler.core.tokenize.types.Arrow
-import community.flock.wirespec.compiler.core.tokenize.types.Brackets
-import community.flock.wirespec.compiler.core.tokenize.types.Colon
-import community.flock.wirespec.compiler.core.tokenize.types.Comma
-import community.flock.wirespec.compiler.core.tokenize.types.CustomType
-import community.flock.wirespec.compiler.core.tokenize.types.CustomValue
-import community.flock.wirespec.compiler.core.tokenize.types.EndOfProgram
-import community.flock.wirespec.compiler.core.tokenize.types.ForwardSlash
-import community.flock.wirespec.compiler.core.tokenize.types.Hash
-import community.flock.wirespec.compiler.core.tokenize.types.Character
-import community.flock.wirespec.compiler.core.tokenize.types.LeftCurly
-import community.flock.wirespec.compiler.core.tokenize.types.Method
-import community.flock.wirespec.compiler.core.tokenize.types.Path
-import community.flock.wirespec.compiler.core.tokenize.types.QuestionMark
-import community.flock.wirespec.compiler.core.tokenize.types.RightCurly
-import community.flock.wirespec.compiler.core.tokenize.types.StatusCode
-import community.flock.wirespec.compiler.core.tokenize.types.WsEndpointDef
-import community.flock.wirespec.compiler.core.tokenize.types.WsString
+import community.flock.wirespec.compiler.core.WsCustomType
 import kotlin.test.Test
 
 class TokenizeEndpointTest {
@@ -40,8 +23,8 @@ class TokenizeEndpointTest {
             |    404 -> Error
             |}
         """.trimMargin(),
-        WsEndpointDef, CustomType, Method, Path, ForwardSlash, LeftCurly, CustomValue, Colon, WsString,
-        RightCurly, Arrow, LeftCurly, StatusCode, Arrow, CustomType, Brackets, StatusCode, Arrow, CustomType,
+        EndpointDefinition, WsCustomType, Method, Path, ForwardSlash, LeftCurly, CustomValue, Colon, WsString,
+        RightCurly, Arrow, LeftCurly, StatusCode, Arrow, WsCustomType, Brackets, StatusCode, Arrow, WsCustomType,
         RightCurly, EndOfProgram,
     )
 
@@ -52,8 +35,8 @@ class TokenizeEndpointTest {
             |    200 -> Todo
             |}
         """.trimMargin(),
-        WsEndpointDef, CustomType, CustomType, Method, Path, Arrow, LeftCurly,
-        StatusCode, Arrow, CustomType, RightCurly, EndOfProgram,
+        EndpointDefinition, WsCustomType, WsCustomType, Method, Path, Arrow, LeftCurly,
+        StatusCode, Arrow, WsCustomType, RightCurly, EndOfProgram,
     )
 
     @Test
@@ -64,9 +47,9 @@ class TokenizeEndpointTest {
             |    200 -> Todo[]
             |}
         """.trimMargin(),
-        WsEndpointDef, CustomType, Method, Path, QuestionMark, LeftCurly, CustomValue, Colon,
+        EndpointDefinition, WsCustomType, Method, Path, QuestionMark, LeftCurly, CustomValue, Colon,
         WsString, Comma, CustomValue, Colon, WsString, RightCurly, Arrow, LeftCurly,
-        StatusCode, Arrow, CustomType, Brackets, RightCurly, EndOfProgram,
+        StatusCode, Arrow, WsCustomType, Brackets, RightCurly, EndOfProgram,
     )
 
     @Test
@@ -77,8 +60,8 @@ class TokenizeEndpointTest {
             |    200 -> Todo[]
             |}
         """.trimMargin(),
-        WsEndpointDef, CustomType, Method, Path, Hash, LeftCurly, CustomValue, Colon,
+        EndpointDefinition, WsCustomType, Method, Path, Hash, LeftCurly, CustomValue, Colon,
         WsString, Comma, CustomValue, Colon, WsString, RightCurly, Arrow, LeftCurly,
-        StatusCode, Arrow, CustomType, Brackets, RightCurly, EndOfProgram,
+        StatusCode, Arrow, WsCustomType, Brackets, RightCurly, EndOfProgram,
     )
 }

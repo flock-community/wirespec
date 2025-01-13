@@ -7,15 +7,15 @@ import arrow.core.nel
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
+import community.flock.wirespec.compiler.core.tokenize.ChannelDefinition
+import community.flock.wirespec.compiler.core.tokenize.Comment
+import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
+import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
+import community.flock.wirespec.compiler.core.tokenize.Precision
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.Tokens
-import community.flock.wirespec.compiler.core.tokenize.removeWhiteSpace
-import community.flock.wirespec.compiler.core.tokenize.types.WirespecDefinition
-import community.flock.wirespec.compiler.core.tokenize.types.WsChannelDef
-import community.flock.wirespec.compiler.core.tokenize.types.WsComment
-import community.flock.wirespec.compiler.core.tokenize.types.WsEndpointDef
-import community.flock.wirespec.compiler.core.tokenize.types.WsEnumTypeDef
-import community.flock.wirespec.compiler.core.tokenize.types.WsTypeDef
+import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
+import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
 import community.flock.wirespec.compiler.utils.Logger
 
 typealias AST = List<Node>
@@ -32,7 +32,6 @@ class Parser(logger: Logger) : AbstractParser(logger) {
     private val channelParser = ChannelParser(logger)
 
     fun parse(tokens: Tokens): Either<NonEmptyList<WirespecException>, AST> = tokens
-        .removeWhiteSpace()
         .toProvider(logger)
         .parse()
 
@@ -45,18 +44,23 @@ class Parser(logger: Logger) : AbstractParser(logger) {
     private fun TokenProvider.parseDefinition() = either {
         token.log()
         val comment = when (token.type) {
-            is WsComment -> Comment(token.value).also { eatToken().bind() }
+            is Comment -> Comment(token.value).also { eatToken().bind() }
             else -> null
         }
         when (token.type) {
             is WirespecDefinition -> when (token.type as WirespecDefinition) {
-                is WsTypeDef -> with(typeParser) { parseType(comment) }.bind()
-                is WsEnumTypeDef -> with(enumParser) { parseEnum(comment) }.bind()
-                is WsEndpointDef -> with(endpointParser) { parseEndpoint(comment) }.bind()
-                is WsChannelDef -> with(channelParser) { parseChannel(comment) }.bind()
+                is TypeDefinition -> with(typeParser) { parseType(comment) }.bind()
+                is EnumTypeDefinition -> with(enumParser) { parseEnum(comment) }.bind()
+                is EndpointDefinition -> with(endpointParser) { parseEndpoint(comment) }.bind()
+                is ChannelDefinition -> with(channelParser) { parseChannel(comment) }.bind()
             }
 
             else -> raise(WrongTokenException<WirespecDefinition>(token).also { eatToken().bind() })
         }
     }
+}
+
+fun Precision.toPrimitivePrecision() = when (this) {
+    Precision.P32 -> Reference.Primitive.Type.Precision.P32
+    Precision.P64 -> Reference.Primitive.Type.Precision.P64
 }

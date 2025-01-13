@@ -12,7 +12,7 @@ class CompileEnumTest {
 
     private val compiler = """
         |enum MyAwesomeEnum {
-        |  ONE, Two, THREE_MORE
+        |  ONE, Two, THREE_MORE, UnitedKingdom
         |}
     """.trimMargin().let(::compile)
 
@@ -27,7 +27,8 @@ class CompileEnumTest {
             |enum class MyAwesomeEnum (override val label: String): Wirespec.Enum {
             |  ONE("ONE"),
             |  Two("Two"),
-            |  THREE_MORE("THREE_MORE");
+            |  THREE_MORE("THREE_MORE"),
+            |  UnitedKingdom("UnitedKingdom");
             |  override fun toString(): String {
             |    return label
             |  }
@@ -48,7 +49,8 @@ class CompileEnumTest {
             |public enum MyAwesomeEnum implements Wirespec.Enum {
             |  ONE("ONE"),
             |  Two("Two"),
-            |  THREE_MORE("THREE_MORE");
+            |  THREE_MORE("THREE_MORE"),
+            |  UnitedKingdom("UnitedKingdom");
             |  public final String label;
             |  MyAwesomeEnum(String label) {
             |    this.label = label;
@@ -80,6 +82,7 @@ class CompileEnumTest {
             |  final case object ONE extends MyAwesomeEnum(label = "ONE")
             |  final case object TWO extends MyAwesomeEnum(label = "Two")
             |  final case object THREE_MORE extends MyAwesomeEnum(label = "THREE_MORE")
+            |  final case object UNITEDKINGDOM extends MyAwesomeEnum(label = "UnitedKingdom")
             |}
             |
         """.trimMargin()
@@ -90,7 +93,7 @@ class CompileEnumTest {
     @Test
     fun typeScript() {
         val ts = """
-            |export type MyAwesomeEnum = "ONE" | "Two" | "THREE_MORE"
+            |export type MyAwesomeEnum = "ONE" | "Two" | "THREE_MORE" | "UnitedKingdom"
             |
         """.trimMargin()
 
@@ -101,7 +104,7 @@ class CompileEnumTest {
     fun wirespec() {
         val wirespec = """
             |enum MyAwesomeEnum {
-            |  ONE, Two, THREE_MORE
+            |  ONE, Two, THREE_MORE, UnitedKingdom
             |}
             |
         """.trimMargin()

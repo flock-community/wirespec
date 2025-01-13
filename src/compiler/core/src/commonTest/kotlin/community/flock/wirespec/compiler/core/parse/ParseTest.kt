@@ -1,7 +1,7 @@
 package community.flock.wirespec.compiler.core.parse
 
 import community.flock.wirespec.compiler.core.WirespecSpec
-import community.flock.wirespec.compiler.core.tokenize.tokenize
+import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
@@ -10,7 +10,7 @@ import kotlin.test.Test
 
 class ParseTest {
 
-    private fun parser() = Parser(noLogger)
+    private fun parser(source: String) = WirespecSpec.parse(source)(noLogger)
 
     @Test
     fun testParserWithCorrectInput() {
@@ -22,8 +22,7 @@ class ParseTest {
 
         """.trimMargin()
 
-        WirespecSpec.tokenize(source)
-            .let(parser()::parse)
+        parser(source)
             .shouldBeRight()
             .size shouldBe 1
     }
@@ -38,8 +37,7 @@ class ParseTest {
 
         """.trimMargin()
 
-        WirespecSpec.tokenize(source)
-            .let(parser()::parse)
+        parser(source)
             .shouldBeRight()
             .size shouldBe 1
     }
@@ -54,8 +52,7 @@ class ParseTest {
 
         """.trimMargin()
 
-        WirespecSpec.tokenize(source)
-            .let(parser()::parse)
+        parser(source)
             .shouldBeLeft()
             .also { it.size shouldBe 1 }
             .first()
@@ -75,8 +72,7 @@ class ParseTest {
 
         """.trimMargin()
 
-        WirespecSpec.tokenize(source)
-            .let(parser()::parse)
+        parser(source)
             .shouldBeRight()
             .size shouldBe 1
     }
@@ -99,8 +95,7 @@ class ParseTest {
             |}
         """.trimMargin()
 
-        WirespecSpec.tokenize(source)
-            .let(parser()::parse)
+        parser(source)
             .shouldBeRight().filterIsInstance<Definition>().map { it.comment?.value } shouldBe listOf(
             "This is comment 1",
             "This is comment 2",
