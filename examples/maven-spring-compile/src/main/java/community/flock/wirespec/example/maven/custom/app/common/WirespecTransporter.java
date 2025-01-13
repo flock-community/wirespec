@@ -2,6 +2,7 @@ package community.flock.wirespec.example.maven.custom.app.common;
 
 import community.flock.wirespec.java.Wirespec.RawRequest;
 import community.flock.wirespec.java.Wirespec.RawResponse;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.RequestEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -26,17 +27,14 @@ public class WirespecTransporter {
     }
 
     public CompletableFuture<RawResponse> transport(RawRequest request) {
-        final var headers = request.headers().entrySet()
-                .stream()
-                .map(it -> Map.entry(it.getKey(), List.of(it.getValue())))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        final var headers = new HttpHeaders();
+        headers.putAll(request.headers());
 
-        final var req = new RequestEntity<>(
-                request.body(),
-                toMultiValueMap(headers),
-                valueOf(request.method()),
-                create(request.path().stream().reduce((acc, cur) -> acc + "/" + cur).orElse(""))
-        );
+        final var req = RequestEntity
+            .method(valueOf(request.method()), create(request.path().stream().reduce((acc, cur) -> acc + "/" + cur).orElse("")))
+            .headers(headers)
+            .body(request.body());
+
         final var res = restTemplate.exchange(req, String.class);
         return completedFuture(new RawResponse(
                 res.getStatusCode().value(),

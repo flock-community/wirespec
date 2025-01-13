@@ -1,6 +1,7 @@
 package community.flock.wirespec.example.maven.custom.app.common
 
 import community.flock.wirespec.kotlin.Wirespec
+import community.flock.wirespec.kotlin.serde.DefaultParamSerialization
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.request
@@ -22,7 +23,7 @@ class WirespecClient(private val httpClient: HttpClient = HttpClient()) {
                 path(*request.path.toTypedArray())
             }
             headers {
-                request.headers.forEach { (t, u) -> appendAll(t, listOf(u)) }
+                request.headers.forEach { (name, values) -> appendAll(name, values) }
             }
         }
         response.run {
@@ -35,8 +36,15 @@ class WirespecClient(private val httpClient: HttpClient = HttpClient()) {
     }
 }
 
+/**
+ * Example implementation of Wirespec Serialization using DefaultParamSerialization
+ * This class handles standard parameter serialization for headers and query parameters.
+ * For custom serialization requirements, you can create your own implementation
+ * of Wirespec.ParamSerialization instead of using DefaultParamSerialization.
+ * In this case, you don't need the dependency on community.flock.wirespec.integration:wirespec
+ */
 @Suppress("UNCHECKED_CAST")
-object Serialization : Wirespec.Serialization<String> {
+object Serialization : Wirespec.Serialization<String>, Wirespec.ParamSerialization by DefaultParamSerialization() {
     override fun <T> serialize(t: T, kType: KType): String =
         Json.encodeToString(Json.serializersModule.serializer(kType), t)
 
