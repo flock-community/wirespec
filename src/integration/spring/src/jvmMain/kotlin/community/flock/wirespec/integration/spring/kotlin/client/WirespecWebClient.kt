@@ -1,5 +1,6 @@
 package community.flock.wirespec.integration.spring.kotlin.client
 
+import community.flock.wirespec.integration.spring.shared.filterNotEmpty
 import community.flock.wirespec.kotlin.Wirespec
 import community.flock.wirespec.kotlin.Wirespec.Serialization
 import kotlinx.coroutines.reactor.awaitSingle
@@ -30,11 +31,11 @@ class WirespecWebClient(
         .uri { uriBuilder ->
             uriBuilder
                 .path(request.path.joinToString("/"))
-                .apply { request.queries.forEach { (key, value) -> queryParam(key, value) } }
+                .apply { request.queries.filterNotEmpty().forEach { (key, value) -> queryParam(key, value) } }
                 .build()
         }
         .headers { headers ->
-            request.headers.forEach { (key, value) -> headers.addAll(key, value) }
+            request.headers.filterNotEmpty().forEach { (key, value) -> headers.addAll(key, value) }
         }
         .bodyValue(request.body)
         .exchangeToMono { response ->
