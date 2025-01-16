@@ -18,7 +18,7 @@ class AvroJavaEmitterTest {
     fun emitTypeFunctionBodyTest() {
         val type = Type(
             comment = null,
-            identifier = DefinitionIdentifier("identifier"),
+            identifier = DefinitionIdentifier("Identifier"),
             shape = Type.Shape(
                 listOf(
                     Field(FieldIdentifier("name"), Reference.Primitive(Reference.Primitive.Type.String), false)
@@ -37,7 +37,7 @@ class AvroJavaEmitterTest {
             |  public static class Avro {
             |    
             |    public static final org.apache.avro.Schema SCHEMA = 
-            |      new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"identifier\",\"namespace\":\"packageName\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"}]}");
+            |      new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Identifier\",\"namespace\":\"packageName\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"}]}");
             |
             |    public static Identifier from(org.apache.avro.generic.GenericData.Record record) {
             |       return new Identifier(

@@ -18,7 +18,7 @@ class AvroKotlinEmitterTest {
     fun emitTypeFunctionBodyTest() {
         val type = Type(
             comment = null,
-            identifier = DefinitionIdentifier("identifier"),
+            identifier = DefinitionIdentifier("Identifier"),
             shape = Type.Shape(
                 listOf(
                     Field(FieldIdentifier("name"), Reference.Primitive(Reference.Primitive.Type.String), false)
@@ -37,7 +37,7 @@ class AvroKotlinEmitterTest {
             |{
             |  class Avro {
             |    companion object {
-            |      val SCHEMA = org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"identifier\",\"namespace\":\"packageName\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"}]}");
+            |      val SCHEMA = org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Identifier\",\"namespace\":\"packageName\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"}]}");
             |
             |      @JvmStatic
             |      fun from(record: org.apache.avro.generic.GenericData.Record): Identifier {
