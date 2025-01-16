@@ -63,7 +63,7 @@ class AvroJavaEmitterTest {
     fun emitEnumFunctionBodyTest() {
         val enum = Enum(
             comment = null,
-            identifier = DefinitionIdentifier("identifier"),
+            identifier = DefinitionIdentifier("Identifier"),
             entries = setOf("ONE", "TWO", "THREE")
         )
         val ast = listOf(enum)
@@ -91,7 +91,7 @@ class AvroJavaEmitterTest {
             |  public static class Avro {
             |
             |    public static final org.apache.avro.Schema SCHEMA = 
-            |      new org.apache.avro.Schema.Parser().parse("{\"type\":\"enum\",\"name\":\"identifier\",\"symbols\":[\"ONE\",\"TWO\",\"THREE\"]}");
+            |      new org.apache.avro.Schema.Parser().parse("{\"type\":\"enum\",\"name\":\"Identifier\",\"symbols\":[\"ONE\",\"TWO\",\"THREE\"]}");
             |    
             |    public static Identifier from(org.apache.avro.generic.GenericData.EnumSymbol record) {
             |      return Identifier.valueOf(record.toString());

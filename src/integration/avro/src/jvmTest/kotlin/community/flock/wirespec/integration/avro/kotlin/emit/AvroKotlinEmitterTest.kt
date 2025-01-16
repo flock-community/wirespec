@@ -67,7 +67,7 @@ class AvroKotlinEmitterTest {
     fun emitEnumFunctionBodyTest() {
         val enum = Enum(
             comment = null,
-            identifier = DefinitionIdentifier("identifier"),
+            identifier = DefinitionIdentifier("Identifier"),
             entries = setOf("ONE", "TWO", "THREE")
         )
         val ast = listOf(enum)
@@ -87,7 +87,7 @@ class AvroKotlinEmitterTest {
             |  class Avro {
             |    companion object {
             |
-            |       val SCHEMA: org.apache.avro.Schema = org.apache.avro.Schema.Parser().parse("{\"type\":\"enum\",\"name\":\"identifier\",\"symbols\":[\"ONE\",\"TWO\",\"THREE\"]}");
+            |       val SCHEMA: org.apache.avro.Schema = org.apache.avro.Schema.Parser().parse("{\"type\":\"enum\",\"name\":\"Identifier\",\"symbols\":[\"ONE\",\"TWO\",\"THREE\"]}");
             |
             |       @JvmStatic
             |       fun from(record: org.apache.avro.generic.GenericData.EnumSymbol): Identifier {
