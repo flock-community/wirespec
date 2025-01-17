@@ -39,7 +39,7 @@ abstract class Emitter(
             when (it) {
                 is Type -> Emitted(it.emitName(), emit(it, ast))
                 is Endpoint -> Emitted(it.emitName(), emit(it))
-                is Enum -> Emitted(it.emitName(), emit(it))
+                is Enum -> Emitted(it.emitName(), emit(it, ast))
                 is Refined -> Emitted(it.emitName(), emit(it))
                 is Union -> Emitted(it.emitName(), emit(it))
                 is Channel -> Emitted(it.emitName(), emit(it))

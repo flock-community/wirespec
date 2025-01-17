@@ -631,7 +631,7 @@ class OpenApiV3ParserTest {
                 identifier = DefinitionIdentifier("Todo_input"),
                 shape = Shape(
                     listOf(
-                        Field(FieldIdentifier("title"), Primitive(Primitive.Type.String, false), true),
+                        Field(FieldIdentifier("title"), Primitive(Primitive.Type.String,  false), true),
                         Field(FieldIdentifier("completed"), Primitive(Primitive.Type.Boolean, false), true)
                     )
                 ),
@@ -643,7 +643,7 @@ class OpenApiV3ParserTest {
                 shape = Shape(
                     listOf(
                         Field(FieldIdentifier("id"), Primitive(Primitive.Type.String, false), true),
-                        Field(FieldIdentifier("title"), Primitive(Primitive.Type.String, false), true),
+                        Field(FieldIdentifier("title"), Primitive(Primitive.Type.String,  false), true),
                         Field(FieldIdentifier("completed"), Primitive(Primitive.Type.Boolean, false), true),
                         Field(FieldIdentifier("alert"), Custom("TodoAlert", false), true),
                     )
@@ -655,7 +655,7 @@ class OpenApiV3ParserTest {
                 identifier = DefinitionIdentifier("TodoAlert"),
                 shape = Shape(
                     listOf(
-                        Field(FieldIdentifier("code"), Primitive(Primitive.Type.String, false), true),
+                        Field(FieldIdentifier("code"), Primitive(Primitive.Type.String,  false), true),
                         Field(FieldIdentifier("message"), Custom("TodoAlertMessage", false), true),
                     )
                 ),
@@ -690,7 +690,7 @@ class OpenApiV3ParserTest {
                 shape = Shape(
                     listOf(
                         Field(FieldIdentifier("code"), Primitive(Primitive.Type.String, false), true),
-                        Field(FieldIdentifier("message"), Primitive(Primitive.Type.String, false), true),
+                        Field(FieldIdentifier("message"), Primitive(Primitive.Type.String,false), true),
                     )
                 ),
                 extends = emptyList(),
