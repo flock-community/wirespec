@@ -13,13 +13,6 @@ import community.flock.wirespec.compiler.core.parse.Union
 
 object AvroEmitter {
 
-    fun AST.hasChannel(name: String) = filterIsInstance<Channel>()
-        .any{ it.identifier.value == name }
-
-
-    private fun AST.findType(name: String): Definition? = filterIsInstance<Definition>()
-        .find { it.identifier.value == name }
-
     fun Enum.emit(): AvroModel.EnumType =  AvroModel.EnumType(
         type = "enum",
         name = identifier.value,
@@ -107,4 +100,6 @@ object AvroEmitter {
                 else -> null
             } }
     }
+
+    private fun AST.findType(name: String): Definition? = filterIsInstance<Definition>().find { it.identifier.value == name }
 }

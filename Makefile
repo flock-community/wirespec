@@ -18,6 +18,9 @@ compile-types:
 example:
 	$(shell pwd)/scripts/example.sh
 
+fast:
+	./gradlew jvmTest
+
 image:
 	$(shell pwd)/scripts/image.sh
 

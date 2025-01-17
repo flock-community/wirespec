@@ -12,7 +12,7 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.integration.avro.Utils
 import community.flock.wirespec.integration.avro.Utils.isEnum
 
-class AvroKotlinEmitter(val packageName: String, logger: Logger) : KotlinEmitter(packageName, logger) {
+class AvroKotlinEmitter(private val packageName: String, logger: Logger) : KotlinEmitter(packageName, logger) {
 
     private fun emitAvroSchema(type: Definition, ast: AST) = Utils.emitAvroSchema(packageName, type, ast)
         ?.replace("\\\"<<<<<", "\" + ")
@@ -31,7 +31,7 @@ class AvroKotlinEmitter(val packageName: String, logger: Logger) : KotlinEmitter
             |
         """.trimMargin()
 
-    fun emitAvro(type: Type, ast: AST) = """
+    private fun emitAvro(type: Type, ast: AST) = """
         |  class Avro {
         |    companion object {
         |      val SCHEMA = org.apache.avro.Schema.Parser().parse("${emitAvroSchema(type, ast)}");
@@ -46,7 +46,7 @@ class AvroKotlinEmitter(val packageName: String, logger: Logger) : KotlinEmitter
         |      @JvmStatic
         |      fun to(model: ${type.emitName()} ): org.apache.avro.generic.GenericData.Record {
         |        val record = org.apache.avro.generic.GenericData.Record(SCHEMA);
-        |        ${type.shape.value.mapIndexed(emitTo(ast)).joinToString("\n${Spacer(4)}")}
+        |        ${type.shape.value.mapIndexed(emitTo).joinToString("\n${Spacer(4)}")}
         |        return record;
         |      }
         |    }
@@ -55,7 +55,7 @@ class AvroKotlinEmitter(val packageName: String, logger: Logger) : KotlinEmitter
     """.trimMargin()
 
     override fun emit(enum: Enum, ast: AST) = """
-        |enum class ${enum.identifier.value.sanitizeSymbol()} (override val label: String): Wirespec.Enum {
+        |enum class ${emit(enum.identifier)} (override val label: String): Wirespec.Enum {
         |${enum.entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }.spacer()};
         |${Spacer}override fun toString(): String {
         |${Spacer(2)}return label
@@ -65,7 +65,7 @@ class AvroKotlinEmitter(val packageName: String, logger: Logger) : KotlinEmitter
         |
     """.trimMargin()
 
-    fun emitAvro(enum: Enum, ast: AST) = """
+    private fun emitAvro(enum: Enum, ast: AST) = """
         |  class Avro {
         |    companion object {
         |
@@ -85,24 +85,21 @@ class AvroKotlinEmitter(val packageName: String, logger: Logger) : KotlinEmitter
         |
     """.trimMargin()
 
-    val emitTo: (ast: AST) -> (index: Int, field: Field) -> String =
-        { ast ->
-            { index, field ->
-                when (val reference = field.reference) {
-                    is Reference.Custom -> when {
-                        reference.isIterable -> "record.put(${index}, model.${emit(field.identifier)}.map{${field.reference.value}.Avro.to(it)});"
-                        else -> "record.put(${index}, ${field.reference.emit()}.Avro.to(model.${emit(field.identifier)}));"
-                    }
-
-                    is Reference.Primitive -> when {
-                        reference.type == Reference.Primitive.Type.Bytes -> "record.put(${index}, java.nio.ByteBuffer.wrap(model.${emit(field.identifier)}.toByteArray()));"
-                        else -> "record.put(${index}, model.${emit(field.identifier)});"
-                    }
-
-                    else -> TODO()
-                }
+    private val emitTo: (index: Int, field: Field) -> String = { index, field ->
+        when (val reference = field.reference) {
+            is Reference.Custom -> when {
+                reference.isIterable -> "record.put(${index}, model.${emit(field.identifier)}.map{${field.reference.value}.Avro.to(it)});"
+                else -> "record.put(${index}, ${field.reference.emit()}.Avro.to(model.${emit(field.identifier)}));"
             }
+
+            is Reference.Primitive -> when {
+                reference.type == Reference.Primitive.Type.Bytes -> "record.put(${index}, java.nio.ByteBuffer.wrap(model.${emit(field.identifier)}.toByteArray()));"
+                else -> "record.put(${index}, model.${emit(field.identifier)});"
+            }
+
+            else -> TODO()
         }
+    }
 
     val emitFrom: (ast: AST) -> (index: Int, field: Field) -> String =
         { ast ->
@@ -114,9 +111,9 @@ class AvroKotlinEmitter(val packageName: String, logger: Logger) : KotlinEmitter
                         else -> "${field.reference.emit()}.Avro.from(record.get(${index}) as org.apache.avro.generic.GenericData.Record)"
                     }
 
-                    is Reference.Primitive -> when {
-                        reference.type == Reference.Primitive.Type.Bytes -> "String((record.get(${index}) as java.nio.ByteBuffer).array())"
-                        reference.type == Reference.Primitive.Type.String -> "record.get(${index}).toString() as ${field.emitType()}"
+                    is Reference.Primitive -> when (reference.type) {
+                        Reference.Primitive.Type.Bytes -> "String((record.get(${index}) as java.nio.ByteBuffer).array())"
+                        Reference.Primitive.Type.String -> "record.get(${index}).toString() as ${field.emitType()}"
                         else -> "record.get(${index}) as ${field.emitType()}"
                     }
 

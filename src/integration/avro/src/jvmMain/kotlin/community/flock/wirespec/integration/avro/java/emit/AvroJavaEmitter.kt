@@ -12,13 +12,12 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.integration.avro.Utils
 import community.flock.wirespec.integration.avro.Utils.isEnum
 
-class AvroJavaEmitter(packageName: String, logger: Logger) : JavaEmitter(packageName, logger) {
+class AvroJavaEmitter(private val packageName: String, logger: Logger) : JavaEmitter(packageName, logger) {
 
     private fun emitAvroSchema(type: Definition, ast: AST) = Utils.emitAvroSchema(packageName, type, ast)
         ?.replace("\\\"<<<<<", "\" + ")
         ?.replace(">>>>>\\\"", ".Avro.SCHEMA + \"")
         ?: error("Cannot emit avro: ${type.identifier.value}")
-
 
     override fun emit(type: Type, ast: AST) = """
         |public record ${type.emitName()} (
@@ -43,7 +42,7 @@ class AvroJavaEmitter(packageName: String, logger: Logger) : JavaEmitter(package
         |    
         |    public static org.apache.avro.generic.GenericData.Record to(${type.emitName()} data) {
         |      var record = new org.apache.avro.generic.GenericData.Record(SCHEMA);
-        |      ${type.shape.value.mapIndexed(emitTo(ast)).joinToString("\n${Spacer(3)}")}
+        |      ${type.shape.value.mapIndexed(emitTo).joinToString("\n${Spacer(3)}")}
         |      return record;
         |    }
         |  }
@@ -85,24 +84,21 @@ class AvroJavaEmitter(packageName: String, logger: Logger) : JavaEmitter(package
         |  }
     """.trimMargin()
 
-    val emitTo: (ast: AST) -> (index: Int, field: Field) -> String =
-        { ast ->
-            { index, field ->
-                when (val reference = field.reference) {
-                    is Reference.Custom -> when {
-                        reference.isIterable -> "record.put(${index}, data.${emit(field.identifier)}().stream().map(it -> ${field.reference.value}.Avro.to(it)).toList());"
-                        else -> "record.put(${index}, ${field.reference.emit()}.Avro.to(data.${emit(field.identifier)}()));"
-                    }
-
-                    is Reference.Primitive -> when(reference.type) {
-                        is Reference.Primitive.Type.Bytes -> "record.put(${index}, java.nio.ByteBuffer.wrap(data.${emit(field.identifier)}()));"
-                        else -> "record.put(${index}, data.${emit(field.identifier)}()${if (field.isNullable) ".orElse(null)" else ""});"
-                    }
-
-                    else -> TODO()
-                }
+    private val emitTo:  (index: Int, field: Field) -> String = { index, field ->
+        when (val reference = field.reference) {
+            is Reference.Custom -> when {
+                reference.isIterable -> "record.put(${index}, data.${emit(field.identifier)}().stream().map(it -> ${field.reference.value}.Avro.to(it)).toList());"
+                else -> "record.put(${index}, ${field.reference.emit()}.Avro.to(data.${emit(field.identifier)}()));"
             }
+
+            is Reference.Primitive -> when(reference.type) {
+                is Reference.Primitive.Type.Bytes -> "record.put(${index}, java.nio.ByteBuffer.wrap(data.${emit(field.identifier)}()));"
+                else -> "record.put(${index}, data.${emit(field.identifier)}()${if (field.isNullable) ".orElse(null)" else ""});"
+            }
+
+            else -> TODO()
         }
+    }
 
     val emitFrom: (ast: AST) -> (index: Int, field: Field) -> String =
         { ast ->

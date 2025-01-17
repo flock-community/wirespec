@@ -20,11 +20,11 @@ class AvroParserTest {
         val resource = Resource("src/commonTest/resources/customer.avsc")
             .apply { assertTrue(exists()) }
 
-        val ast = AvroParser.parse(resource.readText())
+        AvroParser.parse(resource.readText())
 
     }
 
-    @Test()
+    @Test
     fun testUnionSimple() {
         val resource = Resource("src/commonTest/resources/union_simple.avsc")
             .apply { assertTrue(exists()) }
@@ -38,7 +38,7 @@ class AvroParserTest {
     }
 
 
-    @Test()
+    @Test
     fun testUnionComplex() {
         val resource = Resource("src/commonTest/resources/union_complex.avsc")
             .apply { assertTrue(exists()) }

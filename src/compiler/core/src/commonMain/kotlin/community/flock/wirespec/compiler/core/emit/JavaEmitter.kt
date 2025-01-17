@@ -26,11 +26,11 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 
 open class JavaEmitter(
-    val packageName: String = DEFAULT_GENERATED_PACKAGE_STRING,
+    private val packageName: String = DEFAULT_GENERATED_PACKAGE_STRING,
     logger: Logger = noLogger,
 ) : DefinitionModelEmitter, Emitter(logger, true) {
 
-    open val import = """
+    val import = """
         |
         |import $DEFAULT_SHARED_PACKAGE_STRING.java.Wirespec;
         |
@@ -80,14 +80,14 @@ open class JavaEmitter(
     override fun Field.emit() =
         "${emitType()} ${emit(identifier)}"
 
-    open fun Field.emitType() =
+    fun Field.emitType() =
         if (isNullable) "java.util.Optional<${reference.emit()}>" else reference.emit()
 
     override fun Reference.emit() = emitType()
         .let { if (isIterable) "java.util.List<$it>" else it }
         .let { if (isDictionary) "java.util.Map<String, $it>" else it }
 
-    open fun Reference.emitType(void:String = "void") = when (this) {
+    fun Reference.emitType(void:String = "void") = when (this) {
         is Reference.Unit -> void
         is Reference.Any -> "Object"
         is Reference.Custom -> emit()
@@ -354,7 +354,7 @@ open class JavaEmitter(
         else -> this
     }
 
-    open fun String.sanitizeSymbol() = this
+    fun String.sanitizeSymbol() = this
         .split(".", " ", "-")
         .mapIndexed { index, s -> if(index > 0) s.firstToUpper() else s }
         .joinToString("")
@@ -363,11 +363,11 @@ open class JavaEmitter(
         .joinToString("")
         .sanitizeFirstIsDigit()
 
-    open fun String.sanitizeFirstIsDigit() = if (firstOrNull()?.isDigit() == true) "_${this}" else this
+    private fun String.sanitizeFirstIsDigit() = if (firstOrNull()?.isDigit() == true) "_${this}" else this
 
-    open fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_").sanitizeFirstIsDigit()
+    fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_").sanitizeFirstIsDigit()
 
-    open fun String.sanitizeKeywords() = if (this in reservedKeywords) "_$this" else this
+    fun String.sanitizeKeywords() = if (this in reservedKeywords) "_$this" else this
 
     companion object : Keywords {
         override val reservedKeywords = setOf(

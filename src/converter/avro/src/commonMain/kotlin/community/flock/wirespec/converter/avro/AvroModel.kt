@@ -33,7 +33,7 @@ object AvroModel {
         constructor(type: List<Type>) : this(*type.toTypedArray())
         val list = type.toList()
         override val size = list.size
-        override fun get(index: Int) = list.get(index)
+        override fun get(index: Int) = list[index]
     }
 
     @Serializable(with = TypeSerializer::class)
@@ -123,7 +123,7 @@ object AvroModel {
                     element.containsKey("fields") -> input.json.decodeFromJsonElement(RecordType.serializer(), element)
                     element.containsKey("symbols") -> input.json.decodeFromJsonElement(EnumType.serializer(), element)
                     element.containsKey("logicalType") -> input.json.decodeFromJsonElement(LogicalType.serializer(), element)
-                    else -> TODO("Unknown object type: ${element}")
+                    else -> TODO("Unknown object type: $element")
                 }
                 is JsonPrimitive -> SimpleType(element.content)
                 is JsonArray -> TODO("Type can never be an array")

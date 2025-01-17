@@ -18,6 +18,7 @@ import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firs
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.IOException.FileReadException
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.converter.avro.AvroParser
 import community.flock.wirespec.openapi.v2.OpenApiV2Emitter
 import community.flock.wirespec.openapi.v3.OpenApiV3Emitter
 import community.flock.wirespec.plugin.CompilerArguments
@@ -50,7 +51,6 @@ import community.flock.wirespec.plugin.cli.io.WirespecFile
 import community.flock.wirespec.plugin.utils.orNull
 import community.flock.wirespec.openapi.v2.OpenApiV2Parser as OpenApiParserV2
 import community.flock.wirespec.openapi.v3.OpenApiV3Parser as OpenApiParserV3
-import community.flock.wirespec.converter.avro.AvroParser
 
 fun main(args: Array<String>) {
     (0..20)

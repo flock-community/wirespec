@@ -27,7 +27,7 @@ open class ScalaEmitter(
     logger: Logger = noLogger
 ) : DefinitionModelEmitter, Emitter(logger) {
 
-    open val import = """
+    val import = """
         |
         |import $DEFAULT_SHARED_PACKAGE_STRING.scala.Wirespec
         |
