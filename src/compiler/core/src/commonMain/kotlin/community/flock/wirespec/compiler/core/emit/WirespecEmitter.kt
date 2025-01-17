@@ -75,7 +75,7 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
         .let { if (isIterable) "$it[]" else it }
         .let { if (isDictionary) "{ $it }" else it }
 
-    override fun emit(enum: Enum) =
+    override fun emit(enum: Enum, ast: AST) =
         "enum ${emit(enum.identifier)} {\n${Spacer}${enum.entries.joinToString(", ") { it.capitalize() }}\n}\n"
 
     override fun emit(refined: Refined) = "type ${emit(refined.identifier)} ${refined.validator.emit()}\n"

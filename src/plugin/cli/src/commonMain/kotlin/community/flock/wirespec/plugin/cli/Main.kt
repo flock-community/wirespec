@@ -18,6 +18,7 @@ import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firs
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.IOException.FileReadException
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.converter.avro.AvroParser
 import community.flock.wirespec.openapi.v2.OpenApiV2Emitter
 import community.flock.wirespec.openapi.v3.OpenApiV3Emitter
 import community.flock.wirespec.plugin.CompilerArguments
@@ -80,6 +81,7 @@ fun compile(arguments: CompilerArguments): List<Either<NonEmptyList<WirespecExce
             val ast = when (format) {
                 Format.OpenApiV2 -> OpenApiParserV2.parse(file.read(), !strict)
                 Format.OpenApiV3 -> OpenApiParserV3.parse(file.read(), !strict)
+                Format.Avro -> AvroParser.parse(file.read())
             }
             val path = fullPath.out(packageName, output)
             languages.emitters(packageName, path, logger).map { (emitter, file) ->

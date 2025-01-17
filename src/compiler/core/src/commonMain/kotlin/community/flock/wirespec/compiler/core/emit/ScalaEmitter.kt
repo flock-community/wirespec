@@ -27,7 +27,7 @@ open class ScalaEmitter(
     logger: Logger = noLogger
 ) : DefinitionModelEmitter, Emitter(logger) {
 
-    open val import = """
+    val import = """
         |
         |import $DEFAULT_SHARED_PACKAGE_STRING.scala.Wirespec
         |
@@ -94,7 +94,7 @@ open class ScalaEmitter(
         .let { if (isIterable) "List[$it]" else it }
         .let { if (isDictionary) "Map[String, $it]" else it }
 
-    override fun emit(enum: Enum) = enum.run {
+    override fun emit(enum: Enum, ast: AST) = enum.run {
         fun String.sanitize() = replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }
         """
         |sealed abstract class ${emitName()}(val label: String)

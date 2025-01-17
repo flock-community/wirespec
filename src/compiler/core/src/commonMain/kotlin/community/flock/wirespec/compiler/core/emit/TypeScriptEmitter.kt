@@ -49,7 +49,7 @@ open class TypeScriptEmitter(logger: Logger = noLogger) : DefinitionModelEmitter
             |
             |""".trimMargin()
 
-    override fun emit(enum: Enum) =
+    override fun emit(enum: Enum, ast: AST) =
         "export type ${enum.identifier.sanitizeSymbol()} = ${enum.entries.joinToString(" | ") { """"$it"""" }}\n"
 
     override fun Type.Shape.emit() = value.joinToString(",\n") { it.emit() }

@@ -31,7 +31,7 @@ open class KotlinEmitter(
     logger: Logger = noLogger,
 ) : DefinitionModelEmitter, Emitter(logger, false) {
 
-    open val import = """
+    val import = """
         |
         |import $DEFAULT_SHARED_PACKAGE_STRING.kotlin.Wirespec
         |import kotlin.reflect.typeOf
@@ -72,9 +72,12 @@ open class KotlinEmitter(
 
     override fun Type.Shape.emit() = value.joinToString("\n") { "${Spacer}val ${it.emit()}," }.dropLast(1)
 
-    override fun Field.emit() = "${emit(identifier)}: ${reference.emit()}${if (isNullable) "?" else ""}"
+    override fun Field.emit() = "${emit(identifier)}: ${emitType()}"
 
-    override fun Reference.emit() = when (this) {
+    fun Field.emitType() =
+        "${reference.emit()}${if (isNullable) "?" else ""}"
+
+    fun Reference.emitType() = when (this) {
         is Reference.Unit -> "Unit"
         is Reference.Any -> "Any"
         is Reference.Custom -> value
@@ -92,6 +95,8 @@ open class KotlinEmitter(
             is Reference.Primitive.Type.Bytes -> "ByteArray"
         }
     }
+
+    override fun Reference.emit() = emitType()
         .let { if (isIterable) "List<$it>" else it }
         .let { if (isDictionary) "Map<String, $it>" else it }
 
@@ -111,7 +116,7 @@ open class KotlinEmitter(
 
     override fun Refined.Validator.emit() = "Regex(\"\"\"${expression}\"\"\").matches(value)"
 
-    override fun emit(enum: Enum) = """
+    override fun emit(enum: Enum, ast: AST) = """
         |enum class ${enum.identifier.value.sanitizeSymbol()} (override val label: String): Wirespec.Enum {
         |${enum.entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }.spacer()};
         |${Spacer}override fun toString(): String {
@@ -292,7 +297,7 @@ open class KotlinEmitter(
         else -> this
     }
 
-    private fun String.sanitizeSymbol() = this
+     private fun String.sanitizeSymbol() = this
         .split(".", " ")
         .mapIndexed { index, s -> if(index > 0) s.firstToUpper() else s }
         .joinToString("")
@@ -303,9 +308,9 @@ open class KotlinEmitter(
 
     private fun String.sanitizeFirstIsDigit() = if (firstOrNull()?.isDigit() == true) "_${this}" else this
 
-    private fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_").sanitizeFirstIsDigit()
+    fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_").sanitizeFirstIsDigit()
 
-    private fun String.sanitizeKeywords() = if (this in reservedKeywords) addBackticks() else this
+    fun String.sanitizeKeywords() = if (this in reservedKeywords) addBackticks() else this
 
     companion object : Keywords {
         override val reservedKeywords = setOf(
