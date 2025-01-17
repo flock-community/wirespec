@@ -125,3 +125,7 @@ abstract class Emitter(
         )
     }
 }
+
+interface HasEmitter {
+    val emitter: Emitter
+}

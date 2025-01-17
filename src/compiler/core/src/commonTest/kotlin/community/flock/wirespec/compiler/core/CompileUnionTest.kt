@@ -48,7 +48,7 @@ class CompileUnionTest {
             |
         """.trimMargin()
 
-        compiler(KotlinEmitter()) shouldBeRight expected
+        compiler { KotlinEmitter(logger = it) } shouldBeRight expected
     }
 
     @Test
@@ -60,7 +60,7 @@ class CompileUnionTest {
             |
         """.trimMargin()
 
-        compiler(JavaEmitter()) shouldBeRight java
+        compiler { JavaEmitter(logger = it) } shouldBeRight java
     }
 
     @Test
@@ -86,7 +86,7 @@ class CompileUnionTest {
             |
         """.trimMargin()
 
-        compiler(ScalaEmitter()) shouldBeRight scala
+        compiler { ScalaEmitter(logger = it) } shouldBeRight scala
     }
 
     @Test
@@ -113,7 +113,7 @@ class CompileUnionTest {
             |
         """.trimMargin()
 
-        compiler(TypeScriptEmitter()) shouldBeRight ts
+        compiler { TypeScriptEmitter(logger = it) } shouldBeRight ts
     }
 
     @Test
@@ -137,6 +137,6 @@ class CompileUnionTest {
             |
         """.trimMargin()
 
-        compiler(WirespecEmitter()) shouldBeRight wirespec
+        compiler { WirespecEmitter(logger = it) } shouldBeRight wirespec
     }
 }

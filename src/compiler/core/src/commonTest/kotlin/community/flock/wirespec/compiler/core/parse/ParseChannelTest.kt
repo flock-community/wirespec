@@ -1,5 +1,6 @@
 package community.flock.wirespec.compiler.core.parse
 
+import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.utils.noLogger
@@ -10,7 +11,10 @@ import kotlin.test.Test
 
 class ParseChannelTest {
 
-    private fun parser(source: String) = WirespecSpec.parse(source)(noLogger)
+    private fun parser(source: String) = object : ParseContext {
+        override val spec = WirespecSpec
+        override val logger = noLogger
+    }.parse(source)
 
     @Test
     fun testChannelParser() {

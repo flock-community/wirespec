@@ -1,5 +1,6 @@
 package community.flock.wirespec.integration.jackson.kotlin
 
+import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
@@ -15,8 +16,8 @@ class GenerateTestClasses {
     private val javaPkg = "${basePkg}.java.generated"
     private val kotlinPkg = "${basePkg}.kotlin.generated"
 
-    private val javaEmitter = JavaEmitter(javaPkg)
-    private val kotlinEmitter = KotlinEmitter(kotlinPkg)
+    private val javaEmitter = JavaEmitter(javaPkg, noLogger)
+    private val kotlinEmitter = KotlinEmitter(kotlinPkg, noLogger)
 
     private fun pkgToPath(pkg: String) = pkg.split(".").joinToString("/")
 
@@ -27,7 +28,10 @@ class GenerateTestClasses {
     @Test
     fun generate() {
         val todoFile = File("src/commonTest/resources/wirespec/todos.ws").readText()
-        val ast = WirespecSpec.parse(todoFile)(noLogger)
+        val ast = object : ParseContext {
+            override val spec = WirespecSpec
+            override val logger = noLogger
+        }.parse(todoFile)
             .fold({ error("Cannot parse wirespec: ${it.first().message}") }, { it })
             .filterIsInstance<Definition>()
 
@@ -45,4 +49,3 @@ class GenerateTestClasses {
         }
     }
 }
-

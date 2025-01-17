@@ -32,7 +32,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenApiType
 
-object OpenApiV2Emitter: Emitter(noLogger) {
+object OpenApiV2Emitter : Emitter(noLogger) {
 
     override val singleLineComment = ""
 
@@ -184,7 +184,7 @@ object OpenApiV2Emitter: Emitter(noLogger) {
 
     fun Reference.emit(): SchemaOrReferenceObject = when (this) {
         is Reference.Custom -> ReferenceObject(ref = Ref("#/definitions/${value}"))
-        is Reference.Primitive ->SchemaObject(type = type.emitType(), format = emitFormat())
+        is Reference.Primitive -> SchemaObject(type = type.emitType(), format = emitFormat())
         is Reference.Any -> error("Cannot map Any")
         is Reference.Unit -> error("Cannot map Unit")
     }.let { if (isIterable) SchemaObject(type = OpenApiType.ARRAY, items = it) else it }

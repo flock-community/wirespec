@@ -1,14 +1,19 @@
 package community.flock.wirespec.compiler.core.emit
 
+import community.flock.wirespec.compiler.core.CompilationContext
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.fixture.NodeFixtures
 import community.flock.wirespec.compiler.core.parse.Node
+import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
 class KotlinEmitterTest {
 
-    private val emitter = KotlinEmitter()
+    private val emitter = object : CompilationContext {
+        override val logger = noLogger
+        override val emitter = KotlinEmitter(logger = logger)
+    }.emitter
 
     @Test
     fun testEmitterType() {
