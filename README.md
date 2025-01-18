@@ -38,15 +38,16 @@ You can explore and experiment with Wirespec by using the [Wirespec playground](
 By understanding your project's specific needs and architecture, you can choose the most suitable specification tool to streamline development and improve collaboration.
 #
 
-| Feature/Aspect           | **Wirespec**                  | **OpenAPI**                | **AsyncAPI**               | **TypeSpec**                |
-|--------------------------|------------------------------|---------------------------|---------------------------|----------------------------|
-| **Primary Focus**        | Streamlined API design       | RESTful APIs              | Asynchronous APIs         | Programmatic API design    |
-| **Specification Format** | Minimal, Wirespec syntax     | YAML/JSON                 | YAML/JSON                 | TypeScript-like syntax     |
-| **Ecosystem Support**    | Emerging                     | Mature and extensive      | Growing rapidly           | Emerging                   |
-| **Code Generation**      | Built-in, cross-language     | Extensive via tools       | Robust via tools          | Flexible and customizable  |
-| **Best for Microservices** | Excellent                   | Good                      | Excellent                 | Good                       |
-| **Asynchronous Support** | Limited                      | Limited                   | Excellent                 | Limited                    |
-| **Ease of Use**          | High (minimalist)            | Moderate (can be verbose) | Moderate                  | Moderate (requires coding) |
+| Feature/Aspect             | **Wirespec**                       | **OpenAPI**         | **AsyncAPI**      | **TypeSpec**               |
+|----------------------------|------------------------------------|---------------------|-------------------|----------------------------|
+| **Primary Focus**          | Streamlined API design             | RESTful APIs        | Asynchronous APIs | Programmatic API design    |
+| **Specification Format**   | Minimal, Wirespec syntax           | YAML/JSON           | YAML/JSON         | TypeScript-like syntax     |
+| **Ecosystem Support**      | Emerging                           | Mature and extensive | Growing rapidly   | Emerging                   |
+| **Code Generation**        | Built-in, cross-language           | Extensive via tools | Robust via tools  | Flexible and customizable  |
+| **Best for Microservices** | Excellent                          | Good                | Excellent         | Good                       |
+| **Asynchronous Support**   | Limited                            | Limited             | Excellent         | Limited                    |
+| **Ease of Use**            | High (minimalist)                  | Moderate (can be verbose) | Moderate          | Moderate (requires coding) |
+| **Technology**             | Multiplatform (JVM Node.js Binary) | JVM                 | JVM               | Node.js                    |
 
 Wirespec can read and convert OpenApiSpecification (OAS) files.
 
