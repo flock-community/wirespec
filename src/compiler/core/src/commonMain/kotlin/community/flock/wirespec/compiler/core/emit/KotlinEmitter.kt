@@ -321,5 +321,4 @@ open class KotlinEmitter(
             "typeof", "val", "var", "when", "while", "private", "public"
         )
     }
-
 }

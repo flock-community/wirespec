@@ -100,15 +100,7 @@ open class ScalaEmitter(
         """
         |sealed abstract class ${emitName()}(val label: String)
         |object ${emit(identifier)} {
-        |${
-            entries.joinToString("\n") {
-                """${Spacer}final case object ${it.sanitize().uppercase()} extends ${
-                    emit(
-                        identifier
-                    )
-                }(label = "$it")"""
-            }
-        }
+        |${entries.joinToString("\n") { """${Spacer}final case object ${it.sanitize().uppercase()} extends ${emit(identifier)}(label = "$it")""" }}
         |}
         |""".trimMargin()
     }

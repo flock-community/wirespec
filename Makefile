@@ -15,7 +15,7 @@ compile:
 compile-types:
 	$(shell pwd)/scripts/compileTypes.sh
 
-example: fast
+example:
 	$(shell pwd)/scripts/example.sh
 
 fast:
