@@ -150,10 +150,15 @@ object OpenApiV3Emitter : Emitter(noLogger) {
                 ParameterLocation.HEADER
             )
         },
-        requestBody = RequestBodyObject(
-            content = requests.mapNotNull { it.content?.emit() }.toMap().ifEmpty { null },
-            required = !requests.any { it.content?.isNullable ?: false }
-        ),
+        requestBody = requests.mapNotNull { it.content?.emit() }
+            .toMap()
+            .takeIf { it.isNotEmpty() }
+            ?.let { content ->
+                RequestBodyObject(
+                    content = content,
+                    required = requests.any { it.content?.isNullable == false }
+                )
+            },
         responses = responses
             .groupBy { it.status }
             .map { (statusCode, res) ->
