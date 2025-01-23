@@ -222,6 +222,7 @@ jobs:
         run: |
           ./gradlew :src:compiler:core:publish \
                     :src:compiler:lib:publish \
+                    :src:converter:avro:publish \
                     :src:converter:openapi:publish \
                     :src:plugin:gradle:publish \
                     :src:plugin:maven:publish \
