@@ -179,7 +179,7 @@ open class TypeScriptEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(l
     private fun Endpoint.Response.emitReference() = content?.reference?.emit() ?: "undefined"
 
     private fun Endpoint.Response.emitType() = """
-      |${Spacer}export type ${emitName()} = { 
+      |${Spacer}export type ${emitName()} = {
       |${Spacer(2)}status: $status
       |${Spacer(2)}headers: {${headers.joinToString { it.emit() }}}
       |${Spacer(2)}body: ${emitReference()}

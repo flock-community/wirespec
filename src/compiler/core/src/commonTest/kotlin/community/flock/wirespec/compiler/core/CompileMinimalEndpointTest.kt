@@ -70,7 +70,7 @@ class CompileMinimalEndpointTest {
             |    when(response) {
             |      is Response200 -> Wirespec.RawResponse(
             |        statusCode = response.status,
-            |        headers = mapOf(),
+            |        headers = emptyMap(),
             |        body = serialization.serialize(response.body, typeOf<List<TodoDto>>()),
             |      )
             |    }

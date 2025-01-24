@@ -191,6 +191,27 @@ class ParseEndpointTest {
     }
 
     @Test
+    fun testResponseHeaderParser() {
+        val source = """
+            |type Todo { name: String }
+            |endpoint GetTodo GET /todo/{id: Integer} -> {
+            |   200 -> Todo #{token: String}
+            |}
+        """.trimMargin()
+
+        parser(source)
+            .shouldBeRight()
+            .also { it.size shouldBe 2 }[1]
+            .shouldBeInstanceOf<Endpoint>()
+            .responses.shouldNotBeEmpty().also { it.size shouldBe 1 }
+            .first().run {
+                headers.size shouldBe 1
+                headers.first().identifier.value shouldBe "token"
+                headers.first().reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String
+            }
+    }
+
+    @Test
     fun testDictionaryResponse() {
         val source = """
             |endpoint GetTodos GET /todos ? {done:{String}} # {token:{String}} -> {
