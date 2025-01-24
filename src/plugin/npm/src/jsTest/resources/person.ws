@@ -1,4 +1,5 @@
-type TodoIdentifier /^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$/g
+export function wsExample() {
+  return `type TodoIdentifier /^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$/g
 type Name /^[0-9a-zA-Z]{1,50}$/g
 type DutchPostalCode /^([0-9]{4}[A-Z]{2})$/g
 type Date /^([0-9]{2}-[0-9]{2}-20[0-9]{2})$/g
@@ -44,4 +45,6 @@ endpoint PutTodo PUT Todo /todos/{id: TodoIdentifier} -> {
 endpoint DeleteTodo DELETE /todos/{id: TodoIdentifier} -> {
     200 -> Todo
     404 -> Error
+}
+`;
 }
