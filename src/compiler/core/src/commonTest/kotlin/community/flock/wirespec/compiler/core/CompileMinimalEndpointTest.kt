@@ -253,7 +253,7 @@ class CompileMinimalEndpointTest {
             |    headers: Headers
             |    body: undefined
             |  }
-            |  export type Response200 = { 
+            |  export type Response200 = {
             |    status: 200
             |    headers: {}
             |    body: TodoDto[]
