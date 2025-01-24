@@ -23,11 +23,10 @@ import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.compiler.utils.noLogger
 
 open class JavaEmitter(
     private val packageName: String = DEFAULT_GENERATED_PACKAGE_STRING,
-    logger: Logger = noLogger,
+    logger: Logger,
 ) : DefinitionModelEmitter, Emitter(logger, true) {
 
     val import = """
@@ -275,12 +274,7 @@ open class JavaEmitter(
     """.trimMargin()
 
     fun Endpoint.Response.emit() = """
-        |${Spacer}record Response${status.firstToUpper()}(${
-        listOfNotNull(
-            headers.joinToString { it.emit() }.orNull(),
-            content?.let { "${it.emit()} body" }
-        ).joinToString()
-        }) implements Response${status.first()}XX<${content.emit()}>, Response${content.emit().concatGenerics()} {
+        |${Spacer}record Response${status.firstToUpper()}(${listOfNotNull(headers.joinToString { it.emit() }.orNull(), content?.let { "${it.emit()} body" }).joinToString()}) implements Response${status.first()}XX<${content.emit()}>, Response${content.emit().concatGenerics()} {
         |${Spacer(2)}@Override public int getStatus() { return ${status.fixStatus()}; }
         |${Spacer(2)}${headers.joinToString { emit(it.identifier) }.let { "@Override public Headers getHeaders() { return new Headers($it); }" }}
         |${Spacer(2)}@Override public ${content.emit()} getBody() { return ${if(content == null) "null" else "body"}; }
@@ -354,7 +348,7 @@ open class JavaEmitter(
         else -> this
     }
 
-    fun String.sanitizeSymbol() = this
+    private fun String.sanitizeSymbol() = this
         .split(".", " ", "-")
         .mapIndexed { index, s -> if(index > 0) s.firstToUpper() else s }
         .joinToString("")

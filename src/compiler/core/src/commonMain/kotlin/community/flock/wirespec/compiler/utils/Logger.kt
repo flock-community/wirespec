@@ -43,4 +43,8 @@ open class Logger(logLevel: Level?) {
     }
 }
 
+interface HasLogger {
+    val logger: Logger
+}
+
 val noLogger = object : Logger(logLevel = null) {}

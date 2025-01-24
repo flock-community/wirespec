@@ -19,9 +19,8 @@ import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.compiler.utils.noLogger
 
-open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, Emitter(logger) {
+open class WirespecEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(logger) {
 
     override fun Definition.emitName(): String = when (this) {
         is Endpoint -> emit(identifier)
@@ -46,9 +45,11 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
 
     override fun Field.emit() = "${emit(identifier)}: ${reference.emit()}${if (isNullable) "?" else ""}"
 
-    override fun emit(identifier: Identifier) = when(identifier){
-        is DefinitionIdentifier ->  identifier.run { if (value in reservedKeywords) value.addBackticks() else value }
-        is FieldIdentifier -> identifier.run { if (value in reservedKeywords || value.first().isUpperCase()) value.addBackticks() else value }
+    override fun emit(identifier: Identifier) = when (identifier) {
+        is DefinitionIdentifier -> identifier.run { if (value in reservedKeywords) value.addBackticks() else value }
+        is FieldIdentifier -> identifier.run {
+            if (value in reservedKeywords || value.first().isUpperCase()) value.addBackticks() else value
+        }
     }
 
     override fun emit(channel: Channel): String =
@@ -62,11 +63,12 @@ open class WirespecEmitter(logger: Logger = noLogger) : DefinitionModelEmitter, 
             is Reference.Primitive.Type.String -> "String"
             is Reference.Primitive.Type.Boolean -> "Boolean"
             is Reference.Primitive.Type.Bytes -> "Bytes"
-            is Reference.Primitive.Type.Integer -> when(type.precision){
+            is Reference.Primitive.Type.Integer -> when (type.precision) {
                 Reference.Primitive.Type.Precision.P32 -> "Integer32"
                 Reference.Primitive.Type.Precision.P64 -> "Integer"
             }
-            is Reference.Primitive.Type.Number -> when(type.precision){
+
+            is Reference.Primitive.Type.Number -> when (type.precision) {
                 Reference.Primitive.Type.Precision.P32 -> "Number32"
                 Reference.Primitive.Type.Precision.P64 -> "Number"
             }

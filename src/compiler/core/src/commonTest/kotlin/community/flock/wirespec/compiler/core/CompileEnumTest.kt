@@ -36,7 +36,7 @@ class CompileEnumTest {
             |
         """.trimMargin()
 
-        compiler(KotlinEmitter()) shouldBeRight kotlin
+        compiler { KotlinEmitter(logger = it) } shouldBeRight kotlin
     }
 
     @Test
@@ -67,7 +67,7 @@ class CompileEnumTest {
             |
         """.trimMargin()
 
-        compiler(JavaEmitter()) shouldBeRight java
+        compiler { JavaEmitter(logger = it) } shouldBeRight java
     }
 
     @Test
@@ -87,7 +87,7 @@ class CompileEnumTest {
             |
         """.trimMargin()
 
-        compiler(ScalaEmitter()) shouldBeRight scala
+        compiler { ScalaEmitter(logger = it) } shouldBeRight scala
     }
 
     @Test
@@ -97,7 +97,7 @@ class CompileEnumTest {
             |
         """.trimMargin()
 
-        compiler(TypeScriptEmitter()) shouldBeRight ts
+        compiler { TypeScriptEmitter(logger = it) } shouldBeRight ts
     }
 
     @Test
@@ -109,6 +109,6 @@ class CompileEnumTest {
             |
         """.trimMargin()
 
-        compiler(WirespecEmitter()) shouldBeRight wirespec
+        compiler { WirespecEmitter(logger = it) } shouldBeRight wirespec
     }
 }

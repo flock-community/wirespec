@@ -20,11 +20,10 @@ import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.compiler.utils.noLogger
 
 open class ScalaEmitter(
     private val packageName: String = DEFAULT_GENERATED_PACKAGE_STRING,
-    logger: Logger = noLogger
+    logger: Logger,
 ) : DefinitionModelEmitter, Emitter(logger) {
 
     val import = """
@@ -79,14 +78,16 @@ open class ScalaEmitter(
         is Reference.Custom -> value
         is Reference.Primitive -> when (type) {
             is Reference.Primitive.Type.String -> "String"
-            is Reference.Primitive.Type.Integer -> when(type.precision){
+            is Reference.Primitive.Type.Integer -> when (type.precision) {
                 Reference.Primitive.Type.Precision.P32 -> "Int"
                 Reference.Primitive.Type.Precision.P64 -> "Long"
             }
-            is Reference.Primitive.Type.Number -> when(type.precision){
+
+            is Reference.Primitive.Type.Number -> when (type.precision) {
                 Reference.Primitive.Type.Precision.P32 -> "Float"
                 Reference.Primitive.Type.Precision.P64 -> "Double"
             }
+
             is Reference.Primitive.Type.Boolean -> "Boolean"
             is Reference.Primitive.Type.Bytes -> "Array[Byte]"
         }

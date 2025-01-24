@@ -30,7 +30,7 @@ class CompileRefinedTest {
             |
         """.trimMargin()
 
-        compiler(KotlinEmitter()) shouldBeRight kotlin
+        compiler { KotlinEmitter(logger = it) } shouldBeRight kotlin
     }
 
     @Test
@@ -52,7 +52,7 @@ class CompileRefinedTest {
             |
         """.trimMargin()
 
-        compiler(JavaEmitter()) shouldBeRight java
+        compiler { JavaEmitter(logger = it) } shouldBeRight java
     }
 
     @Test
@@ -71,7 +71,7 @@ class CompileRefinedTest {
             |
         """.trimMargin()
 
-        compiler(ScalaEmitter()) shouldBeRight scala
+        compiler { ScalaEmitter(logger = it) } shouldBeRight scala
     }
 
     @Test
@@ -84,7 +84,7 @@ class CompileRefinedTest {
             |
         """.trimMargin()
 
-        compiler(TypeScriptEmitter()) shouldBeRight ts
+        compiler { TypeScriptEmitter(logger = it) } shouldBeRight ts
     }
 
     @Test
@@ -94,6 +94,6 @@ class CompileRefinedTest {
             |
         """.trimMargin()
 
-        compiler(WirespecEmitter()) shouldBeRight wirespec
+        compiler { WirespecEmitter(logger = it) } shouldBeRight wirespec
     }
 }

@@ -41,6 +41,10 @@ interface LanguageSpec {
     val orderedMatchers: List<TokenMatcher>
 }
 
+interface HasLanguageSpec {
+    val spec: LanguageSpec get() = WirespecSpec
+}
+
 object WirespecSpec : LanguageSpec {
     override val customType = WsCustomType
     override val orderedMatchers = listOf(

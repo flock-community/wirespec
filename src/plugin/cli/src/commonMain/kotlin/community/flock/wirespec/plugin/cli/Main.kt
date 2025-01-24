@@ -5,7 +5,7 @@ import arrow.core.NonEmptyList
 import arrow.core.left
 import arrow.core.nel
 import arrow.core.right
-import community.flock.wirespec.compiler.core.WirespecSpec
+import community.flock.wirespec.compiler.core.CompilationContext
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.component1
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
@@ -59,7 +59,8 @@ fun main(args: Array<String>) {
         .let(WirespecCli.provide(::compile, ::convert, ::write))
 }
 
-fun convert(arguments: CompilerArguments): List<Either<NonEmptyList<WirespecException>, Pair<List<Emitted>, File?>>> = compile(arguments)
+fun convert(arguments: CompilerArguments): List<Either<NonEmptyList<WirespecException>, Pair<List<Emitted>, File?>>> =
+    compile(arguments)
 
 fun compile(arguments: CompilerArguments): List<Either<NonEmptyList<WirespecException>, Pair<List<Emitted>, File?>>> {
 
@@ -122,10 +123,12 @@ private fun Reader.wirespec(
     path: (FileExtension) -> FullFilePath,
     logger: Logger
 ) = read()
-    .let(WirespecSpec::compile)(logger)
-    .let { compiler ->
+    .let { source ->
         languages.emitters(packageName, path, logger).map { (emitter, file) ->
-            val results = compiler(emitter)
+            val results = object : CompilationContext {
+                override val logger = logger
+                override val emitter = emitter
+            }.compile(source)
             if (!emitter.split) results.map {
                 listOf(
                     Emitted(
