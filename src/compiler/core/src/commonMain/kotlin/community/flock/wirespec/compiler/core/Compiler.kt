@@ -37,6 +37,6 @@ private enum class Stage {
     TOKENIZED, PARSED, VALIDATED, EMITTED;
 
     fun log(it: Any): HasLogger.() -> Unit = {
-        logger.info("********** $name **********\n$it\n########## $name ##########")
+        logger.debug("********** $name **********\n$it\n########## $name ##########")
     }
 }
