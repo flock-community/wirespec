@@ -1,17 +1,18 @@
 package community.flock.wirespec.generator
 
 import arrow.core.getOrElse
+import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.Reference.Primitive.Type
 import community.flock.wirespec.compiler.utils.noLogger
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonPrimitive
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonPrimitive
 
 class GeneratorTest {
 
@@ -43,9 +44,6 @@ class GeneratorTest {
         |  addresses: Address[]
         |}
     """.trimMargin()
-
-    private fun parser(source: String) =
-        WirespecSpec.parse(source)(noLogger).getOrElse { e -> error("Cannot parse: ${e.map { it.message }}") }
 
     @Test
     fun generateAddress() {
@@ -84,5 +82,11 @@ class GeneratorTest {
         val res = ast.generate("Address[]", random)
         assertEquals(5, res.jsonArray.size)
     }
+
+    private fun parser(source: String) =
+        object : ParseContext {
+            override val spec = WirespecSpec
+            override val logger = noLogger
+        }.parse(source).getOrElse { e -> error("Cannot parse: ${e.map { it.message }}") }
 
 }

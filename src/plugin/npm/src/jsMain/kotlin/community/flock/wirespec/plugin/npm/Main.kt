@@ -5,6 +5,7 @@ package community.flock.wirespec.plugin.npm
 import arrow.core.curried
 import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPIObject
+import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
@@ -12,7 +13,7 @@ import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
-import community.flock.wirespec.compiler.core.parse.Parser
+import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.lib.WsNode
 import community.flock.wirespec.compiler.lib.WsStringResult
@@ -55,10 +56,9 @@ fun tokenize(source: String) = WirespecSpec
     .toTypedArray()
 
 @JsExport
-fun parse(source: String) = WirespecSpec
-    .tokenize(source)
-    .let(Parser(noLogger)::parse)
-    .produce()
+fun parse(source: String) = object : ParseContext {
+    override val logger = noLogger
+}.parse(source).produce()
 
 @JsExport
 fun convert(source: String, converters: Converters) = when (converters) {
@@ -67,9 +67,9 @@ fun convert(source: String, converters: Converters) = when (converters) {
 }
 
 @JsExport
-fun generate(source: String, type: String): WsStringResult = WirespecSpec
-    .tokenize(source)
-    .let(Parser(noLogger)::parse)
+fun generate(source: String, type: String): WsStringResult = object : ParseContext {
+    override val logger = noLogger
+}.parse(source)
     .map { it.generate(type).toString() }
     .produce()
 
@@ -78,18 +78,18 @@ fun emit(ast: Array<WsNode>, emitter: Emitters, packageName: String) = ast
     .map { it.consume() }
     .let {
         when (emitter) {
-            Emitters.WIRESPEC -> WirespecEmitter().emit(it)
-            Emitters.TYPESCRIPT -> TypeScriptEmitter().emit(it)
-            Emitters.JAVA -> JavaEmitter(packageName).emit(it)
-            Emitters.KOTLIN -> KotlinEmitter(packageName).emit(it)
-            Emitters.SCALA -> ScalaEmitter(packageName).emit(it)
+            Emitters.WIRESPEC -> WirespecEmitter(logger = noLogger).emit(it)
+            Emitters.TYPESCRIPT -> TypeScriptEmitter(logger = noLogger).emit(it)
+            Emitters.JAVA -> JavaEmitter(packageName, logger = noLogger).emit(it)
+            Emitters.KOTLIN -> KotlinEmitter(packageName, logger = noLogger).emit(it)
+            Emitters.SCALA -> ScalaEmitter(packageName, logger = noLogger).emit(it)
             Emitters.OPENAPI_V2 -> listOf(it)
                 .map(OpenApiV2Emitter::emitSwaggerObject)
                 .map(encode(SwaggerObject.serializer()))
                 .map(::Emitted.curried()("openapi")::invoke)
 
             Emitters.OPENAPI_V3 -> listOf(it)
-                .map{ast -> OpenApiV3Emitter.emitOpenAPIObject(ast, null)}
+                .map { ast -> OpenApiV3Emitter.emitOpenAPIObject(ast, null) }
                 .map(encode(OpenAPIObject.serializer()))
                 .map(::Emitted.curried()("openapi")::invoke)
         }

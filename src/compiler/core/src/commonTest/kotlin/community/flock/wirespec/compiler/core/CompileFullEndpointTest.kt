@@ -169,7 +169,7 @@ class CompileFullEndpointTest {
             |
         """.trimMargin()
 
-        compiler(KotlinEmitter()) shouldBeRight kotlin
+        compiler { KotlinEmitter(logger = it) } shouldBeRight kotlin
     }
 
     @Test
@@ -292,7 +292,7 @@ class CompileFullEndpointTest {
             |
         """.trimMargin()
 
-        compiler(JavaEmitter()) shouldBeRight java
+        compiler { JavaEmitter(logger = it) } shouldBeRight java
     }
 
     @Test
@@ -326,7 +326,7 @@ class CompileFullEndpointTest {
             |
         """.trimMargin()
 
-        compiler(ScalaEmitter()) shouldBeRight scala
+        compiler { ScalaEmitter(logger = it) } shouldBeRight scala
     }
 
     @Test
@@ -476,7 +476,7 @@ class CompileFullEndpointTest {
             |
         """.trimMargin()
 
-        compiler(TypeScriptEmitter()) shouldBeRight ts
+        compiler { TypeScriptEmitter(logger = it) } shouldBeRight ts
     }
 
     @Test
@@ -509,6 +509,6 @@ class CompileFullEndpointTest {
             |
         """.trimMargin()
 
-        compiler(WirespecEmitter()) shouldBeRight wirespec
+        compiler { WirespecEmitter(logger = it) } shouldBeRight wirespec
     }
 }

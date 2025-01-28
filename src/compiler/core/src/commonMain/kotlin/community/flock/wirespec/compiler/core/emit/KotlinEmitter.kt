@@ -24,11 +24,10 @@ import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.compiler.utils.noLogger
 
 open class KotlinEmitter(
     private val packageName: String = DEFAULT_GENERATED_PACKAGE_STRING,
-    logger: Logger = noLogger,
+    logger: Logger,
 ) : DefinitionModelEmitter, Emitter(logger, false) {
 
     val import = """
@@ -322,5 +321,4 @@ open class KotlinEmitter(
             "typeof", "val", "var", "when", "while", "private", "public"
         )
     }
-
 }

@@ -1,6 +1,7 @@
 package community.flock.wirespec.plugin
 
 import arrow.core.Either
+import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
@@ -30,13 +31,17 @@ import community.flock.wirespec.plugin.Language.Wirespec
 typealias FilesContent = List<Pair<String, String>>
 
 fun FilesContent.parse(logger: Logger): List<Pair<String, List<Node>>> =
-    map { (name, source) -> name to WirespecSpec.parse(source)(logger) }
-        .map { (name, result) ->
-            name to when (result) {
-                is Either.Right -> result.value
-                is Either.Left -> error("compile error: ${result.value}")
-            }
+    map { (name, source) ->
+        name to object : ParseContext {
+            override val spec = WirespecSpec
+            override val logger = logger
+        }.parse(source)
+    }.map { (name, result) ->
+        name to when (result) {
+            is Either.Right -> result.value
+            is Either.Left -> error("compile error: ${result.value}")
         }
+    }
 
 fun FilesContent.compile(logger: Logger, emitter: Emitter) =
     parse(logger)

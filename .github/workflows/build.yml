@@ -35,27 +35,27 @@ jobs:
         run: |
           make build
       - name: Archive linux cli
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wirespec-cli-linux
           path: src/plugin/cli/build/bin/linuxX64/releaseExecutable/cli.kexe
       - name: Archive macosX86 cli
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wirespec-cli-macos-x86
           path: src/plugin/cli/build/bin/macosX64/releaseExecutable/cli.kexe
       - name: Archive macosArm64 cli
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wirespec-cli-macos-arm64
           path: src/plugin/cli/build/bin/macosArm64/releaseExecutable/cli.kexe
       - name: Archive vscode extension
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wirespec-vscode
           path: src/ide/vscode/wirespec-client-vscode-*.vsix
       - name: Archive Intellij plugin
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wirespec-intellij-plugin
           path: src/ide/intellij-plugin/build/distributions/intellij-plugin-*.zip
@@ -151,7 +151,7 @@ jobs:
           node-version: 20
       - name: Build lib
         run: |
-          ./gradlew :src:plugin:arguments:publish \
+          ./gradlew :src:plugin:arguments:publishToMavenLocal \
                     :src:plugin:npm:build
       - name: Build vscode extension
         working-directory: ./src/ide/vscode
@@ -169,15 +169,15 @@ jobs:
       - version
 
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: wirespec-cli-macos-x86
           path: artifacts/macosX64
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: wirespec-cli-macos-arm64
           path: artifacts/macosArm64
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: wirespec-cli-linux
           path: artifacts/linuxX64
@@ -222,6 +222,7 @@ jobs:
         run: |
           ./gradlew :src:compiler:core:publish \
                     :src:compiler:lib:publish \
+                    :src:converter:avro:publish \
                     :src:converter:openapi:publish \
                     :src:plugin:gradle:publish \
                     :src:plugin:maven:publish \

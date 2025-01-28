@@ -35,7 +35,13 @@ abstract class Emitter(
 
     open fun emit(ast: AST): List<Emitted> = ast
         .map {
-            logger.info("Emitting Node $it")
+            logger.info(
+                "Emitting Node ${
+                    when (it) {
+                        is Definition -> it.emitName()
+                    }
+                }"
+            )
             when (it) {
                 is Type -> Emitted(it.emitName(), emit(it, ast))
                 is Endpoint -> Emitted(it.emitName(), emit(it))
@@ -124,4 +130,8 @@ abstract class Emitter(
             "Request", "Response"
         )
     }
+}
+
+interface HasEmitter {
+    val emitter: Emitter
 }
