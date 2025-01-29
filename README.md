@@ -31,7 +31,7 @@ Here are some key reasons why you might want to use Wirespec:
 In summary, using Wirespec during software development leads to faster, more reliable, and collaborative API creation while reducing errors and improving overall project efficiency.
 ## Wirespec playground
 
-You can explore and experiment with Wirespec by using the [Wirespec playground](playground.wirespec.io). Whether you are new to Wirespec or a seasoned user, the playground makes is simple to design, test and improve your API specifications- all in one place.
+You can explore and experiment with Wirespec by using the [Wirespec playground](https://playground.wirespec.io). Whether you are new to Wirespec or a seasoned user, the playground makes is simple to design, test and improve your API specifications- all in one place.
 
 ## Wirespec compared
 
