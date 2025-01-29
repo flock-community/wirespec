@@ -64,7 +64,7 @@ object WirespecSpec : LanguageSpec {
         Regex("^\\?") to QuestionMark,
         Regex("^#") to Hash,
         Regex("^\\[\\]") to Brackets,
-        Regex("^GET|^POST|^PUT|^DELETE|^OPTIONS|^HEAD|^PATCH|^TRACE") to Method,
+        Regex("^\\b(GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE)\\b") to Method,
         Regex("^[1-5][0-9][0-9]") to StatusCode,
         Regex("^[a-z`][a-zA-Z0-9_`]*") to CustomValue,
         Regex("^[A-Z][a-zA-Z0-9_]*") to customType,
