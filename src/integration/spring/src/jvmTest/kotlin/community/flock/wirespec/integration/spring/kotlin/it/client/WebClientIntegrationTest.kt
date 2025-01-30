@@ -28,7 +28,7 @@ class WebClientIntegrationTest {
             name = "Dog",
             photoUrls = listOf(),
             category = null,
-            tags = null,
+            tags = emptyList(),
             status = null,
         )
 
