@@ -320,13 +320,13 @@ object FindPetsByTagsEndpoint : Wirespec.Endpoint {
   data object Path : Wirespec.Path
 
   data class Queries(
-    val tags: List<String>?,
+    val tags: List<String?>,
   ) : Wirespec.Queries
 
   data object Headers : Wirespec.Request.Headers
 
   class Request(
-    tags: List<String>?
+    tags: List<String?>
   ) : Wirespec.Request<Unit> {
     override val path = Path
     override val method = Wirespec.Method.GET
@@ -1810,7 +1810,7 @@ enum class OrderStatus (override val label: String): Wirespec.Enum {
 data class Customer(
   val id: Long?,
   val username: String?,
-  val address: List<Address>?
+  val address: List<Address?>
 )
 
 data class Address(
@@ -1846,7 +1846,7 @@ data class Pet(
   val name: String,
   val category: Category?,
   val photoUrls: List<String>,
-  val tags: List<Tag>?,
+  val tags: List<Tag?>,
   val status: PetStatus?
 )
 

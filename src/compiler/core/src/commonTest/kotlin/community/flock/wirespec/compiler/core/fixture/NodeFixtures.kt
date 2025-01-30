@@ -48,7 +48,7 @@ object NodeFixtures {
                 Field(
                     identifier = FieldIdentifier("notes"),
                     reference = Primitive(type = Primitive.Type.String, isIterable = true),
-                    isNullable = false,
+                    isNullable = true,
                 ),
                 Field(
                     identifier = FieldIdentifier("done"),

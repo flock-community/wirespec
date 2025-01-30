@@ -71,10 +71,7 @@ open class KotlinEmitter(
 
     override fun Type.Shape.emit() = value.joinToString("\n") { "${Spacer}val ${it.emit()}," }.dropLast(1)
 
-    override fun Field.emit() = "${emit(identifier)}: ${emitType()}"
-
-    fun Field.emitType() =
-        "${reference.emit()}${if (isNullable) "?" else ""}"
+    override fun Field.emit() = "${emit(identifier)}: ${reference.emitWrap(isNullable)}"
 
     fun Reference.emitType() = when (this) {
         is Reference.Unit -> "Unit"
@@ -286,9 +283,9 @@ open class KotlinEmitter(
     private fun String.brace() = wrap("(", ")")
     private fun String.wrap(prefix: String, postfix: String) = if (isEmpty()) "" else "$prefix$this$postfix"
 
-    private fun Reference.emitWrap(isNullable: Boolean): String = value
-        .let { if (isIterable) "List<$it>" else it }
+    private fun Reference.emitWrap(isNullable: Boolean): String = emitType()
         .let { if (isNullable) "$it?" else it }
+        .let { if (isIterable) "List<$it>" else it }
         .let { if (isDictionary) "Map<String, $it>" else it }
 
     private fun String.fixStatus(): String = when (this) {

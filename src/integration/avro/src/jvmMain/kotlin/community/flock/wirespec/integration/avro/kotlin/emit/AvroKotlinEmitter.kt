@@ -113,11 +113,11 @@ class AvroKotlinEmitter(private val packageName: String, logger: Logger) : Kotli
 
                     is Reference.Primitive -> when (reference.type) {
                         Reference.Primitive.Type.Bytes -> "String((record.get(${index}) as java.nio.ByteBuffer).array())"
-                        Reference.Primitive.Type.String -> "record.get(${index}).toString() as ${field.emitType()}"
-                        else -> "record.get(${index}) as ${field.emitType()}"
+                        Reference.Primitive.Type.String -> "record.get(${index}).toString() as ${field.reference.emit()}"
+                        else -> "record.get(${index}) as ${field.reference.emit()}"
                     }
 
-                    else -> "record.get(${index}): ${field.emitType()}"
+                    else -> "record.get(${index}): ${field.reference.emit()}"
                 }
             }
         }

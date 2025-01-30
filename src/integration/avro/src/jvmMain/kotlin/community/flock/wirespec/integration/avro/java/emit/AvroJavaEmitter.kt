@@ -105,23 +105,21 @@ class AvroJavaEmitter(private val packageName: String, logger: Logger) : JavaEmi
             { index, field ->
                 when (val reference = field.reference) {
                     is Reference.Custom -> when {
-                        field.isNullable -> "(${field.emitType()}) java.util.Optional.ofNullable((${field.reference.emitType()}) record.get(${index}))"
-                        reference.isIterable -> "((java.util.List<org.apache.avro.generic.GenericData.Record>) record.get(${index})).stream().map(it -> ${field.reference.emitType()}.Avro.from(it)).toList()"
+                        field.isNullable -> "(java.util.Optional<${reference.emit()}>) java.util.Optional.ofNullable((${field.reference.emitWrap(field.isNullable)}) record.get(${index}))"
+                        reference.isIterable -> "((java.util.List<org.apache.avro.generic.GenericData.Record>) record.get(${index})).stream().map(it -> ${field.reference.emitWrap(field.isNullable)}.Avro.from(it)).toList()"
                         reference.isEnum(ast) -> "${field.reference.emit()}.Avro.from((org.apache.avro.generic.GenericData.EnumSymbol) record.get(${index}))"
                         else -> "${field.reference.emit()}.Avro.from((org.apache.avro.generic.GenericData.Record) record.get(${index}))"
                     }
 
                     is Reference.Primitive -> when {
-                        field.isNullable -> "(${field.emitType()}) java.util.Optional.ofNullable((${field.reference.emitType()}) record.get(${index}))"
-                        reference.type == Reference.Primitive.Type.Bytes -> "(${field.emitType()}) ((java.nio.ByteBuffer) record.get(${index})).array()"
-                        reference.type == Reference.Primitive.Type.String -> "(${field.emitType()}) record.get(${index}).toString()"
-                        else -> "(${field.emitType()}) record.get(${index})"
+                        field.isNullable -> "(${field.reference.emitWrap(field.isNullable)}) java.util.Optional.ofNullable((${field.reference.emitWrap(field.isNullable)}) record.get(${index}))"
+                        reference.type == Reference.Primitive.Type.Bytes -> "(${field.reference.emitWrap(field.isNullable)}) ((java.nio.ByteBuffer) record.get(${index})).array()"
+                        reference.type == Reference.Primitive.Type.String -> "(${field.reference.emitWrap(field.isNullable)}) record.get(${index}).toString()"
+                        else -> "(${field.reference.emitWrap(field.isNullable)}) record.get(${index})"
                     }
 
-                    else -> "(${field.emitType()}) record.get(${index})"
+                    else -> "(${field.reference.emitWrap(field.isNullable)}) record.get(${index})"
                 }
             }
         }
-
-
 }

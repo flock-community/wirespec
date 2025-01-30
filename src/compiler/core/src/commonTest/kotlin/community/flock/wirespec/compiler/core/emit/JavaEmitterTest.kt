@@ -23,7 +23,7 @@ class JavaEmitterTest {
             |public record Todo (
             |  String name,
             |  java.util.Optional<String> description,
-            |  java.util.List<String> notes,
+            |  java.util.List<java.util.Optional<String>> notes,
             |  Boolean done
             |) {
             |};

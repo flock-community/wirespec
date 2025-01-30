@@ -23,7 +23,7 @@ class KotlinEmitterTest {
             |data class Todo(
             |  val name: String,
             |  val description: String?,
-            |  val notes: List<String>,
+            |  val notes: List<String?>,
             |  val done: Boolean
             |)
             |

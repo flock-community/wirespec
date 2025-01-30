@@ -77,10 +77,7 @@ open class JavaEmitter(
     override fun Type.Shape.emit() = value.joinToString("\n") { "${Spacer}${it.emit()}," }.dropLast(1)
 
     override fun Field.emit() =
-        "${emitType()} ${emit(identifier)}"
-
-    fun Field.emitType() =
-        if (isNullable) "java.util.Optional<${reference.emit()}>" else reference.emit()
+        "${reference.emitWrap(isNullable)} ${emit(identifier)}"
 
     override fun Reference.emit() = emitType()
         .let { if (isIterable) "java.util.List<$it>" else it }
@@ -338,7 +335,7 @@ open class JavaEmitter(
 
     private fun Endpoint.Segment.Param.emit() = "${reference.emit()} ${emit(identifier)}"
 
-    private fun Reference.emitWrap(isNullable: Boolean): String = value
+    fun Reference.emitWrap(isNullable: Boolean): String = emitType()
         .let { if (isNullable) "java.util.Optional<$it>" else it }
         .let { if (isIterable) "java.util.List<$it>" else it }
         .let { if (isDictionary) "java.util.Map<String, $it>" else it }
