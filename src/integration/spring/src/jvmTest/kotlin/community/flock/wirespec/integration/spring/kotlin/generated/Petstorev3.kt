@@ -346,7 +346,7 @@ object FindPetsByTagsEndpoint : Wirespec.Endpoint {
 
   fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
     Request(
-      tags = request.queries["tags"]?.let{ serialization.deserializeParam(it, typeOf<List<String>>()) }
+      tags = request.queries["tags"]?.let{ serialization.deserializeParam(it, typeOf<List<String?>>()) } ?: emptyList()
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
