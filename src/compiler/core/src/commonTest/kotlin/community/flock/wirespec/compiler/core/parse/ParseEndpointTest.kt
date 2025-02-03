@@ -121,8 +121,7 @@ class ParseEndpointTest {
                         identifier = FieldIdentifier("id"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
-                            isIterable = false,
-                            isDictionary = false,
+                            isNullable = false,
                         )
                     )
                 )
@@ -152,12 +151,12 @@ class ParseEndpointTest {
                 one.run {
                     identifier.value shouldBe "name"
                     reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String
-                    isNullable shouldBe false
+                    reference.isNullable shouldBe false
                 }
                 two.run {
                     identifier.value shouldBe "date"
                     reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String
-                    isNullable shouldBe false
+                    reference.isNullable shouldBe false
                 }
             }
     }
@@ -180,12 +179,12 @@ class ParseEndpointTest {
                 one.run {
                     identifier.value shouldBe "name"
                     reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String
-                    isNullable shouldBe false
+                    reference.isNullable shouldBe false
                 }
                 two.run {
                     identifier.value shouldBe "date"
                     reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String
-                    isNullable shouldBe false
+                    reference.isNullable shouldBe false
                 }
             }
     }
@@ -224,9 +223,9 @@ class ParseEndpointTest {
             .also { it.size shouldBe 1 }[0]
             .shouldBeInstanceOf<Endpoint>().run {
                 responses.shouldNotBeEmpty()
-                responses.first().content?.reference?.isDictionary?.shouldBeTrue()
-                queries.first().reference.isDictionary.shouldBeTrue()
-                headers.first().reference.isDictionary.shouldBeTrue()
+                responses.first().content?.reference?.let { it is  Reference.Dict }?.shouldBeTrue()
+                queries.first().reference.let { it is Reference.Dict }.shouldBeTrue()
+                headers.first().reference.let { it is Reference.Dict }.shouldBeTrue()
             }
 
     }

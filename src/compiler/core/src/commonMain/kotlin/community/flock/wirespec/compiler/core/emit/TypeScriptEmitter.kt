@@ -57,9 +57,11 @@ open class TypeScriptEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(l
         "${Spacer}\"${emit(identifier)}\": ${reference.emit()}"
 
     override fun Field.emit() =
-        "${Spacer}\"${emit(identifier)}\"${if (isNullable) "?" else ""}: ${reference.emit()}"
+        """$Spacer"${emit(identifier)}": ${reference.emit()}"""
 
-    override fun Reference.emit() = when (this) {
+    override fun Reference.emit(): String = when (this) {
+        is Reference.Dict -> "Record<string, ${reference.emit()}>"
+        is Reference.Iterable -> "${reference.emit()}[]"
         is Reference.Unit -> "void"
         is Reference.Any -> "any"
         is Reference.Custom -> value.sanitizeSymbol()
@@ -70,9 +72,7 @@ open class TypeScriptEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(l
             is Reference.Primitive.Type.Boolean -> "boolean"
             is Reference.Primitive.Type.Bytes -> "ArrayBuffer"
         }
-    }
-        .let { if (isIterable) "$it[]" else it }
-        .let { if (isDictionary) "Record<string, $it>" else it }
+    }.let { "$it${if (isNullable) " | undefined" else ""}" }
 
     override fun emit(refined: Refined) =
         """export type ${refined.identifier.sanitizeSymbol()} = string;

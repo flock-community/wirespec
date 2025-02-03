@@ -5,9 +5,7 @@ import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
 import community.flock.wirespec.compiler.core.tokenize.Arrow
-import community.flock.wirespec.compiler.core.tokenize.Brackets
 import community.flock.wirespec.compiler.core.tokenize.Colon
-import community.flock.wirespec.compiler.core.tokenize.CustomType
 import community.flock.wirespec.compiler.core.tokenize.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.Hash
@@ -18,12 +16,6 @@ import community.flock.wirespec.compiler.core.tokenize.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.StatusCode
 import community.flock.wirespec.compiler.core.tokenize.WirespecType
-import community.flock.wirespec.compiler.core.tokenize.WsBoolean
-import community.flock.wirespec.compiler.core.tokenize.WsBytes
-import community.flock.wirespec.compiler.core.tokenize.WsInteger
-import community.flock.wirespec.compiler.core.tokenize.WsNumber
-import community.flock.wirespec.compiler.core.tokenize.WsString
-import community.flock.wirespec.compiler.core.tokenize.WsUnit
 import community.flock.wirespec.compiler.utils.Logger
 
 class EndpointParser(logger: Logger) : AbstractParser(logger) {
@@ -47,36 +39,25 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
             else -> raise(WrongTokenException<Method>(token))
         }.also { eatToken().bind() }
 
-        val isDict = when (token.type) {
-            is LeftCurly -> true.also { eatToken().bind() }
-            else -> false
-        }
-
         val requests = listOf(
-            when (token.type) {
-                is WirespecType -> parseReference(token.type as WirespecType, token.value, isDict).bind()
-                else -> null
-            }
-        )
-            .also {
-                if (isDict) {
-                    when (token.type) {
-                        is RightCurly -> eatToken().bind()
-                        else -> raise(WrongTokenException<RightCurly>(token).also { eatToken().bind() })
-                    }
+            with(typeParser) {
+                when (val type = token.type) {
+                    is LeftCurly -> parseDict().bind()
+                    is WirespecType -> parseWirespecType(type).bind()
+                    else -> null
                 }
             }
-            .map {
-                Endpoint.Request(
-                    content = it?.let {
-                        Endpoint.Content(
-                            type = "application/json",
-                            reference = it,
-                            isNullable = false
-                        )
-                    }
-                )
-            }
+        ).map {
+            Endpoint.Request(
+                content = it?.let {
+                    Endpoint.Content(
+                        type = "application/json",
+                        reference = it,
+                        isNullable = false
+                    )
+                }
+            )
+        }
 
         val segments = mutableListOf<Endpoint.Segment>().apply {
             while (token.type !is QuestionMark && token.type !is Hash && token.type !is Arrow) {
@@ -147,19 +128,11 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
             is Colon -> eatToken().bind()
             else -> raise(WrongTokenException<Colon>(token))
         }
-        val isDict = when (token.type) {
-            is LeftCurly -> true.also { eatToken().bind() }
-            else -> false
-        }
-        val reference = when (token.type) {
-            is WirespecType -> parseReference(token.type as WirespecType, token.value, isDict).bind()
-            else -> raise(WrongTokenException<WirespecType>(token))
-        }.also {
-            if (isDict) {
-                when (token.type) {
-                    is RightCurly -> eatToken().bind()
-                    else -> raise(WrongTokenException<RightCurly>(token).also { eatToken().bind() })
-                }
+        val reference = with(typeParser) {
+            when (val type = token.type) {
+                is LeftCurly -> parseDict().bind()
+                is WirespecType -> parseWirespecType(type).bind()
+                else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })
             }
         }
         when (token.type) {
@@ -252,38 +225,22 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
                 type = Reference.Primitive.Type.String,
                 isIterable = isIterable,
                 isDictionary = isDict,
-            )
 
-            is WsBytes -> Reference.Primitive(
-                type = Reference.Primitive.Type.Bytes,
-                isIterable = isIterable,
-                isDictionary = isDict,
-            )
-
-            is WsInteger -> Reference.Primitive(
-                type = Reference.Primitive.Type.Integer(wsType.precision.toPrimitivePrecision()),
-                isIterable = isIterable,
-                isDictionary = isDict,
-            )
-
-            is WsNumber -> Reference.Primitive(
-                type = Reference.Primitive.Type.Number(wsType.precision.toPrimitivePrecision()),
-                isIterable = isIterable,
-                isDictionary = isDict,
-            )
-
-            is WsBoolean -> Reference.Primitive(
-                type = Reference.Primitive.Type.Boolean,
-                isIterable = isIterable,
-                isDictionary = isDict,
-            )
-
-            is WsUnit -> Reference.Unit(isIterable)
-
-            is CustomType -> {
-                previousToken.shouldBeDefined().bind()
-                Reference.Custom(value, isIterable)
+        val reference = with(typeParser) {
+            when (val type = token.type) {
+                is LeftCurly -> parseDict().bind()
+                is WirespecType -> parseWirespecType(type).bind()
+                else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })
             }
         }
+
+        val content =
+            if (reference is Reference.Unit) null
+            else Endpoint.Content(
+                type = "application/json",
+                reference = reference,
+            )
+
+        Endpoint.Response(status = statusCode, headers = emptyList(), content = content)
     }
 }

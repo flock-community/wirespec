@@ -71,33 +71,30 @@ open class KotlinEmitter(
 
     override fun Type.Shape.emit() = value.joinToString("\n") { "${Spacer}val ${it.emit()}," }.dropLast(1)
 
-    override fun Field.emit() = "${emit(identifier)}: ${emitType()}"
+    override fun Field.emit() = "${emit(identifier)}: ${reference.emit()}"
 
-    fun Field.emitType() =
-        "${reference.emit()}${if (isNullable) "?" else ""}"
-
-    fun Reference.emitType() = when (this) {
+    override fun Reference.emit(): String = when (this) {
+        is Reference.Dict -> "Map<String, ${reference.emit()}>"
+        is Reference.Iterable -> "List<${reference.emit()}>"
         is Reference.Unit -> "Unit"
         is Reference.Any -> "Any"
         is Reference.Custom -> value
         is Reference.Primitive -> when (type) {
             is Reference.Primitive.Type.String -> "String"
-            is Reference.Primitive.Type.Integer -> when(type.precision){
+            is Reference.Primitive.Type.Integer -> when (type.precision) {
                 Reference.Primitive.Type.Precision.P32 -> "Int"
                 Reference.Primitive.Type.Precision.P64 -> "Long"
             }
-            is Reference.Primitive.Type.Number -> when(type.precision){
+
+            is Reference.Primitive.Type.Number -> when (type.precision) {
                 Reference.Primitive.Type.Precision.P32 -> "Float"
                 Reference.Primitive.Type.Precision.P64 -> "Double"
             }
+
             is Reference.Primitive.Type.Boolean -> "Boolean"
             is Reference.Primitive.Type.Bytes -> "ByteArray"
         }
-    }
-
-    override fun Reference.emit() = emitType()
-        .let { if (isIterable) "List<$it>" else it }
-        .let { if (isDictionary) "Map<String, $it>" else it }
+    }.let { if (isNullable) "$it?" else it }
 
     override fun emit(identifier: Identifier) = when (identifier) {
         is DefinitionIdentifier -> identifier.value.sanitizeSymbol()
@@ -132,7 +129,7 @@ open class KotlinEmitter(
 
     override fun emit(channel: Channel) = """
         |interface ${emit(channel.identifier)}Channel {
-        |   operator fun invoke(message: ${channel.reference.emitWrap(channel.isNullable)})
+        |   operator fun invoke(message: ${channel.reference.emit()})
         |}
         |
     """.trimMargin()
@@ -272,7 +269,7 @@ open class KotlinEmitter(
         """${Spacer(3)}${emit(value.identifier)} = serialization.deserialize(request.path[${index}], typeOf<${value.reference.emit()}>())"""
 
     private fun Field.emitDeserializedParams(type: String, fields: String, spaces: Int = 3) =
-        if (isNullable)
+        if (isNullable == true)
             """${Spacer(spaces)}${emit(identifier)} = $type.$fields["${identifier.value}"]?.let{ serialization.deserializeParam(it, typeOf<${reference.emit()}>()) }"""
         else
             """${Spacer(spaces)}${emit(identifier)} = serialization.deserializeParam(requireNotNull($type.$fields["${identifier.value}"]) { "${emit(identifier)} is null" }, typeOf<${reference.emit()}>())"""
@@ -287,19 +284,14 @@ open class KotlinEmitter(
     private fun String.brace() = wrap("(", ")")
     private fun String.wrap(prefix: String, postfix: String) = if (isEmpty()) "" else "$prefix$this$postfix"
 
-    private fun Reference.emitWrap(isNullable: Boolean): String = value
-        .let { if (isIterable) "List<$it>" else it }
-        .let { if (isNullable) "$it?" else it }
-        .let { if (isDictionary) "Map<String, $it>" else it }
-
     private fun String.fixStatus(): String = when (this) {
         "default" -> "200"
         else -> this
     }
 
-     private fun String.sanitizeSymbol() = this
+    private fun String.sanitizeSymbol() = this
         .split(".", " ")
-        .mapIndexed { index, s -> if(index > 0) s.firstToUpper() else s }
+        .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
         .joinToString("")
         .asSequence()
         .filter { it.isLetterOrDigit() || it in listOf('_') }

@@ -7,8 +7,6 @@ import community.flock.wirespec.compiler.core.exceptions.WirespecException.Compi
 import community.flock.wirespec.compiler.core.tokenize.Arrow
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
-import community.flock.wirespec.compiler.core.tokenize.QuestionMark
-import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.WirespecType
 import community.flock.wirespec.compiler.utils.Logger
 
@@ -32,27 +30,20 @@ class ChannelParser(logger: Logger) : AbstractParser(logger) {
             is Arrow -> eatToken().bind()
             else -> raise(WrongTokenException<Colon>(token).also { eatToken().bind() })
         }
-        val isDict = when (token.type) {
-            is LeftCurly -> true.also { eatToken().bind() }
-            else -> false
-        }
-        when (val type = token.type) {
-            is WirespecType -> Channel(
-                comment = comment,
-                identifier = identifier,
-                reference = with(typeParser) { parseFieldValue(type, token.value, isDict).bind() },
-                isNullable = (token.type is QuestionMark).also { if (it) eatToken().bind() }
-            ).also {
-                if (isDict) {
-                    when (token.type) {
-                        is RightCurly -> eatToken().bind()
-                        else -> raise(WrongTokenException<RightCurly>(token).also { eatToken().bind() })
-                    }
-                }
+
+        val reference = with(typeParser) {
+            when (val type = token.type) {
+                is LeftCurly -> parseDict().bind()
+                is WirespecType -> parseWirespecType(type).bind()
+                else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })
             }
-
-            else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })
         }
 
+        Channel(
+            comment = comment,
+            identifier = identifier,
+            reference = reference,
+            isNullable = null
+        )
     }
 }

@@ -105,20 +105,20 @@ class AvroJavaEmitter(private val packageName: String, logger: Logger) : JavaEmi
             { index, field ->
                 when (val reference = field.reference) {
                     is Reference.Custom -> when {
-                        field.isNullable -> "(${field.emitType()}) java.util.Optional.ofNullable((${field.reference.emitType()}) record.get(${index}))"
+                        field.isNullable -> "(${reference.emit()}) java.util.Optional.ofNullable((${field.reference.emitType()}) record.get(${index}))"
                         reference.isIterable -> "((java.util.List<org.apache.avro.generic.GenericData.Record>) record.get(${index})).stream().map(it -> ${field.reference.emitType()}.Avro.from(it)).toList()"
                         reference.isEnum(ast) -> "${field.reference.emit()}.Avro.from((org.apache.avro.generic.GenericData.EnumSymbol) record.get(${index}))"
                         else -> "${field.reference.emit()}.Avro.from((org.apache.avro.generic.GenericData.Record) record.get(${index}))"
                     }
 
                     is Reference.Primitive -> when {
-                        field.isNullable -> "(${field.emitType()}) java.util.Optional.ofNullable((${field.reference.emitType()}) record.get(${index}))"
-                        reference.type == Reference.Primitive.Type.Bytes -> "(${field.emitType()}) ((java.nio.ByteBuffer) record.get(${index})).array()"
-                        reference.type == Reference.Primitive.Type.String -> "(${field.emitType()}) record.get(${index}).toString()"
-                        else -> "(${field.emitType()}) record.get(${index})"
+                        field.isNullable -> "(${reference.emit()}) java.util.Optional.ofNullable((${field.reference.emitType()}) record.get(${index}))"
+                        reference.type == Reference.Primitive.Type.Bytes -> "(${reference.emit()}) ((java.nio.ByteBuffer) record.get(${index})).array()"
+                        reference.type == Reference.Primitive.Type.String -> "(${reference.emit()}) record.get(${index}).toString()"
+                        else -> "(${reference.emit()}) record.get(${index})"
                     }
 
-                    else -> "(${field.emitType()}) record.get(${index})"
+                    else -> "(${reference.emit()}) record.get(${index})"
                 }
             }
         }

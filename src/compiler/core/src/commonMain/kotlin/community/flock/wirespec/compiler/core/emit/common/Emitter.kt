@@ -117,7 +117,7 @@ abstract class Emitter(
         type = type,
         identifier = identifier,
         reference = reference,
-        isNullable = isNullable
+        isNullable = isNullable ?: false
     )
 
     companion object {

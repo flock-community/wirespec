@@ -31,7 +31,7 @@ class ParseChannelTest {
                 comment?.value shouldBe null
                 identifier.value shouldBe "TodosChannel"
                 reference.value shouldBe "Todo"
-                isNullable shouldBe false
+                reference.isNullable shouldBe false
             }
     }
 
@@ -50,7 +50,7 @@ class ParseChannelTest {
                 comment?.value shouldBe null
                 identifier.value shouldBe "TodosChannel"
                 reference.value shouldBe "Todo"
-                isNullable shouldBe true
+                reference.isNullable shouldBe true
             }
     }
 }

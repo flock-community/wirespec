@@ -72,55 +72,82 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
             }
         }
 
-    fun TokenProvider.parseFieldValue(wsType: WirespecType, value: String, isDict: Boolean) = either {
-        val previousToken = token
+    fun TokenProvider.parseDict() = either {
         eatToken().bind()
-        token.log()
-        val isIterable = (token.type is Brackets).also { if (it) eatToken().bind() }
-        when (wsType) {
-            is WsString -> Reference.Primitive(
-                type = Reference.Primitive.Type.String,
-                isIterable = isIterable,
-                isDictionary = isDict
+        when (val type = token.type) {
+            is WirespecType -> Reference.Dict(
+                reference = parseWirespecType(type).bind(),
+                isNullable = when (token.type) {
+                    is RightCurly -> {
+                        eatToken().bind()
+                        isNullable().bind()
+                    }
+
+                    else -> raise(WrongTokenException<RightCurly>(token).also { eatToken().bind() })
+                }
             )
 
-            is WsBytes -> Reference.Primitive(
-                type = Reference.Primitive.Type.Bytes,
-                isIterable = isIterable,
-                isDictionary = isDict
-            )
+            else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })
+        }
+    }
 
-            is WsInteger -> Reference.Primitive(
-                type = Reference.Primitive.Type.Integer(wsType.precision.toPrimitivePrecision()),
-                isIterable = isIterable,
-                isDictionary = isDict
-            )
-
-            is WsNumber -> Reference.Primitive(
-                type = Reference.Primitive.Type.Number(wsType.precision.toPrimitivePrecision()),
-                isIterable = isIterable,
-                isDictionary = isDict
-            )
-
-            is WsBoolean -> Reference.Primitive(
-                type = Reference.Primitive.Type.Boolean,
-                isIterable = isIterable,
-                isDictionary = isDict
-            )
-
-            is WsUnit -> Reference.Unit(
-                isIterable = isIterable,
-                isDictionary = isDict
-            )
-
-            is CustomType -> {
-                previousToken.shouldBeDefined().bind()
-                Reference.Custom(
-                    value = value,
-                    isIterable = isIterable,
-                    isDictionary = isDict
+    fun TokenProvider.parseWirespecType(type: WirespecType) = either {
+        val current = eatToken().bind()
+        val wirespecType = when (type) {
+            is WsString -> { it ->
+                Reference.Primitive(
+                    type = Reference.Primitive.Type.String,
+                    isNullable = it
                 )
             }
+
+            is WsBytes -> { it ->
+                Reference.Primitive(
+                    type = Reference.Primitive.Type.Bytes,
+                    isNullable = it
+                )
+            }
+
+            is WsInteger -> { it ->
+                Reference.Primitive(
+                    type = Reference.Primitive.Type.Integer(type.precision.toPrimitivePrecision()),
+                    isNullable = it
+                )
+            }
+
+            is WsNumber -> { it ->
+                Reference.Primitive(
+                    type = Reference.Primitive.Type.Number(type.precision.toPrimitivePrecision()),
+                    isNullable = it
+                )
+            }
+
+            is WsBoolean -> { it ->
+                Reference.Primitive(
+                    type = Reference.Primitive.Type.Boolean,
+                    isNullable = it
+                )
+            }
+
+            is WsUnit -> Reference::Unit
+
+            is CustomType -> { it ->
+                current.shouldBeDefined().bind()
+                Reference.Custom(
+                    value = current.value,
+                    isNullable = it
+                )
+            }
+        }(isNullable().bind())
+        when(token.type){
+            is Brackets -> {
+                eatToken().bind()
+                Reference.Iterable(
+                    reference = wirespecType,
+                    isNullable = isNullable().bind()
+                )
+            }
+            else -> wirespecType
         }
     }
 
@@ -158,23 +185,19 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
             is Colon -> eatToken().bind()
             else -> raise(WrongTokenException<Colon>(token).also { eatToken().bind() })
         }
-        val isDict = when (token.type) {
-            is LeftCurly -> true.also { eatToken().bind() }
-            else -> false
-        }
+
         when (val type = token.type) {
+            is LeftCurly -> Field(
+                identifier = identifier,
+                reference = parseDict().bind(),
+                isNullable = null,
+            )
+
             is WirespecType -> Field(
                 identifier = identifier,
-                reference = parseFieldValue(type, token.value, isDict).bind(),
-                isNullable = (token.type is QuestionMark).also { if (it) eatToken().bind() }
-            ).also {
-                if (isDict) {
-                    when (token.type) {
-                        is RightCurly -> eatToken().bind()
-                        else -> raise(WrongTokenException<RightCurly>(token).also { eatToken().bind() })
-                    }
-                }
-            }
+                reference = parseWirespecType(type).bind(),
+                isNullable = null
+            )
 
             else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })
         }
@@ -203,5 +226,12 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
 
             else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
         }.toSet()
+    }
+
+    private fun TokenProvider.isNullable() = either {
+        when (token.type) {
+            is QuestionMark -> true.also { eatToken().bind() }
+            else -> false
+        }
     }
 }
