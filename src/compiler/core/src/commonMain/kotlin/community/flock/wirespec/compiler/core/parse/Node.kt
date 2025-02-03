@@ -23,36 +23,45 @@ data class Type(
 }
 
 sealed interface Reference : Value<String> {
-    val isIterable: Boolean
-    val isDictionary: Boolean
+    val isNullable: Boolean
 
     data class Any(
-        override val isIterable: Boolean,
-        override val isDictionary: Boolean = false,
+        override val isNullable: Boolean
     ) : Reference {
         override val value = "Any"
     }
 
     data class Unit(
-        override val isIterable: Boolean,
-        override val isDictionary: Boolean = false,
+        override val isNullable: Boolean
     ) : Reference {
         override val value = "Unit"
     }
 
+    data class Dict(
+        val reference: Reference,
+        override val isNullable: Boolean
+    ) : Reference {
+        override val value = "Dict"
+    }
+
+    data class Iterable(
+        val reference: Reference,
+        override val isNullable: Boolean
+    ) : Reference {
+        override val value = "Iterable"
+    }
+
     data class Custom(
         override val value: String,
-        override val isIterable: Boolean,
-        override val isDictionary: Boolean = false
+        override val isNullable: Boolean,
     ) : Reference
 
     data class Primitive(
         val type: Type,
-        override val isIterable: Boolean = false,
-        override val isDictionary: Boolean = false
+        override val isNullable: Boolean,
     ) : Reference {
         sealed interface Type {
-            val name: kotlin.String;
+            val name: kotlin.String
 
             enum class Precision { P32, P64 }
             data object String : Type {
@@ -81,7 +90,12 @@ sealed interface Reference : Value<String> {
     }
 }
 
-data class Field(val identifier: FieldIdentifier, val reference: Reference, val isNullable: Boolean)
+data class Field(
+    val identifier: FieldIdentifier,
+    val reference: Reference,
+    @Deprecated("Nullability should be modelled in Reference")
+    val isNullable: Boolean?
+)
 
 data class Enum(
     override val comment: Comment?,
@@ -133,7 +147,8 @@ data class Endpoint(
 data class Channel(
     override val comment: Comment?,
     override val identifier: DefinitionIdentifier,
-    val isNullable: Boolean,
+    @Deprecated("Should be in reference")
+    val isNullable: Boolean?,
     val reference: Reference,
 ) : Definition
 

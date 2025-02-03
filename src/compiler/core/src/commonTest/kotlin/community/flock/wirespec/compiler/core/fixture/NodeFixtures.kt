@@ -4,6 +4,7 @@ import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
+import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -37,23 +38,38 @@ object NodeFixtures {
             value = listOf(
                 Field(
                     identifier = FieldIdentifier("name"),
-                    reference = Primitive(type = Primitive.Type.String),
-                    isNullable = false,
+                    reference = Primitive(
+                        type = Primitive.Type.String,
+                        isNullable = false,
+                    ),
+                    isNullable = null,
                 ),
                 Field(
                     identifier = FieldIdentifier("description"),
-                    reference = Primitive(type = Primitive.Type.String),
-                    isNullable = true,
+                    reference = Primitive(
+                        type = Primitive.Type.String,
+                        isNullable = true,
+                    ),
+                    isNullable = null,
                 ),
                 Field(
                     identifier = FieldIdentifier("notes"),
-                    reference = Primitive(type = Primitive.Type.String, isIterable = true),
-                    isNullable = false,
+                    reference = Reference.Iterable(
+                        reference = Primitive(
+                            type = Primitive.Type.String,
+                            isNullable = false,
+                        ),
+                        isNullable = false,
+                    ),
+                    isNullable = null,
                 ),
                 Field(
                     identifier = FieldIdentifier("done"),
-                    reference = Primitive(type = Primitive.Type.Boolean),
-                    isNullable = false,
+                    reference = Primitive(
+                        type = Primitive.Type.Boolean,
+                        isNullable = false,
+                    ),
+                    isNullable = null,
                 )
             )
         ),

@@ -1,5 +1,6 @@
 package community.flock.wirespec.openapi.v3
 
+import community.flock.kotlinx.openapi.bindings.v3.Type as OpenapiType
 import community.flock.kotlinx.openapi.bindings.v3.BooleanObject
 import community.flock.kotlinx.openapi.bindings.v3.HeaderObject
 import community.flock.kotlinx.openapi.bindings.v3.HeaderOrReferenceObject
@@ -31,7 +32,6 @@ import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.openapi.Common.className
 import community.flock.wirespec.openapi.Common.filterNotNullValues
 import kotlinx.serialization.json.Json
-import community.flock.kotlinx.openapi.bindings.v3.Type as OpenapiType
 
 object OpenApiV3Parser {
 
@@ -449,21 +449,19 @@ object OpenApiV3Parser {
             when {
 
                 schema.additionalProperties != null -> when (val additionalProperties = schema.additionalProperties!!) {
-                    is BooleanObject -> Reference.Any(isIterable = false, isDictionary = true)
+                    is BooleanObject -> Reference.Dict(reference = Reference.Any(isNullable = false), isNullable = false)
                     is ReferenceObject -> toReference(additionalProperties).toMap()
                     is SchemaObject -> toReference(additionalProperties, reference.getReference()).toMap()
                 }
 
                 schema.enum != null -> Reference.Custom(
-                    className(referencingObject.getReference()),
-                    isIterable = false,
-                    isDictionary = false
+                    value = className(referencingObject.getReference()),
+                    isNullable = false,
                 )
 
                 schema.type.isPrimitive() -> Reference.Primitive(
-                    schema.type!!.toPrimitive(schema.format),
-                    isIterable = false,
-                    isDictionary = false
+                    type = schema.type!!.toPrimitive(schema.format),
+                    isNullable = false,
                 )
 
                 schema.type == OpenapiType.ARRAY -> when (val items = schema.items) {
@@ -491,34 +489,38 @@ object OpenApiV3Parser {
         }
 
         schema.additionalProperties != null -> when (val additionalProperties = schema.additionalProperties!!) {
-            is BooleanObject -> Reference.Any(isIterable = false, isDictionary = true)
+            is BooleanObject -> Reference.Dict(
+                reference = Reference.Any(isNullable = false),
+                isNullable = false,
+            )
             is ReferenceObject -> toReference(additionalProperties).toMap()
             is SchemaObject -> additionalProperties
                 .takeIf { it.type.isPrimitive() || it.properties != null }
                 ?.let { toReference(it, name).toMap() }
-                ?: Reference.Any(isIterable = false, isDictionary = true)
+                ?: Reference.Dict(
+                    reference = Reference.Any(isNullable = false),
+                    isNullable = false,
+                )
         }
 
-        schema.enum != null -> Reference.Custom(name, false, schema.additionalProperties != null)
+        schema.enum != null -> Reference.Custom(value = name, isNullable = false)
+            .let { if(schema.additionalProperties != null) Reference.Dict(reference = it, isNullable = false) else it }
+
         else -> when (val type = schema.type) {
             OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Reference.Primitive(
-                type.toPrimitive(schema.format),
-                false,
-                schema.additionalProperties != null
-            )
+                type = type.toPrimitive(schema.format),
+                isNullable = false,
+            ).let { if(schema.additionalProperties != null) Reference.Dict(it, isNullable = false) else it }
 
             null, OpenapiType.OBJECT ->
                 when {
-                    schema.additionalProperties is BooleanObject -> Reference.Any(
-                        false,
-                        schema.additionalProperties != null
-                    )
+                    schema.additionalProperties is BooleanObject -> Reference.Any(isNullable = false)
+                        .let { if(schema.additionalProperties != null) Reference.Dict(it, isNullable = false) else it }
 
                     else -> Reference.Custom(
-                        name,
-                        isIterable = false,
-                        isDictionary = schema.additionalProperties != null
-                    )
+                        value = name,
+                        isNullable = false,
+                    ).let { if(schema.additionalProperties != null) Reference.Dict(it, isNullable = false) else it }
                 }
 
             OpenapiType.ARRAY -> {
@@ -587,14 +589,14 @@ object OpenApiV3Parser {
         when (val s = parameter.schema) {
             is ReferenceObject -> toReference(s)
             is SchemaObject -> toReference(s, name + if (s.type == OpenapiType.ARRAY) "Array" else "")
-            null -> Reference.Primitive(Reference.Primitive.Type.String)
+            null -> Reference.Primitive(type = Reference.Primitive.Type.String, isNullable = false)
         }.let { Field(FieldIdentifier(parameter.name), it, !(parameter.required ?: false)) }
 
     private fun OpenAPIObject.toField(header: HeaderObject, identifier: String, name: String) =
         when (val s = header.schema) {
             is ReferenceObject -> toReference(s)
             is SchemaObject -> toReference(s, name)
-            null -> Reference.Primitive(Reference.Primitive.Type.String)
+            null -> Reference.Primitive(type = Reference.Primitive.Type.String, isNullable = false)
         }.let { Field(FieldIdentifier(identifier), it, !(header.required ?: false)) }
 
     private data class FlattenRequest(
@@ -650,16 +652,6 @@ private fun OpenapiType?.isPrimitive() = when (this) {
     null -> false
 }
 
-private fun Reference.toIterable() = when (this) {
-    is Reference.Custom -> copy(isIterable = true)
-    is Reference.Any -> copy(isIterable = true)
-    is Reference.Primitive -> copy(isIterable = true)
-    is Reference.Unit -> copy(isIterable = true)
-}
+private fun Reference.toIterable() = Reference.Iterable(reference = this, isNullable = false)
 
-private fun Reference.toMap() = when (this) {
-    is Reference.Custom -> copy(isDictionary = true)
-    is Reference.Any -> copy(isDictionary = true)
-    is Reference.Primitive -> copy(isDictionary = true)
-    is Reference.Unit -> copy(isDictionary = true)
-}
+private fun Reference.toMap() = Reference.Dict(reference = this, isNullable = false)

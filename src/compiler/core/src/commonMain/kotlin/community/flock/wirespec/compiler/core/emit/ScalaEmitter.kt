@@ -65,14 +65,16 @@ open class ScalaEmitter(
     override fun Type.Shape.emit() = value.joinToString("\n") { it.emit() }.dropLast(1)
 
     override fun Field.emit() =
-        "${Spacer}val ${emit(identifier)}: ${if (isNullable) "Option[${reference.emit()}]" else reference.emit()},"
+        "${Spacer}val ${emit(identifier)}: ${reference.emit()},"
 
     override fun emit(identifier: Identifier) =
         identifier.run { if (value in reservedKeywords) value.addBackticks() else value }
 
     override fun emit(channel: Channel) = notYetImplemented()
 
-    override fun Reference.emit() = when (this) {
+    override fun Reference.emit(): String = when (this) {
+        is Reference.Dict -> "Map[String, ${reference.emit()}]"
+        is Reference.Iterable -> "List[${reference.emit()}]"
         is Reference.Unit -> "Unit"
         is Reference.Any -> "Any"
         is Reference.Custom -> value
@@ -91,16 +93,22 @@ open class ScalaEmitter(
             is Reference.Primitive.Type.Boolean -> "Boolean"
             is Reference.Primitive.Type.Bytes -> "Array[Byte]"
         }
-    }
-        .let { if (isIterable) "List[$it]" else it }
-        .let { if (isDictionary) "Map[String, $it]" else it }
+    }.let { if (isNullable) "Option[$it]" else it }
 
     override fun emit(enum: Enum, ast: AST) = enum.run {
         fun String.sanitize() = replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }
         """
         |sealed abstract class ${emitName()}(val label: String)
         |object ${emit(identifier)} {
-        |${entries.joinToString("\n") { """${Spacer}final case object ${it.sanitize().uppercase()} extends ${emit(identifier)}(label = "$it")""" }}
+        |${
+            entries.joinToString("\n") {
+                """${Spacer}final case object ${it.sanitize().uppercase()} extends ${
+                    emit(
+                        identifier
+                    )
+                }(label = "$it")"""
+            }
+        }
         |}
         |""".trimMargin()
     }

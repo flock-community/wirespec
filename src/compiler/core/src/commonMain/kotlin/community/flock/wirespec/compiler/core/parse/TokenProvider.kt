@@ -38,11 +38,12 @@ class TokenProvider(private val logger: Logger, tokens: Tokens) {
 
     fun hasNext() = nextToken != null
 
-    fun eatToken(): Either<WirespecException, Unit> = either {
+    fun eatToken(): Either<WirespecException, Token> = either {
         val previousToken = token
         token = nextToken ?: raise(NextException(previousToken.coordinates))
         nextToken = nextToken()
         printTokens(previousToken)
+        previousToken
     }
 
     private fun printTokens(previousToken: Token? = null) {
