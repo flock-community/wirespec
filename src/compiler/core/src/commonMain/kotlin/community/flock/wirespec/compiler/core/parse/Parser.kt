@@ -21,7 +21,7 @@ import community.flock.wirespec.compiler.utils.Logger
 typealias AST = List<Node>
 
 abstract class AbstractParser(protected val logger: Logger) {
-    protected fun Token.log() = logger.info("Parsing $type at line ${coordinates.line} position ${coordinates.position}")
+    protected fun Token.log() = logger.debug("Parsing $type at line ${coordinates.line} position ${coordinates.position}")
 }
 
 class Parser(logger: Logger) : AbstractParser(logger) {
