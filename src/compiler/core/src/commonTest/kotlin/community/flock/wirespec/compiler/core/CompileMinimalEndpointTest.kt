@@ -70,7 +70,7 @@ class CompileMinimalEndpointTest {
             |    when(response) {
             |      is Response200 -> Wirespec.RawResponse(
             |        statusCode = response.status,
-            |        headers = mapOf(),
+            |        headers = emptyMap(),
             |        body = serialization.serialize(response.body, typeOf<List<TodoDto>>()),
             |      )
             |    }
@@ -253,7 +253,7 @@ class CompileMinimalEndpointTest {
             |    headers: Headers
             |    body: undefined
             |  }
-            |  export type Response200 = { 
+            |  export type Response200 = {
             |    status: 200
             |    headers: {}
             |    body: TodoDto[]

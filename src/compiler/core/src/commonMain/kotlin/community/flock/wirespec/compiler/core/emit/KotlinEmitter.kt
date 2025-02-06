@@ -253,7 +253,7 @@ open class KotlinEmitter(
     private fun Endpoint.Response.emitSerialized() = """
         |${Spacer(3)}is Response$status -> Wirespec.RawResponse(
         |${Spacer(4)}statusCode = response.status,
-        |${Spacer(4)}headers = mapOf(),
+        |${Spacer(4)}headers = ${if (headers.isNotEmpty()) headers.joinToString(" + ") { "(${it.emitSerializedParams("headers")})" } else "emptyMap()"},
         |${Spacer(4)}body = ${if (content != null) "serialization.serialize(response.body, typeOf<${content.emit()}>())" else "null"},
         |${Spacer(3)})
     """.trimMargin()

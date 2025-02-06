@@ -96,17 +96,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
             else -> emptyList()
         }
 
-        val headers = when (token.type) {
-            is Hash -> {
-                eatToken().bind()
-                when (token.type) {
-                    is LeftCurly -> with(typeParser) { parseTypeShape().bind() }.value
-                    else -> raise(WrongTokenException<LeftCurly>(token))
-                }
-            }
-
-            else -> emptyList()
-        }
+        val headers = parseHeaders().bind()
 
         when (token.type) {
             is Arrow -> eatToken().bind()
@@ -222,7 +212,24 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
                 }
             }
         }
-        Endpoint.Response(status = statusCode, headers = emptyList(), content = content)
+
+        val headers = parseHeaders().bind()
+        Endpoint.Response(status = statusCode, headers = headers, content = content)
+    }
+
+    private fun TokenProvider.parseHeaders() = either {
+        token.log()
+        when (token.type) {
+            is Hash -> {
+                eatToken().bind()
+                when (token.type) {
+                    is LeftCurly -> with(typeParser) { parseTypeShape().bind() }.value
+                    else -> raise(WrongTokenException<LeftCurly>(token))
+                }
+            }
+
+            else -> emptyList()
+        }
     }
 
     private fun TokenProvider.parseContent(wsType: WirespecType, value: String, isDict: Boolean) = either {

@@ -15,6 +15,7 @@ class CompileFullEndpointTest {
         |    ?{done: Boolean}
         |    #{token: Token} -> {
         |    200 -> TodoDto
+        |    201 -> TodoDto #{token: Token}
         |    500 -> Error
         |}
         |type PotentialTodoDto {
@@ -99,6 +100,12 @@ class CompileFullEndpointTest {
             |    data object Headers : Wirespec.Response.Headers
             |  }
             |
+            |  data class Response201(override val body: TodoDto) : Response2XX<TodoDto>, ResponseTodoDto {
+            |    override val status = 201
+            |    override val headers = Headers
+            |    data object Headers : Wirespec.Response.Headers
+            |  }
+            |
             |  data class Response500(override val body: Error) : Response5XX<Error>, ResponseError {
             |    override val status = 500
             |    override val headers = Headers
@@ -109,12 +116,17 @@ class CompileFullEndpointTest {
             |    when(response) {
             |      is Response200 -> Wirespec.RawResponse(
             |        statusCode = response.status,
-            |        headers = mapOf(),
+            |        headers = emptyMap(),
+            |        body = serialization.serialize(response.body, typeOf<TodoDto>()),
+            |      )
+            |      is Response201 -> Wirespec.RawResponse(
+            |        statusCode = response.status,
+            |        headers = (mapOf("token" to (request.headers.token?.let{ serialization.serializeParam(it, typeOf<Token>()) } ?: emptyList()))),
             |        body = serialization.serialize(response.body, typeOf<TodoDto>()),
             |      )
             |      is Response500 -> Wirespec.RawResponse(
             |        statusCode = response.status,
-            |        headers = mapOf(),
+            |        headers = emptyMap(),
             |        body = serialization.serialize(response.body, typeOf<Error>()),
             |      )
             |    }
@@ -122,6 +134,9 @@ class CompileFullEndpointTest {
             |  fun fromResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
             |    when (response.statusCode) {
             |      200 -> Response200(
+            |        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<TodoDto>()),
+            |      )
+            |      201 -> Response201(
             |        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<TodoDto>()),
             |      )
             |      500 -> Response500(
@@ -224,6 +239,14 @@ class CompileFullEndpointTest {
             |    @Override public TodoDto getBody() { return body; }
             |    class Headers implements Wirespec.Response.Headers {}
             |  }
+            |  record Response201(Token token, TodoDto body) implements Response2XX<TodoDto>, ResponseTodoDto {
+            |    @Override public int getStatus() { return 201; }
+            |    @Override public Headers getHeaders() { return new Headers(token); }
+            |    @Override public TodoDto getBody() { return body; }
+            |    public record Headers(
+            |    Token token
+            |  ) implements Wirespec.Response.Headers {}
+            |  }
             |  record Response500(Error body) implements Response5XX<Error>, ResponseError {
             |    @Override public int getStatus() { return 500; }
             |    @Override public Headers getHeaders() { return new Headers(); }
@@ -254,6 +277,7 @@ class CompileFullEndpointTest {
             |
             |    static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
             |      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, false))); }
+            |      if (response instanceof Response201 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serialize(r.getHeaders().token(), Wirespec.getType(Token.class, false)))), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, false))); }
             |      if (response instanceof Response500 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(Error.class, false))); }
             |      else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
             |    }
@@ -261,6 +285,10 @@ class CompileFullEndpointTest {
             |    static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
             |      return switch (response.statusCode()) {
             |        case 200 -> new Response200(
+            |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, false))
+            |      );
+            |        case 201 -> new Response201(
+            |        java.util.Optional.ofNullable(response.headers().get("token")).map(it -> serialization.deserialize(it, Wirespec.getType(Token.class, false))).get(),
             |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, false))
             |      );
             |        case 500 -> new Response500(
@@ -361,17 +389,22 @@ class CompileFullEndpointTest {
             |    headers: Headers
             |    body: PotentialTodoDto
             |  }
-            |  export type Response200 = { 
+            |  export type Response200 = {
             |    status: 200
             |    headers: {}
             |    body: TodoDto
             |  }
-            |  export type Response500 = { 
+            |  export type Response201 = {
+            |    status: 201
+            |    headers: {  "token": Token}
+            |    body: TodoDto
+            |  }
+            |  export type Response500 = {
             |    status: 500
             |    headers: {}
             |    body: Error
             |  }
-            |  export type Response = Response200 | Response500
+            |  export type Response = Response200 | Response201 | Response500
             |  export const request = (props: {id: string, done: boolean, token: Token, body: PotentialTodoDto}): Request => ({
             |    path: {id: props.id},
             |    method: "PUT",
@@ -381,6 +414,11 @@ class CompileFullEndpointTest {
             |  })
             |  export const response200 = (props: {body: TodoDto}): Response200 => ({
             |    status: 200,
+            |    headers: {token: props.token},
+            |    body: props.body,
+            |  })
+            |  export const response201 = (props: {token: Token, body: TodoDto}): Response201 => ({
+            |    status: 201,
             |    headers: {token: props.token},
             |    body: props.body,
             |  })
@@ -405,6 +443,12 @@ class CompileFullEndpointTest {
             |        case 200:
             |          return {
             |            status: 200,
+            |            headers: {},
+            |            body: serialization.deserialize<TodoDto>(response.body)
+            |          };
+            |        case 201:
+            |          return {
+            |            status: 201,
             |            headers: {},
             |            body: serialization.deserialize<TodoDto>(response.body)
             |          };
@@ -484,6 +528,7 @@ class CompileFullEndpointTest {
         val wirespec = """
             |endpoint PutTodo PUT PotentialTodoDto /todos/{id: String} ? {done: Boolean} -> {
             |  200 -> TodoDto
+            |  201 -> TodoDto
             |  500 -> Error
             |}
             |
