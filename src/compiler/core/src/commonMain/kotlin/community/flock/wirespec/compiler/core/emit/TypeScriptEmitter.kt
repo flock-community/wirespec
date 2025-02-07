@@ -172,7 +172,7 @@ open class TypeScriptEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(l
     private fun <T> Iterable<T>.joinToObject(transform: ((T) -> CharSequence)) =
         joinToString(", ", "{", "}", transform = transform)
 
-    private fun Param.emit() = "${emit(identifier)}${if (isNullable) "?" else ""}: ${reference.emit()}"
+    private fun Param.emit() = "${emit(identifier)}${if (reference.isNullable) "?" else ""}: ${reference.emit()}"
 
     private fun Endpoint.Response.emitName() = "Response" + status.firstToUpper()
 

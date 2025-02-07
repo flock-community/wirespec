@@ -42,7 +42,6 @@ object NodeFixtures {
                         type = Primitive.Type.String,
                         isNullable = false,
                     ),
-                    isNullable = null,
                 ),
                 Field(
                     identifier = FieldIdentifier("description"),
@@ -50,7 +49,6 @@ object NodeFixtures {
                         type = Primitive.Type.String,
                         isNullable = true,
                     ),
-                    isNullable = null,
                 ),
                 Field(
                     identifier = FieldIdentifier("notes"),
@@ -61,7 +59,6 @@ object NodeFixtures {
                         ),
                         isNullable = false,
                     ),
-                    isNullable = null,
                 ),
                 Field(
                     identifier = FieldIdentifier("done"),
@@ -69,7 +66,6 @@ object NodeFixtures {
                         type = Primitive.Type.Boolean,
                         isNullable = false,
                     ),
-                    isNullable = null,
                 )
             )
         ),

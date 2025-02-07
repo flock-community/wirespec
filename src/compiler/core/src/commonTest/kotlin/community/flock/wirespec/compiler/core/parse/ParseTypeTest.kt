@@ -103,7 +103,6 @@ class ParseTypeTest {
                         value = listOf(
                             Field(
                                 identifier = FieldIdentifier("int32"),
-                                isNullable = null,
                                 reference = Reference.Primitive(
                                     type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32),
                                     isNullable = false
@@ -111,7 +110,6 @@ class ParseTypeTest {
                             ),
                             Field(
                                 identifier = FieldIdentifier("int64"),
-                                isNullable = null,
                                 reference = Reference.Iterable(
                                     isNullable = false,
                                     reference = Reference.Primitive(
@@ -131,7 +129,6 @@ class ParseTypeTest {
                         value = listOf(
                             Field(
                                 identifier = FieldIdentifier("num32"),
-                                isNullable = null,
                                 reference = Reference.Primitive(
                                     type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P32),
                                     isNullable = false,
@@ -139,7 +136,6 @@ class ParseTypeTest {
                             ),
                             Field(
                                 identifier = FieldIdentifier("num64"),
-                                isNullable = null,
                                 reference = Reference.Primitive(
                                     type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P64),
                                     isNullable = true,

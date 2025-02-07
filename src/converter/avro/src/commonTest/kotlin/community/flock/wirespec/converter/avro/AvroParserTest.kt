@@ -15,7 +15,7 @@ import kotlin.test.assertTrue
 class AvroParserTest {
 
 
-    @Test()
+    @Test
     fun testCustomer() {
         val resource = Resource("src/commonTest/resources/customer.avsc")
             .apply { assertTrue(exists()) }
@@ -73,64 +73,56 @@ class AvroParserTest {
                             identifier = FieldIdentifier("id"),
                             reference = Reference.Primitive(
                                 type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32),
-                                isIterable = false,
-                                isDictionary = false
+                                isNullable = false
                             ),
-                            isNullable = false
                         ),
                         Field(
                             identifier = FieldIdentifier("username"),
                             reference = Reference.Primitive(
                                 type = Reference.Primitive.Type.String,
-                                isIterable = false,
-                                isDictionary = false
+                                isNullable = false
                             ),
-                            isNullable = false
                         ),
                         Field(
                             identifier = FieldIdentifier("passwordHash"),
                             reference = Reference.Primitive(
                                 type = Reference.Primitive.Type.String,
-                                isIterable = false,
-                                isDictionary = false
+                                isNullable = false
                             ),
-                            isNullable = false
                         ),
                         Field(
                             identifier = FieldIdentifier("signupDate"),
                             reference = Reference.Primitive(
                                 type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P64),
-                                isIterable = false,
-                                isDictionary = false
+                                isNullable = false
                             ),
-                            isNullable = false
                         ),
                         Field(
                             identifier = FieldIdentifier("emailAddresses"),
-                            reference = Reference.Custom(
-                                "EmailAddress",
-                                isIterable = true,
-                                isDictionary = false
+                            reference = Reference.Iterable(
+                                reference = Reference.Custom(
+                                    "EmailAddress",
+                                    isNullable = false
+                                ), isNullable = false
                             ),
-                            isNullable = false
                         ),
                         Field(
                             identifier = FieldIdentifier("twitterAccounts"),
-                            reference = Reference.Custom(
-                                "TwitterAccount",
-                                isIterable = true,
-                                isDictionary = false
+                            reference = Reference.Iterable(
+                                reference = Reference.Custom(
+                                    "TwitterAccount",
+                                    isNullable = false
+                                ), isNullable = false
                             ),
-                            isNullable = false
                         ),
                         Field(
                             identifier = FieldIdentifier("toDoItems"),
-                            reference = Reference.Custom(
-                                "ToDoItem",
-                                isIterable = true,
-                                isDictionary = false
-                            ),
-                            isNullable = false
+                            reference = Reference.Iterable(
+                                reference = Reference.Custom(
+                                    "ToDoItem",
+                                    isNullable = false
+                                ), isNullable = false
+                            )
                         )
                     )
                 )
@@ -145,7 +137,7 @@ class AvroParserTest {
                 isNullable = false,
                 reference = Reference.Custom(
                     "User",
-                    isIterable = false,
+                    isNullable = false,
                 )
             ),
             ast.last()
