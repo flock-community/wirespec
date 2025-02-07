@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.utils.noLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.Test
@@ -36,14 +37,13 @@ class ParseTypeTest {
             .shouldBeInstanceOf<Field>()
             .run {
                 identifier.shouldBeInstanceOf<Identifier>().value shouldBe "bar"
-                reference.shouldBeInstanceOf<Reference.Primitive>().run {
-                    type shouldBe Reference.Primitive.Type.String
-                    isIterable shouldBe true
-                    isDictionary shouldBe true
-                }
-                isNullable shouldBe false
+                reference.shouldBeInstanceOf<Reference.Dict>()
+                    .reference.shouldBeInstanceOf<Reference.Iterable>()
+                    .reference.shouldBeInstanceOf<Reference.Primitive>().run {
+                        type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
+                        isNullable.shouldBeFalse()
+                    }
             }
-
     }
 
     @Test
@@ -79,8 +79,8 @@ class ParseTypeTest {
             .also { it.size shouldBe 2 }
             .let {
                 val (first, second) = it.toList()
-                first shouldBe Reference.Custom(value = "Bar", isIterable = false, isDictionary = false)
-                second shouldBe Reference.Custom(value = "Bal", isIterable = false, isDictionary = false)
+                first shouldBe Reference.Custom(value = "Bar", isNullable = false)
+                second shouldBe Reference.Custom(value = "Bal", isNullable = false)
             }
     }
 
@@ -103,24 +103,23 @@ class ParseTypeTest {
                         value = listOf(
                             Field(
                                 identifier = FieldIdentifier("int32"),
-                                isNullable = false,
                                 reference = Reference.Primitive(
                                     type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32),
-                                    isIterable = false,
-                                    isDictionary = false
+                                    isNullable = false
                                 )
                             ),
                             Field(
                                 identifier = FieldIdentifier("int64"),
-                                isNullable = false,
-                                reference = Reference.Primitive(
-                                    type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P64),
-                                    isIterable = true,
-                                    isDictionary = false
-                                )
-                            )
-                        )
-                    )
+                                reference = Reference.Iterable(
+                                    isNullable = false,
+                                    reference = Reference.Primitive(
+                                        type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P64),
+                                        isNullable = false,
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
                 )
                 second shouldBe Type(
                     comment = null,
@@ -130,20 +129,16 @@ class ParseTypeTest {
                         value = listOf(
                             Field(
                                 identifier = FieldIdentifier("num32"),
-                                isNullable = false,
                                 reference = Reference.Primitive(
                                     type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P32),
-                                    isIterable = false,
-                                    isDictionary = false
+                                    isNullable = false,
                                 )
                             ),
                             Field(
                                 identifier = FieldIdentifier("num64"),
-                                isNullable = true,
                                 reference = Reference.Primitive(
                                     type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P64),
-                                    isIterable = false,
-                                    isDictionary = false
+                                    isNullable = true,
                                 )
                             )
                         )

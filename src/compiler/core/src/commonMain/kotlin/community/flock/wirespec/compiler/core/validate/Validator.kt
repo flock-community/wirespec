@@ -27,7 +27,12 @@ fun AST.validate(): AST = map { node ->
                         }
                         .contains(node.identifier.value)
                 }
-                .map { Reference.Custom(it.identifier.value, isIterable = false) }
+                .map {
+                    Reference.Custom(
+                        value = it.identifier.value,
+                        isNullable = false
+                    )
+                }
         )
 
         is Union -> node

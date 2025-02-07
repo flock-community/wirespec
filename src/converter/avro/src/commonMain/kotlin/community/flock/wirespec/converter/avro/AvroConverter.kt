@@ -8,7 +8,6 @@ import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
 
-
 object AvroConverter {
 
     private val nullType = AvroModel.SimpleType("null")
@@ -24,34 +23,27 @@ object AvroConverter {
         else -> TODO("primitive not mapped ${this.value}")
     }
 
-    private fun AvroModel.Type.toReference(isIterable: Boolean = false): Reference = when (this) {
+    private fun AvroModel.Type.toReference(isNullable: Boolean): Reference = when (this) {
         is AvroModel.SimpleType -> when (value) {
-            "null" -> Reference.Unit(
-                isIterable = isIterable,
-                isDictionary = false
-            )
+            "null" -> Reference.Unit(isNullable = isNullable)
+            "boolean", "int", "long", "float", "double", "bytes", "string" ->
+                Reference.Primitive(type = toPrimitive(), isNullable = isNullable)
 
-            "boolean", "int", "long", "float", "double", "bytes", "string" -> Reference.Primitive(
-                type = toPrimitive(),
-                isIterable = isIterable,
-                isDictionary = false
-            )
-
-            else -> Reference.Custom(value, isIterable, false)
+            else -> Reference.Custom(value = value, isNullable = isNullable)
         }
 
-        is AvroModel.ArrayType -> items.toReference(true)
-        is AvroModel.RecordType -> Reference.Custom(name, isIterable, false)
-        is AvroModel.EnumType -> Reference.Custom(name, isIterable, false)
-        is AvroModel.LogicalType -> AvroModel.SimpleType(this.type).toReference()
+        is AvroModel.ArrayType -> Reference.Iterable(reference = items.toReference(false), isNullable = isNullable)
+        is AvroModel.RecordType -> Reference.Custom(value = name, isNullable = isNullable)
+        is AvroModel.EnumType -> Reference.Custom(value = name, isNullable = isNullable)
+        is AvroModel.LogicalType -> AvroModel.SimpleType(value = type).toReference(isNullable)
     }
 
     private fun AvroModel.TypeList.toReference(): Reference {
         val list = this - nullType
         return when {
-            list.size == 1 -> list.first().toReference()
+            list.size == 1 -> list.first().toReference(isNullable())
             list.count { it is AvroModel.SimpleType } > 1 -> error("Cannot have multiple SimpleTypes in Union")
-            else -> list.first().toReference()
+            else -> list.first().toReference(isNullable())
         }
     }
 
@@ -63,7 +55,6 @@ object AvroConverter {
             Field(
                 identifier = FieldIdentifier(it.name),
                 reference = it.type.toReference(),
-                isNullable = it.type.isNullable()
             )
         })
     )

@@ -24,7 +24,7 @@ object Expected {
                 Endpoint.Request(
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(value = "TestWithDashGETRequestBody", isIterable = false),
+                        reference = Reference.Custom(value = "TestWithDashGETRequestBody", isNullable = true),
                         isNullable = true
                     )
                 )
@@ -35,7 +35,7 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Primitive(type = Reference.Primitive.Type.String, isIterable = false),
+                        reference = Reference.Primitive(type = Reference.Primitive.Type.String, isNullable = false),
                         isNullable = false
                     )
                 )
@@ -48,13 +48,11 @@ object Expected {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("id"),
-                        reference = Reference.Primitive(type = Reference.Primitive.Type.String, isIterable = false),
-                        isNullable = true
+                        reference = Reference.Primitive(type = Reference.Primitive.Type.String, isNullable = true),
                     ),
                     Field(
                         identifier = FieldIdentifier("nest"),
-                        reference = Reference.Custom(value = "TestWithDashGETRequestBodyNest", isIterable = false),
-                        isNullable = true
+                        reference = Reference.Custom(value = "TestWithDashGETRequestBodyNest", isNullable = true),
                     )
                 )
             ),
@@ -67,13 +65,11 @@ object Expected {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("a"),
-                        reference = Reference.Primitive(type = Reference.Primitive.Type.Number(), isIterable = false),
-                        isNullable = true
+                        reference = Reference.Primitive(type = Reference.Primitive.Type.Number(), isNullable = true),
                     ),
                     Field(
                         identifier = FieldIdentifier("b"),
-                        reference = Reference.Primitive(type = Reference.Primitive.Type.Number(), isIterable = false),
-                        isNullable = true
+                        reference = Reference.Primitive(type = Reference.Primitive.Type.Number(), isNullable = true),
                     )
                 )
             ),
@@ -102,7 +98,7 @@ object Expected {
                         type = "application/json",
                         reference = Reference.Custom(
                             value = "Test200ResponseBody",
-                            isIterable = false
+                            isNullable = false
                         ),
                         isNullable = false
                     )
@@ -118,17 +114,15 @@ object Expected {
                         identifier = FieldIdentifier("id"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
-                            isIterable = false
+                            isNullable = true
                         ),
-                        isNullable = true
                     ),
                     Field(
                         identifier = FieldIdentifier("nest"),
                         reference = Reference.Custom(
                             value = "Test200ResponseBodyNest",
-                            isIterable = false
+                            isNullable = true
                         ),
-                        isNullable = true
                     )
                 )
             ),
@@ -143,17 +137,15 @@ object Expected {
                         identifier = FieldIdentifier("a"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number(),
-                            isIterable = false
+                            isNullable = true
                         ),
-                        isNullable = true
                     ),
                     Field(
                         identifier = FieldIdentifier("b"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number(),
-                            isIterable = false
+                            isNullable = true
                         ),
-                        isNullable = true
                     )
                 )
             ),
@@ -176,7 +168,10 @@ object Expected {
                 Endpoint.Request(
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(value = "Message", isIterable = false, isDictionary = true),
+                        reference = Reference.Dict(
+                            reference = Reference.Custom(value = "Message", isNullable = false),
+                            isNullable = true
+                        ),
                         isNullable = true
                     )
                 )
@@ -187,7 +182,10 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(value = "Message", isIterable = false, isDictionary = true),
+                        reference = Reference.Dict(
+                            reference = Reference.Custom(value = "Message", isNullable = false),
+                            isNullable = false
+                        ),
                         isNullable = false
                     )
                 ),
@@ -196,10 +194,12 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(
-                            value = "AdditionalProperties404ResponseBody",
-                            isIterable = false,
-                            isDictionary = true
+                        reference = Reference.Dict(
+                            reference = Reference.Custom(
+                                value = "AdditionalProperties404ResponseBody",
+                                isNullable = false,
+                            ),
+                            isNullable = false
                         ),
                         isNullable = false
                     )
@@ -209,7 +209,7 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Any(isIterable = false, isDictionary = true),
+                        reference = Reference.Dict(reference = Reference.Any(isNullable = true), isNullable = false),
                         isNullable = false
                     )
                 )
@@ -224,17 +224,15 @@ object Expected {
                         identifier = FieldIdentifier("code"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Integer(),
-                            isIterable = false
+                            isNullable = true,
                         ),
-                        isNullable = true
                     ),
                     Field(
                         identifier = FieldIdentifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
-                            isIterable = false
+                            isNullable = true,
                         ),
-                        isNullable = true
                     )
                 )
             ),
@@ -249,17 +247,15 @@ object Expected {
                         identifier = FieldIdentifier("code"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Integer(),
-                            isIterable = false
+                            isNullable = true,
                         ),
-                        isNullable = true
                     ),
                     Field(
                         identifier = FieldIdentifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
-                            isIterable = false
+                            isNullable = true,
                         ),
-                        isNullable = true
                     )
                 )
             ),
@@ -279,7 +275,13 @@ object Expected {
                 Endpoint.Request(
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(value = "MessageArray", isIterable = true, isDictionary = false),
+                        reference = Reference.Iterable(
+                            reference = Reference.Custom(
+                                value = "MessageArray",
+                                isNullable = false
+                            ),
+                            isNullable = true
+                        ),
                         isNullable = true
                     )
                 )
@@ -290,10 +292,12 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(
-                            value = "ArrayGET200ResponseBody",
-                            isIterable = true,
-                            isDictionary = false
+                        reference = Reference.Iterable(
+                            reference = Reference.Custom(
+                                value = "ArrayGET200ResponseBody",
+                                isNullable = false,
+                            ),
+                            isNullable = true
                         ),
                         isNullable = false
                     )
@@ -303,7 +307,13 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(value = "MessageArray", isIterable = true, isDictionary = false),
+                        reference = Reference.Iterable(
+                            reference = Reference.Custom(
+                                value = "MessageArray",
+                                isNullable = false
+                            ),
+                            isNullable = false
+                        ),
                         isNullable = false
                     )
                 ),
@@ -312,10 +322,12 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String,
-                            isIterable = true,
-                            isDictionary = false
+                        reference = Reference.Iterable(
+                            reference = Reference.Primitive(
+                                type = Reference.Primitive.Type.String,
+                                isNullable = false
+                            ),
+                            isNullable = false
                         ),
                         isNullable = false
                     )
@@ -329,19 +341,20 @@ object Expected {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("code"),
-                        reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.Number(),
-                            isIterable = false
+                        reference = Reference.Iterable(
+                            reference = Reference.Primitive(
+                                type = Reference.Primitive.Type.Number(),
+                                isNullable = false
+                            ),
+                            isNullable = true
                         ),
-                        isNullable = true
                     ),
                     Field(
                         identifier = FieldIdentifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
-                            isIterable = false
+                            isNullable = true,
                         ),
-                        isNullable = true
                     )
                 )
             ),
@@ -356,17 +369,15 @@ object Expected {
                         identifier = FieldIdentifier("code"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number(),
-                            isIterable = false
+                            isNullable = true,
                         ),
-                        isNullable = true
                     ),
                     Field(
                         identifier = FieldIdentifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
-                            isIterable = false
+                            isNullable = true,
                         ),
-                        isNullable = true
                     )
                 )
             ),
@@ -396,8 +407,7 @@ object Expected {
                         type = "application/json",
                         reference = Reference.Custom(
                             value = "AllofGET200ResponseBody",
-                            isIterable = false,
-                            isDictionary = false
+                            isNullable = false,
                         ),
                         isNullable = false
                     )
@@ -413,33 +423,29 @@ object Expected {
                         identifier = FieldIdentifier("a"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
-                            isIterable = false
+                            isNullable = true,
                         ),
-                        isNullable = true
                     ),
                     Field(
                         identifier = FieldIdentifier("b"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
-                            isIterable = false
+                            isNullable = false,
                         ),
-                        isNullable = false
                     ),
                     Field(
                         identifier = FieldIdentifier("c"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
-                            isIterable = false
+                            isNullable = true,
                         ),
-                        isNullable = true
                     ),
                     Field(
                         identifier = FieldIdentifier("d"),
                         reference = Reference.Custom(
                             value = "AllofGET200ResponseBodyD",
-                            isIterable = false
+                            isNullable = true,
                         ),
-                        isNullable = true
                     )
                 )
             ),
@@ -454,10 +460,8 @@ object Expected {
                         identifier = FieldIdentifier("e"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
-                            isIterable = false,
-                            isDictionary = false
+                            isNullable = true,
                         ),
-                        isNullable = true
                     )
                 )
             ),
@@ -472,9 +476,8 @@ object Expected {
                         identifier = FieldIdentifier("a"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
-                            isIterable = false
+                            isNullable = true,
                         ),
-                        isNullable = true
                     )
                 )
             ),
@@ -489,9 +492,8 @@ object Expected {
                         identifier = FieldIdentifier("b"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
-                            isIterable = false
+                            isNullable = false,
                         ),
-                        isNullable = false
                     )
                 )
             ),
@@ -521,8 +523,7 @@ object Expected {
                         type = "application/json",
                         reference = Reference.Custom(
                             value = "OneofGET200ResponseBody",
-                            isIterable = false,
-                            isDictionary = false
+                            isNullable = false,
                         ),
                         isNullable = false
                     )
@@ -533,17 +534,15 @@ object Expected {
             comment = null,
             identifier = DefinitionIdentifier("OneofGET200ResponseBody"),
             entries = setOf(
-                Reference.Custom(value = "Foo", isIterable = false, isDictionary = false),
-                Reference.Custom(value = "Bar", isIterable = false, isDictionary = false),
+                Reference.Custom(value = "Foo", isNullable = false),
+                Reference.Custom(value = "Bar", isNullable = false),
                 Reference.Custom(
                     value = "OneofGET200ResponseBody2",
-                    isIterable = false,
-                    isDictionary = false
+                    isNullable = false,
                 ),
                 Reference.Custom(
                     value = "OneofGET200ResponseBody3",
-                    isIterable = false,
-                    isDictionary = false
+                    isNullable = false,
                 )
             )
         ),
@@ -556,10 +555,8 @@ object Expected {
                         identifier = FieldIdentifier("c"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
-                            isIterable = false,
-                            isDictionary = false
+                            isNullable = true,
                         ),
-                        isNullable = true
                     )
                 )
             ),
@@ -574,10 +571,8 @@ object Expected {
                         identifier = FieldIdentifier("d"),
                         reference = Reference.Custom(
                             value = "OneofGET200ResponseBody3D",
-                            isIterable = false,
-                            isDictionary = false
+                            isNullable = true,
                         ),
-                        isNullable = true
                     )
                 )
             ),
@@ -593,10 +588,8 @@ object Expected {
                             "e"
                         ), reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
-                            isIterable = false,
-                            isDictionary = false
+                            isNullable = true,
                         ),
-                        isNullable = true
                     )
                 )
             ),
@@ -611,9 +604,8 @@ object Expected {
                         identifier = FieldIdentifier("a"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
-                            isIterable = false
+                            isNullable = true,
                         ),
-                        isNullable = true
                     )
                 )
             ),
@@ -628,9 +620,8 @@ object Expected {
                         identifier = FieldIdentifier("b"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
-                            isIterable = false
+                            isNullable = false,
                         ),
-                        isNullable = false
                     )
                 )
             ),
@@ -649,10 +640,8 @@ object Expected {
                     identifier = FieldIdentifier("order"),
                     reference = Reference.Custom(
                         value = "EnumGETParameterOrder",
-                        isIterable = false,
-                        isDictionary = false
+                        isNullable = true,
                     ),
-                    isNullable = true
                 )
             ),
             headers = emptyList(),
@@ -668,7 +657,7 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(value = "Message", isIterable = false, isDictionary = false),
+                        reference = Reference.Custom(value = "Message", isNullable = false),
                         isNullable = false
                     )
                 ),
@@ -679,8 +668,7 @@ object Expected {
                         type = "application/json",
                         reference = Reference.Custom(
                             value = "EnumGET201ResponseBody",
-                            isIterable = false,
-                            isDictionary = false
+                            isNullable = false,
                         ),
                         isNullable = false
                     )
@@ -701,17 +689,15 @@ object Expected {
                         identifier = FieldIdentifier("code"),
                         reference = Reference.Custom(
                             value = "EnumGET201ResponseBodyCode",
-                            isIterable = false
+                            isNullable = false,
                         ),
-                        isNullable = false
                     ),
                     Field(
                         identifier = FieldIdentifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
-                            isIterable = false
+                            isNullable = true,
                         ),
-                        isNullable = true
                     )
                 )
             ),
@@ -729,19 +715,20 @@ object Expected {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("code"),
-                        reference = Reference.Custom(
-                            value = "ErrorType",
-                            isIterable = true
+                        reference = Reference.Iterable(
+                            reference = Reference.Custom(
+                                value = "ErrorType",
+                                isNullable = false
+                            ),
+                            isNullable = false
                         ),
-                        isNullable = false
                     ),
                     Field(
                         identifier = FieldIdentifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
-                            isIterable = false
+                            isNullable = true
                         ),
-                        isNullable = true
                     )
                 )
             ),

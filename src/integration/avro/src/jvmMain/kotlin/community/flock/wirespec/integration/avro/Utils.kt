@@ -12,7 +12,7 @@ import kotlinx.serialization.json.Json
 
 object Utils {
 
-    fun emitAvroSchema(packageName:String, type: Definition, ast: AST) = AvroEmitter
+    fun emitAvroSchema(packageName: String, type: Definition, ast: AST) = AvroEmitter
         .emit(ast)
         .map {
             when (it) {
@@ -31,17 +31,9 @@ object Utils {
         ?.let { Json.encodeToString(it) }
         ?.escaped()
 
-    fun Reference.isEnum(ast: AST): Boolean {
-        return when (this) {
-            is Reference.Custom -> ast
-                .filterIsInstance<Enum>()
-                .any { it.identifier.value == this.value }
-
-            is Reference.Any -> false
-            is Reference.Primitive -> false
-            is Reference.Unit -> false
-        }
-    }
+    fun Reference.isEnum(ast: AST): Boolean = ast
+        .filterIsInstance<Enum>()
+        .any { it.identifier.value == this.value }
 
     private fun AvroModel.Type.flatten(): AvroModel.Type =
         when (this) {
@@ -49,8 +41,10 @@ object Utils {
                 .copy(
                     fields = fields
                         .map { field ->
-                            field.copy(type = AvroModel.TypeList(field.type
-                                .map { it.flatten() }
+                            field.copy(
+                                type = AvroModel.TypeList(
+                                field.type
+                                    .map { it.flatten() }
                             ))
                         }
                 )

@@ -87,11 +87,8 @@ class AvroKotlinEmitter(private val packageName: String, logger: Logger) : Kotli
 
     private val emitTo: (index: Int, field: Field) -> String = { index, field ->
         when (val reference = field.reference) {
-            is Reference.Custom -> when {
-                reference.isIterable -> "record.put(${index}, model.${emit(field.identifier)}.map{${field.reference.value}.Avro.to(it)});"
-                else -> "record.put(${index}, ${field.reference.emit()}.Avro.to(model.${emit(field.identifier)}));"
-            }
-
+            is Reference.Iterable -> "record.put(${index}, model.${emit(field.identifier)}.map{${reference.reference.value}.Avro.to(it)});"
+            is Reference.Custom -> "record.put(${index}, ${field.reference.emit()}.Avro.to(model.${emit(field.identifier)}));"
             is Reference.Primitive -> when {
                 reference.type == Reference.Primitive.Type.Bytes -> "record.put(${index}, java.nio.ByteBuffer.wrap(model.${emit(field.identifier)}.toByteArray()));"
                 else -> "record.put(${index}, model.${emit(field.identifier)});"
@@ -105,19 +102,19 @@ class AvroKotlinEmitter(private val packageName: String, logger: Logger) : Kotli
         { ast ->
             { index, field ->
                 when (val reference = field.reference) {
+                    is Reference.Iterable -> "(record.get(${index}) as java.util.List<org.apache.avro.generic.GenericData.Record>).map{${reference.reference.emit()}.Avro.from(it)}"
                     is Reference.Custom -> when {
-                        reference.isIterable -> "(record.get(${index}) as java.util.List<org.apache.avro.generic.GenericData.Record>).map{${field.reference.emitType()}.Avro.from(it)}"
                         reference.isEnum(ast) -> "${field.reference.emit()}.Avro.from(record.get(${index}) as org.apache.avro.generic.GenericData.EnumSymbol)"
                         else -> "${field.reference.emit()}.Avro.from(record.get(${index}) as org.apache.avro.generic.GenericData.Record)"
                     }
 
                     is Reference.Primitive -> when (reference.type) {
                         Reference.Primitive.Type.Bytes -> "String((record.get(${index}) as java.nio.ByteBuffer).array())"
-                        Reference.Primitive.Type.String -> "record.get(${index}).toString() as ${field.emitType()}"
-                        else -> "record.get(${index}) as ${field.emitType()}"
+                        Reference.Primitive.Type.String -> "record.get(${index}).toString() as ${reference.emit()}"
+                        else -> "record.get(${index}) as ${reference.emit()}"
                     }
 
-                    else -> "record.get(${index}): ${field.emitType()}"
+                    else -> "record.get(${index}): ${reference.emit()}"
                 }
             }
         }

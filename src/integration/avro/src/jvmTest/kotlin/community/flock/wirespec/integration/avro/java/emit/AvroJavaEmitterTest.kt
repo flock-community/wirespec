@@ -21,7 +21,10 @@ class AvroJavaEmitterTest {
             identifier = DefinitionIdentifier("Identifier"),
             shape = Type.Shape(
                 listOf(
-                    Field(FieldIdentifier("name"), Reference.Primitive(Reference.Primitive.Type.String), false)
+                    Field(
+                        identifier = FieldIdentifier(name = "name"),
+                        reference = Reference.Primitive(type = Reference.Primitive.Type.String, isNullable = false)
+                    )
                 )
             ),
             extends = emptyList()

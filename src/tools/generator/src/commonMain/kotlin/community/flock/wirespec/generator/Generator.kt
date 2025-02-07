@@ -11,18 +11,20 @@ import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
+import kotlin.random.Random
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlin.random.Random
 
-fun AST.generate(type: String, random: Random = Random.Default): JsonElement = Reference.Custom(
-    value = type.removeSuffix("[]"),
-    isIterable = type.endsWith("[]"),
-    isDictionary = false
-).let { generate(it, random) }
+fun AST.generate(type: String, random: Random = Random.Default): JsonElement =
+    Reference.Custom(
+        value = type.removeSuffix("[]"),
+        isNullable = false,
+    )
+        .let { if (type.endsWith("[]")) Reference.Iterable(reference = it, isNullable = false) else it }
+        .let { generate(it, random) }
 
 fun AST.generate(type: Reference, random: Random = Random.Default): JsonElement =
     generateReference(type, random)
@@ -36,6 +38,8 @@ private fun AST.generateIterator(def: Definition, random: Random): JsonElement =
     .let(::JsonArray)
 
 private fun AST.generateReference(ref: Reference, random: Random) = when (ref) {
+    is Reference.Dict -> TODO()
+    is Reference.Iterable -> generateIterator(resolveReference(ref.reference), random)
     is Reference.Primitive -> when (ref.type) {
         is Reference.Primitive.Type.Integer -> random.nextInt().let(::JsonPrimitive)
         is Reference.Primitive.Type.Number -> random.nextDouble().let(::JsonPrimitive)
@@ -43,9 +47,7 @@ private fun AST.generateReference(ref: Reference, random: Random) = when (ref) {
         else -> RgxGen.parse("\\w{1,50}").generate(random).let(::JsonPrimitive)
     }
 
-    is Reference.Custom -> resolveReference(ref)
-        .let { if (ref.isIterable) generateIterator(it, random) else generateObject(it, random) }
-
+    is Reference.Custom -> generateObject(resolveReference(ref), random)
     is Reference.Unit -> JsonNull
     is Reference.Any -> throw NotImplementedError("Cannot generate Any")
 }

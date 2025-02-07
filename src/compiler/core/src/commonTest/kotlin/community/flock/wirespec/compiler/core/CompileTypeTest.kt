@@ -16,7 +16,8 @@ class CompileTypeTest {
         |  url: String,
         |  `BODY_TYPE`: String?,
         |  params: String[],
-        |  headers: { String }
+        |  headers: { String },
+        |  body: { String?[]? }?
         |}
     """.trimMargin().let(::compile)
 
@@ -30,7 +31,8 @@ class CompileTypeTest {
             |  val url: String,
             |  val BODY_TYPE: String?,
             |  val params: List<String>,
-            |  val headers: Map<String, String>
+            |  val headers: Map<String, String>,
+            |  val body: Map<String, List<String?>?>?
             |)
             |
         """.trimMargin()
@@ -48,7 +50,8 @@ class CompileTypeTest {
             |  String url,
             |  java.util.Optional<String> BODY_TYPE,
             |  java.util.List<String> params,
-            |  java.util.Map<String, String> headers
+            |  java.util.Map<String, String> headers,
+            |  java.util.Optional<java.util.Map<String, java.util.Optional<java.util.List<java.util.Optional<String>>>>> body
             |) {
             |};
             |
@@ -67,7 +70,8 @@ class CompileTypeTest {
             |  val url: String,
             |  val BODY_TYPE: Option[String],
             |  val params: List[String],
-            |  val headers: Map[String, String]
+            |  val headers: Map[String, String],
+            |  val body: Option[Map[String, Option[List[Option[String]]]]]
             |)
             |
         """.trimMargin()
@@ -81,9 +85,10 @@ class CompileTypeTest {
             |export type Request = {
             |  "type": string,
             |  "url": string,
-            |  "BODY_TYPE"?: string,
+            |  "BODY_TYPE": string | undefined,
             |  "params": string[],
-            |  "headers": Record<string, string>
+            |  "headers": Record<string, string>,
+            |  "body": Record<string, string | undefined[] | undefined> | undefined
             |}
             |
             |
@@ -100,7 +105,8 @@ class CompileTypeTest {
             |  url: String,
             |  `BODY_TYPE`: String?,
             |  params: String[],
-            |  headers: { String }
+            |  headers: { String },
+            |  body: { String?[]? }?
             |}
             |
         """.trimMargin()

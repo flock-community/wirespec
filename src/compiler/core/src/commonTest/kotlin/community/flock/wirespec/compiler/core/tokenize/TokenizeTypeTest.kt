@@ -32,4 +32,16 @@ class TokenizeTypeTest {
         TypeDefinition, WsCustomType, Equals, WsCustomType,
         Pipe, WsCustomType, EndOfProgram,
     )
+
+    @Test
+    fun testNullableTypes() = testTokenizer(
+        """
+            |type Foo {
+            |    bar: { String?[]? }?
+            |}
+        """.trimMargin(),
+        TypeDefinition, WsCustomType, LeftCurly, CustomValue, Colon,
+        LeftCurly, WsString, QuestionMark, Brackets, QuestionMark,
+        RightCurly, QuestionMark, RightCurly, EndOfProgram
+    )
 }
