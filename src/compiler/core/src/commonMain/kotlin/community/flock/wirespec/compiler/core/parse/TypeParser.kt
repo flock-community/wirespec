@@ -190,13 +190,11 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
             is LeftCurly -> Field(
                 identifier = identifier,
                 reference = parseDict().bind(),
-                isNullable = null,
             )
 
             is WirespecType -> Field(
                 identifier = identifier,
                 reference = parseWirespecType(type).bind(),
-                isNullable = null
             )
 
             else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })

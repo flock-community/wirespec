@@ -93,8 +93,6 @@ sealed interface Reference : Value<String> {
 data class Field(
     val identifier: FieldIdentifier,
     val reference: Reference,
-    @Deprecated("Nullability should be modelled in Reference")
-    val isNullable: Boolean?
 )
 
 data class Enum(

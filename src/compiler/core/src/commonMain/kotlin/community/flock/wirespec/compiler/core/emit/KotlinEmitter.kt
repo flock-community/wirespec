@@ -269,7 +269,7 @@ open class KotlinEmitter(
         """${Spacer(3)}${emit(value.identifier)} = serialization.deserialize(request.path[${index}], typeOf<${value.reference.emit()}>())"""
 
     private fun Field.emitDeserializedParams(type: String, fields: String, spaces: Int = 3) =
-        if (isNullable == true)
+        if (reference.isNullable)
             """${Spacer(spaces)}${emit(identifier)} = $type.$fields["${identifier.value}"]?.let{ serialization.deserializeParam(it, typeOf<${reference.emit()}>()) }"""
         else
             """${Spacer(spaces)}${emit(identifier)} = serialization.deserializeParam(requireNotNull($type.$fields["${identifier.value}"]) { "${emit(identifier)} is null" }, typeOf<${reference.emit()}>())"""

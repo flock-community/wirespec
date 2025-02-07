@@ -66,15 +66,16 @@ object OpenApiV2Parser {
                             .distinct()
                             .ifEmpty { listOf("application/json") }
                             .map { type ->
+                                val isNullable = !(requestBody.required ?: false)
                                 Endpoint.Request(
                                     Endpoint.Content(
                                         type = type,
                                         reference = when (val schema = requestBody.schema) {
-                                            is ReferenceObject -> toReference(schema)
-                                            is SchemaObject -> toReference(schema, className(name, "RequestBody"))
+                                            is ReferenceObject -> toReference(schema, isNullable)
+                                            is SchemaObject -> toReference(schema, className(name, "RequestBody"), isNullable)
                                             null -> TODO("Not yet implemented")
                                         },
-                                        isNullable = !(requestBody.required ?: false)
+                                        isNullable = isNullable
                                     )
                                 )
                             }
@@ -95,10 +96,11 @@ object OpenApiV2Parser {
                                         Endpoint.Content(
                                             type = type,
                                             reference = when (schema) {
-                                                is ReferenceObject -> toReference(schema)
+                                                is ReferenceObject -> toReference(schema, false)
                                                 is SchemaObject -> toReference(
                                                     schema,
-                                                    className(name, status.value, "ResponseBody")
+                                                    className(name, status.value, "ResponseBody"),
+                                                    false
                                                 )
                                             },
                                             isNullable = false
@@ -343,14 +345,14 @@ object OpenApiV2Parser {
             is ReferenceObject -> emptyList()
         }
 
-    private fun SwaggerObject.toReference(reference: ReferenceObject): Reference =
+    private fun SwaggerObject.toReference(reference: ReferenceObject, isNullable: Boolean): Reference =
         resolveSchemaObject(reference).let { refOrSchema ->
             val schema = resolve(refOrSchema)
             when {
                 schema.additionalProperties != null -> when (val additionalProperties = schema.additionalProperties!!) {
-                    is BooleanObject -> Reference.Dict(Reference.Any(isNullable = false), isNullable = false)
-                    is ReferenceObject -> toReference(additionalProperties).toMap()
-                    is SchemaObject -> toReference(additionalProperties, reference.getReference()).toMap()
+                    is BooleanObject -> Reference.Dict(Reference.Any(isNullable = false), isNullable = isNullable)
+                    is ReferenceObject -> toReference(additionalProperties, isNullable).toMap()
+                    is SchemaObject -> toReference(additionalProperties, reference.getReference(), isNullable).toMap()
                 }
 
                 schema.enum != null -> Reference.Custom(
@@ -365,8 +367,8 @@ object OpenApiV2Parser {
 
                 else -> when (schema.type) {
                     OpenapiType.ARRAY -> when (val items = schema.items) {
-                        is ReferenceObject -> toReference(items).toIterable()
-                        is SchemaObject -> toReference(items, className(reference.getReference(), "Array")).toIterable()
+                        is ReferenceObject -> toReference(items, isNullable).toIterable()
+                        is SchemaObject -> toReference(items, className(reference.getReference(), "Array"), isNullable).toIterable()
                         null -> error("items cannot be null when type is array: ${reference.ref}")
                     }
 
@@ -380,43 +382,43 @@ object OpenApiV2Parser {
         }
 
 
-    private fun SwaggerObject.toReference(schema: SchemaObject, name: String): Reference = when {
+    private fun SwaggerObject.toReference(schema: SchemaObject, name: String, isNullable: Boolean): Reference = when {
         schema.additionalProperties != null -> when (val additionalProperties = schema.additionalProperties!!) {
-            is BooleanObject -> Reference.Dict(Reference.Any(isNullable = false), isNullable = false)
-            is ReferenceObject -> toReference(additionalProperties).toMap()
+            is BooleanObject -> Reference.Dict(Reference.Any(isNullable = false), isNullable = isNullable)
+            is ReferenceObject -> toReference(additionalProperties, isNullable).toMap()
             is SchemaObject -> additionalProperties
                 .takeIf { it.type.isPrimitive() || it.properties != null }
-                ?.let { toReference(it, name).toMap() }
-                ?: Reference.Dict(Reference.Any(isNullable = false), isNullable = false)
+                ?.let { toReference(it, name, isNullable).toMap() }
+                ?: Reference.Dict(Reference.Any(isNullable = false), isNullable = isNullable)
         }
 
         schema.enum != null -> {
-            if (schema.additionalProperties != null) Reference.Dict(Reference.Custom(name, false), isNullable = false)
-            else Reference.Custom(name, isNullable = false)
+            if (schema.additionalProperties != null) Reference.Dict(Reference.Custom(name, false), isNullable = isNullable)
+            else Reference.Custom(name, isNullable = isNullable)
         }
         else -> when (val type = schema.type) {
             OpenapiType.STRING, OpenapiType.INTEGER, OpenapiType.NUMBER, OpenapiType.BOOLEAN -> {
-                if (schema.additionalProperties != null) Reference.Dict(Reference.Primitive(type.toPrimitive(schema.format), isNullable = false), isNullable = false)
-                else Reference.Primitive(type.toPrimitive(schema.format), isNullable = false)
+                if (schema.additionalProperties != null) Reference.Dict(Reference.Primitive(type.toPrimitive(schema.format), isNullable = false), isNullable = isNullable)
+                else Reference.Primitive(type.toPrimitive(schema.format), isNullable = isNullable)
             }
 
             null, OpenapiType.OBJECT ->
                 when {
                     schema.additionalProperties is BooleanObject -> {
-                        if (schema.additionalProperties != null) Reference.Dict(Reference.Any(isNullable = false), isNullable = false)
-                        else Reference.Any(isNullable = false)
+                        if (schema.additionalProperties != null) Reference.Dict(Reference.Any(isNullable = false), isNullable = isNullable)
+                        else Reference.Any(isNullable = isNullable)
                     }
 
                     else -> {
-                        if (schema.additionalProperties != null) Reference.Dict(Reference.Custom(name, isNullable = false), isNullable = false)
-                        Reference.Custom(name, isNullable = false)
+                        if (schema.additionalProperties != null) Reference.Dict(Reference.Custom(name, isNullable = false), isNullable = isNullable)
+                        Reference.Custom(name, isNullable = isNullable)
                     }
                 }
 
             OpenapiType.ARRAY -> {
                 when (val items = schema.items) {
-                    is ReferenceObject -> toReference(items).toIterable()
-                    is SchemaObject -> toReference(items, name).toIterable()
+                    is ReferenceObject -> toReference(items, isNullable).toIterable()
+                    is SchemaObject -> toReference(items, name, isNullable).toIterable()
                     null -> error("When schema is of type array items cannot be null for name: $name")
                 }
             }
@@ -454,37 +456,35 @@ object OpenApiV2Parser {
         Field(
             identifier = FieldIdentifier(identifier),
             reference = when (header.type) {
-                "array" -> header.items?.let { resolve(it) }?.let { toReference(it, identifier) }
+                "array" -> header.items?.let { resolve(it) }?.let { toReference(it, identifier, true) }
                     ?: error("Item cannot be null")
 
                 else -> Reference.Primitive(
                     header.type.mapType(header.format),
-                    isNullable = false,
+                    isNullable = true,
                 )
             },
-            isNullable = true
         )
 
     private fun SwaggerObject.toField(schema: SchemaObject, name: String) =
         schema.properties.orEmpty().map { (key, value) ->
+            val isNullable = !(schema.required?.contains(key) ?: false)
             when (value) {
                 is SchemaObject -> {
                     Field(
                         identifier = FieldIdentifier(key),
                         reference = when {
-                            value.enum != null -> toReference(value, className(name, key))
-                            value.type == OpenapiType.ARRAY -> toReference(value, className(name, key, "Array"))
-                            else -> toReference(value, className(name, key))
+                            value.enum != null -> toReference(value, className(name, key), isNullable)
+                            value.type == OpenapiType.ARRAY -> toReference(value, className(name, key, "Array"), isNullable)
+                            else -> toReference(value, className(name, key), isNullable)
                         },
-                        isNullable = !(schema.required?.contains(key) ?: false)
                     )
                 }
 
                 is ReferenceObject -> {
                     Field(
                         identifier = FieldIdentifier(key),
-                        reference = toReference(value),
-                        isNullable = !(schema.required?.contains(key) ?: false)
+                        reference = toReference(value, isNullable),
                     )
                 }
             }
@@ -492,16 +492,17 @@ object OpenApiV2Parser {
 
     private fun SwaggerObject.toField(parameter: ParameterObject, name: String) = resolve(parameter)
         .let {
+            val isNullable = !(parameter.required ?: false)
             when {
-                parameter.enum != null -> Reference.Custom(className(name, "Parameter", it.name), false)
+                parameter.enum != null -> Reference.Custom(className(name, "Parameter", it.name), isNullable = isNullable)
                 else -> when (val type = it.type) {
                     OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> type
                         .toPrimitive(it.format)
-                        .let { primitive -> Reference.Primitive(primitive, isNullable = false) }
+                        .let { primitive -> Reference.Primitive(primitive, isNullable = isNullable) }
 
                     OpenapiType.ARRAY -> it.items?.let { items -> resolve(items) }
                         ?.let { it.type?.toPrimitive(it.format) }
-                        ?.let { primitive -> Reference.Iterable(Reference.Primitive(primitive, isNullable = false), isNullable = false) }
+                        ?.let { primitive -> Reference.Iterable(Reference.Primitive(primitive, isNullable = false), isNullable = isNullable) }
                         ?: TODO("Not yet implemented")
 
                     OpenapiType.OBJECT -> TODO("Not yet implemented")
@@ -510,7 +511,7 @@ object OpenApiV2Parser {
                 }
 
             }
-        }.let { Field(FieldIdentifier(parameter.name), it, !(parameter.required ?: false)) }
+        }.let { Field(FieldIdentifier(parameter.name), it) }
 
     private fun Path.toSegments(parameters: List<ParameterObject>) = value.split("/").drop(1).map { segment ->
         val isParam = segment.isNotEmpty() && segment[0] == '{' && segment[segment.length - 1] == '}'
