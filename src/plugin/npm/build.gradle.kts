@@ -10,6 +10,12 @@ repositories {
     mavenCentral()
 }
 
+plugins.withId("maven-publish") {
+    tasks.configureEach {
+        enabled = false
+    }
+}
+
 kotlin {
     js(IR) {
         nodejs()

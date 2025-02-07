@@ -14,6 +14,12 @@ repositories {
     mavenCentral()
 }
 
+plugins.withId("maven-publish") {
+    tasks.configureEach {
+        enabled = false
+    }
+}
+
 kotlin {
     targets.all {
         compilations.all {
