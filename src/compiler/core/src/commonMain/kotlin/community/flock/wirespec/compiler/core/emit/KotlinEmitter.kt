@@ -308,7 +308,7 @@ open class KotlinEmitter(
 
     private fun String.sanitizeFirstIsDigit() = if (firstOrNull()?.isDigit() == true) "_${this}" else this
 
-    fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_").sanitizeFirstIsDigit()
+    fun String.sanitizeEnum() = split("-", ", ", ".", " ", "/", "//").joinToString("_").sanitizeFirstIsDigit()
 
     fun String.sanitizeKeywords() = if (this in reservedKeywords) addBackticks() else this
 

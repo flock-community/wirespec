@@ -1,5 +1,5 @@
 plugins {
-    kotlin("multiplatform")
+    alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlinx.resources)
     kotlin("plugin.serialization") version "2.0.0-RC1"
 }
@@ -30,7 +30,10 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.6.0")
                 implementation(project(":src:compiler:core"))
+                implementation(libs.kotlinx.serialization)
+                implementation(libs.kotlinx.openapi.bindings)
                 implementation("io.github.pdvrieze.xmlutil:core:0.86.3")
                 implementation("io.github.pdvrieze.xmlutil:serialization:0.86.3")
                 implementation("io.github.pdvrieze.xmlutil:serialutil:0.86.3")
@@ -39,17 +42,16 @@ kotlin {
         commonTest {
             dependencies {
                 implementation(libs.kotlinx.resources)
-                implementation(kotlin("test"))
+                implementation(libs.kotlin.test)
                 implementation(libs.bundles.kotest)
             }
         }
         val jvmTest by getting {
             dependencies {
-                implementation(kotlin("test"))
+                implementation(libs.bundles.jackson)
                 implementation("com.squareup.okhttp3:okhttp:4.12.0")
                 implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.17.1")
             }
         }
     }
-
 }

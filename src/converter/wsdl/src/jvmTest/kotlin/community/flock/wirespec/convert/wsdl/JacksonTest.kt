@@ -4,12 +4,12 @@ import com.fasterxml.jackson.core.io.IOContext
 import com.fasterxml.jackson.dataformat.xml.XmlFactory
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import com.fasterxml.jackson.dataformat.xml.util.StaxUtil
-import community.flock.wirespec.generated.CapitalCity
-import okhttp3.Headers
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody
+//import community.flock.wirespec.generated.CapitalCity
+//import okhttp3.Headers
+//import okhttp3.MediaType.Companion.toMediaType
+//import okhttp3.OkHttpClient
+//import okhttp3.Request
+//import okhttp3.RequestBody
 import java.io.Writer
 import java.util.Objects
 import javax.xml.stream.XMLStreamException
@@ -59,43 +59,43 @@ class JacksonTest {
 
     }
 
-    @Test
-    fun sendSoap() {
-        fun soap(body:String) = """
-            |<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:web="http://www.oorsprong.org/websamples.countryinfo">
-            |   <soapenv:Header/>
-            |   <soapenv:Body>
-            |      ${body}
-            |   </soapenv:Body>
-            |</soapenv:Envelope>
-        """.trimMargin()
-
-        val obj = CapitalCity(
-            sCountryISOCode = "NL"
-        )
-
-        val body = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(obj)
-
-        println(body)
-        println(soap(body))
-
-        val TEXT_XML = "text/xml".toMediaType();
-        val request: Request = Request.Builder()
-            .url("http://webservices.oorsprong.org/websamples.countryinfo/CountryInfoService.wso")
-            .method("POST", RequestBody.create(TEXT_XML, soap(body)))
-            .headers(
-                Headers.Builder()
-                    .add("SOAPAction", "")
-                    .add("Host", "webservices.oorsprong.org")
-                    .build())
-            .build()
-
-        val client = OkHttpClient()
-
-        val res = client.newCall(request).execute().use { response ->
-            response.body?.string()
-        }
-
-        println(res)
-    }
+//    @Test
+//    fun sendSoap() {
+//        fun soap(body:String) = """
+//            |<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:web="http://www.oorsprong.org/websamples.countryinfo">
+//            |   <soapenv:Header/>
+//            |   <soapenv:Body>
+//            |      ${body}
+//            |   </soapenv:Body>
+//            |</soapenv:Envelope>
+//        """.trimMargin()
+//
+//        val obj = CapitalCity(
+//            sCountryISOCode = "NL"
+//        )
+//
+//        val body = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(obj)
+//
+//        println(body)
+//        println(soap(body))
+//
+//        val TEXT_XML = "text/xml".toMediaType();
+//        val request: Request = Request.Builder()
+//            .url("http://webservices.oorsprong.org/websamples.countryinfo/CountryInfoService.wso")
+//            .method("POST", RequestBody.create(TEXT_XML, soap(body)))
+//            .headers(
+//                Headers.Builder()
+//                    .add("SOAPAction", "")
+//                    .add("Host", "webservices.oorsprong.org")
+//                    .build())
+//            .build()
+//
+//        val client = OkHttpClient()
+//
+//        val res = client.newCall(request).execute().use { response ->
+//            response.body?.string()
+//        }
+//
+//        println(res)
+//    }
 }
