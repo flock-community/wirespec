@@ -52,8 +52,8 @@ object SoapBindings {
         namespace = "http://schemas.xmlsoap.org/wsdl/soap/"
     )
     data class SoapBody(
-        val use: String,
-        val parts: String?,
+        override val use: String,
+        override val parts: String?,
     ): WsdlBindings.Body
 
     @Serializable
@@ -62,8 +62,8 @@ object SoapBindings {
         namespace = "http://schemas.xmlsoap.org/wsdl/soap12/"
     )
     data class Soap12Body(
-        val use: String,
-        val parts: String?,
+        override val use: String,
+        override val parts: String?,
     ): WsdlBindings.Body
 
 

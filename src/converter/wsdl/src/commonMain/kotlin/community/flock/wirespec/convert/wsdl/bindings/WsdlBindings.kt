@@ -147,7 +147,10 @@ object WsdlBindings {
     )
 
     @Serializable
-    sealed interface Body
+    sealed interface Body {
+        val use: String
+        val parts: String?
+    }
 
     @Serializable
     sealed interface Header
