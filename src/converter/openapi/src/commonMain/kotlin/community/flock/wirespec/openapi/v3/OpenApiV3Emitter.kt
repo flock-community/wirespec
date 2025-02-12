@@ -115,12 +115,14 @@ object OpenApiV3Emitter : Emitter(noLogger) {
             pattern = validator.value
         )
 
+
+
     private fun Type.emit(): SchemaObject =
         SchemaObject(
             description = comment?.value,
             properties = shape.value.associate { it.emitSchema() },
             required = shape.value
-                .filter { it.reference !is Reference.Iterable }
+                .filter { !it.reference.isNullable }
                 .map { it.identifier.value }
                 .takeIf { it.isNotEmpty() }
         )
@@ -157,7 +159,7 @@ object OpenApiV3Emitter : Emitter(noLogger) {
             ?.let { content ->
                 RequestBodyObject(
                     content = content,
-                    required = requests.any { it.content?.isNullable == false }
+                    required = !requests.any { it.content?.reference?.isNullable == true }
                 )
             },
         responses = responses
@@ -209,10 +211,23 @@ object OpenApiV3Emitter : Emitter(noLogger) {
 
     private fun Reference.emitSchema(): SchemaOrReferenceObject =
         when (this) {
-            is Reference.Dict -> SchemaObject(type = OpenApiType.OBJECT, additionalProperties = reference.emitSchema() as SchemaOrReferenceOrBooleanObject )
-            is Reference.Iterable -> SchemaObject(type = OpenApiType.ARRAY, items = reference.emitSchema())
+            is Reference.Dict -> SchemaObject(
+                nullable = reference.isNullable,
+                type = OpenApiType.OBJECT,
+                additionalProperties = reference.emitSchema() as SchemaOrReferenceOrBooleanObject
+            )
+
+            is Reference.Iterable -> SchemaObject(
+                nullable = reference.isNullable,
+                type = OpenApiType.ARRAY,
+                items = reference.emitSchema()
+            )
+
             is Reference.Custom -> ReferenceObject(ref = Ref("#/components/schemas/${value}"))
-            is Reference.Primitive -> SchemaObject(type = type.emitType(), format = emitFormat())
+            is Reference.Primitive -> SchemaObject(
+                type = type.emitType(),
+                format = emitFormat()
+            )
             is Reference.Any -> error("Cannot map Any")
             is Reference.Unit -> error("Cannot map Unit")
         }

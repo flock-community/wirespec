@@ -93,7 +93,7 @@ object OpenApiV2Emitter : Emitter(noLogger) {
                     type.identifier.value to SchemaObject(
                         properties = type.shape.value.associate { it.emit() },
                         required = type.shape.value
-                            .filter { it.reference !is Reference.Iterable }
+                            .filter { !it.reference.isNullable }
                             .map { it.identifier.value }
                             .takeIf { it.isNotEmpty() }
                     )
@@ -122,7 +122,7 @@ object OpenApiV2Emitter : Emitter(noLogger) {
                     `in` = ParameterLocation.BODY,
                     name = "RequestBody",
                     schema = it.reference.emit(),
-                    required = !it.isNullable,
+                    required = !it.reference.isNullable,
                 )
             } + queries.map { it.emitParameter(ParameterLocation.QUERY) } + headers.map {
             it.emitParameter(

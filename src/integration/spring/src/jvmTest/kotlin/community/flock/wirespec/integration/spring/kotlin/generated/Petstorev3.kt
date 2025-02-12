@@ -223,13 +223,13 @@ object FindPetsByStatusEndpoint : Wirespec.Endpoint {
   data object Path : Wirespec.Path
 
   data class Queries(
-    val status: FindPetsByStatusParameterStatus,
+    val status: FindPetsByStatusParameterStatus?,
   ) : Wirespec.Queries
 
   data object Headers : Wirespec.Request.Headers
 
   class Request(
-    status: FindPetsByStatusParameterStatus
+    status: FindPetsByStatusParameterStatus?
   ) : Wirespec.Request<Unit> {
     override val path = Path
     override val method = Wirespec.Method.GET
@@ -242,14 +242,14 @@ object FindPetsByStatusEndpoint : Wirespec.Endpoint {
     Wirespec.RawRequest(
       path = listOf("pet", "findByStatus"),
       method = request.method.name,
-      queries = (mapOf("status" to (request.queries.status?.let{ serialization.serializeParam(it, typeOf<FindPetsByStatusParameterStatus>()) } ?: emptyList()))),
+      queries = (mapOf("status" to (request.queries.status?.let{ serialization.serializeParam(it, typeOf<FindPetsByStatusParameterStatus?>()) } ?: emptyList()))),
       headers = emptyMap(),
       body = serialization.serialize(request.body, typeOf<Unit>()),
     )
 
   fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
     Request(
-      status = serialization.deserializeParam(requireNotNull(request.queries["status"]) { "status is null" }, typeOf<FindPetsByStatusParameterStatus>())
+      status = request.queries["status"]?.let{ serialization.deserializeParam(it, typeOf<FindPetsByStatusParameterStatus?>()) }
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
@@ -320,13 +320,13 @@ object FindPetsByTagsEndpoint : Wirespec.Endpoint {
   data object Path : Wirespec.Path
 
   data class Queries(
-    val tags: List<String>,
+    val tags: List<String>?,
   ) : Wirespec.Queries
 
   data object Headers : Wirespec.Request.Headers
 
   class Request(
-    tags: List<String>
+    tags: List<String>?
   ) : Wirespec.Request<Unit> {
     override val path = Path
     override val method = Wirespec.Method.GET
@@ -339,14 +339,14 @@ object FindPetsByTagsEndpoint : Wirespec.Endpoint {
     Wirespec.RawRequest(
       path = listOf("pet", "findByTags"),
       method = request.method.name,
-      queries = (mapOf("tags" to (request.queries.tags?.let{ serialization.serializeParam(it, typeOf<List<String>>()) } ?: emptyList()))),
+      queries = (mapOf("tags" to (request.queries.tags?.let{ serialization.serializeParam(it, typeOf<List<String>?>()) } ?: emptyList()))),
       headers = emptyMap(),
       body = serialization.serialize(request.body, typeOf<Unit>()),
     )
 
   fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
     Request(
-      tags = serialization.deserializeParam(requireNotNull(request.queries["tags"]) { "tags is null" }, typeOf<List<String>>())
+      tags = request.queries["tags"]?.let{ serialization.deserializeParam(it, typeOf<List<String>?>()) }
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
@@ -530,15 +530,15 @@ object UpdatePetWithFormEndpoint : Wirespec.Endpoint {
   ) : Wirespec.Path
 
   data class Queries(
-    val name: String,
-    val status: String,
+    val name: String?,
+    val status: String?,
   ) : Wirespec.Queries
 
   data object Headers : Wirespec.Request.Headers
 
   class Request(
     petId: Long,
-    name: String,     status: String
+    name: String?,     status: String?
   ) : Wirespec.Request<Unit> {
     override val path = Path(petId)
     override val method = Wirespec.Method.POST
@@ -551,7 +551,7 @@ object UpdatePetWithFormEndpoint : Wirespec.Endpoint {
     Wirespec.RawRequest(
       path = listOf("pet", request.path.petId.let{serialization.serialize(it, typeOf<Long>())}),
       method = request.method.name,
-      queries = (mapOf("name" to (request.queries.name?.let{ serialization.serializeParam(it, typeOf<String>()) } ?: emptyList()))) + (mapOf("status" to (request.queries.status?.let{ serialization.serializeParam(it, typeOf<String>()) } ?: emptyList()))),
+      queries = (mapOf("name" to (request.queries.name?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))) + (mapOf("status" to (request.queries.status?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
       headers = emptyMap(),
       body = serialization.serialize(request.body, typeOf<Unit>()),
     )
@@ -559,7 +559,7 @@ object UpdatePetWithFormEndpoint : Wirespec.Endpoint {
   fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
     Request(
       petId = serialization.deserialize(request.path[1], typeOf<Long>()),
-      name = serialization.deserializeParam(requireNotNull(request.queries["name"]) { "name is null" }, typeOf<String>()),       status = serialization.deserializeParam(requireNotNull(request.queries["status"]) { "status is null" }, typeOf<String>())
+      name = request.queries["name"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) },       status = request.queries["status"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) }
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
@@ -618,12 +618,12 @@ object DeletePetEndpoint : Wirespec.Endpoint {
   data object Queries : Wirespec.Queries
 
   data class Headers(
-    val api_key: String,
+    val api_key: String?,
   ) : Wirespec.Request.Headers
 
   class Request(
     petId: Long,
-    api_key: String
+    api_key: String?
   ) : Wirespec.Request<Unit> {
     override val path = Path(petId)
     override val method = Wirespec.Method.DELETE
@@ -637,14 +637,14 @@ object DeletePetEndpoint : Wirespec.Endpoint {
       path = listOf("pet", request.path.petId.let{serialization.serialize(it, typeOf<Long>())}),
       method = request.method.name,
       queries = emptyMap(),
-      headers = (mapOf("api_key" to (request.headers.api_key?.let{ serialization.serializeParam(it, typeOf<String>()) } ?: emptyList()))),
+      headers = (mapOf("api_key" to (request.headers.api_key?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
       body = serialization.serialize(request.body, typeOf<Unit>()),
     )
 
   fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
     Request(
       petId = serialization.deserialize(request.path[1], typeOf<Long>()),
-      api_key = serialization.deserializeParam(requireNotNull(request.headers["api_key"]) { "api_key is null" }, typeOf<String>())
+      api_key = request.headers["api_key"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) }
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
@@ -701,16 +701,16 @@ object UploadFileEndpoint : Wirespec.Endpoint {
   ) : Wirespec.Path
 
   data class Queries(
-    val additionalMetadata: String,
+    val additionalMetadata: String?,
   ) : Wirespec.Queries
 
   data object Headers : Wirespec.Request.Headers
 
   class Request(
     petId: Long,
-    additionalMetadata: String,
-    override val body: String,
-  ) : Wirespec.Request<String> {
+    additionalMetadata: String?,
+    override val body: String?,
+  ) : Wirespec.Request<String?> {
     override val path = Path(petId)
     override val method = Wirespec.Method.POST
     override val queries = Queries(additionalMetadata)
@@ -721,16 +721,16 @@ object UploadFileEndpoint : Wirespec.Endpoint {
     Wirespec.RawRequest(
       path = listOf("pet", request.path.petId.let{serialization.serialize(it, typeOf<Long>())}, "uploadImage"),
       method = request.method.name,
-      queries = (mapOf("additionalMetadata" to (request.queries.additionalMetadata?.let{ serialization.serializeParam(it, typeOf<String>()) } ?: emptyList()))),
+      queries = (mapOf("additionalMetadata" to (request.queries.additionalMetadata?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
       headers = emptyMap(),
-      body = serialization.serialize(request.body, typeOf<String>()),
+      body = serialization.serialize(request.body, typeOf<String?>()),
     )
 
   fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
     Request(
       petId = serialization.deserialize(request.path[1], typeOf<Long>()),
-      additionalMetadata = serialization.deserializeParam(requireNotNull(request.queries["additionalMetadata"]) { "additionalMetadata is null" }, typeOf<String>()),
-      body = serialization.deserialize(requireNotNull(request.body) { "body is null" }, typeOf<String>()),
+      additionalMetadata = request.queries["additionalMetadata"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) },
+      body = serialization.deserialize(requireNotNull(request.body) { "body is null" }, typeOf<String?>()),
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
@@ -864,8 +864,8 @@ object PlaceOrderEndpoint : Wirespec.Endpoint {
   data object Headers : Wirespec.Request.Headers
 
   class Request(
-    override val body: Order,
-  ) : Wirespec.Request<Order> {
+    override val body: Order?,
+  ) : Wirespec.Request<Order?> {
     override val path = Path
     override val method = Wirespec.Method.POST
     override val queries = Queries
@@ -878,12 +878,12 @@ object PlaceOrderEndpoint : Wirespec.Endpoint {
       method = request.method.name,
       queries = emptyMap(),
       headers = emptyMap(),
-      body = serialization.serialize(request.body, typeOf<Order>()),
+      body = serialization.serialize(request.body, typeOf<Order?>()),
     )
 
   fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
     Request(
-      body = serialization.deserialize(requireNotNull(request.body) { "body is null" }, typeOf<Order>()),
+      body = serialization.deserialize(requireNotNull(request.body) { "body is null" }, typeOf<Order?>()),
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
@@ -1164,8 +1164,8 @@ object CreateUserEndpoint : Wirespec.Endpoint {
   data object Headers : Wirespec.Request.Headers
 
   class Request(
-    override val body: User,
-  ) : Wirespec.Request<User> {
+    override val body: User?,
+  ) : Wirespec.Request<User?> {
     override val path = Path
     override val method = Wirespec.Method.POST
     override val queries = Queries
@@ -1178,12 +1178,12 @@ object CreateUserEndpoint : Wirespec.Endpoint {
       method = request.method.name,
       queries = emptyMap(),
       headers = emptyMap(),
-      body = serialization.serialize(request.body, typeOf<User>()),
+      body = serialization.serialize(request.body, typeOf<User?>()),
     )
 
   fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
     Request(
-      body = serialization.deserialize(requireNotNull(request.body) { "body is null" }, typeOf<User>()),
+      body = serialization.deserialize(requireNotNull(request.body) { "body is null" }, typeOf<User?>()),
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
@@ -1240,8 +1240,8 @@ object CreateUsersWithListInputEndpoint : Wirespec.Endpoint {
   data object Headers : Wirespec.Request.Headers
 
   class Request(
-    override val body: List<User>,
-  ) : Wirespec.Request<List<User>> {
+    override val body: List<User>?,
+  ) : Wirespec.Request<List<User>?> {
     override val path = Path
     override val method = Wirespec.Method.POST
     override val queries = Queries
@@ -1254,12 +1254,12 @@ object CreateUsersWithListInputEndpoint : Wirespec.Endpoint {
       method = request.method.name,
       queries = emptyMap(),
       headers = emptyMap(),
-      body = serialization.serialize(request.body, typeOf<List<User>>()),
+      body = serialization.serialize(request.body, typeOf<List<User>?>()),
     )
 
   fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
     Request(
-      body = serialization.deserialize(requireNotNull(request.body) { "body is null" }, typeOf<List<User>>()),
+      body = serialization.deserialize(requireNotNull(request.body) { "body is null" }, typeOf<List<User>?>()),
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
@@ -1327,14 +1327,14 @@ object LoginUserEndpoint : Wirespec.Endpoint {
   data object Path : Wirespec.Path
 
   data class Queries(
-    val username: String,
-    val password: String,
+    val username: String?,
+    val password: String?,
   ) : Wirespec.Queries
 
   data object Headers : Wirespec.Request.Headers
 
   class Request(
-    username: String,     password: String
+    username: String?,     password: String?
   ) : Wirespec.Request<Unit> {
     override val path = Path
     override val method = Wirespec.Method.GET
@@ -1347,14 +1347,14 @@ object LoginUserEndpoint : Wirespec.Endpoint {
     Wirespec.RawRequest(
       path = listOf("user", "login"),
       method = request.method.name,
-      queries = (mapOf("username" to (request.queries.username?.let{ serialization.serializeParam(it, typeOf<String>()) } ?: emptyList()))) + (mapOf("password" to (request.queries.password?.let{ serialization.serializeParam(it, typeOf<String>()) } ?: emptyList()))),
+      queries = (mapOf("username" to (request.queries.username?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))) + (mapOf("password" to (request.queries.password?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
       headers = emptyMap(),
       body = serialization.serialize(request.body, typeOf<Unit>()),
     )
 
   fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
     Request(
-      username = serialization.deserializeParam(requireNotNull(request.queries["username"]) { "username is null" }, typeOf<String>()),       password = serialization.deserializeParam(requireNotNull(request.queries["password"]) { "password is null" }, typeOf<String>())
+      username = request.queries["username"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) },       password = request.queries["password"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) }
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
@@ -1621,8 +1621,8 @@ object UpdateUserEndpoint : Wirespec.Endpoint {
 
   class Request(
     username: String,
-    override val body: User,
-  ) : Wirespec.Request<User> {
+    override val body: User?,
+  ) : Wirespec.Request<User?> {
     override val path = Path(username)
     override val method = Wirespec.Method.PUT
     override val queries = Queries
@@ -1635,13 +1635,13 @@ object UpdateUserEndpoint : Wirespec.Endpoint {
       method = request.method.name,
       queries = emptyMap(),
       headers = emptyMap(),
-      body = serialization.serialize(request.body, typeOf<User>()),
+      body = serialization.serialize(request.body, typeOf<User?>()),
     )
 
   fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
     Request(
       username = serialization.deserialize(request.path[1], typeOf<String>()),
-      body = serialization.deserialize(requireNotNull(request.body) { "body is null" }, typeOf<User>()),
+      body = serialization.deserialize(requireNotNull(request.body) { "body is null" }, typeOf<User?>()),
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
@@ -1795,12 +1795,12 @@ enum class FindPetsByStatusParameterStatus (override val label: String): Wirespe
 }
 
 data class Order(
-  val id: Long,
-  val petId: Long,
-  val quantity: Int,
-  val shipDate: String,
-  val status: OrderStatus,
-  val complete: Boolean
+  val id: Long?,
+  val petId: Long?,
+  val quantity: Int?,
+  val shipDate: String?,
+  val status: OrderStatus?,
+  val complete: Boolean?
 )
 
 enum class OrderStatus (override val label: String): Wirespec.Enum {
@@ -1813,46 +1813,46 @@ enum class OrderStatus (override val label: String): Wirespec.Enum {
 }
 
 data class Customer(
-  val id: Long,
-  val username: String,
-  val address: List<Address>
+  val id: Long?,
+  val username: String?,
+  val address: List<Address>?
 )
 
 data class Address(
-  val street: String,
-  val city: String,
-  val state: String,
-  val zip: String
+  val street: String?,
+  val city: String?,
+  val state: String?,
+  val zip: String?
 )
 
 data class Category(
-  val id: Long,
-  val name: String
+  val id: Long?,
+  val name: String?
 )
 
 data class User(
-  val id: Long,
-  val username: String,
-  val firstName: String,
-  val lastName: String,
-  val email: String,
-  val password: String,
-  val phone: String,
-  val userStatus: Int
+  val id: Long?,
+  val username: String?,
+  val firstName: String?,
+  val lastName: String?,
+  val email: String?,
+  val password: String?,
+  val phone: String?,
+  val userStatus: Int?
 )
 
 data class Tag(
-  val id: Long,
-  val name: String
+  val id: Long?,
+  val name: String?
 )
 
 data class Pet(
-  val id: Long,
+  val id: Long?,
   val name: String,
-  val category: Category,
+  val category: Category?,
   val photoUrls: List<String>,
-  val tags: List<Tag>,
-  val status: PetStatus
+  val tags: List<Tag>?,
+  val status: PetStatus?
 )
 
 enum class PetStatus (override val label: String): Wirespec.Enum {
@@ -1865,7 +1865,7 @@ enum class PetStatus (override val label: String): Wirespec.Enum {
 }
 
 data class ApiResponse(
-  val code: Int,
-  val type: String,
-  val message: String
+  val code: Int?,
+  val type: String?,
+  val message: String?
 )

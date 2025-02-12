@@ -13,7 +13,7 @@ import community.flock.wirespec.compiler.core.parse.Reference.Custom
 import community.flock.wirespec.compiler.core.parse.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape
-import community.flock.wirespec.openapi.common.Expected
+import community.flock.wirespec.openapi.common.Ast
 import community.flock.wirespec.openapi.v3.OpenApiV3Parser.parse
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -111,7 +111,10 @@ class OpenApiV3ParserTest {
                         Field(
                             identifier = FieldIdentifier("address"),
                             reference = Reference.Iterable(
-                                reference = Custom(value = "Address", isNullable = false),
+                                reference = Custom(
+                                    value = "Address",
+                                    isNullable = false
+                                ),
                                 isNullable = true,
                             ),
                         )
@@ -388,7 +391,6 @@ class OpenApiV3ParserTest {
                             ),
                             isNullable = false,
                         ),
-                        isNullable = false,
                     )
                 )
             )
@@ -426,7 +428,16 @@ class OpenApiV3ParserTest {
                     Endpoint.Response(
                         status = "200",
                         headers = emptyList(),
-                        content = Endpoint.Content("application/json", Custom("Ingredient", true), false)
+                        content = Endpoint.Content(
+                            "application/json",
+                            Reference.Iterable(
+                                reference = Custom(
+                                    value = "Ingredient",
+                                    isNullable = false
+                                ),
+                                isNullable = false
+                            ),
+                        )
                     ),
                     Endpoint.Response(
                         status = "404",
@@ -440,9 +451,9 @@ class OpenApiV3ParserTest {
                 identifier = DefinitionIdentifier("Ingredient"),
                 shape = Shape(
                     listOf(
-                        Field(FieldIdentifier("id"), Primitive(Primitive.Type.String, false)),
-                        Field(FieldIdentifier("name"), Primitive(Primitive.Type.String, false)),
-                        Field(FieldIdentifier("quantity"), Primitive(Primitive.Type.String, false)),
+                        Field(FieldIdentifier("id"), Primitive(Primitive.Type.String, true)),
+                        Field(FieldIdentifier("name"), Primitive(Primitive.Type.String, true)),
+                        Field(FieldIdentifier("quantity"), Primitive(Primitive.Type.String, true)),
                     )
                 ),
                 extends = emptyList(),
@@ -488,12 +499,28 @@ class OpenApiV3ParserTest {
                     Endpoint.Response(
                         status = "200",
                         headers = emptyList(),
-                        content = Endpoint.Content("application/json", Custom("Todo", true), false)
+                        content = Endpoint.Content(
+                            type = "application/json",
+                            reference = Reference.Iterable(
+                                reference = Custom(
+                                    value = "Todo",
+                                    isNullable = false
+                                ),
+
+                                isNullable = false
+                            ),
+                        )
                     ),
                     Endpoint.Response(
                         status = "500",
                         headers = emptyList(),
-                        content = Endpoint.Content("application/json", Custom("Error", false), false)
+                        content = Endpoint.Content(
+                            type = "application/json",
+                            reference = Custom(
+                                value = "Error",
+                                isNullable = false
+                            ),
+                        )
                     )
                 )
             ),
@@ -516,15 +543,19 @@ class OpenApiV3ParserTest {
                     Endpoint.Request(
                         Endpoint.Content(
                             type = "application/json",
-                            reference = Custom("Todo_input", false),
-                            isNullable = true
+                            reference = Custom(
+                                value = "Todo_input",
+                                isNullable = true
+                            ),
                         )
                     ),
                     Endpoint.Request(
                         Endpoint.Content(
                             type = "application/xml",
-                            reference = Custom("Todo", false),
-                            isNullable = true
+                            reference = Custom(
+                                value = "Todo",
+                                isNullable = true
+                            ),
                         )
                     )
                 ),
@@ -539,8 +570,10 @@ class OpenApiV3ParserTest {
                         headers = emptyList(),
                         content = Endpoint.Content(
                             type = "application/json",
-                            reference = Custom("Error", false),
-                            isNullable = false
+                            reference = Custom(
+                                value = "Error",
+                                isNullable = false
+                            ),
                         )
                     )
                 )
@@ -565,8 +598,10 @@ class OpenApiV3ParserTest {
                         headers = emptyList(),
                         content = Endpoint.Content(
                             type = "application/json",
-                            reference = Custom("Todo", false),
-                            isNullable = true
+                            reference = Custom(
+                                value = "Todo",
+                                isNullable = true
+                            ),
                         )
                     ),
                     Endpoint.Response(
@@ -574,8 +609,10 @@ class OpenApiV3ParserTest {
                         headers = emptyList(),
                         content = Endpoint.Content(
                             type = "application/json",
-                            reference = Custom("Error", false),
-                            isNullable = false
+                            reference = Custom(
+                                value = "Error",
+                                isNullable = false
+                            ),
                         )
                     )
                 )
@@ -585,8 +622,8 @@ class OpenApiV3ParserTest {
                 identifier = DefinitionIdentifier("Todo_input"),
                 shape = Shape(
                     listOf(
-                        Field(FieldIdentifier("title"), Primitive(Primitive.Type.String, false)),
-                        Field(FieldIdentifier("completed"), Primitive(Primitive.Type.Boolean, false))
+                        Field(FieldIdentifier("title"), Primitive(Primitive.Type.String, true)),
+                        Field(FieldIdentifier("completed"), Primitive(Primitive.Type.Boolean, true))
                     )
                 ),
                 extends = emptyList(),
@@ -596,10 +633,10 @@ class OpenApiV3ParserTest {
                 identifier = DefinitionIdentifier("Todo"),
                 shape = Shape(
                     listOf(
-                        Field(FieldIdentifier("id"), Primitive(Primitive.Type.String, false)),
-                        Field(FieldIdentifier("title"), Primitive(Primitive.Type.String, false)),
-                        Field(FieldIdentifier("completed"), Primitive(Primitive.Type.Boolean, false)),
-                        Field(FieldIdentifier("alert"), Custom("TodoAlert", false)),
+                        Field(FieldIdentifier("id"), Primitive(Primitive.Type.String, true)),
+                        Field(FieldIdentifier("title"), Primitive(Primitive.Type.String, true)),
+                        Field(FieldIdentifier("completed"), Primitive(Primitive.Type.Boolean, true)),
+                        Field(FieldIdentifier("alert"), Custom("TodoAlert", true)),
                     )
                 ),
                 extends = emptyList(),
@@ -609,8 +646,8 @@ class OpenApiV3ParserTest {
                 identifier = DefinitionIdentifier("TodoAlert"),
                 shape = Shape(
                     listOf(
-                        Field(FieldIdentifier("code"), Primitive(Primitive.Type.String, false)),
-                        Field(FieldIdentifier("message"), Custom("TodoAlertMessage", false)),
+                        Field(FieldIdentifier("code"), Primitive(Primitive.Type.String, true)),
+                        Field(FieldIdentifier("message"), Custom("TodoAlertMessage", true)),
                     )
                 ),
                 extends = emptyList(),
@@ -620,8 +657,8 @@ class OpenApiV3ParserTest {
                 identifier = DefinitionIdentifier("TodoAlertMessage"),
                 shape = Shape(
                     listOf(
-                        Field(FieldIdentifier("key"), Primitive(Primitive.Type.String, false)),
-                        Field(FieldIdentifier("value"), Primitive(Primitive.Type.String, false)),
+                        Field(FieldIdentifier("key"), Primitive(Primitive.Type.String, true)),
+                        Field(FieldIdentifier("value"), Primitive(Primitive.Type.String, true)),
                     )
                 ),
                 extends = emptyList(),
@@ -631,9 +668,9 @@ class OpenApiV3ParserTest {
                 identifier = DefinitionIdentifier("TodosnestedArray"),
                 shape = Shape(
                     listOf(
-                        Field(FieldIdentifier("id"), Primitive(Primitive.Type.String, false)),
-                        Field(FieldIdentifier("title"), Primitive(Primitive.Type.String, false)),
-                        Field(FieldIdentifier("nested"), Primitive(Primitive.Type.Boolean, false)),
+                        Field(FieldIdentifier("id"), Primitive(Primitive.Type.String, true)),
+                        Field(FieldIdentifier("title"), Primitive(Primitive.Type.String, true)),
+                        Field(FieldIdentifier("nested"), Primitive(Primitive.Type.Boolean, true)),
                     )
                 ),
                 extends = emptyList(),
@@ -643,8 +680,8 @@ class OpenApiV3ParserTest {
                 identifier = DefinitionIdentifier("Error"),
                 shape = Shape(
                     listOf(
-                        Field(FieldIdentifier("code"), Primitive(Primitive.Type.String, false)),
-                        Field(FieldIdentifier("message"), Primitive(Primitive.Type.String, false)),
+                        Field(FieldIdentifier("code"), Primitive(Primitive.Type.String, true)),
+                        Field(FieldIdentifier("message"), Primitive(Primitive.Type.String, true)),
                     )
                 ),
                 extends = emptyList(),
@@ -661,7 +698,7 @@ class OpenApiV3ParserTest {
         val openApi = OpenAPI.decodeFromString(json)
         val ast = openApi.parse()
 
-        assertEquals(Expected.objectInRequest, ast)
+        assertEquals(Ast.objectInRequest, ast)
 
         println(ast)
     }
@@ -673,7 +710,7 @@ class OpenApiV3ParserTest {
         val openApi = OpenAPI.decodeFromString(json)
         val ast = openApi.parse()
 
-        assertEquals(Expected.objectInResponse, ast)
+        assertEquals(Ast.objectInResponse, ast)
 
         println(ast)
     }
@@ -685,7 +722,7 @@ class OpenApiV3ParserTest {
         val openApi = OpenAPI.decodeFromString(json)
         val ast = openApi.parse()
 
-        assertEquals(Expected.additionalProperties, ast)
+        assertEquals(Ast.additionalProperties, ast)
 
         println(ast)
     }
@@ -697,7 +734,7 @@ class OpenApiV3ParserTest {
         val openApi = OpenAPI.decodeFromString(json)
         val ast = openApi.parse()
 
-        assertEquals(Expected.array, ast)
+        assertEquals(Ast.array, ast)
 
         println(ast)
     }
@@ -709,7 +746,7 @@ class OpenApiV3ParserTest {
         val openApi = OpenAPI.decodeFromString(json)
         val ast = openApi.parse()
 
-        assertEquals(Expected.allOf, ast)
+        assertEquals(Ast.allOf, ast)
     }
 
     @Test
@@ -719,7 +756,7 @@ class OpenApiV3ParserTest {
         val openApi = OpenAPI.decodeFromString(json)
         val ast = openApi.parse()
 
-        Expected.oneOf.zip(ast).forEach { (expected, actual) ->
+        Ast.oneOf.zip(ast).forEach { (expected, actual) ->
             println(expected.identifier)
             assertEquals(expected, actual)
         }
@@ -733,7 +770,7 @@ class OpenApiV3ParserTest {
         val openApi = OpenAPI.decodeFromString(json)
         val ast = openApi.parse()
 
-        assertEquals(Expected.enum, ast)
+        assertEquals(Ast.enum, ast)
     }
 
     @Test
@@ -765,7 +802,6 @@ class OpenApiV3ParserTest {
                                 value = "Address",
                                 isNullable = false,
                             ),
-                            isNullable = false
                         )
                     ),
                     Endpoint.Response(
@@ -777,7 +813,6 @@ class OpenApiV3ParserTest {
                                 value = "ResponserefGET202ResponseBody",
                                 isNullable = false,
                             ),
-                            isNullable = false
                         )
                     )
                 )
@@ -856,7 +891,8 @@ class OpenApiV3ParserTest {
                             reference = Custom(
                                 value = "ResponserefGETParameterEmbedArray",
                                 isNullable = false
-                            ), isNullable = true
+                            ),
+                            isNullable = true
                         ),
                     ), Field(
                         identifier = FieldIdentifier(name = "embedRef"),
@@ -864,7 +900,8 @@ class OpenApiV3ParserTest {
                             reference = Custom(
                                 value = "EmbedParamsArray",
                                 isNullable = false,
-                            ), isNullable = true
+                            ),
+                            isNullable = true
                         ),
                     )
                 ),
@@ -881,7 +918,6 @@ class OpenApiV3ParserTest {
                                 value = "ResponserefGET201ResponseBody",
                                 isNullable = false,
                             ),
-                            isNullable = false
                         )
                     )
                 )
@@ -944,7 +980,6 @@ class OpenApiV3ParserTest {
                                 value = "RefarrayGET200ResponseBody",
                                 isNullable = false,
                             ),
-                            isNullable = false
                         )
                     )
                 )
@@ -1044,7 +1079,6 @@ class OpenApiV3ParserTest {
                                 type = Primitive.Type.String,
                                 isNullable = false,
                             ),
-                            isNullable = false
                         )
                     )
                 )
@@ -1100,7 +1134,8 @@ class OpenApiV3ParserTest {
                                 reference = Primitive(
                                     type = Primitive.Type.String,
                                     isNullable = false,
-                                ), isNullable = false,
+                                ),
+                                isNullable = false,
                             ),
                         )
                     )

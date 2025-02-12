@@ -16,7 +16,6 @@ object AvroParser {
             is AvroModel.RecordType -> Channel(
                 comment = null,
                 identifier = DefinitionIdentifier(name = avro.name),
-                isNullable = false,
                 reference = Reference.Custom(
                     value = avro.name,
                     isNullable = false

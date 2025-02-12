@@ -9,7 +9,7 @@ import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 
-object Expected {
+object Ast {
 
     val objectInRequest = listOf(
         Endpoint(
@@ -25,7 +25,6 @@ object Expected {
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(value = "TestWithDashGETRequestBody", isNullable = true),
-                        isNullable = true
                     )
                 )
             ),
@@ -35,8 +34,10 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Primitive(type = Reference.Primitive.Type.String, isNullable = false),
-                        isNullable = false
+                        reference = Reference.Primitive(
+                            type = Reference.Primitive.Type.String,
+                            isNullable = false
+                        ),
                     )
                 )
             )
@@ -100,7 +101,6 @@ object Expected {
                             value = "Test200ResponseBody",
                             isNullable = false
                         ),
-                        isNullable = false
                     )
                 )
             )
@@ -169,10 +169,12 @@ object Expected {
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Dict(
-                            reference = Reference.Custom(value = "Message", isNullable = false),
+                            reference = Reference.Custom(
+                                value = "Message",
+                                isNullable = false
+                            ),
                             isNullable = true
                         ),
-                        isNullable = true
                     )
                 )
             ),
@@ -183,10 +185,12 @@ object Expected {
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Dict(
-                            reference = Reference.Custom(value = "Message", isNullable = false),
+                            reference = Reference.Custom(
+                                value = "Message",
+                                isNullable = false
+                            ),
                             isNullable = false
                         ),
-                        isNullable = false
                     )
                 ),
                 Endpoint.Response(
@@ -201,7 +205,6 @@ object Expected {
                             ),
                             isNullable = false
                         ),
-                        isNullable = false
                     )
                 ),
                 Endpoint.Response(
@@ -209,8 +212,12 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Dict(reference = Reference.Any(isNullable = true), isNullable = false),
-                        isNullable = false
+                        reference = Reference.Dict(
+                            reference = Reference.Any(
+                                isNullable = false
+                            ),
+                            isNullable = false
+                        ),
                     )
                 )
             )
@@ -276,13 +283,15 @@ object Expected {
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Iterable(
-                            reference = Reference.Custom(
-                                value = "MessageArray",
+                            reference = Reference.Iterable(
+                                reference = Reference.Custom(
+                                    value = "MessageArray",
+                                    isNullable = false
+                                ),
                                 isNullable = false
                             ),
                             isNullable = true
                         ),
-                        isNullable = true
                     )
                 )
             ),
@@ -293,13 +302,13 @@ object Expected {
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Iterable(
-                            reference = Reference.Custom(
-                                value = "ArrayGET200ResponseBody",
-                                isNullable = false,
-                            ),
-                            isNullable = true
+                                reference = Reference.Custom(
+                                    value = "ArrayGET200ResponseBody",
+                                    isNullable = false,
+                                ),
+                                isNullable = false
+
                         ),
-                        isNullable = false
                     )
                 ),
                 Endpoint.Response(
@@ -308,13 +317,16 @@ object Expected {
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Iterable(
-                            reference = Reference.Custom(
-                                value = "MessageArray",
+                            reference = Reference.Iterable(
+                                reference = Reference.Custom(
+                                    value = "MessageArray",
+                                    isNullable = false
+
+                                ),
                                 isNullable = false
                             ),
                             isNullable = false
                         ),
-                        isNullable = false
                     )
                 ),
                 Endpoint.Response(
@@ -323,13 +335,13 @@ object Expected {
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Iterable(
-                            reference = Reference.Primitive(
-                                type = Reference.Primitive.Type.String,
+                                reference = Reference.Primitive(
+                                    type = Reference.Primitive.Type.String,
+                                    isNullable = false
+                                ),
                                 isNullable = false
-                            ),
-                            isNullable = false
+
                         ),
-                        isNullable = false
                     )
                 )
             )
@@ -341,11 +353,8 @@ object Expected {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("code"),
-                        reference = Reference.Iterable(
-                            reference = Reference.Primitive(
-                                type = Reference.Primitive.Type.Number(),
-                                isNullable = false
-                            ),
+                        reference = Reference.Primitive(
+                            type = Reference.Primitive.Type.Number(),
                             isNullable = true
                         ),
                     ),
@@ -409,7 +418,6 @@ object Expected {
                             value = "AllofGET200ResponseBody",
                             isNullable = false,
                         ),
-                        isNullable = false
                     )
                 )
             )
@@ -525,7 +533,6 @@ object Expected {
                             value = "OneofGET200ResponseBody",
                             isNullable = false,
                         ),
-                        isNullable = false
                     )
                 )
             )
@@ -586,7 +593,8 @@ object Expected {
                     Field(
                         identifier = FieldIdentifier(
                             "e"
-                        ), reference = Reference.Primitive(
+                        ),
+                        reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isNullable = true,
                         ),
@@ -657,8 +665,10 @@ object Expected {
                     headers = emptyList(),
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(value = "Message", isNullable = false),
-                        isNullable = false
+                        reference = Reference.Custom(
+                            value = "Message",
+                            isNullable = false
+                        ),
                     )
                 ),
                 Endpoint.Response(
@@ -669,8 +679,7 @@ object Expected {
                         reference = Reference.Custom(
                             value = "EnumGET201ResponseBody",
                             isNullable = false,
-                        ),
-                        isNullable = false
+                        )
                     )
                 )
             )

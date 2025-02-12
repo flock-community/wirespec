@@ -134,7 +134,6 @@ class AvroParserTest {
             Channel(
                 comment = null,
                 identifier = DefinitionIdentifier("User"),
-                isNullable = false,
                 reference = Reference.Custom(
                     "User",
                     isNullable = false,

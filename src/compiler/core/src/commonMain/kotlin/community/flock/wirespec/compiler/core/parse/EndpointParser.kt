@@ -53,7 +53,6 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
                     Endpoint.Content(
                         type = "application/json",
                         reference = it,
-                        isNullable = false
                     )
                 }
             )

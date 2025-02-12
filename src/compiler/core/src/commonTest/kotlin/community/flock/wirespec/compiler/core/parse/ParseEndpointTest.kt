@@ -94,7 +94,6 @@ class ParseEndpointTest {
                         reference.shouldBeInstanceOf<Reference.Custom>().run {
                             value shouldBe "Todo"
                         }
-                        isNullable shouldBe false
                     }
                 }
             }

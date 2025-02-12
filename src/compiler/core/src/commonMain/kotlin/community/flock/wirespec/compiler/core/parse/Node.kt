@@ -139,14 +139,12 @@ data class Endpoint(
 
     data class Request(val content: Content?)
     data class Response(val status: String, val headers: List<Field>, val content: Content?)
-    data class Content(val type: String, val reference: Reference, val isNullable: Boolean = false)
+    data class Content(val type: String, val reference: Reference)
 }
 
 data class Channel(
     override val comment: Comment?,
     override val identifier: DefinitionIdentifier,
-    @Deprecated("Should be in reference")
-    val isNullable: Boolean?,
     val reference: Reference,
 ) : Definition
 

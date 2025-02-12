@@ -404,6 +404,7 @@
           "content": {
             "application/octet-stream": {
               "schema": {
+
                 "type": "string",
                 "format": "binary"
               }

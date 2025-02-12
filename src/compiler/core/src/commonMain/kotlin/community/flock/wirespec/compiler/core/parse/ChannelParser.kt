@@ -43,7 +43,6 @@ class ChannelParser(logger: Logger) : AbstractParser(logger) {
             comment = comment,
             identifier = identifier,
             reference = reference,
-            isNullable = null
         )
     }
 }

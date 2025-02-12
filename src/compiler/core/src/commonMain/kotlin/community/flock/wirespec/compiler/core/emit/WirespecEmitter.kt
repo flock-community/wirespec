@@ -86,7 +86,7 @@ open class WirespecEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(log
 
     override fun emit(endpoint: Endpoint) = """
         |endpoint ${emit(endpoint.identifier)} ${endpoint.method}${endpoint.requests.emitRequest()} ${endpoint.path.emitPath()}${endpoint.queries.emitQuery()} -> {
-        |${endpoint.responses.joinToString("\n") { "$Spacer${it.status.fixStatus()} -> ${it.content?.reference?.emit() ?: "Unit"}${if (it.content?.isNullable == true) "?" else ""}" }}
+        |${endpoint.responses.joinToString("\n") { "$Spacer${it.status.fixStatus()} -> ${it.content?.reference?.emit() ?: "Unit"}${if (it.content?.reference?.isNullable == true) "?" else ""}" }}
         |}
         |
     """.trimMargin()

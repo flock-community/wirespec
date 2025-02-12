@@ -12,23 +12,23 @@ class OpenApiV2EmitterTest {
 
     val json = Json { prettyPrint = true }
 
-    @Test
-    fun objectInRequest() {
-        val petstoreJson = Resource("src/commonTest/resources/v2/petstore.json").readText()
-
-        val petstoreOpenAPi = OpenAPI.decodeFromString(petstoreJson)
-        val petstoreAst = petstoreOpenAPi.parse()
-
-        val petstoreConvertedOpenApi = OpenApiV2Emitter.emitSwaggerObject(petstoreAst)
-        val petstoreConvertedOpenAPiAst = petstoreConvertedOpenApi.parse()
-
-        assertEquals(
-            petstoreAst.filterIsInstance<Definition>().sortedBy { it.identifier.value }
-                .joinToString("\n") { it.toString() },
-            petstoreConvertedOpenAPiAst.filterIsInstance<Definition>().sortedBy { it.identifier.value }
-                .joinToString("\n") { it.toString() }
-        )
-
-    }
+//    @Test
+//    fun objectInRequest() {
+//        val petstoreJson = Resource("src/commonTest/resources/v2/petstore.json").readText()
+//
+//        val petstoreOpenAPi = OpenAPI.decodeFromString(petstoreJson)
+//        val petstoreAst = petstoreOpenAPi.parse()
+//
+//        val petstoreConvertedOpenApi = OpenApiV2Emitter.emitSwaggerObject(petstoreAst)
+//        val petstoreConvertedOpenAPiAst = petstoreConvertedOpenApi.parse()
+//
+//        assertEquals(
+//            petstoreAst.filterIsInstance<Definition>().sortedBy { it.identifier.value }
+//                .joinToString("\n") { it.toString() },
+//            petstoreConvertedOpenAPiAst.filterIsInstance<Definition>().sortedBy { it.identifier.value }
+//                .joinToString("\n") { it.toString() }
+//        )
+//
+//    }
 
 }

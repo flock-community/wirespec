@@ -12,7 +12,7 @@ import community.flock.wirespec.compiler.core.parse.Reference.Custom
 import community.flock.wirespec.compiler.core.parse.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape
-import community.flock.wirespec.openapi.common.Expected
+import community.flock.wirespec.openapi.common.Ast
 import community.flock.wirespec.openapi.v2.OpenApiV2Parser.parse
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -277,7 +277,6 @@ class OpenApiV2ParserTest {
                         content = Endpoint.Content(
                             type = "application/json",
                             reference = Custom(value = "Foo", isNullable = false),
-                            isNullable = false
                         )
                     )
                 )
@@ -309,7 +308,7 @@ class OpenApiV2ParserTest {
         val openApi = OpenAPI.decodeFromString(json)
         val ast = openApi.parse()
 
-        assertEquals(Expected.objectInRequest, ast)
+        assertEquals(Ast.objectInRequest, ast)
     }
 
     @Test
@@ -319,7 +318,7 @@ class OpenApiV2ParserTest {
         val openApi = OpenAPI.decodeFromString(json)
         val ast = openApi.parse()
 
-        assertEquals(Expected.objectInResponse, ast)
+        assertEquals(Ast.objectInResponse, ast)
     }
 
     @Test
@@ -329,7 +328,7 @@ class OpenApiV2ParserTest {
         val openApi = OpenAPI.decodeFromString(json)
         val ast = openApi.parse()
 
-        assertEquals(Expected.additionalProperties, ast)
+        assertEquals(Ast.additionalProperties, ast)
     }
 
     @Test
@@ -339,7 +338,7 @@ class OpenApiV2ParserTest {
         val openApi = OpenAPI.decodeFromString(json)
         val ast = openApi.parse()
 
-        assertEquals(Expected.array, ast)
+        assertEquals(Ast.array, ast)
     }
 
     @Test
@@ -349,7 +348,7 @@ class OpenApiV2ParserTest {
         val openApi = OpenAPI.decodeFromString(json)
         val ast = openApi.parse()
 
-        assertEquals(Expected.allOf, ast)
+        assertEquals(Ast.allOf, ast)
     }
 
     @Test
@@ -359,6 +358,6 @@ class OpenApiV2ParserTest {
         val openApi = OpenAPI.decodeFromString(json)
         val ast = openApi.parse()
 
-        assertEquals(Expected.enum, ast)
+        assertEquals(Ast.enum, ast)
     }
 }
