@@ -10,6 +10,13 @@ repositories {
     mavenCentral()
 }
 
+plugins.withId("maven-publish") {
+    tasks.withType(AbstractPublishToMaven::class) {
+        logger.info("Disabling ${name} task in project ${project.name}...")
+        enabled = false
+    }
+}
+
 kotlin {
     js(IR) {
         nodejs()

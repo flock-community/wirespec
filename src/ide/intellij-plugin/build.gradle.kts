@@ -6,6 +6,7 @@ plugins {
 group = "${libs.versions.group.id.get()}.lsp.intellij-plugin"
 version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.get()
 
+
 kotlin {
     jvmToolchain(libs.versions.java.get().toInt())
 }
@@ -14,6 +15,13 @@ repositories {
     mavenCentral()
     intellijPlatform {
         defaultRepositories()
+    }
+}
+
+plugins.withId("maven-publish") {
+    tasks.withType(AbstractPublishToMaven::class) {
+        logger.info("Disabling ${name} task in project ${project.name}...")
+        enabled = false
     }
 }
 
