@@ -66,7 +66,7 @@ object OpenApiV2Parser {
                             .distinct()
                             .ifEmpty { listOf("application/json") }
                             .map { type ->
-                                val isNullable = !(requestBody.required ?: false)
+                                val isNullable = false
                                 Endpoint.Request(
                                     Endpoint.Content(
                                         type = type,

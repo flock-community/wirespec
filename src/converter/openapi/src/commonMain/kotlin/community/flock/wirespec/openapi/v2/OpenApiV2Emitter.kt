@@ -137,18 +137,18 @@ object OpenApiV2Emitter : Emitter(noLogger) {
                         it.identifier.value to HeaderObject(
                             type = it.reference.emitType().name,
                             format = it.reference.emitFormat(),
-                            items = if (it.reference is Reference.Iterable) it.reference.emit() else null
+                            items = (it.reference as? Reference.Iterable)?.reference?.emit()
                         )
                     },
                     schema = response.content
                         ?.takeIf { content -> content.reference !is Reference.Unit }
                         ?.let { content ->
-                            when (content.reference) {
+                            when (val ref = content.reference) {
                                 is Reference.Iterable -> SchemaObject(
                                     type = OpenApiType.ARRAY,
-                                    items = content.reference.emit()
+                                    items = ref.reference.emit()
                                 )
-                                else -> content.reference.emit()
+                                else -> ref.emit()
                             }
                         }
                 )
@@ -170,15 +170,15 @@ object OpenApiV2Emitter : Emitter(noLogger) {
             name = identifier.value,
             type = reference.emitType(),
             format = reference.emitFormat(),
-            items = when (reference) {
-                is Reference.Iterable -> when (val emit = reference.emit()) {
+            items = when (val ref = reference) {
+                is Reference.Iterable -> when (val emit = ref.emit()) {
                     is ReferenceObject -> emit
                     is SchemaObject -> emit.items
                 }
 
                 else -> null
             },
-            required = reference !is Reference.Iterable,
+            required = !reference.isNullable,
         )
 
     fun Reference.emit(): SchemaOrReferenceObject = when (this) {

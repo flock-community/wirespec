@@ -389,7 +389,7 @@ open class JavaEmitter(
         """${Spacer(4)}serialization.<${value.reference.emit()}>deserialize(request.path().get(${index}), Wirespec.getType(${value.reference.emitType()}.class, ${value.reference.isIterable}))"""
 
     private fun Field.emitDeserializedParams(fields: String) =
-        """${Spacer(4)}java.util.Optional.ofNullable(request.$fields().get("${identifier.value}")).map(it -> serialization.<${reference.emit()}>deserializeParam(it, Wirespec.getType(${reference.emitType()}.class, ${reference.isIterable})))${if (!reference.isNullable) ".get()" else ""}"""
+        """${Spacer(4)}java.util.Optional.ofNullable(request.$fields().get("${identifier.value}")).map(it -> serialization.<${reference.emitType()}>deserializeParam(it, Wirespec.getType(${reference.emitType()}.class, ${reference.isIterable})))${if (!reference.isNullable) ".get()" else ""}"""
 
     private fun Field.emitSerializedHeader() =
         """java.util.Map.entry("${identifier.value}", serialization.serialize(r.getHeaders().${emit(identifier)}(), Wirespec.getType(${reference.emitType()}.class, ${reference.isIterable})))"""

@@ -545,7 +545,7 @@ class OpenApiV3ParserTest {
                             type = "application/json",
                             reference = Custom(
                                 value = "Todo_input",
-                                isNullable = true
+                                isNullable = false
                             ),
                         )
                     ),
@@ -554,7 +554,7 @@ class OpenApiV3ParserTest {
                             type = "application/xml",
                             reference = Custom(
                                 value = "Todo",
-                                isNullable = true
+                                isNullable = false
                             ),
                         )
                     )

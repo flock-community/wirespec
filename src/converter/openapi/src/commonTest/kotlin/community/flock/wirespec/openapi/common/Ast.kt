@@ -24,7 +24,7 @@ object Ast {
                 Endpoint.Request(
                     content = Endpoint.Content(
                         type = "application/json",
-                        reference = Reference.Custom(value = "TestWithDashGETRequestBody", isNullable = true),
+                        reference = Reference.Custom(value = "TestWithDashGETRequestBody", isNullable = false),
                     )
                 )
             ),
@@ -173,7 +173,7 @@ object Ast {
                                 value = "Message",
                                 isNullable = false
                             ),
-                            isNullable = true
+                            isNullable = false,
                         ),
                     )
                 )
@@ -290,7 +290,7 @@ object Ast {
                                 ),
                                 isNullable = false
                             ),
-                            isNullable = true
+                            isNullable = false
                         ),
                     )
                 )

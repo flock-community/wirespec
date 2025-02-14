@@ -4,10 +4,10 @@ import com.goncalossilva.resources.Resource
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPI
 import community.flock.wirespec.openapi.common.Ast
 import community.flock.wirespec.openapi.v3.OpenApiV3Parser.parse
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 class OpenApiV3EmitterTest {
 
@@ -45,7 +45,7 @@ class OpenApiV3EmitterTest {
                                         }
                                     }
                                 },
-                                "required": false
+                                "required": true
                             },
                             "responses": {
                                 "200": {

@@ -86,7 +86,7 @@ class AvroJavaEmitter(private val packageName: String, logger: Logger) : JavaEmi
 
     private val emitTo:  (index: Int, field: Field) -> String = { index, field ->
         when (val reference = field.reference) {
-            is Reference.Iterable -> "record.put(${index}, data.${emit(field.identifier)}().stream().map(it -> ${field.reference.value}.Avro.to(it)).toList());"
+            is Reference.Iterable -> "record.put(${index}, data.${emit(field.identifier)}().stream().map(it -> ${reference.reference.value}.Avro.to(it)).toList());"
             is Reference.Custom -> "record.put(${index}, ${field.reference.emit()}.Avro.to(data.${emit(field.identifier)}()));"
             is Reference.Primitive -> when(reference.type) {
                 is Reference.Primitive.Type.Bytes -> "record.put(${index}, java.nio.ByteBuffer.wrap(data.${emit(field.identifier)}()));"
@@ -101,7 +101,7 @@ class AvroJavaEmitter(private val packageName: String, logger: Logger) : JavaEmi
         { ast ->
             { index, field ->
                 when (val reference = field.reference) {
-                    is Reference.Iterable -> "((java.util.List<org.apache.avro.generic.GenericData.Record>) record.get(${index})).stream().map(it -> ${field.reference.emitType()}.Avro.from(it)).toList()"
+                    is Reference.Iterable -> "((java.util.List<org.apache.avro.generic.GenericData.Record>) record.get(${index})).stream().map(it -> ${reference.reference.emitType()}.Avro.from(it)).toList()"
                     is Reference.Custom -> when {
                         reference.isNullable -> "(${reference.emit()}) java.util.Optional.ofNullable((${field.reference.emitType()}) record.get(${index}))"
                         reference.isEnum(ast) -> "${field.reference.emit()}.Avro.from((org.apache.avro.generic.GenericData.EnumSymbol) record.get(${index}))"

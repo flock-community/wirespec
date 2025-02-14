@@ -65,7 +65,7 @@ object OpenApiV3Parser {
                     .map { toField(it, className(name, "Parameter", it.name)) }
                 val requests = operation.requestBody?.let { resolve(it) }
                     ?.let { requestBody ->
-                        val isNullable = !(requestBody.required ?: false)
+                        val isNullable = false
                         requestBody.content?.map { (mediaType, mediaObject) ->
                             val reference = when (val schema = mediaObject.schema) {
                                 is ReferenceObject -> toReference(schema, isNullable)
