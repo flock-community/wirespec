@@ -38,7 +38,7 @@ object Wirespec {
     }
 
     enum class Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
-    interface Request<T : Any?> {
+    interface Request<T : Any> {
         val path: Path;
         val method: Method;
         val queries: Queries;
@@ -48,7 +48,7 @@ object Wirespec {
         interface Headers : Wirespec.Headers
     }
 
-    interface Response<T : Any?> {
+    interface Response<T : Any> {
         val status: Int;
         val headers: Headers;
         val body: T;
