@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.utils.noLogger
+import community.flock.wirespec.openapi.v3.OpenApiV3Emitter
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -28,6 +29,19 @@ class WsdlParserTest {
         val wirespec = KotlinEmitter(logger = noLogger).emit(ast)
         println(KotlinShared.source)
         println(wirespec.joinToString { it.result })
+    }
+
+    @Test
+    fun ingPam() {
+        val path = Path(base, "pam")
+        val file = Path(path, "AgreementService.wsdl")
+        val source = SystemFileSystem.source(file).buffered()
+        val ast = WsdlParser
+            .parseDefinitions(source.readString(),path)
+            .filterIsInstance<Definition>()
+            .distinctBy { it.identifier }
+        val res = OpenApiV3Emitter.emit(ast)
+        println(res.joinToString { it.result })
     }
 
     @Test

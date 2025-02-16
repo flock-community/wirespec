@@ -13,6 +13,7 @@ object SchemaBindings {
      data class Schema(
          val targetNamespace: String? = null,
          val elementFormDefault: String? = null,
+         val attributeFormDefault: String? = null,
          val version: String? = null,
          val element: List<Element> = emptyList(),
          val simpleType: List<SimpleType> = emptyList(),
@@ -27,7 +28,7 @@ object SchemaBindings {
      )
      data class Import(
          val namespace: String,
-         val schemaLocation: String,
+         val schemaLocation: String? = null,
      )
 
      @Serializable

@@ -26,9 +26,13 @@ object WsdlParser {
 
         val import = res.import
             .flatMap {
-                val file = SystemFileSystem.resolve(Path(path, it.schemaLocation))
-                val data = SystemFileSystem.source(file).buffered().readString()
-                parseSchema(data, file.parent ?: error("Missing schema"))
+                it.schemaLocation
+                    ?.let { location ->
+                        val file = SystemFileSystem.resolve(Path(path, location))
+                        val data = SystemFileSystem.source(file).buffered().readString()
+                        parseSchema(data, file.parent ?: error("Missing schema"))
+                    }
+                    ?: emptyList()
             }
 
         val simpleTypes = res.simpleType
@@ -59,10 +63,22 @@ object WsdlParser {
             .flatMap { it.schema }
             .flatMap { it.import }
             .flatMap {
-                val file = SystemFileSystem.resolve(Path(path, it.schemaLocation))
-                val data = SystemFileSystem.source(file).buffered().readString()
-                parseSchema(data, file.parent ?: error("Missing schema"))
+                it.schemaLocation
+                    ?.let { location ->
+                        val file = SystemFileSystem.resolve(Path(path, location))
+                        val data = SystemFileSystem.source(file).buffered().readString()
+                        parseSchema(data, file.parent ?: error("Missing schema"))
+                    }
+                    ?: emptyList()
+
             }
+
+        val aliasMap = res.types
+            .flatMap { it.schema }
+            .flatMap { it.element }
+            .associate { it.name to it.type?.split(":")?.last() }
+
+        val messages = res.message.map { it.toType(aliasMap) }
 
         val simpleTypes = res.types
             .flatMap { it.schema }
@@ -79,8 +95,28 @@ object WsdlParser {
             .flatMap { it.element }
             .flatMap { elm -> elm.complexType.map { it.toType(elm.name) } }
 
-        return endpoints + importWsdl + importSchema + simpleTypes + complexTypes + elementTypes
+        return endpoints + importWsdl + importSchema + messages + simpleTypes + complexTypes + elementTypes
     }
+
+    private fun WsdlBindings.Message.toType(aliasMap:Map<String,String?>) =
+        Type(
+            comment = null,
+            identifier = DefinitionIdentifier(name),
+            shape = Type.Shape(
+                value = part.map { part ->
+                    Field(
+                        identifier = FieldIdentifier(part.name),
+                        reference = part.element?.split(":")?.last()
+                            ?.let { Reference.Custom(aliasMap[it]?:it, false, false) }
+                            ?: Reference.Unit(false, false),
+                        isNullable = false
+                    )
+                }
+            ),
+            extends = emptyList()
+
+        )
+
 
     fun SchemaBindings.SimpleType.toType(name: String? = null) = when {
         restriction.isNotEmpty() -> Enum(
@@ -110,8 +146,12 @@ object WsdlParser {
                     isIterable = isIterable
                 )
 
-                "string" -> Reference.Primitive(type = Reference.Primitive.Type.String, isIterable = isIterable)
-                "integer" -> Reference.Primitive(
+                "string", "date", "dateTime" -> Reference.Primitive(
+                    type = Reference.Primitive.Type.String,
+                    isIterable = isIterable
+                )
+
+                "int", "integer", "positiveInteger" -> Reference.Primitive(
                     type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32),
                     isIterable = isIterable
                 )
@@ -119,7 +159,7 @@ object WsdlParser {
                 "base64Binary" -> Reference.Primitive(type = Reference.Primitive.Type.String, isIterable = isIterable)
                 "anyType" -> Reference.Any(isIterable = isIterable)
                 null -> Reference.Unit(isIterable = isIterable)
-                else -> Reference.Custom(value = t.firstToUpper(), isIterable = isIterable)
+                else -> Reference.Custom(value = t, isIterable = isIterable)
             }
         )
     }
@@ -127,7 +167,7 @@ object WsdlParser {
     fun WsdlBindings.WsdlOperation.toEndpoint() =
         Endpoint(
             comment = null,
-            identifier = DefinitionIdentifier(this.name),
+            identifier = DefinitionIdentifier(this.name + "Endpoint"),
             method = Endpoint.Method.POST,
             path = listOf(Endpoint.Segment.Literal(this.name)),
             queries = emptyList(),

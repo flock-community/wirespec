@@ -44,6 +44,7 @@ kotlin {
                 implementation(libs.kotlinx.resources)
                 implementation(libs.kotlin.test)
                 implementation(libs.bundles.kotest)
+                implementation(project(":src:converter:openapi"))
             }
         }
         val jvmTest by getting {
