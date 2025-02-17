@@ -50,7 +50,7 @@ data object JavaShared : Shared {
         |${Spacer}interface ParamDeserializer { <T> T deserializeParam(List<String> values, Type type); }
         |${Spacer}interface Deserializer<RAW> extends ParamDeserializer { <T> T deserialize(RAW raw, Type type); }
         |${Spacer}record RawRequest(String method, List<String> path, Map<String, List<String>> queries, Map<String, List<String>> headers, String body) {} 
-        |${Spacer}record RawResponse(int statusCode, Map<String, String> headers, String body) {}
+        |${Spacer}record RawResponse(int statusCode, Map<String, List<String>> headers, String body) {}
         |${Spacer}static Type getType(final Class<?> type, final boolean isIterable) {
         |${Spacer(2)}if(isIterable) {
         |${Spacer(3)}return new ParameterizedType() {

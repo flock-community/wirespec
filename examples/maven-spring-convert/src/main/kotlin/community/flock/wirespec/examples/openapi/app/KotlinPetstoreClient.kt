@@ -10,6 +10,7 @@ import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.exchange
+import org.springframework.util.CollectionUtils
 
 interface KotlinPetstoreClient : AddPetEndpoint.Handler, FindPetsByStatusEndpoint.Handler
 
@@ -38,5 +39,5 @@ class LiveKotlinPetstoreClient(
             .headers(HttpHeaders().apply { putAll(request.headers) })
             .body(request.body ?: Unit)
             .let { client.exchange<String>(it) }
-            .run { Wirespec.RawResponse(statusCode = statusCode.value(), headers = headers.toSingleValueMap(), body = body) }
+            .run { Wirespec.RawResponse(statusCode = statusCode.value(), headers = CollectionUtils.toMultiValueMap(headers), body = body) }
 }
