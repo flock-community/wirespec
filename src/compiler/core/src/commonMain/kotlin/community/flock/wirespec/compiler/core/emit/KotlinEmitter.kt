@@ -230,8 +230,8 @@ open class KotlinEmitter(
     fun Endpoint.Response.emit() = """
         |${Spacer}data class Response$status(override val body: ${content.emit()}) : Response${status[0]}XX<${content.emit()}>, Response${content.emit().concatGenerics()} {
         |${Spacer(2)}override val status = ${status.fixStatus()}
-        |${Spacer(2)}override val headers = Headers
-        |${headers.emitObject("Headers", "Wirespec.Response.Headers", 2) { it.emit() }}
+        |${Spacer(2)}override val headers = ResponseHeaders${headers.joinToString { emit(it.identifier) }.brace()}${if (content == null) "\n${Spacer(2)}override val body = Unit" else ""}
+        |${headers.emitObject("ResponseHeaders", "Wirespec.Response.Headers", 2) { it.emit() }}
         |${Spacer}}
     """.trimMargin()
 

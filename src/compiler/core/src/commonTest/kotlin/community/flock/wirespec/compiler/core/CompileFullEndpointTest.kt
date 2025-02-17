@@ -96,22 +96,22 @@ class CompileFullEndpointTest {
             |
             |  data class Response200(override val body: TodoDto) : Response2XX<TodoDto>, ResponseTodoDto {
             |    override val status = 200
-            |    override val headers = Headers
-            |    data object Headers : Wirespec.Response.Headers
+            |    override val headers = ResponseHeaders
+            |    data object ResponseHeaders : Wirespec.Response.Headers
             |  }
             |
             |  data class Response201(override val body: TodoDto) : Response2XX<TodoDto>, ResponseTodoDto {
             |    override val status = 201
-            |    override val headers = Headers
-            |    data class Headers(
+            |    override val headers = ResponseHeaders(token)
+            |    data class ResponseHeaders(
             |      val token: Token,
             |    ) : Wirespec.Response.Headers
             |  }
             |
             |  data class Response500(override val body: Error) : Response5XX<Error>, ResponseError {
             |    override val status = 500
-            |    override val headers = Headers
-            |    data object Headers : Wirespec.Response.Headers
+            |    override val headers = ResponseHeaders
+            |    data object ResponseHeaders : Wirespec.Response.Headers
             |  }
             |
             |  fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =

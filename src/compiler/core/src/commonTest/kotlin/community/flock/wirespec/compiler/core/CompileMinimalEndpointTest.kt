@@ -62,8 +62,8 @@ class CompileMinimalEndpointTest {
             |
             |  data class Response200(override val body: List<TodoDto>) : Response2XX<List<TodoDto>>, ResponseListTodoDto {
             |    override val status = 200
-            |    override val headers = Headers
-            |    data object Headers : Wirespec.Response.Headers
+            |    override val headers = ResponseHeaders
+            |    data object ResponseHeaders : Wirespec.Response.Headers
             |  }
             |
             |  fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
