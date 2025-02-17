@@ -5,7 +5,7 @@ import community.flock.wirespec.kotlin.Wirespec
 import community.flock.wirespec.kotlin.Wirespec.Serialization
 import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.http.HttpMethod
-import org.springframework.util.CollectionUtils
+import org.springframework.util.CollectionUtils.*
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
@@ -44,7 +44,7 @@ class WirespecWebClient(
                 .map { body ->
                     Wirespec.RawResponse(
                         statusCode = response.statusCode().value(),
-                        headers = CollectionUtils.toMultiValueMap(response.headers().asHttpHeaders()),
+                        headers = toMultiValueMap(response.headers().asHttpHeaders()),
                         body = body
                     )
                 }
@@ -54,7 +54,7 @@ class WirespecWebClient(
                 is WebClientResponseException ->
                     Wirespec.RawResponse(
                         statusCode = throwable.statusCode.value(),
-                        headers = CollectionUtils.toMultiValueMap(throwable.headers),
+                        headers = toMultiValueMap(throwable.headers),
                         body = throwable.responseBodyAsString
                     ).let { Mono.just(it) }
 

@@ -6,6 +6,7 @@ import community.flock.wirespec.kotlin.Wirespec
 import java.net.URI
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
+import org.springframework.util.CollectionUtils.*
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestTemplate
@@ -39,5 +40,5 @@ class LiveKotlinPetstoreClient(
             .headers(HttpHeaders().apply { putAll(request.headers) })
             .body(request.body ?: Unit)
             .let { client.exchange<String>(it) }
-            .run { Wirespec.RawResponse(statusCode = statusCode.value(), headers = CollectionUtils.toMultiValueMap(headers), body = body) }
+            .run { Wirespec.RawResponse(statusCode = statusCode.value(), headers = toMultiValueMap(headers), body = body) }
 }
