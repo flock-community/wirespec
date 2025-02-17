@@ -399,7 +399,7 @@ class CompileFullEndpointTest {
             |  }
             |  export type Response201 = {
             |    status: 201
-            |    headers: {  "token": Token}
+            |    headers: {"token": Token}
             |    body: TodoDto
             |  }
             |  export type Response500 = {

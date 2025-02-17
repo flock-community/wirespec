@@ -181,7 +181,7 @@ open class TypeScriptEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(l
     private fun Endpoint.Response.emitType() = """
       |${Spacer}export type ${emitName()} = {
       |${Spacer(2)}status: $status
-      |${Spacer(2)}headers: {${headers.joinToString { it.emit() }}}
+      |${Spacer(2)}headers: {${headers.joinToString { "\"${emit(it.identifier)}\"${if (it.isNullable) "?" else ""}: ${it.reference.emit()}" }}}
       |${Spacer(2)}body: ${emitReference()}
       |${Spacer}}
     """.trimIndent()
