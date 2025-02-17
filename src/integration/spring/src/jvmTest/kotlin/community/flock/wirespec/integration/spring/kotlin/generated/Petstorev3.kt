@@ -50,7 +50,6 @@ object AddPetEndpoint : Wirespec.Endpoint {
   data class Response405(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 405
     override val headers = ResponseHeaders
-    override val body = Unit
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
@@ -145,21 +144,18 @@ object UpdatePetEndpoint : Wirespec.Endpoint {
   data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
     override val headers = ResponseHeaders
-    override val body = Unit
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   data class Response404(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 404
     override val headers = ResponseHeaders
-    override val body = Unit
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   data class Response405(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 405
     override val headers = ResponseHeaders
-    override val body = Unit
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
@@ -273,7 +269,6 @@ object FindPetsByStatusEndpoint : Wirespec.Endpoint {
   data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
     override val headers = ResponseHeaders
-    override val body = Unit
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
@@ -371,7 +366,6 @@ object FindPetsByTagsEndpoint : Wirespec.Endpoint {
   data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
     override val headers = ResponseHeaders
-    override val body = Unit
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
@@ -469,14 +463,12 @@ object GetPetByIdEndpoint : Wirespec.Endpoint {
   data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
     override val headers = ResponseHeaders
-    override val body = Unit
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   data class Response404(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 404
     override val headers = ResponseHeaders
-    override val body = Unit
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
@@ -579,7 +571,6 @@ object UpdatePetWithFormEndpoint : Wirespec.Endpoint {
   data class Response405(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 405
     override val headers = ResponseHeaders
-    override val body = Unit
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
@@ -665,7 +656,6 @@ object DeletePetEndpoint : Wirespec.Endpoint {
   data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
     override val headers = ResponseHeaders
-    override val body = Unit
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
@@ -913,7 +903,6 @@ object PlaceOrderEndpoint : Wirespec.Endpoint {
   data class Response405(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 405
     override val headers = ResponseHeaders
-    override val body = Unit
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
@@ -1011,14 +1000,12 @@ object GetOrderByIdEndpoint : Wirespec.Endpoint {
   data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
     override val headers = ResponseHeaders
-    override val body = Unit
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   data class Response404(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 404
     override val headers = ResponseHeaders
-    override val body = Unit
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
@@ -1116,14 +1103,12 @@ object DeleteOrderEndpoint : Wirespec.Endpoint {
   data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
     override val headers = ResponseHeaders
-    override val body = Unit
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   data class Response404(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 404
     override val headers = ResponseHeaders
-    override val body = Unit
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
@@ -1294,7 +1279,6 @@ object CreateUsersWithListInputEndpoint : Wirespec.Endpoint {
   data class Responsedefault(override val body: Unit) : ResponsedXX<Unit>, ResponseUnit {
     override val status = 200
     override val headers = ResponseHeaders
-    override val body = Unit
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
@@ -1381,7 +1365,7 @@ object LoginUserEndpoint : Wirespec.Endpoint {
   sealed interface ResponseString : Response<String>
   sealed interface ResponseUnit : Response<Unit>
 
-  data class Response200(override val body: String) : Response2XX<String>, ResponseString {
+  data class Response200(override val body: String, val XRateLimit: Int?, val XExpiresAfter: String?) : Response2XX<String>, ResponseString {
     override val status = 200
     override val headers = ResponseHeaders(XRateLimit, XExpiresAfter)
     data class ResponseHeaders(
@@ -1393,7 +1377,6 @@ object LoginUserEndpoint : Wirespec.Endpoint {
   data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
     override val headers = ResponseHeaders
-    override val body = Unit
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
@@ -1479,7 +1462,6 @@ object LogoutUserEndpoint : Wirespec.Endpoint {
   data class Responsedefault(override val body: Unit) : ResponsedXX<Unit>, ResponseUnit {
     override val status = 200
     override val headers = ResponseHeaders
-    override val body = Unit
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
@@ -1567,14 +1549,12 @@ object GetUserByNameEndpoint : Wirespec.Endpoint {
   data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
     override val headers = ResponseHeaders
-    override val body = Unit
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   data class Response404(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 404
     override val headers = ResponseHeaders
-    override val body = Unit
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
@@ -1673,7 +1653,6 @@ object UpdateUserEndpoint : Wirespec.Endpoint {
   data class Responsedefault(override val body: Unit) : ResponsedXX<Unit>, ResponseUnit {
     override val status = 200
     override val headers = ResponseHeaders
-    override val body = Unit
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
@@ -1753,14 +1732,12 @@ object DeleteUserEndpoint : Wirespec.Endpoint {
   data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
     override val headers = ResponseHeaders
-    override val body = Unit
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   data class Response404(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 404
     override val headers = ResponseHeaders
-    override val body = Unit
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 

@@ -100,7 +100,7 @@ class CompileFullEndpointTest {
             |    data object ResponseHeaders : Wirespec.Response.Headers
             |  }
             |
-            |  data class Response201(override val body: TodoDto) : Response2XX<TodoDto>, ResponseTodoDto {
+            |  data class Response201(override val body: TodoDto, val token: Token) : Response2XX<TodoDto>, ResponseTodoDto {
             |    override val status = 201
             |    override val headers = ResponseHeaders(token)
             |    data class ResponseHeaders(

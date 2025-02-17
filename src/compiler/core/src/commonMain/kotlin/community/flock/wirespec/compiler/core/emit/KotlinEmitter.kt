@@ -228,9 +228,9 @@ open class KotlinEmitter(
     """.trimMargin()
 
     fun Endpoint.Response.emit() = """
-        |${Spacer}data class Response$status(override val body: ${content.emit()}) : Response${status[0]}XX<${content.emit()}>, Response${content.emit().concatGenerics()} {
+        |${Spacer}data class Response$status(override val body: ${content.emit()}${headers.joinToString(", ") { "val ${emit(it.identifier)}: ${it.emitType()}" }.let { if (it.isBlank()) "" else ", $it"}}) : Response${status[0]}XX<${content.emit()}>, Response${content.emit().concatGenerics()} {
         |${Spacer(2)}override val status = ${status.fixStatus()}
-        |${Spacer(2)}override val headers = ResponseHeaders${headers.joinToString { emit(it.identifier) }.brace()}${if (content == null) "\n${Spacer(2)}override val body = Unit" else ""}
+        |${Spacer(2)}override val headers = ResponseHeaders${headers.joinToString { emit(it.identifier) }.brace()}
         |${headers.emitObject("ResponseHeaders", "Wirespec.Response.Headers", 2) { it.emit() }}
         |${Spacer}}
     """.trimMargin()
