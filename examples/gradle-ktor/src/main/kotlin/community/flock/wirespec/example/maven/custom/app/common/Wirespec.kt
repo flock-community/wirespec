@@ -29,7 +29,7 @@ class WirespecClient(private val httpClient: HttpClient = HttpClient()) {
         response.run {
             Wirespec.RawResponse(
                 statusCode = status.value,
-                headers = headers.entries().associate { it.key to it.value.first() },
+                headers = headers.entries().associate { it.key to it.value },
                 body = body()
             )
         }
