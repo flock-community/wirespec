@@ -369,7 +369,7 @@ class CompileFullEndpointTest {
             |  export type RawResponse = { status: number, headers: Record<string, string>, body?: string }
             |  export type Content<T> = { type:string, body:T }
             |  export type Request<T> = { path: Record<string, unknown>, method: Method, query?: Record<string, unknown>, headers?: Record<string, unknown>, content?:Content<T> }
-            |  export type Response<T> = { status:number, headers?: Record<string, unknown[]>, content?:Content<T> }
+            |  export type Response<T> = { status:number, headers?: Record<string, unknown>, content?:Content<T> }
             |  export type Serialization = { serialize: <T>(type: T) => string; deserialize: <T>(raw: string | undefined) => T }
             |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
             |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
@@ -417,7 +417,7 @@ class CompileFullEndpointTest {
             |  })
             |  export const response200 = (props: {body: TodoDto}): Response200 => ({
             |    status: 200,
-            |    headers: {token: props.token},
+            |    headers: {},
             |    body: props.body,
             |  })
             |  export const response201 = (props: {token: Token, body: TodoDto}): Response201 => ({
@@ -427,65 +427,65 @@ class CompileFullEndpointTest {
             |  })
             |  export const response500 = (props: {body: Error}): Response500 => ({
             |    status: 500,
-            |    headers: {token: props.token},
+            |    headers: {},
             |    body: props.body,
             |  })
             |  export type Handler = {
             |    putTodo: (request:Request) => Promise<Response>
             |  }
             |  export const client: Wirespec.Client<Request, Response> = (serialization: Wirespec.Serialization) => ({
-            |    to: (request) => ({
+            |    to: (it) => ({
             |      method: "PUT",
-            |      path: ["todos", serialization.serialize(request.path.id)],
-            |      queries: {done: serialization.serialize(request.queries.done)},
-            |      headers: {token: serialization.serialize(request.headers.token)},
-            |      body: serialization.serialize(request.body)
+            |      path: ["todos", serialization.serialize(it.path.id)],
+            |      queries: {done: serialization.serialize(it.queries.done)},
+            |      headers: {token: serialization.serialize(it.headers.token)},
+            |      body: serialization.serialize(it.body)
             |    }),
-            |    from: (response) => {
-            |      switch (response.status) {
+            |    from: (it) => {
+            |      switch (it.status) {
             |        case 200:
             |          return {
             |            status: 200,
             |            headers: {},
-            |            body: serialization.deserialize<TodoDto>(response.body)
+            |            body: serialization.deserialize<TodoDto>(it.body)
             |          };
             |        case 201:
             |          return {
             |            status: 201,
-            |            headers: {},
-            |            body: serialization.deserialize<TodoDto>(response.body)
+            |            headers: {token: serialization.deserialize(it.headers.token)},
+            |            body: serialization.deserialize<TodoDto>(it.body)
             |          };
             |        case 500:
             |          return {
             |            status: 500,
             |            headers: {},
-            |            body: serialization.deserialize<Error>(response.body)
+            |            body: serialization.deserialize<Error>(it.body)
             |          };
             |        default:
-            |          throw new Error(`Cannot internalize response with status: ${'$'}{response.status}`);
+            |          throw new Error(`Cannot internalize response with status: ${'$'}{it.status}`);
             |      }
             |    }
             |  })
             |  export const server:Wirespec.Server<Request, Response> = (serialization: Wirespec.Serialization) => ({
-            |    from: (request) => {
+            |    from: (it) => {
             |      return {
             |        method: "PUT",
             |        path: { 
-            |          id: serialization.deserialize(request.path[1])
+            |          id: serialization.deserialize(it.path[1])
             |        },
             |        queries: {
-            |          done: serialization.deserialize(request.queries.done)
+            |          done: serialization.deserialize(it.queries.done)
             |        },
             |        headers: {
-            |          token: serialization.deserialize(request.headers.token)
+            |          token: serialization.deserialize(it.headers.token)
             |        },
-            |        body: serialization.deserialize(request.body)
+            |        body: serialization.deserialize(it.body)
             |      }
             |    },
-            |    to: (response) => ({
-            |      status: response.status,
+            |    to: (it) => ({
+            |      status: it.status,
             |      headers: {},
-            |      body: serialization.serialize(response.body),
+            |      body: serialization.serialize(it.body),
             |    })
             |  })
             |  export const api = {
