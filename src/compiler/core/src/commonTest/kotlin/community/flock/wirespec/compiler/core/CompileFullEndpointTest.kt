@@ -103,7 +103,9 @@ class CompileFullEndpointTest {
             |  data class Response201(override val body: TodoDto) : Response2XX<TodoDto>, ResponseTodoDto {
             |    override val status = 201
             |    override val headers = Headers
-            |    data object Headers : Wirespec.Response.Headers
+            |    data class Headers(
+            |      val token: Token,
+            |    ) : Wirespec.Response.Headers
             |  }
             |
             |  data class Response500(override val body: Error) : Response5XX<Error>, ResponseError {
@@ -121,7 +123,7 @@ class CompileFullEndpointTest {
             |      )
             |      is Response201 -> Wirespec.RawResponse(
             |        statusCode = response.status,
-            |        headers = (mapOf("token" to (request.headers.token?.let{ serialization.serializeParam(it, typeOf<Token>()) } ?: emptyList()))),
+            |        headers = (mapOf("token" to (response.headers.token?.let{ serialization.serializeParam(it, typeOf<Token>()) } ?: emptyList()))),
             |        body = serialization.serialize(response.body, typeOf<TodoDto>()),
             |      )
             |      is Response500 -> Wirespec.RawResponse(
@@ -138,6 +140,7 @@ class CompileFullEndpointTest {
             |      )
             |      201 -> Response201(
             |        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<TodoDto>()),
+            |        token = serialization.deserializeParam(requireNotNull(response.headers["token"]) { "token is null" }, typeOf<Token>())
             |      )
             |      500 -> Response500(
             |        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<Error>()),

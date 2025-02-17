@@ -198,12 +198,12 @@ open class KotlinEmitter(
         .distinct()
         .joinToString("\n") { "${Spacer}sealed interface Response${it.concatGenerics()} : Response<$it>" }
 
-    private fun <E> List<E>.emitObject(name: String, extends: String, block: (E) -> String) =
-        if (isEmpty()) "${Spacer}data object $name : $extends"
+    private fun <E> List<E>.emitObject(name: String, extends: String, spaces: Int = 1, block: (E) -> String) =
+        if (isEmpty()) "${Spacer(spaces)}data object $name : $extends"
         else """
-            |${Spacer}data class $name(
-            |${joinToString(",\n") { "${Spacer(2)}val ${block(it)}" }},
-            |${Spacer}) : $extends
+            |${Spacer(spaces)}data class $name(
+            |${joinToString(",\n") { "${Spacer(spaces + 1)}val ${block(it)}" }},
+            |${Spacer(spaces)}) : $extends
         """.trimMargin()
 
     fun Endpoint.Request.emit(endpoint: Endpoint) = """
@@ -218,8 +218,8 @@ open class KotlinEmitter(
         |${Spacer(2)}Wirespec.RawRequest(
         |${Spacer(3)}path = listOf(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
         |${Spacer(3)}method = request.method.name,
-        |${Spacer(3)}queries = ${if (endpoint.queries.isNotEmpty()) endpoint.queries.joinToString(" + ") { "(${it.emitSerializedParams("queries")})" } else "emptyMap()"},
-        |${Spacer(3)}headers = ${if (endpoint.headers.isNotEmpty()) endpoint.headers.joinToString(" + ") { "(${it.emitSerializedParams("headers")})" } else "emptyMap()"},
+        |${Spacer(3)}queries = ${if (endpoint.queries.isNotEmpty()) endpoint.queries.joinToString(" + ") { "(${it.emitSerializedParams("request", "queries")})" } else "emptyMap()"},
+        |${Spacer(3)}headers = ${if (endpoint.headers.isNotEmpty()) endpoint.headers.joinToString(" + ") { "(${it.emitSerializedParams("request", "headers")})" } else "emptyMap()"},
         |${Spacer(3)}body = serialization.serialize(request.body, typeOf<${content.emit()}>()),
         |${Spacer(2)})
         |
@@ -231,7 +231,7 @@ open class KotlinEmitter(
         |${Spacer}data class Response$status(override val body: ${content.emit()}) : Response${status[0]}XX<${content.emit()}>, Response${content.emit().concatGenerics()} {
         |${Spacer(2)}override val status = ${status.fixStatus()}
         |${Spacer(2)}override val headers = Headers
-        |${Spacer(2)}data object Headers : Wirespec.Response.Headers
+        |${headers.emitObject("Headers", "Wirespec.Response.Headers", 2) { it.emit() }}
         |${Spacer}}
     """.trimMargin()
 
@@ -245,36 +245,37 @@ open class KotlinEmitter(
 
     private fun Endpoint.Request.emitDeserializedParams(endpoint: Endpoint) = listOfNotNull(
         endpoint.indexedPathParams.joinToString { it.emitDeserialized() }.orNull(),
-        endpoint.queries.joinToString { it.emitDeserializedParams("queries") }.orNull(),
-        endpoint.headers.joinToString { it.emitDeserializedParams("headers") }.orNull(),
+        endpoint.queries.joinToString { it.emitDeserializedParams("request", "queries") }.orNull(),
+        endpoint.headers.joinToString { it.emitDeserializedParams("request", "headers") }.orNull(),
         content?.let { """${Spacer(3)}body = serialization.deserialize(requireNotNull(request.body) { "body is null" }, typeOf<${it.emit()}>()),""" }
     ).joinToString(",\n").let { if (it.isBlank()) "" else "(\n$it\n${Spacer(2)})" }
 
     private fun Endpoint.Response.emitSerialized() = """
         |${Spacer(3)}is Response$status -> Wirespec.RawResponse(
         |${Spacer(4)}statusCode = response.status,
-        |${Spacer(4)}headers = ${if (headers.isNotEmpty()) headers.joinToString(" + ") { "(${it.emitSerializedParams("headers")})" } else "emptyMap()"},
+        |${Spacer(4)}headers = ${if (headers.isNotEmpty()) headers.joinToString(" + ") { "(${it.emitSerializedParams("response", "headers")})" } else "emptyMap()"},
         |${Spacer(4)}body = ${if (content != null) "serialization.serialize(response.body, typeOf<${content.emit()}>())" else "null"},
         |${Spacer(3)})
     """.trimMargin()
 
-    private fun Endpoint.Response.emitDeserialized() = """
-        |${Spacer(3)}$status -> Response$status(
-        |${Spacer(4)}body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<${content.emit()}>()),
-        |${Spacer(3)})
-    """.trimMargin()
+    private fun Endpoint.Response.emitDeserialized() = listOfNotNull(
+        "${Spacer(3)}$status -> Response$status(",
+        "${Spacer(4)}body = serialization.deserialize(requireNotNull(response.body) { \"body is null\" }, typeOf<${content.emit()}>()),",
+        headers.joinToString(",\n") { it.emitDeserializedParams("response", "headers", 4) }.orNull(),
+        "${Spacer(3)})"
+    ).joinToString("\n")
 
-    private fun Field.emitSerializedParams(fields: String) =
-        """mapOf("${emit(identifier)}" to (request.$fields.${emit(identifier)}?.let{ serialization.serializeParam(it, typeOf<${reference.emit()}>()) } ?: emptyList()))"""
+    private fun Field.emitSerializedParams(type: String, fields: String) =
+        """mapOf("${emit(identifier)}" to ($type.$fields.${emit(identifier)}?.let{ serialization.serializeParam(it, typeOf<${reference.emit()}>()) } ?: emptyList()))"""
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
         """${Spacer(3)}${emit(value.identifier)} = serialization.deserialize(request.path[${index}], typeOf<${value.reference.emit()}>())"""
 
-    private fun Field.emitDeserializedParams(fields: String) =
+    private fun Field.emitDeserializedParams(type: String, fields: String, spaces: Int = 3) =
         if (isNullable)
-            """${Spacer(3)}${emit(identifier)} = request.$fields["${identifier.value}"]?.let{ serialization.deserializeParam(it, typeOf<${reference.emit()}>()) }"""
+            """${Spacer(spaces)}${emit(identifier)} = $type.$fields["${identifier.value}"]?.let{ serialization.deserializeParam(it, typeOf<${reference.emit()}>()) }"""
         else
-            """${Spacer(3)}${emit(identifier)} = serialization.deserializeParam(requireNotNull(request.$fields["${identifier.value}"]) { "${emit(identifier)} is null" }, typeOf<${reference.emit()}>())"""
+            """${Spacer(spaces)}${emit(identifier)} = serialization.deserializeParam(requireNotNull($type.$fields["${identifier.value}"]) { "${emit(identifier)} is null" }, typeOf<${reference.emit()}>())"""
 
     private fun Endpoint.Segment.Param.emitIdentifier() =
         "request.path.${emit(identifier)}.let{serialization.serialize(it, typeOf<${reference.emit()}>())}"
