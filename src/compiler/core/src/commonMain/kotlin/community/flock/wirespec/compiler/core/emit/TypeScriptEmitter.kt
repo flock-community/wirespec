@@ -164,7 +164,7 @@ open class TypeScriptEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(l
         paramList().takeIf { it.isNotEmpty() }?.let { "props: ${it.joinToObject { it.emit() }}" }.orEmpty()
     }): Response${status.firstToUpper()} => ({
       |${Spacer(2)}status: ${status},
-      |${Spacer(2)}headers: ${endpoint.headers.joinToObject { "${emit(it.identifier)}: props.${emit(it.identifier)}" }},
+      |${Spacer(2)}headers: ${headers.joinToObject { "${emit(it.identifier)}: props.${emit(it.identifier)}" }},
       |${Spacer(2)}body: ${content?.let { "props.body" } ?: "undefined"},
       |${Spacer}})
     """.trimIndent()
@@ -202,26 +202,26 @@ open class TypeScriptEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(l
     private fun Endpoint.emitPathArray() = path.joinToString(", ", "[", "]") {
         when (it) {
             is Endpoint.Segment.Literal -> """"${it.value}""""
-            is Endpoint.Segment.Param -> "serialization.serialize(request.path.${emit(it.identifier)})"
+            is Endpoint.Segment.Param -> "serialization.serialize(it.path.${emit(it.identifier)})"
         }
     }
 
     private fun Endpoint.emitClientTo() = """
-        |to: (request) => ({
+        |to: (it) => ({
         |${Spacer(1)}method: "${method.name.uppercase()}",
         |${Spacer(1)}path: ${emitPathArray()},
         |${Spacer(1)}queries: {${queries.joinToString { it.emitSerialize("queries") }}},
         |${Spacer(1)}headers: {${headers.joinToString { it.emitSerialize("headers") }}},
-        |${Spacer(1)}body: serialization.serialize(request.body)
+        |${Spacer(1)}body: serialization.serialize(it.body)
         |})
     """.trimMargin()
 
     private fun Endpoint.emitClientFrom() = """
-        |from: (response) => {
-        |${Spacer(1)}switch (response.status) {
+        |from: (it) => {
+        |${Spacer(1)}switch (it.status) {
         |${responses.joinToString("\n") { it.emitClientFromResponse() }.prependIndent(Spacer(2))}
         |${Spacer(2)}default:
-        |${Spacer(3)}throw new Error(`Cannot internalize response with status: ${'$'}{response.status}`);
+        |${Spacer(3)}throw new Error(`Cannot internalize response with status: ${'$'}{it.status}`);
         |${Spacer(1)}}
         |}
     """.trimMargin()
@@ -230,8 +230,8 @@ open class TypeScriptEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(l
         |case ${status}:
         |${Spacer(1)}return {
         |${Spacer(2)}status: ${status},
-        |${Spacer(2)}headers: {},
-        |${Spacer(2)}body: serialization.deserialize<${emitReference()}>(response.body)
+        |${Spacer(2)}headers: {${headers.joinToString { it.emitDeserialize("headers") }}},
+        |${Spacer(2)}body: serialization.deserialize<${emitReference()}>(it.body)
         |${Spacer(1)}};
     """.trimMargin()
 
@@ -243,7 +243,7 @@ open class TypeScriptEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(l
     """.trimMargin()
 
     private fun Endpoint.emitServerFrom() = """
-        |from: (request) => {
+        |from: (it) => {
         |${Spacer(1)}return {
         |${Spacer(2)}method: "${method.name.uppercase()}",
         |${Spacer(2)}path: { 
@@ -255,25 +255,25 @@ open class TypeScriptEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(l
         |${Spacer(2)}headers: {
         |${headers.joinToString(",") { it.emitDeserialize("headers").prependIndent(Spacer(3)) }}
         |${Spacer(2)}},
-        |${Spacer(2)}body: serialization.deserialize(request.body)
+        |${Spacer(2)}body: serialization.deserialize(it.body)
         |${Spacer(1)}}
         |}
     """.trimMargin()
 
     private fun emitServerTo() = """
-        |to: (response) => ({
-        |${Spacer(1)}status: response.status,
+        |to: (it) => ({
+        |${Spacer(1)}status: it.status,
         |${Spacer(1)}headers: {},
-        |${Spacer(1)}body: serialization.serialize(response.body),
+        |${Spacer(1)}body: serialization.serialize(it.body),
         |})
     """.trimMargin()
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialize() =
-        """${emit(value.identifier)}: serialization.deserialize(request.path[${index}])"""
+        """${emit(value.identifier)}: serialization.deserialize(it.path[${index}])"""
 
     private fun Field.emitDeserialize(fields: String) =
-        """${emit(identifier)}: serialization.deserialize(request.$fields.${emit(identifier)})"""
+        """${emit(identifier)}: serialization.deserialize(it.$fields.${emit(identifier)})"""
 
     private fun Field.emitSerialize(fields: String) =
-        """${emit(identifier)}: serialization.serialize(request.$fields.${emit(identifier)})"""
+        """${emit(identifier)}: serialization.serialize(it.$fields.${emit(identifier)})"""
 }

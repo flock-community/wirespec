@@ -34,7 +34,7 @@ const api: Api = {
         }));
     },
     getTodos(_: GetTodos.Request): Promise<GetTodos.Response> {
-        return Promise.resolve(GetTodos.response200({ body }));
+        return Promise.resolve(GetTodos.response200({ total: 2, body}));
     },
     getTodoById(_: GetTodoById.Request): Promise<GetTodoById.Response> {
         return Promise.resolve(GetTodoById.response200({ body: body[0] }));
