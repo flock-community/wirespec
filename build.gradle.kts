@@ -18,7 +18,7 @@ subprojects {
     apply(plugin = dokka)
 
     signing {
-        setRequired { System.getenv("VERSION") != null }
+        setRequired { System.getenv("GPG_PRIVATE_KEY") != null }
         useInMemoryPgpKeys(
             System.getenv("GPG_PRIVATE_KEY"),
             System.getenv("GPG_PASSPHRASE")
