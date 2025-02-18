@@ -169,23 +169,24 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
         }
         eatToken().bind()
         token.log()
-        val isDict = when (token.type) {
-            is LeftCurly -> true.also { eatToken().bind() }
-            else -> false
-        }
-        val content = when (token.type) {
-            is WirespecType -> parseContent(token.type as WirespecType, token.value, isDict).bind()
-            else -> raise(WrongTokenException<WirespecType>(token))
-        }.also {
-            if (isDict) {
-                when (token.type) {
-                    is RightCurly -> eatToken().bind()
-                    else -> raise(WrongTokenException<RightCurly>(token).also { eatToken().bind() })
-                }
+
+        val reference = with(typeParser) {
+            when (val type = token.type) {
+                is LeftCurly -> parseDict().bind()
+                is WirespecType -> parseWirespecType(type).bind()
+                else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })
             }
         }
 
+        val content =
+            if (reference is Reference.Unit) null
+            else Endpoint.Content(
+                type = "application/json",
+                reference = reference,
+            )
+
         val headers = parseHeaders().bind()
+
         Endpoint.Response(status = statusCode, headers = headers, content = content)
     }
 
@@ -204,42 +205,5 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
         }
     }
 
-    private fun TokenProvider.parseContent(wsType: WirespecType, value: String, isDict: Boolean) = either {
-        token.log()
-        val reference = parseReference(wsType, value, isDict).bind()
-        if (reference is Reference.Unit) null
-        else Endpoint.Content(
-            type = "application/json",
-            reference = reference,
-        )
-    }
 
-    private fun TokenProvider.parseReference(wsType: WirespecType, value: String, isDict: Boolean) = either {
-        val previousToken = token
-        eatToken().bind()
-        token.log()
-        val isIterable = (token.type is Brackets).also { if (it) eatToken().bind() }
-        when (wsType) {
-            is WsString -> Reference.Primitive(
-                type = Reference.Primitive.Type.String,
-                isIterable = isIterable,
-                isDictionary = isDict,
-
-        val reference = with(typeParser) {
-            when (val type = token.type) {
-                is LeftCurly -> parseDict().bind()
-                is WirespecType -> parseWirespecType(type).bind()
-                else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })
-            }
-        }
-
-        val content =
-            if (reference is Reference.Unit) null
-            else Endpoint.Content(
-                type = "application/json",
-                reference = reference,
-            )
-
-        Endpoint.Response(status = statusCode, headers = emptyList(), content = content)
-    }
 }
