@@ -18,20 +18,6 @@ class WsdlParserTest {
     val base = Path("src/commonTest/resources")
 
     @Test
-    fun ingServiceRequest() {
-        val path = Path(base, "srv/ServiceRequest")
-        val file = Path(path, "GCB_GINT_ServiceRequest_002.wsdl")
-        val source = SystemFileSystem.source(file).buffered()
-        val ast = WsdlParser
-            .parseDefinitions(source.readString(),path)
-            .filterIsInstance<Definition>()
-            .distinctBy { it.identifier }
-        val wirespec = KotlinEmitter(logger = noLogger).emit(ast)
-        println(KotlinShared.source)
-        println(wirespec.joinToString { it.result })
-    }
-
-    @Test
     fun ingPam() {
         val path = Path(base, "pam")
         val file = Path(path, "AgreementService.wsdl")

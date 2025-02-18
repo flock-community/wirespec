@@ -139,7 +139,7 @@ object WsdlParser {
         val isIterable = this.maxOccurs != "1"
         return Field(
             identifier = FieldIdentifier(this.name),
-            isNullable = this.nillable ?: false,
+            isNullable = this.nillable ?: this.minOccurs?.let { it == "0" } ?: false,
             reference = when (val t = type?.split(":")?.last()) {
                 "decimal" -> Reference.Primitive(
                     type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P64),
