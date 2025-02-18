@@ -43,7 +43,7 @@ open class WirespecEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(log
 
     override fun Type.Shape.emit() = value.joinToString(",\n") { "$Spacer${it.emit()}" }
 
-    override fun Field.emit() = "${emit(identifier)}: ${reference.emit()}${if (isNullable) "?" else ""}"
+    override fun Field.emit() = "${emit(identifier)}: ${reference.emit()}"
 
     override fun emit(identifier: Identifier) = when (identifier) {
         is DefinitionIdentifier -> identifier.run { if (value in reservedKeywords) value.addBackticks() else value }
@@ -56,6 +56,8 @@ open class WirespecEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(log
         "channel ${emit(channel.identifier)} -> ${channel.reference.emit()}"
 
     override fun Reference.emit(): String = when (this) {
+        is Reference.Dict -> "{ ${reference.emit()} }"
+        is Reference.Iterable -> "${reference.emit()}[]"
         is Reference.Unit -> "Unit"
         is Reference.Any -> "Any"
         is Reference.Custom -> value
@@ -73,9 +75,7 @@ open class WirespecEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(log
                 Reference.Primitive.Type.Precision.P64 -> "Number"
             }
         }
-    }
-        .let { if (isIterable) "$it[]" else it }
-        .let { if (isDictionary) "{ $it }" else it }
+    }.let { if (isNullable) "$it?" else it }
 
     override fun emit(enum: Enum, ast: AST) =
         "enum ${emit(enum.identifier)} {\n${Spacer}${enum.entries.joinToString(", ") { it.capitalize() }}\n}\n"
@@ -86,7 +86,7 @@ open class WirespecEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(log
 
     override fun emit(endpoint: Endpoint) = """
         |endpoint ${emit(endpoint.identifier)} ${endpoint.method}${endpoint.requests.emitRequest()} ${endpoint.path.emitPath()}${endpoint.queries.emitQuery()} -> {
-        |${endpoint.responses.joinToString("\n") { "$Spacer${it.status.fixStatus()} -> ${it.content?.reference?.emit() ?: "Unit"}${if (it.content?.isNullable == true) "?" else ""}" }}
+        |${endpoint.responses.joinToString("\n") { "$Spacer${it.status.fixStatus()} -> ${it.content?.reference?.emit() ?: "Unit"}${if (it.content?.reference?.isNullable == true) "?" else ""}" }}
         |}
         |
     """.trimMargin()

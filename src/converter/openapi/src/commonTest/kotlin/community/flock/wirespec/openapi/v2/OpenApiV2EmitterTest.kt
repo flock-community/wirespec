@@ -4,9 +4,9 @@ import com.goncalossilva.resources.Resource
 import community.flock.kotlinx.openapi.bindings.v2.OpenAPI
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.openapi.v2.OpenApiV2Parser.parse
-import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlinx.serialization.json.Json
 
 class OpenApiV2EmitterTest {
 

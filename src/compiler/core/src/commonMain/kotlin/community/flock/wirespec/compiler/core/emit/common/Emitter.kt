@@ -24,7 +24,6 @@ abstract class Emitter(
         val type: ParamType,
         val identifier: Identifier,
         val reference: Reference,
-        val isNullable: Boolean,
     ) {
         enum class ParamType {
             PATH, QUERY, HEADER, BODY
@@ -103,21 +102,18 @@ abstract class Emitter(
         type = ParamType.PATH,
         identifier = identifier,
         reference = reference,
-        isNullable = false
     )
 
     private fun Endpoint.Content.toParam() = Param(
         type = ParamType.BODY,
         identifier = FieldIdentifier("body"),
         reference = reference,
-        isNullable = isNullable
     )
 
     private fun Field.toParam(type: ParamType) = Param(
         type = type,
         identifier = identifier,
         reference = reference,
-        isNullable = isNullable
     )
 
     companion object {

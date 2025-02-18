@@ -18,6 +18,7 @@ import community.flock.kotlinx.openapi.bindings.v3.RequestBodyObject
 import community.flock.kotlinx.openapi.bindings.v3.ResponseObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceObject
+import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceOrBooleanObject
 import community.flock.kotlinx.openapi.bindings.v3.StatusCode
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
@@ -114,12 +115,14 @@ object OpenApiV3Emitter : Emitter(noLogger) {
             pattern = validator.value
         )
 
+
+
     private fun Type.emit(): SchemaObject =
         SchemaObject(
             description = comment?.value,
             properties = shape.value.associate { it.emitSchema() },
             required = shape.value
-                .filter { !it.isNullable }
+                .filter { !it.reference.isNullable }
                 .map { it.identifier.value }
                 .takeIf { it.isNotEmpty() }
         )
@@ -156,7 +159,7 @@ object OpenApiV3Emitter : Emitter(noLogger) {
             ?.let { content ->
                 RequestBodyObject(
                     content = content,
-                    required = requests.any { it.content?.isNullable == false }
+                    required = !requests.any { it.content?.reference?.isNullable == true }
                 )
             },
         responses = responses
@@ -198,6 +201,8 @@ object OpenApiV3Emitter : Emitter(noLogger) {
     private fun Field.emitSchema(): Pair<String, SchemaOrReferenceObject> = identifier.value to reference.emitSchema()
 
     private fun Reference.emitHeader() = when (this) {
+        is Reference.Dict -> ReferenceObject(ref = Ref("#/components/headers/${value}"))
+        is Reference.Iterable -> ReferenceObject(ref = Ref("#/components/headers/${value}"))
         is Reference.Custom -> ReferenceObject(ref = Ref("#/components/headers/${value}"))
         is Reference.Primitive -> HeaderObject(schema = emitSchema())
         is Reference.Any -> error("Cannot map Any")
@@ -206,24 +211,25 @@ object OpenApiV3Emitter : Emitter(noLogger) {
 
     private fun Reference.emitSchema(): SchemaOrReferenceObject =
         when (this) {
+            is Reference.Dict -> SchemaObject(
+                nullable = reference.isNullable,
+                type = OpenApiType.OBJECT,
+                additionalProperties = reference.emitSchema() as SchemaOrReferenceOrBooleanObject
+            )
+
+            is Reference.Iterable -> SchemaObject(
+                nullable = reference.isNullable,
+                type = OpenApiType.ARRAY,
+                items = reference.emitSchema()
+            )
+
             is Reference.Custom -> ReferenceObject(ref = Ref("#/components/schemas/${value}"))
-            is Reference.Primitive -> SchemaObject(type = type.emitType(), format = emitFormat())
+            is Reference.Primitive -> SchemaObject(
+                type = type.emitType(),
+                format = emitFormat()
+            )
             is Reference.Any -> error("Cannot map Any")
             is Reference.Unit -> error("Cannot map Unit")
-        }.let {
-            when {
-                isDictionary -> SchemaObject(
-                    type = OpenApiType.OBJECT,
-                    additionalProperties = it
-                )
-
-                isIterable -> SchemaObject(
-                    type = OpenApiType.ARRAY,
-                    items = it,
-                )
-
-                else -> it
-            }
         }
 
     private fun Reference.Primitive.Type.emitType(): OpenApiType = when (this) {

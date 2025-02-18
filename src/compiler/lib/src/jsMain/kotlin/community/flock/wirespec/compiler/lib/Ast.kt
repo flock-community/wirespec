@@ -90,14 +90,12 @@ private fun WsChannel.consume() = Channel(
     identifier = DefinitionIdentifier(identifier),
     comment = comment?.let { Comment(it) },
     reference = reference.consume(),
-    isNullable = isNullable
 )
 
 
 private fun WsField.consume() = Field(
     identifier = identifier.consume(),
     reference = reference.consume(),
-    isNullable = isNullable
 )
 
 private fun WsRequest.consume() =
@@ -116,31 +114,36 @@ private fun WsContent.consume() =
     Endpoint.Content(
         type = type,
         reference = reference.consume(),
-        isNullable = isNullable
     )
 
-private fun WsReference.consume() =
+private fun WsReference.consume(): Reference =
     when (this) {
         is WsAny -> Reference.Any(
-            isIterable = isIterable,
-            isDictionary = isMap
+            isNullable = isNullable
         )
 
         is WsUnit -> Reference.Unit(
-            isIterable = isIterable,
-            isDictionary = isMap
+            isNullable = isNullable
         )
 
         is WsCustom -> Reference.Custom(
             value = value,
-            isIterable = isIterable,
-            isDictionary = isMap
+            isNullable = isNullable,
         )
 
         is WsPrimitive -> Reference.Primitive(
             type = type.consume(),
-            isIterable = isIterable,
-            isDictionary = isMap
+            isNullable = isNullable,
+        )
+
+        is WsDict -> Reference.Dict(
+            reference = reference.consume(),
+            isNullable = isNullable,
+        )
+
+        is WsIterable -> Reference.Iterable(
+            reference = reference.consume(),
+            isNullable = isNullable,
         )
     }
 
@@ -197,7 +200,6 @@ fun Node.produce(): WsNode =
             identifier = identifier.value,
             comment = comment?.value,
             reference = reference.produce(),
-            isNullable = isNullable
         )
     }
 
@@ -215,18 +217,23 @@ private fun List<Endpoint.Segment>.produce(): Array<WsSegment> = map {
     }
 }.toTypedArray()
 
-private fun Field.produce() = WsField(identifier.produce(), reference.produce(), isNullable)
+private fun Field.produce() = WsField(
+    identifier = identifier.produce(),
+    reference = reference.produce()
+)
 
 private fun List<Field>.produce() = map { it.produce() }.toTypedArray()
 
 private fun DefinitionIdentifier.produce() = WsClassIdentifier(value)
 private fun FieldIdentifier.produce() = WsFieldIdentifier(value)
 
-private fun Reference.produce() = when (this) {
-    is Reference.Any -> WsAny(isIterable, isDictionary)
-    is Reference.Unit -> WsUnit(isIterable, isDictionary)
-    is Reference.Custom -> WsCustom(value, isIterable, isDictionary)
-    is Reference.Primitive -> WsPrimitive(type.produce(), isIterable, isDictionary)
+private fun Reference.produce(): WsReference = when (this) {
+    is Reference.Any -> WsAny(isNullable)
+    is Reference.Unit -> WsUnit(isNullable)
+    is Reference.Custom -> WsCustom(value, isNullable)
+    is Reference.Primitive -> WsPrimitive(type.produce(), isNullable)
+    is Reference.Dict -> WsDict(reference.produce(), isNullable)
+    is Reference.Iterable -> WsIterable(reference.produce(), isNullable)
 }
 
 private fun Reference.Primitive.Type.produce() = when (this) {
@@ -248,7 +255,7 @@ private fun Endpoint.Method.produce() = when (this) {
     Endpoint.Method.TRACE -> WsMethod.TRACE
 }
 
-private fun Endpoint.Content.produce() = WsContent(type, reference.produce(), isNullable)
+private fun Endpoint.Content.produce() = WsContent(type, reference.produce())
 
 private fun Endpoint.Request.produce() = WsRequest(content?.produce())
 
@@ -309,7 +316,6 @@ data class WsChannel(
     override val identifier: String,
     val comment: String?,
     val reference: WsReference,
-    val isNullable: Boolean
 ) : WsNode
 
 @JsExport
@@ -339,7 +345,7 @@ data class WsParam(
 data class Shape(val value: Array<WsField>)
 
 @JsExport
-data class WsField(val identifier: WsFieldIdentifier, val reference: WsReference, val isNullable: Boolean)
+data class WsField(val identifier: WsFieldIdentifier, val reference: WsReference)
 
 @JsExport
 sealed interface WsIdentifier
@@ -352,28 +358,32 @@ data class WsFieldIdentifier(val value: String) : WsIdentifier
 
 @JsExport
 sealed interface WsReference {
-    val isIterable: Boolean
-    val isMap: Boolean
+    val isNullable: Boolean
 }
 
 @JsExport
-data class WsAny(override val isIterable: Boolean, override val isMap: Boolean = false) : WsReference
+data class WsAny(override val isNullable: Boolean) : WsReference
 
 @JsExport
-data class WsUnit(override val isIterable: Boolean, override val isMap: Boolean = false) : WsReference
+data class WsUnit(override val isNullable: Boolean) : WsReference
+
+@JsExport
+data class WsIterable(val reference: WsReference, override val isNullable: Boolean) : WsReference
+
+@JsExport
+data class WsDict(val reference: WsReference, override val isNullable: Boolean) : WsReference
+
 
 @JsExport
 data class WsCustom(
     val value: String,
-    override val isIterable: Boolean,
-    override val isMap: Boolean = false
+    override val isNullable: Boolean,
 ) : WsReference
 
 @JsExport
 data class WsPrimitive(
     val type: WsPrimitiveType,
-    override val isIterable: Boolean,
-    override val isMap: Boolean = false
+    override val isNullable: Boolean,
 ) : WsReference
 
 @JsExport

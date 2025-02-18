@@ -93,7 +93,7 @@ object OpenApiV2Emitter : Emitter(noLogger) {
                     type.identifier.value to SchemaObject(
                         properties = type.shape.value.associate { it.emit() },
                         required = type.shape.value
-                            .filter { !it.isNullable }
+                            .filter { !it.reference.isNullable }
                             .map { it.identifier.value }
                             .takeIf { it.isNotEmpty() }
                     )
@@ -122,7 +122,7 @@ object OpenApiV2Emitter : Emitter(noLogger) {
                     `in` = ParameterLocation.BODY,
                     name = "RequestBody",
                     schema = it.reference.emit(),
-                    required = !it.isNullable,
+                    required = !it.reference.isNullable,
                 )
             } + queries.map { it.emitParameter(ParameterLocation.QUERY) } + headers.map {
             it.emitParameter(
@@ -137,18 +137,18 @@ object OpenApiV2Emitter : Emitter(noLogger) {
                         it.identifier.value to HeaderObject(
                             type = it.reference.emitType().name,
                             format = it.reference.emitFormat(),
-                            items = if (it.reference.isIterable) it.reference.emit() else null
+                            items = (it.reference as? Reference.Iterable)?.reference?.emit()
                         )
                     },
                     schema = response.content
                         ?.takeIf { content -> content.reference !is Reference.Unit }
                         ?.let { content ->
-                            when (content.reference.isIterable) {
-                                false -> content.reference.emit()
-                                true -> SchemaObject(
+                            when (val ref = content.reference) {
+                                is Reference.Iterable -> SchemaObject(
                                     type = OpenApiType.ARRAY,
-                                    items = content.reference.emit()
+                                    items = ref.reference.emit()
                                 )
+                                else -> ref.emit()
                             }
                         }
                 )
@@ -170,24 +170,25 @@ object OpenApiV2Emitter : Emitter(noLogger) {
             name = identifier.value,
             type = reference.emitType(),
             format = reference.emitFormat(),
-            items = when (reference.isIterable) {
-                true -> when (val emit = reference.emit()) {
+            items = when (val ref = reference) {
+                is Reference.Iterable -> when (val emit = ref.emit()) {
                     is ReferenceObject -> emit
                     is SchemaObject -> emit.items
                 }
 
-                false -> null
+                else -> null
             },
-            required = !isNullable
-
+            required = !reference.isNullable,
         )
 
     fun Reference.emit(): SchemaOrReferenceObject = when (this) {
+        is Reference.Dict -> SchemaObject(type = OpenApiType.OBJECT, items = reference.emit())
+        is Reference.Iterable -> SchemaObject(type = OpenApiType.ARRAY, items = reference.emit())
         is Reference.Custom -> ReferenceObject(ref = Ref("#/definitions/${value}"))
         is Reference.Primitive -> SchemaObject(type = type.emitType(), format = emitFormat())
         is Reference.Any -> error("Cannot map Any")
         is Reference.Unit -> error("Cannot map Unit")
-    }.let { if (isIterable) SchemaObject(type = OpenApiType.ARRAY, items = it) else it }
+    }
 
 
     private fun Reference.Primitive.Type.emitType(): OpenApiType = when (this) {
@@ -199,7 +200,9 @@ object OpenApiV2Emitter : Emitter(noLogger) {
     }
 
     private fun Reference.emitType() =
-        if (isIterable) OpenApiType.ARRAY else when (this) {
+        when (this) {
+            is Reference.Dict -> OpenApiType.OBJECT
+            is Reference.Iterable -> OpenApiType.ARRAY
             is Reference.Primitive -> type.emitType()
             is Reference.Custom -> OpenApiType.OBJECT
             is Reference.Any -> OpenApiType.OBJECT

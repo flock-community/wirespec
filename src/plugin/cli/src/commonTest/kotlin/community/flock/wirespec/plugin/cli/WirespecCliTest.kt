@@ -158,12 +158,12 @@ class WirespecCliTest {
 
         val expected = """
             |export type Pet = {
-            |  "id"?: number,
-            |  "category"?: Category,
+            |  "id": number | undefined,
+            |  "category": Category | undefined,
             |  "name": string,
             |  "photoUrls": string[],
-            |  "tags"?: Tag[],
-            |  "status"?: PetStatus
+            |  "tags": Tag[] | undefined,
+            |  "status": PetStatus | undefined
             |}
         """.trimMargin()
 

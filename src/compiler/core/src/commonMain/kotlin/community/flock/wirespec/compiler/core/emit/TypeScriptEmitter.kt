@@ -57,9 +57,11 @@ open class TypeScriptEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(l
         "${Spacer}\"${emit(identifier)}\": ${reference.emit()}"
 
     override fun Field.emit() =
-        "${Spacer}\"${emit(identifier)}\"${if (isNullable) "?" else ""}: ${reference.emit()}"
+        """$Spacer"${emit(identifier)}": ${reference.emit()}"""
 
-    override fun Reference.emit() = when (this) {
+    override fun Reference.emit(): String = when (this) {
+        is Reference.Dict -> "Record<string, ${reference.emit()}>"
+        is Reference.Iterable -> "${reference.emit()}[]"
         is Reference.Unit -> "void"
         is Reference.Any -> "any"
         is Reference.Custom -> value.sanitizeSymbol()
@@ -70,9 +72,7 @@ open class TypeScriptEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(l
             is Reference.Primitive.Type.Boolean -> "boolean"
             is Reference.Primitive.Type.Bytes -> "ArrayBuffer"
         }
-    }
-        .let { if (isIterable) "$it[]" else it }
-        .let { if (isDictionary) "Record<string, $it>" else it }
+    }.let { "$it${if (isNullable) " | undefined" else ""}" }
 
     override fun emit(refined: Refined) =
         """export type ${refined.identifier.sanitizeSymbol()} = string;
@@ -148,9 +148,7 @@ open class TypeScriptEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(l
     """.trimIndent()
 
     private fun Endpoint.Request.emitFunction(endpoint: Endpoint) = """
-      |${Spacer}export const request = (${
-        paramList(endpoint).takeIf { it.isNotEmpty() }?.let { "props: ${it.joinToObject { it.emit() }}" }.orEmpty()
-    }): Request => ({
+      |${Spacer}export const request = (${paramList(endpoint).takeIf { it.isNotEmpty() }?.let { "props: ${it.joinToObject { it.emit() }}" }.orEmpty()}): Request => ({
       |${Spacer(2)}path: ${endpoint.pathParams.joinToObject { "${emit(it.identifier)}: props.${emit(it.identifier)}" }},
       |${Spacer(2)}method: "${endpoint.method}",
       |${Spacer(2)}queries: ${endpoint.queries.joinToObject { "${emit(it.identifier)}: props.${emit(it.identifier)}" }},
@@ -160,9 +158,7 @@ open class TypeScriptEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(l
     """.trimIndent()
 
     private fun Endpoint.Response.emitFunction(endpoint: Endpoint) = """
-      |${Spacer}export const response${status.firstToUpper()} = (${
-        paramList().takeIf { it.isNotEmpty() }?.let { "props: ${it.joinToObject { it.emit() }}" }.orEmpty()
-    }): Response${status.firstToUpper()} => ({
+      |${Spacer}export const response${status.firstToUpper()} = (${paramList().takeIf { it.isNotEmpty() }?.let { "props: ${it.joinToObject { it.emit() }}" }.orEmpty()}): Response${status.firstToUpper()} => ({
       |${Spacer(2)}status: ${status},
       |${Spacer(2)}headers: ${headers.joinToObject { "${emit(it.identifier)}: props.${emit(it.identifier)}" }},
       |${Spacer(2)}body: ${content?.let { "props.body" } ?: "undefined"},
@@ -172,7 +168,7 @@ open class TypeScriptEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(l
     private fun <T> Iterable<T>.joinToObject(transform: ((T) -> CharSequence)) =
         joinToString(", ", "{", "}", transform = transform)
 
-    private fun Param.emit() = "${emit(identifier)}${if (isNullable) "?" else ""}: ${reference.emit()}"
+    private fun Param.emit() = "${emit(identifier)}${if (reference.isNullable) "?" else ""}: ${reference.emit()}"
 
     private fun Endpoint.Response.emitName() = "Response" + status.firstToUpper()
 
@@ -181,7 +177,7 @@ open class TypeScriptEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(l
     private fun Endpoint.Response.emitType() = """
       |${Spacer}export type ${emitName()} = {
       |${Spacer(2)}status: $status
-      |${Spacer(2)}headers: {${headers.joinToString { "\"${emit(it.identifier)}\"${if (it.isNullable) "?" else ""}: ${it.reference.emit()}" }}}
+      |${Spacer(2)}headers: {${headers.joinToString { "\"${emit(it.identifier)}\": ${it.reference.emit()}" }}}
       |${Spacer(2)}body: ${emitReference()}
       |${Spacer}}
     """.trimIndent()
