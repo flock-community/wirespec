@@ -151,7 +151,7 @@ jobs:
           node-version: 20
       - name: Build lib
         run: |
-          ./gradlew src:plugin:arguments:jvmJar \
+          ./gradlew publishToMavenLocal \
                     src:plugin:npm:jsNodeProductionLibraryDistribution
       - name: Build vscode extension
         working-directory: ./src/ide/vscode
