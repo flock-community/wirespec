@@ -41,7 +41,7 @@ public interface Wirespec {
     interface ParamDeserializer { <T> T deserializeParam(List<String> values, Type type); }
     interface Deserializer<RAW> extends ParamDeserializer { <T> T deserialize(RAW raw, Type type); }
     record RawRequest(String method, List<String> path, Map<String, List<String>> queries, Map<String, List<String>> headers, String body) {}
-    record RawResponse(int statusCode, Map<String, String> headers, String body) {}
+    record RawResponse(int statusCode, Map<String, List<String>> headers, String body) {}
     static Type getType(final Class<?> type, final boolean isIterable) {
         if(isIterable) {
             return new ParameterizedType() {

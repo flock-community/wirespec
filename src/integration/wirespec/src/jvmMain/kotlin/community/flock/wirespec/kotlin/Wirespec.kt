@@ -83,5 +83,5 @@ object Wirespec {
         val body: String?
     )
 
-    data class RawResponse(val statusCode: Int, val headers: Map<String, String>, val body: String?)
+    data class RawResponse(val statusCode: Int, val headers: Map<String, List<String>>, val body: String?)
 }

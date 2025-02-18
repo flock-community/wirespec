@@ -88,7 +88,7 @@ type DEFINITION = ENTRY | ENTRY | ...
 
 ```wirespec
 endpoint DEFINITION METHOD [INPUT_REFERENCE] PATH [? QUERY] [# HEADER] -> {
-    STATUS -> REFERENCE
+    STATUS -> REFERENCE [# HEADER]
 }
 ```
 
@@ -116,7 +116,8 @@ type Error {
 }
 
 endpoint GetTodoById GET /todos/{ id: UUID } -> {
-    200 -> Todo[]
+    200 -> Todo
+    301 -> Unit #{Location: String}
     404 -> Error
 }
 

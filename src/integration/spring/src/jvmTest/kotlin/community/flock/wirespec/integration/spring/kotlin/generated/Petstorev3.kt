@@ -43,26 +43,26 @@ object AddPetEndpoint : Wirespec.Endpoint {
 
   data class Response200(override val body: Pet) : Response2XX<Pet>, ResponsePet {
     override val status = 200
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   data class Response405(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 405
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = serialization.serialize(response.body, typeOf<Pet>()),
       )
       is Response405 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = null,
       )
     }
@@ -137,48 +137,48 @@ object UpdatePetEndpoint : Wirespec.Endpoint {
 
   data class Response200(override val body: Pet) : Response2XX<Pet>, ResponsePet {
     override val status = 200
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   data class Response404(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 404
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   data class Response405(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 405
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = serialization.serialize(response.body, typeOf<Pet>()),
       )
       is Response400 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = null,
       )
       is Response404 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = null,
       )
       is Response405 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = null,
       )
     }
@@ -262,26 +262,26 @@ object FindPetsByStatusEndpoint : Wirespec.Endpoint {
 
   data class Response200(override val body: List<Pet>) : Response2XX<List<Pet>>, ResponseListPet {
     override val status = 200
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = serialization.serialize(response.body, typeOf<List<Pet>>()),
       )
       is Response400 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = null,
       )
     }
@@ -359,26 +359,26 @@ object FindPetsByTagsEndpoint : Wirespec.Endpoint {
 
   data class Response200(override val body: List<Pet>) : Response2XX<List<Pet>>, ResponseListPet {
     override val status = 200
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = serialization.serialize(response.body, typeOf<List<Pet>>()),
       )
       is Response400 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = null,
       )
     }
@@ -456,37 +456,37 @@ object GetPetByIdEndpoint : Wirespec.Endpoint {
 
   data class Response200(override val body: Pet) : Response2XX<Pet>, ResponsePet {
     override val status = 200
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   data class Response404(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 404
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = serialization.serialize(response.body, typeOf<Pet>()),
       )
       is Response400 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = null,
       )
       is Response404 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = null,
       )
     }
@@ -570,15 +570,15 @@ object UpdatePetWithFormEndpoint : Wirespec.Endpoint {
 
   data class Response405(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 405
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Response405 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = null,
       )
     }
@@ -655,15 +655,15 @@ object DeletePetEndpoint : Wirespec.Endpoint {
 
   data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Response400 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = null,
       )
     }
@@ -741,15 +741,15 @@ object UploadFileEndpoint : Wirespec.Endpoint {
 
   data class Response200(override val body: ApiResponse) : Response2XX<ApiResponse>, ResponseApiResponse {
     override val status = 200
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = serialization.serialize(response.body, typeOf<ApiResponse>()),
       )
     }
@@ -816,15 +816,15 @@ object GetInventoryEndpoint : Wirespec.Endpoint {
 
   data class Response200(override val body: Map<String, Int>) : Response2XX<Map<String, Int>>, ResponseMapStringInt {
     override val status = 200
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = serialization.serialize(response.body, typeOf<Map<String, Int>>()),
       )
     }
@@ -896,26 +896,26 @@ object PlaceOrderEndpoint : Wirespec.Endpoint {
 
   data class Response200(override val body: Order) : Response2XX<Order>, ResponseOrder {
     override val status = 200
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   data class Response405(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 405
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = serialization.serialize(response.body, typeOf<Order>()),
       )
       is Response405 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = null,
       )
     }
@@ -993,37 +993,37 @@ object GetOrderByIdEndpoint : Wirespec.Endpoint {
 
   data class Response200(override val body: Order) : Response2XX<Order>, ResponseOrder {
     override val status = 200
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   data class Response404(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 404
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = serialization.serialize(response.body, typeOf<Order>()),
       )
       is Response400 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = null,
       )
       is Response404 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = null,
       )
     }
@@ -1102,26 +1102,26 @@ object DeleteOrderEndpoint : Wirespec.Endpoint {
 
   data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   data class Response404(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 404
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Response400 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = null,
       )
       is Response404 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = null,
       )
     }
@@ -1194,15 +1194,15 @@ object CreateUserEndpoint : Wirespec.Endpoint {
 
   data class Responsedefault(override val body: User) : ResponsedXX<User>, ResponseUser {
     override val status = 200
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Responsedefault -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = serialization.serialize(response.body, typeOf<User>()),
       )
     }
@@ -1272,26 +1272,26 @@ object CreateUsersWithListInputEndpoint : Wirespec.Endpoint {
 
   data class Response200(override val body: User) : Response2XX<User>, ResponseUser {
     override val status = 200
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   data class Responsedefault(override val body: Unit) : ResponsedXX<Unit>, ResponseUnit {
     override val status = 200
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = serialization.serialize(response.body, typeOf<User>()),
       )
       is Responsedefault -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = null,
       )
     }
@@ -1365,28 +1365,31 @@ object LoginUserEndpoint : Wirespec.Endpoint {
   sealed interface ResponseString : Response<String>
   sealed interface ResponseUnit : Response<Unit>
 
-  data class Response200(override val body: String) : Response2XX<String>, ResponseString {
+  data class Response200(override val body: String, val XRateLimit: Int?, val XExpiresAfter: String?) : Response2XX<String>, ResponseString {
     override val status = 200
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders(XRateLimit, XExpiresAfter)
+    data class ResponseHeaders(
+      val XRateLimit: Int?,
+      val XExpiresAfter: String?,
+    ) : Wirespec.Response.Headers
   }
 
   data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = (mapOf("XRateLimit" to (response.headers.XRateLimit?.let{ serialization.serializeParam(it, typeOf<Int>()) } ?: emptyList()))) + (mapOf("XExpiresAfter" to (response.headers.XExpiresAfter?.let{ serialization.serializeParam(it, typeOf<String>()) } ?: emptyList()))),
         body = serialization.serialize(response.body, typeOf<String>()),
       )
       is Response400 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = null,
       )
     }
@@ -1395,6 +1398,8 @@ object LoginUserEndpoint : Wirespec.Endpoint {
     when (response.statusCode) {
       200 -> Response200(
         body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<String>()),
+        XRateLimit = response.headers["X-Rate-Limit"]?.let{ serialization.deserializeParam(it, typeOf<Int>()) },
+        XExpiresAfter = response.headers["X-Expires-After"]?.let{ serialization.deserializeParam(it, typeOf<String>()) }
       )
       400 -> Response400(
         body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<Unit>()),
@@ -1456,15 +1461,15 @@ object LogoutUserEndpoint : Wirespec.Endpoint {
 
   data class Responsedefault(override val body: Unit) : ResponsedXX<Unit>, ResponseUnit {
     override val status = 200
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Responsedefault -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = null,
       )
     }
@@ -1537,37 +1542,37 @@ object GetUserByNameEndpoint : Wirespec.Endpoint {
 
   data class Response200(override val body: User) : Response2XX<User>, ResponseUser {
     override val status = 200
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   data class Response404(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 404
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = serialization.serialize(response.body, typeOf<User>()),
       )
       is Response400 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = null,
       )
       is Response404 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = null,
       )
     }
@@ -1647,15 +1652,15 @@ object UpdateUserEndpoint : Wirespec.Endpoint {
 
   data class Responsedefault(override val body: Unit) : ResponsedXX<Unit>, ResponseUnit {
     override val status = 200
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Responsedefault -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = null,
       )
     }
@@ -1726,26 +1731,26 @@ object DeleteUserEndpoint : Wirespec.Endpoint {
 
   data class Response400(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 400
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   data class Response404(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
     override val status = 404
-    override val headers = Headers
-    data object Headers : Wirespec.Response.Headers
+    override val headers = ResponseHeaders
+    data object ResponseHeaders : Wirespec.Response.Headers
   }
 
   fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Response400 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = null,
       )
       is Response404 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = mapOf(),
+        headers = emptyMap(),
         body = null,
       )
     }

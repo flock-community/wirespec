@@ -16,8 +16,8 @@ type Error {
     description: String
 }
 
-endpoint GetTodos GET /api/todos -> {
-    200 -> TodoDto[]
+endpoint GetTodos GET /api/todos ? {done:Boolean?} -> {
+    200 -> TodoDto[] # {total:Integer}
 }
 
 endpoint GetTodoById GET /api/todos/{id: TodoId} -> {
