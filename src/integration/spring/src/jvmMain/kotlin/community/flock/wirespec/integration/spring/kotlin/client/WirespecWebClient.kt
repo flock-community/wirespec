@@ -5,7 +5,7 @@ import community.flock.wirespec.kotlin.Wirespec
 import community.flock.wirespec.kotlin.Wirespec.Serialization
 import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.http.HttpMethod
-import org.springframework.util.CollectionUtils.*
+import org.springframework.util.CollectionUtils.toMultiValueMap
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
@@ -15,8 +15,8 @@ class WirespecWebClient(
     private val client: WebClient,
     private val wirespecSerde: Serialization<String>,
 ) {
-    suspend fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> send(request: Req, ): Res {
-        val declaringClass= request::class.java.declaringClass
+    suspend fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> send(request: Req): Res {
+        val declaringClass = request::class.java.declaringClass
         val handler = declaringClass.declaredClasses.toList()
             .find { it.simpleName == "Handler" }
             ?: error("Handler not found")
@@ -45,7 +45,7 @@ class WirespecWebClient(
                     Wirespec.RawResponse(
                         statusCode = response.statusCode().value(),
                         headers = toMultiValueMap(response.headers().asHttpHeaders()),
-                        body = body
+                        body = body,
                     )
                 }
         }
@@ -55,7 +55,7 @@ class WirespecWebClient(
                     Wirespec.RawResponse(
                         statusCode = throwable.statusCode.value(),
                         headers = toMultiValueMap(throwable.headers),
-                        body = throwable.responseBodyAsString
+                        body = throwable.responseBodyAsString,
                     ).let { Mono.just(it) }
 
                 else -> Mono.error(throwable)

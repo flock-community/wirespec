@@ -28,6 +28,5 @@ class ChooseByNameContributor : IntellijChooseByNameContributor {
         .also { map = it }
         .keys.toTypedArray()
 
-    override fun getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean) =
-        listOfNotNull(map[name] as NavigationItem).toTypedArray()
+    override fun getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean) = listOfNotNull(map[name] as NavigationItem).toTypedArray()
 }

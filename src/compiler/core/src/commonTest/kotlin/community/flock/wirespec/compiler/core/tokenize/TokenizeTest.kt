@@ -5,8 +5,7 @@ import kotlin.test.Test
 class TokenizeTest {
 
     @Test
-    fun testEmptySource() =
-        testTokenizer("", StartOfProgram, EndOfProgram, removeWhiteSpace = false)
+    fun testEmptySource() = testTokenizer("", StartOfProgram, EndOfProgram, removeWhiteSpace = false)
 
     @Test
     fun testSourceLengthOfOneCharacterSource() = testTokenizer("t", CustomValue, EndOfProgram)
@@ -18,6 +17,7 @@ class TokenizeTest {
             | * This is a comment
             | */
         """.trimMargin(),
-        Comment, EndOfProgram
+        Comment,
+        EndOfProgram,
     )
 }

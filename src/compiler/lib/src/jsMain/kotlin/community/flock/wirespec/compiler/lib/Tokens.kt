@@ -8,13 +8,13 @@ import community.flock.wirespec.compiler.core.tokenize.name
 fun Token.produce() = WsToken(
     type = type.name(),
     value = value,
-    coordinates = coordinates.produce()
+    coordinates = coordinates.produce(),
 )
 
 @JsExport
 data class WsTokenResult(
     val tokens: WsTokens? = null,
-    val error: WsError? = null
+    val error: WsError? = null,
 )
 
 @JsExport
@@ -30,38 +30,36 @@ data class WsTokens(val value: Array<WsToken>) {
         return true
     }
 
-    override fun hashCode(): Int {
-        return value.contentHashCode()
-    }
+    override fun hashCode(): Int = value.contentHashCode()
 }
 
 @JsExport
 data class WsToken(
     val type: String,
     val value: String,
-    val coordinates: WsCoordinates = WsCoordinates()
+    val coordinates: WsCoordinates = WsCoordinates(),
 )
 
 fun Token.Coordinates.produce() = WsCoordinates(
     line = line,
     position = position,
-    idxAndLength = idxAndLength.produce()
+    idxAndLength = idxAndLength.produce(),
 )
 
 @JsExport
 data class WsCoordinates(
     val line: Int = 1,
     val position: Int = 1,
-    val idxAndLength: WsIndex = WsIndex()
+    val idxAndLength: WsIndex = WsIndex(),
 )
 
 fun Token.Coordinates.IdxAndLength.produce() = WsIndex(
     idx = idx,
-    length = length
+    length = length,
 )
 
 @JsExport
 data class WsIndex(
     val idx: Int = 0,
-    val length: Int = 0
+    val length: Int = 0,
 )

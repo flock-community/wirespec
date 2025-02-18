@@ -4,26 +4,25 @@ import community.flock.wirespec.integration.spring.shared.extractPath
 import community.flock.wirespec.integration.spring.shared.extractQueries
 import community.flock.wirespec.kotlin.Wirespec
 import jakarta.servlet.http.HttpServletRequest
-import java.util.stream.Collectors
 import org.springframework.core.MethodParameter
 import org.springframework.web.bind.support.WebDataBinderFactory
 import org.springframework.web.context.request.NativeWebRequest
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.method.support.ModelAndViewContainer
+import java.util.stream.Collectors
 import kotlin.reflect.full.companionObjectInstance
 
 class WirespecMethodArgumentResolver(
-    private val wirespecSerialization: Wirespec.Serialization<String>
+    private val wirespecSerialization: Wirespec.Serialization<String>,
 ) : HandlerMethodArgumentResolver {
 
-    override fun supportsParameter(parameter: MethodParameter): Boolean =
-        Wirespec.Request::class.java.isAssignableFrom(parameter.parameterType)
+    override fun supportsParameter(parameter: MethodParameter): Boolean = Wirespec.Request::class.java.isAssignableFrom(parameter.parameterType)
 
     override fun resolveArgument(
         parameter: MethodParameter,
         mavContainer: ModelAndViewContainer?,
         webRequest: NativeWebRequest,
-        binderFactory: WebDataBinderFactory?
+        binderFactory: WebDataBinderFactory?,
     ): Wirespec.Request<*> {
         val servletRequest = webRequest.nativeRequest as HttpServletRequest
         val declaringClass = parameter.parameterType.declaringClass
@@ -41,5 +40,5 @@ fun HttpServletRequest.toRawRequest(): Wirespec.RawRequest = Wirespec.RawRequest
     path = extractPath(),
     queries = extractQueries(),
     headers = headerNames.toList().associateWith { getHeaders(it).toList() },
-    body = reader.lines().collect(Collectors.joining(System.lineSeparator()))
+    body = reader.lines().collect(Collectors.joining(System.lineSeparator())),
 )

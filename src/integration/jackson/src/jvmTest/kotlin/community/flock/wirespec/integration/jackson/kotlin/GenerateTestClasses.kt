@@ -13,8 +13,8 @@ import kotlin.test.Test
 class GenerateTestClasses {
 
     private val basePkg = "community.flock.wirespec.integration.jackson"
-    private val javaPkg = "${basePkg}.java.generated"
-    private val kotlinPkg = "${basePkg}.kotlin.generated"
+    private val javaPkg = "$basePkg.java.generated"
+    private val kotlinPkg = "$basePkg.kotlin.generated"
 
     private val javaEmitter = JavaEmitter(javaPkg, noLogger)
     private val kotlinEmitter = KotlinEmitter(kotlinPkg, noLogger)

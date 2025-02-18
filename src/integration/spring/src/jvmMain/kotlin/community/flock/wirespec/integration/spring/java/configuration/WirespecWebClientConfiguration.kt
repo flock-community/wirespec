@@ -16,14 +16,12 @@ open class WirespecWebClientConfiguration(
 ) {
     @Bean
     @ConditionalOnMissingBean(name = ["wirespecSpringWebClient"])
-    open fun defaultWebClient(): WebClient =
-        WebClient.builder().build()
+    open fun defaultWebClient(): WebClient = WebClient.builder().build()
 
     @Bean
     @ConditionalOnMissingBean(WirespecWebClient::class)
-    open fun wirespecWebClient(@Qualifier("wirespecSpringWebClient") webClient: WebClient): WirespecWebClient =
-        WirespecWebClient(
-            client = webClient,
-            wirespecSerde = serialization
-        )
+    open fun wirespecWebClient(@Qualifier("wirespecSpringWebClient") webClient: WebClient): WirespecWebClient = WirespecWebClient(
+        client = webClient,
+        wirespecSerde = serialization,
+    )
 }

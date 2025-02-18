@@ -105,8 +105,8 @@ class ParseTypeTest {
                                 identifier = FieldIdentifier("int32"),
                                 reference = Reference.Primitive(
                                     type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32),
-                                    isNullable = false
-                                )
+                                    isNullable = false,
+                                ),
                             ),
                             Field(
                                 identifier = FieldIdentifier("int64"),
@@ -132,17 +132,17 @@ class ParseTypeTest {
                                 reference = Reference.Primitive(
                                     type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P32),
                                     isNullable = false,
-                                )
+                                ),
                             ),
                             Field(
                                 identifier = FieldIdentifier("num64"),
                                 reference = Reference.Primitive(
                                     type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P64),
                                     isNullable = true,
-                                )
-                            )
-                        )
-                    )
+                                ),
+                            ),
+                        ),
+                    ),
                 )
             }
     }

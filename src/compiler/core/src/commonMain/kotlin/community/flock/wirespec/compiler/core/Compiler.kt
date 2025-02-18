@@ -16,25 +16,31 @@ import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.core.validate.validate
 import community.flock.wirespec.compiler.utils.HasLogger
 
-interface CompilationContext : ParseContext, HasEmitter
+interface CompilationContext :
+    ParseContext,
+    HasEmitter
 
-fun CompilationContext.compile(source: String): Either<Nel<WirespecException>, List<Emitted>> =
-    parse(source)
-        .map(emitter::emit)
-        .also(EMITTED::log)
+fun CompilationContext.compile(source: String): Either<Nel<WirespecException>, List<Emitted>> = parse(source)
+    .map(emitter::emit)
+    .also(EMITTED::log)
 
-interface ParseContext : HasLanguageSpec, HasLogger
+interface ParseContext :
+    HasLanguageSpec,
+    HasLogger
 
-fun ParseContext.parse(source: String): Either<NonEmptyList<WirespecException>, AST> =
-    spec.tokenize(source)
-        .also(TOKENIZED::log)
-        .let(Parser(logger)::parse)
-        .also(PARSED::log)
-        .map { it.validate() }
-        .also(VALIDATED::log)
+fun ParseContext.parse(source: String): Either<NonEmptyList<WirespecException>, AST> = spec.tokenize(source)
+    .also(TOKENIZED::log)
+    .let(Parser(logger)::parse)
+    .also(PARSED::log)
+    .map { it.validate() }
+    .also(VALIDATED::log)
 
 private enum class Stage {
-    TOKENIZED, PARSED, VALIDATED, EMITTED;
+    TOKENIZED,
+    PARSED,
+    VALIDATED,
+    EMITTED,
+    ;
 
     fun log(it: Any): HasLogger.() -> Unit = {
         logger.debug("********** $name **********\n$it\n########## $name ##########")

@@ -15,8 +15,8 @@ class TodoTest {
 }
 
 private fun testContext(test: TestContext.() -> Unit) = object : TestContext {
-    override val todoService = object :
-        TodoService {
-        override val todoRepository = LiveTodoRepository()
-    }
+    override val todoService =
+        object : TodoService {
+            override val todoRepository = LiveTodoRepository()
+        }
 }.test()

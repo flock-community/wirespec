@@ -10,18 +10,16 @@ fun Emitted.writeToFiles(
     packageName: PackageName?,
     shared: Shared?,
     fileName: String? = null,
-    ext: FileExtension
+    ext: FileExtension,
 ) {
     if (shared != null) {
         val sharedPackageName = PackageName(shared.packageString)
         writeFile(output, sharedPackageName, Wirespec.name, ext).writeText(shared.source)
     }
     writeFile(output, packageName, fileName ?: typeName, ext).writeText(result)
-
 }
 
-private fun writeFile(output: File, packageName: PackageName?, fileName: String, ext: FileExtension) =
-    output
-        .resolve(packageName.toDirectory())
-        .apply { mkdirs()}
-        .resolve("$fileName.${ext.value}")
+private fun writeFile(output: File, packageName: PackageName?, fileName: String, ext: FileExtension) = output
+    .resolve(packageName.toDirectory())
+    .apply { mkdirs() }
+    .resolve("$fileName.${ext.value}")

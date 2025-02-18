@@ -28,7 +28,7 @@ class EnumParser(logger: Logger) : AbstractParser(logger) {
             is LeftCurly -> Enum(
                 comment = comment,
                 identifier = typeName,
-                entries = parseEnumTypeEntries().bind()
+                entries = parseEnumTypeEntries().bind(),
             )
 
             else -> raise(WrongTokenException<LeftCurly>(token).also { eatToken().bind() })

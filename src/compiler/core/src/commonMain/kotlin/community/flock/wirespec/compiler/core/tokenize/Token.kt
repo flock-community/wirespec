@@ -6,12 +6,12 @@ import community.flock.wirespec.compiler.core.tokenize.Token.Coordinates.IdxAndL
 data class Token(
     override val value: String,
     val type: TokenType,
-    val coordinates: Coordinates
+    val coordinates: Coordinates,
 ) : Value<String> {
     data class Coordinates(
         val line: Int = 1,
         val position: Int = 1,
-        val idxAndLength: IdxAndLength = IdxAndLength()
+        val idxAndLength: IdxAndLength = IdxAndLength(),
     ) {
         data class IdxAndLength(val idx: Int = 0, val length: Int = 0)
     }
@@ -19,7 +19,7 @@ data class Token(
 
 operator fun Token.Coordinates.plus(length: Int) = copy(
     position = position + length,
-    idxAndLength = idxAndLength + length
+    idxAndLength = idxAndLength + length,
 )
 
 operator fun IdxAndLength.plus(length: Int) = IdxAndLength(idx + length, length)

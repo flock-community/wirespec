@@ -69,7 +69,7 @@ abstract class CustomWirespecTask : BaseWirespecTask() {
             .onEach { (name, result) ->
                 output.dir(emitterPkg.toDirectory()).get().asFile.apply {
                     mkdirs()
-                    resolve("${name}.$ext").writeText(result)
+                    resolve("$name.$ext").writeText(result)
                 }
             }
     }

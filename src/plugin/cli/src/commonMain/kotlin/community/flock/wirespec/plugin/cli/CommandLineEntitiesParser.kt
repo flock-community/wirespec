@@ -64,12 +64,14 @@ private abstract class CommonOptions : CliktCommand() {
     val shared by option(*Options.Shared.flags, help = "Generate shared wirespec code").flag(default = false)
     val strict by option(*Options.Strict.flags, help = "Strict mode").flag()
 
-    fun getInput(inputDir: String? = null): Input =
-        if (inputDir != null && inputFile != null) throw CliktError("Choose either a file or a directory. Not Both.")
-        else inputFile
+    fun getInput(inputDir: String? = null): Input = if (inputDir != null && inputFile != null) {
+        throw CliktError("Choose either a file or a directory. Not Both.")
+    } else {
+        inputFile
             ?.let(FullFilePath.Companion::parse)
             ?: inputDir?.let(::FullDirPath)
             ?: Console
+    }
 
     fun String.toLogLevel() = when (trim().uppercase()) {
         "DEBUG" -> DEBUG

@@ -21,12 +21,7 @@ class UserTest {
 
     @Test
     fun testSaveUser() = testContext {
-        assertEquals(
-            User("newName"), userService.saveUser(
-                User(
-                    "newName"
-                )
-            ))
+        assertEquals(User("newName"), userService.saveUser(User("newName")))
     }
 
     @Test
@@ -37,7 +32,8 @@ class UserTest {
 }
 
 private fun testContext(test: TestContext.() -> Unit) = object : TestContext {
-    override val userService = object : UserService {
-        override val userAdapter = LiveUserAdapter(TestUserClient())
-    }
+    override val userService =
+        object : UserService {
+            override val userAdapter = LiveUserAdapter(TestUserClient())
+        }
 }.test()

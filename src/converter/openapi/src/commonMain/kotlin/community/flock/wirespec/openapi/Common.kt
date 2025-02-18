@@ -8,8 +8,7 @@ object Common {
         .flatMap { it.split("-", "/") }
         .joinToString("") { it.firstToUpper() }
 
-    fun <K, V> Map<K, V?>.filterNotNullValues(): Map<K, V> =
-        mapNotNull { (key, value) -> value?.let { key to it } }.toMap()
+    fun <K, V> Map<K, V?>.filterNotNullValues(): Map<K, V> = mapNotNull { (key, value) -> value?.let { key to it } }.toMap()
 
     val json = Json {
         prettyPrint = true

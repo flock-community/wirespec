@@ -14,11 +14,10 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice
 @ControllerAdvice
 class WirespecResponseBodyAdvice(
     private val objectMapper: ObjectMapper,
-    private val wirespecSerialization: Wirespec.Serialization<String>
+    private val wirespecSerialization: Wirespec.Serialization<String>,
 ) : ResponseBodyAdvice<Any?> {
 
-    override fun supports(returnType: MethodParameter, converterType: Class<out HttpMessageConverter<*>?>): Boolean =
-        Wirespec.Response::class.java.isAssignableFrom(returnType.parameterType)
+    override fun supports(returnType: MethodParameter, converterType: Class<out HttpMessageConverter<*>?>): Boolean = Wirespec.Response::class.java.isAssignableFrom(returnType.parameterType)
 
     override fun beforeBodyWrite(
         body: Any?,
@@ -26,7 +25,7 @@ class WirespecResponseBodyAdvice(
         selectedContentType: MediaType,
         selectedConverterType: Class<out HttpMessageConverter<*>>,
         request: ServerHttpRequest,
-        response: ServerHttpResponse
+        response: ServerHttpResponse,
     ): Any? {
         val declaringClass = returnType.parameterType.declaringClass
         val handler = declaringClass.declaredClasses.toList().find { it.simpleName == "Handler" }

@@ -59,11 +59,9 @@ fun main(args: Array<String>) {
         .let(WirespecCli.provide(::compile, ::convert, ::write))
 }
 
-fun convert(arguments: CompilerArguments): List<Either<NonEmptyList<WirespecException>, Pair<List<Emitted>, File?>>> =
-    compile(arguments)
+fun convert(arguments: CompilerArguments): List<Either<NonEmptyList<WirespecException>, Pair<List<Emitted>, File?>>> = compile(arguments)
 
 fun compile(arguments: CompilerArguments): List<Either<NonEmptyList<WirespecException>, Pair<List<Emitted>, File?>>> {
-
     val input = arguments.input
     val output = arguments.output
 
@@ -74,7 +72,6 @@ fun compile(arguments: CompilerArguments): List<Either<NonEmptyList<WirespecExce
 
     return when (val operation = arguments.operation) {
         is Operation.Convert -> {
-
             val fullPath = input as FullFilePath
             val file = JsonFile(fullPath)
             val strict = arguments.strict
@@ -87,28 +84,35 @@ fun compile(arguments: CompilerArguments): List<Either<NonEmptyList<WirespecExce
             val path = fullPath.out(packageName, output)
             languages.emitters(packageName, path, logger).map { (emitter, file) ->
                 val results = emitter.emit(ast)
-                if (!emitter.split) listOf(
-                    Emitted(
-                        fullPath.fileName.value.replaceFirstChar(Char::uppercase),
-                        results.first().result
-                    )
-                ) to file
-                else results to file
+                if (!emitter.split) {
+                    listOf(
+                        Emitted(
+                            fullPath.fileName.value.replaceFirstChar(Char::uppercase),
+                            results.first().result,
+                        ),
+                    ) to file
+                } else {
+                    results to file
+                }
             }.map { it.right() }
         }
 
         is Operation.Compile -> when (input) {
-            is Console -> input
-                .wirespec(languages, packageName, { FullFilePath(output!!.value, FileName("console"), it) }, logger)
+            is Console ->
+                input
+                    .wirespec(languages, packageName, { FullFilePath(output!!.value, FileName("console"), it) }, logger)
 
             is FullDirPath -> Directory(input.path)
                 .wirespecFiles()
                 .flatMap { it.wirespec(languages, packageName, it.path.out(packageName, output), logger) }
 
             is FullFilePath ->
-                if (input.extension == FileExtension.Wirespec) WirespecFile(input)
-                    .let { it.wirespec(languages, packageName, it.path.out(packageName, output), logger) }
-                else FileReadException("Path $input is not a Wirespec file").nel().left().nel()
+                if (input.extension == FileExtension.Wirespec) {
+                    WirespecFile(input)
+                        .let { it.wirespec(languages, packageName, it.path.out(packageName, output), logger) }
+                } else {
+                    FileReadException("Path $input is not a Wirespec file").nel().left().nel()
+                }
         }
     }
 }
@@ -121,7 +125,7 @@ private fun Reader.wirespec(
     languages: Set<Language>,
     packageName: PackageName,
     path: (FileExtension) -> FullFilePath,
-    logger: Logger
+    logger: Logger,
 ) = read()
     .let { source ->
         languages.emitters(packageName, path, logger).map { (emitter, file) ->
@@ -129,15 +133,18 @@ private fun Reader.wirespec(
                 override val logger = logger
                 override val emitter = emitter
             }.compile(source)
-            if (!emitter.split) results.map {
-                listOf(
-                    Emitted(
-                        path(FileExtension.Wirespec).fileName.value.firstToUpper(),
-                        it.first().result
+            if (!emitter.split) {
+                results.map {
+                    listOf(
+                        Emitted(
+                            path(FileExtension.Wirespec).fileName.value.firstToUpper(),
+                            it.first().result,
+                        ),
                     )
-                )
-            } to file
-            else results to file
+                } to file
+            } else {
+                results to file
+            }
         }
     }
     .map { (results, file) -> results.map { it to file } }
@@ -145,7 +152,7 @@ private fun Reader.wirespec(
 private fun Set<Language>.emitters(
     packageName: PackageName,
     path: ((FileExtension) -> FullFilePath)?,
-    logger: Logger
+    logger: Logger,
 ) = map {
     val (packageString) = packageName
     when (it) {
@@ -163,6 +170,6 @@ private fun FullFilePath.out(packageName: PackageName, output: Output?) = { exte
     val dir = output ?: "$directory/out/${extension.name.lowercase()}"
     copy(
         directory = "$dir/${packageName.value.split('.').joinToString("/")}",
-        extension = extension
+        extension = extension,
     )
 }

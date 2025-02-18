@@ -14,14 +14,12 @@ import kotlin.test.assertTrue
 
 class AvroParserTest {
 
-
     @Test
     fun testCustomer() {
         val resource = Resource("src/commonTest/resources/customer.avsc")
             .apply { assertTrue(exists()) }
 
         AvroParser.parse(resource.readText())
-
     }
 
     @Test
@@ -36,7 +34,6 @@ class AvroParserTest {
             assertEquals("Cannot have multiple SimpleTypes in Union", e.message)
         }
     }
-
 
     @Test
     fun testUnionComplex() {
@@ -59,7 +56,7 @@ class AvroParserTest {
 
         assertEquals(
             listOf("User", "EmailAddress", "TwitterAccount", "OAuthStatus", "ToDoItem", "ToDoStatus", "User"),
-            ast.filterIsInstance<Definition>().map { it.identifier.value }
+            ast.filterIsInstance<Definition>().map { it.identifier.value },
         )
 
         assertEquals(
@@ -73,28 +70,28 @@ class AvroParserTest {
                             identifier = FieldIdentifier("id"),
                             reference = Reference.Primitive(
                                 type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32),
-                                isNullable = false
+                                isNullable = false,
                             ),
                         ),
                         Field(
                             identifier = FieldIdentifier("username"),
                             reference = Reference.Primitive(
                                 type = Reference.Primitive.Type.String,
-                                isNullable = false
+                                isNullable = false,
                             ),
                         ),
                         Field(
                             identifier = FieldIdentifier("passwordHash"),
                             reference = Reference.Primitive(
                                 type = Reference.Primitive.Type.String,
-                                isNullable = false
+                                isNullable = false,
                             ),
                         ),
                         Field(
                             identifier = FieldIdentifier("signupDate"),
                             reference = Reference.Primitive(
                                 type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P64),
-                                isNullable = false
+                                isNullable = false,
                             ),
                         ),
                         Field(
@@ -102,8 +99,9 @@ class AvroParserTest {
                             reference = Reference.Iterable(
                                 reference = Reference.Custom(
                                     "EmailAddress",
-                                    isNullable = false
-                                ), isNullable = false
+                                    isNullable = false,
+                                ),
+                                isNullable = false,
                             ),
                         ),
                         Field(
@@ -111,8 +109,9 @@ class AvroParserTest {
                             reference = Reference.Iterable(
                                 reference = Reference.Custom(
                                     "TwitterAccount",
-                                    isNullable = false
-                                ), isNullable = false
+                                    isNullable = false,
+                                ),
+                                isNullable = false,
                             ),
                         ),
                         Field(
@@ -120,14 +119,15 @@ class AvroParserTest {
                             reference = Reference.Iterable(
                                 reference = Reference.Custom(
                                     "ToDoItem",
-                                    isNullable = false
-                                ), isNullable = false
-                            )
-                        )
-                    )
-                )
+                                    isNullable = false,
+                                ),
+                                isNullable = false,
+                            ),
+                        ),
+                    ),
+                ),
             ),
-            ast.first()
+            ast.first(),
         )
 
         assertEquals(
@@ -137,10 +137,9 @@ class AvroParserTest {
                 reference = Reference.Custom(
                     "User",
                     isNullable = false,
-                )
+                ),
             ),
-            ast.last()
+            ast.last(),
         )
-
     }
 }

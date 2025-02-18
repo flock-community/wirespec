@@ -102,7 +102,6 @@ class Lexer : IntellijLexer() {
     }
 
     override fun getBufferEnd() = bufferSequence.toString().length
-
 }
 
 fun Token.Coordinates.getStartPos() = idxAndLength.idx - idxAndLength.length

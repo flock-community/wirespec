@@ -15,45 +15,38 @@ private interface TodoApi :
     PostTodoEndpoint.Handler,
     DeleteTodoByIdEndpoint.Handler
 
-class TodoHandler(liveTodoRepository: TodoRepository) : TodoApi {
+class TodoHandler(
+    liveTodoRepository: TodoRepository,
+) : TodoApi {
+    private val service =
+        object : TodoService {
+            override val todoRepository = liveTodoRepository
+        }
 
-    private val service = object : TodoService {
-        override val todoRepository = liveTodoRepository
-    }
+    override suspend fun getTodos(request: GetTodosEndpoint.Request): GetTodosEndpoint.Response200 = service
+        .getAllTodos()
+        .map { it.produce() }
+        .let(GetTodosEndpoint::Response200)
 
-    override suspend fun getTodos(request: GetTodosEndpoint.Request): GetTodosEndpoint.Response200 =
-        service.getAllTodos()
-            .map { it.produce() }
-            .let(GetTodosEndpoint::Response200)
+    override suspend fun getTodoById(request: GetTodoByIdEndpoint.Request): GetTodoByIdEndpoint.Response200 = request.path.id
+        .also { if (!it.validate()) throw TodoIdNotValidException(invalidId = it.value) }
+        .value
+        .let(Todo::Id)
+        .let(service::getTodoById)
+        .produce()
+        .let(GetTodoByIdEndpoint::Response200)
 
-    override suspend fun getTodoById(request: GetTodoByIdEndpoint.Request): GetTodoByIdEndpoint.Response200 =
-        request.path.id
-            .also { if (!it.validate()) throw TodoIdNotValidException(
-                it.value
-            )
-            }
-            .value
-            .let(Todo::Id)
-            .let(service::getTodoById)
-            .produce()
-            .let(GetTodoByIdEndpoint::Response200)
+    override suspend fun postTodo(request: PostTodoEndpoint.Request): PostTodoEndpoint.Response200 = request.body
+        .consume()
+        .let(service::saveTodo)
+        .produce()
+        .let(PostTodoEndpoint::Response200)
 
-    override suspend fun postTodo(request: PostTodoEndpoint.Request): PostTodoEndpoint.Response200 =
-        request.body
-            .consume()
-            .let(service::saveTodo)
-            .produce()
-            .let(PostTodoEndpoint::Response200)
-
-    override suspend fun deleteTodoById(request: DeleteTodoByIdEndpoint.Request): DeleteTodoByIdEndpoint.Response200 =
-        request.path.id
-            .also { if (!it.validate()) throw TodoIdNotValidException(
-                it.value
-            )
-            }
-            .value
-            .let(Todo::Id)
-            .let(service::deleteTodoById)
-            .produce()
-            .let(DeleteTodoByIdEndpoint::Response200)
+    override suspend fun deleteTodoById(request: DeleteTodoByIdEndpoint.Request): DeleteTodoByIdEndpoint.Response200 = request.path.id
+        .also { if (!it.validate()) throw TodoIdNotValidException(invalidId = it.value) }
+        .value
+        .let(Todo::Id)
+        .let(service::deleteTodoById)
+        .produce()
+        .let(DeleteTodoByIdEndpoint::Response200)
 }

@@ -26,7 +26,8 @@ class CommandLineEntitiesTest {
     fun testAllOptions() {
         val opts = Options.entries.flatMap {
             listOfNotNull(
-                it.flags.first(), when (it) {
+                it.flags.first(),
+                when (it) {
                     Options.InputFile -> null
                     Options.InputDir -> "input"
                     Options.OutputDir -> "output"
@@ -36,7 +37,7 @@ class CommandLineEntitiesTest {
                     // To enable flags they only need the flag name. Therefore, the 'argument' part is null.
                     Options.Shared -> null
                     Options.Strict -> null
-                }
+                },
             )
         }.filterNot { it == "-f" }.toTypedArray()
         WirespecCli.provide(
@@ -49,63 +50,75 @@ class CommandLineEntitiesTest {
                 it.logLevel shouldBe ERROR
                 it.shared.also(::println) shouldBe true
                 it.strict shouldBe true
-            }, noopInput {}, noopWriter
+            },
+            noopInput {},
+            noopWriter,
         )(arrayOf("compile") + opts)
     }
 
     @Test
     fun testMinimumCliArgumentsForCompile() {
-        WirespecCli.provide(noopInput {
-            it.operation.shouldBeTypeOf<Operation.Compile>()
-            it.input.shouldBeTypeOf<Console>()
-            it.output.shouldBeNull()
-            it.languages shouldBe setOf(Kotlin)
-            it.packageName.value shouldBe DEFAULT_GENERATED_PACKAGE_STRING
-            it.logLevel shouldBe ERROR
-            it.shared shouldBe false
-            it.strict shouldBe false
-        }, noopInput { }, noopWriter)(arrayOf("compile", "-l", "Kotlin"))
+        WirespecCli.provide(
+            noopInput {
+                it.operation.shouldBeTypeOf<Operation.Compile>()
+                it.input.shouldBeTypeOf<Console>()
+                it.output.shouldBeNull()
+                it.languages shouldBe setOf(Kotlin)
+                it.packageName.value shouldBe DEFAULT_GENERATED_PACKAGE_STRING
+                it.logLevel shouldBe ERROR
+                it.shared shouldBe false
+                it.strict shouldBe false
+            },
+            noopInput { },
+            noopWriter,
+        )(arrayOf("compile", "-l", "Kotlin"))
     }
 
     @Test
     fun testMinimumCliArgumentsForConvert() {
-        WirespecCli.provide(noopInput { }, noopInput {
-            it.operation.shouldBeTypeOf<Operation.Convert>()
-            it.input.shouldBeTypeOf<FullFilePath>().run {
-                fileName.value shouldBe "swagger"
-                extension shouldBe FileExtension.Json
-            }
-            it.output.shouldBeNull()
-            it.languages shouldBe setOf(Wirespec)
-            it.packageName.value shouldBe DEFAULT_GENERATED_PACKAGE_STRING
-            it.logLevel shouldBe ERROR
-            it.shared shouldBe false
-            it.strict shouldBe false
-        }, noopWriter)(arrayOf("convert", "-f", "swagger.json", "openapiv2"))
+        WirespecCli.provide(
+            noopInput { },
+            noopInput {
+                it.operation.shouldBeTypeOf<Operation.Convert>()
+                it.input.shouldBeTypeOf<FullFilePath>().run {
+                    fileName.value shouldBe "swagger"
+                    extension shouldBe FileExtension.Json
+                }
+                it.output.shouldBeNull()
+                it.languages shouldBe setOf(Wirespec)
+                it.packageName.value shouldBe DEFAULT_GENERATED_PACKAGE_STRING
+                it.logLevel shouldBe ERROR
+                it.shared shouldBe false
+                it.strict shouldBe false
+            },
+            noopWriter,
+        )(arrayOf("convert", "-f", "swagger.json", "openapiv2"))
     }
 
     @Test
     fun testCommandLineEntitiesParser() {
-        WirespecCli.provide(noopInput { }, noopInput {
-            it.operation.shouldBeTypeOf<Operation.Convert>().run {
-                format shouldBe Format.OpenApiV2
-            }
-            it.input.shouldBeTypeOf<Console>()
-            it.output?.value shouldBe "output"
-            it.languages shouldBe setOf(Kotlin)
-            it.packageName.value shouldBe DEFAULT_GENERATED_PACKAGE_STRING
-            it.logLevel shouldBe ERROR
-            it.shared shouldBe false
-            it.strict shouldBe false
-        }, noopWriter)(arrayOf("convert", "openapiv2", "-o", "output", "-l", "Kotlin"))
+        WirespecCli.provide(
+            noopInput { },
+            noopInput {
+                it.operation.shouldBeTypeOf<Operation.Convert>().run {
+                    format shouldBe Format.OpenApiV2
+                }
+                it.input.shouldBeTypeOf<Console>()
+                it.output?.value shouldBe "output"
+                it.languages shouldBe setOf(Kotlin)
+                it.packageName.value shouldBe DEFAULT_GENERATED_PACKAGE_STRING
+                it.logLevel shouldBe ERROR
+                it.shared shouldBe false
+                it.strict shouldBe false
+            },
+            noopWriter,
+        )(arrayOf("convert", "openapiv2", "-o", "output", "-l", "Kotlin"))
     }
 
-    private fun noopInput(block: (CompilerArguments) -> Unit): (CompilerArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File?>>> =
-        {
-            block(it)
-            emptyList()
-        }
+    private fun noopInput(block: (CompilerArguments) -> Unit): (CompilerArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File?>>> = {
+        block(it)
+        emptyList()
+    }
 
     private val noopWriter: (List<Emitted>, File?) -> Unit = { _, _ -> }
-
 }

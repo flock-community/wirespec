@@ -30,12 +30,11 @@ class Annotator : ExternalAnnotator<List<WirespecException>, List<WirespecExcept
                 .range(
                     TextRange(
                         it.coordinates.idxAndLength.idx - it.coordinates.idxAndLength.length,
-                        it.coordinates.idxAndLength.idx
-                    )
+                        it.coordinates.idxAndLength.idx,
+                    ),
                 )
                 .create()
         }
         super.apply(file, annotationResult, holder)
     }
-
 }

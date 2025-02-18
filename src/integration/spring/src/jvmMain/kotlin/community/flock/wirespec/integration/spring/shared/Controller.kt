@@ -19,19 +19,18 @@ fun HttpServletRequest.extractPath() = (pathInfo ?: servletPath)
 
 fun HttpServletRequest.extractQueries() = extractQueries(queryString)
 
-fun extractQueries(queryString: String?): Map<String, List<String>> =
-    queryString
-        ?.let { query ->
-            query.split("&").flatMap { param ->
-                val (key, value) = param.split("=", limit = 2)
-                val decodedKey = URLDecoder.decode(key, StandardCharsets.UTF_8)
-                value.split(",").map {
-                    decodedKey to URLDecoder.decode(it, StandardCharsets.UTF_8)
-                }
+fun extractQueries(queryString: String?): Map<String, List<String>> = queryString
+    ?.let { query ->
+        query.split("&").flatMap { param ->
+            val (key, value) = param.split("=", limit = 2)
+            val decodedKey = URLDecoder.decode(key, StandardCharsets.UTF_8)
+            value.split(",").map {
+                decodedKey to URLDecoder.decode(it, StandardCharsets.UTF_8)
             }
-                .groupBy(
-                    keySelector = { it.first },
-                    valueTransform = { it.second }
-                )
         }
-        .orEmpty()
+            .groupBy(
+                keySelector = { it.first },
+                valueTransform = { it.second },
+            )
+    }
+    .orEmpty()

@@ -2,17 +2,17 @@ package community.flock.wirespec.plugin.maven
 
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.validate.validate
+import community.flock.wirespec.converter.avro.AvroParser
 import community.flock.wirespec.openapi.v2.OpenApiV2Parser
 import community.flock.wirespec.openapi.v3.OpenApiV3Parser
-import community.flock.wirespec.converter.avro.AvroParser
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.mapEmitter
 import community.flock.wirespec.plugin.writeToFiles
-import java.io.File
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
+import java.io.File
 
 @Mojo(name = "convert", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
 class ConvertMojo : CompileMojo() {
@@ -48,7 +48,7 @@ class ConvertMojo : CompileMojo() {
                         packageName = packageNameValue,
                         shared = if (shared) sharedData else null,
                         fileName = if (emitter.split) null else fileName,
-                        ext = ext
+                        ext = ext,
                     )
                 }
             }

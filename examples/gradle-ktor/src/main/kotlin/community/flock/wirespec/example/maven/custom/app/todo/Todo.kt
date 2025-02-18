@@ -8,8 +8,12 @@ data class Todo(
     val done: Boolean,
 ) {
     @JvmInline
-    value class Id(override val value: String) : Value<String>
+    value class Id(
+        override val value: String,
+    ) : Value<String>
 }
 
 @JvmInline
-value class Name(override val value: String) : Value<String>
+value class Name(
+    override val value: String,
+) : Value<String>

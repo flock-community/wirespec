@@ -7,7 +7,6 @@ plugins {
     alias(libs.plugins.kotlinx.resources)
 }
 
-
 group = "${libs.versions.group.id.get()}.plugin.cli"
 version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.get()
 
@@ -17,11 +16,10 @@ repositories {
 
 plugins.withId("maven-publish") {
     tasks.withType(AbstractPublishToMaven::class) {
-        logger.info("Disabling ${name} task in project ${project.name}...")
+        logger.info("Disabling $name task in project ${project.name}...")
         enabled = false
     }
 }
-
 
 kotlin {
     targets.all {

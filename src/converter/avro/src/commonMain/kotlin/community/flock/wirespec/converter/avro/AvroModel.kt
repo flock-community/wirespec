@@ -25,7 +25,7 @@ object AvroModel {
         val name: String,
         val type: TypeList,
         val doc: String? = null,
-        val default: String? = null
+        val default: String? = null,
     )
 
     @Serializable(with = TypeListSerializer::class)
@@ -41,7 +41,7 @@ object AvroModel {
 
     @Serializable
     data class SimpleType(
-        val value: String
+        val value: String,
     ) : Type
 
     @Serializable
@@ -75,26 +75,26 @@ object AvroModel {
         val scale: Int? = null,
     ) : Type
 
-
     object TypeListSerializer : KSerializer<TypeList> {
 
         override val descriptor: SerialDescriptor = buildSerialDescriptor("TypeListSerializer", PolymorphicKind.SEALED)
 
         override fun serialize(encoder: Encoder, value: TypeList) {
             if (value.size > 1) {
-                 encoder.encodeSerializableValue(ListSerializer(Type.serializer()), value )
+                encoder.encodeSerializableValue(ListSerializer(Type.serializer()), value)
             } else {
                 encoder.encodeSerializableValue(Type.serializer(), value.first())
             }
-
         }
 
         override fun deserialize(decoder: Decoder): TypeList {
             val input = decoder as? JsonDecoder ?: throw SerializationException("This class can be loaded only by Json")
             return when (val element = input.decodeJsonElement()) {
                 is JsonPrimitive -> TypeList(input.json.decodeFromJsonElement(Type.serializer(), element))
-                is JsonArray -> TypeList(*element.map { input.json.decodeFromJsonElement(Type.serializer(), it) }
-                    .toTypedArray())
+                is JsonArray -> TypeList(
+                    *element.map { input.json.decodeFromJsonElement(Type.serializer(), it) }
+                        .toTypedArray(),
+                )
 
                 is JsonObject -> TypeList(input.json.decodeFromJsonElement(Type.serializer(), element))
             }

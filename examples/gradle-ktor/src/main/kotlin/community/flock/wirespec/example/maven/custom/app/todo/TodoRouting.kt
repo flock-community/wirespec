@@ -19,14 +19,14 @@ import io.ktor.server.routing.routing
 import io.ktor.util.toMap
 
 fun Application.todoModule(todoRepository: TodoRepository) {
-
     val handler = TodoHandler(todoRepository)
 
     routing {
         with(GetTodosEndpoint.Handler) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
-                    call.toRawRequest()
+                    call
+                        .toRawRequest()
                         .let(server(Serialization)::from)
                         .let { handler.getTodos(it) }
                         .run { call.respond(body) }
@@ -37,7 +37,8 @@ fun Application.todoModule(todoRepository: TodoRepository) {
         with(GetTodoByIdEndpoint.Handler) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
-                    call.toRawRequest()
+                    call
+                        .toRawRequest()
                         .let(server(Serialization)::from)
                         .let { handler.getTodoById(it) }
                         .run { call.respond(body) }
@@ -48,7 +49,8 @@ fun Application.todoModule(todoRepository: TodoRepository) {
         with(PostTodoEndpoint.Handler) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
-                    call.toRawRequest()
+                    call
+                        .toRawRequest()
                         .let(server(Serialization)::from)
                         .let { handler.postTodo(it) }
                         .run { call.respond(body) }
@@ -59,7 +61,8 @@ fun Application.todoModule(todoRepository: TodoRepository) {
         with(DeleteTodoByIdEndpoint.Handler) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
-                    call.toRawRequest()
+                    call
+                        .toRawRequest()
                         .let(server(Serialization)::from)
                         .let { handler.deleteTodoById(it) }
                         .run { call.respond(body) }
@@ -69,13 +72,10 @@ fun Application.todoModule(todoRepository: TodoRepository) {
     }
 }
 
-suspend fun ApplicationCall.toRawRequest() =
-    Wirespec.RawRequest(
-        method = request.httpMethod.value,
-        path = request.path().split("/").filter { it.isNotBlank() },
-        queries = request.queryParameters.toMap(),
-        headers = request.headers.toMap(),
-        body = receive<String>(),
-    )
-
-private fun Map<String, List<String>>.toSingleValueMap() = map{(k, v) -> k to v.first()}.toMap()
+suspend fun ApplicationCall.toRawRequest() = Wirespec.RawRequest(
+    method = request.httpMethod.value,
+    path = request.path().split("/").filter { it.isNotBlank() },
+    queries = request.queryParameters.toMap(),
+    headers = request.headers.toMap(),
+    body = receive<String>(),
+)

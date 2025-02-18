@@ -15,7 +15,7 @@ class DefaultParamSerialization : Wirespec.ParamSerialization {
         Boolean::class to String::toBoolean,
         Char::class to String::single,
         Byte::class to String::toByte,
-        Short::class to String::toShort
+        Short::class to String::toShort,
     )
 
     override fun <T> serializeParam(value: T, kType: KType): List<String> = when {
@@ -57,20 +57,16 @@ class DefaultParamSerialization : Wirespec.ParamSerialization {
         return findEnumByLabel(enumClass, value)
     }
 
-    private fun findEnumByLabel(enumClass: KClass<*>, label: String): Any =
-        enumClass.java.enumConstants.firstOrNull {
-            (it as Wirespec.Enum).label == label
-        } ?: throw IllegalArgumentException("Invalid enum value '$label' for type: ${enumClass.simpleName}")
+    private fun findEnumByLabel(enumClass: KClass<*>, label: String): Any = enumClass.java.enumConstants.firstOrNull {
+        (it as Wirespec.Enum).label == label
+    } ?: throw IllegalArgumentException("Invalid enum value '$label' for type: ${enumClass.simpleName}")
 
     private fun KType.isList() = (classifier as? KClass<*>) == List::class
 
-    private fun KType.isWirespecEnum() =
-        (classifier as? KClass<*>)?.supertypes?.any { it.classifier == Wirespec.Enum::class } == true
+    private fun KType.isWirespecEnum() = (classifier as? KClass<*>)?.supertypes?.any { it.classifier == Wirespec.Enum::class } == true
 
     private fun KType.getListElementType() = arguments.single().type
         ?: throw IllegalArgumentException("Cannot determine list element type")
 
-    private fun KType.classifierAsKClass(): KClass<*> =
-        classifier as? KClass<*> ?: throw IllegalArgumentException("Invalid type classifier")
+    private fun KType.classifierAsKClass(): KClass<*> = classifier as? KClass<*> ?: throw IllegalArgumentException("Invalid type classifier")
 }
-

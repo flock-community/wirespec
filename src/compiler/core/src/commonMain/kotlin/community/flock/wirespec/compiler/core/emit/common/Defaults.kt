@@ -11,5 +11,4 @@ data object Spacer {
 
     operator fun invoke(times: Int) = SPACER.repeat(times)
     operator fun invoke(block: () -> String) = "$SPACER${block().split("\n").joinToString("\n$SPACER")}"
-
 }

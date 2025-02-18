@@ -4,7 +4,7 @@ import community.flock.wirespec.integration.spring.shared.filterNotEmpty
 import community.flock.wirespec.java.Wirespec
 import community.flock.wirespec.java.Wirespec.Serialization
 import org.springframework.http.HttpMethod
-import org.springframework.util.CollectionUtils.*
+import org.springframework.util.CollectionUtils.toMultiValueMap
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
@@ -18,7 +18,7 @@ class WirespecWebClient(
     fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> send(
         request: Req,
     ): CompletableFuture<Res> {
-        val declaringClass= request::class.java.declaringClass
+        val declaringClass = request::class.java.declaringClass
         val handler = declaringClass.declaredClasses.toList()
             .find { it.simpleName == "Handler" }
             ?: error("Handler not found")
@@ -53,7 +53,7 @@ class WirespecWebClient(
                     Wirespec.RawResponse(
                         response.statusCode().value(),
                         toMultiValueMap(response.headers().asHttpHeaders()),
-                        body
+                        body,
                     )
                 }
         }
@@ -63,11 +63,10 @@ class WirespecWebClient(
                     Wirespec.RawResponse(
                         throwable.statusCode.value(),
                         toMultiValueMap(throwable.headers),
-                        throwable.responseBodyAsString
+                        throwable.responseBodyAsString,
                     ).let { Mono.just(it) }
 
                 else -> Mono.error(throwable)
             }
         }.toFuture()
-
 }

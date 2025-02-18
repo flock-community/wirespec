@@ -15,37 +15,34 @@ import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 
-fun WsNode.consume(): Node =
-    when (this) {
-        is WsEndpoint -> consume()
-        is WsEnum -> consume()
-        is WsRefined -> consume()
-        is WsType -> consume()
-        is WsUnion -> consume()
-        is WsChannel -> consume()
-    }
+fun WsNode.consume(): Node = when (this) {
+    is WsEndpoint -> consume()
+    is WsEnum -> consume()
+    is WsRefined -> consume()
+    is WsType -> consume()
+    is WsUnion -> consume()
+    is WsChannel -> consume()
+}
 
-fun WsEndpoint.consume(): Endpoint =
-    Endpoint(
-        comment = comment?.let { Comment(it) },
-        identifier = DefinitionIdentifier(identifier),
-        method = method.consume(),
-        path = path.map { it.consume() },
-        queries = query.map { it.consume() },
-        headers = query.map { it.consume() },
-        cookies = query.map { it.consume() },
-        requests = requests.map { it.consume() },
-        responses = responses.map { it.consume() },
+fun WsEndpoint.consume(): Endpoint = Endpoint(
+    comment = comment?.let { Comment(it) },
+    identifier = DefinitionIdentifier(identifier),
+    method = method.consume(),
+    path = path.map { it.consume() },
+    queries = query.map { it.consume() },
+    headers = query.map { it.consume() },
+    cookies = query.map { it.consume() },
+    requests = requests.map { it.consume() },
+    responses = responses.map { it.consume() },
+)
+
+private fun WsSegment.consume() = when (this) {
+    is WsLiteral -> Endpoint.Segment.Literal(value)
+    is WsParam -> Endpoint.Segment.Param(
+        identifier = identifier.consume(),
+        reference = reference.consume(),
     )
-
-private fun WsSegment.consume() =
-    when (this) {
-        is WsLiteral -> Endpoint.Segment.Literal(value)
-        is WsParam -> Endpoint.Segment.Param(
-            identifier = identifier.consume(),
-            reference = reference.consume()
-        )
-    }
+}
 
 private fun WsMethod.consume() = when (this) {
     WsMethod.GET -> Endpoint.Method.GET
@@ -64,13 +61,13 @@ private fun WsFieldIdentifier.consume() = FieldIdentifier(value)
 private fun WsEnum.consume() = Enum(
     identifier = DefinitionIdentifier(identifier),
     comment = comment?.let { Comment(it) },
-    entries = entries.toSet()
+    entries = entries.toSet(),
 )
 
 private fun WsRefined.consume() = Refined(
     identifier = DefinitionIdentifier(identifier),
     comment = comment?.let { Comment(it) },
-    validator = Refined.Validator(validator)
+    validator = Refined.Validator(validator),
 )
 
 private fun WsType.consume() = Type(
@@ -83,7 +80,7 @@ private fun WsType.consume() = Type(
 private fun WsUnion.consume() = Union(
     identifier = DefinitionIdentifier(identifier),
     comment = comment?.let { Comment(it) },
-    entries = entries.map { it.consume() }.toSet()
+    entries = entries.map { it.consume() }.toSet(),
 )
 
 private fun WsChannel.consume() = Channel(
@@ -92,122 +89,114 @@ private fun WsChannel.consume() = Channel(
     reference = reference.consume(),
 )
 
-
 private fun WsField.consume() = Field(
     identifier = identifier.consume(),
     reference = reference.consume(),
 )
 
-private fun WsRequest.consume() =
-    Endpoint.Request(
-        content = content?.consume()
+private fun WsRequest.consume() = Endpoint.Request(
+    content = content?.consume(),
+)
+
+private fun WsResponse.consume() = Endpoint.Response(
+    status = status,
+    headers = headers.map { it.consume() },
+    content = content?.consume(),
+)
+
+private fun WsContent.consume() = Endpoint.Content(
+    type = type,
+    reference = reference.consume(),
+)
+
+private fun WsReference.consume(): Reference = when (this) {
+    is WsAny -> Reference.Any(
+        isNullable = isNullable,
     )
 
-private fun WsResponse.consume() =
-    Endpoint.Response(
-        status = status,
-        headers = headers.map { it.consume() },
-        content = content?.consume()
+    is WsUnit -> Reference.Unit(
+        isNullable = isNullable,
     )
 
-private fun WsContent.consume() =
-    Endpoint.Content(
-        type = type,
+    is WsCustom -> Reference.Custom(
+        value = value,
+        isNullable = isNullable,
+    )
+
+    is WsPrimitive -> Reference.Primitive(
+        type = type.consume(),
+        isNullable = isNullable,
+    )
+
+    is WsDict -> Reference.Dict(
         reference = reference.consume(),
+        isNullable = isNullable,
     )
 
-private fun WsReference.consume(): Reference =
-    when (this) {
-        is WsAny -> Reference.Any(
-            isNullable = isNullable
-        )
+    is WsIterable -> Reference.Iterable(
+        reference = reference.consume(),
+        isNullable = isNullable,
+    )
+}
 
-        is WsUnit -> Reference.Unit(
-            isNullable = isNullable
-        )
+private fun WsPrimitiveType.consume() = when (this) {
+    WsPrimitiveType.String -> Reference.Primitive.Type.String
+    WsPrimitiveType.Integer -> Reference.Primitive.Type.Integer()
+    WsPrimitiveType.Number -> Reference.Primitive.Type.Number()
+    WsPrimitiveType.Boolean -> Reference.Primitive.Type.Boolean
+    WsPrimitiveType.Bytes -> Reference.Primitive.Type.Bytes
+}
 
-        is WsCustom -> Reference.Custom(
-            value = value,
-            isNullable = isNullable,
-        )
+fun Node.produce(): WsNode = when (this) {
+    is Type -> WsType(
+        identifier = identifier.value,
+        comment = comment?.value,
+        shape = shape.produce(),
+    )
 
-        is WsPrimitive -> Reference.Primitive(
-            type = type.consume(),
-            isNullable = isNullable,
-        )
+    is Endpoint -> WsEndpoint(
+        identifier = identifier.value,
+        comment = comment?.value,
+        method = method.produce(),
+        path = path.produce(),
+        query = queries.produce(),
+        headers = headers.produce(),
+        cookies = cookies.produce(),
+        requests = requests.produce(),
+        responses = responses.produce(),
+    )
 
-        is WsDict -> Reference.Dict(
-            reference = reference.consume(),
-            isNullable = isNullable,
-        )
+    is Enum -> WsEnum(
+        identifier = identifier.value,
+        comment = comment?.value,
+        entries = entries.toTypedArray(),
+    )
 
-        is WsIterable -> Reference.Iterable(
-            reference = reference.consume(),
-            isNullable = isNullable,
-        )
-    }
+    is Refined -> WsRefined(
+        identifier = identifier.value,
+        comment = comment?.value,
+        validator = validator.value,
+    )
 
-private fun WsPrimitiveType.consume() =
-    when (this) {
-        WsPrimitiveType.String -> Reference.Primitive.Type.String
-        WsPrimitiveType.Integer -> Reference.Primitive.Type.Integer()
-        WsPrimitiveType.Number -> Reference.Primitive.Type.Number()
-        WsPrimitiveType.Boolean -> Reference.Primitive.Type.Boolean
-        WsPrimitiveType.Bytes -> Reference.Primitive.Type.Bytes
-    }
+    is Union -> WsUnion(
+        identifier = identifier.value,
+        comment = comment?.value,
+        entries = entries
+            .map { it.produce() }
+            .toTypedArray(),
+    )
 
+    is Channel -> WsChannel(
+        identifier = identifier.value,
+        comment = comment?.value,
+        reference = reference.produce(),
+    )
+}
 
-fun Node.produce(): WsNode =
-    when (this) {
-        is Type -> WsType(
-            identifier = identifier.value,
-            comment = comment?.value,
-            shape = shape.produce()
-        )
-
-        is Endpoint -> WsEndpoint(
-            identifier = identifier.value,
-            comment = comment?.value,
-            method = method.produce(),
-            path = path.produce(),
-            query = queries.produce(),
-            headers = headers.produce(),
-            cookies = cookies.produce(),
-            requests = requests.produce(),
-            responses = responses.produce(),
-        )
-
-        is Enum -> WsEnum(
-            identifier = identifier.value,
-            comment = comment?.value,
-            entries = entries.toTypedArray()
-        )
-
-        is Refined -> WsRefined(
-            identifier = identifier.value,
-            comment = comment?.value,
-            validator = validator.value
-        )
-
-        is Union -> WsUnion(
-            identifier = identifier.value,
-            comment = comment?.value,
-            entries = entries
-                .map { it.produce() }
-                .toTypedArray())
-
-        is Channel -> WsChannel(
-            identifier = identifier.value,
-            comment = comment?.value,
-            reference = reference.produce(),
-        )
-    }
-
-fun List<Node>.produce(): Array<WsNode> =
-    map { it.produce() }.toTypedArray()
+fun List<Node>.produce(): Array<WsNode> = map { it.produce() }.toTypedArray()
 
 private fun Type.Shape.produce() = WsShape(
-    value.map { it.produce() }.toTypedArray()
+    value.map { it.produce() }.toTypedArray(),
 )
 
 private fun List<Endpoint.Segment>.produce(): Array<WsSegment> = map {
@@ -219,7 +208,7 @@ private fun List<Endpoint.Segment>.produce(): Array<WsSegment> = map {
 
 private fun Field.produce() = WsField(
     identifier = identifier.produce(),
-    reference = reference.produce()
+    reference = reference.produce(),
 )
 
 private fun List<Field>.produce() = map { it.produce() }.toTypedArray()
@@ -264,7 +253,7 @@ private fun List<Endpoint.Request>.produce() = map { it.produce() }.toTypedArray
 private fun Endpoint.Response.produce() = WsResponse(
     status = status,
     headers = headers.map { it.produce() }.toTypedArray(),
-    content = content?.produce()
+    content = content?.produce(),
 )
 
 private fun List<Endpoint.Response>.produce() = map { it.produce() }.toTypedArray()
@@ -278,7 +267,7 @@ sealed interface WsNode {
 data class WsType(
     override val identifier: String,
     val comment: String?,
-    val shape: WsShape
+    val shape: WsShape,
 ) : WsNode
 
 @JsExport
@@ -294,21 +283,21 @@ data class WsEndpoint(
     val headers: Array<WsField>,
     val cookies: Array<WsField>,
     val requests: Array<WsRequest>,
-    val responses: Array<WsResponse>
+    val responses: Array<WsResponse>,
 ) : WsNode
 
 @JsExport
 data class WsEnum(
     override val identifier: String,
     val comment: String?,
-    val entries: Array<String>
+    val entries: Array<String>,
 ) : WsNode
 
 @JsExport
 data class WsUnion(
     override val identifier: String,
     val comment: String?,
-    val entries: Array<WsReference>
+    val entries: Array<WsReference>,
 ) : WsNode
 
 @JsExport
@@ -322,7 +311,7 @@ data class WsChannel(
 data class WsRefined(
     override val identifier: String,
     val comment: String?,
-    val validator: String
+    val validator: String,
 ) : WsNode
 
 @JsExport
@@ -337,9 +326,8 @@ data class WsLiteral(val value: String) : WsSegment
 @JsExport
 data class WsParam(
     val identifier: WsFieldIdentifier,
-    val reference: WsReference
+    val reference: WsReference,
 ) : WsSegment
-
 
 @JsExport
 data class Shape(val value: Array<WsField>)
@@ -372,7 +360,6 @@ data class WsIterable(val reference: WsReference, override val isNullable: Boole
 
 @JsExport
 data class WsDict(val reference: WsReference, override val isNullable: Boolean) : WsReference
-
 
 @JsExport
 data class WsCustom(

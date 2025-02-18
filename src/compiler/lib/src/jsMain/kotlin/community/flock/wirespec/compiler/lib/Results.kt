@@ -14,21 +14,20 @@ fun Either<Nel<WirespecException>, List<Emitted>>.produce(): WsCompilationResult
         result = WsCompiled(
             value = value
                 .map { it.produce() }
-                .toTypedArray()
-        )
+                .toTypedArray(),
+        ),
     )
 }
 
-fun Emitted.produce() =
-    WsEmitted(
-        typeName = typeName,
-        result = result
-    )
+fun Emitted.produce() = WsEmitted(
+    typeName = typeName,
+    result = result,
+)
 
 @JsExport
 class WsCompilationResult(
     val result: WsCompiled? = null,
-    val errors: Array<WsError> = emptyArray()
+    val errors: Array<WsError> = emptyArray(),
 )
 
 @JsExport
@@ -64,4 +63,3 @@ class WsEmitted(
     val typeName: String,
     val result: String,
 )
-

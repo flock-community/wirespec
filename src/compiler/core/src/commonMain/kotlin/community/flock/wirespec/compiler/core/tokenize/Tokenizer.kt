@@ -14,15 +14,17 @@ data class OptimizeOptions(
     val specify: Boolean = true,
 )
 
-fun LanguageSpec.tokenize(source: String, options: OptimizeOptions = OptimizeOptions()): Tokens =
-    tokenize(source, nonEmptyListOf(Token(type = StartOfProgram, value = "", coordinates = Coordinates())))
-        .let(optimize(options))
+fun LanguageSpec.tokenize(source: String, options: OptimizeOptions = OptimizeOptions()): Tokens = tokenize(source, nonEmptyListOf(Token(type = StartOfProgram, value = "", coordinates = Coordinates())))
+    .let(optimize(options))
 
 private tailrec fun LanguageSpec.tokenize(source: String, incompleteTokens: Tokens): Tokens {
     val (token, remaining) = extractToken(source, incompleteTokens.last().coordinates)
     val tokens = incompleteTokens + token
-    return if (token.type is EndOfProgram) tokens
-    else tokenize(remaining, tokens)
+    return if (token.type is EndOfProgram) {
+        tokens
+    } else {
+        tokenize(remaining, tokens)
+    }
 }
 
 private fun LanguageSpec.extractToken(source: String, previousTokenCoordinates: Coordinates) = orderedMatchers
@@ -30,13 +32,12 @@ private fun LanguageSpec.extractToken(source: String, previousTokenCoordinates: 
     ?.let { it to source.removePrefix(it.value) }
     ?: Pair(endToken(previousTokenCoordinates), "")
 
-private fun MatchResult.toToken(type: TokenType, previousTokenCoordinates: Coordinates) =
-    Token(value, type, previousTokenCoordinates.nextCoordinates(type, value))
+private fun MatchResult.toToken(type: TokenType, previousTokenCoordinates: Coordinates) = Token(value, type, previousTokenCoordinates.nextCoordinates(type, value))
 
 private fun Coordinates.nextCoordinates(type: TokenType, value: String) = when (type) {
     is NewLine -> Coordinates(
         line = line + 1,
-        idxAndLength = idxAndLength + value.length
+        idxAndLength = idxAndLength + value.length,
     )
 
     else -> this + value.length

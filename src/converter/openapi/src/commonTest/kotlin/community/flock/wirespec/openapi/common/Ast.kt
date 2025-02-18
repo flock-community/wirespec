@@ -25,8 +25,8 @@ object Ast {
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Custom(value = "TestWithDashGETRequestBody", isNullable = false),
-                    )
-                )
+                    ),
+                ),
             ),
             responses = listOf(
                 Endpoint.Response(
@@ -36,11 +36,11 @@ object Ast {
                         type = "application/json",
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
-                            isNullable = false
+                            isNullable = false,
                         ),
-                    )
-                )
-            )
+                    ),
+                ),
+            ),
         ),
         Type(
             comment = null,
@@ -54,8 +54,8 @@ object Ast {
                     Field(
                         identifier = FieldIdentifier("nest"),
                         reference = Reference.Custom(value = "TestWithDashGETRequestBodyNest", isNullable = true),
-                    )
-                )
+                    ),
+                ),
             ),
             extends = emptyList(),
         ),
@@ -71,11 +71,11 @@ object Ast {
                     Field(
                         identifier = FieldIdentifier("b"),
                         reference = Reference.Primitive(type = Reference.Primitive.Type.Number(), isNullable = true),
-                    )
-                )
+                    ),
+                ),
             ),
             extends = emptyList(),
-        )
+        ),
     )
     val objectInResponse = listOf(
         Endpoint(
@@ -88,8 +88,8 @@ object Ast {
             cookies = emptyList(),
             requests = listOf(
                 Endpoint.Request(
-                    content = null
-                )
+                    content = null,
+                ),
             ),
             responses = listOf(
                 Endpoint.Response(
@@ -99,11 +99,11 @@ object Ast {
                         type = "application/json",
                         reference = Reference.Custom(
                             value = "Test200ResponseBody",
-                            isNullable = false
+                            isNullable = false,
                         ),
-                    )
-                )
-            )
+                    ),
+                ),
+            ),
         ),
         Type(
             comment = null,
@@ -114,17 +114,17 @@ object Ast {
                         identifier = FieldIdentifier("id"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
-                            isNullable = true
+                            isNullable = true,
                         ),
                     ),
                     Field(
                         identifier = FieldIdentifier("nest"),
                         reference = Reference.Custom(
                             value = "Test200ResponseBodyNest",
-                            isNullable = true
+                            isNullable = true,
                         ),
-                    )
-                )
+                    ),
+                ),
             ),
             extends = emptyList(),
         ),
@@ -137,20 +137,20 @@ object Ast {
                         identifier = FieldIdentifier("a"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number(),
-                            isNullable = true
+                            isNullable = true,
                         ),
                     ),
                     Field(
                         identifier = FieldIdentifier("b"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number(),
-                            isNullable = true
+                            isNullable = true,
                         ),
-                    )
-                )
+                    ),
+                ),
             ),
             extends = emptyList(),
-        )
+        ),
     )
     val additionalProperties = listOf(
         Endpoint(
@@ -159,7 +159,7 @@ object Ast {
             method = Endpoint.Method.GET,
             path = listOf(
                 Endpoint.Segment.Literal(value = "additional"),
-                Endpoint.Segment.Literal(value = "properties")
+                Endpoint.Segment.Literal(value = "properties"),
             ),
             queries = emptyList(),
             headers = emptyList(),
@@ -171,12 +171,12 @@ object Ast {
                         reference = Reference.Dict(
                             reference = Reference.Custom(
                                 value = "Message",
-                                isNullable = false
+                                isNullable = false,
                             ),
                             isNullable = false,
                         ),
-                    )
-                )
+                    ),
+                ),
             ),
             responses = listOf(
                 Endpoint.Response(
@@ -187,11 +187,11 @@ object Ast {
                         reference = Reference.Dict(
                             reference = Reference.Custom(
                                 value = "Message",
-                                isNullable = false
+                                isNullable = false,
                             ),
-                            isNullable = false
+                            isNullable = false,
                         ),
-                    )
+                    ),
                 ),
                 Endpoint.Response(
                     status = "404",
@@ -203,9 +203,9 @@ object Ast {
                                 value = "AdditionalProperties404ResponseBody",
                                 isNullable = false,
                             ),
-                            isNullable = false
+                            isNullable = false,
                         ),
-                    )
+                    ),
                 ),
                 Endpoint.Response(
                     status = "500",
@@ -214,13 +214,13 @@ object Ast {
                         type = "application/json",
                         reference = Reference.Dict(
                             reference = Reference.Any(
-                                isNullable = false
+                                isNullable = false,
                             ),
-                            isNullable = false
+                            isNullable = false,
                         ),
-                    )
-                )
-            )
+                    ),
+                ),
+            ),
         ),
         Type(
             comment = null,
@@ -240,8 +240,8 @@ object Ast {
                             type = Reference.Primitive.Type.String,
                             isNullable = true,
                         ),
-                    )
-                )
+                    ),
+                ),
             ),
             extends = emptyList(),
         ),
@@ -263,11 +263,11 @@ object Ast {
                             type = Reference.Primitive.Type.String,
                             isNullable = true,
                         ),
-                    )
-                )
+                    ),
+                ),
             ),
             extends = emptyList(),
-        )
+        ),
     )
     val array = listOf(
         Endpoint(
@@ -286,14 +286,14 @@ object Ast {
                             reference = Reference.Iterable(
                                 reference = Reference.Custom(
                                     value = "MessageArray",
-                                    isNullable = false
+                                    isNullable = false,
                                 ),
-                                isNullable = false
+                                isNullable = false,
                             ),
-                            isNullable = false
+                            isNullable = false,
                         ),
-                    )
-                )
+                    ),
+                ),
             ),
             responses = listOf(
                 Endpoint.Response(
@@ -302,14 +302,14 @@ object Ast {
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Iterable(
-                                reference = Reference.Custom(
-                                    value = "ArrayGET200ResponseBody",
-                                    isNullable = false,
-                                ),
-                                isNullable = false
+                            reference = Reference.Custom(
+                                value = "ArrayGET200ResponseBody",
+                                isNullable = false,
+                            ),
+                            isNullable = false,
 
                         ),
-                    )
+                    ),
                 ),
                 Endpoint.Response(
                     status = "201",
@@ -320,14 +320,14 @@ object Ast {
                             reference = Reference.Iterable(
                                 reference = Reference.Custom(
                                     value = "MessageArray",
-                                    isNullable = false
+                                    isNullable = false,
 
                                 ),
-                                isNullable = false
+                                isNullable = false,
                             ),
-                            isNullable = false
+                            isNullable = false,
                         ),
-                    )
+                    ),
                 ),
                 Endpoint.Response(
                     status = "202",
@@ -335,16 +335,16 @@ object Ast {
                     content = Endpoint.Content(
                         type = "application/json",
                         reference = Reference.Iterable(
-                                reference = Reference.Primitive(
-                                    type = Reference.Primitive.Type.String,
-                                    isNullable = false
-                                ),
-                                isNullable = false
+                            reference = Reference.Primitive(
+                                type = Reference.Primitive.Type.String,
+                                isNullable = false,
+                            ),
+                            isNullable = false,
 
                         ),
-                    )
-                )
-            )
+                    ),
+                ),
+            ),
         ),
         Type(
             comment = null,
@@ -355,7 +355,7 @@ object Ast {
                         identifier = FieldIdentifier("code"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number(),
-                            isNullable = true
+                            isNullable = true,
                         ),
                     ),
                     Field(
@@ -364,8 +364,8 @@ object Ast {
                             type = Reference.Primitive.Type.String,
                             isNullable = true,
                         ),
-                    )
-                )
+                    ),
+                ),
             ),
             extends = emptyList(),
         ),
@@ -387,11 +387,11 @@ object Ast {
                             type = Reference.Primitive.Type.String,
                             isNullable = true,
                         ),
-                    )
-                )
+                    ),
+                ),
             ),
             extends = emptyList(),
-        )
+        ),
     )
 
     val allOf = listOf(
@@ -405,8 +405,8 @@ object Ast {
             cookies = emptyList(),
             requests = listOf(
                 Endpoint.Request(
-                    content = null
-                )
+                    content = null,
+                ),
             ),
             responses = listOf(
                 Endpoint.Response(
@@ -418,9 +418,9 @@ object Ast {
                             value = "AllofGET200ResponseBody",
                             isNullable = false,
                         ),
-                    )
-                )
-            )
+                    ),
+                ),
+            ),
         ),
         Type(
             comment = null,
@@ -454,8 +454,8 @@ object Ast {
                             value = "AllofGET200ResponseBodyD",
                             isNullable = true,
                         ),
-                    )
-                )
+                    ),
+                ),
             ),
             extends = emptyList(),
         ),
@@ -470,8 +470,8 @@ object Ast {
                             type = Reference.Primitive.Type.String,
                             isNullable = true,
                         ),
-                    )
-                )
+                    ),
+                ),
             ),
             extends = emptyList(),
         ),
@@ -486,8 +486,8 @@ object Ast {
                             type = Reference.Primitive.Type.String,
                             isNullable = true,
                         ),
-                    )
-                )
+                    ),
+                ),
             ),
             extends = emptyList(),
         ),
@@ -502,11 +502,11 @@ object Ast {
                             type = Reference.Primitive.Type.String,
                             isNullable = false,
                         ),
-                    )
-                )
+                    ),
+                ),
             ),
             extends = emptyList(),
-        )
+        ),
     )
 
     val oneOf = listOf(
@@ -520,8 +520,8 @@ object Ast {
             cookies = emptyList(),
             requests = listOf(
                 Endpoint.Request(
-                    content = null
-                )
+                    content = null,
+                ),
             ),
             responses = listOf(
                 Endpoint.Response(
@@ -533,9 +533,9 @@ object Ast {
                             value = "OneofGET200ResponseBody",
                             isNullable = false,
                         ),
-                    )
-                )
-            )
+                    ),
+                ),
+            ),
         ),
         Union(
             comment = null,
@@ -550,8 +550,8 @@ object Ast {
                 Reference.Custom(
                     value = "OneofGET200ResponseBody3",
                     isNullable = false,
-                )
-            )
+                ),
+            ),
         ),
         Type(
             comment = null,
@@ -564,8 +564,8 @@ object Ast {
                             type = Reference.Primitive.Type.String,
                             isNullable = true,
                         ),
-                    )
-                )
+                    ),
+                ),
             ),
             extends = emptyList(),
         ),
@@ -580,8 +580,8 @@ object Ast {
                             value = "OneofGET200ResponseBody3D",
                             isNullable = true,
                         ),
-                    )
-                )
+                    ),
+                ),
             ),
             extends = emptyList(),
         ),
@@ -592,14 +592,14 @@ object Ast {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier(
-                            "e"
+                            "e",
                         ),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isNullable = true,
                         ),
-                    )
-                )
+                    ),
+                ),
             ),
             extends = emptyList(),
         ),
@@ -614,8 +614,8 @@ object Ast {
                             type = Reference.Primitive.Type.String,
                             isNullable = true,
                         ),
-                    )
-                )
+                    ),
+                ),
             ),
             extends = emptyList(),
         ),
@@ -630,11 +630,11 @@ object Ast {
                             type = Reference.Primitive.Type.String,
                             isNullable = false,
                         ),
-                    )
-                )
+                    ),
+                ),
             ),
             extends = emptyList(),
-        )
+        ),
     )
 
     val enum = listOf(
@@ -650,14 +650,14 @@ object Ast {
                         value = "EnumGETParameterOrder",
                         isNullable = true,
                     ),
-                )
+                ),
             ),
             headers = emptyList(),
             cookies = emptyList(),
             requests = listOf(
                 Endpoint.Request(
-                    content = null
-                )
+                    content = null,
+                ),
             ),
             responses = listOf(
                 Endpoint.Response(
@@ -667,9 +667,9 @@ object Ast {
                         type = "application/json",
                         reference = Reference.Custom(
                             value = "Message",
-                            isNullable = false
+                            isNullable = false,
                         ),
-                    )
+                    ),
                 ),
                 Endpoint.Response(
                     status = "201",
@@ -679,15 +679,15 @@ object Ast {
                         reference = Reference.Custom(
                             value = "EnumGET201ResponseBody",
                             isNullable = false,
-                        )
-                    )
-                )
-            )
+                        ),
+                    ),
+                ),
+            ),
         ),
         Enum(
             comment = null,
             identifier = DefinitionIdentifier("EnumGETParameterOrder"),
-            entries = setOf("ASC", "DESC")
+            entries = setOf("ASC", "DESC"),
         ),
         Type(
             comment = null,
@@ -707,15 +707,15 @@ object Ast {
                             type = Reference.Primitive.Type.String,
                             isNullable = true,
                         ),
-                    )
-                )
+                    ),
+                ),
             ),
             extends = emptyList(),
         ),
         Enum(
             comment = null,
             identifier = DefinitionIdentifier("EnumGET201ResponseBodyCode"),
-            entries = setOf("WARNING", "ERROR")
+            entries = setOf("WARNING", "ERROR"),
         ),
         Type(
             comment = null,
@@ -727,26 +727,26 @@ object Ast {
                         reference = Reference.Iterable(
                             reference = Reference.Custom(
                                 value = "ErrorType",
-                                isNullable = false
+                                isNullable = false,
                             ),
-                            isNullable = false
+                            isNullable = false,
                         ),
                     ),
                     Field(
                         identifier = FieldIdentifier("text"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
-                            isNullable = true
+                            isNullable = true,
                         ),
-                    )
-                )
+                    ),
+                ),
             ),
             extends = emptyList(),
         ),
         Enum(
             comment = null,
             identifier = DefinitionIdentifier("ErrorType"),
-            entries = setOf("WARNING", "ERROR")
-        )
+            entries = setOf("WARNING", "ERROR"),
+        ),
     )
 }

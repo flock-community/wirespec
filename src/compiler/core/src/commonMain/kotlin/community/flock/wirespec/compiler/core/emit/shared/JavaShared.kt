@@ -25,21 +25,21 @@ data object JavaShared : Shared {
         |${Spacer}interface ServerEdge<Req extends Request<?>, Res extends Response<?>> {
         |${Spacer(2)}Req from(RawRequest request);
         |${Spacer(2)}RawResponse to(Res response);
-        |${Spacer}}
+        |$Spacer}
         |${Spacer}interface ClientEdge<Req extends Request<?>, Res extends Response<?>> {
         |${Spacer(2)}RawRequest to(Req request);
         |${Spacer(2)}Res from(RawResponse response);
-        |${Spacer}}
+        |$Spacer}
         |${Spacer}interface Client<Req extends Request<?>, Res extends Response<?>> {
         |${Spacer(2)}String getPathTemplate();
         |${Spacer(2)}String getMethod();
         |${Spacer(2)}ClientEdge<Req, Res> getClient(Serialization<String> serialization);
-        |${Spacer}}
+        |$Spacer}
         |${Spacer}interface Server<Req extends Request<?>, Res extends Response<?>> {
         |${Spacer(2)}String getPathTemplate();
         |${Spacer(2)}String getMethod();
         |${Spacer(2)}ServerEdge<Req, Res> getServer(Serialization<String> serialization);
-        |${Spacer}}
+        |$Spacer}
         |${Spacer}enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
         |${Spacer}interface Request<T> { Path getPath(); Method getMethod(); Queries getQueries(); Headers getHeaders(); T getBody(); interface Headers extends Wirespec.Headers {} }
         |${Spacer}interface Response<T> { int getStatus(); Headers getHeaders(); T getBody(); interface Headers extends Wirespec.Headers {} }
@@ -60,7 +60,7 @@ data object JavaShared : Shared {
         |${Spacer(3)}};
         |${Spacer(2)}}
         |${Spacer(2)}else { return type; }
-        |${Spacer}}
+        |$Spacer}
         |}
         |
     """.trimMargin()

@@ -18,13 +18,13 @@ open class Logger(logLevel: Level?) {
     }
 
     open val shouldWarnLog = when (logLevel) {
-        DEBUG, INFO, WARN-> true
+        DEBUG, INFO, WARN -> true
         null, ERROR -> false
     }
 
     open val shouldErrorLog = when (logLevel) {
         DEBUG, INFO, WARN, ERROR -> true
-        null  -> false
+        null -> false
     }
 
     open fun debug(string: String) = string logIf shouldDebugLog
@@ -35,7 +35,11 @@ open class Logger(logLevel: Level?) {
     private infix fun String.logIf(b: Boolean) = if (b) println(this) else Unit
 
     enum class Level {
-        DEBUG, INFO, WARN, ERROR;
+        DEBUG,
+        INFO,
+        WARN,
+        ERROR,
+        ;
 
         companion object {
             override fun toString() = entries.joinToString(", ")

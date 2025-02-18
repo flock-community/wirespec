@@ -27,7 +27,7 @@ import java.io.File
 @Mojo(
     name = "custom",
     defaultPhase = LifecyclePhase.GENERATE_SOURCES,
-    requiresDependencyResolution = ResolutionScope.COMPILE
+    requiresDependencyResolution = ResolutionScope.COMPILE,
 )
 class CustomMojo : BaseMojo() {
 
@@ -98,8 +98,11 @@ class CustomMojo : BaseMojo() {
 
         ast.map { (name, ast) -> name to ast.validate().let { emitter.emit(it) } }
             .flatMap { (name, results) ->
-                if (emitter.split) results
-                else listOf(Emitted(name, results.first().result))
+                if (emitter.split) {
+                    results
+                } else {
+                    listOf(Emitted(name, results.first().result))
+                }
             }
             .also { File(output).resolve(emitterPkg.toDirectory()).mkdirs() }
             .forEach { (name, result) ->
@@ -109,7 +112,6 @@ class CustomMojo : BaseMojo() {
 
     private fun getClassLoader(project: MavenProject): ClassLoader {
         try {
-
             val classpathElements = project.compileClasspathElements.apply {
                 add(project.build.outputDirectory)
                 add(project.build.testOutputDirectory)

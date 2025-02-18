@@ -10,7 +10,10 @@ import kotlinx.serialization.json.Json
 object AvroParser {
 
     fun parse(schemaContent: String, strict: Boolean = true): AST {
-        val json = Json { ignoreUnknownKeys = true; isLenient = true }
+        val json = Json {
+            ignoreUnknownKeys = true
+            isLenient = true
+        }
         val avro = json.decodeFromString<AvroModel.Type>(schemaContent)
         return avro.flatten() + when (avro) {
             is AvroModel.RecordType -> Channel(
@@ -18,8 +21,8 @@ object AvroParser {
                 identifier = DefinitionIdentifier(name = avro.name),
                 reference = Reference.Custom(
                     value = avro.name,
-                    isNullable = false
-                )
+                    isNullable = false,
+                ),
             )
 
             is AvroModel.ArrayType -> TODO()

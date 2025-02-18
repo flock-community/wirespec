@@ -35,9 +35,13 @@ import community.flock.kotlinx.openapi.bindings.v2.Type as OpenapiType
 
 object OpenApiV2Parser {
 
-    fun parse(json: String, ignoreUnknown: Boolean = false): AST =
-        OpenAPI(json = Json { prettyPrint = true; ignoreUnknownKeys = ignoreUnknown })
-            .decodeFromString(json).parse()
+    fun parse(json: String, ignoreUnknown: Boolean = false): AST = OpenAPI(
+        json = Json {
+            prettyPrint = true
+            ignoreUnknownKeys = ignoreUnknown
+        },
+    )
+        .decodeFromString(json).parse()
 
     fun SwaggerObject.parse(): AST = listOf(
         parseEndpoints(),
@@ -74,8 +78,8 @@ object OpenApiV2Parser {
                                             is ReferenceObject -> toReference(schema, isNullable)
                                             is SchemaObject -> toReference(schema, className(name, "RequestBody"), isNullable)
                                             null -> TODO("Not yet implemented")
-                                        }
-                                    )
+                                        },
+                                    ),
                                 )
                             }
                     }
@@ -99,11 +103,11 @@ object OpenApiV2Parser {
                                                 is SchemaObject -> toReference(
                                                     schema,
                                                     className(name, status.value, "ResponseBody"),
-                                                    false
+                                                    false,
                                                 )
                                             },
                                         )
-                                    }
+                                    },
                                 )
                             }
                     }
@@ -120,9 +124,8 @@ object OpenApiV2Parser {
                         cookies = emptyList(),
                         requests = requests,
                         responses = responses,
-                    )
+                    ),
                 )
-
             }
         }
 
@@ -145,8 +148,8 @@ object OpenApiV2Parser {
                     Enum(
                         comment = null,
                         identifier = DefinitionIdentifier(className(name, "Parameter", parameter.name)),
-                        entries = parameter.enum!!.map { it.content }.toSet()
-                    )
+                        entries = parameter.enum!!.map { it.content }.toSet(),
+                    ),
                 )
 
                 else -> emptyList()
@@ -180,9 +183,10 @@ object OpenApiV2Parser {
             is SchemaObject -> when (schema.type) {
                 null, OpenapiType.OBJECT -> flatten(schema, className(name, statusCode.value, "ResponseBody"))
 
-                OpenapiType.ARRAY -> schema.items
-                    ?.let { flatten(it, className(name, statusCode.value, "ResponseBody")) }
-                    .orEmpty()
+                OpenapiType.ARRAY ->
+                    schema.items
+                        ?.let { flatten(it, className(name, statusCode.value, "ResponseBody")) }
+                        .orEmpty()
 
                 else -> emptyList()
             }
@@ -204,78 +208,69 @@ object OpenApiV2Parser {
         else -> error("Cannot map type: $this")
     }
 
-    private fun SwaggerObject.resolveParameters(operation: OperationObject) =
-        operation.parameters.orEmpty()
-            .map {
-                when (it) {
-                    is ParameterObject -> it
-                    is ReferenceObject -> resolveParameterObject(it)
-                }
+    private fun SwaggerObject.resolveParameters(operation: OperationObject) = operation.parameters.orEmpty()
+        .map {
+            when (it) {
+                is ParameterObject -> it
+                is ReferenceObject -> resolveParameterObject(it)
             }
+        }
 
-    private fun SwaggerObject.resolveParameters(itemObject: PathItemObject) =
-        itemObject.parameters.orEmpty()
-            .map {
-                when (it) {
-                    is ParameterObject -> it
-                    is ReferenceObject -> resolveParameterObject(it)
-                }
+    private fun SwaggerObject.resolveParameters(itemObject: PathItemObject) = itemObject.parameters.orEmpty()
+        .map {
+            when (it) {
+                is ParameterObject -> it
+                is ReferenceObject -> resolveParameterObject(it)
             }
-
-    private fun SwaggerObject.resolveParameterObject(reference: ReferenceObject) =
-        parameters
-            ?.get(reference.getReference())
-            ?: error("Cannot resolve ref: ${reference.ref}")
-
-    private fun SwaggerObject.resolveResponseObject(reference: ReferenceObject) =
-        responses
-            ?.get(reference.getReference())
-            ?: error("Cannot resolve ref: ${reference.ref}")
-
-    private fun SwaggerObject.resolveSchemaObject(reference: ReferenceObject) =
-        definitions
-            ?.get(reference.getReference())
-            ?: error("Cannot resolve ref: ${reference.ref}")
-
-    private tailrec fun SwaggerObject.resolve(schemaOrReference: SchemaOrReferenceObject): SchemaObject =
-        when (schemaOrReference) {
-            is SchemaObject -> schemaOrReference
-            is ReferenceObject -> resolve(resolveSchemaObject(schemaOrReference))
         }
 
-    private fun SwaggerObject.resolve(schemaOrReferenceOrBoolean: SchemaOrReferenceOrBooleanObject): SchemaObject =
-        when (schemaOrReferenceOrBoolean) {
-            is SchemaObject -> schemaOrReferenceOrBoolean
-            is ReferenceObject -> resolve(resolveSchemaObject(schemaOrReferenceOrBoolean))
-            is BooleanObject -> TODO("Not yet implemented")
-        }
+    private fun SwaggerObject.resolveParameterObject(reference: ReferenceObject) = parameters
+        ?.get(reference.getReference())
+        ?: error("Cannot resolve ref: ${reference.ref}")
 
-    private fun SwaggerObject.resolve(responseOrReference: ResponseOrReferenceObject): ResponseObject =
-        when (responseOrReference) {
-            is ResponseObject -> responseOrReference
-            is ReferenceObject -> resolveResponseObject(responseOrReference)
-        }
+    private fun SwaggerObject.resolveResponseObject(reference: ReferenceObject) = responses
+        ?.get(reference.getReference())
+        ?: error("Cannot resolve ref: ${reference.ref}")
 
-    private fun HeaderOrReferenceObject.resolve(): HeaderObject =
-        when (this) {
-            is HeaderObject -> this
-            is ReferenceObject -> error("Headers cannot be referenced in open api v2")
-        }
+    private fun SwaggerObject.resolveSchemaObject(reference: ReferenceObject) = definitions
+        ?.get(reference.getReference())
+        ?: error("Cannot resolve ref: ${reference.ref}")
 
-    private fun SwaggerObject.resolve(parameterOrReference: ParameterOrReferenceObject): ParameterObject =
-        when (parameterOrReference) {
-            is ParameterObject -> parameterOrReference
-            is ReferenceObject -> resolveParameterObject(parameterOrReference)
-        }
+    private tailrec fun SwaggerObject.resolve(schemaOrReference: SchemaOrReferenceObject): SchemaObject = when (schemaOrReference) {
+        is SchemaObject -> schemaOrReference
+        is ReferenceObject -> resolve(resolveSchemaObject(schemaOrReference))
+    }
+
+    private fun SwaggerObject.resolve(schemaOrReferenceOrBoolean: SchemaOrReferenceOrBooleanObject): SchemaObject = when (schemaOrReferenceOrBoolean) {
+        is SchemaObject -> schemaOrReferenceOrBoolean
+        is ReferenceObject -> resolve(resolveSchemaObject(schemaOrReferenceOrBoolean))
+        is BooleanObject -> TODO("Not yet implemented")
+    }
+
+    private fun SwaggerObject.resolve(responseOrReference: ResponseOrReferenceObject): ResponseObject = when (responseOrReference) {
+        is ResponseObject -> responseOrReference
+        is ReferenceObject -> resolveResponseObject(responseOrReference)
+    }
+
+    private fun HeaderOrReferenceObject.resolve(): HeaderObject = when (this) {
+        is HeaderObject -> this
+        is ReferenceObject -> error("Headers cannot be referenced in open api v2")
+    }
+
+    private fun SwaggerObject.resolve(parameterOrReference: ParameterOrReferenceObject): ParameterObject = when (parameterOrReference) {
+        is ParameterObject -> parameterOrReference
+        is ReferenceObject -> resolveParameterObject(parameterOrReference)
+    }
 
     private fun SwaggerObject.flatten(schemaObject: SchemaObject, name: String): AST = when {
         schemaObject.additionalProperties != null -> when (schemaObject.additionalProperties) {
             is BooleanObject -> emptyList()
-            else -> schemaObject.additionalProperties
-                ?.let { resolve(it) }
-                ?.takeIf { it.properties != null }
-                ?.let { flatten(it, name) }
-                ?: emptyList()
+            else ->
+                schemaObject.additionalProperties
+                    ?.let { resolve(it) }
+                    ?.takeIf { it.properties != null }
+                    ?.let { flatten(it, name) }
+                    ?: emptyList()
         }
 
         schemaObject.allOf != null -> listOf(
@@ -284,32 +279,36 @@ object OpenApiV2Parser {
                 identifier = DefinitionIdentifier(name),
                 shape = Type.Shape(
                     schemaObject.allOf
-                    .orEmpty()
-                    .flatMap {
-                        when (it) {
-                            is SchemaObject -> toField(it, name)
-                            is ReferenceObject -> toField(resolve(resolveSchemaObject(it)), it.getReference())
+                        .orEmpty()
+                        .flatMap {
+                            when (it) {
+                                is SchemaObject -> toField(it, name)
+                                is ReferenceObject -> toField(resolve(resolveSchemaObject(it)), it.getReference())
+                            }
+                        }
+                        .distinctBy { it.identifier },
+                ),
+                extends = emptyList(),
+            ),
+        ).plus(
+            schemaObject.allOf!!.flatMap {
+                when (it) {
+                    is ReferenceObject -> emptyList()
+                    is SchemaObject -> it.properties.orEmpty().flatMap { (key, value) ->
+                        when (value) {
+                            is ReferenceObject -> emptyList()
+                            is SchemaObject -> flatten(value, className(name, key))
                         }
                     }
-                    .distinctBy { it.identifier }),
-                extends = emptyList(),
-            )
-        ).plus(schemaObject.allOf!!.flatMap {
-            when (it) {
-                is ReferenceObject -> emptyList()
-                is SchemaObject -> it.properties.orEmpty().flatMap { (key, value) ->
-                    when (value) {
-                        is ReferenceObject -> emptyList()
-                        is SchemaObject -> flatten(value, className(name, key))
-                    }
                 }
-            }
-        })
+            },
+        )
 
-        schemaObject.enum != null -> schemaObject.enum!!
-            .map { it.content }
-            .toSet()
-            .let { listOf(Enum(comment = null, identifier = DefinitionIdentifier(name), entries = it)) }
+        schemaObject.enum != null ->
+            schemaObject.enum!!
+                .map { it.content }
+                .toSet()
+                .let { listOf(Enum(comment = null, identifier = DefinitionIdentifier(name), entries = it)) }
 
         else -> when (schemaObject.type) {
             null, OpenapiType.OBJECT -> {
@@ -322,7 +321,7 @@ object OpenApiV2Parser {
                         identifier = DefinitionIdentifier(name),
                         shape = Type.Shape(toField(schemaObject, name)),
                         extends = emptyList(),
-                    )
+                    ),
                 )
                 schema + fields
             }
@@ -337,74 +336,80 @@ object OpenApiV2Parser {
         }
     }
 
-    private fun SwaggerObject.flatten(schemaOrReference: SchemaOrReferenceObject, name: String): AST =
-        when (schemaOrReference) {
-            is SchemaObject -> flatten(schemaOrReference, name)
-            is ReferenceObject -> emptyList()
-        }
+    private fun SwaggerObject.flatten(schemaOrReference: SchemaOrReferenceObject, name: String): AST = when (schemaOrReference) {
+        is SchemaObject -> flatten(schemaOrReference, name)
+        is ReferenceObject -> emptyList()
+    }
 
-    private fun SwaggerObject.toReference(reference: ReferenceObject, isNullable: Boolean): Reference =
-        resolveSchemaObject(reference).let { refOrSchema ->
-            val schema = resolve(refOrSchema)
-            when {
-                schema.additionalProperties != null -> when (val additionalProperties = schema.additionalProperties!!) {
-                    is BooleanObject -> Reference.Dict(Reference.Any(isNullable = false), isNullable = isNullable)
-                    is ReferenceObject -> toReference(additionalProperties, false).toDict(isNullable)
-                    is SchemaObject -> toReference(additionalProperties, reference.getReference(), false).toDict(isNullable)
+    private fun SwaggerObject.toReference(reference: ReferenceObject, isNullable: Boolean): Reference = resolveSchemaObject(reference).let { refOrSchema ->
+        val schema = resolve(refOrSchema)
+        when {
+            schema.additionalProperties != null -> when (val additionalProperties = schema.additionalProperties!!) {
+                is BooleanObject -> Reference.Dict(Reference.Any(isNullable = false), isNullable = isNullable)
+                is ReferenceObject -> toReference(additionalProperties, false).toDict(isNullable)
+                is SchemaObject -> toReference(additionalProperties, reference.getReference(), false).toDict(isNullable)
+            }
+
+            schema.enum != null -> Reference.Custom(
+                className(reference.getReference()),
+                isNullable = isNullable,
+            )
+
+            schema.type.isPrimitive() -> Reference.Primitive(
+                schema.type!!.toPrimitive(schema.format),
+                isNullable = isNullable,
+            )
+
+            else -> when (schema.type) {
+                OpenapiType.ARRAY -> when (val items = schema.items) {
+                    is ReferenceObject -> toReference(items, false).toIterable(isNullable)
+                    is SchemaObject -> toReference(items, className(reference.getReference(), "Array"), isNullable).toIterable(isNullable)
+                    null -> error("items cannot be null when type is array: ${reference.ref}")
                 }
 
-                schema.enum != null -> Reference.Custom(
-                    className(reference.getReference()),
-                    isNullable = isNullable
-                )
-
-                schema.type.isPrimitive() -> Reference.Primitive(
-                    schema.type!!.toPrimitive(schema.format),
-                    isNullable = isNullable
-                )
-
-                else -> when (schema.type) {
-                    OpenapiType.ARRAY -> when (val items = schema.items) {
-                        is ReferenceObject -> toReference(items, false).toIterable(isNullable)
-                        is SchemaObject -> toReference(items, className(reference.getReference(), "Array"), isNullable).toIterable(isNullable)
-                        null -> error("items cannot be null when type is array: ${reference.ref}")
-                    }
-
-                    else -> when (refOrSchema) {
-                        is SchemaObject -> Reference.Custom(className(reference.getReference()), isNullable)
-                        is ReferenceObject -> Reference.Custom(className(refOrSchema.getReference()), isNullable)
-                    }
-
+                else -> when (refOrSchema) {
+                    is SchemaObject -> Reference.Custom(className(reference.getReference()), isNullable)
+                    is ReferenceObject -> Reference.Custom(className(refOrSchema.getReference()), isNullable)
                 }
             }
         }
-
+    }
 
     private fun SwaggerObject.toReference(schema: SchemaObject, name: String, isNullable: Boolean): Reference = when {
         schema.additionalProperties != null -> when (val additionalProperties = schema.additionalProperties!!) {
             is BooleanObject -> Reference.Dict(Reference.Any(isNullable = false), isNullable = isNullable)
             is ReferenceObject -> toReference(additionalProperties, false).toDict(isNullable)
-            is SchemaObject -> additionalProperties
-                .takeIf { it.type.isPrimitive() || it.properties != null }
-                ?.let { toReference(it, name, false).toDict(isNullable) }
-                ?: Reference.Dict(Reference.Any(isNullable = false), isNullable = isNullable)
+            is SchemaObject ->
+                additionalProperties
+                    .takeIf { it.type.isPrimitive() || it.properties != null }
+                    ?.let { toReference(it, name, false).toDict(isNullable) }
+                    ?: Reference.Dict(Reference.Any(isNullable = false), isNullable = isNullable)
         }
 
         schema.enum != null -> {
-            if (schema.additionalProperties != null) Reference.Dict(Reference.Custom(name, false), isNullable = isNullable)
-            else Reference.Custom(name, isNullable = isNullable)
+            if (schema.additionalProperties != null) {
+                Reference.Dict(Reference.Custom(name, false), isNullable = isNullable)
+            } else {
+                Reference.Custom(name, isNullable = isNullable)
+            }
         }
         else -> when (val type = schema.type) {
             OpenapiType.STRING, OpenapiType.INTEGER, OpenapiType.NUMBER, OpenapiType.BOOLEAN -> {
-                if (schema.additionalProperties != null) Reference.Dict(Reference.Primitive(type.toPrimitive(schema.format), isNullable = false), isNullable = isNullable)
-                else Reference.Primitive(type.toPrimitive(schema.format), isNullable = isNullable)
+                if (schema.additionalProperties != null) {
+                    Reference.Dict(Reference.Primitive(type.toPrimitive(schema.format), isNullable = false), isNullable = isNullable)
+                } else {
+                    Reference.Primitive(type.toPrimitive(schema.format), isNullable = isNullable)
+                }
             }
 
             null, OpenapiType.OBJECT ->
                 when {
                     schema.additionalProperties is BooleanObject -> {
-                        if (schema.additionalProperties != null) Reference.Dict(Reference.Any(isNullable = isNullable), isNullable = false)
-                        else Reference.Any(isNullable = isNullable)
+                        if (schema.additionalProperties != null) {
+                            Reference.Dict(Reference.Any(isNullable = isNullable), isNullable = false)
+                        } else {
+                            Reference.Any(isNullable = isNullable)
+                        }
                     }
 
                     else -> {
@@ -450,43 +455,41 @@ object OpenApiV2Parser {
         else -> error("Type is not a primitive")
     }
 
-    private fun SwaggerObject.toField(header: HeaderObject, identifier: String) =
-        Field(
-            identifier = FieldIdentifier(identifier),
-            reference = when (header.type) {
-                "array" -> header.items?.let { resolve(it) }?.let { toReference(it, identifier, false) }
-                    ?: error("Item cannot be null")
+    private fun SwaggerObject.toField(header: HeaderObject, identifier: String) = Field(
+        identifier = FieldIdentifier(identifier),
+        reference = when (header.type) {
+            "array" -> header.items?.let { resolve(it) }?.let { toReference(it, identifier, false) }
+                ?: error("Item cannot be null")
 
-                else -> Reference.Primitive(
-                    header.type.mapType(header.format),
-                    isNullable = false,
+            else -> Reference.Primitive(
+                header.type.mapType(header.format),
+                isNullable = false,
+            )
+        },
+    )
+
+    private fun SwaggerObject.toField(schema: SchemaObject, name: String) = schema.properties.orEmpty().map { (key, value) ->
+        val isNullable = !(schema.required?.contains(key) ?: false)
+        when (value) {
+            is SchemaObject -> {
+                Field(
+                    identifier = FieldIdentifier(key),
+                    reference = when {
+                        value.enum != null -> toReference(value, className(name, key), isNullable)
+                        value.type == OpenapiType.ARRAY -> toReference(value, className(name, key, "Array"), isNullable)
+                        else -> toReference(value, className(name, key), isNullable)
+                    },
                 )
-            },
-        )
+            }
 
-    private fun SwaggerObject.toField(schema: SchemaObject, name: String) =
-        schema.properties.orEmpty().map { (key, value) ->
-            val isNullable = !(schema.required?.contains(key) ?: false)
-            when (value) {
-                is SchemaObject -> {
-                    Field(
-                        identifier = FieldIdentifier(key),
-                        reference = when {
-                            value.enum != null -> toReference(value, className(name, key), isNullable)
-                            value.type == OpenapiType.ARRAY -> toReference(value, className(name, key, "Array"), isNullable)
-                            else -> toReference(value, className(name, key), isNullable)
-                        },
-                    )
-                }
-
-                is ReferenceObject -> {
-                    Field(
-                        identifier = FieldIdentifier(key),
-                        reference = toReference(value, isNullable),
-                    )
-                }
+            is ReferenceObject -> {
+                Field(
+                    identifier = FieldIdentifier(key),
+                    reference = toReference(value, isNullable),
+                )
             }
         }
+    }
 
     private fun SwaggerObject.toField(parameter: ParameterObject, name: String) = resolve(parameter)
         .let {
@@ -494,9 +497,10 @@ object OpenApiV2Parser {
             when {
                 parameter.enum != null -> Reference.Custom(className(name, "Parameter", it.name), isNullable = isNullable)
                 else -> when (val type = it.type) {
-                    OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> type
-                        .toPrimitive(it.format)
-                        .let { primitive -> Reference.Primitive(primitive, isNullable = isNullable) }
+                    OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN ->
+                        type
+                            .toPrimitive(it.format)
+                            .let { primitive -> Reference.Primitive(primitive, isNullable = isNullable) }
 
                     OpenapiType.ARRAY -> it.items?.let { items -> resolve(items) }
                         ?.let { it.type?.toPrimitive(it.format) }
@@ -507,7 +511,6 @@ object OpenApiV2Parser {
                     OpenapiType.FILE -> TODO("Not yet implemented")
                     null -> TODO("Not yet implemented")
                 }
-
             }
         }.let { Field(FieldIdentifier(parameter.name), it) }
 
@@ -522,7 +525,7 @@ object OpenApiV2Parser {
                     ?.let {
                         Endpoint.Segment.Param(
                             FieldIdentifier(param),
-                            Reference.Primitive(it, false)
+                            Reference.Primitive(it, false),
                         )
                     }
                     ?: error(" Declared path parameter $param needs to be defined as a path parameter in path or operation level")
@@ -552,7 +555,7 @@ object OpenApiV2Parser {
         val pathItem: PathItemObject,
         val method: Endpoint.Method,
         val operation: OperationObject,
-        val type: String
+        val type: String,
     )
 
     private fun SwaggerObject.flatMapRequests(f: FlattenRequest.() -> AST) = paths
@@ -565,7 +568,7 @@ object OpenApiV2Parser {
                             pathItem = pathItem,
                             method = method,
                             operation = operation,
-                            type = type
+                            type = type,
                         )
                     }
                 }
@@ -579,7 +582,7 @@ object OpenApiV2Parser {
         val operation: OperationObject,
         val statusCode: StatusCode,
         val response: ResponseOrReferenceObject,
-        val type: String
+        val type: String,
     )
 
     private fun SwaggerObject.flatMapResponses(f: FlattenResponse.() -> AST) = paths
@@ -596,7 +599,7 @@ object OpenApiV2Parser {
                                     operation = operation,
                                     statusCode = statusCode,
                                     response = response,
-                                    type = type
+                                    type = type,
                                 )
                             }
                         }
@@ -616,12 +619,12 @@ private fun OpenapiType?.isPrimitive() = when (this) {
     null -> false
 }
 
-private fun Reference.toIterable(isNullable:Boolean) = Reference.Iterable(
+private fun Reference.toIterable(isNullable: Boolean) = Reference.Iterable(
     reference = this,
     isNullable = isNullable,
 )
 
-private fun Reference.toDict(isNullable:Boolean) = Reference.Dict(
+private fun Reference.toDict(isNullable: Boolean) = Reference.Dict(
     reference = this,
     isNullable = isNullable,
 )

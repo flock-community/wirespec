@@ -9,19 +9,21 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class Controller(
-    private val service: Service
-) : AddPetEndpoint.Handler, GetPetByIdEndpoint.Handler, UpdatePetEndpoint.Handler, DeletePetEndpoint.Handler, FindPetsByTagsEndpoint.Handler {
+    private val service: Service,
+) : AddPetEndpoint.Handler,
+    GetPetByIdEndpoint.Handler,
+    UpdatePetEndpoint.Handler,
+    DeletePetEndpoint.Handler,
+    FindPetsByTagsEndpoint.Handler {
 
     override suspend fun addPet(request: AddPetEndpoint.Request): AddPetEndpoint.Response<*> {
         service.create(request.body)
         return AddPetEndpoint.Response200(request.body)
     }
 
-    override suspend fun getPetById(request: GetPetByIdEndpoint.Request): GetPetByIdEndpoint.Response<*> {
-        return service.list.find { it.id == request.path.petId }
-            ?.let { GetPetByIdEndpoint.Response200(it) }
-            ?: GetPetByIdEndpoint.Response404(Unit)
-    }
+    override suspend fun getPetById(request: GetPetByIdEndpoint.Request): GetPetByIdEndpoint.Response<*> = service.list.find { it.id == request.path.petId }
+        ?.let { GetPetByIdEndpoint.Response200(it) }
+        ?: GetPetByIdEndpoint.Response404(Unit)
 
     override suspend fun updatePet(request: UpdatePetEndpoint.Request): UpdatePetEndpoint.Response<*> {
         service.update(request.body)
@@ -35,7 +37,5 @@ class Controller(
         }
     }
 
-    override suspend fun findPetsByTags(request: FindPetsByTagsEndpoint.Request): FindPetsByTagsEndpoint.Response<*> =
-        FindPetsByTagsEndpoint.Response200(emptyList())
-
+    override suspend fun findPetsByTags(request: FindPetsByTagsEndpoint.Request): FindPetsByTagsEndpoint.Response<*> = FindPetsByTagsEndpoint.Response200(emptyList())
 }

@@ -19,6 +19,4 @@ class TokenizeEnumTest {
         RightCurly,
         EndOfProgram,
     )
-
-
 }

@@ -5,7 +5,10 @@ import community.flock.wirespec.plugin.Reader
 import community.flock.wirespec.plugin.Writer
 import community.flock.wirespec.plugin.cli.js.fs
 
-actual abstract class File actual constructor(actual val path: FullFilePath) : Reader, Writer, Copy {
+actual abstract class File actual constructor(actual val path: FullFilePath) :
+    Reader,
+    Writer,
+    Copy {
 
     actual override fun read(): String = fs.readFileSync(path.toString(), "utf-8").unsafeCast<String>()
 
@@ -17,5 +20,4 @@ actual abstract class File actual constructor(actual val path: FullFilePath) : R
             fs.writeFileSync(this.toString(), string)
         }
     }
-
 }
