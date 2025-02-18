@@ -39,6 +39,7 @@ kotlin {
                 implementation(libs.kotlinx.resources)
                 implementation(libs.kotlin.test)
                 implementation(libs.bundles.kotest)
+                implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.6.0")
             }
         }
         val jvmTest by getting {
