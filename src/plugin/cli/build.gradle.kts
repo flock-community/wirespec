@@ -57,6 +57,7 @@ kotlin {
                 implementation(project(":src:converter:avro"))
                 implementation(project(":src:converter:openapi"))
                 implementation(libs.clikt)
+                implementation(libs.kotlinx.io.core)
             }
         }
         val commonTest by getting {
