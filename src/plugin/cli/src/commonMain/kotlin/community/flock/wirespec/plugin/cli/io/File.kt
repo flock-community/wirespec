@@ -23,5 +23,12 @@ abstract class File(val path: FullFilePath) :
         .let { SystemFileSystem.source(it).buffered().readString() }
 
     override fun write(string: String) = Path(path.toString())
-        .let { SystemFileSystem.sink(it).buffered().writeString(string) }
+        .let { path ->
+            path.parent
+                ?.takeIf { !SystemFileSystem.exists(it) }
+                ?.let { SystemFileSystem.createDirectories(it, true) }
+            SystemFileSystem.sink(path).buffered()
+                .apply { writeString(string) }
+                .flush()
+        }
 }
