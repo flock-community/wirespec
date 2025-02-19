@@ -21,6 +21,9 @@ example:
 fast:
 	./gradlew jvmTest
 
+format:
+	$(shell pwd)/scripts/format.sh
+
 image:
 	$(shell pwd)/scripts/image.sh
 

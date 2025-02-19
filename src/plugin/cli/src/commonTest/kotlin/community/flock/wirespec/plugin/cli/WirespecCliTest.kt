@@ -18,7 +18,7 @@ class WirespecCliTest {
     @Test
     fun testCliOutput() {
         val packageDir = DEFAULT_GENERATED_PACKAGE_STRING.replace(".", "/")
-        val input = "${inputDir}/wirespec"
+        val input = "$inputDir/wirespec"
         val output = outputDir()
 
         WirespecCli.provide(::compile, ::convert, ::write)(arrayOf("compile", "-d", input, "-o", output, "-l", "Kotlin"))
@@ -41,7 +41,7 @@ class WirespecCliTest {
     fun testCliJavaPackage() {
         val packageName = "community.flock.next"
         val packageDir = packageName.replace(".", "/")
-        val input = "${inputDir}/wirespec"
+        val input = "$inputDir/wirespec"
         val output = outputDir()
 
         WirespecCli.provide(::compile, ::convert, ::write)(
@@ -51,7 +51,7 @@ class WirespecCliTest {
                 "-o", output,
                 "-l", "Java",
                 "-p", "community.flock.next",
-            )
+            ),
         )
 
         val file = JavaFile(FullFilePath("$output/$packageDir", FileName("Bla"))).read()
@@ -73,7 +73,7 @@ class WirespecCliTest {
     fun testCliOpenApiPetstoreKotlin() {
         val packageName = "community.flock.openapi"
         val packageDir = packageName.replace(".", "/")
-        val input = "${inputDir}/openapi/petstore.json"
+        val input = "$inputDir/openapi/petstore.json"
         val output = outputDir()
 
         WirespecCli.provide(::compile, ::convert, ::write)(
@@ -83,7 +83,7 @@ class WirespecCliTest {
                 "-o", output,
                 "-l", "Kotlin",
                 "-p", "community.flock.openapi",
-            )
+            ),
         )
 
         val path = FullFilePath("$output/$packageDir", FileName("Petstore"))
@@ -98,7 +98,7 @@ class WirespecCliTest {
             |  val tags: List<Tag>?,
             |  val status: PetStatus?
             |)
-            """.trimMargin()
+        """.trimMargin()
 
         file shouldContain expected
     }
@@ -107,7 +107,7 @@ class WirespecCliTest {
     fun testCliKetoKotlin() {
         val packageName = "community.flock.openapi"
         val packageDir = packageName.replace(".", "/")
-        val input = "${inputDir}/openapi/keto.json"
+        val input = "$inputDir/openapi/keto.json"
         val output = outputDir()
 
         WirespecCli.provide(::compile, ::convert, ::write)(
@@ -117,7 +117,7 @@ class WirespecCliTest {
                 "-o", output,
                 "-l", "Kotlin",
                 "-p", "community.flock.openapi",
-            )
+            ),
         )
 
         val path = FullFilePath("$output/$packageDir", FileName("Keto"))
@@ -131,7 +131,7 @@ class WirespecCliTest {
             |  val subject_id: String?,
             |  val subject_set: SubjectSet?
             |)
-            """.trimMargin()
+        """.trimMargin()
 
         file shouldContain expected
     }
@@ -140,7 +140,7 @@ class WirespecCliTest {
     fun testCliOpenapiTypesScript() {
         val packageName = "community.flock.openapi"
         val packageDir = packageName.replace(".", "/")
-        val input = "${inputDir}/openapi/petstore.json"
+        val input = "$inputDir/openapi/petstore.json"
         val output = outputDir()
 
         WirespecCli.provide(::compile, ::convert, ::write)(
@@ -150,7 +150,7 @@ class WirespecCliTest {
                 "-o", output,
                 "-l", "TypeScript",
                 "-p", "community.flock.openapi",
-            )
+            ),
         )
 
         val path = FullFilePath("$output/$packageDir", FileName("Petstore"))
@@ -175,5 +175,4 @@ class WirespecCliTest {
         .joinToString("")
 
     private val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
-
 }

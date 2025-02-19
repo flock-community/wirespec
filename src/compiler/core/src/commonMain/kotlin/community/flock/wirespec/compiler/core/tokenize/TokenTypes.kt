@@ -50,13 +50,18 @@ data object WsString : SpecificType
 data object WsBoolean : SpecificType
 data object WsBytes : SpecificType
 data object WsUnit : SpecificType
-data class WsInteger(override val precision: Precision) : SpecificType, HasPrecision
-data class WsNumber(override val precision: Precision) : SpecificType, HasPrecision
+data class WsInteger(override val precision: Precision) :
+    SpecificType,
+    HasPrecision
+data class WsNumber(override val precision: Precision) :
+    SpecificType,
+    HasPrecision
 
 interface HasPrecision {
     val precision: Precision
 }
 
 enum class Precision {
-    P32, P64
+    P32,
+    P64,
 }

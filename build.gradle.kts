@@ -1,7 +1,8 @@
 plugins {
+    alias(libs.plugins.dokka) apply false
     alias(libs.plugins.kotlin.multiplatform) apply false
     alias(libs.plugins.kotlin.jvm) apply false
-    alias(libs.plugins.dokka) apply false
+    alias(libs.plugins.spotless)
     `maven-publish`
     signing
 }
@@ -10,12 +11,14 @@ repositories {
     mavenCentral()
 }
 
-val dokka = libs.plugins.dokka.get().pluginId
+val dokkaId = libs.plugins.dokka.get().pluginId
+val spotlessId = libs.plugins.spotless.get().pluginId
 
 subprojects {
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
-    apply(plugin = dokka)
+    apply(plugin = dokkaId)
+    apply(plugin = spotlessId)
 
     signing {
         setRequired { System.getenv("GPG_PRIVATE_KEY") != null }
@@ -24,6 +27,20 @@ subprojects {
             System.getenv("GPG_PASSPHRASE")
         )
         sign(publishing.publications)
+    }
+
+    spotless {
+        kotlin {
+            target("**/*.kt", "**/*.kts")
+            targetExclude("**/tmp/**", "**/generated/**", "**/build/**", "**/resources/**", "**/*Emitter.kt")
+            ktlint().editorConfigOverride(
+                mapOf("ktlint_code_style" to "intellij_idea"),
+            )
+            suppressLintsFor {
+                step = "ktlint"
+                shortCode = "standard:enum-entry-name-case"
+            }
+        }
     }
 
     publishing {

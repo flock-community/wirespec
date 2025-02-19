@@ -41,9 +41,10 @@ class UtilsTest {
 
         """/* Multiple
            | Lines
-           | Here */""".trimMargin().removeCommentMarkers() shouldBe """Multiple
+           | Here */
+        """.trimMargin().removeCommentMarkers() shouldBe """Multiple
            | Lines
-           | Here""".trimMargin()
+           | Here
+        """.trimMargin()
     }
-
 }

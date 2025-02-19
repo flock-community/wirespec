@@ -15,11 +15,10 @@ fun cli(args: Array<String>) {
 }
 
 @JsExport
-fun parser(source: String): Array<WsNode> =
-    object : ParseContext {
-        override val logger = noLogger
-    }.parse(source).getOrNull()
-        ?.filterIsInstance<Definition>()
-        ?.map { it.produce() }
-        ?.toTypedArray()
-        ?: error("Cannot parse source")
+fun parser(source: String): Array<WsNode> = object : ParseContext {
+    override val logger = noLogger
+}.parse(source).getOrNull()
+    ?.filterIsInstance<Definition>()
+    ?.map { it.produce() }
+    ?.toTypedArray()
+    ?: error("Cannot parse source")

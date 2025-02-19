@@ -5,7 +5,6 @@ interface HasTodoRepository {
 }
 
 interface TodoRepository {
-
     fun getAllTodos(): List<Todo>
 
     fun getTodoById(id: Todo.Id): Todo

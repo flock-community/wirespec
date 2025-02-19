@@ -36,7 +36,7 @@ class OpenApiV2ParserTest {
                             identifier = FieldIdentifier("code"),
                             reference = Primitive(
                                 type = Primitive.Type.Integer(Primitive.Type.Precision.P32),
-                                isNullable = true
+                                isNullable = true,
                             ),
                         ),
                         Field(
@@ -46,8 +46,8 @@ class OpenApiV2ParserTest {
                         Field(
                             identifier = FieldIdentifier("message"),
                             reference = Primitive(type = Primitive.Type.String, isNullable = true),
-                        )
-                    )
+                        ),
+                    ),
                 ),
                 extends = emptyList(),
             ),
@@ -63,8 +63,8 @@ class OpenApiV2ParserTest {
                         Field(
                             identifier = FieldIdentifier("name"),
                             reference = Primitive(type = Primitive.Type.String, isNullable = true),
-                        )
-                    )
+                        ),
+                    ),
                 ),
                 extends = emptyList(),
             ),
@@ -90,23 +90,23 @@ class OpenApiV2ParserTest {
                             reference = Reference.Iterable(
                                 reference = Primitive(
                                     type = Primitive.Type.String,
-                                    isNullable = false
+                                    isNullable = false,
                                 ),
-                                isNullable = false
+                                isNullable = false,
                             ),
                         ),
                         Field(
                             identifier = FieldIdentifier("tags"),
                             reference = Reference.Iterable(
                                 reference = Custom(value = "Tag", isNullable = false),
-                                isNullable = true
+                                isNullable = true,
                             ),
                         ),
                         Field(
                             identifier = FieldIdentifier("status"),
                             reference = Custom(value = "PetStatus", isNullable = true),
-                        )
-                    )
+                        ),
+                    ),
                 ),
                 extends = emptyList(),
             ),
@@ -122,8 +122,8 @@ class OpenApiV2ParserTest {
                         Field(
                             identifier = FieldIdentifier("name"),
                             reference = Primitive(type = Primitive.Type.String, isNullable = true),
-                        )
-                    )
+                        ),
+                    ),
                 ),
                 extends = emptyList(),
             ),
@@ -158,8 +158,8 @@ class OpenApiV2ParserTest {
                         Field(
                             identifier = FieldIdentifier("complete"),
                             reference = Primitive(type = Primitive.Type.Boolean, isNullable = true),
-                        )
-                    )
+                        ),
+                    ),
                 ),
                 extends = emptyList(),
             ),
@@ -202,24 +202,24 @@ class OpenApiV2ParserTest {
                                 type = Primitive.Type.Integer(Primitive.Type.Precision.P32),
                                 isNullable = true,
                             ),
-                        )
-                    )
+                        ),
+                    ),
                 ),
                 extends = emptyList(),
-            )
+            ),
         )
 
         val expectedEnumDefinitions = listOf(
             Enum(
                 comment = null,
                 identifier = DefinitionIdentifier("PetStatus"),
-                entries = setOf("available", "pending", "sold")
+                entries = setOf("available", "pending", "sold"),
             ),
             Enum(
                 comment = null,
                 identifier = DefinitionIdentifier("OrderStatus"),
-                entries = setOf("placed", "approved", "delivered")
-            )
+                entries = setOf("placed", "approved", "delivered"),
+            ),
         )
 
         val typeDefinitions: List<Type> = ast.filterIsInstance<Type>()
@@ -248,7 +248,7 @@ class OpenApiV2ParserTest {
             "DeleteUser",
             "LoginUser",
             "LogoutUser",
-            "CreateUser"
+            "CreateUser",
         )
         assertEquals(expectedEndpoint, endpoints)
     }
@@ -277,9 +277,9 @@ class OpenApiV2ParserTest {
                         content = Endpoint.Content(
                             type = "application/json",
                             reference = Custom(value = "Foo", isNullable = false),
-                        )
-                    )
-                )
+                        ),
+                    ),
+                ),
             ),
             Type(
                 comment = null,
@@ -292,11 +292,11 @@ class OpenApiV2ParserTest {
                                 type = Primitive.Type.String,
                                 isNullable = true,
                             ),
-                        )
-                    )
+                        ),
+                    ),
                 ),
                 extends = emptyList(),
-            )
+            ),
         )
         assertEquals(expected, ast)
     }

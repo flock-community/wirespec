@@ -51,18 +51,20 @@ object AvroConverter {
         comment = null,
         identifier = DefinitionIdentifier(name),
         extends = emptyList(),
-        shape = Type.Shape(this.fields.map {
-            Field(
-                identifier = FieldIdentifier(it.name),
-                reference = it.type.toReference(),
-            )
-        })
+        shape = Type.Shape(
+            fields.map {
+                Field(
+                    identifier = FieldIdentifier(it.name),
+                    reference = it.type.toReference(),
+                )
+            },
+        ),
     )
 
     private fun AvroModel.EnumType.toEnum() = Enum(
         comment = null,
         identifier = DefinitionIdentifier(name),
-        entries = symbols.toSet()
+        entries = symbols.toSet(),
     )
 
     fun AvroModel.Type.flatten(): AST = when (this) {

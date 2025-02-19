@@ -62,15 +62,14 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         }.let(Type::Shape)
     }
 
-    private fun TokenProvider.parseRefinedValidator(accumulatedString: String): Either<WirespecException, String> =
-        either {
-            eatToken().bind()
-            token.log()
-            when (token.type) {
-                is WirespecDefinition, EndOfProgram -> accumulatedString
-                else -> parseRefinedValidator(accumulatedString + token.value).bind()
-            }
+    private fun TokenProvider.parseRefinedValidator(accumulatedString: String): Either<WirespecException, String> = either {
+        eatToken().bind()
+        token.log()
+        when (token.type) {
+            is WirespecDefinition, EndOfProgram -> accumulatedString
+            else -> parseRefinedValidator(accumulatedString + token.value).bind()
         }
+    }
 
     fun TokenProvider.parseDict() = either {
         eatToken().bind()
@@ -84,7 +83,7 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
                     }
 
                     else -> raise(WrongTokenException<RightCurly>(token).also { eatToken().bind() })
-                }
+                },
             )
 
             else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })
@@ -97,35 +96,35 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
             is WsString -> { it ->
                 Reference.Primitive(
                     type = Reference.Primitive.Type.String,
-                    isNullable = it
+                    isNullable = it,
                 )
             }
 
             is WsBytes -> { it ->
                 Reference.Primitive(
                     type = Reference.Primitive.Type.Bytes,
-                    isNullable = it
+                    isNullable = it,
                 )
             }
 
             is WsInteger -> { it ->
                 Reference.Primitive(
                     type = Reference.Primitive.Type.Integer(type.precision.toPrimitivePrecision()),
-                    isNullable = it
+                    isNullable = it,
                 )
             }
 
             is WsNumber -> { it ->
                 Reference.Primitive(
                     type = Reference.Primitive.Type.Number(type.precision.toPrimitivePrecision()),
-                    isNullable = it
+                    isNullable = it,
                 )
             }
 
             is WsBoolean -> { it ->
                 Reference.Primitive(
                     type = Reference.Primitive.Type.Boolean,
-                    isNullable = it
+                    isNullable = it,
                 )
             }
 
@@ -135,16 +134,16 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
                 current.shouldBeDefined().bind()
                 Reference.Custom(
                     value = current.value,
-                    isNullable = it
+                    isNullable = it,
                 )
             }
         }(isNullable().bind())
-        when(token.type){
+        when (token.type) {
             is Brackets -> {
                 eatToken().bind()
                 Reference.Iterable(
                     reference = wirespecType,
-                    isNullable = isNullable().bind()
+                    isNullable = isNullable().bind(),
                 )
             }
             else -> wirespecType

@@ -24,21 +24,21 @@ open class WirespecSerializationConfiguration {
     open fun wirespecSerialization(
         objectMapper: ObjectMapper,
         queryParamSerde: ParamSerialization,
-    ): Wirespec.Serialization<String> =
-        object : Wirespec.Serialization<String>, ParamSerialization by queryParamSerde {
+    ): Wirespec.Serialization<String> = object : Wirespec.Serialization<String>, ParamSerialization by queryParamSerde {
 
-            private val wirespecObjectMapper = objectMapper.copy().registerModule(WirespecModuleKotlin())
+        private val wirespecObjectMapper = objectMapper.copy().registerModule(WirespecModuleKotlin())
 
-            override fun <T> serialize(t: T, kType: KType): String = when (t) {
-                is String -> t
-                else -> wirespecObjectMapper.writeValueAsString(t)
-            }
+        override fun <T> serialize(t: T, kType: KType): String = when (t) {
+            is String -> t
+            else -> wirespecObjectMapper.writeValueAsString(t)
+        }
 
-            override fun <T> deserialize(raw: String, kType: KType): T = when {
-                kType.classifier == String::class -> raw as T
-                else -> wirespecObjectMapper
+        override fun <T> deserialize(raw: String, kType: KType): T = when {
+            kType.classifier == String::class -> raw as T
+            else ->
+                wirespecObjectMapper
                     .constructType(kType.javaType)
                     .let { wirespecObjectMapper.readValue(raw, it) }
-            }
         }
+    }
 }

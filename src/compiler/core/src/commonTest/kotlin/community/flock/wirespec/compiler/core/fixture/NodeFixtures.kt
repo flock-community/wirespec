@@ -15,10 +15,9 @@ object NodeFixtures {
         comment = null,
         identifier = DefinitionIdentifier("UUID"),
         validator = Refined.Validator(
-            "/^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}\$/"
-        )
+            "/^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}\$/",
+        ),
     )
-
 
     val enum = Enum(
         comment = null,
@@ -27,9 +26,8 @@ object NodeFixtures {
             "OPEN",
             "IN_PROGRESS",
             "CLOSE",
-        )
+        ),
     )
-
 
     val type = Type(
         comment = null,
@@ -66,8 +64,8 @@ object NodeFixtures {
                         type = Primitive.Type.Boolean,
                         isNullable = false,
                     ),
-                )
-            )
+                ),
+            ),
         ),
         extends = emptyList(),
     )

@@ -16,5 +16,4 @@ open class WirespecWebMvcConfiguration : WebMvcConfigurer {
     override fun addArgumentResolvers(argumentResolvers: MutableList<HandlerMethodArgumentResolver>) {
         argumentResolvers.add(WirespecMethodArgumentResolver(wirespecSerialization))
     }
-
 }

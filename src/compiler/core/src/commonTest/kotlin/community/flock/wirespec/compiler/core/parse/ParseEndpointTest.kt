@@ -41,8 +41,8 @@ class ParseEndpointTest {
                 path shouldBe listOf(Literal("todos"))
                 requests shouldBe listOf(
                     Endpoint.Request(
-                        content = null
-                    )
+                        content = null,
+                    ),
                 )
             }
     }
@@ -66,8 +66,8 @@ class ParseEndpointTest {
                 path shouldBe listOf(Literal("To-Do_List"))
                 requests shouldBe listOf(
                     Endpoint.Request(
-                        content = null
-                    )
+                        content = null,
+                    ),
                 )
             }
     }
@@ -116,18 +116,19 @@ class ParseEndpointTest {
                 identifier.value shouldBe "GetTodo"
                 method shouldBe GET
                 path shouldBe listOf(
-                    Literal("todos"), Endpoint.Segment.Param(
+                    Literal("todos"),
+                    Endpoint.Segment.Param(
                         identifier = FieldIdentifier("id"),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String,
                             isNullable = false,
-                        )
-                    )
+                        ),
+                    ),
                 )
                 requests shouldBe listOf(
                     Endpoint.Request(
-                        content = null
-                    )
+                        content = null,
+                    ),
                 )
             }
     }
@@ -222,10 +223,9 @@ class ParseEndpointTest {
             .also { it.size shouldBe 1 }[0]
             .shouldBeInstanceOf<Endpoint>().run {
                 responses.shouldNotBeEmpty()
-                responses.first().content?.reference?.let { it is  Reference.Dict }?.shouldBeTrue()
+                responses.first().content?.reference?.let { it is Reference.Dict }?.shouldBeTrue()
                 queries.first().reference.let { it is Reference.Dict }.shouldBeTrue()
                 headers.first().reference.let { it is Reference.Dict }.shouldBeTrue()
             }
-
     }
 }

@@ -34,7 +34,6 @@ gradlePlugin {
     }
 }
 
-
 tasks.publishToMavenLocal {
     dependsOn(":src:compiler:core:publishToMavenLocal")
     dependsOn(":src:plugin:arguments:publishToMavenLocal")

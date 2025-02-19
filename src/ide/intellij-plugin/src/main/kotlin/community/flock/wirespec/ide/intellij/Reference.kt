@@ -23,7 +23,5 @@ class Reference<A : CustomTypeElement>(element: A) : PsiReferenceBase<A>(element
 
     override fun handleElementRename(newElementName: String): PsiElement = element.setName(newElementName)
 
-    private fun PsiElement.visitAllElements(): List<PsiElement> =
-        listOf(this) + children.flatMap { it.visitAllElements() }
-
+    private fun PsiElement.visitAllElements(): List<PsiElement> = listOf(this) + children.flatMap { it.visitAllElements() }
 }

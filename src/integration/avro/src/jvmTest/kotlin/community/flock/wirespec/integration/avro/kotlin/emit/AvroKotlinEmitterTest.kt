@@ -23,11 +23,11 @@ class AvroKotlinEmitterTest {
                 listOf(
                     Field(
                         identifier = FieldIdentifier(name = "name"),
-                        reference = Reference.Primitive(type = Reference.Primitive.Type.String, isNullable = false)
-                    )
-                )
+                        reference = Reference.Primitive(type = Reference.Primitive.Type.String, isNullable = false),
+                    ),
+                ),
             ),
-            extends = emptyList()
+            extends = emptyList(),
         )
 
         val ast = listOf(type)
@@ -71,7 +71,7 @@ class AvroKotlinEmitterTest {
         val enum = Enum(
             comment = null,
             identifier = DefinitionIdentifier("Identifier"),
-            entries = setOf("ONE", "TWO", "THREE")
+            entries = setOf("ONE", "TWO", "THREE"),
         )
         val ast = listOf(enum)
         val expected = """

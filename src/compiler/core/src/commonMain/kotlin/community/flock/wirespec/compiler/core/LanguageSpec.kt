@@ -71,7 +71,7 @@ object WirespecSpec : LanguageSpec {
         Regex("^/[a-zA-Z0-9-_]+") to Path,
         Regex("^\\/\\*(\\*(?!\\/)|[^*])*\\*\\/") to Comment,
         Regex("^/") to ForwardSlash,
-        Regex("^.") to Character // Catch all regular expression if none of the above matched
+        Regex("^.") to Character, // Catch all regular expression if none of the above matched
     )
 }
 

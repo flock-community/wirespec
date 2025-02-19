@@ -19,7 +19,10 @@ import platform.posix.mkdir
 import platform.posix.opendir
 
 @OptIn(ExperimentalForeignApi::class)
-actual abstract class File actual constructor(actual val path: FullFilePath) : Reader, Writer, Copy {
+actual abstract class File actual constructor(actual val path: FullFilePath) :
+    Reader,
+    Writer,
+    Copy {
 
     actual override fun read() = StringBuilder().apply {
         fopen(path.toString(), "r")?.let { file ->

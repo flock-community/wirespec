@@ -22,7 +22,6 @@ import community.flock.wirespec.integration.jackson.common.translater
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.KClass
 
-
 /**
  * A Jackson module that handles deserialization of all Wirespec.Refined, to ensure
  * collapse / expanse of the wrapper class around the string value.
@@ -65,8 +64,7 @@ class WirespecModuleKotlin : SimpleModule() {
  * @see WirespecModuleKotlin
  */
 private class RefinedSerializer(x: Class<Wirespec.Refined>? = null) : StdSerializer<Wirespec.Refined>(x) {
-    override fun serialize(value: Wirespec.Refined, gen: JsonGenerator, provider: SerializerProvider) =
-        gen.writeString(value.value)
+    override fun serialize(value: Wirespec.Refined, gen: JsonGenerator, provider: SerializerProvider) = gen.writeString(value.value)
 }
 
 /**
@@ -76,8 +74,7 @@ private class RefinedSerializer(x: Class<Wirespec.Refined>? = null) : StdSeriali
  * @see WirespecModuleKotlin
  */
 private class EnumSerializer(x: Class<Wirespec.Enum>? = null) : StdSerializer<Wirespec.Enum>(x) {
-    override fun serialize(value: Wirespec.Enum, gen: JsonGenerator, provider: SerializerProvider) =
-        gen.writeString(value.toString())
+    override fun serialize(value: Wirespec.Enum, gen: JsonGenerator, provider: SerializerProvider) = gen.writeString(value.toString())
 }
 
 /**
@@ -117,7 +114,7 @@ private class WirespecDeserializerModifier : BeanDeserializerModifier() {
         config: DeserializationConfig,
         type: JavaType,
         beanDesc: BeanDescription,
-        deserializer: JsonDeserializer<*>
+        deserializer: JsonDeserializer<*>,
     ): JsonDeserializer<*> = when (Wirespec.Enum::class.java.isAssignableFrom(beanDesc.beanClass)) {
         true -> super.modifyDeserializer(config, beanDesc, EnumDeserializer(beanDesc.beanClass))
         false -> super.modifyEnumDeserializer(config, type, beanDesc, deserializer)
@@ -126,7 +123,7 @@ private class WirespecDeserializerModifier : BeanDeserializerModifier() {
     override fun modifyDeserializer(
         config: DeserializationConfig,
         beanDesc: BeanDescription,
-        deserializer: JsonDeserializer<*>
+        deserializer: JsonDeserializer<*>,
     ): JsonDeserializer<*> = when (Wirespec.Refined::class.java.isAssignableFrom(beanDesc.beanClass)) {
         true -> super.modifyDeserializer(config, beanDesc, RefinedDeserializer(beanDesc.beanClass))
         false -> super.modifyDeserializer(config, beanDesc, deserializer)
@@ -137,16 +134,14 @@ private class KotlinReservedKeywordNamingStrategy : PropertyNamingStrategy() {
 
     private val translate = translater(KotlinEmitter)
 
-    override fun nameForGetterMethod(config: MapperConfig<*>, method: AnnotatedMethod, defaultName: String): String =
-        defaultName.translateIfDataClass(method.declaringClass.kotlin)
+    override fun nameForGetterMethod(config: MapperConfig<*>, method: AnnotatedMethod, defaultName: String): String = defaultName.translateIfDataClass(method.declaringClass.kotlin)
 
-    override fun nameForSetterMethod(config: MapperConfig<*>, method: AnnotatedMethod, defaultName: String): String =
-        defaultName.translateIfDataClass(method.declaringClass.kotlin)
+    override fun nameForSetterMethod(config: MapperConfig<*>, method: AnnotatedMethod, defaultName: String): String = defaultName.translateIfDataClass(method.declaringClass.kotlin)
 
     override fun nameForConstructorParameter(
         config: MapperConfig<*>,
         ctorParam: AnnotatedParameter,
-        defaultName: String
+        defaultName: String,
     ) = defaultName.translateIfDataClass(ctorParam.owner.rawType.kotlin)
 
     private fun String.translateIfDataClass(clazz: KClass<*>) = when (clazz.isData) {
@@ -154,4 +149,3 @@ private class KotlinReservedKeywordNamingStrategy : PropertyNamingStrategy() {
         false -> this
     }
 }
-

@@ -11,23 +11,21 @@ import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
-import kotlin.random.Random
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlin.random.Random
 
-fun AST.generate(type: String, random: Random = Random.Default): JsonElement =
-    Reference.Custom(
-        value = type.removeSuffix("[]"),
-        isNullable = false,
-    )
-        .let { if (type.endsWith("[]")) Reference.Iterable(reference = it, isNullable = false) else it }
-        .let { generate(it, random) }
+fun AST.generate(type: String, random: Random = Random.Default): JsonElement = Reference.Custom(
+    value = type.removeSuffix("[]"),
+    isNullable = false,
+)
+    .let { if (type.endsWith("[]")) Reference.Iterable(reference = it, isNullable = false) else it }
+    .let { generate(it, random) }
 
-fun AST.generate(type: Reference, random: Random = Random.Default): JsonElement =
-    generateReference(type, random)
+fun AST.generate(type: Reference, random: Random = Random.Default): JsonElement = generateReference(type, random)
 
 private fun AST.resolveReference(type: Reference) = filterIsInstance<Definition>()
     .find { it.identifier.value == type.value }

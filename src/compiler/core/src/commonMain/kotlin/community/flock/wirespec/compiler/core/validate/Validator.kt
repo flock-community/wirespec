@@ -30,9 +30,9 @@ fun AST.validate(): AST = map { node ->
                 .map {
                     Reference.Custom(
                         value = it.identifier.value,
-                        isNullable = false
+                        isNullable = false,
                     )
-                }
+                },
         )
 
         is Union -> node

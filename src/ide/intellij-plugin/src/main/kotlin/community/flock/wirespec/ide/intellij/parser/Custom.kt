@@ -14,7 +14,9 @@ import community.flock.wirespec.ide.intellij.FileType
 import community.flock.wirespec.ide.intellij.Icons
 import community.flock.wirespec.ide.intellij.Reference
 
-abstract class CustomTypeElement(ast: ASTNode) : ASTWrapperPsiElement(ast), PsiNamedElement {
+abstract class CustomTypeElement(ast: ASTNode) :
+    ASTWrapperPsiElement(ast),
+    PsiNamedElement {
 
     override fun getName(): String? = text
 
@@ -28,7 +30,9 @@ abstract class CustomTypeElement(ast: ASTNode) : ASTWrapperPsiElement(ast), PsiN
     }
 }
 
-class CustomTypeElementDef(private val ast: ASTNode) : CustomTypeElement(ast), PsiNameIdentifierOwner {
+class CustomTypeElementDef(private val ast: ASTNode) :
+    CustomTypeElement(ast),
+    PsiNameIdentifierOwner {
 
     override fun setName(name: String): PsiElement = also {
         parent.node.replaceChild(node, project.createDefNode(name))
@@ -37,7 +41,9 @@ class CustomTypeElementDef(private val ast: ASTNode) : CustomTypeElement(ast), P
     override fun getNameIdentifier(): PsiElement = ast.firstChildNode.psi
 }
 
-class CustomTypeElementRef(private val ast: ASTNode) : CustomTypeElement(ast), PsiNameIdentifierOwner {
+class CustomTypeElementRef(private val ast: ASTNode) :
+    CustomTypeElement(ast),
+    PsiNameIdentifierOwner {
 
     override fun setName(name: String): PsiElement = also {
         parent.node.replaceChild(node, project.createRefNode(name))

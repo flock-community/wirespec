@@ -26,27 +26,27 @@ sealed interface Reference : Value<String> {
     val isNullable: Boolean
 
     data class Any(
-        override val isNullable: Boolean
+        override val isNullable: Boolean,
     ) : Reference {
         override val value = "Any"
     }
 
     data class Unit(
-        override val isNullable: Boolean
+        override val isNullable: Boolean,
     ) : Reference {
         override val value = "Unit"
     }
 
     data class Dict(
         val reference: Reference,
-        override val isNullable: Boolean
+        override val isNullable: Boolean,
     ) : Reference {
         override val value = "Dict"
     }
 
     data class Iterable(
         val reference: Reference,
-        override val isNullable: Boolean
+        override val isNullable: Boolean,
     ) : Reference {
         override val value = "Iterable"
     }
@@ -83,7 +83,6 @@ sealed interface Reference : Value<String> {
             data object Bytes : Type {
                 override val name = "Bytes"
             }
-
         }
 
         override val value = type.name
@@ -126,14 +125,16 @@ data class Endpoint(
     val headers: List<Field>,
     val cookies: List<Field>,
     val requests: List<Request>,
-    val responses: List<Response>
+    val responses: List<Response>,
 ) : Definition {
     enum class Method { GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH, TRACE }
     sealed interface Segment {
-        data class Literal(override val value: String) : Value<String>, Segment
+        data class Literal(override val value: String) :
+            Value<String>,
+            Segment
         data class Param(
             val identifier: FieldIdentifier,
-            val reference: Reference
+            val reference: Reference,
         ) : Segment
     }
 

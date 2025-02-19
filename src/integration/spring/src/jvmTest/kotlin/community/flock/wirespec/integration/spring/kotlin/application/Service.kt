@@ -3,7 +3,6 @@ package community.flock.wirespec.integration.spring.kotlin.application
 import community.flock.wirespec.integration.spring.kotlin.generated.Pet
 import org.springframework.stereotype.Service
 
-
 @Service
 class Service {
 
@@ -23,5 +22,4 @@ class Service {
     fun delete(id: Long) {
         list.removeIf { it.id == id }
     }
-
 }

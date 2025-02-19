@@ -9,12 +9,14 @@ interface Copy {
     fun copy(fileName: FileName): File
 }
 
-expect abstract class File(path: FullFilePath) : Reader, Writer, Copy {
+expect abstract class File(path: FullFilePath) :
+    Reader,
+    Writer,
+    Copy {
 
     val path: FullFilePath
 
     override fun read(): String
 
     override fun write(string: String)
-
 }

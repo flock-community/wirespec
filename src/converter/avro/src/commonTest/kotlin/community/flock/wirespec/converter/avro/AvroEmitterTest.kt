@@ -1,11 +1,11 @@
 package community.flock.wirespec.converter.avro
 
 import com.goncalossilva.resources.Resource
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 
 class AvroEmitterTest {
 
@@ -16,7 +16,6 @@ class AvroEmitterTest {
 
     @Test
     fun testSimple() {
-
         val text = Resource("src/commonTest/resources/example.avsc")
             .apply { assertTrue(exists()) }
             .run { readText() }
@@ -319,6 +318,4 @@ class AvroEmitterTest {
 
         assertEquals(expected, actual)
     }
-
-
 }

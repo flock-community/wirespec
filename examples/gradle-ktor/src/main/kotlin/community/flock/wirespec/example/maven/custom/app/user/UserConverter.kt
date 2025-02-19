@@ -7,5 +7,4 @@ object UserConverter : Converter<User, UserDto> {
     override fun UserDto.internalize() = User(name = name)
 
     override fun User.externalize() = UserDto(name = name)
-
 }

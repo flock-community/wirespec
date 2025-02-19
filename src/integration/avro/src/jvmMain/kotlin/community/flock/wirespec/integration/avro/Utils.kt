@@ -35,29 +35,29 @@ object Utils {
         .filterIsInstance<Enum>()
         .any { it.identifier.value == this.value }
 
-    private fun AvroModel.Type.flatten(): AvroModel.Type =
-        when (this) {
-            is AvroModel.RecordType -> this
+    private fun AvroModel.Type.flatten(): AvroModel.Type = when (this) {
+        is AvroModel.RecordType ->
+            this
                 .copy(
                     fields = fields
                         .map { field ->
                             field.copy(
                                 type = AvroModel.TypeList(
-                                field.type
-                                    .map { it.flatten() }
-                            ))
-                        }
+                                    field.type
+                                        .map { it.flatten() },
+                                ),
+                            )
+                        },
                 )
 
-            is AvroModel.ArrayType -> this.copy(items = items.flatten())
-            is AvroModel.EnumType -> this
-            is AvroModel.LogicalType -> this
-            is AvroModel.SimpleType -> this.copy(
-                value = when (value) {
-                    "boolean", "int", "long", "float", "double", "bytes", "string", "null" -> value
-                    else -> "<<<<<$value>>>>>"
-                },
-            )
-        }
-
+        is AvroModel.ArrayType -> this.copy(items = items.flatten())
+        is AvroModel.EnumType -> this
+        is AvroModel.LogicalType -> this
+        is AvroModel.SimpleType -> this.copy(
+            value = when (value) {
+                "boolean", "int", "long", "float", "double", "bytes", "string", "null" -> value
+                else -> "<<<<<$value>>>>>"
+            },
+        )
+    }
 }

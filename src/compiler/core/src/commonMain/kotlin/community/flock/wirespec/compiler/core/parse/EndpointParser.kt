@@ -46,7 +46,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
                     is WirespecType -> parseWirespecType(type).bind()
                     else -> null
                 }
-            }
+            },
         ).map {
             Endpoint.Request(
                 content = it?.let {
@@ -54,7 +54,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
                         type = "application/json",
                         reference = it,
                     )
-                }
+                },
             )
         }
 
@@ -140,7 +140,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
         }
         Endpoint.Segment.Param(
             identifier = identifier,
-            reference = reference
+            reference = reference,
         )
     }
 
@@ -179,11 +179,14 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
         }
 
         val content =
-            if (reference is Reference.Unit) null
-            else Endpoint.Content(
-                type = "application/json",
-                reference = reference,
-            )
+            if (reference is Reference.Unit) {
+                null
+            } else {
+                Endpoint.Content(
+                    type = "application/json",
+                    reference = reference,
+                )
+            }
 
         val headers = parseHeaders().bind()
 
@@ -204,6 +207,4 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
             else -> emptyList()
         }
     }
-
-
 }

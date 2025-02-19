@@ -13,7 +13,7 @@ class FindUsagesProvider : IntellijFindUsagesProvider {
         Lexer(),
         TokenSet.create(Types.CUSTOM_TYPE),
         TokenSet.EMPTY,
-        TokenSet.EMPTY
+        TokenSet.EMPTY,
     )
 
     override fun canFindUsagesFor(psiElement: PsiElement) = psiElement is CustomTypeElement

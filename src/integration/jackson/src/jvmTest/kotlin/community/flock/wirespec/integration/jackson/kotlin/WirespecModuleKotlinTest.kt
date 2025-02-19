@@ -15,7 +15,7 @@ class WirespecModuleKotlinTest {
         id = TodoId("123"),
         name = "Do It now",
         final = false,
-        category = TodoCategory.LIFE
+        category = TodoCategory.LIFE,
     )
 
     private val json = "{\"id\":\"123\",\"name\":\"Do It now\",\"final\":false,\"category\":\"LIFE\"}"
@@ -25,13 +25,13 @@ class WirespecModuleKotlinTest {
         .registerModules(WirespecModuleKotlin())
 
     @Test
-    fun serializeRefined(){
+    fun serializeRefined() {
         val res = objectMapper.writeValueAsString(todo)
         assertEquals(json, res)
     }
 
     @Test
-    fun deserializeRefined(){
+    fun deserializeRefined() {
         val res = objectMapper.readValue<Todo>(json)
         assertEquals(todo, res)
     }

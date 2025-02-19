@@ -9,17 +9,17 @@ import kotlin.reflect.full.companionObjectInstance
 fun Class<*>.invoke(
     method: Method,
     wirespecSerialization: Wirespec.Serialization<String>,
-    request: Wirespec.Request<BufferedReader>
+    request: Wirespec.Request<BufferedReader>,
 ): Wirespec.Request<*> = if (isKotlinClass()) {
     val func = method(
         kotlin.companionObjectInstance,
-        wirespecSerialization
+        wirespecSerialization,
     ) as (Wirespec.Request<BufferedReader>) -> Wirespec.Request<*>
     func(request)
 } else {
     val func = method(
         this,
-        wirespecSerialization
+        wirespecSerialization,
     ) as Function<Wirespec.Request<BufferedReader>, Wirespec.Request<*>>
     func.apply(request)
 }

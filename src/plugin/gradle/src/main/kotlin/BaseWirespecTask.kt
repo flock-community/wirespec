@@ -27,5 +27,4 @@ abstract class BaseWirespecTask : DefaultTask() {
         override fun warn(string: String) = logger.warn(string)
         override fun error(string: String) = logger.error(string)
     }
-
 }

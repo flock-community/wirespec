@@ -50,7 +50,7 @@ abstract class CompileWirespecTask : BaseWirespecTask() {
                             packageName = packageNameValue,
                             shared = if (shared.getOrElse(true)) sharedData else null,
                             fileName = if (emitter.split) null else fileName,
-                            ext = ext
+                            ext = ext,
                         )
                     }
                 }

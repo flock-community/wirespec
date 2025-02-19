@@ -10,7 +10,7 @@ data class WsError(
     @JsName("position") val position: Int,
     @JsName("index") val index: Int,
     @JsName("length") val length: Int,
-    @JsName("value") val value: String
+    @JsName("value") val value: String,
 )
 
 fun WirespecException.produce() = WsError(
@@ -18,5 +18,5 @@ fun WirespecException.produce() = WsError(
     position = coordinates.position,
     index = coordinates.idxAndLength.idx - coordinates.idxAndLength.length,
     length = coordinates.idxAndLength.length,
-    value = message ?: "No message"
+    value = message ?: "No message",
 )

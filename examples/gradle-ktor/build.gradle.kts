@@ -1,3 +1,4 @@
+import com.diffplug.gradle.spotless.SpotlessTask
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
 import community.flock.wirespec.compiler.core.parse.AST
@@ -14,11 +15,12 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ktor)
+    alias(libs.plugins.spotless)
     alias(libs.plugins.wirespec)
 }
 
 group = "community.flock.wirespec.example.gradle"
-version = libs.versions.default.get()
+version = libs.versions.wirespec.get()
 
 application {
     mainClass.set("community.flock.wirespec.examples.app.ApplicationKt")
@@ -50,11 +52,30 @@ tasks.withType<KotlinCompile> {
     }
 }
 
+tasks.withType<SpotlessTask> {
+    dependsOn("wirespec-kotlin")
+    dependsOn("wirespec-typescript")
+}
+
 sourceSets {
     main {
         java {
             srcDir("${layout.buildDirectory.get()}/generated")
         }
+    }
+}
+
+spotless {
+    format("misc") {
+        target("**/.gitignore", "**/*.properties", "**/*.md")
+        endWithNewline()
+    }
+    kotlin {
+        target("**/*.kt", "**/*.kts")
+        targetExclude("**/build/**", "**/resources/**", "**/*Emitter.kt")
+        ktlint().editorConfigOverride(
+            mapOf("ktlint_code_style" to "intellij_idea"),
+        )
     }
 }
 
@@ -65,6 +86,8 @@ buildscript {
 }
 
 tasks.register<CustomWirespecTask>("wirespec-kotlin") {
+    description = "Compile Wirespec to Kotlin"
+    group = "Wirespec compile"
     input = layout.projectDirectory.dir("src/main/wirespec")
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.generated.kotlin"
@@ -75,6 +98,8 @@ tasks.register<CustomWirespecTask>("wirespec-kotlin") {
 }
 
 tasks.register<CompileWirespecTask>("wirespec-typescript") {
+    description = "Compile Wirespec to TypeScript"
+    group = "Wirespec compile"
     input = layout.projectDirectory.dir("src/main/wirespec")
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.generated.typescript"

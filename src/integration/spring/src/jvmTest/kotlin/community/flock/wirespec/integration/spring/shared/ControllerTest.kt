@@ -2,7 +2,7 @@ import community.flock.wirespec.integration.spring.shared.extractQueries
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
-class QueryParameterExtractorTest {
+class ControllerTest {
 
     @Test
     fun `should handle ampersand-separated parameters`() {
@@ -10,7 +10,7 @@ class QueryParameterExtractorTest {
 
         assertEquals(
             mapOf("tags" to listOf("Smilodon Rex", "Dodo Bird", "Mammoth")),
-            extractQueries(query)
+            extractQueries(query),
         )
     }
 
@@ -20,7 +20,7 @@ class QueryParameterExtractorTest {
 
         assertEquals(
             mapOf("tags" to listOf("Smilodon Rex", "Dodo Bird", "Mammoth")),
-            extractQueries(query)
+            extractQueries(query),
         )
     }
 
@@ -30,7 +30,7 @@ class QueryParameterExtractorTest {
 
         assertEquals(
             mapOf("tags" to listOf("Smilodon Rex", "Dodo Bird", "Mammoth")),
-            extractQueries(query)
+            extractQueries(query),
         )
     }
 
@@ -42,9 +42,9 @@ class QueryParameterExtractorTest {
             mapOf(
                 "tags" to listOf("Big Cat", "Small Dog"),
                 "color" to listOf("deep red"),
-                "size" to listOf("very large")
+                "size" to listOf("very large"),
             ),
-            extractQueries(query)
+            extractQueries(query),
         )
     }
 
@@ -55,9 +55,9 @@ class QueryParameterExtractorTest {
         assertEquals(
             mapOf(
                 "equation" to listOf("1+1=2"),
-                "url" to listOf("http://example.com?a=b")
+                "url" to listOf("http://example.com?a=b"),
             ),
-            extractQueries(query)
+            extractQueries(query),
         )
     }
 
@@ -68,9 +68,9 @@ class QueryParameterExtractorTest {
         assertEquals(
             mapOf(
                 "text" to listOf("!@#$%^&*()"),
-                "name" to listOf("John Doe")
+                "name" to listOf("John Doe"),
             ),
-            extractQueries(query)
+            extractQueries(query),
         )
     }
 
@@ -81,9 +81,9 @@ class QueryParameterExtractorTest {
         assertEquals(
             mapOf(
                 "name" to listOf("John Doe"),
-                "title" to listOf("Senior Software Engineer")
+                "title" to listOf("Senior Software Engineer"),
             ),
-            extractQueries(query)
+            extractQueries(query),
         )
     }
 
@@ -94,9 +94,9 @@ class QueryParameterExtractorTest {
         assertEquals(
             mapOf(
                 "empty" to listOf(""),
-                "next" to listOf("value")
+                "next" to listOf("value"),
             ),
-            extractQueries(query)
+            extractQueries(query),
         )
     }
 
@@ -107,9 +107,9 @@ class QueryParameterExtractorTest {
         assertEquals(
             mapOf(
                 "text" to listOf("😊"),
-                "name" to listOf("日本")
+                "name" to listOf("日本"),
             ),
-            extractQueries(query)
+            extractQueries(query),
         )
     }
 }

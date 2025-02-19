@@ -5,10 +5,10 @@ import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.mapEmitter
 import community.flock.wirespec.plugin.parse
 import community.flock.wirespec.plugin.writeToFiles
-import java.io.File
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
+import java.io.File
 
 @Mojo(name = "compile", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
 open class CompileMojo : BaseMojo() {
@@ -34,7 +34,7 @@ open class CompileMojo : BaseMojo() {
                             packageName = packageNameValue,
                             shared = if (shared) sharedData else null,
                             fileName = if (emitter.split) null else fileName,
-                            ext = ext
+                            ext = ext,
                         )
                     }
                 }

@@ -7,10 +7,10 @@ import community.flock.wirespec.generated.kotlin.PostUserEndpoint
 import community.flock.wirespec.generated.kotlin.UserDto
 
 class TestUserClient : UserClient {
-
-    private val users = mutableSetOf(
-        UserDto("name")
-    )
+    private val users =
+        mutableSetOf(
+            UserDto("name"),
+        )
 
     override suspend fun getUsers(request: GetUsersEndpoint.Request) = users
         .toList()
