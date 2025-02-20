@@ -10,12 +10,24 @@ import java.io.File
 
 abstract class BaseMojo : AbstractMojo() {
 
+    /**
+     * Specifies the input files or directories.
+     * Multiple paths can be provided, separated by commas.
+     * Files can also be loaded from the classpath using the 'classpath:' prefix (e.g., 'classpath:wirespec/petstore.ws').
+     */
+
     @Parameter(required = true)
     protected lateinit var input: String
 
+    /**
+     * Specifies the output directories to process.
+     */
     @Parameter(required = true)
     protected lateinit var output: String
 
+    /**
+     * Specifies package name default 'community.flock.wirespec.generated'
+     */
     @Parameter
     protected var packageName: String = DEFAULT_GENERATED_PACKAGE_STRING
 
