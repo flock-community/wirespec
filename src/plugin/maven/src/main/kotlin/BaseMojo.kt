@@ -30,12 +30,14 @@ abstract class BaseMojo : AbstractMojo() {
         override fun error(string: String) = log.error(string)
     }
 
-    protected fun getFilesContent(): FilesContent = File(input)
-        .let {
+    protected fun getFilesContent() = input
+        .split(",")
+        .map { File(input) }
+        .flatMap {
             if (it.isDirectory) {
-                it.listFiles() ?: arrayOf<File>()
+                it.listFiles()?.toList() ?: emptyList()
             } else {
-                arrayOf(it)
+                listOf(it)
             }
         }
         .map { it.name.split(".").first() to it }
