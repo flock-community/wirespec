@@ -1,6 +1,18 @@
 package community.flock.wirespec.converter.avro
 
+import arrow.core.Either
+import arrow.core.NonEmptyList
 import com.goncalossilva.resources.Resource
+import community.flock.wirespec.compiler.core.CompilationContext
+import community.flock.wirespec.compiler.core.ParseContext
+import community.flock.wirespec.compiler.core.WirespecSpec
+import community.flock.wirespec.compiler.core.compile
+import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.exceptions.WirespecException
+import community.flock.wirespec.compiler.core.parse
+import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.compiler.utils.noLogger
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
@@ -14,6 +26,47 @@ class AvroEmitterTest {
         ignoreUnknownKeys = true
     }
 
+    fun parse(source: String): AST {
+        return object : ParseContext {
+            override val spec = WirespecSpec
+            override val logger = noLogger
+        }.parse(source).getOrNull() ?: error("Parsing failed.")
+
+    }
+
+
+    @Test
+    fun testTodoWs() {
+        val text = Resource("src/commonTest/resources/todo.ws")
+            .apply { assertTrue(exists()) }
+            .run { readText() }
+
+        val ast = parse(text)
+        val actual = AvroEmitter.emit(ast).let { json.encodeToString(it) }
+        val expected = """
+            [
+                {
+                    "type": "record",
+                    "name": "Todo",
+                    "fields": [
+                        {
+                            "name": "id",
+                            "type": "string"
+                        },
+                        {
+                            "name": "name",
+                            "type": "string"
+                        },
+                        {
+                            "name": "done",
+                            "type": "boolean"
+                        }
+                    ]
+                }
+            ]
+            """.trimIndent()
+            assertEquals(expected, actual)
+        }
     @Test
     fun testSimple() {
         val text = Resource("src/commonTest/resources/example.avsc")

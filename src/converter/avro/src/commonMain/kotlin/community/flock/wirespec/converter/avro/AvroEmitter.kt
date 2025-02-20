@@ -47,13 +47,9 @@ object AvroEmitter {
                 } else {
                     def.also { hasEmitted.add(def.identifier.value) }.emit(ast, hasEmitted)
                 }
-
                 is Enum -> def.emit()
-                is Channel -> TODO()
-                is Endpoint -> TODO()
-                is Refined -> TODO()
-                is Union -> TODO()
-                null -> AvroModel.SimpleType(value)
+                is Refined -> AvroModel.SimpleType("string")
+                else -> AvroModel.SimpleType(value)
             }
         }
 
