@@ -3,7 +3,6 @@ package community.flock.wirespec.plugin.maven
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
-import community.flock.wirespec.plugin.FilesContent
 import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
@@ -30,10 +29,27 @@ abstract class BaseMojo : AbstractMojo() {
         override fun error(string: String) = log.error(string)
     }
 
-    protected fun getFilesContent() = input
-        .split(",")
-        .map { File(input) }
+    protected fun getFilesContent() = input.split(",")
         .flatMap {
+            when {
+                it.startsWith("classpath:") -> readFromClasspath(it.substringAfter("classpath:"))
+                else -> readFromFile(it)
+            }
+        }
+
+    private fun readFromClasspath(input: String): List<Pair<String, String>> = input
+        .let {
+            val file = File(it)
+            val classLoader = javaClass.classLoader
+            val inputStream = classLoader.getResourceAsStream(input)
+                ?: error("Could not find file: $it on the classpath.")
+            val content = inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+            val name = file.name.split(".").first()
+            return listOf(name to content)
+        }
+
+    private fun readFromFile(input: String) = File(input)
+        .let {
             if (it.isDirectory) {
                 it.listFiles()?.toList() ?: emptyList()
             } else {
