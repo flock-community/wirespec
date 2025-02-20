@@ -33,11 +33,12 @@ import community.flock.wirespec.plugin.Operation
 import community.flock.wirespec.plugin.Output
 import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.cli.io.File
+import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
 
 enum class Options(vararg val flags: String) {
-    InputDir("-d", "--input-dir"),
-    InputFile("-f", "--input-file"),
-    OutputDir("-o", "--output-dir"),
+    Input("-i", "--input"),
+    Output("-o", "--output"),
     Language("-l", "--language"),
     PackageName("-p", "--package"),
     LogLevel("--log-level"),
@@ -56,21 +57,22 @@ class WirespecCli : NoOpCliktCommand(name = "wirespec") {
 }
 
 private abstract class CommonOptions : CliktCommand() {
-    private val inputFile by option(*Options.InputFile.flags, help = "Input file")
-    val inputDir by option(*Options.InputDir.flags, help = "Input directory")
-    val outputDir by option(*Options.OutputDir.flags, help = "Output directory")
+    val input by option(*Options.Input.flags, help = "Input")
+    val output by option(*Options.Output.flags, help = "Output")
     val packageName by option(*Options.PackageName.flags, help = "Package name").default(DEFAULT_GENERATED_PACKAGE_STRING)
     val logLevel by option(*Options.LogLevel.flags, help = "Log level: $Level").default("$ERROR")
     val shared by option(*Options.Shared.flags, help = "Generate shared wirespec code").flag(default = false)
     val strict by option(*Options.Strict.flags, help = "Strict mode").flag()
 
-    fun getInput(inputDir: String? = null): Input = if (inputDir != null && inputFile != null) {
-        throw CliktError("Choose either a file or a directory. Not Both.")
-    } else {
-        inputFile
-            ?.let(FullFilePath.Companion::parse)
-            ?: inputDir?.let(::FullDirPath)
-            ?: Console
+    fun getInput(input: String? = null): Input {
+        if (input != null) {
+            val path = Path(input)
+            val meta = SystemFileSystem.metadataOrNull(path)
+                ?: throw CliktError("Cannot access file or directory: $input")
+            if (meta.isDirectory) return FullDirPath(input)
+            if (meta.isRegularFile) return FullFilePath.parse(input)
+        }
+        return Console
     }
 
     fun String.toLogLevel() = when (trim().uppercase()) {
@@ -94,8 +96,8 @@ private class Compile(
     override fun run() {
         CompilerArguments(
             operation = Operation.Compile,
-            input = getInput(inputDir),
-            output = Output(outputDir),
+            input = getInput(input),
+            output = Output(output),
             languages = languages.toSet(),
             packageName = PackageName(packageName),
             logLevel = logLevel.toLogLevel(),
@@ -121,11 +123,14 @@ private class Convert(
         .multiple(listOf(Wirespec))
 
     override fun run() {
-        inputDir?.let { echo("To convert, please specify a file", err = true) }
+        val inp = getInput(input)
+        if (inp is FullDirPath) {
+            echo("To convert, please specify a file", err = true)
+        }
         CompilerArguments(
             operation = Operation.Convert(format = format),
-            input = getInput(null),
-            output = Output(outputDir),
+            input = inp,
+            output = Output(output),
             languages = languages.toSet().ifEmpty { setOf(Wirespec) },
             packageName = PackageName(packageName),
             logLevel = logLevel.toLogLevel(),

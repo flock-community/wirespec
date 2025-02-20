@@ -28,9 +28,8 @@ class CommandLineEntitiesTest {
             listOfNotNull(
                 it.flags.first(),
                 when (it) {
-                    Options.InputFile -> null
-                    Options.InputDir -> "input"
-                    Options.OutputDir -> "output"
+                    Options.Input -> "src/commonTest/resources/openapi"
+                    Options.Output -> "output"
                     Options.Language -> "Wirespec"
                     Options.PackageName -> "packageName"
                     Options.LogLevel -> "error"
@@ -39,10 +38,10 @@ class CommandLineEntitiesTest {
                     Options.Strict -> null
                 },
             )
-        }.filterNot { it == "-f" }.toTypedArray()
+        }.toTypedArray()
         WirespecCli.provide(
             noopInput {
-                it.input.shouldBeTypeOf<FullDirPath>().path shouldBe "input"
+                it.input.shouldBeTypeOf<FullDirPath>().path shouldBe "src/commonTest/resources/openapi"
                 it.operation.shouldBeTypeOf<Operation.Compile>()
                 it.output?.value shouldBe "output"
                 it.languages shouldBe setOf(Wirespec)
@@ -81,7 +80,7 @@ class CommandLineEntitiesTest {
             noopInput {
                 it.operation.shouldBeTypeOf<Operation.Convert>()
                 it.input.shouldBeTypeOf<FullFilePath>().run {
-                    fileName.value shouldBe "swagger"
+                    fileName.value shouldBe "keto"
                     extension shouldBe FileExtension.Json
                 }
                 it.output.shouldBeNull()
@@ -92,7 +91,7 @@ class CommandLineEntitiesTest {
                 it.strict shouldBe false
             },
             noopWriter,
-        )(arrayOf("convert", "-f", "swagger.json", "openapiv2"))
+        )(arrayOf("convert", "-i", "src/commonTest/resources/openapi/keto.json", "openapiv2"))
     }
 
     @Test
