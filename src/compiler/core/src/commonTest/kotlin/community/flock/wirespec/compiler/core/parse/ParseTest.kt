@@ -105,4 +105,27 @@ class ParseTest {
             "This is comment 2",
         )
     }
+
+    @Test
+    fun testParserCommentRefinedType() {
+        val source = """
+            |/*
+            |  comment Name
+            |  */
+            |type Name /^[0-9a-zA-Z]{1,50}${'$'}/g
+            |/*
+            |  comment Address
+            |  */
+            |type Address {
+            |  street: Name?,
+            |  houseNumber: Integer
+            |}
+        """.trimMargin()
+
+        parser(source)
+            .shouldBeRight().filterIsInstance<Definition>().map { it.comment?.value } shouldBe listOf(
+            "comment Name",
+            "comment Address",
+        )
+    }
 }
