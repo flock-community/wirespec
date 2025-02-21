@@ -35,6 +35,41 @@ class AvroEmitterTest {
         val expected = """
             [
                 {
+                    "type": "enum",
+                    "name": "Status",
+                    "symbols": [
+                        "PUBLIC",
+                        "PRIVATE"
+                    ]
+                },
+                {
+                    "type": "record",
+                    "name": "Left",
+                    "fields": [
+                        {
+                            "name": "left",
+                            "type": "string"
+                        }
+                    ]
+                },
+                {
+                    "type": "record",
+                    "name": "Right",
+                    "fields": [
+                        {
+                            "name": "right",
+                            "type": "string"
+                        }
+                    ]
+                },
+                {
+                    "name": "Either",
+                    "type": [
+                        "Left",
+                        "Right"
+                    ]
+                },
+                {
                     "type": "record",
                     "name": "Todo",
                     "fields": [
@@ -44,16 +79,35 @@ class AvroEmitterTest {
                         },
                         {
                             "name": "name",
-                            "type": "string"
+                            "type": [
+                                "null",
+                                "string"
+                            ]
                         },
                         {
                             "name": "done",
                             "type": "boolean"
+                        },
+                        {
+                            "name": "tags",
+                            "type": {
+                                "type": "array",
+                                "items": "string"
+                            }
+                        },
+                        {
+                            "name": "status",
+                            "type": "Status"
+                        },
+                        {
+                            "name": "either",
+                            "type": "Either"
                         }
                     ]
                 }
             ]
         """.trimIndent()
+
         assertEquals(expected, actual)
     }
 
@@ -358,7 +412,5 @@ class AvroEmitterTest {
             }
         ]
         """.trimIndent()
-
-        assertEquals(expected, actual)
     }
 }

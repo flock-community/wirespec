@@ -60,11 +60,23 @@ object AvroModel {
     ) : Type
 
     @Serializable
+    data class MapType(
+        val type: String,
+        val values: Type,
+    ) : Type
+
+    @Serializable
     data class EnumType(
         val type: String,
         val name: String,
         val doc: String? = null,
         val symbols: List<String>,
+    ) : Type
+
+    @Serializable
+    data class UnionType(
+        val name: String,
+        val type: TypeList,
     ) : Type
 
     @Serializable
@@ -110,7 +122,9 @@ object AvroModel {
                 is SimpleType -> encoder.encodeSerializableValue(String.serializer(), value.value)
                 is RecordType -> encoder.encodeSerializableValue(RecordType.serializer(), value)
                 is ArrayType -> encoder.encodeSerializableValue(ArrayType.serializer(), value)
+                is MapType -> encoder.encodeSerializableValue(MapType.serializer(), value)
                 is EnumType -> encoder.encodeSerializableValue(EnumType.serializer(), value)
+                is UnionType -> encoder.encodeSerializableValue(UnionType.serializer(), value)
                 is LogicalType -> TODO()
             }
         }
