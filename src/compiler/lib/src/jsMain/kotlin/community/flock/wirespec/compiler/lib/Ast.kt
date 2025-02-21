@@ -9,13 +9,14 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
+import community.flock.wirespec.compiler.core.parse.Import
 import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 
-fun WsNode.consume(): Node = when (this) {
+fun WsDefinition.consume(): Node = when (this) {
     is WsEndpoint -> consume()
     is WsEnum -> consume()
     is WsRefined -> consume()
@@ -191,6 +192,11 @@ fun Node.produce(): WsNode = when (this) {
         comment = comment?.value,
         reference = reference.produce(),
     )
+
+    is Import -> WsImport(
+        url = url.value,
+        references = references.map { WsCustom(it.value, it.isNullable) },
+    )
 }
 
 fun List<Node>.produce(): Array<WsNode> = map { it.produce() }.toTypedArray()
@@ -259,7 +265,10 @@ private fun Endpoint.Response.produce() = WsResponse(
 private fun List<Endpoint.Response>.produce() = map { it.produce() }.toTypedArray()
 
 @JsExport
-sealed interface WsNode {
+sealed interface WsNode
+
+@JsExport
+sealed interface WsDefinition : WsNode {
     val identifier: String
 }
 
@@ -268,7 +277,7 @@ data class WsType(
     override val identifier: String,
     val comment: String?,
     val shape: WsShape,
-) : WsNode
+) : WsDefinition
 
 @JsExport
 data class WsShape(val value: Array<WsField>)
@@ -284,27 +293,33 @@ data class WsEndpoint(
     val cookies: Array<WsField>,
     val requests: Array<WsRequest>,
     val responses: Array<WsResponse>,
-) : WsNode
+) : WsDefinition
 
 @JsExport
 data class WsEnum(
     override val identifier: String,
     val comment: String?,
     val entries: Array<String>,
-) : WsNode
+) : WsDefinition
 
 @JsExport
 data class WsUnion(
     override val identifier: String,
     val comment: String?,
     val entries: Array<WsReference>,
-) : WsNode
+) : WsDefinition
 
 @JsExport
 data class WsChannel(
     override val identifier: String,
     val comment: String?,
     val reference: WsReference,
+) : WsDefinition
+
+@JsExport
+data class WsImport(
+    val url: String,
+    val references: List<WsCustom>,
 ) : WsNode
 
 @JsExport
@@ -312,7 +327,7 @@ data class WsRefined(
     override val identifier: String,
     val comment: String?,
     val validator: String,
-) : WsNode
+) : WsDefinition
 
 @JsExport
 enum class WsMethod { GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH, TRACE }

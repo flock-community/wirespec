@@ -1,5 +1,6 @@
 package community.flock.wirespec.compiler.core.parse
 
+import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.Value
 import community.flock.wirespec.compiler.core.parse.Reference.Primitive.Type.Precision.P64
 import community.flock.wirespec.compiler.core.removeBackticks
@@ -11,6 +12,14 @@ sealed interface Node
 sealed interface Definition : Node {
     val comment: Comment?
     val identifier: Identifier
+}
+
+data class Import(
+    val references: NonEmptyList<Reference.Custom>,
+    val url: Url,
+) : Node {
+    @JvmInline
+    value class Url(override val value: String) : Value<String>
 }
 
 data class Type(

@@ -54,7 +54,14 @@ Wirespec can read and convert OpenApiSpecification (OAS) files.
 
 ## Syntax
 
-Wirespec knows four definitions: `refined`, `enum`, `type`, `endpoint`.
+Wirespec knows four definitions: `import`, `refined`, `enum`, `type`, `endpoint`.
+
+### Import
+
+```wirespec
+import { DEFINITION, DEFINITION, ... } "FILE"
+```
+Imports only work within the same folder
 
 ### Refined
 

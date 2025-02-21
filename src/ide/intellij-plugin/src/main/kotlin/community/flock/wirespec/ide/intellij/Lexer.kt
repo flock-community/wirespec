@@ -16,7 +16,9 @@ import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.Equals
 import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.Hash
+import community.flock.wirespec.compiler.core.tokenize.ImportDefinition
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
+import community.flock.wirespec.compiler.core.tokenize.Literal
 import community.flock.wirespec.compiler.core.tokenize.Method
 import community.flock.wirespec.compiler.core.tokenize.OptimizeOptions
 import community.flock.wirespec.compiler.core.tokenize.Path
@@ -69,6 +71,7 @@ class Lexer : IntellijLexer() {
         is Character -> Types.CHARACTER
         is EndOfProgram -> Types.END_OF_PROGRAM
         is WhiteSpace -> Types.WHITE_SPACE
+        is ImportDefinition -> Types.IMPORT_DEF
         is TypeDefinition -> Types.TYPE_DEF
         is EnumTypeDefinition -> Types.ENUM_DEF
         is EndpointDefinition -> Types.ENDPOINT_DEF
@@ -86,6 +89,7 @@ class Lexer : IntellijLexer() {
         is Arrow -> Types.ARROW
         is Equals -> Types.EQUALS
         is Pipe -> Types.PIPE
+        is Literal -> Types.LITERAL
     }
 
     override fun getTokenStart() = tokens[index]

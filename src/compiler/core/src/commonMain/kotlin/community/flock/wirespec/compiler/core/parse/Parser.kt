@@ -11,6 +11,7 @@ import community.flock.wirespec.compiler.core.tokenize.ChannelDefinition
 import community.flock.wirespec.compiler.core.tokenize.Comment
 import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
 import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
+import community.flock.wirespec.compiler.core.tokenize.ImportDefinition
 import community.flock.wirespec.compiler.core.tokenize.Precision
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.Tokens
@@ -26,6 +27,7 @@ abstract class AbstractParser(protected val logger: Logger) {
 
 class Parser(logger: Logger) : AbstractParser(logger) {
 
+    private val importParser = ImportParser(logger)
     private val typeParser = TypeParser(logger)
     private val enumParser = EnumParser(logger)
     private val endpointParser = EndpointParser(logger)
@@ -36,7 +38,7 @@ class Parser(logger: Logger) : AbstractParser(logger) {
         .parse()
 
     private fun TokenProvider.parse(): EitherNel<WirespecException, AST> = either {
-        mutableListOf<EitherNel<WirespecException, Definition>>()
+        mutableListOf<EitherNel<WirespecException, Node>>()
             .apply { while (hasNext()) add(parseDefinition().mapLeft { it.nel() }) }
             .map { it.bind() }
     }
@@ -49,6 +51,7 @@ class Parser(logger: Logger) : AbstractParser(logger) {
         }
         when (token.type) {
             is WirespecDefinition -> when (token.type as WirespecDefinition) {
+                is ImportDefinition -> with(importParser) { parseImport() }.bind()
                 is TypeDefinition -> with(typeParser) { parseType(comment) }.bind()
                 is EnumTypeDefinition -> with(enumParser) { parseEnum(comment) }.bind()
                 is EndpointDefinition -> with(endpointParser) { parseEndpoint(comment) }.bind()

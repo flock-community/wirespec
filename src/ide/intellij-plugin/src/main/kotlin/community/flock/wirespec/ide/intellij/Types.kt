@@ -19,6 +19,7 @@ interface Types {
         val CHARACTER = ElementType("CHARACTER")
         val END_OF_PROGRAM = ElementType("END_OF_PROGRAM")
         val WHITE_SPACE = ElementType("WHITE_SPACE")
+        val IMPORT_DEF = ElementType("IMPORT_DEF")
         val TYPE_DEF = ElementType("TYPE_DEF")
         val ENUM_DEF = ElementType("ENUM_DEF")
         val ENDPOINT_DEF = ElementType("ENDPOINT_DEF")
@@ -36,5 +37,6 @@ interface Types {
         val ARROW = ElementType("ARROW")
         val EQUALS = ElementType("EQUALS")
         val PIPE = ElementType("PIPE")
+        val LITERAL = ElementType("LITERAL")
     }
 }
