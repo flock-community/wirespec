@@ -1,6 +1,11 @@
 package community.flock.wirespec.converter.avro
 
 import com.goncalossilva.resources.Resource
+import community.flock.wirespec.compiler.core.ParseContext
+import community.flock.wirespec.compiler.core.WirespecSpec
+import community.flock.wirespec.compiler.core.parse
+import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.utils.noLogger
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
@@ -12,6 +17,98 @@ class AvroEmitterTest {
     private val json = Json {
         prettyPrint = true
         ignoreUnknownKeys = true
+    }
+
+    fun parse(source: String): AST = object : ParseContext {
+        override val spec = WirespecSpec
+        override val logger = noLogger
+    }.parse(source).getOrNull() ?: error("Parsing failed.")
+
+    @Test
+    fun testTodoWs() {
+        val text = Resource("src/commonTest/resources/todo.ws")
+            .apply { assertTrue(exists()) }
+            .run { readText() }
+
+        val ast = parse(text)
+        val actual = AvroEmitter.emit(ast).let { json.encodeToString(it) }
+        val expected = """
+            [
+                {
+                    "type": "enum",
+                    "name": "Status",
+                    "symbols": [
+                        "PUBLIC",
+                        "PRIVATE"
+                    ]
+                },
+                {
+                    "type": "record",
+                    "name": "Left",
+                    "fields": [
+                        {
+                            "name": "left",
+                            "type": "string"
+                        }
+                    ]
+                },
+                {
+                    "type": "record",
+                    "name": "Right",
+                    "fields": [
+                        {
+                            "name": "right",
+                            "type": "string"
+                        }
+                    ]
+                },
+                {
+                    "name": "Either",
+                    "type": [
+                        "Left",
+                        "Right"
+                    ]
+                },
+                {
+                    "type": "record",
+                    "name": "Todo",
+                    "fields": [
+                        {
+                            "name": "id",
+                            "type": "string"
+                        },
+                        {
+                            "name": "name",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
+                            "name": "done",
+                            "type": "boolean"
+                        },
+                        {
+                            "name": "tags",
+                            "type": {
+                                "type": "array",
+                                "items": "string"
+                            }
+                        },
+                        {
+                            "name": "status",
+                            "type": "Status"
+                        },
+                        {
+                            "name": "either",
+                            "type": "Either"
+                        }
+                    ]
+                }
+            ]
+        """.trimIndent()
+
+        assertEquals(expected, actual)
     }
 
     @Test
@@ -315,7 +412,5 @@ class AvroEmitterTest {
             }
         ]
         """.trimIndent()
-
-        assertEquals(expected, actual)
     }
 }

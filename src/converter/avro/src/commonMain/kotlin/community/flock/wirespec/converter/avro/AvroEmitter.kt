@@ -19,9 +19,14 @@ object AvroEmitter {
         symbols = entries.toList()
     )
 
+    fun Union.emit(): AvroModel.UnionType = AvroModel.UnionType(
+        name = identifier.value,
+        type = AvroModel.TypeList(entries.map { AvroModel.SimpleType(it.value) })
+    )
+
     fun Reference.emit(ast: AST, hasEmitted: MutableList<String>): AvroModel.Type = when (this) {
-        is Reference.Dict -> TODO()
-        is Reference.Iterable -> TODO()
+        is Reference.Dict -> AvroModel.MapType(type = "map", values = reference.emit(ast, hasEmitted))
+        is Reference.Iterable -> AvroModel.ArrayType(type = "array", items = reference.emit(ast, hasEmitted))
         is Reference.Primitive -> {
             when (val type = type) {
                 is Reference.Primitive.Type.String -> AvroModel.SimpleType("string")
@@ -47,13 +52,9 @@ object AvroEmitter {
                 } else {
                     def.also { hasEmitted.add(def.identifier.value) }.emit(ast, hasEmitted)
                 }
-
-                is Enum -> def.emit()
-                is Channel -> TODO()
-                is Endpoint -> TODO()
-                is Refined -> TODO()
-                is Union -> TODO()
-                null -> AvroModel.SimpleType(value)
+                is Enum -> AvroModel.SimpleType(def.identifier.value)
+                is Refined -> AvroModel.SimpleType("string")
+                else -> AvroModel.SimpleType(value)
             }
         }
 
@@ -67,7 +68,6 @@ object AvroEmitter {
                 type = "array",
                 items = ref.reference.emit(ast, hasEmitted)
             )
-
             else -> ref.emit(ast, hasEmitted)
         }
 
@@ -97,6 +97,7 @@ object AvroEmitter {
                 when (it) {
                     is Type -> it.emit(ast, hasEmitted)
                     is Enum -> it.emit()
+                    is Union -> it.emit()
                     else -> null
                 }
             }

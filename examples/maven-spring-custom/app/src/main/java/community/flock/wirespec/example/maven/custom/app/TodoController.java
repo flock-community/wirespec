@@ -1,5 +1,6 @@
 package community.flock.wirespec.example.maven.custom.app;
 
+import hello.CustomCustom;
 import hello.TodoCustom;
 import hello.TodoIdCustom;
 import hello.TodoInputCustom;
@@ -15,7 +16,9 @@ class TodoController {
 
     @GetMapping("/")
     public List<String> list() {
+
         return List.of(
+                CustomCustom.class.getName(),
                 TodoCustom.class.getName(),
                 TodoIdCustom.class.getName(),
                 TodoInputCustom.class.getName()

@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.core.parse.Union
 
 object AvroConverter {
 
@@ -36,6 +37,8 @@ object AvroConverter {
         is AvroModel.RecordType -> Reference.Custom(value = name, isNullable = isNullable)
         is AvroModel.EnumType -> Reference.Custom(value = name, isNullable = isNullable)
         is AvroModel.LogicalType -> AvroModel.SimpleType(value = type).toReference(isNullable)
+        is AvroModel.MapType -> Reference.Dict(reference = values.toReference(false), isNullable = isNullable)
+        is AvroModel.UnionType -> Reference.Custom(value = name, isNullable = isNullable)
     }
 
     private fun AvroModel.TypeList.toReference(): Reference {
@@ -67,11 +70,19 @@ object AvroConverter {
         entries = symbols.toSet(),
     )
 
-    fun AvroModel.Type.flatten(): AST = when (this) {
+    private fun AvroModel.UnionType.toUnion(name: String) = Union(
+        comment = null,
+        identifier = DefinitionIdentifier(name),
+        entries = this.type.map { it.toReference(false) }.toSet(),
+    )
+
+    fun AvroModel.Type.flatten(name: String = ""): AST = when (this) {
         is AvroModel.SimpleType -> emptyList()
-        is AvroModel.RecordType -> listOf(toType()) + fields.flatMap { field -> field.type.flatMap { it.flatten() } }
-        is AvroModel.ArrayType -> items.flatten()
+        is AvroModel.RecordType -> listOf(toType()) + fields.flatMap { field -> field.type.flatMap { it.flatten(name) } }
+        is AvroModel.ArrayType -> items.flatten(name)
         is AvroModel.EnumType -> listOf(toEnum())
         is AvroModel.LogicalType -> emptyList()
+        is AvroModel.MapType -> values.flatten(name)
+        is AvroModel.UnionType -> listOf(toUnion(name))
     }
 }

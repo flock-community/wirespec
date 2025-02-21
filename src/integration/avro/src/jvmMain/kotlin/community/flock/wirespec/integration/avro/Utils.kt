@@ -59,5 +59,8 @@ object Utils {
                 else -> "<<<<<$value>>>>>"
             },
         )
+
+        is AvroModel.MapType -> TODO()
+        is AvroModel.UnionType -> TODO()
     }
 }

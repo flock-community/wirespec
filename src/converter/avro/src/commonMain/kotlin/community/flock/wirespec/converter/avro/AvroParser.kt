@@ -24,11 +24,12 @@ object AvroParser {
                     isNullable = false,
                 ),
             )
-
             is AvroModel.ArrayType -> TODO()
             is AvroModel.EnumType -> TODO()
             is AvroModel.SimpleType -> TODO()
             is AvroModel.LogicalType -> TODO()
+            is AvroModel.MapType -> TODO()
+            is AvroModel.UnionType -> TODO()
         }
     }
 }
