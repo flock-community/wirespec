@@ -26,6 +26,7 @@ import community.flock.wirespec.compiler.core.tokenize.WsNumber
 import community.flock.wirespec.compiler.core.tokenize.WsString
 import community.flock.wirespec.compiler.core.tokenize.WsUnit
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.compiler.core.tokenize.Comment as CommentToken
 
 class TypeParser(logger: Logger) : AbstractParser(logger) {
 
@@ -66,7 +67,7 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is WirespecDefinition, EndOfProgram -> accumulatedString
+            is WirespecDefinition, EndOfProgram, CommentToken -> accumulatedString
             else -> parseRefinedValidator(accumulatedString + token.value).bind()
         }
     }
