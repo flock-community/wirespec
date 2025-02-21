@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Import
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -33,13 +34,10 @@ abstract class Emitter(
     open fun Definition.emitName(): String = notYetImplemented()
 
     open fun emit(ast: AST): List<Emitted> = ast
+        .filterIsInstance<Definition>()
         .map {
             logger.info(
-                "Emitting Node ${
-                    when (it) {
-                        is Definition -> it.emitName()
-                    }
-                }"
+                "Emitting Node ${it.emitName()}"
             )
             when (it) {
                 is Type -> Emitted(it.emitName(), emit(it, ast))
