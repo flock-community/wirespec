@@ -1,14 +1,12 @@
 import {useEffect, useState} from "react";
+import { WsError, WsEmitted } from "@flock/wirespec";
 import {useMonaco} from "@monaco-editor/react"
 import {PlayGroundInput} from "./PlayGroundInput";
 import {PlayGroundOutput} from "./PlayGroundOutput";
 import {PlayGroundErrors} from "./PlayGroundErrors";
-import { community } from "wirespec";
 import {TargetLanguageSelector} from "./TargetLanguageSelector";
 import {initializeMonaco} from "../utils/InitializeMonaco";
 import {setMonacoErrors} from "../utils/SetMonacoErrors";
-import WsError = community.flock.wirespec.compiler.lib.WsError;
-import WsEmitted = community.flock.wirespec.compiler.lib.WsEmitted;
 import { Box, Grid, Typography, useTheme } from "@mui/material";
 import { wirespecToTarget } from "../transformations/WirespecToTarget";
 

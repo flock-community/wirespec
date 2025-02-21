@@ -1,9 +1,4 @@
-import { community } from "wirespec";
-import parse = community.flock.wirespec.plugin.npm.parse;
-import emit = community.flock.wirespec.plugin.npm.emit;
-import Emitters = community.flock.wirespec.plugin.npm.Emitters;
-import WsEmitted = community.flock.wirespec.compiler.lib.WsEmitted;
-import WsError = community.flock.wirespec.compiler.lib.WsError;
+import { parse, emit, Emitters, WsEmitted, WsError} from "@flock/wirespec";
 import { CompliationResult } from "../components/PlayGround";
 
 const getEmitterFor = (language: string) => {
@@ -17,7 +12,7 @@ const getEmitterFor = (language: string) => {
     case "java":
       return Emitters.JAVA;
     default:
-      throw(`unknown language: ${language}`);
+      throw new Error(`unknown language: ${language}`);
   }
 }
 

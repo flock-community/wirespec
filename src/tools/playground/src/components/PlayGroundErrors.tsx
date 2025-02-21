@@ -1,5 +1,4 @@
-import { community } from "wirespec";
-import WsError = wirespec.community.flock.wirespec.compiler.lib.WsError;
+import { WsError } from "@flock/wirespec";
 import { Typography } from "@mui/material";
 
 interface PlayGroundErrorsProps {

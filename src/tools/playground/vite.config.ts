@@ -6,6 +6,6 @@ export default defineConfig({
         react()
     ],
     optimizeDeps: {
-        include: ['wirespec'], // Add the package containing this namespace
+        exclude: ['@flock/wirespec'], // Add the package containing this namespace
     },
 })

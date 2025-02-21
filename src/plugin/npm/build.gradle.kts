@@ -20,6 +20,7 @@ plugins.withId("maven-publish") {
 kotlin {
     js(IR) {
         nodejs()
+        useEsModules()
         generateTypeScriptDefinitions()
         binaries.library()
         compilations["main"].packageJson {

@@ -1,6 +1,5 @@
 import {Monaco} from "@monaco-editor/react";
-import { community } from "wirespec";
-import WsError = community.flock.wirespec.compiler.lib.WsError;
+import { WsError } from "@flock/wirespec";
 
 export function setMonacoErrors(monaco: Monaco, errors: WsError[]) {
     const model = monaco.editor.getModels();

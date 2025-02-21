@@ -1,12 +1,8 @@
+import { WsToken, tokenize, parse } from "@flock/wirespec";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { createConnection, DiagnosticSeverity, SemanticTokensBuilder, TextDocuments } from "vscode-languageserver";
 import { ServerCapabilities } from "vscode-languageserver-protocol/lib/common/protocol";
 import { Range, SemanticTokensLegend } from "vscode-languageserver-types";
-
-import { community } from "wirespec";
-import tokenize = community.flock.wirespec.plugin.npm.tokenize
-import parse = community.flock.wirespec.plugin.npm.parse
-import WsToken = community.flock.wirespec.compiler.lib.WsToken
 
 const getCompilerErrors = (text) => {
   const {errors} = parse(text);
