@@ -22,6 +22,9 @@ export function TargetLanguageSelector({selectedLanguage, setSelectedLanguage}: 
           <MenuItem value="kotlin">Kotlin</MenuItem>
           <MenuItem value="scala">Scala</MenuItem>
           <MenuItem value="java">Java</MenuItem>
+          <MenuItem value="open_api_v2">OpenApi v2</MenuItem>
+          <MenuItem value="open_api_v3">OpenApi v3</MenuItem>
+          <MenuItem value="avro">Avro</MenuItem>
         </Select>
       </FormControl>
     );

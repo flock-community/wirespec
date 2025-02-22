@@ -1,6 +1,4 @@
-import com.github.gradle.node.npm.task.NpmTask
-
-group = "${libs.versions.group.id.get()}.tools.playground"
+group = "${libs.versions.group.id.get()}.ide"
 version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.get()
 
 plugins {

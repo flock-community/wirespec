@@ -9,3 +9,8 @@ export const openApiV3ToWirespec: (openapi: string) => WsEmitted[] = (x: string)
     const ast = convert(x, Converters.OPENAPI_V3);
     return emit(ast, Emitters.WIRESPEC, '');
 };
+
+export const avroToWirespec: (openapi: string) => WsEmitted[] = (x: string) => {
+    const ast = convert(x, Converters.AVRO);
+    return emit(ast, Emitters.WIRESPEC, '');
+};

@@ -2,7 +2,7 @@ import { SyntheticEvent, useState} from "react";
 import { Box, Tab } from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
 import { PlayGround } from './PlayGround';
-import { OpenApiConverter } from './OpenApiConverter';
+import { Converter } from './Converter.tsx';
 import { wsExample } from '../examples/wirespec';
 import { swaggerExample } from "../examples/swagger";
 
@@ -12,7 +12,7 @@ export function TabRoot() {
   const [spec, setSpec] = useState(swaggerExample());
   const [value, setValue] = useState('1');
 
-  const handleTabChange = (event: SyntheticEvent, newValue: string) => {
+  const handleTabChange = (_: SyntheticEvent, newValue: string) => {
     setValue(newValue);
   }
 
@@ -26,7 +26,7 @@ export function TabRoot() {
           onChange={handleTabChange}
         >
           <Tab label="Wirespec compiler" value='1'/>
-          <Tab label="OpenAPI converter" value='2'/>
+          <Tab label="Wirespec converter" value='2'/>
         </TabList>
       </Box>
       <TabPanel value='1' sx={{border: 1, padding: 1, borderColor: '#fcdf00'}}>
@@ -38,7 +38,7 @@ export function TabRoot() {
         </PlayGround>
       </TabPanel>
       <TabPanel value='2' sx={{border: 1, padding: 1, borderColor: '#fcdf00'}}>
-        <OpenApiConverter code={spec} setCode={setSpec}></OpenApiConverter>
+        <Converter code={spec} setCode={setSpec}></Converter>
       </TabPanel>
     </TabContext>
   );

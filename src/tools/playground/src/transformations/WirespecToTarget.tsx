@@ -11,6 +11,12 @@ const getEmitterFor = (language: string) => {
       return Emitters.SCALA;
     case "java":
       return Emitters.JAVA;
+    case "open_api_v2":
+      return Emitters.OPENAPI_V2;
+    case "open_api_v3":
+      return Emitters.OPENAPI_V3;
+    case "avro":
+      return Emitters.AVRO;
     default:
       throw new Error(`unknown language: ${language}`);
   }

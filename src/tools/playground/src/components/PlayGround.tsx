@@ -27,6 +27,9 @@ function createFileHeaderFor(fileName: string, language: string) {
       case "typescript":
       case "kotlin":
       case "scala":
+      case "open_api_v2":
+      case "open_api_v3":
+      case "avro":
         return '';
       case "java":
         return `\n/**\n/* ${fileName}\n**/\n`;

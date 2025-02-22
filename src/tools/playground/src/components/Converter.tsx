@@ -11,7 +11,7 @@ interface OpenApiCoverterProps {
     setCode: (input: string) => void
 }
 
-export function OpenApiConverter({code, setCode}: OpenApiCoverterProps) {
+export function Converter({code, setCode}: OpenApiCoverterProps) {
     const monaco = useMonaco()
     useEffect(() => {
         if (!monaco) {
