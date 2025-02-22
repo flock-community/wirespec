@@ -1,0 +1,42 @@
+{
+  "name": "wirespec-playground",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "tsc": "tsc",
+    "build": "vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
+    "@flock/wirespec": "file:../../plugin/npm/build/dist/js/productionLibrary/",
+    "@fontsource/roboto": "^5.0.13",
+    "@monaco-editor/react": "^4.6.0",
+    "@mui/lab": "^5.0.0-alpha.170",
+    "@mui/material": "^5.15.16",
+    "@uiw/codemirror-theme-vscode": "^4.21.24",
+    "@uiw/react-codemirror": "^4.21.24",
+    "react": "^18.2.0",
+    "react-bootstrap": "^2.10.2",
+    "react-dom": "^18.2.0",
+    "react-tabs": "^6.0.2"
+  },
+  "devDependencies": {
+    "@rollup/rollup-darwin-arm64": "^4.14.3",
+    "@types/prismjs": "^1.26.3",
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "@typescript-eslint/eslint-plugin": "^7.2.0",
+    "@typescript-eslint/parser": "^7.2.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.6",
+    "typescript": "^5.4.5",
+    "vite": "5.4.14"
+  }
+}

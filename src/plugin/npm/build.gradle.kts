@@ -20,6 +20,7 @@ plugins.withId("maven-publish") {
 kotlin {
     js(IR) {
         nodejs()
+        useEsModules()
         generateTypeScriptDefinitions()
         binaries.library()
         compilations["main"].packageJson {
@@ -41,16 +42,31 @@ kotlin {
                 implementation(project(":src:compiler:lib"))
                 implementation(project(":src:plugin:cli"))
                 implementation(project(":src:converter:openapi"))
+                implementation(project(":src:converter:avro"))
                 implementation(project(":src:tools:generator"))
                 implementation(libs.kotlinx.openapi.bindings)
                 implementation(libs.kotlinx.serialization)
             }
         }
-        val jsMain by getting {
-            dependencies {
-                implementation(libs.kotlin.test)
-                implementation(libs.kotlinx.resources)
-            }
-        }
     }
+}
+
+tasks.named("compileKotlinJs") {
+    dependsOn("copyResourcesJs")
+}
+
+tasks.named("generateProjectStructureMetadata") {
+    dependsOn("copyResourcesJs")
+}
+
+tasks.named("allMetadataJar") {
+    dependsOn("copyResourcesJs")
+}
+
+tasks.named("jsProcessResources") {
+    dependsOn("copyResourcesJs")
+}
+
+tasks.named("spotlessKotlin") {
+    dependsOn("copyResourcesJs")
 }

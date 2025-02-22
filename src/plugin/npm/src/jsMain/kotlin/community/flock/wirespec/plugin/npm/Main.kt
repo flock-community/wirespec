@@ -3,8 +3,6 @@
 package community.flock.wirespec.plugin.npm
 
 import arrow.core.curried
-import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
-import community.flock.kotlinx.openapi.bindings.v3.OpenAPIObject
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
@@ -20,13 +18,15 @@ import community.flock.wirespec.compiler.lib.WsStringResult
 import community.flock.wirespec.compiler.lib.consume
 import community.flock.wirespec.compiler.lib.produce
 import community.flock.wirespec.compiler.utils.noLogger
+import community.flock.wirespec.converter.avro.AvroEmitter
+import community.flock.wirespec.converter.avro.AvroParser
 import community.flock.wirespec.generator.generate
 import community.flock.wirespec.openapi.v2.OpenApiV2Emitter
 import community.flock.wirespec.openapi.v2.OpenApiV2Parser
 import community.flock.wirespec.openapi.v3.OpenApiV3Emitter
 import community.flock.wirespec.openapi.v3.OpenApiV3Parser
 import community.flock.wirespec.plugin.cli.main
-import kotlinx.serialization.SerializationStrategy
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 @JsExport
@@ -38,12 +38,14 @@ enum class Emitters {
     SCALA,
     OPENAPI_V2,
     OPENAPI_V3,
+    AVRO,
 }
 
 @JsExport
 enum class Converters {
     OPENAPI_V2,
     OPENAPI_V3,
+    AVRO,
 }
 
 @JsExport
@@ -64,6 +66,7 @@ fun parse(source: String) = object : ParseContext {
 fun convert(source: String, converters: Converters) = when (converters) {
     Converters.OPENAPI_V2 -> OpenApiV2Parser.parse(source).produce()
     Converters.OPENAPI_V3 -> OpenApiV3Parser.parse(source).produce()
+    Converters.AVRO -> AvroParser.parse(source).produce()
 }
 
 @JsExport
@@ -77,6 +80,7 @@ fun generate(source: String, type: String): WsStringResult = object : ParseConte
 fun emit(ast: Array<WsNode>, emitter: Emitters, packageName: String) = ast
     .map { it.consume() }
     .let {
+        val json = Json { prettyPrint = true }
         when (emitter) {
             Emitters.WIRESPEC -> WirespecEmitter(logger = noLogger).emit(it)
             Emitters.TYPESCRIPT -> TypeScriptEmitter(logger = noLogger).emit(it)
@@ -85,16 +89,17 @@ fun emit(ast: Array<WsNode>, emitter: Emitters, packageName: String) = ast
             Emitters.SCALA -> ScalaEmitter(packageName, logger = noLogger).emit(it)
             Emitters.OPENAPI_V2 -> listOf(it)
                 .map(OpenApiV2Emitter::emitSwaggerObject)
-                .map(encode(SwaggerObject.serializer()))
+                .map(json::encodeToString)
                 .map(::Emitted.curried()("openapi")::invoke)
-
             Emitters.OPENAPI_V3 -> listOf(it)
                 .map { ast -> OpenApiV3Emitter.emitOpenAPIObject(ast, null) }
-                .map(encode(OpenAPIObject.serializer()))
+                .map(json::encodeToString)
+                .map(::Emitted.curried()("openapi")::invoke)
+            Emitters.AVRO -> listOf(it)
+                .map { ast -> AvroEmitter.emit(ast) }
+                .map(json::encodeToString)
                 .map(::Emitted.curried()("openapi")::invoke)
         }
     }
     .map { it.produce() }
     .toTypedArray()
-
-private fun <T> encode(serializer: SerializationStrategy<T>) = { value: T -> Json.encodeToString(serializer, value) }
