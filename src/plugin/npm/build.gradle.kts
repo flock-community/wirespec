@@ -50,3 +50,23 @@ kotlin {
         }
     }
 }
+
+tasks.named("compileKotlinJs") {
+    dependsOn("copyResourcesJs")
+}
+
+tasks.named("generateProjectStructureMetadata") {
+    dependsOn("copyResourcesJs")
+}
+
+tasks.named("allMetadataJar") {
+    dependsOn("copyResourcesJs")
+}
+
+tasks.named("jsProcessResources") {
+    dependsOn("copyResourcesJs")
+}
+
+tasks.named("spotlessKotlin") {
+    dependsOn("copyResourcesJs")
+}
