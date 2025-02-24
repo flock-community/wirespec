@@ -1,16 +1,18 @@
 package community.flock.wirespec.converter.avro
 
-import com.goncalossilva.resources.Resource
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.utils.noLogger
+import kotlinx.io.buffered
+import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
+import kotlinx.io.readString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class AvroEmitterTest {
 
@@ -26,9 +28,8 @@ class AvroEmitterTest {
 
     @Test
     fun testTodoWs() {
-        val text = Resource("src/commonTest/resources/todo.ws")
-            .apply { assertTrue(exists()) }
-            .run { readText() }
+        val path = Path("src/commonTest/resources/todo.ws")
+        val text = SystemFileSystem.source(path).buffered().readString()
 
         val ast = parse(text)
         val actual = AvroEmitter.emit(ast).let { json.encodeToString(it) }
@@ -113,9 +114,8 @@ class AvroEmitterTest {
 
     @Test
     fun testSimple() {
-        val text = Resource("src/commonTest/resources/example.avsc")
-            .apply { assertTrue(exists()) }
-            .run { readText() }
+        val path = Path("src/commonTest/resources/example.avsc")
+        val text = SystemFileSystem.source(path).buffered().readString()
 
         val ast = AvroParser.parse(text)
         val actual = AvroEmitter.emit(ast).let { json.encodeToString(it) }

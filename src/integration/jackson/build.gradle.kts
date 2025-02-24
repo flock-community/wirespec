@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.kotlinx.resources)
 }
 
 group = "${libs.versions.group.id.get()}.integration"

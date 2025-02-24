@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.kotlinx.resources)
 }
 
 group = "${libs.versions.group.id.get()}.converter"
@@ -36,7 +35,7 @@ kotlin {
         }
         commonTest {
             dependencies {
-                implementation(libs.kotlinx.resources)
+                implementation(libs.kotlinx.io.core)
                 implementation(libs.kotlin.test)
                 implementation(libs.bundles.kotest)
             }

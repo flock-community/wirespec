@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.kotlinx.resources)
 }
 
 group = "${libs.versions.group.id.get()}.compiler"
@@ -41,10 +40,10 @@ kotlin {
                 implementation(project(":src:converter:openapi"))
             }
         }
-        val jsMain by getting {
+        val jsTest by getting {
             dependencies {
                 implementation(libs.kotlin.test)
-                implementation(libs.kotlinx.resources)
+                implementation(libs.kotlinx.io.core)
             }
         }
     }
