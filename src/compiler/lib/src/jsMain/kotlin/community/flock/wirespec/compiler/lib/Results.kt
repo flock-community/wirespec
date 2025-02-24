@@ -43,7 +43,7 @@ fun Either<Nel<WirespecException>, AST>.produce(): WsParseResult = when (this) {
 
 @JsExport
 class WsParseResult(
-    val result: Array<WsDefinition>? = null,
+    val result: Array<WsNode>? = null,
     val errors: Array<WsError>? = null,
 )
 

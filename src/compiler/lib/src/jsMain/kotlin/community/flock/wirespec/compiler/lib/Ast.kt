@@ -2,6 +2,7 @@
 
 package community.flock.wirespec.compiler.lib
 
+import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Comment
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
@@ -16,6 +17,11 @@ import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 
+fun WsNode.consume(): Node = when (this) {
+    is WsDefinition -> consume()
+    is WsImport -> consume()
+}
+
 fun WsDefinition.consume(): Node = when (this) {
     is WsEndpoint -> consume()
     is WsEnum -> consume()
@@ -24,6 +30,11 @@ fun WsDefinition.consume(): Node = when (this) {
     is WsUnion -> consume()
     is WsChannel -> consume()
 }
+
+fun WsImport.consume(): Node = Import(
+    url = Import.Url(url),
+    references = references.map { it.consume() }.toNonEmptyListOrNull() ?: error("Import references cannot be empty."),
+)
 
 fun WsEndpoint.consume(): Endpoint = Endpoint(
     comment = comment?.let { Comment(it) },
@@ -111,34 +122,41 @@ private fun WsContent.consume() = Endpoint.Content(
 )
 
 private fun WsReference.consume(): Reference = when (this) {
-    is WsAny -> Reference.Any(
-        isNullable = isNullable,
-    )
-
-    is WsUnit -> Reference.Unit(
-        isNullable = isNullable,
-    )
-
-    is WsCustom -> Reference.Custom(
-        value = value,
-        isNullable = isNullable,
-    )
-
-    is WsPrimitive -> Reference.Primitive(
-        type = type.consume(),
-        isNullable = isNullable,
-    )
-
-    is WsDict -> Reference.Dict(
-        reference = reference.consume(),
-        isNullable = isNullable,
-    )
-
-    is WsIterable -> Reference.Iterable(
-        reference = reference.consume(),
-        isNullable = isNullable,
-    )
+    is WsAny -> consume()
+    is WsCustom -> consume()
+    is WsDict -> consume()
+    is WsIterable -> consume()
+    is WsPrimitive -> consume()
+    is WsUnit -> consume()
 }
+
+fun WsAny.consume() = Reference.Any(
+    isNullable = isNullable,
+)
+
+fun WsUnit.consume() = Reference.Unit(
+    isNullable = isNullable,
+)
+
+fun WsCustom.consume() = Reference.Custom(
+    value = value,
+    isNullable = isNullable,
+)
+
+fun WsPrimitive.consume() = Reference.Primitive(
+    type = type.consume(),
+    isNullable = isNullable,
+)
+
+fun WsDict.consume() = Reference.Dict(
+    reference = reference.consume(),
+    isNullable = isNullable,
+)
+
+fun WsIterable.consume() = Reference.Iterable(
+    reference = reference.consume(),
+    isNullable = isNullable,
+)
 
 private fun WsPrimitiveType.consume() = when (this) {
     WsPrimitiveType.String -> Reference.Primitive.Type.String
