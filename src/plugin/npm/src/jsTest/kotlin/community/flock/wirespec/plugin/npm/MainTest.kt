@@ -17,7 +17,7 @@ class MainTest {
 
     @Test
     fun testEmit() {
-        val path = Path("src/commonTest/resources/person.ws")
+        val path = Path("src/jsTest/resources/person.ws")
         val file = SystemFileSystem.source(path).buffered().readString()
         val res = object : ParseContext {
             override val spec = WirespecSpec

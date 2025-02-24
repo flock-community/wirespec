@@ -105,35 +105,21 @@ subprojects {
     // https://github.com/Kotlin/kotlinx-io/issues/265
     // https://gist.github.com/dellisd/a1df42787d42b41cd3ce16f573984674
     afterEvaluate {
-        val copyCommonTestResourcesForJs by tasks.registering(Copy::class) {
+        val copyTestResourcesForJs by tasks.registering(Copy::class) {
             group = "nodejs"
-            description = "Copy common test-resources for nodejs test task (located at src/commonTest/resources)"
+            description = "Copy js specific test-resources for nodejs test task (located at src/*Test/resources)"
 
-            logger.info("I'm copying commonTest resources for ${project.path}")
+            logger.info("Copying test resources for ${project.path}")
             val projectFullName = project.path.replace(Project.PATH_SEPARATOR, "-")
             val buildDir = rootProject.layout.buildDirectory.get()
-
-            from("$projectDir/src/commonTest/resources")
-            into("$buildDir/js/packages/${rootProject.name}$projectFullName-test/src/commonTest/resources")
+            from("$projectDir/src")
+            include("*Test/resources")
+            into("$buildDir/js/packages/${rootProject.name}$projectFullName-test/src")
         }
-
-        val copyJsTestResourcesForJs by tasks.registering(Copy::class) {
-            group = "nodejs"
-            description = "Copy js specific test-resources for nodejs test task (located at src/jsTest/resources)"
-
-            logger.info("I'm copying jsTest resources for ${project.path}")
-            val projectFullName = project.path.replace(Project.PATH_SEPARATOR, "-")
-            val buildDir = rootProject.layout.buildDirectory.get()
-
-            from("$projectDir/src/jsTest/resources")
-            into("$buildDir/js/packages/${rootProject.name}$projectFullName-test/src/jsTest/resources")
-        }
-
 
         if (project.tasks.findByName("jsNodeTest") != null) {
             project.tasks.named("jsNodeTest").configure {
-                dependsOn(copyCommonTestResourcesForJs)
-                dependsOn(copyJsTestResourcesForJs)
+                dependsOn(copyTestResourcesForJs)
             }
         }
     }
