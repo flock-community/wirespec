@@ -30,9 +30,37 @@ subprojects {
     }
 
     spotless {
+        val exclude = listOf(
+            "**/.github/**",
+            "**/.gradle/**",
+            "**/.idea/**",
+            "**/.intellijPlatform/**",
+            "**/.kotlin/**",
+            "**/build/**",
+            "**/tmp/**",
+            "**/generated/**",
+            "**/resources/**",
+            "**/node_modules/**",
+            "**/*.lock",
+            "**/*Emitter.kt",
+        ).toTypedArray()
+
+        format("misc") {
+            target("**/*.md")
+            targetExclude(*exclude)
+            endWithNewline()
+        }
+
+        format("wirespec") {
+            target("**/*.ws")
+            targetExclude(*exclude)
+            endWithNewline()
+//            nativeCmd("wirespec", "/usr/local/bin/wirespec", listOf("fmt", "-")) // name, path to binary, additional arguments
+        }
+
         kotlin {
             target("**/*.kt", "**/*.kts")
-            targetExclude("**/tmp/**", "**/generated/**", "**/build/**", "**/resources/**", "**/*Emitter.kt")
+            targetExclude(*exclude)
             ktlint().editorConfigOverride(
                 mapOf("ktlint_code_style" to "intellij_idea"),
             )

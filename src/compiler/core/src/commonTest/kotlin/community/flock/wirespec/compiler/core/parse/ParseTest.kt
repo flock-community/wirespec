@@ -60,7 +60,7 @@ class ParseTest {
             .shouldBeLeft()
             .also { it.size shouldBe 1 }
             .first()
-            .message shouldBe "RightCurly expected, not: CustomValue at line 3 and position 3"
+            .message shouldBe "RightCurly expected, not: DromedaryCaseIdentifier at line 3 and position 3"
     }
 
     @Test

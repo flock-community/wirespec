@@ -1,8 +1,8 @@
 .PHONY: *
 
 build:
-	./mvnw clean verify && \
-	(cd gradle-ktor && ./gradlew clean check) && \
+	./mvnw verify && \
+	(cd gradle-ktor && ./gradlew check) && \
 	(cd npm-typescript && npm run build)
 
 clean:
