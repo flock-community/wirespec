@@ -5,13 +5,15 @@ import arrow.core.nel
 import arrow.core.nonEmptyListOf
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.LanguageSpec
+import community.flock.wirespec.compiler.core.removeBackticks
 import community.flock.wirespec.compiler.core.tokenize.Token.Coordinates
 
 typealias Tokens = NonEmptyList<Token>
 
 data class OptimizeOptions(
     val removeWhitespace: Boolean = true,
-    val specify: Boolean = true,
+    val specifyTypes: Boolean = true,
+    val specifyFieldIdentifiers: Boolean = true,
 )
 
 fun LanguageSpec.tokenize(source: String, options: OptimizeOptions = OptimizeOptions()): Tokens = tokenize(source, nonEmptyListOf(Token(type = StartOfProgram, value = "", coordinates = Coordinates())))
@@ -20,10 +22,9 @@ fun LanguageSpec.tokenize(source: String, options: OptimizeOptions = OptimizeOpt
 private tailrec fun LanguageSpec.tokenize(source: String, incompleteTokens: Tokens): Tokens {
     val (token, remaining) = extractToken(source, incompleteTokens.last().coordinates)
     val tokens = incompleteTokens + token
-    return if (token.type is EndOfProgram) {
-        tokens
-    } else {
-        tokenize(remaining, tokens)
+    return when (token.type) {
+        is EndOfProgram -> tokens
+        else -> tokenize(remaining, tokens)
     }
 }
 
@@ -52,17 +53,29 @@ private fun endToken(previousTokenCoordinates: Coordinates = Coordinates()) = To
 private fun LanguageSpec.optimize(options: OptimizeOptions) = { tokens: Tokens ->
     tokens
         .runOption(options.removeWhitespace) { removeWhiteSpace() }
-        .runOption(options.specify) { map { it.specify(customType.types) } }
+        .runOption(options.specifyTypes) { map { it.specifyType(typeIdentifier.specificTypes) } }
+        .runOption(options.specifyFieldIdentifiers) { map { it.specifyFieldIdentifier(fieldIdentifier.caseVariants) } }
 }
 
 private fun Tokens.runOption(bool: Boolean, block: Tokens.() -> Tokens) = if (bool) block() else this
 
 private fun Tokens.removeWhiteSpace(): Tokens = filterNot { it.type is WhiteSpace }.toNonEmptyListOrNull() ?: endToken().nel()
 
-private fun Token.specify(entries: Map<String, SpecificType>) = when (type) {
-    is CustomType -> entries[value]
+private fun Token.specifyType(entries: Map<String, SpecificType>) = when (type) {
+    is TypeIdentifier -> entries[value]
         ?.let { copy(type = it) }
         ?: this
 
     else -> this
 }
+
+private fun Token.specifyFieldIdentifier(caseVariants: List<Pair<Regex, CaseVariant>>) = when (type) {
+    is FieldIdentifier -> caseVariants.firstNotNullOfOrNull { (regex, variant) ->
+        when {
+            regex.matches(value.removeBackticks()) -> copy(type = variant)
+            else -> null
+        }
+    }
+
+    else -> null
+} ?: this

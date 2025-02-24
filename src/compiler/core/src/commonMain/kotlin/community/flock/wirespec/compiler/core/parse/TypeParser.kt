@@ -7,8 +7,6 @@ import community.flock.wirespec.compiler.core.exceptions.WirespecException.Compi
 import community.flock.wirespec.compiler.core.tokenize.Brackets
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.Comma
-import community.flock.wirespec.compiler.core.tokenize.CustomType
-import community.flock.wirespec.compiler.core.tokenize.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.EndOfProgram
 import community.flock.wirespec.compiler.core.tokenize.Equals
 import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
@@ -17,7 +15,9 @@ import community.flock.wirespec.compiler.core.tokenize.Pipe
 import community.flock.wirespec.compiler.core.tokenize.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinitionStart
+import community.flock.wirespec.compiler.core.tokenize.TypeIdentifier
 import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
+import community.flock.wirespec.compiler.core.tokenize.WirespecIdentifier
 import community.flock.wirespec.compiler.core.tokenize.WirespecType
 import community.flock.wirespec.compiler.core.tokenize.WsBoolean
 import community.flock.wirespec.compiler.core.tokenize.WsBytes
@@ -34,8 +34,8 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is CustomType -> parseTypeDefinition(comment, DefinitionIdentifier(token.value)).bind()
-            else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
+            is TypeIdentifier -> parseTypeDefinition(comment, DefinitionIdentifier(token.value)).bind()
+            else -> raise(WrongTokenException<TypeIdentifier>(token).also { eatToken().bind() })
         }
     }
 
@@ -43,18 +43,18 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is CustomValue -> mutableListOf<Field>().apply {
+            is WirespecIdentifier -> mutableListOf<Field>().apply {
                 add(parseField(FieldIdentifier(token.value)).bind())
                 while (token.type == Comma) {
                     eatToken().bind()
                     when (token.type) {
-                        is CustomValue -> add(parseField(FieldIdentifier(token.value)).bind())
-                        else -> raise(WrongTokenException<CustomValue>(token).also { eatToken().bind() })
+                        is WirespecIdentifier -> add(parseField(FieldIdentifier(token.value)).bind())
+                        else -> raise(WrongTokenException<WirespecIdentifier>(token).also { eatToken().bind() })
                     }
                 }
             }
 
-            else -> raise(WrongTokenException<CustomValue>(token).also { eatToken().bind() })
+            else -> raise(WrongTokenException<WirespecIdentifier>(token).also { eatToken().bind() })
         }.also {
             when (token.type) {
                 is RightCurly -> eatToken().bind()
@@ -131,7 +131,7 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
 
             is WsUnit -> Reference::Unit
 
-            is CustomType -> { it ->
+            is TypeIdentifier -> { it ->
                 current.shouldBeDefined().bind()
                 Reference.Custom(
                     value = current.value,
@@ -205,24 +205,24 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
         eatToken().bind()
         token.log()
         when (token.type) {
-            is CustomType -> mutableListOf<Reference>().apply {
+            is TypeIdentifier -> mutableListOf<Reference>().apply {
                 token.shouldBeDefined().bind()
                 add(Reference.Custom(token.value, false))
                 eatToken().bind()
                 while (token.type == Pipe) {
                     eatToken().bind()
                     when (token.type) {
-                        is CustomType -> {
+                        is TypeIdentifier -> {
                             token.shouldBeDefined().bind()
                             add(Reference.Custom(token.value, false)).also { eatToken().bind() }
                         }
 
-                        else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
+                        else -> raise(WrongTokenException<TypeIdentifier>(token).also { eatToken().bind() })
                     }
                 }
             }
 
-            else -> raise(WrongTokenException<CustomType>(token).also { eatToken().bind() })
+            else -> raise(WrongTokenException<TypeIdentifier>(token).also { eatToken().bind() })
         }.toSet()
     }
 

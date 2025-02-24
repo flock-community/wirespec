@@ -70,6 +70,12 @@ spotless {
         target("**/.gitignore", "**/*.properties", "**/*.md")
         endWithNewline()
     }
+
+    format("wirespec") {
+        target("**/*.ws")
+        endWithNewline()
+    }
+
     kotlin {
         target("**/*.kt", "**/*.kts")
         targetExclude("**/build/**", "**/resources/**", "**/*Emitter.kt")

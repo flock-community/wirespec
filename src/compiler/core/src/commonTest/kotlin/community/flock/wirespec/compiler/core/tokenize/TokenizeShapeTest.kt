@@ -1,6 +1,6 @@
 package community.flock.wirespec.compiler.core.tokenize
 
-import community.flock.wirespec.compiler.core.WsCustomType
+import community.flock.wirespec.compiler.core.WirespecType
 import kotlin.test.Test
 
 class TokenizeShapeTest {
@@ -13,9 +13,9 @@ class TokenizeShapeTest {
             |  dictB: {String[]}
             |}
         """.trimMargin(),
-        TypeDefinition, WsCustomType, LeftCurly,
-        CustomValue, Colon, LeftCurly, WsString, RightCurly, Comma,
-        CustomValue, Colon, LeftCurly, WsString, Brackets, RightCurly,
+        TypeDefinition, WirespecType, LeftCurly,
+        DromedaryCaseIdentifier, Colon, LeftCurly, WsString, RightCurly, Comma,
+        DromedaryCaseIdentifier, Colon, LeftCurly, WsString, Brackets, RightCurly,
         RightCurly, EndOfProgram,
     )
 }

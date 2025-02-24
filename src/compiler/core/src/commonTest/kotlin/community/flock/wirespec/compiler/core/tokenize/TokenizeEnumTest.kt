@@ -1,6 +1,6 @@
 package community.flock.wirespec.compiler.core.tokenize
 
-import community.flock.wirespec.compiler.core.WsCustomType
+import community.flock.wirespec.compiler.core.WirespecType
 import kotlin.test.Test
 
 class TokenizeEnumTest {
@@ -13,9 +13,9 @@ class TokenizeEnumTest {
             |    DELETE_BAR
             |}
         """.trimMargin(),
-        EnumTypeDefinition, WsCustomType, LeftCurly,
-        WsCustomType, Comma,
-        WsCustomType,
+        EnumTypeDefinition, WirespecType, LeftCurly,
+        WirespecType, Comma,
+        WirespecType,
         RightCurly,
         EndOfProgram,
     )
