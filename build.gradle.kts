@@ -113,7 +113,7 @@ subprojects {
             val projectFullName = project.path.replace(Project.PATH_SEPARATOR, "-")
             val buildDir = rootProject.layout.buildDirectory.get()
             from("$projectDir/src")
-            include("*Test/resources/*.*")
+            include("*Test/resources/**/*")
             into("$buildDir/js/packages/${rootProject.name}$projectFullName-test/src")
         }
 
