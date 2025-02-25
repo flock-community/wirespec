@@ -1,9 +1,12 @@
 package community.flock.wirespec.openapi.v3
 
-import com.goncalossilva.resources.Resource
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPI
 import community.flock.wirespec.openapi.common.Ast
 import community.flock.wirespec.openapi.v3.OpenApiV3Parser.parse
+import kotlinx.io.buffered
+import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
+import kotlinx.io.readString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
@@ -134,7 +137,8 @@ class OpenApiV3EmitterTest {
 
     @Test
     fun petstoreParseEmitParse() {
-        val petstoreJson = Resource("src/commonTest/resources/v3/petstore.json").readText()
+        val path = Path("src/commonTest/resources/v3/petstore.json")
+        val petstoreJson = SystemFileSystem.source(path).buffered().readString()
 
         val petstoreOpenAPi = OpenAPI.decodeFromString(petstoreJson)
         val petstoreAst = petstoreOpenAPi.parse()

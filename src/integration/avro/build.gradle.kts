@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.kotlinx.resources)
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
 }

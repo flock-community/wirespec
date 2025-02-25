@@ -97,4 +97,31 @@ subprojects {
             }
         }
     }
+
+    // We're using kotlinx.io in tests as well. For (node)js test, test-resources aren't readily available.
+    // With this additional config of adding two copy tasks, and setting an explicit dependency on the
+    // test tasks ensures the test-resources are readily available within every sub-project
+    //
+    // https://github.com/Kotlin/kotlinx-io/issues/265
+    // https://gist.github.com/dellisd/a1df42787d42b41cd3ce16f573984674
+    afterEvaluate {
+        val copyTestResourcesForJs by tasks.registering(Copy::class) {
+            group = "nodejs"
+            description = "Copy js specific test-resources for nodejs test task (located at src/*Test/resources)"
+
+            logger.info("Copying test resources for ${project.path}")
+            val projectFullName = project.path.replace(Project.PATH_SEPARATOR, "-")
+            val buildDir = rootProject.layout.buildDirectory.get()
+            from("$projectDir/src")
+            include("*Test/resources/**/*")
+            into("$buildDir/js/packages/${rootProject.name}$projectFullName-test/src")
+        }
+
+        if (project.tasks.findByName("jsNodeTest") != null) {
+            project.tasks.named("jsNodeTest").configure {
+                dependsOn(copyTestResourcesForJs)
+            }
+        }
+    }
 }
+

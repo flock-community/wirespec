@@ -1,11 +1,14 @@
 package community.flock.wirespec.plugin.npm
 
-import com.goncalossilva.resources.Resource
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.lib.produce
 import community.flock.wirespec.compiler.utils.noLogger
+import kotlinx.io.buffered
+import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
+import kotlinx.io.readString
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -14,7 +17,8 @@ class MainTest {
 
     @Test
     fun testEmit() {
-        val file = Resource("src/commonTest/resources/person.ws").readText()
+        val path = Path("src/jsTest/resources/person.ws")
+        val file = SystemFileSystem.source(path).buffered().readString()
         val res = object : ParseContext {
             override val spec = WirespecSpec
             override val logger = noLogger

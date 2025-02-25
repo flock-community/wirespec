@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.kotlinx.resources)
 }
 
 group = "${libs.versions.group.id.get()}.plugin.npm"
@@ -35,7 +34,7 @@ kotlin {
     }
 
     sourceSets {
-        val commonMain by getting {
+        val jsMain by getting {
             dependencies {
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:compiler:lib"))
@@ -46,10 +45,10 @@ kotlin {
                 implementation(libs.kotlinx.serialization)
             }
         }
-        val jsMain by getting {
+        val jsTest by getting {
             dependencies {
                 implementation(libs.kotlin.test)
-                implementation(libs.kotlinx.resources)
+                implementation(libs.kotlinx.io.core)
             }
         }
     }
