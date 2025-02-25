@@ -1,9 +1,11 @@
-group = "${libs.versions.group.id.get()}.tools.playground"
-version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.get()
+import com.github.gradle.node.npm.task.NpmTask
 
-repositories {
-    mavenCentral()
+plugins {
+    alias(libs.plugins.node.gradle.plugin)
 }
+
+group = "${libs.versions.group.id.get()}.tools"
+version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.get()
 
 plugins.withId("maven-publish") {
     tasks.withType(AbstractPublishToMaven::class) {
@@ -12,15 +14,12 @@ plugins.withId("maven-publish") {
     }
 }
 
-task<Exec>("npmInstall") {
-    commandLine("npm", "install")
+task<NpmTask>("npmBuild") {
+    args.set(listOf("run", "build"))
+    dependsOn("npmInstall")
+    dependsOn(":src:plugin:npm:jsPackage")
 }
 
-task<Exec>("npmRunBuild") {
-    dependsOn("npmInstall")
-    commandLine("npm", "run", "build")
-}
-
-tasks.assemble {
-    dependsOn("npmInstall")
+tasks.named("build") {
+    dependsOn("npmBuild")
 }
