@@ -19,11 +19,12 @@ plugins.withId("maven-publish") {
 kotlin {
     js(IR) {
         nodejs()
+        useEsModules()
         generateTypeScriptDefinitions()
         binaries.library()
         compilations["main"].packageJson {
             customField("name", "@flock/wirespec")
-            customField("bin", mapOf("wirespec" to "wirespec-bin.js"))
+            customField("bin", mapOf("wirespec" to "wirespec-bin.mjs"))
         }
     }
 

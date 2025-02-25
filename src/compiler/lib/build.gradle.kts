@@ -12,11 +12,6 @@ repositories {
 kotlin {
     js(IR) {
         nodejs()
-        generateTypeScriptDefinitions()
-        binaries.library()
-        compilations["main"].packageJson {
-            customField("name", "@flock/wirespec-lib")
-        }
     }
     jvm {
         withJava()
