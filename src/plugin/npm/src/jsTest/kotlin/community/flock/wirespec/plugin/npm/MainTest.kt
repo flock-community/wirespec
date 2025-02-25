@@ -61,7 +61,7 @@ class MainTest {
             200 -> Todo
             404 -> Error
         }
-    """.trimIndent()
+        """.trimIndent()
 
     @Test
     fun testEmit() {
