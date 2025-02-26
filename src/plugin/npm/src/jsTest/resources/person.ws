@@ -45,5 +45,3 @@ endpoint DeleteTodo DELETE /todos/{id: TodoIdentifier} -> {
     200 -> Todo
     404 -> Error
 }
-`;
-}
