@@ -2,6 +2,7 @@
 
 package community.flock.wirespec.compiler.lib
 
+import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Comment
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
@@ -9,6 +10,7 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
+import community.flock.wirespec.compiler.core.parse.Import
 import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
@@ -16,6 +18,11 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 
 fun WsNode.consume(): Node = when (this) {
+    is WsDefinition -> consume()
+    is WsImport -> consume()
+}
+
+fun WsDefinition.consume(): Node = when (this) {
     is WsEndpoint -> consume()
     is WsEnum -> consume()
     is WsRefined -> consume()
@@ -23,6 +30,11 @@ fun WsNode.consume(): Node = when (this) {
     is WsUnion -> consume()
     is WsChannel -> consume()
 }
+
+fun WsImport.consume(): Node = Import(
+    url = Import.Url(url),
+    references = references.map { it.consume() }.toNonEmptyListOrNull() ?: error("Import references cannot be empty."),
+)
 
 fun WsEndpoint.consume(): Endpoint = Endpoint(
     comment = comment?.let { Comment(it) },
@@ -110,34 +122,41 @@ private fun WsContent.consume() = Endpoint.Content(
 )
 
 private fun WsReference.consume(): Reference = when (this) {
-    is WsAny -> Reference.Any(
-        isNullable = isNullable,
-    )
-
-    is WsUnit -> Reference.Unit(
-        isNullable = isNullable,
-    )
-
-    is WsCustom -> Reference.Custom(
-        value = value,
-        isNullable = isNullable,
-    )
-
-    is WsPrimitive -> Reference.Primitive(
-        type = type.consume(),
-        isNullable = isNullable,
-    )
-
-    is WsDict -> Reference.Dict(
-        reference = reference.consume(),
-        isNullable = isNullable,
-    )
-
-    is WsIterable -> Reference.Iterable(
-        reference = reference.consume(),
-        isNullable = isNullable,
-    )
+    is WsAny -> consume()
+    is WsCustom -> consume()
+    is WsDict -> consume()
+    is WsIterable -> consume()
+    is WsPrimitive -> consume()
+    is WsUnit -> consume()
 }
+
+fun WsAny.consume() = Reference.Any(
+    isNullable = isNullable,
+)
+
+fun WsUnit.consume() = Reference.Unit(
+    isNullable = isNullable,
+)
+
+fun WsCustom.consume() = Reference.Custom(
+    value = value,
+    isNullable = isNullable,
+)
+
+fun WsPrimitive.consume() = Reference.Primitive(
+    type = type.consume(),
+    isNullable = isNullable,
+)
+
+fun WsDict.consume() = Reference.Dict(
+    reference = reference.consume(),
+    isNullable = isNullable,
+)
+
+fun WsIterable.consume() = Reference.Iterable(
+    reference = reference.consume(),
+    isNullable = isNullable,
+)
 
 private fun WsPrimitiveType.consume() = when (this) {
     WsPrimitiveType.String -> Reference.Primitive.Type.String
@@ -190,6 +209,11 @@ fun Node.produce(): WsNode = when (this) {
         identifier = identifier.value,
         comment = comment?.value,
         reference = reference.produce(),
+    )
+
+    is Import -> WsImport(
+        url = url.value,
+        references = references.map { WsCustom(it.value, it.isNullable) },
     )
 }
 
@@ -259,7 +283,10 @@ private fun Endpoint.Response.produce() = WsResponse(
 private fun List<Endpoint.Response>.produce() = map { it.produce() }.toTypedArray()
 
 @JsExport
-sealed interface WsNode {
+sealed interface WsNode
+
+@JsExport
+sealed interface WsDefinition : WsNode {
     val identifier: String
 }
 
@@ -268,7 +295,7 @@ data class WsType(
     override val identifier: String,
     val comment: String?,
     val shape: WsShape,
-) : WsNode
+) : WsDefinition
 
 @JsExport
 data class WsShape(val value: Array<WsField>)
@@ -284,27 +311,33 @@ data class WsEndpoint(
     val cookies: Array<WsField>,
     val requests: Array<WsRequest>,
     val responses: Array<WsResponse>,
-) : WsNode
+) : WsDefinition
 
 @JsExport
 data class WsEnum(
     override val identifier: String,
     val comment: String?,
     val entries: Array<String>,
-) : WsNode
+) : WsDefinition
 
 @JsExport
 data class WsUnion(
     override val identifier: String,
     val comment: String?,
     val entries: Array<WsReference>,
-) : WsNode
+) : WsDefinition
 
 @JsExport
 data class WsChannel(
     override val identifier: String,
     val comment: String?,
     val reference: WsReference,
+) : WsDefinition
+
+@JsExport
+data class WsImport(
+    val url: String,
+    val references: List<WsCustom>,
 ) : WsNode
 
 @JsExport
@@ -312,7 +345,7 @@ data class WsRefined(
     override val identifier: String,
     val comment: String?,
     val validator: String,
-) : WsNode
+) : WsDefinition
 
 @JsExport
 enum class WsMethod { GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH, TRACE }

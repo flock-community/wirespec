@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core
 import arrow.core.Either
 import arrow.core.Nel
 import arrow.core.NonEmptyList
+import arrow.core.flatMap
 import community.flock.wirespec.compiler.core.Stage.EMITTED
 import community.flock.wirespec.compiler.core.Stage.PARSED
 import community.flock.wirespec.compiler.core.Stage.TOKENIZED
@@ -32,7 +33,7 @@ fun ParseContext.parse(source: String): Either<NonEmptyList<WirespecException>, 
     .also(TOKENIZED::log)
     .let(Parser(logger)::parse)
     .also(PARSED::log)
-    .map { it.validate() }
+    .flatMap { it.validate() }
     .also(VALIDATED::log)
 
 private enum class Stage {

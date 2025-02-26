@@ -32,6 +32,18 @@ sealed class WirespecException(message: String, val coordinates: Token.Coordinat
                     "Cannot find reference: $referenceName",
                 )
 
+            class EmptyImportReferenceException(token: Token) :
+                ParserException(
+                    token.coordinates,
+                    "List of imports cannot be empty",
+                )
+
+            class RelativeImportException(token: Token) :
+                ParserException(
+                    token.coordinates,
+                    "Can only import relative paths in the same directory as the source file",
+                )
+
             sealed class NullTokenException(message: String, coordinates: Token.Coordinates) : ParserException(coordinates, "$message cannot be null") {
                 class NextException(coordinates: Token.Coordinates) : NullTokenException("Next Token", coordinates)
             }

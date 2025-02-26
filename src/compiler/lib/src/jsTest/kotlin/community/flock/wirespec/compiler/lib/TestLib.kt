@@ -23,7 +23,7 @@ class TestLib {
             override val logger = noLogger
         }.parse(source).map { ast ->
             val output = ast.produce()
-            val input = output.map { it.consume() }
+            val input = output.filterIsInstance<WsDefinition>().map { it.consume() }
             assertEquals(input, ast)
         }
     }
