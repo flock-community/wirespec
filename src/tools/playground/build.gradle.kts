@@ -17,9 +17,12 @@ plugins.withId("maven-publish") {
 task<NpmTask>("npmBuild") {
     args.set(listOf("run", "build"))
     dependsOn("npmInstall")
-    dependsOn(":src:plugin:npm:jsPackage")
 }
 
 tasks.named("build") {
     dependsOn("npmBuild")
+}
+
+dependencies {
+    project(":src:plugin:npm")
 }
