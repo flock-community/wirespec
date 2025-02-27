@@ -32,10 +32,12 @@
             <plugin>
                 <groupId>community.flock.wirespec.plugin.maven</groupId>
                 <artifactId>wirespec-maven-plugin</artifactId>
+                <version>${wirespec.version}</version>
                 <dependencies>
                     <dependency>
                         <groupId>community.flock.wirespec.example.maven</groupId>
                         <artifactId>emitter</artifactId>
+                        <version>${wirespec.version}</version>
                     </dependency>
                 </dependencies>
                 <executions>

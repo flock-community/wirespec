@@ -11,14 +11,14 @@
     <artifactId>maven-spring-custom</artifactId>
     <packaging>pom</packaging>
 
-    <properties>
-        <wirespec.version>0.0.0-SNAPSHOT</wirespec.version>
-    </properties>
-
     <modules>
         <module>app</module>
         <module>emitter</module>
     </modules>
+
+    <properties>
+        <wirespec.version>0.0.0-SNAPSHOT</wirespec.version>
+    </properties>
 
     <dependencyManagement>
         <dependencies>
