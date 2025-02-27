@@ -53,7 +53,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: wirespec-vscode
-          path: src/ide/vscode/wirespec-client-vscode-*.vsix
+          path: src/ide/vscode/wirespec.vsix
       - name: Archive Intellij plugin
         uses: actions/upload-artifact@v4
         with:
@@ -271,6 +271,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: wirespec-docs
+          path: src/tools/docs/build
       - uses: 'google-github-actions/auth@v2'
         with:
           credentials_json: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
