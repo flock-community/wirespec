@@ -11,8 +11,24 @@
     <artifactId>maven-spring-custom</artifactId>
     <packaging>pom</packaging>
 
+    <properties>
+        <wirespec.version>0.0.0-SNAPSHOT</wirespec.version>
+    </properties>
+
     <modules>
         <module>app</module>
         <module>emitter</module>
     </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>community.flock.wirespec</groupId>
+                <artifactId>bom</artifactId>
+                <version>${wirespec.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 </project>
