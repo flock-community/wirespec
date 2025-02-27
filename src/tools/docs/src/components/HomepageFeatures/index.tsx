@@ -20,7 +20,7 @@ const FeatureList: FeatureItem[] = [
     ),
   },
   {
-    title: 'Generate code',
+    title: 'Code generate',
     Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
     description: (
       <>
@@ -30,7 +30,7 @@ const FeatureList: FeatureItem[] = [
     ),
   },
   {
-    title: 'Validate implementation',
+    title: 'Validation',
     Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
     description: (
       <>
