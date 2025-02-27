@@ -14,5 +14,4 @@ bomGenerator {
     includeDependency("$group.integration", "jackson-jvm", "$version")
     includeDependency("$group.integration", "spring-jvm", "$version")
     includeDependency("$group.integration", "wirespec-jvm", "$version")
-
 }
