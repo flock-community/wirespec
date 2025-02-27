@@ -28,6 +28,7 @@ spotless = "7.0.2"
 spring_boot = "3.3.4"
 spring_webflux = "6.1.13"
 spring_dependency_management = "1.1.6"
+gradlebom_plugin = "1.0.0.Final"
 
 [libraries]
 arrow_core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
@@ -75,3 +76,4 @@ node_gradle_plugin = { id = "com.github.node-gradle.node", version.ref = "node_g
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 spring_boot = { id = "org.springframework.boot", version.ref = "spring_boot" }
 spring_dependency_management = { id = "io.spring.dependency-management", version.ref = "spring_dependency_management" }
+gradlebom_plugin = { id = "io.github.gradlebom.generator-plugin", version.ref = "gradlebom_plugin" }

@@ -16,6 +16,7 @@ dependencyResolutionManagement {
 }
 
 include(
+    "src:bom",
     "src:compiler:core",
     "src:compiler:lib",
     "src:ide:intellij-plugin",
