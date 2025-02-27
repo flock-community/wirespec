@@ -1,4 +1,4 @@
-name: Java CI with Gradle
+`name: Java CI with Gradle
 
 on:
   push:
@@ -59,6 +59,11 @@ jobs:
         with:
           name: wirespec-intellij-plugin
           path: src/ide/intellij-plugin/build/distributions/intellij-plugin-*.zip
+      - name: Docs
+        uses: actions/upload-artifact@v4
+        with:
+          name: wirespec-docs
+          path: src/tools/docs/build
 
   example:
 
@@ -253,3 +258,24 @@ jobs:
         working-directory: ./src/plugin/npm/build/dist/js/productionLibrary
         run: |
           npm publish --access public
+
+  publish-docs:
+
+    needs:
+      - build
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: 'actions/checkout@v4'
+      - uses: actions/download-artifact@v4
+        with:
+          name: wirespec-docs
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+      - name: Info
+        run: |
+          gcloud info
