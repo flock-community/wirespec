@@ -1,6 +1,6 @@
 package community.flock.wirespec.compiler.core.tokenize
 
-import community.flock.wirespec.compiler.core.WsCustomType
+import community.flock.wirespec.compiler.core.WirespecType
 import kotlin.test.Test
 
 class TokenizeTypeTest {
@@ -9,20 +9,31 @@ class TokenizeTypeTest {
     fun testTypeTokenize() = testTokenizer(
         """
             |type Foo {
-            |    bar: String
+            |    bar: String,
+            |    `Baz`: String,
+            |    `foo-bar`: String,
+            |    `FOO-BAR`: String,
+            |    `foo_bar`: String,
+            |    `FOO_BAR`: String
             |}
         """.trimMargin(),
-        TypeDefinition, WsCustomType, LeftCurly, CustomValue,
-        Colon, WsString, RightCurly, EndOfProgram,
+        TypeDefinition, WirespecType, LeftCurly,
+        DromedaryCaseIdentifier, Colon, WsString, Comma,
+        PascalCaseIdentifier, Colon, WsString, Comma,
+        KebabCaseIdentifier, Colon, WsString, Comma,
+        ScreamingKebabCaseIdentifier, Colon, WsString, Comma,
+        SnakeCaseIdentifier, Colon, WsString, Comma,
+        ScreamingSnakeCaseIdentifier, Colon, WsString,
+        RightCurly, EndOfProgram,
     )
 
     @Test
     fun testRefinedTypeTokenize() = testTokenizer(
         "type DutchPostalCode /^([0-9]{4}[A-Z]{2})$/g",
-        TypeDefinition, WsCustomType, ForwardSlash, Character, Character,
+        TypeDefinition, WirespecType, ForwardSlash, Character, Character,
         Character, Character, Character, Character, Character,
-        LeftCurly, Character, RightCurly, Character, WsCustomType,
-        Character, WsCustomType, Character, LeftCurly, Character,
+        LeftCurly, Character, RightCurly, Character, WirespecType,
+        Character, WirespecType, Character, LeftCurly, Character,
         RightCurly, Character, Character, Path, EndOfProgram,
     )
 
@@ -30,11 +41,11 @@ class TokenizeTypeTest {
     fun testUnionTypeTokenize() = testTokenizer(
         "type Foo = Bar | Bal",
         TypeDefinition,
-        WsCustomType,
+        WirespecType,
         Equals,
-        WsCustomType,
+        WirespecType,
         Pipe,
-        WsCustomType,
+        WirespecType,
         EndOfProgram,
     )
 
@@ -45,8 +56,8 @@ class TokenizeTypeTest {
             |    bar: { String?[]? }?
             |}
         """.trimMargin(),
-        TypeDefinition, WsCustomType, LeftCurly, CustomValue, Colon,
-        LeftCurly, WsString, QuestionMark, Brackets, QuestionMark,
+        TypeDefinition, WirespecType, LeftCurly, DromedaryCaseIdentifier,
+        Colon, LeftCurly, WsString, QuestionMark, Brackets, QuestionMark,
         RightCurly, QuestionMark, RightCurly, EndOfProgram,
     )
 }

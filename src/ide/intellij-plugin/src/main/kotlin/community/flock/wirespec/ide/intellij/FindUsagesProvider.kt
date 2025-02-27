@@ -11,7 +11,7 @@ class FindUsagesProvider : IntellijFindUsagesProvider {
 
     override fun getWordsScanner(): WordsScanner = DefaultWordsScanner(
         Lexer(),
-        TokenSet.create(Types.CUSTOM_TYPE),
+        TokenSet.create(Types.TYPE_IDENTIFIER),
         TokenSet.EMPTY,
         TokenSet.EMPTY,
     )

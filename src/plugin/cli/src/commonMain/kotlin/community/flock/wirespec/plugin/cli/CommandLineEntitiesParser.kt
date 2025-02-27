@@ -59,21 +59,20 @@ class WirespecCli : NoOpCliktCommand(name = "wirespec") {
 private abstract class CommonOptions : CliktCommand() {
     val input by option(*Options.Input.flags, help = "Input")
     val output by option(*Options.Output.flags, help = "Output")
-    val packageName by option(*Options.PackageName.flags, help = "Package name").default(DEFAULT_GENERATED_PACKAGE_STRING)
+    val packageName by option(*Options.PackageName.flags, help = "Package name")
+        .default(DEFAULT_GENERATED_PACKAGE_STRING)
     val logLevel by option(*Options.LogLevel.flags, help = "Log level: $Level").default("$ERROR")
     val shared by option(*Options.Shared.flags, help = "Generate shared wirespec code").flag(default = false)
     val strict by option(*Options.Strict.flags, help = "Strict mode").flag()
 
-    fun getInput(input: String? = null): Input {
-        if (input != null) {
-            val path = Path(input)
-            val meta = SystemFileSystem.metadataOrNull(path)
-                ?: throw CliktError("Cannot access file or directory: $input")
-            if (meta.isDirectory) return FullDirPath(input)
-            if (meta.isRegularFile) return FullFilePath.parse(input)
+    fun getInput(input: String? = null): Input = input?.let {
+        val meta = SystemFileSystem.metadataOrNull(Path(it)) ?: throw CliktError("Cannot access file or directory: $it")
+        when {
+            meta.isDirectory -> FullDirPath(it)
+            meta.isRegularFile -> FullFilePath.parse(it)
+            else -> throw CliktError("Input is not a file or directory: $it")
         }
-        return Console
-    }
+    } ?: Console
 
     fun String.toLogLevel() = when (trim().uppercase()) {
         "DEBUG" -> DEBUG

@@ -1,6 +1,8 @@
 package community.flock.wirespec.compiler.core.tokenize
 
-import community.flock.wirespec.compiler.core.WsCustomType
+import community.flock.wirespec.compiler.core.WirespecField
+import community.flock.wirespec.compiler.core.WirespecType
+import community.flock.wirespec.compiler.core.tokenize.Precision.P64
 import kotlin.test.Test
 
 class TokenizeTest {
@@ -9,7 +11,7 @@ class TokenizeTest {
     fun testEmptySource() = testTokenizer("", StartOfProgram, EndOfProgram, removeWhiteSpace = false)
 
     @Test
-    fun testSourceLengthOfOneCharacterSource() = testTokenizer("t", CustomValue, EndOfProgram)
+    fun testSourceLengthOfOneCharacterSource() = testTokenizer("t", DromedaryCaseIdentifier, EndOfProgram)
 
     @Test
     fun testCommentSource() = testTokenizer(
@@ -37,14 +39,9 @@ class TokenizeTest {
             |  houseNumber: Integer
             |}
         """.trimMargin(),
-        Comment,
-        TypeDefinition, WsCustomType, ForwardSlash, Character, Character, Character, Character, Character, CustomValue, Character, CustomValue, Character, WsCustomType, Character, LeftCurly, Character, Comma, Character, Character, RightCurly, Character, Path,
-        Comment,
-        TypeDefinition, WsCustomType,
-        LeftCurly,
-        CustomValue, Colon, WsCustomType, QuestionMark, Comma,
-        CustomValue, Colon, WsInteger(Precision.P64),
-        RightCurly,
-        EndOfProgram,
+        Comment, TypeDefinition, WirespecType, ForwardSlash, Character, Character, Character, Character, Character,
+        WirespecField, Character, LeftCurly, Character, Comma, Character, Character, RightCurly, Character, Path,
+        Comment, TypeDefinition, WirespecType, LeftCurly, DromedaryCaseIdentifier, Colon, WirespecType, QuestionMark,
+        Comma, DromedaryCaseIdentifier, Colon, WsInteger(P64), RightCurly, EndOfProgram,
     )
 }
