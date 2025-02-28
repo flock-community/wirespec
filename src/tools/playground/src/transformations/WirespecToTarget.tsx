@@ -1,12 +1,12 @@
-import { parse, emit, Emitters, WsEmitted, WsError} from "@flock/wirespec";
+import { parse, emit, Emitters, WsEmitted, WsError } from "@flock/wirespec";
 import { CompliationResult } from "../components/PlayGround";
 
 const getEmitterFor = (language: string) => {
-  switch(language) {
+  switch (language) {
     case "typescript":
       return Emitters.TYPESCRIPT;
     case "kotlin":
-      return Emitters.KOTLIN
+      return Emitters.KOTLIN;
     case "scala":
       return Emitters.SCALA;
     case "java":
@@ -20,18 +20,21 @@ const getEmitterFor = (language: string) => {
     default:
       throw new Error(`unknown language: ${language}`);
   }
-}
+};
 
-export const wirespecToTarget: (x: string, y: string) => CompliationResult = (wirespec: string, language: string) => {
+export const wirespecToTarget: (x: string, y: string) => CompliationResult = (
+  wirespec: string,
+  language: string,
+) => {
   const emitter = getEmitterFor(language);
   const parseResult = parse(wirespec);
   let result = [] as WsEmitted[];
   let errors = [] as WsError[];
-  if(parseResult.result) {
-      result = emit(parseResult.result, emitter, '');
+  if (parseResult.result) {
+    result = emit(parseResult.result, emitter, "");
   }
   if (parseResult.errors) {
-      errors = parseResult.errors;
+    errors = parseResult.errors;
   }
   return { result, errors };
 };
