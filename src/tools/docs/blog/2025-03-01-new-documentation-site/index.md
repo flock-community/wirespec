@@ -1,4 +1,5 @@
 ---
+title: New documentation website
 authors: [wilmveel]
 tags: [wirespec, docs]
 ---
