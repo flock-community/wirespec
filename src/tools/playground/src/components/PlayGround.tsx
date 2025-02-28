@@ -9,6 +9,7 @@ import { initializeMonaco } from "../utils/InitializeMonaco";
 import { setMonacoErrors } from "../utils/SetMonacoErrors";
 import { Box, Grid, Typography, useTheme } from "@mui/material";
 import { wirespecToTarget } from "../transformations/WirespecToTarget";
+import { useSearch } from "@tanstack/react-router";
 
 interface PlayGroundProps {
   code: string;
@@ -38,12 +39,8 @@ function createFileHeaderFor(fileName: string, language: string) {
   }
 }
 
-export function PlayGround({
-  code,
-  setCode,
-  selectedLanguage,
-  setSelectedLanguage,
-}: PlayGroundProps) {
+export function PlayGround({ code, setCode }: PlayGroundProps) {
+  const { output } = useSearch({ from: "/" });
   const monaco = useMonaco();
   useEffect(() => {
     if (!monaco) {
@@ -58,9 +55,9 @@ export function PlayGround({
   const theme = useTheme();
 
   useEffect(() => {
-    const compiledOutput = wirespecToTarget(code, selectedLanguage);
+    const compiledOutput = wirespecToTarget(code, output);
     setWirespecOutput(compiledOutput);
-  }, [code, selectedLanguage]);
+  }, [code, output]);
   useEffect(() => {
     if (wirespecOutput) {
       if (wirespecOutput.result.length) {
@@ -68,7 +65,7 @@ export function PlayGround({
           wirespecOutput.result
             .map(
               (file) =>
-                `${createFileHeaderFor(file.typeName, selectedLanguage)}${file.result}`,
+                `${createFileHeaderFor(file.typeName, output)}${file.result}`,
             )
             .join(""),
         );
@@ -99,19 +96,13 @@ export function PlayGround({
               </Box>
             </Typography>
             <Box sx={{ [theme.breakpoints.up("md")]: { display: "none" } }}>
-              <TargetLanguageSelector
-                selectedLanguage={selectedLanguage}
-                setSelectedLanguage={setSelectedLanguage}
-              />
+              <TargetLanguageSelector />
             </Box>
           </Box>
         </Grid>
         <Grid item md={6}>
           <Box sx={{ [theme.breakpoints.down("md")]: { display: "none" } }}>
-            <TargetLanguageSelector
-              selectedLanguage={selectedLanguage}
-              setSelectedLanguage={setSelectedLanguage}
-            />
+            <TargetLanguageSelector />
           </Box>
         </Grid>
 
@@ -120,7 +111,7 @@ export function PlayGround({
         </Grid>
 
         <Grid item xs={12} md={6}>
-          <PlayGroundOutput code={wirespecResult} language={selectedLanguage} />
+          <PlayGroundOutput code={wirespecResult} />
         </Grid>
 
         <Grid item xs={6}>
