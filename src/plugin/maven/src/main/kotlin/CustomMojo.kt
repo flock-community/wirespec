@@ -87,13 +87,13 @@ class CustomMojo : BaseMojo() {
             }
         }
 
-        val file = File(input)
+        val fileContents = getFilesContent()
         val ast: List<Pair<String, AST>> =
             when (format) {
-                Format.OpenApiV2 -> listOf(file.name to OpenApiV2Parser.parse(file.readText(), !strict).validate())
-                Format.OpenApiV3 -> listOf(file.name to OpenApiV3Parser.parse(file.readText(), !strict).validate())
-                Format.Avro -> listOf(file.name to AvroParser.parse(file.readText(), !strict).validate())
-                null -> getFilesContent().parse(logger)
+                Format.OpenApiV2 -> fileContents.map { it.first to OpenApiV2Parser.parse(it.second, !strict).validate() }
+                Format.OpenApiV3 -> fileContents.map { it.first to OpenApiV3Parser.parse(it.second, !strict).validate() }
+                Format.Avro -> fileContents.map { it.first to AvroParser.parse(it.second, !strict).validate() }
+                null -> fileContents.parse(logger)
             }
 
         ast.map { (name, ast) -> name to ast.validate().let { emitter.emit(it) } }

@@ -1,5 +1,6 @@
 package community.flock.wirespec.plugin.maven
 
+import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.mapEmitter
@@ -21,22 +22,29 @@ open class CompileMojo : BaseMojo() {
 
     override fun execute() {
         project.addCompileSourceRoot(output)
-        val outputFile = File(output)
+        val outputDirectory = File(output)
         val packageNameValue = PackageName(packageName)
-        val content = getFilesContent().parse(logger)
+        val asts = getFilesContent().parse(logger)
+
+        emit(packageNameValue, asts, outputDirectory)
+    }
+
+    protected fun emit(
+        packageNameValue: PackageName,
+        asts: List<Pair<String, AST>>,
+        outputFile: File,
+    ) {
         languages
             ?.map { it.mapEmitter(packageNameValue, logger) }
             ?.forEach { (emitter, ext, sharedData) ->
-                content.forEach { (fileName, ast) ->
-                    emitter.emit(ast).forEach {
-                        it.writeToFiles(
-                            output = outputFile,
-                            packageName = packageNameValue,
-                            shared = if (shared) sharedData else null,
-                            fileName = if (emitter.split) null else fileName,
-                            ext = ext,
-                        )
-                    }
+                asts.forEach { (fileName, ast) ->
+                    emitter.emit(ast).writeToFiles(
+                        output = outputFile,
+                        packageName = packageNameValue,
+                        shared = if (shared) sharedData else null,
+                        fileName = if (emitter.split) null else fileName,
+                        ext = ext,
+                    )
                 }
             }
     }

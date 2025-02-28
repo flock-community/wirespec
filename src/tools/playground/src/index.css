@@ -1,6 +1,8 @@
 @font-face {
-  font-family: 'TechnaSans-Regular';
-  src: local('TechnaSans-Regular'), url(./fonts/TechnaSans-Regular.otf) format('opentype');
+  font-family: "TechnaSans-Regular";
+  src:
+    local("TechnaSans-Regular"),
+    url(./fonts/TechnaSans-Regular.otf) format("opentype");
 }
 
 :root {
