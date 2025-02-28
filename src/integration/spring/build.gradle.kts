@@ -50,6 +50,7 @@ kotlin {
                 implementation(project(":src:integration:wirespec"))
                 implementation(libs.spring.boot.test)
                 implementation(libs.kotlin.junit)
+                implementation(libs.kotlinx.io.core)
             }
         }
     }

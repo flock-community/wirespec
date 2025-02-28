@@ -80,8 +80,8 @@ object AddPetEndpoint : Wirespec.Endpoint {
 
   interface Handler: Wirespec.Handler {
     @org.springframework.web.bind.annotation.PostMapping("/pet")
+    suspend fun addPet(request: Request): Response<*>
 
-suspend fun addPet(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/pet"
       override val method = "POST"
@@ -202,8 +202,8 @@ object UpdatePetEndpoint : Wirespec.Endpoint {
 
   interface Handler: Wirespec.Handler {
     @org.springframework.web.bind.annotation.PutMapping("/pet")
+    suspend fun updatePet(request: Request): Response<*>
 
-suspend fun updatePet(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/pet"
       override val method = "PUT"
@@ -299,8 +299,8 @@ object FindPetsByStatusEndpoint : Wirespec.Endpoint {
 
   interface Handler: Wirespec.Handler {
     @org.springframework.web.bind.annotation.GetMapping("/pet/findByStatus")
+    suspend fun findPetsByStatus(request: Request): Response<*>
 
-suspend fun findPetsByStatus(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/pet/findByStatus"
       override val method = "GET"
@@ -396,8 +396,8 @@ object FindPetsByTagsEndpoint : Wirespec.Endpoint {
 
   interface Handler: Wirespec.Handler {
     @org.springframework.web.bind.annotation.GetMapping("/pet/findByTags")
+    suspend fun findPetsByTags(request: Request): Response<*>
 
-suspend fun findPetsByTags(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/pet/findByTags"
       override val method = "GET"
@@ -507,8 +507,8 @@ object GetPetByIdEndpoint : Wirespec.Endpoint {
 
   interface Handler: Wirespec.Handler {
     @org.springframework.web.bind.annotation.GetMapping("/pet/{petId}")
+    suspend fun getPetById(request: Request): Response<*>
 
-suspend fun getPetById(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/pet/{petId}"
       override val method = "GET"
@@ -593,8 +593,8 @@ object UpdatePetWithFormEndpoint : Wirespec.Endpoint {
 
   interface Handler: Wirespec.Handler {
     @org.springframework.web.bind.annotation.PostMapping("/pet/{petId}")
+    suspend fun updatePetWithForm(request: Request): Response<*>
 
-suspend fun updatePetWithForm(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/pet/{petId}"
       override val method = "POST"
@@ -678,8 +678,8 @@ object DeletePetEndpoint : Wirespec.Endpoint {
 
   interface Handler: Wirespec.Handler {
     @org.springframework.web.bind.annotation.DeleteMapping("/pet/{petId}")
+    suspend fun deletePet(request: Request): Response<*>
 
-suspend fun deletePet(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/pet/{petId}"
       override val method = "DELETE"
@@ -764,8 +764,8 @@ object UploadFileEndpoint : Wirespec.Endpoint {
 
   interface Handler: Wirespec.Handler {
     @org.springframework.web.bind.annotation.PostMapping("/pet/{petId}/uploadImage")
+    suspend fun uploadFile(request: Request): Response<*>
 
-suspend fun uploadFile(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/pet/{petId}/uploadImage"
       override val method = "POST"
@@ -839,8 +839,8 @@ object GetInventoryEndpoint : Wirespec.Endpoint {
 
   interface Handler: Wirespec.Handler {
     @org.springframework.web.bind.annotation.GetMapping("/store/inventory")
+    suspend fun getInventory(request: Request): Response<*>
 
-suspend fun getInventory(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/store/inventory"
       override val method = "GET"
@@ -933,8 +933,8 @@ object PlaceOrderEndpoint : Wirespec.Endpoint {
 
   interface Handler: Wirespec.Handler {
     @org.springframework.web.bind.annotation.PostMapping("/store/order")
+    suspend fun placeOrder(request: Request): Response<*>
 
-suspend fun placeOrder(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/store/order"
       override val method = "POST"
@@ -1044,8 +1044,8 @@ object GetOrderByIdEndpoint : Wirespec.Endpoint {
 
   interface Handler: Wirespec.Handler {
     @org.springframework.web.bind.annotation.GetMapping("/store/order/{orderId}")
+    suspend fun getOrderById(request: Request): Response<*>
 
-suspend fun getOrderById(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/store/order/{orderId}"
       override val method = "GET"
@@ -1139,8 +1139,8 @@ object DeleteOrderEndpoint : Wirespec.Endpoint {
 
   interface Handler: Wirespec.Handler {
     @org.springframework.web.bind.annotation.DeleteMapping("/store/order/{orderId}")
+    suspend fun deleteOrder(request: Request): Response<*>
 
-suspend fun deleteOrder(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/store/order/{orderId}"
       override val method = "DELETE"
@@ -1215,8 +1215,8 @@ object CreateUserEndpoint : Wirespec.Endpoint {
 
   interface Handler: Wirespec.Handler {
     @org.springframework.web.bind.annotation.PostMapping("/user")
+    suspend fun createUser(request: Request): Response<*>
 
-suspend fun createUser(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/user"
       override val method = "POST"
@@ -1306,8 +1306,8 @@ object CreateUsersWithListInputEndpoint : Wirespec.Endpoint {
 
   interface Handler: Wirespec.Handler {
     @org.springframework.web.bind.annotation.PostMapping("/user/createWithList")
+    suspend fun createUsersWithListInput(request: Request): Response<*>
 
-suspend fun createUsersWithListInput(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/user/createWithList"
       override val method = "POST"
@@ -1409,8 +1409,8 @@ object LoginUserEndpoint : Wirespec.Endpoint {
 
   interface Handler: Wirespec.Handler {
     @org.springframework.web.bind.annotation.GetMapping("/user/login")
+    suspend fun loginUser(request: Request): Response<*>
 
-suspend fun loginUser(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/user/login"
       override val method = "GET"
@@ -1482,8 +1482,8 @@ object LogoutUserEndpoint : Wirespec.Endpoint {
 
   interface Handler: Wirespec.Handler {
     @org.springframework.web.bind.annotation.GetMapping("/user/logout")
+    suspend fun logoutUser(request: Request): Response<*>
 
-suspend fun logoutUser(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/user/logout"
       override val method = "GET"
@@ -1593,8 +1593,8 @@ object GetUserByNameEndpoint : Wirespec.Endpoint {
 
   interface Handler: Wirespec.Handler {
     @org.springframework.web.bind.annotation.GetMapping("/user/{username}")
+    suspend fun getUserByName(request: Request): Response<*>
 
-suspend fun getUserByName(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/user/{username}"
       override val method = "GET"
@@ -1673,8 +1673,8 @@ object UpdateUserEndpoint : Wirespec.Endpoint {
 
   interface Handler: Wirespec.Handler {
     @org.springframework.web.bind.annotation.PutMapping("/user/{username}")
+    suspend fun updateUser(request: Request): Response<*>
 
-suspend fun updateUser(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/user/{username}"
       override val method = "PUT"
@@ -1768,8 +1768,8 @@ object DeleteUserEndpoint : Wirespec.Endpoint {
 
   interface Handler: Wirespec.Handler {
     @org.springframework.web.bind.annotation.DeleteMapping("/user/{username}")
+    suspend fun deleteUser(request: Request): Response<*>
 
-suspend fun deleteUser(request: Request): Response<*>
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/user/{username}"
       override val method = "DELETE"
