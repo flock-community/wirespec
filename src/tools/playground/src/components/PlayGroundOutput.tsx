@@ -1,20 +1,18 @@
 import Editor from "@monaco-editor/react";
-import { useSearch } from "@tanstack/react-router";
 
 interface PlayGroundOutputProps {
   code?: string;
+  language: string;
 }
 
-export function PlayGroundOutput({ code }: PlayGroundOutputProps) {
-  const { output } = useSearch({ from: "/" });
-
+export function PlayGroundOutput({ code, language }: PlayGroundOutputProps) {
   return (
     <>
       {code != undefined ? (
         <Editor
-          language={output}
+          language={language}
           theme={"vs-dark"}
-          height={"50vh"}
+          height={"75vh"}
           value={code}
           options={{ readOnly: true }}
         />

@@ -1,3 +1,4 @@
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMonaco } from "@monaco-editor/react";
 import { initializeMonaco } from "../utils/InitializeMonaco";
@@ -5,17 +6,18 @@ import {
   openApiV2ToWirespec,
   openApiV3ToWirespec,
 } from "../transformations/OpenApiToWirespec";
-import { PlayGroundInput } from "./PlayGroundInput";
-import { PlayGroundOutput } from "./PlayGroundOutput";
+import { PlayGroundInput } from "../components/PlayGroundInput";
+import { PlayGroundOutput } from "../components/PlayGroundOutput";
 import { Grid, Typography } from "@mui/material";
+import { swaggerExample } from "../examples/swagger";
 
-interface OpenApiCoverterProps {
-  code: string;
-  setCode: (input: string) => void;
-}
+export const Route = createFileRoute("/converter")({
+  component: RouteComponent,
+});
 
-export function OpenApiConverter({ code, setCode }: OpenApiCoverterProps) {
+function RouteComponent() {
   const monaco = useMonaco();
+  const [code, setCode] = useState(swaggerExample());
   useEffect(() => {
     if (!monaco) {
       return;
