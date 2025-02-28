@@ -1,66 +1,62 @@
 import wirespecLogo from "./assets/wirespec.svg";
 import "./App.css";
-import { TabRoot } from "./components/TabRoot";
-import { Box, createTheme, Link, ThemeProvider } from "@mui/material";
+import { Box, createTheme, ThemeProvider, Typography } from "@mui/material";
 import "@fontsource/roboto/300.css";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
+import { Outlet, Link } from "@tanstack/react-router";
 
 const darkTheme = createTheme({
   palette: {
     mode: "dark",
-    primary: {
-      main: "#fcdf00",
-    },
-    secondary: {
-      main: "#ffffff",
-    },
   },
 });
-
-darkTheme.typography.h1 = {
-  fontSize: "6vw",
-  fontFamily: "TechnaSans-Regular",
-};
-
-darkTheme.typography.h5 = {
-  fontFamily: "Roboto",
-};
 
 function App() {
   return (
     <ThemeProvider theme={darkTheme}>
-      <Box
-        sx={{
-          marginLeft: 10,
-          marginRight: 10,
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
+      <Box display="flex" flexDirection="column" rowGap={2}>
         <Box
-          sx={{
-            width: "100%",
-            display: "flex",
-            justifyContent: "center",
-            marginTop: 5,
-          }}
+          display="flex"
+          alignItems="center"
+          gap={8}
+          paddingBlock={2}
+          paddingInline={2}
+          bgcolor="#333"
         >
-          <Link
-            href="https://github.com/flock-community/wirespec"
-            target="_blank"
-          >
-            <img
-              src={wirespecLogo}
-              height={100}
-              className="logo"
-              alt="Wirespec Logo"
-            />
-          </Link>
+          <a href="https://github.com/flock-community/wirespec" target="_blank">
+            <img src={wirespecLogo} height={50} alt="Wirespec Logo" />
+          </a>
+
+          <Box display="flex" gap={4}>
+            <Link
+              to="/compiler"
+              search={{ emitter: "typescript" }}
+              activeOptions={{ includeSearch: false }}
+              activeProps={{
+                style: {
+                  color: "#646cff",
+                },
+              }}
+            >
+              <Typography>Compiler</Typography>
+            </Link>
+            <Link
+              to="/converter"
+              activeProps={{
+                style: {
+                  color: "#646cff",
+                },
+              }}
+            >
+              <Typography>Converter</Typography>
+            </Link>
+          </Box>
         </Box>
-        <Box>
-          <TabRoot />
+
+        <Box paddingInline={2}>
+          <Outlet />
         </Box>
       </Box>
     </ThemeProvider>
