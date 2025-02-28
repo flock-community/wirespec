@@ -1,28 +1,31 @@
 import { FormControl, MenuItem, Select } from "@mui/material";
+import { useNavigate, useSearch } from "@tanstack/react-router";
+import { type Output } from "../routes";
 
-interface TargetLanguageSelectorProps {
-  selectedLanguage: string;
-  setSelectedLanguage: (input: string) => void;
-}
+export function TargetLanguageSelector() {
+  const options: { value: Output; label: string }[] = [
+    { value: "typescript", label: "TypeScript" },
+    { value: "kotlin", label: "Kotlin" },
+    { value: "scala", label: "Scala" },
+    { value: "java", label: "Java" },
+    { value: "open_api_v2", label: "OpenApi v2" },
+    { value: "open_api_v3", label: "OpenApi v3" },
+    { value: "avro", label: "Avro" },
+  ];
 
-export function TargetLanguageSelector({
-  selectedLanguage,
-  setSelectedLanguage,
-}: TargetLanguageSelectorProps) {
+  const navigate = useNavigate({ from: "/" });
+  const { output } = useSearch({ from: "/" });
+
   const handleChange = (event: { target: { value: string } }) => {
-    setSelectedLanguage(event.target.value);
+    navigate({ search: () => ({ output: event.target.value as Output }) });
   };
 
   return (
     <FormControl sx={{ minWidth: 120 }} size="small">
-      <Select value={selectedLanguage} onChange={handleChange}>
-        <MenuItem value="typescript">TypeScript</MenuItem>
-        <MenuItem value="kotlin">Kotlin</MenuItem>
-        <MenuItem value="scala">Scala</MenuItem>
-        <MenuItem value="java">Java</MenuItem>
-        <MenuItem value="open_api_v2">OpenApi v2</MenuItem>
-        <MenuItem value="open_api_v3">OpenApi v3</MenuItem>
-        <MenuItem value="avro">Avro</MenuItem>
+      <Select value={output} onChange={handleChange}>
+        {options.map((option) => (
+          <MenuItem value={option.value}>{option.label}</MenuItem>
+        ))}
       </Select>
     </FormControl>
   );
