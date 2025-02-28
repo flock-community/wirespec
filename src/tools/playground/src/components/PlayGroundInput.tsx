@@ -18,7 +18,7 @@ export function PlayGroundInput({ code, setCode }: PlayGroundInputProps) {
     <Editor
       language="wirespec"
       theme="ws-dark"
-      height={"50vh"}
+      height={"75vh"}
       value={code}
       onChange={(code: string | undefined) => handleSetCode(code)}
     />

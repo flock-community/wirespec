@@ -1,5 +1,5 @@
 import { parse, emit, Emitters, WsEmitted, WsError } from "@flock/wirespec";
-import { CompliationResult } from "../components/PlayGround";
+import { CompliationResult } from "../components/Compiler";
 
 const getEmitterFor = (language: string) => {
   switch (language) {

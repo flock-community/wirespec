@@ -1,9 +1,9 @@
 import { FormControl, MenuItem, Select } from "@mui/material";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { type Output } from "../routes";
+import { type Emitter } from "../routes/compiler";
 
 export function TargetLanguageSelector() {
-  const options: { value: Output; label: string }[] = [
+  const options: { value: Emitter; label: string }[] = [
     { value: "typescript", label: "TypeScript" },
     { value: "kotlin", label: "Kotlin" },
     { value: "scala", label: "Scala" },
@@ -13,16 +13,16 @@ export function TargetLanguageSelector() {
     { value: "avro", label: "Avro" },
   ];
 
-  const navigate = useNavigate({ from: "/" });
-  const { output } = useSearch({ from: "/" });
+  const navigate = useNavigate({ from: "/compiler" });
+  const { emitter } = useSearch({ from: "/compiler" });
 
   const handleChange = (event: { target: { value: string } }) => {
-    navigate({ search: () => ({ output: event.target.value as Output }) });
+    navigate({ search: () => ({ emitter: event.target.value as Emitter }) });
   };
 
   return (
     <FormControl sx={{ minWidth: 120 }} size="small">
-      <Select value={output} onChange={handleChange}>
+      <Select value={emitter} onChange={handleChange}>
         {options.map((option) => (
           <MenuItem value={option.value}>{option.label}</MenuItem>
         ))}
@@ -30,5 +30,3 @@ export function TargetLanguageSelector() {
     </FormControl>
   );
 }
-
-export default TargetLanguageSelector;
