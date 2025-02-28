@@ -10,13 +10,12 @@ import org.springframework.stereotype.Component
 
 @Component
 class WirespecPetstoreWebClient(
-    private val wirespecWebClient: WirespecWebClient,
+    val wirespecWebClient: WirespecWebClient,
 ) : AddPetEndpoint.Handler,
     UpdatePetEndpoint.Handler,
     GetPetByIdEndpoint.Handler,
     DeletePetEndpoint.Handler,
     FindPetsByTagsEndpoint.Handler {
-
     override suspend fun getPetById(request: GetPetByIdEndpoint.Request): GetPetByIdEndpoint.Response<*> = wirespecWebClient.send(request)
 
     override suspend fun addPet(request: AddPetEndpoint.Request): AddPetEndpoint.Response<*> = wirespecWebClient.send(request)
@@ -25,5 +24,6 @@ class WirespecPetstoreWebClient(
 
     override suspend fun deletePet(request: DeletePetEndpoint.Request): DeletePetEndpoint.Response<*> = wirespecWebClient.send(request)
 
-    override suspend fun findPetsByTags(request: FindPetsByTagsEndpoint.Request): FindPetsByTagsEndpoint.Response<*> = wirespecWebClient.send(request)
+    override suspend fun findPetsByTags(request: FindPetsByTagsEndpoint.Request): FindPetsByTagsEndpoint.Response<*> =
+        wirespecWebClient.send(request)
 }
