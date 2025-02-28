@@ -14,7 +14,7 @@ import org.springframework.web.reactive.function.client.WebClient
 open class WirespecWebClientConfiguration(
     val serialization: Wirespec.Serialization<String>,
 ) {
-    @Bean
+    @Bean("wirespecSpringWebClient")
     @ConditionalOnMissingBean(name = ["wirespecSpringWebClient"])
     open fun defaultWebClient(): WebClient = WebClient.builder().build()
 
