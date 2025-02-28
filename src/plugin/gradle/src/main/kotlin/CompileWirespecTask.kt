@@ -44,15 +44,13 @@ abstract class CompileWirespecTask : BaseWirespecTask() {
             .map { it.mapEmitter(packageNameValue, wirespecLogger) }
             .forEach { (emitter, ext, sharedData) ->
                 ast.forEach { (fileName, ast) ->
-                    emitter.emit(ast).forEach {
-                        it.writeToFiles(
-                            output = output.asFile.get(),
-                            packageName = packageNameValue,
-                            shared = if (shared.getOrElse(true)) sharedData else null,
-                            fileName = if (emitter.split) null else fileName,
-                            ext = ext,
-                        )
-                    }
+                    emitter.emit(ast).writeToFiles(
+                        output = output.asFile.get(),
+                        packageName = packageNameValue,
+                        shared = if (shared.getOrElse(true)) sharedData else null,
+                        fileName = if (emitter.split) null else fileName,
+                        ext = ext,
+                    )
                 }
             }
     }
