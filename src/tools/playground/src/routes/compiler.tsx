@@ -26,7 +26,7 @@ type Search = {
   emitter: Emitter;
 };
 
-type CompilationResult = {
+export type CompilationResult = {
   result: WsEmitted[];
   errors: WsError[];
 };
