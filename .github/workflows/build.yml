@@ -53,12 +53,17 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: wirespec-vscode
-          path: src/ide/vscode/wirespec-client-vscode-*.vsix
+          path: src/ide/vscode/wirespec.vsix
       - name: Archive Intellij plugin
         uses: actions/upload-artifact@v4
         with:
           name: wirespec-intellij-plugin
           path: src/ide/intellij-plugin/build/distributions/intellij-plugin-*.zip
+      - name: Docs
+        uses: actions/upload-artifact@v4
+        with:
+          name: wirespec-docs
+          path: src/tools/docs/build
 
   example:
 
@@ -253,3 +258,30 @@ jobs:
         working-directory: ./src/plugin/npm/build/dist/js/productionLibrary
         run: |
           npm publish --access public
+
+  publish-docs:
+
+    runs-on: ubuntu-latest
+
+    needs:
+      - version
+
+    steps:
+      - uses: 'actions/checkout@v4'
+      - uses: actions/download-artifact@v4
+        with:
+          name: wirespec-docs
+          path: src/tools/docs/build
+      - uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+      - name: Publish Docker
+        working-directory: ./src/tools/docs
+        run: |
+          gcloud auth configure-docker europe-docker.pkg.dev
+          docker buildx build --platform linux/amd64 -t europe-docker.pkg.dev/wirespec-421108/wirespec-docker/wirespec-docs .
+          docker push europe-docker.pkg.dev/wirespec-421108/wirespec-docker/wirespec-docs
+          gcloud run deploy wirespec-docs --image=europe-docker.pkg.dev/wirespec-421108/wirespec-docker/wirespec-docs --region=europe-west4 --project=wirespec-421108
+
