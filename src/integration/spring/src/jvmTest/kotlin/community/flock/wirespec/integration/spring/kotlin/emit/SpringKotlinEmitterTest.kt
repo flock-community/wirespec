@@ -150,7 +150,8 @@ class SpringKotlinEmitterTest {
             |    }
             |  }
             |}
-            |""".trimMargin()
+            |
+        """.trimMargin()
 
         assertEquals(expected, actual)
     }

@@ -43,7 +43,8 @@ class SpringJavaEmitterTest {
             |  @Override
             |  public String getValue() { return value; }
             |}
-            |""".trimMargin(),
+            |
+            """.trimMargin(),
             """
             |package community.flock.wirespec.spring.test;
             |
@@ -55,7 +56,8 @@ class SpringJavaEmitterTest {
             |  Boolean done
             |) {
             |};
-            |""".trimMargin(),
+            |
+            """.trimMargin(),
             """ 
             |package community.flock.wirespec.spring.test;
             |
@@ -66,7 +68,8 @@ class SpringJavaEmitterTest {
             |  String description
             |) {
             |};
-            |""".trimMargin(),
+            |
+            """.trimMargin(),
             """ 
             |package community.flock.wirespec.spring.test;
             |
@@ -180,7 +183,8 @@ class SpringJavaEmitterTest {
             |    }
             |  }
             |}
-            |""".trimMargin()
+            |
+            """.trimMargin(),
         )
 
         assertEquals(expected.toSet(), actual.toSet())
