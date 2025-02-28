@@ -74,6 +74,7 @@ const config: Config = {
                     label: 'Docs',
                 },
                 {to: '/blog', label: 'Blog', position: 'left'},
+                {to: 'https://playground.wirespec.io', label: 'Playground', position: 'left', },
                 {
                     href: 'https://github.com/flock-community/wirespec',
                     label: 'GitHub',
@@ -88,8 +89,12 @@ const config: Config = {
                     title: 'Docs',
                     items: [
                         {
-                            label: 'Docs',
+                            label: 'About',
                             to: '/docs/about',
+                        },
+                        {
+                            label: 'Plugins',
+                            to: '/docs/plugins',
                         },
                     ],
                 },
@@ -98,16 +103,12 @@ const config: Config = {
                     items: [
                         {
                             label: 'Stack Overflow',
-                            href: 'https://stackoverflow.com/questions/tagged/docusaurus',
+                            href: 'https://stackoverflow.com/questions/tagged/wirespec',
                         },
                         {
-                            label: 'Discord',
-                            href: 'https://discordapp.com/invite/docusaurus',
-                        },
-                        {
-                            label: 'Twitter',
-                            href: 'https://twitter.com/docusaurus',
-                        },
+                            label: 'Signal',
+                            href: 'https://signal.group/#CjQKIJonLCeiw-BY_wjD58JegEWXAXI79Ig24tjYTYwtyi9wEhDL67jUl5GFj140yszVCib3',
+                        }
                     ],
                 },
                 {
