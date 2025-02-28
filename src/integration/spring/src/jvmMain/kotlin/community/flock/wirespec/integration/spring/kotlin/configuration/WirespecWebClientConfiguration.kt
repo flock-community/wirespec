@@ -26,9 +26,8 @@ open class WirespecWebClientConfiguration(
     @ConditionalOnMissingBean(WirespecWebClient::class)
     open fun wirespecWebClient(
         @Qualifier("wirespecSpringWebClient") webClient: WebClient,
-    ): WirespecWebClient =
-        WirespecWebClient(
-            client = webClient,
-            wirespecSerde = serialization,
-        )
+    ): WirespecWebClient = WirespecWebClient(
+        client = webClient,
+        wirespecSerde = serialization,
+    )
 }
