@@ -12,7 +12,7 @@ export function PlayGroundOutput({ code, language }: PlayGroundOutputProps) {
         <Editor
           language={language}
           theme={"vs-dark"}
-          height={"50vh"}
+          height={"75vh"}
           value={code}
           options={{ readOnly: true }}
         />
