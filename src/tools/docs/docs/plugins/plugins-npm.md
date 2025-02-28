@@ -43,3 +43,16 @@ You can use the wirespec cli in your npm project. For all the cli options see [C
   }
 }
 ```
+
+## Programmatically
+
+Wirespec can be used programaticly to build your custom integrations. Here is a simple example of how to emit Typescript code.
+
+```typescript
+import fs from 'node:fs/promises';
+import { parse, emit, Emitters } from 'wirespec'
+
+const src = await fs.readFile('/todo.ws')
+const ast = parse(src)
+const ts = emit(ast.result, Emitters.TYPESCRIPT, '')
+```
