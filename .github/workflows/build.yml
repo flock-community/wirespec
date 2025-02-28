@@ -64,6 +64,11 @@ jobs:
         with:
           name: wirespec-docs
           path: src/tools/docs/build
+      - name: Playground
+        uses: actions/upload-artifact@v4
+        with:
+          name: wirespec-playground
+          path: src/tools/playground/dist
 
   example:
 
@@ -285,3 +290,28 @@ jobs:
           docker push europe-docker.pkg.dev/wirespec-421108/wirespec-docker/wirespec-docs
           gcloud run deploy wirespec-docs --image=europe-docker.pkg.dev/wirespec-421108/wirespec-docker/wirespec-docs --region=europe-west4 --project=wirespec-421108
 
+  publish-playground:
+    runs-on: ubuntu-latest
+
+    needs:
+      - version
+
+    steps:
+      - uses: "actions/checkout@v4"
+      - uses: actions/download-artifact@v4
+        with:
+          name: wirespec-playground
+          path: src/tools/playground/dist
+      - uses: "google-github-actions/auth@v2"
+        with:
+          credentials_json: "${{ secrets.GCP_SERVICE_ACCOUNT }}"
+      - name: "Set up Cloud SDK"
+        uses: "google-github-actions/setup-gcloud@v2"
+      - name: Publish Docker
+        working-directory: ./src/tools/playground
+        run: |
+          gcloud auth configure-docker europe-docker.pkg.dev
+          docker buildx dist --platform linux/amd64 -t europe-docker.pkg.dev/wirespec-421108/wirespec-docker/wirespec-playground .
+          docker push europe-docker.pkg.dev/wirespec-421108/wirespec-docker/wirespec-playground
+          gcloud run deploy wirespec-playground --image=europe-docker.pkg.dev/wirespec-421108/wirespec-docker/wirespec-playground --region=europe-west4 --project=wirespec-421108
+          
