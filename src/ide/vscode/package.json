@@ -61,7 +61,11 @@
         ],
         "extensions": [
           ".ws"
-        ]
+        ],
+        "icon": {
+          "light": "./icons/wirespec.svg",
+          "dark": "./icons/wirespec.svg"
+        }
       }
     ]
   },
