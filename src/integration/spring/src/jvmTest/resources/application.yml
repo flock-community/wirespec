@@ -4,4 +4,4 @@ logging:
 wirespec:
   spring:
     webclient:
-      base-url: "http://localhost:8081"
+      base-url: http://localhost:8081
