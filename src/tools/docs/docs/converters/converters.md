@@ -1,25 +1,32 @@
 # Converters
 
-Wirespec offers the capability to convert from existing specification formats, facilitating a smooth transition to Wirespec. Currently, it supports conversion from OpenAPI Specification (OAS) and Avro. Be aware that converting to Wirespec is a destructive.
+Wirespec offers the capability to convert from existing specification formats. Currently, it supports conversion from OpenAPI Specification (OAS) and Avro. Be aware that converting to Wirespec is a destructive operation.
 
 ## OpenAPI Specification (OAS)
 
-Supports conversion form OAS v2 and v3. In the conversion all speciefied paths are converted to endpoints with the coresponding schemas which are converted to Wirespec types. Some notes about the conversion
+Supports conversion form OAS v2 and v3. In the conversion all specified paths are converted to endpoints with the corresponding schemas which are converted to Wirespec types.
+
+Wirespec supports conversion from OAS v2 and v3. During conversion, all specified paths are converted to endpoints, with corresponding schemas transformed into Wirespec types. Here are some key points about the conversion process:
 
 * **allOf**: spreads all properties into one type
 * **anyOf**: converts to a Wirespec union
 * **oneOf**: converts to a Wirespec union
 
-Not converted:
+The following OpenAPI constructs are **not** converted:
 
-* Example
-* Link
-* Discriminator
-* XML
-* Security
+* **Example**
+* **Link**
+* **Discriminator**
+* **XML**
+* **Security**
 
-[Playground convert OAS](https://playground.wirespec.io/converter?format=)
+[Playground convert OAS](https://playground.wirespec.io/converter?format=open_api_v3)
+
 
 ## Avro
 
-Wire
+Avro schemas can be converted to Wirespec types. Please note the following considerations:
+
+*   **Defaults**: Default values are not supported
+
+[Playground convert Avro](https://playground.wirespec.io/converter?format=avro)

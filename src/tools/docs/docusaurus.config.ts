@@ -32,7 +32,9 @@ const config: Config = {
     customFields: {
         version: '0.0.0-SNAPSHOT'
     },
-
+    plugins: [
+        ['drawio', {}],
+    ],
     presets: [
         [
             'classic',
@@ -42,7 +44,7 @@ const config: Config = {
                     // Please change this to your repo.
                     // Remove this to remove the "edit this page" links.
                     editUrl:
-                        'https://github.com/flock-community/wirespec/tree/main/src/tools/docs/',
+                        'https://github.com/flock-community/wirespec/tree/master/src/tools/docs/',
                 },
                 theme: {
                     customCss: [
