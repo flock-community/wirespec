@@ -5,5 +5,5 @@ import com.intellij.openapi.util.IconLoader
 import javax.swing.Icon
 
 object Icons {
-    val FILE: Icon = IconLoader.getIcon("/icons/connected.png", Icons::class.java)
+    val FILE: Icon = IconLoader.getIcon("/icons/wirespec.svg", Icons::class.java)
 }
