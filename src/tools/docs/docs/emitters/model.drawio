@@ -1,70 +1,70 @@
-<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36" version="26.0.16">
-  <diagram name="Page-1" id="0JkmHoqKAVIImyu0CGQ1">
-    <mxGraphModel dx="1242" dy="693" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="light-dark(#282a36, #121212)" math="0" shadow="0">
-      <root>
-        <mxCell id="0" />
-        <mxCell id="1" parent="0" />
-        <mxCell id="hgIAx-ZCjix9j8izKX2Y-2" value="Shared" style="rounded=0;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fontColor=default;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="40" y="40" width="400" height="80" as="geometry" />
-        </mxCell>
-        <mxCell id="hgIAx-ZCjix9j8izKX2Y-4" value="File" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="40" y="130" width="400" height="760" as="geometry" />
-        </mxCell>
-        <mxCell id="hgIAx-ZCjix9j8izKX2Y-5" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct&lt;/span&gt;&amp;nbsp;type" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="50" y="160" width="380" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="hgIAx-ZCjix9j8izKX2Y-6" value="&lt;font style=&quot;color: rgb(255, 51, 51);&quot;&gt;&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;static&lt;/span&gt;&lt;/font&gt;&amp;nbsp;Endpoint&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="50" y="200" width="380" height="680" as="geometry" />
-        </mxCell>
-        <mxCell id="hgIAx-ZCjix9j8izKX2Y-7" value="&lt;font style=&quot;color: light-dark(rgb(189, 150, 248), rgb(237, 237, 237));&quot;&gt;struct&lt;/font&gt;&amp;nbsp;Path" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="60" y="230" width="360" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="hgIAx-ZCjix9j8izKX2Y-8" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct &lt;/span&gt;Headers" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="60" y="310" width="360" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="hgIAx-ZCjix9j8izKX2Y-9" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct&amp;nbsp; &lt;/span&gt;Queries" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="60" y="270" width="360" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="hgIAx-ZCjix9j8izKX2Y-10" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct&amp;nbsp;&lt;/span&gt;Request" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="60" y="350" width="360" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="hgIAx-ZCjix9j8izKX2Y-11" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct&amp;nbsp;&lt;/span&gt;Response###" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="60" y="390" width="360" height="70" as="geometry" />
-        </mxCell>
-        <mxCell id="hgIAx-ZCjix9j8izKX2Y-13" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct &lt;/span&gt;Headers" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="70" y="420" width="340" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="hgIAx-ZCjix9j8izKX2Y-14" value="&lt;font style=&quot;color: rgb(189, 150, 248);&quot;&gt;union&lt;/font&gt;&amp;nbsp;Response (union)" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="60" y="470" width="360" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="hgIAx-ZCjix9j8izKX2Y-15" value="&lt;font style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/font&gt; request (...request parameter list) : Request" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="60" y="510" width="360" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="hgIAx-ZCjix9j8izKX2Y-16" value="&lt;font style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/font&gt; response### (...response parameter list) : Response###" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="60" y="555" width="360" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="hgIAx-ZCjix9j8izKX2Y-17" value="&lt;font style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/font&gt;&amp;nbsp;client (serialization)" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="60" y="600" width="360" height="110" as="geometry" />
-        </mxCell>
-        <mxCell id="hgIAx-ZCjix9j8izKX2Y-18" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&amp;nbsp;&lt;/span&gt;to (request):&amp;nbsp;RawRequest" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="70" y="630" width="340" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="hgIAx-ZCjix9j8izKX2Y-20" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;func from&lt;/span&gt;&amp;nbsp;(rawResponse):&amp;nbsp;Response" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="70" y="670" width="340" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="hgIAx-ZCjix9j8izKX2Y-21" value="&lt;font style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/font&gt;&amp;nbsp;server (serialization)" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="60" y="720" width="360" height="150" as="geometry" />
-        </mxCell>
-        <mxCell id="hgIAx-ZCjix9j8izKX2Y-22" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&amp;nbsp;&lt;/span&gt;to (response):&amp;nbsp;RawResponse" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="70" y="750" width="340" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="hgIAx-ZCjix9j8izKX2Y-23" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;func from&lt;/span&gt;&amp;nbsp;(rawRequest):&amp;nbsp;Request" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="70" y="790" width="340" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="hgIAx-ZCjix9j8izKX2Y-24" value="&lt;font style=&quot;color: rgb(255, 51, 51);&quot;&gt;&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;static&lt;/span&gt;&lt;/font&gt;&amp;nbsp;Endpoint&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="70" y="830" width="340" height="30" as="geometry" />
-        </mxCell>
-      </root>
-    </mxGraphModel>
-  </diagram>
+<mxfile host="65bd71144e">
+    <diagram name="Page-1" id="0JkmHoqKAVIImyu0CGQ1">
+        <mxGraphModel dx="912" dy="475" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="none" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-2" value="Shared" style="rounded=0;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#FCDF00;gradientColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="40" width="400" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-4" value="File" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="130" width="400" height="760" as="geometry"/>
+                </mxCell>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-5" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct&lt;/span&gt;&amp;nbsp;Type" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="160" width="380" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-6" value="&lt;font style=&quot;color: rgb(255, 51, 51);&quot;&gt;&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;static&lt;/span&gt;&lt;/font&gt;&amp;nbsp;Endpoint&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="200" width="380" height="680" as="geometry"/>
+                </mxCell>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-7" value="&lt;font style=&quot;color: light-dark(rgb(189, 150, 248), rgb(237, 237, 237));&quot;&gt;struct&lt;/font&gt;&amp;nbsp;Path" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="230" width="360" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-8" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct &lt;/span&gt;Headers" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="310" width="360" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-9" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct&amp;nbsp; &lt;/span&gt;Queries" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="270" width="360" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-10" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct&amp;nbsp;&lt;/span&gt;Request" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="350" width="360" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-11" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct&amp;nbsp;&lt;/span&gt;Response###" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="390" width="360" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-13" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct &lt;/span&gt;Headers" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="70" y="420" width="340" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-14" value="&lt;font style=&quot;color: rgb(189, 150, 248);&quot;&gt;union&lt;/font&gt;&amp;nbsp;Response (union)" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="470" width="360" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-15" value="&lt;font style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/font&gt; request (...request parameter list) : Request" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="510" width="360" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-16" value="&lt;font style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/font&gt; response### (...response parameter list) : Response###" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="555" width="360" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-17" value="&lt;font style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/font&gt;&amp;nbsp;client (serialization)" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="600" width="360" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-18" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&amp;nbsp;&lt;/span&gt;to (request):&amp;nbsp;RawRequest" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="70" y="630" width="340" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-20" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;func from&lt;/span&gt;&amp;nbsp;(rawResponse):&amp;nbsp;Response" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="70" y="670" width="340" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-21" value="&lt;font style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/font&gt;&amp;nbsp;server (serialization)" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="720" width="360" height="150" as="geometry"/>
+                </mxCell>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-22" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&amp;nbsp;&lt;/span&gt;to (response):&amp;nbsp;RawResponse" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="70" y="750" width="340" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-23" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;func from&lt;/span&gt;&amp;nbsp;(rawRequest):&amp;nbsp;Request" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="70" y="790" width="340" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-24" value="&lt;font style=&quot;color: rgb(255, 51, 51);&quot;&gt;&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;static&lt;/span&gt;&lt;/font&gt;&amp;nbsp;Endpoint&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="70" y="830" width="340" height="30" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
 </mxfile>
