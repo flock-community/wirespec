@@ -1,8 +1,18 @@
 import Drawio from '@theme/Drawio'
 import simpleGraph from '!!raw-loader!./model.drawio';
+import {WirespecExample} from "../../src/components/Wirespec";
 
 # Emitters
+Wirespec generates functional and dependency-free code. The generated output consists of structs and functions. This code can be wired to a server or client.
 
-Wirespec emits functional and dependency fee code. For
+## Structure
+This diagram provides an overview of the generic structure of the code emitted by Wirespec. The same structure is consistently applied across all supported languages, with minor exceptions to leverage language-specific features when beneficial.
+
+The structure exists of a shared part and a part per emitted output. The shared part holds interfaces of the Wirespec functional model. The specific part has models of all types, endpoint and channels.
 
 <Drawio content={simpleGraph}  />
+
+## Examples
+In the specific documentation of the language examples of the.
+
+<WirespecExample/>

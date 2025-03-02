@@ -1,68 +1,149 @@
 <mxfile host="65bd71144e">
     <diagram name="Page-1" id="0JkmHoqKAVIImyu0CGQ1">
-        <mxGraphModel dx="912" dy="475" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="none" math="0" shadow="0">
+        <mxGraphModel dx="676" dy="918" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="none" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="hgIAx-ZCjix9j8izKX2Y-2" value="Shared" style="rounded=0;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#FCDF00;gradientColor=none;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="40" width="400" height="80" as="geometry"/>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-2" value="Shared" style="rounded=0;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;labelBackgroundColor=none;labelBorderColor=none;textShadow=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;" parent="1" vertex="1">
+                    <mxGeometry width="410" height="990" as="geometry"/>
                 </mxCell>
-                <mxCell id="hgIAx-ZCjix9j8izKX2Y-4" value="File" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="130" width="400" height="760" as="geometry"/>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-4" value="File" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="420" width="407" height="870" as="geometry"/>
                 </mxCell>
-                <mxCell id="hgIAx-ZCjix9j8izKX2Y-5" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct&lt;/span&gt;&amp;nbsp;Type" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="50" y="160" width="380" height="30" as="geometry"/>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-5" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct&lt;/span&gt;&amp;nbsp;Type" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="430" y="30" width="390" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="hgIAx-ZCjix9j8izKX2Y-6" value="&lt;font style=&quot;color: rgb(255, 51, 51);&quot;&gt;&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;static&lt;/span&gt;&lt;/font&gt;&amp;nbsp;Endpoint&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="50" y="200" width="380" height="680" as="geometry"/>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-6" value="&lt;font style=&quot;color: rgb(255, 51, 51);&quot;&gt;&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;static&lt;/span&gt;&lt;/font&gt;&amp;nbsp;Endpoint&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="430" y="70" width="390" height="710" as="geometry"/>
                 </mxCell>
-                <mxCell id="hgIAx-ZCjix9j8izKX2Y-7" value="&lt;font style=&quot;color: light-dark(rgb(189, 150, 248), rgb(237, 237, 237));&quot;&gt;struct&lt;/font&gt;&amp;nbsp;Path" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="60" y="230" width="360" height="30" as="geometry"/>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-7" value="&lt;font style=&quot;color: light-dark(rgb(204, 153, 255), rgb(237, 237, 237));&quot;&gt;struct&lt;/font&gt;&amp;nbsp;Path" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="440" y="100" width="370" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="hgIAx-ZCjix9j8izKX2Y-8" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct &lt;/span&gt;Headers" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="60" y="310" width="360" height="30" as="geometry"/>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-8" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct &lt;/span&gt;Headers" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="440" y="180" width="370" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="hgIAx-ZCjix9j8izKX2Y-9" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct&amp;nbsp; &lt;/span&gt;Queries" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="60" y="270" width="360" height="30" as="geometry"/>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-9" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct&amp;nbsp; &lt;/span&gt;Queries" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="440" y="140" width="370" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="hgIAx-ZCjix9j8izKX2Y-10" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct&amp;nbsp;&lt;/span&gt;Request" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="60" y="350" width="360" height="30" as="geometry"/>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-10" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct&amp;nbsp;&lt;/span&gt;Request" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="440" y="220" width="370" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="hgIAx-ZCjix9j8izKX2Y-11" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct&amp;nbsp;&lt;/span&gt;Response###" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="60" y="390" width="360" height="70" as="geometry"/>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-11" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct&amp;nbsp;&lt;/span&gt;Response###" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="440" y="260" width="370" height="70" as="geometry"/>
                 </mxCell>
-                <mxCell id="hgIAx-ZCjix9j8izKX2Y-13" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct &lt;/span&gt;Headers" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="70" y="420" width="340" height="30" as="geometry"/>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-13" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;struct &lt;/span&gt;Headers" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="450" y="290" width="350" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="hgIAx-ZCjix9j8izKX2Y-14" value="&lt;font style=&quot;color: rgb(189, 150, 248);&quot;&gt;union&lt;/font&gt;&amp;nbsp;Response (union)" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="60" y="470" width="360" height="30" as="geometry"/>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-14" value="&lt;font style=&quot;color: rgb(189, 150, 248);&quot;&gt;union&lt;/font&gt;&amp;nbsp;Response" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="440" y="340" width="370" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="hgIAx-ZCjix9j8izKX2Y-15" value="&lt;font style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/font&gt; request (...request parameter list) : Request" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="60" y="510" width="360" height="30" as="geometry"/>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-15" value="&lt;font style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/font&gt; request (...params) : Request" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="440" y="380" width="370" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="hgIAx-ZCjix9j8izKX2Y-16" value="&lt;font style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/font&gt; response### (...response parameter list) : Response###" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="60" y="555" width="360" height="30" as="geometry"/>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-16" value="&lt;font style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/font&gt; response### (...params) : Response###" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="440" y="420" width="370" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="hgIAx-ZCjix9j8izKX2Y-17" value="&lt;font style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/font&gt;&amp;nbsp;client (serialization)" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="60" y="600" width="360" height="110" as="geometry"/>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-17" value="&lt;font style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/font&gt;&amp;nbsp;client (serialization:&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;&amp;nbsp;Serialization&lt;/span&gt;)" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="440" y="460" width="370" height="110" as="geometry"/>
                 </mxCell>
-                <mxCell id="hgIAx-ZCjix9j8izKX2Y-18" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&amp;nbsp;&lt;/span&gt;to (request):&amp;nbsp;RawRequest" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="70" y="630" width="340" height="30" as="geometry"/>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-18" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&amp;nbsp;&lt;/span&gt;to (request: Request):&amp;nbsp;RawRequest" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="450" y="490" width="350" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="hgIAx-ZCjix9j8izKX2Y-20" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;func from&lt;/span&gt;&amp;nbsp;(rawResponse):&amp;nbsp;Response" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="70" y="670" width="340" height="30" as="geometry"/>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-20" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/span&gt;&lt;font style=&quot;color: rgb(40, 29, 0);&quot;&gt;&amp;nbsp;&lt;/font&gt;&lt;font&gt;&lt;font style=&quot;color: rgb(40, 29, 0);&quot;&gt;&lt;font style=&quot;color: rgb(0, 0, 0);&quot;&gt;from (raw: RawResponse&lt;/font&gt;&lt;/font&gt;&lt;font style=&quot;color: rgb(0, 0, 0);&quot;&gt;):&amp;nbsp;Response&lt;/font&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="450" y="530" width="350" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="hgIAx-ZCjix9j8izKX2Y-21" value="&lt;font style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/font&gt;&amp;nbsp;server (serialization)" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="60" y="720" width="360" height="150" as="geometry"/>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-21" value="&lt;font style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/font&gt;&amp;nbsp;server (serialization: Serialization)" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="440" y="580" width="367" height="110" as="geometry"/>
                 </mxCell>
-                <mxCell id="hgIAx-ZCjix9j8izKX2Y-22" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&amp;nbsp;&lt;/span&gt;to (response):&amp;nbsp;RawResponse" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="70" y="750" width="340" height="30" as="geometry"/>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-22" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&amp;nbsp;&lt;/span&gt;to (response: Response):&amp;nbsp;RawResponse" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="450" y="610" width="347" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="hgIAx-ZCjix9j8izKX2Y-23" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;func from&lt;/span&gt;&amp;nbsp;(rawRequest):&amp;nbsp;Request" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="70" y="790" width="340" height="30" as="geometry"/>
+                <mxCell id="hgIAx-ZCjix9j8izKX2Y-23" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/span&gt;&amp;nbsp;from (raw: RawRequest):&amp;nbsp;Request" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="450" y="650" width="347" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="hgIAx-ZCjix9j8izKX2Y-24" value="&lt;font style=&quot;color: rgb(255, 51, 51);&quot;&gt;&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;static&lt;/span&gt;&lt;/font&gt;&amp;nbsp;Endpoint&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="70" y="830" width="340" height="30" as="geometry"/>
+                <mxCell id="2" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;interface&lt;/span&gt;&amp;nbsp;Endpoint" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="10" y="30" width="390" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;interface&lt;/span&gt;&amp;nbsp;Enum" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="10" y="70" width="390" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;interface&lt;/span&gt;&amp;nbsp;Refined" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="10" y="110" width="390" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;interface&lt;/span&gt;&amp;nbsp;Path" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="10" y="190" width="390" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;interface&lt;/span&gt;&amp;nbsp;Queries" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="10" y="230" width="390" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;interface&lt;/span&gt;&amp;nbsp;Headers" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="10" y="270" width="390" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;interface&lt;/span&gt;&amp;nbsp;Handler" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="10" y="310" width="390" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;interface&lt;/span&gt;&amp;nbsp;Server" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="10" y="870" width="390" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/span&gt;&amp;nbsp;from (rawReq: rawRequest ): Request" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="20" y="900" width="370" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/span&gt;&amp;nbsp;to (res: Response ): RawResponse" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="20" y="940" width="370" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;interface&lt;/span&gt;&amp;nbsp;Client" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="10" y="750" width="390" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/span&gt;&amp;nbsp;from (rawReq: rawRequest ): Request" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="20" y="780" width="370" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/span&gt;&amp;nbsp;to (res: Response ): RawResponse" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="20" y="820" width="370" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;enum&lt;/span&gt;&amp;nbsp;Method" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="10" y="150" width="390" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="16" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;interface&lt;/span&gt;&amp;nbsp;Request&amp;lt;T&amp;gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="10" y="350" width="390" height="230" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;field&lt;/span&gt;&amp;nbsp;path: Path" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="20" y="380" width="370" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="18" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;field&lt;/span&gt;&amp;nbsp;method: Method" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="20" y="420" width="370" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="19" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;field&lt;/span&gt;&amp;nbsp;queries: Queries" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="20" y="460" width="370" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="20" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;field&lt;/span&gt;&amp;nbsp;headers: Headers" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="20" y="500" width="370" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="21" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;field&lt;/span&gt;&amp;nbsp;body: T" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="20" y="540" width="370" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="22" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;interface&lt;/span&gt;&amp;nbsp;Response&amp;lt;T&amp;gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="10" y="590" width="390" height="150" as="geometry"/>
+                </mxCell>
+                <mxCell id="23" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;field&lt;/span&gt;&amp;nbsp;status: Interger" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="20" y="620" width="370" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="26" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;field&lt;/span&gt;&amp;nbsp;headers: Headers" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="20" y="660" width="370" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="27" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;field&lt;/span&gt;&amp;nbsp;body: T" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="20" y="700" width="370" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="28" value="&lt;font style=&quot;color: rgb(255, 51, 51);&quot;&gt;&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;static&lt;/span&gt;&lt;/font&gt;&amp;nbsp;Channel" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="430" y="790" width="390" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="29" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/span&gt;&amp;nbsp;invoke (rawRequest: ):&amp;nbsp;Request" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="440" y="820" width="347" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="34" value="&lt;font style=&quot;color: rgb(255, 51, 51);&quot;&gt;&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;static&lt;/span&gt;&lt;/font&gt;&amp;nbsp;Handle" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="440" y="700" width="370" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="35" value="&lt;span style=&quot;color: rgb(189, 150, 248);&quot;&gt;func&lt;/span&gt;&amp;nbsp;&amp;lt;endpoint&amp;gt; (request:Requste):&amp;nbsp;Response" style="rounded=0;whiteSpace=wrap;html=1;align=left;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontFamily=system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubun;fontSize=16;spacingLeft=7;labelBackgroundColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="450" y="730" width="350" height="30" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
