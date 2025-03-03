@@ -1,6 +1,6 @@
 package community.flock.wirespec.integration.spring.kotlin.it.client
 
-import community.flock.wirespec.integration.spring.kotlin.configuration.EnableWirespecWebClient
+import community.flock.wirespec.integration.spring.kotlin.application.Application
 import community.flock.wirespec.integration.spring.kotlin.generated.AddPetEndpoint
 import community.flock.wirespec.integration.spring.kotlin.generated.DeletePetEndpoint
 import community.flock.wirespec.integration.spring.kotlin.generated.FindPetsByTagsEndpoint
@@ -14,8 +14,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.test.context.SpringBootTest
 import kotlin.test.Test
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
-@EnableWirespecWebClient
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, classes = [Application::class, WirespecPetstoreWebClient::class])
 @EnableConfigurationProperties
 class WebClientIntegrationTest {
     @Autowired

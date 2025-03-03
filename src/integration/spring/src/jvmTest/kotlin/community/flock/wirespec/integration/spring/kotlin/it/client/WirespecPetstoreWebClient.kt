@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class WirespecPetstoreWebClient(
-    val wirespecWebClient: WirespecWebClient,
+    private val wirespecWebClient: WirespecWebClient,
 ) : AddPetEndpoint.Handler,
     UpdatePetEndpoint.Handler,
     GetPetByIdEndpoint.Handler,
