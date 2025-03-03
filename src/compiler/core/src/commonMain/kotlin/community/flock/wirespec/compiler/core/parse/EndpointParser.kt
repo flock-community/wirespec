@@ -6,7 +6,6 @@ import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
 import community.flock.wirespec.compiler.core.tokenize.Arrow
 import community.flock.wirespec.compiler.core.tokenize.Colon
-import community.flock.wirespec.compiler.core.tokenize.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.Hash
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
@@ -15,6 +14,7 @@ import community.flock.wirespec.compiler.core.tokenize.Path
 import community.flock.wirespec.compiler.core.tokenize.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.StatusCode
+import community.flock.wirespec.compiler.core.tokenize.WirespecIdentifier
 import community.flock.wirespec.compiler.core.tokenize.WirespecType
 import community.flock.wirespec.compiler.utils.Logger
 
@@ -120,8 +120,8 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
             else -> raise(WrongTokenException<LeftCurly>(token))
         }
         val identifier = when (token.type) {
-            is CustomValue -> FieldIdentifier(token.value).also { eatToken().bind() }
-            else -> raise(WrongTokenException<CustomValue>(token))
+            is WirespecIdentifier -> FieldIdentifier(token.value).also { eatToken().bind() }
+            else -> raise(WrongTokenException<WirespecIdentifier>(token))
         }
         when (token.type) {
             is Colon -> eatToken().bind()
