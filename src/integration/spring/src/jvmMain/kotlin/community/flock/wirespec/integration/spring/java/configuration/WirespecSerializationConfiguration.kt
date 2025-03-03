@@ -21,7 +21,7 @@ open class WirespecSerializationConfiguration {
     @Bean
     open fun wirespecSerialization(
         objectMapper: ObjectMapper,
-        paramSerde: DefaultParamSerialization,
+        paramSerde: ParamSerialization,
     ): Serialization<String> = object : Serialization<String>, ParamSerialization by paramSerde {
         private val wirespecObjectMapper = objectMapper.copy().registerModule(WirespecModuleJava())
 
