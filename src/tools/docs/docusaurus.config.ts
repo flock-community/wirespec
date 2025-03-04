@@ -92,7 +92,7 @@ const config: Config = {
                     items: [
                         {
                             label: 'About',
-                            to: '/docs/about',
+                            to: '/docs/into',
                         },
                         {
                             label: 'Plugins',

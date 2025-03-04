@@ -1,4 +1,4 @@
-# Code generation
+# Generate code
 
 The vision of code generation centers on enabling a contract-first approach where specifications act as the single source of truth. By prioritizing the specification over the implementation, development is streamlined, reducing ambiguity and fostering better collaboration among cross-functional teams.
 
