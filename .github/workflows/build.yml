@@ -25,9 +25,12 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           gpg-passphrase: GPG_PASSPHRASE
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/pull/merge' }}
       - uses: actions/setup-node@v3
         with:
           node-version: 20
@@ -81,9 +84,13 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           gpg-passphrase: GPG_PASSPHRASE
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/imporve-build-speed-and-dx' }}
+
       - uses: actions/setup-node@v3
         with:
           node-version: 20
