@@ -6,6 +6,8 @@ sidebar_position: 4
 
 # Wirespec Gradle Plugin
 
+![Maven Central](https://img.shields.io/maven-central/v/community.flock.wirespec.plugin.maven/wirespec-maven-plugin)
+
 This document describes how to use the Wirespec Gradle plugin to integrate Wirespec compilation into your Gradle build process.  The plugin allows you to automatically generate code from your Wirespec definitions during your build.
 
 ## Installation

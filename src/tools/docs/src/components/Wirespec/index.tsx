@@ -1,7 +1,9 @@
 import {parse, emit, Emitters, Shared} from "@flock/wirespec"
 import CodeBlock from '@theme/CodeBlock';
 
-const example = `type UUID /^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$/g
+// language=ws
+const example = `
+type UUID /^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$/g
 type Date /^([0-9]{2}-[0-9]{2}-20[0-9]{2})$/g
 
 type Todo {
@@ -38,7 +40,8 @@ endpoint DeleteTodo DELETE /todos/{id: UUID} # {soft:Boolean} -> {
     500 -> Error
 }
 
-channel SyncTodo -> Todo`
+channel SyncTodo -> Todo
+`
 
 export const WirespecExample = () => {
     return  <CodeBlock language="wirespec">{example}</CodeBlock>
