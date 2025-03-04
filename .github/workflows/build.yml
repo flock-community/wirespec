@@ -30,7 +30,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/pull/merge' }}
+          cache-read-only: false # TODO remove me
       - uses: actions/setup-node@v3
         with:
           node-version: 20
