@@ -3,6 +3,9 @@ import CodeBlock from '@theme/CodeBlock';
 
 // language=ws
 const example = `
+/**
+  * A UUID v4 type
+  */
 type UUID /^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$/g
 type Date /^([0-9]{2}-[0-9]{2}-20[0-9]{2})$/g
 
@@ -44,7 +47,8 @@ channel SyncTodo -> Todo
 `
 
 export const WirespecExample = () => {
-    return  <CodeBlock language="wirespec">{example}</CodeBlock>
+    return <CodeBlock language="wirespec">{example}</CodeBlock>
+
 }
 
 type WirespecProps = {
