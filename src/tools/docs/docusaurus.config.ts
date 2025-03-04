@@ -66,7 +66,7 @@ const config: Config = {
             title: 'Wirespec',
             logo: {
                 alt: 'Wirespec Logo',
-                src: 'img/flock.png',
+                src: 'img/wirespec.svg',
             },
             items: [
                 {
