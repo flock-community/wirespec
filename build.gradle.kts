@@ -31,11 +31,11 @@ subprojects {
 
     spotless {
         val exclude = listOf(
-            "**/.github/**",
-            "**/.gradle/**",
-            "**/.idea/**",
-            "**/.intellijPlatform/**",
-            "**/.kotlin/**",
+            ".github/**",
+            ".gradle/**",
+            ".idea/**",
+            ".intellijPlatform/**",
+            ".kotlin/**",
             "**/build/**",
             "**/vscode/**",
             "**/docs/**",
@@ -43,9 +43,8 @@ subprojects {
             "**/tmp/**",
             "**/generated/**",
             "**/resources/**",
-            "**/node_modules/**",
-            "**/*.lock",
-            "**/*Emitter.kt",
+            "*.lock",
+            "node_modules/**",
         ).toTypedArray()
 
         format("misc") {
@@ -63,7 +62,7 @@ subprojects {
 
         kotlin {
             target("**/*.kt", "**/*.kts")
-            targetExclude(*exclude)
+            targetExclude(*exclude, "**/*Emitter.kt",)
             ktlint().editorConfigOverride(
                 mapOf("ktlint_code_style" to "intellij_idea"),
             )
