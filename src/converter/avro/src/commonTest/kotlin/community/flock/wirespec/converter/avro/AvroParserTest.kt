@@ -1,6 +1,5 @@
 package community.flock.wirespec.converter.avro
 
-import com.goncalossilva.resources.Resource
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
@@ -8,27 +7,30 @@ import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
+import kotlinx.io.buffered
+import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
+import kotlinx.io.readString
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class AvroParserTest {
 
     @Test
     fun testCustomer() {
-        val resource = Resource("src/commonTest/resources/customer.avsc")
-            .apply { assertTrue(exists()) }
+        val path = Path("src/commonTest/resources/customer.avsc")
+        val resource = SystemFileSystem.source(path).buffered().readString()
 
-        AvroParser.parse(resource.readText())
+        AvroParser.parse(resource)
     }
 
     @Test
     fun testUnionSimple() {
-        val resource = Resource("src/commonTest/resources/union_simple.avsc")
-            .apply { assertTrue(exists()) }
+        val path = Path("src/commonTest/resources/union_simple.avsc")
+        val resource = SystemFileSystem.source(path).buffered().readString()
 
         try {
-            AvroParser.parse(resource.readText())
+            AvroParser.parse(resource)
             assertEquals(true, false)
         } catch (e: Exception) {
             assertEquals("Cannot have multiple SimpleTypes in Union", e.message)
@@ -37,11 +39,11 @@ class AvroParserTest {
 
     @Test
     fun testUnionComplex() {
-        val resource = Resource("src/commonTest/resources/union_complex.avsc")
-            .apply { assertTrue(exists()) }
+        val path = Path("src/commonTest/resources/union_complex.avsc")
+        val resource = SystemFileSystem.source(path).buffered().readString()
 
         try {
-            AvroParser.parse(resource.readText())
+            AvroParser.parse(resource)
         } catch (e: Exception) {
             assertEquals("Cannot have multiple SimpleTypes in Union", e.message)
         }
@@ -49,10 +51,10 @@ class AvroParserTest {
 
     @Test
     fun testExampleSchema() {
-        val resource = Resource("src/commonTest/resources/example.avsc")
-            .apply { assertTrue(exists()) }
+        val path = Path("src/commonTest/resources/example.avsc")
+        val resource = SystemFileSystem.source(path).buffered().readString()
 
-        val ast = AvroParser.parse(resource.readText())
+        val ast = AvroParser.parse(resource)
 
         assertEquals(
             listOf("User", "EmailAddress", "TwitterAccount", "OAuthStatus", "ToDoItem", "ToDoStatus", "User"),

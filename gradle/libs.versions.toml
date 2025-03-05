@@ -12,22 +12,23 @@ java = "17"
 junit_launcher = "1.11.3"
 kotest = "5.9.1"
 kotest_arrow = "1.4.0"
-kotlin = "2.0.21"
+kotlin = "2.1.10"
 kotlin_compiler = "2.0"
 kotlinx_coroutines = "1.9.0"
 kotlinx_io = "0.6.0"
 kotlinx_openapi_bindings = "0.0.24"
-kotlinx_resources = "0.9.0"
 kotlinx_rgxgen = "0.0.1"
 kotlinx_serialization = "1.7.0"
 maven_plugin = "0.4.3"
 maven_plugin_api = "3.9.8"
 maven_plugin_annotations = "3.13.1"
 maven_project = "2.2.1"
+node_gradle = "7.1.0"
 spotless = "7.0.2"
 spring_boot = "3.3.4"
 spring_webflux = "6.1.13"
 spring_dependency_management = "1.1.6"
+gradlebom_plugin = "1.0.0.Final"
 
 [libraries]
 arrow_core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
@@ -48,7 +49,6 @@ kotlin_test_junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version
 kotlinx_coroutines_reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactor", version.ref = "kotlinx_coroutines" }
 kotlinx_io_core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinx_io" }
 kotlinx_openapi_bindings = { module = "community.flock.kotlinx.openapi.bindings:kotlin-openapi-bindings", version.ref = "kotlinx_openapi_bindings" }
-kotlinx_resources = { module = "com.goncalossilva:resources", version.ref = "kotlinx_resources" }
 kotlinx_rgxgen = { module = "community.flock.kotlinx.rgxgen:kotlin-rgxgen", version.ref = "kotlinx_rgxgen" }
 kotlinx_serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx_serialization" }
 maven_plugin_api = { module = "org.apache.maven:maven-plugin-api", version.ref = "maven_plugin_api" }
@@ -70,9 +70,10 @@ intellij = { id = "org.jetbrains.intellij.platform", version.ref = "intellij" }
 kotest = { id = "io.kotest.multiplatform", version.ref = "kotest" }
 kotlin_jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin_multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
-kotlinx_resources = { id = "com.goncalossilva.resources", version.ref = "kotlinx_resources" }
 kotlinx_serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 maven_plugin = { id = "de.benediktritter.maven-plugin-development", version.ref = "maven_plugin" }
+node_gradle_plugin = { id = "com.github.node-gradle.node", version.ref = "node_gradle" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 spring_boot = { id = "org.springframework.boot", version.ref = "spring_boot" }
 spring_dependency_management = { id = "io.spring.dependency-management", version.ref = "spring_dependency_management" }
+gradlebom_plugin = { id = "io.github.gradlebom.generator-plugin", version.ref = "gradlebom_plugin" }

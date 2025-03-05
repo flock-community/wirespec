@@ -16,6 +16,7 @@ dependencyResolutionManagement {
 }
 
 include(
+    "src:bom",
     "src:compiler:core",
     "src:compiler:lib",
     "src:ide:intellij-plugin",
@@ -30,5 +31,7 @@ include(
     "src:integration:jackson",
     "src:integration:wirespec",
     "src:integration:spring",
+    "src:tools:docs",
     "src:tools:generator",
+    "src:tools:playground",
 )

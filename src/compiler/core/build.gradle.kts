@@ -16,6 +16,7 @@ kotlin {
     linuxX64()
     js(IR) {
         nodejs()
+        useEsModules()
     }
     jvm {
         withJava()

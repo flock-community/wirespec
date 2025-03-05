@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.kotlinx.resources)
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
 }
@@ -51,6 +50,7 @@ kotlin {
                 implementation(project(":src:integration:wirespec"))
                 implementation(libs.spring.boot.test)
                 implementation(libs.kotlin.junit)
+                implementation(libs.kotlinx.io.core)
             }
         }
     }

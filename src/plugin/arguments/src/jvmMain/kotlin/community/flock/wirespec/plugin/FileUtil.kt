@@ -5,18 +5,29 @@ import community.flock.wirespec.compiler.core.emit.shared.Shared
 import community.flock.wirespec.plugin.Language.Wirespec
 import java.io.File
 
-fun Emitted.writeToFiles(
+fun List<Emitted>.writeToFiles(
     output: File,
     packageName: PackageName?,
     shared: Shared?,
     fileName: String? = null,
     ext: FileExtension,
 ) {
+    if (isEmpty()) return
+
     if (shared != null) {
         val sharedPackageName = PackageName(shared.packageString)
         writeFile(output, sharedPackageName, Wirespec.name, ext).writeText(shared.source)
     }
-    writeFile(output, packageName, fileName ?: typeName, ext).writeText(result)
+
+    forEach {
+        writeFile(
+            output = output,
+            packageName = packageName,
+            fileName = fileName ?: it.typeName,
+            ext = ext,
+        )
+            .writeText(it.result)
+    }
 }
 
 private fun writeFile(output: File, packageName: PackageName?, fileName: String, ext: FileExtension) = output
