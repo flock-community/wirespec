@@ -3,12 +3,19 @@ import CodeBlock from '@theme/CodeBlock';
 
 // language=ws
 const example = `
-/**
-  * A UUID v4 type
-  */
+/*
+  A UUID v4 type
+*/
 type UUID /^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$/g
-type Date /^([0-9]{2}-[0-9]{2}-20[0-9]{2})$/g
 
+/*
+  Date format YYYY-MM-DD
+*/
+type Date /^20[0-9]{2}-[0-9]{2}-[0-9]{2}$/g
+
+/*
+  Todo shape
+*/
 type Todo {
   id: UUID,
   name: String,
@@ -18,31 +25,49 @@ type Todo {
   date: Date
 }
 
+/*
+  Error shape
+ */
 type Error {
   reason: String
 }
 
+/*
+  Get Todo endpoint
+ */
 endpoint GetTodos GET /todos ? {done: Boolean} -> {
     200 -> Todo[] # {count:Integer, page:Integer}
     500 -> Error
 }
 
+/*
+  Update Todo endpoint
+ */
 endpoint PutTodo PUT Todo /todos/{id: UUID} -> {
     200 -> Todo
     404 -> Error
     500 -> Error
 }
 
+/*
+  Create Todo endpoint
+ */
 endpoint PostTodo POST Todo /todos -> {
     200 -> Todo
     500 -> Error
 }
 
+/*
+  Delete Todo by id
+ */
 endpoint DeleteTodo DELETE /todos/{id: UUID} # {soft:Boolean} -> {
     200 -> Todo
     500 -> Error
 }
 
+/*
+  Sync Todo
+ */
 channel SyncTodo -> Todo
 `
 
@@ -67,7 +92,13 @@ export const WirespecCompile = ({emitter}:WirespecProps) => {
 
     if(ast.result){
         const source = emit(ast.result, emitter, "")
-        return <CodeBlock language="kotlin">{source[0].result}</CodeBlock>
+        return source.map(it => {
+            if(emitter === Emitters.OPENAPI_V2){
+                const json = JSON.parse(it.result)
+                return <CodeBlock title={`${it.typeName}.json`} language="json">{JSON.stringify(json, null, 4)}</CodeBlock>
+            }
+            return <CodeBlock title={`${it.typeName}.java`} language="kotlin">{it.result}</CodeBlock>
+        })
     }else{
         return <pre>{ast.errors.join("\n")}</pre>
     }
