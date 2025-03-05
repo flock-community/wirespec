@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.maven.plugin)
+    alias(libs.plugins.maven.plugin.development)
 }
 
 group = "${libs.versions.group.id.get()}.plugin.maven"

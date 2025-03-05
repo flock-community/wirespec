@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.gradlebom.plugin)
+    alias(libs.plugins.gradlebom.generator)
 }
 
 group = libs.versions.group.id.get()

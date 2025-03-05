@@ -71,9 +71,9 @@ kotest = { id = "io.kotest.multiplatform", version.ref = "kotest" }
 kotlin_jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin_multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinx_serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-maven_plugin = { id = "de.benediktritter.maven-plugin-development", version.ref = "maven_plugin" }
-node_gradle_plugin = { id = "com.github.node-gradle.node", version.ref = "node_gradle" }
+maven_plugin_development = { id = "de.benediktritter.maven-plugin-development", version.ref = "maven_plugin" }
+node_gradle = { id = "com.github.node-gradle.node", version.ref = "node_gradle" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 spring_boot = { id = "org.springframework.boot", version.ref = "spring_boot" }
 spring_dependency_management = { id = "io.spring.dependency-management", version.ref = "spring_dependency_management" }
-gradlebom_plugin = { id = "io.github.gradlebom.generator-plugin", version.ref = "gradlebom_plugin" }
+gradlebom_generator = { id = "io.github.gradlebom.generator-plugin", version.ref = "gradlebom_plugin" }

@@ -25,13 +25,11 @@ plugins.withId("maven-publish") {
 }
 
 dependencies {
-    dependencies {
-        intellijPlatform {
-            intellijIdeaCommunity("2024.3")
-            pluginVerifier()
-            zipSigner()
-            instrumentationTools()
-        }
+    intellijPlatform {
+        intellijIdeaCommunity("2024.3")
+        pluginVerifier()
+        zipSigner()
+        instrumentationTools()
     }
     implementation(project(":src:compiler:core"))
 }
