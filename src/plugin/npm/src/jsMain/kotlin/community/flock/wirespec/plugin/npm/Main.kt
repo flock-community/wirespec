@@ -24,6 +24,8 @@ import community.flock.wirespec.compiler.lib.WsStringResult
 import community.flock.wirespec.compiler.lib.consume
 import community.flock.wirespec.compiler.lib.produce
 import community.flock.wirespec.compiler.utils.noLogger
+import community.flock.wirespec.converter.avro.AvroEmitter
+import community.flock.wirespec.converter.avro.AvroParser
 import community.flock.wirespec.generator.generate
 import community.flock.wirespec.openapi.v2.OpenApiV2Emitter
 import community.flock.wirespec.openapi.v2.OpenApiV2Parser
@@ -31,6 +33,7 @@ import community.flock.wirespec.openapi.v3.OpenApiV3Emitter
 import community.flock.wirespec.openapi.v3.OpenApiV3Parser
 import community.flock.wirespec.plugin.cli.main
 import kotlinx.serialization.SerializationStrategy
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 @JsExport
@@ -50,12 +53,14 @@ enum class Emitters {
     SCALA,
     OPENAPI_V2,
     OPENAPI_V3,
+    AVRO,
 }
 
 @JsExport
 enum class Converters {
     OPENAPI_V2,
     OPENAPI_V3,
+    AVRO,
 }
 
 @JsExport
@@ -76,6 +81,7 @@ fun parse(source: String) = object : ParseContext {
 fun convert(source: String, converters: Converters) = when (converters) {
     Converters.OPENAPI_V2 -> OpenApiV2Parser.parse(source).produce()
     Converters.OPENAPI_V3 -> OpenApiV3Parser.parse(source).produce()
+    Converters.AVRO -> AvroParser.parse(source).produce()
 }
 
 @JsExport
@@ -104,6 +110,10 @@ fun emit(ast: Array<WsNode>, emitter: Emitters, packageName: String) = ast
                 .map { ast -> OpenApiV3Emitter.emitOpenAPIObject(ast, null) }
                 .map(encode(OpenAPIObject.serializer()))
                 .map(::Emitted.curried()("openapi")::invoke)
+            Emitters.AVRO -> listOf(it)
+                .map { ast -> AvroEmitter.emit(ast) }
+                .map { Json.encodeToString(it) }
+                .map(::Emitted.curried()("avro")::invoke)
         }
     }
     .map { it.produce() }
