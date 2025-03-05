@@ -2,32 +2,39 @@ package community.flock.wirespec.compiler.core
 
 import community.flock.wirespec.compiler.core.tokenize.Arrow
 import community.flock.wirespec.compiler.core.tokenize.Brackets
+import community.flock.wirespec.compiler.core.tokenize.CaseVariant
 import community.flock.wirespec.compiler.core.tokenize.ChannelDefinition
 import community.flock.wirespec.compiler.core.tokenize.Character
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.Comma
 import community.flock.wirespec.compiler.core.tokenize.Comment
-import community.flock.wirespec.compiler.core.tokenize.CustomType
-import community.flock.wirespec.compiler.core.tokenize.CustomValue
+import community.flock.wirespec.compiler.core.tokenize.DromedaryCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
 import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.Equals
+import community.flock.wirespec.compiler.core.tokenize.FieldIdentifier
 import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.Hash
+import community.flock.wirespec.compiler.core.tokenize.KebabCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.ImportDefinition
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.Literal
 import community.flock.wirespec.compiler.core.tokenize.Method
 import community.flock.wirespec.compiler.core.tokenize.NewLine
+import community.flock.wirespec.compiler.core.tokenize.PascalCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.Path
 import community.flock.wirespec.compiler.core.tokenize.Pipe
 import community.flock.wirespec.compiler.core.tokenize.Precision.P32
 import community.flock.wirespec.compiler.core.tokenize.Precision.P64
 import community.flock.wirespec.compiler.core.tokenize.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
+import community.flock.wirespec.compiler.core.tokenize.ScreamingKebabCaseIdentifier
+import community.flock.wirespec.compiler.core.tokenize.ScreamingSnakeCaseIdentifier
+import community.flock.wirespec.compiler.core.tokenize.SnakeCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.StatusCode
 import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
+import community.flock.wirespec.compiler.core.tokenize.TypeIdentifier
 import community.flock.wirespec.compiler.core.tokenize.WhiteSpaceExceptNewLine
 import community.flock.wirespec.compiler.core.tokenize.WsBoolean
 import community.flock.wirespec.compiler.core.tokenize.WsBytes
@@ -39,7 +46,8 @@ import community.flock.wirespec.compiler.core.tokenize.WsUnit
 typealias TokenMatcher = Pair<Regex, TokenType>
 
 interface LanguageSpec {
-    val customType: CustomType
+    val typeIdentifier: TypeIdentifier
+    val fieldIdentifier: FieldIdentifier
     val orderedMatchers: List<TokenMatcher>
 }
 
@@ -48,13 +56,14 @@ interface HasLanguageSpec {
 }
 
 object WirespecSpec : LanguageSpec {
-    override val customType = WsCustomType
+    override val typeIdentifier = WirespecType
+    override val fieldIdentifier = WirespecField
     override val orderedMatchers = listOf(
-        Regex("^import") to ImportDefinition,
-        Regex("^type") to TypeDefinition,
-        Regex("^enum") to EnumTypeDefinition,
-        Regex("^endpoint") to EndpointDefinition,
-        Regex("^channel") to ChannelDefinition,
+        Regex("^\\bimport\\b") to ImportDefinition,
+        Regex("^\\btype\\b") to TypeDefinition,
+        Regex("^\\benum\\b") to EnumTypeDefinition,
+        Regex("^\\bendpoint\\b") to EndpointDefinition,
+        Regex("^\\bchannel\\b") to ChannelDefinition,
         Regex("^[^\\S\\r\\n]+") to WhiteSpaceExceptNewLine,
         Regex("^[\\r\\n]") to NewLine,
         Regex("^\".*\"") to Literal,
@@ -70,8 +79,8 @@ object WirespecSpec : LanguageSpec {
         Regex("^\\[\\]") to Brackets,
         Regex("^\\b(GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE)\\b") to Method,
         Regex("^[1-5][0-9][0-9]") to StatusCode,
-        Regex("^[a-z`][a-zA-Z0-9_`]*") to CustomValue,
-        Regex("^[A-Z][a-zA-Z0-9_]*") to customType,
+        Regex("^[a-z`][a-zA-Z0-9_\\-`]*") to fieldIdentifier,
+        Regex("^\\b[A-Z][a-zA-Z0-9_]*\\b") to typeIdentifier,
         Regex("^/[a-zA-Z0-9-_]+") to Path,
         Regex("^\\/\\*(\\*(?!\\/)|[^*])*\\*\\/") to Comment,
         Regex("^/") to ForwardSlash,
@@ -79,8 +88,8 @@ object WirespecSpec : LanguageSpec {
     )
 }
 
-data object WsCustomType : CustomType {
-    override val types = mapOf(
+data object WirespecType : TypeIdentifier {
+    override val specificTypes = mapOf(
         "Boolean" to WsBoolean,
         "Bytes" to WsBytes,
         "Integer" to WsInteger(P64),
@@ -89,5 +98,16 @@ data object WsCustomType : CustomType {
         "Number32" to WsNumber(P32),
         "String" to WsString,
         "Unit" to WsUnit,
+    )
+}
+
+data object WirespecField : FieldIdentifier {
+    override val caseVariants: List<Pair<Regex, CaseVariant>> = listOf(
+        Regex("([A-Z][a-z0-9]+)((\\d)|([A-Z0-9][a-z0-9]+))*([A-Z])?") to PascalCaseIdentifier,
+        Regex("[a-z]+((\\d)|([A-Z0-9][a-z0-9]+))*([A-Z])?") to DromedaryCaseIdentifier,
+        Regex("[a-z]+(?:-[a-z0-9]+)*") to KebabCaseIdentifier,
+        Regex("[A-Z]+(?:-[A-Z0-9]+)*") to ScreamingKebabCaseIdentifier,
+        Regex("[a-z]+(?:_[a-z0-9]+)*") to SnakeCaseIdentifier,
+        Regex("[A-Z]+(?:_[A-Z0-9]+)*") to ScreamingSnakeCaseIdentifier,
     )
 }

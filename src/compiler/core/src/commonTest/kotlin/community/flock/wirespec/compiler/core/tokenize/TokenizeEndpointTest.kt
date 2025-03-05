@@ -1,6 +1,6 @@
 package community.flock.wirespec.compiler.core.tokenize
 
-import community.flock.wirespec.compiler.core.WsCustomType
+import community.flock.wirespec.compiler.core.WirespecType
 import kotlin.test.Test
 
 class TokenizeEndpointTest {
@@ -23,8 +23,11 @@ class TokenizeEndpointTest {
             |    404 -> Error
             |}
         """.trimMargin(),
-        EndpointDefinition, WsCustomType, Method, Path, ForwardSlash, LeftCurly, CustomValue, Colon, WsString,
-        RightCurly, Arrow, LeftCurly, StatusCode, Arrow, WsCustomType, Brackets, StatusCode, Arrow, WsCustomType,
+        EndpointDefinition,
+        WirespecType, Method, Path, ForwardSlash, LeftCurly, DromedaryCaseIdentifier, Colon, WsString,
+        RightCurly, Arrow, LeftCurly, StatusCode, Arrow,
+        WirespecType, Brackets, StatusCode, Arrow,
+        WirespecType,
         RightCurly, EndOfProgram,
     )
 
@@ -35,8 +38,11 @@ class TokenizeEndpointTest {
             |    200 -> Todo
             |}
         """.trimMargin(),
-        EndpointDefinition, WsCustomType, WsCustomType, Method, Path, Arrow, LeftCurly,
-        StatusCode, Arrow, WsCustomType, RightCurly, EndOfProgram,
+        EndpointDefinition,
+        WirespecType,
+        WirespecType, Method, Path, Arrow, LeftCurly,
+        StatusCode, Arrow,
+        WirespecType, RightCurly, EndOfProgram,
     )
 
     @Test
@@ -47,9 +53,11 @@ class TokenizeEndpointTest {
             |    200 -> Todo[]
             |}
         """.trimMargin(),
-        EndpointDefinition, WsCustomType, Method, Path, QuestionMark, LeftCurly, CustomValue, Colon,
-        WsString, Comma, CustomValue, Colon, WsString, RightCurly, Arrow, LeftCurly,
-        StatusCode, Arrow, WsCustomType, Brackets, RightCurly, EndOfProgram,
+        EndpointDefinition,
+        WirespecType, Method, Path, QuestionMark, LeftCurly, DromedaryCaseIdentifier, Colon,
+        WsString, Comma, DromedaryCaseIdentifier, Colon, WsString, RightCurly, Arrow, LeftCurly,
+        StatusCode, Arrow,
+        WirespecType, Brackets, RightCurly, EndOfProgram,
     )
 
     @Test
@@ -60,8 +68,10 @@ class TokenizeEndpointTest {
             |    200 -> Todo[]
             |}
         """.trimMargin(),
-        EndpointDefinition, WsCustomType, Method, Path, Hash, LeftCurly, CustomValue, Colon,
-        WsString, Comma, CustomValue, Colon, WsString, RightCurly, Arrow, LeftCurly,
-        StatusCode, Arrow, WsCustomType, Brackets, RightCurly, EndOfProgram,
+        EndpointDefinition,
+        WirespecType, Method, Path, Hash, LeftCurly, DromedaryCaseIdentifier, Colon,
+        WsString, Comma, DromedaryCaseIdentifier, Colon, WsString, RightCurly, Arrow, LeftCurly,
+        StatusCode, Arrow,
+        WirespecType, Brackets, RightCurly, EndOfProgram,
     )
 }

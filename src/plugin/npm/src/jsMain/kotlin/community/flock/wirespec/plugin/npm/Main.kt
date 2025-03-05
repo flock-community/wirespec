@@ -13,6 +13,10 @@ import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
+import community.flock.wirespec.compiler.core.emit.shared.JavaShared
+import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
+import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
+import community.flock.wirespec.compiler.core.emit.shared.TypeScriptShared
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.lib.WsDefinition
@@ -28,6 +32,14 @@ import community.flock.wirespec.openapi.v3.OpenApiV3Parser
 import community.flock.wirespec.plugin.cli.main
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.json.Json
+
+@JsExport
+enum class Shared(val source: String) {
+    KOTLIN(KotlinShared.source),
+    JAVA(JavaShared.source),
+    SCALA(ScalaShared.source),
+    TYPESCRIPT(TypeScriptShared.source),
+}
 
 @JsExport
 enum class Emitters {

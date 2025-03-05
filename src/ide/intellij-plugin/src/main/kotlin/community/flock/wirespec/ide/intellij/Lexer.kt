@@ -8,8 +8,6 @@ import community.flock.wirespec.compiler.core.tokenize.Character
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.Comma
 import community.flock.wirespec.compiler.core.tokenize.Comment
-import community.flock.wirespec.compiler.core.tokenize.CustomType
-import community.flock.wirespec.compiler.core.tokenize.CustomValue
 import community.flock.wirespec.compiler.core.tokenize.EndOfProgram
 import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
 import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
@@ -28,7 +26,9 @@ import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.StatusCode
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
+import community.flock.wirespec.compiler.core.tokenize.TypeIdentifier
 import community.flock.wirespec.compiler.core.tokenize.WhiteSpace
+import community.flock.wirespec.compiler.core.tokenize.WirespecIdentifier
 import community.flock.wirespec.compiler.core.tokenize.WsBoolean
 import community.flock.wirespec.compiler.core.tokenize.WsBytes
 import community.flock.wirespec.compiler.core.tokenize.WsInteger
@@ -66,7 +66,7 @@ class Lexer : IntellijLexer() {
         is Hash -> Types.HASH
         is ForwardSlash -> Types.FORWARD_SLASH
         is Brackets -> Types.BRACKETS
-        is CustomValue -> Types.CUSTOM_VALUE
+        is WirespecIdentifier -> Types.WIRESPEC_IDENTIFIER
         is Comment -> Types.COMMENT
         is Character -> Types.CHARACTER
         is EndOfProgram -> Types.END_OF_PROGRAM
@@ -81,7 +81,7 @@ class Lexer : IntellijLexer() {
         is WsNumber -> Types.NUMBER
         is WsBoolean -> Types.BOOLEAN
         is WsBytes -> Types.BYTES
-        is CustomType -> Types.CUSTOM_TYPE
+        is TypeIdentifier -> Types.TYPE_IDENTIFIER
         is WsUnit -> Types.UNIT
         is Method -> Types.METHOD
         is Path -> Types.PATH

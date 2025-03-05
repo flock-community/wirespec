@@ -1,41 +1,26 @@
-# Website
+# Project Name
 
-This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
+This is the documentation source of wirespec, on [wirespec.io](https://wirespec.io) (COMING SOON)
 
-### Installation
+The website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
 
-```
-$ yarn
-```
+## Maintaining / updating the documentation
 
-### Local Development
+As the `docs` are part of the wirespec monorepo, they will automatically be build when building the whole project ([see root readme](../../../README.md)).
 
-```
-$ yarn start
-```
+To run docusaurus locally:
 
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
+1. Navigate to the docs folder 
+    ```bash
+   cd src/tools/docs
+    ```
 
-### Build
-
-```
-$ yarn build
-```
-
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
-
-### Deployment
-
-Using SSH:
-
-```
-$ USE_SSH=true yarn deploy
-```
-
-Not using SSH:
-
-```
-$ GIT_USER=<Your GitHub username> yarn deploy
-```
-
-If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+   
+3. Run docusaurus
+    ```bash
+   npm start
+    ```
