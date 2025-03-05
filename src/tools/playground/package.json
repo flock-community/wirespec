@@ -4,6 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "clean": "npm run clean:build && npm run clean:node_modules",
+    "clean:build": "npx rimraf dist",
+    "clean:node_modules": "npx rimraf node_modules",
     "dev": "vite",
     "tsc": "tsc",
     "build": "vite build",
