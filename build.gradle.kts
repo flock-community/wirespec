@@ -31,11 +31,11 @@ subprojects {
 
     spotless {
         val exclude = listOf(
-            ".github/**",
-            ".gradle/**",
-            ".idea/**",
-            ".intellijPlatform/**",
-            ".kotlin/**",
+            "**/.github/**",
+            "**/.gradle/**",
+            "**/.idea/**",
+            "**/.intellijPlatform/**",
+            "**/.kotlin/**",
             "**/build/**",
             "**/vscode/**",
             "**/docs/**",
@@ -43,8 +43,9 @@ subprojects {
             "**/tmp/**",
             "**/generated/**",
             "**/resources/**",
-            "*.lock",
-            "node_modules/**",
+            "**/node_modules/**",
+            "**/*.lock",
+            "**/*Emitter.kt",
         ).toTypedArray()
 
         format("misc") {
