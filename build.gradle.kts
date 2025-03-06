@@ -63,7 +63,7 @@ subprojects {
 
         kotlin {
             target("**/*.kt", "**/*.kts")
-            targetExclude(*exclude)
+            targetExclude(*exclude, "**/*Emitter.kt",)
             ktlint().editorConfigOverride(
                 mapOf("ktlint_code_style" to "intellij_idea"),
             )

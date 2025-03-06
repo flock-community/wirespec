@@ -1,5 +1,5 @@
 ---
-title: New documentation website
+title: Documentation website
 authors: [wilmveel]
 tags: [wirespec, docs]
 ---
@@ -7,6 +7,8 @@ tags: [wirespec, docs]
 ## Wirespec's New Documentation Website: Your Comprehensive Guide is Here!
 
 We're thrilled to announce the launch of the brand new Wirespec documentation website! We've been working hard to create a resource that is not only informative and accurate, but also easy to navigate and understand.
+
+<!-- truncate -->
 
 Whether you're a seasoned Wirespec pro or just getting started, this new site is your one-stop shop for all things Wirespec. You'll find everything you need to effectively use Wirespec to define, validate, and improve your API specifications.
 

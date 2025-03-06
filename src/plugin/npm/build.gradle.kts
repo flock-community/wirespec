@@ -41,6 +41,7 @@ kotlin {
                 implementation(project(":src:compiler:lib"))
                 implementation(project(":src:plugin:cli"))
                 implementation(project(":src:converter:openapi"))
+                implementation(project(":src:converter:avro"))
                 implementation(project(":src:tools:generator"))
                 implementation(libs.kotlinx.openapi.bindings)
                 implementation(libs.kotlinx.serialization)
