@@ -1,40 +1,45 @@
 .PHONY: *
 
+define measure_time
+	d=$$(date +%s); $(2); echo "Command:$(1) took $$(($$(date +%s)-d)) seconds"
+endef
+
 # The first command will be invoked with `make` only and should be `all`
-all: build image test example
+all:
+	@$(call measure_time, all, make build image test example)
 
 build:
-	$(shell pwd)/scripts/build.sh
+	@$(call measure_time, build, $(shell pwd)/scripts/build.sh)
 
 clean:
-	$(shell pwd)/scripts/clean.sh
+	@$(call measure_time, clean, $(shell pwd)/scripts/clean.sh)
 
 compile:
-	./gradlew assemble
+	@$(call measure_time, compile, ./gradlew assemble)
 
 compile-types:
-	$(shell pwd)/scripts/compileTypes.sh
+	@$(call measure_time, compile-types, $(shell pwd)/scripts/compileTypes.sh)
 
 example:
-	$(shell pwd)/scripts/example.sh
+	@$(call measure_time, example, $(shell pwd)/scripts/example.sh)
 
-fast:
-	./gradlew jvmTest
+jvm:
+	@$(call measure_time, jvm, ./gradlew jvmTest)
 
 format:
-	$(shell pwd)/scripts/format.sh
+	@$(call measure_time, format, $(shell pwd)/scripts/format.sh)
 
 image:
-	$(shell pwd)/scripts/image.sh
+	@$(call measure_time, image, $(shell pwd)/scripts/image.sh)
 
 local:
-	$(shell pwd)/scripts/local.sh
+	@$(call measure_time, local, $(shell pwd)/scripts/local.sh)
 
 publish:
-	./gradlew publish
+	@$(call measure_time, publish, ./gradlew publish)
 
 test:
-	$(shell pwd)/scripts/test.sh
+	@$(call measure_time, test, $(shell pwd)/scripts/test.sh)
 
 update:
-	npm install -g @vscode/vsce
+	@$(call measure_time, update, npm install -g @vscode/vsce)
