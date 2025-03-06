@@ -44,7 +44,7 @@ const config: Config = {
                     // Please change this to your repo.
                     // Remove this to remove the "edit this page" links.
                     editUrl:
-                        'https://github.com/flock-community/wirespec/tree/master/src/tools/docs/',
+                        'https://github.com/flock-community/wirespec/tree/master/src/site/docs/',
                 },
                 theme: {
                     customCss: [

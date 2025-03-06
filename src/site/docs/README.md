@@ -12,7 +12,7 @@ To run docusaurus locally:
 
 1. Navigate to the docs folder 
     ```bash
-   cd src/tools/docs
+   cd src/site/docs
     ```
 
 2. Install dependencies:

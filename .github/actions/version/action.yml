@@ -1,5 +1,5 @@
 name: 'Version number'
-description: 'Check if version number is corect'
+description: 'Check if version number is correct'
 inputs:
   version:  # id of input
     description: 'Who to greet'
