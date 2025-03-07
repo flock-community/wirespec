@@ -16,7 +16,6 @@ class WirespecPetstoreWebClient(
     GetPetByIdEndpoint.Handler,
     DeletePetEndpoint.Handler,
     FindPetsByTagsEndpoint.Handler {
-
     override suspend fun getPetById(request: GetPetByIdEndpoint.Request): GetPetByIdEndpoint.Response<*> = wirespecWebClient.send(request)
 
     override suspend fun addPet(request: AddPetEndpoint.Request): AddPetEndpoint.Response<*> = wirespecWebClient.send(request)
