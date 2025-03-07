@@ -33,7 +33,7 @@ import community.flock.wirespec.openapi.Common.filterNotNullValues
 import kotlinx.serialization.json.Json
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenapiType
 
-object OpenApiV2Parser {
+object OpenAPIV2Parser {
 
     fun parse(json: String, ignoreUnknown: Boolean = false): AST = OpenAPI(
         json = Json {
@@ -254,7 +254,7 @@ object OpenApiV2Parser {
 
     private fun HeaderOrReferenceObject.resolve(): HeaderObject = when (this) {
         is HeaderObject -> this
-        is ReferenceObject -> error("Headers cannot be referenced in open api v2")
+        is ReferenceObject -> error("Headers cannot be referenced in OpenAPI v2")
     }
 
     private fun SwaggerObject.resolve(parameterOrReference: ParameterOrReferenceObject): ParameterObject = when (parameterOrReference) {

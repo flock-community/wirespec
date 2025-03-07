@@ -19,8 +19,8 @@ import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException.IOException.FileReadException
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.converter.avro.AvroParser
-import community.flock.wirespec.openapi.v2.OpenApiV2Emitter
-import community.flock.wirespec.openapi.v3.OpenApiV3Emitter
+import community.flock.wirespec.openapi.v2.OpenAPIV2Emitter
+import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter
 import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.Console
 import community.flock.wirespec.plugin.FileExtension
@@ -49,8 +49,8 @@ import community.flock.wirespec.plugin.cli.io.ScalaFile
 import community.flock.wirespec.plugin.cli.io.TypeScriptFile
 import community.flock.wirespec.plugin.cli.io.WirespecFile
 import community.flock.wirespec.plugin.utils.orNull
-import community.flock.wirespec.openapi.v2.OpenApiV2Parser as OpenApiParserV2
-import community.flock.wirespec.openapi.v3.OpenApiV3Parser as OpenApiParserV3
+import community.flock.wirespec.openapi.v2.OpenAPIV2Parser as OpenAPIParserV2
+import community.flock.wirespec.openapi.v3.OpenAPIV3Parser as OpenAPIParserV3
 
 fun main(args: Array<String>) {
     (0..20)
@@ -77,8 +77,8 @@ fun compile(arguments: CompilerArguments): List<Either<NonEmptyList<WirespecExce
             val strict = arguments.strict
             val format = operation.format
             val ast = when (format) {
-                Format.OpenApiV2 -> OpenApiParserV2.parse(file.read(), !strict)
-                Format.OpenApiV3 -> OpenApiParserV3.parse(file.read(), !strict)
+                Format.OpenAPIV2 -> OpenAPIParserV2.parse(file.read(), !strict)
+                Format.OpenAPIV3 -> OpenAPIParserV3.parse(file.read(), !strict)
                 Format.Avro -> AvroParser.parse(file.read())
             }
             val path = fullPath.out(packageName, output)
@@ -161,8 +161,8 @@ private fun Set<Language>.emitters(
         Scala -> ScalaEmitter(packageString, logger) to path?.let { ScalaFile(it(FileExtension.Scala)) }
         TypeScript -> TypeScriptEmitter(logger) to path?.let { TypeScriptFile(it(FileExtension.TypeScript)) }
         Wirespec -> WirespecEmitter(logger) to path?.let { WirespecFile(it(FileExtension.Wirespec)) }
-        OpenAPIV2 -> OpenApiV2Emitter to path?.let { JsonFile(it(FileExtension.Json)) }
-        OpenAPIV3 -> OpenApiV3Emitter to path?.let { JsonFile(it(FileExtension.Json)) }
+        OpenAPIV2 -> OpenAPIV2Emitter to path?.let { JsonFile(it(FileExtension.Json)) }
+        OpenAPIV3 -> OpenAPIV3Emitter to path?.let { JsonFile(it(FileExtension.Json)) }
     }
 }
 

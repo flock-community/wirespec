@@ -2,7 +2,7 @@ package community.flock.wirespec.openapi.v2
 
 import community.flock.kotlinx.openapi.bindings.v2.OpenAPI
 import community.flock.wirespec.compiler.core.parse.Definition
-import community.flock.wirespec.openapi.v2.OpenApiV2Parser.parse
+import community.flock.wirespec.openapi.v2.OpenAPIV2Parser.parse
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -11,7 +11,7 @@ import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class OpenApiV2EmitterTest {
+class OpenAPIV2EmitterTest {
 
     val json = Json { prettyPrint = true }
 
@@ -23,8 +23,8 @@ class OpenApiV2EmitterTest {
         val petstoreOpenAPi = OpenAPI.decodeFromString(petstoreJson)
         val petstoreAst = petstoreOpenAPi.parse()
 
-        val petstoreConvertedOpenApi = OpenApiV2Emitter.emitSwaggerObject(petstoreAst)
-        val petstoreConvertedOpenAPiAst = petstoreConvertedOpenApi.parse()
+        val petstoreConvertedOpenAPI = OpenAPIV2Emitter.emitSwaggerObject(petstoreAst)
+        val petstoreConvertedOpenAPiAst = petstoreConvertedOpenAPI.parse()
 
         assertEquals(
             petstoreAst.filterIsInstance<Definition>().sortedBy { it.identifier.value }

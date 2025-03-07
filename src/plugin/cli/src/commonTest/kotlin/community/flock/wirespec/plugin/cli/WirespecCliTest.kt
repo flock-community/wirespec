@@ -70,7 +70,7 @@ class WirespecCliTest {
     }
 
     @Test
-    fun testCliOpenApiPetstoreKotlin() {
+    fun testCliOpenAPIPetstoreKotlin() {
         val packageName = "community.flock.openapi"
         val packageDir = packageName.replace(".", "/")
         val input = "$inputDir/openapi/petstore.json"

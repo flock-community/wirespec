@@ -5,8 +5,8 @@ import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.utils.noLogger
-import community.flock.wirespec.openapi.v2.OpenApiV2Parser
-import community.flock.wirespec.openapi.v3.OpenApiV3Parser
+import community.flock.wirespec.openapi.v2.OpenAPIV2Parser
+import community.flock.wirespec.openapi.v3.OpenAPIV3Parser
 import io.kotest.assertions.arrow.core.shouldBeRight
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
@@ -20,7 +20,7 @@ class ConvertAndCompile {
     fun testV2ConversionAndCompilation() {
         val path = Path("src/commonTest/resources/v2/petstore.json")
         val input = SystemFileSystem.source(path).buffered().readString()
-        val ast = OpenApiV2Parser.parse(input, true)
+        val ast = OpenAPIV2Parser.parse(input, true)
         val wirespec = WirespecEmitter(noLogger).emit(ast).joinToString("\n") { it.result }
         compiler(wirespec).shouldBeRight()
     }
@@ -29,7 +29,7 @@ class ConvertAndCompile {
     fun testV3ConversionAndCompilation() {
         val path = Path("src/commonTest/resources/v3/petstore.json")
         val input = SystemFileSystem.source(path).buffered().readString()
-        val ast = OpenApiV3Parser.parse(input, true)
+        val ast = OpenAPIV3Parser.parse(input, true)
         val wirespec = WirespecEmitter(noLogger).emit(ast).joinToString("\n") { it.result }
         compiler(wirespec).shouldBeRight()
     }

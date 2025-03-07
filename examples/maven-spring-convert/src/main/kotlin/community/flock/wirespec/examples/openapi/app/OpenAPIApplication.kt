@@ -4,8 +4,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
 @SpringBootApplication
-class OpenApiApplication
+class OpenAPIApplication
 
 fun main(args: Array<String>) {
-    runApplication<OpenApiApplication>(*args)
+    runApplication<OpenAPIApplication>(*args)
 }

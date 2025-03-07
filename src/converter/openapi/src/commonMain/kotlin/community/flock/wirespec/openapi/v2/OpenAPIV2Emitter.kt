@@ -30,9 +30,9 @@ import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.openapi.Common.json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
-import community.flock.kotlinx.openapi.bindings.v2.Type as OpenApiType
+import community.flock.kotlinx.openapi.bindings.v2.Type as OpenAPIType
 
-object OpenApiV2Emitter : Emitter(noLogger) {
+object OpenAPIV2Emitter : Emitter(noLogger) {
 
     override val singleLineComment = ""
 
@@ -85,7 +85,7 @@ object OpenApiV2Emitter : Emitter(noLogger) {
             definitions = ast
                 .filterIsInstance<Refined>().associate { type ->
                     type.identifier.value to SchemaObject(
-                        type = OpenApiType.STRING,
+                        type = OpenAPIType.STRING,
                         pattern = type.validator.value
                     )
                 } + ast
@@ -100,7 +100,7 @@ object OpenApiV2Emitter : Emitter(noLogger) {
                 } + ast
                 .filterIsInstance<Enum>().associate { enum ->
                     enum.identifier.value to SchemaObject(
-                        type = OpenApiType.STRING,
+                        type = OpenAPIType.STRING,
                         enum = enum.entries.map { JsonPrimitive(it) }
                     )
                 }
@@ -145,7 +145,7 @@ object OpenApiV2Emitter : Emitter(noLogger) {
                         ?.let { content ->
                             when (val ref = content.reference) {
                                 is Reference.Iterable -> SchemaObject(
-                                    type = OpenApiType.ARRAY,
+                                    type = OpenAPIType.ARRAY,
                                     items = ref.reference.emit()
                                 )
                                 else -> ref.emit()
@@ -182,8 +182,8 @@ object OpenApiV2Emitter : Emitter(noLogger) {
         )
 
     fun Reference.emit(): SchemaOrReferenceObject = when (this) {
-        is Reference.Dict -> SchemaObject(type = OpenApiType.OBJECT, items = reference.emit())
-        is Reference.Iterable -> SchemaObject(type = OpenApiType.ARRAY, items = reference.emit())
+        is Reference.Dict -> SchemaObject(type = OpenAPIType.OBJECT, items = reference.emit())
+        is Reference.Iterable -> SchemaObject(type = OpenAPIType.ARRAY, items = reference.emit())
         is Reference.Custom -> ReferenceObject(ref = Ref("#/definitions/${value}"))
         is Reference.Primitive -> SchemaObject(type = type.emitType(), format = emitFormat())
         is Reference.Any -> error("Cannot map Any")
@@ -191,22 +191,22 @@ object OpenApiV2Emitter : Emitter(noLogger) {
     }
 
 
-    private fun Reference.Primitive.Type.emitType(): OpenApiType = when (this) {
-        is Reference.Primitive.Type.String -> OpenApiType.STRING
-        is Reference.Primitive.Type.Integer -> OpenApiType.INTEGER
-        is Reference.Primitive.Type.Number -> OpenApiType.NUMBER
-        is Reference.Primitive.Type.Boolean -> OpenApiType.BOOLEAN
-        is Reference.Primitive.Type.Bytes -> OpenApiType.STRING
+    private fun Reference.Primitive.Type.emitType(): OpenAPIType = when (this) {
+        is Reference.Primitive.Type.String -> OpenAPIType.STRING
+        is Reference.Primitive.Type.Integer -> OpenAPIType.INTEGER
+        is Reference.Primitive.Type.Number -> OpenAPIType.NUMBER
+        is Reference.Primitive.Type.Boolean -> OpenAPIType.BOOLEAN
+        is Reference.Primitive.Type.Bytes -> OpenAPIType.STRING
     }
 
     private fun Reference.emitType() =
         when (this) {
-            is Reference.Dict -> OpenApiType.OBJECT
-            is Reference.Iterable -> OpenApiType.ARRAY
+            is Reference.Dict -> OpenAPIType.OBJECT
+            is Reference.Iterable -> OpenAPIType.ARRAY
             is Reference.Primitive -> type.emitType()
-            is Reference.Custom -> OpenApiType.OBJECT
-            is Reference.Any -> OpenApiType.OBJECT
-            is Reference.Unit -> OpenApiType.OBJECT
+            is Reference.Custom -> OpenAPIType.OBJECT
+            is Reference.Any -> OpenAPIType.OBJECT
+            is Reference.Unit -> OpenAPIType.OBJECT
         }
 
     private fun Reference.emitFormat() =

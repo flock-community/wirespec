@@ -2,8 +2,8 @@ package community.flock.wirespec.plugin.gradle
 
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
 import community.flock.wirespec.converter.avro.AvroParser
-import community.flock.wirespec.openapi.v2.OpenApiV2Parser
-import community.flock.wirespec.openapi.v3.OpenApiV3Parser
+import community.flock.wirespec.openapi.v2.OpenAPIV2Parser
+import community.flock.wirespec.openapi.v3.OpenAPIV3Parser
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.PackageName
@@ -53,8 +53,8 @@ abstract class ConvertWirespecTask : BaseWirespecTask() {
         val json = input.asFile.get().readText()
 
         val ast = when (format.get()) {
-            Format.OpenApiV2 -> OpenApiV2Parser.parse(json, strict.getOrElse(false))
-            Format.OpenApiV3 -> OpenApiV3Parser.parse(json, strict.getOrElse(false))
+            Format.OpenAPIV2 -> OpenAPIV2Parser.parse(json, strict.getOrElse(false))
+            Format.OpenAPIV3 -> OpenAPIV3Parser.parse(json, strict.getOrElse(false))
             Format.Avro -> AvroParser.parse(json)
         }
 

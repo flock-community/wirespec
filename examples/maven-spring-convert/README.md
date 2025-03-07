@@ -18,7 +18,7 @@
                 <input>${project.basedir}/src/main/openapi/petstorev2.json</input>
                 <output>${project.build.directory}/generated-sources</output>
                 <packageName>community.flock.wirespec.generated.kotlin.v2</packageName>
-                <format>OpenApiV2</format>
+                <format>OpenAPIV2</format>
                 <languages>
                     <language>Kotlin</language>
                 </languages>
@@ -34,7 +34,7 @@
                 <input>${project.basedir}/src/main/openapi/petstorev3.json</input>
                 <output>${project.build.directory}/generated-sources</output>
                 <packageName>community.flock.wirespec.generated.kotlin.v3</packageName>
-                <format>OpenApiV3</format>
+                <format>OpenAPIV3</format>
                 <languages>
                     <language>Kotlin</language>
                 </languages>
@@ -50,7 +50,7 @@
                 <input>${project.basedir}/src/main/openapi/petstorev2.json</input>
                 <output>${project.build.directory}/generated-sources</output>
                 <packageName>community.flock.wirespec.generated.java.v2</packageName>
-                <format>OpenApiV2</format>
+                <format>OpenAPIV2</format>
                 <languages>
                     <language>Java</language>
                 </languages>
@@ -66,7 +66,7 @@
                 <input>${project.basedir}/src/main/openapi/petstorev3.json</input>
                 <output>${project.build.directory}/generated-sources</output>
                 <packageName>community.flock.wirespec.generated.java.v3</packageName>
-                <format>OpenApiV3</format>
+                <format>OpenAPIV3</format>
                 <languages>
                     <language>Java</language>
                 </languages>

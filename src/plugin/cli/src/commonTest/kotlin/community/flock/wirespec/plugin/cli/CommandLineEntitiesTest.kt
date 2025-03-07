@@ -100,7 +100,7 @@ class CommandLineEntitiesTest {
             noopInput { },
             noopInput {
                 it.operation.shouldBeTypeOf<Operation.Convert>().run {
-                    format shouldBe Format.OpenApiV2
+                    format shouldBe Format.OpenAPIV2
                 }
                 it.input.shouldBeTypeOf<Console>()
                 it.output?.value shouldBe "output"

@@ -29,7 +29,7 @@ The `Convert` operation facilitates integration with other API specification lan
 
 *   **input:** Path to the input file in the original specification language.
 *   **output:** Path to the output directory where the converted Wirespec file will be placed.
-*   **format:** The format of the input file (e.g., `OpenApiV2`, `OpenApiV3`, `Avro`).
+*   **format:** The format of the input file (e.g., `OpenAPIV2`, `OpenAPIV3`, `Avro`).
 
 [Playground convert](http://playground.wirespec.io/covert)
 
@@ -39,7 +39,7 @@ The `Custom` operation combines the functionality of both `Compile` and `Convert
 
 *   **input:** Path to the input file or folder.
 *   **output:** Path to the output directory.
-*   **format:** Input format (e.g., `OpenApiV2`, `OpenApiV3`, `Avro`).
+*   **format:** Input format (e.g., `OpenAPIV2`, `OpenAPIV3`, `Avro`).
 *   **languages:** A comma-separated list of target languages for code generation (e.g., `Java`, `Kotlin`, `Scala`, `TypeScript`, `Wirespec`, `OpenAPIV2`, `OpenAPIV3`).
 *   **package name:** The package name for the generated code.
 *   **share:** A flag to indicate whether shared code should be emitted.

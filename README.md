@@ -49,7 +49,7 @@ By understanding your project's specific needs and architecture, you can choose 
 | **Ease of Use**            | High (minimalist)                  | Moderate (can be verbose) | Moderate          | Moderate (requires coding) |
 | **Technology**             | Multiplatform (JVM Node.js Binary) | JVM                 | Node.js           | Node.js                    |
 
-Wirespec can read and convert OpenApiSpecification (OAS) files.
+Wirespec can read and convert OpenAPISpecification (OAS) files.
 
 
 ## Syntax

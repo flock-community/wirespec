@@ -33,7 +33,7 @@ import community.flock.wirespec.openapi.Common.filterNotNullValues
 import kotlinx.serialization.json.Json
 import community.flock.kotlinx.openapi.bindings.v3.Type as OpenapiType
 
-object OpenApiV3Parser {
+object OpenAPIV3Parser {
 
     fun parse(json: String, strict: Boolean = false): AST = OpenAPI(
         json = Json {

@@ -12,7 +12,7 @@ import community.flock.wirespec.compiler.core.parse.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.openapi.common.Ast
-import community.flock.wirespec.openapi.v2.OpenApiV2Parser.parse
+import community.flock.wirespec.openapi.v2.OpenAPIV2Parser.parse
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -20,7 +20,7 @@ import kotlinx.io.readString
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class OpenApiV2ParserTest {
+class OpenAPIV2ParserTest {
 
     @Test
     fun petstore() {
