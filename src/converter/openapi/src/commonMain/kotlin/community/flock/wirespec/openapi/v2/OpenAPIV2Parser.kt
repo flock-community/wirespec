@@ -254,7 +254,7 @@ object OpenAPIV2Parser {
 
     private fun HeaderOrReferenceObject.resolve(): HeaderObject = when (this) {
         is HeaderObject -> this
-        is ReferenceObject -> error("Headers cannot be referenced in open api v2")
+        is ReferenceObject -> error("Headers cannot be referenced in OpenAPI v2")
     }
 
     private fun SwaggerObject.resolve(parameterOrReference: ParameterOrReferenceObject): ParameterObject = when (parameterOrReference) {
