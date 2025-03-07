@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.tokenize
 fun TokenType.name(): String = this::class.simpleName!!
 
 sealed interface TokenType
+data object Literal : TokenType
 data object RightCurly : TokenType
 data object Colon : TokenType
 data object Comma : TokenType
@@ -42,6 +43,7 @@ data object StartOfProgram : WhiteSpace
 
 sealed interface Keyword : TokenType
 sealed interface WirespecDefinition : Keyword
+data object ImportDefinition : WirespecDefinition
 data object TypeDefinition : WirespecDefinition
 data object EnumTypeDefinition : WirespecDefinition
 data object ChannelDefinition : WirespecDefinition

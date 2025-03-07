@@ -16,7 +16,9 @@ import community.flock.wirespec.compiler.core.tokenize.FieldIdentifier
 import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.Hash
 import community.flock.wirespec.compiler.core.tokenize.KebabCaseIdentifier
+import community.flock.wirespec.compiler.core.tokenize.ImportDefinition
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
+import community.flock.wirespec.compiler.core.tokenize.Literal
 import community.flock.wirespec.compiler.core.tokenize.Method
 import community.flock.wirespec.compiler.core.tokenize.NewLine
 import community.flock.wirespec.compiler.core.tokenize.PascalCaseIdentifier
@@ -57,12 +59,14 @@ object WirespecSpec : LanguageSpec {
     override val typeIdentifier = WirespecType
     override val fieldIdentifier = WirespecField
     override val orderedMatchers = listOf(
+        Regex("^\\bimport\\b") to ImportDefinition,
         Regex("^\\btype\\b") to TypeDefinition,
         Regex("^\\benum\\b") to EnumTypeDefinition,
         Regex("^\\bendpoint\\b") to EndpointDefinition,
         Regex("^\\bchannel\\b") to ChannelDefinition,
         Regex("^[^\\S\\r\\n]+") to WhiteSpaceExceptNewLine,
         Regex("^[\\r\\n]") to NewLine,
+        Regex("^\".*\"") to Literal,
         Regex("^\\{") to LeftCurly,
         Regex("^\\}") to RightCurly,
         Regex("^->") to Arrow,

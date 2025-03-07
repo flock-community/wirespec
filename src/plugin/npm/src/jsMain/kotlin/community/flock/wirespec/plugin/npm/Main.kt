@@ -19,7 +19,7 @@ import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
 import community.flock.wirespec.compiler.core.emit.shared.TypeScriptShared
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.tokenize.tokenize
-import community.flock.wirespec.compiler.lib.WsNode
+import community.flock.wirespec.compiler.lib.WsDefinition
 import community.flock.wirespec.compiler.lib.WsStringResult
 import community.flock.wirespec.compiler.lib.consume
 import community.flock.wirespec.compiler.lib.produce
@@ -92,7 +92,7 @@ fun generate(source: String, type: String): WsStringResult = object : ParseConte
     .produce()
 
 @JsExport
-fun emit(ast: Array<WsNode>, emitter: Emitters, packageName: String) = ast
+fun emit(ast: Array<WsDefinition>, emitter: Emitters, packageName: String) = ast
     .map { it.consume() }
     .let {
         when (emitter) {
