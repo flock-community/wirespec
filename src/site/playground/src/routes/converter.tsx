@@ -5,7 +5,7 @@ import { initializeMonaco } from "../utils/InitializeMonaco";
 import {
   openApiV2ToWirespec,
   openApiV3ToWirespec,
-} from "../transformations/OpenApiToWirespec";
+} from "../transformations/OpenAPIToWirespec";
 import { PlayGroundInput } from "../components/PlayGroundInput";
 import { PlayGroundOutput } from "../components/PlayGroundOutput";
 import { Grid, Typography } from "@mui/material";
@@ -36,7 +36,7 @@ function RouteComponent() {
         compiled = openApiV3ToWirespec(code);
       } else {
         setError(
-          `Invalid OpenApi specification; missing 'swagger' or 'openapi' property`,
+          `Invalid OpenAPI specification; missing 'swagger' or 'openapi' property`,
         );
         return;
       }

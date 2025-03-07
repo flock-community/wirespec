@@ -7,7 +7,7 @@ import kotlin.reflect.KClass
 
 sealed class WirespecException(message: String, val coordinates: Token.Coordinates) : RuntimeException(message) {
 
-    class OpenApiParse(message: String) : WirespecException(message, Token.Coordinates())
+    class OpenAPIParse(message: String) : WirespecException(message, Token.Coordinates())
     sealed class IOException(message: String) : WirespecException(message, Token.Coordinates()) {
         class FileReadException(message: String) : IOException(message)
         class FileWriteException(message: String) : IOException(message)

@@ -53,7 +53,7 @@ tasks {
 }
 
 tasks {
-    val createOpenApiSourceJar by registering(Jar::class) {
+    val createOpenAPISourceJar by registering(Jar::class) {
         // Java sources
         from(sourceSets.main.get().java) {
             include("**/community/flock/**/*.java")
@@ -64,7 +64,7 @@ tasks {
     }
 
     buildPlugin {
-        dependsOn(createOpenApiSourceJar)
-        from(createOpenApiSourceJar) { into("scripts") }
+        dependsOn(createOpenAPISourceJar)
+        from(createOpenAPISourceJar) { into("scripts") }
     }
 }

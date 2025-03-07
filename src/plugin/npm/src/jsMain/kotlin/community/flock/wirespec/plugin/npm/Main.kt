@@ -27,10 +27,10 @@ import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.converter.avro.AvroEmitter
 import community.flock.wirespec.converter.avro.AvroParser
 import community.flock.wirespec.generator.generate
-import community.flock.wirespec.openapi.v2.OpenApiV2Emitter
-import community.flock.wirespec.openapi.v2.OpenApiV2Parser
-import community.flock.wirespec.openapi.v3.OpenApiV3Emitter
-import community.flock.wirespec.openapi.v3.OpenApiV3Parser
+import community.flock.wirespec.openapi.v2.OpenAPIV2Emitter
+import community.flock.wirespec.openapi.v2.OpenAPIV2Parser
+import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter
+import community.flock.wirespec.openapi.v3.OpenAPIV3Parser
 import community.flock.wirespec.plugin.cli.main
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.encodeToString
@@ -79,8 +79,8 @@ fun parse(source: String) = object : ParseContext {
 
 @JsExport
 fun convert(source: String, converters: Converters) = when (converters) {
-    Converters.OPENAPI_V2 -> OpenApiV2Parser.parse(source).produce()
-    Converters.OPENAPI_V3 -> OpenApiV3Parser.parse(source).produce()
+    Converters.OPENAPI_V2 -> OpenAPIV2Parser.parse(source).produce()
+    Converters.OPENAPI_V3 -> OpenAPIV3Parser.parse(source).produce()
     Converters.AVRO -> AvroParser.parse(source).produce()
 }
 
@@ -102,12 +102,12 @@ fun emit(ast: Array<WsNode>, emitter: Emitters, packageName: String) = ast
             Emitters.KOTLIN -> KotlinEmitter(packageName, logger = noLogger).emit(it)
             Emitters.SCALA -> ScalaEmitter(packageName, logger = noLogger).emit(it)
             Emitters.OPENAPI_V2 -> listOf(it)
-                .map(OpenApiV2Emitter::emitSwaggerObject)
+                .map(OpenAPIV2Emitter::emitSwaggerObject)
                 .map(encode(SwaggerObject.serializer()))
                 .map(::Emitted.curried()("openapi")::invoke)
 
             Emitters.OPENAPI_V3 -> listOf(it)
-                .map { ast -> OpenApiV3Emitter.emitOpenAPIObject(ast, null) }
+                .map { ast -> OpenAPIV3Emitter.emitOpenAPIObject(ast, null) }
                 .map(encode(OpenAPIObject.serializer()))
                 .map(::Emitted.curried()("openapi")::invoke)
             Emitters.AVRO -> listOf(it)

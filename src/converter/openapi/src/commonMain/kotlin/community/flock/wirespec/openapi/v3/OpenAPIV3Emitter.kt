@@ -37,9 +37,9 @@ import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.openapi.Common.json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
-import community.flock.kotlinx.openapi.bindings.v3.Type as OpenApiType
+import community.flock.kotlinx.openapi.bindings.v3.Type as OpenAPIType
 
-object OpenApiV3Emitter : Emitter(noLogger) {
+object OpenAPIV3Emitter : Emitter(noLogger) {
     data class Options(
         val title: String,
         val version: String,
@@ -111,7 +111,7 @@ object OpenApiV3Emitter : Emitter(noLogger) {
 
     private fun Refined.emit(): SchemaObject =
         SchemaObject(
-            type = OpenApiType.STRING,
+            type = OpenAPIType.STRING,
             pattern = validator.value
         )
 
@@ -130,14 +130,14 @@ object OpenApiV3Emitter : Emitter(noLogger) {
     private fun Enum.emit(): SchemaObject =
         SchemaObject(
             description = comment?.value,
-            type = OpenApiType.STRING,
+            type = OpenAPIType.STRING,
             enum = entries.map { JsonPrimitive(it) }
         )
 
     private fun Union.emit(): SchemaObject =
         SchemaObject(
             description = comment?.value,
-            type = OpenApiType.STRING,
+            type = OpenAPIType.STRING,
             oneOf = entries.map { it.emitSchema() }
         )
 
@@ -213,13 +213,13 @@ object OpenApiV3Emitter : Emitter(noLogger) {
         when (this) {
             is Reference.Dict -> SchemaObject(
                 nullable = reference.isNullable,
-                type = OpenApiType.OBJECT,
+                type = OpenAPIType.OBJECT,
                 additionalProperties = reference.emitSchema() as SchemaOrReferenceOrBooleanObject
             )
 
             is Reference.Iterable -> SchemaObject(
                 nullable = reference.isNullable,
-                type = OpenApiType.ARRAY,
+                type = OpenAPIType.ARRAY,
                 items = reference.emitSchema()
             )
 
@@ -232,12 +232,12 @@ object OpenApiV3Emitter : Emitter(noLogger) {
             is Reference.Unit -> error("Cannot map Unit")
         }
 
-    private fun Reference.Primitive.Type.emitType(): OpenApiType = when (this) {
-        is Reference.Primitive.Type.String -> OpenApiType.STRING
-        is Reference.Primitive.Type.Integer -> OpenApiType.INTEGER
-        is Reference.Primitive.Type.Number -> OpenApiType.NUMBER
-        is Reference.Primitive.Type.Boolean -> OpenApiType.BOOLEAN
-        is Reference.Primitive.Type.Bytes -> OpenApiType.STRING
+    private fun Reference.Primitive.Type.emitType(): OpenAPIType = when (this) {
+        is Reference.Primitive.Type.String -> OpenAPIType.STRING
+        is Reference.Primitive.Type.Integer -> OpenAPIType.INTEGER
+        is Reference.Primitive.Type.Number -> OpenAPIType.NUMBER
+        is Reference.Primitive.Type.Boolean -> OpenAPIType.BOOLEAN
+        is Reference.Primitive.Type.Bytes -> OpenAPIType.STRING
     }
 
     private fun Endpoint.Content.emit(): Pair<MediaType, MediaTypeObject> =

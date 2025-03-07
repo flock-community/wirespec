@@ -2,7 +2,7 @@ package community.flock.wirespec.openapi.v3
 
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPI
 import community.flock.wirespec.openapi.common.Ast
-import community.flock.wirespec.openapi.v3.OpenApiV3Parser.parse
+import community.flock.wirespec.openapi.v3.OpenAPIV3Parser.parse
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -12,13 +12,13 @@ import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class OpenApiV3EmitterTest {
+class OpenAPIV3EmitterTest {
 
     val json = Json { prettyPrint = true }
 
     @Test
     fun astArray() {
-        val res = OpenApiV3Emitter.emitOpenAPIObject(Ast.array, null)
+        val res = OpenAPIV3Emitter.emitOpenAPIObject(Ast.array, null)
         val openapi = json.encodeToString(res)
         val expect = """
             {
@@ -143,7 +143,7 @@ class OpenApiV3EmitterTest {
         val petstoreOpenAPi = OpenAPI.decodeFromString(petstoreJson)
         val petstoreAst = petstoreOpenAPi.parse()
 
-        val petstoreConvertedOpenAPi = OpenApiV3Emitter.emitOpenAPIObject(petstoreAst, null)
+        val petstoreConvertedOpenAPi = OpenAPIV3Emitter.emitOpenAPIObject(petstoreAst, null)
 
 //        println(json.encodeToString(petstoreConvertedOpenAPi))
         val petstoreConvertedOpenAPiAst = petstoreConvertedOpenAPi.parse()

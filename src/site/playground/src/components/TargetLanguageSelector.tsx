@@ -8,8 +8,8 @@ export function TargetLanguageSelector() {
     { value: "kotlin", label: "Kotlin" },
     { value: "scala", label: "Scala" },
     { value: "java", label: "Java" },
-    { value: "open_api_v2", label: "OpenApi v2" },
-    { value: "open_api_v3", label: "OpenApi v3" },
+    { value: "open_api_v2", label: "OpenAPI v2" },
+    { value: "open_api_v3", label: "OpenAPI v3" },
     { value: "avro", label: "Avro" },
   ];
 

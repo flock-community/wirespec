@@ -1,8 +1,8 @@
 package community.flock.wirespec.plugin
 
 enum class Format {
-    OpenApiV2,
-    OpenApiV3,
+    OpenAPIV2,
+    OpenAPIV3,
     Avro,
     ;
 

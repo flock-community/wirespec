@@ -15,7 +15,7 @@ tasks.register<CompileWirespecTask>("wirespec-kotlin") {
 tasks.register<ConvertWirespecTask>("wirespec-openapi") {
     input = layout.projectDirectory.file("openapi/petstorev3.json")
     output = layout.buildDirectory.dir("generated")
-    format = Format.OpenApiV3
+    format = Format.OpenAPIV3
     packageName = "community.flock.wirespec.openapi"
     languages = listOf(Language.Kotlin)
 }

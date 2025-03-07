@@ -34,10 +34,10 @@ tasks.register<CompileWirespecTask>("wirespec-typescript") {
 }
 
 tasks.register<ConvertWirespecTask>("wirespec-openapi") {
-    description = "Convert Wirespec to OpenApiSpec"
+    description = "Convert Wirespec to OpenAPISpec"
     input = layout.projectDirectory.dir("src/main/wirespec")
     output = layout.buildDirectory.dir("openapi")
-    format = "OpenApi"
+    format = "OpenAPI"
 }
 
 tasks.register<CustomWirespecTask>("wirespec-kotlin") {
