@@ -37,7 +37,7 @@ fun main(args: Array<String>) {
     (0..20)
         .mapNotNull(args::orNull)
         .toTypedArray()
-        .let(WirespecCli.provide(::compile, ::convert, ::write))
+        .let(WirespecCli.provide(::compile, ::convert, ::write)::main)
 }
 
 fun Set<Language>.emitters(

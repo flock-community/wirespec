@@ -2,6 +2,7 @@ package community.flock.wirespec.plugin.cli.io
 
 import community.flock.wirespec.plugin.DirectoryPath
 import community.flock.wirespec.plugin.FileExtension
+import community.flock.wirespec.plugin.FileExtension.Wirespec
 import community.flock.wirespec.plugin.FileName
 import community.flock.wirespec.plugin.FilePath
 import kotlinx.io.files.Path
@@ -15,9 +16,9 @@ class Directory(private val path: DirectoryPath) {
         .let { SystemFileSystem.list(it) }
         .asSequence()
         .filter { SystemFileSystem.metadataOrNull(it)?.isRegularFile ?: false }
-        .filter { it.extension == FileExtension.Wirespec.value }
+        .filter { it.extension == Wirespec.value }
         .map { it.name }
-        .map { it.dropLast(FileExtension.Wirespec.value.length + 1) }
+        .map { it.dropLast(Wirespec.value.length + 1) }
         .map { FilePath(path, FileName(it)) }
         .map(::WirespecFile)
         .toSet()

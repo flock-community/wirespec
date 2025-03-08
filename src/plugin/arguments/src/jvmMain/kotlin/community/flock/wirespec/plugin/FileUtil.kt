@@ -25,8 +25,7 @@ fun List<Emitted>.writeToFiles(
             packageName = packageName,
             fileName = fileName ?: it.typeName,
             ext = ext,
-        )
-            .writeText(it.result)
+        ).writeText(it.result)
     }
 }
 

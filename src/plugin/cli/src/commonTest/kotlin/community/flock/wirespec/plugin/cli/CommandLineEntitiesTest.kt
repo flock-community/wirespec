@@ -1,13 +1,8 @@
 package community.flock.wirespec.plugin.cli
 
-import arrow.core.EitherNel
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
-import community.flock.wirespec.compiler.core.emit.common.Emitted
-import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
-import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.Console
-import community.flock.wirespec.plugin.ConverterArguments
 import community.flock.wirespec.plugin.DirectoryPath
 import community.flock.wirespec.plugin.FileExtension
 import community.flock.wirespec.plugin.FilePath
@@ -15,7 +10,6 @@ import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Format.OpenAPIV2
 import community.flock.wirespec.plugin.Language.Kotlin
 import community.flock.wirespec.plugin.Language.Wirespec
-import community.flock.wirespec.plugin.cli.io.File
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeTypeOf
@@ -52,7 +46,7 @@ class CommandLineEntitiesTest {
             },
             noopConverter {},
             noopWriter,
-        )(arrayOf("compile") + opts)
+        ).main(arrayOf("compile") + opts)
     }
 
     @Test
@@ -69,7 +63,7 @@ class CommandLineEntitiesTest {
             },
             noopConverter { },
             noopWriter,
-        )(arrayOf("compile", "-l", "Kotlin"))
+        ).main(arrayOf("compile", "-l", "Kotlin"))
     }
 
     @Test
@@ -90,36 +84,6 @@ class CommandLineEntitiesTest {
                 it.strict shouldBe false
             },
             noopWriter,
-        )(arrayOf("convert", "-i", "src/commonTest/resources/openapi/keto.json", "openapiv2"))
+        ).main(arrayOf("convert", "-i", "src/commonTest/resources/openapi/keto.json", "openapiv2"))
     }
-
-    @Test
-    fun testCommandLineEntitiesParser() {
-        WirespecCli.provide(
-            noopCompiler { },
-            noopConverter {
-                it.format.shouldBeTypeOf<Format>() shouldBe OpenAPIV2
-                it.input.shouldBeTypeOf<Console>()
-                it.output?.value shouldBe "output"
-                it.languages shouldBe setOf(Kotlin)
-                it.packageName.value shouldBe DEFAULT_GENERATED_PACKAGE_STRING
-                it.logLevel shouldBe ERROR
-                it.shared shouldBe false
-                it.strict shouldBe false
-            },
-            noopWriter,
-        )(arrayOf("convert", "openapiv2", "-o", "output", "-l", "Kotlin"))
-    }
-
-    private fun noopCompiler(block: (CompilerArguments) -> Unit): (CompilerArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File>>> = {
-        block(it)
-        emptyList()
-    }
-
-    private fun noopConverter(block: (ConverterArguments) -> Unit): (ConverterArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File>>> = {
-        block(it)
-        emptyList()
-    }
-
-    private val noopWriter: (List<Emitted>, File?) -> Unit = { _, _ -> }
 }

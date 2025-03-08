@@ -5,7 +5,7 @@ import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.name
 import kotlin.reflect.KClass
 
-sealed class WirespecException(message: String, val coordinates: Token.Coordinates) : RuntimeException(message) {
+sealed class WirespecException(override val message: String, val coordinates: Token.Coordinates) : RuntimeException(message) {
 
     class OpenAPIParse(message: String) : WirespecException(message, Token.Coordinates())
     sealed class IOException(message: String) : WirespecException(message, Token.Coordinates()) {

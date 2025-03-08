@@ -10,9 +10,8 @@ fun interface Reader {
 
 sealed interface Input
 
-data class DirectoryPath(override val value: String) :
-    Input,
-    Value<String> {
+@JvmInline
+value class DirectoryPath(override val value: String) : Input, Value<String> {
     override fun toString() = value
     companion object {
         fun String.toDirectoryPath() = DirectoryPath(this)
@@ -36,7 +35,9 @@ data class FilePath(val directory: DirectoryPath, val fileName: FileName, val ex
 }
 
 @JvmInline
-value class FileName(override val value: String) : Value<String>
+value class FileName(override val value: String) : Value<String> {
+    override fun toString() = value
+}
 
 data object Console : Input, Reader {
     override fun read() = generateSequence { readlnOrNull() }.joinToString("/n")
