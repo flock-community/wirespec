@@ -23,13 +23,13 @@ import community.flock.wirespec.compiler.utils.Logger.Level.INFO
 import community.flock.wirespec.compiler.utils.Logger.Level.WARN
 import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.Console
+import community.flock.wirespec.plugin.ConverterArguments
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.FullDirPath
 import community.flock.wirespec.plugin.FullFilePath
 import community.flock.wirespec.plugin.Input
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.Language.Wirespec
-import community.flock.wirespec.plugin.Operation
 import community.flock.wirespec.plugin.Output
 import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.cli.io.File
@@ -50,7 +50,7 @@ class WirespecCli : NoOpCliktCommand(name = "wirespec") {
     companion object {
         fun provide(
             compile: (CompilerArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File?>>>,
-            convert: (CompilerArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File?>>>,
+            convert: (ConverterArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File?>>>,
             write: List<Emitted>.(File?) -> Unit,
         ): (Array<out String>) -> Unit = WirespecCli().subcommands(Compile(compile, write), Convert(convert, write))::main
     }
@@ -94,7 +94,6 @@ private class Compile(
 
     override fun run() {
         CompilerArguments(
-            operation = Operation.Compile,
             input = getInput(input),
             output = Output(output),
             languages = languages.toSet(),
@@ -112,7 +111,7 @@ private class Compile(
 }
 
 private class Convert(
-    private val block: (CompilerArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File?>>>,
+    private val block: (ConverterArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File?>>>,
     private val write: (List<Emitted>, File?) -> Unit,
 ) : CommonOptions() {
 
@@ -126,8 +125,8 @@ private class Convert(
         if (inp is FullDirPath) {
             echo("To convert, please specify a file", err = true)
         }
-        CompilerArguments(
-            operation = Operation.Convert(format = format),
+        ConverterArguments(
+            format = format,
             input = inp,
             output = Output(output),
             languages = languages.toSet().ifEmpty { setOf(Wirespec) },

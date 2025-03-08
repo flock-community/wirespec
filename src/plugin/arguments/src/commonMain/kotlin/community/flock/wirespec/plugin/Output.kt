@@ -3,7 +3,7 @@ package community.flock.wirespec.plugin
 import community.flock.wirespec.compiler.core.Value
 import kotlin.jvm.JvmInline
 
-interface Writer {
+fun interface Writer {
     fun write(string: String)
 }
 
