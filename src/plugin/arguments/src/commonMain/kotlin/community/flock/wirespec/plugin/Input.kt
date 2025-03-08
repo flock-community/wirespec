@@ -10,19 +10,25 @@ fun interface Reader {
 
 sealed interface Input
 
-data class FullDirPath(val path: String) : Input
-
-data class FullFilePath(val directory: String, val fileName: FileName, val extension: FileExtension = Wirespec) :
-    Input {
+data class DirectoryPath(override val value: String) :
+    Input,
+    Value<String> {
+    override fun toString() = value
     companion object {
-        fun parse(input: String): FullFilePath {
+        fun String.toDirectoryPath() = DirectoryPath(this)
+    }
+}
+
+data class FilePath(val directory: DirectoryPath, val fileName: FileName, val extension: FileExtension = Wirespec) : Input {
+    companion object {
+        fun parse(input: String): FilePath {
             val list = input.split("/").let { it.dropLast(1) + it.last().split(".") }
             val extension = list.last().lowercase()
                 .let { ext -> FileExtension.entries.find { it.value == ext } }
                 ?: error("Invalid file extension")
             val filename = FileName(list[list.size - 2])
             val path = list.subList(0, list.size - 2).joinToString("/")
-            return FullFilePath(path, filename, extension)
+            return FilePath(DirectoryPath(path), filename, extension)
         }
     }
 

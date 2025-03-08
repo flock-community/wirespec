@@ -13,10 +13,10 @@ import community.flock.wirespec.compiler.core.exceptions.WirespecException.IOExc
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.Console
+import community.flock.wirespec.plugin.DirectoryPath
 import community.flock.wirespec.plugin.FileExtension
 import community.flock.wirespec.plugin.FileName
-import community.flock.wirespec.plugin.FullDirPath
-import community.flock.wirespec.plugin.FullFilePath
+import community.flock.wirespec.plugin.FilePath
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.Reader
@@ -24,7 +24,7 @@ import community.flock.wirespec.plugin.cli.io.Directory
 import community.flock.wirespec.plugin.cli.io.File
 import community.flock.wirespec.plugin.cli.io.WirespecFile
 
-fun compile(arguments: CompilerArguments): List<Either<NonEmptyList<WirespecException>, Pair<List<Emitted>, File?>>> {
+fun compile(arguments: CompilerArguments): List<Either<NonEmptyList<WirespecException>, Pair<List<Emitted>, File>>> {
     val input = arguments.input
     val output = arguments.output
 
@@ -36,13 +36,13 @@ fun compile(arguments: CompilerArguments): List<Either<NonEmptyList<WirespecExce
     return when (input) {
         is Console ->
             input
-                .wirespec(languages, packageName, { FullFilePath(output!!.value, FileName("console"), it) }, logger)
+                .wirespec(languages, packageName, { FilePath(DirectoryPath(output!!.value), FileName("console"), it) }, logger)
 
-        is FullDirPath -> Directory(input.path)
+        is DirectoryPath -> Directory(DirectoryPath(input.value))
             .wirespecFiles()
             .flatMap { it.wirespec(languages, packageName, it.path.out(packageName, output), logger) }
 
-        is FullFilePath ->
+        is FilePath ->
             if (input.extension == FileExtension.Wirespec) {
                 WirespecFile(input)
                     .let { it.wirespec(languages, packageName, it.path.out(packageName, output), logger) }
@@ -55,9 +55,9 @@ fun compile(arguments: CompilerArguments): List<Either<NonEmptyList<WirespecExce
 private fun Reader.wirespec(
     languages: Set<Language>,
     packageName: PackageName,
-    path: (FileExtension) -> FullFilePath,
+    path: (FileExtension) -> FilePath,
     logger: Logger,
-) = read()
+): List<Either<NonEmptyList<WirespecException>, Pair<List<Emitted>, File>>> = read()
     .let { source ->
         languages.emitters(packageName, path, logger).map { (emitter, file) ->
             val results = object : CompilationContext {

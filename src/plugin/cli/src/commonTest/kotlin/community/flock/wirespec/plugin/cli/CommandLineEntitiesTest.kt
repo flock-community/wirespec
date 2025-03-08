@@ -8,11 +8,11 @@ import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
 import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.Console
 import community.flock.wirespec.plugin.ConverterArguments
+import community.flock.wirespec.plugin.DirectoryPath
 import community.flock.wirespec.plugin.FileExtension
+import community.flock.wirespec.plugin.FilePath
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Format.OpenAPIV2
-import community.flock.wirespec.plugin.FullDirPath
-import community.flock.wirespec.plugin.FullFilePath
 import community.flock.wirespec.plugin.Language.Kotlin
 import community.flock.wirespec.plugin.Language.Wirespec
 import community.flock.wirespec.plugin.cli.io.File
@@ -42,7 +42,7 @@ class CommandLineEntitiesTest {
         }.toTypedArray()
         WirespecCli.provide(
             noopCompiler {
-                it.input.shouldBeTypeOf<FullDirPath>().path shouldBe "src/commonTest/resources/openapi"
+                it.input.shouldBeTypeOf<DirectoryPath>().value shouldBe "src/commonTest/resources/openapi"
                 it.output?.value shouldBe "output"
                 it.languages shouldBe setOf(Wirespec)
                 it.packageName.value shouldBe "packageName"
@@ -78,9 +78,9 @@ class CommandLineEntitiesTest {
             noopCompiler { },
             noopConverter {
                 it.format.shouldBeTypeOf<Format>() shouldBe OpenAPIV2
-                it.input.shouldBeTypeOf<FullFilePath>().run {
+                it.input.shouldBeTypeOf<FilePath>().run {
                     fileName.value shouldBe "keto"
-                    extension shouldBe FileExtension.Json
+                    extension shouldBe FileExtension.JSON
                 }
                 it.output.shouldBeNull()
                 it.languages shouldBe setOf(Wirespec)
@@ -111,12 +111,12 @@ class CommandLineEntitiesTest {
         )(arrayOf("convert", "openapiv2", "-o", "output", "-l", "Kotlin"))
     }
 
-    private fun noopCompiler(block: (CompilerArguments) -> Unit): (CompilerArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File?>>> = {
+    private fun noopCompiler(block: (CompilerArguments) -> Unit): (CompilerArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File>>> = {
         block(it)
         emptyList()
     }
 
-    private fun noopConverter(block: (ConverterArguments) -> Unit): (ConverterArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File?>>> = {
+    private fun noopConverter(block: (ConverterArguments) -> Unit): (ConverterArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File>>> = {
         block(it)
         emptyList()
     }

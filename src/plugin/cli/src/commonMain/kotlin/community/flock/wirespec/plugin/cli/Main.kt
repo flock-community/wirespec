@@ -10,9 +10,10 @@ import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.openapi.v2.OpenAPIV2Emitter
 import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter
+import community.flock.wirespec.plugin.DirectoryPath.Companion.toDirectoryPath
 import community.flock.wirespec.plugin.FileExtension
 import community.flock.wirespec.plugin.FileName
-import community.flock.wirespec.plugin.FullFilePath
+import community.flock.wirespec.plugin.FilePath
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.Language.Java
 import community.flock.wirespec.plugin.Language.Kotlin
@@ -39,30 +40,31 @@ fun main(args: Array<String>) {
         .let(WirespecCli.provide(::compile, ::convert, ::write))
 }
 
-fun write(output: List<Emitted>, file: File?) =
-    output.forEach { (name, result) -> file?.copy(FileName(name))?.write(result) ?: print(result) }
-
 fun Set<Language>.emitters(
     packageName: PackageName,
-    path: ((FileExtension) -> FullFilePath)?,
+    path: ((FileExtension) -> FilePath),
     logger: Logger,
 ) = map {
     val (packageString) = packageName
     when (it) {
-        Java -> JavaEmitter(packageString, logger) to path?.let { JavaFile(it(FileExtension.Java)) }
-        Kotlin -> KotlinEmitter(packageString, logger) to path?.let { KotlinFile(it(FileExtension.Kotlin)) }
-        Scala -> ScalaEmitter(packageString, logger) to path?.let { ScalaFile(it(FileExtension.Scala)) }
-        TypeScript -> TypeScriptEmitter(logger) to path?.let { TypeScriptFile(it(FileExtension.TypeScript)) }
-        Wirespec -> WirespecEmitter(logger) to path?.let { WirespecFile(it(FileExtension.Wirespec)) }
-        OpenAPIV2 -> OpenAPIV2Emitter to path?.let { JsonFile(it(FileExtension.Json)) }
-        OpenAPIV3 -> OpenAPIV3Emitter to path?.let { JsonFile(it(FileExtension.Json)) }
+        Java -> JavaEmitter(packageString, logger) to JavaFile(path(FileExtension.Java))
+        Kotlin -> KotlinEmitter(packageString, logger) to KotlinFile(path(FileExtension.Kotlin))
+        Scala -> ScalaEmitter(packageString, logger) to ScalaFile(path(FileExtension.Scala))
+        TypeScript -> TypeScriptEmitter(logger) to TypeScriptFile(path(FileExtension.TypeScript))
+        Wirespec -> WirespecEmitter(logger) to WirespecFile(path(FileExtension.Wirespec))
+        OpenAPIV2 -> OpenAPIV2Emitter to JsonFile(path(FileExtension.JSON))
+        OpenAPIV3 -> OpenAPIV3Emitter to JsonFile(path(FileExtension.JSON))
     }
 }
 
-fun FullFilePath.out(packageName: PackageName, output: Output?) = { extension: FileExtension ->
+fun FilePath.out(packageName: PackageName, output: Output?) = { extension: FileExtension ->
     val dir = output ?: "$directory/out/${extension.name.lowercase()}"
     copy(
-        directory = "$dir/${packageName.value.split('.').joinToString("/")}",
+        directory = "$dir/${packageName.value.split('.').joinToString("/")}".toDirectoryPath(),
         extension = extension,
     )
+}
+
+fun write(output: List<Emitted>, file: File) = output.forEach { (name, result) ->
+    file.copy(FileName(name)).write(result)
 }

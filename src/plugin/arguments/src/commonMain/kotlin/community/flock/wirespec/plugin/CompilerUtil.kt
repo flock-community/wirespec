@@ -60,6 +60,6 @@ fun Language.mapEmitter(packageName: PackageName, logger: Logger) = when (this) 
     Scala -> LanguageEmitter(ScalaEmitter(packageName.value, logger), FileExtension.Scala, ScalaShared)
     TypeScript -> LanguageEmitter(TypeScriptEmitter(logger), FileExtension.TypeScript)
     Wirespec -> LanguageEmitter(WirespecEmitter(logger), FileExtension.Wirespec)
-    OpenAPIV2 -> LanguageEmitter(OpenAPIV2Emitter, FileExtension.Json)
-    OpenAPIV3 -> LanguageEmitter(OpenAPIV3Emitter, FileExtension.Json)
+    OpenAPIV2 -> LanguageEmitter(OpenAPIV2Emitter, FileExtension.JSON)
+    OpenAPIV3 -> LanguageEmitter(OpenAPIV3Emitter, FileExtension.JSON)
 }

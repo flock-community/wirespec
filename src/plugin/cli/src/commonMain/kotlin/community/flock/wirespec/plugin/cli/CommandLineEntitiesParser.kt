@@ -24,9 +24,9 @@ import community.flock.wirespec.compiler.utils.Logger.Level.WARN
 import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.Console
 import community.flock.wirespec.plugin.ConverterArguments
+import community.flock.wirespec.plugin.DirectoryPath
+import community.flock.wirespec.plugin.FilePath
 import community.flock.wirespec.plugin.Format
-import community.flock.wirespec.plugin.FullDirPath
-import community.flock.wirespec.plugin.FullFilePath
 import community.flock.wirespec.plugin.Input
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.Language.Wirespec
@@ -49,9 +49,9 @@ enum class Options(vararg val flags: String) {
 class WirespecCli : NoOpCliktCommand(name = "wirespec") {
     companion object {
         fun provide(
-            compile: (CompilerArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File?>>>,
-            convert: (ConverterArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File?>>>,
-            write: List<Emitted>.(File?) -> Unit,
+            compile: (CompilerArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File>>>,
+            convert: (ConverterArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File>>>,
+            write: (List<Emitted>, File) -> Unit,
         ): (Array<out String>) -> Unit = WirespecCli().subcommands(Compile(compile, write), Convert(convert, write))::main
     }
 }
@@ -65,11 +65,11 @@ private abstract class CommonOptions : CliktCommand() {
     val shared by option(*Options.Shared.flags, help = "Generate shared wirespec code").flag(default = false)
     val strict by option(*Options.Strict.flags, help = "Strict mode").flag()
 
-    fun getInput(input: String? = null): Input = input?.let {
+    fun getInput(input: String?): Input = input?.let {
         val meta = SystemFileSystem.metadataOrNull(Path(it)) ?: throw CliktError("Cannot access file or directory: $it")
         when {
-            meta.isDirectory -> FullDirPath(it)
-            meta.isRegularFile -> FullFilePath.parse(it)
+            meta.isDirectory -> DirectoryPath(it)
+            meta.isRegularFile -> FilePath.parse(it)
             else -> throw CliktError("Input is not a file or directory: $it")
         }
     } ?: Console
@@ -84,12 +84,12 @@ private abstract class CommonOptions : CliktCommand() {
 }
 
 private class Compile(
-    private val block: (CompilerArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File?>>>,
-    private val write: (List<Emitted>, File?) -> Unit,
+    private val block: (CompilerArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File>>>,
+    private val write: (List<Emitted>, File) -> Unit,
 ) : CommonOptions() {
 
     private val languages by option(*Options.Language.flags, help = "Language")
-        .choice(Language.toMap())
+        .choice(choices = Language.toMap(), ignoreCase = true)
         .multiple(required = true)
 
     override fun run() {
@@ -111,8 +111,8 @@ private class Compile(
 }
 
 private class Convert(
-    private val block: (ConverterArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File?>>>,
-    private val write: (List<Emitted>, File?) -> Unit,
+    private val block: (ConverterArguments) -> List<EitherNel<WirespecException, Pair<List<Emitted>, File>>>,
+    private val write: (List<Emitted>, File) -> Unit,
 ) : CommonOptions() {
 
     private val format by argument(help = "Input format").enum<Format>()
@@ -122,7 +122,7 @@ private class Convert(
 
     override fun run() {
         val inp = getInput(input)
-        if (inp is FullDirPath) {
+        if (inp is DirectoryPath) {
             echo("To convert, please specify a file", err = true)
         }
         ConverterArguments(
@@ -137,7 +137,7 @@ private class Convert(
         ).let(block).forEach {
             when (it) {
                 is Either.Right -> it.value.let { (result, file) -> write(result, file) }
-                is Either.Left -> echo(it.value, err = true)
+                is Either.Left -> throw CliktError(it.value.joinToString { e -> e.message ?: "" })
             }
         }
     }

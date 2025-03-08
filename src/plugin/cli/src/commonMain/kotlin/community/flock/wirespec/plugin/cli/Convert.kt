@@ -10,17 +10,17 @@ import community.flock.wirespec.converter.avro.AvroParser
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser
 import community.flock.wirespec.plugin.ConverterArguments
+import community.flock.wirespec.plugin.FilePath
 import community.flock.wirespec.plugin.Format.Avro
 import community.flock.wirespec.plugin.Format.OpenAPIV2
 import community.flock.wirespec.plugin.Format.OpenAPIV3
-import community.flock.wirespec.plugin.FullFilePath
 import community.flock.wirespec.plugin.cli.io.File
 import community.flock.wirespec.plugin.cli.io.JsonFile
 
-fun convert(arguments: ConverterArguments): List<Either<NonEmptyList<WirespecException>, Pair<List<Emitted>, File?>>> {
+fun convert(arguments: ConverterArguments): List<Either<NonEmptyList<WirespecException>, Pair<List<Emitted>, File>>> {
     val packageName = arguments.packageName
 
-    val fullPath = arguments.input as FullFilePath
+    val fullPath = arguments.input as FilePath
     val jsonString = JsonFile(fullPath).read()
     val strict = arguments.strict
 
