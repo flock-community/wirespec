@@ -1,7 +1,7 @@
 package community.flock.wirespec.plugin.gradle
 
 import community.flock.wirespec.compiler.core.emit.common.Emitter
-import community.flock.wirespec.plugin.FilesContent
+import community.flock.wirespec.plugin.FileContent
 import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.compile
 import community.flock.wirespec.plugin.toDirectory
@@ -40,9 +40,9 @@ abstract class CustomWirespecTask : BaseWirespecTask() {
     abstract val extension: Property<String>
 
     @Internal
-    protected fun getFilesContent(): FilesContent = input.asFileTree
+    protected fun getFilesContent(): List<FileContent> = input.asFileTree
         .map { it.name.split(".").first() to it.readText(Charsets.UTF_8) }
-        .map { (name, reader) -> name to reader }
+        .map(::FileContent)
 
     @TaskAction
     fun custom() {

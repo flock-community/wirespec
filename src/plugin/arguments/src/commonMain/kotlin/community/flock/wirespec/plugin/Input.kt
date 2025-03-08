@@ -11,7 +11,9 @@ fun interface Reader {
 sealed interface Input
 
 @JvmInline
-value class DirectoryPath(override val value: String) : Input, Value<String> {
+value class DirectoryPath(override val value: String) :
+    Input,
+    Value<String> {
     override fun toString() = value
     companion object {
         fun String.toDirectoryPath() = DirectoryPath(this)
@@ -25,8 +27,9 @@ data class FilePath(val directory: DirectoryPath, val fileName: FileName, val ex
             val extension = list.last().lowercase()
                 .let { ext -> FileExtension.entries.find { it.value == ext } }
                 ?: error("Invalid file extension")
-            val filename = FileName(list[list.size - 2])
-            val path = list.subList(0, list.size - 2).joinToString("/")
+            val idxOfFileName = list.size - 2
+            val filename = FileName(list[idxOfFileName])
+            val path = list.subList(0, idxOfFileName).joinToString("/")
             return FilePath(DirectoryPath(path), filename, extension)
         }
     }

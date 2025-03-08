@@ -7,7 +7,6 @@ import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
 import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
 import community.flock.wirespec.compiler.core.emit.shared.TypeScriptShared
 import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.validate.validate
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.converter.avro.AvroParser
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser
@@ -90,18 +89,17 @@ class CustomMojo : BaseMojo() {
         val fileContents = getFilesContent()
         val ast: List<Pair<String, AST>> =
             when (format) {
-                Format.OpenAPIV2 -> fileContents.map { it.first to OpenAPIV2Parser.parse(it.second, !strict).validate() }
-                Format.OpenAPIV3 -> fileContents.map { it.first to OpenAPIV3Parser.parse(it.second, !strict).validate() }
-                Format.Avro -> fileContents.map { it.first to AvroParser.parse(it.second, !strict).validate() }
+                Format.OpenAPIV2 -> fileContents.map { (name, content) -> name to OpenAPIV2Parser.parse(content, !strict) }
+                Format.OpenAPIV3 -> fileContents.map { (name, content) -> name to OpenAPIV3Parser.parse(content, !strict) }
+                Format.Avro -> fileContents.map { (name, content) -> name to AvroParser.parse(content, !strict) }
                 null -> fileContents.parse(logger)
             }
 
-        ast.map { (name, ast) -> name to ast.validate().let { emitter.emit(it) } }
+        ast.map { (name, ast) -> name to emitter.emit(ast) }
             .flatMap { (name, results) ->
-                if (emitter.split) {
-                    results
-                } else {
-                    listOf(Emitted(name, results.first().result))
+                when {
+                    emitter.split -> results
+                    else -> listOf(Emitted(name, results.first().result))
                 }
             }
             .also { File(output).resolve(emitterPkg.toDirectory()).mkdirs() }

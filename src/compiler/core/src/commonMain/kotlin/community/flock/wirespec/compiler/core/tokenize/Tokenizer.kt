@@ -10,13 +10,13 @@ import community.flock.wirespec.compiler.core.tokenize.Token.Coordinates
 
 typealias Tokens = NonEmptyList<Token>
 
-data class OptimizeOptions(
+data class TokenizeOptions(
     val removeWhitespace: Boolean = true,
     val specifyTypes: Boolean = true,
     val specifyFieldIdentifiers: Boolean = true,
 )
 
-fun LanguageSpec.tokenize(source: String, options: OptimizeOptions = OptimizeOptions()): Tokens = tokenize(source, nonEmptyListOf(Token(type = StartOfProgram, value = "", coordinates = Coordinates())))
+fun LanguageSpec.tokenize(source: String, options: TokenizeOptions = TokenizeOptions()): Tokens = tokenize(source, nonEmptyListOf(Token(type = StartOfProgram, value = "", coordinates = Coordinates())))
     .let(optimize(options))
 
 private tailrec fun LanguageSpec.tokenize(source: String, incompleteTokens: Tokens): Tokens {
@@ -36,11 +36,7 @@ private fun LanguageSpec.extractToken(source: String, previousTokenCoordinates: 
 private fun MatchResult.toToken(type: TokenType, previousTokenCoordinates: Coordinates) = Token(value, type, previousTokenCoordinates.nextCoordinates(type, value))
 
 private fun Coordinates.nextCoordinates(type: TokenType, value: String) = when (type) {
-    is NewLine -> Coordinates(
-        line = line + 1,
-        idxAndLength = idxAndLength + value.length,
-    )
-
+    is NewLine -> Coordinates(line = line + 1, idxAndLength = idxAndLength + value.length)
     else -> this + value.length
 }
 
@@ -50,7 +46,7 @@ private fun endToken(previousTokenCoordinates: Coordinates = Coordinates()) = To
     coordinates = previousTokenCoordinates.nextCoordinates(EndOfProgram, EndOfProgram.VALUE),
 )
 
-private fun LanguageSpec.optimize(options: OptimizeOptions) = { tokens: Tokens ->
+private fun LanguageSpec.optimize(options: TokenizeOptions) = { tokens: Tokens ->
     tokens
         .runOption(options.removeWhitespace) { removeWhiteSpace() }
         .runOption(options.specifyTypes) { map { it.specifyType(typeIdentifier.specificTypes) } }
