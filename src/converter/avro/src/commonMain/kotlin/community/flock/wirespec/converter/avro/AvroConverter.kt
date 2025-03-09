@@ -1,10 +1,10 @@
 package community.flock.wirespec.converter.avro
 
-import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
+import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
@@ -76,7 +76,7 @@ object AvroConverter {
         entries = this.type.map { it.toReference(false) }.toSet(),
     )
 
-    fun AvroModel.Type.flatten(name: String = ""): AST = when (this) {
+    fun AvroModel.Type.flatten(name: String = ""): List<Node> = when (this) {
         is AvroModel.SimpleType -> emptyList()
         is AvroModel.RecordType -> listOf(toType()) + fields.flatMap { field -> field.type.flatMap { it.flatten(name) } }
         is AvroModel.ArrayType -> items.flatten(name)

@@ -1,11 +1,13 @@
 package community.flock.wirespec.compiler.core.emit
 
+import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.concatGenerics
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.Keywords
+import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.orNull
 import community.flock.wirespec.compiler.core.parse.AST
@@ -22,10 +24,9 @@ import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
-import kotlin.math.log
 
 open class JavaEmitter(
-    private val packageName: String = DEFAULT_GENERATED_PACKAGE_STRING,
+    private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
 ) : Emitter(true) {
 
     val import = """
@@ -45,12 +46,12 @@ open class JavaEmitter(
 
     override val singleLineComment = "//"
 
-    override fun emit(ast: AST, logger: Logger): List<Emitted> =
+    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> =
         super.emit(ast, logger).map { (typeName, result) ->
             Emitted(
                 typeName = typeName.sanitizeSymbol(),
                 result = """
-                    |${if (packageName.isBlank()) "" else "package $packageName;"}
+                    |package $packageName;
                     |${if (ast.needImports()) import else ""}
                     |$result
                 """.trimMargin().trimStart()

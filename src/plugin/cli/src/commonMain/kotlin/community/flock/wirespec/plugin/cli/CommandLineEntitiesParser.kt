@@ -1,6 +1,7 @@
 package community.flock.wirespec.plugin.cli
 
-import arrow.core.EitherNel
+import arrow.core.NonEmptyList
+import arrow.core.NonEmptySet
 import arrow.core.nonEmptySetOf
 import arrow.core.toNonEmptySetOrNull
 import com.github.ajalt.clikt.core.CliktCommand
@@ -16,7 +17,7 @@ import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.enum
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.Emitted
-import community.flock.wirespec.compiler.core.exceptions.WirespecException
+import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.utils.Logger.Level
 import community.flock.wirespec.compiler.utils.Logger.Level.DEBUG
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
@@ -24,15 +25,19 @@ import community.flock.wirespec.compiler.utils.Logger.Level.INFO
 import community.flock.wirespec.compiler.utils.Logger.Level.WARN
 import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.ConverterArguments
+import community.flock.wirespec.plugin.Directory
 import community.flock.wirespec.plugin.DirectoryPath
 import community.flock.wirespec.plugin.File
+import community.flock.wirespec.plugin.FileExtension
+import community.flock.wirespec.plugin.FileName
 import community.flock.wirespec.plugin.FilePath
 import community.flock.wirespec.plugin.Format
-import community.flock.wirespec.plugin.Input
+import community.flock.wirespec.plugin.FullPath
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.Language.Wirespec
-import community.flock.wirespec.plugin.Output
-import community.flock.wirespec.plugin.PackageName
+import community.flock.wirespec.plugin.files.JsonFile
+import community.flock.wirespec.plugin.files.WirespecFile
+import community.flock.wirespec.plugin.plus
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -49,11 +54,9 @@ enum class Options(vararg val flags: String) {
     Strict("--strict"),
 }
 
-data class WirespecResult(val file: File, val emitted: List<Emitted>) {
-    constructor(pair: Pair<File, List<Emitted>>) : this(pair.first, pair.second)
+data class WirespecResult(val file: File, val emitted: NonEmptyList<Emitted>) {
+    constructor(pair: Pair<File, NonEmptyList<Emitted>>) : this(pair.first, pair.second)
 }
-
-typealias WirespecResults = List<EitherNel<WirespecException, WirespecResult>>
 
 class WirespecCli : NoOpCliktCommand(name = "wirespec") {
     companion object {
@@ -65,22 +68,23 @@ class WirespecCli : NoOpCliktCommand(name = "wirespec") {
 }
 
 private abstract class CommonOptions : CliktCommand() {
-    val input by option(*Options.Input.flags, help = "Input")
-    val output by option(*Options.Output.flags, help = "Output")
+    val inputPath by option(*Options.Input.flags, help = "Input")
+    val outputPath by option(*Options.Output.flags, help = "Output")
     val packageName by option(*Options.PackageName.flags, help = "Package name")
         .default(DEFAULT_GENERATED_PACKAGE_STRING)
     val logLevel by option(*Options.LogLevel.flags, help = "Log level: $Level").default("$ERROR")
     val shared by option(*Options.Shared.flags, help = "Generate shared wirespec code").flag(default = false)
     val strict by option(*Options.Strict.flags, help = "Strict mode").flag()
 
-    fun getInput(input: String?): Input = input?.let {
-        val meta = SystemFileSystem.metadataOrNull(Path(it)) ?: throw CannotAccessFileOrDirectory(it)
+    fun getFullPath(input: String?, createIfNotExists: Boolean = false): FullPath? = input?.let {
+        val path = Path(it).createIfNotExists(createIfNotExists)
+        val meta = SystemFileSystem.metadataOrNull(path) ?: throw CannotAccessFileOrDirectory(it)
         when {
             meta.isDirectory -> DirectoryPath(it)
             meta.isRegularFile -> FilePath.parse(it)
             else -> throw IsNotAFileOrDirectory(it)
         }
-    } ?: throw IsNotAFileOrDirectory("null")
+    }
 
     fun String.toLogLevel() = when (trim().uppercase()) {
         "DEBUG" -> DEBUG
@@ -100,9 +104,22 @@ private class Compile(
         .multiple(required = true)
 
     override fun run() {
+        val input = when (val it = getFullPath(inputPath)) {
+            null -> throw IsNotAFileOrDirectory(null)
+            is DirectoryPath -> Directory(it).wirespecFiles()
+            is FilePath -> when (it.extension) {
+                FileExtension.Wirespec -> nonEmptySetOf(WirespecFile(it))
+                else -> throw WirespecFileError()
+            }
+        }
+        val output = when (val it = getFullPath(outputPath, true)) {
+            null -> Directory(input.first().path + "/out")
+            is DirectoryPath -> Directory(it)
+            is FilePath -> throw OutputShouldBeADirectory()
+        }
         CompilerArguments(
-            input = getInput(input),
-            output = Output(output),
+            input = input,
+            output = output,
             reader = { it.read() },
             writer = { file, string -> file.write(string) },
             error = ::handleError,
@@ -125,14 +142,23 @@ private class Convert(
         .multiple()
 
     override fun run() {
-        val filePath = when (val it = getInput(input)) {
+        val input = when (val it = getFullPath(inputPath)) {
+            null -> throw IsNotAFileOrDirectory(null)
             is DirectoryPath -> throw ConvertNeedsAFile()
-            is FilePath -> it
+            is FilePath -> when (it.extension) {
+                FileExtension.JSON -> JsonFile(it)
+                else -> throw JSONFileError()
+            }
+        }
+        val output = when (val it = getFullPath(outputPath, true)) {
+            null -> Directory(input.path + "/out")
+            is DirectoryPath -> Directory(it)
+            is FilePath -> throw OutputShouldBeADirectory()
         }
         ConverterArguments(
             format = format,
-            input = filePath,
-            output = Output(output),
+            input = input,
+            output = output,
             reader = { it.read() },
             writer = { file, string -> file.write(string) },
             error = ::handleError,
@@ -148,14 +174,39 @@ private class Convert(
 fun File.read() = Path(path.toString())
     .let { SystemFileSystem.source(it).buffered().readString() }
 
+private fun Directory.wirespecFiles(): NonEmptySet<WirespecFile> = Path(path.value)
+    .let(SystemFileSystem::list)
+    .asSequence()
+    .filter(::isRegularFile)
+    .filter(::isWirespecFile)
+    .map { it.name }
+    .map { it.dropLast(FileExtension.Wirespec.value.length + 1) }
+    .map { FilePath(path, FileName(it)) }
+    .map(::WirespecFile)
+    .toList()
+    .toNonEmptySetOrNull()
+    ?: throw WirespecFileError()
+
 private fun File.write(string: String) = Path(path.toString())
-    .let { path ->
-        path.parent
-            ?.takeIf { !SystemFileSystem.exists(it) }
-            ?.let { SystemFileSystem.createDirectories(it, true) }
-        SystemFileSystem.sink(path).buffered()
+    .also { it.parent?.createIfNotExists() }
+    .let {
+        SystemFileSystem.sink(it).buffered()
             .apply { writeString(string) }
             .flush()
     }
+
+private fun Path.createIfNotExists(create: Boolean = true) = also {
+    when {
+        create && !SystemFileSystem.exists(this) -> SystemFileSystem.createDirectories(this, true)
+        else -> Unit
+    }
+}
+
+private fun isRegularFile(path: Path) = SystemFileSystem.metadataOrNull(path)?.isRegularFile == true
+
+private fun isWirespecFile(path: Path) = path.extension == FileExtension.Wirespec.value
+
+private val Path.extension: String
+    get() = name.substringAfterLast('.', "")
 
 private fun handleError(string: String): Nothing = throw CliktError(string)

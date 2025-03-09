@@ -1,5 +1,7 @@
 package community.flock.wirespec.compiler.core.emit.common
 
+import arrow.core.NonEmptyList
+import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Param.ParamType
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
@@ -32,7 +34,7 @@ abstract class Emitter(
 
     open fun Definition.emitName(): String = notYetImplemented()
 
-    open fun emit(ast: AST, logger: Logger): List<Emitted> = ast
+    open fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast
         .map {
             when (it) {
                 is Definition -> it.emitName()
@@ -48,7 +50,7 @@ abstract class Emitter(
         }
         .run {
             if (split) this
-            else listOf(Emitted("NoName", joinToString("\n") { it.result }))
+            else nonEmptyListOf(Emitted("NoName", joinToString("\n") { it.result }))
         }
 
     fun String.spacer(space: Int = 1) = split("\n")

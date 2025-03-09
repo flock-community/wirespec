@@ -8,28 +8,36 @@ fun interface Reader {
     fun read(): String
 }
 
+fun interface Writer {
+    fun write(string: String)
+}
+
 fun interface Copy {
     fun copy(fileName: FileName): File
 }
 
 sealed interface Input
 
-class Directory(val path: DirectoryPath)
+sealed interface Output
 
-abstract class File(val path: FilePath) : Copy
+class Directory(val path: DirectoryPath) :
+    Input,
+    Output
+
+abstract class File(val path: FilePath) :
+    Input,
+    Copy
+
+sealed interface FullPath
 
 @JvmInline
 value class DirectoryPath(override val value: String) :
-    Input,
+    FullPath,
     Value<String> {
     override fun toString() = value
-
-    companion object {
-        fun String.toDirectoryPath() = DirectoryPath(this)
-    }
 }
 
-data class FilePath(val directory: DirectoryPath, val fileName: FileName, val extension: FileExtension = Wirespec) : Input {
+data class FilePath(val directory: DirectoryPath, val fileName: FileName, val extension: FileExtension = Wirespec) : FullPath {
     companion object {
         fun parse(input: String): FilePath {
             val list = input.split("/").let { it.dropLast(1) + it.last().split(".") }
@@ -50,3 +58,7 @@ data class FilePath(val directory: DirectoryPath, val fileName: FileName, val ex
 value class FileName(override val value: String) : Value<String> {
     override fun toString() = value
 }
+
+operator fun FilePath.plus(string: String) = directory + string
+
+operator fun DirectoryPath.plus(string: String) = DirectoryPath(value + string)

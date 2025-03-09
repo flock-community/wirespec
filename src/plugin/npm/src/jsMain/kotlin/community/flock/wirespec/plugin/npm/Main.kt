@@ -3,6 +3,7 @@
 package community.flock.wirespec.plugin.npm
 
 import arrow.core.curried
+import arrow.core.toNonEmptyListOrNull
 import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPIObject
 import community.flock.wirespec.compiler.core.ParseContext
@@ -13,6 +14,7 @@ import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
+import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.shared.JavaShared
 import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
 import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
@@ -92,13 +94,14 @@ fun generate(source: String, type: String): WsStringResult = object : ParseConte
 @JsExport
 fun emit(ast: Array<WsNode>, emitter: Emitters, packageName: String) = ast
     .map { it.consume() }
+    .let { it.toNonEmptyListOrNull() ?: error("Cannot emit empty AST") }
     .let {
         when (emitter) {
             Emitters.WIRESPEC -> WirespecEmitter().emit(it, noLogger)
             Emitters.TYPESCRIPT -> TypeScriptEmitter().emit(it, noLogger)
-            Emitters.JAVA -> JavaEmitter(packageName).emit(it, noLogger)
-            Emitters.KOTLIN -> KotlinEmitter(packageName).emit(it, noLogger)
-            Emitters.SCALA -> ScalaEmitter(packageName).emit(it, noLogger)
+            Emitters.JAVA -> JavaEmitter(PackageName(packageName)).emit(it, noLogger)
+            Emitters.KOTLIN -> KotlinEmitter(PackageName(packageName)).emit(it, noLogger)
+            Emitters.SCALA -> ScalaEmitter(PackageName(packageName)).emit(it, noLogger)
             Emitters.OPENAPI_V2 -> listOf(it)
                 .map(OpenAPIV2Emitter::emitSwaggerObject)
                 .map(encode(SwaggerObject.serializer()))

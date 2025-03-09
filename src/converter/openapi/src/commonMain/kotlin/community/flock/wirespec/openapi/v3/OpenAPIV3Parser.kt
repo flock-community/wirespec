@@ -1,5 +1,6 @@
 package community.flock.wirespec.openapi.v3
 
+import arrow.core.toNonEmptyListOrNull
 import community.flock.kotlinx.openapi.bindings.v3.BooleanObject
 import community.flock.kotlinx.openapi.bindings.v3.HeaderObject
 import community.flock.kotlinx.openapi.bindings.v3.HeaderOrReferenceObject
@@ -25,6 +26,7 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
+import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
@@ -40,19 +42,17 @@ object OpenAPIV3Parser {
             prettyPrint = true
             ignoreUnknownKeys = strict
         },
-    )
-        .decodeFromString(json)
-        .parse()
+    ).decodeFromString(json).parse().toNonEmptyListOrNull() ?: error("Cannot yield non empty List<Node> for OpenAPI v3")
 
-    fun OpenAPIObject.parse(): AST = listOf(
+    fun OpenAPIObject.parse(): List<Node> = listOf(
         parseEndpoint(),
         parseParameters(),
         parseRequestBody(),
         parseResponseBody(),
         parseComponents(),
-    ).reduce(AST::plus)
+    ).reduce(List<Node>::plus)
 
-    private fun OpenAPIObject.parseEndpoint(): AST = paths
+    private fun OpenAPIObject.parseEndpoint(): List<Node> = paths
         .flatMap { (key, path) ->
             path.toOperationList().map { (method, operation) ->
                 val parameters = resolveParameters(path) + resolveParameters(operation)
@@ -136,7 +136,7 @@ object OpenAPIV3Parser {
             }
         }
 
-    private fun OpenAPIObject.parseParameters(): AST = flatMapRequests {
+    private fun OpenAPIObject.parseParameters(): List<Node> = flatMapRequests {
         val parameters = resolveParameters(pathItem) + resolveParameters(operation)
         val name = operation.toName() ?: (path.toName() + method.name)
         parameters.flatMap { parameter ->
@@ -144,7 +144,7 @@ object OpenAPIV3Parser {
         }
     }
 
-    private fun OpenAPIObject.parseRequestBody(): AST = flatMapRequests {
+    private fun OpenAPIObject.parseRequestBody(): List<Node> = flatMapRequests {
         val name = operation.toName() ?: (path.toName() + method.name)
         operation.requestBody?.let { resolve(it) }?.content.orEmpty()
             .flatMap { (_, mediaObject) ->
@@ -162,7 +162,7 @@ object OpenAPIV3Parser {
             }
     }
 
-    private fun OpenAPIObject.flatMapResponse(response: ResponseObject, name: String, statusCode: StatusCode): AST = response.content.orEmpty()
+    private fun OpenAPIObject.flatMapResponse(response: ResponseObject, name: String, statusCode: StatusCode): List<Node> = response.content.orEmpty()
         .flatMap { (_, mediaObject) ->
             when (val schema = mediaObject.schema) {
                 is SchemaObject -> when (schema.type) {
@@ -185,7 +185,7 @@ object OpenAPIV3Parser {
             }
         }
 
-    private fun OpenAPIObject.parseResponseBody(): AST = flatMapResponses {
+    private fun OpenAPIObject.parseResponseBody(): List<Node> = flatMapResponses {
         val name = operation.toName() ?: (path.toName() + method.name)
         when (val response = response) {
             is ResponseObject -> flatMapResponse(response, name, statusCode)
@@ -193,7 +193,7 @@ object OpenAPIV3Parser {
         }
     }
 
-    private fun OpenAPIObject.parseComponents(): AST = components?.schemas.orEmpty()
+    private fun OpenAPIObject.parseComponents(): List<Node> = components?.schemas.orEmpty()
         .filter {
             when (val s = it.value) {
                 is SchemaObject -> s.additionalProperties == null
@@ -338,7 +338,7 @@ object OpenAPIV3Parser {
         is ReferenceObject -> resolveResponseObject(responseOrReferenceObject).second
     }
 
-    private fun OpenAPIObject.flatten(schemaObject: SchemaObject, name: String): AST = when {
+    private fun OpenAPIObject.flatten(schemaObject: SchemaObject, name: String): List<Node> = when {
         schemaObject.additionalProperties != null -> when (schemaObject.additionalProperties) {
             is BooleanObject -> emptyList()
             else ->
@@ -623,7 +623,7 @@ object OpenAPIV3Parser {
         val operation: OperationObject,
     )
 
-    private fun OpenAPIObject.flatMapRequests(f: FlattenRequest.() -> AST) = paths
+    private fun OpenAPIObject.flatMapRequests(f: FlattenRequest.() -> List<Node>) = paths
         .flatMap { (path, pathItem) ->
             pathItem.toOperationList().map { (method, operation) ->
                 FlattenRequest(path = path, pathItem = pathItem, method = method, operation = operation)
@@ -640,7 +640,7 @@ object OpenAPIV3Parser {
         val response: ResponseOrReferenceObject,
     )
 
-    private fun OpenAPIObject.flatMapResponses(f: FlattenResponse.() -> AST) = paths
+    private fun OpenAPIObject.flatMapResponses(f: FlattenResponse.() -> List<Node>) = paths
         .flatMap { (path, pathItem) ->
             pathItem.toOperationList()
                 .flatMap { (method, operation) ->

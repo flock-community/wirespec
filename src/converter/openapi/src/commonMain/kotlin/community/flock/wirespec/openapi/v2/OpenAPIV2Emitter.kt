@@ -1,5 +1,7 @@
 package community.flock.wirespec.openapi.v2
 
+import arrow.core.NonEmptyList
+import arrow.core.nonEmptyListOf
 import community.flock.kotlinx.openapi.bindings.v2.HeaderObject
 import community.flock.kotlinx.openapi.bindings.v2.InfoObject
 import community.flock.kotlinx.openapi.bindings.v2.OperationObject
@@ -27,7 +29,6 @@ import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.openapi.Common.json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
@@ -37,8 +38,8 @@ object OpenAPIV2Emitter : Emitter() {
 
     override val singleLineComment = ""
 
-    override fun emit(ast: AST, logger: Logger): List<Emitted> =
-        listOf(Emitted("SwaggerObject", json.encodeToString(emitSwaggerObject(ast))))
+    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> =
+        nonEmptyListOf(Emitted("SwaggerObject", json.encodeToString(emitSwaggerObject(ast))))
 
     override fun Type.Shape.emit() = notYetImplemented()
 

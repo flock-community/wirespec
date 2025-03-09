@@ -1,5 +1,6 @@
 package community.flock.wirespec.compiler.core.emit
 
+import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.Spacer
@@ -16,7 +17,6 @@ import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
-import kotlin.math.log
 
 open class TypeScriptEmitter : Emitter() {
 
@@ -31,7 +31,7 @@ open class TypeScriptEmitter : Emitter() {
 
     override val singleLineComment = "//"
 
-    override fun emit(ast: AST, logger: Logger): List<Emitted> =
+    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> =
         super.emit(ast, logger).map {
             Emitted(
                 it.typeName.sanitizeSymbol(), """

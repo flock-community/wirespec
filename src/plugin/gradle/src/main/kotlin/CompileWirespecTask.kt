@@ -1,8 +1,8 @@
 package community.flock.wirespec.plugin.gradle
 
+import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.plugin.FileContent
 import community.flock.wirespec.plugin.Language
-import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.mapEmitter
 import community.flock.wirespec.plugin.parse
 import community.flock.wirespec.plugin.writeToFiles

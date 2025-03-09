@@ -4,9 +4,9 @@ import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACK
 import community.flock.wirespec.plugin.DirectoryPath
 import community.flock.wirespec.plugin.FileName
 import community.flock.wirespec.plugin.FilePath
-import community.flock.wirespec.plugin.cli.io.JavaFile
-import community.flock.wirespec.plugin.cli.io.KotlinFile
-import community.flock.wirespec.plugin.cli.io.TypeScriptFile
+import community.flock.wirespec.plugin.files.JavaFile
+import community.flock.wirespec.plugin.files.KotlinFile
+import community.flock.wirespec.plugin.files.TypeScriptFile
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import kotlin.test.Test

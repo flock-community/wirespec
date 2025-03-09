@@ -1,5 +1,6 @@
 package community.flock.wirespec.example.maven.custom.emit;
 
+import arrow.core.NonEmptyList;
 import community.flock.wirespec.compiler.core.emit.common.Emitted;
 import community.flock.wirespec.compiler.core.emit.common.Emitter;
 import community.flock.wirespec.compiler.core.parse.Channel;
@@ -15,8 +16,6 @@ import community.flock.wirespec.compiler.core.parse.Type;
 import community.flock.wirespec.compiler.core.parse.Union;
 import community.flock.wirespec.compiler.utils.Logger;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 public class CustomEmitter extends Emitter {
 
@@ -44,13 +43,10 @@ public class CustomEmitter extends Emitter {
 
     @NotNull
     @Override
-    public List<Emitted> emit(@NotNull List<? extends Node> ast, @NotNull Logger logger) {
+    public NonEmptyList<Emitted> emit(@NotNull NonEmptyList<? extends Node> ast, @NotNull Logger logger) {
         return ast
-                .stream()
-                .filter(Type.class::isInstance)
                 .map(it -> (Type) it)
-                .map(type -> new Emitted(emitName(type), emit(type, ast)))
-                .toList();
+                .map(type -> new Emitted(emitName(type), emit(type, ast)));
     }
 
     @NotNull
@@ -67,7 +63,7 @@ public class CustomEmitter extends Emitter {
 
     @NotNull
     @Override
-    public String emit(@NotNull Enum anEnum, @NotNull List<? extends Node> ast) {
+    public String emit(@NotNull Enum anEnum, @NotNull NonEmptyList<? extends Node> ast) {
         return notYetImplemented();
     }
 
@@ -91,7 +87,7 @@ public class CustomEmitter extends Emitter {
 
     @NotNull
     @Override
-    public String emit(@NotNull Type type, @NotNull List<? extends Node> ast) {
+    public String emit(@NotNull Type type, @NotNull NonEmptyList<? extends Node> ast) {
         return "package hello;\n\npublic class " + emitName(type) + " {}";
     }
 

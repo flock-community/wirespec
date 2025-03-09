@@ -3,7 +3,7 @@
 build:
 	./mvnw verify && \
 	(cd gradle-ktor && ./gradlew check) && \
-	(cd npm-typescript && npm run build)
+	(cd npm-typescript && npm i && npm run build)
 
 clean:
 	./mvnw clean && \

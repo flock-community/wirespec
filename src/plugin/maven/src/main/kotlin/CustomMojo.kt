@@ -2,6 +2,7 @@ package community.flock.wirespec.plugin.maven
 
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.shared.JavaShared
 import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
 import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
@@ -11,7 +12,6 @@ import community.flock.wirespec.openapi.v2.OpenAPIV2Parser
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Language
-import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.parse
 import community.flock.wirespec.plugin.toDirectory
 import org.apache.maven.plugins.annotations.LifecyclePhase

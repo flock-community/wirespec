@@ -1,6 +1,9 @@
 package community.flock.wirespec.plugin.cli
 
+import arrow.core.nonEmptyListOf
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.Emitted
+import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.converter.avro.AvroParser
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser
@@ -10,33 +13,33 @@ import community.flock.wirespec.plugin.FileName
 import community.flock.wirespec.plugin.Format.Avro
 import community.flock.wirespec.plugin.Format.OpenAPIV2
 import community.flock.wirespec.plugin.Format.OpenAPIV3
-import community.flock.wirespec.plugin.cli.io.JsonFile
 
 fun convert(arguments: ConverterArguments) {
     val packageName = arguments.packageName
 
-    val fullPath = arguments.input
+    val jsonFile = arguments.input
 
     val ast = when (arguments.format) {
         OpenAPIV2 -> OpenAPIV2Parser::parse
         OpenAPIV3 -> OpenAPIV3Parser::parse
         Avro -> AvroParser::parse
-    }(arguments.reader(JsonFile(fullPath)), arguments.strict)
+    }(arguments.reader(jsonFile), arguments.strict)
 
-    val path = fullPath.out(packageName, arguments.output)
+    val path = jsonFile.out(packageName, arguments.output)
 
-    return arguments.languages.emitters(packageName, path).map { (emitter, file) ->
-        val results = emitter.emit(ast, Logger(arguments.logLevel))
-        when {
-            emitter.split -> file to results
-            else -> file to listOf(
-                Emitted(
-                    fullPath.fileName.value.replaceFirstChar(Char::uppercase),
-                    results.first().result,
-                ),
-            )
-        }.let(::WirespecResult)
-    }
+    return arguments.languages.emitters(packageName ?: PackageName(DEFAULT_GENERATED_PACKAGE_STRING), path)
+        .map { (emitter, file) ->
+            val results = emitter.emit(ast, Logger(arguments.logLevel))
+            when {
+                emitter.split -> file to results
+                else -> file to nonEmptyListOf(
+                    Emitted(
+                        jsonFile.path.fileName.value.replaceFirstChar(Char::uppercase),
+                        results.first().result,
+                    ),
+                )
+            }.let(::WirespecResult)
+        }
         .flatMap { (file, results) -> results.map { (name, result) -> file.copy(FileName(name)) to result } }
         .forEach { (file, result) -> arguments.writer(file, result) }
 }

@@ -1,4 +1,4 @@
-package community.flock.wirespec.plugin.cli.io
+package community.flock.wirespec.plugin.files
 
 import community.flock.wirespec.plugin.File
 import community.flock.wirespec.plugin.FileExtension
