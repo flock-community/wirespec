@@ -1,14 +1,12 @@
 package community.flock.wirespec.compiler.core
 
 import community.flock.wirespec.compiler.core.emit.common.Emitter
-import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.compiler.utils.noLogger
+import community.flock.wirespec.compiler.utils.NoLogger
 
-fun compile(source: String) = { emitter: (Logger) -> Emitter ->
-    object : CompilationContext {
+fun compile(source: String) = { emitter: () -> Emitter ->
+    object : CompilationContext, NoLogger {
         override val spec = WirespecSpec
-        override val logger = noLogger
-        override val emitter = emitter(logger)
+        override val emitter = emitter()
     }.compile(source)
         .map { it.first().result }
         .onLeft(::println)

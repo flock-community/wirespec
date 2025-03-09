@@ -1,12 +1,13 @@
 package community.flock.wirespec.compiler.core.emit
 
+import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.addBackticks
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_SHARED_PACKAGE_STRING
-import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.Keywords
+import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
@@ -22,9 +23,8 @@ import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 
 open class ScalaEmitter(
-    private val packageName: String = DEFAULT_GENERATED_PACKAGE_STRING,
-    logger: Logger,
-) : DefinitionModelEmitter, Emitter(logger) {
+    private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
+) : Emitter() {
 
     val import = """
         |
@@ -43,12 +43,12 @@ open class ScalaEmitter(
 
     override val singleLineComment = "//"
 
-    override fun emit(ast: AST): List<Emitted> =
-        super.emit(ast).map { (typeName, result) ->
+    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> =
+        super.emit(ast, logger).map { (typeName, result) ->
             Emitted(
                 typeName = typeName,
                 result = """
-                    |${if (packageName.isBlank()) "" else "package $packageName"}
+                    |package $packageName
                     |${if (ast.needImports()) import else ""}
                     |${result}
                 """.trimMargin().trimStart()

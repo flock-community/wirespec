@@ -158,6 +158,7 @@ value class Comment private constructor(override val value: String) : Value<Stri
 
 sealed class Identifier(name: String) : Value<String> {
     override val value = name.removeBackticks()
+    override fun toString() = value
 }
 
 data class DefinitionIdentifier(private val name: String) : Identifier(name)

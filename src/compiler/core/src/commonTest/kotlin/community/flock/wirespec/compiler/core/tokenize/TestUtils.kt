@@ -10,7 +10,7 @@ fun testTokenizer(
     removeWhiteSpace: Boolean = true,
 ) {
     WirespecSpec
-        .tokenize(source, OptimizeOptions(removeWhitespace = removeWhiteSpace))
+        .tokenize(source, TokenizeOptions(removeWhitespace = removeWhiteSpace))
         .shouldNotBeEmpty()
         .apply { size shouldBe expected.size }
         .map { it.type }

@@ -4,7 +4,7 @@ import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.utils.noLogger
+import community.flock.wirespec.compiler.utils.NoLogger
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -21,9 +21,8 @@ class AvroEmitterTest {
         ignoreUnknownKeys = true
     }
 
-    fun parse(source: String): AST = object : ParseContext {
+    private fun parse(source: String): AST = object : ParseContext, NoLogger {
         override val spec = WirespecSpec
-        override val logger = noLogger
     }.parse(source).getOrNull() ?: error("Parsing failed.")
 
     @Test

@@ -3,6 +3,7 @@ package community.flock.wirespec.plugin.maven
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
+import community.flock.wirespec.plugin.FileContent
 import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
@@ -47,7 +48,7 @@ abstract class BaseMojo : AbstractMojo() {
                 it.startsWith("classpath:") -> readFromClasspath(it.substringAfter("classpath:"))
                 else -> readFromFile(it)
             }
-        }
+        }.map(::FileContent)
 
     private fun readFromClasspath(input: String): List<Pair<String, String>> = input
         .let {
@@ -62,10 +63,9 @@ abstract class BaseMojo : AbstractMojo() {
 
     private fun readFromFile(input: String) = File(input)
         .let {
-            if (it.isDirectory) {
-                it.listFiles()?.toList() ?: emptyList()
-            } else {
-                listOf(it)
+            when {
+                it.isDirectory -> it.listFiles().orEmpty().toList()
+                else -> listOf(it)
             }
         }
         .map { it.name.split(".").first() to it }

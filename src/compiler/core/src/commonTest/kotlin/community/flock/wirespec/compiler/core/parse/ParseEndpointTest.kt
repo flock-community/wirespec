@@ -6,7 +6,7 @@ import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.Endpoint.Method.GET
 import community.flock.wirespec.compiler.core.parse.Endpoint.Method.POST
 import community.flock.wirespec.compiler.core.parse.Endpoint.Segment.Literal
-import community.flock.wirespec.compiler.utils.noLogger
+import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldNotBeEmpty
@@ -17,9 +17,8 @@ import kotlin.test.Test
 
 class ParseEndpointTest {
 
-    private fun parser(source: String) = object : ParseContext {
+    private fun parser(source: String) = object : ParseContext, NoLogger {
         override val spec = WirespecSpec
-        override val logger = noLogger
     }.parse(source)
 
     @Test

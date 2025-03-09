@@ -4,6 +4,7 @@ import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
@@ -14,9 +15,8 @@ import kotlin.test.assertEquals
 
 class SpringJavaEmitterTest {
 
-    private fun parse(source: String): AST = object : ParseContext {
+    private fun parse(source: String): AST = object : ParseContext, NoLogger {
         override val spec = WirespecSpec
-        override val logger = noLogger
     }.parse(source).getOrNull() ?: error("Parsing failed.")
 
     @Test
@@ -25,8 +25,8 @@ class SpringJavaEmitterTest {
         val text = SystemFileSystem.source(path).buffered().readString()
 
         val ast = parse(text)
-        val actual = SpringJavaEmitter("community.flock.wirespec.spring.test", noLogger)
-            .emit(ast)
+        val actual = SpringJavaEmitter("community.flock.wirespec.spring.test")
+            .emit(ast, noLogger)
             .map { it.result }
         val expected = listOf(
             """

@@ -1,6 +1,7 @@
 package community.flock.wirespec.plugin
 
 import community.flock.wirespec.compiler.core.emit.common.Emitted
+import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.shared.Shared
 import community.flock.wirespec.plugin.Language.Wirespec
 import java.io.File
@@ -25,8 +26,7 @@ fun List<Emitted>.writeToFiles(
             packageName = packageName,
             fileName = fileName ?: it.typeName,
             ext = ext,
-        )
-            .writeText(it.result)
+        ).writeText(it.result)
     }
 }
 

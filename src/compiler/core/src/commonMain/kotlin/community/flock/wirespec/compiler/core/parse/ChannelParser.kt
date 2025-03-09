@@ -3,16 +3,13 @@ package community.flock.wirespec.compiler.core.parse
 import arrow.core.Either
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
-import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
+import community.flock.wirespec.compiler.core.exceptions.WrongTokenException
 import community.flock.wirespec.compiler.core.tokenize.Arrow
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.WirespecType
-import community.flock.wirespec.compiler.utils.Logger
 
-class ChannelParser(logger: Logger) : AbstractParser(logger) {
-
-    private val typeParser = TypeParser(logger)
+object ChannelParser {
 
     fun TokenProvider.parseChannel(comment: Comment?): Either<WirespecException, Channel> = either {
         eatToken().bind()
@@ -31,7 +28,7 @@ class ChannelParser(logger: Logger) : AbstractParser(logger) {
             else -> raise(WrongTokenException<Colon>(token).also { eatToken().bind() })
         }
 
-        val reference = with(typeParser) {
+        val reference = with(TypeParser) {
             when (val type = token.type) {
                 is LeftCurly -> parseDict().bind()
                 is WirespecType -> parseWirespecType(type).bind()

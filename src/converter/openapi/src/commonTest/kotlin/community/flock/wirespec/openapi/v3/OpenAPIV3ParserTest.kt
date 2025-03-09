@@ -1,5 +1,6 @@
 package community.flock.wirespec.openapi.v3
 
+import arrow.core.nonEmptyListOf
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPI
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
@@ -1133,7 +1134,7 @@ class OpenAPIV3ParserTest {
         val openApi = OpenAPI.decodeFromString(json)
         val ast = openApi.parse()
 
-        val expected: AST = listOf(
+        val expected: AST = nonEmptyListOf(
             Type(
                 comment = null,
                 identifier = DefinitionIdentifier(name = "User"),

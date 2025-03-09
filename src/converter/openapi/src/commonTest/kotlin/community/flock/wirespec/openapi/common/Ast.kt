@@ -1,5 +1,6 @@
 package community.flock.wirespec.openapi.common
 
+import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -269,7 +270,7 @@ object Ast {
             extends = emptyList(),
         ),
     )
-    val array = listOf(
+    val array = nonEmptyListOf(
         Endpoint(
             comment = null,
             identifier = DefinitionIdentifier("ArrayGET"),

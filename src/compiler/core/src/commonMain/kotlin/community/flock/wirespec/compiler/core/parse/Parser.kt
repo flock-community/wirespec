@@ -1,44 +1,50 @@
 package community.flock.wirespec.compiler.core.parse
 
-import arrow.core.Either
 import arrow.core.EitherNel
 import arrow.core.NonEmptyList
+import arrow.core.flatMap
 import arrow.core.nel
 import arrow.core.raise.either
+import arrow.core.raise.ensureNotNull
+import arrow.core.right
+import arrow.core.toNonEmptyListOrNull
+import community.flock.wirespec.compiler.core.exceptions.EmptyAST
+import community.flock.wirespec.compiler.core.exceptions.UnionError
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
-import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
+import community.flock.wirespec.compiler.core.exceptions.WrongTokenException
 import community.flock.wirespec.compiler.core.tokenize.ChannelDefinition
 import community.flock.wirespec.compiler.core.tokenize.Comment
 import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
 import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
-import community.flock.wirespec.compiler.core.tokenize.Precision
-import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.Tokens
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
-import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.compiler.utils.HasLogger
 
-typealias AST = List<Node>
+typealias AST = NonEmptyList<Node>
 
-abstract class AbstractParser(protected val logger: Logger) {
-    protected fun Token.log() = logger.debug("Parsing $type at line ${coordinates.line} position ${coordinates.position}")
-}
+data class ParseOptions(
+    val allowUnions: Boolean = true,
+)
 
-class Parser(logger: Logger) : AbstractParser(logger) {
+object Parser {
 
-    private val typeParser = TypeParser(logger)
-    private val enumParser = EnumParser(logger)
-    private val endpointParser = EndpointParser(logger)
-    private val channelParser = ChannelParser(logger)
+    private val typeParser = TypeParser
+    private val enumParser = EnumParser
+    private val endpointParser = EndpointParser
+    private val channelParser = ChannelParser
 
-    fun parse(tokens: Tokens): Either<NonEmptyList<WirespecException>, AST> = tokens
+    fun HasLogger.parse(tokens: Tokens, options: ParseOptions = ParseOptions()): EitherNel<WirespecException, AST> = tokens
         .toProvider(logger)
         .parse()
+        .flatMap(validate(options))
 
     private fun TokenProvider.parse(): EitherNel<WirespecException, AST> = either {
         mutableListOf<EitherNel<WirespecException, Definition>>()
             .apply { while (hasNext()) add(parseDefinition().mapLeft { it.nel() }) }
             .map { it.bind() }
+            .toNonEmptyListOrNull()
+            .let { ensureNotNull(it) { EmptyAST().nel() } }
     }
 
     private fun TokenProvider.parseDefinition() = either {
@@ -58,9 +64,38 @@ class Parser(logger: Logger) : AbstractParser(logger) {
             else -> raise(WrongTokenException<WirespecDefinition>(token).also { eatToken().bind() })
         }
     }
-}
 
-fun Precision.toPrimitivePrecision() = when (this) {
-    Precision.P32 -> Reference.Primitive.Type.Precision.P32
-    Precision.P64 -> Reference.Primitive.Type.Precision.P64
+    private fun validate(options: ParseOptions): (AST) -> EitherNel<WirespecException, AST> = { ast: AST ->
+        ast
+            .runOption(options.allowUnions) { fillExtendsClause() }
+    }
+
+    private fun AST.runOption(bool: Boolean, block: AST.() -> EitherNel<WirespecException, AST>) = if (bool) block() else right()
+
+    private fun AST.fillExtendsClause(): EitherNel<WirespecException, AST> = either {
+        map { node ->
+            when (node) {
+                is Channel -> node
+                is Endpoint -> node
+                is Enum -> node
+                is Refined -> node
+                is Type -> node.copy(
+                    extends = filterIsInstance<Union>()
+                        .filter { union ->
+                            union.entries
+                                .map {
+                                    when (it) {
+                                        is Reference.Custom -> it.value
+                                        else -> raise(UnionError().nel())
+                                    }
+                                }
+                                .contains(node.identifier.value)
+                        }
+                        .map { Reference.Custom(value = it.identifier.value, isNullable = false) },
+                )
+
+                is Union -> node
+            }
+        }
+    }
 }

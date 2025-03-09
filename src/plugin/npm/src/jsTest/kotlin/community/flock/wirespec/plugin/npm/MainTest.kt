@@ -4,7 +4,7 @@ import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.lib.produce
-import community.flock.wirespec.compiler.utils.noLogger
+import community.flock.wirespec.compiler.utils.NoLogger
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -65,9 +65,8 @@ class MainTest {
 
     @Test
     fun testEmit() {
-        val res = object : ParseContext {
+        val res = object : ParseContext, NoLogger {
             override val spec = WirespecSpec
-            override val logger = noLogger
         }.parse(personWs).getOrNull()
         assertNotNull(res)
         val openApiV2 = emit(res.produce(), Emitters.OPENAPI_V2, "")

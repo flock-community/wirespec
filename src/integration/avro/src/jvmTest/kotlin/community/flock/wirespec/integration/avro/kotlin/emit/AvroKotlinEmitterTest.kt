@@ -1,5 +1,6 @@
 package community.flock.wirespec.integration.avro.kotlin.emit
 
+import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test
 
 class AvroKotlinEmitterTest {
 
-    private val emitter = AvroKotlinEmitter("packageName", noLogger)
+    private val emitter = AvroKotlinEmitter("packageName")
 
     @Test
     fun emitTypeFunctionBodyTest() {
@@ -30,7 +31,7 @@ class AvroKotlinEmitterTest {
             extends = emptyList(),
         )
 
-        val ast = listOf(type)
+        val ast = nonEmptyListOf(type)
         val expected = """
             |package packageName
             |
@@ -61,7 +62,7 @@ class AvroKotlinEmitterTest {
             |}
             |
         """.trimMargin()
-        val actual = emitter.emit(ast)
+        val actual = emitter.emit(ast, noLogger)
         println(actual.first().result)
         assertEquals(expected, actual.first().result)
     }
@@ -73,7 +74,7 @@ class AvroKotlinEmitterTest {
             identifier = DefinitionIdentifier("Identifier"),
             entries = setOf("ONE", "TWO", "THREE"),
         )
-        val ast = listOf(enum)
+        val ast = nonEmptyListOf(enum)
         val expected = """
             |package packageName
             |
@@ -107,7 +108,7 @@ class AvroKotlinEmitterTest {
             |}
             |
         """.trimMargin()
-        val actual = emitter.emit(ast)
+        val actual = emitter.emit(ast, noLogger)
         println(actual)
         assertEquals(expected, actual.first().result)
     }

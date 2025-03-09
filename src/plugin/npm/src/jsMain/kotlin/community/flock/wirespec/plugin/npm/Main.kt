@@ -3,6 +3,7 @@
 package community.flock.wirespec.plugin.npm
 
 import arrow.core.curried
+import arrow.core.toNonEmptyListOrNull
 import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPIObject
 import community.flock.wirespec.compiler.core.ParseContext
@@ -13,6 +14,7 @@ import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
+import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.shared.JavaShared
 import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
 import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
@@ -23,6 +25,7 @@ import community.flock.wirespec.compiler.lib.WsNode
 import community.flock.wirespec.compiler.lib.WsStringResult
 import community.flock.wirespec.compiler.lib.consume
 import community.flock.wirespec.compiler.lib.produce
+import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.converter.avro.AvroEmitter
 import community.flock.wirespec.converter.avro.AvroParser
@@ -73,9 +76,7 @@ fun tokenize(source: String) = WirespecSpec
     .toTypedArray()
 
 @JsExport
-fun parse(source: String) = object : ParseContext {
-    override val logger = noLogger
-}.parse(source).produce()
+fun parse(source: String) = object : ParseContext, NoLogger {}.parse(source).produce()
 
 @JsExport
 fun convert(source: String, converters: Converters) = when (converters) {
@@ -85,22 +86,22 @@ fun convert(source: String, converters: Converters) = when (converters) {
 }
 
 @JsExport
-fun generate(source: String, type: String): WsStringResult = object : ParseContext {
-    override val logger = noLogger
-}.parse(source)
+fun generate(source: String, type: String): WsStringResult = object : ParseContext, NoLogger {}
+    .parse(source)
     .map { it.generate(type).toString() }
     .produce()
 
 @JsExport
 fun emit(ast: Array<WsNode>, emitter: Emitters, packageName: String) = ast
     .map { it.consume() }
+    .let { it.toNonEmptyListOrNull() ?: error("Cannot emit empty AST") }
     .let {
         when (emitter) {
-            Emitters.WIRESPEC -> WirespecEmitter(logger = noLogger).emit(it)
-            Emitters.TYPESCRIPT -> TypeScriptEmitter(logger = noLogger).emit(it)
-            Emitters.JAVA -> JavaEmitter(packageName, logger = noLogger).emit(it)
-            Emitters.KOTLIN -> KotlinEmitter(packageName, logger = noLogger).emit(it)
-            Emitters.SCALA -> ScalaEmitter(packageName, logger = noLogger).emit(it)
+            Emitters.WIRESPEC -> WirespecEmitter().emit(it, noLogger)
+            Emitters.TYPESCRIPT -> TypeScriptEmitter().emit(it, noLogger)
+            Emitters.JAVA -> JavaEmitter(PackageName(packageName)).emit(it, noLogger)
+            Emitters.KOTLIN -> KotlinEmitter(PackageName(packageName)).emit(it, noLogger)
+            Emitters.SCALA -> ScalaEmitter(PackageName(packageName)).emit(it, noLogger)
             Emitters.OPENAPI_V2 -> listOf(it)
                 .map(OpenAPIV2Emitter::emitSwaggerObject)
                 .map(encode(SwaggerObject.serializer()))
@@ -110,6 +111,7 @@ fun emit(ast: Array<WsNode>, emitter: Emitters, packageName: String) = ast
                 .map { ast -> OpenAPIV3Emitter.emitOpenAPIObject(ast, null) }
                 .map(encode(OpenAPIObject.serializer()))
                 .map(::Emitted.curried()("openapi")::invoke)
+
             Emitters.AVRO -> listOf(it)
                 .map { ast -> AvroEmitter.emit(ast) }
                 .map { Json.encodeToString(it) }

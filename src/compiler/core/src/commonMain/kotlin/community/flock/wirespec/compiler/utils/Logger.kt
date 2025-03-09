@@ -51,4 +51,8 @@ interface HasLogger {
     val logger: Logger
 }
 
+interface NoLogger : HasLogger {
+    override val logger get() = noLogger
+}
+
 val noLogger = object : Logger(logLevel = null) {}

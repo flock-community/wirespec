@@ -3,7 +3,7 @@ package community.flock.wirespec.compiler.core.parse
 import arrow.core.Either
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
-import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
+import community.flock.wirespec.compiler.core.exceptions.WrongTokenException
 import community.flock.wirespec.compiler.core.tokenize.Brackets
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.Comma
@@ -12,6 +12,7 @@ import community.flock.wirespec.compiler.core.tokenize.Equals
 import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.Pipe
+import community.flock.wirespec.compiler.core.tokenize.Precision
 import community.flock.wirespec.compiler.core.tokenize.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinitionStart
@@ -25,10 +26,9 @@ import community.flock.wirespec.compiler.core.tokenize.WsInteger
 import community.flock.wirespec.compiler.core.tokenize.WsNumber
 import community.flock.wirespec.compiler.core.tokenize.WsString
 import community.flock.wirespec.compiler.core.tokenize.WsUnit
-import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.core.tokenize.Comment as CommentToken
 
-class TypeParser(logger: Logger) : AbstractParser(logger) {
+object TypeParser {
 
     fun TokenProvider.parseType(comment: Comment?): Either<WirespecException, Definition> = either {
         eatToken().bind()
@@ -232,4 +232,9 @@ class TypeParser(logger: Logger) : AbstractParser(logger) {
             else -> false
         }
     }
+}
+
+fun Precision.toPrimitivePrecision() = when (this) {
+    Precision.P32 -> Reference.Primitive.Type.Precision.P32
+    Precision.P64 -> Reference.Primitive.Type.Precision.P64
 }

@@ -1,3 +1,5 @@
 package community.flock.wirespec.plugin.utils
 
-actual fun Array<String>.orNull(idx: Int): String? = runCatching { get(idx) }.getOrNull()
+import arrow.core.Either.Companion.catch
+
+actual fun Array<String>.orNull(idx: Int): String? = catch { get(idx) }.getOrNull()

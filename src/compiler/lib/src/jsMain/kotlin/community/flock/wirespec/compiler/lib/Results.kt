@@ -2,15 +2,16 @@
 
 package community.flock.wirespec.compiler.lib
 
-import arrow.core.Either
-import arrow.core.Nel
+import arrow.core.Either.Left
+import arrow.core.Either.Right
+import arrow.core.EitherNel
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.AST
 
-fun Either<Nel<WirespecException>, List<Emitted>>.produce(): WsCompilationResult = when (this) {
-    is Either.Left -> WsCompilationResult(errors = value.map { it.produce() }.toTypedArray())
-    is Either.Right -> WsCompilationResult(
+fun EitherNel<WirespecException, List<Emitted>>.produce(): WsCompilationResult = when (this) {
+    is Left -> WsCompilationResult(errors = value.map { it.produce() }.toTypedArray())
+    is Right -> WsCompilationResult(
         result = WsCompiled(
             value = value
                 .map { it.produce() }
@@ -36,9 +37,9 @@ class WsCompiled(val value: Array<WsEmitted>)
 @JsExport
 class WsCompiledFile(val name: String, val value: String)
 
-fun Either<Nel<WirespecException>, AST>.produce(): WsParseResult = when (this) {
-    is Either.Left -> WsParseResult(errors = value.map { it.produce() }.toTypedArray())
-    is Either.Right -> WsParseResult(result = value.map { it.produce() }.toTypedArray())
+fun EitherNel<WirespecException, AST>.produce(): WsParseResult = when (this) {
+    is Left -> WsParseResult(errors = value.map { it.produce() }.toTypedArray())
+    is Right -> WsParseResult(result = value.map { it.produce() }.toTypedArray())
 }
 
 @JsExport
@@ -47,9 +48,9 @@ class WsParseResult(
     val errors: Array<WsError>? = null,
 )
 
-fun Either<Nel<WirespecException>, String>.produce(): WsStringResult = when (this) {
-    is Either.Left -> WsStringResult(errors = value.map { it.produce() }.toTypedArray())
-    is Either.Right -> WsStringResult(result = value)
+fun EitherNel<WirespecException, String>.produce(): WsStringResult = when (this) {
+    is Left -> WsStringResult(errors = value.map { it.produce() }.toTypedArray())
+    is Right -> WsStringResult(result = value)
 }
 
 @JsExport
