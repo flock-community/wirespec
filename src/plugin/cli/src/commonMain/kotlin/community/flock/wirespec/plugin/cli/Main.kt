@@ -6,12 +6,10 @@ import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
-import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.openapi.v2.OpenAPIV2Emitter
 import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter
 import community.flock.wirespec.plugin.DirectoryPath.Companion.toDirectoryPath
 import community.flock.wirespec.plugin.FileExtension
-import community.flock.wirespec.plugin.FileName
 import community.flock.wirespec.plugin.FilePath
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.Language.Java
@@ -23,7 +21,6 @@ import community.flock.wirespec.plugin.Language.TypeScript
 import community.flock.wirespec.plugin.Language.Wirespec
 import community.flock.wirespec.plugin.Output
 import community.flock.wirespec.plugin.PackageName
-import community.flock.wirespec.plugin.cli.io.File
 import community.flock.wirespec.plugin.cli.io.JavaFile
 import community.flock.wirespec.plugin.cli.io.JsonFile
 import community.flock.wirespec.plugin.cli.io.KotlinFile
@@ -36,7 +33,7 @@ fun main(args: Array<String>) {
     (0..20)
         .mapNotNull(args::orNull)
         .toTypedArray()
-        .let(WirespecCli.provide(::compile, ::convert, ::write)::main)
+        .let(WirespecCli.provide(::compile, ::convert)::main)
 }
 
 fun Set<Language>.emitters(
@@ -61,8 +58,4 @@ fun FilePath.out(packageName: PackageName, output: Output?) = { extension: FileE
         directory = "$dir/${packageName.value.split('.').joinToString("/")}".toDirectoryPath(),
         extension = extension,
     )
-}
-
-fun write(file: File, output: List<Emitted>) = output.forEach { (name, result) ->
-    file.copy(FileName(name)).write(result)
 }

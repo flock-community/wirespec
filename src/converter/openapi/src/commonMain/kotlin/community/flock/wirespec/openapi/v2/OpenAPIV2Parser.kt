@@ -35,10 +35,10 @@ import community.flock.kotlinx.openapi.bindings.v2.Type as OpenapiType
 
 object OpenAPIV2Parser {
 
-    fun parse(json: String, ignoreUnknown: Boolean = false): AST = OpenAPI(
+    fun parse(json: String, strict: Boolean = true): AST = OpenAPI(
         json = Json {
             prettyPrint = true
-            ignoreUnknownKeys = ignoreUnknown
+            ignoreUnknownKeys = !strict
         },
     )
         .decodeFromString(json).parse()

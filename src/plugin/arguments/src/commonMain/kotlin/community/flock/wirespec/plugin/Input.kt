@@ -8,13 +8,22 @@ fun interface Reader {
     fun read(): String
 }
 
+fun interface Copy {
+    fun copy(fileName: FileName): File
+}
+
 sealed interface Input
+
+class Directory(val path: DirectoryPath)
+
+abstract class File(val path: FilePath) : Copy
 
 @JvmInline
 value class DirectoryPath(override val value: String) :
     Input,
     Value<String> {
     override fun toString() = value
+
     companion object {
         fun String.toDirectoryPath() = DirectoryPath(this)
     }
@@ -40,8 +49,4 @@ data class FilePath(val directory: DirectoryPath, val fileName: FileName, val ex
 @JvmInline
 value class FileName(override val value: String) : Value<String> {
     override fun toString() = value
-}
-
-data object Console : Input, Reader {
-    override fun read() = generateSequence { readlnOrNull() }.joinToString("/n")
 }

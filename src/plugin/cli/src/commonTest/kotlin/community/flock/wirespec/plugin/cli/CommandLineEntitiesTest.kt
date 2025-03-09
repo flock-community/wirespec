@@ -2,13 +2,11 @@ package community.flock.wirespec.plugin.cli
 
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
-import community.flock.wirespec.plugin.Console
 import community.flock.wirespec.plugin.DirectoryPath
 import community.flock.wirespec.plugin.FileExtension
 import community.flock.wirespec.plugin.FilePath
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Format.OpenAPIV2
-import community.flock.wirespec.plugin.Language.Kotlin
 import community.flock.wirespec.plugin.Language.Wirespec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -45,25 +43,7 @@ class CommandLineEntitiesTest {
                 it.strict shouldBe true
             },
             noopConverter {},
-            noopWriter,
         ).main(arrayOf("compile") + opts)
-    }
-
-    @Test
-    fun testMinimumCliArgumentsForCompile() {
-        WirespecCli.provide(
-            noopCompiler {
-                it.input.shouldBeTypeOf<Console>()
-                it.output.shouldBeNull()
-                it.languages shouldBe setOf(Kotlin)
-                it.packageName.value shouldBe DEFAULT_GENERATED_PACKAGE_STRING
-                it.logLevel shouldBe ERROR
-                it.shared shouldBe false
-                it.strict shouldBe false
-            },
-            noopConverter { },
-            noopWriter,
-        ).main(arrayOf("compile", "-l", "Kotlin"))
     }
 
     @Test
@@ -83,7 +63,6 @@ class CommandLineEntitiesTest {
                 it.shared shouldBe false
                 it.strict shouldBe false
             },
-            noopWriter,
         ).main(arrayOf("convert", "-i", "src/commonTest/resources/openapi/keto.json", "openapiv2"))
     }
 }

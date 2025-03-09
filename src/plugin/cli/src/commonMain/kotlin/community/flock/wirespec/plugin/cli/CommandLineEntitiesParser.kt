@@ -1,6 +1,5 @@
 package community.flock.wirespec.plugin.cli
 
-import arrow.core.Either
 import arrow.core.EitherNel
 import arrow.core.nonEmptySetOf
 import arrow.core.toNonEmptySetOrNull
@@ -24,9 +23,9 @@ import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
 import community.flock.wirespec.compiler.utils.Logger.Level.INFO
 import community.flock.wirespec.compiler.utils.Logger.Level.WARN
 import community.flock.wirespec.plugin.CompilerArguments
-import community.flock.wirespec.plugin.Console
 import community.flock.wirespec.plugin.ConverterArguments
 import community.flock.wirespec.plugin.DirectoryPath
+import community.flock.wirespec.plugin.File
 import community.flock.wirespec.plugin.FilePath
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Input
@@ -34,9 +33,11 @@ import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.Language.Wirespec
 import community.flock.wirespec.plugin.Output
 import community.flock.wirespec.plugin.PackageName
-import community.flock.wirespec.plugin.cli.io.File
+import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
+import kotlinx.io.readString
+import kotlinx.io.writeString
 
 enum class Options(vararg val flags: String) {
     Input("-i", "--input"),
@@ -57,10 +58,9 @@ typealias WirespecResults = List<EitherNel<WirespecException, WirespecResult>>
 class WirespecCli : NoOpCliktCommand(name = "wirespec") {
     companion object {
         fun provide(
-            compile: (CompilerArguments) -> WirespecResults,
-            convert: (ConverterArguments) -> WirespecResults,
-            write: (File, List<Emitted>) -> Unit,
-        ): WirespecCli = WirespecCli().subcommands(Compile(compile, write), Convert(convert, write))
+            compile: (CompilerArguments) -> Unit,
+            convert: (ConverterArguments) -> Unit,
+        ): WirespecCli = WirespecCli().subcommands(Compile(compile), Convert(convert))
     }
 }
 
@@ -80,7 +80,7 @@ private abstract class CommonOptions : CliktCommand() {
             meta.isRegularFile -> FilePath.parse(it)
             else -> throw IsNotAFileOrDirectory(it)
         }
-    } ?: Console
+    } ?: throw IsNotAFileOrDirectory("null")
 
     fun String.toLogLevel() = when (trim().uppercase()) {
         "DEBUG" -> DEBUG
@@ -92,8 +92,7 @@ private abstract class CommonOptions : CliktCommand() {
 }
 
 private class Compile(
-    private val compiler: (CompilerArguments) -> WirespecResults,
-    private val write: (File, List<Emitted>) -> Unit,
+    private val compiler: (CompilerArguments) -> Unit,
 ) : CommonOptions() {
 
     private val languages by option(*Options.Language.flags, help = "Language")
@@ -104,18 +103,20 @@ private class Compile(
         CompilerArguments(
             input = getInput(input),
             output = Output(output),
+            reader = { it.read() },
+            writer = { file, string -> file.write(string) },
+            error = ::handleError,
             languages = languages.toNonEmptySetOrNull() ?: throw ThisShouldNeverHappen(),
             packageName = PackageName(packageName),
             logLevel = logLevel.toLogLevel(),
             shared = shared,
             strict = strict,
-        ).let(compiler).handle(write)
+        ).let(compiler)
     }
 }
 
 private class Convert(
-    private val converter: (ConverterArguments) -> WirespecResults,
-    private val write: (File, List<Emitted>) -> Unit,
+    private val converter: (ConverterArguments) -> Unit,
 ) : CommonOptions() {
 
     private val format by argument(help = "Input format").enum<Format>()
@@ -125,25 +126,36 @@ private class Convert(
 
     override fun run() {
         val filePath = when (val it = getInput(input)) {
-            is Console, is DirectoryPath -> throw ConvertNeedsAFile()
+            is DirectoryPath -> throw ConvertNeedsAFile()
             is FilePath -> it
         }
         ConverterArguments(
             format = format,
             input = filePath,
             output = Output(output),
+            reader = { it.read() },
+            writer = { file, string -> file.write(string) },
+            error = ::handleError,
             languages = languages.toNonEmptySetOrNull() ?: nonEmptySetOf(Wirespec),
             packageName = PackageName(packageName),
             logLevel = logLevel.toLogLevel(),
             shared = shared,
             strict = strict,
-        ).let(converter).handle(write)
+        ).let(converter)
     }
 }
 
-private fun WirespecResults.handle(block: (File, List<Emitted>) -> Unit) = forEach { either ->
-    when (either) {
-        is Either.Right -> either.value.let { (file, result) -> block(file, result) }
-        is Either.Left -> throw CliktError(either.value.joinToString { it.message })
+fun File.read() = Path(path.toString())
+    .let { SystemFileSystem.source(it).buffered().readString() }
+
+private fun File.write(string: String) = Path(path.toString())
+    .let { path ->
+        path.parent
+            ?.takeIf { !SystemFileSystem.exists(it) }
+            ?.let { SystemFileSystem.createDirectories(it, true) }
+        SystemFileSystem.sink(path).buffered()
+            .apply { writeString(string) }
+            .flush()
     }
-}
+
+private fun handleError(string: String): Nothing = throw CliktError(string)

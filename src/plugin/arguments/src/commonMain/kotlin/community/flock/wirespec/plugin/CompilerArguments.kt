@@ -8,6 +8,9 @@ import kotlin.jvm.JvmInline
 sealed interface WirespecArguments {
     val input: Input
     val output: Output?
+    val reader: (File) -> String
+    val writer: (File, String) -> Unit
+    val error: (String) -> Unit
     val languages: NonEmptySet<Language>
     val packageName: PackageName
     val logLevel: Logger.Level
@@ -18,6 +21,9 @@ sealed interface WirespecArguments {
 data class CompilerArguments(
     override val input: Input,
     override val output: Output?,
+    override val reader: (File) -> String,
+    override val writer: (File, String) -> Unit,
+    override val error: (String) -> Unit,
     override val languages: NonEmptySet<Language>,
     override val packageName: PackageName,
     override val logLevel: Logger.Level,
@@ -29,6 +35,9 @@ data class ConverterArguments(
     val format: Format,
     override val input: FilePath,
     override val output: Output?,
+    override val reader: (File) -> String,
+    override val writer: (File, String) -> Unit,
+    override val error: (String) -> Unit,
     override val languages: NonEmptySet<Language>,
     override val packageName: PackageName,
     override val logLevel: Logger.Level,
