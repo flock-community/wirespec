@@ -1,7 +1,6 @@
 package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.addBackticks
-import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.Keywords
 import community.flock.wirespec.compiler.core.emit.common.Spacer
@@ -20,7 +19,7 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 
-open class WirespecEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(logger) {
+open class WirespecEmitter : Emitter() {
 
     override fun Definition.emitName(): String = when (this) {
         is Endpoint -> emit(identifier)

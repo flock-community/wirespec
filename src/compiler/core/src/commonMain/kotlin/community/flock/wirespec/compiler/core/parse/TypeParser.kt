@@ -26,10 +26,9 @@ import community.flock.wirespec.compiler.core.tokenize.WsInteger
 import community.flock.wirespec.compiler.core.tokenize.WsNumber
 import community.flock.wirespec.compiler.core.tokenize.WsString
 import community.flock.wirespec.compiler.core.tokenize.WsUnit
-import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.core.tokenize.Comment as CommentToken
 
-class TypeParser(logger: Logger) : AbstractParser(logger) {
+object TypeParser {
 
     fun TokenProvider.parseType(comment: Comment?): Either<WirespecException, Definition> = either {
         eatToken().bind()

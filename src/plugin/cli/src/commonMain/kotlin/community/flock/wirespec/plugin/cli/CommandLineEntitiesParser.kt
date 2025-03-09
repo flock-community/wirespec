@@ -48,14 +48,18 @@ enum class Options(vararg val flags: String) {
     Strict("--strict"),
 }
 
-typealias WirespecResults = List<EitherNel<WirespecException, Pair<List<Emitted>, File>>>
+data class WirespecResult(val file: File, val emitted: List<Emitted>) {
+    constructor(pair: Pair<File, List<Emitted>>) : this(pair.first, pair.second)
+}
+
+typealias WirespecResults = List<EitherNel<WirespecException, WirespecResult>>
 
 class WirespecCli : NoOpCliktCommand(name = "wirespec") {
     companion object {
         fun provide(
             compile: (CompilerArguments) -> WirespecResults,
             convert: (ConverterArguments) -> WirespecResults,
-            write: (List<Emitted>, File) -> Unit,
+            write: (File, List<Emitted>) -> Unit,
         ): WirespecCli = WirespecCli().subcommands(Compile(compile, write), Convert(convert, write))
     }
 }
@@ -89,7 +93,7 @@ private abstract class CommonOptions : CliktCommand() {
 
 private class Compile(
     private val compiler: (CompilerArguments) -> WirespecResults,
-    private val write: (List<Emitted>, File) -> Unit,
+    private val write: (File, List<Emitted>) -> Unit,
 ) : CommonOptions() {
 
     private val languages by option(*Options.Language.flags, help = "Language")
@@ -111,7 +115,7 @@ private class Compile(
 
 private class Convert(
     private val converter: (ConverterArguments) -> WirespecResults,
-    private val write: (List<Emitted>, File) -> Unit,
+    private val write: (File, List<Emitted>) -> Unit,
 ) : CommonOptions() {
 
     private val format by argument(help = "Input format").enum<Format>()
@@ -137,9 +141,9 @@ private class Convert(
     }
 }
 
-private fun WirespecResults.handle(block: (List<Emitted>, File) -> Unit) = forEach { either ->
+private fun WirespecResults.handle(block: (File, List<Emitted>) -> Unit) = forEach { either ->
     when (either) {
-        is Either.Right -> either.value.let { (result, file) -> block(result, file) }
+        is Either.Right -> either.value.let { (file, result) -> block(file, result) }
         is Either.Left -> throw CliktError(either.value.joinToString { it.message })
     }
 }

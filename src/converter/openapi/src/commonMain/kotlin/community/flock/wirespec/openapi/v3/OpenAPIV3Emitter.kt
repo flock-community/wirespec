@@ -33,13 +33,14 @@ import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
+import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.openapi.Common.json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 import community.flock.kotlinx.openapi.bindings.v3.Type as OpenAPIType
 
-object OpenAPIV3Emitter : Emitter(noLogger) {
+object OpenAPIV3Emitter : Emitter() {
     data class Options(
         val title: String,
         val version: String,
@@ -47,8 +48,16 @@ object OpenAPIV3Emitter : Emitter(noLogger) {
 
     override val singleLineComment = ""
 
-    override fun emit(ast: AST): List<Emitted> =
+    override fun emit(ast: AST, logger: Logger): List<Emitted> =
         listOf(Emitted("OpenAPIObject", json.encodeToString(emitOpenAPIObject(ast, null))))
+
+    override fun Type.Shape.emit() = notYetImplemented()
+
+    override fun Field.emit() = notYetImplemented()
+
+    override fun Reference.emit() = notYetImplemented()
+
+    override fun Refined.Validator.emit() = notYetImplemented()
 
     override fun emit(type: Type, ast: AST) = notYetImplemented()
 

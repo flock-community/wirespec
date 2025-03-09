@@ -1,6 +1,5 @@
 package community.flock.wirespec.compiler.core.emit
 
-import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.Spacer
@@ -17,8 +16,9 @@ import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
+import kotlin.math.log
 
-open class TypeScriptEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(logger) {
+open class TypeScriptEmitter : Emitter() {
 
     override fun Definition.emitName(): String = when (this) {
         is Endpoint -> emit(identifier)
@@ -31,8 +31,8 @@ open class TypeScriptEmitter(logger: Logger) : DefinitionModelEmitter, Emitter(l
 
     override val singleLineComment = "//"
 
-    override fun emit(ast: AST): List<Emitted> =
-        super.emit(ast).map {
+    override fun emit(ast: AST, logger: Logger): List<Emitted> =
+        super.emit(ast, logger).map {
             Emitted(
                 it.typeName.sanitizeSymbol(), """
                     |${if (ast.hasEndpoints()) TypeScriptShared.source else ""}

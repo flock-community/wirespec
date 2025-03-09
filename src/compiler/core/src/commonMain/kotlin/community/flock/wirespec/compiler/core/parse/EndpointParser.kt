@@ -16,11 +16,8 @@ import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.StatusCode
 import community.flock.wirespec.compiler.core.tokenize.WirespecIdentifier
 import community.flock.wirespec.compiler.core.tokenize.WirespecType
-import community.flock.wirespec.compiler.utils.Logger
 
-class EndpointParser(logger: Logger) : AbstractParser(logger) {
-
-    private val typeParser = TypeParser(logger)
+object EndpointParser {
 
     fun TokenProvider.parseEndpoint(comment: Comment?): Either<WirespecException, Endpoint> = either {
         eatToken().bind()
@@ -40,7 +37,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
         }.also { eatToken().bind() }
 
         val requests = listOf(
-            with(typeParser) {
+            with(TypeParser) {
                 when (val type = token.type) {
                     is LeftCurly -> parseDict().bind()
                     is WirespecType -> parseWirespecType(type).bind()
@@ -68,7 +65,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
             is QuestionMark -> {
                 eatToken().bind()
                 when (token.type) {
-                    is LeftCurly -> with(typeParser) { parseTypeShape().bind() }.value
+                    is LeftCurly -> with(TypeParser) { parseTypeShape().bind() }.value
                     else -> raise(WrongTokenException<LeftCurly>(token))
                 }
             }
@@ -127,7 +124,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
             is Colon -> eatToken().bind()
             else -> raise(WrongTokenException<Colon>(token))
         }
-        val reference = with(typeParser) {
+        val reference = with(TypeParser) {
             when (val type = token.type) {
                 is LeftCurly -> parseDict().bind()
                 is WirespecType -> parseWirespecType(type).bind()
@@ -170,7 +167,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
         eatToken().bind()
         token.log()
 
-        val reference = with(typeParser) {
+        val reference = with(TypeParser) {
             when (val type = token.type) {
                 is LeftCurly -> parseDict().bind()
                 is WirespecType -> parseWirespecType(type).bind()
@@ -199,7 +196,7 @@ class EndpointParser(logger: Logger) : AbstractParser(logger) {
             is Hash -> {
                 eatToken().bind()
                 when (token.type) {
-                    is LeftCurly -> with(typeParser) { parseTypeShape().bind() }.value
+                    is LeftCurly -> with(TypeParser) { parseTypeShape().bind() }.value
                     else -> raise(WrongTokenException<LeftCurly>(token))
                 }
             }

@@ -26,18 +26,27 @@ import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
+import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.openapi.Common.json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenAPIType
 
-object OpenAPIV2Emitter : Emitter(noLogger) {
+object OpenAPIV2Emitter : Emitter() {
 
     override val singleLineComment = ""
 
-    override fun emit(ast: AST): List<Emitted> =
+    override fun emit(ast: AST, logger: Logger): List<Emitted> =
         listOf(Emitted("SwaggerObject", json.encodeToString(emitSwaggerObject(ast))))
+
+    override fun Type.Shape.emit() = notYetImplemented()
+
+    override fun Field.emit() = notYetImplemented()
+
+    override fun Reference.emit() = notYetImplemented()
+
+    override fun Refined.Validator.emit() = notYetImplemented()
 
     override fun emit(type: Type, ast: AST) = notYetImplemented()
 
@@ -91,7 +100,7 @@ object OpenAPIV2Emitter : Emitter(noLogger) {
                 } + ast
                 .filterIsInstance<Type>().associate { type ->
                     type.identifier.value to SchemaObject(
-                        properties = type.shape.value.associate { it.emit() },
+                        properties = type.shape.value.associate { it.toProperties() },
                         required = type.shape.value
                             .filter { !it.reference.isNullable }
                             .map { it.identifier.value }
@@ -105,6 +114,9 @@ object OpenAPIV2Emitter : Emitter(noLogger) {
                     )
                 }
         )
+
+    private fun Field.toProperties(): Pair<String, SchemaOrReferenceObject> =
+        identifier.value to reference.toSchemaOrReference()
 
     private fun List<Endpoint>.emit(method: Endpoint.Method): OperationObject? =
         filter { it.method == method }.map { it.emit() }.firstOrNull()
@@ -121,7 +133,7 @@ object OpenAPIV2Emitter : Emitter(noLogger) {
                 ParameterObject(
                     `in` = ParameterLocation.BODY,
                     name = "RequestBody",
-                    schema = it.reference.emit(),
+                    schema = it.reference.toSchemaOrReference(),
                     required = !it.reference.isNullable,
                 )
             } + queries.map { it.emitParameter(ParameterLocation.QUERY) } + headers.map {
@@ -137,7 +149,7 @@ object OpenAPIV2Emitter : Emitter(noLogger) {
                         it.identifier.value to HeaderObject(
                             type = it.reference.emitType().name,
                             format = it.reference.emitFormat(),
-                            items = (it.reference as? Reference.Iterable)?.reference?.emit()
+                            items = (it.reference as? Reference.Iterable)?.reference?.toSchemaOrReference()
                         )
                     },
                     schema = response.content
@@ -146,9 +158,10 @@ object OpenAPIV2Emitter : Emitter(noLogger) {
                             when (val ref = content.reference) {
                                 is Reference.Iterable -> SchemaObject(
                                     type = OpenAPIType.ARRAY,
-                                    items = ref.reference.emit()
+                                    items = ref.reference.toSchemaOrReference()
                                 )
-                                else -> ref.emit()
+
+                                else -> ref.toSchemaOrReference()
                             }
                         }
                 )
@@ -162,7 +175,6 @@ object OpenAPIV2Emitter : Emitter(noLogger) {
         }
     }
 
-    fun Field.emit(): Pair<String, SchemaOrReferenceObject> = identifier.value to reference.emit()
 
     private fun Field.emitParameter(location: ParameterLocation) =
         ParameterObject(
@@ -171,7 +183,7 @@ object OpenAPIV2Emitter : Emitter(noLogger) {
             type = reference.emitType(),
             format = reference.emitFormat(),
             items = when (val ref = reference) {
-                is Reference.Iterable -> when (val emit = ref.emit()) {
+                is Reference.Iterable -> when (val emit = ref.toSchemaOrReference()) {
                     is ReferenceObject -> emit
                     is SchemaObject -> emit.items
                 }
@@ -181,9 +193,9 @@ object OpenAPIV2Emitter : Emitter(noLogger) {
             required = !reference.isNullable,
         )
 
-    fun Reference.emit(): SchemaOrReferenceObject = when (this) {
-        is Reference.Dict -> SchemaObject(type = OpenAPIType.OBJECT, items = reference.emit())
-        is Reference.Iterable -> SchemaObject(type = OpenAPIType.ARRAY, items = reference.emit())
+    private fun Reference.toSchemaOrReference(): SchemaOrReferenceObject = when (this) {
+        is Reference.Dict -> SchemaObject(type = OpenAPIType.OBJECT, items = reference.toSchemaOrReference())
+        is Reference.Iterable -> SchemaObject(type = OpenAPIType.ARRAY, items = reference.toSchemaOrReference())
         is Reference.Custom -> ReferenceObject(ref = Ref("#/definitions/${value}"))
         is Reference.Primitive -> SchemaObject(type = type.emitType(), format = emitFormat())
         is Reference.Any -> error("Cannot map Any")

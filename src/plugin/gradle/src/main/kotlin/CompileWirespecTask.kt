@@ -41,10 +41,10 @@ abstract class CompileWirespecTask : BaseWirespecTask() {
         val packageNameValue = packageName.map { PackageName(it) }.get()
         val ast = getFilesContent().parse(wirespecLogger)
         languages.get()
-            .map { it.mapEmitter(packageNameValue, wirespecLogger) }
+            .map { it.mapEmitter(packageNameValue) }
             .forEach { (emitter, ext, sharedData) ->
                 ast.forEach { (fileName, ast) ->
-                    emitter.emit(ast).writeToFiles(
+                    emitter.emit(ast, wirespecLogger).writeToFiles(
                         output = output.asFile.get(),
                         packageName = packageNameValue,
                         shared = if (shared.getOrElse(true)) sharedData else null,

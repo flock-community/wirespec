@@ -12,11 +12,10 @@ import community.flock.wirespec.compiler.core.tokenize.ChannelDefinition
 import community.flock.wirespec.compiler.core.tokenize.Comment
 import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
 import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
-import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.Tokens
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
-import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.compiler.utils.HasLogger
 
 typealias AST = List<Node>
 
@@ -24,18 +23,14 @@ data class ParseOptions(
     val allowUnions: Boolean = true,
 )
 
-abstract class AbstractParser(protected val logger: Logger) {
-    protected fun Token.log() = logger.debug("Parsing $type at line ${coordinates.line} position ${coordinates.position}")
-}
+object Parser {
 
-class Parser(logger: Logger) : AbstractParser(logger) {
+    private val typeParser = TypeParser
+    private val enumParser = EnumParser
+    private val endpointParser = EndpointParser
+    private val channelParser = ChannelParser
 
-    private val typeParser = TypeParser(logger)
-    private val enumParser = EnumParser(logger)
-    private val endpointParser = EndpointParser(logger)
-    private val channelParser = ChannelParser(logger)
-
-    fun parse(tokens: Tokens, options: ParseOptions = ParseOptions()): EitherNel<WirespecException, AST> = tokens
+    fun HasLogger.parse(tokens: Tokens, options: ParseOptions = ParseOptions()): EitherNel<WirespecException, AST> = tokens
         .toProvider(logger)
         .parse()
         .flatMap(validate(options))

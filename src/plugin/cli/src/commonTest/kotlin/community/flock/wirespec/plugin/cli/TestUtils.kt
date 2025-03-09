@@ -15,6 +15,6 @@ fun noopConverter(block: (ConverterArguments) -> Unit): (ConverterArguments) -> 
     emptyList()
 }
 
-val noopWriter: (List<Emitted>, File?) -> Unit = { _, _ -> }
+val noopWriter: (File, List<Emitted>) -> Unit = { _, _ -> }
 
 fun noopCli() = WirespecCli.provide(noopCompiler { }, noopConverter { }, noopWriter)

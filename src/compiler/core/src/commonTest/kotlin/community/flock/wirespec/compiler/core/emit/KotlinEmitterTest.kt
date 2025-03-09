@@ -1,19 +1,17 @@
 package community.flock.wirespec.compiler.core.emit
 
-import community.flock.wirespec.compiler.core.CompilationContext
-import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.EmitContext
 import community.flock.wirespec.compiler.core.fixture.NodeFixtures
 import community.flock.wirespec.compiler.core.parse.Node
-import community.flock.wirespec.compiler.utils.noLogger
+import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
 class KotlinEmitterTest {
 
-    private val emitter = object : CompilationContext {
-        override val logger = noLogger
-        override val emitter = KotlinEmitter(logger = logger)
-    }.emitter
+    private val emitContext = object : EmitContext, NoLogger {
+        override val emitter = KotlinEmitter()
+    }
 
     @Test
     fun testEmitterType() {
@@ -29,7 +27,7 @@ class KotlinEmitterTest {
             |
         """.trimMargin()
 
-        val res = emitter.emitFirst(NodeFixtures.type)
+        val res = emitContext.emitFirst(NodeFixtures.type)
         res shouldBe expected
     }
 
@@ -49,7 +47,7 @@ class KotlinEmitterTest {
             |
         """.trimMargin()
 
-        val res = emitter.emitFirst(NodeFixtures.refined)
+        val res = emitContext.emitFirst(NodeFixtures.refined)
         res shouldBe expected
     }
 
@@ -72,9 +70,9 @@ class KotlinEmitterTest {
             |
         """.trimMargin()
 
-        val res = emitter.emitFirst(NodeFixtures.enum)
+        val res = emitContext.emitFirst(NodeFixtures.enum)
         res shouldBe expected
     }
 
-    private fun Emitter.emitFirst(node: Node) = emit(listOf(node)).first().result
+    private fun EmitContext.emitFirst(node: Node) = emitter.emit(listOf(node), logger).first().result
 }

@@ -8,11 +8,10 @@ import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.integration.avro.Utils
 import community.flock.wirespec.integration.avro.Utils.isEnum
 
-class AvroKotlinEmitter(private val packageName: String, logger: Logger) : KotlinEmitter(packageName, logger) {
+class AvroKotlinEmitter(private val packageName: String) : KotlinEmitter(packageName) {
 
     private fun emitAvroSchema(type: Definition, ast: AST) = Utils.emitAvroSchema(packageName, type, ast)
         ?.replace("\\\"<<<<<", "\" + ")

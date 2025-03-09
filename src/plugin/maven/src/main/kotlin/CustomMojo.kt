@@ -6,8 +6,6 @@ import community.flock.wirespec.compiler.core.emit.shared.JavaShared
 import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
 import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
 import community.flock.wirespec.compiler.core.emit.shared.TypeScriptShared
-import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.converter.avro.AvroParser
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser
@@ -56,12 +54,11 @@ class CustomMojo : BaseMojo() {
         val emitter = try {
             val clazz = getClassLoader(project).loadClass(emitterClass)
             val constructor = clazz.constructors.first()
-            val args = constructor.parameters
+            val args: List<Any> = constructor.parameters
                 .map {
                     when (it.type) {
                         String::class.java -> packageName
                         Boolean::class.java -> split
-                        Logger::class.java -> logger
                         else -> error("Cannot map constructor parameter")
                     }
                 }
@@ -87,7 +84,7 @@ class CustomMojo : BaseMojo() {
         }
 
         val fileContents = getFilesContent()
-        val ast: List<Pair<String, AST>> =
+        val ast =
             when (format) {
                 Format.OpenAPIV2 -> fileContents.map { (name, content) -> name to OpenAPIV2Parser.parse(content, !strict) }
                 Format.OpenAPIV3 -> fileContents.map { (name, content) -> name to OpenAPIV3Parser.parse(content, !strict) }
@@ -95,7 +92,7 @@ class CustomMojo : BaseMojo() {
                 null -> fileContents.parse(logger)
             }
 
-        ast.map { (name, ast) -> name to emitter.emit(ast) }
+        ast.map { (name, ast) -> name to emitter.emit(ast, logger) }
             .flatMap { (name, results) ->
                 when {
                     emitter.split -> results

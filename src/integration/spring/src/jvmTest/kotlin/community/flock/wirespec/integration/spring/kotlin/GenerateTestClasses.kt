@@ -13,8 +13,8 @@ class GenerateTestClasses {
     private val kotlinPkg = "$basePkg.kotlin.generated"
     private val javaPkg = "$basePkg.java.generated"
 
-    private val kotlinEmitter = SpringKotlinEmitter(kotlinPkg, noLogger)
-    private val javaEmitter = SpringJavaEmitter(javaPkg, noLogger)
+    private val kotlinEmitter = SpringKotlinEmitter(kotlinPkg)
+    private val javaEmitter = SpringJavaEmitter(javaPkg)
 
     private fun pkgToPath(pkg: String) = pkg.split(".").joinToString("/")
 
@@ -26,7 +26,7 @@ class GenerateTestClasses {
     fun generateKotlin() {
         val petstoreFile = File("src/jvmTest/resources/petstore.json").readText()
         val ast = OpenAPIV3Parser.parse(petstoreFile)
-        val emittedKotlin = kotlinEmitter.emit(ast)
+        val emittedKotlin = kotlinEmitter.emit(ast, noLogger)
 
         kotlinOutputDir.mkdirs()
         emittedKotlin.forEach {
@@ -38,7 +38,7 @@ class GenerateTestClasses {
     fun generateJava() {
         val petstoreFile = File("src/jvmTest/resources/petstore.json").readText()
         val ast = OpenAPIV3Parser.parse(petstoreFile)
-        val emittedJava = javaEmitter.emit(ast)
+        val emittedJava = javaEmitter.emit(ast, noLogger)
 
         javaOutputDir.mkdirs()
         emittedJava.forEach {

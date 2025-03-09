@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.Definition
+import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
 import java.io.File
 import kotlin.test.Test
@@ -16,8 +17,8 @@ class GenerateTestClasses {
     private val javaPkg = "$basePkg.java.generated"
     private val kotlinPkg = "$basePkg.kotlin.generated"
 
-    private val javaEmitter = JavaEmitter(javaPkg, noLogger)
-    private val kotlinEmitter = KotlinEmitter(kotlinPkg, noLogger)
+    private val javaEmitter = JavaEmitter(javaPkg)
+    private val kotlinEmitter = KotlinEmitter(kotlinPkg)
 
     private fun pkgToPath(pkg: String) = pkg.split(".").joinToString("/")
 
@@ -28,15 +29,14 @@ class GenerateTestClasses {
     @Test
     fun generate() {
         val todoFile = File("src/commonTest/resources/wirespec/todos.ws").readText()
-        val ast = object : ParseContext {
+        val ast = object : ParseContext, NoLogger {
             override val spec = WirespecSpec
-            override val logger = noLogger
         }.parse(todoFile)
             .fold({ error("Cannot parse wirespec: ${it.first().message}") }, { it })
             .filterIsInstance<Definition>()
 
-        val emittedJava = javaEmitter.emit(ast)
-        val emittedKotlin = kotlinEmitter.emit(ast)
+        val emittedJava = javaEmitter.emit(ast, noLogger)
+        val emittedKotlin = kotlinEmitter.emit(ast, noLogger)
 
         javaDir.mkdirs()
         emittedJava.forEach {

@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test
 
 class AvroJavaEmitterTest {
 
-    private val emitter = AvroJavaEmitter("packageName", noLogger)
+    private val emitter = AvroJavaEmitter("packageName")
 
     @Test
     fun emitTypeFunctionBodyTest() {
@@ -57,7 +57,7 @@ class AvroJavaEmitterTest {
             |};
             |
         """.trimMargin()
-        val actual = emitter.emit(ast)
+        val actual = emitter.emit(ast, noLogger)
         println(actual.first().result)
         assertEquals(expected, actual.first().result)
     }
@@ -107,7 +107,7 @@ class AvroJavaEmitterTest {
             |}
             |
         """.trimMargin()
-        val actual = emitter.emit(ast)
+        val actual = emitter.emit(ast, noLogger)
         println(actual)
         assertEquals(expected, actual.first().result)
     }

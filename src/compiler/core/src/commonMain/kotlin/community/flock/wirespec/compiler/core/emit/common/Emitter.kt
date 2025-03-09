@@ -14,9 +14,9 @@ import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.compiler.utils.noLogger
 
 abstract class Emitter(
-    val logger: Logger,
     val split: Boolean = false,
 ) : Emitters {
 
@@ -32,15 +32,11 @@ abstract class Emitter(
 
     open fun Definition.emitName(): String = notYetImplemented()
 
-    open fun emit(ast: AST): List<Emitted> = ast
+    open fun emit(ast: AST, logger: Logger): List<Emitted> = ast
         .map {
-            logger.info(
-                "Emitting Node ${
-                    when (it) {
-                        is Definition -> it.emitName()
-                    }
-                }"
-            )
+            when (it) {
+                is Definition -> it.emitName()
+            }.also { name -> logger.info("Emitting Node $name") }
             when (it) {
                 is Type -> Emitted(it.emitName(), emit(it, ast))
                 is Endpoint -> Emitted(it.emitName(), emit(it))

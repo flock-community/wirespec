@@ -47,6 +47,8 @@ class TokenProvider(private val logger: Logger, tokens: Tokens) {
         previousToken
     }
 
+    fun Token.log() = logger.debug("Parsing $type at line ${coordinates.line} position ${coordinates.position}")
+
     private fun printTokens(previousToken: Token? = null) {
         val prev = previousToken?.run { "Eating: '$value', " } ?: ""
         val curr = token.run { "Current: '$value'" }

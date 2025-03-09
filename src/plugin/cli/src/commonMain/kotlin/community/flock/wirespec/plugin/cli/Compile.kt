@@ -55,22 +55,21 @@ private fun Reader.wirespec(
     logger: Logger,
 ): WirespecResults = read()
     .let { source ->
-        languages.emitters(packageName, path, logger).map { (emitter, file) ->
-            val results = object : CompilationContext {
+        languages.emitters(packageName, path).map { (emitter, file) ->
+            val errorOrResults = object : CompilationContext {
                 override val logger = logger
                 override val emitter = emitter
             }.compile(source)
             when {
-                !emitter.split -> results.map {
-                    listOf(
+                emitter.split -> errorOrResults.map { file to it }
+                else -> errorOrResults.map {
+                    file to listOf(
                         Emitted(
                             path(FileExtension.Wirespec).fileName.value.firstToUpper(),
                             it.first().result,
                         ),
                     )
-                } to file
-                else -> results to file
-            }
+                }
+            }.map(::WirespecResult)
         }
     }
-    .map { (results, file) -> results.map { it to file } }

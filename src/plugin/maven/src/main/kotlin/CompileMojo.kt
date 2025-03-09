@@ -35,10 +35,10 @@ open class CompileMojo : BaseMojo() {
         outputFile: File,
     ) {
         languages
-            ?.map { it.mapEmitter(packageNameValue, logger) }
+            ?.map { it.mapEmitter(packageNameValue) }
             ?.forEach { (emitter, ext, sharedData) ->
                 asts.forEach { (fileName, ast) ->
-                    emitter.emit(ast).writeToFiles(
+                    emitter.emit(ast, logger).writeToFiles(
                         output = outputFile,
                         packageName = packageNameValue,
                         shared = if (shared) sharedData else null,

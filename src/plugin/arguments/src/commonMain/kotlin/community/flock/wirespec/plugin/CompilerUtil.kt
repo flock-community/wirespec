@@ -16,7 +16,7 @@ import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
 import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
 import community.flock.wirespec.compiler.core.emit.shared.Shared
 import community.flock.wirespec.compiler.core.parse
-import community.flock.wirespec.compiler.core.parse.Node
+import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.openapi.v2.OpenAPIV2Emitter
 import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter
@@ -32,7 +32,7 @@ data class FileContent(val name: String, val content: String) {
     constructor(pair: Pair<String, String>) : this(pair.first, pair.second)
 }
 
-fun List<FileContent>.parse(logger: Logger): List<Pair<String, List<Node>>> = map { (name, source) ->
+fun List<FileContent>.parse(logger: Logger): List<Pair<String, AST>> = map { (name, source) ->
     name to object : ParseContext {
         override val spec = WirespecSpec
         override val logger = logger
@@ -45,7 +45,7 @@ fun List<FileContent>.parse(logger: Logger): List<Pair<String, List<Node>>> = ma
 }
 
 fun List<FileContent>.compile(logger: Logger, emitter: Emitter) = parse(logger)
-    .map { (name, ast) -> name to emitter.emit(ast) }
+    .map { (name, ast) -> name to emitter.emit(ast, logger) }
     .flatMap { (name, results) ->
         when {
             emitter.split -> results
@@ -55,12 +55,12 @@ fun List<FileContent>.compile(logger: Logger, emitter: Emitter) = parse(logger)
 
 data class LanguageEmitter(val emitter: Emitter, val extension: FileExtension, val shared: Shared? = null)
 
-fun Language.mapEmitter(packageName: PackageName, logger: Logger) = when (this) {
-    Java -> LanguageEmitter(JavaEmitter(packageName.value, logger), FileExtension.Java, JavaShared)
-    Kotlin -> LanguageEmitter(KotlinEmitter(packageName.value, logger), FileExtension.Kotlin, KotlinShared)
-    Scala -> LanguageEmitter(ScalaEmitter(packageName.value, logger), FileExtension.Scala, ScalaShared)
-    TypeScript -> LanguageEmitter(TypeScriptEmitter(logger), FileExtension.TypeScript)
-    Wirespec -> LanguageEmitter(WirespecEmitter(logger), FileExtension.Wirespec)
+fun Language.mapEmitter(packageName: PackageName) = when (this) {
+    Java -> LanguageEmitter(JavaEmitter(packageName.value), FileExtension.Java, JavaShared)
+    Kotlin -> LanguageEmitter(KotlinEmitter(packageName.value), FileExtension.Kotlin, KotlinShared)
+    Scala -> LanguageEmitter(ScalaEmitter(packageName.value), FileExtension.Scala, ScalaShared)
+    TypeScript -> LanguageEmitter(TypeScriptEmitter(), FileExtension.TypeScript)
+    Wirespec -> LanguageEmitter(WirespecEmitter(), FileExtension.Wirespec)
     OpenAPIV2 -> LanguageEmitter(OpenAPIV2Emitter, FileExtension.JSON)
     OpenAPIV3 -> LanguageEmitter(OpenAPIV3Emitter, FileExtension.JSON)
 }

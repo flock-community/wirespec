@@ -59,9 +59,9 @@ abstract class ConvertWirespecTask : BaseWirespecTask() {
         }
 
         languages.get()
-            .map { it.mapEmitter(packageNameValue, wirespecLogger) }
+            .map { it.mapEmitter(packageNameValue) }
             .forEach { (emitter, ext, sharedData) ->
-                emitter.emit(ast).writeToFiles(
+                emitter.emit(ast, wirespecLogger).writeToFiles(
                     output = output.asFile.get(),
                     packageName = packageNameValue,
                     shared = if (shared.getOrElse(true)) sharedData else null,

@@ -4,7 +4,9 @@ import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
@@ -21,6 +23,14 @@ interface Emitters :
 
 interface TypeDefinitionEmitter {
     fun emit(type: Type, ast: AST): String
+
+    fun Type.Shape.emit(): String
+
+    fun Field.emit(): String
+
+    fun Reference.emit(): String
+
+    fun Refined.Validator.emit(): String
 }
 
 interface EnumDefinitionEmitter {

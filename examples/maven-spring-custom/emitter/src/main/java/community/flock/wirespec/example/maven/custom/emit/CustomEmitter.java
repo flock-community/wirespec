@@ -1,6 +1,5 @@
 package community.flock.wirespec.example.maven.custom.emit;
 
-import community.flock.wirespec.compiler.core.emit.common.DefinitionModelEmitter;
 import community.flock.wirespec.compiler.core.emit.common.Emitted;
 import community.flock.wirespec.compiler.core.emit.common.Emitter;
 import community.flock.wirespec.compiler.core.parse.Channel;
@@ -19,10 +18,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
+public class CustomEmitter extends Emitter {
 
-    public CustomEmitter(@NotNull Logger logger, boolean split) {
-        super(logger, split);
+    public CustomEmitter(boolean split) {
+        super(split);
     }
 
     @NotNull
@@ -45,7 +44,7 @@ public class CustomEmitter extends Emitter implements DefinitionModelEmitter {
 
     @NotNull
     @Override
-    public List<Emitted> emit(@NotNull List<? extends Node> ast) {
+    public List<Emitted> emit(@NotNull List<? extends Node> ast, @NotNull Logger logger) {
         return ast
                 .stream()
                 .filter(Type.class::isInstance)

@@ -27,17 +27,16 @@ fun convert(arguments: ConverterArguments): WirespecResults {
 
     val path = fullPath.out(packageName, arguments.output)
 
-    return arguments.languages.emitters(packageName, path, Logger(arguments.logLevel)).map { (emitter, file) ->
-        val results = emitter.emit(ast)
-        if (!emitter.split) {
-            listOf(
+    return arguments.languages.emitters(packageName, path).map { (emitter, file) ->
+        val results = emitter.emit(ast, Logger(arguments.logLevel))
+        when {
+            emitter.split -> file to results
+            else -> file to listOf(
                 Emitted(
                     fullPath.fileName.value.replaceFirstChar(Char::uppercase),
                     results.first().result,
                 ),
-            ) to file
-        } else {
-            results to file
-        }
+            )
+        }.let(::WirespecResult)
     }.map { it.right() }
 }

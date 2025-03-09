@@ -7,7 +7,6 @@ import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
-import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.openapi.v2.OpenAPIV2Emitter
 import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter
 import community.flock.wirespec.plugin.DirectoryPath.Companion.toDirectoryPath
@@ -43,15 +42,14 @@ fun main(args: Array<String>) {
 fun Set<Language>.emitters(
     packageName: PackageName,
     path: ((FileExtension) -> FilePath),
-    logger: Logger,
 ) = map {
     val (packageString) = packageName
     when (it) {
-        Java -> JavaEmitter(packageString, logger) to JavaFile(path(FileExtension.Java))
-        Kotlin -> KotlinEmitter(packageString, logger) to KotlinFile(path(FileExtension.Kotlin))
-        Scala -> ScalaEmitter(packageString, logger) to ScalaFile(path(FileExtension.Scala))
-        TypeScript -> TypeScriptEmitter(logger) to TypeScriptFile(path(FileExtension.TypeScript))
-        Wirespec -> WirespecEmitter(logger) to WirespecFile(path(FileExtension.Wirespec))
+        Java -> JavaEmitter(packageString) to JavaFile(path(FileExtension.Java))
+        Kotlin -> KotlinEmitter(packageString) to KotlinFile(path(FileExtension.Kotlin))
+        Scala -> ScalaEmitter(packageString) to ScalaFile(path(FileExtension.Scala))
+        TypeScript -> TypeScriptEmitter() to TypeScriptFile(path(FileExtension.TypeScript))
+        Wirespec -> WirespecEmitter() to WirespecFile(path(FileExtension.Wirespec))
         OpenAPIV2 -> OpenAPIV2Emitter to JsonFile(path(FileExtension.JSON))
         OpenAPIV3 -> OpenAPIV3Emitter to JsonFile(path(FileExtension.JSON))
     }
@@ -65,6 +63,6 @@ fun FilePath.out(packageName: PackageName, output: Output?) = { extension: FileE
     )
 }
 
-fun write(output: List<Emitted>, file: File) = output.forEach { (name, result) ->
+fun write(file: File, output: List<Emitted>) = output.forEach { (name, result) ->
     file.copy(FileName(name)).write(result)
 }

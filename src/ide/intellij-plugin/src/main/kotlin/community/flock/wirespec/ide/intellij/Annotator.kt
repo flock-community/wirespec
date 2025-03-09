@@ -7,15 +7,17 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
-import community.flock.wirespec.compiler.core.parse.Parser
+import community.flock.wirespec.compiler.core.parse.Parser.parse
 import community.flock.wirespec.compiler.core.tokenize.tokenize
-import community.flock.wirespec.compiler.utils.noLogger
+import community.flock.wirespec.compiler.utils.NoLogger
 
-class Annotator : ExternalAnnotator<List<WirespecException>, List<WirespecException>>() {
+class Annotator :
+    ExternalAnnotator<List<WirespecException>, List<WirespecException>>(),
+    NoLogger {
 
     override fun collectInformation(file: PsiFile) = WirespecSpec
         .tokenize(file.text)
-        .let(Parser(noLogger)::parse)
+        .run { parse(this) }
         .fold({ it }, { emptyList() })
 
     override fun doAnnotate(collectedInfo: List<WirespecException>?) = collectedInfo

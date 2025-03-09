@@ -8,11 +8,10 @@ import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.integration.avro.Utils
 import community.flock.wirespec.integration.avro.Utils.isEnum
 
-class AvroJavaEmitter(private val packageName: String, logger: Logger) : JavaEmitter(packageName, logger) {
+class AvroJavaEmitter(private val packageName: String) : JavaEmitter(packageName) {
 
     private fun emitAvroSchema(type: Definition, ast: AST) = Utils.emitAvroSchema(packageName, type, ast)
         ?.replace("\\\"<<<<<", "\" + ")
