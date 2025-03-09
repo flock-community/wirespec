@@ -1,8 +1,8 @@
 package community.flock.wirespec.plugin.gradle
 
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.plugin.FileContent
-import community.flock.wirespec.plugin.PackageName
 import community.flock.wirespec.plugin.compile
 import community.flock.wirespec.plugin.toDirectory
 import org.gradle.api.file.DirectoryProperty

@@ -1,10 +1,14 @@
 package community.flock.wirespec.compiler.core.parse
 
 import arrow.core.EitherNel
+import arrow.core.NonEmptyList
 import arrow.core.flatMap
 import arrow.core.nel
 import arrow.core.raise.either
+import arrow.core.raise.ensureNotNull
 import arrow.core.right
+import arrow.core.toNonEmptyListOrNull
+import community.flock.wirespec.compiler.core.exceptions.EmptyAST
 import community.flock.wirespec.compiler.core.exceptions.UnionError
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WrongTokenException
@@ -17,7 +21,7 @@ import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
 import community.flock.wirespec.compiler.utils.HasLogger
 
-typealias AST = List<Node>
+typealias AST = NonEmptyList<Node>
 
 data class ParseOptions(
     val allowUnions: Boolean = true,
@@ -39,6 +43,8 @@ object Parser {
         mutableListOf<EitherNel<WirespecException, Definition>>()
             .apply { while (hasNext()) add(parseDefinition().mapLeft { it.nel() }) }
             .map { it.bind() }
+            .toNonEmptyListOrNull()
+            .let { ensureNotNull(it) { EmptyAST().nel() } }
     }
 
     private fun TokenProvider.parseDefinition() = either {

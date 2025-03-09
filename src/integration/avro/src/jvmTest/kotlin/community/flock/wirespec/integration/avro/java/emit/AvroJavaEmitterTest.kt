@@ -1,5 +1,6 @@
 package community.flock.wirespec.integration.avro.java.emit
 
+import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
@@ -30,7 +31,7 @@ class AvroJavaEmitterTest {
             extends = emptyList(),
         )
 
-        val ast = listOf(type)
+        val ast = nonEmptyListOf(type)
         val expected = """
             |package packageName;
             |
@@ -69,7 +70,7 @@ class AvroJavaEmitterTest {
             identifier = DefinitionIdentifier("Identifier"),
             entries = setOf("ONE", "TWO", "THREE"),
         )
-        val ast = listOf(enum)
+        val ast = nonEmptyListOf(enum)
         val expected = """
             |package packageName;
             |

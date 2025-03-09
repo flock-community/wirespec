@@ -1,6 +1,7 @@
 package community.flock.wirespec.integration.avro.kotlin.emit
 
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
+import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
@@ -11,7 +12,7 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.integration.avro.Utils
 import community.flock.wirespec.integration.avro.Utils.isEnum
 
-class AvroKotlinEmitter(private val packageName: String) : KotlinEmitter(packageName) {
+class AvroKotlinEmitter(private val packageName: String) : KotlinEmitter(PackageName(packageName)) {
 
     private fun emitAvroSchema(type: Definition, ast: AST) = Utils.emitAvroSchema(packageName, type, ast)
         ?.replace("\\\"<<<<<", "\" + ")

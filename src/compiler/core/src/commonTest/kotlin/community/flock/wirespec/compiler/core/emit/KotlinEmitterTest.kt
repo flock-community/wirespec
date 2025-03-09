@@ -1,5 +1,6 @@
 package community.flock.wirespec.compiler.core.emit
 
+import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.EmitContext
 import community.flock.wirespec.compiler.core.fixture.NodeFixtures
 import community.flock.wirespec.compiler.core.parse.Node
@@ -74,5 +75,5 @@ class KotlinEmitterTest {
         res shouldBe expected
     }
 
-    private fun EmitContext.emitFirst(node: Node) = emitter.emit(listOf(node), logger).first().result
+    private fun EmitContext.emitFirst(node: Node) = emitter.emit(nonEmptyListOf(node), logger).first().result
 }

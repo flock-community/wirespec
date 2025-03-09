@@ -1,5 +1,7 @@
 package community.flock.wirespec.openapi.v3
 
+import arrow.core.NonEmptyList
+import arrow.core.nonEmptyListOf
 import community.flock.kotlinx.openapi.bindings.v3.ComponentsObject
 import community.flock.kotlinx.openapi.bindings.v3.HeaderObject
 import community.flock.kotlinx.openapi.bindings.v3.HeaderOrReferenceObject
@@ -48,8 +50,8 @@ object OpenAPIV3Emitter : Emitter() {
 
     override val singleLineComment = ""
 
-    override fun emit(ast: AST, logger: Logger): List<Emitted> =
-        listOf(Emitted("OpenAPIObject", json.encodeToString(emitOpenAPIObject(ast, null))))
+    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> =
+        nonEmptyListOf(Emitted("OpenAPIObject", json.encodeToString(emitOpenAPIObject(ast, null))))
 
     override fun Type.Shape.emit() = notYetImplemented()
 

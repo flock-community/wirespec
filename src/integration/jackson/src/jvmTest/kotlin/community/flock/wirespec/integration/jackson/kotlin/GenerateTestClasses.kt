@@ -1,9 +1,11 @@
 package community.flock.wirespec.integration.jackson.kotlin
 
+import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
+import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.utils.NoLogger
@@ -17,8 +19,8 @@ class GenerateTestClasses {
     private val javaPkg = "$basePkg.java.generated"
     private val kotlinPkg = "$basePkg.kotlin.generated"
 
-    private val javaEmitter = JavaEmitter(javaPkg)
-    private val kotlinEmitter = KotlinEmitter(kotlinPkg)
+    private val javaEmitter = JavaEmitter(PackageName(javaPkg))
+    private val kotlinEmitter = KotlinEmitter(PackageName(kotlinPkg))
 
     private fun pkgToPath(pkg: String) = pkg.split(".").joinToString("/")
 
@@ -34,6 +36,7 @@ class GenerateTestClasses {
         }.parse(todoFile)
             .fold({ error("Cannot parse wirespec: ${it.first().message}") }, { it })
             .filterIsInstance<Definition>()
+            .toNonEmptyListOrNull() ?: error("Could not parse any definitions")
 
         val emittedJava = javaEmitter.emit(ast, noLogger)
         val emittedKotlin = kotlinEmitter.emit(ast, noLogger)

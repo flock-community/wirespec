@@ -58,9 +58,9 @@ class WirespecCliErrorsTest {
     }
 
     @Test
-    fun testConvertNeedsAFile() = inContext(arrayOf("convert", "-i", "src/commonTest/resources/wirespec", "OpenAPIV2")) {
+    fun testConvertNeedsAFile() = inContext(arrayOf("convert", "-i", "src/commonTest/resources/openapi", "OpenAPIV2")) {
         statusCode shouldBe 1
-        stderr shouldBe "To convert, please specify a file\n"
+        stderr shouldBe "To convert, please specify a file.\n"
     }
 
     private fun inContext(args: Array<out String>, block: CliktCommandTestResult.() -> Unit) = noopCli().test(argv = args).block()

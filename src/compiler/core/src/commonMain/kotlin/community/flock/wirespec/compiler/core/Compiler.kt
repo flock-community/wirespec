@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core
 import arrow.core.Either.Left
 import arrow.core.Either.Right
 import arrow.core.EitherNel
+import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.Stage.EMITTED
 import community.flock.wirespec.compiler.core.Stage.PARSED
 import community.flock.wirespec.compiler.core.Stage.TOKENIZED
@@ -41,11 +42,11 @@ fun ParseContext.parse(source: String): EitherNel<WirespecException, AST> = toke
     .run { parse(this) }
     .also(PARSED::log)
 
-fun EmitContext.emit(source: String): EitherNel<WirespecException, List<Emitted>> = parse(source)
+fun EmitContext.emit(source: String): EitherNel<WirespecException, NonEmptyList<Emitted>> = parse(source)
     .map { emitter.emit(it, logger) }
     .also(EMITTED::log)
 
-fun CompilationContext.compile(source: String): EitherNel<WirespecException, List<Emitted>> = emit(source)
+fun CompilationContext.compile(source: String): EitherNel<WirespecException, NonEmptyList<Emitted>> = emit(source)
 
 fun CompilationContext.compile(reader: () -> String, writer: (Emitted) -> Unit, error: (String) -> Unit) {
     when (val either = compile(reader())) {
