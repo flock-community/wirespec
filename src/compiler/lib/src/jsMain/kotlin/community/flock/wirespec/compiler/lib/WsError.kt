@@ -18,5 +18,5 @@ fun WirespecException.produce() = WsError(
     position = coordinates.position,
     index = coordinates.idxAndLength.idx - coordinates.idxAndLength.length,
     length = coordinates.idxAndLength.length,
-    value = message ?: "No message",
+    value = message,
 )

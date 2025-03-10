@@ -1,10 +1,11 @@
 package community.flock.wirespec.compiler.core.parse
 
 import arrow.core.Either
+import arrow.core.Either.Companion.catch
 import arrow.core.raise.either
+import community.flock.wirespec.compiler.core.exceptions.DefinitionNotExistsException
+import community.flock.wirespec.compiler.core.exceptions.NextException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
-import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException
-import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.NullTokenException.NextException
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.Tokens
 import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
@@ -28,7 +29,7 @@ class TokenProvider(private val logger: Logger, tokens: Tokens) {
 
     fun Token.shouldBeDefined(): Either<WirespecException, Unit> = either {
         if (value !in definitionNames) {
-            raise(ParserException.DefinitionNotExistsException(value, coordinates))
+            raise(DefinitionNotExistsException(value, coordinates))
         }
     }
 
@@ -46,6 +47,8 @@ class TokenProvider(private val logger: Logger, tokens: Tokens) {
         previousToken
     }
 
+    fun Token.log() = logger.debug("Parsing $type at line ${coordinates.line} position ${coordinates.position}")
+
     private fun printTokens(previousToken: Token? = null) {
         val prev = previousToken?.run { "Eating: '$value', " } ?: ""
         val curr = token.run { "Current: '$value'" }
@@ -53,7 +56,7 @@ class TokenProvider(private val logger: Logger, tokens: Tokens) {
         logger.debug("$prev$curr$next")
     }
 
-    private fun nextToken() = runCatching { tokenIterator.next() }.getOrNull()
+    private fun nextToken() = catch { tokenIterator.next() }.getOrNull()
 }
 
 fun Tokens.toProvider(logger: Logger) = TokenProvider(logger, this)

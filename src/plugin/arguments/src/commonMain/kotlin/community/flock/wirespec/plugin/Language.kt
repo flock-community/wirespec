@@ -24,5 +24,5 @@ enum class FileExtension(override val value: String) : Value<String> {
     Scala("scala"),
     TypeScript("ts"),
     Wirespec("ws"),
-    Json("json"),
+    JSON("json"),
 }

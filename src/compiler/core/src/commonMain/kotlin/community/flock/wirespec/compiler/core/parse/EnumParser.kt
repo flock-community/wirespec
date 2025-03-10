@@ -3,14 +3,13 @@ package community.flock.wirespec.compiler.core.parse
 import arrow.core.Either
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
-import community.flock.wirespec.compiler.core.exceptions.WirespecException.CompilerException.ParserException.WrongTokenException
+import community.flock.wirespec.compiler.core.exceptions.WrongTokenException
 import community.flock.wirespec.compiler.core.tokenize.Comma
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.WirespecType
-import community.flock.wirespec.compiler.utils.Logger
 
-class EnumParser(logger: Logger) : AbstractParser(logger) {
+object EnumParser {
 
     fun TokenProvider.parseEnum(comment: Comment?): Either<WirespecException, Enum> = either {
         eatToken().bind()

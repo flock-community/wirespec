@@ -1,27 +1,49 @@
 package community.flock.wirespec.plugin
 
-import community.flock.wirespec.compiler.core.Value
+import arrow.core.NonEmptySet
+import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.utils.Logger
-import kotlin.jvm.JvmInline
+import community.flock.wirespec.plugin.files.JsonFile
+import community.flock.wirespec.plugin.files.WirespecFile
 
-data class CompilerArguments(
-    val operation: Operation,
-    val input: Input,
-    val output: Output?,
-    val languages: Set<Language>,
-    val packageName: PackageName,
-    val logLevel: Logger.Level,
-    val shared: Boolean,
-    val strict: Boolean,
-)
-
-sealed interface Operation {
-    data object Compile : Operation
-    data class Convert(val format: Format) : Operation
+sealed interface WirespecArguments {
+    val output: Output?
+    val reader: (File) -> String
+    val writer: (File, String) -> Unit
+    val error: (String) -> Unit
+    val languages: NonEmptySet<Language>
+    val packageName: PackageName?
+    val logLevel: Logger.Level
+    val shared: Boolean
+    val strict: Boolean
 }
 
-@JvmInline
-value class PackageName(override val value: String) : Value<String>
+data class CompilerArguments(
+    val input: NonEmptySet<WirespecFile>,
+    override val output: Directory,
+    override val reader: (File) -> String,
+    override val writer: (File, String) -> Unit,
+    override val error: (String) -> Unit,
+    override val languages: NonEmptySet<Language>,
+    override val packageName: PackageName?,
+    override val logLevel: Logger.Level,
+    override val shared: Boolean,
+    override val strict: Boolean,
+) : WirespecArguments
+
+data class ConverterArguments(
+    val format: Format,
+    val input: JsonFile,
+    override val output: Directory,
+    override val reader: (File) -> String,
+    override val writer: (File, String) -> Unit,
+    override val error: (String) -> Unit,
+    override val languages: NonEmptySet<Language>,
+    override val packageName: PackageName?,
+    override val logLevel: Logger.Level,
+    override val shared: Boolean,
+    override val strict: Boolean,
+) : WirespecArguments
 
 fun PackageName?.toDirectory() = let { (it)?.value }
     ?.split(".")

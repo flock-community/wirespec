@@ -1,44 +1,63 @@
 package community.flock.wirespec.compiler.core
 
-import arrow.core.Either
-import arrow.core.Nel
+import arrow.core.Either.Left
+import arrow.core.Either.Right
+import arrow.core.EitherNel
 import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.Stage.EMITTED
 import community.flock.wirespec.compiler.core.Stage.PARSED
 import community.flock.wirespec.compiler.core.Stage.TOKENIZED
-import community.flock.wirespec.compiler.core.Stage.VALIDATED
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.HasEmitter
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.parse.Parser
+import community.flock.wirespec.compiler.core.parse.Parser.parse
+import community.flock.wirespec.compiler.core.tokenize.Tokens
 import community.flock.wirespec.compiler.core.tokenize.tokenize
-import community.flock.wirespec.compiler.core.validate.validate
 import community.flock.wirespec.compiler.utils.HasLogger
 
-interface CompilationContext :
-    ParseContext,
-    HasEmitter
-
-fun CompilationContext.compile(source: String): Either<Nel<WirespecException>, List<Emitted>> = parse(source)
-    .map(emitter::emit)
-    .also(EMITTED::log)
-
-interface ParseContext :
+interface TokenizeContext :
     HasLanguageSpec,
     HasLogger
 
-fun ParseContext.parse(source: String): Either<NonEmptyList<WirespecException>, AST> = spec.tokenize(source)
+interface ParseContext :
+    TokenizeContext,
+    HasLogger
+
+interface EmitContext :
+    ParseContext,
+    HasEmitter,
+    HasLogger
+
+interface CompilationContext :
+    TokenizeContext,
+    ParseContext,
+    EmitContext
+
+fun TokenizeContext.tokenize(source: String): Tokens = spec
+    .tokenize(source)
     .also(TOKENIZED::log)
-    .let(Parser(logger)::parse)
+
+fun ParseContext.parse(source: String): EitherNel<WirespecException, AST> = tokenize(source)
+    .run { parse(this) }
     .also(PARSED::log)
-    .map { it.validate() }
-    .also(VALIDATED::log)
+
+fun EmitContext.emit(source: String): EitherNel<WirespecException, NonEmptyList<Emitted>> = parse(source)
+    .map { emitter.emit(it, logger) }
+    .also(EMITTED::log)
+
+fun CompilationContext.compile(source: String): EitherNel<WirespecException, NonEmptyList<Emitted>> = emit(source)
+
+fun CompilationContext.compile(reader: () -> String, writer: (Emitted) -> Unit, error: (String) -> Unit) {
+    when (val either = compile(reader())) {
+        is Left -> either.value.joinToString { it.message }.let { error(it) }
+        is Right -> either.value.forEach { writer(it) }
+    }
+}
 
 private enum class Stage {
     TOKENIZED,
     PARSED,
-    VALIDATED,
     EMITTED,
     ;
 

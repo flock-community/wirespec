@@ -106,7 +106,7 @@ class CompileMinimalEndpointTest {
             |
         """.trimMargin()
 
-        compiler { KotlinEmitter(logger = it) } shouldBeRight kotlin
+        compiler { KotlinEmitter() } shouldBeRight kotlin
     }
 
     @Test
@@ -206,7 +206,7 @@ class CompileMinimalEndpointTest {
             |
         """.trimMargin()
 
-        compiler { JavaEmitter(logger = it) } shouldBeRight java
+        compiler { JavaEmitter() } shouldBeRight java
     }
 
     @Test
@@ -224,7 +224,7 @@ class CompileMinimalEndpointTest {
             |
         """.trimMargin()
 
-        compiler { ScalaEmitter(logger = it) } shouldBeRight scala
+        compiler { ScalaEmitter() } shouldBeRight scala
     }
 
     @Test
@@ -333,7 +333,7 @@ class CompileMinimalEndpointTest {
             |
         """.trimMargin()
 
-        compiler { TypeScriptEmitter(logger = it) } shouldBeRight ts
+        compiler { TypeScriptEmitter() } shouldBeRight ts
     }
 
     @Test
@@ -349,6 +349,6 @@ class CompileMinimalEndpointTest {
             |
         """.trimMargin()
 
-        compiler { WirespecEmitter(logger = it) } shouldBeRight wirespec
+        compiler { WirespecEmitter() } shouldBeRight wirespec
     }
 }

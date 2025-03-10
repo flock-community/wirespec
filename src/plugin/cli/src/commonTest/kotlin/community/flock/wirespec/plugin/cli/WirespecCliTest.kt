@@ -1,11 +1,12 @@
 package community.flock.wirespec.plugin.cli
 
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
+import community.flock.wirespec.plugin.DirectoryPath
 import community.flock.wirespec.plugin.FileName
-import community.flock.wirespec.plugin.FullFilePath
-import community.flock.wirespec.plugin.cli.io.JavaFile
-import community.flock.wirespec.plugin.cli.io.KotlinFile
-import community.flock.wirespec.plugin.cli.io.TypeScriptFile
+import community.flock.wirespec.plugin.FilePath
+import community.flock.wirespec.plugin.files.JavaFile
+import community.flock.wirespec.plugin.files.KotlinFile
+import community.flock.wirespec.plugin.files.TypeScriptFile
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import kotlin.test.Test
@@ -21,11 +22,12 @@ class WirespecCliTest {
         val input = "$inputDir/wirespec"
         val output = outputDir()
 
-        WirespecCli.provide(::compile, ::convert, ::write)(arrayOf("compile", "-i", input, "-o", output, "-l", "Kotlin"))
+        WirespecCli.provide(::compile, ::convert)
+            .main(arrayOf("compile", "-i", input, "-o", output, "-l", "Kotlin"))
 
-        val file = KotlinFile(FullFilePath("$output/$packageDir", FileName("Type"))).read()
+        val directoryPath = DirectoryPath("$output/$packageDir")
 
-        val expected = """
+        KotlinFile(FilePath(directoryPath, FileName("Type"))).read() shouldBe """
             |package community.flock.wirespec.generated
             |
             |data class Bla(
@@ -34,7 +36,6 @@ class WirespecCliTest {
             |)
             |
         """.trimMargin()
-        file shouldBe expected
     }
 
     @Test
@@ -44,7 +45,7 @@ class WirespecCliTest {
         val input = "$inputDir/wirespec"
         val output = outputDir()
 
-        WirespecCli.provide(::compile, ::convert, ::write)(
+        WirespecCli.provide(::compile, ::convert).main(
             arrayOf(
                 "compile",
                 "-i", input,
@@ -54,9 +55,9 @@ class WirespecCliTest {
             ),
         )
 
-        val file = JavaFile(FullFilePath("$output/$packageDir", FileName("Bla"))).read()
+        val directoryPath = DirectoryPath("$output/$packageDir")
 
-        val expected = """
+        JavaFile(FilePath(directoryPath, FileName("Bla"))).read() shouldBe """
             |package community.flock.next;
             |
             |public record Bla (
@@ -66,7 +67,6 @@ class WirespecCliTest {
             |};
             |
         """.trimMargin()
-        file shouldBe expected
     }
 
     @Test
@@ -76,7 +76,7 @@ class WirespecCliTest {
         val input = "$inputDir/openapi/petstore.json"
         val output = outputDir()
 
-        WirespecCli.provide(::compile, ::convert, ::write)(
+        WirespecCli.provide(::compile, ::convert).main(
             arrayOf(
                 "convert", "openapiv2",
                 "-i", input,
@@ -86,10 +86,10 @@ class WirespecCliTest {
             ),
         )
 
-        val path = FullFilePath("$output/$packageDir", FileName("Petstore"))
-        val file = KotlinFile(path).read()
+        val directoryPath = DirectoryPath("$output/$packageDir")
+        val path = FilePath(directoryPath, FileName("Petstore"))
 
-        val expected = """
+        KotlinFile(path).read() shouldContain """
             |data class Pet(
             |  val id: Long?,
             |  val category: Category?,
@@ -99,8 +99,6 @@ class WirespecCliTest {
             |  val status: PetStatus?
             |)
         """.trimMargin()
-
-        file shouldContain expected
     }
 
     @Test
@@ -110,7 +108,7 @@ class WirespecCliTest {
         val input = "$inputDir/openapi/keto.json"
         val output = outputDir()
 
-        WirespecCli.provide(::compile, ::convert, ::write)(
+        WirespecCli.provide(::compile, ::convert).main(
             arrayOf(
                 "convert", "openapiv3",
                 "-i", input,
@@ -120,10 +118,10 @@ class WirespecCliTest {
             ),
         )
 
-        val path = FullFilePath("$output/$packageDir", FileName("Keto"))
-        val file = KotlinFile(path).read()
+        val directoryPath = DirectoryPath("$output/$packageDir")
+        val path = FilePath(directoryPath, FileName("Keto"))
 
-        val expected = """
+        KotlinFile(path).read() shouldContain """
             |data class Relationship(
             |  val namespace: String,
             |  val `object`: String,
@@ -132,8 +130,6 @@ class WirespecCliTest {
             |  val subject_set: SubjectSet?
             |)
         """.trimMargin()
-
-        file shouldContain expected
     }
 
     @Test
@@ -143,7 +139,7 @@ class WirespecCliTest {
         val input = "$inputDir/openapi/petstore.json"
         val output = outputDir()
 
-        WirespecCli.provide(::compile, ::convert, ::write)(
+        WirespecCli.provide(::compile, ::convert).main(
             arrayOf(
                 "convert", "openapiv2",
                 "-i", input,
@@ -153,10 +149,10 @@ class WirespecCliTest {
             ),
         )
 
-        val path = FullFilePath("$output/$packageDir", FileName("Petstore"))
-        val file = TypeScriptFile(path).read()
+        val directoryPath = DirectoryPath("$output/$packageDir")
+        val path = FilePath(directoryPath, FileName("Petstore"))
 
-        val expected = """
+        TypeScriptFile(path).read() shouldContain """
             |export type Pet = {
             |  "id": number | undefined,
             |  "category": Category | undefined,
@@ -166,8 +162,6 @@ class WirespecCliTest {
             |  "status": PetStatus | undefined
             |}
         """.trimMargin()
-
-        file shouldContain expected
     }
 
     private fun getRandomString(length: Int) = (1..length)

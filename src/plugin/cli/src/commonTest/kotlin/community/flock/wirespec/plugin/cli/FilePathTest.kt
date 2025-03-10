@@ -1,18 +1,18 @@
 package community.flock.wirespec.plugin.cli
 
 import community.flock.wirespec.plugin.FileExtension
-import community.flock.wirespec.plugin.FullFilePath
+import community.flock.wirespec.plugin.FilePath
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
-class FullFilePathTest {
+class FilePathTest {
 
     @Test
     fun testParse() {
-        FullFilePath.parse("/src/test/resources/test.json").run {
-            directory shouldBe "/src/test/resources"
+        FilePath.parse("/src/test/resources/test.json").run {
+            directory.value shouldBe "/src/test/resources"
             fileName.value shouldBe "test"
-            extension shouldBe FileExtension.Json
+            extension shouldBe FileExtension.JSON
         }
     }
 }

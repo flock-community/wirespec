@@ -1,5 +1,6 @@
 package community.flock.wirespec.openapi.v3
 
+import arrow.core.toNonEmptyListOrNull
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPI
 import community.flock.wirespec.openapi.common.Ast
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser.parse
@@ -141,11 +142,10 @@ class OpenAPIV3EmitterTest {
         val petstoreJson = SystemFileSystem.source(path).buffered().readString()
 
         val petstoreOpenAPi = OpenAPI.decodeFromString(petstoreJson)
-        val petstoreAst = petstoreOpenAPi.parse()
+        val petstoreAst = petstoreOpenAPi.parse().toNonEmptyListOrNull() ?: error("AST should not be empty")
 
         val petstoreConvertedOpenAPi = OpenAPIV3Emitter.emitOpenAPIObject(petstoreAst, null)
 
-//        println(json.encodeToString(petstoreConvertedOpenAPi))
         val petstoreConvertedOpenAPiAst = petstoreConvertedOpenAPi.parse()
 
         assertEquals(petstoreAst, petstoreConvertedOpenAPiAst)
