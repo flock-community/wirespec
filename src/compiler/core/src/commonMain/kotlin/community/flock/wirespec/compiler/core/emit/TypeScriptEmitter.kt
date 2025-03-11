@@ -42,14 +42,14 @@ open class TypeScriptEmitter : Emitter() {
             )
         }
 
-    override fun emit(type: Type, ast: AST) =
+    override fun emit(type: Type, module: Module) =
         """export type ${type.identifier.sanitizeSymbol()} = {
             |${type.shape.emit()}
             |}
             |
             |""".trimMargin()
 
-    override fun emit(enum: Enum, ast: AST) =
+    override fun emit(enum: Enum, module: Module) =
         "export type ${enum.identifier.sanitizeSymbol()} = ${enum.entries.joinToString(" | ") { """"$it"""" }}\n"
 
     override fun Type.Shape.emit() = value.joinToString(",\n") { it.emit() }

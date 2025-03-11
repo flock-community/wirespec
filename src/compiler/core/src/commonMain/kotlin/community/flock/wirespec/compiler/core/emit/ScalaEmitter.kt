@@ -56,7 +56,7 @@ open class ScalaEmitter(
             )
         }
 
-    override fun emit(type: Type, ast: AST) = """
+    override fun emit(type: Type, module: Module) = """
         |case class ${type.emitName()}(
         |${type.shape.emit()}
         |)
@@ -96,7 +96,7 @@ open class ScalaEmitter(
         }
     }.let { if (isNullable) "Option[$it]" else it }
 
-    override fun emit(enum: Enum, ast: AST) = enum.run {
+    override fun emit(enum: Enum, module: Module) = enum.run {
         fun String.sanitize() = replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }
         """
         |sealed abstract class ${emitName()}(val label: String)

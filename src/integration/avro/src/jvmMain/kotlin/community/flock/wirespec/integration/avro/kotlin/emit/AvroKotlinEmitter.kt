@@ -11,35 +11,36 @@ import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.integration.avro.Utils
 import community.flock.wirespec.integration.avro.Utils.isEnum
+import community.flock.wirespec.compiler.core.parse.Module
 
 class AvroKotlinEmitter(private val packageName: String) : KotlinEmitter(PackageName(packageName)) {
 
-    private fun emitAvroSchema(type: Definition, ast: AST) = Utils.emitAvroSchema(packageName, type, ast)
+    private fun emitAvroSchema(type: Definition, module: Module) = Utils.emitAvroSchema(packageName, type, module)
         ?.replace("\\\"<<<<<", "\" + ")
         ?.replace(">>>>>\\\"", ".Avro.SCHEMA + \"")
         ?: error("Cannot emit avro: ${type.identifier.value}")
 
-    override fun emit(type: Type, ast: AST) =
+    override fun emit(type: Type, module: Module) =
         if (type.shape.value.isEmpty()) "${Spacer}model object ${type.emitName()}"
         else """
             |data class ${type.emitName()}(
             |${type.shape.emit()}
             |)${type.extends.run { if (isEmpty()) "" else " : ${joinToString(", ") { it.emit() }}" }}
             |{
-            |${emitAvro(type, ast)}
+            |${emitAvro(type, module)}
             |}
             |
         """.trimMargin()
 
-    private fun emitAvro(type: Type, ast: AST) = """
+    private fun emitAvro(type: Type, module: Module) = """
         |  class Avro {
         |    companion object {
-        |      val SCHEMA = org.apache.avro.Schema.Parser().parse("${emitAvroSchema(type, ast)}");
+        |      val SCHEMA = org.apache.avro.Schema.Parser().parse("${emitAvroSchema(type, module)}");
         |
         |      @JvmStatic
         |      fun from(record: org.apache.avro.generic.GenericData.Record): ${type.emitName()} {
         |        return ${type.emitName()}(
-        |          ${type.shape.value.mapIndexed(emitFrom(ast)).joinToString(",\n${Spacer(5)}")}
+        |          ${type.shape.value.mapIndexed(emitFrom(module)).joinToString(",\n${Spacer(5)}")}
         |        );
         |      }
         |
@@ -54,22 +55,22 @@ class AvroKotlinEmitter(private val packageName: String) : KotlinEmitter(Package
         |
     """.trimMargin()
 
-    override fun emit(enum: Enum, ast: AST) = """
+    override fun emit(enum: Enum, module: Module) = """
         |enum class ${emit(enum.identifier)} (override val label: String): Wirespec.Enum {
         |${enum.entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }.spacer()};
         |${Spacer}override fun toString(): String {
         |${Spacer(2)}return label
         |${Spacer}}
-        |${emitAvro(enum, ast)}
+        |${emitAvro(enum, module)}
         |}
         |
     """.trimMargin()
 
-    private fun emitAvro(enum: Enum, ast: AST) = """
+    private fun emitAvro(enum: Enum, module: Module) = """
         |  class Avro {
         |    companion object {
         |
-        |       val SCHEMA: org.apache.avro.Schema = org.apache.avro.Schema.Parser().parse("${emitAvroSchema(enum, ast)}");
+        |       val SCHEMA: org.apache.avro.Schema = org.apache.avro.Schema.Parser().parse("${emitAvroSchema(enum, module)}");
         |
         |       @JvmStatic
         |       fun from(record: org.apache.avro.generic.GenericData.EnumSymbol): ${enum.emitName()} {
@@ -98,13 +99,13 @@ class AvroKotlinEmitter(private val packageName: String) : KotlinEmitter(Package
         }
     }
 
-    val emitFrom: (ast: AST) -> (index: Int, field: Field) -> String =
-        { ast ->
+    val emitFrom: (module: Module) -> (index: Int, field: Field) -> String =
+        { module ->
             { index, field ->
                 when (val reference = field.reference) {
                     is Reference.Iterable -> "(record.get(${index}) as java.util.List<org.apache.avro.generic.GenericData.Record>).map{${reference.reference.emit()}.Avro.from(it)}"
                     is Reference.Custom -> when {
-                        reference.isEnum(ast) -> "${field.reference.emit()}.Avro.from(record.get(${index}) as org.apache.avro.generic.GenericData.EnumSymbol)"
+                        reference.isEnum(module) -> "${field.reference.emit()}.Avro.from(record.get(${index}) as org.apache.avro.generic.GenericData.EnumSymbol)"
                         else -> "${field.reference.emit()}.Avro.from(record.get(${index}) as org.apache.avro.generic.GenericData.Record)"
                     }
 

@@ -17,7 +17,6 @@ import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.compiler.utils.noLogger
 
 abstract class Emitter(
     val split: Boolean = false,
@@ -44,9 +43,9 @@ abstract class Emitter(
                 is Definition -> it.emitName()
             }.also { name -> logger.info("Emitting Node $name") }
             when (it) {
-                is Type -> Emitted(it.emitName(), emit(it, ast))
+                is Type -> Emitted(it.emitName(), emit(it, module))
                 is Endpoint -> Emitted(it.emitName(), emit(it))
-                is Enum -> Emitted(it.emitName(), emit(it, ast))
+                is Enum -> Emitted(it.emitName(), emit(it, module))
                 is Refined -> Emitted(it.emitName(), emit(it))
                 is Union -> Emitted(it.emitName(), emit(it))
                 is Channel -> Emitted(it.emitName(), emit(it))

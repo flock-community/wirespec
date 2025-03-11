@@ -11,7 +11,6 @@ import community.flock.wirespec.compiler.core.emit.common.Keywords
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.orNull
-import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
@@ -61,7 +60,7 @@ open class KotlinEmitter(
             )
         }
 
-    override fun emit(type: Type, ast: AST) =
+    override fun emit(type: Type, module: Module) =
         if (type.shape.value.isEmpty()) "${Spacer}data object ${type.emitName()}"
         else """
             |data class ${type.emitName()}(
@@ -113,7 +112,7 @@ open class KotlinEmitter(
 
     override fun Refined.Validator.emit() = "Regex(\"\"\"${expression}\"\"\").matches(value)"
 
-    override fun emit(enum: Enum, ast: AST) = """
+    override fun emit(enum: Enum, module: Module) = """
         |enum class ${enum.identifier.value.sanitizeSymbol()} (override val label: String): Wirespec.Enum {
         |${enum.entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }.spacer()};
         |${Spacer}override fun toString(): String {

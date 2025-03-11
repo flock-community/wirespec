@@ -59,10 +59,10 @@ open class JavaEmitter(
             )
         }
 
-    override fun emit(type: Type, ast: AST) = """
+    override fun emit(type: Type, module: Module) = """
         |public record ${type.emitName()} (
         |${type.shape.emit()}
-        |)${type.extends.run { if (isEmpty()) "" else " extends ${joinToString(", ") { it.emit() }}" }}${type.emitUnion(ast)} {
+        |)${type.extends.run { if (isEmpty()) "" else " extends ${joinToString(", ") { it.emit() }}" }}${type.emitUnion(module)} {
         |};
         |
     """.trimMargin()
@@ -154,7 +154,7 @@ open class JavaEmitter(
     override fun Refined.Validator.emit() =
         """${Spacer}return java.util.regex.Pattern.compile("${expression.replace("\\", "\\\\")}").matcher(record.value).find();"""
 
-    override fun emit(enum: Enum, ast: AST) = """
+    override fun emit(enum: Enum, module: Module) = """
         |public enum ${emit(enum.identifier)} implements Wirespec.Enum {
         |${enum.entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }.spacer()};
         |${Spacer}public final String label;
