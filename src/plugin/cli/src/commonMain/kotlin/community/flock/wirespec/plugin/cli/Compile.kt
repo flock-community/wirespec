@@ -7,7 +7,6 @@ import arrow.core.nonEmptyListOf
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.CompilationContext
 import community.flock.wirespec.compiler.core.compile
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.common.PackageName
@@ -25,7 +24,7 @@ fun compile(arguments: CompilerArguments) {
     val context = { file: File, output: Directory ->
         object : WirespecContext {
             override val languages: NonEmptySet<Language> = arguments.languages
-            override val packageName: PackageName = arguments.packageName ?: PackageName(DEFAULT_GENERATED_PACKAGE_STRING)
+            override val packageName: PackageName = arguments.packageName
             override val path: (FileExtension) -> FilePath = file.out(arguments.packageName, output)
             override val logger: Logger = Logger(arguments.logLevel)
             override fun read(): String = arguments.reader(file)

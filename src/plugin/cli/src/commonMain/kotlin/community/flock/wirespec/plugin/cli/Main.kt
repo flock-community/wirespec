@@ -51,10 +51,12 @@ fun NonEmptySet<Language>.emitters(
     }
 }
 
-fun File.out(packageName: PackageName?, output: Directory) = { extension: FileExtension ->
-    val dir = output.path + "/${packageName?.value?.split('.').orEmpty().joinToString("/")}"
+fun File.out(packageName: PackageName, output: Directory) = { extension: FileExtension ->
     path.copy(
-        directory = dir,
         extension = extension,
+        directory = output.path + when (packageName.createDirectory) {
+            true -> "/${packageName.value.split('.').joinToString("/")}"
+            false -> ""
+        },
     )
 }

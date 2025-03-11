@@ -12,7 +12,7 @@ sealed interface WirespecArguments {
     val writer: (File, String) -> Unit
     val error: (String) -> Unit
     val languages: NonEmptySet<Language>
-    val packageName: PackageName?
+    val packageName: PackageName
     val logLevel: Logger.Level
     val shared: Boolean
     val strict: Boolean
@@ -25,7 +25,7 @@ data class CompilerArguments(
     override val writer: (File, String) -> Unit,
     override val error: (String) -> Unit,
     override val languages: NonEmptySet<Language>,
-    override val packageName: PackageName?,
+    override val packageName: PackageName,
     override val logLevel: Logger.Level,
     override val shared: Boolean,
     override val strict: Boolean,
@@ -39,7 +39,7 @@ data class ConverterArguments(
     override val writer: (File, String) -> Unit,
     override val error: (String) -> Unit,
     override val languages: NonEmptySet<Language>,
-    override val packageName: PackageName?,
+    override val packageName: PackageName,
     override val logLevel: Logger.Level,
     override val shared: Boolean,
     override val strict: Boolean,
