@@ -1,5 +1,6 @@
 package community.flock.wirespec.compiler.core.parse
 
+import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.Value
 import community.flock.wirespec.compiler.core.parse.Reference.Primitive.Type.Precision.P64
 import community.flock.wirespec.compiler.core.removeBackticks
@@ -7,6 +8,17 @@ import community.flock.wirespec.compiler.core.removeCommentMarkers
 import kotlin.jvm.JvmInline
 
 sealed interface Node
+
+data class AST(
+    val modules: NonEmptyList<Module>
+) : Node
+
+data class Module(
+    val path: String, // TODO Or File type perhaps?
+    val definitions: NonEmptyList<Definition>
+) : Node
+
+//-typealias AST = NonEmptyList<Node>
 
 sealed interface Definition : Node {
     val comment: Comment?

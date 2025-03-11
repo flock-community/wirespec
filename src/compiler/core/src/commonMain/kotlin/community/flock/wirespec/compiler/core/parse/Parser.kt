@@ -8,7 +8,8 @@ import arrow.core.raise.either
 import arrow.core.raise.ensureNotNull
 import arrow.core.right
 import arrow.core.toNonEmptyListOrNull
-import community.flock.wirespec.compiler.core.exceptions.EmptyAST
+import community.flock.wirespec.compiler.core.ParseContext
+import community.flock.wirespec.compiler.core.exceptions.EmptyModule
 import community.flock.wirespec.compiler.core.exceptions.UnionError
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WrongTokenException
@@ -19,9 +20,6 @@ import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.TokenizedModule
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
-import community.flock.wirespec.compiler.utils.HasLogger
-
-typealias AST = NonEmptyList<Node>
 
 data class ParseOptions(
     val allowUnions: Boolean = true,
@@ -34,18 +32,19 @@ object Parser {
     private val endpointParser = EndpointParser
     private val channelParser = ChannelParser
 
-    fun HasLogger.parse(tokens: List<TokenizedModule>, options: ParseOptions = ParseOptions()): EitherNel<WirespecException, AST> = tokens
-        .toProvider(logger)
-        .parse()
-        .flatMap(validate(options))
+    fun ParseContext.parse(modules: NonEmptyList<TokenizedModule>, options: ParseOptions = ParseOptions()): EitherNel<WirespecException, AST> =
+        modules.map{ it.toProvider(logger).parseModule(options) }
+            .let { l -> either { l.bindAll() } }
+            .map { AST(it) }
 
-    private fun TokenProvider.parse(): EitherNel<WirespecException, AST> = either {
+    private fun TokenProvider.parseModule(options: ParseOptions): EitherNel<WirespecException, Module> = either {
         mutableListOf<EitherNel<WirespecException, Definition>>()
             .apply { while (hasNext()) add(parseDefinition().mapLeft { it.nel() }) }
             .map { it.bind() }
             .toNonEmptyListOrNull()
-            .let { ensureNotNull(it) { EmptyAST().nel() } }
-    }
+            .let { ensureNotNull(it) { EmptyModule().nel() } }
+    }.flatMap(validate(options))
+        .map { Module("yolo", it) } // TODO how to wire this?
 
     private fun TokenProvider.parseDefinition() = either {
         token.log()
@@ -65,21 +64,20 @@ object Parser {
         }
     }
 
-    private fun validate(options: ParseOptions): (AST) -> EitherNel<WirespecException, AST> = { ast: AST ->
-        ast
-            .runOption(options.allowUnions) { fillExtendsClause() }
+    private fun validate(options: ParseOptions): (NonEmptyList<Definition>) -> EitherNel<WirespecException, NonEmptyList<Definition>> = { ast: NonEmptyList<Definition> ->
+        ast.runOption(options.allowUnions) { fillExtendsClause() }
     }
 
-    private fun AST.runOption(bool: Boolean, block: AST.() -> EitherNel<WirespecException, AST>) = if (bool) block() else right()
+    private fun NonEmptyList<Definition>.runOption(bool: Boolean, block: NonEmptyList<Definition>.() -> EitherNel<WirespecException, NonEmptyList<Definition>>) = if (bool) block() else right()
 
-    private fun AST.fillExtendsClause(): EitherNel<WirespecException, AST> = either {
-        map { node ->
-            when (node) {
-                is Channel -> node
-                is Endpoint -> node
-                is Enum -> node
-                is Refined -> node
-                is Type -> node.copy(
+    private fun NonEmptyList<Definition>.fillExtendsClause(): EitherNel<WirespecException, NonEmptyList<Definition>> = either {
+        map { definition ->
+            when (definition) {
+                is Channel -> definition
+                is Endpoint -> definition
+                is Enum -> definition
+                is Refined -> definition
+                is Type -> definition.copy(
                     extends = filterIsInstance<Union>()
                         .filter { union ->
                             union.entries
@@ -89,12 +87,12 @@ object Parser {
                                         else -> raise(UnionError().nel())
                                     }
                                 }
-                                .contains(node.identifier.value)
+                                .contains(definition.identifier.value)
                         }
                         .map { Reference.Custom(value = it.identifier.value, isNullable = false) },
                 )
 
-                is Union -> node
+                is Union -> definition
             }
         }
     }

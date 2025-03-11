@@ -10,7 +10,7 @@ class UnionError :
         message = "Only Custom references can be part of a Union",
     )
 
-class EmptyAST :
+class EmptyModule :
     ValidationError(
         coordinates = Token.Coordinates(),
         message = "AST should not be empty",

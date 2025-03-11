@@ -38,16 +38,16 @@ fun TokenizeContext.tokenize(source: String): TokenizedModule = spec
     .tokenize(source)
     .also(TOKENIZED::log)
 
-fun ParseContext.parse(source: List<String>): EitherNel<WirespecException, AST> =
+fun ParseContext.parse(source: NonEmptyList<String>): EitherNel<WirespecException, AST> =
     parse(source.map { tokenize(it) }).also(PARSED::log)
 
-fun EmitContext.emit(source: List<String>): EitherNel<WirespecException, NonEmptyList<Emitted>> = parse(source)
+fun EmitContext.emit(source: NonEmptyList<String>): EitherNel<WirespecException, NonEmptyList<Emitted>> = parse(source)
     .map { emitter.emit(it, logger) }
     .also(EMITTED::log)
 
-fun CompilationContext.compile(source: List<String>): EitherNel<WirespecException, NonEmptyList<Emitted>> = emit(source)
+fun CompilationContext.compile(source: NonEmptyList<String>): EitherNel<WirespecException, NonEmptyList<Emitted>> = emit(source)
 
-fun CompilationContext.compile(reader: () -> List<String>, writer: (Emitted) -> Unit, error: (String) -> Unit) {
+fun CompilationContext.compile(reader: () -> NonEmptyList<String>, writer: (Emitted) -> Unit, error: (String) -> Unit) {
     when (val either = compile(reader())) {
         is Left -> either.value.joinToString { it.message }.let { error(it) }
         is Right -> either.value.forEach { writer(it) }
