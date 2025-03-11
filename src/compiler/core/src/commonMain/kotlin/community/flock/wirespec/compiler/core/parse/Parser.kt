@@ -16,7 +16,7 @@ import community.flock.wirespec.compiler.core.tokenize.ChannelDefinition
 import community.flock.wirespec.compiler.core.tokenize.Comment
 import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
 import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
-import community.flock.wirespec.compiler.core.tokenize.Tokens
+import community.flock.wirespec.compiler.core.tokenize.TokenizedModule
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
 import community.flock.wirespec.compiler.utils.HasLogger
@@ -34,7 +34,7 @@ object Parser {
     private val endpointParser = EndpointParser
     private val channelParser = ChannelParser
 
-    fun HasLogger.parse(tokens: Tokens, options: ParseOptions = ParseOptions()): EitherNel<WirespecException, AST> = tokens
+    fun HasLogger.parse(tokens: List<TokenizedModule>, options: ParseOptions = ParseOptions()): EitherNel<WirespecException, AST> = tokens
         .toProvider(logger)
         .parse()
         .flatMap(validate(options))

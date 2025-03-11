@@ -20,20 +20,22 @@ import community.flock.wirespec.plugin.FileName
 import community.flock.wirespec.plugin.FilePath
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.Reader
+import community.flock.wirespec.plugin.files.WirespecFile
 
 fun compile(arguments: CompilerArguments) {
-    val context = { file: File, output: Directory ->
+
+    val context = { files: NonEmptySet<File>, output: Directory ->
         object : WirespecContext {
             override val languages: NonEmptySet<Language> = arguments.languages
             override val packageName: PackageName = arguments.packageName ?: PackageName(DEFAULT_GENERATED_PACKAGE_STRING)
             override val path: (FileExtension) -> FilePath = file.out(arguments.packageName, output)
             override val logger: Logger = Logger(arguments.logLevel)
-            override fun read(): String = arguments.reader(file)
+            override fun read(): List<String> = files.map{ arguments.reader(it)} // TODO
         }
     }
 
-    return arguments.input
-        .flatMap { context(it, arguments.output).wirespec() }
+    return arguments
+        .let { context(it.input, arguments.output).wirespec() }
         .let { either { it.bindAll() } }
         .let { either ->
             when (either) {

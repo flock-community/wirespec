@@ -5,7 +5,7 @@ import community.flock.wirespec.plugin.FileExtension.Wirespec
 import kotlin.jvm.JvmInline
 
 fun interface Reader {
-    fun read(): String
+    fun read(): List<String>
 }
 
 fun interface Writer {
