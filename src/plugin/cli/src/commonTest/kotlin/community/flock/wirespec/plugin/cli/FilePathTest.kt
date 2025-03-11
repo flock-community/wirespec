@@ -9,7 +9,7 @@ class FilePathTest {
 
     @Test
     fun testParse() {
-        FilePath.parse("/src/test/resources/test.json").run {
+        FilePath("/src/test/resources/test.json").run {
             directory.value shouldBe "/src/test/resources"
             fileName.value shouldBe "test"
             extension shouldBe FileExtension.JSON

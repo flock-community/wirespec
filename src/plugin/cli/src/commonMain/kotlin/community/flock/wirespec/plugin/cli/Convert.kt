@@ -1,9 +1,7 @@
 package community.flock.wirespec.plugin.cli
 
 import arrow.core.nonEmptyListOf
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.Emitted
-import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.converter.avro.AvroParser
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser
@@ -27,7 +25,7 @@ fun convert(arguments: ConverterArguments) {
 
     val path = jsonFile.out(packageName, arguments.output)
 
-    return arguments.languages.emitters(packageName ?: PackageName(DEFAULT_GENERATED_PACKAGE_STRING), path)
+    return arguments.languages.emitters(packageName, path)
         .map { (emitter, file) ->
             val results = emitter.emit(ast, Logger(arguments.logLevel))
             when {

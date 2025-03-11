@@ -81,7 +81,7 @@ private abstract class CommonOptions : CliktCommand() {
         val meta = SystemFileSystem.metadataOrNull(path) ?: throw CannotAccessFileOrDirectory(it)
         when {
             meta.isDirectory -> DirectoryPath(it)
-            meta.isRegularFile -> FilePath.parse(it)
+            meta.isRegularFile -> FilePath(it)
             else -> throw IsNotAFileOrDirectory(it)
         }
     }

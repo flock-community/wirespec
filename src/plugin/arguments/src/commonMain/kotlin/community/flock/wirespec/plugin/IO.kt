@@ -1,7 +1,13 @@
 package community.flock.wirespec.plugin
 
 import community.flock.wirespec.compiler.core.Value
-import community.flock.wirespec.plugin.FileExtension.Wirespec
+import community.flock.wirespec.plugin.FileExtension.*
+import community.flock.wirespec.plugin.files.JavaFile
+import community.flock.wirespec.plugin.files.JsonFile
+import community.flock.wirespec.plugin.files.KotlinFile
+import community.flock.wirespec.plugin.files.ScalaFile
+import community.flock.wirespec.plugin.files.TypeScriptFile
+import community.flock.wirespec.plugin.files.WirespecFile
 import kotlin.jvm.JvmInline
 
 fun interface Reader {
@@ -28,6 +34,15 @@ abstract class File(val path: FilePath) :
     Input,
     Copy
 
+fun File.withExtension(extension: FileExtension) = when (extension) {
+    Java -> JavaFile(path.copy(extension = extension))
+    Kotlin -> KotlinFile(path.copy(extension = extension))
+    Scala -> ScalaFile(path.copy(extension = extension))
+    TypeScript -> TypeScriptFile(path.copy(extension = extension))
+    Wirespec -> WirespecFile(path.copy(extension = extension))
+    JSON -> JsonFile(path.copy(extension = extension))
+}
+
 sealed interface FullPath
 
 @JvmInline
@@ -37,9 +52,10 @@ value class DirectoryPath(override val value: String) :
     override fun toString() = value
 }
 
-data class FilePath(val directory: DirectoryPath, val fileName: FileName, val extension: FileExtension = Wirespec) : FullPath {
+data class FilePath(val directory: DirectoryPath, val fileName: FileName, val extension: FileExtension = Wirespec) :
+    FullPath {
     companion object {
-        fun parse(input: String): FilePath {
+        operator fun invoke(input: String): FilePath {
             val list = input.split("/").let { it.dropLast(1) + it.last().split(".") }
             val extension = list.last().lowercase()
                 .let { ext -> FileExtension.entries.find { it.value == ext } }
