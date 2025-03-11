@@ -1,21 +1,19 @@
-package community.flock.wirespec.plugin
+package community.flock.wirespec.plugin.files
 
 import community.flock.wirespec.compiler.core.Value
-import community.flock.wirespec.plugin.FileExtension.*
-import community.flock.wirespec.plugin.files.JavaFile
-import community.flock.wirespec.plugin.files.JsonFile
-import community.flock.wirespec.plugin.files.KotlinFile
-import community.flock.wirespec.plugin.files.ScalaFile
-import community.flock.wirespec.plugin.files.TypeScriptFile
-import community.flock.wirespec.plugin.files.WirespecFile
+import community.flock.wirespec.compiler.core.emit.common.PackageName
+import community.flock.wirespec.plugin.FileExtension
+import community.flock.wirespec.plugin.FileExtension.JSON
+import community.flock.wirespec.plugin.FileExtension.Java
+import community.flock.wirespec.plugin.FileExtension.Kotlin
+import community.flock.wirespec.plugin.FileExtension.Scala
+import community.flock.wirespec.plugin.FileExtension.TypeScript
+import community.flock.wirespec.plugin.FileExtension.Wirespec
+import community.flock.wirespec.plugin.FileExtension.entries
 import kotlin.jvm.JvmInline
 
 fun interface Reader {
     fun read(): String
-}
-
-fun interface Writer {
-    fun write(string: String)
 }
 
 fun interface Copy {
@@ -30,6 +28,11 @@ class Directory(val path: DirectoryPath) :
     Input,
     Output
 
+operator fun Directory.plus(packageName: PackageName) = when (packageName.createDirectory) {
+    true -> "/${packageName.value.split('.').joinToString("/")}"
+    false -> ""
+}.let { Directory(path + it) }
+
 abstract class File(val path: FilePath) :
     Input,
     Copy
@@ -40,8 +43,11 @@ fun File.withExtension(extension: FileExtension) = when (extension) {
     Scala -> ScalaFile(path.copy(extension = extension))
     TypeScript -> TypeScriptFile(path.copy(extension = extension))
     Wirespec -> WirespecFile(path.copy(extension = extension))
-    JSON -> JsonFile(path.copy(extension = extension))
+    JSON -> JSONFile(path.copy(extension = extension))
 }
+
+fun File.changeName(name: FileName) = path.copy(fileName = name)
+fun File.changeDirectory(directory: Directory) = path.copy(directory = directory.path)
 
 sealed interface FullPath
 
@@ -52,13 +58,12 @@ value class DirectoryPath(override val value: String) :
     override fun toString() = value
 }
 
-data class FilePath(val directory: DirectoryPath, val fileName: FileName, val extension: FileExtension = Wirespec) :
-    FullPath {
+data class FilePath(val directory: DirectoryPath, val fileName: FileName, val extension: FileExtension = Wirespec) : FullPath {
     companion object {
         operator fun invoke(input: String): FilePath {
             val list = input.split("/").let { it.dropLast(1) + it.last().split(".") }
             val extension = list.last().lowercase()
-                .let { ext -> FileExtension.entries.find { it.value == ext } }
+                .let { ext -> entries.find { it.value == ext } }
                 ?: error("Invalid file extension")
             val idxOfFileName = list.size - 2
             val filename = FileName(list[idxOfFileName])
