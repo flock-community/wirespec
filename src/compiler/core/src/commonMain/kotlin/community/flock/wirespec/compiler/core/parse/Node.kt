@@ -13,9 +13,11 @@ data class AST(
     val modules: NonEmptyList<Module>
 ) : Node
 
+typealias Statements = NonEmptyList<Definition>
+
 data class Module(
     val path: String, // TODO Or File type perhaps?
-    val definitions: NonEmptyList<Definition>
+    val statements: Statements // Or Definition maybe?
 ) : Node
 
 //-typealias AST = NonEmptyList<Node>

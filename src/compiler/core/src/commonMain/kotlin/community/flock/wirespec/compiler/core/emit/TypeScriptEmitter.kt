@@ -12,6 +12,7 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -31,11 +32,11 @@ open class TypeScriptEmitter : Emitter() {
 
     override val singleLineComment = "//"
 
-    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> =
-        super.emit(ast, logger).map {
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
+        super.emit(module, logger).map {
             Emitted(
                 it.typeName.sanitizeSymbol(), """
-                    |${if (ast.hasEndpoints()) TypeScriptShared.source else ""}
+                    |${if (module.hasEndpoints()) TypeScriptShared.source else ""}
                     |${it.result}
             """.trimMargin().trimStart()
             )

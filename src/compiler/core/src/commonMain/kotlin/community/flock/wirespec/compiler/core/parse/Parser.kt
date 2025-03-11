@@ -64,13 +64,13 @@ object Parser {
         }
     }
 
-    private fun validate(options: ParseOptions): (NonEmptyList<Definition>) -> EitherNel<WirespecException, NonEmptyList<Definition>> = { ast: NonEmptyList<Definition> ->
-        ast.runOption(options.allowUnions) { fillExtendsClause() }
+    private fun validate(options: ParseOptions): (Statements) -> EitherNel<WirespecException, Statements> = { defs: Statements ->
+        defs.runOption(options.allowUnions) { fillExtendsClause() }
     }
 
-    private fun NonEmptyList<Definition>.runOption(bool: Boolean, block: NonEmptyList<Definition>.() -> EitherNel<WirespecException, NonEmptyList<Definition>>) = if (bool) block() else right()
+    private fun Statements.runOption(bool: Boolean, block: Statements.() -> EitherNel<WirespecException, Statements>) = if (bool) block() else right()
 
-    private fun NonEmptyList<Definition>.fillExtendsClause(): EitherNel<WirespecException, NonEmptyList<Definition>> = either {
+    private fun Statements.fillExtendsClause(): EitherNel<WirespecException, Statements> = either {
         map { definition ->
             when (definition) {
                 is Channel -> definition

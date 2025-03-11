@@ -28,7 +28,7 @@ class AvroJavaEmitter(private val packageName: String) : JavaEmitter(PackageName
         |
     """.trimMargin()
 
-    private fun emitTypeFunctionBody(type: Type, ast: AST) = """
+    private fun emitTypeFunctionBody(type: Type, module: AST) = """
         |  public static class Avro {
         |    
         |    public static final org.apache.avro.Schema SCHEMA = 

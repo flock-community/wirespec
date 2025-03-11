@@ -19,6 +19,7 @@ import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -46,13 +47,13 @@ open class JavaEmitter(
 
     override val singleLineComment = "//"
 
-    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> =
-        super.emit(ast, logger).map { (typeName, result) ->
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
+        super.emit(module, logger).map { (typeName, result) ->
             Emitted(
                 typeName = typeName.sanitizeSymbol(),
                 result = """
                     |package $packageName;
-                    |${if (ast.needImports()) import else ""}
+                    |${if (module.needImports()) import else ""}
                     |$result
                 """.trimMargin().trimStart()
             )
@@ -66,7 +67,7 @@ open class JavaEmitter(
         |
     """.trimMargin()
 
-    fun Type.emitUnion(ast: AST) = ast
+    fun Type.emitUnion(module: Module) = module.statements
         .filterIsInstance<Union>()
         .filter { union -> union.entries.filterIsInstance<Reference.Custom>().any { it.value == identifier.value } }
         .map { it.identifier.value }
