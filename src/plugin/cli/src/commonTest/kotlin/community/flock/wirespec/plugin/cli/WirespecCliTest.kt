@@ -1,9 +1,9 @@
 package community.flock.wirespec.plugin.cli
 
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
-import community.flock.wirespec.plugin.DirectoryPath
-import community.flock.wirespec.plugin.FileName
-import community.flock.wirespec.plugin.FilePath
+import community.flock.wirespec.plugin.files.DirectoryPath
+import community.flock.wirespec.plugin.files.FileName
+import community.flock.wirespec.plugin.files.FilePath
 import community.flock.wirespec.plugin.files.JavaFile
 import community.flock.wirespec.plugin.files.KotlinFile
 import community.flock.wirespec.plugin.files.TypeScriptFile

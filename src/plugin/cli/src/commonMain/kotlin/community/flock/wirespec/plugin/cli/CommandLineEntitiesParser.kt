@@ -25,19 +25,19 @@ import community.flock.wirespec.compiler.utils.Logger.Level.INFO
 import community.flock.wirespec.compiler.utils.Logger.Level.WARN
 import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.ConverterArguments
-import community.flock.wirespec.plugin.Directory
-import community.flock.wirespec.plugin.DirectoryPath
-import community.flock.wirespec.plugin.File
 import community.flock.wirespec.plugin.FileExtension
-import community.flock.wirespec.plugin.FileName
-import community.flock.wirespec.plugin.FilePath
 import community.flock.wirespec.plugin.Format
-import community.flock.wirespec.plugin.FullPath
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.Language.Wirespec
-import community.flock.wirespec.plugin.files.JsonFile
+import community.flock.wirespec.plugin.files.Directory
+import community.flock.wirespec.plugin.files.DirectoryPath
+import community.flock.wirespec.plugin.files.File
+import community.flock.wirespec.plugin.files.FileName
+import community.flock.wirespec.plugin.files.FilePath
+import community.flock.wirespec.plugin.files.FullPath
+import community.flock.wirespec.plugin.files.JSONFile
 import community.flock.wirespec.plugin.files.WirespecFile
-import community.flock.wirespec.plugin.plus
+import community.flock.wirespec.plugin.files.plus
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -119,7 +119,7 @@ private class Compile(
         }
         CompilerArguments(
             input = input,
-            output = output,
+            output = output + PackageName(packageName),
             reader = { it.read() },
             writer = { file, string -> file.write(string) },
             error = ::handleError,
@@ -146,7 +146,7 @@ private class Convert(
             null -> throw IsNotAFileOrDirectory(null)
             is DirectoryPath -> throw ConvertNeedsAFile()
             is FilePath -> when (it.extension) {
-                FileExtension.JSON -> JsonFile(it)
+                FileExtension.JSON -> JSONFile(it)
                 else -> throw JSONFileError()
             }
         }
@@ -158,7 +158,7 @@ private class Convert(
         ConverterArguments(
             format = format,
             input = input,
-            output = output,
+            output = output + PackageName(packageName),
             reader = { it.read() },
             writer = { file, string -> file.write(string) },
             error = ::handleError,

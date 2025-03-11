@@ -12,21 +12,21 @@ import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firs
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.plugin.CompilerArguments
-import community.flock.wirespec.plugin.Directory
-import community.flock.wirespec.plugin.File
-import community.flock.wirespec.plugin.FileExtension
-import community.flock.wirespec.plugin.FileName
-import community.flock.wirespec.plugin.FilePath
 import community.flock.wirespec.plugin.Language
-import community.flock.wirespec.plugin.Reader
+import community.flock.wirespec.plugin.files.Directory
+import community.flock.wirespec.plugin.files.FileName
+import community.flock.wirespec.plugin.files.Reader
+import community.flock.wirespec.plugin.files.WirespecFile
+import community.flock.wirespec.plugin.files.changeDirectory
 
 fun compile(arguments: CompilerArguments) {
-    val context = { file: File, output: Directory ->
+    val context = { file: WirespecFile, output: Directory ->
         object : WirespecContext {
             override val languages: NonEmptySet<Language> = arguments.languages
             override val packageName: PackageName = arguments.packageName
-            override val path: (FileExtension) -> FilePath = file.out(arguments.packageName, output)
-            override val logger: Logger = Logger(arguments.logLevel)
+            override val sourceFile: WirespecFile = file
+            override val outputDir: Directory = output
+            override val liveLogger: Logger = Logger(arguments.logLevel)
             override fun read(): String = arguments.reader(file)
         }
     }
@@ -49,22 +49,25 @@ fun compile(arguments: CompilerArguments) {
 private interface WirespecContext : Reader {
     val languages: NonEmptySet<Language>
     val packageName: PackageName
-    val path: (FileExtension) -> FilePath
-    val logger: Logger
+    val sourceFile: WirespecFile
+    val outputDir: Directory
+    val liveLogger: Logger
 }
 
-private fun WirespecContext.wirespec() = languages
-    .emitters(packageName, path).map { (emitter, file) ->
+private fun WirespecContext.wirespec() = sourceFile
+    .changeDirectory(outputDir)
+    .emitters(languages, packageName)
+    .map { (emitter, outputFile) ->
         val errorOrResults = object : CompilationContext {
-            override val logger = this@wirespec.logger
+            override val logger = liveLogger
             override val emitter = emitter
         }.compile(read())
         when {
-            emitter.split -> errorOrResults.map { file to it }
+            emitter.split -> errorOrResults.map { outputFile to it }
             else -> errorOrResults.map {
-                file to nonEmptyListOf(
+                outputFile to nonEmptyListOf(
                     Emitted(
-                        path(FileExtension.Wirespec).fileName.value.firstToUpper(),
+                        outputFile.path.fileName.value.firstToUpper(),
                         it.first().result,
                     ),
                 )

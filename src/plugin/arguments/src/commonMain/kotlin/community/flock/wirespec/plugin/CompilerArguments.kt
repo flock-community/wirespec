@@ -3,11 +3,13 @@ package community.flock.wirespec.plugin
 import arrow.core.NonEmptySet
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.plugin.files.JsonFile
+import community.flock.wirespec.plugin.files.Directory
+import community.flock.wirespec.plugin.files.File
+import community.flock.wirespec.plugin.files.JSONFile
 import community.flock.wirespec.plugin.files.WirespecFile
 
 sealed interface WirespecArguments {
-    val output: Output?
+    val output: Directory
     val reader: (File) -> String
     val writer: (File, String) -> Unit
     val error: (String) -> Unit
@@ -33,7 +35,7 @@ data class CompilerArguments(
 
 data class ConverterArguments(
     val format: Format,
-    val input: JsonFile,
+    val input: JSONFile,
     override val output: Directory,
     override val reader: (File) -> String,
     override val writer: (File, String) -> Unit,
