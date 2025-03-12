@@ -6,7 +6,6 @@ import community.flock.wirespec.plugin.FileExtension
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Format.OpenAPIV2
 import community.flock.wirespec.plugin.Language.Wirespec
-import community.flock.wirespec.plugin.files.JSONFile
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -34,8 +33,12 @@ class CommandLineEntitiesTest {
         }.toTypedArray()
         WirespecCli.provide(
             noopCompiler {
-                it.input.shouldHaveSize(2).first().path.directory.value shouldBe "src/commonTest/resources/wirespec"
-                it.output.path.value shouldBe "src/commonTest/resources/wirespec/packageName"
+                it.inputFiles.shouldHaveSize(2).first().path.run {
+                    directory.value shouldBe "src/commonTest/resources/wirespec"
+                    fileName.value shouldBe "todo"
+                    extension shouldBe FileExtension.Wirespec
+                }
+                it.outputDirectory.path.value shouldBe "src/commonTest/resources/wirespec/packageName"
                 it.languages shouldBe setOf(Wirespec)
                 it.packageName.shouldNotBeNull().value shouldBe "packageName"
                 it.logLevel shouldBe ERROR
@@ -52,11 +55,12 @@ class CommandLineEntitiesTest {
             noopCompiler { },
             noopConverter {
                 it.format.shouldBeTypeOf<Format>() shouldBe OpenAPIV2
-                it.input.shouldBeTypeOf<JSONFile>().path.run {
+                it.inputFiles.shouldHaveSize(1).first().path.run {
+                    directory.value shouldBe "src/commonTest/resources/openapi"
                     fileName.value shouldBe "keto"
                     extension shouldBe FileExtension.JSON
                 }
-                it.output.path.value shouldBe "src/commonTest/resources/openapi/out/community/flock/wirespec/generated"
+                it.outputDirectory.path.value shouldBe "src/commonTest/resources/openapi/out/community/flock/wirespec/generated"
                 it.languages shouldBe setOf(Wirespec)
                 it.packageName.shouldNotBeNull().value shouldBe DEFAULT_GENERATED_PACKAGE_STRING
                 it.logLevel shouldBe ERROR
