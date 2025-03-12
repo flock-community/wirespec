@@ -11,13 +11,11 @@
     <artifactId>maven-spring-avro</artifactId>
 
     <dependencies>
-
         <dependency>
             <groupId>community.flock.wirespec.integration</groupId>
             <artifactId>avro-jvm</artifactId>
             <version>0.0.0-SNAPSHOT</version>
         </dependency>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
@@ -31,7 +29,6 @@
             <artifactId>kafka-avro-serializer</artifactId>
             <version>7.7.1</version>
         </dependency>
-
         <dependency>
             <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
@@ -52,11 +49,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-testcontainers</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.kafka</groupId>
-            <artifactId>spring-kafka-test</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

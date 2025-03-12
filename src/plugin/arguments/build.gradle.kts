@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotest)
 }
 
 group = "${libs.versions.group.id.get()}.plugin.arguments"
@@ -20,15 +21,22 @@ kotlin {
             }
         }
     }
+
+    sourceSets.all {
+        languageSettings.apply {
+            languageVersion = libs.versions.kotlin.compiler.get()
+        }
+    }
+
     sourceSets {
-        val commonMain by getting {
+        commonMain {
             dependencies {
-                implementation(project(":src:compiler:core"))
+                api(project(":src:compiler:core"))
                 implementation(project(":src:converter:avro"))
                 implementation(project(":src:converter:openapi"))
             }
         }
-        val commonTest by getting {
+        commonTest {
             dependencies {
                 implementation(libs.kotlin.test)
                 implementation(libs.bundles.kotest)

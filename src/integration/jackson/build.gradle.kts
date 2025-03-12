@@ -30,13 +30,13 @@ kotlin {
                 implementation(libs.bundles.kotlin.test)
             }
         }
-        val jvmMain by getting {
+        jvmMain {
             dependencies {
                 implementation(project(":src:compiler:core"))
                 compileOnly(libs.bundles.jackson)
             }
         }
-        val jvmTest by getting {
+        jvmTest {
             dependencies {
                 implementation(libs.bundles.jackson)
             }
