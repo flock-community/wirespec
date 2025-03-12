@@ -2,6 +2,7 @@
 
 package community.flock.wirespec.compiler.lib
 
+import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Comment
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
@@ -9,6 +10,7 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
+import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
@@ -191,6 +193,9 @@ fun Node.produce(): WsNode = when (this) {
         comment = comment?.value,
         reference = reference.produce(),
     )
+
+    is AST -> TODO()
+    is Module -> TODO()
 }
 
 fun List<Node>.produce(): Array<WsNode> = map { it.produce() }.toTypedArray()

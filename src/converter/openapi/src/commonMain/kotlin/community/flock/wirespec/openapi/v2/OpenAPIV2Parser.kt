@@ -1,6 +1,7 @@
 package community.flock.wirespec.openapi.v2
 
 import arrow.core.filterIsInstance
+import arrow.core.nonEmptyListOf
 import arrow.core.toNonEmptyListOrNull
 import community.flock.kotlinx.openapi.bindings.v2.BooleanObject
 import community.flock.kotlinx.openapi.bindings.v2.HeaderObject
@@ -27,6 +28,7 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
+import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.openapi.Common.className
@@ -36,12 +38,13 @@ import community.flock.kotlinx.openapi.bindings.v2.Type as OpenapiType
 
 object OpenAPIV2Parser {
 
-    fun parse(json: String, strict: Boolean = true): AST = OpenAPI(
+    fun parse(json: String, strict: Boolean = true): AST = AST(nonEmptyListOf(Module("", OpenAPI(
         json = Json {
             prettyPrint = true
             ignoreUnknownKeys = !strict
         },
-    ).decodeFromString(json).parse().toNonEmptyListOrNull() ?: error("Cannot yield non empty AST for OpenAPI v2")
+    ).decodeFromString(json).parse().toNonEmptyListOrNull() ?: error("Cannot yield non empty AST for OpenAPI v2")))
+    )
 
     fun SwaggerObject.parse(): List<Definition> = listOf(
         parseEndpoints(),

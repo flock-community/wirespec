@@ -1,5 +1,6 @@
 package community.flock.wirespec.openapi.v3
 
+import arrow.core.nonEmptyListOf
 import arrow.core.toNonEmptyListOrNull
 import community.flock.kotlinx.openapi.bindings.v3.BooleanObject
 import community.flock.kotlinx.openapi.bindings.v3.HeaderObject
@@ -27,22 +28,26 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
+import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.openapi.Common.className
 import community.flock.wirespec.openapi.Common.filterNotNullValues
+import community.flock.wirespec.openapi.v2.OpenAPIV2Parser.parse
 import kotlinx.serialization.json.Json
 import community.flock.kotlinx.openapi.bindings.v3.Type as OpenapiType
 
 object OpenAPIV3Parser {
 
-    fun parse(json: String, strict: Boolean = false): AST = OpenAPI(
+    fun parse(json: String, strict: Boolean = false): AST = AST(
+        nonEmptyListOf(
+            Module("", community.flock.kotlinx.openapi.bindings.v2.OpenAPI(
         json = Json {
             prettyPrint = true
             ignoreUnknownKeys = strict
         },
-    ).decodeFromString(json).parse().toNonEmptyListOrNull() ?: error("Cannot yield non empty List<Node> for OpenAPI v3")
+    ).decodeFromString(json).parse().toNonEmptyListOrNull() ?: error("Cannot yield non empty List<Node> for OpenAPI v3"))))
 
     fun OpenAPIObject.parse(): List<Definition> = listOf(
         parseEndpoint(),

@@ -1134,7 +1134,7 @@ class OpenAPIV3ParserTest {
         val openApi = OpenAPI.decodeFromString(json)
         val ast = openApi.parse()
 
-        val expected: AST = nonEmptyListOf(
+        val expected = nonEmptyListOf(
             Type(
                 comment = null,
                 identifier = DefinitionIdentifier(name = "User"),
