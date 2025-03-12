@@ -1,7 +1,6 @@
-package community.flock.wirespec.plugin.utils
+package community.flock.wirespec.plugin.cli
 
 import arrow.core.Either.Companion.catch
-import community.flock.wirespec.plugin.cli.js.process
 
 // Remove first arguments [command, program]
 private val nodeArgs = process.argv.slice(2) as Array<String>

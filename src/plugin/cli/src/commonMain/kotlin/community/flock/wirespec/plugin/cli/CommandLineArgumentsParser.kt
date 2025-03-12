@@ -1,6 +1,5 @@
 package community.flock.wirespec.plugin.cli
 
-import arrow.core.NonEmptyList
 import arrow.core.NonEmptySet
 import arrow.core.nonEmptySetOf
 import arrow.core.toNonEmptySetOrNull
@@ -16,7 +15,6 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.enum
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
-import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.utils.Logger.Level
 import community.flock.wirespec.compiler.utils.Logger.Level.DEBUG
@@ -52,10 +50,6 @@ enum class Options(vararg val flags: String) {
     LogLevel("--log-level"),
     Shared("--shared"),
     Strict("--strict"),
-}
-
-data class WirespecResult(val file: File, val emitted: NonEmptyList<Emitted>) {
-    constructor(pair: Pair<File, NonEmptyList<Emitted>>) : this(pair.first, pair.second)
 }
 
 class WirespecCli : NoOpCliktCommand(name = "wirespec") {
@@ -118,8 +112,8 @@ private class Compile(
             is FilePath -> throw OutputShouldBeADirectory()
         }
         CompilerArguments(
-            input = input,
-            output = output + PackageName(packageName),
+            inputFiles = input,
+            outputDirectory = output + PackageName(packageName),
             reader = { it.read() },
             writer = { file, string -> file.write(string) },
             error = ::handleError,
@@ -157,8 +151,8 @@ private class Convert(
         }
         ConverterArguments(
             format = format,
-            input = input,
-            output = output + PackageName(packageName),
+            inputFiles = nonEmptySetOf(input),
+            outputDirectory = output + PackageName(packageName),
             reader = { it.read() },
             writer = { file, string -> file.write(string) },
             error = ::handleError,

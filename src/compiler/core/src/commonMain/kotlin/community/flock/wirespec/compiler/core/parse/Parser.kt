@@ -24,6 +24,7 @@ import community.flock.wirespec.compiler.utils.HasLogger
 typealias AST = NonEmptyList<Node>
 
 data class ParseOptions(
+    val strict: Boolean = false,
     val allowUnions: Boolean = true,
 )
 

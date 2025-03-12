@@ -3,22 +3,9 @@ package community.flock.wirespec.plugin.files
 import community.flock.wirespec.compiler.core.Value
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.plugin.FileExtension
-import community.flock.wirespec.plugin.FileExtension.JSON
-import community.flock.wirespec.plugin.FileExtension.Java
-import community.flock.wirespec.plugin.FileExtension.Kotlin
-import community.flock.wirespec.plugin.FileExtension.Scala
-import community.flock.wirespec.plugin.FileExtension.TypeScript
 import community.flock.wirespec.plugin.FileExtension.Wirespec
 import community.flock.wirespec.plugin.FileExtension.entries
 import kotlin.jvm.JvmInline
-
-fun interface Reader {
-    fun read(): String
-}
-
-fun interface Copy {
-    fun copy(fileName: FileName): File
-}
 
 sealed interface Input
 
@@ -33,21 +20,11 @@ operator fun Directory.plus(packageName: PackageName) = when (packageName.create
     false -> ""
 }.let { Directory(path + it) }
 
-abstract class File(val path: FilePath) :
-    Input,
-    Copy
-
-fun File.withExtension(extension: FileExtension) = when (extension) {
-    Java -> JavaFile(path.copy(extension = extension))
-    Kotlin -> KotlinFile(path.copy(extension = extension))
-    Scala -> ScalaFile(path.copy(extension = extension))
-    TypeScript -> TypeScriptFile(path.copy(extension = extension))
-    Wirespec -> WirespecFile(path.copy(extension = extension))
-    JSON -> JSONFile(path.copy(extension = extension))
+abstract class File(val path: FilePath) : Input {
+    abstract fun changeName(fileName: FileName): File
 }
 
-fun File.changeName(name: FileName) = path.copy(fileName = name)
-fun File.changeDirectory(directory: Directory) = path.copy(directory = directory.path)
+fun Directory.inferOutputFile(file: File) = file.path.copy(directory = path)
 
 sealed interface FullPath
 

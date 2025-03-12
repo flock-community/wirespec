@@ -9,7 +9,7 @@ import community.flock.wirespec.plugin.files.JSONFile
 import community.flock.wirespec.plugin.files.WirespecFile
 
 sealed interface WirespecArguments {
-    val output: Directory
+    val outputDirectory: Directory
     val reader: (File) -> String
     val writer: (File, String) -> Unit
     val error: (String) -> Unit
@@ -21,8 +21,8 @@ sealed interface WirespecArguments {
 }
 
 data class CompilerArguments(
-    val input: NonEmptySet<WirespecFile>,
-    override val output: Directory,
+    val inputFiles: NonEmptySet<WirespecFile>,
+    override val outputDirectory: Directory,
     override val reader: (File) -> String,
     override val writer: (File, String) -> Unit,
     override val error: (String) -> Unit,
@@ -35,8 +35,8 @@ data class CompilerArguments(
 
 data class ConverterArguments(
     val format: Format,
-    val input: JSONFile,
-    override val output: Directory,
+    val inputFiles: NonEmptySet<JSONFile>,
+    override val outputDirectory: Directory,
     override val reader: (File) -> String,
     override val writer: (File, String) -> Unit,
     override val error: (String) -> Unit,

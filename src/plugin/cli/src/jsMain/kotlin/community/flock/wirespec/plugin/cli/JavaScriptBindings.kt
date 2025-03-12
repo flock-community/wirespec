@@ -1,4 +1,4 @@
-package community.flock.wirespec.plugin.cli.js
+package community.flock.wirespec.plugin.cli
 
 external interface Process {
     val env: dynamic
