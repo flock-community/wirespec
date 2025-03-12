@@ -34,7 +34,6 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.openapi.Common.className
 import community.flock.wirespec.openapi.Common.filterNotNullValues
-import community.flock.wirespec.openapi.v2.OpenAPIV2Parser.parse
 import kotlinx.serialization.json.Json
 import community.flock.kotlinx.openapi.bindings.v3.Type as OpenapiType
 
@@ -42,7 +41,7 @@ object OpenAPIV3Parser {
 
     fun parse(json: String, strict: Boolean = false): AST = AST(
         nonEmptyListOf(
-            Module("", community.flock.kotlinx.openapi.bindings.v2.OpenAPI(
+            Module("", OpenAPI(
         json = Json {
             prettyPrint = true
             ignoreUnknownKeys = strict
