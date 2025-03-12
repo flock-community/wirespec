@@ -25,7 +25,7 @@ kotlin {
                 implementation(libs.bundles.kotlin.test)
             }
         }
-        val jvmMain by getting {
+        jvmMain {
             dependencies {
                 implementation(libs.bundles.jackson)
             }

@@ -31,7 +31,7 @@ kotlin {
                 implementation(project(":src:integration:wirespec"))
             }
         }
-        val jvmMain by getting {
+        jvmMain {
             dependencies {
                 compileOnly(project(":src:compiler:core"))
                 compileOnly(project(":src:integration:wirespec"))
@@ -46,7 +46,7 @@ kotlin {
                 runtimeOnly(libs.junit.launcher)
             }
         }
-        val jvmTest by getting {
+        jvmTest {
             dependencies {
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:integration:wirespec"))
