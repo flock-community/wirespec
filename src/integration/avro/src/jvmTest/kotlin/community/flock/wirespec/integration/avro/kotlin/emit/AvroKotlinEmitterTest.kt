@@ -1,6 +1,7 @@
 package community.flock.wirespec.integration.avro.kotlin.emit
 
 import arrow.core.nonEmptyListOf
+import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
@@ -10,6 +11,8 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.utils.noLogger
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import community.flock.wirespec.compiler.core.parse.Module
+
 
 class AvroKotlinEmitterTest {
 
@@ -31,7 +34,7 @@ class AvroKotlinEmitterTest {
             extends = emptyList(),
         )
 
-        val ast = nonEmptyListOf(type)
+        val ast = AST(nonEmptyListOf(Module("", nonEmptyListOf(type))))
         val expected = """
             |package packageName
             |
@@ -74,7 +77,7 @@ class AvroKotlinEmitterTest {
             identifier = DefinitionIdentifier("Identifier"),
             entries = setOf("ONE", "TWO", "THREE"),
         )
-        val ast = nonEmptyListOf(enum)
+        val ast = AST(nonEmptyListOf(Module("", nonEmptyListOf(enum))))
         val expected = """
             |package packageName
             |
