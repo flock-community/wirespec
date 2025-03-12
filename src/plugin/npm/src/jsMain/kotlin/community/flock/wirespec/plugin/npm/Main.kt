@@ -3,6 +3,7 @@
 package community.flock.wirespec.plugin.npm
 
 import arrow.core.curried
+import arrow.core.nonEmptyListOf
 import arrow.core.toNonEmptyListOrNull
 import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPIObject
@@ -20,6 +21,8 @@ import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
 import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
 import community.flock.wirespec.compiler.core.emit.shared.TypeScriptShared
 import community.flock.wirespec.compiler.core.parse
+import community.flock.wirespec.compiler.core.parse.Definition
+import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.lib.WsNode
 import community.flock.wirespec.compiler.lib.WsStringResult
@@ -76,7 +79,7 @@ fun tokenize(source: String) = WirespecSpec
     .toTypedArray()
 
 @JsExport
-fun parse(source: String) = object : ParseContext, NoLogger {}.parse(source).produce()
+fun parse(source: String) = object : ParseContext, NoLogger {}.parse(nonEmptyListOf(source)).produce()
 
 @JsExport
 fun convert(source: String, converters: Converters) = when (converters) {
@@ -87,14 +90,14 @@ fun convert(source: String, converters: Converters) = when (converters) {
 
 @JsExport
 fun generate(source: String, type: String): WsStringResult = object : ParseContext, NoLogger {}
-    .parse(source)
+    .parse(nonEmptyListOf(source))
     .map { it.generate(type).toString() }
     .produce()
 
 @JsExport
 fun emit(ast: Array<WsNode>, emitter: Emitters, packageName: String) = ast
     .map { it.consume() }
-    .let { it.toNonEmptyListOrNull() ?: error("Cannot emit empty AST") }
+    .let { Module("", it.toNonEmptyListOrNull() ?: error("Cannot emit empty AST")) }
     .let {
         when (emitter) {
             Emitters.WIRESPEC -> WirespecEmitter().emit(it, noLogger)

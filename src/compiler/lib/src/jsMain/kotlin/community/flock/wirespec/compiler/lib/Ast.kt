@@ -18,7 +18,7 @@ import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 
-fun WsNode.consume(): Node = when (this) {
+fun WsNode.consume(): Definition = when (this) {
     is WsEndpoint -> consume()
     is WsEnum -> consume()
     is WsRefined -> consume()

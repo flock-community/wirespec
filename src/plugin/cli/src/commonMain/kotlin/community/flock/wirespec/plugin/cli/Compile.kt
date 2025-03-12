@@ -29,7 +29,7 @@ fun compile(arguments: CompilerArguments) {
         object : WirespecContext {
             override val languages: NonEmptySet<Language> = arguments.languages
             override val packageName: PackageName = arguments.packageName ?: PackageName(DEFAULT_GENERATED_PACKAGE_STRING)
-            override val path: (FileExtension) -> FilePath = file.out(arguments.packageName, output)
+            override val path: (FileExtension) -> FilePath = files.first().out(arguments.packageName, output)
             override val logger: Logger = Logger(arguments.logLevel)
             override fun read(): NonEmptyList<String> = files.map{ arguments.reader(it)} // TODO
         }
