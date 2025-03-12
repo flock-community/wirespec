@@ -2,6 +2,7 @@ package community.flock.wirespec.plugin.cli
 
 import arrow.core.Either.Left
 import arrow.core.Either.Right
+import arrow.core.NonEmptyList
 import arrow.core.NonEmptySet
 import arrow.core.nonEmptyListOf
 import arrow.core.raise.either
@@ -30,7 +31,7 @@ fun compile(arguments: CompilerArguments) {
             override val packageName: PackageName = arguments.packageName ?: PackageName(DEFAULT_GENERATED_PACKAGE_STRING)
             override val path: (FileExtension) -> FilePath = file.out(arguments.packageName, output)
             override val logger: Logger = Logger(arguments.logLevel)
-            override fun read(): List<String> = files.map{ arguments.reader(it)} // TODO
+            override fun read(): NonEmptyList<String> = files.map{ arguments.reader(it)} // TODO
         }
     }
 

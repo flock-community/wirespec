@@ -31,6 +31,7 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -50,8 +51,8 @@ object OpenAPIV3Emitter : Emitter() {
 
     override val singleLineComment = ""
 
-    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> =
-        nonEmptyListOf(Emitted("OpenAPIObject", json.encodeToString(emitOpenAPIObject(ast, null))))
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
+        nonEmptyListOf(Emitted("OpenAPIObject", json.encodeToString(emitOpenAPIObject(module, null))))
 
     override fun Type.Shape.emit() = notYetImplemented()
 
@@ -61,9 +62,9 @@ object OpenAPIV3Emitter : Emitter() {
 
     override fun Refined.Validator.emit() = notYetImplemented()
 
-    override fun emit(type: Type, ast: AST) = notYetImplemented()
+    override fun emit(type: Type, module: Module) = notYetImplemented()
 
-    override fun emit(enum: Enum, ast: AST) = notYetImplemented()
+    override fun emit(enum: Enum, module: Module) = notYetImplemented()
 
     override fun emit(refined: Refined) = notYetImplemented()
 
@@ -75,18 +76,17 @@ object OpenAPIV3Emitter : Emitter() {
 
     override fun emit(channel: Channel) = notYetImplemented()
 
-    fun emitOpenAPIObject(ast: AST, options: Options? = null) = OpenAPIObject(
+    fun emitOpenAPIObject(module: Module, options: Options? = null) = OpenAPIObject(
         openapi = "3.0.0",
         info = InfoObject(
             title = options?.title ?: "Wirespec",
             version = options?.version ?: "0.0.0"
         ),
-        paths = ast.emitPaths(),
-        components = ast.emitComponents()
+        paths = module.emitPaths(),
+        components = module.emitComponents()
     )
 
-    private fun AST.emitComponents() = this
-        .filterIsInstance<Definition>()
+    private fun Module.emitComponents() = statements.toList()
         .filter { it !is Endpoint }
         .associate {
             it.identifier.value to when (it) {
@@ -100,7 +100,7 @@ object OpenAPIV3Emitter : Emitter() {
         }
         .let { ComponentsObject(it) }
 
-    private fun AST.emitPaths() = this
+    private fun Module.emitPaths() = statements
         .filterIsInstance<Endpoint>()
         .groupBy { it.path }.map { (path, endpoints) ->
             Path(path.emitSegment()) to PathItemObject(

@@ -1,11 +1,12 @@
 package community.flock.wirespec.plugin
 
+import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.Value
 import community.flock.wirespec.plugin.FileExtension.Wirespec
 import kotlin.jvm.JvmInline
 
 fun interface Reader {
-    fun read(): List<String>
+    fun read(): NonEmptyList<String>
 }
 
 fun interface Writer {

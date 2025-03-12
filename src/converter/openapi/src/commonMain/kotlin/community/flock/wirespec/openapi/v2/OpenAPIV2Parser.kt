@@ -27,7 +27,6 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
-import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.openapi.Common.className
@@ -44,15 +43,15 @@ object OpenAPIV2Parser {
         },
     ).decodeFromString(json).parse().toNonEmptyListOrNull() ?: error("Cannot yield non empty AST for OpenAPI v2")
 
-    fun SwaggerObject.parse(): List<Node> = listOf(
+    fun SwaggerObject.parse(): List<Definition> = listOf(
         parseEndpoints(),
         parseParameters(),
         parseRequestBody(),
         parseResponseBody(),
         parseDefinitions(),
-    ).reduce(List<Node>::plus)
+    ).reduce(List<Definition>::plus)
 
-    private fun SwaggerObject.parseEndpoints(): List<Node> = paths
+    private fun SwaggerObject.parseEndpoints(): List<Definition> = paths
         .flatMap { (path, pathItem) ->
             pathItem.toOperationList().flatMap { (method, operation) ->
                 val parameters = resolveParameters(pathItem) + resolveParameters(operation)
@@ -130,7 +129,7 @@ object OpenAPIV2Parser {
             }
         }
 
-    private fun SwaggerObject.parseParameters(): List<Node> = flatMapRequests {
+    private fun SwaggerObject.parseParameters(): List<Definition> = flatMapRequests {
         val parameters = resolveParameters(pathItem) + resolveParameters(operation)
         val name = operation.toName() ?: (path.toName() + method.name)
         parameters
@@ -140,7 +139,7 @@ object OpenAPIV2Parser {
             }
     }
 
-    private fun SwaggerObject.parseRequestBody(): List<Node> = flatMapRequests {
+    private fun SwaggerObject.parseRequestBody(): List<Definition> = flatMapRequests {
         val parameters = resolveParameters(pathItem) + (resolveParameters(operation))
         val name = operation.toName() ?: (path.toName() + method.name)
         val enums: List<Definition> = parameters.flatMap { parameter ->
@@ -156,7 +155,7 @@ object OpenAPIV2Parser {
                 else -> emptyList()
             }
         }
-        val types: List<Node> = operation.parameters
+        val types: List<Definition> = operation.parameters
             ?.map { resolve(it) }
             ?.filter { it.`in` == ParameterLocation.BODY }
             ?.flatMap { param ->
@@ -177,7 +176,7 @@ object OpenAPIV2Parser {
         enums + types
     }
 
-    private fun SwaggerObject.parseResponseBody(): List<Node> = flatMapResponses {
+    private fun SwaggerObject.parseResponseBody(): List<Definition> = flatMapResponses {
         val schema = resolve(response).schema
         val name = operation.toName() ?: (path.toName() + method.name)
         when (schema) {
@@ -196,7 +195,7 @@ object OpenAPIV2Parser {
         }
     }
 
-    private fun SwaggerObject.parseDefinitions(): List<Node> = definitions.orEmpty()
+    private fun SwaggerObject.parseDefinitions(): List<Definition> = definitions.orEmpty()
         .filterIsInstance<String, SchemaObject>()
         .filter { it.value.additionalProperties == null }
         .flatMap { flatten(it.value, className(it.key)) }
@@ -263,7 +262,7 @@ object OpenAPIV2Parser {
         is ReferenceObject -> resolveParameterObject(parameterOrReference)
     }
 
-    private fun SwaggerObject.flatten(schemaObject: SchemaObject, name: String): List<Node> = when {
+    private fun SwaggerObject.flatten(schemaObject: SchemaObject, name: String): List<Definition> = when {
         schemaObject.additionalProperties != null -> when (schemaObject.additionalProperties) {
             is BooleanObject -> emptyList()
             else ->
@@ -337,7 +336,7 @@ object OpenAPIV2Parser {
         }
     }
 
-    private fun SwaggerObject.flatten(schemaOrReference: SchemaOrReferenceObject, name: String): List<Node> = when (schemaOrReference) {
+    private fun SwaggerObject.flatten(schemaOrReference: SchemaOrReferenceObject, name: String): List<Definition> = when (schemaOrReference) {
         is SchemaObject -> flatten(schemaOrReference, name)
         is ReferenceObject -> emptyList()
     }
@@ -559,7 +558,7 @@ object OpenAPIV2Parser {
         val type: String,
     )
 
-    private fun SwaggerObject.flatMapRequests(f: FlattenRequest.() -> List<Node>) = paths
+    private fun SwaggerObject.flatMapRequests(f: FlattenRequest.() -> List<Definition>) = paths
         .flatMap { (path, pathItem) ->
             pathItem.toOperationList()
                 .flatMap { (method, operation) ->
@@ -586,7 +585,7 @@ object OpenAPIV2Parser {
         val type: String,
     )
 
-    private fun SwaggerObject.flatMapResponses(f: FlattenResponse.() -> List<Node>) = paths
+    private fun SwaggerObject.flatMapResponses(f: FlattenResponse.() -> List<Definition>) = paths
         .flatMap { (path, pathItem) ->
             pathItem.toOperationList()
                 .flatMap { (method, operation) ->

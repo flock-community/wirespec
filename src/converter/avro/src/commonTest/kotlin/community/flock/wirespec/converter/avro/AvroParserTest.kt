@@ -58,7 +58,7 @@ class AvroParserTest {
 
         assertEquals(
             listOf("User", "EmailAddress", "TwitterAccount", "OAuthStatus", "ToDoItem", "ToDoStatus", "User"),
-            ast.filterIsInstance<Definition>().map { it.identifier.value },
+            ast.modules.flatMap { it.statements }.toList().map { it.identifier.value },
         )
 
         assertEquals(
@@ -129,7 +129,7 @@ class AvroParserTest {
                     ),
                 ),
             ),
-            ast.first(),
+            ast.modules.first().statements.first(),
         )
 
         assertEquals(
@@ -141,7 +141,7 @@ class AvroParserTest {
                     isNullable = false,
                 ),
             ),
-            ast.last(),
+            ast.modules.first().statements.last(),
         )
     }
 }
