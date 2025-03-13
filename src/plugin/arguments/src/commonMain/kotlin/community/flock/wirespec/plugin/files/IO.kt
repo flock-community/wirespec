@@ -1,20 +1,11 @@
-package community.flock.wirespec.plugin
+package community.flock.wirespec.plugin.files
 
 import community.flock.wirespec.compiler.core.Value
+import community.flock.wirespec.compiler.core.emit.common.PackageName
+import community.flock.wirespec.plugin.FileExtension
 import community.flock.wirespec.plugin.FileExtension.Wirespec
+import community.flock.wirespec.plugin.FileExtension.entries
 import kotlin.jvm.JvmInline
-
-fun interface Reader {
-    fun read(): String
-}
-
-fun interface Writer {
-    fun write(string: String)
-}
-
-fun interface Copy {
-    fun copy(fileName: FileName): File
-}
 
 sealed interface Input
 
@@ -24,9 +15,19 @@ class Directory(val path: DirectoryPath) :
     Input,
     Output
 
-abstract class File(val path: FilePath) :
-    Input,
-    Copy
+operator fun Directory.plus(packageName: PackageName) = Directory(path + packageName)
+
+operator fun DirectoryPath.plus(packageName: PackageName) = when (packageName.createDirectory) {
+    true -> "/${packageName.value.split('.').joinToString("/")}"
+    false -> ""
+}.let { this + it }
+
+abstract class File(val path: FilePath) : Input {
+    abstract fun change(fileName: FileName): File
+    abstract fun change(directory: DirectoryPath): File
+}
+
+fun Directory.inferOutputFile(file: File) = file.path.copy(directory = path)
 
 sealed interface FullPath
 
@@ -39,10 +40,10 @@ value class DirectoryPath(override val value: String) :
 
 data class FilePath(val directory: DirectoryPath, val fileName: FileName, val extension: FileExtension = Wirespec) : FullPath {
     companion object {
-        fun parse(input: String): FilePath {
+        operator fun invoke(input: String): FilePath {
             val list = input.split("/").let { it.dropLast(1) + it.last().split(".") }
             val extension = list.last().lowercase()
-                .let { ext -> FileExtension.entries.find { it.value == ext } }
+                .let { ext -> entries.find { it.value == ext } }
                 ?: error("Invalid file extension")
             val idxOfFileName = list.size - 2
             val filename = FileName(list[idxOfFileName])

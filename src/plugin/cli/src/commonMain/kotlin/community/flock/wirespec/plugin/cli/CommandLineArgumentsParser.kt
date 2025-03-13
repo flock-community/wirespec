@@ -1,6 +1,5 @@
 package community.flock.wirespec.plugin.cli
 
-import arrow.core.NonEmptyList
 import arrow.core.NonEmptySet
 import arrow.core.nonEmptySetOf
 import arrow.core.toNonEmptySetOrNull
@@ -16,8 +15,8 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.enum
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
-import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.PackageName
+import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.Logger.Level
 import community.flock.wirespec.compiler.utils.Logger.Level.DEBUG
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
@@ -25,19 +24,19 @@ import community.flock.wirespec.compiler.utils.Logger.Level.INFO
 import community.flock.wirespec.compiler.utils.Logger.Level.WARN
 import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.ConverterArguments
-import community.flock.wirespec.plugin.Directory
-import community.flock.wirespec.plugin.DirectoryPath
-import community.flock.wirespec.plugin.File
 import community.flock.wirespec.plugin.FileExtension
-import community.flock.wirespec.plugin.FileName
-import community.flock.wirespec.plugin.FilePath
 import community.flock.wirespec.plugin.Format
-import community.flock.wirespec.plugin.FullPath
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.Language.Wirespec
-import community.flock.wirespec.plugin.files.JsonFile
+import community.flock.wirespec.plugin.files.Directory
+import community.flock.wirespec.plugin.files.DirectoryPath
+import community.flock.wirespec.plugin.files.File
+import community.flock.wirespec.plugin.files.FileName
+import community.flock.wirespec.plugin.files.FilePath
+import community.flock.wirespec.plugin.files.FullPath
+import community.flock.wirespec.plugin.files.JSONFile
 import community.flock.wirespec.plugin.files.WirespecFile
-import community.flock.wirespec.plugin.plus
+import community.flock.wirespec.plugin.files.plus
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -52,10 +51,6 @@ enum class Options(vararg val flags: String) {
     LogLevel("--log-level"),
     Shared("--shared"),
     Strict("--strict"),
-}
-
-data class WirespecResult(val file: File, val emitted: NonEmptyList<Emitted>) {
-    constructor(pair: Pair<File, NonEmptyList<Emitted>>) : this(pair.first, pair.second)
 }
 
 class WirespecCli : NoOpCliktCommand(name = "wirespec") {
@@ -76,12 +71,12 @@ private abstract class CommonOptions : CliktCommand() {
     val shared by option(*Options.Shared.flags, help = "Generate shared wirespec code").flag(default = false)
     val strict by option(*Options.Strict.flags, help = "Strict mode").flag()
 
-    fun getFullPath(input: String?, createIfNotExists: Boolean = false): FullPath? = input?.let {
+    fun getFullPath(ioPath: String?, createIfNotExists: Boolean = false): FullPath? = ioPath?.let {
         val path = Path(it).createIfNotExists(createIfNotExists)
         val meta = SystemFileSystem.metadataOrNull(path) ?: throw CannotAccessFileOrDirectory(it)
         when {
             meta.isDirectory -> DirectoryPath(it)
-            meta.isRegularFile -> FilePath.parse(it)
+            meta.isRegularFile -> FilePath(it)
             else -> throw IsNotAFileOrDirectory(it)
         }
     }
@@ -118,14 +113,14 @@ private class Compile(
             is FilePath -> throw OutputShouldBeADirectory()
         }
         CompilerArguments(
-            input = input,
-            output = output,
+            inputFiles = input,
+            outputDirectory = output,
             reader = { it.read() },
             writer = { file, string -> file.write(string) },
             error = ::handleError,
             languages = languages.toNonEmptySetOrNull() ?: throw ThisShouldNeverHappen(),
             packageName = PackageName(packageName),
-            logLevel = logLevel.toLogLevel(),
+            logger = Logger(logLevel.toLogLevel()),
             shared = shared,
             strict = strict,
         ).let(compiler)
@@ -146,7 +141,7 @@ private class Convert(
             null -> throw IsNotAFileOrDirectory(null)
             is DirectoryPath -> throw ConvertNeedsAFile()
             is FilePath -> when (it.extension) {
-                FileExtension.JSON -> JsonFile(it)
+                FileExtension.JSON -> JSONFile(it)
                 else -> throw JSONFileError()
             }
         }
@@ -157,14 +152,14 @@ private class Convert(
         }
         ConverterArguments(
             format = format,
-            input = input,
-            output = output,
+            inputFiles = nonEmptySetOf(input),
+            outputDirectory = output,
             reader = { it.read() },
             writer = { file, string -> file.write(string) },
             error = ::handleError,
             languages = languages.toNonEmptySetOrNull() ?: nonEmptySetOf(Wirespec),
             packageName = PackageName(packageName),
-            logLevel = logLevel.toLogLevel(),
+            logger = Logger(logLevel.toLogLevel()),
             shared = shared,
             strict = strict,
         ).let(converter)

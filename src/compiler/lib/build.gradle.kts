@@ -29,13 +29,13 @@ kotlin {
     }
 
     sourceSets {
-        val commonMain by getting {
+        commonMain {
             dependencies {
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:converter:openapi"))
             }
         }
-        val jsTest by getting {
+        jsTest {
             dependencies {
                 implementation(libs.kotlin.test)
                 implementation(libs.kotlinx.io.core)

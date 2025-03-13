@@ -43,9 +43,6 @@ class CustomMojo : BaseMojo() {
     @Parameter
     private var format: Format? = null
 
-    @Parameter
-    private var strict: Boolean = true
-
     override fun execute() {
         project.addCompileSourceRoot(output)
         val ext = extension
