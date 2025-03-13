@@ -16,6 +16,7 @@ import community.flock.wirespec.compiler.core.emit.shared.JavaShared
 import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
 import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
 import community.flock.wirespec.compiler.core.emit.shared.Shared
+import community.flock.wirespec.compiler.core.emit.shared.TypeScriptShared
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.utils.Logger
@@ -28,6 +29,13 @@ import community.flock.wirespec.plugin.Language.OpenAPIV3
 import community.flock.wirespec.plugin.Language.Scala
 import community.flock.wirespec.plugin.Language.TypeScript
 import community.flock.wirespec.plugin.Language.Wirespec
+import community.flock.wirespec.plugin.files.FileName
+import community.flock.wirespec.plugin.files.FilePath
+import community.flock.wirespec.plugin.files.JavaFile
+import community.flock.wirespec.plugin.files.KotlinFile
+import community.flock.wirespec.plugin.files.ScalaFile
+import community.flock.wirespec.plugin.files.TypeScriptFile
+import community.flock.wirespec.plugin.files.plus
 
 data class FileContent(val name: String, val content: String) {
     constructor(pair: Pair<String, String>) : this(pair.first, pair.second)
@@ -65,3 +73,20 @@ fun Language.mapEmitter(packageName: PackageName) = when (this) {
     OpenAPIV2 -> LanguageEmitter(OpenAPIV2Emitter, FileExtension.JSON)
     OpenAPIV3 -> LanguageEmitter(OpenAPIV3Emitter, FileExtension.JSON)
 }
+
+fun WirespecArguments.mapShared() = languages.mapNotNull {
+    it.mapShared(FilePath(outputDirectory.path, FileName("Wirespec")), shared)
+}
+
+private fun Language.mapShared(filePath: FilePath, shared: Boolean) = takeIf { shared }
+    ?.let {
+        when (it) {
+            Java -> JavaFile(filePath) to JavaShared
+            Kotlin -> KotlinFile(filePath) to KotlinShared
+            Scala -> ScalaFile(filePath) to ScalaShared
+            TypeScript -> TypeScriptFile(filePath) to TypeScriptShared
+            Wirespec, OpenAPIV2, OpenAPIV3 -> null
+        }
+    }
+    ?.let { (file, shared) -> file.change(file.path.directory + PackageName(shared.packageString)) to shared }
+    ?.let { (file, shared) -> file to shared.source }

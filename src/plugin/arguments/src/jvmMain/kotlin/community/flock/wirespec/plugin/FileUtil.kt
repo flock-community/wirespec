@@ -4,10 +4,10 @@ import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.shared.Shared
 import community.flock.wirespec.plugin.Language.Wirespec
-import java.io.File
+import java.io.File as JavaFile
 
 fun List<Emitted>.writeToFiles(
-    output: File,
+    output: JavaFile,
     packageName: PackageName?,
     shared: Shared?,
     fileName: String? = null,
@@ -30,7 +30,7 @@ fun List<Emitted>.writeToFiles(
     }
 }
 
-private fun writeFile(output: File, packageName: PackageName?, fileName: String, ext: FileExtension) = output
+private fun writeFile(output: JavaFile, packageName: PackageName?, fileName: String, ext: FileExtension) = output
     .resolve(packageName.toDirectory())
     .apply { mkdirs() }
     .resolve("$fileName.${ext.value}")

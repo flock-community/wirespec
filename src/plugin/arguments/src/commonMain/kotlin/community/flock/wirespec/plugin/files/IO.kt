@@ -15,13 +15,16 @@ class Directory(val path: DirectoryPath) :
     Input,
     Output
 
-operator fun Directory.plus(packageName: PackageName) = when (packageName.createDirectory) {
+operator fun Directory.plus(packageName: PackageName) = Directory(path + packageName)
+
+operator fun DirectoryPath.plus(packageName: PackageName) = when (packageName.createDirectory) {
     true -> "/${packageName.value.split('.').joinToString("/")}"
     false -> ""
-}.let { Directory(path + it) }
+}.let { this + it }
 
 abstract class File(val path: FilePath) : Input {
-    abstract fun changeName(fileName: FileName): File
+    abstract fun change(fileName: FileName): File
+    abstract fun change(directory: DirectoryPath): File
 }
 
 fun Directory.inferOutputFile(file: File) = file.path.copy(directory = path)

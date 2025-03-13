@@ -4,6 +4,9 @@ import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACK
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
 import community.flock.wirespec.plugin.FileContent
+import community.flock.wirespec.plugin.files.DirectoryPath
+import community.flock.wirespec.plugin.files.FilePath
+import community.flock.wirespec.plugin.files.FullPath
 import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
@@ -32,6 +35,9 @@ abstract class BaseMojo : AbstractMojo() {
     @Parameter
     protected var packageName: String = DEFAULT_GENERATED_PACKAGE_STRING
 
+    @Parameter
+    protected var strict: Boolean = true
+
     @Parameter(defaultValue = "\${project}", readonly = true, required = true)
     protected lateinit var project: MavenProject
 
@@ -40,6 +46,14 @@ abstract class BaseMojo : AbstractMojo() {
         override fun info(string: String) = log.info(string)
         override fun warn(string: String) = log.warn(string)
         override fun error(string: String) = log.error(string)
+    }
+
+    fun getFullPath(input: String?, createIfNotExists: Boolean = false): FullPath? = input?.let {
+        val file = File(it).createIfNotExists(createIfNotExists)
+        when {
+            file.isDirectory -> DirectoryPath(file.absolutePath)
+            else -> FilePath(file.absolutePath)
+        }
     }
 
     protected fun getFilesContent() = input.split(",")
