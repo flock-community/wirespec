@@ -16,6 +16,7 @@ import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.enum
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.PackageName
+import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.Logger.Level
 import community.flock.wirespec.compiler.utils.Logger.Level.DEBUG
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
@@ -70,7 +71,7 @@ private abstract class CommonOptions : CliktCommand() {
     val shared by option(*Options.Shared.flags, help = "Generate shared wirespec code").flag(default = false)
     val strict by option(*Options.Strict.flags, help = "Strict mode").flag()
 
-    fun getFullPath(input: String?, createIfNotExists: Boolean = false): FullPath? = input?.let {
+    fun getFullPath(ioPath: String?, createIfNotExists: Boolean = false): FullPath? = ioPath?.let {
         val path = Path(it).createIfNotExists(createIfNotExists)
         val meta = SystemFileSystem.metadataOrNull(path) ?: throw CannotAccessFileOrDirectory(it)
         when {
@@ -113,13 +114,13 @@ private class Compile(
         }
         CompilerArguments(
             inputFiles = input,
-            outputDirectory = output + PackageName(packageName),
+            outputDirectory = output,
             reader = { it.read() },
             writer = { file, string -> file.write(string) },
             error = ::handleError,
             languages = languages.toNonEmptySetOrNull() ?: throw ThisShouldNeverHappen(),
             packageName = PackageName(packageName),
-            logLevel = logLevel.toLogLevel(),
+            logger = Logger(logLevel.toLogLevel()),
             shared = shared,
             strict = strict,
         ).let(compiler)
@@ -152,13 +153,13 @@ private class Convert(
         ConverterArguments(
             format = format,
             inputFiles = nonEmptySetOf(input),
-            outputDirectory = output + PackageName(packageName),
+            outputDirectory = output,
             reader = { it.read() },
             writer = { file, string -> file.write(string) },
             error = ::handleError,
             languages = languages.toNonEmptySetOrNull() ?: nonEmptySetOf(Wirespec),
             packageName = PackageName(packageName),
-            logLevel = logLevel.toLogLevel(),
+            logger = Logger(logLevel.toLogLevel()),
             shared = shared,
             strict = strict,
         ).let(converter)

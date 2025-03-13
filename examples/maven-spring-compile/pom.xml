@@ -36,6 +36,13 @@
                 <groupId>community.flock.wirespec.plugin.maven</groupId>
                 <artifactId>wirespec-maven-plugin</artifactId>
                 <version>0.0.0-SNAPSHOT</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>community.flock.wirespec.integration</groupId>
+                        <artifactId>wirespec-jvm</artifactId>
+                        <version>0.0.0-SNAPSHOT</version>
+                    </dependency>
+                </dependencies>
                 <executions>
                     <execution>
                         <id>typescript</id>

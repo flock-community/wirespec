@@ -10,3 +10,5 @@ enum class FileExtension(override val value: String) : Value<String> {
     Wirespec("ws"),
     JSON("json"),
 }
+
+fun FileExtension.withDot() = ".$value"

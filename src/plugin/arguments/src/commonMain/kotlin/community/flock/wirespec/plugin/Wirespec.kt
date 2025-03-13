@@ -17,7 +17,6 @@ import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
-import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.converter.avro.AvroParser
 import community.flock.wirespec.openapi.v2.OpenAPIV2Emitter
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser
@@ -34,6 +33,7 @@ import community.flock.wirespec.plugin.files.File
 import community.flock.wirespec.plugin.files.FileName
 import community.flock.wirespec.plugin.files.FilePath
 import community.flock.wirespec.plugin.files.inferOutputFile
+import community.flock.wirespec.plugin.files.plus
 import community.flock.wirespec.plugin.files.toJSONFile
 import community.flock.wirespec.plugin.files.toJavaFile
 import community.flock.wirespec.plugin.files.toKotlinFile
@@ -44,14 +44,14 @@ import community.flock.wirespec.plugin.files.toWirespecFile
 fun compile(arguments: CompilerArguments) {
     val ctx = { emitter: Emitter ->
         object : CompilationContext {
-            override val logger = Logger(arguments.logLevel)
+            override val logger = arguments.logger
             override val emitter = emitter
         }
     }
 
     return arguments.inputFiles
         .flatMap { inputFile ->
-            arguments.outputDirectory
+            arguments.outputDirectory.plus(arguments.packageName)
                 .inferOutputFile(inputFile)
                 .pairWithEmitters(arguments.languages, arguments.packageName)
                 .map { (outputFile, emitter) ->
@@ -62,9 +62,13 @@ fun compile(arguments: CompilerArguments) {
         }
         .let { either { it.bindAll() } }
         .map { it.flatten() }
+        .map { it + arguments.mapShared() }
         .mapLeft { it.map(WirespecException::message) }
         .fold({ arguments.error(it.joinToString()) }) {
-            it.forEach { (file, result) -> arguments.writer(file, result) }
+            it.forEach { (file, result) ->
+                println("Writing ${file.path.fileName.value} to ${file.path.directory}")
+                arguments.writer(file, result)
+            }
         }
 }
 
@@ -73,7 +77,7 @@ fun convert(arguments: ConverterArguments) {
         object {
             fun emit(source: String) = emitter.emit(
                 parser(source, arguments.strict),
-                Logger(arguments.logLevel),
+                arguments.logger,
             ).right()
 
             private val parser = when (arguments.format) {
@@ -86,7 +90,7 @@ fun convert(arguments: ConverterArguments) {
 
     return arguments.inputFiles
         .flatMap { inputFile ->
-            arguments.outputDirectory
+            arguments.outputDirectory.plus(arguments.packageName)
                 .inferOutputFile(inputFile)
                 .pairWithEmitters(arguments.languages, arguments.packageName)
                 .map { (outputFile, emitter) ->
@@ -127,5 +131,5 @@ private fun keepSplitOrCombine(split: Boolean, outputFile: File) = { emitted: No
 }
 
 private fun NonEmptyList<Pair<File, NonEmptyList<Emitted>>>.flatten() = flatMap { (file, results) ->
-    results.map { (name, result) -> file.changeName(FileName(name)) to result }
+    results.map { (name, result) -> file.change(FileName(name)) to result }
 }
