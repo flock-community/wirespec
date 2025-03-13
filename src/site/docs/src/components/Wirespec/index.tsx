@@ -89,11 +89,11 @@ export const WirespecShared = ({emitter}:WirespecProps ) => {
 
 export const WirespecCompile = ({emitter}:WirespecProps) => {
     const ast = parse(example)
-
+    const jsonEmitters: Emitters[] = [Emitters.OPENAPI_V2, Emitters.OPENAPI_V3, Emitters.AVRO]
     if(ast.result){
         const source = emit(ast.result, emitter, "")
         return source.map(it => {
-            if(emitter === Emitters.OPENAPI_V2){
+            if(jsonEmitters.includes(emitter)){
                 const json = JSON.parse(it.result)
                 return <CodeBlock title={`${it.typeName}.json`} language="json">{JSON.stringify(json, null, 4)}</CodeBlock>
             }
