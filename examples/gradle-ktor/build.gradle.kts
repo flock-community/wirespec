@@ -114,11 +114,6 @@ tasks.register<CompileWirespecTask>("wirespec-typescript") {
 
 class KotlinSerializableEmitter : KotlinEmitter(PackageName("community.flock.wirespec.generated.kotlin")) {
 
-    override fun emit(type: Type, ast: AST): String = """
-        |@kotlinx.serialization.Serializable
-        |${super.emit(type, ast)}
-    """.trimMargin()
-
     override fun emit(refined: Refined): String = """
         |@kotlinx.serialization.Serializable
         |${super.emit(refined)}
