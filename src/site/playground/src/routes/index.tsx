@@ -14,9 +14,12 @@ import { setMonacoErrors } from "../utils/SetMonacoErrors";
 import { wirespecToTarget } from "../transformations/WirespecToTarget";
 import { wsExample } from "../examples/wirespec";
 
-export type Specification = "wirespec";
+type CompileSpecification = "wirespec";
+type ConvertSpecification = "open_api_v2" | "open_api_v3";
 
-export type Emitter =
+export type Specification = CompileSpecification | ConvertSpecification;
+
+type CompilerEmitter =
   | "typescript"
   | "kotlin"
   | "scala"
@@ -24,6 +27,9 @@ export type Emitter =
   | "open_api_v2"
   | "open_api_v3"
   | "avro";
+type ConverterEmitter = "wirespec";
+
+export type Emitter = CompilerEmitter | ConverterEmitter;
 
 type Search = {
   specification: Specification;
@@ -107,28 +113,24 @@ function RouteComponent() {
   }, [errors, monaco]);
 
   return (
-    <Grid container alignItems="center" spacing={1}>
-      <Grid item md={6}>
-        {/* <SpecificationSelector /> */}
-      </Grid>
-      <Grid item md={6}>
-        <Box sx={{ [theme.breakpoints.down("md")]: { display: "none" } }}>
-          <EmitterSelector />
+    <Box
+      display="flex"
+      flexDirection={theme.breakpoints.down("md") ? "column" : "row"}
+      gap={1}
+    >
+      <Box flex={1}>
+        <SpecificationSelector />
+        <Box marginTop={1}>
+          <PlayGroundInput code={code} setCode={setCode} />
         </Box>
-      </Grid>
-
-      <Grid item xs={12} md={6}>
-        <PlayGroundInput code={code} setCode={setCode} />
-      </Grid>
-
-      <Grid item xs={12} md={6}>
-        <PlayGroundOutput code={wirespecResult} language={emitter} />
-      </Grid>
-
-      <Grid item xs={6}>
         <PlayGroundErrors errors={errors} />
-      </Grid>
-      <Grid item xs={6} />
-    </Grid>
+      </Box>
+      <Box flex={1}>
+        <EmitterSelector />
+        <Box marginTop={1}>
+          <PlayGroundOutput code={wirespecResult} language={emitter} />
+        </Box>
+      </Box>
+    </Box>
   );
 }

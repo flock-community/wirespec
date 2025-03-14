@@ -14,10 +14,12 @@ export function EmitterSelector() {
   ];
 
   const navigate = useNavigate({ from: "/" });
-  const { emitter } = useSearch({ from: "/" });
+  const { emitter, specification } = useSearch({ from: "/" });
 
   const handleChange = (event: { target: { value: string } }) => {
-    navigate({ search: () => ({ emitter: event.target.value as Emitter }) });
+    navigate({
+      search: () => ({ emitter: event.target.value as Emitter, specification }),
+    });
   };
 
   return (
