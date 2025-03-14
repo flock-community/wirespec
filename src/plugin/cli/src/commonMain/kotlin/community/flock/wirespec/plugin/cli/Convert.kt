@@ -34,7 +34,7 @@ fun convert(arguments: ConverterArguments) {
                 emitter.split -> file to results
                 else -> file to nonEmptyListOf(
                     Emitted(
-                        jsonFile.path.fileName.value.replaceFirstChar(Char::uppercase),
+                        jsonFile.path.fileName.value,
                         results.first().result,
                     ),
                 )
