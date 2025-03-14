@@ -6,20 +6,24 @@ import { useMonaco } from "@monaco-editor/react";
 import { Box, styled } from "@mui/material";
 import { PlayGroundInput } from "../components/PlayGroundInput";
 import { PlayGroundOutput } from "../components/PlayGroundOutput";
-import { PlayGroundErrors } from "../components/PlayGroundErrors";
 import { SpecificationSelector } from "../components/SpecificationSelector";
 import { EmitterSelector } from "../components/EmitterSelector";
 import { initializeMonaco } from "../utils/InitializeMonaco";
-import { setMonacoErrors } from "../utils/SetMonacoErrors";
+import { MonacoError, setMonacoErrors } from "../utils/SetMonacoErrors";
 import { wirespecToTarget } from "../transformations/WirespecToTarget";
 import { wsExample } from "../examples/wirespec";
+import { swaggerExample } from "../examples/swagger";
+import {
+  openApiV2ToWirespec,
+  openApiV3ToWirespec,
+} from "../transformations/OpenAPIToWirespec";
 
 type CompileSpecification = "wirespec";
 type ConvertSpecification = "open_api_v2" | "open_api_v3";
 
 export type Specification = CompileSpecification | ConvertSpecification;
 
-type CompilerEmitter =
+export type CompilerEmitter =
   | "typescript"
   | "kotlin"
   | "scala"
@@ -27,8 +31,7 @@ type CompilerEmitter =
   | "open_api_v2"
   | "open_api_v3"
   | "avro";
-type ConverterEmitter = "wirespec";
-
+export type ConverterEmitter = "wirespec";
 export type Emitter = CompilerEmitter | ConverterEmitter;
 
 type Search = {
@@ -49,6 +52,7 @@ function createFileHeaderFor(fileName: string, language: string) {
     case "open_api_v2":
     case "open_api_v3":
     case "avro":
+    case "wirespec":
       return "";
     case "java":
       return `\n/**\n/* ${fileName}\n**/\n`;
@@ -69,6 +73,7 @@ export const Route = createFileRoute("/")({
 });
 
 const StyledContainer = styled(Box)(({ theme }) => ({
+  height: "100%",
   display: "flex",
   gap: "8px",
   [theme.breakpoints.down("md")]: {
@@ -78,23 +83,60 @@ const StyledContainer = styled(Box)(({ theme }) => ({
 
 function RouteComponent() {
   const monaco = useMonaco();
-  const { emitter } = useSearch({ from: "/" });
-  const [code, setCode] = useState(wsExample());
+  const { emitter, specification } = useSearch({ from: "/" });
+  const [code, setCode] = useState("");
   const [wirespecOutput, setWirespecOutput] = useState<CompilationResult>();
   const [wirespecResult, setWirespecResult] = useState("");
-  const [errors, setErrors] = useState<WsError[]>([]);
+  const [wirespecErrors, setWirespecErrors] = useState<MonacoError[]>([]);
 
   useEffect(() => {
-    const compiledOutput = wirespecToTarget(code, emitter);
-    setWirespecOutput(compiledOutput);
-  }, [code, emitter]);
-
-  useEffect(() => {
-    if (!monaco) {
+    if (specification === "wirespec") {
+      const compiledOutput = wirespecToTarget(code, emitter);
+      setWirespecOutput(compiledOutput);
       return;
     }
+
+    try {
+      const json = JSON.parse(code);
+
+      if (json.swagger) {
+        setWirespecOutput(openApiV2ToWirespec(code));
+      } else if (json.openapi) {
+        setWirespecOutput(openApiV3ToWirespec(code));
+      } else {
+        return setWirespecErrors([
+          {
+            value: `Invalid OpenAPI specification; missing 'swagger' or 'openapi' property`,
+            line: 1,
+            position: 1,
+            length: 1,
+          },
+        ]);
+      }
+      setWirespecErrors([]);
+    } catch (error) {
+      if (error instanceof Error) {
+        setWirespecErrors([
+          { value: error.message, line: 1, position: 1, length: 1 },
+        ]);
+      }
+    }
+  }, [code, emitter, specification]);
+
+  useEffect(() => {
+    if (!monaco) return;
     initializeMonaco(monaco);
   }, [monaco]);
+
+  useEffect(() => {
+    if (!monaco) return;
+
+    setMonacoErrors(monaco, wirespecErrors);
+  }, [wirespecErrors, monaco]);
+
+  useEffect(() => {
+    specification === "wirespec" ? setCode(wsExample) : setCode(swaggerExample);
+  }, [specification]);
 
   useEffect(() => {
     if (wirespecOutput) {
@@ -103,34 +145,28 @@ function RouteComponent() {
           wirespecOutput.result
             .map(
               (file) =>
-                `${createFileHeaderFor(file.typeName, emitter)}${file.result}`
+                `${createFileHeaderFor(file.typeName, emitter)}${file.result}`,
             )
-            .join("")
+            .join(""),
         );
       }
-      setErrors(wirespecOutput.errors);
+      if (wirespecOutput.errors) {
+        setWirespecErrors(wirespecOutput.errors);
+      }
     }
   }, [wirespecOutput, emitter]);
-
-  useEffect(() => {
-    if (!monaco) {
-      return;
-    }
-    setMonacoErrors(monaco, errors);
-  }, [errors, monaco]);
 
   return (
     <StyledContainer>
       <Box flex={1}>
         <SpecificationSelector />
-        <Box marginTop={1}>
+        <Box marginTop={1} height="100%">
           <PlayGroundInput code={code} setCode={setCode} />
         </Box>
-        <PlayGroundErrors errors={errors} />
       </Box>
       <Box flex={1}>
         <EmitterSelector />
-        <Box marginTop={1}>
+        <Box marginTop={1} minHeight="80vh" height="100%">
           <PlayGroundOutput code={wirespecResult} language={emitter} />
         </Box>
       </Box>

@@ -3,24 +3,29 @@ import {
   convert,
   emit,
   Emitters,
-  WsEmitted,
+  type WsEmitted,
 } from "@flock/wirespec";
 
-export const openApiV2ToWirespec: (openapi: string) => WsEmitted[] = (
-  x: string,
-) => {
+export const openApiV2ToWirespec: (openapi: string) => {
+  result: WsEmitted[];
+  errors: [];
+} = (x: string) => {
   const ast = convert(x, Converters.OPENAPI_V2);
-  return emit(ast, Emitters.WIRESPEC, "");
+  return { result: emit(ast, Emitters.WIRESPEC, ""), errors: [] };
 };
 
-export const openApiV3ToWirespec: (openapi: string) => WsEmitted[] = (
-  x: string,
-) => {
+export const openApiV3ToWirespec: (openapi: string) => {
+  result: WsEmitted[];
+  errors: [];
+} = (x: string) => {
   const ast = convert(x, Converters.OPENAPI_V3);
-  return emit(ast, Emitters.WIRESPEC, "");
+  return { result: emit(ast, Emitters.WIRESPEC, ""), errors: [] };
 };
 
-export const avroToWirespec: (avro: string) => WsEmitted[] = (x: string) => {
+export const avroToWirespec: (avro: string) => {
+  result: WsEmitted[];
+  errors: [];
+} = (x: string) => {
   const ast = convert(x, Converters.AVRO);
-  return emit(ast, Emitters.WIRESPEC, "");
+  return { result: emit(ast, Emitters.WIRESPEC, ""), errors: [] };
 };

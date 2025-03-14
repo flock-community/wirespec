@@ -16,7 +16,7 @@ const darkTheme = createTheme({
 function App() {
   return (
     <ThemeProvider theme={darkTheme}>
-      <Box display="flex" flexDirection="column" rowGap={2}>
+      <Box height="100vh" display="flex" flexDirection="column" rowGap={2}>
         <Box
           component="header"
           display="flex"
@@ -62,7 +62,7 @@ function App() {
           </a>
         </Box>
 
-        <Box paddingInline={2}>
+        <Box flex={1} paddingInline={2}>
           <Outlet />
         </Box>
       </Box>
