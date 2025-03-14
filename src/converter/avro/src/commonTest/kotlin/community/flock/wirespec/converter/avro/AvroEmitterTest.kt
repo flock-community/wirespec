@@ -1,5 +1,6 @@
 package community.flock.wirespec.converter.avro
 
+import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
@@ -23,7 +24,7 @@ class AvroEmitterTest {
 
     private fun parse(source: String): AST = object : ParseContext, NoLogger {
         override val spec = WirespecSpec
-    }.parse(source).getOrNull() ?: error("Parsing failed.")
+    }.parse(nonEmptyListOf(source)).getOrNull() ?: error("Parsing failed.")
 
     @Test
     fun testTodoWs() {
@@ -31,7 +32,7 @@ class AvroEmitterTest {
         val text = SystemFileSystem.source(path).buffered().readString()
 
         val ast = parse(text)
-        val actual = AvroEmitter.emit(ast).let { json.encodeToString(it) }
+        val actual = AvroEmitter.emit(ast.modules.first()).let { json.encodeToString(it) }
         val expected = """
             [
                 {
@@ -117,7 +118,7 @@ class AvroEmitterTest {
         val text = SystemFileSystem.source(path).buffered().readString()
 
         val ast = AvroParser.parse(text)
-        val actual = AvroEmitter.emit(ast).let { json.encodeToString(it) }
+        val actual = AvroEmitter.emit(ast.modules.first()).let { json.encodeToString(it) }
 
         val expected = """
         [
