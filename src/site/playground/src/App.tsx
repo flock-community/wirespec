@@ -43,7 +43,11 @@ function App() {
             href="https://docs.wirespec.io/"
             target="_blank"
             rel="noopener"
-            style={{ marginLeft: "auto", color: "white" }}
+            style={{
+              marginLeft: "auto",
+              color: "white",
+              textDecoration: "none",
+            }}
           >
             Documentation
           </a>
@@ -52,7 +56,7 @@ function App() {
             href="https://github.com/flock-community/wirespec"
             target="_blank"
             rel="noopener"
-            style={{ color: "white" }}
+            style={{ color: "white", textDecoration: "none" }}
           >
             GitHub
           </a>
