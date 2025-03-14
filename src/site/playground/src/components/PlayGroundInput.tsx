@@ -9,8 +9,8 @@ export function PlayGroundInput({ code, setCode }: PlayGroundInputProps) {
   return (
     <Editor
       language="wirespec"
-      height={"80vh"}
       theme="vs-dark"
+      height="100vh"
       options={{ minimap: { enabled: false } }}
       value={code}
       onChange={(code: string | undefined) => setCode(code ?? "")}
