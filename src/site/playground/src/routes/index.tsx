@@ -17,6 +17,7 @@ import {
   openApiV2ToWirespec,
   openApiV3ToWirespec,
 } from "../transformations/OpenAPIToWirespec";
+import { openapiExample } from "../examples/openapi";
 
 type CompileSpecification = "wirespec";
 type ConvertSpecification = "open_api_v2" | "open_api_v3";
@@ -135,7 +136,14 @@ function RouteComponent() {
   }, [wirespecErrors, monaco]);
 
   useEffect(() => {
-    specification === "wirespec" ? setCode(wsExample) : setCode(swaggerExample);
+    switch (specification) {
+      case "wirespec":
+        return setCode(wsExample);
+      case "open_api_v2":
+        return setCode(swaggerExample);
+      case "open_api_v3":
+        return setCode(openapiExample);
+    }
   }, [specification]);
 
   useEffect(() => {
