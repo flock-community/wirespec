@@ -3,7 +3,7 @@ import { useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { WsError, WsEmitted } from "@flock/wirespec";
 import { useMonaco } from "@monaco-editor/react";
-import { Box, Grid, useTheme } from "@mui/material";
+import { Box } from "@mui/material";
 import { PlayGroundInput } from "../components/PlayGroundInput";
 import { PlayGroundOutput } from "../components/PlayGroundOutput";
 import { PlayGroundErrors } from "../components/PlayGroundErrors";
@@ -70,7 +70,6 @@ export const Route = createFileRoute("/")({
 
 function RouteComponent() {
   const monaco = useMonaco();
-  const theme = useTheme();
   const { emitter } = useSearch({ from: "/" });
   const [code, setCode] = useState(wsExample());
   const [wirespecOutput, setWirespecOutput] = useState<CompilationResult>();
@@ -96,9 +95,9 @@ function RouteComponent() {
           wirespecOutput.result
             .map(
               (file) =>
-                `${createFileHeaderFor(file.typeName, emitter)}${file.result}`
+                `${createFileHeaderFor(file.typeName, emitter)}${file.result}`,
             )
-            .join("")
+            .join(""),
         );
       }
       setErrors(wirespecOutput.errors);
@@ -113,11 +112,7 @@ function RouteComponent() {
   }, [errors, monaco]);
 
   return (
-    <Box
-      display="flex"
-      flexDirection={theme.breakpoints.down("md") ? "column" : "row"}
-      gap={1}
-    >
+    <Box display="flex" gap={1}>
       <Box flex={1}>
         <SpecificationSelector />
         <Box marginTop={1}>

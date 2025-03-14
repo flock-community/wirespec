@@ -20,7 +20,6 @@
     "@flock/wirespec": "file:../../plugin/npm/build/dist/js/productionLibrary/",
     "@fontsource/roboto": "^5.0.13",
     "@monaco-editor/react": "^4.6.0",
-    "@mui/icons-material": "^5.16.14",
     "@mui/lab": "^5.0.0-alpha.170",
     "@mui/material": "^5.15.16",
     "@tanstack/react-router": "^1.112.0",

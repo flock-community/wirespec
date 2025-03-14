@@ -1,5 +1,5 @@
 import { parse, emit, Emitters, WsEmitted, WsError } from "@flock/wirespec";
-import { CompilationResult } from "../routes/compiler";
+import { CompilationResult } from "../routes/index";
 
 const getEmitterFor = (language: string) => {
   switch (language) {
@@ -24,7 +24,7 @@ const getEmitterFor = (language: string) => {
 
 export const wirespecToTarget: (x: string, y: string) => CompilationResult = (
   wirespec: string,
-  language: string,
+  language: string
 ) => {
   const emitter = getEmitterFor(language);
   const parseResult = parse(wirespec);

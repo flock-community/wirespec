@@ -1,12 +1,11 @@
 import wirespecLogo from "./assets/wirespec.svg";
 import "./App.css";
 import { Box, createTheme, ThemeProvider } from "@mui/material";
-import GitHubIcon from "@mui/icons-material/GitHub";
 import "@fontsource/roboto/300.css";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
-import { Outlet, Link } from "@tanstack/react-router";
+import { Outlet } from "@tanstack/react-router";
 
 const darkTheme = createTheme({
   palette: {
@@ -22,7 +21,7 @@ function App() {
           component="header"
           display="flex"
           alignItems="center"
-          gap={8}
+          gap={2}
           paddingBlock={2}
           paddingInline={2}
           bgcolor="#333"
@@ -41,12 +40,21 @@ function App() {
           </span>
 
           <a
-            href="https://github.com/flock-community/wirespec"
+            href="https://docs.wirespec.io/"
             target="_blank"
-            title="GitHub"
+            rel="noopener"
             style={{ marginLeft: "auto", color: "white" }}
           >
-            <GitHubIcon />
+            Documentation
+          </a>
+
+          <a
+            href="https://github.com/flock-community/wirespec"
+            target="_blank"
+            rel="noopener"
+            style={{ color: "white" }}
+          >
+            GitHub
           </a>
         </Box>
 
