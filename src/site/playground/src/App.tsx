@@ -30,13 +30,13 @@ function App() {
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "6px",
-              fontSize: "24px",
-              fontWeight: 700,
+              gap: "8px",
+              fontSize: "20px",
+              fontWeight: 600,
             }}
           >
             <img src={wirespecLogo} height={30} alt="Wirespec Logo" />
-            <span> Wirespec </span>
+            <span> Wirespec Playground </span>
           </span>
 
           <a
