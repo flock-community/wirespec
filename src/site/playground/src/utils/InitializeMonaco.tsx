@@ -4,17 +4,16 @@ const KEYWORDS = ["Boolean", "String", "Integer"];
 
 export function initializeMonaco(monaco: Monaco) {
   const model = monaco.editor.getModels();
-  console.log(model);
   if (!model) {
     return;
   }
 
   monaco.languages.register({ id: "wirespec" });
 
-  monaco?.editor.defineTheme("vs-dark", {
+  monaco.editor.defineTheme("vs-dark", {
     colors: {
       "editor.foreground": "#BDAE9D",
-      "editor.background": "#2A211C",
+      "editor.background": "#242424",
     },
     inherit: true,
     base: "vs-dark",
