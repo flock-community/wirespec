@@ -1,6 +1,6 @@
 import { FormControl, ListSubheader, MenuItem, Select } from "@mui/material";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { type Specification } from "../routes/compiler";
+import { type Specification } from "../routes/index";
 
 export function SpecificationSelector() {
   const compileOptions: { value: Specification; label: string }[] = [
@@ -13,8 +13,8 @@ export function SpecificationSelector() {
     { value: "open_api_v3", label: "Open API v3" },
   ];
 
-  const navigate = useNavigate({ from: "/compiler" });
-  const { specification } = useSearch({ from: "/compiler" });
+  const navigate = useNavigate({ from: "/" });
+  const { specification } = useSearch({ from: "/" });
 
   const handleChange = (event: { target: { value: string } }) => {
     if (event.target.value === "wirespec") {

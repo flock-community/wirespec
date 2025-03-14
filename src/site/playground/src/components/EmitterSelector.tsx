@@ -1,6 +1,6 @@
 import { FormControl, MenuItem, Select } from "@mui/material";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { type Emitter } from "../routes/compiler";
+import { type Emitter } from "../routes/index";
 
 export function EmitterSelector() {
   const options: { value: Emitter; label: string }[] = [
@@ -13,8 +13,8 @@ export function EmitterSelector() {
     { value: "avro", label: "Avro" },
   ];
 
-  const navigate = useNavigate({ from: "/compiler" });
-  const { emitter } = useSearch({ from: "/compiler" });
+  const navigate = useNavigate({ from: "/" });
+  const { emitter } = useSearch({ from: "/" });
 
   const handleChange = (event: { target: { value: string } }) => {
     navigate({ search: () => ({ emitter: event.target.value as Emitter }) });

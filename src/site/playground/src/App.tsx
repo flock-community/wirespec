@@ -40,31 +40,6 @@ function App() {
             <span> Wirespec </span>
           </span>
 
-          <Box component="nav" display="flex" gap={4}>
-            <Link
-              to="/compiler"
-              search={{ emitter: "typescript" }}
-              activeOptions={{ includeSearch: false }}
-              activeProps={{
-                style: {
-                  color: "#646cff",
-                },
-              }}
-            >
-              Compiler
-            </Link>
-            <Link
-              to="/converter"
-              activeProps={{
-                style: {
-                  color: "#646cff",
-                },
-              }}
-            >
-              Converter
-            </Link>
-          </Box>
-
           <a
             href="https://github.com/flock-community/wirespec"
             target="_blank"
