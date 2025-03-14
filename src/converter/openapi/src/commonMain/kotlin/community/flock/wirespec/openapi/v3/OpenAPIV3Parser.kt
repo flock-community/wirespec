@@ -41,12 +41,17 @@ object OpenAPIV3Parser {
 
     fun parse(json: String, strict: Boolean = false): AST = AST(
         nonEmptyListOf(
-            Module("", OpenAPI(
-        json = Json {
-            prettyPrint = true
-            ignoreUnknownKeys = strict
-        },
-    ).decodeFromString(json).parse().toNonEmptyListOrNull() ?: error("Cannot yield non empty List<Node> for OpenAPI v3"))))
+            Module(
+                "",
+                OpenAPI(
+                    json = Json {
+                        prettyPrint = true
+                        ignoreUnknownKeys = strict
+                    },
+                ).decodeFromString(json).parse().toNonEmptyListOrNull() ?: error("Cannot yield non empty List<Node> for OpenAPI v3"),
+            ),
+        ),
+    )
 
     fun OpenAPIObject.parse(): List<Definition> = listOf(
         parseEndpoint(),

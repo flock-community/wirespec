@@ -8,7 +8,6 @@ import arrow.core.raise.either
 import arrow.core.raise.ensureNotNull
 import arrow.core.right
 import arrow.core.toNonEmptyListOrNull
-import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.exceptions.EmptyModule
 import community.flock.wirespec.compiler.core.exceptions.UnionError
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
@@ -33,10 +32,9 @@ object Parser {
     private val endpointParser = EndpointParser
     private val channelParser = ChannelParser
 
-    fun HasLogger.parse(modules: NonEmptyList<TokenizedModule>, options: ParseOptions = ParseOptions()): EitherNel<WirespecException, AST> =
-        modules.map{ it.toProvider(logger).parseModule(options) }
-            .let { l -> either { l.bindAll() } }
-            .map { AST(it) }
+    fun HasLogger.parse(modules: NonEmptyList<TokenizedModule>, options: ParseOptions = ParseOptions()): EitherNel<WirespecException, AST> = modules.map { it.toProvider(logger).parseModule(options) }
+        .let { l -> either { l.bindAll() } }
+        .map { AST(it) }
 
     private fun TokenProvider.parseModule(options: ParseOptions): EitherNel<WirespecException, Module> = either {
         mutableListOf<EitherNel<WirespecException, Definition>>()

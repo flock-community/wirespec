@@ -38,12 +38,18 @@ import community.flock.kotlinx.openapi.bindings.v2.Type as OpenapiType
 
 object OpenAPIV2Parser {
 
-    fun parse(json: String, strict: Boolean = true): AST = AST(nonEmptyListOf(Module("", OpenAPI(
-        json = Json {
-            prettyPrint = true
-            ignoreUnknownKeys = !strict
-        },
-    ).decodeFromString(json).parse().toNonEmptyListOrNull() ?: error("Cannot yield non empty AST for OpenAPI v2")))
+    fun parse(json: String, strict: Boolean = true): AST = AST(
+        nonEmptyListOf(
+            Module(
+                "",
+                OpenAPI(
+                    json = Json {
+                        prettyPrint = true
+                        ignoreUnknownKeys = !strict
+                    },
+                ).decodeFromString(json).parse().toNonEmptyListOrNull() ?: error("Cannot yield non empty AST for OpenAPI v2"),
+            ),
+        ),
     )
 
     fun SwaggerObject.parse(): List<Definition> = listOf(

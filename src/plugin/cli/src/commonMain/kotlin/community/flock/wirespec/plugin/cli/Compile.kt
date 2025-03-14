@@ -21,17 +21,15 @@ import community.flock.wirespec.plugin.FileName
 import community.flock.wirespec.plugin.FilePath
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.Reader
-import community.flock.wirespec.plugin.files.WirespecFile
 
 fun compile(arguments: CompilerArguments) {
-
     val context = { files: NonEmptySet<File>, output: Directory ->
         object : WirespecContext {
             override val languages: NonEmptySet<Language> = arguments.languages
             override val packageName: PackageName = arguments.packageName ?: PackageName(DEFAULT_GENERATED_PACKAGE_STRING)
             override val path: (FileExtension) -> FilePath = files.first().out(arguments.packageName, output)
             override val logger: Logger = Logger(arguments.logLevel)
-            override fun read(): NonEmptyList<String> = files.map{ arguments.reader(it)} // TODO
+            override fun read(): NonEmptyList<String> = files.map { arguments.reader(it) } // TODO
         }
     }
 

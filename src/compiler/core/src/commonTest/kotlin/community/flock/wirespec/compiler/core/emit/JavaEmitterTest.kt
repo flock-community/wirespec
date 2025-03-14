@@ -4,10 +4,9 @@ import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.EmitContext
 import community.flock.wirespec.compiler.core.fixture.NodeFixtures
 import community.flock.wirespec.compiler.core.parse.Definition
-import community.flock.wirespec.compiler.core.parse.Node
+import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.matchers.shouldBe
-import community.flock.wirespec.compiler.core.parse.Module
 import kotlin.test.Test
 
 class JavaEmitterTest {

@@ -24,7 +24,7 @@ class TestLib {
         }.parse(nonEmptyListOf(source)).map { ast ->
             val output = ast.produce()
             val input = output.consume()
-            assertEquals(input, ast.modules.flatMap{ it.statements }.first())
+            assertEquals(input, ast.modules.flatMap { it.statements }.first())
         }
     }
 }

@@ -10,17 +10,15 @@ import kotlin.jvm.JvmInline
 sealed interface Node
 
 data class AST(
-    val modules: NonEmptyList<Module>
+    val modules: NonEmptyList<Module>,
 ) : Node
 
 typealias Statements = NonEmptyList<Definition>
 
 data class Module(
-    val path: String, // TODO Or File type perhaps?
-    val statements: Statements // Or Definition maybe?
+    val path: String,
+    val statements: Statements,
 ) : Node
-
-//-typealias AST = NonEmptyList<Node>
 
 sealed interface Definition : Node {
     val comment: Comment?
