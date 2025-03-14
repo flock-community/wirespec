@@ -1,24 +1,18 @@
 import Editor from "@monaco-editor/react";
 
 interface PlayGroundOutputProps {
-  code?: string;
+  code: string;
   language: string;
 }
 
 export function PlayGroundOutput({ code, language }: PlayGroundOutputProps) {
   return (
-    <>
-      {code != undefined ? (
-        <Editor
-          language={language}
-          theme={"vs-dark"}
-          height={"75vh"}
-          value={code}
-          options={{ readOnly: true }}
-        />
-      ) : (
-        ""
-      )}
-    </>
+    <Editor
+      language={language}
+      height={"75vh"}
+      theme="vs-dark"
+      options={{ readOnly: true, minimap: { enabled: false } }}
+      value={code}
+    />
   );
 }

@@ -1,6 +1,7 @@
 import wirespecLogo from "./assets/wirespec.svg";
 import "./App.css";
-import { Box, createTheme, ThemeProvider, Typography } from "@mui/material";
+import { Box, createTheme, ThemeProvider } from "@mui/material";
+import GitHubIcon from "@mui/icons-material/GitHub";
 import "@fontsource/roboto/300.css";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
@@ -18,6 +19,7 @@ function App() {
     <ThemeProvider theme={darkTheme}>
       <Box display="flex" flexDirection="column" rowGap={2}>
         <Box
+          component="header"
           display="flex"
           alignItems="center"
           gap={8}
@@ -25,11 +27,20 @@ function App() {
           paddingInline={2}
           bgcolor="#333"
         >
-          <a href="https://github.com/flock-community/wirespec" target="_blank">
-            <img src={wirespecLogo} height={50} alt="Wirespec Logo" />
-          </a>
+          <span
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              fontSize: "24px",
+              fontWeight: 700,
+            }}
+          >
+            <img src={wirespecLogo} height={30} alt="Wirespec Logo" />
+            <span> Wirespec </span>
+          </span>
 
-          <Box display="flex" gap={4}>
+          <Box component="nav" display="flex" gap={4}>
             <Link
               to="/compiler"
               search={{ emitter: "typescript" }}
@@ -40,7 +51,7 @@ function App() {
                 },
               }}
             >
-              <Typography>Compiler</Typography>
+              Compiler
             </Link>
             <Link
               to="/converter"
@@ -50,9 +61,18 @@ function App() {
                 },
               }}
             >
-              <Typography>Converter</Typography>
+              Converter
             </Link>
           </Box>
+
+          <a
+            href="https://github.com/flock-community/wirespec"
+            target="_blank"
+            title="GitHub"
+            style={{ marginLeft: "auto", color: "white" }}
+          >
+            <GitHubIcon />
+          </a>
         </Box>
 
         <Box paddingInline={2}>

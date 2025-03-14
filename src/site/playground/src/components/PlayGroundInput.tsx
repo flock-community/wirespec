@@ -6,21 +6,14 @@ interface PlayGroundInputProps {
 }
 
 export function PlayGroundInput({ code, setCode }: PlayGroundInputProps) {
-  function handleSetCode(code: string | undefined) {
-    if (!code) {
-      setCode("");
-      return;
-    }
-    setCode(code);
-  }
-
   return (
     <Editor
       language="wirespec"
-      theme="ws-dark"
       height={"75vh"}
+      theme="vs-dark"
+      options={{ minimap: { enabled: false } }}
       value={code}
-      onChange={(code: string | undefined) => handleSetCode(code)}
+      onChange={(code: string | undefined) => setCode(code ?? "")}
     />
   );
 }

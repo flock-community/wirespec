@@ -2,7 +2,7 @@ import { FormControl, MenuItem, Select } from "@mui/material";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { type Emitter } from "../routes/compiler";
 
-export function TargetLanguageSelector() {
+export function EmitterSelector() {
   const options: { value: Emitter; label: string }[] = [
     { value: "typescript", label: "TypeScript" },
     { value: "kotlin", label: "Kotlin" },

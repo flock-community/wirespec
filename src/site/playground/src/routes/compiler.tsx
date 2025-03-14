@@ -6,12 +6,15 @@ import { useMonaco } from "@monaco-editor/react";
 import { PlayGroundInput } from "../components/PlayGroundInput";
 import { PlayGroundOutput } from "../components/PlayGroundOutput";
 import { PlayGroundErrors } from "../components/PlayGroundErrors";
-import { TargetLanguageSelector } from "../components/TargetLanguageSelector";
+import { EmitterSelector } from "../components/EmitterSelector";
 import { initializeMonaco } from "../utils/InitializeMonaco";
 import { setMonacoErrors } from "../utils/SetMonacoErrors";
-import { Box, Grid, Typography, useTheme } from "@mui/material";
+import { Box, Grid, useTheme } from "@mui/material";
 import { wirespecToTarget } from "../transformations/WirespecToTarget";
 import { wsExample } from "../examples/wirespec";
+import { SpecificationSelector } from "../components/SpecificationSelector";
+
+export type Specification = "wirespec";
 
 export type Emitter =
   | "typescript"
@@ -23,6 +26,7 @@ export type Emitter =
   | "avro";
 
 type Search = {
+  specification: Specification;
   emitter: Emitter;
 };
 
@@ -51,15 +55,26 @@ export const Route = createFileRoute("/compiler")({
   component: RouteComponent,
   validateSearch: (search?: Record<string, unknown>): Search => {
     return {
+      specification:
+        (search?.specification as Search["specification"]) || "wirespec",
       emitter: (search?.emitter as Search["emitter"]) || "typescript",
     };
   },
 });
 
 function RouteComponent() {
-  const { emitter } = useSearch({ from: "/compiler" });
   const monaco = useMonaco();
+  const theme = useTheme();
+  const { emitter } = useSearch({ from: "/compiler" });
   const [code, setCode] = useState(wsExample());
+  const [wirespecOutput, setWirespecOutput] = useState<CompilationResult>();
+  const [wirespecResult, setWirespecResult] = useState("");
+  const [errors, setErrors] = useState<WsError[]>([]);
+
+  useEffect(() => {
+    const compiledOutput = wirespecToTarget(code, emitter);
+    setWirespecOutput(compiledOutput);
+  }, [code, emitter]);
 
   useEffect(() => {
     if (!monaco) {
@@ -67,16 +82,7 @@ function RouteComponent() {
     }
     initializeMonaco(monaco);
   }, [monaco]);
-  const [wirespecOutput, setWirespecOutput] = useState<CompilationResult>();
-  const [wirespecResult, setWirespecResult] = useState("");
-  const [errors, setErrors] = useState<WsError[]>([]);
 
-  const theme = useTheme();
-
-  useEffect(() => {
-    const compiledOutput = wirespecToTarget(code, emitter);
-    setWirespecOutput(compiledOutput);
-  }, [code, emitter]);
   useEffect(() => {
     if (wirespecOutput) {
       if (wirespecOutput.result.length) {
@@ -84,14 +90,15 @@ function RouteComponent() {
           wirespecOutput.result
             .map(
               (file) =>
-                `${createFileHeaderFor(file.typeName, emitter)}${file.result}`,
+                `${createFileHeaderFor(file.typeName, emitter)}${file.result}`
             )
-            .join(""),
+            .join("")
         );
       }
       setErrors(wirespecOutput.errors);
     }
-  }, [wirespecOutput]);
+  }, [wirespecOutput, emitter]);
+
   useEffect(() => {
     if (!monaco) {
       return;
@@ -102,25 +109,11 @@ function RouteComponent() {
   return (
     <Grid container alignItems="center" spacing={1}>
       <Grid item md={6}>
-        <Box display="flex" alignItems="center" gap="5px">
-          <Typography variant="h5">
-            Wirespec
-            <Box
-              component="span"
-              sx={{ [theme.breakpoints.up("md")]: { display: "none" } }}
-            >
-              {" "}
-              to:
-            </Box>
-          </Typography>
-          <Box sx={{ [theme.breakpoints.up("md")]: { display: "none" } }}>
-            <TargetLanguageSelector />
-          </Box>
-        </Box>
+        <SpecificationSelector />
       </Grid>
       <Grid item md={6}>
         <Box sx={{ [theme.breakpoints.down("md")]: { display: "none" } }}>
-          <TargetLanguageSelector />
+          <EmitterSelector />
         </Box>
       </Grid>
 
