@@ -493,7 +493,7 @@ object OpenAPIV3Parser {
             when (val items = schema.items) {
                 is ReferenceObject -> toReference(items, schema.nullable ?: false).toIterable(isNullable)
                 is SchemaObject -> toReference(items, schema.nullable ?: false, name).toIterable(isNullable)
-                null -> TODO()
+                null -> error("items cannot be null when type is array: ${name}")
             }
         }
 
