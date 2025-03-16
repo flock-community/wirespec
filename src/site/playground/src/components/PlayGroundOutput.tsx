@@ -1,8 +1,9 @@
 import Editor from "@monaco-editor/react";
+import { Language } from "../routes";
 
 interface PlayGroundOutputProps {
   code: string;
-  language: string;
+  language: Language;
 }
 
 export function PlayGroundOutput({ code, language }: PlayGroundOutputProps) {
