@@ -39,12 +39,12 @@ class WsCompiledFile(val name: String, val value: String)
 
 fun EitherNel<WirespecException, AST>.produce(): WsParseResult = when (this) {
     is Left -> WsParseResult(errors = value.map { it.produce() }.toTypedArray())
-    is Right -> WsParseResult(result = value.modules.flatMap { it.statements }.map { it.produce() }.toTypedArray())
+    is Right -> WsParseResult(result = value.produce())
 }
 
 @JsExport
 class WsParseResult(
-    val result: Array<WsNode>? = null,
+    val result: WsAST? = null,
     val errors: Array<WsError>? = null,
 )
 
