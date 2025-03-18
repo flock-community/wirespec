@@ -43,7 +43,7 @@ object Parser {
             .toNonEmptyListOrNull()
             .let { ensureNotNull(it) { EmptyModule().nel() } }
     }.flatMap(validate(options))
-        .map { Module("yolo", it) } // TODO how to wire this?
+        .map { Module("", it) } // TODO how to wire this?
 
     private fun TokenProvider.parseDefinition() = either {
         token.log()
