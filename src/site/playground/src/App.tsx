@@ -1,11 +1,11 @@
 import wirespecLogo from "./assets/wirespec.svg";
 import "./App.css";
-import { Box, createTheme, ThemeProvider, Typography } from "@mui/material";
+import { Box, createTheme, ThemeProvider } from "@mui/material";
 import "@fontsource/roboto/300.css";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
-import { Outlet, Link } from "@tanstack/react-router";
+import { Outlet } from "@tanstack/react-router";
 
 const darkTheme = createTheme({
   palette: {
@@ -16,46 +16,53 @@ const darkTheme = createTheme({
 function App() {
   return (
     <ThemeProvider theme={darkTheme}>
-      <Box display="flex" flexDirection="column" rowGap={2}>
+      <Box height="100vh" display="flex" flexDirection="column" rowGap={2}>
         <Box
+          component="header"
           display="flex"
           alignItems="center"
-          gap={8}
+          gap={2}
           paddingBlock={2}
           paddingInline={2}
           bgcolor="#333"
         >
-          <a href="https://github.com/flock-community/wirespec" target="_blank">
-            <img src={wirespecLogo} height={50} alt="Wirespec Logo" />
+          <span
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              fontSize: "20px",
+              fontWeight: 600,
+            }}
+          >
+            <img src={wirespecLogo} height={30} alt="Wirespec Logo" />
+            <span> Wirespec Playground </span>
+          </span>
+
+          <a
+            href="https://docs.wirespec.io/"
+            target="_blank"
+            rel="noopener"
+            style={{
+              marginLeft: "auto",
+              color: "white",
+              textDecoration: "none",
+            }}
+          >
+            Documentation
           </a>
 
-          <Box display="flex" gap={4}>
-            <Link
-              to="/compiler"
-              search={{ emitter: "typescript" }}
-              activeOptions={{ includeSearch: false }}
-              activeProps={{
-                style: {
-                  color: "#646cff",
-                },
-              }}
-            >
-              <Typography>Compiler</Typography>
-            </Link>
-            <Link
-              to="/converter"
-              activeProps={{
-                style: {
-                  color: "#646cff",
-                },
-              }}
-            >
-              <Typography>Converter</Typography>
-            </Link>
-          </Box>
+          <a
+            href="https://github.com/flock-community/wirespec"
+            target="_blank"
+            rel="noopener"
+            style={{ color: "white", textDecoration: "none" }}
+          >
+            GitHub
+          </a>
         </Box>
 
-        <Box paddingInline={2}>
+        <Box flex={1} paddingInline={2}>
           <Outlet />
         </Box>
       </Box>
