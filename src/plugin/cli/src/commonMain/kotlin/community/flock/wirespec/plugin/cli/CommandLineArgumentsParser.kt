@@ -14,7 +14,13 @@ import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.enum
+import community.flock.wirespec.compiler.core.emit.JavaEmitter
+import community.flock.wirespec.compiler.core.emit.KotlinEmitter
+import community.flock.wirespec.compiler.core.emit.ScalaEmitter
+import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
+import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.Logger.Level
@@ -22,21 +28,21 @@ import community.flock.wirespec.compiler.utils.Logger.Level.DEBUG
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
 import community.flock.wirespec.compiler.utils.Logger.Level.INFO
 import community.flock.wirespec.compiler.utils.Logger.Level.WARN
+import community.flock.wirespec.openapi.v2.OpenAPIV2Emitter
+import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter
 import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.ConverterArguments
-import community.flock.wirespec.plugin.FileExtension
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Language
-import community.flock.wirespec.plugin.Language.Wirespec
 import community.flock.wirespec.plugin.files.Directory
 import community.flock.wirespec.plugin.files.DirectoryPath
-import community.flock.wirespec.plugin.files.File
-import community.flock.wirespec.plugin.files.FileName
 import community.flock.wirespec.plugin.files.FilePath
 import community.flock.wirespec.plugin.files.FullPath
-import community.flock.wirespec.plugin.files.JSONFile
-import community.flock.wirespec.plugin.files.WirespecFile
-import community.flock.wirespec.plugin.files.plus
+import community.flock.wirespec.plugin.files.Source
+import community.flock.wirespec.plugin.files.Source.Type.JSON
+import community.flock.wirespec.plugin.files.Source.Type.Wirespec
+import community.flock.wirespec.plugin.files.SourcePath
+import community.flock.wirespec.plugin.files.path
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -63,22 +69,33 @@ class WirespecCli : NoOpCliktCommand(name = "wirespec") {
 }
 
 private abstract class CommonOptions : CliktCommand() {
-    val inputPath by option(*Options.Input.flags, help = "Input")
-    val outputPath by option(*Options.Output.flags, help = "Output")
+    val input by option(*Options.Input.flags, help = "Input")
+    val output by option(*Options.Output.flags, help = "Output")
     val packageName by option(*Options.PackageName.flags, help = "Package name")
         .default(DEFAULT_GENERATED_PACKAGE_STRING)
     val logLevel by option(*Options.LogLevel.flags, help = "Log level: $Level").default("$ERROR")
     val shared by option(*Options.Shared.flags, help = "Generate shared wirespec code").flag(default = false)
     val strict by option(*Options.Strict.flags, help = "Strict mode").flag()
 
-    fun getFullPath(ioPath: String?, createIfNotExists: Boolean = false): FullPath? = ioPath?.let {
-        val path = Path(it).createIfNotExists(createIfNotExists)
-        val meta = SystemFileSystem.metadataOrNull(path) ?: throw CannotAccessFileOrDirectory(it)
-        when {
-            meta.isDirectory -> DirectoryPath(it)
-            meta.isRegularFile -> FilePath(it)
-            else -> throw IsNotAFileOrDirectory(it)
+    fun getFullPath(input: String?, createIfNotExists: Boolean = false) = when {
+        input == null -> null
+        input.startsWith("classpath:") -> SourcePath(input.substringAfter("classpath:"))
+        else -> {
+            val path = Path(input).createIfNotExists(createIfNotExists)
+            val meta = SystemFileSystem.metadataOrNull(path) ?: throw CannotAccessFileOrDirectory(input)
+            val pathString = path.toString()
+            when {
+                meta.isDirectory -> DirectoryPath(pathString)
+                meta.isRegularFile -> FilePath(pathString)
+                else -> throw IsNotAFileOrDirectory(pathString)
+            }
         }
+    }
+
+    fun getOutPutPath(inputPath: FullPath) = when (val it = getFullPath(output, true)) {
+        null -> DirectoryPath("${inputPath.path()}/out")
+        is DirectoryPath -> it
+        is FilePath, is SourcePath -> throw OutputShouldBeADirectory()
     }
 
     fun String.toLogLevel() = when (trim().uppercase()) {
@@ -99,26 +116,41 @@ private class Compile(
         .multiple(required = true)
 
     override fun run() {
-        val input = when (val it = getFullPath(inputPath)) {
+        val inputPath = getFullPath(input)
+        val sources = when (inputPath) {
             null -> throw IsNotAFileOrDirectory(null)
-            is DirectoryPath -> Directory(it).wirespecFiles()
-            is FilePath -> when (it.extension) {
-                FileExtension.Wirespec -> nonEmptySetOf(WirespecFile(it))
+            is SourcePath -> throw NoClasspathPossible()
+            is DirectoryPath -> Directory(inputPath).wirespecSources()
+            is FilePath -> when (inputPath.extension) {
+                FileExtension.Wirespec -> nonEmptySetOf(
+                    Source<Wirespec>(
+                        inputPath.name,
+                        inputPath.read(),
+                    ),
+                )
+
                 else -> throw WirespecFileError()
             }
         }
-        val output = when (val it = getFullPath(outputPath, true)) {
-            null -> Directory(input.first().path + "/out")
-            is DirectoryPath -> Directory(it)
-            is FilePath -> throw OutputShouldBeADirectory()
-        }
+
+        val emitters = languages.map {
+            when (it) {
+                Language.Java -> JavaEmitter(PackageName(packageName))
+                Language.Kotlin -> KotlinEmitter(PackageName(packageName))
+                Language.Scala -> ScalaEmitter(PackageName(packageName))
+                Language.TypeScript -> TypeScriptEmitter()
+                Language.Wirespec -> WirespecEmitter()
+                Language.OpenAPIV2 -> OpenAPIV2Emitter
+                Language.OpenAPIV3 -> OpenAPIV3Emitter
+            }
+        }.toNonEmptySetOrNull() ?: nonEmptySetOf(WirespecEmitter())
+
         CompilerArguments(
-            inputFiles = input,
-            outputDirectory = output,
-            reader = { it.read() },
-            writer = { file, string -> file.write(string) },
+            input = sources,
+            output = Directory(getOutPutPath(inputPath)),
+            emitters = emitters,
+            writer = { filePath, string -> filePath.write(string) },
             error = ::handleError,
-            languages = languages.toNonEmptySetOrNull() ?: throw ThisShouldNeverHappen(),
             packageName = PackageName(packageName),
             logger = Logger(logLevel.toLogLevel()),
             shared = shared,
@@ -137,27 +169,36 @@ private class Convert(
         .multiple()
 
     override fun run() {
-        val input = when (val it = getFullPath(inputPath)) {
+        val inputPath = getFullPath(input)
+        val source = when (inputPath) {
             null -> throw IsNotAFileOrDirectory(null)
+            is SourcePath -> throw NoClasspathPossible()
             is DirectoryPath -> throw ConvertNeedsAFile()
-            is FilePath -> when (it.extension) {
-                FileExtension.JSON -> JSONFile(it)
+            is FilePath -> when (inputPath.extension) {
+                FileExtension.JSON -> Source<JSON>(inputPath.name, inputPath.read())
                 else -> throw JSONFileError()
             }
         }
-        val output = when (val it = getFullPath(outputPath, true)) {
-            null -> Directory(input.path + "/out")
-            is DirectoryPath -> Directory(it)
-            is FilePath -> throw OutputShouldBeADirectory()
-        }
+
+        val emitters = languages.map {
+            when (it) {
+                Language.Java -> JavaEmitter(PackageName(packageName))
+                Language.Kotlin -> KotlinEmitter(PackageName(packageName))
+                Language.Scala -> ScalaEmitter(PackageName(packageName))
+                Language.TypeScript -> TypeScriptEmitter()
+                Language.Wirespec -> WirespecEmitter()
+                Language.OpenAPIV2 -> OpenAPIV2Emitter
+                Language.OpenAPIV3 -> OpenAPIV3Emitter
+            }
+        }.toNonEmptySetOrNull() ?: nonEmptySetOf(WirespecEmitter())
+
         ConverterArguments(
             format = format,
-            inputFiles = nonEmptySetOf(input),
-            outputDirectory = output,
-            reader = { it.read() },
-            writer = { file, string -> file.write(string) },
+            input = nonEmptySetOf(source),
+            output = Directory(getOutPutPath(inputPath)),
+            emitters = emitters,
+            writer = { filePath, string -> filePath.write(string) },
             error = ::handleError,
-            languages = languages.toNonEmptySetOrNull() ?: nonEmptySetOf(Wirespec),
             packageName = PackageName(packageName),
             logger = Logger(logLevel.toLogLevel()),
             shared = shared,
@@ -166,23 +207,19 @@ private class Convert(
     }
 }
 
-fun File.read() = Path(path.toString())
+fun FilePath.read() = Path(toString())
     .let { SystemFileSystem.source(it).buffered().readString() }
 
-private fun Directory.wirespecFiles(): NonEmptySet<WirespecFile> = Path(path.value)
+private fun Directory.wirespecSources(): NonEmptySet<Source<Wirespec>> = Path(path.value)
     .let(SystemFileSystem::list)
-    .asSequence()
     .filter(::isRegularFile)
     .filter(::isWirespecFile)
-    .map { it.name }
-    .map { it.dropLast(FileExtension.Wirespec.value.length + 1) }
-    .map { FilePath(path, FileName(it)) }
-    .map(::WirespecFile)
-    .toList()
+    .map { FilePath(it.toString()) to SystemFileSystem.source(it).buffered().readString() }
+    .map { (path, source) -> Source<Wirespec>(name = path.name, content = source) }
     .toNonEmptySetOrNull()
     ?: throw WirespecFileError()
 
-private fun File.write(string: String) = Path(path.toString())
+private fun FilePath.write(string: String) = Path(toString())
     .also { it.parent?.createIfNotExists() }
     .let {
         SystemFileSystem.sink(it).buffered()

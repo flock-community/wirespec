@@ -7,9 +7,11 @@ import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACK
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.emit.common.Keywords
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
+import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
 import community.flock.wirespec.compiler.core.orNull
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
@@ -36,6 +38,10 @@ open class KotlinEmitter(
         |import kotlin.reflect.typeOf
         |
     """.trimMargin()
+
+    override val extension = FileExtension.Kotlin
+
+    override val shared = KotlinShared
 
     override fun Definition.emitName(): String = when (this) {
         is Endpoint -> "${emit(identifier)}Endpoint"

@@ -1,35 +1,46 @@
 package community.flock.wirespec.plugin.files
 
 import community.flock.wirespec.compiler.core.Value
+import community.flock.wirespec.compiler.core.emit.common.FileExtension
+import community.flock.wirespec.compiler.core.emit.common.FileExtension.Wirespec
+import community.flock.wirespec.compiler.core.emit.common.FileExtension.entries
 import community.flock.wirespec.compiler.core.emit.common.PackageName
-import community.flock.wirespec.plugin.FileExtension
-import community.flock.wirespec.plugin.FileExtension.Wirespec
-import community.flock.wirespec.plugin.FileExtension.entries
+import community.flock.wirespec.plugin.files.Source.Type
 import kotlin.jvm.JvmInline
 
 sealed interface Input
 
 sealed interface Output
 
+data class Source<out E : Type>(val name: Name, val content: String) : Input {
+    sealed interface Type {
+        data object Wirespec : Type
+        data object JSON : Type
+    }
+}
+
 class Directory(val path: DirectoryPath) :
     Input,
     Output
 
+fun Directory.toFilePath(name: Name) = FilePath(path, name, Wirespec)
+
 operator fun Directory.plus(packageName: PackageName) = Directory(path + packageName)
 
-operator fun DirectoryPath.plus(packageName: PackageName) = when (packageName.createDirectory) {
-    true -> "/${packageName.value.split('.').joinToString("/")}"
-    false -> ""
-}.let { this + it }
+sealed interface FullPath
 
-abstract class File(val path: FilePath) : Input {
-    abstract fun change(fileName: FileName): File
-    abstract fun change(directory: DirectoryPath): File
+fun FullPath.path() = when (this) {
+    is SourcePath -> value
+    is DirectoryPath -> value
+    is FilePath -> directory.value
 }
 
-fun Directory.inferOutputFile(file: File) = file.path.copy(directory = path)
-
-sealed interface FullPath
+@JvmInline
+value class SourcePath(override val value: String) :
+    FullPath,
+    Value<String> {
+    override fun toString() = value
+}
 
 @JvmInline
 value class DirectoryPath(override val value: String) :
@@ -38,7 +49,12 @@ value class DirectoryPath(override val value: String) :
     override fun toString() = value
 }
 
-data class FilePath(val directory: DirectoryPath, val fileName: FileName, val extension: FileExtension = Wirespec) : FullPath {
+operator fun DirectoryPath.plus(packageName: PackageName) = when (packageName.createDirectory) {
+    true -> "/${packageName.value.split('.').joinToString("/")}"
+    false -> ""
+}.let { this + it }
+
+data class FilePath(val directory: DirectoryPath, val name: Name, val extension: FileExtension) : FullPath {
     companion object {
         operator fun invoke(input: String): FilePath {
             val list = input.split("/").let { it.dropLast(1) + it.last().split(".") }
@@ -46,17 +62,17 @@ data class FilePath(val directory: DirectoryPath, val fileName: FileName, val ex
                 .let { ext -> entries.find { it.value == ext } }
                 ?: error("Invalid file extension")
             val idxOfFileName = list.size - 2
-            val filename = FileName(list[idxOfFileName])
+            val filename = Name(list[idxOfFileName])
             val path = list.subList(0, idxOfFileName).joinToString("/")
             return FilePath(DirectoryPath(path), filename, extension)
         }
     }
 
-    override fun toString() = "$directory/${fileName.value}.${extension.value}"
+    override fun toString() = "$directory/${name.value}.${extension.value}"
 }
 
 @JvmInline
-value class FileName(override val value: String) : Value<String> {
+value class Name(override val value: String) : Value<String> {
     override fun toString() = value
 }
 

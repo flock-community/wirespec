@@ -2,45 +2,36 @@ package community.flock.wirespec.plugin.maven
 
 import arrow.core.NonEmptySet
 import arrow.core.toNonEmptySetOrNull
-import community.flock.wirespec.plugin.FileExtension.Wirespec
+import community.flock.wirespec.compiler.core.emit.common.FileExtension.Wirespec
 import community.flock.wirespec.plugin.files.Directory
-import community.flock.wirespec.plugin.files.File
-import community.flock.wirespec.plugin.files.FileName
 import community.flock.wirespec.plugin.files.FilePath
-import community.flock.wirespec.plugin.files.WirespecFile
-import java.io.File as JavaFile
+import community.flock.wirespec.plugin.files.Name
+import community.flock.wirespec.plugin.files.Source
+import community.flock.wirespec.plugin.files.Source.Type.Wirespec
+import java.io.File
 
-fun JavaFile.createIfNotExists(create: Boolean = true) = also {
+fun File.createIfNotExists(create: Boolean = true) = also {
     when {
         create && !it.exists() -> it.mkdirs()
         else -> Unit
     }
 }
 
-fun File.read() = path.toString()
-    .also(::println)
-    .let(::JavaFile)
-    .also(::println)
+fun FilePath.read() = toString()
+    .let(::File)
     .readText(Charsets.UTF_8)
-    .also(::println)
 
-fun File.write(string: String) = path.toString()
-    .let(::JavaFile)
-    .also(::println)
+fun FilePath.write(string: String) = toString()
+    .let(::File)
     .apply { parentFile.mkdirs() }
     .writeText(string)
 
-fun Directory.wirespecFiles(): NonEmptySet<WirespecFile> = path.value
-    .let(::JavaFile)
+fun Directory.wirespecFiles(): NonEmptySet<Source<Wirespec>> = File(path.value)
     .listFiles()
     .orEmpty()
-    .asSequence()
     .filter { it.isFile }
     .filter { it.extension == Wirespec.value }
-    .map { it.name.split(".").first() }
-    .map { FilePath(path, FileName(it)) }
-    .map(::WirespecFile)
-    .toList()
-    .onEach(::println)
+    .map { it.name.split(".").first() to it.readText(Charsets.UTF_8) }
+    .map { (name, source) -> Source<Wirespec>(Name(name), source) }
     .toNonEmptySetOrNull()
     ?: throw WirespecFileError()

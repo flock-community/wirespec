@@ -2,6 +2,7 @@ package community.flock.wirespec.compiler.core.emit
 
 import community.flock.wirespec.compiler.core.addBackticks
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.emit.common.Keywords
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.parse.AST
@@ -28,6 +29,10 @@ open class WirespecEmitter : Emitter() {
         is Union -> emit(identifier)
         is Channel -> emit(identifier)
     }
+
+    override val extension = FileExtension.Wirespec
+
+    override val shared = null
 
     override val singleLineComment = "\n"
 

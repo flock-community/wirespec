@@ -1,6 +1,7 @@
 package community.flock.wirespec.plugin
 
 import community.flock.wirespec.compiler.core.emit.common.Emitted
+import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.shared.Shared
 import community.flock.wirespec.plugin.Language.Wirespec

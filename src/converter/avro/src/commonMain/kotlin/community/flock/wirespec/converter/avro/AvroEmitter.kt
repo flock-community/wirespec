@@ -1,17 +1,24 @@
 package community.flock.wirespec.converter.avro
 
+import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 
-object AvroEmitter {
+object AvroEmitter : Emitter() {
+
+    override val extension = FileExtension.JSON
+
+    override val shared = null
 
     fun Enum.emit(): AvroModel.EnumType = AvroModel.EnumType(
         type = "enum",
@@ -52,6 +59,7 @@ object AvroEmitter {
                 } else {
                     def.also { hasEmitted.add(def.identifier.value) }.emit(ast, hasEmitted)
                 }
+
                 is Enum -> AvroModel.SimpleType(def.identifier.value)
                 is Refined -> AvroModel.SimpleType("string")
                 else -> AvroModel.SimpleType(value)
@@ -68,6 +76,7 @@ object AvroEmitter {
                 type = "array",
                 items = ref.reference.emit(ast, hasEmitted)
             )
+
             else -> ref.emit(ast, hasEmitted)
         }
 
@@ -105,4 +114,57 @@ object AvroEmitter {
 
     private fun AST.findType(name: String): Definition? =
         filterIsInstance<Definition>().find { it.identifier.value == name }
+
+    override fun emit(
+        type: Type,
+        ast: AST
+    ): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun Type.Shape.emit(): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun Field.emit(): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun Reference.emit(): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun Refined.Validator.emit(): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun emit(
+        enum: Enum,
+        ast: AST
+    ): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun emit(refined: Refined): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun emit(endpoint: Endpoint): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun emit(union: Union): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun emit(identifier: Identifier): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun emit(channel: Channel): String {
+        TODO("Not yet implemented")
+    }
+
+    override val singleLineComment: String
+        get() = TODO("Not yet implemented")
 }

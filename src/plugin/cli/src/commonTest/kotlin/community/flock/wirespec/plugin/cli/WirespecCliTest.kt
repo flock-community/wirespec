@@ -1,14 +1,12 @@
 package community.flock.wirespec.plugin.cli
 
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.plugin.compile
 import community.flock.wirespec.plugin.convert
 import community.flock.wirespec.plugin.files.DirectoryPath
-import community.flock.wirespec.plugin.files.FileName
 import community.flock.wirespec.plugin.files.FilePath
-import community.flock.wirespec.plugin.files.JavaFile
-import community.flock.wirespec.plugin.files.KotlinFile
-import community.flock.wirespec.plugin.files.TypeScriptFile
+import community.flock.wirespec.plugin.files.Name
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import kotlin.test.Test
@@ -29,7 +27,7 @@ class WirespecCliTest {
 
         val directoryPath = DirectoryPath("$output/$packageDir")
 
-        KotlinFile(FilePath(directoryPath, FileName("Type"))).read() shouldBe """
+        FilePath(directoryPath, Name("Type"), FileExtension.Kotlin).read() shouldBe """
             |package community.flock.wirespec.generated
             |
             |data class Bla(
@@ -59,7 +57,7 @@ class WirespecCliTest {
 
         val directoryPath = DirectoryPath("$output/$packageDir")
 
-        JavaFile(FilePath(directoryPath, FileName("Bla"))).read() shouldBe """
+        FilePath(directoryPath, Name("Bla"), FileExtension.Java).read() shouldBe """
             |package community.flock.next;
             |
             |public record Bla (
@@ -89,9 +87,9 @@ class WirespecCliTest {
         )
 
         val directoryPath = DirectoryPath("$output/$packageDir")
-        val path = FilePath(directoryPath, FileName("Petstore"))
+        val path = FilePath(directoryPath, Name("Petstore"), FileExtension.Kotlin)
 
-        KotlinFile(path).read() shouldContain """
+        path.read() shouldContain """
             |data class Pet(
             |  val id: Long?,
             |  val category: Category?,
@@ -121,9 +119,9 @@ class WirespecCliTest {
         )
 
         val directoryPath = DirectoryPath("$output/$packageDir")
-        val path = FilePath(directoryPath, FileName("Keto"))
+        val path = FilePath(directoryPath, Name("Keto"), FileExtension.Kotlin)
 
-        KotlinFile(path).read() shouldContain """
+        path.read() shouldContain """
             |data class Relationship(
             |  val namespace: String,
             |  val `object`: String,
@@ -152,9 +150,9 @@ class WirespecCliTest {
         )
 
         val directoryPath = DirectoryPath("$output/$packageDir")
-        val path = FilePath(directoryPath, FileName("Petstore"))
+        val path = FilePath(directoryPath, Name("Petstore"), FileExtension.TypeScript)
 
-        TypeScriptFile(path).read() shouldContain """
+        path.read() shouldContain """
             |export type Pet = {
             |  "id": number | undefined,
             |  "category": Category | undefined,

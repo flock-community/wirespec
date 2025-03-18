@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.emit
 import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.emit.shared.TypeScriptShared
 import community.flock.wirespec.compiler.core.parse.AST
@@ -28,6 +29,10 @@ open class TypeScriptEmitter : Emitter() {
         is Union -> emit(identifier)
         is Channel -> emit(identifier)
     }
+
+    override val extension = FileExtension.TypeScript
+
+    override val shared = TypeScriptShared
 
     override val singleLineComment = "//"
 

@@ -83,30 +83,27 @@
                     <execution>
                         <id>test_metadata</id>
                         <goals>
-                            <goal>custom</goal>
+                            <goal>convert</goal>
                         </goals>
                         <configuration>
                             <input>${project.basedir}/src/main/avro/test_metadata.avsc</input>
                             <output>${project.build.directory}/generated-sources</output>
                             <format>Avro</format>
                             <emitterClass>community.flock.wirespec.integration.avro.java.emit.AvroJavaEmitter</emitterClass>
-                            <shared>Java</shared>
-                            <extension>java</extension>
                             <packageName>com.eventloopsoftware.kafka.model</packageName>
+                            <shared>true</shared>
                         </configuration>
                     </execution>
                     <execution>
                         <id>test_avro_001</id>
                         <goals>
-                            <goal>custom</goal>
+                            <goal>convert</goal>
                         </goals>
                         <configuration>
                             <input>${project.basedir}/src/main/avro/test_avro_001.avsc</input>
                             <output>${project.build.directory}/generated-sources</output>
                             <format>Avro</format>
                             <emitterClass>community.flock.wirespec.integration.avro.java.emit.AvroJavaEmitter</emitterClass>
-                            <shared>Java</shared>
-                            <extension>java</extension>
                             <packageName>com.eventloopsoftware</packageName>
                         </configuration>
                     </execution>

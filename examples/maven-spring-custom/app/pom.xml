@@ -44,27 +44,23 @@
                     <execution>
                         <id>todo</id>
                         <goals>
-                            <goal>custom</goal>
+                            <goal>compile</goal>
                         </goals>
                         <configuration>
                             <input>${project.basedir}/src/main/wirespec</input>
                             <output>${project.build.directory}/generated-sources/java/hello</output>
                             <emitterClass>community.flock.wirespec.example.maven.custom.emit.CustomEmitter</emitterClass>
-                            <extension>java</extension>
-                            <split>true</split>
                         </configuration>
                     </execution>
                     <execution>
                         <id>spec</id>
                         <goals>
-                            <goal>custom</goal>
+                            <goal>compile</goal>
                         </goals>
                         <configuration>
                             <input>classpath:test/spec.ws</input>
                             <output>${project.build.directory}/generated-sources/java/hello</output>
                             <emitterClass>community.flock.wirespec.example.maven.custom.emit.CustomEmitter</emitterClass>
-                            <extension>java</extension>
-                            <split>true</split>
                         </configuration>
                     </execution>
                 </executions>

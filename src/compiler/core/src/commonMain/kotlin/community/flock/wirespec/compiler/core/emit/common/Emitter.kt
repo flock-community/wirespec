@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.emit.common
 import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Param.ParamType
+import community.flock.wirespec.compiler.core.emit.shared.Shared
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
@@ -16,7 +17,6 @@ import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.compiler.utils.noLogger
 
 abstract class Emitter(
     val split: Boolean = false,
@@ -31,6 +31,10 @@ abstract class Emitter(
             PATH, QUERY, HEADER, BODY
         }
     }
+
+    abstract val extension: FileExtension
+
+    abstract val shared: Shared?
 
     open fun Definition.emitName(): String = notYetImplemented()
 

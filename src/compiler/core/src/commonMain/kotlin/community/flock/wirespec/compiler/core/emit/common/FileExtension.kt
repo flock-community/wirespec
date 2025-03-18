@@ -1,4 +1,4 @@
-package community.flock.wirespec.plugin
+package community.flock.wirespec.compiler.core.emit.common
 
 import community.flock.wirespec.compiler.core.Value
 
@@ -9,6 +9,5 @@ enum class FileExtension(override val value: String) : Value<String> {
     TypeScript("ts"),
     Wirespec("ws"),
     JSON("json"),
+    Avro("avsc"),
 }
-
-fun FileExtension.withDot() = ".$value"

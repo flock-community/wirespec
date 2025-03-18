@@ -1,20 +1,22 @@
 package community.flock.wirespec.plugin
 
 import arrow.core.NonEmptySet
+import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.plugin.files.Directory
-import community.flock.wirespec.plugin.files.File
-import community.flock.wirespec.plugin.files.JSONFile
-import community.flock.wirespec.plugin.files.WirespecFile
+import community.flock.wirespec.plugin.files.FilePath
+import community.flock.wirespec.plugin.files.Source
+import community.flock.wirespec.plugin.files.Source.Type
+import community.flock.wirespec.plugin.files.Source.Type.JSON
+import community.flock.wirespec.plugin.files.Source.Type.Wirespec
 
 sealed interface WirespecArguments {
-    val inputFiles: NonEmptySet<File>
-    val outputDirectory: Directory
-    val reader: (File) -> String
-    val writer: (File, String) -> Unit
+    val input: NonEmptySet<Source<Type>>
+    val output: Directory
+    val emitters: NonEmptySet<Emitter>
+    val writer: (FilePath, String) -> Unit
     val error: (String) -> Unit
-    val languages: NonEmptySet<Language>
     val packageName: PackageName
     val logger: Logger
     val shared: Boolean
@@ -22,12 +24,11 @@ sealed interface WirespecArguments {
 }
 
 data class CompilerArguments(
-    override val inputFiles: NonEmptySet<WirespecFile>,
-    override val outputDirectory: Directory,
-    override val reader: (File) -> String,
-    override val writer: (File, String) -> Unit,
+    override val input: NonEmptySet<Source<Wirespec>>,
+    override val output: Directory,
+    override val emitters: NonEmptySet<Emitter>,
+    override val writer: (FilePath, String) -> Unit,
     override val error: (String) -> Unit,
-    override val languages: NonEmptySet<Language>,
     override val packageName: PackageName,
     override val logger: Logger,
     override val shared: Boolean,
@@ -36,12 +37,11 @@ data class CompilerArguments(
 
 data class ConverterArguments(
     val format: Format,
-    override val inputFiles: NonEmptySet<JSONFile>,
-    override val outputDirectory: Directory,
-    override val reader: (File) -> String,
-    override val writer: (File, String) -> Unit,
+    override val input: NonEmptySet<Source<JSON>>,
+    override val output: Directory,
+    override val emitters: NonEmptySet<Emitter>,
+    override val writer: (FilePath, String) -> Unit,
     override val error: (String) -> Unit,
-    override val languages: NonEmptySet<Language>,
     override val packageName: PackageName,
     override val logger: Logger,
     override val shared: Boolean,

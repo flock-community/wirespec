@@ -1,7 +1,7 @@
 package community.flock.wirespec.plugin.maven
 
+import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.plugin.FileExtension
 
 class CannotAccessFileOrDirectory(input: String) : RuntimeException("Cannot access file or directory: $input.")
 
@@ -18,3 +18,5 @@ class WirespecFileError : SpecificFile(FileExtension.Wirespec)
 class OutputShouldBeADirectory : RuntimeException("Output should be a directory.")
 
 class ThisShouldNeverHappen : RuntimeException("This should never happen.")
+
+class PickAtLeastOneLanguageOrEmitter : RuntimeException("Pick a least one language or emitter.")

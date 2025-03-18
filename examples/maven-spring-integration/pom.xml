@@ -52,7 +52,7 @@
                     <execution>
                         <id>java</id>
                         <goals>
-                            <goal>custom</goal>
+                            <goal>compile</goal>
                         </goals>
                         <configuration>
                             <input>${project.basedir}/src/main/wirespec</input>
