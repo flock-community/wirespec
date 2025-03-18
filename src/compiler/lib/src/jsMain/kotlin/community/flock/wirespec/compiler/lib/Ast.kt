@@ -19,12 +19,12 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 
 fun WsAST.consume(): AST = AST(
-    modules = modules.map { it.consume() }.toNonEmptyListOrNull()!!
+    modules = modules.map { it.consume() }.toNonEmptyListOrNull()!!,
 )
 
 fun WsModule.consume(): Module = Module(
     path = "",
-    statements = statements.map { it.consume() }.toNonEmptyListOrNull() !!, // TODO
+    statements = statements.map { it.consume() }.toNonEmptyListOrNull()!!,
 )
 
 fun WsDefinition.consume(): Definition = when (this) {

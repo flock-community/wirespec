@@ -5,6 +5,7 @@ import arrow.core.Either.Right
 import arrow.core.NonEmptyList
 import arrow.core.NonEmptySet
 import arrow.core.nonEmptyListOf
+import arrow.core.nonEmptySetOf
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.CompilationContext
 import community.flock.wirespec.compiler.core.compile
@@ -29,12 +30,12 @@ fun compile(arguments: CompilerArguments) {
             override val packageName: PackageName = arguments.packageName ?: PackageName(DEFAULT_GENERATED_PACKAGE_STRING)
             override val path: (FileExtension) -> FilePath = files.first().out(arguments.packageName, output)
             override val logger: Logger = Logger(arguments.logLevel)
-            override fun read(): NonEmptyList<String> = files.map { arguments.reader(it) } // TODO
+            override fun read(): NonEmptyList<String> = files.map { arguments.reader(it) }
         }
     }
 
-    return arguments
-        .let { context(it.input, arguments.output).wirespec() }
+    return arguments.input
+        .flatMap { context(nonEmptySetOf(it), arguments.output).wirespec() }
         .let { either { it.bindAll() } }
         .let { either ->
             when (either) {
