@@ -23,6 +23,7 @@ import community.flock.wirespec.compiler.core.emit.shared.TypeScriptShared
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.tokenize.tokenize
+import community.flock.wirespec.compiler.lib.WsAST
 import community.flock.wirespec.compiler.lib.WsNode
 import community.flock.wirespec.compiler.lib.WsStringResult
 import community.flock.wirespec.compiler.lib.consume
@@ -94,10 +95,10 @@ fun generate(source: String, type: String): WsStringResult = object : ParseConte
     .produce()
 
 @JsExport
-fun emit(ast: Array<WsNode>, emitter: Emitters, packageName: String) = ast
-    .map { it.consume() }
-    .let { Module("", it.toNonEmptyListOrNull() ?: error("Cannot emit empty AST")) }
-    .let {
+fun emit(ast: WsAST, emitter: Emitters, packageName: String) = ast
+    .modules
+    .map { module -> module.consume() }
+    .flatMap {
         when (emitter) {
             Emitters.WIRESPEC -> WirespecEmitter().emit(it, noLogger)
             Emitters.TYPESCRIPT -> TypeScriptEmitter().emit(it, noLogger)
