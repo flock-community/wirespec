@@ -6,7 +6,7 @@ Here you can find examples of how to use:
 * [The Maven Plugin](maven-spring-compile/README.md)
 * [And convert an OpenAPI Specification](maven-spring-convert/README.md)
 * [A custom Emitter](maven-spring-custom/README.md)
-* [The Spring integration](maven-spring-integration/README.md)
+* [The Spring integration](../../src/integration/spring/README.md)
 
 ## Integration
 
