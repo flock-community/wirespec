@@ -13,12 +13,12 @@ data class AST(
     val modules: NonEmptyList<Module>,
 ) : Node
 
-typealias Statements = NonEmptyList<Definition>
-
 data class Module(
-    val path: String,
+    val uri: String,
     val statements: Statements,
 ) : Node
+
+typealias Statements = NonEmptyList<Definition>
 
 sealed interface Definition : Node {
     val comment: Comment?

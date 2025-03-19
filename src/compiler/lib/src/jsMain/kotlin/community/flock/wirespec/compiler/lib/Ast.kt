@@ -23,7 +23,7 @@ fun WsAST.consume(): AST = AST(
 )
 
 fun WsModule.consume(): Module = Module(
-    path = "",
+    uri = "",
     statements = statements.map { it.consume() }.toNonEmptyListOrNull()!!,
 )
 
