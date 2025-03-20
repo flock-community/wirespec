@@ -201,7 +201,7 @@ open class PythonEmitter(
         |@staticmethod
         |def to_raw_request(serialization: Wirespec.Serializer, request: Request) -> Wirespec.RawRequest:
         |${Spacer}return Wirespec.RawRequest(
-        |${Spacer}${Spacer}path = [${path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> "request.path.${it.identifier.value}"} }}],
+        |${Spacer}${Spacer}path = [${path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> "str(request.path.${it.identifier.value})"} }}],
         |${Spacer}${Spacer}method = request.method.value,
         |${Spacer}${Spacer}queries = ${if (queries.isNotEmpty()) queries.joinToString(", ", "{", "}") { it.emitSerializedParams("request", "queries") } else "{}"},
         |${Spacer}${Spacer}headers = ${if (headers.isNotEmpty()) headers.joinToString(", ", "{", "}") { it.emitSerializedParams("request", "headers") } else "{}"},
