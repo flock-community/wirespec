@@ -328,7 +328,7 @@ open class JavaEmitter(
     ).joinToString(",\n").let { if (it.isBlank()) "" else "\n$it\n${Spacer(3)}" }
 
     private fun Endpoint.Response.emitDeserializedParams() = listOfNotNull(
-        headers.joinToString { """${Spacer(4)}java.util.Optional.ofNullable(response.headers().get("${it.identifier.value}")).map(it -> serialization.deserialize(it, Wirespec.getType(${it.reference.emitType()}.class, ${it.reference.isIterable})))${if (!it.reference.isNullable) ".get()" else ""}""" }
+        headers.joinToString { """${Spacer(4)}java.util.Optional.ofNullable(response.headers().get("${it.identifier.value}")).map(it -> serialization.deserializeParam(it, Wirespec.getType(${it.reference.emitType()}.class, ${it.reference.isIterable})))${if (!it.reference.isNullable) ".get()" else ""}""" }
             .orNull(),
         content?.let { """${Spacer(4)}serialization.deserialize(response.body(), Wirespec.getType(${it.emitType()}.class, ${it.reference.isIterable}))""" }
     ).joinToString(",\n").let { if (it.isBlank()) "" else "\n$it\n${Spacer(3)}" }
@@ -351,7 +351,7 @@ open class JavaEmitter(
         """${Spacer(4)}java.util.Optional.ofNullable(request.$fields().get("${identifier.value}")).map(it -> serialization.<${reference.emitType()}>deserializeParam(it, Wirespec.getType(${reference.emitType()}.class, ${reference.isIterable})))${if (!reference.isNullable) ".get()" else ""}"""
 
     private fun Field.emitSerializedHeader() =
-        """java.util.Map.entry("${identifier.value}", serialization.serialize(r.getHeaders().${emit(identifier)}(), Wirespec.getType(${reference.emitType()}.class, ${reference.isIterable})))"""
+        """java.util.Map.entry("${identifier.value}", serialization.serializeParam(r.getHeaders().${emit(identifier)}(), Wirespec.getType(${reference.emitType()}.class, ${reference.isIterable})))"""
 
     private fun Endpoint.Segment.Param.emitIdentifier() =
         "serialization.serialize(request.path.${emit(identifier).firstToLower()}, Wirespec.getType(${reference.emitType()}.class, ${reference.isIterable}))"
