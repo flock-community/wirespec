@@ -112,14 +112,14 @@ open class PythonEmitter(
     private fun Param.emitAssignSelf() = "${emit(identifier)} = ${emit(identifier)}"
     private fun Endpoint.Request.emitAssignSelf(endpoint: Endpoint) = """
         |self.path = ${endpoint.emitName()}.Request.Path(${paramList(endpoint).filter { it.type == Param.ParamType.PATH }.joinToString { it.emitAssignSelf() }})
-        |self.queries = ${endpoint.emitName()}.Request.Queries(${paramList(endpoint).filter { it.type == Param.ParamType.QUERY }.joinToString { it.emitAssignSelf() }})
-        |self.headers = ${endpoint.emitName()}.Request.Headers(${paramList(endpoint).filter { it.type == Param.ParamType.HEADER }.joinToString { it.emitAssignSelf() }})
-        |self.body = body
+        |self.queries = ${endpoint.emitName()}.Request.Queries(${paramList(endpoint).filter { it.type == Param.ParamType.QUERY }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
+        |self.headers = ${endpoint.emitName()}.Request.Headers(${paramList(endpoint).filter { it.type == Param.ParamType.HEADER }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
+        |self.body = ${content?.let { "body" } ?: "None"}
     """.trimMargin()
 
     private fun Endpoint.Response.emitAssignSelf(endpoint: Endpoint) = """
-        |self.headers = ${endpoint.emitName()}.Response${status}.Headers(${paramList().filter { it.type == Param.ParamType.HEADER }.joinToString { it.emitAssignSelf() }})
-        |self.body = body
+        |self.headers = ${endpoint.emitName()}.Response${status}.Headers(${paramList().filter { it.type == Param.ParamType.HEADER }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
+        |self.body = ${content?.let { "body" } ?: "None"}
     """.trimMargin()
 
     override fun Reference.emit(): String = when (this) {
