@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.shared.JavaShared
 import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
+import community.flock.wirespec.compiler.core.emit.shared.PythonShared
 import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
 import community.flock.wirespec.compiler.core.emit.shared.TypeScriptShared
 import community.flock.wirespec.converter.avro.AvroParser
@@ -72,6 +73,7 @@ class CustomMojo : BaseMojo() {
                 Language.Kotlin -> KotlinShared
                 Language.Scala -> ScalaShared
                 Language.TypeScript -> TypeScriptShared
+                Language.Python -> PythonShared
                 Language.Wirespec -> null
                 Language.OpenAPIV2 -> null
                 Language.OpenAPIV3 -> null

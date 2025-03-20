@@ -3,6 +3,7 @@ package community.flock.wirespec.plugin.cli
 import arrow.core.NonEmptySet
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
+import community.flock.wirespec.compiler.core.emit.PythonEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
@@ -15,6 +16,7 @@ import community.flock.wirespec.plugin.FileExtension
 import community.flock.wirespec.plugin.FileExtension.JSON
 import community.flock.wirespec.plugin.FileExtension.Java
 import community.flock.wirespec.plugin.FileExtension.Kotlin
+import community.flock.wirespec.plugin.FileExtension.Python
 import community.flock.wirespec.plugin.FileExtension.Scala
 import community.flock.wirespec.plugin.FileExtension.TypeScript
 import community.flock.wirespec.plugin.FileExtension.Wirespec
@@ -45,6 +47,7 @@ fun NonEmptySet<Language>.emitters(
         Language.Kotlin -> KotlinEmitter(packageName) to KotlinFile(path(Kotlin))
         Language.Scala -> ScalaEmitter(packageName) to ScalaFile(path(Scala))
         Language.TypeScript -> TypeScriptEmitter() to TypeScriptFile(path(TypeScript))
+        Language.Python -> PythonEmitter() to WirespecFile(path(Python))
         Language.Wirespec -> WirespecEmitter() to WirespecFile(path(Wirespec))
         Language.OpenAPIV2 -> OpenAPIV2Emitter to JsonFile(path(JSON))
         Language.OpenAPIV3 -> OpenAPIV3Emitter to JsonFile(path(JSON))

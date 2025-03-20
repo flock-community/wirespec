@@ -7,6 +7,7 @@ enum class Language {
     Kotlin,
     Scala,
     TypeScript,
+    Python,
     Wirespec,
     OpenAPIV2,
     OpenAPIV3,
@@ -23,6 +24,7 @@ enum class FileExtension(override val value: String) : Value<String> {
     Kotlin("kt"),
     Scala("scala"),
     TypeScript("ts"),
+    Python("py"),
     Wirespec("ws"),
     JSON("json"),
 }

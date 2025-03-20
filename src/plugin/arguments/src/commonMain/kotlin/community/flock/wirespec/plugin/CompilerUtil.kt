@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
+import community.flock.wirespec.compiler.core.emit.PythonEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
@@ -14,6 +15,7 @@ import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.shared.JavaShared
 import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
+import community.flock.wirespec.compiler.core.emit.shared.PythonShared
 import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
 import community.flock.wirespec.compiler.core.emit.shared.Shared
 import community.flock.wirespec.compiler.core.parse
@@ -25,6 +27,7 @@ import community.flock.wirespec.plugin.Language.Java
 import community.flock.wirespec.plugin.Language.Kotlin
 import community.flock.wirespec.plugin.Language.OpenAPIV2
 import community.flock.wirespec.plugin.Language.OpenAPIV3
+import community.flock.wirespec.plugin.Language.Python
 import community.flock.wirespec.plugin.Language.Scala
 import community.flock.wirespec.plugin.Language.TypeScript
 import community.flock.wirespec.plugin.Language.Wirespec
@@ -64,4 +67,5 @@ fun Language.mapEmitter(packageName: PackageName) = when (this) {
     Wirespec -> LanguageEmitter(WirespecEmitter(), FileExtension.Wirespec)
     OpenAPIV2 -> LanguageEmitter(OpenAPIV2Emitter, FileExtension.JSON)
     OpenAPIV3 -> LanguageEmitter(OpenAPIV3Emitter, FileExtension.JSON)
+    Python -> LanguageEmitter(PythonEmitter(), FileExtension.Python, PythonShared)
 }
