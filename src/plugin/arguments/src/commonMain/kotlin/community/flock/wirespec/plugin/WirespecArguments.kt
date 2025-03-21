@@ -49,6 +49,5 @@ data class ConverterArguments(
 ) : WirespecArguments
 
 fun PackageName?.toDirectory() = this?.value
-    ?.split(".")
-    ?.joinToString("/")
+    ?.replace('.', '/')
     ?: ""
