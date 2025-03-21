@@ -20,6 +20,7 @@ import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceOrBooleanObject
 import community.flock.kotlinx.openapi.bindings.v2.StatusCode
 import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
+import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
@@ -117,7 +118,7 @@ object OpenAPIV2Parser {
                 listOf(
                     Endpoint(
                         comment = null,
-                        identifier = DefinitionIdentifier(name),
+                        identifier = DefinitionIdentifier(name.sanitize()),
                         method = method,
                         path = segments,
                         queries = query,
@@ -148,7 +149,7 @@ object OpenAPIV2Parser {
                 parameter.enum != null -> listOf(
                     Enum(
                         comment = null,
-                        identifier = DefinitionIdentifier(className(name, "Parameter", parameter.name)),
+                        identifier = DefinitionIdentifier(className(name, "Parameter", parameter.name).sanitize()),
                         entries = parameter.enum!!.map { it.content }.toSet(),
                     ),
                 )
@@ -277,7 +278,7 @@ object OpenAPIV2Parser {
         schemaObject.allOf != null -> listOf(
             Type(
                 comment = null,
-                identifier = DefinitionIdentifier(name),
+                identifier = DefinitionIdentifier(name.sanitize()),
                 shape = Type.Shape(
                     schemaObject.allOf
                         .orEmpty()
@@ -309,7 +310,7 @@ object OpenAPIV2Parser {
             schemaObject.enum!!
                 .map { it.content }
                 .toSet()
-                .let { listOf(Enum(comment = null, identifier = DefinitionIdentifier(name), entries = it)) }
+                .let { listOf(Enum(comment = null, identifier = DefinitionIdentifier(name.sanitize()), entries = it)) }
 
         else -> when (schemaObject.type) {
             null, OpenapiType.OBJECT -> {
@@ -319,7 +320,7 @@ object OpenAPIV2Parser {
                 val schema = listOf(
                     Type(
                         comment = null,
-                        identifier = DefinitionIdentifier(name),
+                        identifier = DefinitionIdentifier(name.sanitize()),
                         shape = Type.Shape(toField(schemaObject, name)),
                         extends = emptyList(),
                     ),
@@ -352,7 +353,7 @@ object OpenAPIV2Parser {
             }
 
             schema.enum != null -> Reference.Custom(
-                className(reference.getReference()),
+                className(reference.getReference()).sanitize(),
                 isNullable = isNullable,
             )
 
@@ -369,8 +370,8 @@ object OpenAPIV2Parser {
                 }
 
                 else -> when (refOrSchema) {
-                    is SchemaObject -> Reference.Custom(className(reference.getReference()), isNullable)
-                    is ReferenceObject -> Reference.Custom(className(refOrSchema.getReference()), isNullable)
+                    is SchemaObject -> Reference.Custom(className(reference.getReference()).sanitize(), isNullable)
+                    is ReferenceObject -> Reference.Custom(className(refOrSchema.getReference()).sanitize(), isNullable)
                 }
             }
         }
@@ -389,9 +390,9 @@ object OpenAPIV2Parser {
 
         schema.enum != null -> {
             if (schema.additionalProperties != null) {
-                Reference.Dict(Reference.Custom(name, false), isNullable = isNullable)
+                Reference.Dict(Reference.Custom(name.sanitize(), false), isNullable = isNullable)
             } else {
-                Reference.Custom(name, isNullable = isNullable)
+                Reference.Custom(name.sanitize(), isNullable = isNullable)
             }
         }
         else -> when (val type = schema.type) {
@@ -414,8 +415,8 @@ object OpenAPIV2Parser {
                     }
 
                     else -> {
-                        if (schema.additionalProperties != null) Reference.Dict(Reference.Custom(name, isNullable = isNullable), isNullable = false)
-                        Reference.Custom(name, isNullable = isNullable)
+                        if (schema.additionalProperties != null) Reference.Dict(Reference.Custom(name.sanitize(), isNullable = isNullable), isNullable = false)
+                        Reference.Custom(name.sanitize(), isNullable = isNullable)
                     }
                 }
 
@@ -496,7 +497,7 @@ object OpenAPIV2Parser {
         .let {
             val isNullable = !(parameter.required ?: false)
             when {
-                parameter.enum != null -> Reference.Custom(className(name, "Parameter", it.name), isNullable = isNullable)
+                parameter.enum != null -> Reference.Custom(className(name, "Parameter", it.name).sanitize(), isNullable = isNullable)
                 else -> when (val type = it.type) {
                     OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN ->
                         type
@@ -608,6 +609,14 @@ object OpenAPIV2Parser {
         }
         .flatMap(f)
 }
+
+private fun String.sanitize() = this
+    .split(".", " ", "-")
+    .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
+    .joinToString("")
+    .asSequence()
+    .filter { it.isLetterOrDigit() || it in listOf('_') }
+    .joinToString("")
 
 private fun OpenapiType?.isPrimitive() = when (this) {
     OpenapiType.STRING -> true

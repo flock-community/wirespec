@@ -89,7 +89,7 @@ open class JavaEmitter(
         is Reference.Iterable -> "java.util.List<${reference.emit()}>"
         is Reference.Unit -> "void"
         is Reference.Any -> "Object"
-        is Reference.Custom -> value.sanitizeSymbol()
+        is Reference.Custom -> value
         is Reference.Primitive -> when (type) {
             is Reference.Primitive.Type.String -> "String"
             is Reference.Primitive.Type.Integer -> when (type.precision) {

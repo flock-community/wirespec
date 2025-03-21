@@ -20,6 +20,7 @@ import community.flock.kotlinx.openapi.bindings.v3.SchemaObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceOrBooleanObject
 import community.flock.kotlinx.openapi.bindings.v3.StatusCode
+import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Endpoint
@@ -352,7 +353,7 @@ object OpenAPIV3Parser {
         schemaObject.oneOf != null || schemaObject.anyOf != null -> listOf(
             Union(
                 comment = null,
-                identifier = DefinitionIdentifier(name),
+                identifier = DefinitionIdentifier(name.sanitize()),
                 entries = schemaObject.oneOf
                     .orEmpty()
                     .mapIndexed { index, it ->
@@ -377,7 +378,7 @@ object OpenAPIV3Parser {
         schemaObject.allOf != null -> listOf(
             Type(
                 comment = null,
-                identifier = DefinitionIdentifier(name),
+                identifier = DefinitionIdentifier(name.sanitize()),
                 shape = Type.Shape(
                     schemaObject.allOf.orEmpty().flatMap { toField(resolve(it), name) }
                         .distinctBy { it.identifier },
@@ -457,7 +458,7 @@ object OpenAPIV3Parser {
             }
 
             schema.enum != null -> Reference.Custom(
-                value = className(referencingObject.getReference()),
+                value = className(referencingObject.getReference()).sanitize(),
                 isNullable = isNullable,
             )
 
@@ -469,7 +470,7 @@ object OpenAPIV3Parser {
             schema.type == OpenapiType.ARRAY -> when (val items = schema.items) {
                 is ReferenceObject -> toReference(items, schema.nullable ?: false).toIterable(isNullable)
                 is SchemaObject -> Reference.Custom(
-                    className(referencingObject.getReference(), "Array"),
+                    className(referencingObject.getReference(), "Array").sanitize(),
                     schema.nullable ?: false,
                 ).toIterable(isNullable)
 
@@ -477,7 +478,7 @@ object OpenAPIV3Parser {
             }
 
             else -> Reference.Custom(
-                value = className(referencingObject.getReference()),
+                value = className(referencingObject.getReference()).sanitize(),
                 isNullable = isNullable,
             )
         }
@@ -513,7 +514,7 @@ object OpenAPIV3Parser {
                     )
         }
 
-        schema.enum != null -> Reference.Custom(value = name, isNullable = isNullable)
+        schema.enum != null -> Reference.Custom(value = name.sanitize(), isNullable = isNullable)
             .let { if (schema.additionalProperties != null) Reference.Dict(reference = it, isNullable = false) else it }
 
         else -> when (val type = schema.type) {
@@ -528,7 +529,7 @@ object OpenAPIV3Parser {
                         .let { if (schema.additionalProperties != null) Reference.Dict(it, isNullable = false) else it }
 
                     else -> Reference.Custom(
-                        value = name,
+                        value = name.sanitize(),
                         isNullable = isNullable,
                     ).let { if (schema.additionalProperties != null) Reference.Dict(it, isNullable = false) else it }
                 }
@@ -658,6 +659,14 @@ object OpenAPIV3Parser {
         }
         .flatMap(f)
 }
+
+private fun String.sanitize() = this
+    .split(".", " ", "-")
+    .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
+    .joinToString("")
+    .asSequence()
+    .filter { it.isLetterOrDigit() || it in listOf('_') }
+    .joinToString("")
 
 private fun OpenapiType?.isPrimitive() = when (this) {
     OpenapiType.STRING -> true
