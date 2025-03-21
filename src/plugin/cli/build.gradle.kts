@@ -49,28 +49,21 @@ kotlin {
     }
 
     sourceSets {
-        val commonMain by getting {
+        commonMain {
             dependencies {
                 implementation(project(":src:plugin:arguments"))
-                implementation(project(":src:compiler:core"))
-                implementation(project(":src:converter:avro"))
                 implementation(project(":src:converter:openapi"))
                 implementation(libs.clikt)
                 implementation(libs.kotlinx.io.core)
             }
         }
-        val commonTest by getting {
+        commonTest {
             dependencies {
                 implementation(libs.kotlin.test)
                 implementation(libs.bundles.kotest)
             }
         }
-        val nativeMain by creating {}
-        val macosX64Main by getting {}
-        val macosArm64Main by getting {}
-        val linuxX64Main by getting {}
-        val jvmMain by getting {}
-        val jsMain by getting {
+        jsMain {
             dependencies {
                 implementation(project(":src:compiler:lib"))
             }

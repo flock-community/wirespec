@@ -35,7 +35,7 @@ kotlin {
     }
 
     sourceSets {
-        val jsMain by getting {
+        jsMain {
             dependencies {
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:compiler:lib"))
@@ -47,7 +47,7 @@ kotlin {
                 implementation(libs.kotlinx.serialization)
             }
         }
-        val jsTest by getting {
+        jsTest {
             dependencies {
                 implementation(libs.kotlin.test)
                 implementation(libs.kotlinx.io.core)

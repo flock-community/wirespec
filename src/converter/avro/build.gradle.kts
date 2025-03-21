@@ -39,7 +39,7 @@ kotlin {
                 implementation(libs.bundles.kotest)
             }
         }
-        val jvmTest by getting {
+        jvmTest {
             dependencies {
                 implementation(libs.bundles.jackson)
             }

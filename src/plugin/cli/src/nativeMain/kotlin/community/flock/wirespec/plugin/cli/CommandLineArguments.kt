@@ -1,4 +1,4 @@
-package community.flock.wirespec.plugin.utils
+package community.flock.wirespec.plugin.cli
 
 import arrow.core.Either.Companion.catch
 

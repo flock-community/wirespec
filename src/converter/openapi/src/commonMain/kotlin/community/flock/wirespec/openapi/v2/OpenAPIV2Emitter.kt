@@ -18,6 +18,7 @@ import community.flock.kotlinx.openapi.bindings.v2.StatusCode
 import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Endpoint
@@ -35,6 +36,10 @@ import kotlinx.serialization.json.JsonPrimitive
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenAPIType
 
 object OpenAPIV2Emitter : Emitter() {
+
+    override val extension = FileExtension.JSON
+
+    override val shared = null
 
     override val singleLineComment = ""
 

@@ -11,6 +11,7 @@ import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.shared.JavaShared
 import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
@@ -28,6 +29,9 @@ import community.flock.wirespec.plugin.Language.OpenAPIV3
 import community.flock.wirespec.plugin.Language.Scala
 import community.flock.wirespec.plugin.Language.TypeScript
 import community.flock.wirespec.plugin.Language.Wirespec
+import community.flock.wirespec.plugin.files.FilePath
+import community.flock.wirespec.plugin.files.Name
+import community.flock.wirespec.plugin.files.plus
 
 data class FileContent(val name: String, val content: String) {
     constructor(pair: Pair<String, String>) : this(pair.first, pair.second)
@@ -65,3 +69,12 @@ fun Language.mapEmitter(packageName: PackageName) = when (this) {
     OpenAPIV2 -> LanguageEmitter(OpenAPIV2Emitter, FileExtension.JSON)
     OpenAPIV3 -> LanguageEmitter(OpenAPIV3Emitter, FileExtension.JSON)
 }
+
+fun WirespecArguments.mapShared() = emitters.mapNotNull {
+    it.mapShared(FilePath(output.path, Name("Wirespec"), it.extension), shared)
+}
+
+private fun Emitter.mapShared(filePath: FilePath, shared: Boolean) = takeIf { shared }
+    ?.let { it.shared?.run { filePath.copy(extension = it.extension) to this } }
+    ?.let { (file, shared) -> file.copy(directory = file.directory + PackageName(shared.packageString)) to shared }
+    ?.let { (file, shared) -> file to shared.source }
