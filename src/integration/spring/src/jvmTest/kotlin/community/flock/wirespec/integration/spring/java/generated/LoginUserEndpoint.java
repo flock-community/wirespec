@@ -81,7 +81,7 @@ public interface LoginUserEndpoint extends Wirespec.Endpoint {
     static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
       return switch (response.statusCode()) {
         case 200 -> new Response200(
-        java.util.Optional.ofNullable(response.headers().get("X-Rate-Limit")).map(it -> serialization.deserializeParam(it, Wirespec.getType(Integer.class, false))),         java.util.Optional.ofNullable(response.headers().get("X-Expires-After")).map(it -> serialization.deserializeParam(it, Wirespec.getType(String.class, false))),
+        java.util.Optional.ofNullable(response.headers().get("X-Rate-Limit")).map(it -> serialization.<Integer>deserializeParam(it, Wirespec.getType(Integer.class, false))),         java.util.Optional.ofNullable(response.headers().get("X-Expires-After")).map(it -> serialization.<String>deserializeParam(it, Wirespec.getType(String.class, false))),
         serialization.deserialize(response.body(), Wirespec.getType(String.class, false))
       );
         case 400 -> new Response400();
