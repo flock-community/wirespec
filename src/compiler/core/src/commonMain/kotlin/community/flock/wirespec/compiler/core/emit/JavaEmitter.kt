@@ -89,7 +89,7 @@ open class JavaEmitter(
         is Reference.Iterable -> "java.util.List<${reference.emit()}>"
         is Reference.Unit -> "void"
         is Reference.Any -> "Object"
-        is Reference.Custom -> value
+        is Reference.Custom -> value.sanitizeSymbol()
         is Reference.Primitive -> when (type) {
             is Reference.Primitive.Type.String -> "String"
             is Reference.Primitive.Type.Integer -> when (type.precision) {
@@ -334,7 +334,7 @@ open class JavaEmitter(
     ).joinToString(",\n").let { if (it.isBlank()) "" else "\n$it\n${Spacer(3)}" }
 
     private fun Endpoint.Response.emitDeserializedParams() = listOfNotNull(
-        headers.joinToString { """${Spacer(4)}java.util.Optional.ofNullable(response.headers().get("${it.identifier.value}")).map(it -> serialization.deserializeParam(it, Wirespec.getType(${it.reference.emitType()}.class, ${it.reference.isIterable})))${if (!it.reference.isNullable) ".get()" else ""}""" }
+        headers.joinToString { """${Spacer(4)}java.util.Optional.ofNullable(response.headers().get("${it.identifier.value}")).map(it -> serialization.<${it.reference.emitType()}>deserializeParam(it, Wirespec.getType(${it.reference.emitType()}.class, ${it.reference.isIterable})))${if (!it.reference.isNullable) ".get()" else ""}""" }
             .orNull(),
         content?.let { """${Spacer(4)}serialization.deserialize(response.body(), Wirespec.getType(${it.emitType()}.class, ${it.reference.isIterable}))""" }
     ).joinToString(",\n").let { if (it.isBlank()) "" else "\n$it\n${Spacer(3)}" }
