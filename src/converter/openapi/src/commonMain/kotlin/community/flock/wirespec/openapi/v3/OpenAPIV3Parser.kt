@@ -1,5 +1,6 @@
 package community.flock.wirespec.openapi.v3
 
+import arrow.core.nonEmptyListOf
 import arrow.core.toNonEmptyListOrNull
 import community.flock.kotlinx.openapi.bindings.v3.BooleanObject
 import community.flock.kotlinx.openapi.bindings.v3.HeaderObject
@@ -21,12 +22,13 @@ import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceOrBooleanObject
 import community.flock.kotlinx.openapi.bindings.v3.StatusCode
 import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
-import community.flock.wirespec.compiler.core.parse.Node
+import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
@@ -37,22 +39,29 @@ import community.flock.kotlinx.openapi.bindings.v3.Type as OpenapiType
 
 object OpenAPIV3Parser {
 
-    fun parse(json: String, strict: Boolean = false): AST = OpenAPI(
-        json = Json {
-            prettyPrint = true
-            ignoreUnknownKeys = strict
-        },
-    ).decodeFromString(json).parse().toNonEmptyListOrNull() ?: error("Cannot yield non empty List<Node> for OpenAPI v3")
+    fun parse(json: String, strict: Boolean = false): AST = AST(
+        nonEmptyListOf(
+            Module(
+                "",
+                OpenAPI(
+                    json = Json {
+                        prettyPrint = true
+                        ignoreUnknownKeys = strict
+                    },
+                ).decodeFromString(json).parse().toNonEmptyListOrNull() ?: error("Cannot yield non empty List<Node> for OpenAPI v3"),
+            ),
+        ),
+    )
 
-    fun OpenAPIObject.parse(): List<Node> = listOf(
+    fun OpenAPIObject.parse(): List<Definition> = listOf(
         parseEndpoint(),
         parseParameters(),
         parseRequestBody(),
         parseResponseBody(),
         parseComponents(),
-    ).reduce(List<Node>::plus)
+    ).reduce(List<Definition>::plus)
 
-    private fun OpenAPIObject.parseEndpoint(): List<Node> = paths
+    private fun OpenAPIObject.parseEndpoint(): List<Definition> = paths
         .flatMap { (key, path) ->
             path.toOperationList().map { (method, operation) ->
                 val parameters = resolveParameters(path) + resolveParameters(operation)
@@ -136,7 +145,7 @@ object OpenAPIV3Parser {
             }
         }
 
-    private fun OpenAPIObject.parseParameters(): List<Node> = flatMapRequests {
+    private fun OpenAPIObject.parseParameters(): List<Definition> = flatMapRequests {
         val parameters = resolveParameters(pathItem) + resolveParameters(operation)
         val name = operation.toName() ?: (path.toName() + method.name)
         parameters.flatMap { parameter ->
@@ -144,7 +153,7 @@ object OpenAPIV3Parser {
         }
     }
 
-    private fun OpenAPIObject.parseRequestBody(): List<Node> = flatMapRequests {
+    private fun OpenAPIObject.parseRequestBody(): List<Definition> = flatMapRequests {
         val name = operation.toName() ?: (path.toName() + method.name)
         operation.requestBody?.let { resolve(it) }?.content.orEmpty()
             .flatMap { (_, mediaObject) ->
@@ -162,7 +171,7 @@ object OpenAPIV3Parser {
             }
     }
 
-    private fun OpenAPIObject.flatMapResponse(response: ResponseObject, name: String, statusCode: StatusCode): List<Node> = response.content.orEmpty()
+    private fun OpenAPIObject.flatMapResponse(response: ResponseObject, name: String, statusCode: StatusCode): List<Definition> = response.content.orEmpty()
         .flatMap { (_, mediaObject) ->
             when (val schema = mediaObject.schema) {
                 is SchemaObject -> when (schema.type) {
@@ -185,7 +194,7 @@ object OpenAPIV3Parser {
             }
         }
 
-    private fun OpenAPIObject.parseResponseBody(): List<Node> = flatMapResponses {
+    private fun OpenAPIObject.parseResponseBody(): List<Definition> = flatMapResponses {
         val name = operation.toName() ?: (path.toName() + method.name)
         when (val response = response) {
             is ResponseObject -> flatMapResponse(response, name, statusCode)
@@ -193,7 +202,7 @@ object OpenAPIV3Parser {
         }
     }
 
-    private fun OpenAPIObject.parseComponents(): List<Node> = components?.schemas.orEmpty()
+    private fun OpenAPIObject.parseComponents(): List<Definition> = components?.schemas.orEmpty()
         .filter {
             when (val s = it.value) {
                 is SchemaObject -> s.additionalProperties == null
@@ -338,7 +347,7 @@ object OpenAPIV3Parser {
         is ReferenceObject -> resolveResponseObject(responseOrReferenceObject).second
     }
 
-    private fun OpenAPIObject.flatten(schemaObject: SchemaObject, name: String): List<Node> = when {
+    private fun OpenAPIObject.flatten(schemaObject: SchemaObject, name: String): List<Definition> = when {
         schemaObject.additionalProperties != null -> when (schemaObject.additionalProperties) {
             is BooleanObject -> emptyList()
             else ->
@@ -623,7 +632,7 @@ object OpenAPIV3Parser {
         val operation: OperationObject,
     )
 
-    private fun OpenAPIObject.flatMapRequests(f: FlattenRequest.() -> List<Node>) = paths
+    private fun OpenAPIObject.flatMapRequests(f: FlattenRequest.() -> List<Definition>) = paths
         .flatMap { (path, pathItem) ->
             pathItem.toOperationList().map { (method, operation) ->
                 FlattenRequest(path = path, pathItem = pathItem, method = method, operation = operation)
@@ -640,7 +649,7 @@ object OpenAPIV3Parser {
         val response: ResponseOrReferenceObject,
     )
 
-    private fun OpenAPIObject.flatMapResponses(f: FlattenResponse.() -> List<Node>) = paths
+    private fun OpenAPIObject.flatMapResponses(f: FlattenResponse.() -> List<Definition>) = paths
         .flatMap { (path, pathItem) ->
             pathItem.toOperationList()
                 .flatMap { (method, operation) ->

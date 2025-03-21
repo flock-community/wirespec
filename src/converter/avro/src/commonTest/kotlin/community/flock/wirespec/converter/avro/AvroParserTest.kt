@@ -1,7 +1,6 @@
 package community.flock.wirespec.converter.avro
 
 import community.flock.wirespec.compiler.core.parse.Channel
-import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
@@ -58,7 +57,7 @@ class AvroParserTest {
 
         assertEquals(
             listOf("User", "EmailAddress", "TwitterAccount", "OAuthStatus", "ToDoItem", "ToDoStatus", "User"),
-            ast.filterIsInstance<Definition>().map { it.identifier.value },
+            ast.modules.flatMap { it.statements }.toList().map { it.identifier.value },
         )
 
         assertEquals(
@@ -129,7 +128,7 @@ class AvroParserTest {
                     ),
                 ),
             ),
-            ast.first(),
+            ast.modules.first().statements.first(),
         )
 
         assertEquals(
@@ -141,7 +140,7 @@ class AvroParserTest {
                     isNullable = false,
                 ),
             ),
-            ast.last(),
+            ast.modules.first().statements.last(),
         )
     }
 }

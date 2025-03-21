@@ -2,8 +2,10 @@ package community.flock.wirespec.plugin.cli
 
 import arrow.core.Either.Left
 import arrow.core.Either.Right
+import arrow.core.NonEmptyList
 import arrow.core.NonEmptySet
 import arrow.core.nonEmptyListOf
+import arrow.core.nonEmptySetOf
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.CompilationContext
 import community.flock.wirespec.compiler.core.compile
@@ -22,18 +24,18 @@ import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.Reader
 
 fun compile(arguments: CompilerArguments) {
-    val context = { file: File, output: Directory ->
+    val context = { files: NonEmptySet<File>, output: Directory ->
         object : WirespecContext {
             override val languages: NonEmptySet<Language> = arguments.languages
             override val packageName: PackageName = arguments.packageName ?: PackageName(DEFAULT_GENERATED_PACKAGE_STRING)
-            override val path: (FileExtension) -> FilePath = file.out(arguments.packageName, output)
+            override val path: (FileExtension) -> FilePath = files.first().out(arguments.packageName, output)
             override val logger: Logger = Logger(arguments.logLevel)
-            override fun read(): String = arguments.reader(file)
+            override fun read(): NonEmptyList<String> = files.map { arguments.reader(it) }
         }
     }
 
     return arguments.input
-        .flatMap { context(it, arguments.output).wirespec() }
+        .flatMap { context(nonEmptySetOf(it), arguments.output).wirespec() }
         .let { either { it.bindAll() } }
         .let { either ->
             when (either) {

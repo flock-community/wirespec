@@ -1,9 +1,9 @@
 package community.flock.wirespec.integration.avro
 
 import arrow.core.escaped
-import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.converter.avro.AvroEmitter
 import community.flock.wirespec.converter.avro.AvroModel
@@ -12,8 +12,8 @@ import kotlinx.serialization.json.Json
 
 object Utils {
 
-    fun emitAvroSchema(packageName: String, type: Definition, ast: AST) = AvroEmitter
-        .emit(ast)
+    fun emitAvroSchema(packageName: String, type: Definition, module: Module) = AvroEmitter
+        .emit(module)
         .map {
             when (it) {
                 is AvroModel.RecordType -> it.copy(namespace = packageName)
@@ -31,7 +31,7 @@ object Utils {
         ?.let { Json.encodeToString(it) }
         ?.escaped()
 
-    fun Reference.isEnum(ast: AST): Boolean = ast
+    fun Reference.isEnum(module: Module): Boolean = module.statements
         .filterIsInstance<Enum>()
         .any { it.identifier.value == this.value }
 

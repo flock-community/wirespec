@@ -1,11 +1,9 @@
 package community.flock.wirespec.converter.avro
 
-import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
-import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -24,9 +22,9 @@ object AvroEmitter {
         type = AvroModel.TypeList(entries.map { AvroModel.SimpleType(it.value) })
     )
 
-    fun Reference.emit(ast: AST, hasEmitted: MutableList<String>): AvroModel.Type = when (this) {
-        is Reference.Dict -> AvroModel.MapType(type = "map", values = reference.emit(ast, hasEmitted))
-        is Reference.Iterable -> AvroModel.ArrayType(type = "array", items = reference.emit(ast, hasEmitted))
+    fun Reference.emit(module: Module, hasEmitted: MutableList<String>): AvroModel.Type = when (this) {
+        is Reference.Dict -> AvroModel.MapType(type = "map", values = reference.emit(module, hasEmitted))
+        is Reference.Iterable -> AvroModel.ArrayType(type = "array", items = reference.emit(module, hasEmitted))
         is Reference.Primitive -> {
             when (val type = type) {
                 is Reference.Primitive.Type.String -> AvroModel.SimpleType("string")
@@ -46,11 +44,11 @@ object AvroEmitter {
         }
 
         is Reference.Custom -> {
-            when (val def = ast.findType(value)) {
+            when (val def = module.findType(value)) {
                 is Type -> if (hasEmitted.contains(def.identifier.value)) {
                     def.identifier.value.let(AvroModel::SimpleType)
                 } else {
-                    def.also { hasEmitted.add(def.identifier.value) }.emit(ast, hasEmitted)
+                    def.also { hasEmitted.add(def.identifier.value) }.emit(module, hasEmitted)
                 }
                 is Enum -> AvroModel.SimpleType(def.identifier.value)
                 is Refined -> AvroModel.SimpleType("string")
@@ -62,16 +60,16 @@ object AvroEmitter {
         is Reference.Unit -> TODO()
     }
 
-    fun Field.emit(ast: AST, hasEmitted: MutableList<String>) =
+    fun Field.emit(module: Module, hasEmitted: MutableList<String>) =
         when (val ref = reference) {
             is Reference.Iterable -> AvroModel.ArrayType(
                 type = "array",
-                items = ref.reference.emit(ast, hasEmitted)
+                items = ref.reference.emit(module, hasEmitted)
             )
-            else -> ref.emit(ast, hasEmitted)
+            else -> ref.emit(module, hasEmitted)
         }
 
-    fun Type.emit(ast: AST, hasEmitted: MutableList<String>): AvroModel.RecordType = AvroModel.RecordType(
+    fun Type.emit(module: Module, hasEmitted: MutableList<String>): AvroModel.RecordType = AvroModel.RecordType(
         name = identifier.value,
         type = "record",
         fields = shape.value.map { field ->
@@ -80,22 +78,21 @@ object AvroEmitter {
                 type = if (field.reference.isNullable) {
                     AvroModel.TypeList(
                         AvroModel.SimpleType("null"),
-                        field.emit(ast, hasEmitted)
+                        field.emit(module, hasEmitted)
                     )
                 } else {
-                    AvroModel.TypeList(field.emit(ast, hasEmitted))
+                    AvroModel.TypeList(field.emit(module, hasEmitted))
                 }
             )
         }
     )
 
-    fun emit(ast: AST): List<AvroModel.Type> {
+    fun emit(module: Module): List<AvroModel.Type> {
         val hasEmitted = mutableListOf<String>()
-        return ast
-            .filterIsInstance<Definition>()
+        return module.statements.toList()
             .mapNotNull {
                 when (it) {
-                    is Type -> it.emit(ast, hasEmitted)
+                    is Type -> it.emit(module, hasEmitted)
                     is Enum -> it.emit()
                     is Union -> it.emit()
                     else -> null
@@ -103,6 +100,5 @@ object AvroEmitter {
             }
     }
 
-    private fun AST.findType(name: String): Definition? =
-        filterIsInstance<Definition>().find { it.identifier.value == name }
+    private fun Module.findType(name: String): Definition? = statements.toList().find { it.identifier.value == name }
 }
