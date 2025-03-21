@@ -229,9 +229,9 @@ open class PythonEmitter(
 
     private fun Field.emitDeserializedParams(type: String, fields: String) =
         if (reference.isNullable)
-            """${emit(identifier)} = serialization.deserialize_param($type.$fields["${identifier.value}"], ${reference.emit()})"""
+            """${emit(identifier)} = serialization.deserialize_param($type.$fields.get("${identifier.value}".lower()), ${reference.emit()})"""
         else
-            """${emit(identifier)} = serialization.deserialize_param($type.$fields["${identifier.value}"], ${reference.emit()})"""
+            """${emit(identifier)} = serialization.deserialize_param($type.$fields.get("${identifier.value}".lower()), ${reference.emit()})"""
 
     fun Endpoint.Response.emit(endpoint: Endpoint) = """
         |@dataclass
@@ -284,7 +284,7 @@ open class PythonEmitter(
     """.trimMargin()
 
     private fun Field.emitSerializedParams(type: String, fields: String) =
-        """"${emit(identifier)}": serialization.serialize_param($type.$fields.${emit(identifier)}, ${reference.emit()})"""
+        """"${identifier.value}": serialization.serialize_param($type.$fields.${emit(identifier)}, ${reference.emit()})"""
 
 
     private fun <E> List<E>.emitObject(name: String, extends: String, spaces: Int = 1, block: (E) -> String) =
