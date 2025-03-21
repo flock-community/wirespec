@@ -33,7 +33,7 @@ make
 
 Create a Pull Request:
 
-- At [https://github.com/flock/wirespec](https://github.com/flock/wirespec) click on fork (at the right top)
+- At [https://github.com/flock-community](https://github.com/flock-community/wirespec) click on fork (at the right top)
 
 ``` bash
 # add fork to your remotes
