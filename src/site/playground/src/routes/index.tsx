@@ -35,6 +35,14 @@ export type CompilerEmitter =
 export type ConverterEmitter = "wirespec";
 export type Emitter = CompilerEmitter | ConverterEmitter;
 
+export type Language =
+  | "wirespec"
+  | "kotlin"
+  | "java"
+  | "typescript"
+  | "scala"
+  | "json";
+
 type Search = {
   specification: Specification;
   emitter: Emitter;
@@ -43,10 +51,11 @@ type Search = {
 export type CompilationResult = {
   result: WsEmitted[];
   errors: WsError[];
+  language: Language;
 };
 
-function createFileHeaderFor(fileName: string, language: string) {
-  switch (language) {
+const createFileHeaderFor = (fileName: string, emitter: Emitter): string => {
+  switch (emitter) {
     case "typescript":
     case "kotlin":
     case "scala":
@@ -57,10 +66,8 @@ function createFileHeaderFor(fileName: string, language: string) {
       return "";
     case "java":
       return `\n/**\n/* ${fileName}\n**/\n`;
-    default:
-      throw `unknown language: ${language}`;
   }
-}
+};
 
 export const Route = createFileRoute("/")({
   component: RouteComponent,
@@ -169,13 +176,20 @@ function RouteComponent() {
       <Box flex={1}>
         <SpecificationSelector />
         <Box marginTop={1} height="100%">
-          <PlayGroundInput code={code} setCode={setCode} />
+          <PlayGroundInput
+            code={code}
+            setCode={setCode}
+            language={specification === "wirespec" ? "wirespec" : "json"}
+          />
         </Box>
       </Box>
       <Box flex={1}>
         <EmitterSelector />
         <Box marginTop={1} minHeight="80vh" height="100%">
-          <PlayGroundOutput code={wirespecResult} language={emitter} />
+          <PlayGroundOutput
+            code={wirespecResult}
+            language={wirespecOutput?.language || "wirespec"}
+          />
         </Box>
       </Box>
     </StyledContainer>
