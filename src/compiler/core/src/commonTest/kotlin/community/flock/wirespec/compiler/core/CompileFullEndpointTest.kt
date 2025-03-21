@@ -291,7 +291,7 @@ class CompileFullEndpointTest {
             |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, false))
             |      );
             |        case 201 -> new Response201(
-            |        java.util.Optional.ofNullable(response.headers().get("token")).map(it -> serialization.deserializeParam(it, Wirespec.getType(Token.class, false))).get(),
+            |        java.util.Optional.ofNullable(response.headers().get("token")).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, false))).get(),
             |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, false))
             |      );
             |        case 500 -> new Response500(
