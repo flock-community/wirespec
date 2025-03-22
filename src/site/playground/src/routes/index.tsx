@@ -3,7 +3,7 @@ import { useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { WsError, WsEmitted } from "@flock/wirespec";
 import { useMonaco } from "@monaco-editor/react";
-import { Box, styled } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { PlayGround } from "../components/PlayGround";
 import { SpecificationSelector } from "../components/SpecificationSelector";
 import { EmitterSelector } from "../components/EmitterSelector";
@@ -79,13 +79,6 @@ export const Route = createFileRoute("/")({
   },
 });
 
-const StyledContainer = styled(Box)(({ theme }) => ({
-  display: "flex",
-  [theme.breakpoints.down("md")]: {
-    flexDirection: "column",
-  },
-}));
-
 function RouteComponent() {
   const monaco = useMonaco();
   const { emitter, specification } = useSearch({ from: "/" });
@@ -93,6 +86,9 @@ function RouteComponent() {
   const [wirespecOutput, setWirespecOutput] = useState<CompilationResult>();
   const [wirespecResult, setWirespecResult] = useState("");
   const [wirespecErrors, setWirespecErrors] = useState<MonacoError[]>([]);
+  const [mobileDisplay, setMobileDisplay] = useState<"input" | "output">(
+    "input"
+  );
 
   useEffect(() => {
     if (specification === "wirespec") {
@@ -157,9 +153,9 @@ function RouteComponent() {
           wirespecOutput.result
             .map(
               (file) =>
-                `${createFileHeaderFor(file.typeName, emitter)}${file.result}`,
+                `${createFileHeaderFor(file.typeName, emitter)}${file.result}`
             )
-            .join(""),
+            .join("")
         );
       }
       if (wirespecOutput.errors) {
@@ -169,10 +165,29 @@ function RouteComponent() {
   }, [wirespecOutput, emitter]);
 
   return (
-    <StyledContainer>
-      <Box flex={1}>
-        <Box marginLeft={{ xs: 1, sm: 8 }}>
+    <Box display="flex">
+      <Box
+        flex={1}
+        display={{
+          xs: mobileDisplay === "input" ? "inline-block" : "none",
+          sm: "block",
+        }}
+      >
+        <Box
+          marginInline={{ xs: 1, sm: 8 }}
+          display="flex"
+          justifyContent="space-between"
+        >
           <SpecificationSelector />
+
+          <Box display={{ sm: "none" }}>
+            <Button
+              sx={{ color: "var(--color-primary)" }}
+              onClick={() => setMobileDisplay("output")}
+            >
+              show output
+            </Button>
+          </Box>
         </Box>
         <Box marginTop={1} borderTop="1px solid var(--border-primary)">
           <PlayGround
@@ -182,9 +197,27 @@ function RouteComponent() {
           />
         </Box>
       </Box>
-      <Box flex={1}>
-        <Box marginInline={{ xs: 1, sm: 8 }}>
+      <Box
+        flex={1}
+        display={{
+          xs: mobileDisplay === "output" ? "inline-block" : "none",
+          sm: "block",
+        }}
+      >
+        <Box
+          marginInline={{ xs: 1, sm: 8 }}
+          display="flex"
+          justifyContent="space-between"
+        >
           <EmitterSelector />
+          <Box display={{ sm: "none" }}>
+            <Button
+              sx={{ color: "var(--color-primary)" }}
+              onClick={() => setMobileDisplay("input")}
+            >
+              show input
+            </Button>
+          </Box>
         </Box>
 
         <Box
@@ -198,6 +231,6 @@ function RouteComponent() {
           />
         </Box>
       </Box>
-    </StyledContainer>
+    </Box>
   );
 }
