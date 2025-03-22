@@ -87,7 +87,7 @@ function RouteComponent() {
   const [wirespecResult, setWirespecResult] = useState("");
   const [wirespecErrors, setWirespecErrors] = useState<MonacoError[]>([]);
   const [mobileDisplay, setMobileDisplay] = useState<"input" | "output">(
-    "input"
+    "input",
   );
 
   useEffect(() => {
@@ -153,9 +153,9 @@ function RouteComponent() {
           wirespecOutput.result
             .map(
               (file) =>
-                `${createFileHeaderFor(file.typeName, emitter)}${file.result}`
+                `${createFileHeaderFor(file.typeName, emitter)}${file.result}`,
             )
-            .join("")
+            .join(""),
         );
       }
       if (wirespecOutput.errors) {
