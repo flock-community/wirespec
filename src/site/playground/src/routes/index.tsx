@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import { WsError, WsEmitted } from "@flock/wirespec";
 import { useMonaco } from "@monaco-editor/react";
 import { Box, styled } from "@mui/material";
-import { PlayGroundInput } from "../components/PlayGroundInput";
-import { PlayGroundOutput } from "../components/PlayGroundOutput";
+import { PlayGround } from "../components/PlayGround";
 import { SpecificationSelector } from "../components/SpecificationSelector";
 import { EmitterSelector } from "../components/EmitterSelector";
 import { initializeMonaco } from "../utils/InitializeMonaco";
@@ -81,9 +80,7 @@ export const Route = createFileRoute("/")({
 });
 
 const StyledContainer = styled(Box)(({ theme }) => ({
-  height: "100%",
   display: "flex",
-  gap: "8px",
   [theme.breakpoints.down("md")]: {
     flexDirection: "column",
   },
@@ -174,9 +171,11 @@ function RouteComponent() {
   return (
     <StyledContainer>
       <Box flex={1}>
-        <SpecificationSelector />
-        <Box marginTop={1} height="100%">
-          <PlayGroundInput
+        <Box marginLeft={{ xs: 1, sm: 8 }}>
+          <SpecificationSelector />
+        </Box>
+        <Box marginTop={1} borderTop="1px solid var(--border-primary)">
+          <PlayGround
             code={code}
             setCode={setCode}
             language={specification === "wirespec" ? "wirespec" : "json"}
@@ -184,9 +183,16 @@ function RouteComponent() {
         </Box>
       </Box>
       <Box flex={1}>
-        <EmitterSelector />
-        <Box marginTop={1} minHeight="80vh" height="100%">
-          <PlayGroundOutput
+        <Box marginInline={{ xs: 1, sm: 8 }}>
+          <EmitterSelector />
+        </Box>
+
+        <Box
+          marginTop={1}
+          borderTop="1px solid var(--border-primary)"
+          borderLeft={{ sm: "1px solid var(--border-primary)" }}
+        >
+          <PlayGround
             code={wirespecResult}
             language={wirespecOutput?.language || "wirespec"}
           />

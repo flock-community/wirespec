@@ -12,8 +12,7 @@ export function initializeMonaco(monaco: Monaco) {
 
   monaco.editor.defineTheme("vs-dark", {
     colors: {
-      "editor.foreground": "#BDAE9D",
-      "editor.background": "#242424",
+      "editor.background": "#000000",
     },
     inherit: true,
     base: "vs-dark",

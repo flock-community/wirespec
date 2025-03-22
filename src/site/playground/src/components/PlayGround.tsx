@@ -1,17 +1,13 @@
 import Editor from "@monaco-editor/react";
 import { Language } from "../routes";
 
-interface PlayGroundInputProps {
+interface PlayGroundProps {
   code: string;
-  setCode: (input: string) => void;
+  setCode?: (input: string) => void;
   language: Language;
 }
 
-export function PlayGroundInput({
-  code,
-  setCode,
-  language,
-}: PlayGroundInputProps) {
+export function PlayGround({ code, setCode, language }: PlayGroundProps) {
   return (
     <Editor
       language={language}
@@ -19,7 +15,9 @@ export function PlayGroundInput({
       height="100vh"
       options={{ minimap: { enabled: false } }}
       value={code}
-      onChange={(code: string | undefined) => setCode(code ?? "")}
+      onChange={
+        setCode ? (code: string | undefined) => setCode(code ?? "") : undefined
+      }
     />
   );
 }
