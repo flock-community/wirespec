@@ -1,6 +1,6 @@
 import wirespecLogo from "./assets/wirespec.svg";
 import "./App.css";
-import { Box, createTheme, ThemeProvider } from "@mui/material";
+import { Box, createTheme, Stack, ThemeProvider } from "@mui/material";
 import "@fontsource/roboto/300.css";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
@@ -16,27 +16,33 @@ const darkTheme = createTheme({
 function App() {
   return (
     <ThemeProvider theme={darkTheme}>
-      <Box height="100vh" display="flex" flexDirection="column" rowGap={2}>
+      <Box
+        height={{ sm: "100vh" }}
+        overflow="hidden"
+        display="flex"
+        flexDirection="column"
+        rowGap={1}
+      >
         <Box
           component="header"
           display="flex"
           alignItems="center"
           gap={2}
           paddingBlock={2}
-          paddingInline={2}
-          bgcolor="#333"
+          paddingInline={{ xs: 1, sm: 2 }}
+          borderBottom="1px solid var(--border-primary)"
         >
           <span
             style={{
               display: "flex",
               alignItems: "center",
               gap: "8px",
-              fontSize: "20px",
-              fontWeight: 600,
             }}
           >
-            <img src={wirespecLogo} height={30} alt="Wirespec Logo" />
-            <span> Wirespec Playground </span>
+            <img src={wirespecLogo} height={30} alt="" />
+            <Stack fontSize={{ sm: "20px" }} fontWeight={600}>
+              Wirespec Playground
+            </Stack>
           </span>
 
           <a
@@ -49,7 +55,7 @@ function App() {
               textDecoration: "none",
             }}
           >
-            Documentation
+            Docs
           </a>
 
           <a
@@ -62,9 +68,7 @@ function App() {
           </a>
         </Box>
 
-        <Box flex={1} paddingInline={2}>
-          <Outlet />
-        </Box>
+        <Outlet />
       </Box>
     </ThemeProvider>
   );
