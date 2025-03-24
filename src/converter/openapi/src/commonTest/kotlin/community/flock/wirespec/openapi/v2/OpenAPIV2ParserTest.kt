@@ -6,8 +6,8 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
-import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Reference.Custom
+import community.flock.wirespec.compiler.core.parse.Reference.Iterable
 import community.flock.wirespec.compiler.core.parse.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape
@@ -21,6 +21,30 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class OpenAPIV2ParserTest {
+
+    @Test
+    fun query() {
+        val path = Path("src/commonTest/resources/v2/query.json")
+        val json = SystemFileSystem.source(path).buffered().readString()
+
+        val openApi = OpenAPI.decodeFromString(json)
+        val ast = openApi.parse()
+
+        val endpoint = ast
+            .filterIsInstance<Endpoint>()
+            .find { it.identifier.value == "QueryGET" }
+
+        val fields = endpoint?.queries?.find { it.identifier.value == "order" }
+
+        val expected = Iterable(
+            reference = Primitive(
+                type = Primitive.Type.String,
+                isNullable = false,
+            ),
+            isNullable = true,
+        )
+        assertEquals(expected, fields?.reference)
+    }
 
     @Test
     fun petstore() {
@@ -91,7 +115,7 @@ class OpenAPIV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("photoUrls"),
-                            reference = Reference.Iterable(
+                            reference = Iterable(
                                 reference = Primitive(
                                     type = Primitive.Type.String,
                                     isNullable = false,
@@ -101,7 +125,7 @@ class OpenAPIV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("tags"),
-                            reference = Reference.Iterable(
+                            reference = Iterable(
                                 reference = Custom(value = "Tag", isNullable = false),
                                 isNullable = true,
                             ),
