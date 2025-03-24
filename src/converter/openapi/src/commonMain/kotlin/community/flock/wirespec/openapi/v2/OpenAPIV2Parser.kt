@@ -164,9 +164,7 @@ object OpenAPIV2Parser {
                 when (val schema = param.schema) {
                     is SchemaObject -> when (schema.type) {
                         null, OpenapiType.OBJECT -> flatten(schema, className(name, "RequestBody"))
-
                         OpenapiType.ARRAY -> schema.items?.let { flatten(it, className(name, "RequestBody")) }.orEmpty()
-
                         else -> emptyList()
                     }
 
@@ -506,7 +504,10 @@ object OpenAPIV2Parser {
 
                     OpenapiType.ARRAY -> it.items?.let { items -> resolve(items) }
                         ?.let { it.type?.toPrimitive(it.format) }
-                        ?.let { primitive -> Reference.Primitive(primitive, isNullable = isNullable) }
+                        ?.let { primitive -> Reference.Iterable(
+                            Reference.Primitive(primitive, it.required ?: false),
+                            isNullable = isNullable
+                        )}
                         ?: TODO("Not yet implemented")
 
                     OpenapiType.OBJECT -> TODO("Not yet implemented")
