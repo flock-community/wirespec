@@ -506,7 +506,7 @@ object OpenAPIV2Parser {
                         ?.let { it.type?.toPrimitive(it.format) }
                         ?.let { primitive ->
                             Reference.Iterable(
-                                Reference.Primitive(primitive, it.required ?: false),
+                                Reference.Primitive(primitive, false),
                                 isNullable = isNullable,
                             )
                         }
