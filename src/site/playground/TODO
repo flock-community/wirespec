@@ -1,20 +1,8 @@
-* After Wirespec changes, update error handling
-** wirespec should return the lineNumber and startColumn of the error
+- download as zip option
 
-* Change design of title to look more like Flock homepage (logo top left and title smaller in center)
+- support compilation targets that output multiple flies
+  \*\* tab solution
 
-* For small screensize: adjust titles to make it "Wirespec to <dropdown>"
-** more space between the playground input and output
+- copy button above PlaygroundOutput; paste button above PlaygroundInput
 
-* download as zip option
-
-* support compilation targets that output multiple flies
-** tab solution
-
-* copy button above PlaygroundOutput; paste button above PlaygroundInput
-
-* Make nice looking error box
-** support multiple errors
-** collapsible
-
-* use Flock design system BlackSun
+- use Flock design system BlackSun
