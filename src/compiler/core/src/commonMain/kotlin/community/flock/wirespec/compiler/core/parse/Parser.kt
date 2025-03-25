@@ -22,6 +22,7 @@ import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
 import community.flock.wirespec.compiler.utils.HasLogger
 
 data class ParseOptions(
+    val strict: Boolean = false,
     val allowUnions: Boolean = true,
 )
 

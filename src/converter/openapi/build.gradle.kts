@@ -7,7 +7,6 @@ version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.g
 
 repositories {
     mavenCentral()
-    maven(uri("https://s01.oss.sonatype.org/service/local/repo_groups/public/content"))
 }
 
 kotlin {
@@ -40,7 +39,7 @@ kotlin {
                 implementation(libs.bundles.kotest)
             }
         }
-        val jvmTest by getting {
+        jvmTest {
             dependencies {
                 implementation(libs.bundles.jackson)
             }

@@ -1,7 +1,5 @@
 package community.flock.wirespec.compiler.core
 
-import arrow.core.Either.Left
-import arrow.core.Either.Right
 import arrow.core.EitherNel
 import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.Stage.EMITTED
@@ -45,13 +43,6 @@ fun EmitContext.emit(source: NonEmptyList<String>): EitherNel<WirespecException,
     .also(EMITTED::log)
 
 fun CompilationContext.compile(source: NonEmptyList<String>): EitherNel<WirespecException, NonEmptyList<Emitted>> = emit(source)
-
-fun CompilationContext.compile(reader: () -> NonEmptyList<String>, writer: (Emitted) -> Unit, error: (String) -> Unit) {
-    when (val either = compile(reader())) {
-        is Left -> either.value.joinToString { it.message }.let { error(it) }
-        is Right -> either.value.forEach { writer(it) }
-    }
-}
 
 private enum class Stage {
     TOKENIZED,

@@ -3,9 +3,8 @@ import { useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { WsError, WsEmitted } from "@flock/wirespec";
 import { useMonaco } from "@monaco-editor/react";
-import { Box, styled } from "@mui/material";
-import { PlayGroundInput } from "../components/PlayGroundInput";
-import { PlayGroundOutput } from "../components/PlayGroundOutput";
+import { Box, Button } from "@mui/material";
+import { PlayGround } from "../components/PlayGround";
 import { SpecificationSelector } from "../components/SpecificationSelector";
 import { EmitterSelector } from "../components/EmitterSelector";
 import { initializeMonaco } from "../utils/InitializeMonaco";
@@ -35,6 +34,14 @@ export type CompilerEmitter =
 export type ConverterEmitter = "wirespec";
 export type Emitter = CompilerEmitter | ConverterEmitter;
 
+export type Language =
+  | "wirespec"
+  | "kotlin"
+  | "java"
+  | "typescript"
+  | "scala"
+  | "json";
+
 type Search = {
   specification: Specification;
   emitter: Emitter;
@@ -43,10 +50,11 @@ type Search = {
 export type CompilationResult = {
   result: WsEmitted[];
   errors: WsError[];
+  language: Language;
 };
 
-function createFileHeaderFor(fileName: string, language: string) {
-  switch (language) {
+const createFileHeaderFor = (fileName: string, emitter: Emitter): string => {
+  switch (emitter) {
     case "typescript":
     case "kotlin":
     case "scala":
@@ -57,10 +65,8 @@ function createFileHeaderFor(fileName: string, language: string) {
       return "";
     case "java":
       return `\n/**\n/* ${fileName}\n**/\n`;
-    default:
-      throw `unknown language: ${language}`;
   }
-}
+};
 
 export const Route = createFileRoute("/")({
   component: RouteComponent,
@@ -73,15 +79,6 @@ export const Route = createFileRoute("/")({
   },
 });
 
-const StyledContainer = styled(Box)(({ theme }) => ({
-  height: "100%",
-  display: "flex",
-  gap: "8px",
-  [theme.breakpoints.down("md")]: {
-    flexDirection: "column",
-  },
-}));
-
 function RouteComponent() {
   const monaco = useMonaco();
   const { emitter, specification } = useSearch({ from: "/" });
@@ -89,6 +86,9 @@ function RouteComponent() {
   const [wirespecOutput, setWirespecOutput] = useState<CompilationResult>();
   const [wirespecResult, setWirespecResult] = useState("");
   const [wirespecErrors, setWirespecErrors] = useState<MonacoError[]>([]);
+  const [mobileDisplay, setMobileDisplay] = useState<"input" | "output">(
+    "input",
+  );
 
   useEffect(() => {
     if (specification === "wirespec") {
@@ -165,19 +165,72 @@ function RouteComponent() {
   }, [wirespecOutput, emitter]);
 
   return (
-    <StyledContainer>
-      <Box flex={1}>
-        <SpecificationSelector />
-        <Box marginTop={1} height="100%">
-          <PlayGroundInput code={code} setCode={setCode} />
+    <Box display="flex">
+      <Box
+        flex={1}
+        display={{
+          xs: mobileDisplay === "input" ? "inline-block" : "none",
+          sm: "block",
+        }}
+      >
+        <Box
+          marginInline={{ xs: 1, sm: 8 }}
+          display="flex"
+          justifyContent="space-between"
+        >
+          <SpecificationSelector />
+
+          <Box display={{ sm: "none" }}>
+            <Button
+              sx={{ color: "var(--color-primary)" }}
+              onClick={() => setMobileDisplay("output")}
+            >
+              show output
+            </Button>
+          </Box>
+        </Box>
+        <Box marginTop={1} borderTop="1px solid var(--border-primary)">
+          <PlayGround
+            code={code}
+            setCode={setCode}
+            language={specification === "wirespec" ? "wirespec" : "json"}
+          />
         </Box>
       </Box>
-      <Box flex={1}>
-        <EmitterSelector />
-        <Box marginTop={1} minHeight="80vh" height="100%">
-          <PlayGroundOutput code={wirespecResult} language={emitter} />
+      <Box
+        flex={1}
+        display={{
+          xs: mobileDisplay === "output" ? "inline-block" : "none",
+          sm: "block",
+        }}
+      >
+        <Box
+          marginInline={{ xs: 1, sm: 8 }}
+          display="flex"
+          justifyContent="space-between"
+        >
+          <EmitterSelector />
+          <Box display={{ sm: "none" }}>
+            <Button
+              sx={{ color: "var(--color-primary)" }}
+              onClick={() => setMobileDisplay("input")}
+            >
+              show input
+            </Button>
+          </Box>
+        </Box>
+
+        <Box
+          marginTop={1}
+          borderTop="1px solid var(--border-primary)"
+          borderLeft={{ sm: "1px solid var(--border-primary)" }}
+        >
+          <PlayGround
+            code={wirespecResult}
+            language={wirespecOutput?.language || "wirespec"}
+          />
         </Box>
       </Box>
-    </StyledContainer>
+    </Box>
   );
 }

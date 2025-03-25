@@ -145,7 +145,7 @@ class SpringJavaEmitterTest {
             |    }
             |
             |    static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
-            |      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Map.ofEntries(java.util.Map.entry("total", serialization.serialize(r.getHeaders().total(), Wirespec.getType(Long.class, false)))), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, true))); }
+            |      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Map.ofEntries(java.util.Map.entry("total", serialization.serializeParam(r.getHeaders().total(), Wirespec.getType(Long.class, false)))), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, true))); }
             |      if (response instanceof Response500 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(Error.class, false))); }
             |      else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
             |    }
@@ -153,7 +153,7 @@ class SpringJavaEmitterTest {
             |    static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
             |      return switch (response.statusCode()) {
             |        case 200 -> new Response200(
-            |        java.util.Optional.ofNullable(response.headers().get("total")).map(it -> serialization.deserialize(it, Wirespec.getType(Long.class, false))).get(),
+            |        java.util.Optional.ofNullable(response.headers().get("total")).map(it -> serialization.<Long>deserializeParam(it, Wirespec.getType(Long.class, false))).get(),
             |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, true))
             |      );
             |        case 500 -> new Response500(

@@ -6,9 +6,11 @@ import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACK
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.emit.common.Keywords
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
+import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
@@ -32,6 +34,10 @@ open class ScalaEmitter(
         |import $DEFAULT_SHARED_PACKAGE_STRING.scala.Wirespec
         |
     """.trimMargin()
+
+    override val extension = FileExtension.Scala
+
+    override val shared = ScalaShared
 
     override fun Definition.emitName(): String = when (this) {
         is Endpoint -> "${emit(identifier)}Endpoint"

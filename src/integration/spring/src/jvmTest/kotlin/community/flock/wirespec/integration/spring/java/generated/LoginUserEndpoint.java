@@ -73,7 +73,7 @@ public interface LoginUserEndpoint extends Wirespec.Endpoint {
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Map.ofEntries(java.util.Map.entry("X-Rate-Limit", serialization.serialize(r.getHeaders().XRateLimit(), Wirespec.getType(Integer.class, false))), java.util.Map.entry("X-Expires-After", serialization.serialize(r.getHeaders().XExpiresAfter(), Wirespec.getType(String.class, false)))), serialization.serialize(r.body, Wirespec.getType(String.class, false))); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Map.ofEntries(java.util.Map.entry("X-Rate-Limit", serialization.serializeParam(r.getHeaders().XRateLimit(), Wirespec.getType(Integer.class, false))), java.util.Map.entry("X-Expires-After", serialization.serializeParam(r.getHeaders().XExpiresAfter(), Wirespec.getType(String.class, false)))), serialization.serialize(r.body, Wirespec.getType(String.class, false))); }
       if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), null); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
     }
@@ -81,7 +81,7 @@ public interface LoginUserEndpoint extends Wirespec.Endpoint {
     static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
       return switch (response.statusCode()) {
         case 200 -> new Response200(
-        java.util.Optional.ofNullable(response.headers().get("X-Rate-Limit")).map(it -> serialization.deserialize(it, Wirespec.getType(Integer.class, false))),         java.util.Optional.ofNullable(response.headers().get("X-Expires-After")).map(it -> serialization.deserialize(it, Wirespec.getType(String.class, false))),
+        java.util.Optional.ofNullable(response.headers().get("X-Rate-Limit")).map(it -> serialization.<Integer>deserializeParam(it, Wirespec.getType(Integer.class, false))),         java.util.Optional.ofNullable(response.headers().get("X-Expires-After")).map(it -> serialization.<String>deserializeParam(it, Wirespec.getType(String.class, false))),
         serialization.deserialize(response.body(), Wirespec.getType(String.class, false))
       );
         case 400 -> new Response400();

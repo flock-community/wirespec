@@ -3,6 +3,8 @@ package community.flock.wirespec.example.maven.custom.emit;
 import arrow.core.NonEmptyList;
 import community.flock.wirespec.compiler.core.emit.common.Emitted;
 import community.flock.wirespec.compiler.core.emit.common.Emitter;
+import community.flock.wirespec.compiler.core.emit.common.FileExtension;
+import community.flock.wirespec.compiler.core.emit.shared.Shared;
 import community.flock.wirespec.compiler.core.parse.Channel;
 import community.flock.wirespec.compiler.core.parse.Definition;
 import community.flock.wirespec.compiler.core.parse.Endpoint;
@@ -18,17 +20,30 @@ import community.flock.wirespec.compiler.core.parse.Module;
 import community.flock.wirespec.compiler.core.parse.AST;
 import community.flock.wirespec.compiler.utils.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CustomEmitter extends Emitter {
 
-    public CustomEmitter(boolean split) {
-        super(split);
+    public CustomEmitter() {
+        super(true);
     }
 
     @NotNull
     @Override
     public String getSingleLineComment() {
         return "//";
+    }
+
+    @NotNull
+    @Override
+    public FileExtension getExtension() {
+        return FileExtension.Java;
+    }
+
+    @Nullable
+    @Override
+    public Shared getShared() {
+        return null;
     }
 
     @NotNull
@@ -108,5 +123,4 @@ public class CustomEmitter extends Emitter {
     public String emit(@NotNull Identifier identifier) {
         return identifier.getValue();
     }
-
 }

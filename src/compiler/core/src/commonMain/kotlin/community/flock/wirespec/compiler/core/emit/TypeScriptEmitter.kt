@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.emit
 import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.emit.shared.TypeScriptShared
 import community.flock.wirespec.compiler.core.parse.AST
@@ -30,6 +31,10 @@ open class TypeScriptEmitter : Emitter() {
         is Channel -> emit(identifier)
     }
 
+    override val extension = FileExtension.TypeScript
+
+    override val shared = TypeScriptShared
+
     override val singleLineComment = "//"
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
@@ -55,10 +60,10 @@ open class TypeScriptEmitter : Emitter() {
     override fun Type.Shape.emit() = value.joinToString(",\n") { it.emit() }
 
     internal fun Endpoint.Segment.Param.emit() =
-        "${Spacer}\"${emit(identifier)}\": ${reference.emit()}"
+        "${Spacer}${emit(identifier)}: ${reference.emit()}"
 
     override fun Field.emit() =
-        """$Spacer"${emit(identifier)}": ${reference.emit()}"""
+        "$Spacer${emit(identifier)}: ${reference.emit()}"
 
     override fun Reference.emit(): String = when (this) {
         is Reference.Dict -> "Record<string, ${reference.emit()}>"
@@ -77,9 +82,9 @@ open class TypeScriptEmitter : Emitter() {
 
     override fun emit(refined: Refined) =
         """export type ${refined.identifier.sanitizeSymbol()} = string;
-            |const regExp${emit(refined.identifier)} = ${refined.validator.emit()};
-            |export const validate${emit(refined.identifier)} = (value: string): value is ${refined.identifier.sanitizeSymbol()} => 
-            |${Spacer}regExp${emit(refined.identifier)}.test(value);
+            |const regExp${refined.identifier.value} = ${refined.validator.emit()};
+            |export const validate${refined.identifier.value} = (value: string): value is ${refined.identifier.sanitizeSymbol()} => 
+            |${Spacer}regExp${refined.identifier.value}.test(value);
             |""".trimMargin()
 
     override fun Refined.Validator.emit() = value
@@ -123,7 +128,7 @@ open class TypeScriptEmitter : Emitter() {
     override fun emit(union: Union) =
         "export type ${union.identifier.sanitizeSymbol()} = ${union.entries.joinToString(" | ") { it.emit() }}\n"
 
-    override fun emit(identifier: Identifier) = identifier.value
+    override fun emit(identifier: Identifier) = """"${identifier.value}""""
 
     override fun emit(channel: Channel) = notYetImplemented()
 
@@ -150,10 +155,10 @@ open class TypeScriptEmitter : Emitter() {
 
     private fun Endpoint.Request.emitFunction(endpoint: Endpoint) = """
       |${Spacer}export const request = (${paramList(endpoint).takeIf { it.isNotEmpty() }?.let { "props: ${it.joinToObject { it.emit() }}" }.orEmpty()}): Request => ({
-      |${Spacer(2)}path: ${endpoint.pathParams.joinToObject { "${emit(it.identifier)}: props.${emit(it.identifier)}" }},
+      |${Spacer(2)}path: ${endpoint.pathParams.joinToObject { "${emit(it.identifier)}: props[${emit(it.identifier)}]" }},
       |${Spacer(2)}method: "${endpoint.method}",
-      |${Spacer(2)}queries: ${endpoint.queries.joinToObject { "${emit(it.identifier)}: props.${emit(it.identifier)}" }},
-      |${Spacer(2)}headers: ${endpoint.headers.joinToObject { "${emit(it.identifier)}: props.${emit(it.identifier)}" }},
+      |${Spacer(2)}queries: ${endpoint.queries.joinToObject { "${emit(it.identifier)}: props[${emit(it.identifier)}]" }},
+      |${Spacer(2)}headers: ${endpoint.headers.joinToObject { "${emit(it.identifier)}: props[${emit(it.identifier)}]" }},
       |${Spacer(2)}body: ${content?.let { "props.body" } ?: "undefined"},
       |${Spacer}})
     """.trimIndent()
@@ -161,7 +166,7 @@ open class TypeScriptEmitter : Emitter() {
     private fun Endpoint.Response.emitFunction(endpoint: Endpoint) = """
       |${Spacer}export const response${status.firstToUpper()} = (${paramList().takeIf { it.isNotEmpty() }?.let { "props: ${it.joinToObject { it.emit() }}" }.orEmpty()}): Response${status.firstToUpper()} => ({
       |${Spacer(2)}status: ${status},
-      |${Spacer(2)}headers: ${headers.joinToObject { "${emit(it.identifier)}: props.${emit(it.identifier)}" }},
+      |${Spacer(2)}headers: ${headers.joinToObject { "${emit(it.identifier)}: props[${emit(it.identifier)}]" }},
       |${Spacer(2)}body: ${content?.let { "props.body" } ?: "undefined"},
       |${Spacer}})
     """.trimIndent()
@@ -169,7 +174,7 @@ open class TypeScriptEmitter : Emitter() {
     private fun <T> Iterable<T>.joinToObject(transform: ((T) -> CharSequence)) =
         joinToString(", ", "{", "}", transform = transform)
 
-    private fun Param.emit() = "${emit(identifier)}${if (reference.isNullable) "?" else ""}: ${reference.emit()}"
+    private fun Param.emit() = "${emit(identifier)}: ${reference.emit()}"
 
     private fun Endpoint.Response.emitName() = "Response" + status.firstToUpper()
 
@@ -178,7 +183,7 @@ open class TypeScriptEmitter : Emitter() {
     private fun Endpoint.Response.emitType() = """
       |${Spacer}export type ${emitName()} = {
       |${Spacer(2)}status: $status
-      |${Spacer(2)}headers: {${headers.joinToString { "\"${emit(it.identifier)}\": ${it.reference.emit()}" }}}
+      |${Spacer(2)}headers: {${headers.joinToString { "${emit(it.identifier)}: ${it.reference.emit()}" }}}
       |${Spacer(2)}body: ${emitReference()}
       |${Spacer}}
     """.trimIndent()
@@ -199,7 +204,7 @@ open class TypeScriptEmitter : Emitter() {
     private fun Endpoint.emitPathArray() = path.joinToString(", ", "[", "]") {
         when (it) {
             is Endpoint.Segment.Literal -> """"${it.value}""""
-            is Endpoint.Segment.Param -> "serialization.serialize(it.path.${emit(it.identifier)})"
+            is Endpoint.Segment.Param -> "serialization.serialize(it.path[${emit(it.identifier)}])"
         }
     }
 
@@ -269,8 +274,8 @@ open class TypeScriptEmitter : Emitter() {
         """${emit(value.identifier)}: serialization.deserialize(it.path[${index}])"""
 
     private fun Field.emitDeserialize(fields: String) =
-        """${emit(identifier)}: serialization.deserialize(it.$fields.${emit(identifier)})"""
+        """${emit(identifier)}: serialization.deserialize(it.$fields[${emit(identifier)}])"""
 
     private fun Field.emitSerialize(fields: String) =
-        """${emit(identifier)}: serialization.serialize(it.$fields.${emit(identifier)})"""
+        """${emit(identifier)}: serialization.serialize(it.$fields[${emit(identifier)}])"""
 }

@@ -311,7 +311,7 @@ jobs:
         working-directory: ./src/site/playground
         run: |
           gcloud auth configure-docker europe-docker.pkg.dev
-          docker buildx dist --platform linux/amd64 -t europe-docker.pkg.dev/wirespec-421108/wirespec-docker/wirespec-playground .
+          docker buildx build --platform linux/amd64 -t europe-docker.pkg.dev/wirespec-421108/wirespec-docker/wirespec-playground .
           docker push europe-docker.pkg.dev/wirespec-421108/wirespec-docker/wirespec-playground
           gcloud run deploy wirespec-playground --image=europe-docker.pkg.dev/wirespec-421108/wirespec-docker/wirespec-playground --region=europe-west4 --project=wirespec-421108
           

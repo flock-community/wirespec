@@ -24,6 +24,7 @@ import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceOrBooleanObj
 import community.flock.kotlinx.openapi.bindings.v3.StatusCode
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
@@ -37,7 +38,6 @@ import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.openapi.Common.json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
@@ -48,6 +48,10 @@ object OpenAPIV3Emitter : Emitter() {
         val title: String,
         val version: String,
     )
+
+    override val extension = FileExtension.JSON
+
+    override val shared = null
 
     override val singleLineComment = ""
 

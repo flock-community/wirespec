@@ -280,7 +280,7 @@ class CompileFullEndpointTest {
             |
             |    static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
             |      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, false))); }
-            |      if (response instanceof Response201 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serialize(r.getHeaders().token(), Wirespec.getType(Token.class, false)))), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, false))); }
+            |      if (response instanceof Response201 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serializeParam(r.getHeaders().token(), Wirespec.getType(Token.class, false)))), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, false))); }
             |      if (response instanceof Response500 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(Error.class, false))); }
             |      else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
             |    }
@@ -291,7 +291,7 @@ class CompileFullEndpointTest {
             |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, false))
             |      );
             |        case 201 -> new Response201(
-            |        java.util.Optional.ofNullable(response.headers().get("token")).map(it -> serialization.deserialize(it, Wirespec.getType(Token.class, false))).get(),
+            |        java.util.Optional.ofNullable(response.headers().get("token")).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, false))).get(),
             |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, false))
             |      );
             |        case 500 -> new Response500(
@@ -408,24 +408,24 @@ class CompileFullEndpointTest {
             |    body: Error
             |  }
             |  export type Response = Response200 | Response201 | Response500
-            |  export const request = (props: {id: string, done: boolean, token: Token, body: PotentialTodoDto}): Request => ({
-            |    path: {id: props.id},
+            |  export const request = (props: {"id": string, "done": boolean, "token": Token, "body": PotentialTodoDto}): Request => ({
+            |    path: {"id": props["id"]},
             |    method: "PUT",
-            |    queries: {done: props.done},
-            |    headers: {token: props.token},
+            |    queries: {"done": props["done"]},
+            |    headers: {"token": props["token"]},
             |    body: props.body,
             |  })
-            |  export const response200 = (props: {body: TodoDto}): Response200 => ({
+            |  export const response200 = (props: {"body": TodoDto}): Response200 => ({
             |    status: 200,
             |    headers: {},
             |    body: props.body,
             |  })
-            |  export const response201 = (props: {token: Token, body: TodoDto}): Response201 => ({
+            |  export const response201 = (props: {"token": Token, "body": TodoDto}): Response201 => ({
             |    status: 201,
-            |    headers: {token: props.token},
+            |    headers: {"token": props["token"]},
             |    body: props.body,
             |  })
-            |  export const response500 = (props: {body: Error}): Response500 => ({
+            |  export const response500 = (props: {"body": Error}): Response500 => ({
             |    status: 500,
             |    headers: {},
             |    body: props.body,
@@ -436,9 +436,9 @@ class CompileFullEndpointTest {
             |  export const client: Wirespec.Client<Request, Response> = (serialization: Wirespec.Serialization) => ({
             |    to: (it) => ({
             |      method: "PUT",
-            |      path: ["todos", serialization.serialize(it.path.id)],
-            |      queries: {done: serialization.serialize(it.queries.done)},
-            |      headers: {token: serialization.serialize(it.headers.token)},
+            |      path: ["todos", serialization.serialize(it.path["id"])],
+            |      queries: {"done": serialization.serialize(it.queries["done"])},
+            |      headers: {"token": serialization.serialize(it.headers["token"])},
             |      body: serialization.serialize(it.body)
             |    }),
             |    from: (it) => {
@@ -452,7 +452,7 @@ class CompileFullEndpointTest {
             |        case 201:
             |          return {
             |            status: 201,
-            |            headers: {token: serialization.deserialize(it.headers.token)},
+            |            headers: {"token": serialization.deserialize(it.headers["token"])},
             |            body: serialization.deserialize<TodoDto>(it.body)
             |          };
             |        case 500:
@@ -471,13 +471,13 @@ class CompileFullEndpointTest {
             |      return {
             |        method: "PUT",
             |        path: { 
-            |          id: serialization.deserialize(it.path[1])
+            |          "id": serialization.deserialize(it.path[1])
             |        },
             |        queries: {
-            |          done: serialization.deserialize(it.queries.done)
+            |          "done": serialization.deserialize(it.queries["done"])
             |        },
             |        headers: {
-            |          token: serialization.deserialize(it.headers.token)
+            |          "token": serialization.deserialize(it.headers["token"])
             |        },
             |        body: serialization.deserialize(it.body)
             |      }

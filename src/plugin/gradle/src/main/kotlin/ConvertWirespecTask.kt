@@ -25,7 +25,7 @@ abstract class ConvertWirespecTask : BaseWirespecTask() {
     abstract val input: RegularFileProperty
 
     @get:Input
-    @get:Option(option = "languages", description = "languages list")
+    @get:Option(option = "format", description = "formats list")
     abstract val format: Property<Format>
 
     @get:Input
@@ -39,7 +39,7 @@ abstract class ConvertWirespecTask : BaseWirespecTask() {
 
     @get:Optional
     @get:Input
-    @get:Option(option = "shared", description = "emit shared class")
+    @get:Option(option = "strict", description = "strict parsing mode")
     abstract val strict: Property<Boolean>
 
     @TaskAction

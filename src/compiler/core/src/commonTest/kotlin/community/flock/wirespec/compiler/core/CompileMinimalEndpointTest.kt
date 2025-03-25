@@ -266,7 +266,7 @@ class CompileMinimalEndpointTest {
             |    headers: {},
             |    body: undefined,
             |  })
-            |  export const response200 = (props: {body: TodoDto[]}): Response200 => ({
+            |  export const response200 = (props: {"body": TodoDto[]}): Response200 => ({
             |    status: 200,
             |    headers: {},
             |    body: props.body,
