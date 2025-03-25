@@ -34,7 +34,7 @@ fun compile(arguments: CompilerArguments) {
                 .pairWithEmitters(arguments.emitters)
                 .map { (outputFile, emitter) ->
                     ctx(emitter)
-                        .compile(source.content)
+                        .compile(nonEmptyListOf(source.content))
                         .map(keepSplitOrCombine(emitter.split, outputFile))
                 }
         }
