@@ -12,6 +12,7 @@ import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -38,15 +39,18 @@ abstract class Emitter(
 
     open fun Definition.emitName(): String = notYetImplemented()
 
-    open fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast
+    fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast.modules.flatMap { emit(it, logger) }
+
+    open fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = module
+        .statements
         .map {
             when (it) {
                 is Definition -> it.emitName()
             }.also { name -> logger.info("Emitting Node $name") }
             when (it) {
-                is Type -> Emitted(it.emitName(), emit(it, ast))
+                is Type -> Emitted(it.emitName(), emit(it, module))
                 is Endpoint -> Emitted(it.emitName(), emit(it))
-                is Enum -> Emitted(it.emitName(), emit(it, ast))
+                is Enum -> Emitted(it.emitName(), emit(it, module))
                 is Refined -> Emitted(it.emitName(), emit(it))
                 is Union -> Emitted(it.emitName(), emit(it))
                 is Channel -> Emitted(it.emitName(), emit(it))
@@ -121,8 +125,8 @@ abstract class Emitter(
     companion object {
         fun String.firstToUpper() = replaceFirstChar(Char::uppercase)
         fun String.firstToLower() = replaceFirstChar(Char::lowercase)
-        fun AST.needImports() = any { it is Endpoint || it is Enum || it is Refined }
-        fun AST.hasEndpoints() = any { it is Endpoint }
+        fun Module.needImports() = statements.any { it is Endpoint || it is Enum || it is Refined }
+        fun Module.hasEndpoints() = statements.any { it is Endpoint }
         fun String.isStatusCode() = toIntOrNull()?.let { it in 0..599 } ?: false
         val internalClasses = setOf(
             "Request", "Response"

@@ -18,6 +18,7 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -49,19 +50,19 @@ open class ScalaEmitter(
 
     override val singleLineComment = "//"
 
-    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> =
-        super.emit(ast, logger).map { (typeName, result) ->
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
+        super.emit(module, logger).map { (typeName, result) ->
             Emitted(
                 typeName = typeName,
                 result = """
                     |package $packageName
-                    |${if (ast.needImports()) import else ""}
+                    |${if (module.needImports()) import else ""}
                     |${result}
                 """.trimMargin().trimStart()
             )
         }
 
-    override fun emit(type: Type, ast: AST) = """
+    override fun emit(type: Type, module: Module) = """
         |case class ${type.emitName()}(
         |${type.shape.emit()}
         |)
@@ -101,7 +102,7 @@ open class ScalaEmitter(
         }
     }.let { if (isNullable) "Option[$it]" else it }
 
-    override fun emit(enum: Enum, ast: AST) = enum.run {
+    override fun emit(enum: Enum, module: Module) = enum.run {
         fun String.sanitize() = replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }
         """
         |sealed abstract class ${emitName()}(val label: String)

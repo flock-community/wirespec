@@ -25,6 +25,7 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -43,8 +44,8 @@ object OpenAPIV2Emitter : Emitter() {
 
     override val singleLineComment = ""
 
-    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> =
-        nonEmptyListOf(Emitted("SwaggerObject", json.encodeToString(emitSwaggerObject(ast))))
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
+        nonEmptyListOf(Emitted("SwaggerObject", json.encodeToString(emitSwaggerObject(module))))
 
     override fun Type.Shape.emit() = notYetImplemented()
 
@@ -54,9 +55,9 @@ object OpenAPIV2Emitter : Emitter() {
 
     override fun Refined.Validator.emit() = notYetImplemented()
 
-    override fun emit(type: Type, ast: AST) = notYetImplemented()
+    override fun emit(type: Type, module: Module) = notYetImplemented()
 
-    override fun emit(enum: Enum, ast: AST) = notYetImplemented()
+    override fun emit(enum: Enum, module: Module) = notYetImplemented()
 
     override fun emit(refined: Refined) = notYetImplemented()
 
@@ -68,7 +69,7 @@ object OpenAPIV2Emitter : Emitter() {
 
     override fun emit(channel: Channel) = notYetImplemented()
 
-    fun emitSwaggerObject(ast: AST): SwaggerObject =
+    fun emitSwaggerObject(module: Module): SwaggerObject =
         SwaggerObject(
             swagger = "2.0",
             info = InfoObject(
@@ -77,7 +78,7 @@ object OpenAPIV2Emitter : Emitter() {
             ),
             consumes = listOf("application/json"),
             produces = listOf("application/json"),
-            paths = ast.filterIsInstance<Endpoint>().groupBy { it.path }.map { (segments, endpoints) ->
+            paths = module.statements.filterIsInstance<Endpoint>().groupBy { it.path }.map { (segments, endpoints) ->
                 Path(segments.emitSegment()) to PathItemObject(
                     parameters = segments.filterIsInstance<Endpoint.Segment.Param>().map {
                         ParameterObject(
@@ -97,13 +98,13 @@ object OpenAPIV2Emitter : Emitter() {
                     head = endpoints.emit(Endpoint.Method.HEAD),
                 )
             }.toMap(),
-            definitions = ast
+            definitions = module.statements
                 .filterIsInstance<Refined>().associate { type ->
                     type.identifier.value to SchemaObject(
                         type = OpenAPIType.STRING,
                         pattern = type.validator.value
                     )
-                } + ast
+                } + module.statements
                 .filterIsInstance<Type>().associate { type ->
                     type.identifier.value to SchemaObject(
                         properties = type.shape.value.associate { it.toProperties() },
@@ -112,7 +113,7 @@ object OpenAPIV2Emitter : Emitter() {
                             .map { it.identifier.value }
                             .takeIf { it.isNotEmpty() }
                     )
-                } + ast
+                } + module.statements
                 .filterIsInstance<Enum>().associate { enum ->
                     enum.identifier.value to SchemaObject(
                         type = OpenAPIType.STRING,

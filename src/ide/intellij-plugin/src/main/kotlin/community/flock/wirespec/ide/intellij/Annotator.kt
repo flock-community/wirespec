@@ -1,5 +1,6 @@
 package community.flock.wirespec.ide.intellij
 
+import arrow.core.nonEmptyListOf
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.lang.annotation.HighlightSeverity
@@ -17,7 +18,7 @@ class Annotator :
 
     override fun collectInformation(file: PsiFile) = WirespecSpec
         .tokenize(file.text)
-        .run { parse(this) }
+        .run { parse(nonEmptyListOf(this)) }
         .fold({ it }, { emptyList() })
 
     override fun doAnnotate(collectedInfo: List<WirespecException>?) = collectedInfo

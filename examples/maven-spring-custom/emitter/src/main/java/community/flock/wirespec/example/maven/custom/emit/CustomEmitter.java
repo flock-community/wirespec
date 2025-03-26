@@ -16,6 +16,8 @@ import community.flock.wirespec.compiler.core.parse.Reference;
 import community.flock.wirespec.compiler.core.parse.Refined;
 import community.flock.wirespec.compiler.core.parse.Type;
 import community.flock.wirespec.compiler.core.parse.Union;
+import community.flock.wirespec.compiler.core.parse.Module;
+import community.flock.wirespec.compiler.core.parse.AST;
 import community.flock.wirespec.compiler.utils.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,14 +60,6 @@ public class CustomEmitter extends Emitter {
 
     @NotNull
     @Override
-    public NonEmptyList<Emitted> emit(@NotNull NonEmptyList<? extends Node> ast, @NotNull Logger logger) {
-        return ast
-                .map(it -> (Type) it)
-                .map(type -> new Emitted(emitName(type), emit(type, ast)));
-    }
-
-    @NotNull
-    @Override
     public String emit(@NotNull Endpoint endpoint) {
         return notYetImplemented();
     }
@@ -78,7 +72,7 @@ public class CustomEmitter extends Emitter {
 
     @NotNull
     @Override
-    public String emit(@NotNull Enum anEnum, @NotNull NonEmptyList<? extends Node> ast) {
+    public String emit(@NotNull Enum anEnum, @NotNull Module module) {
         return notYetImplemented();
     }
 
@@ -102,7 +96,7 @@ public class CustomEmitter extends Emitter {
 
     @NotNull
     @Override
-    public String emit(@NotNull Type type, @NotNull NonEmptyList<? extends Node> ast) {
+    public String emit(@NotNull Type type, @NotNull Module module) {
         return "package hello;\n\npublic class " + emitName(type) + " {}";
     }
 

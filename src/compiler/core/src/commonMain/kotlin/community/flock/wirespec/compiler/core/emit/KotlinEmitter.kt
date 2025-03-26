@@ -13,7 +13,6 @@ import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
 import community.flock.wirespec.compiler.core.orNull
-import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
@@ -22,6 +21,7 @@ import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -54,19 +54,19 @@ open class KotlinEmitter(
 
     override val singleLineComment = "//"
 
-    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> =
-        super.emit(ast, logger).map { (typeName, result) ->
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
+        super.emit(module, logger).map { (typeName, result) ->
             Emitted(
                 typeName = typeName.sanitizeSymbol(),
                 result = """
                     |package $packageName
-                    |${if (ast.needImports()) import else ""}
+                    |${if (module.needImports()) import else ""}
                     |$result
                 """.trimMargin().trimStart()
             )
         }
 
-    override fun emit(type: Type, ast: AST) =
+    override fun emit(type: Type, module: Module) =
         if (type.shape.value.isEmpty()) "${Spacer}data object ${type.emitName()}"
         else """
             |data class ${type.emitName()}(
@@ -118,7 +118,7 @@ open class KotlinEmitter(
 
     override fun Refined.Validator.emit() = "Regex(\"\"\"${expression}\"\"\").matches(value)"
 
-    override fun emit(enum: Enum, ast: AST) = """
+    override fun emit(enum: Enum, module: Module) = """
         |enum class ${enum.identifier.value.sanitizeSymbol()} (override val label: String): Wirespec.Enum {
         |${enum.entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }.spacer()};
         |${Spacer}override fun toString(): String {

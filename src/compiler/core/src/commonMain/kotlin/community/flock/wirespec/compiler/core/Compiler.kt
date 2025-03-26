@@ -10,7 +10,7 @@ import community.flock.wirespec.compiler.core.emit.common.HasEmitter
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Parser.parse
-import community.flock.wirespec.compiler.core.tokenize.Tokens
+import community.flock.wirespec.compiler.core.tokenize.TokenizedModule
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.HasLogger
 
@@ -32,19 +32,17 @@ interface CompilationContext :
     ParseContext,
     EmitContext
 
-fun TokenizeContext.tokenize(source: String): Tokens = spec
+fun TokenizeContext.tokenize(source: String): TokenizedModule = spec
     .tokenize(source)
     .also(TOKENIZED::log)
 
-fun ParseContext.parse(source: String): EitherNel<WirespecException, AST> = tokenize(source)
-    .run { parse(this) }
-    .also(PARSED::log)
+fun ParseContext.parse(source: NonEmptyList<String>): EitherNel<WirespecException, AST> = parse(source.map { tokenize(it) }).also(PARSED::log)
 
-fun EmitContext.emit(source: String): EitherNel<WirespecException, NonEmptyList<Emitted>> = parse(source)
+fun EmitContext.emit(source: NonEmptyList<String>): EitherNel<WirespecException, NonEmptyList<Emitted>> = parse(source)
     .map { emitter.emit(it, logger) }
     .also(EMITTED::log)
 
-fun CompilationContext.compile(source: String): EitherNel<WirespecException, NonEmptyList<Emitted>> = emit(source)
+fun CompilationContext.compile(source: NonEmptyList<String>): EitherNel<WirespecException, NonEmptyList<Emitted>> = emit(source)
 
 private enum class Stage {
     TOKENIZED,

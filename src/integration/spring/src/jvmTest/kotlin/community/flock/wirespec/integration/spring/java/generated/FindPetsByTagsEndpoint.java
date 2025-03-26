@@ -64,7 +64,7 @@ public interface FindPetsByTagsEndpoint extends Wirespec.Endpoint {
 
     static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
       return new Request(
-        java.util.Optional.ofNullable(request.queries().get("tags")).map(it -> serialization.<String>deserializeParam(it, Wirespec.getType(String.class, true)))
+        java.util.Optional.ofNullable(request.queries().get("tags")).map(it -> serialization.<java.util.List<String>>deserializeParam(it, Wirespec.getType(String.class, true)))
       );
     }
 

@@ -3,10 +3,10 @@ package community.flock.wirespec.integration.avro.java.emit
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
-import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.integration.avro.Utils
@@ -14,29 +14,29 @@ import community.flock.wirespec.integration.avro.Utils.isEnum
 
 class AvroJavaEmitter(private val packageName: String) : JavaEmitter(PackageName(packageName)) {
 
-    private fun emitAvroSchema(type: Definition, ast: AST) = Utils.emitAvroSchema(packageName, type, ast)
+    private fun emitAvroSchema(type: Definition, module: Module) = Utils.emitAvroSchema(packageName, type, module)
         ?.replace("\\\"<<<<<", "\" + ")
         ?.replace(">>>>>\\\"", ".Avro.SCHEMA + \"")
         ?: error("Cannot emit avro: ${type.identifier.value}")
 
-    override fun emit(type: Type, ast: AST) = """
+    override fun emit(type: Type, module: Module) = """
         |public record ${type.emitName()} (
         |${type.shape.emit()}
-        |)${type.extends.run { if (isEmpty()) "" else " extends ${joinToString(", ") { it.emit() }}" }}${type.emitUnion(ast)} {
-        |${emitTypeFunctionBody(type, ast)}
+        |)${type.extends.run { if (isEmpty()) "" else " extends ${joinToString(", ") { it.emit() }}" }}${type.emitUnion(module)} {
+        |${emitTypeFunctionBody(type, module)}
         |};
         |
     """.trimMargin()
 
-    private fun emitTypeFunctionBody(type: Type, ast: AST) = """
+    private fun emitTypeFunctionBody(type: Type, module: Module) = """
         |  public static class Avro {
         |    
         |    public static final org.apache.avro.Schema SCHEMA = 
-        |      new org.apache.avro.Schema.Parser().parse("${emitAvroSchema(type, ast)}");
+        |      new org.apache.avro.Schema.Parser().parse("${emitAvroSchema(type, module)}");
         |
         |    public static ${type.emitName()} from(org.apache.avro.generic.GenericData.Record record) {
         |       return new ${type.emitName()}(
-        |       ${type.shape.value.mapIndexed(emitFrom(ast)).joinToString(",\n${Spacer(4)}")}
+        |       ${type.shape.value.mapIndexed(emitFrom(module)).joinToString(",\n${Spacer(4)}")}
         |      );
         |    }
         |    
@@ -48,7 +48,7 @@ class AvroJavaEmitter(private val packageName: String) : JavaEmitter(PackageName
         |  }
     """.trimMargin()
 
-    override fun emit(enum: Enum, ast: AST) = """
+    override fun emit(enum: Enum, module: Module) = """
         |public enum ${emit(enum.identifier)} implements Wirespec.Enum {
         |${enum.entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }.spacer()};
         |${Spacer}public final String label;
@@ -63,16 +63,16 @@ class AvroJavaEmitter(private val packageName: String) : JavaEmitter(PackageName
         |${Spacer}public String getLabel() {
         |${Spacer(2)}return label;
         |${Spacer}}
-        |${emitEnumFunctionBody(enum, ast)}
+        |${emitEnumFunctionBody(enum, module)}
         |}
         |
     """.trimMargin()
 
-     private fun emitEnumFunctionBody(enum: Enum, ast: AST) = """
+     private fun emitEnumFunctionBody(enum: Enum, module: Module) = """
         |  public static class Avro {
         |
         |    public static final org.apache.avro.Schema SCHEMA = 
-        |      new org.apache.avro.Schema.Parser().parse("${emitAvroSchema(enum, ast)}");
+        |      new org.apache.avro.Schema.Parser().parse("${emitAvroSchema(enum, module)}");
         |    
         |    public static ${enum.emitName()} from(org.apache.avro.generic.GenericData.EnumSymbol record) {
         |      return ${enum.emitName()}.valueOf(record.toString());
@@ -97,14 +97,14 @@ class AvroJavaEmitter(private val packageName: String) : JavaEmitter(PackageName
         }
     }
 
-    val emitFrom: (ast: AST) -> (index: Int, field: Field) -> String =
-        { ast ->
+    val emitFrom: (module: Module) -> (index: Int, field: Field) -> String =
+        { module ->
             { index, field ->
                 when (val reference = field.reference) {
                     is Reference.Iterable -> "((java.util.List<org.apache.avro.generic.GenericData.Record>) record.get(${index})).stream().map(it -> ${reference.reference.emitRoot()}.Avro.from(it)).toList()"
                     is Reference.Custom -> when {
                         reference.isNullable -> "(${reference.emit()}) java.util.Optional.ofNullable((${field.reference.emitRoot()}) record.get(${index}))"
-                        reference.isEnum(ast) -> "${field.reference.emit()}.Avro.from((org.apache.avro.generic.GenericData.EnumSymbol) record.get(${index}))"
+                        reference.isEnum(module) -> "${field.reference.emit()}.Avro.from((org.apache.avro.generic.GenericData.EnumSymbol) record.get(${index}))"
                         else -> "${field.reference.emit()}.Avro.from((org.apache.avro.generic.GenericData.Record) record.get(${index}))"
                     }
 

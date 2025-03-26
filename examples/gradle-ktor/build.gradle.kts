@@ -3,7 +3,7 @@ import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
-import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.plugin.Language
@@ -114,9 +114,9 @@ tasks.register<CompileWirespecTask>("wirespec-typescript") {
 
 class KotlinSerializableEmitter : KotlinEmitter(PackageName("community.flock.wirespec.generated.kotlin")) {
 
-    override fun emit(type: Type, ast: AST): String = """
+    override fun emit(type: Type, module: Module): String = """
         |@kotlinx.serialization.Serializable
-        |${super.emit(type, ast)}
+        |${super.emit(type, module)}
     """.trimMargin()
 
     override fun emit(refined: Refined): String = """

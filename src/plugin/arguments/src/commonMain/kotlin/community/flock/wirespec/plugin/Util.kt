@@ -2,6 +2,7 @@ package community.flock.wirespec.plugin
 
 import arrow.core.Either.Left
 import arrow.core.Either.Right
+import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
@@ -41,7 +42,7 @@ fun List<FileContent>.parse(logger: Logger): List<Pair<String, AST>> = map { (na
     name to object : ParseContext {
         override val spec = WirespecSpec
         override val logger = logger
-    }.parse(source)
+    }.parse(nonEmptyListOf(source))
 }.map { (name, result) ->
     name to when (result) {
         is Right -> result.value

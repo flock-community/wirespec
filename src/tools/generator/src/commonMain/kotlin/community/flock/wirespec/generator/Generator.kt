@@ -27,7 +27,7 @@ fun AST.generate(type: String, random: Random = Random.Default): JsonElement = R
 
 fun AST.generate(type: Reference, random: Random = Random.Default): JsonElement = generateReference(type, random)
 
-private fun AST.resolveReference(type: Reference) = filterIsInstance<Definition>()
+private fun AST.resolveReference(type: Reference) = modules.flatMap { it.statements }.toList()
     .find { it.identifier.value == type.value }
     ?: error("Definition not found in AST: $type")
 

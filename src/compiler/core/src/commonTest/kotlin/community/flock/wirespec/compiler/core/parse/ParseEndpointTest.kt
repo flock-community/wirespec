@@ -1,5 +1,6 @@
 package community.flock.wirespec.compiler.core.parse
 
+import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
@@ -19,7 +20,7 @@ class ParseEndpointTest {
 
     private fun parser(source: String) = object : ParseContext, NoLogger {
         override val spec = WirespecSpec
-    }.parse(source)
+    }.parse(nonEmptyListOf(source)).map { it.modules.flatMap(Module::statements) }
 
     @Test
     fun testEndpointParser() {

@@ -14,6 +14,7 @@ import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -38,7 +39,7 @@ open class WirespecEmitter : Emitter() {
 
     override fun notYetImplemented() = singleLineComment
 
-    override fun emit(type: Type, ast: AST) = """
+    override fun emit(type: Type, module: Module) = """
         |type ${emit(type.identifier)} {
         |${type.shape.emit()}
         |}
@@ -80,7 +81,7 @@ open class WirespecEmitter : Emitter() {
         }
     }.let { if (isNullable) "$it?" else it }
 
-    override fun emit(enum: Enum, ast: AST) =
+    override fun emit(enum: Enum, module: Module) =
         "enum ${emit(enum.identifier)} {\n${Spacer}${enum.entries.joinToString(", ") { it.capitalize() }}\n}\n"
 
     override fun emit(refined: Refined) = "type ${emit(refined.identifier)} ${refined.validator.emit()}\n"

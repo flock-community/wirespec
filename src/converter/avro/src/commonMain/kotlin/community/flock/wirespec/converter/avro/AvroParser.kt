@@ -1,9 +1,12 @@
 package community.flock.wirespec.converter.avro
 
+import arrow.core.nonEmptyListOf
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
+import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
+import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.converter.avro.AvroConverter.flatten
 import kotlinx.serialization.json.Json
@@ -16,7 +19,7 @@ object AvroParser {
             isLenient = true
         }
         val avro = json.decodeFromString<AvroModel.Type>(schemaContent)
-        val result = avro.flatten() + when (avro) {
+        val result: List<Definition> = avro.flatten() + when (avro) {
             is AvroModel.RecordType -> Channel(
                 comment = null,
                 identifier = DefinitionIdentifier(name = avro.name),
@@ -32,6 +35,6 @@ object AvroParser {
             is AvroModel.MapType -> TODO()
             is AvroModel.UnionType -> TODO()
         }
-        return result.toNonEmptyListOrNull() ?: error("Cannot yield non empty AST")
+        return AST(nonEmptyListOf(Module("", result.toNonEmptyListOrNull() ?: error("Cannot yield non empty AST"))))
     }
 }
