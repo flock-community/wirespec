@@ -34,13 +34,9 @@ abstract class BaseMojo : AbstractMojo() {
      * Multiple paths can be provided, separated by commas.
      * Files can also be loaded from the classpath using the 'classpath:' prefix (e.g., 'classpath:wirespec/petstore.ws').
      */
-
     @Parameter(required = true)
     protected lateinit var input: String
 
-    /**
-     * Specifies the output directories to process.
-     */
     @Parameter(required = true)
     protected lateinit var output: String
 
@@ -53,9 +49,6 @@ abstract class BaseMojo : AbstractMojo() {
     @Parameter
     protected var emitterClass: String? = null
 
-    /**
-     * Specifies package name default 'community.flock.wirespec.generated'
-     */
     @Parameter
     protected var packageName: String = DEFAULT_GENERATED_PACKAGE_STRING
 

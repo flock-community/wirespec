@@ -94,7 +94,7 @@ tasks.register<CompileWirespecTask>("wirespec-kotlin") {
     input = layout.projectDirectory.dir("src/main/wirespec")
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.generated.kotlin"
-    emitter = KotlinSerializableEmitter::class.java
+    emitterClass = KotlinSerializableEmitter::class.java
 }
 
 tasks.register<CompileWirespecTask>("wirespec-typescript") {
