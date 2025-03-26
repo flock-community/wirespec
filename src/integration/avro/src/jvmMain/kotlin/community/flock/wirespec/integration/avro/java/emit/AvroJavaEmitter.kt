@@ -101,15 +101,15 @@ class AvroJavaEmitter(private val packageName: String) : JavaEmitter(PackageName
         { module ->
             { index, field ->
                 when (val reference = field.reference) {
-                    is Reference.Iterable -> "((java.util.List<org.apache.avro.generic.GenericData.Record>) record.get(${index})).stream().map(it -> ${reference.reference.emitType()}.Avro.from(it)).toList()"
+                    is Reference.Iterable -> "((java.util.List<org.apache.avro.generic.GenericData.Record>) record.get(${index})).stream().map(it -> ${reference.reference.emitRoot()}.Avro.from(it)).toList()"
                     is Reference.Custom -> when {
-                        reference.isNullable -> "(${reference.emit()}) java.util.Optional.ofNullable((${field.reference.emitType()}) record.get(${index}))"
+                        reference.isNullable -> "(${reference.emit()}) java.util.Optional.ofNullable((${field.reference.emitRoot()}) record.get(${index}))"
                         reference.isEnum(module) -> "${field.reference.emit()}.Avro.from((org.apache.avro.generic.GenericData.EnumSymbol) record.get(${index}))"
                         else -> "${field.reference.emit()}.Avro.from((org.apache.avro.generic.GenericData.Record) record.get(${index}))"
                     }
 
                     is Reference.Primitive -> when {
-                        reference.isNullable -> "(${reference.emit()}) java.util.Optional.ofNullable((${field.reference.emitType()}) record.get(${index}))"
+                        reference.isNullable -> "(${reference.emit()}) java.util.Optional.ofNullable((${field.reference.emitRoot()}) record.get(${index}))"
                         reference.type == Reference.Primitive.Type.Bytes -> "(${reference.emit()}) ((java.nio.ByteBuffer) record.get(${index})).array()"
                         reference.type == Reference.Primitive.Type.String -> "(${reference.emit()}) record.get(${index}).toString()"
                         else -> "(${reference.emit()}) record.get(${index})"

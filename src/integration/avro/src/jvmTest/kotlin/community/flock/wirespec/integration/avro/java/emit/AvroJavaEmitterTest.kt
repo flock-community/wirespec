@@ -18,7 +18,7 @@ class AvroJavaEmitterTest {
     private val emitter = AvroJavaEmitter("packageName")
 
     @Test
-    fun emitTypeFunctionBodyTest() {
+    fun emitRootFunctionBodyTest() {
         val type = Type(
             comment = null,
             identifier = DefinitionIdentifier("Identifier"),
