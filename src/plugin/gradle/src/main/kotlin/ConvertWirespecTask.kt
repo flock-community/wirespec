@@ -6,41 +6,18 @@ import community.flock.wirespec.converter.avro.AvroParser
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser
 import community.flock.wirespec.plugin.Format
-import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.mapEmitter
 import community.flock.wirespec.plugin.writeToFiles
-import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
 
 abstract class ConvertWirespecTask : BaseWirespecTask() {
 
-    @get:InputFile
-    @get:Option(option = "input", description = "input directory")
-    abstract val input: RegularFileProperty
-
     @get:Input
     @get:Option(option = "format", description = "formats list")
     abstract val format: Property<Format>
-
-    @get:Input
-    @get:Option(option = "languages", description = "languages list")
-    abstract val languages: ListProperty<Language>
-
-    @get:Optional
-    @get:Input
-    @get:Option(option = "shared", description = "emit shared class")
-    abstract val shared: Property<Boolean>
-
-    @get:Optional
-    @get:Input
-    @get:Option(option = "strict", description = "strict parsing mode")
-    abstract val strict: Property<Boolean>
 
     @TaskAction
     fun convert() {

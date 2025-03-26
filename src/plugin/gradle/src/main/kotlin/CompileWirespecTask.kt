@@ -2,34 +2,13 @@ package community.flock.wirespec.plugin.gradle
 
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.plugin.FileContent
-import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.mapEmitter
 import community.flock.wirespec.plugin.parse
 import community.flock.wirespec.plugin.writeToFiles
-import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.provider.ListProperty
-import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
-import org.gradle.api.tasks.options.Option
 
 abstract class CompileWirespecTask : BaseWirespecTask() {
-
-    @get:InputDirectory
-    @get:Option(option = "input", description = "input directory")
-    abstract val input: DirectoryProperty
-
-    @get:Input
-    @get:Option(option = "languages", description = "languages list")
-    abstract val languages: ListProperty<Language>
-
-    @get:Optional
-    @get:Input
-    @get:Option(option = "shared", description = "emit shared class")
-    abstract val shared: Property<Boolean>
 
     @Internal
     protected fun getFilesContent(): List<FileContent> = input.asFileTree
