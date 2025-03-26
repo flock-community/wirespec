@@ -21,13 +21,14 @@ abstract class ConvertWirespecTask : BaseWirespecTask() {
 
     @TaskAction
     fun convert() {
-        val packageNameValue = packageName.map { PackageName(it) }.get()
-        val fileName = input.get().asFile.name.split("/")
+        val packageNameValue = packageName.getOrElse("community.flock.wirespec").let(PackageName::invoke)
+        val file = input.get().asFile
+        val fileName = file.name.split("/")
             .last()
             .substringBeforeLast(".")
             .firstToUpper()
 
-        val json = input.asFile.get().readText()
+        val json = file.readText()
 
         val ast = when (format.get()) {
             Format.OpenAPIV2 -> OpenAPIV2Parser.parse(json, strict.getOrElse(false))
