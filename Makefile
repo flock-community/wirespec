@@ -1,10 +1,12 @@
 .PHONY: *
 
 # The first command will be invoked with `make` only and should be `all`
-all: build image test example
+all: format build image test example
 
 build:
 	$(shell pwd)/scripts/build.sh
+
+ci: build image test example
 
 clean:
 	$(shell pwd)/scripts/clean.sh

@@ -2,7 +2,6 @@ import com.diffplug.gradle.spotless.SpotlessTask
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.emit.common.PackageName
-import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -98,8 +97,6 @@ tasks.register<CustomWirespecTask>("wirespec-kotlin") {
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.generated.kotlin"
     emitter = KotlinSerializableEmitter::class.java
-    sharedPackage = KotlinShared.packageString
-    sharedSource = KotlinShared.source
     extension = FileExtension.Kotlin.value
 }
 
