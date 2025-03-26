@@ -39,6 +39,7 @@ abstract class BaseWirespecTask : DefaultTask() {
     abstract val emitter: Property<Class<*>>
 
     @get:Input
+    @get:Optional
     @get:Option(option = "packageName", description = "package name")
     abstract val packageName: Property<String>
 
