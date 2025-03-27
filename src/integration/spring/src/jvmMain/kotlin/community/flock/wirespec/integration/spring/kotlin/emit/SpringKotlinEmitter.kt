@@ -14,7 +14,10 @@ class SpringKotlinEmitter(packageName: String) : KotlinEmitter(PackageName(packa
             Endpoint.Method.POST -> "@org.springframework.web.bind.annotation.PostMapping(\"${path}\")"
             Endpoint.Method.PUT -> "@org.springframework.web.bind.annotation.PutMapping(\"${path}\")"
             Endpoint.Method.DELETE -> "@org.springframework.web.bind.annotation.DeleteMapping(\"${path}\")"
-            else -> error("Method not implemented: ${endpoint.method}")
+            Endpoint.Method.OPTIONS -> "@org.springframework.web.bind.annotation.RequestMapping(value=\"${path}\", method = RequestMethod.OPTIONS)"
+            Endpoint.Method.HEAD -> "@org.springframework.web.bind.annotation.RequestMapping(value=\"${path}\", method = RequestMethod.HEAD)"
+            Endpoint.Method.PATCH -> "@org.springframework.web.bind.annotation.RequestMapping(value=\"${path}\", method = RequestMethod.PATCH)"
+            Endpoint.Method.TRACE -> "@org.springframework.web.bind.annotation.RequestMapping(value=\"${path}\", method = RequestMethod.TRACE)"
         }
         return """
             |${annotation}
