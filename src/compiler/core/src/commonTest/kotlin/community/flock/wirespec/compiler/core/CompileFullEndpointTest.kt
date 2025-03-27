@@ -529,7 +529,20 @@ class CompileFullEndpointTest {
 
     @Test
     fun python() {
-        val python = "".trimMargin()
+        val python = """
+            |package community.flock.wirespec.generated
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from .shared.Wirespec import T, Wirespec
+            |from typing import List, Optional
+            |
+            |
+            |@dataclass
+            |class PotentialTodoDto:
+            |  name: str
+            |  done: bool
+            |
+        """.trimMargin()
         compiler { PythonEmitter() } shouldBeRight python
     }
 
