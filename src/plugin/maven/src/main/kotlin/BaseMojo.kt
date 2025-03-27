@@ -3,6 +3,7 @@ package community.flock.wirespec.plugin.maven
 import arrow.core.toNonEmptySetOrNull
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
+import community.flock.wirespec.compiler.core.emit.PythonEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
@@ -103,6 +104,7 @@ abstract class BaseMojo : AbstractMojo() {
                 Language.Kotlin -> KotlinEmitter(PackageName(packageName))
                 Language.Scala -> ScalaEmitter(PackageName(packageName))
                 Language.TypeScript -> TypeScriptEmitter()
+                Language.Python -> PythonEmitter()
                 Language.Wirespec -> WirespecEmitter()
                 Language.OpenAPIV2 -> OpenAPIV2Emitter
                 Language.OpenAPIV3 -> OpenAPIV3Emitter
