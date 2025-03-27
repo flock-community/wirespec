@@ -1,13 +1,21 @@
 package community.flock.wirespec.compiler.core.emit
 
 import arrow.core.NonEmptyList
+import arrow.core.nel
+import arrow.core.nonEmptyListOf
+import arrow.core.sort
+import arrow.core.sort
 import arrow.core.toNonEmptyListOrNull
+
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.emit.common.Keywords
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
+import community.flock.wirespec.compiler.core.emit.shared.PythonShared
+import community.flock.wirespec.compiler.core.emit.shared.Shared
 import community.flock.wirespec.compiler.core.orNull
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
@@ -18,9 +26,11 @@ import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
+import community.flock.wirespec.compiler.core.parse.Statements
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
@@ -36,6 +46,10 @@ open class PythonEmitter(
         |from typing import List, Optional
     """.trimMargin()
 
+    override val extension = FileExtension.Python
+
+    override val shared = PythonShared
+
     override fun Definition.emitName(): String = when (this) {
         is Endpoint -> "${emit(identifier)}Endpoint"
         is Channel -> "${emit(identifier)}Channel"
@@ -47,22 +61,30 @@ open class PythonEmitter(
 
     override val singleLineComment = "#"
 
-    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> {
-        val list = ast.filterIsInstance<Enum>() + ast.filterIsInstance<Refined>() + ast.filterIsInstance<Type>() + ast.filterIsInstance<Union>() + ast.filterIsInstance<Endpoint>() + ast.filterIsInstance<Channel>()
-        return super.emit(list.toNonEmptyListOrNull() ?: error("Non e"), logger).map { (typeName, result) ->
+    fun sort (definition: Definition) = when (definition) {
+        is Enum -> 1
+        is Refined -> 2
+        is Type -> 3
+        is Union -> 4
+        is Endpoint -> 5
+        is Channel -> 6
+    }
+
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
+        val statements = module.statements.sortedBy(::sort).toNonEmptyListOrNull()!!
+        return super.emit(module.copy(statements = statements), logger).map { (typeName, result) ->
             Emitted(
                 typeName = typeName.sanitizeSymbol(),
                 result = """
-                    |$import
-                    |
-                    |$result
-                """.trimMargin()
+                        |package $packageName
+                        |${if (module.needImports()) import else ""}
+                        |$result
+                    """.trimMargin().trimStart()
             )
         }
     }
 
     private fun Node.localImports():List<Reference.Custom> = when (this) {
-        is Channel -> TODO()
         is Endpoint -> listOf(
             path.filterIsInstance<Param>().map { it.reference },
             headers.map { it.reference },
@@ -70,10 +92,8 @@ open class PythonEmitter(
             requests.map { it.content?.reference },
             responses.flatMap { listOf(it.content?.reference) + it.headers.map { it.reference }}
         ).flatten().filterNotNull().map { it.flattenListDict() }.filterIsInstance<Reference.Custom>().distinct()
-        is Enum -> TODO()
-        is Refined -> TODO()
         is Type -> shape.value.map { it.reference.flattenListDict() }.filterIsInstance<Reference.Custom>().distinct()
-        is Union -> TODO()
+        else -> emptyList()
     }
 
     private fun Reference.flattenListDict():Reference = when (this) {
@@ -84,7 +104,7 @@ open class PythonEmitter(
 
     private fun Reference.Custom.emitReferenceCustomImports() = "from .${value} import ${value}"
 
-    override fun emit(type: Type, ast: AST): String =
+    override fun emit(type: Type, module: Module): String =
         if (type.shape.value.isEmpty()) """
             |${type.localImports().joinToString ("\n"){ it.emitReferenceCustomImports() }}
             |
@@ -302,7 +322,7 @@ open class PythonEmitter(
 
     override fun Refined.Validator.emit() = "re.compile(r\"${expression}\").match(value) is not None"
 
-    override fun emit(enum: Enum, ast: AST) = """
+    override fun emit(enum: Enum, module: Module) = """
         |class ${enum.identifier.value.sanitizeSymbol()}(str, Enum):
         |${enum.entries.joinToString("\n") { "${Spacer}${it.sanitizeEnum().sanitizeKeywords()} = \"$it\"" }}
         |

@@ -230,7 +230,19 @@ class CompileMinimalEndpointTest {
 
     @Test
     fun python() {
-        val python = "".trimMargin()
+        val python = """
+            |package community.flock.wirespec.generated
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from .shared.Wirespec import T, Wirespec
+            |from typing import List, Optional
+            |
+            |
+            |@dataclass
+            |class TodoDto:
+            |  description: str
+            |
+        """.trimMargin()
         compiler { PythonEmitter() } shouldBeRight python
     }
 

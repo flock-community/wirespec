@@ -1,8 +1,5 @@
 package community.flock.wirespec.compiler.core.emit.shared
 
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_SHARED_PACKAGE_STRING
-import community.flock.wirespec.compiler.core.emit.common.Spacer
-
 data object PythonShared : Shared {
     override val packageString: String = "shared"
 
@@ -134,5 +131,5 @@ data object PythonShared : Shared {
         |        headers: Dict[str, List[str]]
         |        body: Optional[str]
         |
-        """.trimMargin()
+    """.trimMargin()
 }
