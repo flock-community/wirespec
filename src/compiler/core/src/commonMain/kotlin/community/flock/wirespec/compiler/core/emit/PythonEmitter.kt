@@ -131,15 +131,15 @@ open class PythonEmitter(
     private fun Param.emit() = "${emit(identifier)}: ${reference.emit()}"
     private fun Param.emitAssignSelf() = "${emit(identifier)} = ${emit(identifier)}"
     private fun Endpoint.Request.emitAssignSelf(endpoint: Endpoint) = """
-        |self.path = ${endpoint.emitName()}.Request.Path(${paramList(endpoint).filter { it.type == Param.ParamType.PATH }.joinToString { it.emitAssignSelf() }})
-        |self.queries = ${endpoint.emitName()}.Request.Queries(${paramList(endpoint).filter { it.type == Param.ParamType.QUERY }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
-        |self.headers = ${endpoint.emitName()}.Request.Headers(${paramList(endpoint).filter { it.type == Param.ParamType.HEADER }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
-        |self.body = ${content?.let { "body" } ?: "None"}
+        |self._path = ${endpoint.emitName()}.Request.Path(${paramList(endpoint).filter { it.type == Param.ParamType.PATH }.joinToString { it.emitAssignSelf() }})
+        |self._queries = ${endpoint.emitName()}.Request.Queries(${paramList(endpoint).filter { it.type == Param.ParamType.QUERY }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
+        |self._headers = ${endpoint.emitName()}.Request.Headers(${paramList(endpoint).filter { it.type == Param.ParamType.HEADER }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
+        |self._body = ${content?.let { "body" } ?: "None"}
     """.trimMargin()
 
     private fun Endpoint.Response.emitAssignSelf(endpoint: Endpoint) = """
-        |self.headers = ${endpoint.emitName()}.Response${status}.Headers(${paramList().filter { it.type == Param.ParamType.HEADER }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
-        |self.body = ${content?.let { "body" } ?: "None"}
+        |self._headers = ${endpoint.emitName()}.Response${status}.Headers(${paramList().filter { it.type == Param.ParamType.HEADER }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
+        |self._body = ${content?.let { "body" } ?: "None"}
     """.trimMargin()
 
     override fun Reference.emit(): String = when (this) {
@@ -206,11 +206,23 @@ open class PythonEmitter(
         |${endpoint.queries.emitObject("Queries", "Wirespec.Request.Queries") { it.emit() }}
         |${endpoint.headers.emitObject("Headers", "Wirespec.Request.Headers") { it.emit() }}
         | 
-        |${Spacer}body: ${content.emit()} = None
+        |${Spacer}@property
+        |${Spacer}def body(self) -> ${content.emit()}:
+        |${Spacer}${Spacer}return self._body
+        |
+        |${Spacer}@property
+        |${Spacer}def path(self) -> Path:
+        |${Spacer}${Spacer}return self._path
+        |
+        |${Spacer}@property
+        |${Spacer}def queries(self) -> Queries:
+        |${Spacer}${Spacer}return self._queries
+        |
+        |${Spacer}@property
+        |${Spacer}def headers(self) -> Headers:
+        |${Spacer}${Spacer}return self._headers
+        |
         |${Spacer}method: Wirespec.Method = Wirespec.Method.${endpoint.method.name}
-        |${Spacer}path: Path = None
-        |${Spacer}queries: Queries = None
-        |${Spacer}headers: Headers = None
         |
         |${Spacer}def __init__(self, ${paramList(endpoint).joinToString (", "){ it.emit() }}):
         |${emitAssignSelf(endpoint).spacer(2)}
@@ -223,8 +235,8 @@ open class PythonEmitter(
         |${Spacer}return Wirespec.RawRequest(
         |${Spacer}${Spacer}path = [${path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> "str(request.path.${it.identifier.value})"} }}],
         |${Spacer}${Spacer}method = request.method.value,
-        |${Spacer}${Spacer}queries = ${if (queries.isNotEmpty()) queries.joinToString(", ", "{", "}") { it.emitSerializedParams("request", "queries") } else "{}"},
-        |${Spacer}${Spacer}headers = ${if (headers.isNotEmpty()) headers.joinToString(", ", "{", "}") { it.emitSerializedParams("request", "headers") } else "{}"},
+        |${Spacer}${Spacer}queries = ${if (queries.isNotEmpty()) queries.joinToString(",\n", "{", "}") { it.emitSerializedParams("request", "queries") } else "{}"},
+        |${Spacer}${Spacer}headers = ${if (headers.isNotEmpty()) headers.joinToString(",\n", "{", "}") { it.emitSerializedParams("request", "headers") } else "{}"},
         |${Spacer}${Spacer}body = serialization.serialize(request.body, ${this.requests.first().content.emit()}),
         |${Spacer})
         |
@@ -249,18 +261,24 @@ open class PythonEmitter(
 
     private fun Field.emitDeserializedParams(type: String, fields: String) =
         if (reference.isNullable)
-            """${emit(identifier)} = serialization.deserialize_param($type.$fields.get("${identifier.value}".lower()), ${reference.emit()})"""
+            """${emit(identifier)} = serialization.deserialize_param($type.$fields.get("${identifier.value}".lower()), type(${reference.emit()}))"""
         else
-            """${emit(identifier)} = serialization.deserialize_param($type.$fields.get("${identifier.value}".lower()), ${reference.emit()})"""
+            """${emit(identifier)} = serialization.deserialize_param($type.$fields.get("${identifier.value}".lower()), type(${reference.emit()}))"""
 
     fun Endpoint.Response.emit(endpoint: Endpoint) = """
         |@dataclass
         |class Response${status}(Wirespec.Response[${content.emit()}]):
         |${headers.emitObject("Headers", "Wirespec.Response.Headers") { it.emit() }}
         |
-        |${Spacer}body: ${content.emit()} = None
+        |${Spacer}@property
+        |${Spacer}def headers(self) -> Headers:
+        |${Spacer}${Spacer}return self._headers
+        |
+        |${Spacer}@property
+        |${Spacer}def body(self) -> ${content.emit()}:
+        |${Spacer}${Spacer}return self._body
+        |
         |${Spacer}status: int = $status
-        |${Spacer}headers: Headers = None
         |
         |${Spacer}def __init__(self, ${paramList().joinToString (", "){ it.emit() }}):
         |${emitAssignSelf(endpoint).spacer(2)}
@@ -304,7 +322,7 @@ open class PythonEmitter(
     """.trimMargin()
 
     private fun Field.emitSerializedParams(type: String, fields: String) =
-        """"${identifier.value}": serialization.serialize_param($type.$fields.${emit(identifier)}, ${reference.emit()})"""
+        """"${identifier.value}": serialization.serialize_param($type.$fields.${emit(identifier)}, type(${reference.emit()}))"""
 
 
     private fun <E> List<E>.emitObject(name: String, extends: String, spaces: Int = 1, block: (E) -> String) =

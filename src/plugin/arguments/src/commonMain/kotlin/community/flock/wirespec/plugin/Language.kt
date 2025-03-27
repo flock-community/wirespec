@@ -5,6 +5,7 @@ enum class Language {
     Kotlin,
     Scala,
     TypeScript,
+    Python,
     Wirespec,
     OpenAPIV2,
     OpenAPIV3,
