@@ -1,10 +1,6 @@
 import wirespecLogo from "./assets/wirespec.svg";
 import "./App.css";
 import { Box, createTheme, Stack, ThemeProvider } from "@mui/material";
-import "@fontsource/roboto/300.css";
-import "@fontsource/roboto/400.css";
-import "@fontsource/roboto/500.css";
-import "@fontsource/roboto/700.css";
 import { Outlet } from "@tanstack/react-router";
 
 const darkTheme = createTheme({
