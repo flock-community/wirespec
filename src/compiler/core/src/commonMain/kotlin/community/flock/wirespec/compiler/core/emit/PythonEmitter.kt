@@ -202,8 +202,9 @@ open class PythonEmitter(
     """.trimMargin()
 
     private fun Endpoint.emitHandleClass() = """
-        |@abstractmethod
-        |def ${identifier.value}(self, req: Request) -> Response: pass
+        |class Handler(Wirespec.Handler):
+        |${Spacer}@abstractmethod
+        |${Spacer}def ${identifier.value}(self, req: '${emitName()}.Request') -> '${emitName()}.Response': pass
     """.trimMargin()
 
     fun Endpoint.Request.emit(endpoint: Endpoint) = """
