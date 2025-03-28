@@ -5,10 +5,10 @@ Check out ways to contribute to Wirespec:
 ## Feature requests
 
 When you have an idea on how we could improve, please check
-our [discussions](https://github.com/flock/wirespec/discussions) to see if there are similar ideas or feature requests.
-If there are none, please [start](https://github.com/flock/wirespec/discussions/new) your feature request as a new
-discussion topic. Add the title `[Feature Request] My awesome feature` and a description of what you expect from the
-improvement and what the use case is.
+our [discussions](https://github.com/flock-community/wirespec/discussions) to see if there are similar ideas or feature
+requests. If there are none, please [start](https://github.com/flock-community/wirespec/discussions/new) your feature
+request as a new discussion topic. Add the title `[Feature Request] My awesome feature` and a description of what you
+expect from the improvement and what the use case is.
 
 ## We ♥ pull requests
 
@@ -18,7 +18,7 @@ Setup:
 
 ``` bash
 # Clone the repo:
-git clone https://github.com/flock/wirespec.git
+git clone https://github.com/flock-community/wirespec.git
 cd wirespec
 
 # Create a branch for your changes
@@ -33,7 +33,7 @@ make
 
 Create a Pull Request:
 
-- At [https://github.com/flock-community](https://github.com/flock-community/wirespec) click on fork (at the right top)
+- At [GitHub Flock](https://github.com/flock-community/wirespec) click on fork (at the right top)
 
 ``` bash
 # add fork to your remotes
