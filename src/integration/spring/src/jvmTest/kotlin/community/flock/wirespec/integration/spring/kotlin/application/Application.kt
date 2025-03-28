@@ -1,11 +1,11 @@
-package community.flock.wirespec.integration.spring.kotlin
+package community.flock.wirespec.integration.spring.kotlin.application
 
-import community.flock.wirespec.integration.spring.kotlin.configuration.EnableWirespecController
+import community.flock.wirespec.integration.spring.kotlin.configuration.EnableWirespec
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
 @SpringBootApplication
-@EnableWirespecController
+@EnableWirespec
 open class Application
 
 fun main(args: Array<String>) {
