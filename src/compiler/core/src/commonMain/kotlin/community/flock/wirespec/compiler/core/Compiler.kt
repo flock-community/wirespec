@@ -32,16 +32,15 @@ interface CompilationContext :
     ParseContext,
     EmitContext
 
-data class ModuleContent (val loc: String, val content: String)
+data class ModuleContent(val loc: String, val content: String)
 
-data class TokenizedModule (val loc: String, val tokens: Tokens)
+data class TokenizedModule(val loc: String, val tokens: Tokens)
 
 fun TokenizeContext.tokenize(source: String): Tokens = spec
     .tokenize(source)
     .also(TOKENIZED::log)
 
-fun ParseContext.parse(source: NonEmptyList<ModuleContent>): EitherNel<WirespecException, AST> =
-    parse(source.map { TokenizedModule(it.loc, tokenize(it.content)) }).also(PARSED::log)
+fun ParseContext.parse(source: NonEmptyList<ModuleContent>): EitherNel<WirespecException, AST> = parse(source.map { TokenizedModule(it.loc, tokenize(it.content)) }).also(PARSED::log)
 
 fun EmitContext.emit(source: NonEmptyList<ModuleContent>): EitherNel<WirespecException, NonEmptyList<Emitted>> = parse(source)
     .map { emitter.emit(it, logger) }
