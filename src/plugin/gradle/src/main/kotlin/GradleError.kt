@@ -1,4 +1,4 @@
-package community.flock.wirespec.plugin.maven
+package community.flock.wirespec.plugin.gradle
 
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
 

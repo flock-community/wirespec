@@ -1,57 +1,48 @@
 package community.flock.wirespec.plugin.gradle
 
-import community.flock.wirespec.compiler.core.emit.common.PackageName
-import community.flock.wirespec.plugin.FileContent
-import community.flock.wirespec.plugin.Language
-import community.flock.wirespec.plugin.mapEmitter
-import community.flock.wirespec.plugin.parse
-import community.flock.wirespec.plugin.writeToFiles
-import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.provider.ListProperty
-import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Optional
+import arrow.core.nonEmptySetOf
+import community.flock.wirespec.compiler.core.emit.common.FileExtension.Wirespec
+import community.flock.wirespec.plugin.CompilerArguments
+import community.flock.wirespec.plugin.compile
+import community.flock.wirespec.plugin.io.Directory
+import community.flock.wirespec.plugin.io.DirectoryPath
+import community.flock.wirespec.plugin.io.FilePath
+import community.flock.wirespec.plugin.io.Source
+import community.flock.wirespec.plugin.io.Source.Type.Wirespec
+import community.flock.wirespec.plugin.io.SourcePath
+import community.flock.wirespec.plugin.io.getFullPath
+import community.flock.wirespec.plugin.io.getOutPutPath
+import community.flock.wirespec.plugin.io.or
+import community.flock.wirespec.plugin.io.read
+import community.flock.wirespec.plugin.io.wirespecSources
+import community.flock.wirespec.plugin.io.write
 import org.gradle.api.tasks.TaskAction
-import org.gradle.api.tasks.options.Option
 
 abstract class CompileWirespecTask : BaseWirespecTask() {
 
-    @get:InputDirectory
-    @get:Option(option = "input", description = "input directory")
-    abstract val input: DirectoryProperty
-
-    @get:Input
-    @get:Option(option = "languages", description = "languages list")
-    abstract val languages: ListProperty<Language>
-
-    @get:Optional
-    @get:Input
-    @get:Option(option = "shared", description = "emit shared class")
-    abstract val shared: Property<Boolean>
-
-    @Internal
-    protected fun getFilesContent(): List<FileContent> = input.asFileTree
-        .map { it.name.split(".").first() to it.readText(Charsets.UTF_8) }
-        .map(::FileContent)
-
     @TaskAction
     fun action() {
-        val packageNameValue = packageName.map { PackageName(it) }.get()
-        val ast = getFilesContent().parse(wirespecLogger)
-        languages.get()
-            .map { it.mapEmitter(packageNameValue) }
-            .forEach { (emitter, ext, sharedData) ->
-                ast.forEach { (fileName, ast) ->
-                    emitter.emit(ast, wirespecLogger).writeToFiles(
-                        output = output.asFile.get(),
-                        packageName = packageNameValue,
-                        shared = if (shared.getOrElse(true)) sharedData else null,
-                        fileName = if (emitter.split) null else fileName,
-                        ext = ext,
-                    )
-                }
+        val inputPath = getFullPath(input.get().asFile.absolutePath).or(::handleError)
+        val outputPath = output.get().asFile.absolutePath
+        val sources = when (inputPath) {
+            null -> throw IsNotAFileOrDirectory(null)
+            is SourcePath -> nonEmptySetOf(inputPath.readFromClasspath())
+            is DirectoryPath -> Directory(inputPath).wirespecSources().or(::handleError)
+            is FilePath -> when (inputPath.extension) {
+                Wirespec -> nonEmptySetOf(Source<Wirespec>(inputPath.name, inputPath.read()))
+                else -> throw WirespecFileError()
             }
+        }
+        CompilerArguments(
+            input = sources,
+            output = Directory(getOutPutPath(inputPath, outputPath).or(::handleError)),
+            emitters = emitters(),
+            writer = { filePath, string -> filePath.write(string) },
+            error = { throw RuntimeException(it) },
+            packageName = packageNameValue(),
+            logger = wirespecLogger,
+            shared = shared.getOrElse(true),
+            strict = strict.getOrElse(false),
+        ).let(::compile)
     }
 }

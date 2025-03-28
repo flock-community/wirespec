@@ -12,3 +12,7 @@ clean:
 
 format:
 	(cd gradle-ktor && ./gradlew spotlessApply)
+
+yolo:
+	./mvnw verify -DskipTests && \
+	(cd gradle-ktor && ./gradlew check -x test)

@@ -19,6 +19,9 @@ object AvroEmitter : Emitter() {
     override val extension = FileExtension.JSON
 
     override val shared = null
+
+    override fun Definition.emitName() = notYetImplemented()
+
     override fun emit(type: Type, module: Module): String {
         TODO("Not yet implemented")
     }

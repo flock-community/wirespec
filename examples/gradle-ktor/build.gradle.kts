@@ -1,14 +1,11 @@
 import com.diffplug.gradle.spotless.SpotlessTask
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
-import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.emit.common.PackageName
-import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.gradle.CompileWirespecTask
-import community.flock.wirespec.plugin.gradle.CustomWirespecTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -91,16 +88,13 @@ buildscript {
     }
 }
 
-tasks.register<CustomWirespecTask>("wirespec-kotlin") {
+tasks.register<CompileWirespecTask>("wirespec-kotlin") {
     description = "Compile Wirespec to Kotlin"
     group = "Wirespec compile"
     input = layout.projectDirectory.dir("src/main/wirespec")
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.generated.kotlin"
-    emitter = KotlinSerializableEmitter::class.java
-    sharedPackage = KotlinShared.packageString
-    sharedSource = KotlinShared.source
-    extension = FileExtension.Kotlin.value
+    emitterClass = KotlinSerializableEmitter::class.java
 }
 
 tasks.register<CompileWirespecTask>("wirespec-typescript") {
