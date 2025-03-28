@@ -9,11 +9,11 @@ interface PlayGroundProps {
 }
 
 export function PlayGround({ code, setCode, language }: PlayGroundProps) {
-    const [width, setWidth] = useState(0);
+    const [fontSize, setFontSize] = useState(0);
     useEffect(() => {
         const updateWindowDimensions = () => {
-            const newWidth = window.innerWidth;
-            setWidth(newWidth);
+            const width = window.innerWidth;
+            setFontSize(width < 768 ? 12 : 0.01*width);
         };
 
         window.addEventListener("resize", updateWindowDimensions);
@@ -25,7 +25,7 @@ export function PlayGround({ code, setCode, language }: PlayGroundProps) {
       language={language}
       theme="vs-dark"
       height="100vh"
-      options={{ minimap: { enabled: false }, fontSize: width < 768 ? 12 : 0.01*width }}
+      options={{ minimap: { enabled: false }, fontSize  }}
       value={code}
       onChange={
         setCode ? (code: string | undefined) => setCode(code ?? "") : undefined
