@@ -86,7 +86,11 @@ open class PythonEmitter(
             requests.map { it.content?.reference },
             responses.flatMap { listOf(it.content?.reference) + it.headers.map { it.reference }}
         ).flatten().filterNotNull().map { it.flattenListDict() }.filterIsInstance<Reference.Custom>().distinct()
-        is Type -> shape.value.map { it.reference.flattenListDict() }.filterIsInstance<Reference.Custom>().distinct()
+        is Type -> shape.value
+            .filter { identifier.value != it.reference.emitRoot() }
+            .map { it.reference.flattenListDict() }
+            .filterIsInstance<Reference.Custom>()
+            .distinct()
         else -> emptyList()
     }
 
@@ -111,7 +115,7 @@ open class PythonEmitter(
             |${type.localImports().joinToString ("\n"){ it.emitReferenceCustomImports() }}
             |
             |@dataclass
-            |class ${type.emitName()}${type.extends.run { if (isEmpty()) "" else "(${joinToString(", ") { it.emit() }})" }}:
+            |class ${type.emitName()}:
             |${type.shape.emit()}
             |
         """.trimMargin()
@@ -120,7 +124,7 @@ open class PythonEmitter(
 
     private fun Endpoint.Segment.Param.emit() = "${emit(identifier)}: ${reference.emit()} "
 
-    override fun Field.emit() = "${emit(identifier)}: ${reference.emit()}"
+    override fun Field.emit() = "${emit(identifier)}: '${reference.emit()}'"
 
     private fun Param.emit() = "${emit(identifier)}: ${reference.emit()}"
     private fun Param.emitAssignSelf() = "${emit(identifier)} = ${emit(identifier)}"
@@ -186,13 +190,10 @@ open class PythonEmitter(
         |
         |class ${emit(endpoint.identifier)}Endpoint (Wirespec.Endpoint):
         |${endpoint.requests.first().emit(endpoint).spacer(1)}
-        |${endpoint.requests.first().emitToRawRequest(endpoint).spacer(1)}
-        |${endpoint.requests.first().emitFromRawRequest(endpoint).spacer(1)}
         |${endpoint.responses.joinToString ("\n"){it.emit(endpoint)}.spacer(1)}
         |${endpoint.emitResponseUnion().spacer(1)}
-        |${endpoint.emitToRawResponse().spacer(1)}
-        |${endpoint.emitFromRawResponse().spacer(1)}
         |${endpoint.emitHandleClass().spacer(1)}
+        |${endpoint.emitConvertClass().spacer(1)}
         |
         """.trimMargin()
 
@@ -202,9 +203,19 @@ open class PythonEmitter(
     """.trimMargin()
 
     private fun Endpoint.emitHandleClass() = """
-        |class Handler(Wirespec.Handler):
+        |class Handler(Wirespec.Endpoint.Handler):
         |${Spacer}@abstractmethod
         |${Spacer}def ${identifier.value}(self, req: '${emitName()}.Request') -> '${emitName()}.Response': pass
+        |
+    """.trimMargin()
+
+    private fun Endpoint.emitConvertClass() = """
+        |class Convert(Wirespec.Endpoint.Convert[Request, Response]):
+        |${requests.first().emitToRawRequest(this).spacer(1)}
+        |${requests.first().emitFromRawRequest(this).spacer(1)}
+        |${emitToRawResponse().spacer(1)}
+        |${emitFromRawResponse().spacer(1)}
+        |
     """.trimMargin()
 
     fun Endpoint.Request.emit(endpoint: Endpoint) = """
@@ -243,20 +254,20 @@ open class PythonEmitter(
 
     private fun Endpoint.Request.emitToRawRequest(endpoint: Endpoint) = """
         |@staticmethod
-        |def to_raw_request(serialization: Wirespec.Serializer, request: Request) -> Wirespec.RawRequest:
+        |def to_raw_request(serialization: Wirespec.Serializer, request: '${endpoint.emitName()}.Request') -> Wirespec.RawRequest:
         |${Spacer}return Wirespec.RawRequest(
         |${Spacer}${Spacer}path = [${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> "str(request.path.${emit(it.identifier)})"} }}],
         |${Spacer}${Spacer}method = request.method.value,
         |${Spacer}${Spacer}queries = ${if (endpoint.queries.isNotEmpty()) endpoint.queries.joinToString(",\n", "{", "}") { it.emitSerializedParams("request", "queries") } else "{}"},
         |${Spacer}${Spacer}headers = ${if (endpoint.headers.isNotEmpty()) endpoint.headers.joinToString(",\n", "{", "}") { it.emitSerializedParams("request", "headers") } else "{}"},
-        |${Spacer}${Spacer}body = serialization.serialize(request.body, ${content?.reference?.emitRoot() ?: "type(None)"}),
+        |${Spacer}${Spacer}body = serialization.serialize(request.body, ${content?.reference?.emitType() ?: "type(None)"}),
         |${Spacer})
         |
     """.trimMargin()
 
     private fun Endpoint.Request.emitFromRawRequest(endpoint: Endpoint) = """
         |@staticmethod
-        |def from_raw_request(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest) -> Request:
+        |def from_raw_request(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest) -> '${endpoint.emitName()}.Request':
         |${Spacer}return ${endpoint.emitName()}.Request${emitDeserializedParams(endpoint)}
         |
     """.trimMargin()
@@ -265,17 +276,17 @@ open class PythonEmitter(
         endpoint.indexedPathParams.joinToString { it.emitDeserialized() }.orNull(),
         endpoint.queries.joinToString (",\n"){ it.emitDeserializedParams("request", "queries") }.orNull(),
         endpoint.headers.joinToString (",\n"){ it.emitDeserializedParams("request", "headers") }.orNull(),
-        content?.let { """${Spacer(3)}body = serialization.deserialize(request.body, ${it.reference.emitRoot()}),""" }
+        content?.let { """${Spacer(3)}body = serialization.deserialize(request.body, ${it.reference.emitType()}),""" }
     ).joinToString(",\n").let { if (it.isBlank()) "" else "(\n$it\n)" }
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
-        """${Spacer(3)}${emit(value.identifier)} = serialization.deserialize(request.path[${index}], ${value.reference.emitRoot()})"""
+        """${Spacer(3)}${emit(value.identifier)} = serialization.deserialize(request.path[${index}], ${value.reference.emitType()})"""
 
     private fun Field.emitDeserializedParams(type: String, fields: String) =
         if (reference.isNullable)
-            """${emit(identifier)} = serialization.deserialize_param($type.$fields.get("${identifier.value}".lower()), ${reference.emitRoot()})"""
+            """${emit(identifier)} = serialization.deserialize_param($type.$fields.get("${identifier.value}".lower()), ${reference.emitType()})"""
         else
-            """${emit(identifier)} = serialization.deserialize_param($type.$fields.get("${identifier.value}".lower()), ${reference.emitRoot()})"""
+            """${emit(identifier)} = serialization.deserialize_param($type.$fields.get("${identifier.value}".lower()), ${reference.emitType()})"""
 
     fun Endpoint.Response.emit(endpoint: Endpoint) = """
         |@dataclass
@@ -301,15 +312,16 @@ open class PythonEmitter(
 
     private fun Endpoint.emitToRawResponse() = """
         |@staticmethod
-        |def to_raw_response(serialization: Wirespec.Serializer, response: Response) -> Wirespec.RawResponse:
+        |def to_raw_response(serialization: Wirespec.Serializer, response: '${emitName()}.Response') -> Wirespec.RawResponse:
         |${Spacer}match response:
         |${responses.distinctBy { it.status }.joinToString("\n") { it.emitSerialized(this) }.spacer(2)}
-        |
+        |${Spacer}${Spacer}case _:
+        |${Spacer}${Spacer}${Spacer}raise Exception("Cannot match response with status: " + str(response.status))
         """.trimMargin()
 
     private fun Endpoint.emitFromRawResponse() = """
         |@staticmethod
-        |def from_raw_response(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse) -> Response:
+        |def from_raw_response(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse) -> '${emitName()}.Response':
         |${Spacer}match response.status_code:
         |${responses.filter { it.status.isStatusCode() }.distinctBy { it.status }.joinToString("\n") { it.emitDeserialized(this) }.spacer(2)}
         |${Spacer(2)}case _: 
@@ -320,7 +332,7 @@ open class PythonEmitter(
     private fun Endpoint.Response.emitDeserialized(endpoint: Endpoint) = listOfNotNull(
         "case $status:",
         "${Spacer}return ${endpoint.emitName()}.Response$status(",
-        "${Spacer(2)}body = serialization.deserialize(response.body, ${content?.reference?.emitRoot() ?: "type(None)"}),",
+        "${Spacer(2)}body = serialization.deserialize(response.body, ${content?.reference?.emitType() ?: "type(None)"}),",
         headers.joinToString(",\n") { it.emitDeserializedParams("response", "headers") }.orNull()?.spacer(2),
         "${Spacer})"
     ).joinToString("\n")
@@ -331,12 +343,12 @@ open class PythonEmitter(
         |${Spacer(1)}return Wirespec.RawResponse(
         |${Spacer(2)}status_code = response.status,
         |${Spacer(2)}headers = ${if (headers.isNotEmpty()) headers.joinToString(", ", "{", "}") { it.emitSerializedParams("response", "headers") } else "{}"},
-        |${Spacer(2)}body = ${if (content != null) "serialization.serialize(response.body, ${content.reference.emitRoot()}" else "type(None)"}),
+        |${Spacer(2)}body = ${if (content != null) "serialization.serialize(response.body, ${content.reference.emitType()}" else "type(None)"}),
         |${Spacer(1)})
     """.trimMargin()
 
     private fun Field.emitSerializedParams(type: String, fields: String) =
-        """"${identifier.value}": serialization.serialize_param($type.$fields.${emit(identifier)}, ${reference.emitRoot()})"""
+        """"${identifier.value}": serialization.serialize_param($type.$fields.${emit(identifier)}, ${reference.emitType()})"""
 
 
     private fun <E> List<E>.emitObject(name: String, extends: String, spaces: Int = 1, block: (E) -> String) =
