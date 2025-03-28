@@ -1,12 +1,7 @@
 package community.flock.wirespec.compiler.core.emit
 
 import arrow.core.NonEmptyList
-import arrow.core.nel
-import arrow.core.nonEmptyListOf
-import arrow.core.sort
-import arrow.core.sort
 import arrow.core.toNonEmptyListOrNull
-
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
@@ -15,9 +10,7 @@ import community.flock.wirespec.compiler.core.emit.common.Keywords
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.emit.shared.PythonShared
-import community.flock.wirespec.compiler.core.emit.shared.Shared
 import community.flock.wirespec.compiler.core.orNull
-import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
@@ -30,7 +23,6 @@ import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
-import community.flock.wirespec.compiler.core.parse.Statements
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
@@ -42,8 +34,10 @@ open class PythonEmitter(
     val import = """
         |from abc import abstractmethod
         |from dataclasses import dataclass
-        |from .shared.Wirespec import T, Wirespec
         |from typing import List, Optional
+        |
+        |from .shared.Wirespec import T, Wirespec
+        |
     """.trimMargin()
 
     override val extension = FileExtension.Python
@@ -72,16 +66,16 @@ open class PythonEmitter(
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
         val statements = module.statements.sortedBy(::sort).toNonEmptyListOrNull()!!
-        return super.emit(module.copy(statements = statements), logger).map { (typeName, result) ->
-            Emitted(
-                typeName = typeName.sanitizeSymbol(),
-                result = """
-                        |package $packageName
-                        |${if (module.needImports()) import else ""}
-                        |$result
-                    """.trimMargin().trimStart()
-            )
-        }
+        return super.emit(module.copy(statements = statements), logger)
+            .map { (typeName, result) ->
+                Emitted(
+                    typeName = typeName.sanitizeSymbol(),
+                    result = """
+                            |${if (module.needImports()) import else ""}
+                            |$result
+                        """.trimMargin().trimStart()
+                )
+            } + Emitted("__init__", "")
     }
 
     private fun Node.localImports():List<Reference.Custom> = when (this) {
@@ -142,20 +136,33 @@ open class PythonEmitter(
         |self._body = ${content?.let { "body" } ?: "None"}
     """.trimMargin()
 
-    override fun Reference.emit(): String = when (this) {
+    override fun Reference.emit()= emitType().let { if (isNullable) "Optional[$it]" else it }
+
+     private fun Reference.emitType(): String = when (this) {
         is Reference.Dict -> "Dict[str, ${reference.emit()}]"
         is Reference.Iterable -> "List[${reference.emit()}]"
         is Reference.Unit -> "None"
         is Reference.Any -> "Any"
         is Reference.Custom -> value
-        is Reference.Primitive -> when (type) {
-            is Reference.Primitive.Type.String -> "str"
-            is Reference.Primitive.Type.Integer -> "int"
-            is Reference.Primitive.Type.Number -> "float"
-            is Reference.Primitive.Type.Boolean -> "bool"
-            is Reference.Primitive.Type.Bytes -> "bytes"
-        }
-    }.let { if (isNullable) "Optional[$it]" else it }
+        is Reference.Primitive -> this.type.emit()
+    }
+
+    private fun Reference.emitRoot(): String = when (this) {
+        is Reference.Dict -> reference.emitRoot()
+        is Reference.Iterable -> reference.emitRoot()
+        is Reference.Any -> emitType()
+        is Reference.Custom -> emitType()
+        is Reference.Primitive -> emitType()
+        is Reference.Unit -> emitType()
+    }
+
+    fun Reference.Primitive.Type.emit() = when (this) {
+        is Reference.Primitive.Type.String -> "str"
+        is Reference.Primitive.Type.Integer -> "int"
+        is Reference.Primitive.Type.Number -> "float"
+        is Reference.Primitive.Type.Boolean -> "bool"
+        is Reference.Primitive.Type.Bytes -> "bytes"
+    }
 
     override fun emit(identifier: Identifier) = when (identifier) {
         is DefinitionIdentifier -> identifier.value.sanitizeSymbol()
@@ -179,7 +186,7 @@ open class PythonEmitter(
         |
         |class ${emit(endpoint.identifier)}Endpoint (Wirespec.Endpoint):
         |${endpoint.requests.first().emit(endpoint).spacer(1)}
-        |${endpoint.emitToRawRequest().spacer(1)}
+        |${endpoint.requests.first().emitToRawRequest(endpoint).spacer(1)}
         |${endpoint.requests.first().emitFromRawRequest(endpoint).spacer(1)}
         |${endpoint.responses.joinToString ("\n"){it.emit(endpoint)}.spacer(1)}
         |${endpoint.emitResponseUnion().spacer(1)}
@@ -222,6 +229,10 @@ open class PythonEmitter(
         |${Spacer}def headers(self) -> Headers:
         |${Spacer}${Spacer}return self._headers
         |
+        |${Spacer}_body:  ${content.emit()}
+        |${Spacer}_headers: Headers
+        |${Spacer}_queries: Queries
+        |${Spacer}_path: Path
         |${Spacer}method: Wirespec.Method = Wirespec.Method.${endpoint.method.name}
         |
         |${Spacer}def __init__(self, ${paramList(endpoint).joinToString (", "){ it.emit() }}):
@@ -229,15 +240,15 @@ open class PythonEmitter(
         |
         """.trimMargin()
 
-    private fun Endpoint.emitToRawRequest() = """
+    private fun Endpoint.Request.emitToRawRequest(endpoint: Endpoint) = """
         |@staticmethod
         |def to_raw_request(serialization: Wirespec.Serializer, request: Request) -> Wirespec.RawRequest:
         |${Spacer}return Wirespec.RawRequest(
-        |${Spacer}${Spacer}path = [${path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> "str(request.path.${it.identifier.value})"} }}],
+        |${Spacer}${Spacer}path = [${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> "str(request.path.${emit(it.identifier)})"} }}],
         |${Spacer}${Spacer}method = request.method.value,
-        |${Spacer}${Spacer}queries = ${if (queries.isNotEmpty()) queries.joinToString(",\n", "{", "}") { it.emitSerializedParams("request", "queries") } else "{}"},
-        |${Spacer}${Spacer}headers = ${if (headers.isNotEmpty()) headers.joinToString(",\n", "{", "}") { it.emitSerializedParams("request", "headers") } else "{}"},
-        |${Spacer}${Spacer}body = serialization.serialize(request.body, ${this.requests.first().content.emit()}),
+        |${Spacer}${Spacer}queries = ${if (endpoint.queries.isNotEmpty()) endpoint.queries.joinToString(",\n", "{", "}") { it.emitSerializedParams("request", "queries") } else "{}"},
+        |${Spacer}${Spacer}headers = ${if (endpoint.headers.isNotEmpty()) endpoint.headers.joinToString(",\n", "{", "}") { it.emitSerializedParams("request", "headers") } else "{}"},
+        |${Spacer}${Spacer}body = serialization.serialize(request.body, ${content?.reference?.emitRoot() ?: "type(None)"}),
         |${Spacer})
         |
     """.trimMargin()
@@ -253,17 +264,17 @@ open class PythonEmitter(
         endpoint.indexedPathParams.joinToString { it.emitDeserialized() }.orNull(),
         endpoint.queries.joinToString (",\n"){ it.emitDeserializedParams("request", "queries") }.orNull(),
         endpoint.headers.joinToString (",\n"){ it.emitDeserializedParams("request", "headers") }.orNull(),
-        content?.let { """${Spacer(3)}body = serialization.deserialize(request.body, ${it.emit()}),""" }
+        content?.let { """${Spacer(3)}body = serialization.deserialize(request.body, ${it.reference.emitRoot()}),""" }
     ).joinToString(",\n").let { if (it.isBlank()) "" else "(\n$it\n)" }
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
-        """${Spacer(3)}${emit(value.identifier)} = serialization.deserialize(request.path[${index}], ${value.reference.emit()})"""
+        """${Spacer(3)}${emit(value.identifier)} = serialization.deserialize(request.path[${index}], ${value.reference.emitRoot()})"""
 
     private fun Field.emitDeserializedParams(type: String, fields: String) =
         if (reference.isNullable)
-            """${emit(identifier)} = serialization.deserialize_param($type.$fields.get("${identifier.value}".lower()), type(${reference.emit()}))"""
+            """${emit(identifier)} = serialization.deserialize_param($type.$fields.get("${identifier.value}".lower()), ${reference.emitRoot()})"""
         else
-            """${emit(identifier)} = serialization.deserialize_param($type.$fields.get("${identifier.value}".lower()), type(${reference.emit()}))"""
+            """${emit(identifier)} = serialization.deserialize_param($type.$fields.get("${identifier.value}".lower()), ${reference.emitRoot()})"""
 
     fun Endpoint.Response.emit(endpoint: Endpoint) = """
         |@dataclass
@@ -278,6 +289,8 @@ open class PythonEmitter(
         |${Spacer}def body(self) -> ${content.emit()}:
         |${Spacer}${Spacer}return self._body
         |
+        |${Spacer}_body: ${content.emit()}
+        |${Spacer}_headers: Headers
         |${Spacer}status: int = $status
         |
         |${Spacer}def __init__(self, ${paramList().joinToString (", "){ it.emit() }}):
@@ -306,7 +319,7 @@ open class PythonEmitter(
     private fun Endpoint.Response.emitDeserialized(endpoint: Endpoint) = listOfNotNull(
         "case $status:",
         "${Spacer}return ${endpoint.emitName()}.Response$status(",
-        "${Spacer(2)}body = serialization.deserialize(response.body, ${content.emit()}),",
+        "${Spacer(2)}body = serialization.deserialize(response.body, ${content?.reference?.emitRoot() ?: "type(None)"}),",
         headers.joinToString(",\n") { it.emitDeserializedParams("response", "headers") }.orNull()?.spacer(2),
         "${Spacer})"
     ).joinToString("\n")
@@ -317,12 +330,12 @@ open class PythonEmitter(
         |${Spacer(1)}return Wirespec.RawResponse(
         |${Spacer(2)}status_code = response.status,
         |${Spacer(2)}headers = ${if (headers.isNotEmpty()) headers.joinToString(", ", "{", "}") { it.emitSerializedParams("response", "headers") } else "{}"},
-        |${Spacer(2)}body = ${if (content != null) "serialization.serialize(response.body, ${content.emit()})" else "null"},
+        |${Spacer(2)}body = ${if (content != null) "serialization.serialize(response.body, ${content.reference.emitRoot()}" else "type(None)"}),
         |${Spacer(1)})
     """.trimMargin()
 
     private fun Field.emitSerializedParams(type: String, fields: String) =
-        """"${identifier.value}": serialization.serialize_param($type.$fields.${emit(identifier)}, type(${reference.emit()}))"""
+        """"${identifier.value}": serialization.serialize_param($type.$fields.${emit(identifier)}, ${reference.emitRoot()})"""
 
 
     private fun <E> List<E>.emitObject(name: String, extends: String, spaces: Int = 1, block: (E) -> String) =
