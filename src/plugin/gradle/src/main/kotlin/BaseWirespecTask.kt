@@ -1,7 +1,18 @@
 package community.flock.wirespec.plugin.gradle
 
+import arrow.core.toNonEmptySetOrNull
+import community.flock.wirespec.compiler.core.emit.JavaEmitter
+import community.flock.wirespec.compiler.core.emit.KotlinEmitter
+import community.flock.wirespec.compiler.core.emit.ScalaEmitter
+import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
+import community.flock.wirespec.compiler.core.emit.WirespecEmitter
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.Emitter
+import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
+import community.flock.wirespec.openapi.v2.OpenAPIV2Emitter
+import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.files.DirectoryPath
 import community.flock.wirespec.plugin.files.FilePath
@@ -65,6 +76,30 @@ abstract class BaseWirespecTask : DefaultTask() {
         override fun error(string: String) = logger.error(string)
     }
 
+    protected fun packageNameValue() = packageName.getOrElse(DEFAULT_GENERATED_PACKAGE_STRING).let(PackageName::invoke)
+
+    protected fun emitter() = try {
+        emitterClass.orNull?.getDeclaredConstructor()?.newInstance() as? Emitter
+    } catch (e: Exception) {
+        logger.error("Cannot create instance of emitter: ${emitterClass.orNull?.simpleName}", e)
+        throw e
+    }
+
+    protected fun emitters() = languages.get().map {
+        when (it) {
+            Language.Java -> JavaEmitter(packageNameValue())
+            Language.Kotlin -> KotlinEmitter(packageNameValue())
+            Language.Scala -> ScalaEmitter(packageNameValue())
+            Language.TypeScript -> TypeScriptEmitter()
+            Language.Wirespec -> WirespecEmitter()
+            Language.OpenAPIV2 -> OpenAPIV2Emitter
+            Language.OpenAPIV3 -> OpenAPIV3Emitter
+        }
+    }.plus(emitter())
+        .mapNotNull { it }
+        .toNonEmptySetOrNull()
+        ?: throw PickAtLeastOneLanguageOrEmitter()
+
     protected fun getFullPath(input: String?, createIfNotExists: Boolean = false) = when {
         input == null -> null
         input.startsWith("classpath:") -> SourcePath(input.substringAfter("classpath:"))
@@ -78,7 +113,7 @@ abstract class BaseWirespecTask : DefaultTask() {
         }
     }
 
-    fun getOutPutPath(inputPath: FullPath) = when (val it = getFullPath(output.get().asFile.absolutePath, true)) {
+    protected fun getOutPutPath(inputPath: FullPath) = when (val it = getFullPath(output.get().asFile.absolutePath, true)) {
         null -> DirectoryPath("${inputPath.path()}/out")
         is DirectoryPath -> it
         is FilePath, is SourcePath -> throw OutputShouldBeADirectory()

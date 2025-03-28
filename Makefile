@@ -1,12 +1,10 @@
 .PHONY: *
 
 # The first command will be invoked with `make` only and should be `all`
-all: format build image test example
+all: build image test example
 
 build:
 	$(shell pwd)/scripts/build.sh
-
-ci: build image test example
 
 clean:
 	$(shell pwd)/scripts/clean.sh
@@ -40,3 +38,6 @@ test:
 
 update:
 	npm install -g @vscode/vsce
+
+yolo:
+	$(shell pwd)/scripts/yolo.sh
