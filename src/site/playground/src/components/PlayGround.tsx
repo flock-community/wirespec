@@ -1,27 +1,14 @@
 import Editor from "@monaco-editor/react";
 import { Language } from "../routes";
-import {useEffect, useState} from "react";
 
 interface PlayGroundProps {
   code: string;
   setCode?: (input: string) => void;
   language: Language;
+  fontSize: number;
 }
 
-export function PlayGround({ code, setCode, language }: PlayGroundProps) {
-    const [fontSize, setFontSize] = useState(0);
-    useEffect(() => {
-        const updateWindowDimensions = () => {
-            const width = window.innerWidth;
-            setFontSize(width < 768 ? 12 : 0.01*width);
-        };
-
-        updateWindowDimensions();
-
-        window.addEventListener("resize", updateWindowDimensions);
-
-        return () => window.removeEventListener("resize", updateWindowDimensions)
-    }, []);
+export function PlayGround({ code, setCode, language, fontSize }: PlayGroundProps) {
     return (
     <Editor
       language={language}
