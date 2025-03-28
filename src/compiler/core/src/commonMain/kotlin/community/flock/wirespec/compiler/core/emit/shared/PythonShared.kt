@@ -10,10 +10,6 @@ data object PythonShared : Shared {
         |from typing import Any, Generic, List, Dict, Optional, TypeVar, NoReturn
         |
         |T = TypeVar('T', bound=Any)
-        |RAW = TypeVar('RAW', bound=Any)
-        |Req = TypeVar('Req', bound='Request')
-        |Res = TypeVar('Res', bound='Response')
-        |
         |
         |class Wirespec:
         |
@@ -25,20 +21,6 @@ data object PythonShared : Shared {
         |        def value(self) -> str: pass
         |
         |    class Handler(ABC): pass
-        |
-        |    class ServerEdge(Generic[Req, Res], ABC):
-        |        @abstractmethod
-        |        def from_request(self, request: 'RawRequest') -> Req: pass
-        |
-        |        @abstractmethod
-        |        def to_response(self, response: Res) -> 'RawResponse': pass
-        |
-        |    class ClientEdge(Generic[Req, Res], ABC):
-        |        @abstractmethod
-        |        def to_request(self, request: Req) -> 'RawRequest': pass
-        |
-        |        @abstractmethod
-        |        def from_response(self, response: 'RawResponse') -> Res: pass
         |
         |    class Method(Enum):
         |        GET = "GET"
@@ -64,7 +46,7 @@ data object PythonShared : Shared {
         |
         |        @property
         |        @abstractmethod
-        |        def method(self) -> 'Method': pass
+        |        def method(self) -> 'Wirespec.Method': pass
         |
         |        @property
         |        @abstractmethod
@@ -94,27 +76,27 @@ data object PythonShared : Shared {
         |        @abstractmethod
         |        def body(self) -> T: pass
         |
-        |    class Serializer(ABC):
-        |        @abstractmethod
-        |        def serialize_param(self, value: T, t: type) -> List[str]: pass
-        |        @abstractmethod
-        |        def serialize(self, value: T, t: type) -> str: pass
-        |
-        |    class Deserializer(ABC):
-        |        @abstractmethod
-        |        def deserialize_param(self, value: List[str], t): pass
-        |        @abstractmethod
-        |        def deserialize(self, value: str, t: type) -> T: pass
-        |
-        |    class Serialization(Serializer, Deserializer):
-        |        @abstractmethod
-        |        def serialize_param(self, value: T, t: type) -> List[str]: pass
+        |    class Serializer(Generic[T], ABC):
         |        @abstractmethod
         |        def serialize(self, value: T, t: type) -> str: pass
         |        @abstractmethod
-        |        def deserialize_param(self, value: List[str], t): pass
+        |        def serialize_param(self, value: T, t: type) -> List[str]: pass
+        |
+        |    class Deserializer(Generic[T], ABC):
         |        @abstractmethod
-        |        def deserialize(self, value: str, t): pass
+        |        def deserialize(self, value: str | None, t: type) -> T: pass
+        |        @abstractmethod
+        |        def deserialize_param(self, value: List[str] | None, t): pass
+        |
+        |    class Serialization(Generic[T], Serializer, Deserializer):
+        |        @abstractmethod
+        |        def serialize(self, value: T, t: type) -> str: pass
+        |        @abstractmethod
+        |        def serialize_param(self, value: T, t: type) -> List[str]: pass
+        |        @abstractmethod
+        |        def deserialize(self, value: str | None, t: type) -> T: pass
+        |        @abstractmethod
+        |        def deserialize_param(self, value: List[str] | None, t): pass
         |
         |    @dataclass
         |    class RawRequest:
