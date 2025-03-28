@@ -7,11 +7,11 @@ import community.flock.wirespec.compiler.core.exceptions.DefinitionNotExistsExce
 import community.flock.wirespec.compiler.core.exceptions.NextException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.tokenize.Token
-import community.flock.wirespec.compiler.core.tokenize.TokenizedModule
+import community.flock.wirespec.compiler.core.tokenize.Tokens
 import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
 import community.flock.wirespec.compiler.utils.Logger
 
-class TokenProvider(private val logger: Logger, tokens: TokenizedModule) {
+class TokenProvider(private val logger: Logger, tokens: Tokens) {
 
     var token = tokens.head
 
@@ -59,4 +59,4 @@ class TokenProvider(private val logger: Logger, tokens: TokenizedModule) {
     private fun nextToken() = catch { tokenIterator.next() }.getOrNull()
 }
 
-fun TokenizedModule.toProvider(logger: Logger) = TokenProvider(logger, this)
+fun Tokens.toProvider(logger: Logger) = TokenProvider(logger, this)
