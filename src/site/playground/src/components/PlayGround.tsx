@@ -16,6 +16,8 @@ export function PlayGround({ code, setCode, language }: PlayGroundProps) {
             setFontSize(width < 768 ? 12 : 0.01*width);
         };
 
+        updateWindowDimensions();
+
         window.addEventListener("resize", updateWindowDimensions);
 
         return () => window.removeEventListener("resize", updateWindowDimensions)
