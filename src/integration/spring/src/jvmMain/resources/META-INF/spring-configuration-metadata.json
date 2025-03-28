@@ -1,0 +1,25 @@
+{
+  "groups": [
+    {
+      "name": "wirespec.spring.webclient",
+      "type": "community.flock.wirespec.integration.spring.shared.WebClientConfigurationProperties",
+      "sourceType": "community.flock.wirespec.integration.spring.shared.WebClientConfigurationProperties",
+      "description": "Configuration properties for setting up a WebClient in a Spring application."
+    }
+  ],
+  "properties": [
+    {
+      "name": "wirespec.spring.webclient.base-url",
+      "type": "java.lang.String",
+      "sourceType": "community.flock.wirespec.integration.spring.shared.WebClientConfigurationProperties",
+      "description": "The base URL to be used by the WebClient for making requests.",
+      "required": true
+    }
+  ],
+  "hints": [
+    {
+      "property": "wirespec.spring.webclient.base-url",
+      "value": "Ensure this is set to a valid URL, such as 'https://api.example.com'."
+    }
+  ]
+}

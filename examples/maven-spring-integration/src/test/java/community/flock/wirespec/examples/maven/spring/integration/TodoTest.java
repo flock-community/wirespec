@@ -19,7 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class TodoTest {
+class TodoTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -31,14 +31,21 @@ public class TodoTest {
                 .andExpect(request().asyncStarted())
                 .andReturn();
 
-        this.mockMvc.perform(asyncDispatch(mvcGetResult))
+        mockMvc.perform(asyncDispatch(mvcGetResult))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(3)));
 
         MvcResult mvcPostResult =  mockMvc
                 .perform(post("/todos")
-                                .contentType(APPLICATION_JSON_VALUE)
-                                .content("{\"name\":\"test\", \"done\": true}"))
+                        .contentType(APPLICATION_JSON_VALUE)
+                        .content(
+                                //language=json
+                                """
+                                        {
+                                          "name": "test",
+                                          "done": true
+                                        }
+                                        """))
                 .andExpect(request().asyncStarted())
                 .andReturn();
 
