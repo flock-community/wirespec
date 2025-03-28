@@ -6,6 +6,7 @@ import arrow.core.nonEmptyListOf
 import arrow.core.raise.either
 import arrow.core.right
 import community.flock.wirespec.compiler.core.CompilationContext
+import community.flock.wirespec.compiler.core.SourceContent
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
@@ -34,7 +35,7 @@ fun compile(arguments: CompilerArguments) {
                 .pairWithEmitters(arguments.emitters)
                 .map { (outputFile, emitter) ->
                     ctx(emitter)
-                        .compile(nonEmptyListOf(source.content))
+                        .compile(nonEmptyListOf(SourceContent(source.name.value, source.content)))
                         .map(keepSplitOrCombine(emitter.split, outputFile))
                 }
         }
