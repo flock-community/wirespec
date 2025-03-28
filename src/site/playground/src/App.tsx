@@ -44,7 +44,7 @@ function App() {
           <a
             href="https://docs.wirespec.io/"
             target="_blank"
-            rel="noopener"
+            rel="noopener noreferrer"
             style={{
               marginLeft: "auto",
               color: "white",
@@ -57,7 +57,7 @@ function App() {
           <a
             href="https://github.com/flock-community/wirespec"
             target="_blank"
-            rel="noopener"
+            rel="noopener noreferrer"
             style={{ color: "white", textDecoration: "none" }}
           >
             GitHub
