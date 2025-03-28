@@ -15,4 +15,4 @@ format:
 
 yolo:
 	./mvnw verify -DskipTests && \
-	(cd gradle-ktor && ./gradlew check)
+	(cd gradle-ktor && ./gradlew check -x test)

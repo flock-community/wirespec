@@ -4,9 +4,10 @@ import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACK
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.plugin.compile
 import community.flock.wirespec.plugin.convert
-import community.flock.wirespec.plugin.files.DirectoryPath
-import community.flock.wirespec.plugin.files.FilePath
-import community.flock.wirespec.plugin.files.Name
+import community.flock.wirespec.plugin.io.DirectoryPath
+import community.flock.wirespec.plugin.io.FilePath
+import community.flock.wirespec.plugin.io.Name
+import community.flock.wirespec.plugin.io.read
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import kotlin.test.Test

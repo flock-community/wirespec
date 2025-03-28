@@ -1,6 +1,6 @@
 package community.flock.wirespec.plugin.cli
 
-import arrow.core.NonEmptySet
+import arrow.core.getOrElse
 import arrow.core.nonEmptySetOf
 import arrow.core.toNonEmptySetOrNull
 import com.github.ajalt.clikt.core.CliktCommand
@@ -34,20 +34,19 @@ import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.ConverterArguments
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Language
-import community.flock.wirespec.plugin.files.Directory
-import community.flock.wirespec.plugin.files.DirectoryPath
-import community.flock.wirespec.plugin.files.FilePath
-import community.flock.wirespec.plugin.files.FullPath
-import community.flock.wirespec.plugin.files.Source
-import community.flock.wirespec.plugin.files.Source.Type.JSON
-import community.flock.wirespec.plugin.files.Source.Type.Wirespec
-import community.flock.wirespec.plugin.files.SourcePath
-import community.flock.wirespec.plugin.files.path
-import kotlinx.io.buffered
-import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
-import kotlinx.io.readString
-import kotlinx.io.writeString
+import community.flock.wirespec.plugin.io.Directory
+import community.flock.wirespec.plugin.io.DirectoryPath
+import community.flock.wirespec.plugin.io.FilePath
+import community.flock.wirespec.plugin.io.Source
+import community.flock.wirespec.plugin.io.Source.Type.JSON
+import community.flock.wirespec.plugin.io.Source.Type.Wirespec
+import community.flock.wirespec.plugin.io.SourcePath
+import community.flock.wirespec.plugin.io.getFullPath
+import community.flock.wirespec.plugin.io.getOutPutPath
+import community.flock.wirespec.plugin.io.or
+import community.flock.wirespec.plugin.io.read
+import community.flock.wirespec.plugin.io.wirespecSources
+import community.flock.wirespec.plugin.io.write
 
 enum class Options(vararg val flags: String) {
     Input("-i", "--input"),
@@ -77,27 +76,6 @@ private abstract class CommonOptions : CliktCommand() {
     val shared by option(*Options.Shared.flags, help = "Generate shared wirespec code").flag(default = false)
     val strict by option(*Options.Strict.flags, help = "Strict mode").flag()
 
-    fun getFullPath(input: String?, createIfNotExists: Boolean = false) = when {
-        input == null -> null
-        input.startsWith("classpath:") -> SourcePath(input.substringAfter("classpath:"))
-        else -> {
-            val path = Path(input).createIfNotExists(createIfNotExists)
-            val meta = SystemFileSystem.metadataOrNull(path) ?: throw CannotAccessFileOrDirectory(input)
-            val pathString = path.toString()
-            when {
-                meta.isDirectory -> DirectoryPath(pathString)
-                meta.isRegularFile -> FilePath(pathString)
-                else -> throw IsNotAFileOrDirectory(pathString)
-            }
-        }
-    }
-
-    fun getOutPutPath(inputPath: FullPath) = when (val it = getFullPath(output, true)) {
-        null -> DirectoryPath("${inputPath.path()}/out")
-        is DirectoryPath -> it
-        is FilePath, is SourcePath -> throw OutputShouldBeADirectory()
-    }
-
     fun String.toLogLevel() = when (trim().uppercase()) {
         "DEBUG" -> DEBUG
         "INFO" -> INFO
@@ -116,11 +94,11 @@ private class Compile(
         .multiple(required = true)
 
     override fun run() {
-        val inputPath = getFullPath(input)
+        val inputPath = getFullPath(input).getOrElse { throw CliktError(it.message) }
         val sources = when (inputPath) {
             null -> throw IsNotAFileOrDirectory(null)
             is SourcePath -> throw NoClasspathPossible()
-            is DirectoryPath -> Directory(inputPath).wirespecSources()
+            is DirectoryPath -> Directory(inputPath).wirespecSources().or(::handleError)
             is FilePath -> when (inputPath.extension) {
                 FileExtension.Wirespec -> nonEmptySetOf(
                     Source<Wirespec>(
@@ -147,7 +125,7 @@ private class Compile(
 
         CompilerArguments(
             input = sources,
-            output = Directory(getOutPutPath(inputPath)),
+            output = Directory(getOutPutPath(inputPath, output).or(::handleError)),
             emitters = emitters,
             writer = { filePath, string -> filePath.write(string) },
             error = ::handleError,
@@ -169,7 +147,7 @@ private class Convert(
         .multiple()
 
     override fun run() {
-        val inputPath = getFullPath(input)
+        val inputPath = getFullPath(input).or(::handleError)
         val source = when (inputPath) {
             null -> throw IsNotAFileOrDirectory(null)
             is SourcePath -> throw NoClasspathPossible()
@@ -195,7 +173,7 @@ private class Convert(
         ConverterArguments(
             format = format,
             input = nonEmptySetOf(source),
-            output = Directory(getOutPutPath(inputPath)),
+            output = Directory(getOutPutPath(inputPath, output).or(::handleError)),
             emitters = emitters,
             writer = { filePath, string -> filePath.write(string) },
             error = ::handleError,
@@ -206,39 +184,5 @@ private class Convert(
         ).let(converter)
     }
 }
-
-fun FilePath.read() = Path(toString())
-    .let { SystemFileSystem.source(it).buffered().readString() }
-
-private fun Directory.wirespecSources(): NonEmptySet<Source<Wirespec>> = Path(path.value)
-    .let(SystemFileSystem::list)
-    .filter(::isRegularFile)
-    .filter(::isWirespecFile)
-    .map { FilePath(it.toString()) to SystemFileSystem.source(it).buffered().readString() }
-    .map { (path, source) -> Source<Wirespec>(name = path.name, content = source) }
-    .toNonEmptySetOrNull()
-    ?: throw WirespecFileError()
-
-private fun FilePath.write(string: String) = Path(toString())
-    .also { it.parent?.createIfNotExists() }
-    .let {
-        SystemFileSystem.sink(it).buffered()
-            .apply { writeString(string) }
-            .flush()
-    }
-
-private fun Path.createIfNotExists(create: Boolean = true) = also {
-    when {
-        create && !SystemFileSystem.exists(this) -> SystemFileSystem.createDirectories(this, true)
-        else -> Unit
-    }
-}
-
-private fun isRegularFile(path: Path) = SystemFileSystem.metadataOrNull(path)?.isRegularFile == true
-
-private fun isWirespecFile(path: Path) = path.extension == FileExtension.Wirespec.value
-
-private val Path.extension: String
-    get() = name.substringAfterLast('.', "")
 
 private fun handleError(string: String): Nothing = throw CliktError(string)

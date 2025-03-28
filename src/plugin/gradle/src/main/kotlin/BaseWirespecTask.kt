@@ -14,13 +14,9 @@ import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
 import community.flock.wirespec.openapi.v2.OpenAPIV2Emitter
 import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter
 import community.flock.wirespec.plugin.Language
-import community.flock.wirespec.plugin.files.DirectoryPath
-import community.flock.wirespec.plugin.files.FilePath
-import community.flock.wirespec.plugin.files.FullPath
-import community.flock.wirespec.plugin.files.Name
-import community.flock.wirespec.plugin.files.Source
-import community.flock.wirespec.plugin.files.SourcePath
-import community.flock.wirespec.plugin.files.path
+import community.flock.wirespec.plugin.io.Name
+import community.flock.wirespec.plugin.io.Source
+import community.flock.wirespec.plugin.io.SourcePath
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
@@ -100,25 +96,6 @@ abstract class BaseWirespecTask : DefaultTask() {
         .toNonEmptySetOrNull()
         ?: throw PickAtLeastOneLanguageOrEmitter()
 
-    protected fun getFullPath(input: String?, createIfNotExists: Boolean = false) = when {
-        input == null -> null
-        input.startsWith("classpath:") -> SourcePath(input.substringAfter("classpath:"))
-        else -> {
-            val file = File(input).createIfNotExists(createIfNotExists)
-            when {
-                file.isDirectory -> DirectoryPath(file.absolutePath)
-                file.isFile -> FilePath(file.absolutePath)
-                else -> throw IsNotAFileOrDirectory(input)
-            }
-        }
-    }
-
-    protected fun getOutPutPath(inputPath: FullPath) = when (val it = getFullPath(output.get().asFile.absolutePath, true)) {
-        null -> DirectoryPath("${inputPath.path()}/out")
-        is DirectoryPath -> it
-        is FilePath, is SourcePath -> throw OutputShouldBeADirectory()
-    }
-
     inline fun <reified E : Source.Type> SourcePath.readFromClasspath(): Source<E> {
         val file = File(value)
         val classLoader = javaClass.classLoader
@@ -128,4 +105,6 @@ abstract class BaseWirespecTask : DefaultTask() {
         val name = file.name.split(".").first()
         return Source<E>(name = Name(name), content = content)
     }
+
+    protected fun handleError(string: String): Nothing = throw RuntimeException(string)
 }

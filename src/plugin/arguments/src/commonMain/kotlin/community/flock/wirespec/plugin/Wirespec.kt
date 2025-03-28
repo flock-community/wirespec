@@ -10,14 +10,15 @@ import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
+import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.converter.avro.AvroParser
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser
-import community.flock.wirespec.plugin.files.FilePath
-import community.flock.wirespec.plugin.files.Name
-import community.flock.wirespec.plugin.files.plus
-import community.flock.wirespec.plugin.files.toFilePath
+import community.flock.wirespec.plugin.io.FilePath
+import community.flock.wirespec.plugin.io.Name
+import community.flock.wirespec.plugin.io.plus
+import community.flock.wirespec.plugin.io.toFilePath
 
 fun compile(arguments: CompilerArguments) {
     val ctx = { emitter: Emitter ->
@@ -104,3 +105,12 @@ private fun keepSplitOrCombine(split: Boolean, outputFile: FilePath) = { emitted
 private fun NonEmptyList<Pair<FilePath, NonEmptyList<Emitted>>>.flatten() = flatMap { (file, results) ->
     results.map { (name, result) -> file.copy(name = Name(name)) to result }
 }
+
+private fun WirespecArguments.mapShared() = emitters.mapNotNull {
+    it.mapShared(FilePath(output.path, Name("Wirespec"), it.extension), shared)
+}
+
+private fun Emitter.mapShared(filePath: FilePath, shared: Boolean) = takeIf { shared }
+    ?.let { it.shared?.run { filePath.copy(extension = it.extension) to this } }
+    ?.let { (file, shared) -> file.copy(directory = file.directory + PackageName(shared.packageString)) to shared }
+    ?.let { (file, shared) -> file to shared.source }
