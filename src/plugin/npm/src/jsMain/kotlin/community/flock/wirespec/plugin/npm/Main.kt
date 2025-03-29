@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
+import community.flock.wirespec.compiler.core.emit.PythonEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
@@ -54,6 +55,7 @@ enum class Emitters {
     JAVA,
     KOTLIN,
     SCALA,
+    PYTHON,
     OPENAPI_V2,
     OPENAPI_V3,
     AVRO,
@@ -102,6 +104,7 @@ fun emit(ast: WsAST, emitter: Emitters, packageName: String) = ast
             Emitters.JAVA -> JavaEmitter(PackageName(packageName)).emit(it, noLogger)
             Emitters.KOTLIN -> KotlinEmitter(PackageName(packageName)).emit(it, noLogger)
             Emitters.SCALA -> ScalaEmitter(PackageName(packageName)).emit(it, noLogger)
+            Emitters.PYTHON -> PythonEmitter(PackageName(packageName)).emit(it, noLogger)
             Emitters.OPENAPI_V2 -> listOf(it)
                 .map(OpenAPIV2Emitter::emitSwaggerObject)
                 .map(encode(SwaggerObject.serializer()))

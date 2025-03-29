@@ -2,6 +2,7 @@ package community.flock.wirespec.compiler.core
 
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
+import community.flock.wirespec.compiler.core.emit.PythonEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
@@ -225,6 +226,24 @@ class CompileMinimalEndpointTest {
         """.trimMargin()
 
         compiler { ScalaEmitter() } shouldBeRight scala
+    }
+
+    @Test
+    fun python() {
+        val python = """
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |
+            |from .shared.Wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class TodoDto:
+            |  description: 'str'
+            |
+            |
+        """.trimMargin()
+        compiler { PythonEmitter() } shouldBeRight python
     }
 
     @Test
