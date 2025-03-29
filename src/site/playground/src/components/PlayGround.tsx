@@ -5,16 +5,16 @@ interface PlayGroundProps {
   code: string;
   setCode?: (input: string) => void;
   language: Language;
-  fontSize: number;
 }
 
-export function PlayGround({ code, setCode, language, fontSize }: PlayGroundProps) {
-    return (
+export function PlayGround({ code, setCode, language }: PlayGroundProps) {
+  return (
     <Editor
       language={language}
       theme="vs-dark"
       height="100vh"
-      options={{ minimap: { enabled: false }, fontSize  }}
+      width="50vw"
+      options={{ minimap: { enabled: false } }}
       value={code}
       onChange={
         setCode ? (code: string | undefined) => setCode(code ?? "") : undefined
