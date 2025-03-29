@@ -19,7 +19,7 @@
     "@emotion/styled": "^11.11.5",
     "@flock/wirespec": "file:../../plugin/npm/build/dist/js/productionLibrary/",
     "@monaco-editor/react": "^4.6.0",
-    "@mui/material": "^5.15.16",
+    "@mui/material": "7.0.1",
     "@tanstack/react-router": "^1.112.0",
     "@uiw/codemirror-theme-vscode": "^4.21.24",
     "@uiw/react-codemirror": "^4.21.24",
