@@ -75,7 +75,7 @@ open class PythonEmitter(
                             |$result
                         """.trimMargin().trimStart()
                 )
-            } + Emitted("__init__", "")
+            } + Emitted("__init__", module.statements.map { "from .${it.emitName()} import ${it.emitName()}" }.joinToString("\n"))
     }
 
     private fun Node.localImports():List<Reference.Custom> = when (this) {
@@ -104,20 +104,19 @@ open class PythonEmitter(
 
     override fun emit(type: Type, module: Module): String =
         if (type.shape.value.isEmpty()) """
-            |${type.localImports().joinToString ("\n"){ it.emitReferenceCustomImports() }}
-            |
             |@dataclass
             |class ${type.emitName()}:
             |${Spacer}pass
             |
-        """.trimMargin()
-        else """
             |${type.localImports().joinToString ("\n"){ it.emitReferenceCustomImports() }}
             |
+        """.trimMargin()
+        else """
             |@dataclass
             |class ${type.emitName()}:
             |${type.shape.emit()}
             |
+            |${type.localImports().joinToString ("\n"){ it.emitReferenceCustomImports() }}
         """.trimMargin()
 
     override fun Type.Shape.emit() = value.joinToString("\n") { "${Spacer}${it.emit()}" }
