@@ -34,6 +34,7 @@ kotlin {
                 api(project(":src:compiler:core"))
                 implementation(project(":src:converter:avro"))
                 implementation(project(":src:converter:openapi"))
+                implementation(libs.kotlinx.io.core)
             }
         }
         commonTest {

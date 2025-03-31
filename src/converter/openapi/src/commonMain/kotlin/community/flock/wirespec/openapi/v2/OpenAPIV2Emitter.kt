@@ -21,6 +21,7 @@ import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
+import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
@@ -41,6 +42,8 @@ object OpenAPIV2Emitter : Emitter() {
     override val extension = FileExtension.JSON
 
     override val shared = null
+
+    override fun Definition.emitName() = notYetImplemented()
 
     override val singleLineComment = ""
 
