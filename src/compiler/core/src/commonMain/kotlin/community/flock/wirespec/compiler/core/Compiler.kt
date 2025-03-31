@@ -2,6 +2,7 @@ package community.flock.wirespec.compiler.core
 
 import arrow.core.EitherNel
 import arrow.core.NonEmptyList
+import arrow.core.flatMap
 import community.flock.wirespec.compiler.core.Stage.EMITTED
 import community.flock.wirespec.compiler.core.Stage.PARSED
 import community.flock.wirespec.compiler.core.Stage.TOKENIZED
@@ -43,7 +44,7 @@ fun TokenizeContext.tokenize(source: String): NonEmptyList<Token> = spec
 fun ParseContext.parse(source: NonEmptyList<ModuleContent>): EitherNel<WirespecException, AST> = parse(source.map { TokenizedModule(it.src, tokenize(it.content)) }).also(PARSED::log)
 
 fun EmitContext.emit(source: NonEmptyList<ModuleContent>): EitherNel<WirespecException, NonEmptyList<Emitted>> = parse(source)
-    .map { emitter.emit(it, logger) }
+    .map { emitters.flatMap { emitter -> emitter.emit(it, logger) } }
     .also(EMITTED::log)
 
 fun CompilationContext.compile(source: NonEmptyList<ModuleContent>): EitherNel<WirespecException, NonEmptyList<Emitted>> = emit(source)

@@ -38,6 +38,6 @@ class ConvertAndCompile {
     }
 
     private fun compiler(source: String) = object : CompilationContext, NoLogger {
-        override val emitter = KotlinEmitter()
+        override val emitters = KotlinEmitter()
     }.compile(nonEmptyListOf(ModuleContent("", source)))
 }

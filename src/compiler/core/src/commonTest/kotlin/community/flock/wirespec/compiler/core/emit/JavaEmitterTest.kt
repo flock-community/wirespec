@@ -12,7 +12,7 @@ import kotlin.test.Test
 class JavaEmitterTest {
 
     private val emitContext = object : EmitContext, NoLogger {
-        override val emitter = JavaEmitter()
+        override val emitters = JavaEmitter()
     }
 
     @Test
@@ -88,5 +88,5 @@ class JavaEmitterTest {
         res shouldBe expected
     }
 
-    private fun EmitContext.emitFirst(node: Definition) = emitter.emit(Module("", nonEmptyListOf(node)), logger).first().result
+    private fun EmitContext.emitFirst(node: Definition) = emitters.emit(Module("", nonEmptyListOf(node)), logger).first().result
 }

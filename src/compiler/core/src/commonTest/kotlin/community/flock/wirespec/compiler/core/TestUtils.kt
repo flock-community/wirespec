@@ -7,7 +7,7 @@ import community.flock.wirespec.compiler.utils.NoLogger
 fun compile(source: String) = { emitter: () -> Emitter ->
     object : CompilationContext, NoLogger {
         override val spec = WirespecSpec
-        override val emitter = emitter()
+        override val emitters = emitter()
     }.compile(nonEmptyListOf(ModuleContent("", source)))
         .map { it.first().result }
         .onLeft(::println)

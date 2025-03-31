@@ -21,10 +21,10 @@ import community.flock.wirespec.plugin.files.plus
 import community.flock.wirespec.plugin.files.toFilePath
 
 fun compile(arguments: CompilerArguments) {
-    val ctx = { emitter: Emitter ->
+    val ctx = { emitter: NonEmptySet<Emitter> ->
         object : CompilationContext {
             override val logger = arguments.logger
-            override val emitter = emitter
+            override val emitters = emitter
         }
     }
 
@@ -33,6 +33,9 @@ fun compile(arguments: CompilerArguments) {
             arguments.output.plus(arguments.packageName)
                 .toFilePath(source.name)
                 .pairWithEmitters(arguments.emitters)
+                // Pair between output path and emitter
+                // We then make a CompilationContext with the emitter and logger
+                // We change to: CompilationContext has 1+ emitters and a logger and maybe also the package name
                 .map { (outputFile, emitter) ->
                     ctx(emitter)
                         .compile(nonEmptyListOf(ModuleContent(source.name.value, source.content)))
@@ -88,7 +91,7 @@ fun convert(arguments: ConverterArguments) {
 
 private fun FilePath.pairWithEmitters(emitters: NonEmptySet<Emitter>) = emitters.map {
     copy(extension = it.extension) to it
-}
+} // This gets moved to when we are actually emitting and is based on what goes into the module
 
 private fun keepSplitOrCombine(split: Boolean, outputFile: FilePath) = { emitted: NonEmptyList<Emitted> ->
     when (split) {

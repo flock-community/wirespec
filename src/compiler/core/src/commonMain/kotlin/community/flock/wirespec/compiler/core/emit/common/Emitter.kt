@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.emit.common
 
 import arrow.core.NonEmptyList
+import arrow.core.NonEmptySet
 import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Param.ParamType
 import community.flock.wirespec.compiler.core.emit.shared.Shared
@@ -135,5 +136,5 @@ abstract class Emitter(
 }
 
 interface HasEmitter {
-    val emitter: Emitter
+    val emitters: NonEmptySet<Emitter>
 }
