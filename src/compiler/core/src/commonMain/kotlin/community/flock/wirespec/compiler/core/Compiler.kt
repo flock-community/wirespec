@@ -10,7 +10,7 @@ import community.flock.wirespec.compiler.core.emit.common.HasEmitter
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Parser.parse
-import community.flock.wirespec.compiler.core.tokenize.Tokens
+import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.HasLogger
 
@@ -32,15 +32,15 @@ interface CompilationContext :
     ParseContext,
     EmitContext
 
-data class ModuleContent(val loc: String, val content: String)
+data class ModuleContent(val src: String, val content: String)
 
-data class TokenizedModule(val loc: String, val tokens: Tokens)
+data class TokenizedModule(val src: String, val tokens: NonEmptyList<Token>)
 
-fun TokenizeContext.tokenize(source: String): Tokens = spec
+fun TokenizeContext.tokenize(source: String): NonEmptyList<Token> = spec
     .tokenize(source)
     .also(TOKENIZED::log)
 
-fun ParseContext.parse(source: NonEmptyList<ModuleContent>): EitherNel<WirespecException, AST> = parse(source.map { TokenizedModule(it.loc, tokenize(it.content)) }).also(PARSED::log)
+fun ParseContext.parse(source: NonEmptyList<ModuleContent>): EitherNel<WirespecException, AST> = parse(source.map { TokenizedModule(it.src, tokenize(it.content)) }).also(PARSED::log)
 
 fun EmitContext.emit(source: NonEmptyList<ModuleContent>): EitherNel<WirespecException, NonEmptyList<Emitted>> = parse(source)
     .map { emitter.emit(it, logger) }

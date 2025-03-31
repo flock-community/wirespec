@@ -8,18 +8,16 @@ import community.flock.wirespec.compiler.core.LanguageSpec
 import community.flock.wirespec.compiler.core.removeBackticks
 import community.flock.wirespec.compiler.core.tokenize.Token.Coordinates
 
-typealias Tokens = NonEmptyList<Token>
-
 data class TokenizeOptions(
     val removeWhitespace: Boolean = true,
     val specifyTypes: Boolean = true,
     val specifyFieldIdentifiers: Boolean = true,
 )
 
-fun LanguageSpec.tokenize(source: String, options: TokenizeOptions = TokenizeOptions()): Tokens = tokenize(source, nonEmptyListOf(Token(type = StartOfProgram, value = "", coordinates = Coordinates())))
+fun LanguageSpec.tokenize(source: String, options: TokenizeOptions = TokenizeOptions()): NonEmptyList<Token> = tokenize(source, nonEmptyListOf(Token(type = StartOfProgram, value = "", coordinates = Coordinates())))
     .let(optimize(options))
 
-private tailrec fun LanguageSpec.tokenize(source: String, incompleteTokens: Tokens): Tokens {
+private tailrec fun LanguageSpec.tokenize(source: String, incompleteTokens: NonEmptyList<Token>): NonEmptyList<Token> {
     val (token, remaining) = extractToken(source, incompleteTokens.last().coordinates)
     val tokens = incompleteTokens + token
     return when (token.type) {
@@ -46,16 +44,16 @@ private fun endToken(previousTokenCoordinates: Coordinates = Coordinates()) = To
     coordinates = previousTokenCoordinates.nextCoordinates(EndOfProgram, EndOfProgram.VALUE),
 )
 
-private fun LanguageSpec.optimize(options: TokenizeOptions) = { tokens: Tokens ->
+private fun LanguageSpec.optimize(options: TokenizeOptions) = { tokens: NonEmptyList<Token> ->
     tokens
         .runOption(options.removeWhitespace) { removeWhiteSpace() }
         .runOption(options.specifyTypes) { map { it.specifyType(typeIdentifier.specificTypes) } }
         .runOption(options.specifyFieldIdentifiers) { map { it.specifyFieldIdentifier(fieldIdentifier.caseVariants) } }
 }
 
-private fun Tokens.runOption(bool: Boolean, block: Tokens.() -> Tokens) = if (bool) block() else this
+private fun NonEmptyList<Token>.runOption(bool: Boolean, block: NonEmptyList<Token>.() -> NonEmptyList<Token>) = if (bool) block() else this
 
-private fun Tokens.removeWhiteSpace(): Tokens = filterNot { it.type is WhiteSpace }.toNonEmptyListOrNull() ?: endToken().nel()
+private fun NonEmptyList<Token>.removeWhiteSpace(): NonEmptyList<Token> = filterNot { it.type is WhiteSpace }.toNonEmptyListOrNull() ?: endToken().nel()
 
 private fun Token.specifyType(entries: Map<String, SpecificType>) = when (type) {
     is TypeIdentifier -> entries[value]

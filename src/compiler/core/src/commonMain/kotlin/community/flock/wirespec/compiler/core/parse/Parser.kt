@@ -33,18 +33,19 @@ object Parser {
     private val endpointParser = EndpointParser
     private val channelParser = ChannelParser
 
-    fun HasLogger.parse(modules: NonEmptyList<TokenizedModule>, options: ParseOptions = ParseOptions()): EitherNel<WirespecException, AST> = modules.map { it.tokens.toProvider(logger).parseModule(it.loc, options) }
+    fun HasLogger.parse(modules: NonEmptyList<TokenizedModule>, options: ParseOptions = ParseOptions()): EitherNel<WirespecException, AST> =
+        modules.map { it.tokens.toProvider(logger).parseModule(it.src, options) }
         .let { l -> either { l.bindAll() } }
         .map { AST(it) }
 
-    private fun TokenProvider.parseModule(loc: String, options: ParseOptions): EitherNel<WirespecException, Module> = either {
+    private fun TokenProvider.parseModule(src: String, options: ParseOptions): EitherNel<WirespecException, Module> = either {
         mutableListOf<EitherNel<WirespecException, Definition>>()
             .apply { while (hasNext()) add(parseDefinition().mapLeft { it.nel() }) }
             .map { it.bind() }
             .toNonEmptyListOrNull()
             .let { ensureNotNull(it) { EmptyModule().nel() } }
     }.flatMap(validate(options))
-        .map { Module(loc, it) }
+        .map { Module(src, it) }
 
     private fun TokenProvider.parseDefinition() = either {
         token.log()
