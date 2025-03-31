@@ -8,7 +8,7 @@ fun compile(source: String) = { emitter: () -> Emitter ->
     object : CompilationContext, NoLogger {
         override val spec = WirespecSpec
         override val emitter = emitter()
-    }.compile(nonEmptyListOf(source))
+    }.compile(nonEmptyListOf(ModuleContent("", source)))
         .map { it.first().result }
         .onLeft(::println)
 }
