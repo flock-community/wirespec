@@ -31,6 +31,9 @@ import org.apache.maven.plugins.annotations.ResolutionScope
 )
 class ConvertMojo : BaseMojo() {
 
+    /**
+     * Specifies the format to convert from: [Format].
+     */
     @Parameter(required = true)
     private lateinit var format: Format
 

@@ -33,21 +33,39 @@ abstract class BaseMojo : AbstractMojo() {
     @Parameter(required = true)
     protected lateinit var input: String
 
+    /**
+     * Specifies the output directory.
+     */
     @Parameter(required = true)
     protected lateinit var output: String
 
+    /**
+     * Specifies the languages to compile to: [Language].
+     */
     @Parameter
     protected var languages: List<Language> = listOf()
 
+    /**
+     * Specifies whether to emit the shared Wirespec code.
+     */
     @Parameter
     protected var shared: Boolean = true
 
+    /**
+     * Specifies what additional custom emitter to use.
+     */
     @Parameter
     protected var emitterClass: String? = null
 
+    /**
+     * Specifies package name, default [DEFAULT_GENERATED_PACKAGE_STRING]
+     */
     @Parameter
     protected var packageName: String = DEFAULT_GENERATED_PACKAGE_STRING
 
+    /**
+     * Specifies whether to invoke strict mode. Default 'true'.
+     */
     @Parameter
     protected var strict: Boolean = true
 
