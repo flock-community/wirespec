@@ -38,3 +38,6 @@ test:
 
 update:
 	npm install -g @vscode/vsce
+
+yolo:
+	$(shell pwd)/scripts/yolo.sh

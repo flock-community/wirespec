@@ -14,13 +14,9 @@ import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
 import community.flock.wirespec.openapi.v2.OpenAPIV2Emitter
 import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter
 import community.flock.wirespec.plugin.Language
-import community.flock.wirespec.plugin.files.DirectoryPath
-import community.flock.wirespec.plugin.files.FilePath
-import community.flock.wirespec.plugin.files.FullPath
-import community.flock.wirespec.plugin.files.Name
-import community.flock.wirespec.plugin.files.Source
-import community.flock.wirespec.plugin.files.SourcePath
-import community.flock.wirespec.plugin.files.path
+import community.flock.wirespec.plugin.io.Name
+import community.flock.wirespec.plugin.io.Source
+import community.flock.wirespec.plugin.io.SourcePath
 import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
@@ -34,31 +30,42 @@ abstract class BaseMojo : AbstractMojo() {
      * Multiple paths can be provided, separated by commas.
      * Files can also be loaded from the classpath using the 'classpath:' prefix (e.g., 'classpath:wirespec/petstore.ws').
      */
-
     @Parameter(required = true)
     protected lateinit var input: String
 
     /**
-     * Specifies the output directories to process.
+     * Specifies the output directory.
      */
     @Parameter(required = true)
     protected lateinit var output: String
 
+    /**
+     * Specifies the languages to compile to: [Language].
+     */
     @Parameter
     protected var languages: List<Language> = listOf()
 
+    /**
+     * Specifies whether to emit the shared Wirespec code.
+     */
     @Parameter
     protected var shared: Boolean = true
 
+    /**
+     * Specifies what additional custom emitter to use.
+     */
     @Parameter
     protected var emitterClass: String? = null
 
     /**
-     * Specifies package name default 'community.flock.wirespec.generated'
+     * Specifies package name, default [DEFAULT_GENERATED_PACKAGE_STRING]
      */
     @Parameter
     protected var packageName: String = DEFAULT_GENERATED_PACKAGE_STRING
 
+    /**
+     * Specifies whether to invoke strict mode. Default 'true'.
+     */
     @Parameter
     protected var strict: Boolean = true
 
@@ -70,25 +77,6 @@ abstract class BaseMojo : AbstractMojo() {
         override fun info(string: String) = log.info(string)
         override fun warn(string: String) = log.warn(string)
         override fun error(string: String) = log.error(string)
-    }
-
-    fun getFullPath(input: String?, createIfNotExists: Boolean = false) = when {
-        input == null -> null
-        input.startsWith("classpath:") -> SourcePath(input.substringAfter("classpath:"))
-        else -> {
-            val file = File(input).createIfNotExists(createIfNotExists)
-            when {
-                file.isDirectory -> DirectoryPath(file.absolutePath)
-                file.isFile -> FilePath(file.absolutePath)
-                else -> throw IsNotAFileOrDirectory(input)
-            }
-        }
-    }
-
-    fun getOutPutPath(inputPath: FullPath) = when (val it = getFullPath(output, true)) {
-        null -> DirectoryPath("${inputPath.path()}/out")
-        is DirectoryPath -> it
-        is FilePath, is SourcePath -> throw OutputShouldBeADirectory()
     }
 
     private val emitter
@@ -147,4 +135,6 @@ abstract class BaseMojo : AbstractMojo() {
         val name = file.name.split(".").first()
         return Source<E>(name = Name(name), content = content)
     }
+
+    protected fun handleError(string: String): Nothing = throw RuntimeException(string)
 }

@@ -54,7 +54,6 @@ kotlin {
                 implementation(project(":src:plugin:arguments"))
                 implementation(project(":src:converter:openapi"))
                 implementation(libs.clikt)
-                implementation(libs.kotlinx.io.core)
             }
         }
         commonTest {

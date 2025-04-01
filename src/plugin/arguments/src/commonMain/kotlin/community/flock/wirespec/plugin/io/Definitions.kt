@@ -1,11 +1,11 @@
-package community.flock.wirespec.plugin.files
+package community.flock.wirespec.plugin.io
 
 import community.flock.wirespec.compiler.core.Value
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.emit.common.FileExtension.Wirespec
 import community.flock.wirespec.compiler.core.emit.common.FileExtension.entries
 import community.flock.wirespec.compiler.core.emit.common.PackageName
-import community.flock.wirespec.plugin.files.Source.Type
+import community.flock.wirespec.plugin.io.Source.Type
 import kotlin.jvm.JvmInline
 
 sealed interface Input

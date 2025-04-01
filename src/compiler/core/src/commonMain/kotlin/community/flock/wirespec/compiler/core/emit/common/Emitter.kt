@@ -38,16 +38,14 @@ abstract class Emitter(
 
     abstract val shared: Shared?
 
-    open fun Definition.emitName(): String = notYetImplemented()
+    abstract fun Definition.emitName(): String
 
     fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast.modules.flatMap { emit(it, logger) }
 
     open fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = module
         .statements
         .map {
-            when (it) {
-                is Definition -> it.emitName()
-            }.also { name -> logger.info("Emitting Node $name") }
+            logger.info("Emitting Node ${it.emitName()}")
             when (it) {
                 is Type -> Emitted(it.emitName(), emit(it, module))
                 is Endpoint -> Emitted(it.emitName(), emit(it))

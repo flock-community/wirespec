@@ -4,12 +4,12 @@ import arrow.core.NonEmptySet
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.plugin.files.Directory
-import community.flock.wirespec.plugin.files.FilePath
-import community.flock.wirespec.plugin.files.Source
-import community.flock.wirespec.plugin.files.Source.Type
-import community.flock.wirespec.plugin.files.Source.Type.JSON
-import community.flock.wirespec.plugin.files.Source.Type.Wirespec
+import community.flock.wirespec.plugin.io.Directory
+import community.flock.wirespec.plugin.io.FilePath
+import community.flock.wirespec.plugin.io.Source
+import community.flock.wirespec.plugin.io.Source.Type
+import community.flock.wirespec.plugin.io.Source.Type.JSON
+import community.flock.wirespec.plugin.io.Source.Type.Wirespec
 
 sealed interface WirespecArguments {
     val input: NonEmptySet<Source<Type>>
