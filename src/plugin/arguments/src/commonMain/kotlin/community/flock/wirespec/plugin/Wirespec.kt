@@ -28,15 +28,14 @@ fun compile(arguments: CompilerArguments) {
         }
     }
 
-    return ctx()
-        .compile(arguments.input.map { s -> ModuleContent(s.name.value, s.content) })
-        .mapLeft { it.map(WirespecException::message) }
-        .fold({ arguments.error(it.joinToString()) }) {
-            // it : List<Emitted>
-            it.forEach { (file, result) ->
-                arguments.writer(FilePath(file), result) // Happy fold
-            }
+    ctx().compile(arguments.input.map { s -> ModuleContent(s.name.value, s.content) })
+    .mapLeft { it.map(WirespecException::message) }
+    .fold({ arguments.error(it.joinToString()) }) {
+        // it : List<Emitted>
+        it.forEach { (file, result) ->
+            arguments.writer(FilePath(file), result) // Happy fold
         }
+    }
 }
 
 fun convert(arguments: ConverterArguments) {
