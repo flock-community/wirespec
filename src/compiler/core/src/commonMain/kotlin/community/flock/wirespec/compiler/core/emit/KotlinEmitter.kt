@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.emit
 
 import arrow.core.NonEmptyList
+import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.addBackticks
 import community.flock.wirespec.compiler.core.concatGenerics
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
@@ -30,7 +31,7 @@ import community.flock.wirespec.compiler.utils.Logger
 
 open class KotlinEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
-) : Emitter(false) {
+) : Emitter() {
 
     val import = """
         |
@@ -54,17 +55,16 @@ open class KotlinEmitter(
 
     override val singleLineComment = "//"
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
-        super.emit(module, logger).map { (typeName, result) ->
-            Emitted(
-                typeName = typeName.sanitizeSymbol(),
-                result = """
-                    |package $packageName
-                    |${if (module.needImports()) import else ""}
-                    |$result
-                """.trimMargin().trimStart()
-            )
-        }
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = nonEmptyListOf(
+        Emitted(
+            typeName = module.uri.split("/").last().firstToUpper() + "." + extension.value,
+            result = """
+                |package $packageName
+                |${if (module.needImports()) import else ""}
+                |${super.emit(module, logger).map(Emitted::result).joinToString("\n")}
+            """.trimMargin().trimStart()
+        )
+    )
 
     override fun emit(type: Type, module: Module) =
         if (type.shape.value.isEmpty()) "${Spacer}data object ${type.emitName()}"

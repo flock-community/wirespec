@@ -29,12 +29,19 @@ fun compile(arguments: CompilerArguments) {
         }
     }
 
+    println("EMITTERS123: ")
+    println(arguments.emitters.map { it.extension.value })
+
     ctx().compile(arguments.input.map { s -> ModuleContent(s.name.value, s.content) })
         .mapLeft { it.map(WirespecException::message) }
         .fold({ arguments.error(it.joinToString()) }) {
             // it : List<Emitted>
             it.forEach { (file, result) ->
-                arguments.writer(FilePath(file), result) // Happy fold
+                println("YOLO $file")
+//                println(arguments.mapShared())
+                println(arguments.output.path.value)
+//                println(arguments.)
+                arguments.writer(FilePath(arguments.output.path.value + "/" + file), result) // Happy fold
             }
         }
 }
@@ -63,7 +70,7 @@ fun convert(arguments: ConverterArguments) {
                 .map { (outputFile, emitter) ->
                     ctx(emitter)
                         .emit(source.content)
-                        .map(keepSplitOrCombine(emitter.split, outputFile))
+                        .map(keepSplitOrCombine(false, outputFile)) // TODO
                 }
         }
         .let { either { it.bindAll() } }

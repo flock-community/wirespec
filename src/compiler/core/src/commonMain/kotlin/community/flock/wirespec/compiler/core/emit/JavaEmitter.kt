@@ -29,7 +29,7 @@ import community.flock.wirespec.compiler.utils.Logger
 
 open class JavaEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
-) : Emitter(true) {
+) : Emitter() {
 
     val import = """
         |
@@ -55,7 +55,7 @@ open class JavaEmitter(
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
         super.emit(module, logger).map { (typeName, result) ->
             Emitted(
-                typeName = typeName.sanitizeSymbol(),
+                typeName = typeName.sanitizeSymbol() + "." + extension.value,
                 result = """
                     |package $packageName;
                     |${if (module.needImports()) import else ""}

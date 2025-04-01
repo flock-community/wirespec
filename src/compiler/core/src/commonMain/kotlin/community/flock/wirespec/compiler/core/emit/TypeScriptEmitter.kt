@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.emit
 
 import arrow.core.NonEmptyList
+import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
@@ -37,15 +38,15 @@ open class TypeScriptEmitter : Emitter() {
 
     override val singleLineComment = "//"
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
-        super.emit(module, logger).map {
-            Emitted(
-                it.typeName.sanitizeSymbol(), """
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = nonEmptyListOf(
+        Emitted(
+            typeName = module.uri.split("/").last().firstToUpper() + "." + extension.value,
+            result = """
                     |${if (module.hasEndpoints()) TypeScriptShared.source else ""}
-                    |${it.result}
+                    |${super.emit(module, logger).map(Emitted::result).joinToString("\n")}
             """.trimMargin().trimStart()
-            )
-        }
+        )
+    )
 
     override fun emit(type: Type, module: Module) =
         """export type ${type.identifier.sanitizeSymbol()} = {

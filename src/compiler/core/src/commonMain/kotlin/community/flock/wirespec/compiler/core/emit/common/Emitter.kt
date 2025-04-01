@@ -20,9 +20,7 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 
-abstract class Emitter(
-    val split: Boolean = false,
-) : Emitters {
+abstract class Emitter : Emitters {
 
     data class Param(
         val type: ParamType,
@@ -55,10 +53,10 @@ abstract class Emitter(
                 is Channel -> Emitted(it.emitName(), emit(it))
             }
         }
-        .run {
-            if (split) this
-            else nonEmptyListOf(Emitted("NoName", joinToString("\n") { it.result }))
-        }
+//        .run {
+//            if (split) this
+//            else nonEmptyListOf(Emitted(module.uri.split("/").last().firstToUpper() + "." + extension.value, joinToString("\n") { it.result }))
+//        }
 
     fun String.spacer(space: Int = 1) = split("\n")
         .joinToString("\n") {
