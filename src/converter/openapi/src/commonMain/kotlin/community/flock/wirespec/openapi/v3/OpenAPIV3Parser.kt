@@ -47,7 +47,7 @@ object OpenAPIV3Parser {
                 OpenAPI(
                     json = Json {
                         prettyPrint = true
-                        ignoreUnknownKeys = strict
+                        ignoreUnknownKeys = !strict
                     },
                 ).decodeFromString(json).parse().toNonEmptyListOrNull() ?: error("Cannot yield non empty List<Node> for OpenAPI v3"),
             ),

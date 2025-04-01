@@ -139,13 +139,14 @@ class WirespecCliTest {
         val packageDir = packageName.replace(".", "/")
         val input = "$inputDir/openapi/petstore.json"
         val output = outputDir()
+        println("Emitted to $output")
 
         WirespecCli.provide(::compile, ::convert).main(
             arrayOf(
-                "convert", "openapiv2",
+                "convert", "openapiv3",
                 "-i", input,
                 "-o", output,
-                "-l", "TypeScript",
+                "-l", "Wirespec",
                 "-p", "community.flock.openapi",
             ),
         )
