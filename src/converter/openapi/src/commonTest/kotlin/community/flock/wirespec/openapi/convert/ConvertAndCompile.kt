@@ -1,6 +1,7 @@
 package community.flock.wirespec.openapi.convert
 
 import arrow.core.nonEmptyListOf
+import arrow.core.nonEmptySetOf
 import community.flock.wirespec.compiler.core.CompilationContext
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.compile
@@ -38,6 +39,6 @@ class ConvertAndCompile {
     }
 
     private fun compiler(source: String) = object : CompilationContext, NoLogger {
-        override val emitters = KotlinEmitter()
+        override val emitters = nonEmptySetOf(KotlinEmitter())
     }.compile(nonEmptyListOf(ModuleContent("", source)))
 }

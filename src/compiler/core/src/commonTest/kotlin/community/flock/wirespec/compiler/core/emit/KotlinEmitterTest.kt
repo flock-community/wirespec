@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.emit
 
 import arrow.core.nonEmptyListOf
+import arrow.core.nonEmptySetOf
 import community.flock.wirespec.compiler.core.EmitContext
 import community.flock.wirespec.compiler.core.fixture.NodeFixtures
 import community.flock.wirespec.compiler.core.parse.Definition
@@ -12,7 +13,7 @@ import kotlin.test.Test
 class KotlinEmitterTest {
 
     private val emitContext = object : EmitContext, NoLogger {
-        override val emitters = KotlinEmitter()
+        override val emitters = nonEmptySetOf(KotlinEmitter())
     }
 
     @Test
@@ -76,5 +77,5 @@ class KotlinEmitterTest {
         res shouldBe expected
     }
 
-    private fun EmitContext.emitFirst(node: Definition) = emitters.emit(Module("", nonEmptyListOf(node)), logger).first().result
+    private fun EmitContext.emitFirst(node: Definition) = emitters.map { it.emit(Module("", nonEmptyListOf(node)), logger).first().result }
 }

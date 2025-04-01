@@ -21,35 +21,20 @@ import community.flock.wirespec.plugin.files.plus
 import community.flock.wirespec.plugin.files.toFilePath
 
 fun compile(arguments: CompilerArguments) {
-    val ctx = { emitter: NonEmptySet<Emitter> ->
+    val ctx = {
         object : CompilationContext {
             override val logger = arguments.logger
-            override val emitters = emitter
+            override val emitters = arguments.emitters
         }
     }
 
-    return arguments.input
-        .flatMap { source ->
-            arguments.output.plus(arguments.packageName)
-                .toFilePath(source.name)
-                .pairWithEmitters(arguments.emitters)
-                // Pair between output path and emitter
-                // We then make a CompilationContext with the emitter and logger
-                // We change to: CompilationContext has 1+ emitters and a logger and maybe also the package name
-                .map { (outputFile, emitter) ->
-                    ctx(emitter)
-                        .compile(nonEmptyListOf(ModuleContent(source.name.value, source.content)))
-                        .map(keepSplitOrCombine(emitter.split, outputFile))
-                }
-        }
-        .let { either { it.bindAll() } }
-        .map { it.flatten() }
-        .map { it + arguments.mapShared() }
+    return ctx()
+        .compile(arguments.input.map { s -> ModuleContent(s.name.value, s.content) })
         .mapLeft { it.map(WirespecException::message) }
         .fold({ arguments.error(it.joinToString()) }) {
+            // it : List<Emitted>
             it.forEach { (file, result) ->
-                println("Writing ${file.name.value} to ${file.directory}")
-                arguments.writer(file, result)
+                arguments.writer(FilePath(file), result) // Happy fold
             }
         }
 }
@@ -94,7 +79,7 @@ private fun FilePath.pairWithEmitters(emitters: NonEmptySet<Emitter>) = emitters
 } // This gets moved to when we are actually emitting and is based on what goes into the module
 
 private fun keepSplitOrCombine(split: Boolean, outputFile: FilePath) = { emitted: NonEmptyList<Emitted> ->
-    when (split) {
+    when (split) { // This is a property of the emitter, and does not belong here
         true -> outputFile to emitted
         false -> outputFile to nonEmptyListOf(
             Emitted(
