@@ -1,0 +1,110 @@
+---
+id: types
+title: Types
+slug: /language/types
+sidebar_position: 2
+---
+
+In Wirespec, everything that gets sent over the wire is a type.
+
+## Primitive
+
+This section describes the primitive types used in Wirespec:
+
+| Type    | Description                                                       |
+|---------|-------------------------------------------------------------------|
+| String  | Textual data, typically UTF-8 encoded.                            |
+| Boolean | `true` or `false` value.                                          |
+| Integer | Whole numbers (e.g., `int32`, `uint64`).                          |
+| Number  | Numerical values with decimal parts (e.g., `float32`, `float64`). |
+| Bytes   | Raw, uninterpreted binary data. E.g. an array of bytes            |
+| Unit    | Absence of a value (like `void`).                                 |
+
+
+## Composite
+
+A composite type in wirespec allows you to group together fields of different types under a single named structure.
+Think of it as creating your own custom data structure or record. It's the foundation for building complex data
+representations and is what you would typically use to define your Data Transfer Objects (DTOs) or similar data
+structures.
+
+```wirespec
+type User {
+    id: Integer,
+    name: String,
+}
+```
+
+It is also possible to reference other types that you defined:
+
+```wirespec
+type Person {
+    name: String,
+    address: Address
+}
+
+type Address {
+    streetName: String,
+    houseNumber: Integer
+}
+```
+
+Additionally, fields can be defined as optional using a `?`, or as a list using `[]`:
+
+```wirespec
+type Product {
+    name: String,
+    description: String?,
+    tags: String[]
+}
+```
+
+## Enum
+
+Enums (enumerations) in Wirespec are used to define a type that can only take on one of a predefined set of named
+values. Enums are ideal for situations where a field can only have a fixed number of possibilities:
+
+```wirespec
+enum Direction {
+    NORTH, SOUTH, WEST, EAST
+}
+```
+
+Both upper case and camel case values are accepted:
+
+```wirespec
+enum Role {
+    SoftwareEngineer,
+    SystemAdmin
+}
+```
+
+## Refined
+
+Using simple string values as types is often too lenient. You might need to enforce specific patterns, ranges, or
+formats for your data. Refined types allow you to be more specific, constrained types based on existing ones, ensuring
+data conforms to certain rules. A common use case for refined types is to use a regular expression to define allowed
+patterns for strings. You can define a refined type as follows:
+
+```wirespec
+type Name /^[0-9a-zA-Z]{1,50}$/g
+```
+
+## Union
+
+In Wirespec, a union type represents a value that can be one of several different types. The key characteristic is that
+at any given time, the value holds only one of those types. It can be defined using `type` keyword and consists of a
+list of non-primitive types separated by a `|` (union operator):
+
+```wirespec
+type Result = Win | Loss
+
+type Win {
+    points: Integer,
+    nextOpponent: User
+}
+
+type Loss {
+   points: Integer,
+}
+```
