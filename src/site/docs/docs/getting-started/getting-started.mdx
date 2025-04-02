@@ -8,9 +8,6 @@ sidebar_position: 0
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-
-# Getting Started
-
 ## What is Wirespec?
 
 Wirespec is a modern tool that enhances software development by streamlining the process of designing, documenting,
@@ -21,6 +18,8 @@ Wirespec distinguishes itself by using a simple language model and multi-languag
 
 WireSpec can be installed either as an npm package for use within a project or as a standalone command-line interface
 (CLI) tool.
+
+Link to the plugin sections too
 
 [//]: # (TODO should be Npm + Docker + Homebrew)
 <Tabs>
@@ -111,7 +110,7 @@ one of the following commands referencing the directory where you put your `todo
 <Tabs>
     <TabItem value="TypeScript" label="TypeScript">
         ```bash
-        wirespec compile --language typescript --input .
+        wirespec compile --input . --language typescript
         ```
 
         This will generate the following file:
@@ -123,7 +122,7 @@ one of the following commands referencing the directory where you put your `todo
     </TabItem>
     <TabItem value="Kotlin" label="Kotlin">
         ```bash
-        wirespec compile --language kotlin --input .
+        wirespec compile --input . --language kotlin
         ```
 
         This will generate the following file:
@@ -135,7 +134,7 @@ one of the following commands referencing the directory where you put your `todo
 
     <TabItem value="Java" label="Java">
         ```bash
-        wirespec compile --language java --input .
+        wirespec compile --input . --language java
         ```
 
         This will generate the following files:
