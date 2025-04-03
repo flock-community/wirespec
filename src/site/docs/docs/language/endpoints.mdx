@@ -14,7 +14,7 @@ endpoint GetTodos GET /todos -> {
 }
 ```
 
-### Request Body
+## Request Body
 
 You can specify a [type](types) for the request body like so:
 
@@ -29,7 +29,7 @@ type Todo {
 }
 ```
 
-### Path parameters
+## Path parameters
 
 Endpoint parameters are defined using Pascal notation - **name: type.** Path parameters can simply be embedded in the
 URI between brackets. Each parameter must be explicitly typed:
@@ -40,7 +40,7 @@ endpoint GetTodo GET /todos/{id: Integer} -> {
 }
 ```
 
-### Query parameters
+## Query parameters
 
 Query parameters are appended to the endpoint URI after a `?` symbol. Individual parameters are separated by commas, and
 must be explicitly typed as well:
@@ -51,7 +51,7 @@ endpoint GetTodos GET /todos ?{done: Boolean, prio: Boolean} -> {
 }
 ```
 
-### Responses
+## Responses
 
 After defining the request format you can define one or more response types. Responses are defined by a response code
 followed by an arrow `->` and a [type](types):
@@ -72,7 +72,7 @@ endpoint DeleteTodo DELETE /todos/{id: Integer} -> {
 }
 ```
 
-### Headers
+## Headers
 
 Request headers are indicated by a `#` followed by a list of one or more comma separated parameters, and  *must* be
 defined after query parameters.
@@ -91,7 +91,7 @@ endpoint CreateTodo POST Todo /todos -> {
 }
 ```
 
-### HTTP methods
+## HTTP methods
 
 Wirespec currently accepts some, but not all [HTTP methods](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods).
 Methods are specified in uppercase, the following are currently available in Wirespec:
