@@ -14,6 +14,7 @@ This section describes the primitive types used in Wirespec:
  - `Boolean`
  - `Integer`
  - `Number` (For Real numbers, so i.e. float/double)
+ - `Number32`
  - `Bytes`
  - `Unit` (Only used to indicate the absence of a response body)
 
@@ -55,7 +56,6 @@ type Person {
 
 type Name /^[0-9a-zA-Z]{1,50}$/g
 ```
-
 
 Additionally, fields can be defined as optional using a `?`, or as a list using `[]`:
 
