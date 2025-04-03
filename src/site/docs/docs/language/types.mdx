@@ -45,6 +45,18 @@ type Address {
 }
 ```
 
+The same applies to other types, such as [refined](#refined):
+
+```wirespec
+type Person {
+  firstname: Name,
+  lastName: Name
+}
+
+type Name /^[0-9a-zA-Z]{1,50}$/g
+```
+
+
 Additionally, fields can be defined as optional using a `?`, or as a list using `[]`:
 
 ```wirespec
@@ -83,7 +95,7 @@ data conforms to certain rules. A common use case for refined types is to use a 
 patterns for strings. You can define a refined type as follows:
 
 ```wirespec
-type Name /^[0-9a-zA-Z]{1,50}$/g
+type Date /^([0-9]{2}-[0-9]{2}-20[0-9]{2})$/g
 ```
 
 ## Union
