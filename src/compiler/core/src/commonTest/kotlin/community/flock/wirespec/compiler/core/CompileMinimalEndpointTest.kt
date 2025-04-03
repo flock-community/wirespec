@@ -2,6 +2,7 @@ package community.flock.wirespec.compiler.core
 
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
+import community.flock.wirespec.compiler.core.emit.PythonEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
@@ -204,6 +205,15 @@ class CompileMinimalEndpointTest {
             |  }
             |}
             |
+            |package community.flock.wirespec.generated;
+            |
+            |import community.flock.wirespec.java.Wirespec;
+            |
+            |public record TodoDto (
+            |  String description
+            |) {
+            |};
+            |
         """.trimMargin()
 
         compiler { JavaEmitter() } shouldBeRight java
@@ -225,6 +235,137 @@ class CompileMinimalEndpointTest {
         """.trimMargin()
 
         compiler { ScalaEmitter() } shouldBeRight scala
+    }
+
+    @Test
+    fun python() {
+        val python = """
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |
+            |from .shared.Wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class TodoDto:
+            |  description: 'str'
+            |
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |
+            |from .shared.Wirespec import T, Wirespec
+            |
+            |from .TodoDto import TodoDto
+            |
+            |class GetTodosEndpoint (Wirespec.Endpoint):
+            |  @dataclass
+            |  class Request(Wirespec.Request[None]):
+            |    @dataclass
+            |    class Path (Wirespec.Request.Path): pass
+            |    @dataclass
+            |    class Queries (Wirespec.Request.Queries): pass
+            |    @dataclass
+            |    class Headers (Wirespec.Request.Headers): pass
+            | 
+            |    @property
+            |    def body(self) -> None:
+            |      return self._body
+            |
+            |    @property
+            |    def path(self) -> Path:
+            |      return self._path
+            |
+            |    @property
+            |    def queries(self) -> Queries:
+            |      return self._queries
+            |
+            |    @property
+            |    def headers(self) -> Headers:
+            |      return self._headers
+            |
+            |    _body:  None
+            |    _headers: Headers
+            |    _queries: Queries
+            |    _path: Path
+            |    method: Wirespec.Method = Wirespec.Method.GET
+            |
+            |    def __init__(self, ):
+            |      self._path = GetTodosEndpoint.Request.Path()
+            |      self._queries = GetTodosEndpoint.Request.Queries()
+            |      self._headers = GetTodosEndpoint.Request.Headers()
+            |      self._body = None
+            |
+            |  @dataclass
+            |  class Response200(Wirespec.Response[List[TodoDto]]):
+            |    @dataclass
+            |    class Headers (Wirespec.Response.Headers): pass
+            |
+            |    @property
+            |    def headers(self) -> Headers:
+            |      return self._headers
+            |
+            |    @property
+            |    def body(self) -> List[TodoDto]:
+            |      return self._body
+            |
+            |    _body: List[TodoDto]
+            |    _headers: Headers
+            |    status: int = 200
+            |
+            |    def __init__(self, body: List[TodoDto]):
+            |      self._headers = GetTodosEndpoint.Response200.Headers()
+            |      self._body = body
+            |
+            |  Response = Response200
+            |
+            |  class Handler(Wirespec.Endpoint.Handler):
+            |    @abstractmethod
+            |    def GetTodos(self, req: 'GetTodosEndpoint.Request') -> 'GetTodosEndpoint.Response': pass
+            |
+            |  class Convert(Wirespec.Endpoint.Convert[Request, Response]):
+            |    @staticmethod
+            |    def to_raw_request(serialization: Wirespec.Serializer, request: 'GetTodosEndpoint.Request') -> Wirespec.RawRequest:
+            |      return Wirespec.RawRequest(
+            |        path = ["todos"],
+            |        method = request.method.value,
+            |        queries = {},
+            |        headers = {},
+            |        body = serialization.serialize(request.body, type(None)),
+            |      )
+            |
+            |    @staticmethod
+            |    def from_raw_request(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest) -> 'GetTodosEndpoint.Request':
+            |      return GetTodosEndpoint.Request
+            |
+            |    @staticmethod
+            |    def to_raw_response(serialization: Wirespec.Serializer, response: 'GetTodosEndpoint.Response') -> Wirespec.RawResponse:
+            |      match response:
+            |        case GetTodosEndpoint.Response200():
+            |          return Wirespec.RawResponse(
+            |            status_code = response.status,
+            |            headers = {},
+            |            body = serialization.serialize(response.body, List[TodoDto]),
+            |          )
+            |        case _:
+            |          raise Exception("Cannot match response with status: " + str(response.status))
+            |    @staticmethod
+            |    def from_raw_response(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse) -> 'GetTodosEndpoint.Response':
+            |      match response.status_code:
+            |        case 200:
+            |          return GetTodosEndpoint.Response200(
+            |            body = serialization.deserialize(response.body, List[TodoDto]),
+            |          )
+            |        case _: 
+            |          raise Exception("Cannot match response with status: " + str(response.status_code))
+            |
+            |
+            |
+            |from .GetTodosEndpoint import GetTodosEndpoint
+            |from .TodoDto import TodoDto
+        """.trimMargin()
+        compiler { PythonEmitter() } shouldBeRight python
     }
 
     @Test

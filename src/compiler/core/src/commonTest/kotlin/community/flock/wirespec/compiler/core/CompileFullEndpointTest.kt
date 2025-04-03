@@ -2,6 +2,7 @@ package community.flock.wirespec.compiler.core
 
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
+import community.flock.wirespec.compiler.core.emit.PythonEmitter
 import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
@@ -321,6 +322,46 @@ class CompileFullEndpointTest {
             |  }
             |}
             |
+            |package community.flock.wirespec.generated;
+            |
+            |import community.flock.wirespec.java.Wirespec;
+            |
+            |public record PotentialTodoDto (
+            |  String name,
+            |  Boolean done
+            |) {
+            |};
+            |
+            |package community.flock.wirespec.generated;
+            |
+            |import community.flock.wirespec.java.Wirespec;
+            |
+            |public record Token (
+            |  String iss
+            |) {
+            |};
+            |
+            |package community.flock.wirespec.generated;
+            |
+            |import community.flock.wirespec.java.Wirespec;
+            |
+            |public record TodoDto (
+            |  String id,
+            |  String name,
+            |  Boolean done
+            |) {
+            |};
+            |
+            |package community.flock.wirespec.generated;
+            |
+            |import community.flock.wirespec.java.Wirespec;
+            |
+            |public record Error (
+            |  Long code,
+            |  String description
+            |) {
+            |};
+            |
         """.trimMargin()
 
         compiler { JavaEmitter() } shouldBeRight java
@@ -524,6 +565,252 @@ class CompileFullEndpointTest {
         """.trimMargin()
 
         compiler { TypeScriptEmitter() } shouldBeRight ts
+    }
+
+    @Test
+    fun python() {
+        val python = """
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |
+            |from .shared.Wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class PotentialTodoDto:
+            |  name: 'str'
+            |  done: 'bool'
+            |
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |
+            |from .shared.Wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class Token:
+            |  iss: 'str'
+            |
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |
+            |from .shared.Wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class TodoDto:
+            |  id: 'str'
+            |  name: 'str'
+            |  done: 'bool'
+            |
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |
+            |from .shared.Wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class Error:
+            |  code: 'int'
+            |  description: 'str'
+            |
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |
+            |from .shared.Wirespec import T, Wirespec
+            |
+            |from .Token import Token
+            |from .PotentialTodoDto import PotentialTodoDto
+            |from .TodoDto import TodoDto
+            |from .Error import Error
+            |
+            |class PutTodoEndpoint (Wirespec.Endpoint):
+            |  @dataclass
+            |  class Request(Wirespec.Request[PotentialTodoDto]):
+            |    @dataclass
+            |    class Path (Wirespec.Request.Path):
+            |        id: str 
+            |    @dataclass
+            |    class Queries (Wirespec.Request.Queries):
+            |        done: 'bool'
+            |    @dataclass
+            |    class Headers (Wirespec.Request.Headers):
+            |        token: 'Token'
+            | 
+            |    @property
+            |    def body(self) -> PotentialTodoDto:
+            |      return self._body
+            |
+            |    @property
+            |    def path(self) -> Path:
+            |      return self._path
+            |
+            |    @property
+            |    def queries(self) -> Queries:
+            |      return self._queries
+            |
+            |    @property
+            |    def headers(self) -> Headers:
+            |      return self._headers
+            |
+            |    _body:  PotentialTodoDto
+            |    _headers: Headers
+            |    _queries: Queries
+            |    _path: Path
+            |    method: Wirespec.Method = Wirespec.Method.PUT
+            |
+            |    def __init__(self, id: str, done: bool, token: Token, body: PotentialTodoDto):
+            |      self._path = PutTodoEndpoint.Request.Path(id = id)
+            |      self._queries = PutTodoEndpoint.Request.Queries(  done = done)
+            |      self._headers = PutTodoEndpoint.Request.Headers(  token = token)
+            |      self._body = body
+            |
+            |  @dataclass
+            |  class Response200(Wirespec.Response[TodoDto]):
+            |    @dataclass
+            |    class Headers (Wirespec.Response.Headers): pass
+            |
+            |    @property
+            |    def headers(self) -> Headers:
+            |      return self._headers
+            |
+            |    @property
+            |    def body(self) -> TodoDto:
+            |      return self._body
+            |
+            |    _body: TodoDto
+            |    _headers: Headers
+            |    status: int = 200
+            |
+            |    def __init__(self, body: TodoDto):
+            |      self._headers = PutTodoEndpoint.Response200.Headers()
+            |      self._body = body
+            |
+            |  @dataclass
+            |  class Response201(Wirespec.Response[TodoDto]):
+            |    @dataclass
+            |    class Headers (Wirespec.Response.Headers):
+            |        token: 'Token'
+            |
+            |    @property
+            |    def headers(self) -> Headers:
+            |      return self._headers
+            |
+            |    @property
+            |    def body(self) -> TodoDto:
+            |      return self._body
+            |
+            |    _body: TodoDto
+            |    _headers: Headers
+            |    status: int = 201
+            |
+            |    def __init__(self, token: Token, body: TodoDto):
+            |      self._headers = PutTodoEndpoint.Response201.Headers(  token = token)
+            |      self._body = body
+            |
+            |  @dataclass
+            |  class Response500(Wirespec.Response[Error]):
+            |    @dataclass
+            |    class Headers (Wirespec.Response.Headers): pass
+            |
+            |    @property
+            |    def headers(self) -> Headers:
+            |      return self._headers
+            |
+            |    @property
+            |    def body(self) -> Error:
+            |      return self._body
+            |
+            |    _body: Error
+            |    _headers: Headers
+            |    status: int = 500
+            |
+            |    def __init__(self, body: Error):
+            |      self._headers = PutTodoEndpoint.Response500.Headers()
+            |      self._body = body
+            |
+            |  Response = Response200 | Response201 | Response500
+            |
+            |  class Handler(Wirespec.Endpoint.Handler):
+            |    @abstractmethod
+            |    def PutTodo(self, req: 'PutTodoEndpoint.Request') -> 'PutTodoEndpoint.Response': pass
+            |
+            |  class Convert(Wirespec.Endpoint.Convert[Request, Response]):
+            |    @staticmethod
+            |    def to_raw_request(serialization: Wirespec.Serializer, request: 'PutTodoEndpoint.Request') -> Wirespec.RawRequest:
+            |      return Wirespec.RawRequest(
+            |        path = ["todos", str(request.path.id)],
+            |        method = request.method.value,
+            |        queries = {"done": serialization.serialize_param(request.queries.done, bool)},
+            |        headers = {"token": serialization.serialize_param(request.headers.token, Token)},
+            |        body = serialization.serialize(request.body, PotentialTodoDto),
+            |      )
+            |
+            |    @staticmethod
+            |    def from_raw_request(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest) -> 'PutTodoEndpoint.Request':
+            |      return PutTodoEndpoint.Request(
+            |          id = serialization.deserialize(request.path[1], str),
+            |    done = serialization.deserialize_param(request.queries.get("done".lower()), bool),
+            |    token = serialization.deserialize_param(request.headers.get("token".lower()), Token),
+            |          body = serialization.deserialize(request.body, PotentialTodoDto),
+            |    )
+            |
+            |    @staticmethod
+            |    def to_raw_response(serialization: Wirespec.Serializer, response: 'PutTodoEndpoint.Response') -> Wirespec.RawResponse:
+            |      match response:
+            |        case PutTodoEndpoint.Response200():
+            |          return Wirespec.RawResponse(
+            |            status_code = response.status,
+            |            headers = {},
+            |            body = serialization.serialize(response.body, TodoDto),
+            |          )
+            |        case PutTodoEndpoint.Response201():
+            |          return Wirespec.RawResponse(
+            |            status_code = response.status,
+            |            headers = {"token": serialization.serialize_param(response.headers.token, Token)},
+            |            body = serialization.serialize(response.body, TodoDto),
+            |          )
+            |        case PutTodoEndpoint.Response500():
+            |          return Wirespec.RawResponse(
+            |            status_code = response.status,
+            |            headers = {},
+            |            body = serialization.serialize(response.body, Error),
+            |          )
+            |        case _:
+            |          raise Exception("Cannot match response with status: " + str(response.status))
+            |    @staticmethod
+            |    def from_raw_response(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse) -> 'PutTodoEndpoint.Response':
+            |      match response.status_code:
+            |        case 200:
+            |          return PutTodoEndpoint.Response200(
+            |            body = serialization.deserialize(response.body, TodoDto),
+            |          )
+            |        case 201:
+            |          return PutTodoEndpoint.Response201(
+            |            body = serialization.deserialize(response.body, TodoDto),
+            |            token = serialization.deserialize_param(response.headers.get("token".lower()), Token)
+            |          )
+            |        case 500:
+            |          return PutTodoEndpoint.Response500(
+            |            body = serialization.deserialize(response.body, Error),
+            |          )
+            |        case _: 
+            |          raise Exception("Cannot match response with status: " + str(response.status_code))
+            |
+            |
+            |
+            |from .PutTodoEndpoint import PutTodoEndpoint
+            |from .PotentialTodoDto import PotentialTodoDto
+            |from .Token import Token
+            |from .TodoDto import TodoDto
+            |from .Error import Error
+        """.trimMargin()
+        compiler { PythonEmitter() } shouldBeRight python
     }
 
     @Test
