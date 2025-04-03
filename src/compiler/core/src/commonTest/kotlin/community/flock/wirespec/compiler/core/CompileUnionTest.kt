@@ -58,6 +58,29 @@ class CompileUnionTest {
             |
             |public sealed interface UserAccount permits UserAccountPassword, UserAccountToken {}
             |
+            |package community.flock.wirespec.generated;
+            |
+            |public record UserAccountPassword (
+            |  String username,
+            |  String password
+            |) extends UserAccountimplements UserAccount {
+            |};
+            |
+            |package community.flock.wirespec.generated;
+            |
+            |public record UserAccountToken (
+            |  String token
+            |) extends UserAccountimplements UserAccount {
+            |};
+            |
+            |package community.flock.wirespec.generated;
+            |
+            |public record User (
+            |  String username,
+            |  UserAccount account
+            |) {
+            |};
+            |
         """.trimMargin()
 
         compiler { JavaEmitter() } shouldBeRight java
