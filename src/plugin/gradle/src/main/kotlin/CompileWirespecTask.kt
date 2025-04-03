@@ -16,9 +16,16 @@ import community.flock.wirespec.plugin.io.or
 import community.flock.wirespec.plugin.io.read
 import community.flock.wirespec.plugin.io.wirespecSources
 import community.flock.wirespec.plugin.io.write
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.options.Option
 
 abstract class CompileWirespecTask : BaseWirespecTask() {
+
+    @get:InputDirectory
+    @get:Option(option = "input", description = "input directory")
+    abstract val input: DirectoryProperty
 
     @TaskAction
     fun action() {
