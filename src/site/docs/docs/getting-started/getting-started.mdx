@@ -19,9 +19,8 @@ Wirespec distinguishes itself by using a simple language model and multi-languag
 WireSpec can be installed either as an npm package for use within a project or as a standalone command-line interface
 (CLI) tool.
 
-Link to the plugin sections too
-
 [//]: # (TODO should be Npm + Docker + Homebrew)
+
 <Tabs>
     <TabItem value="npm" label="Npm">
         1. Install [Node.js](https://nodejs.org/en)
@@ -43,7 +42,6 @@ Link to the plugin sections too
     <TabItem value="Cli-arm" label="Cli - macOs(X64)">
         1. Download and install the CLI
 
-
         ```bash
         curl -L https://github.com/flock-community/wirespec/releases/latest/download/macosX64.kexe -o wirespec
         chmod +x wirespec
@@ -53,7 +51,6 @@ Link to the plugin sections too
     <TabItem value="Cli-amd" label="Cli - macOs(Arm64)">
         1. Download and install the CLI
 
-
         ```bash
         curl -L https://github.com/flock-community/wirespec/releases/latest/download/macosArm64.kexe -o wirespec
         chmod +x wirespec
@@ -61,7 +58,9 @@ Link to the plugin sections too
         ```
     </TabItem>
 </Tabs>
+------------------------------
 
+Alongside the CLI tool Wirespec is also available as various [plugins](plugins).
 
 ## Example
 
@@ -150,9 +149,15 @@ one of the following commands referencing the directory where you put your `todo
     </TabItem>
 </Tabs>
 
+------------------------------
+
 The output contains the required Data Transfer Objects (DTOs), endpoint structures with defined response codes, etc.
-Once you've plugged in your HTTP client you are now guaranteed(?) to adhere to the contract.
-(TODO we don't really guarantee anything of course, and is this list exhaustive?)
+Once you've plugged in your HTTP client it is now **easy** for both sides to adhere to the contract.
+
+From here there are several options to integrate Wirespec further into your landscape, development environment, and
+create more elaborate definitions.
+
+[//]: # (Gotta knock it out of the park here)
 
 ## What's next?
 
@@ -163,13 +168,13 @@ Once you've plugged in your HTTP client you are now guaranteed(?) to adhere to t
         <a href="/docs/language">Read More</a>
     </div>
     <div style={{ flex: '1', border: '1px solid #ccc', padding: '15px', borderRadius: '5px' }}>
-        <h3>Hooking up a HTTP client</h3>
+        <h3>Integration</h3>
         <p>Explore different ways to hook up your HTTP client.</p>
         <a href="/docs/integration">Read More</a>
     </div>
     <div style={{ flex: '1', border: '1px solid #ccc', padding: '15px', borderRadius: '5px' }}>
-        <h3>Validation?</h3>
-        <p>Automated testing of Wirespec definitions and generated code. (?).</p>
+        <h3>IDE Plugin</h3>
+        <p>Wirespec supports two IDEs: IntelliJ IDEA and VS Code.</p>
         <a href="/docs/integration">Read More</a>
     </div>
 </div>
