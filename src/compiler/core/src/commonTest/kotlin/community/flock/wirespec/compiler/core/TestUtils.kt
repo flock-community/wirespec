@@ -9,6 +9,6 @@ fun compile(source: String) = { emitter: () -> Emitter ->
         override val spec = WirespecSpec
         override val emitter = emitter()
     }.compile(nonEmptyListOf(source))
-        .map { it.first().result }
+        .map { it.joinToString("\n") { it.result } }
         .onLeft(::println)
 }
