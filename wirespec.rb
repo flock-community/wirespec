@@ -13,7 +13,8 @@ class Wirespec < Formula
   end
 
   def install
-    # TODO
+    system "gradle", "assemble", "-Dorg.gradle.java.home=#{Formula["openjdk"].opt_prefix}"
+    bin.install "wirespec"
   end
 
   test do
