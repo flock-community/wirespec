@@ -38,7 +38,9 @@ abstract class Emitter : Emitters {
 
     abstract fun Definition.emitName(): String
 
-    fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast.modules.flatMap { emit(it, logger) }
+    fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast
+        .modules.flatMap { emit(it, logger) }
+        .map { e -> Emitted(e.typeName + "." + extension.value, e.result) }
 
     open fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = module
         .statements

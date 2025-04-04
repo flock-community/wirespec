@@ -40,7 +40,7 @@ open class TypeScriptEmitter : Emitter() {
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = nonEmptyListOf(
         Emitted(
-            typeName = module.uri.split("/").last().firstToUpper() + "." + extension.value,
+            typeName = module.uri.split("/").last().firstToUpper(),
             result = """
                     |${if (module.hasEndpoints()) TypeScriptShared.source else ""}
                     |${super.emit(module, logger).map(Emitted::result).joinToString("\n")}

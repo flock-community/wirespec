@@ -57,7 +57,7 @@ open class KotlinEmitter(
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = nonEmptyListOf(
         Emitted(
-            typeName = module.uri.split("/").last().firstToUpper() + "." + extension.value,
+            typeName = module.uri.split("/").last().firstToUpper(),
             result = """
                 |package $packageName
                 |${if (module.needImports()) import else ""}

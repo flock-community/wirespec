@@ -12,6 +12,7 @@ import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.emit.shared.JavaShared
 import community.flock.wirespec.compiler.core.orNull
+import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
@@ -55,14 +56,14 @@ open class JavaEmitter(
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
         super.emit(module, logger).map { (typeName, result): Emitted ->
             Emitted(
-                typeName = typeName.sanitizeSymbol() + "." + extension.value,
+                typeName = typeName.sanitizeSymbol(),
                 result = """
                         |package $packageName;
                         |${if (module.needImports()) import else ""}
                         |$result
                     """.trimMargin().trimStart()
             )
-        }
+        } + Emitted("Wirespec", shared.source)
 
     override fun emit(type: Type, module: Module) = """
         |public record ${type.emitName()} (
