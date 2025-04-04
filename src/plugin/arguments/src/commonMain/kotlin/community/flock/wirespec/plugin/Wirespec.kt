@@ -12,14 +12,14 @@ import community.flock.wirespec.plugin.io.FilePath
 import kotlin.reflect.KFunction2
 
 fun compile(arguments: CompilerArguments) {
+    println("COMPILING")
+
     val ctx = {
         object : CompilationContext {
             override val logger = arguments.logger
             override val emitters = arguments.emitters
         }
     }
-
-    println(arguments.emitters.map { it.extension.value })
 
     ctx().compile(arguments.input.map { ModuleContent(it.name.value, it.content) })
         .mapLeft { it.map(WirespecException::message) }
@@ -32,6 +32,9 @@ fun compile(arguments: CompilerArguments) {
 }
 
 fun convert(arguments: ConverterArguments) {
+    println("CONVERTING")
+    println(arguments.emitters.joinToString("\n"))
+
     val parser: KFunction2<ModuleContent, Boolean, AST> = when (arguments.format) {
         Format.OpenAPIV2 -> OpenAPIV2Parser::parse
         Format.OpenAPIV3 -> OpenAPIV3Parser::parse
@@ -41,7 +44,14 @@ fun convert(arguments: ConverterArguments) {
     arguments.input
         .map { ModuleContent(it.name.value, it.content) }
         .map { moduleContent -> parser.invoke(moduleContent, arguments.strict) }
-        .flatMap { ast -> arguments.emitters.flatMap { it.emit(ast, arguments.logger) } }
+        .flatMap { ast ->
+            arguments.emitters.flatMap {
+                println("converted: emitting ${ast.modules.first().uri}")
+                it.emit(ast, arguments.logger)
+            }
+        }
         .forEach { (file, result) ->
-            arguments.writer(FilePath(arguments.output.path.value + "/" + file), result) }
+            println(arguments.output.path.value)
+            arguments.writer(FilePath(arguments.output.path.value + "/" + file), result)
+        }
 }

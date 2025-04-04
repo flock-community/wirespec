@@ -52,8 +52,8 @@ open class JavaEmitter(
 
     override val singleLineComment = "//"
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
-        return super.emit(module, logger).map { (typeName, result): Emitted ->
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
+        super.emit(module, logger).map { (typeName, result): Emitted ->
             Emitted(
                 typeName = typeName.sanitizeSymbol() + "." + extension.value,
                 result = """
@@ -63,7 +63,6 @@ open class JavaEmitter(
                     """.trimMargin().trimStart()
             )
         }
-    }
 
     override fun emit(type: Type, module: Module) = """
         |public record ${type.emitName()} (

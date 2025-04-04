@@ -43,8 +43,6 @@ abstract class Emitter : Emitters {
     open fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = module
         .statements
         .map {
-            println(it.emitName())
-            println(it::class)
             logger.info("Emitting Node ${it.emitName()}")
             when (it) {
                 is Type -> Emitted(it.emitName(), emit(it, module))
@@ -55,10 +53,6 @@ abstract class Emitter : Emitters {
                 is Channel -> Emitted(it.emitName(), emit(it))
             }
         }
-//        .run {
-//            if (split) this
-//            else nonEmptyListOf(Emitted(module.uri.split("/").last().firstToUpper() + "." + extension.value, joinToString("\n") { it.result }))
-//        }
 
     fun String.spacer(space: Int = 1) = split("\n")
         .joinToString("\n") {

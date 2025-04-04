@@ -19,7 +19,6 @@ class TestLib {
     fun testProduceConsume() {
         val path = Path("src/jsTest/resources/person.ws")
         val source = SystemFileSystem.source(path).buffered().readString()
-        println(source)
         object : ParseContext, NoLogger {
             override val spec = WirespecSpec
         }.parse(nonEmptyListOf(ModuleContent("", source))).map { ast ->

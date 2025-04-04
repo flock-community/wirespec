@@ -89,5 +89,5 @@ class JavaEmitterTest {
         res shouldBe expected
     }
 
-    private fun EmitContext.emitFirst(node: Definition) = emitters.map{ it.emit(Module("", nonEmptyListOf(node)), logger).first().result }
+    private fun EmitContext.emitFirst(node: Definition) = emitters.map { it.emit(Module("", nonEmptyListOf(node)), logger).first().result }
 }
