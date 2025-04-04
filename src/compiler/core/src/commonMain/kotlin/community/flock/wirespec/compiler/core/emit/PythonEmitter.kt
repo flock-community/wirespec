@@ -29,7 +29,7 @@ import community.flock.wirespec.compiler.utils.Logger
 
 open class PythonEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
-) : Emitter(true) {
+) : Emitter() {
 
     val import = """
         |from abc import abstractmethod

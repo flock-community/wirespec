@@ -43,6 +43,8 @@ abstract class Emitter : Emitters {
     open fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = module
         .statements
         .map {
+            println(it.emitName())
+            println(it::class)
             logger.info("Emitting Node ${it.emitName()}")
             when (it) {
                 is Type -> Emitted(it.emitName(), emit(it, module))

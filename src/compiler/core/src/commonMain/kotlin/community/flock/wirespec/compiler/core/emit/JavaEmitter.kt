@@ -52,17 +52,18 @@ open class JavaEmitter(
 
     override val singleLineComment = "//"
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
-        super.emit(module, logger).map { (typeName, result) ->
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
+        return super.emit(module, logger).map { (typeName, result): Emitted ->
             Emitted(
                 typeName = typeName.sanitizeSymbol() + "." + extension.value,
                 result = """
-                    |package $packageName;
-                    |${if (module.needImports()) import else ""}
-                    |$result
-                """.trimMargin().trimStart()
+                        |package $packageName;
+                        |${if (module.needImports()) import else ""}
+                        |$result
+                    """.trimMargin().trimStart()
             )
         }
+    }
 
     override fun emit(type: Type, module: Module) = """
         |public record ${type.emitName()} (

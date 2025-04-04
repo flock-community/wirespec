@@ -83,9 +83,9 @@ fun parse(source: String) = object : ParseContext, NoLogger {}.parse(nonEmptyLis
 
 @JsExport
 fun convert(source: String, converters: Converters) = when (converters) {
-    Converters.OPENAPI_V2 -> OpenAPIV2Parser.parse(source).produce()
-    Converters.OPENAPI_V3 -> OpenAPIV3Parser.parse(source).produce()
-    Converters.AVRO -> AvroParser.parse(source).produce()
+    Converters.OPENAPI_V2 -> OpenAPIV2Parser.parse(ModuleContent("", source)).produce()
+    Converters.OPENAPI_V3 -> OpenAPIV3Parser.parse(ModuleContent("", source)).produce()
+    Converters.AVRO -> AvroParser.parse(ModuleContent("", source)).produce()
 }
 
 @JsExport

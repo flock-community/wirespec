@@ -2,7 +2,6 @@ package community.flock.wirespec.compiler.core
 
 import arrow.core.EitherNel
 import arrow.core.NonEmptyList
-import arrow.core.flatMap
 import community.flock.wirespec.compiler.core.Stage.EMITTED
 import community.flock.wirespec.compiler.core.Stage.PARSED
 import community.flock.wirespec.compiler.core.Stage.TOKENIZED
