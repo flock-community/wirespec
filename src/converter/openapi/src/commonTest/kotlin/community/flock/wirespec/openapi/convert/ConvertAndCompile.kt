@@ -24,7 +24,7 @@ class ConvertAndCompile {
     fun testV2ConversionAndCompilation() {
         val path = Path("src/commonTest/resources/v2/petstore.json")
         val input = SystemFileSystem.source(path).buffered().readString()
-        val ast = OpenAPIV2Parser.parse(input, true)
+        val ast = OpenAPIV2Parser.parse(ModuleContent("", input), true)
         val wirespec = WirespecEmitter().emit(ast, noLogger).joinToString("\n") { it.result }
         compiler(wirespec).shouldBeRight()
     }
@@ -33,7 +33,7 @@ class ConvertAndCompile {
     fun testV3ConversionAndCompilation() {
         val path = Path("src/commonTest/resources/v3/petstore.json")
         val input = SystemFileSystem.source(path).buffered().readString()
-        val ast = OpenAPIV3Parser.parse(input, true)
+        val ast = OpenAPIV3Parser.parse(ModuleContent("", input), true)
         val wirespec = WirespecEmitter().emit(ast, noLogger).joinToString("\n") { it.result }
         compiler(wirespec).shouldBeRight()
     }
