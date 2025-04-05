@@ -30,7 +30,7 @@ import community.flock.wirespec.compiler.utils.Logger
 
 open class JavaEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
-) : Emitter(true) {
+) : Emitter() {
 
     val import = """
         |
@@ -54,16 +54,16 @@ open class JavaEmitter(
     override val singleLineComment = "//"
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
-        super.emit(module, logger).map { (typeName, result) ->
+        super.emit(module, logger).map { (typeName, result): Emitted ->
             Emitted(
                 typeName = typeName.sanitizeSymbol(),
                 result = """
-                    |package $packageName;
-                    |${if (module.needImports()) import else ""}
-                    |$result
-                """.trimMargin().trimStart()
+                        |package $packageName;
+                        |${if (module.needImports()) import else ""}
+                        |$result
+                    """.trimMargin().trimStart()
             )
-        }
+        } + Emitted("Wirespec", shared.source)
 
     override fun emit(type: Type, module: Module) = """
         |public record ${type.emitName()} (

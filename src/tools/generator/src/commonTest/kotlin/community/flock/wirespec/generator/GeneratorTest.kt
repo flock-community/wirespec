@@ -2,6 +2,7 @@ package community.flock.wirespec.generator
 
 import arrow.core.getOrElse
 import arrow.core.nonEmptyListOf
+import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
@@ -86,5 +87,5 @@ class GeneratorTest {
 
     private fun parser(source: String) = object : ParseContext, NoLogger {
         override val spec = WirespecSpec
-    }.parse(nonEmptyListOf(source)).getOrElse { e -> error("Cannot parse: ${e.map { it.message }}") }
+    }.parse(nonEmptyListOf(ModuleContent("", source))).getOrElse { e -> error("Cannot parse: ${e.map { it.message }}") }
 }

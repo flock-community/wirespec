@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.emit.common
 
 import arrow.core.NonEmptyList
+import arrow.core.NonEmptySet
 import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Param.ParamType
 import community.flock.wirespec.compiler.core.emit.shared.Shared
@@ -19,9 +20,7 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 
-abstract class Emitter(
-    val split: Boolean = false,
-) : Emitters {
+abstract class Emitter : Emitters {
 
     data class Param(
         val type: ParamType,
@@ -39,7 +38,9 @@ abstract class Emitter(
 
     abstract fun Definition.emitName(): String
 
-    fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast.modules.flatMap { emit(it, logger) }
+    fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast
+        .modules.flatMap { emit(it, logger) }
+        .map { e -> Emitted(e.typeName + "." + extension.value, e.result) }
 
     open fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = module
         .statements
@@ -53,10 +54,6 @@ abstract class Emitter(
                 is Union -> Emitted(it.emitName(), emit(it))
                 is Channel -> Emitted(it.emitName(), emit(it))
             }
-        }
-        .run {
-            if (split) this
-            else nonEmptyListOf(Emitted("NoName", joinToString("\n") { it.result }))
         }
 
     fun String.spacer(space: Int = 1) = split("\n")
@@ -133,5 +130,5 @@ abstract class Emitter(
 }
 
 interface HasEmitter {
-    val emitter: Emitter
+    val emitters: NonEmptySet<Emitter>
 }

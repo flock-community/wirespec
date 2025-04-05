@@ -1,5 +1,6 @@
 package community.flock.wirespec.converter.avro
 
+import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Field
@@ -20,7 +21,7 @@ class AvroParserTest {
         val path = Path("src/commonTest/resources/customer.avsc")
         val resource = SystemFileSystem.source(path).buffered().readString()
 
-        AvroParser.parse(resource)
+        AvroParser.parse(ModuleContent("", resource))
     }
 
     @Test
@@ -29,7 +30,7 @@ class AvroParserTest {
         val resource = SystemFileSystem.source(path).buffered().readString()
 
         try {
-            AvroParser.parse(resource)
+            AvroParser.parse(ModuleContent("", resource))
             assertEquals(true, false)
         } catch (e: Exception) {
             assertEquals("Cannot have multiple SimpleTypes in Union", e.message)
@@ -42,7 +43,7 @@ class AvroParserTest {
         val resource = SystemFileSystem.source(path).buffered().readString()
 
         try {
-            AvroParser.parse(resource)
+            AvroParser.parse(ModuleContent("", resource))
         } catch (e: Exception) {
             assertEquals("Cannot have multiple SimpleTypes in Union", e.message)
         }
@@ -53,7 +54,7 @@ class AvroParserTest {
         val path = Path("src/commonTest/resources/example.avsc")
         val resource = SystemFileSystem.source(path).buffered().readString()
 
-        val ast = AvroParser.parse(resource)
+        val ast = AvroParser.parse(ModuleContent("", resource))
 
         assertEquals(
             listOf("User", "EmailAddress", "TwitterAccount", "OAuthStatus", "ToDoItem", "ToDoStatus", "User"),

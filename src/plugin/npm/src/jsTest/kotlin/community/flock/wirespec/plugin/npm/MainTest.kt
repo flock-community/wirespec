@@ -1,6 +1,7 @@
 package community.flock.wirespec.plugin.npm
 
 import arrow.core.nonEmptyListOf
+import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
@@ -68,7 +69,7 @@ class MainTest {
     fun testEmit() {
         val res = object : ParseContext, NoLogger {
             override val spec = WirespecSpec
-        }.parse(nonEmptyListOf(personWs)).getOrNull()
+        }.parse(nonEmptyListOf(ModuleContent("", personWs))).getOrNull()
         assertNotNull(res)
         val openApiV2 = emit(res.produce(), Emitters.OPENAPI_V2, "")
         val openApiV3 = emit(res.produce(), Emitters.OPENAPI_V3, "")

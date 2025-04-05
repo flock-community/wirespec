@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 public class CustomEmitter extends Emitter {
 
     public CustomEmitter() {
-        super(true);
+        super();
     }
 
     @NotNull
