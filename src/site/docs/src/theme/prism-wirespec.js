@@ -38,6 +38,6 @@ Prism.languages['wirespec'] = Prism.languages.extend('clike', {
         greedy: true
     },
     'comment': {
-        pattern: /^\/\*(\*(?!\/)|[^*])*\*\//gm,
+        pattern: /\/\*[\s\S]*?\*\/|\/\/.*$/gm,
     }
 });
