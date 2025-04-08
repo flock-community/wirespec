@@ -41,12 +41,12 @@ class GenerateTestClasses {
 
         javaDir.mkdirs()
         emittedJava.forEach {
-            javaDir.resolve("${it.typeName}.java").writeText(it.result)
+            baseDir.resolve("java").resolve(it.typeName).writeText(it.result)
         }
 
         kotlinDir.mkdirs()
         emittedKotlin.forEach {
-            kotlinDir.resolve("Todo.kt").writeText(it.result)
+            baseDir.resolve("kotlin").resolve("Todo.kt").writeText(it.result)
         }
     }
 }
