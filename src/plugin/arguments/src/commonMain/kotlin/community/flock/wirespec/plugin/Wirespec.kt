@@ -12,8 +12,6 @@ import community.flock.wirespec.plugin.io.FilePath
 import kotlin.reflect.KFunction2
 
 fun compile(arguments: CompilerArguments) {
-    println("COMPILING")
-
     val ctx = {
         object : CompilationContext {
             override val logger = arguments.logger
@@ -25,16 +23,12 @@ fun compile(arguments: CompilerArguments) {
         .mapLeft { it.map(WirespecException::message) }
         .fold({ arguments.error(it.joinToString()) }) {
             it.forEach { (file, result) ->
-                println(arguments.output.path.value)
                 arguments.writer(FilePath(arguments.output.path.value + "/" + file), result)
             }
         }
 }
 
 fun convert(arguments: ConverterArguments) {
-    println("CONVERTING")
-    println(arguments.emitters.joinToString("\n"))
-
     val parser: KFunction2<ModuleContent, Boolean, AST> = when (arguments.format) {
         Format.OpenAPIV2 -> OpenAPIV2Parser::parse
         Format.OpenAPIV3 -> OpenAPIV3Parser::parse
@@ -46,12 +40,10 @@ fun convert(arguments: ConverterArguments) {
         .map { moduleContent -> parser.invoke(moduleContent, arguments.strict) }
         .flatMap { ast ->
             arguments.emitters.flatMap {
-                println("converted: emitting ${ast.modules.first().uri}")
                 it.emit(ast, arguments.logger)
             }
         }
         .forEach { (file, result) ->
-            println(arguments.output.path.value)
             arguments.writer(FilePath(arguments.output.path.value + "/" + file), result)
         }
 }
