@@ -39,7 +39,7 @@ class CompileFullEndpointTest {
 
     @Test
     fun kotlin() {
-        val kotlin = listOf("""
+        val kotlin = """
             |package community.flock.wirespec.generated
             |
             |import community.flock.wirespec.kotlin.Wirespec
@@ -186,14 +186,14 @@ class CompileFullEndpointTest {
             |  val description: String
             |)
             |
-        """.trimMargin())
+        """.trimMargin()
 
         compiler { KotlinEmitter() } shouldBeRight kotlin
     }
 
     @Test
     fun java() {
-        val java = listOf("""
+        val java = """
             |package community.flock.wirespec.generated;
             |
             |import community.flock.wirespec.java.Wirespec;
@@ -362,14 +362,14 @@ class CompileFullEndpointTest {
             |) {
             |};
             |
-        """.trimMargin())
+        """.trimMargin()
 
         compiler { JavaEmitter() } shouldBeRight java
     }
 
     @Test
     fun scala() {
-        val scala = listOf("""
+        val scala = """
             |package community.flock.wirespec.generated
             |
             |import community.flock.wirespec.scala.Wirespec
@@ -396,14 +396,14 @@ class CompileFullEndpointTest {
             |  val description: String
             |)
             |
-        """.trimMargin())
+        """.trimMargin()
 
         compiler { ScalaEmitter() } shouldBeRight scala
     }
 
     @Test
     fun typeScript() {
-        val ts = listOf("""
+        val ts = """
             |export namespace Wirespec {
             |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
             |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string>, headers: Record<string, string>, body?: string }
@@ -562,14 +562,14 @@ class CompileFullEndpointTest {
             |}
             |
             |
-        """.trimMargin())
+        """.trimMargin()
 
         compiler { TypeScriptEmitter() } shouldBeRight ts
     }
 
     @Test
     fun python() {
-        val python = listOf("""
+        val python = """
             |from abc import abstractmethod
             |from dataclasses import dataclass
             |from typing import List, Optional
@@ -809,13 +809,13 @@ class CompileFullEndpointTest {
             |from .Token import Token
             |from .TodoDto import TodoDto
             |from .Error import Error
-        """.trimMargin())
+        """.trimMargin()
         compiler { PythonEmitter() } shouldBeRight python
     }
 
     @Test
     fun wirespec() {
-        val wirespec = listOf("""
+        val wirespec = """
             |endpoint PutTodo PUT PotentialTodoDto /todos/{id: String} ? {done: Boolean} -> {
             |  200 -> TodoDto
             |  201 -> TodoDto
@@ -842,7 +842,7 @@ class CompileFullEndpointTest {
             |  description: String
             |}
             |
-        """.trimMargin())
+        """.trimMargin()
 
         compiler { WirespecEmitter() } shouldBeRight wirespec
     }
