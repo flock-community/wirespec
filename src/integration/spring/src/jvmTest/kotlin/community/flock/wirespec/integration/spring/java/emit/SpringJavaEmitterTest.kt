@@ -244,7 +244,7 @@ class SpringJavaEmitterTest {
             |  }
             |}
             |
-            """.trimMargin()
+            """.trimMargin(),
         )
 
         assertEquals(expected.toSet(), actual.toSet())
