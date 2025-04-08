@@ -56,14 +56,14 @@ open class JavaEmitter(
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
         super.emit(module, logger).map { (typeName, result): Emitted ->
             Emitted(
-                typeName = typeName.sanitizeSymbol(),
+                typeName = packageName.getDirPrefix() + typeName.sanitizeSymbol(),
                 result = """
                         |package $packageName;
                         |${if (module.needImports()) import else ""}
                         |$result
                     """.trimMargin().trimStart()
             )
-        } + Emitted("Wirespec", shared.source)
+        } + Emitted(packageName.getDirPrefix() + "Wirespec", shared.source)
 
     override fun emit(type: Type, module: Module) = """
         |public record ${type.emitName()} (
