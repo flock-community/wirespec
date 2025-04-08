@@ -4,7 +4,6 @@ import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.parse.Endpoint
-import community.flock.wirespec.compiler.utils.Logger
 
 class SpringJavaEmitter(packageName: String) : JavaEmitter(PackageName(packageName)) {
     override fun emitHandleFunction(endpoint: Endpoint): String {
