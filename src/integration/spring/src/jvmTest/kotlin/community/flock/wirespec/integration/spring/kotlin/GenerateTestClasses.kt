@@ -31,7 +31,7 @@ class GenerateTestClasses {
 
         kotlinOutputDir.mkdirs()
         emittedKotlin.forEach {
-            baseDir.resolve("kotlin").resolve("Petstorev3.kt").writeText(it.result)
+            kotlinOutputDir.resolve("Petstorev3.kt").writeText(it.result)
         }
     }
 
@@ -42,8 +42,9 @@ class GenerateTestClasses {
         val emittedJava = javaEmitter.emit(ast, noLogger)
 
         javaOutputDir.mkdirs()
-        emittedJava.forEach {
-            baseDir.resolve("kotlin").resolve(it.typeName).writeText(it.result)
-        }
+        emittedJava
+            .filter { !it.typeName.contains("Wirespec") }.forEach {
+                baseDir.resolve("kotlin").resolve(it.typeName).writeText(it.result)
+            }
     }
 }

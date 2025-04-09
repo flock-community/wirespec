@@ -40,9 +40,10 @@ class GenerateTestClasses {
         val emittedKotlin = kotlinEmitter.emit(ast, noLogger)
 
         javaDir.mkdirs()
-        emittedJava.forEach {
-            baseDir.resolve("java").resolve(it.typeName).writeText(it.result)
-        }
+        emittedJava
+            .filter { !it.typeName.contains("Wirespec") }.forEach {
+                baseDir.resolve("java").resolve(it.typeName).writeText(it.result)
+            }
 
         kotlinDir.mkdirs()
         emittedKotlin.forEach {
