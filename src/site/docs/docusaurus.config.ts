@@ -298,7 +298,7 @@ const config: Config = {
                             to: '/docs/intro',
                         },
                         {
-                            label: 'Usecase',
+                            label: 'Use cases',
                             to: '/docs/plugins',
                         },
                         {
