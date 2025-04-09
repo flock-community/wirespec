@@ -23,7 +23,6 @@ import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
@@ -31,10 +30,6 @@ import org.gradle.api.tasks.options.Option
 import java.io.File
 
 abstract class BaseWirespecTask : DefaultTask() {
-
-    @get:InputDirectory
-    @get:Option(option = "input", description = "input directory")
-    abstract val input: DirectoryProperty
 
     @get:OutputDirectory
     @get:Option(option = "output", description = "output directory")

@@ -17,12 +17,18 @@ import community.flock.wirespec.plugin.io.getOutPutPath
 import community.flock.wirespec.plugin.io.or
 import community.flock.wirespec.plugin.io.read
 import community.flock.wirespec.plugin.io.write
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
 
 abstract class ConvertWirespecTask : BaseWirespecTask() {
+
+    @get:InputFile
+    @get:Option(option = "input", description = "input directory")
+    abstract val input: RegularFileProperty
 
     @get:Input
     @get:Option(option = "format", description = "formats list")
