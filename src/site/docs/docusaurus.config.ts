@@ -243,14 +243,18 @@ const config: Config = {
                 src: 'img/wirespec-logo.svg',
             },
             items: [
-                { to: '/vision', label: 'Vision', position: 'left' },
+                { 
+                    // to: '/vision',
+                    to: '#',
+                     label: 'Vision', position: 'left' },
                 {
                     label: 'How',
                     position: 'left',
                     items: [
                         {
                           label: 'Design',
-                          to: '/docs/how-design',
+                        //   to: '/docs/how-design',
+                          to: '/docs/getting-started/#',
                         },
                         {
                           label: 'Generate',
@@ -258,7 +262,8 @@ const config: Config = {
                         },
                         {
                           label: 'Validate',
-                          href: '/docs/how-validate',
+                        //   href: '/docs/how-validate',
+                        to: '/docs/getting-started/#',
                         },
                     ],
                 },
