@@ -41,11 +41,11 @@ export default function Home(): JSX.Element {
       description="Description will go into a meta tag in <head />">
       <HomepageHeader />
       <main className={clsx(styles.page)}>
-        <section class="designFirstContent designFirstContent-blur pt-0">
-          <div class="container">
-            <div class="row row--align-center">
-              <div class="col col--5">
-                <div class="designFirstContent-left">
+        <section className="designFirstContent designFirstContent-blur pt-0">
+          <div className="container">
+            <div className="row row--align-center">
+              <div className="col col--5">
+                <div className="designFirstContent-left">
                   
                   <Heading as="h2" className={clsx(styles.heading2)}>Design first <span className="primary-text-color">human</span> readable </Heading>
                   <p>Designing, building and testing your can be timeconsuming and error prone. This can result in inconsistent interfaces, manual errors, and slow development by automating and standardizing your workflow</p>
@@ -60,8 +60,8 @@ export default function Home(): JSX.Element {
 
                 </div>
               </div>
-              <div class="col col--7">
-                <div class="card card-border-bottom card-nospace">
+              <div className="col col--7">
+                <div className="card card-border-bottom card-nospace">
 
                   <CodeBlock language="js" title="example.js">
                   {`function hello() {
@@ -73,11 +73,11 @@ export default function Home(): JSX.Element {
             </div>
           </div>
         </section>
-        <section class="designFirstContent">
-          <div class="container">
-            <div class="row row--align-center">
-              <div class="col col--7">
-                  <div class="card card-border-bottom card-nospace">
+        <section className="designFirstContent">
+          <div className="container">
+            <div className="row row--align-center">
+              <div className="col col--7">
+                  <div className="card card-border-bottom card-nospace">
 
                 <CodeBlock language="js" title="example.js">
                 {`function hello() {
@@ -86,8 +86,8 @@ export default function Home(): JSX.Element {
                 </CodeBlock>
               </div>
               </div>
-              <div class="col col--5">
-                <div class="designFirstContent-right">
+              <div className="col col--5">
+                <div className="designFirstContent-right">
                   <Heading as="h2" className={clsx(styles.heading2)}>Why <span className="primary-text-color">Wirespec</span> </Heading>
                   <p>Wirespec is a tool that simplifies interface design using a contract-first approach, with concise, human-readable specifications as the single source of truth. It generates interface definitions automatically, reducing manual errors and ensuring consistency.</p>
                   <p>By automating this process, Wirespec accelerates development workflows, ensures strict adherence to interface specifications, and speeds up implementation.</p>
@@ -98,10 +98,10 @@ export default function Home(): JSX.Element {
           </div>
         </section>
         <section className="steps">
-          <div class="container">
-            <div class="grid grid-cols-3 gap-35">
-              <div class="card card-border-left">
-                <div class="icon-box">
+          <div className="container">
+            <div className="grid grid-cols-3 gap-35">
+              <div className="card card-border-left">
+                <div className="icon-box">
                   <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M18.6673 24.5L18.6673 22.1667C18.6673 20.929 18.1757 19.742 17.3005 18.8668C16.4253 17.9917 15.2383 17.5 14.0007 17.5L7.00065 17.5C5.76297 17.5 4.57599 17.9917 3.70082 18.8668C2.82565 19.742 2.33398 20.929 2.33398 22.1667L2.33398 24.5" stroke="#101010" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   <path d="M10.5007 12.8333C13.078 12.8333 15.1673 10.744 15.1673 8.16667C15.1673 5.58934 13.078 3.5 10.5007 3.5C7.92332 3.5 5.83398 5.58934 5.83398 8.16667C5.83398 10.744 7.92332 12.8333 10.5007 12.8333Z" stroke="#101010" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -111,8 +111,8 @@ export default function Home(): JSX.Element {
                 </div>
                 <p>Create human-readable specifications automatically</p>
               </div>
-              <div class="card">
-                <div class="icon-box">
+              <div className="card">
+                <div className="icon-box">
                   <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M10.5 3.5H5.83333C4.54467 3.5 3.5 4.54467 3.5 5.83333V10.5C3.5 11.7887 4.54467 12.8333 5.83333 12.8333H10.5C11.7887 12.8333 12.8333 11.7887 12.8333 10.5V5.83333C12.8333 4.54467 11.7887 3.5 10.5 3.5Z" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   <path d="M8.16602 12.832V17.4987C8.16602 18.1175 8.41185 18.711 8.84943 19.1486C9.28702 19.5862 9.88051 19.832 10.4993 19.832H15.166" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -121,8 +121,8 @@ export default function Home(): JSX.Element {
                 </div>
                 <p>Accelerate development worfkflows</p>
               </div>
-              <div class="card card-border-right">
-                <div class="icon-box">
+              <div className="card card-border-right">
+                <div className="icon-box">
                   <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M11.667 2.33203H16.3337" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   <path d="M14 16.332L17.5 12.832" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -134,16 +134,16 @@ export default function Home(): JSX.Element {
             </div>
           </div>
         </section>  
-        <section class="how">
-          <div class="section-header">
-            <div class="container">
+        <section className="how">
+          <div className="section-header">
+            <div className="container">
               <Heading as="h2" className={clsx(styles.heading2)}><span className="primary-text-color">How</span></Heading>
             </div>
           </div>
-          <div class="inner-section" id="how-design">
-            <div class="container">
-              <div class="row row--align-center">
-                <div class="col col--6">
+          <div className="inner-section" id="how-design">
+            <div className="container">
+              <div className="row row--align-center">
+                <div className="col col--6">
                   <div>
                     <Heading as="h2" className={clsx(styles.heading2)}>Design</Heading>
                     <p>Wirespec’s contract-first approach empowers teams by establishing one clear, authoritative source of truth, independent of implementation or technology. It drives robust, consistent interface designs, boosts team alignment, eliminates ambiguity, and accelerates effective collaboration.</p>
@@ -152,8 +152,8 @@ export default function Home(): JSX.Element {
                       to="/docs/intro/">See design</Link>
                   </div>
                 </div>
-                <div class="col col--6">
-                  <div class="card card-border-bottom card-nospace">
+                <div className="col col--6">
+                  <div className="card card-border-bottom card-nospace">
                       <CodeBlock language="js" title="example.js">
                 {`function hello() {
   return 'hi';
@@ -165,11 +165,11 @@ export default function Home(): JSX.Element {
               </div>
             </div>
           </div>
-          <div class="inner-section" id="how-generate">
-            <div class="container">
-              <div class="row row--align-center">
-                <div class="col col--6">
-                  <div class="card card-border-bottom card-nospace">
+          <div className="inner-section" id="how-generate">
+            <div className="container">
+              <div className="row row--align-center">
+                <div className="col col--6">
+                  <div className="card card-border-bottom card-nospace">
                     <CodeBlock language="js" title="example.js">
                 {`function hello() {
   return 'hi';
@@ -177,7 +177,7 @@ export default function Home(): JSX.Element {
                 </CodeBlock>
                   </div>
                 </div>
-                <div class="col col--6">
+                <div className="col col--6">
                   <div>
                     <Heading as="h2" className={clsx(styles.heading2)}>Generate</Heading>
                     <p>The code generation vision embraces a contract-first strategy, placing specifications as the definitive source of truth. This powerful approach ensures durable, reusable interfaces, isolates domain definitions from implementation details, and leverages automated, typesafe code generation—boosting clarity, collaboration, and efficiency across teams.</p>
@@ -190,11 +190,11 @@ export default function Home(): JSX.Element {
               </div>
             </div>
           </div>
-          <div class="inner-section" id="how-validate">
-            <div class="container">
-              <div class="row row--align-center">
-                <div class="col col--6">
-                  <div class="how-content">
+          <div className="inner-section" id="how-validate">
+            <div className="container">
+              <div className="row row--align-center">
+                <div className="col col--6">
+                  <div className="how-content">
                     <Heading as="h2" className={clsx(styles.heading2)}>Validate</Heading>
                     <p>Wirespec specifications serve as the definitive source of truth, ensuring API implementations align seamlessly with defined interfaces. Leveraging automated test data generation and mock servers, they streamline robust validation, swiftly identify discrepancies, reduce ambiguity, and boost reliability—empowering teams to deliver consistent, predictable API behavior.</p>
                     <Link
@@ -202,8 +202,8 @@ export default function Home(): JSX.Element {
                       to="/docs/intro/">See validate</Link>
                   </div>
                 </div>
-                <div class="col col--6">
-                  <div class="card card-border-bottom card-nospace">
+                <div className="col col--6">
+                  <div className="card card-border-bottom card-nospace">
                     <CodeBlock language="js" title="example.js">
                 {`function hello() {
   return 'hi';
@@ -215,42 +215,42 @@ export default function Home(): JSX.Element {
             </div>
           </div>
         </section>
-        <section class="other-capabilites other-capabilites-shadow ">
-          <div class="container">
-            <div class="row row--align-center">
-              <div class="col col--6">
+        <section className="other-capabilites other-capabilites-shadow ">
+          <div className="container">
+            <div className="row row--align-center">
+              <div className="col col--6">
                 <Heading as="h2" className={clsx(styles.heading2)}>Other <span>capabilities</span></Heading>
               </div>
-              <div class="col col--6">
-                <div class="card card-other card-border-bottom">
+              <div className="col col--6">
+                <div className="card card-other card-border-bottom">
                   <Heading as="h4" className={clsx(styles.heading2)}>Plugins</Heading>
                   <p>Wirespec supports various plugins for integration into a variety of ecosystems.</p>
                   <p><span>Plugins:</span> Gradle, Maven, NPM</p>
                 </div>
               </div>
-              <div class="col col--6">
-                <div class="card card-other card-border-bottom">
+              <div className="col col--6">
+                <div className="card card-other card-border-bottom">
                   <Heading as="h4" className={clsx(styles.heading2)}>IDE's</Heading>
                   <p>Wirespec supports two IDEs: IntelliJ IDEA and VS Code.</p>
                   <p><span>Plugins:</span>IntelliJ IDEA and VS Code.</p>
                 </div>
               </div>
-              <div class="col col--6">
-                <div class="card card-other card-border-bottom">
+              <div className="col col--6">
+                <div className="card card-other card-border-bottom">
                   <Heading as="h4" className={clsx(styles.heading2)}>Emitters</Heading>
                   <p>Wirespec generates functional and dependency-free code.</p>
                   <p><span>Plugins:</span> Python, Java, Kotlin, Typescript, Javascript</p>
                 </div>
               </div>
-              <div class="col col--6">
-                <div class="card card-other card-border-bottom">
+              <div className="col col--6">
+                <div className="card card-other card-border-bottom">
                   <Heading as="h4" className={clsx(styles.heading2)}>Converters</Heading>
                   <p>Wirespec offers the capability to convert from existing specification formats.</p>
                   <p><span>Plugins:</span> OpenAPI, Avro</p>
                 </div>
               </div>
-              <div class="col col--6">
-                <div class="card card-other card-border-bottom">
+              <div className="col col--6">
+                <div className="card card-other card-border-bottom">
                   <Heading as="h4" className={clsx(styles.heading2)}>Integration</Heading>
                   <p>Wirespec has integrations with major frameworks.</p>
                   <p><span>Plugins:</span>  OpenAPI, Avro</p>
@@ -259,15 +259,15 @@ export default function Home(): JSX.Element {
             </div>
           </div>
         </section>
-        <section class="other-capabilites">
-          <div class="container">
-            <div class="row">
-              <div class="col col--6">
+        <section className="other-capabilites">
+          <div className="container">
+            <div className="row">
+              <div className="col col--6">
                   <Heading as="h2" className={clsx(styles.heading2)}>Comparison with other <span>tools</span></Heading>
                   <p>By understanding your project's specific needs and architecture, you can choose the most suitable specification tool to streamline development and improve collaboration.</p>
               </div>
             </div>
-            <div class="table">
+            <div className="table">
               <table>
                 <thead>
                   <tr>
@@ -312,21 +312,21 @@ export default function Home(): JSX.Element {
             </div>
           </div>
         </section>
-        <section class="other-capabilites">
-          <div class="container">
-            <div class="row row--align-center">
-              <div class="col col--6">
+        <section className="other-capabilites">
+          <div className="container">
+            <div className="row row--align-center">
+              <div className="col col--6">
                   <Heading as="h2" className={clsx(styles.heading2)}>Why Wirespec from <span>Flock</span></Heading>
                   <p>When you choose Wirespec, you’re selecting a product developed and supported by Flock., a community of passionate and driven professionals committed to continuous improvement.</p>
                   <p>Our dedication to ongoing innovation and quality ensures that Wirespec not only meets current demands but also evolves with emerging technologies.</p>
                   <p>By actively engaging in the open-source community and maintaining transparent development processes, we ensure that continuity and advancement are well-anchored. At Flock., we combine deep technical expertise with a strong focus on collaboration and knowledge sharing, providing you with a partner who elevates your projects to new heights.</p>
               </div>
-              <div class="col col--1">
+              <div className="col col--1">
               </div>
-              <div class="col col--5">
-                <div class="card-flock-wrap">
+              <div className="col col--5">
+                <div className="card-flock-wrap">
                   
-                <div class="card card-border-bottom card-flock">
+                <div className="card card-border-bottom card-flock">
                   <img src="/img/flock-logo.png" alt="flock Logo" />
                 </div>
                 </div>
@@ -335,18 +335,18 @@ export default function Home(): JSX.Element {
            
           </div>
         </section>
-        <section class="start-wirespec">
-          <div class="container">
-            <div class="row">
-              <div class="col col--12">
-                <div class="card card-border-bottom card-footer">
-                  <div class="card-footer-header">
+        <section className="start-wirespec">
+          <div className="container">
+            <div className="row">
+              <div className="col col--12">
+                <div className="card card-border-bottom card-footer">
+                  <div className="card-footer-header">
                     <Heading as="h2" className={clsx(styles.heading2)}>Start with <span>Wirespec</span></Heading>
                     <p>By understanding your project's specific needs and architecture, you can choose the most suitable specification tool to streamline development and improve collaboration.</p>
                   </div>
                   <div className="icon-item-group">
                     <div className="icon-item-box">
-                      <div class="icon-box">
+                      <div className="icon-box">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M13.5 15L18 10.5L13.5 6" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                         <path d="M6.5 6L2 10.5L6.5 15" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -355,7 +355,7 @@ export default function Home(): JSX.Element {
                       <p>Free source-code</p>
                     </div>
                     <div className="icon-item-box">
-                      <div class="icon-box">
+                      <div className="icon-box">
                         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <g clip-path="url(#clip0_1_488)">
                           <path d="M15 5.25L12.75 5.25C12.3522 5.25 11.9706 5.09196 11.6893 4.81066C11.408 4.52936 11.25 4.14782 11.25 3.75L11.25 1.5" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -367,7 +367,7 @@ export default function Home(): JSX.Element {
                       <p>Extended documentation</p>
                     </div>
                     <div className="icon-item-box">
-                      <div class="icon-box">
+                      <div className="icon-box">
                         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <g clip-path="url(#clip0_1_498)">
                         <path d="M12.0008 15.7519L12.0008 14.2519C12.0008 13.4563 11.6848 12.6932 11.1222 12.1306C10.5596 11.568 9.79651 11.252 9.00087 11.252L4.5009 11.252C3.70525 11.252 2.94219 11.568 2.37959 12.1306C1.81698 12.6932 1.50092 13.4563 1.50092 14.2519L1.50092 15.7519" stroke="#101010" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -380,7 +380,7 @@ export default function Home(): JSX.Element {
                       <p>Free community</p>
                     </div>
                   </div>
-                  <div class="footer-action">
+                  <div className="footer-action">
                     <Link className={clsx(styles.button, styles.buttonPrimary)} to="/docs/getting-started">Get started</Link>
                   </div>
                 </div>
