@@ -24,10 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class CustomEmitter extends Emitter {
 
-    public CustomEmitter() {
-        super();
-    }
-
     @NotNull
     @Override
     public String getSingleLineComment() {
