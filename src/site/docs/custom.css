@@ -1,3 +1,28 @@
 :root {
     --ifm-heading-color: #fcde00;
 }
+
+
+/* Control the order of items in the right navbar */
+.navbar__items--right {
+    display: flex;
+    align-items: center;
+  }
+  
+  /* DocSearch should appear first */
+  .DocSearch-Button {
+    order: 1;
+  }
+  
+  /* GitHub link should appear after search */
+  .header-github-link {
+    order: 3;
+    margin-left: 8px;
+  }
+  
+  /* Theme toggle should appear last */
+  .navbar__items--right .colorModeToggle {
+    order: 2;
+    margin-left: 8px;
+  }
+  
