@@ -13,9 +13,9 @@ function HomepageHeader() {
   return (
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
       <div className="container">
-        <Heading as="h1" className={clsx("hero__title hero-heading",  styles.heroHeading)}>Wirespec <br/>your <span className="primary-text-color">API's</span>
+        <Heading as="h1" className={clsx("hero__title hero-heading",  styles.heroHeading)}>Wirespec <br/>your <span className="primary-text-color">APIs</span>
         </Heading>
-        <p className={clsx("hero__subtitle", styles.heroSubtitle)}>Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications</p>
+        <p className={clsx("hero__subtitle", styles.heroSubtitle)}>Simplify your API development, with human readable specifications and guarantee strict adherence</p>
         <div className={styles.buttons}>
           <Link
             className={clsx(styles.button, styles.buttonPrimary)}
@@ -47,15 +47,18 @@ export default function Home(): JSX.Element {
               <div class="col col--5">
                 <div class="designFirstContent-left">
                   
-                  <Heading as="h2" className={clsx(styles.heading2)}>Design first <span className="primary-text-color">human</span> readable </Heading>
-                  <p>Designing, building and testing your can be timeconsuming and error prone. This can result in inconsistent interfaces, manual errors, and slow development by automating and standardizing your workflow</p>
+                  <Heading as="h3" className={clsx(styles.heading2)}><span className="primary-text-color">Human</span>&nbsp;readable,</Heading>
+                  <Heading as="h3" className={clsx(styles.heading2)}>spec first</Heading>
+                  <p>
+                    Designing, building and testing interfaces is time consuming and error prone. Automate and standardize your workflow to eliminate the following problems:
+                  </p>
                   <ul className={styles.listItemGroup}>
-                    <li className={clsx(styles.listItem)}>Design interfaces between systems is hard</li>
-                    <li className={clsx(styles.listItem)}>Multiple tools to describe all interfaces of application (OpenAPI, AsyncAPI, Avro)</li>
-                    <li className={clsx(styles.listItem)}>Bad developer experience writing specifications</li>
+                    <li className={clsx(styles.listItem)}>Negotiating interfaces between teams is hard</li>
+                    <li className={clsx(styles.listItem)}>Tool overload to cover all (REST, Queues, Models)</li>
+                    <li className={clsx(styles.listItem)}>Tedious experience writing specifications</li>
                     <li className={clsx(styles.listItem)}>Dependency hell in generated code</li>
                     <li className={clsx(styles.listItem)}>Choice paralysis in libraries, tools and framewroks</li>
-                    <li className={clsx(styles.listItem)}>Polyglot implementation struggels</li>
+                    <li className={clsx(styles.listItem)}>Polyglot implementation struggles</li>
                   </ul>
 
                 </div>
@@ -89,9 +92,16 @@ export default function Home(): JSX.Element {
               <div class="col col--5">
                 <div class="designFirstContent-right">
                   <Heading as="h2" className={clsx(styles.heading2)}>Why <span className="primary-text-color">Wirespec</span> </Heading>
-                  <p>Wirespec is a tool that simplifies interface design using a contract-first approach, with concise, human-readable specifications as the single source of truth. It generates interface definitions automatically, reducing manual errors and ensuring consistency.</p>
-                  <p>By automating this process, Wirespec accelerates development workflows, ensures strict adherence to interface specifications, and speeds up implementation.</p>
-                  <p>Additionally, Wirespec’s contracts enable automated testing and validation, ensuring implementations reliably match the defined specifications. In short, Wirespec streamlines API development, reduces errors, and improves team alignment on interfaces.</p>
+                  <p>
+                    Wirespec is a language that simplifies interface design. A requirement for truly contract-first specifications is readability, by humans, not machines.
+                  </p>
+                  <p>
+                    By generating producer and consumer it acts as the single source of truth for your implementations, reducing errors, ensuring consistency, and enabling simultaneous frontend and backend development
+                  </p>
+
+                  <p>
+                    Additionally, Wirespec guarantees implementations follows specification by compile-time checks, automated testing, and validation. In short, Wirespec streamlines API development, reduces errors, and improves team alignment.
+                  </p>
                 </div>
               </div>
             </div>
