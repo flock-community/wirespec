@@ -149,7 +149,7 @@ export default function Home(): JSX.Element {
                     <p>Wirespec’s contract-first approach empowers teams by establishing one clear, authoritative source of truth, independent of implementation or technology. It drives robust, consistent interface designs, boosts team alignment, eliminates ambiguity, and accelerates effective collaboration.</p>
                     <Link
                       className={clsx('button-link', styles.button, styles.buttonPrimary)}
-                      to="/docs/intro/">See design</Link>
+                      to="/how#contract">See contract</Link>
                   </div>
                 </div>
                 <div className="col col--6 code-block-col">
@@ -183,7 +183,7 @@ export default function Home(): JSX.Element {
                     <p>The code generation vision embraces a contract-first strategy, placing specifications as the definitive source of truth. This powerful approach ensures durable, reusable interfaces, isolates domain definitions from implementation details, and leverages automated, typesafe code generation—boosting clarity, collaboration, and efficiency across teams.</p>
                     <Link
                       className={clsx('button-link', styles.button, styles.buttonPrimary)}
-                      to="/docs/intro/">See generate</Link>
+                      to="/how#generate">See generate</Link>
 
                   </div>
                 </div>
@@ -199,7 +199,7 @@ export default function Home(): JSX.Element {
                     <p>Wirespec specifications serve as the definitive source of truth, ensuring API implementations align seamlessly with defined interfaces. Leveraging automated test data generation and mock servers, they streamline robust validation, swiftly identify discrepancies, reduce ambiguity, and boost reliability—empowering teams to deliver consistent, predictable API behavior.</p>
                     <Link
                       className={clsx('button-link', styles.button, styles.buttonPrimary)}
-                      to="/docs/intro/">See validate</Link>
+                      to="/how#validate">See validate</Link>
                   </div>
                 </div>
                 <div className="col col--6 code-block-col">

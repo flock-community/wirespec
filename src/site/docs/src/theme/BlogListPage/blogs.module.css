@@ -1,5 +1,19 @@
 .blogMain {
-    padding: 4rem 2rem;
+    padding: 210px 0px ;
+    background-image: url('/img/blog-bg.png');
+    background-repeat: no-repeat;
+    background-size: 100%;
+    background-position: center top;
+
+    @media(max-width: 1440px){
+        padding: 150px 0px 100px;
+    }
+    @media(max-width: 1024px){
+        padding: 120px 0px 80px;
+    }
+    @media(max-width: 767px){
+        padding: 100px 0px 50px;
+    }
 }
 
 .heading {
@@ -10,7 +24,22 @@
     letter-spacing: -0.03em;
     text-align: center;
     color: white;
-    margin-bottom: 2rem;
+    margin-bottom: 86px;
+
+    @media(max-width: 1440px){
+        font-size: 62px;
+       margin-bottom: 50px;
+    }
+
+    @media(max-width: 1024px){
+        font-size: 52px;
+       margin-bottom: 40px;
+    }
+
+    @media(max-width: 767px){
+        font-size: 42px;
+       margin-bottom: 35px;
+    }
 }
 
 .grid {
@@ -19,8 +48,14 @@
     grid-template-columns: repeat(1, 1fr);
     justify-content: center;
     align-items: stretch;
-    max-width: 1200px;
+    max-width: 1280px;
+    width: 90%;
     margin: 0 auto;
+   
+    @media( 767px){
+        gap: 1rem;
+
+    }
 }
 
 

@@ -11,10 +11,14 @@ interface BlogCardProps {
 
 const BlogCard: React.FC<BlogCardProps> = ({ image, title, subtitle, link }) => {
   return (
-    <div className={styles.card}>
-      <img src={image} alt={title} className={styles.cardImage} />
+    <div className={`card-border-bottom card-nospace ${styles.card}`}>
+      <Link to={link}>      
+        <img src={image} alt={title} className={styles.cardImage} />
+      </Link>
       <div className={styles.cardContent}>
-        <h3>{title}</h3>
+        <Link to={link} className={styles.headinglink}>      
+          <h3>{title}</h3>
+        </Link>
         <p>{subtitle}</p>
         <Link to={link} className={styles.readMore}>
           Read more

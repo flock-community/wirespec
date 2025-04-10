@@ -22,7 +22,7 @@ body {
     background-color: #101010;
     background-image: url('/img/hero-image.png');
     background-size: 100%;
-    background-position: top;
+    background-position: bottom;
     align-items: flex-start;
     background-repeat: no-repeat;
 
@@ -106,13 +106,13 @@ body {
     align-items: center;
     justify-content: center;
     margin-top: 30px;
-    @media (max-width: 767px){
+    @media (max-width: 475px){
         flex-direction: column
     }
     &>* {
         margin-right: 25px;
-        
-        @media (max-width: 767px){
+
+        @media (max-width: 475px){
             margin-right: 0px;
             margin-bottom: 20px;
         }
@@ -131,8 +131,15 @@ body {
     font-weight: 400;
     border-radius: 5px;
     text-decoration: none !important;
+    text-align: center;
     transition: background-color .2s cubic-bezier(.08, .52, .52, 1);
     border: 1px solid transparent;
+    
+    @media (max-width: 475px){
+        font-size: 16px;
+        padding: 8px 20px;
+    }
+
 }
 
 .buttonPrimary {

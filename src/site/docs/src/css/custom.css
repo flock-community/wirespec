@@ -384,7 +384,6 @@ table tr:nth-child(2n) {
 
 @media (max-width: 768px) {
     .icon-item-group {
-        flex-direction: column;
         align-items: flex-start;
         gap: 20px;
         /* Reduced gap for smaller screens */

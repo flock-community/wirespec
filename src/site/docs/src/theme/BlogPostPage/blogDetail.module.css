@@ -1,9 +1,25 @@
 .blogMain {
-    padding: 9rem 1rem;
-    max-width: 982px;
-    width: 90%;
-    margin: 0 auto;
     color: white;
+    padding: 210px 0px ;
+    background-image: url('/img/blog-bg.png');
+    background-repeat: no-repeat;
+    background-size: 100%;
+    background-position: center top;
+
+    &>*{
+        max-width: 982px;
+        width: 90%;
+        margin: 0 auto;
+    }
+    @media(max-width: 1440px){
+        padding: 150px 0px 100px;
+    }
+    @media(max-width: 1024px){
+        padding: 120px 0px 80px;
+    }
+    @media(max-width: 767px){
+        padding: 100px 0px 50px;
+    }
 }
 
 .hero h1 {
@@ -36,7 +52,6 @@
     letter-spacing: -0.01em;
     text-align: justify;
     color: #9F9F9F;
-    margin: 0;
 }
 
 .content h2 {
