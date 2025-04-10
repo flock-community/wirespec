@@ -1,0 +1,34 @@
+.blogMain {
+    padding: 4rem 2rem;
+}
+
+.heading {
+    font-family: 'Funnel Display', sans-serif;
+    font-weight: 500;
+    font-size: 74px;
+    line-height: 104%;
+    letter-spacing: -0.03em;
+    text-align: center;
+    color: white;
+    margin-bottom: 2rem;
+}
+
+.grid {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: repeat(1, 1fr);
+    justify-content: center;
+    align-items: stretch;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+
+/* For medium and up (tablet & desktop) */
+
+@media (min-width: 768px) {
+    .grid {
+        grid-template-columns: repeat(2, 1fr);
+        /* 2 cards per row */
+    }
+}

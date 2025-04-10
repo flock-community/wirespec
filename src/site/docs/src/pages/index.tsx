@@ -99,7 +99,7 @@ export default function Home(): JSX.Element {
         </section>
         <section className="steps">
           <div className="container">
-            <div className="grid grid-cols-3 gap-35">
+            <div className="grid grid-cols-3">
               <div className="card card-border-left">
                 <div className="icon-box">
                   <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">

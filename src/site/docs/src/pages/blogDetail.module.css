@@ -1,0 +1,47 @@
+.blogMain {
+    padding: 9rem 1rem;
+    max-width: 980px;
+    margin: 0 auto;
+    color: white;
+}
+
+.hero h1 {
+    font-family: 'Funnel Display', sans-serif;
+    font-weight: 500;
+    font-size: 54px;
+    line-height: 104%;
+    letter-spacing: -0.03em;
+    text-align: left;
+    margin-bottom: 2rem;
+    color: white;
+}
+
+.imageSection {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.heroImage {
+    max-width: 100%;
+    border-radius: 10px;
+}
+
+.content p {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 160%;
+    letter-spacing: -0.01em;
+    text-align: justify;
+    color: #9F9F9F;
+    margin: 0;
+}
+
+.content h2 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 28px;
+    font-weight: 500;
+    margin-top: 2rem;
+    color: #ffffff;
+}

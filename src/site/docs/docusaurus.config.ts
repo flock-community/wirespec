@@ -70,26 +70,26 @@ const config: Config = {
             },
             items: [
                 { 
-                    // to: '/vision',
-                    to: '#',
+                    to: '/vision',
+                    // to: '#',
                      label: 'Vision', position: 'left' },
                 {
                     label: 'How',
                     position: 'left',
                     items: [
                         {
-                          label: 'Design',
+                          label: 'Contract',
                         //   to: '/docs/how-design',
-                          to: '/docs/getting-started/#',
+                          to: '/how#contract',
                         },
                         {
                           label: 'Generate',
-                          to: '/docs/intro/intro-generate',
+                          to: '/how#generate',
                         },
                         {
                           label: 'Validate',
                         //   href: '/docs/how-validate',
-                        to: '/docs/getting-started/#',
+                        to: '/how#validate',
                         },
                     ],
                 },
@@ -112,7 +112,7 @@ const config: Config = {
         footer: {
             style: 'dark',
             logo: {
-                href: '/docs/intro',
+                href: '/',
                 alt: 'Wirespec Logo',
                 src: 'img/wirespec-logo.svg',
             },
@@ -121,15 +121,15 @@ const config: Config = {
                     items: [
                         {
                             label: 'Vision',
-                            to: '/docs/intro',
+                            to: '/vision',
                         },
                         {
                             label: 'Use cases',
-                            to: '/docs/plugins',
+                            to: '/contract',
                         },
                         {
                             label: 'Playground',
-                            to: '/docs/plugins',
+                            to: 'https://playground.wirespec.io',
                         },
                     ],
                 },
@@ -137,7 +137,7 @@ const config: Config = {
                     items: [
                         {
                             label: 'Docs',
-                            to: '/docs/intro',
+                            to: '/',
                         },
                         {
                             label: 'Blog',

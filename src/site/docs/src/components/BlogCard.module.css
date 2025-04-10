@@ -1,0 +1,47 @@
+.card {
+    background-color: #1a1a1a;
+    border: 1px solid;
+    border-image-source: linear-gradient(180deg, #FFDF00 0%, rgba(16, 16, 16, 0) 100%);
+    border-image-slice: 1;
+    border-radius: 10px;
+    max-width: 616px;
+    margin: 1rem auto;
+}
+
+.cardImage {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cardContent {
+    padding: 1.5rem;
+    text-align: left;
+}
+
+.cardContent h3 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 28px;
+    font-weight: 500;
+    color: #ffffff;
+}
+
+.cardContent p {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: #9F9F9F;
+    text-align: left;
+}
+
+.readMore {
+    color: #f7e600;
+    font-size: 18px;
+    font-weight: 400;
+    text-decoration: underline;
+}
+
+.readMore:hover {
+    text-decoration: underline;
+}
