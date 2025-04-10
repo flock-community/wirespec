@@ -8,7 +8,7 @@
 /* You can override the default Infima variables here. */
 
 :root {
-    --ifm-color-primary: #101010;
+    --ifm-color-primary: #ffdf00;
     --ifm-color-primary-dark: #29784c;
     --ifm-color-primary-darker: #277148;
     --ifm-color-primary-darkest: #205d3b;
@@ -23,13 +23,14 @@
     --ifm-navbar-link-hover-color: #ffdf00;
     --ifm-footer-link-hover-color: #ffdf00;
     --ifm-menu-color-active: #ffffff;
+    --ifm-heading-font-family: "Funnel Display", sans-serif;
 }
 
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
 
 [data-theme='dark'] {
-    --ifm-color-primary: #101010;
+    --ifm-color-primary: #ffdf00;
     --ifm-color-primary-dark: #21af90;
     --ifm-color-primary-darker: #1fa588;
     --ifm-color-primary-darkest: #1a8870;
@@ -41,6 +42,7 @@
     --ifm-navbar-link-hover-color: #ffdf00;
     --ifm-footer-link-hover-color: #ffdf00;
     --ifm-menu-color-active: #ffffff;
+    --ifm-heading-font-family: "Funnel Display", sans-serif;
 }
 
 .footer--dark {
@@ -53,7 +55,6 @@ body {
     color: #9F9F9F;
     line-break: 160%;
 }
-
 .pt-0 {
     padding-top: 0px !important;
 }
@@ -162,7 +163,9 @@ body {
     padding: 0px !important;
     overflow: hidden;
 }
-
+.language-js{
+    margin-bottom: 0px;
+}
 .grid {
     display: grid;
 }
@@ -309,8 +312,15 @@ table tr:nth-child(2n) {
 }
 
 .start-wirespec .card-footer .card-footer-header h2 {
+    font-size: 44px;
+    font-weight: 500;
+    color: white;
+    font-family: "Funnel Display", sans-serif;
     text-align: center;
     margin-bottom: 30px;
+}
+.start-wirespec .card-footer .card-footer-header h2 span{
+    color: #ffdf00;
 }
 
 .start-wirespec .card-footer .card-footer-header p {
@@ -319,6 +329,24 @@ table tr:nth-child(2n) {
     margin: 0 auto;
     margin-bottom: 40px;
 }
+.start-wirespec .card-footer .footer-action a{
+    display: inline-block;
+    min-width: 166px;
+    padding: 12px 30px;
+    font-size: 18px;
+    font-weight: 400;
+    border-radius: 5px;
+    text-decoration: none !important;
+    transition: background-color .2s cubic-bezier(.08, .52, .52, 1);
+    border: 1px solid transparent;
+    background-color: #FFDF00;
+    color: #101010;
+}
+.start-wirespec .card-footer .footer-action a:hover {
+        border-color: #FFDF00;
+        background-color: transparent;
+        color: #FFDF00;
+    }
 
 .icon-item-box {
     display: flex;

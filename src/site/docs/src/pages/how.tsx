@@ -4,6 +4,8 @@ import styles from "./contract.module.css";
 import Heading from "@theme/Heading";
 import Link from "@docusaurus/Link";
 import clsx from "clsx";
+import CodeBlock from '@theme/CodeBlock';
+
 
 export default function ContractPage() {
   return (
@@ -85,12 +87,12 @@ export default function ContractPage() {
               </li>
             </ol>
           </section>
-          <section className={styles.contractImageSection}>
-            <img
-              src="/img/contractImage.png"
-              alt="contractImage"
-              className={styles.heroImage}
-            />
+          <section className="card card-border-bottom card-nospace">
+            <CodeBlock language="js" title="example.js">
+              {`function hello() {
+  return 'hi';
+}`}
+            </CodeBlock>
           </section>
         </div>
 
@@ -122,12 +124,12 @@ export default function ContractPage() {
               interactions in a consistent and predictable manner.
             </p>
           </section>
-          <section className={styles.generateImageSection}>
-            <img
-              src="/img/generateImage.png"
-              alt="generateImage"
-              className={styles.heroImage}
-            />
+          <section className="card card-border-bottom card-nospace">
+           <CodeBlock language="js" title="example.js">
+              {`function hello() {
+  return 'hi';
+}`}
+            </CodeBlock>
           </section>
         </div>
 
