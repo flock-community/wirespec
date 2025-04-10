@@ -27,6 +27,7 @@ export type CompilerEmitter =
   | "typescript"
   | "kotlin"
   | "scala"
+  | "python"
   | "java"
   | "open_api_v2"
   | "open_api_v3"
@@ -40,6 +41,7 @@ export type Language =
   | "java"
   | "typescript"
   | "scala"
+  | "python"
   | "json";
 
 type Search = {
@@ -64,6 +66,7 @@ const createFileHeaderFor = (fileName: string, emitter: Emitter): string => {
     case "wirespec":
       return "";
     case "java":
+    case "python":
       return `\n/**\n/* ${fileName}\n**/\n`;
   }
 };
@@ -164,20 +167,6 @@ function RouteComponent() {
     }
   }, [wirespecOutput, emitter]);
 
-  const [fontSize, setFontSize] = useState(0);
-  useEffect(() => {
-    const updateWindowDimensions = () => {
-      const width = window.innerWidth;
-      setFontSize(width < 768 ? 12 : 0.01*width);
-    };
-
-    updateWindowDimensions();
-
-    window.addEventListener("resize", updateWindowDimensions);
-
-    return () => window.removeEventListener("resize", updateWindowDimensions)
-  }, []);
-
   return (
     <Box display="flex">
       <Box
@@ -208,7 +197,6 @@ function RouteComponent() {
             code={code}
             setCode={setCode}
             language={specification === "wirespec" ? "wirespec" : "json"}
-            fontSize={fontSize}
           />
         </Box>
       </Box>
@@ -243,7 +231,6 @@ function RouteComponent() {
           <PlayGround
             code={wirespecResult}
             language={wirespecOutput?.language || "wirespec"}
-            fontSize={fontSize}
           />
         </Box>
       </Box>
