@@ -5,7 +5,7 @@ import type * as Preset from "@docusaurus/preset-classic";
 const config: Config = {
   title: "Wirespec",
   tagline: "Dinosaurs are cool",
-  favicon: "img/favicon.png",
+  favicon: "img/wirespec-favicon.png",
   // Set the production url of your site here
   url: "https://docs.wirespec.io",
   // Set the /<baseUrl>/ pathname under which your site is served
