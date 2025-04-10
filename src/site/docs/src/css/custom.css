@@ -45,7 +45,7 @@
     --ifm-heading-font-family: "Funnel Display", sans-serif;
 }
 
-.footer--dark {
+.footer {
     --ifm-footer-color: #9F9F9F !important;
     --ifm-footer-link-color: #ffffff !important;
 }
@@ -451,11 +451,12 @@ table tr:nth-child(2n) {
     height: 30px;
 }
 
-.footer--dark {
+.footer {
     background: #101010;
     border-top: 1px solid rgba(255, 223, 0, 0.30);
     padding-top: 235px;
     margin-top: -151px;
+    border-color: color-mix(in srgb, #221f1f 60%, #221f1f 0%);
 }
 
 .docs-footer {
