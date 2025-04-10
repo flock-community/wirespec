@@ -55,6 +55,7 @@ body {
     color: #9F9F9F;
     line-break: 160%;
 }
+
 .pt-0 {
     padding-top: 0px !important;
 }
@@ -166,9 +167,11 @@ body {
     padding: 0px !important;
     overflow: hidden;
 }
-.language-js{
+
+.language-js {
     margin-bottom: 0px;
 }
+
 .grid {
     display: grid;
 }
@@ -326,7 +329,8 @@ table tr:nth-child(2n) {
     text-align: center;
     margin-bottom: 30px;
 }
-.start-wirespec .card-footer .card-footer-header h2 span{
+
+.start-wirespec .card-footer .card-footer-header h2 span {
     color: #ffdf00;
 }
 
@@ -336,7 +340,8 @@ table tr:nth-child(2n) {
     margin: 0 auto;
     margin-bottom: 40px;
 }
-.start-wirespec .card-footer .footer-action a{
+
+.start-wirespec .card-footer .footer-action a {
     display: inline-block;
     min-width: 166px;
     padding: 12px 30px;
@@ -349,11 +354,12 @@ table tr:nth-child(2n) {
     background-color: #FFDF00;
     color: #101010;
 }
+
 .start-wirespec .card-footer .footer-action a:hover {
-        border-color: #FFDF00;
-        background-color: transparent;
-        color: #FFDF00;
-    }
+    border-color: #FFDF00;
+    background-color: transparent;
+    color: #FFDF00;
+}
 
 .icon-item-box {
     display: flex;
@@ -456,6 +462,16 @@ table tr:nth-child(2n) {
 .docs-footer {
     margin-top: 0 !important;
     padding-top: 50px;
+}
+
+
+/* Ensure the entire docs page fills the viewport */
+
+
+/* Make the docs sidebar stick to the top of the viewport */
+
+.docSidebarContainer_YfHR {
+    margin-top: 0% !important;
 }
 
 .footer-bottom {
