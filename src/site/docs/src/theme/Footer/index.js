@@ -24,7 +24,6 @@ function Footer() {
     return (
         <>
             { !isDocsPage && (
-
                 <section className="start-wirespec">
                     <div className="container">
                         <div className="row">
