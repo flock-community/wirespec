@@ -27,6 +27,7 @@ export type CompilerEmitter =
   | "typescript"
   | "kotlin"
   | "scala"
+  | "python"
   | "java"
   | "open_api_v2"
   | "open_api_v3"
@@ -40,6 +41,7 @@ export type Language =
   | "java"
   | "typescript"
   | "scala"
+  | "python"
   | "json";
 
 type Search = {
@@ -64,6 +66,7 @@ const createFileHeaderFor = (fileName: string, emitter: Emitter): string => {
     case "wirespec":
       return "";
     case "java":
+    case "python":
       return `\n/**\n/* ${fileName}\n**/\n`;
   }
 };
