@@ -1,0 +1,180 @@
+---
+id: getting-started
+title: Getting Started
+slug: /getting-started
+sidebar_position: 0
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+## What is Wirespec?
+
+Wirespec is a modern tool that enhances software development by streamlining the process of designing, documenting,
+and implementing APIs. While the software industry offers numerous solutions for designing contracts between services,
+Wirespec distinguishes itself by using a simple language model and multi-language compatibility.
+
+## Installation
+
+WireSpec can be installed either as an npm package for use within a project or as a standalone command-line interface
+(CLI) tool.
+
+[//]: # (TODO should be Npm + Docker + Homebrew)
+
+<Tabs>
+    <TabItem value="npm" label="Npm">
+        1. Install [Node.js](https://nodejs.org/en)
+
+        2. Install the Wirespec package
+        ```bash
+        npm install -g @flock/wirespec
+        ```
+    </TabItem>
+    <TabItem value="Cli-linux" label="Cli - Linux">
+        1. Download and install the CLI
+
+        ```bash
+        curl -L https://github.com/flock-community/wirespec/releases/latest/download/linuxX64.kexe -o wirespec
+        chmod +x wirespec
+        sudo mv ./wirespec /usr/local/bin/wirespec
+        ```
+    </TabItem>
+    <TabItem value="Cli-arm" label="Cli - macOs(X64)">
+        1. Download and install the CLI
+
+        ```bash
+        curl -L https://github.com/flock-community/wirespec/releases/latest/download/macosX64.kexe -o wirespec
+        chmod +x wirespec
+        sudo mv ./wirespec /usr/local/bin/wirespec
+        ```
+    </TabItem>
+    <TabItem value="Cli-amd" label="Cli - macOs(Arm64)">
+        1. Download and install the CLI
+
+        ```bash
+        curl -L https://github.com/flock-community/wirespec/releases/latest/download/macosArm64.kexe -o wirespec
+        chmod +x wirespec
+        sudo mv ./wirespec /usr/local/bin/wirespec
+        ```
+    </TabItem>
+</Tabs>
+------------------------------
+
+Alongside the CLI tool Wirespec is also available as various [plugins](plugins).
+
+## Example
+
+Imagine a common situation where a frontend (TypeScript) and backend (Kotlin/Java) have negotiated a contract. This
+means that the API's structure and behavior are defined *before* any code is written, ensuring a shared understanding
+and facilitating parallel development.
+
+### Creating a Definition
+
+The following `todo.ws` file defines such a contract for the basic CRUD operations of a Todo resource:
+
+```wirespec title="todo.ws"
+type TodoDto {
+    id: Integer?,
+    name: String
+}
+
+endpoint GetTodos GET /api/todos -> {
+    200 -> TodoDto[]
+}
+
+endpoint GetById GET /api/todos/{id: Integer} -> {
+    200 -> TodoDto
+    404 -> String
+}
+
+endpoint CreateTodo POST TodoDto /api/todos -> {
+    201 -> TodoDto
+}
+
+endpoint DeleteTodo DELETE /api/todos/{id: Integer} -> {
+    204 -> Unit
+    404 -> String
+}
+
+endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
+    200 -> TodoDto
+}
+```
+
+### Generating code
+
+Next, both sides can use the **shared** definition to generate language specific code, by running
+one of the following commands referencing the directory where you put your `todo.ws` file:
+
+<Tabs>
+    <TabItem value="TypeScript" label="TypeScript">
+        ```bash
+        wirespec compile --input . --language typescript
+        ```
+
+        This will generate the following file:
+        ```
+        project/out/community/flock/wirespec/generated/
+          └─ Todo.ts
+        ```
+
+    </TabItem>
+    <TabItem value="Kotlin" label="Kotlin">
+        ```bash
+        wirespec compile --input . --language kotlin
+        ```
+
+        This will generate the following file:
+        ```
+        project/out/community/flock/wirespec/generated/
+          └─ Todo.kt
+        ```
+    </TabItem>
+
+    <TabItem value="Java" label="Java">
+        ```bash
+        wirespec compile --input . --language java
+        ```
+
+        This will generate the following files:
+        ```
+        project/out/community/flock/wirespec/generated/
+          └─ CreateTodoEndpoint.java
+          └─ DeleteTodoEndpoint.java
+          └─ GetByIdEndpoint.java
+          └─ GetTodosEndpoint.java
+          └─ TodoDto.java
+          └─ UpdateTodoEndpoint.java
+        ```
+    </TabItem>
+</Tabs>
+
+------------------------------
+
+The output contains the required Data Transfer Objects (DTOs), endpoint structures with defined response codes, etc.
+Once you've plugged in your HTTP client it is now **easy** for both sides to adhere to the contract.
+
+From here there are several options to integrate Wirespec further into your landscape, development environment, and
+create more elaborate definitions.
+
+[//]: # (Gotta knock it out of the park here)
+
+## What's next?
+
+<div style={{ display: 'flex', gap: '20px' }}>  {}
+    <div style={{ flex: '1', border: '1px solid #ccc', padding: '15px', borderRadius: '5px' }}>
+        <h3>Wirespec Language</h3>
+        <p>A concise overview of the language concepts in Wirespec.</p>
+        <a href="/docs/language">Read More</a>
+    </div>
+    <div style={{ flex: '1', border: '1px solid #ccc', padding: '15px', borderRadius: '5px' }}>
+        <h3>Integration</h3>
+        <p>Explore different ways to hook up your HTTP client.</p>
+        <a href="/docs/integration">Read More</a>
+    </div>
+    <div style={{ flex: '1', border: '1px solid #ccc', padding: '15px', borderRadius: '5px' }}>
+        <h3>IDE Plugin</h3>
+        <p>Wirespec supports two IDEs: IntelliJ IDEA and VS Code.</p>
+        <a href="/docs/integration">Read More</a>
+    </div>
+</div>

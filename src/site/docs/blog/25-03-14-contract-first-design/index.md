@@ -1,7 +1,8 @@
 ---
-title: Contract first design
+title: Contract third design
 authors: [wilmveel, nsmnds]
 tags: [wirespec, docs, contract, design]
+permalink: /blog-detail
 ---
 
 ## A Contract-First Design Approach

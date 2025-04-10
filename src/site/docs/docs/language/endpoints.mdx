@@ -1,0 +1,105 @@
+---
+id: endpoints
+title: Endpoints
+slug: /language/endpoints
+sidebar_position: 1
+---
+
+Endpoints can be defined using the `endpoint` keyword:
+
+```wirespec
+endpoint GetTodos GET /todos -> {
+    200 -> Todo[]
+}
+```
+
+## Request Body
+
+You can specify a [type](types) for the request body like so:
+
+```wirespec
+endpoint CreateTodo POST Todo /todos -> {
+    201 -> Todo
+}
+
+type Todo {
+    id: Integer?,
+    task: String
+}
+```
+
+## Path parameters
+
+Endpoint parameters are defined using Pascal notation - **name: type.** Path parameters can simply be embedded in the
+URI between brackets. Each parameter must be explicitly typed:
+
+```wirespec
+endpoint GetTodo GET /todos/{id: Integer} -> {
+    200 -> Todo
+}
+```
+
+## Query parameters
+
+Query parameters are appended to the endpoint URI after a `?` symbol. Individual parameters are separated by commas, and
+must be explicitly typed as well:
+
+```wirespec
+endpoint GetTodos GET /todos ?{done: Boolean, prio: Boolean} -> {
+    200 -> Todo[]
+}
+```
+
+## Responses
+
+After defining the request format you can define one or more response types. Responses are defined by a response code
+followed by an arrow `->` and a [type](types):
+
+
+```wirespec
+endpoint UpdateTodo PUT /todos/{id: Integer} -> {
+    200 -> Todo
+    201 -> Todo
+    409 -> Error
+}
+```
+
+Or, when no response body is sent, the type can be set to `Unit`:
+```wirespec
+endpoint DeleteTodo DELETE /todos/{id: Integer} -> {
+    204 -> Unit
+}
+```
+
+## Headers
+
+Request headers are indicated by a `#` followed by a list of one or more comma separated parameters, and  *must* be
+defined after query parameters.
+
+```wirespec
+endpoint GetTodos GET /todos#{token: String, tenant: Integer} -> {
+    200 -> Todo
+}
+```
+
+Response headers can similarly be appended after the response type:
+
+```wirespec
+endpoint CreateTodo POST Todo /todos -> {
+    201 -> Todo #{Location: String}
+}
+```
+
+## HTTP methods
+
+Wirespec currently accepts some, but not all [HTTP methods](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods).
+Methods are specified in uppercase, the following are currently available in Wirespec:
+
+ - `GET`
+ - `POST`
+ - `PUT`
+ - `PATCH`
+ - `DELETE`
+ - `OPTIONS`
+ - `HEAD`
+ - `TRACE`

@@ -2,6 +2,7 @@
 title: Documentation website
 authors: [wilmveel]
 tags: [wirespec, docs]
+permalink: /blog-detail
 ---
 
 ## Wirespec's New Documentation Website: Your Comprehensive Guide is Here!
