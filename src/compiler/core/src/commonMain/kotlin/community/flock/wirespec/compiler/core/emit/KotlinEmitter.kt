@@ -269,7 +269,7 @@ open class KotlinEmitter(
     ).joinToString("\n")
 
     private fun Field.emitSerializedParams(type: String, fields: String) =
-        """mapOf("${emit(identifier)}" to ($type.$fields.${emit(identifier)}?.let{ serialization.serializeParam(it, typeOf<${reference.emit()}>()) } ?: emptyList()))"""
+        """mapOf("${identifier.value}" to ($type.$fields.${emit(identifier)}?.let{ serialization.serializeParam(it, typeOf<${reference.emit()}>()) } ?: emptyList()))"""
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
         """${Spacer(3)}${emit(value.identifier)} = serialization.deserialize(request.path[${index}], typeOf<${value.reference.emit()}>())"""
