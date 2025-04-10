@@ -284,6 +284,7 @@ body {
 .table table tr th {
     color: #ffffff;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .table table tr td {
@@ -418,9 +419,19 @@ table tr:nth-child(2n) {
 
 .footer-link-columns {
     padding: 0 15px;
-    margin-left: auto;
+    margin-left: auto; 
+    width: 30%;
 }
-
+.header-github-link{
+    margin-left: 0px;
+}
+.footer__links{
+    justify-content: space-between;
+}
+.footer__col{
+    width: auto;
+    flex:  0 0 auto;
+}
 .logo-column p {
     color: #9F9F9F;
     margin-bottom: 10px;
@@ -554,47 +565,28 @@ table tr:nth-child(2n) {
     transform: translate(-50%, -50%);
 }
 
-@media (max-width: 767px){
-    .footer-link-columns{
-        margin-left: 0px;
-        width: 100%;
-    }
-    .footer__col{
-        flex:  0 0 50%;
-        width: 50%;
-        margin-bottom: 25px;
-    }
+@media (max-width: 1440px){
     .footer-bottom{
-        margin-top: 0px;
+        margin-top: 80px;
     }
     .footer--dark{
-        padding-top: 175px;
-    }
-    .card-footer{
-        padding: 35px;
-    }
-    .start-wirespec .card-footer .card-footer-header h2{
-        font-size: 30px;
-        margin-bottom: 20px;
-    }
-    .start-wirespec .card-footer .card-footer-header p{
-        font-size: 16px;
-    }
-    .card p{
-        font-size: 16px;
-    }
-    .icon-box{
-        width: 36px;
-        height: 36px;
-    }
-    .start-wirespec .card-footer .footer-action a{
-        padding: 8px 20px;
+        padding-top: 180px;
     }
 
 }
+@media (max-width: 1024px){
+    .footer-bottom{
+        margin-top: 60px;
+    }
+
+
+}
 @media (max-width: 996px){
+    .footer-bottom{
+        margin-top: 40px;
+    }
     .section-header {
-        padding-bottom: 20px;
+        padding-bottom: 0px;
     }
 
     .designFirstContent {
@@ -629,6 +621,7 @@ table tr:nth-child(2n) {
     .other-capabilites h2{
         font-size: 40px;
         margin-bottom: 35px;
+        max-width: 100%;
     }
     .card-other h4{
         font-size: 24px;
@@ -638,5 +631,99 @@ table tr:nth-child(2n) {
     }
     .card-other{
         padding: 25px;
+    }
+    .steps{
+        padding: 30px 0px;
+    }
+
+    .card{
+        padding: 35px;
+    }
+    .logo-column{
+        margin-bottom: 20px;
+    }
+    .footer__copyright{
+        text-align: center;
+    }
+    .footer__items.clean-list{
+
+    }
+    .footer-bottom .footer__items {
+        justify-content: center;
+        margin-top: 15px;
+    }
+}
+
+@media (max-width: 767px){
+    .card{
+        padding: 25px;
+    }
+    .inner-section{
+        padding: 20px 0px;
+    }
+    .other-capabilites{
+        padding: 30px 0px;
+    }
+    .other-capabilites h2{
+        font-size: 32px;
+    }
+    .table table tr th,
+    .table table tr td{
+        padding: 10px;
+        font-size: 16px;
+    }
+    .card-footer .icon-item-box p{
+        text-align: left;
+    }
+    .footer-link-columns{
+        margin-left: 0px;
+        width: 100%;
+    }
+    .footer__col{
+        flex:  0 0 100%;
+        width: 100%;
+        margin-bottom: 25px;
+    }
+    .footer__item .footer__link-item{
+        display: inline-block;
+    }
+    .footer-link-columns .footer__item{
+        text-align: center;
+    }
+    .footer-bottom{
+        margin-top: 0px;
+    }
+    .footer--dark{
+        padding-top: 175px;
+    }
+    .card-footer{
+        padding: 35px;
+    }
+    .start-wirespec .card-footer .card-footer-header h2{
+        font-size: 30px;
+        margin-bottom: 20px;
+    }
+    .start-wirespec .card-footer .card-footer-header p{
+        font-size: 16px;
+    }
+    .card p{
+        font-size: 16px;
+    }
+    .icon-box{
+        width: 36px;
+        height: 36px;
+    }
+    .start-wirespec .card-footer .footer-action a{
+        padding: 8px 20px;
+    }
+    .logo-column{
+        width: 100%;
+        max-width: 100%;
+        text-align: center;
+    }
+    .logo-column p{
+        max-width: 285px;
+        margin: 0 auto;
+        margin-bottom: 15px;
     }
 }
