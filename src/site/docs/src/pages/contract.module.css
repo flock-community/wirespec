@@ -1,10 +1,16 @@
+.mainContainer {
+    background-image: url('/img/how-bg.png');
+    background-size: 100%;
+    background-repeat: no-repeat;
+}
+
 .contractMain {
     padding: 0rem 1rem 9rem 1rem;
     max-width: 960px;
+    width: 90%;
     margin: 0 auto;
     color: white;
-    background-image: url('/img/hero-image.png');
-    background-size: 100%;
+    padding-top: 100px;
 }
 
 .hero h1 {
