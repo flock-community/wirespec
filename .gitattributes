@@ -1,0 +1,17 @@
+# Ensure consistent line endings
+# Convert line endings to LF in the repository, but allow Windows developers to have CRLF in their working directory
+* text=auto eol=lf
+
+# Treat binary files as-is without altering line endings
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.mp4 binary
+
+# These files should have specific line endings
+*.sh	text eol=lf
+*.bat	text eol=crlf
