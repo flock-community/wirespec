@@ -1,26 +1,33 @@
 .visionMain {
-    /* background: linear-gradient(to right, #0a0a0a, #1a1a1a); */
     background-color: #101010;
-    background-image: url('/img/hero-image.png');
+    background-image: url('/img/vision-bg.png');
     background-size: 100%;
     color: white;
-    min-height: 100vh;
     display: flex;
     justify-content: center;
-    align-items: center;
-}
-
-@media (max-width: 1024px) {
-    .visionMain {
-        background-image: none;
-    }
+    align-items: flex-start;
+    background-repeat: no-repeat;
 }
 
 .visionSection {
     max-width: 1023px;
     margin: 0 auto;
-    padding: 4rem 1rem;
+    width: 90%;
+    padding: 210px 0px 175px;
     text-align: center;
+
+    @media(max-width: 1440px){
+        padding: 150px 0px 90px;
+    }
+
+    @media(max-width: 1024px){
+        padding: 100px 0px 50px;
+    }
+
+    @media(max-width: 767px){
+        padding: 120px 0px 30px;
+        padding-top: 100px;
+    }
 }
 
 .visionContent {
@@ -37,6 +44,19 @@
     text-align: center;
     color: #FFFFFF;
     margin: 0%;
+    margin-bottom: 30px;
+
+    span{
+        color: #FFDF00;
+    }
+
+    @media(max-width: 1024px){
+        font-size: 48px;
+    }
+
+    @media(max-width: 767px){
+        font-size: 42px;
+    }
 }
 
 .subtitle {
@@ -55,6 +75,10 @@
     font-size: 18px;
     line-height: 160%;
     letter-spacing: -0.01em;
-    /* -1% in CSS is written as -0.01em */
     color: #9F9F9F;
+
+    @media (max-width: 767px){
+        font-size: 16px;
+        line-height: 140%;
+    }
 }

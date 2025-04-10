@@ -14,8 +14,7 @@ export default function VisionPage() {
       <main className={styles.visionMain}>
         <section className={styles.visionSection}>
           <div className={styles.visionContent}>
-            <h1 className={styles.title}>Wirespec</h1>
-            <h2 className={styles.subtitle}>vision</h2>
+            <h1 className={styles.title}>Wirespec <br/> <span>vision</span> </h1>
             <p className={styles.paragraph}>
               Wirespec envisions a future where interface design is streamlined
               through a contract-first approach. Specifications, defined in a

@@ -74,6 +74,7 @@ body {
 .container {
     max-width: 1310px;
     padding: 0px 15px;
+    width: 90%;
 }
 
 .container-fluid {
@@ -83,6 +84,7 @@ body {
 .designFirstContent {
     padding: 87px 0px;
 }
+
 
 .designFirstContent h2 {
     max-width: 350px;
@@ -104,6 +106,7 @@ body {
     text-align: center;
     padding-bottom: 40px;
 }
+
 
 .how {
     padding: 75px 0px;
@@ -211,9 +214,12 @@ body {
     padding-right: 30px;
 }
 
+
 .designFirstContent-right {
     padding-left: 30px;
 }
+
+
 
 .navbar {
     background-color: transparent;
@@ -546,4 +552,91 @@ table tr:nth-child(2n) {
     filter: blur(300px);
     z-index: -1;
     transform: translate(-50%, -50%);
+}
+
+@media (max-width: 767px){
+    .footer-link-columns{
+        margin-left: 0px;
+        width: 100%;
+    }
+    .footer__col{
+        flex:  0 0 50%;
+        width: 50%;
+        margin-bottom: 25px;
+    }
+    .footer-bottom{
+        margin-top: 0px;
+    }
+    .footer--dark{
+        padding-top: 175px;
+    }
+    .card-footer{
+        padding: 35px;
+    }
+    .start-wirespec .card-footer .card-footer-header h2{
+        font-size: 30px;
+        margin-bottom: 20px;
+    }
+    .start-wirespec .card-footer .card-footer-header p{
+        font-size: 16px;
+    }
+    .card p{
+        font-size: 16px;
+    }
+    .icon-box{
+        width: 36px;
+        height: 36px;
+    }
+    .start-wirespec .card-footer .footer-action a{
+        padding: 8px 20px;
+    }
+
+}
+@media (max-width: 996px){
+    .section-header {
+        padding-bottom: 20px;
+    }
+
+    .designFirstContent {
+        padding: 30px 0px;
+    }
+    .designFirstContent .col--7{
+        order:  1;
+        padding-top: 30px;
+    }
+
+    .designFirstContent-left {
+        padding-right: 0px;
+    }
+
+    .designFirstContent-right {
+        padding-left: 0px;
+
+    }
+    .inner-section{
+        padding: 30px 0px;
+    }
+    .code-block-col{
+        order: 1;
+        padding-top:  30px;
+    }
+    .how{
+        padding: 40px 0px;
+    }
+    .other-capabilites{
+        padding:  40px 0px;
+    }
+    .other-capabilites h2{
+        font-size: 40px;
+        margin-bottom: 35px;
+    }
+    .card-other h4{
+        font-size: 24px;
+    }
+    .card-other p{
+        font-size: 16px;
+    }
+    .card-other{
+        padding: 25px;
+    }
 }
