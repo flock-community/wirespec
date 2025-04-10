@@ -16,7 +16,7 @@ export default function VisionPage() {
           <div className={styles.visionContent}>
             <h1 className={styles.title}>Wirespec</h1>
             <h2 className={styles.subtitle}>vision</h2>
-            <p>
+            <p className={styles.paragraph}>
               Wirespec envisions a future where interface design is streamlined
               through a contract-first approach. Specifications, defined in a
               concise and human-readable language, serve as the single source of
@@ -24,7 +24,7 @@ export default function VisionPage() {
               design-centric methodology empowers cross-functional teams to
               collaborate effectively, ensuring alignment.
             </p>
-            <p>
+            <p className={styles.paragraph}>
               Central to the Wirespec vision is automated code generation. From
               the contract specification, typesafe, purely functional, and
               dependency-free code is generated. This generated code
@@ -34,7 +34,7 @@ export default function VisionPage() {
               development workflows, accelerates implementation, and guarantees
               strict adherence to the defined contract specifications.
             </p>
-            <p>
+            <p className={styles.paragraph}>
               Furthermore, Wirespec’s contract specifications are invaluable for
               validating and testing the implementation against the agreed-upon
               interface. The contract acts as a blueprint, allowing for

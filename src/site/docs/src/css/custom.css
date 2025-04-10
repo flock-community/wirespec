@@ -436,6 +436,11 @@ table tr:nth-child(2n) {
     margin-top: -151px;
 }
 
+.docs-footer {
+    margin-top: 0 !important;
+    padding-top: 50px;
+}
+
 .footer-bottom {
     margin-top: 110px;
 }
