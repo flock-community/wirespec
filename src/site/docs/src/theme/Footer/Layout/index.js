@@ -1,13 +1,17 @@
 import React from 'react';
 import clsx from 'clsx';
-
+import { useLocation } from '@docusaurus/router';
 
 export default function FooterLayout( { style, links, logo, copyright } ) {
+    const location = useLocation();
+    const isDocsPage = location.pathname.startsWith( '/docs' );
     return (
         <footer
             className={ clsx( 'footer', {
-                'footer--dark': style === 'dark',
-            } ) }>
+                'footer--dark': !isDocsPage && style === 'dark',
+                'docs-footer': isDocsPage,
+            } ) }
+        >
             <div className="container container-fluid">
                 <div class="row">
                     { ( logo || copyright ) && (

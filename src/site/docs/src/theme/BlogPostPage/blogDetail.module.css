@@ -1,6 +1,7 @@
 .blogMain {
     padding: 9rem 1rem;
-    max-width: 980px;
+    max-width: 982px;
+    width: 90%;
     margin: 0 auto;
     color: white;
 }

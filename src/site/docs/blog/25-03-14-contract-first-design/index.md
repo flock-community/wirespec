@@ -1,9 +1,12 @@
 ---
-title: Contract third design
-authors: [wilmveel, nsmnds]
-tags: [wirespec, docs, contract, design]
-permalink: /blog-detail
+title: Contract First Design
+slug: /contract-first-design
+description: Learn about contract-first API development
+authors: [wilmveel]
+tags: [api, contract-first]
+image: /img/code-snippet.png
 ---
+
 
 ## A Contract-First Design Approach
 
