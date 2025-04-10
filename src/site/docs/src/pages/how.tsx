@@ -4,8 +4,7 @@ import styles from "./contract.module.css";
 import Heading from "@theme/Heading";
 import Link from "@docusaurus/Link";
 import clsx from "clsx";
-import CodeBlock from '@theme/CodeBlock';
-
+import CodeBlock from "@theme/CodeBlock";
 
 export default function ContractPage() {
   return (
@@ -15,7 +14,7 @@ export default function ContractPage() {
     >
       <main className={styles.contractMain}>
         <div id="contract">
-          <section className={styles.hero} style={{ marginTop: "10rem" }}>
+          <section className={styles.hero} style={{ paddingTop: "4rem" }}>
             <h1>Contract</h1>
             <p>
               The contract–first approach for interface design, as envisioned by
@@ -125,7 +124,7 @@ export default function ContractPage() {
             </p>
           </section>
           <section className="card card-border-bottom card-nospace">
-           <CodeBlock language="js" title="example.js">
+            <CodeBlock language="js" title="example.js">
               {`function hello() {
   return 'hi';
 }`}
@@ -134,7 +133,9 @@ export default function ContractPage() {
         </div>
 
         <div id="validate">
-          <section className={styles.validateSection}>
+          <section
+            className={styles.validateSection}
+          >
             <h2>Validate</h2>
             <p>
               Specifications, such as those defined by Wirespec, play a critical

@@ -31,6 +31,10 @@
     display: none;
 }
 
+.navbar__items--right> :last-child {
+    padding-right: 3rem;
+}
+
 
 /* Theme toggle should appear last */
 
