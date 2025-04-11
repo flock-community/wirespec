@@ -64,26 +64,11 @@ console.log(`Is valid: ${isValid}`);
 Contributions are welcome! If you find any issues or want to suggest new features, feel free to open an issue or submit
 a pull request.
 
-### Development
-
-To set up the project locally:
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/wirespec.git
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Run the tests:
-   ```bash
-   npm test
-   ```
+See [our CONTRIBUTING.md](https://github.com/flock-community/wirespec/blob/master/CONTRIBUTING.md) for more details
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [Apache-2.0 license](https://github.com/flock-community/wirespec/blob/master/LICENSE).
 
 ---
 
