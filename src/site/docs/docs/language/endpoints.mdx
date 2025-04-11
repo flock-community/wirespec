@@ -22,6 +22,10 @@ endpoint CreateTodo POST Todo /todos -> {
     201 -> Todo
 }
 
+type CreateTodo {
+    task: String
+}
+
 type Todo {
     id: Integer?,
     task: String
