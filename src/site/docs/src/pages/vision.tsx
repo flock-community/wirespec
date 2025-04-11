@@ -4,17 +4,22 @@ import styles from "./vision.module.css";
 import Heading from "@theme/Heading";
 import Link from "@docusaurus/Link";
 import clsx from "clsx";
+import Seo from "../components/Seo";
 
 export default function VisionPage() {
   return (
-    <Layout
-      title="Vision"
-      description="Our vision for the future of API design"
-    >
+    <Layout>
+      <Seo
+        title="Wirespec Vision"
+        description="Wirespec streamlines interface design with a contract-first approach, enabling automated code generation, consistent validation, and efficient collaboration across teams"
+        image="/img/code-snippet.png"
+      />
       <main className={styles.visionMain}>
         <section className={styles.visionSection}>
           <div className={styles.visionContent}>
-            <h1 className={styles.title}>Wirespec <br/> <span>vision</span> </h1>
+            <h1 className={styles.title}>
+              Wirespec <br /> <span>vision</span>{" "}
+            </h1>
             <p className={styles.paragraph}>
               Wirespec envisions a future where interface design is streamlined
               through a contract-first approach. Specifications, defined in a

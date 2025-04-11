@@ -9,6 +9,7 @@ import "../css/custom.css";
 import styles from "./index.module.css";
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
+import Seo from "../components/Seo";
 
 function HomepageHeader() {
   const { siteConfig } = useDocusaurusContext();
@@ -48,10 +49,12 @@ function HomepageHeader() {
 export default function Home(): JSX.Element {
   const { siteConfig } = useDocusaurusContext();
   return (
-    <Layout
-      title={`Hello from ${siteConfig.title}`}
-      description="Description will go into a meta tag in <head />"
-    >
+    <Layout>
+      <Seo
+        title="Wirespec"
+        description="Wirespec streamlines interface design with a contract-first approach, enabling automated code generation, consistent validation, and efficient collaboration across teams"
+        image="/img/code-snippet.png"
+      />
       <HomepageHeader />
       <main className={clsx(styles.page)}>
         <section className="designFirstContent designFirstContent-blur pt-0">
@@ -301,7 +304,7 @@ export default function Home(): JSX.Element {
                       title="todo.ws"
                       className="custom-code-block"
                     >
-{`type TodoDto {
+                      {`type TodoDto {
     id: Integer?,
     name: String
 }
@@ -339,32 +342,32 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                 <div className="col col--6 code-block-col">
                   <div>
                     <Tabs>
-                       <TabItem value="TypeScript" label="TypeScript">
-                         <CodeBlock language="bash">{`wirespec compile --input . --language typescript`}</CodeBlock>
-                         <p>This will generate the following file:</p>
-                         <CodeBlock>{`project/out/community/flock/wirespec/generated/
+                      <TabItem value="TypeScript" label="TypeScript">
+                        <CodeBlock language="bash">{`wirespec compile --input . --language typescript`}</CodeBlock>
+                        <p>This will generate the following file:</p>
+                        <CodeBlock>{`project/out/community/flock/wirespec/generated/
 └─ Todo.ts`}</CodeBlock>
-                       </TabItem>
-                    
-                       <TabItem value="Kotlin" label="Kotlin">
-                         <CodeBlock language="bash">{`wirespec compile --input . --language kotlin`}</CodeBlock>
-                         <p>This will generate the following file:</p>
-                         <CodeBlock>{`project/out/community/flock/wirespec/generated/
+                      </TabItem>
+
+                      <TabItem value="Kotlin" label="Kotlin">
+                        <CodeBlock language="bash">{`wirespec compile --input . --language kotlin`}</CodeBlock>
+                        <p>This will generate the following file:</p>
+                        <CodeBlock>{`project/out/community/flock/wirespec/generated/
 └─ Todo.kt`}</CodeBlock>
-                       </TabItem>
-                    
-                       <TabItem value="Java" label="Java">
-                         <CodeBlock language="bash">{`wirespec compile --input . --language java`}</CodeBlock>
-                         <p>This will generate the following files:</p>
-                         <CodeBlock>{`project/out/community/flock/wirespec/generated/
+                      </TabItem>
+
+                      <TabItem value="Java" label="Java">
+                        <CodeBlock language="bash">{`wirespec compile --input . --language java`}</CodeBlock>
+                        <p>This will generate the following files:</p>
+                        <CodeBlock>{`project/out/community/flock/wirespec/generated/
 └─ CreateTodoEndpoint.java
 └─ DeleteTodoEndpoint.java
 └─ GetByIdEndpoint.java
 └─ GetTodosEndpoint.java
 └─ TodoDto.java
 └─ UpdateTodoEndpoint.java`}</CodeBlock>
-                                    </TabItem>
-                                  </Tabs>
+                      </TabItem>
+                    </Tabs>
                   </div>
                 </div>
                 <div className="col col--6">
