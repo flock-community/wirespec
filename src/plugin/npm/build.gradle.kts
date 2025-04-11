@@ -25,6 +25,13 @@ kotlin {
         compilations["main"].packageJson {
             customField("name", "@flock/wirespec")
             customField("bin", mapOf("wirespec" to "wirespec-bin.mjs"))
+            customField(
+                "description",
+                "Simplify your API development workflows, accelerate implementation, and guarantee strict adherence " +
+                    "to defined contract specifications",
+            )
+            customField("repository", mapOf("type" to "git", "url" to "https://github.com/flock-community/wirespec"))
+            customField("license", "Apache-2.0")
         }
     }
 
@@ -54,4 +61,13 @@ kotlin {
             }
         }
     }
+}
+
+val copyReadme = tasks.register<Copy>("copyReadme") {
+    from(project.file("README.md"))
+    into(project.buildDir.resolve("dist/js/productionLibrary"))
+}
+
+tasks.named("jsProcessResources") {
+    dependsOn(copyReadme)
 }
