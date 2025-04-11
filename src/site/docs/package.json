@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@docusaurus/core": "^3.7.0",
+    "@docusaurus/plugin-sitemap": "^3.7.0",
     "@docusaurus/preset-classic": "^3.7.0",
     "@docusaurus/theme-search-algolia": "^3.7.0",
     "@flock/black-sun": "^0.2.0",
