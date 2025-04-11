@@ -5,7 +5,7 @@
 <div align="center">
 <h1>
   <br>
-  <a href="https://github.com/flock-community/wirespec"><img src="./images/wirespec-logo.svg" alt="Wirespec logo" width="200"/></a>
+  <a href="https://github.com/flock-community/wirespec"><img src="./images/wirespec-logo.svg" alt="" width="200"/></a>
   <br>
     Wirespec
   <br>
