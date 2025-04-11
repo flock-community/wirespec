@@ -12,44 +12,49 @@ fi
 compilePackage="community.flock.wirespec.generated"
 convertPackage="community.flock.openapi.generated"
 
-echo "Test macOS artifact"
+languages=("Java")
+
+localWorkDir=$(pwd)
+
+function run() {
+    local wirespec=$1
+    local workDir=$2
+    local platform=$3
+    local language=$4
+    local lang=$(echo "$language" | tr '[:upper:]' '[:lower:]')
+    local compile="$wirespec compile -i $workDir/types/wirespec -l $language -p $compilePackage -o $workDir/types/out/$platform/wirespec/$lang --shared"
+    local convert="$wirespec convert -i $workDir/types/openapi/petstore.json openapiv2 -l $language -p $convertPackage -o $workDir/types/out/$platform/openapi/petstore/$lang --shared"
+    echo "$compile && $convert"
+}
+
+printf "\nTest macOS artifact:\n"
 macWirespec=./src/plugin/$artifactName/build/bin/$macosArch/releaseExecutable/$artifactName.kexe
-"$macWirespec" compile -i "$(pwd)"/types -l Java -p "$compilePackage" -o "$(pwd)"/types/out/native/java
-"$macWirespec" compile -i "$(pwd)"/types -l Kotlin -p "$compilePackage" -o "$(pwd)"/types/out/native/kotlin
-"$macWirespec" compile -i "$(pwd)"/types -l Scala -p "$compilePackage" -o "$(pwd)"/types/out/native/scala
-"$macWirespec" compile -i "$(pwd)"/types -l TypeScript -p "$compilePackage" -o "$(pwd)"/types/out/native/typescript
-"$macWirespec" compile -i "$(pwd)"/types -l Wirespec -p "$compilePackage" -o "$(pwd)"/types/out/native/wirespec
-"$macWirespec" convert -i "$(pwd)"/types/petstore.json openapiv2 -l Java -p "$convertPackage" -o "$(pwd)"/types/out/native/java
-"$macWirespec" convert -i "$(pwd)"/types/petstore.json openapiv2 -l Kotlin -p "$convertPackage" -o "$(pwd)"/types/out/native/kotlin
-"$macWirespec" convert -i "$(pwd)"/types/petstore.json openapiv2 -l Scala -p "$convertPackage" -o "$(pwd)"/types/out/native/scala
-"$macWirespec" convert -i "$(pwd)"/types/petstore.json openapiv2 -l TypeScript -p "$convertPackage" -o "$(pwd)"/types/out/native/typescript
-"$macWirespec" convert -i "$(pwd)"/types/petstore.json openapiv2 -l Wirespec -p "$convertPackage" -o "$(pwd)"/types/out/native/wirespec
+macCommand=""
+for lang in "${languages[@]}"; do
+   macCommand="$macCommand $(run $macWirespec "$localWorkDir" "native" "$lang") && "
+done
+eval "${macCommand%????}"
 
-echo "Test JVM artifact"
+printf "\nTest JVM artifact:\n"
 jvmWirespec=./src/plugin/$artifactName/build/libs/$artifactName-jvm-0.0.0-SNAPSHOT.jar
-java -jar "$jvmWirespec" compile -i "$(pwd)"/types -l Java -p "$compilePackage" -o "$(pwd)"/types/out/jvm/java
-java -jar "$jvmWirespec" compile -i "$(pwd)"/types -l Kotlin -p "$compilePackage" -o "$(pwd)"/types/out/jvm/kotlin
-java -jar "$jvmWirespec" compile -i "$(pwd)"/types -l Scala -p "$compilePackage" -o "$(pwd)"/types/out/jvm/scala
-java -jar "$jvmWirespec" compile -i "$(pwd)"/types -l TypeScript -p "$compilePackage" -o "$(pwd)"/types/out/jvm/typescript
-java -jar "$jvmWirespec" compile -i "$(pwd)"/types -l Wirespec -p "$compilePackage" -o "$(pwd)"/types/out/jvm/wirespec
-java -jar "$jvmWirespec" convert -i "$(pwd)"/types/petstore.json openapiv2 -l Java -p "$convertPackage" -o "$(pwd)"/types/out/jvm/java
-java -jar "$jvmWirespec" convert -i "$(pwd)"/types/petstore.json openapiv2 -l Kotlin -p "$convertPackage" -o "$(pwd)"/types/out/jvm/kotlin
-java -jar "$jvmWirespec" convert -i "$(pwd)"/types/petstore.json openapiv2 -l Scala -p "$convertPackage" -o "$(pwd)"/types/out/jvm/scala
-java -jar "$jvmWirespec" convert -i "$(pwd)"/types/petstore.json openapiv2 -l TypeScript -p "$convertPackage" -o "$(pwd)"/types/out/jvm/typescript
-java -jar "$jvmWirespec" convert -i "$(pwd)"/types/petstore.json openapiv2 -l Wirespec -p "$convertPackage" -o "$(pwd)"/types/out/jvm/wirespec
+jvmCommand=""
+for lang in "${languages[@]}"; do
+  jvmCommand="$jvmCommand $(run "java -jar $jvmWirespec" "$localWorkDir" "jvm" "$lang") && "
+done
+eval "${jvmCommand%????}"
 
-echo "Test Node.js artifact"
-wirespecJs=build/js/packages/wirespec-src-plugin-$artifactName/kotlin/wirespec-src-plugin-$artifactName.js
-node "$wirespecJs" compile -i "$(pwd)"/types -l Java -p "$compilePackage" -o "$(pwd)"/types/out/java
-node "$wirespecJs" compile -i "$(pwd)"/types -l Kotlin -p "$compilePackage" -o "$(pwd)"/types/out/kotlin
-node "$wirespecJs" compile -i "$(pwd)"/types -l Scala -p "$compilePackage" -o "$(pwd)"/types/out/scala
-node "$wirespecJs" compile -i "$(pwd)"/types -l TypeScript -p "$compilePackage" -o "$(pwd)"/types/out/typescript
-node "$wirespecJs" compile -i "$(pwd)"/types -l Wirespec -p "$compilePackage" -o "$(pwd)"/types/out/wirespec
-node "$wirespecJs" convert -i "$(pwd)"/types/petstore.json openapiv2 -l Java -p "$convertPackage" -o "$(pwd)"/types/out/java
-node "$wirespecJs" convert -i "$(pwd)"/types/petstore.json openapiv2 -l Kotlin -p "$convertPackage" -o "$(pwd)"/types/out/kotlin
-node "$wirespecJs" convert -i "$(pwd)"/types/petstore.json openapiv2 -l Scala -p "$convertPackage" -o "$(pwd)"/types/out/scala
-node "$wirespecJs" convert -i "$(pwd)"/types/petstore.json openapiv2 -l TypeScript -p "$convertPackage" -o "$(pwd)"/types/out/typescript
-node "$wirespecJs" convert -i "$(pwd)"/types/petstore.json openapiv2 -l Wirespec -p "$convertPackage" -o "$(pwd)"/types/out/wirespec
+printf "\nTest Node.js artifact:\n"
+nodeWirespec=build/js/packages/wirespec-src-plugin-$artifactName/kotlin/wirespec-src-plugin-$artifactName.js
+nodeCommand=""
+for lang in "${languages[@]}"; do
+  nodeCommand="$nodeCommand $(run "node $nodeWirespec" "$localWorkDir" "node" "$lang") && "
+done
+eval "${nodeCommand%????}"
 
-echo "Test docker image"
-docker run $archSpecific --rm -it -v "$(pwd)"/types:/app/types wirespec
+printf "\nTest docker image:\n"
+dockerWirespec=/app/wirespec
+dockerCommand=""
+for lang in "${languages[@]}"; do
+  dockerCommand="$dockerCommand $(run "$dockerWirespec" "/app" "docker" "$lang") && "
+done
+docker run $archSpecific --rm -it -v "$localWorkDir"/types:/app/types wirespec "${dockerCommand%????}"
