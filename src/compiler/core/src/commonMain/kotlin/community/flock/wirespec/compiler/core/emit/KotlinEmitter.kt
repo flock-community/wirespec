@@ -26,6 +26,7 @@ import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
+import community.flock.wirespec.compiler.core.removeQuestionMark
 import community.flock.wirespec.compiler.utils.Logger
 
 open class KotlinEmitter(
@@ -283,7 +284,7 @@ open class KotlinEmitter(
     private fun Endpoint.Segment.Param.emitIdentifier() =
         "request.path.${emit(identifier)}.let{serialization.serialize(it, typeOf<${reference.emit()}>())}"
 
-    private fun Endpoint.Content?.emit() = this?.reference?.emit() ?: "Unit"
+    private fun Endpoint.Content?.emit() = this?.reference?.emit()?.removeQuestionMark() ?: "Unit"
 
     private fun Endpoint.Segment.Param.emit() = "${emit(identifier)}: ${reference.emit()}"
 
