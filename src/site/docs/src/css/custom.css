@@ -75,7 +75,7 @@ body {
 .container {
     max-width: 1310px;
     padding: 0px 15px;
-    width: 90%;
+    width: 98%;
 }
 
 .container-fluid {
@@ -293,6 +293,9 @@ body {
 .table table tr td {
     font-weight: 400;
 }
+.table table tr td:first-child {
+    font-weight: 600;
+}
 
 .table table tr th,
 .table table tr td {
@@ -307,7 +310,21 @@ body {
 table tr:nth-child(2n) {
     background-color: #181818;
 }
-
+@media(max-width: 1440px){
+    .table table tr th,
+    .table table tr td {
+        padding: 15px;
+    }
+}
+@media(max-width: 767px){
+    .table table {
+        width: 100%;
+        min-width: 1024px;
+    }
+    .table table tr td{
+        white-space: nowrap;
+    }
+}
 .card-flock {
     min-height: 316px;
     display: flex;
@@ -566,6 +583,17 @@ table tr:nth-child(2n) {
     position: relative;
 }
 
+.card-flock{
+    padding-top: 58.8% !important; 
+    position: relative;
+}
+.card-flock iframe{
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+}
 .card-flock-wrap:before {
     display: block;
     content: '';
@@ -579,6 +607,11 @@ table tr:nth-child(2n) {
     filter: blur(300px);
     z-index: -1;
     transform: translate(-50%, -50%);
+}
+.code-block-col img{
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
 }
 
 @media (max-width: 1440px){

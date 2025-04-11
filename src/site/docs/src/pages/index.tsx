@@ -24,7 +24,7 @@ function HomepageHeader() {
           </Link>
           <Link
             className={clsx(styles.button, styles.buttonDefault)}
-            to="/docs/intro/">
+            to="https://playground.wirespec.io/">
             Playground
           </Link>
         </div>
@@ -61,13 +61,8 @@ export default function Home(): JSX.Element {
                 </div>
               </div>
               <div className="col col--7">
-                <div className="card card-border-bottom card-nospace">
-
-                  <CodeBlock language="js" title="example.js">
-                  {`function hello() {
-    return 'hi';
-  }`}
-                  </CodeBlock>
+                <div className=" card-nospace">
+                  <img src="/img/design-first-human-readable.png" alt="design-first-human-readable"/> 
               </div>
               </div>
             </div>
@@ -77,14 +72,9 @@ export default function Home(): JSX.Element {
           <div className="container">
             <div className="row row--align-center">
               <div className="col col--7">
-                  <div className="card card-border-bottom card-nospace">
-
-                <CodeBlock language="js" title="example.js">
-                {`function hello() {
-  return 'hi';
-}`}
-                </CodeBlock>
-              </div>
+                <div className="card card-border-bottom card-nospace">
+                  <img src="/img/why-wirespec.png" alt="design-first-human-readable"/> 
+                </div>
               </div>
               <div className="col col--5">
                 <div className="designFirstContent-right">
@@ -203,13 +193,7 @@ export default function Home(): JSX.Element {
                   </div>
                 </div>
                 <div className="col col--6 code-block-col">
-                  <div className="card card-border-bottom card-nospace">
-                    <CodeBlock language="js" title="example.js">
-                {`function hello() {
-  return 'hi';
-}`}
-                </CodeBlock>
-                  </div>
+                  <img src="/img/validate.png" alt=""/>
                 </div>
               </div>
             </div>
@@ -225,14 +209,14 @@ export default function Home(): JSX.Element {
                 <div className="card card-other card-border-bottom">
                   <Heading as="h4" className={clsx(styles.heading2)}>Plugins</Heading>
                   <p>Wirespec supports various plugins for integration into a variety of ecosystems.</p>
-                  <p><span>Plugins:</span> Gradle, Maven, NPM</p>
+                  <p><span>Plugins:</span> Cli/IDE's, Gradle, Maven, NPM</p>
                 </div>
               </div>
               <div className="col col--6">
                 <div className="card card-other card-border-bottom">
                   <Heading as="h4" className={clsx(styles.heading2)}>IDE's</Heading>
                   <p>Wirespec supports two IDEs: IntelliJ IDEA and VS Code.</p>
-                  <p><span>Plugins:</span>IntelliJ IDEA and VS Code.</p>
+                  <p><span>Plugins:</span> IntelliJ IDEA and VS Code.</p>
                 </div>
               </div>
               <div className="col col--6">
@@ -253,7 +237,7 @@ export default function Home(): JSX.Element {
                 <div className="card card-other card-border-bottom">
                   <Heading as="h4" className={clsx(styles.heading2)}>Integration</Heading>
                   <p>Wirespec has integrations with major frameworks.</p>
-                  <p><span>Plugins:</span>  OpenAPI, Avro</p>
+                  <p><span>Plugins:</span> Spring, Jackson, Avro</p>
                 </div>
               </div>
             </div>
@@ -287,25 +271,53 @@ export default function Home(): JSX.Element {
                     <td>Programmatic API design</td>
                   </tr>
                   <tr>
-                    <td>Primary focus</td>
-                    <td>Streamlined API design</td>
-                    <td>Restful API’s</td>
-                    <td>Asynchronous API’s</td>
-                    <td>Programmatic API design</td>
+                    <td>Specification Format</td>
+                    <td>Minimal, Wirespec syntax</td>
+                    <td>YAML/JSON</td>
+                    <td>YAML/JSON</td>
+                    <td>TypeScript-like syntax</td>
                   </tr>
                   <tr>
-                    <td>Primary focus</td>
-                    <td>Streamlined API design</td>
-                    <td>Restful API’s</td>
-                    <td>Asynchronous API’s</td>
-                    <td>Programmatic API design</td>
+                    <td>Ecosystem Support</td>
+                    <td>Emerging</td>
+                    <td>Mature and extensive</td>
+                    <td>Growing rapidly</td>
+                    <td>Emerging</td>
                   </tr>
                   <tr>
-                    <td>Primary focus</td>
-                    <td>Streamlined API design</td>
-                    <td>Restful API’s</td>
-                    <td>Asynchronous API’s</td>
-                    <td>Programmatic API design</td>
+                    <td>Code Generation</td>
+                    <td>Built-in, cross-language</td>
+                    <td>Extensive via tools</td>
+                    <td>Robust via tools</td>
+                    <td>Flexible and customizable</td>
+                  </tr>
+                  <tr>
+                    <td>Best for Microservices</td>
+                    <td>Excellent</td>
+                    <td>Good</td>
+                    <td>Excellent</td>
+                    <td>Good</td>
+                  </tr>
+                  <tr>
+                    <td>Asynchronous Support</td>
+                    <td>Limited</td>
+                    <td>Limited</td>
+                    <td>Excellent</td>
+                    <td>Limited</td>
+                  </tr>
+                  <tr>
+                    <td>Ease of Use</td>
+                    <td>High (minimalist)</td>
+                    <td>Moderate (can be verbose)</td>
+                    <td>Moderate</td>
+                    <td>Moderate (requires coding)</td>
+                  </tr>
+                  <tr>
+                    <td>Technology</td>
+                    <td>Multiplatform (JVM Node.js Binary)</td>
+                    <td>JVM</td>
+                    <td>Node.js</td>
+                    <td>Node.js</td>
                   </tr>
                 </tbody>
               </table>
@@ -325,10 +337,9 @@ export default function Home(): JSX.Element {
               </div>
               <div className="col col--5">
                 <div className="card-flock-wrap">
-                  
-                <div className="card card-border-bottom card-flock">
-                  <img src="/img/flock-logo.png" alt="flock Logo" />
-                </div>
+                  <div className="card card-border-bottom card-nospace card-flock">
+                    <iframe width="560" height="315" src="https://www.youtube.com/embed/LMA5ByWUhBo?si=4BK1w7GIIVfr2doG" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                  </div>
                 </div>
               </div>
             </div>
