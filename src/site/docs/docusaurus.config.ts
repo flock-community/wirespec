@@ -7,7 +7,7 @@ const config: Config = {
   tagline: "Dinosaurs are cool",
   favicon: "img/wirespec-favicon.png",
   // Set the production url of your site here
-  url: "https://docs.wirespec.io",
+  url: "https://wirespec.io/",
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: "/",
@@ -48,6 +48,11 @@ const config: Config = {
             "./custom.css",
           ],
         },
+        sitemap: {
+          changefreq: "weekly",
+          priority: 0.5,
+          filename: "sitemap.xml", // optional; default is fine
+        },
       } satisfies Preset.Options,
     ],
   ],
@@ -56,17 +61,29 @@ const config: Config = {
       defaultMode: "dark",
     },
     metadata: [
-      { name: 'description', content: 'Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications' },
-      { property: 'og:title', content: `Wirespec your API's` },
-      { property: 'og:description', content: 'Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications' },
-      { property: 'og:image', content: '/img/code-snippet.jpg' },
-      { property: 'og:type', content: 'website' },
-      { property: 'og:url', content: 'https://wirespec.io/' },
+      {
+        name: "description",
+        content:
+          "Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications",
+      },
+      { property: "og:title", content: `Wirespec your API's` },
+      {
+        property: "og:description",
+        content:
+          "Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications",
+      },
+      { property: "og:image", content: "/img/code-snippet.jpg" },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://wirespec.io/" },
 
-      { name: 'twitter:card', content: 'summary_large_image' },
-      { name: 'twitter:title', content: `Wirespec your API's` },
-      { name: 'twitter:description', content: 'Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications' },
-      { name: 'twitter:image', content: '/img/code-snippet.jpg' },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: `Wirespec your API's` },
+      {
+        name: "twitter:description",
+        content:
+          "Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications",
+      },
+      { name: "twitter:image", content: "/img/code-snippet.jpg" },
     ],
     stylesheets: [
       {
