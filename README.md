@@ -2,9 +2,19 @@
 [![Apache 2.0 License](https://img.shields.io/badge/License-Apache_2.0-blue)](LICENSE)
 ![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/flock-community/wirespec/build.yml)
 
-# Wirespec
+<div align="center">
+<h1>
+  <br>
+  <a href="https://github.com/flock-community/wirespec"><img src="./images/wirespec-logo.svg" alt="Wirespec logo" width="200"/></a>
+  <br>
+    Wirespec
+  <br>
+</h1>
+<subtitle>
+Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications
+</subtitle>
+</div>
 
-_Readable contracts and typesafe wires made easy_
 
 ## Introduction
 
