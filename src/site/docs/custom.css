@@ -23,7 +23,7 @@
 
 .header-github-link {
     margin-left: 8px;
-    display: inline-flex;
+    display: flex !important;
 }
 
 .navbar__items--right .colorModeToggle_DEke {

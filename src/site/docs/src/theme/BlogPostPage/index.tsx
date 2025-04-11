@@ -1,7 +1,8 @@
-import React from 'react';
-import Layout from '@theme/Layout';
-import type { Props } from '@theme/BlogPostPage';
-import styles from './blogDetail.module.css'; // Create this CSS module
+import React from "react";
+import Layout from "@theme/Layout";
+import type { Props } from "@theme/BlogPostPage";
+import styles from "./blogDetail.module.css"; // Create this CSS module
+import Seo from "@site/src/components/Seo";
 
 export default function BlogPostPage(props: Props): JSX.Element {
   const { content: BlogPostContent } = props;
@@ -9,7 +10,10 @@ export default function BlogPostPage(props: Props): JSX.Element {
   const { title, description, date } = metadata;
 
   return (
-    <Layout title={title} description={description}>
+    <Layout
+      title="Wirespec blogs"
+      description="Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications"
+    >
       <main className={styles.blogMain}>
         <section className={styles.hero}>
           <h1>{title}</h1>

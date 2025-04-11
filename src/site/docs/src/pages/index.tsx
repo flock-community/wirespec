@@ -49,8 +49,8 @@ export default function Home(): JSX.Element {
   const { siteConfig } = useDocusaurusContext();
   return (
     <Layout
-      title={`Hello from ${siteConfig.title}`}
-      description="Description will go into a meta tag in <head />"
+      title="Wirespec your API's "
+      description="Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications"
     >
       <HomepageHeader />
       <main className={clsx(styles.page)}>
@@ -301,7 +301,7 @@ export default function Home(): JSX.Element {
                       title="todo.ws"
                       className="custom-code-block"
                     >
-{`type TodoDto {
+                      {`type TodoDto {
     id: Integer?,
     name: String
 }
@@ -339,32 +339,32 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                 <div className="col col--6 code-block-col">
                   <div>
                     <Tabs>
-                       <TabItem value="TypeScript" label="TypeScript">
-                         <CodeBlock language="bash">{`wirespec compile --input . --language typescript`}</CodeBlock>
-                         <p>This will generate the following file:</p>
-                         <CodeBlock>{`project/out/community/flock/wirespec/generated/
+                      <TabItem value="TypeScript" label="TypeScript">
+                        <CodeBlock language="bash">{`wirespec compile --input . --language typescript`}</CodeBlock>
+                        <p>This will generate the following file:</p>
+                        <CodeBlock>{`project/out/community/flock/wirespec/generated/
 └─ Todo.ts`}</CodeBlock>
-                       </TabItem>
-                    
-                       <TabItem value="Kotlin" label="Kotlin">
-                         <CodeBlock language="bash">{`wirespec compile --input . --language kotlin`}</CodeBlock>
-                         <p>This will generate the following file:</p>
-                         <CodeBlock>{`project/out/community/flock/wirespec/generated/
+                      </TabItem>
+
+                      <TabItem value="Kotlin" label="Kotlin">
+                        <CodeBlock language="bash">{`wirespec compile --input . --language kotlin`}</CodeBlock>
+                        <p>This will generate the following file:</p>
+                        <CodeBlock>{`project/out/community/flock/wirespec/generated/
 └─ Todo.kt`}</CodeBlock>
-                       </TabItem>
-                    
-                       <TabItem value="Java" label="Java">
-                         <CodeBlock language="bash">{`wirespec compile --input . --language java`}</CodeBlock>
-                         <p>This will generate the following files:</p>
-                         <CodeBlock>{`project/out/community/flock/wirespec/generated/
+                      </TabItem>
+
+                      <TabItem value="Java" label="Java">
+                        <CodeBlock language="bash">{`wirespec compile --input . --language java`}</CodeBlock>
+                        <p>This will generate the following files:</p>
+                        <CodeBlock>{`project/out/community/flock/wirespec/generated/
 └─ CreateTodoEndpoint.java
 └─ DeleteTodoEndpoint.java
 └─ GetByIdEndpoint.java
 └─ GetTodosEndpoint.java
 └─ TodoDto.java
 └─ UpdateTodoEndpoint.java`}</CodeBlock>
-                                    </TabItem>
-                                  </Tabs>
+                      </TabItem>
+                    </Tabs>
                   </div>
                 </div>
                 <div className="col col--6">
