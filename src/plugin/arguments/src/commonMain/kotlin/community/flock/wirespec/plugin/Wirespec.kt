@@ -12,14 +12,12 @@ import community.flock.wirespec.plugin.io.FilePath
 import kotlin.reflect.KFunction2
 
 fun compile(arguments: CompilerArguments) {
-    val ctx = {
-        object : CompilationContext {
-            override val logger = arguments.logger
-            override val emitters = arguments.emitters
-        }
+    val ctx = object : CompilationContext {
+        override val logger = arguments.logger
+        override val emitters = arguments.emitters
     }
 
-    ctx().compile(arguments.input.map { ModuleContent(it.name.value, it.content) })
+    ctx.compile(arguments.input.map { ModuleContent(it.name.value, it.content) })
         .mapLeft { it.map(WirespecException::message) }
         .fold({ arguments.error(it.joinToString()) }) {
             it.forEach { (file, result) ->
