@@ -34,8 +34,8 @@ export default function FooterLayout( { style, links, logo, copyright } ) {
                         </div>
                         <div class="col">
                             <ul class="footer__items clean-list">
-                                <li class="footer__item"><a class="footer__link-item" href="/docs/intro">Privacy statement</a></li>
-                                <li class="footer__item"><a class="footer__link-item" href="/docs/plugins">Terms of Use</a></li>
+                                {/*<li class="footer__item"><a class="footer__link-item" href="/docs/intro">Privacy statement</a></li>*/}
+                                {/*<li class="footer__item"><a class="footer__link-item" href="/docs/plugins">Terms of Use</a></li>*/}
                             </ul>
                         </div>
                     </div>
