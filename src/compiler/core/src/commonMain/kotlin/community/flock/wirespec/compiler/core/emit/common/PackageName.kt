@@ -18,5 +18,5 @@ class PackageName(override val value: String, val createDirectory: Boolean) : Va
             ?.takeIf(String::isNotBlank)
             .let { PackageName(it ?: DEFAULT_SHARED_PACKAGE_STRING, it != null) }
     }
-    fun getDirPrefix(): String = value.replace(".", "/") + "/"
+    fun toDir(): String = value.replace(".", "/") + "/"
 }
