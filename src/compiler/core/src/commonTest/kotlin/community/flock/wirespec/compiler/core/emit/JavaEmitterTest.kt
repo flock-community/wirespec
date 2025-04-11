@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.emit
 
 import arrow.core.nonEmptyListOf
+import arrow.core.nonEmptySetOf
 import community.flock.wirespec.compiler.core.EmitContext
 import community.flock.wirespec.compiler.core.fixture.NodeFixtures
 import community.flock.wirespec.compiler.core.parse.Definition
@@ -12,12 +13,13 @@ import kotlin.test.Test
 class JavaEmitterTest {
 
     private val emitContext = object : EmitContext, NoLogger {
-        override val emitter = JavaEmitter()
+        override val emitters = nonEmptySetOf(JavaEmitter())
     }
 
     @Test
     fun testEmitterType() {
-        val expected = """
+        val expected = listOf(
+            """
             |package community.flock.wirespec.generated;
             |
             |public record Todo (
@@ -28,7 +30,8 @@ class JavaEmitterTest {
             |) {
             |};
             |
-        """.trimMargin()
+            """.trimMargin(),
+        )
 
         val res = emitContext.emitFirst(NodeFixtures.type)
         res shouldBe expected
@@ -36,7 +39,8 @@ class JavaEmitterTest {
 
     @Test
     fun testEmitterRefined() {
-        val expected = """
+        val expected = listOf(
+            """
             |package community.flock.wirespec.generated;
             |
             |import community.flock.wirespec.java.Wirespec;
@@ -51,7 +55,8 @@ class JavaEmitterTest {
             |  public String getValue() { return value; }
             |}
             |
-        """.trimMargin()
+            """.trimMargin(),
+        )
 
         val res = emitContext.emitFirst(NodeFixtures.refined)
         res shouldBe expected
@@ -59,7 +64,8 @@ class JavaEmitterTest {
 
     @Test
     fun testEmitterEnum() {
-        val expected = """
+        val expected = listOf(
+            """
             |package community.flock.wirespec.generated;
             |
             |import community.flock.wirespec.java.Wirespec;
@@ -82,11 +88,12 @@ class JavaEmitterTest {
             |  }
             |}
             |
-        """.trimMargin()
+            """.trimMargin(),
+        )
 
         val res = emitContext.emitFirst(NodeFixtures.enum)
         res shouldBe expected
     }
 
-    private fun EmitContext.emitFirst(node: Definition) = emitter.emit(Module("", nonEmptyListOf(node)), logger).first().result
+    private fun EmitContext.emitFirst(node: Definition) = emitters.map { it.emit(Module("", nonEmptyListOf(node)), logger).first().result }
 }

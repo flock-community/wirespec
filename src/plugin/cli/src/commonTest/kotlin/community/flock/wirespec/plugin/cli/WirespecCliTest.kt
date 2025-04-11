@@ -142,15 +142,18 @@ class WirespecCliTest {
 
         WirespecCli.provide(::compile, ::convert).main(
             arrayOf(
-                "convert", "openapiv2",
-                "-i", input,
-                "-o", output,
-                "-l", "TypeScript",
-                "-p", "community.flock.openapi",
+                "convert",
+                "openapiv2",
+                "-i",
+                input,
+                "-o",
+                output,
+                "-l",
+                "TypeScript",
             ),
         )
 
-        val directoryPath = DirectoryPath("$output/$packageDir")
+        val directoryPath = DirectoryPath(output)
         val path = FilePath(directoryPath, Name("Petstore"), FileExtension.TypeScript)
 
         path.read() shouldContain """

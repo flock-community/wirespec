@@ -61,7 +61,6 @@ class AvroJavaEmitterTest {
             |
         """.trimMargin()
         val actual = emitter.emit(ast, noLogger)
-        println(actual.first().result)
         assertEquals(expected, actual.first().result)
     }
 
@@ -111,7 +110,6 @@ class AvroJavaEmitterTest {
             |
         """.trimMargin()
         val actual = emitter.emit(ast, noLogger)
-        println(actual)
         assertEquals(expected, actual.first().result)
     }
 }

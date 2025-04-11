@@ -1,6 +1,7 @@
 package community.flock.wirespec.integration.jackson.kotlin
 
 import arrow.core.nonEmptyListOf
+import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
@@ -32,16 +33,17 @@ class GenerateTestClasses {
         val todoFile = File("src/commonTest/resources/wirespec/todos.ws").readText()
         val ast = object : ParseContext, NoLogger {
             override val spec = WirespecSpec
-        }.parse(nonEmptyListOf(todoFile))
+        }.parse(nonEmptyListOf(ModuleContent("", todoFile)))
             .fold({ error("Cannot parse wirespec: ${it.first().message}") }, { it })
 
         val emittedJava = javaEmitter.emit(ast, noLogger)
         val emittedKotlin = kotlinEmitter.emit(ast, noLogger)
 
         javaDir.mkdirs()
-        emittedJava.forEach {
-            javaDir.resolve("${it.typeName}.java").writeText(it.result)
-        }
+        emittedJava
+            .filter { !it.typeName.contains("Wirespec") }.forEach {
+                baseDir.resolve("java").resolve(it.typeName).writeText(it.result)
+            }
 
         kotlinDir.mkdirs()
         emittedKotlin.forEach {

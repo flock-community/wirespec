@@ -21,6 +21,7 @@ import community.flock.kotlinx.openapi.bindings.v3.SchemaObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceOrBooleanObject
 import community.flock.kotlinx.openapi.bindings.v3.StatusCode
+import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
@@ -40,16 +41,16 @@ import community.flock.kotlinx.openapi.bindings.v3.Type as OpenapiType
 
 object OpenAPIV3Parser {
 
-    fun parse(json: String, strict: Boolean = false): AST = AST(
+    fun parse(moduleContent: ModuleContent, strict: Boolean = false): AST = AST(
         nonEmptyListOf(
             Module(
-                "",
+                moduleContent.src,
                 OpenAPI(
                     json = Json {
                         prettyPrint = true
                         ignoreUnknownKeys = strict
                     },
-                ).decodeFromString(json).parse().toNonEmptyListOrNull() ?: error("Cannot yield non empty List<Node> for OpenAPI v3"),
+                ).decodeFromString(moduleContent.content).parse().toNonEmptyListOrNull() ?: error("Cannot yield non empty List<Node> for OpenAPI v3"),
             ),
         ),
     )
