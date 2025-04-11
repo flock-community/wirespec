@@ -10,12 +10,10 @@ export default function BlogPostPage(props: Props): JSX.Element {
   const { title, description, date } = metadata;
 
   return (
-    <Layout title={title} description={description}>
-      <Seo
-        title="Wirespec Blogs"
-        description="Wirespec streamlines interface design with a contract-first approach, enabling automated code generation, consistent validation, and efficient collaboration across teams"
-        image="/img/code-snippet.png"
-      />
+    <Layout
+      title="Wirespec blogs"
+      description="Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications"
+    >
       <main className={styles.blogMain}>
         <section className={styles.hero}>
           <h1>{title}</h1>

@@ -9,7 +9,6 @@ import "../css/custom.css";
 import styles from "./index.module.css";
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
-import Seo from "../components/Seo";
 
 function HomepageHeader() {
   const { siteConfig } = useDocusaurusContext();
@@ -49,12 +48,10 @@ function HomepageHeader() {
 export default function Home(): JSX.Element {
   const { siteConfig } = useDocusaurusContext();
   return (
-    <Layout>
-      <Seo
-        title="Wirespec"
-        description="Wirespec streamlines interface design with a contract-first approach, enabling automated code generation, consistent validation, and efficient collaboration across teams"
-        image="/img/code-snippet.png"
-      />
+    <Layout
+      title="Wirespec your API's "
+      description="Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications"
+    >
       <HomepageHeader />
       <main className={clsx(styles.page)}>
         <section className="designFirstContent designFirstContent-blur pt-0">
