@@ -3,136 +3,185 @@ title: Spring
 slug: /integration/spring
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
-This document describes how to integrate Wirespec-generated code with Spring Boot applications.  Wirespec simplifies the creation of type-safe and well-defined APIs, and this integration provides a seamless way to use those APIs within your Spring applications.
+
+This document describes how to integrate Wirespec-generated code with Spring Boot applications.  Wirespec simplifies the
+creation of type-safe and well-defined APIs, and this integration provides a seamless way to use those APIs within your
+Spring applications.
 
 The spring integration works on the controller as well as client.
 
+
 ## Setup
 
-Begin with a Spring Boot application. The [Spring Initializr](https://start.spring.io/) is an excellent starting point. Include the `Spring Reactive Web` dependency.
+<Tabs>
+    <TabItem value="maven" label="Maven">
 
-Add the Maven or Gradle Wirespec plugin to your project, as detailed in the [Plugins](/docs/plugins) documentation.  Configure the plugin to use the custom Spring Java or Kotlin emitter.
+        Add both the dependency and plugin to your `pom.xml` file:
 
-For Java, use: 
+        ```xml
+        <dependency>
+            <groupId>community.flock.wirespec.integration</groupId>
+            <artifactId>spring-jvm</artifactId>
+            <version>0.13.1</version>
+        </dependency>
+        ```
 
+        ```xml
+        <plugin>
+            <groupId>community.flock.wirespec.plugin.maven</groupId>
+            <artifactId>wirespec-maven-plugin</artifactId>
+            <version>0.13.1</version>
+            <executions>
+                <execution>
+                    <id>java</id>
+                    <goals>
+                        <goal>compile</goal>
+                    </goals>
+                    <configuration>
+                        <input>${project.basedir}/src/main/wirespec</input>
+                        <output>${project.build.directory}/generated-sources</output>
+                        <languages>
+                            <language>Java</language>
+                        </languages>
+                        <emitterClass>community.flock.wirespec.integration.spring.java.emit.SpringJavaEmitter</emitterClass>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+        ```
+    </TabItem>
+    <TabItem value="gradle" label="Gradle">
+        ```json
+            tbd
+        ```
+    </TabItem>
+</Tabs>
+
+------------------------------
+
+## Creating a definition
+
+Next, we'll add our Wirespec definition in `src/main/wirespec/`, matching the directory we specified as input in the
+configuration. It contains a simple Todo type and GET endpoint:
+
+[//]: # (Could be the same as in getting-started maybe?)
+```wirespec title="src/main/wirespec/todo.ws"
+type TodoDto {
+    id: Integer,
+    task: String
+}
+
+endpoint GetTodo GET /api/todos/{id: Integer} -> {
+    200 -> TodoDto
+    400 -> String
+}
 ```
-community.flock.wirespec.integration.spring.java.emit.SpringJavaEmitter
+
+Now you can generate sources by running:
+This will generate source to the specified output directory that we can hook up to later..
+
+```bash
+maven install
 ```
 
-For Kotlin, use:
+## RestController
 
-```
-community.flock.wirespec.integration.spring.java.emit.SpringKotlinEmitter
-```
-
-## Usage
-
-Enable Spring integration by adding the `@EnableWirespec` annotation to your application's configuration class:
-
+To enable Spring integration you can simply add the `@EnableWirespecController` annotation to your application's
+configuration class:
 
 ```java
-package community.flock.wirespec.examples.maven.spring.integration;
-
-import community.flock.wirespec.integration.spring.java.configuration.EnableWirespec;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-
 @SpringBootApplication
-@EnableWirespec
+// highlight-next-line
+@EnableWirespeController
 public class TodoApplication {
     public static void main(String[] args) {
         SpringApplication.run(TodoApplication.class, args);
     }
 }
-
 ```
 
-Ensure that the import statement corresponds to the correct package:
+Next, we'll define a simple controller and implement the Wirespec-generated Handler interface for the endpoint we want
+to expose:
 
-*   **Java**: `community.flock.wirespec.integration.spring.java`
-*   **Kotlin**: `community.flock.wirespec.integration.spring.kotlin`
 
-For finer-grained control, use `@EnableWirespecController` or `@EnableWirespecClient` to enable only the controller or client functionality, respectively.
+Finally, .. bla bla implementation:
 
-### Controller
-
-Wirespec endpoints can be seamlessly integrated with Spring controllers, simplifying the exposure of your API while ensuring type safety and clarity.
-
-1. **Annotate with @RestController:** Mark your controller class with the standard @RestController annotation to indicate that it handles incoming web requests.
-
-2. **Implement the Wirespec Handler:** Implement the Wirespec-generated Handler interface for each endpoint you want to expose. This requires providing implementations for the request-handling functions defined in the interface. Each handler function transforms a request into a response.
+Notice you can access a record of the abc you've defined for path/query parameters
 
 ```java
-import community.flock.wirespec.generated.GetTodosEndpoint;
-import community.flock.wirespec.generated.CreateTodoEndpoint;
-
-import org.springframework.web.bind.annotation.RestController;
-
 @RestController
-class TodoController implements GetTodosEndpoint.Handler, CreateTodoEndpoint.Handler {
-    
+class TodoController implements GetTodoEndpoint.Handler {
+
+    @Override
+    public CompletableFuture<GetTodoEndpoint.Response<?>> getTodo(GetTodoEndpoint.Request request) {
+        TodoDto dto = new TodoDto(request.getPath().id(), "Create a Wirespec definition");
+        return completedFuture(new GetTodoEndpoint.Response200(dto));
+    }
+}
+```
+
+```bash
+curl http://localhost:8080/api/todos/1
+```
+
+## WirespecWebClient
+
+You can enable the webclient like so:
+```java
+@SpringBootApplication
+// highlight-next-line
+@EnableWirespecWebClient
+public class TodoApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(TodoApplication.class, args);
+    }
+}
+```
+
+:::note
+
+If you want to use both the Controller *and* WebClient you can use: `@EnableWirespec`
+
+:::
+
+If you are using the WebClient you should add the following to your configuration:
+
+<Tabs>
+    <TabItem value="properties" label="Properties">
+        ```properties
+        wirespec.spring.webclient.base-url=http://localhost:8080
+        ```
+    </TabItem>
+    <TabItem value="yaml" label="YAML">
+        ```yaml
+        wirespec:
+          spring:
+            webclient:
+              base-url: 'http://localhost:8080'
+        ```
+    </TabItem>
+</Tabs>
+
+
+
+Then, we can
+
+```java
+@Service
+public class TodoService implements GetTodosEndpoint.Handler {
+
+    private final WirespecWebClient wirespecWebClient;
+
+    public TodoWebClient(WirespecWebClient wirespecWebClient) {
+        this.wirespecWebClient = wirespecWebClient;
+    }
+
     @Override
     public CompletableFuture<GetTodosEndpoint.Response<?>> getTodos(GetTodosEndpoint.Request request) {
-        // implementation
-    }
-
-    @Override
-    public CompletableFuture<CreateTodoEndpoint.Response<?>> createTodo(CreateTodoEndpoint.Request request) {
-        // implementation
+        return wirespecWebClient.send(request);
     }
 }
 ```
-
-### Client
-
-This section describes how to utilize the Wirespec-generated client interfaces with Spring's WebClient to perform API calls. The core idea is to implement the Handler interface generated by Wirespec for each endpoint (e.g. GetTodosEndpoint.Handler). This implementation leverages the WirespecWebClient to construct and send requests, and handle responses in a type-safe manner.
-
-1. Create a Spring component (e.g., using @Component) that implements the Handler interface for the specific endpoint you want to use.
-
-2. **Inject the WirespecWebClient Bean:** 
-
-The WirespecWebClient is responsible for interacting with the Spring WebClient. Inject the default WirespecWebClient bean into your component's constructor using Spring's @Autowired annotation. This bean is typically configured and provided by the Wirespec Spring integration.
-
-3. **Implement the Handler Method(s) and Send the Request:**
-
-Implement the handler method(s) defined in the Handler interface (e.g., getTodos in the example). Within the handler method, use the wirespecWebClient.send(request) function to send the request.
-
-The send() method takes the Wirespec-generated Request object as input.
-
-It returns a `CompletableFuture<GetTodosEndpoint.Response<?>>` representing the asynchronous operation. The Response object is also Wirespec-generated and provides type-safe access to the response data. The ? is a wildcard, in this case. Replace it with the actual data type, if known.
-
-```java
-package community.flock.wirespec.examples.maven.spring.integration.client;
-
-import community.flock.wirespec.generated.examples.spring.GetTodosEndpoint;
-import community.flock.wirespec.integration.spring.java.client.WirespecWebClient;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import java.util.concurrent.CompletableFuture;
-
-@Component
-public class TodoWebClient implements GetTodosEndpoint.Handler {
-
-  private final WirespecWebClient wirespecWebClient;
-
-  @Autowired
-  public TodoWebClient(WirespecWebClient wirespecWebClient) {
-    this.wirespecWebClient = wirespecWebClient;
-  }
-
-  @Override
-  public CompletableFuture<GetTodosEndpoint.Response<?>> getTodos(GetTodosEndpoint.Request request) {
-    return wirespecWebClient.send(request);
-  }
-}
-```
-
-## Example
-
-Refer to the [maven-spring-integration](https://github.com/flock-community/wirespec/tree/master/examples/maven-spring-integration) example for a complete implementation.
-
-
-
-
