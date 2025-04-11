@@ -1,0 +1,168 @@
+.mainContainer {
+    background-image: url('/img/how-bg.png');
+    background-size: 100%;
+    background-repeat: no-repeat;
+}
+
+.contractMain {
+    padding: 0rem 1rem 9rem 1rem;
+    max-width: 960px;
+    width: 96%;
+    margin: 0 auto;
+    color: white;
+    padding-top: 100px;
+}
+
+.hero h1 {
+    font-family: 'Funnel Display', sans-serif;
+    font-weight: 500;
+    font-size: 54px;
+    line-height: 104%;
+    letter-spacing: -0.03em;
+    text-align: left;
+    margin-bottom: 1rem;
+}
+
+.hero p {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 18px;
+    line-height: 160%;
+    letter-spacing: -0.01em;
+    color: #d1d1d1;
+    text-align: left;
+}
+
+.section h2 {
+    font-size: 28px;
+    font-weight: 600;
+    margin-top: 3rem;
+    margin-bottom: 1.5rem;
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+}
+
+.principles {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 18px;
+    color: #d1d1d1;
+    line-height: 1.7;
+    padding-left: 1.25rem;
+}
+
+.principles>li {
+    margin-bottom: 2rem;
+}
+
+.principles strong {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: white;
+}
+
+.principles ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.principles li {
+    position: relative;
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.bullet {
+    position: absolute;
+    left: 0;
+    top: 0.4em;
+    width: 10px;
+    height: 10px;
+    background-color: #FFDF00;
+    border-radius: 50%;
+}
+
+.generateSection {
+    padding-top: 4rem;
+}
+
+.generateSection h2 {
+    font-family: 'Funnel Display', sans-serif;
+    font-weight: 500;
+    font-size: 48px;
+    letter-spacing: -0.02em;
+    margin-bottom: 2rem;
+    color: white;
+}
+
+.generateSection p {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 18px;
+    line-height: 160%;
+    letter-spacing: -0.01em;
+    color: #d1d1d1;
+    margin-bottom: 1.5rem;
+    text-align: justify;
+}
+
+.validateSection {
+    padding-top: 4rem;
+}
+
+.validateSection h2 {
+    font-family: 'Funnel Display', sans-serif;
+    font-weight: 500;
+    font-size: 48px;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+    color: white;
+}
+
+.validateSection>p {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 18px;
+    color: #d1d1d1;
+    line-height: 160%;
+    letter-spacing: -0.01em;
+    margin-bottom: 2.5rem;
+    text-align: justify;
+}
+
+.validateBlock {
+    margin-bottom: 2rem;
+}
+
+.validateBlock h3 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: white;
+}
+
+.validateBlock p {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 18px;
+    color: #d1d1d1;
+    line-height: 160%;
+    letter-spacing: -0.01em;
+    text-align: justify;
+}
+
+.contractImageSection {
+    border: 1px solid;
+    border-image-source: linear-gradient(180deg, #FFDF00 0%, rgba(16, 16, 16, 0) 100%);
+    border-image-slice: 1;
+    border-radius: 10px;
+    margin: 1rem auto;
+}
+
+.generateImageSection {
+    border: 1px solid;
+    border-image-source: linear-gradient(180deg, #FFDF00 0%, rgba(16, 16, 16, 0) 100%);
+    border-image-slice: 1;
+    border-radius: 10px;
+    margin: 1rem auto;
+}
+
+.heroImage {
+    background: linear-gradient(#101010, #101010) padding-box, linear-gradient(0deg, #101010, #ffdf00) border-box;
+}

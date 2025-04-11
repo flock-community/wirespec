@@ -56,6 +56,7 @@ function Feature({title, Svg, description}: FeatureItem) {
 
 export default function HomepageFeatures(): JSX.Element {
   return (
+    <>
     <section className={styles.features}>
       <div className="container">
         <div className="row">
@@ -65,5 +66,6 @@ export default function HomepageFeatures(): JSX.Element {
         </div>
       </div>
     </section>
+    </>
   );
 }

@@ -1,8 +1,12 @@
 ---
-title: Documentation website
-authors: [wilmveel]
-tags: [wirespec, docs]
+title: New Documentation Site
+slug: /new-doc-site
+description: How we built our new documentation
+authors: [nsmnds]
+tags: [docs, docusaurus]
+image: /img/code-snippet.png
 ---
+
 
 ## Wirespec's New Documentation Website: Your Comprehensive Guide is Here!
 

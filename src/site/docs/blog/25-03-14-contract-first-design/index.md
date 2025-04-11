@@ -1,8 +1,12 @@
 ---
-title: Contract first design
-authors: [wilmveel, nsmnds]
-tags: [wirespec, docs, contract, design]
+title: Contract First Design
+slug: /contract-first-design
+description: Learn about contract-first API development
+authors: [wilmveel]
+tags: [api, contract-first]
+image: /img/code-snippet.png
 ---
+
 
 ## A Contract-First Design Approach
 
