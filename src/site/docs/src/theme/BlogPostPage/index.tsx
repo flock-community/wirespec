@@ -11,8 +11,9 @@ export default function BlogPostPage(props: Props): JSX.Element {
 
   return (
     <Layout
-      title="Wirespec blogs"
-      description="Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications"
+      title={title}
+      description={description}
+      image={frontMatter.image}
     >
       <main className={styles.blogMain}>
         <section className={styles.hero}>

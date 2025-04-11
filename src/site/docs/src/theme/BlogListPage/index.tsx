@@ -9,6 +9,7 @@ export default function BlogListPage({ metadata, items }) {
     <Layout
       title="Wirespec Blogs"
       description="Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications"
+      image="/img/code-snippet.jpg"
     >
       <main className={styles.blogMain}>
         <h1 className={styles.heading}>Blog</h1>

@@ -8,8 +8,9 @@ import clsx from "clsx";
 export default function VisionPage() {
   return (
     <Layout
-      title="Wirespec Vision "
+      title="Wirespec your API's"
       description="Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications"
+      image="/img/code-snippet.jpg"
     >
       <main className={styles.visionMain}>
         <section className={styles.visionSection}>

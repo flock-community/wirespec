@@ -49,8 +49,9 @@ export default function Home(): JSX.Element {
   const { siteConfig } = useDocusaurusContext();
   return (
     <Layout
-      title="Wirespec your API's "
+      title="Wirespec your API's"
       description="Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications"
+      image="/img/code-snippet.jpg"
     >
       <HomepageHeader />
       <main className={clsx(styles.page)}>
@@ -109,7 +110,7 @@ export default function Home(): JSX.Element {
               <div className="col col--7">
                 <div className="card card-border-bottom card-nospace">
                   <img
-                    src="/img/why-wirespec.png"
+                    src="/img/wirespec-double-px.jpg"
                     alt="design-first-human-readable"
                   />
                 </div>
@@ -117,7 +118,7 @@ export default function Home(): JSX.Element {
               <div className="col col--5">
                 <div className="designFirstContent-right">
                   <Heading as="h2" className={clsx(styles.heading2)}>
-                    Why <span className="primary-text-color">Wirespec</span>{" "}
+                    Why <span className="primary-text-color">Wirespec</span>
                   </Heading>
                   <p>
                     Wirespec simplifies interface design using a

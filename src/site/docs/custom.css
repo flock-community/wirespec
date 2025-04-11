@@ -36,7 +36,10 @@
 
 @media (max-width: 767px) {
     .navbar__items--right> :last-child {
-        padding-right: 3rem;
+        padding-right: 2.5rem;
+    }
+    .header-github-link{
+        padding-right: 0px;
     }
 }
 

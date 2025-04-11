@@ -11,8 +11,9 @@ import CodeBlock from "@theme/CodeBlock";
 export default function ContractPage() {
   return (
     <Layout
-      title="Contract-First Design"
-      description="Understanding Wirespec's contract-first approach"
+      title="Wirespec your API's"
+      description="Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications"
+      image="/img/code-snippet.jpg"
     >
       <div className={styles.mainContainer}>
         <main className={styles.contractMain}>

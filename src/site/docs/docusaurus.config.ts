@@ -59,14 +59,14 @@ const config: Config = {
       { name: 'description', content: 'Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications' },
       { property: 'og:title', content: `Wirespec your API's` },
       { property: 'og:description', content: 'Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications' },
-      { property: 'og:image', content: '/img/code-snippet.png' },
+      { property: 'og:image', content: '/img/code-snippet.jpg' },
       { property: 'og:type', content: 'website' },
       { property: 'og:url', content: 'https://wirespec.io/' },
 
       { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'twitter:title', content: `Wirespec your API's` },
       { name: 'twitter:description', content: 'Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications' },
-      { name: 'twitter:image', content: '/img/code-snippet.png' },
+      { name: 'twitter:image', content: '/img/code-snippet.jpg' },
     ],
     stylesheets: [
       {
