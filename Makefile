@@ -4,7 +4,13 @@
 all: build image test example
 
 build:
-	$(shell pwd)/scripts/build.sh
+	make build-wirespec && make build-site
+
+build-wirespec:
+	./gradlew build && (cd src/ide/vscode && npm i && npm run build)
+
+build-site:
+	(cd src/site && make build)
 
 clean:
 	$(shell pwd)/scripts/clean.sh
