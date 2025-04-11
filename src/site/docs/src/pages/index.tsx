@@ -120,7 +120,7 @@ export default function Home(): JSX.Element {
                     Why <span className="primary-text-color">Wirespec</span>{" "}
                   </Heading>
                   <p>
-                    Wirespec is a tool that simplifies interface design using a
+                    Wirespec simplifies interface design using a
                     contract-first approach, with concise, human-readable
                     specifications as the single source of truth. It generates
                     interface definitions automatically, reducing manual errors
@@ -450,7 +450,7 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                     variety of ecosystems.
                   </p>
                   <p>
-                    <span>Plugins:</span> Cli/IDE's, Gradle, Maven, NPM
+                    <span>Plugins:</span> Cli, Gradle, Maven, NPM
                   </p>
                 </div>
               </div>
