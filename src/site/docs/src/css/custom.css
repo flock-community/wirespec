@@ -86,7 +86,6 @@ body {
     padding: 87px 0px;
 }
 
-
 .designFirstContent h2 {
     max-width: 350px;
 }
@@ -107,7 +106,6 @@ body {
     text-align: center;
     padding-bottom: 40px;
 }
-
 
 .how {
     padding: 75px 0px;
@@ -217,12 +215,9 @@ body {
     padding-right: 30px;
 }
 
-
 .designFirstContent-right {
     padding-left: 30px;
 }
-
-
 
 .navbar {
     background-color: transparent;
@@ -441,19 +436,23 @@ table tr:nth-child(2n) {
 
 .footer-link-columns {
     padding: 0 15px;
-    margin-left: auto; 
+    margin-left: auto;
     width: 30%;
 }
-.header-github-link{
+
+.header-github-link {
     margin-left: 0px;
 }
-.footer__links{
+
+.footer__links {
     justify-content: space-between;
 }
-.footer__col{
+
+.footer__col {
     width: auto;
-    flex:  0 0 auto;
+    flex: 0 0 auto;
 }
+
 .logo-column p {
     color: #9F9F9F;
     margin-bottom: 10px;
@@ -614,165 +613,162 @@ table tr:nth-child(2n) {
     max-width: 100%;
 }
 
-@media (max-width: 1440px){
-    .footer-bottom{
+@media (max-width: 1440px) {
+    .footer-bottom {
         margin-top: 80px;
     }
-    .footer--dark{
+    .footer--dark {
         padding-top: 180px;
     }
-
 }
-@media (max-width: 1024px){
-    .footer-bottom{
+
+@media (max-width: 1024px) {
+    .footer-bottom {
         margin-top: 60px;
     }
-
-
 }
-@media (max-width: 996px){
-    .footer-bottom{
+
+@media (max-width: 996px) {
+    .footer-bottom {
         margin-top: 40px;
     }
     .section-header {
         padding-bottom: 0px;
     }
-
     .designFirstContent {
         padding: 30px 0px;
     }
-    .designFirstContent .col--7{
-        order:  1;
+    .designFirstContent .col--7 {
+        order: 1;
         padding-top: 30px;
     }
-
     .designFirstContent-left {
         padding-right: 0px;
     }
-
     .designFirstContent-right {
         padding-left: 0px;
-
     }
-    .inner-section{
+    .inner-section {
         padding: 30px 0px;
     }
-    .code-block-col{
+    .code-block-col {
         order: 1;
-        padding-top:  30px;
+        padding-top: 30px;
     }
-    .how{
+    .how {
         padding: 40px 0px;
     }
-    .other-capabilites{
-        padding:  40px 0px;
+    .other-capabilites {
+        padding: 40px 0px;
     }
-    .other-capabilites h2{
+    .other-capabilites h2 {
         font-size: 40px;
         margin-bottom: 35px;
         max-width: 100%;
     }
-    .card-other h4{
+    .card-other h4 {
         font-size: 24px;
     }
-    .card-other p{
+    .card-other p {
         font-size: 16px;
     }
-    .card-other{
+    .card-other {
         padding: 25px;
     }
-    .steps{
+    .steps {
         padding: 30px 0px;
     }
-
-    .card{
+    .card {
         padding: 35px;
     }
-    .logo-column{
+    .logo-column {
         margin-bottom: 20px;
     }
-    .footer__copyright{
+    .footer__copyright {
         text-align: center;
     }
-    .footer__items.clean-list{
-
-    }
+    .footer__items.clean-list {}
     .footer-bottom .footer__items {
         justify-content: center;
         margin-top: 15px;
     }
 }
 
-@media (max-width: 767px){
-    .card{
+@media (max-width: 767px) {
+    .card {
         padding: 25px;
     }
-    .inner-section{
+    .inner-section {
         padding: 20px 0px;
     }
-    .other-capabilites{
+    .other-capabilites {
         padding: 30px 0px;
     }
-    .other-capabilites h2{
+    .other-capabilites h2 {
         font-size: 32px;
     }
     .table table tr th,
-    .table table tr td{
+    .table table tr td {
         padding: 10px;
         font-size: 16px;
     }
-    .card-footer .icon-item-box p{
+    .card-footer .icon-item-box p {
         text-align: left;
     }
-    .footer-link-columns{
+    .footer-link-columns {
         margin-left: 0px;
         width: 100%;
     }
-    .footer__col{
-        flex:  0 0 100%;
+    .footer__col {
+        flex: 0 0 100%;
         width: 100%;
         margin-bottom: 25px;
     }
-    .footer__item .footer__link-item{
+    .footer__item .footer__link-item {
         display: inline-block;
     }
-    .footer-link-columns .footer__item{
+    .footer-link-columns .footer__item {
         text-align: center;
     }
-    .footer-bottom{
+    .footer-bottom {
         margin-top: 0px;
     }
-    .footer--dark{
+    .footer--dark {
         padding-top: 175px;
     }
-    .card-footer{
+    .card-footer {
         padding: 35px;
     }
-    .start-wirespec .card-footer .card-footer-header h2{
+    .start-wirespec .card-footer .card-footer-header h2 {
         font-size: 30px;
         margin-bottom: 20px;
     }
-    .start-wirespec .card-footer .card-footer-header p{
+    .start-wirespec .card-footer .card-footer-header p {
         font-size: 16px;
     }
-    .card p{
+    .card p {
         font-size: 16px;
     }
-    .icon-box{
+    .icon-box {
         width: 36px;
         height: 36px;
     }
-    .start-wirespec .card-footer .footer-action a{
+    .start-wirespec .card-footer .footer-action a {
         padding: 8px 20px;
     }
-    .logo-column{
+    .logo-column {
         width: 100%;
         max-width: 100%;
         text-align: center;
     }
-    .logo-column p{
+    .logo-column p {
         max-width: 285px;
         margin: 0 auto;
         margin-bottom: 15px;
     }
+}
+
+.custom-code-block {
+    max-height: 400px;
+    overflow-y: auto;
 }

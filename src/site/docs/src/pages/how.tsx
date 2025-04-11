@@ -4,6 +4,8 @@ import styles from "./contract.module.css";
 import Heading from "@theme/Heading";
 import Link from "@docusaurus/Link";
 import clsx from "clsx";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 import CodeBlock from "@theme/CodeBlock";
 
 export default function ContractPage() {
@@ -88,10 +90,40 @@ export default function ContractPage() {
                 </li>
               </ol>
             </section>
-            <section className="card card-border-bottom card-nospace">
-              <CodeBlock language="js" title="example.js">
-                {`function hello() {
-  return 'hi';
+            <section
+              className="card card-border-bottom card-nospace"
+              style={{ marginTop: "2rem" }}
+            >
+              <CodeBlock
+                language="wirespec"
+                title="todo.ws"
+                className="custom-code-block"
+              >
+                {`type TodoDto {
+    id: Integer?,
+    name: String
+}
+
+endpoint GetTodos GET /api/todos -> {
+    200 -> TodoDto[]
+}
+
+endpoint GetById GET /api/todos/{id: Integer} -> {
+    200 -> TodoDto
+    404 -> String
+}
+
+endpoint CreateTodo POST TodoDto /api/todos -> {
+    201 -> TodoDto
+}
+
+endpoint DeleteTodo DELETE /api/todos/{id: Integer} -> {
+    204 -> Unit
+    404 -> String
+}
+
+endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
+    200 -> TodoDto
 }`}
               </CodeBlock>
             </section>
@@ -124,13 +156,33 @@ export default function ContractPage() {
                 the defined interfaces, capturing all possible inputs, outputs,
                 and interactions in a consistent and predictable manner.
               </p>
-            </section>
-            <section className="card card-border-bottom card-nospace">
-              <CodeBlock language="js" title="example.js">
-                {`function hello() {
-  return 'hi';
-}`}
-              </CodeBlock>
+              <Tabs>
+                <TabItem value="TypeScript" label="TypeScript">
+                  <CodeBlock language="bash">{`wirespec compile --input . --language typescript`}</CodeBlock>
+                  <p>This will generate the following file:</p>
+                  <CodeBlock>{`project/out/community/flock/wirespec/generated/
+  └─ Todo.ts`}</CodeBlock>
+                </TabItem>
+
+                <TabItem value="Kotlin" label="Kotlin">
+                  <CodeBlock language="bash">{`wirespec compile --input . --language kotlin`}</CodeBlock>
+                  <p>This will generate the following file:</p>
+                  <CodeBlock>{`project/out/community/flock/wirespec/generated/
+  └─ Todo.kt`}</CodeBlock>
+                </TabItem>
+
+                <TabItem value="Java" label="Java">
+                  <CodeBlock language="bash">{`wirespec compile --input . --language java`}</CodeBlock>
+                  <p>This will generate the following files:</p>
+                  <CodeBlock>{`project/out/community/flock/wirespec/generated/
+  └─ CreateTodoEndpoint.java
+  └─ DeleteTodoEndpoint.java
+  └─ GetByIdEndpoint.java
+  └─ GetTodosEndpoint.java
+  └─ TodoDto.java
+  └─ UpdateTodoEndpoint.java`}</CodeBlock>
+                </TabItem>
+              </Tabs>
             </section>
           </div>
 
