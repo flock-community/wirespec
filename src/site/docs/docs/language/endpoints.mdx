@@ -11,6 +11,13 @@ Endpoints can be defined using the `endpoint` keyword:
 endpoint GetTodos GET /todos -> {
     200 -> Todo[]
 }
+
+type Todo {
+    id: Integer?,
+    task: String,
+    done: Boolean,
+    prio: Integer
+}
 ```
 
 ## Request Body
@@ -19,11 +26,10 @@ You can specify a [type](types) for the request body like so:
 
 ```wirespec
 endpoint CreateTodo POST Todo /todos -> {
-    201 -> Todo
+    201 -> Unit
 }
 
-type Todo {
-    id: Integer?,
+type CreateTodo {
     task: String
 }
 ```
@@ -45,7 +51,7 @@ Query parameters are appended to the endpoint URI after a `?` symbol. Individual
 must be explicitly typed as well:
 
 ```wirespec
-endpoint GetTodos GET /todos ?{done: Boolean, prio: Boolean} -> {
+endpoint GetTodos GET /todos ? {done: Boolean, prio: Boolean} -> {
     200 -> Todo[]
 }
 ```
@@ -59,8 +65,11 @@ followed by an arrow `->` and a [type](types):
 ```wirespec
 endpoint UpdateTodo PUT /todos/{id: Integer} -> {
     200 -> Todo
-    201 -> Todo
     409 -> Error
+}
+
+type UpdateTodo {
+    task: String
 }
 ```
 
@@ -77,7 +86,7 @@ Request headers are indicated by a `#` followed by a list of one or more comma s
 defined after query parameters.
 
 ```wirespec
-endpoint GetTodos GET /todos#{token: String, tenant: Integer} -> {
+endpoint GetTodos GET /todos # {token: String, tenant: Integer} -> {
     200 -> Todo
 }
 ```
@@ -86,7 +95,7 @@ Response headers can similarly be appended after the response type:
 
 ```wirespec
 endpoint CreateTodo POST Todo /todos -> {
-    201 -> Todo #{Location: String}
+    201 -> Todo # {Location: String}
 }
 ```
 
