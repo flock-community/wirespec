@@ -55,6 +55,19 @@ const config: Config = {
     colorMode: {
       defaultMode: "dark",
     },
+    metadata: [
+      { name: 'description', content: 'Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications' },
+      { property: 'og:title', content: `Wirespec your API's` },
+      { property: 'og:description', content: 'Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications' },
+      { property: 'og:image', content: '/img/code-snippet.png' },
+      { property: 'og:type', content: 'website' },
+      { property: 'og:url', content: 'https://wirespec.io/' },
+
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:title', content: `Wirespec your API's` },
+      { name: 'twitter:description', content: 'Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications' },
+      { name: 'twitter:image', content: '/img/code-snippet.png' },
+    ],
     stylesheets: [
       {
         href: "https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300..800&display=swap",
