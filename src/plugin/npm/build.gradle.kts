@@ -28,12 +28,10 @@ kotlin {
             customField(
                 "description",
                 "Simplify your API development workflows, accelerate implementation, and guarantee strict adherence " +
-                        "to defined contract specifications"
+                    "to defined contract specifications",
             )
             customField("repository", mapOf("type" to "git", "url" to "https://github.com/flock-community/wirespec"))
             customField("license", "Apache-2.0")
-
-
         }
     }
 
@@ -73,4 +71,3 @@ val copyReadme = tasks.register<Copy>("copyReadme") {
 tasks.named("jsProcessResources") {
     dependsOn(copyReadme)
 }
-
