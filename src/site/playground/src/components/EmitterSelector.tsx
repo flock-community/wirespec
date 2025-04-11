@@ -11,6 +11,7 @@ export function EmitterSelector() {
     { value: "typescript", label: "TypeScript" },
     { value: "kotlin", label: "Kotlin" },
     { value: "scala", label: "Scala" },
+    { value: "python", label: "Python" },
     { value: "java", label: "Java" },
     { value: "open_api_v2", label: "OpenAPI v2" },
     { value: "open_api_v3", label: "OpenAPI v3" },
