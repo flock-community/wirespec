@@ -127,15 +127,15 @@ const config: Config = {
           items: [
             {
               label: "Vision",
-              to: "/docs/intro",
+              to: "/vision",
             },
             {
-              label: "Use cases",
-              to: "/docs/plugins",
+              label: "How",
+              to: "/how",
             },
             {
               label: "Playground",
-              to: "/docs/plugins",
+              to: "https://playground.wirespec.io",
             },
           ],
         },
@@ -143,7 +143,7 @@ const config: Config = {
           items: [
             {
               label: "Docs",
-              to: "/docs/intro",
+              to: "/docs/getting-started",
             },
             {
               label: "Blog",
