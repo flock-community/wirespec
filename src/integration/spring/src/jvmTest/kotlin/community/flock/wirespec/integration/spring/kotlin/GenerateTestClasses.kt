@@ -43,7 +43,7 @@ class GenerateTestClasses {
 
         javaOutputDir.mkdirs()
         emittedJava
-            .filter { !it.typeName.contains("Wirespec") }.forEach {
+            .filter { "Wirespec" !in it.typeName }.forEach {
                 baseDir.resolve("kotlin").resolve(it.typeName).writeText(it.result)
             }
     }
