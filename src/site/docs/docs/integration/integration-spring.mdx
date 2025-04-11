@@ -1,0 +1,187 @@
+---
+title: Spring
+slug: /integration/spring
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+
+This document describes how to integrate Wirespec-generated code with Spring Boot applications.  Wirespec simplifies the
+creation of type-safe and well-defined APIs, and this integration provides a seamless way to use those APIs within your
+Spring applications.
+
+The spring integration works on the controller as well as client.
+
+
+## Setup
+
+<Tabs>
+    <TabItem value="maven" label="Maven">
+
+        Add both the dependency and plugin to your `pom.xml` file:
+
+        ```xml
+        <dependency>
+            <groupId>community.flock.wirespec.integration</groupId>
+            <artifactId>spring-jvm</artifactId>
+            <version>0.13.1</version>
+        </dependency>
+        ```
+
+        ```xml
+        <plugin>
+            <groupId>community.flock.wirespec.plugin.maven</groupId>
+            <artifactId>wirespec-maven-plugin</artifactId>
+            <version>0.13.1</version>
+            <executions>
+                <execution>
+                    <id>java</id>
+                    <goals>
+                        <goal>compile</goal>
+                    </goals>
+                    <configuration>
+                        <input>${project.basedir}/src/main/wirespec</input>
+                        <output>${project.build.directory}/generated-sources</output>
+                        <languages>
+                            <language>Java</language>
+                        </languages>
+                        <emitterClass>community.flock.wirespec.integration.spring.java.emit.SpringJavaEmitter</emitterClass>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+        ```
+    </TabItem>
+    <TabItem value="gradle" label="Gradle">
+        ```json
+            tbd
+        ```
+    </TabItem>
+</Tabs>
+
+------------------------------
+
+## Creating a definition
+
+Next, we'll add our Wirespec definition in `src/main/wirespec/`, matching the directory we specified as input in the
+configuration. It contains a simple Todo type and GET endpoint:
+
+[//]: # (Could be the same as in getting-started maybe?)
+```wirespec title="src/main/wirespec/todo.ws"
+type TodoDto {
+    id: Integer,
+    task: String
+}
+
+endpoint GetTodo GET /api/todos/{id: Integer} -> {
+    200 -> TodoDto
+    400 -> String
+}
+```
+
+Now you can generate sources by running:
+This will generate source to the specified output directory that we can hook up to later..
+
+```bash
+maven install
+```
+
+## RestController
+
+To enable Spring integration you can simply add the `@EnableWirespecController` annotation to your application's
+configuration class:
+
+```java
+@SpringBootApplication
+// highlight-next-line
+@EnableWirespeController
+public class TodoApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(TodoApplication.class, args);
+    }
+}
+```
+
+Next, we'll define a simple controller and implement the Wirespec-generated Handler interface for the endpoint we want
+to expose:
+
+
+Finally, .. bla bla implementation:
+
+Notice you can access a record of the abc you've defined for path/query parameters
+
+```java
+@RestController
+class TodoController implements GetTodoEndpoint.Handler {
+
+    @Override
+    public CompletableFuture<GetTodoEndpoint.Response<?>> getTodo(GetTodoEndpoint.Request request) {
+        TodoDto dto = new TodoDto(request.getPath().id(), "Create a Wirespec definition");
+        return completedFuture(new GetTodoEndpoint.Response200(dto));
+    }
+}
+```
+
+```bash
+curl http://localhost:8080/api/todos/1
+```
+
+## WirespecWebClient
+
+You can enable the webclient like so:
+```java
+@SpringBootApplication
+// highlight-next-line
+@EnableWirespecWebClient
+public class TodoApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(TodoApplication.class, args);
+    }
+}
+```
+
+:::note
+
+If you want to use both the Controller *and* WebClient you can use: `@EnableWirespec`
+
+:::
+
+If you are using the WebClient you should add the following to your configuration:
+
+<Tabs>
+    <TabItem value="properties" label="Properties">
+        ```properties
+        wirespec.spring.webclient.base-url=http://localhost:8080
+        ```
+    </TabItem>
+    <TabItem value="yaml" label="YAML">
+        ```yaml
+        wirespec:
+          spring:
+            webclient:
+              base-url: 'http://localhost:8080'
+        ```
+    </TabItem>
+</Tabs>
+
+
+
+Then, we can
+
+```java
+@Service
+public class TodoService implements GetTodosEndpoint.Handler {
+
+    private final WirespecWebClient wirespecWebClient;
+
+    public TodoWebClient(WirespecWebClient wirespecWebClient) {
+        this.wirespecWebClient = wirespecWebClient;
+    }
+
+    @Override
+    public CompletableFuture<GetTodosEndpoint.Response<?>> getTodos(GetTodosEndpoint.Request request) {
+        return wirespecWebClient.send(request);
+    }
+}
+```
