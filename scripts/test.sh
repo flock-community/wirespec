@@ -9,10 +9,9 @@ if [[ $(uname -m) = arm64 ]]; then
   archSpecific="--platform=linux/amd64"
 fi
 
-compilePackage="community.flock.wirespec.generated"
-convertPackage="community.flock.openapi.generated"
+package="community.flock.generated"
 
-languages=("Java")
+languages=("Java" "Kotlin" "Scala" "TypeScript" "Wirespec")
 
 localWorkDir=$(pwd)
 
@@ -22,8 +21,8 @@ function run() {
     local platform=$3
     local language=$4
     local lang=$(echo "$language" | tr '[:upper:]' '[:lower:]')
-    local compile="$wirespec compile -i $workDir/types/wirespec -l $language -p $compilePackage -o $workDir/types/out/$platform/wirespec/$lang --shared"
-    local convert="$wirespec convert -i $workDir/types/openapi/petstore.json openapiv2 -l $language -p $convertPackage -o $workDir/types/out/$platform/openapi/petstore/$lang --shared"
+    local compile="$wirespec compile -i $workDir/types/wirespec -l $language -p $package -o $workDir/types/out/$platform/wirespec/$lang --shared"
+    local convert="$wirespec convert -i $workDir/types/openapi/petstore.json openapiv2 -l $language -p $package -o $workDir/types/out/$platform/openapi/petstore/$lang --shared"
     echo "$compile && $convert"
 }
 
@@ -55,6 +54,6 @@ printf "\nTest docker image:\n"
 dockerWirespec=/app/wirespec
 dockerCommand=""
 for lang in "${languages[@]}"; do
-  dockerCommand="$dockerCommand $(run "$dockerWirespec" "/app" "docker" "$lang") && "
+  dockerCommand="$dockerCommand $(run "$dockerWirespec" '/app' 'docker' "$lang") && "
 done
 docker run $archSpecific --rm -it -v "$localWorkDir"/types:/app/types wirespec "${dockerCommand%????}"

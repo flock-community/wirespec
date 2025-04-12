@@ -18,6 +18,7 @@ RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && \
     npm install -g typescript
 
 COPY src/plugin/cli/build/bin/linuxX64/releaseExecutable/cli.kexe /app/wirespec
+COPY scripts/docker/compileTypes.sh /app/compileTypes.sh
 
 WORKDIR /app
 
