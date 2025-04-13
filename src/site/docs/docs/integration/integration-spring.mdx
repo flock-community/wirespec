@@ -60,7 +60,13 @@ The integration works for both [producers](#restcontroller) (RestController) and
     </TabItem>
     <TabItem value="gradle" label="Gradle">
         ```json
-            tbd
+        wirespec {
+            input = "$projectDir/src/main/wirespec"
+            kotlin {
+                packageName = "community.flock.wirespec.generated"
+                output = "$buildDir/generated/community/flock/wirespec/generated"
+            }
+        }
         ```
     </TabItem>
 </Tabs>
@@ -180,12 +186,12 @@ If you are using the WebClient you should add the following to your configuratio
 
 <Tabs>
     <TabItem value="properties" label="Properties">
-        ```properties
+        ```properties title="application.properties"
         wirespec.spring.webclient.base-url=http://localhost:8080
         ```
     </TabItem>
     <TabItem value="yaml" label="YAML">
-        ```yaml
+        ```yaml title="application.yml"
         wirespec:
           spring:
             webclient:
@@ -194,7 +200,7 @@ If you are using the WebClient you should add the following to your configuratio
     </TabItem>
 </Tabs>
 
-
+------------------------------
 
 Then, we can
 
