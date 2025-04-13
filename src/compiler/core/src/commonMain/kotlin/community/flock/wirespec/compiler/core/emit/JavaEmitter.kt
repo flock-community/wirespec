@@ -30,7 +30,7 @@ import community.flock.wirespec.compiler.utils.Logger
 
 open class JavaEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
-    private val emitShared: Boolean = false,
+    private val emitShared: Boolean = true,
 ) : Emitter() {
 
     val import = """
