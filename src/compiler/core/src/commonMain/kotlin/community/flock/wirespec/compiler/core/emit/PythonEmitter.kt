@@ -29,6 +29,7 @@ import community.flock.wirespec.compiler.utils.Logger
 
 open class PythonEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
+    val emitShared: Boolean = false
 ) : Emitter() {
 
     val import = """
@@ -66,7 +67,7 @@ open class PythonEmitter(
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
         val statements = module.statements.sortedBy(::sort).toNonEmptyListOrNull()!!
-        return super.emit(module.copy(statements = statements), logger)
+        val emitted = super.emit(module.copy(statements = statements), logger)
             .map { (typeName, result) ->
                 Emitted(
                     typeName = typeName.sanitizeSymbol(),
@@ -76,6 +77,8 @@ open class PythonEmitter(
                         """.trimMargin().trimStart()
                 )
             } + Emitted("__init__", module.statements.map { "from .${it.emitName()} import ${it.emitName()}" }.joinToString("\n"))
+
+        return if (emitShared) emitted + Emitted(PackageName(DEFAULT_GENERATED_PACKAGE_STRING).toDir() + "wirespec", shared.source) else emitted
     }
 
     private fun Node.localImports():List<Reference.Custom> = when (this) {

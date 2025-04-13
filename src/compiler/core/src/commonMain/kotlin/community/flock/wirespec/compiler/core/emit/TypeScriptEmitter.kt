@@ -2,12 +2,13 @@ package community.flock.wirespec.compiler.core.emit
 
 import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
+import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.emit.shared.TypeScriptShared
-import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
@@ -21,7 +22,7 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 
-open class TypeScriptEmitter : Emitter() {
+open class TypeScriptEmitter(val emitShared: Boolean = false) : Emitter() {
 
     override fun Definition.emitName(): String = when (this) {
         is Endpoint -> emit(identifier)
@@ -38,15 +39,19 @@ open class TypeScriptEmitter : Emitter() {
 
     override val singleLineComment = "//"
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = nonEmptyListOf(
-        Emitted(
-            typeName = module.uri.split("/").last().firstToUpper(),
-            result = """
-                    |${if (module.hasEndpoints()) TypeScriptShared.source else ""}
-                    |${super.emit(module, logger).map(Emitted::result).joinToString("\n")}
-            """.trimMargin().trimStart()
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
+        val emitted = nonEmptyListOf(
+            Emitted(
+                typeName = module.uri.split("/").last().firstToUpper(),
+                result = """
+                        |${if (module.hasEndpoints()) TypeScriptShared.source else ""}
+                        |${super.emit(module, logger).map(Emitted::result).joinToString("\n")}
+                """.trimMargin().trimStart()
+            )
         )
-    )
+
+        return if (emitShared) emitted + Emitted(PackageName(DEFAULT_GENERATED_PACKAGE_STRING).toDir() + "Wirespec", shared.source) else emitted
+    }
 
     override fun emit(type: Type, module: Module) =
         """export type ${type.identifier.sanitizeSymbol()} = {

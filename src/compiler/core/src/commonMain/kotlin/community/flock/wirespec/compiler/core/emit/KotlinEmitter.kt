@@ -32,6 +32,7 @@ import community.flock.wirespec.compiler.utils.Logger
 
 open class KotlinEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
+    private val emitShared: Boolean = false,
 ) : Emitter() {
 
     val import = """
@@ -56,16 +57,20 @@ open class KotlinEmitter(
 
     override val singleLineComment = "//"
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = nonEmptyListOf(
-        Emitted(
-            typeName = packageName.toDir() + module.uri.split("/").last().firstToUpper(),
-            result = """
-                |package $packageName
-                |${if (module.needImports()) import else ""}
-                |${super.emit(module, logger).map(Emitted::result).joinToString("\n")}
-            """.trimMargin().trimStart()
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
+        val emitted = nonEmptyListOf(
+            Emitted(
+                typeName = packageName.toDir() + module.uri.split("/").last().firstToUpper(),
+                result = """
+                    |package $packageName
+                    |${if (module.needImports()) import else ""}
+                    |${super.emit(module, logger).map(Emitted::result).joinToString("\n")}
+                """.trimMargin().trimStart()
+            )
         )
-    )
+
+        return if (emitShared) emitted + Emitted(PackageName(DEFAULT_GENERATED_PACKAGE_STRING).toDir() + "Wirespec", shared.source) else emitted
+    }
 
     override fun emit(type: Type, module: Module) =
         if (type.shape.value.isEmpty()) "${Spacer}data object ${type.emitName()}"
