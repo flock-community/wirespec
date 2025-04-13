@@ -6,6 +6,12 @@ fun String.hasBackticks() = length > 1 && startsWith('`') && endsWith('`')
 
 fun String.removeFirstAndLastChar() = substring(1 until length - 1)
 
+fun String.removeQuestionMark() = if (hasQuestionMark()) removeLastChar() else this
+
+fun String.hasQuestionMark() = length > 1 && endsWith('?')
+
+fun String.removeLastChar() = substring(0 until length - 1)
+
 fun String.addBackticks() = "`$this`"
 
 fun String.orNull() = ifBlank { null }
