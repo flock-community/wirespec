@@ -6,13 +6,12 @@ slug: /integration/spring
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-
-This document describes how to integrate Wirespec-generated code with Spring Boot applications.  Wirespec simplifies the
+This document describes how to integrate Wirespec-generated code with Spring Boot applications. Wirespec simplifies the
 creation of type-safe and well-defined APIs, and this integration provides a seamless way to use those APIs within your
 Spring applications.
 
-The spring integration works on the controller as well as client.
-
+The integration works for both [producers](#restcontroller) (RestController) and [consumers](#webclient)
+(WebClient).
 
 ## Setup
 
@@ -20,9 +19,6 @@ The spring integration works on the controller as well as client.
     <TabItem value="maven" label="Maven">
 
         Add both the dependency and plugin to your `pom.xml` file:
-
-        ![Maven Central](https://img.shields.io/maven-central/v/community.flock.wirespec.plugin.maven/wirespec-maven-plugin)
-
 
         ```xml
         <dependency>
@@ -55,6 +51,12 @@ The spring integration works on the controller as well as client.
             </executions>
         </plugin>
         ```
+
+        :::info
+        Make sure to use the latest version, found here:
+
+        ![Maven Central](https://img.shields.io/maven-central/v/community.flock.wirespec.plugin.maven/wirespec-maven-plugin)
+        :::
     </TabItem>
     <TabItem value="gradle" label="Gradle">
         ```json
@@ -65,10 +67,10 @@ The spring integration works on the controller as well as client.
 
 ------------------------------
 
-## Creating a definition
+## Creating and compiling a definition
 
-Next, we'll add our Wirespec definition in `src/main/wirespec/`, matching the directory we specified as input in the
-configuration. It contains a simple Todo type and GET endpoint:
+Now that the setup is complete, we'll add our Wirespec definition in `src/main/wirespec/`, matching the directory we
+specified as input in the configuration. The example below contains a simple Todo type and GET endpoint:
 
 [//]: # (Could be the same as in getting-started maybe?)
 ```wirespec title="src/main/wirespec/todo.ws"
@@ -83,12 +85,18 @@ endpoint GetTodo GET /api/todos/{id: Integer} -> {
 }
 ```
 
-Now you can generate sources by running:
-This will generate source to the specified output directory that we can hook up to later..
+Now we can compile our definition and generate sources to the specified output directory by running the following
+command:
 
 ```bash
 maven install
 ```
+
+:::note
+It's not necessary to understand the ins and outs of the generated code, so we won't go into detail here.
+However, if you're interested to learn more you can look [here](../emitters/java).
+:::
+
 
 ## RestController
 
@@ -98,7 +106,7 @@ configuration class:
 ```java
 @SpringBootApplication
 // highlight-next-line
-@EnableWirespeController
+@EnableWirespecController
 public class TodoApplication {
     public static void main(String[] args) {
         SpringApplication.run(TodoApplication.class, args);
@@ -106,13 +114,8 @@ public class TodoApplication {
 }
 ```
 
-Next, we'll define a simple controller and implement the Wirespec-generated Handler interface for the endpoint we want
+Next, we'll create a simple controller and implement the Wirespec-generated Handler interface for the endpoint we want
 to expose:
-
-
-Finally, .. bla bla implementation:
-
-Notice you can access a record of the abc you've defined for path/query parameters
 
 ```java
 @RestController
@@ -126,11 +129,34 @@ class TodoController implements GetTodoEndpoint.Handler {
 }
 ```
 
+That's all we need to create a type safe API, see the result for yourself:
+
 ```bash
-curl http://localhost:8080/api/todos/1
+curl http://localhost:8080/api/todos/1 # > {"id":1,"task":"Create a Wirespec definition"}
 ```
 
-## WirespecWebClient
+### Accessing parameters
+
+Various request parameters are available on the `GetTodoEndpoint.Request` object. All of them return a `record` matching
+your Wirespec definition.
+
+```java
+request.getBody();      // Request body
+request.getHeaders();   // Request headers
+request.getQueries();   // Query parameters
+request.getPath();      // Path parameters
+```
+
+In the example from the previous sections we defined the `id` path parameter (`/api/todos/{id: Integer}`). Thus,
+we can access it like so:
+
+```java
+Long id = request.getPath().id();
+```
+
+
+
+## WebClient
 
 You can enable the webclient like so:
 ```java
