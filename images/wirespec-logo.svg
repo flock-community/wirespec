@@ -1,7 +1,4 @@
-<?xml version="1.0" standalone="no"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
-        "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
-<svg width="40" height="40" viewBox="0 0 520 520" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="520" height="520" viewBox="0 0 520 520" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g clip-path="url(#clip0_30_9426)">
         <circle cx="260" cy="259.553" r="250" transform="rotate(45 260 259.553)" fill="#FFDF00"/>
         <mask id="mask0_30_9426" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="10" y="9" width="500"

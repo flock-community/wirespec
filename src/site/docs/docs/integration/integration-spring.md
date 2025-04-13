@@ -41,7 +41,6 @@ public class TodoApplication {
         SpringApplication.run(TodoApplication.class, args);
     }
 }
-
 ```
 
 Ensure that the import statement corresponds to the correct package:

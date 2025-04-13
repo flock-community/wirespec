@@ -2,7 +2,7 @@ type TodoId {
     id: String
 }
 
-type Todo {
+type TodoResult {
     id: TodoId,
     name: String,
     done: Boolean
