@@ -91,11 +91,13 @@ endpoint GetTodo GET /api/todos/{id: Integer} -> {
 }
 ```
 
+<br />
+
 Now we can compile our definition and generate sources to the specified output directory by running the following
 command:
 
 ```bash
-maven install
+./mvnw install # TODO
 ```
 
 :::note
@@ -106,19 +108,21 @@ However, if you're interested to learn more you can look [here](../emitters/java
 
 ## RestController
 
-To enable Spring integration you can simply add the `@EnableWirespecController` annotation to your application's
-configuration class:
+To enable the RestController integration you can simply add the `@EnableWirespecController` annotation to your
+application's configuration class:
 
 ```java
 @SpringBootApplication
 // highlight-next-line
 @EnableWirespecController
-public class TodoApplication {
+public class App {
     public static void main(String[] args) {
-        SpringApplication.run(TodoApplication.class, args);
+        SpringApplication.run(App.class, args);
     }
 }
 ```
+
+<br />
 
 Next, we'll create a simple controller and implement the Wirespec-generated Handler interface for the endpoint we want
 to expose:
@@ -134,6 +138,8 @@ class TodoController implements GetTodoEndpoint.Handler {
     }
 }
 ```
+
+<br />
 
 That's all we need to create a type safe API, see the result for yourself:
 
@@ -164,14 +170,17 @@ Long id = request.getPath().id();
 
 ## WebClient
 
-You can enable the webclient like so:
+To enable the WebClient integration you can simply add the `@EnableWirespecWebClient` annotation to your application's
+configuration class:
+
+
 ```java
 @SpringBootApplication
 // highlight-next-line
 @EnableWirespecWebClient
-public class TodoApplication {
+public class App {
     public static void main(String[] args) {
-        SpringApplication.run(TodoApplication.class, args);
+        SpringApplication.run(App.class, args);
     }
 }
 ```
@@ -182,7 +191,11 @@ If you want to use both the Controller *and* WebClient you can use: `@EnableWire
 
 :::
 
-If you are using the WebClient you should add the following to your configuration:
+<br />
+
+Additionally, you should configure `base-url` in one of the following ways. By default, it uses the Spring Reactive
+WebClient, but this is not required. If you would like to use another WebClient, or specify additional configuration,
+you can do so by declaring a configuration bean.
 
 <Tabs>
     <TabItem value="properties" label="Properties">
@@ -198,25 +211,54 @@ If you are using the WebClient you should add the following to your configuratio
               base-url: 'http://localhost:8080'
         ```
     </TabItem>
+    <TabItem value="bean" label="Configuration Bean">
+        ```java title="WebClientConfig.java"
+        @Configuration
+        public class WebClientConfig {
+
+            @Bean("wirespecSpringWebClient")
+            public WebClient webClient(WebClient.Builder builder) {
+                return builder
+                    .baseUrl("http://localhost:8080")
+                    .build();
+            }
+        }
+        ```
+    </TabItem>
 </Tabs>
 
 ------------------------------
 
-Then, we can
+<br />
+
+Finally, we can inject the WebClient and make a call to an upstream service. The constructor of the request class has
+the required parameters specified in your definition, in this case the `id` path parameter. The WebClient always returns
+a `CompletableFuture` of one of the specified responses.
 
 ```java
 @Service
-public class TodoService implements GetTodosEndpoint.Handler {
+public class TodoService {
 
-    private final WirespecWebClient wirespecWebClient;
+    private final WirespecWebClient webClient;
 
-    public TodoWebClient(WirespecWebClient wirespecWebClient) {
-        this.wirespecWebClient = wirespecWebClient;
+    public TodoService(WirespecWebClient webClient) {
+        this.webClient = webClient;
     }
 
-    @Override
-    public CompletableFuture<GetTodosEndpoint.Response<?>> getTodos(GetTodosEndpoint.Request request) {
-        return wirespecWebClient.send(request);
+    public CompletableFuture<GetTodoEndpoint.Response<?>> getById(long id) {
+        return webClient.send(new GetTodoEndpoint.Request(id));
     }
 }
 ```
+
+
+## Conclusion
+
+todo here:
+    mention what we've done
+    ref example project
+    highlight design philosophy
+
+
+Notice the defintion we specified earlier works on both sides, and the requests/responses are identical whether we are on
+the producer on consumer side. This is central to Wirespec's design
