@@ -52,24 +52,32 @@ The integration works for both [producers](#restcontroller) (RestController) and
         </plugin>
         ```
 
-        :::info
-        Make sure to use the latest version, found here:
-
-        ![Maven Central](https://img.shields.io/maven-central/v/community.flock.wirespec.plugin.maven/wirespec-maven-plugin)
-        :::
     </TabItem>
     <TabItem value="gradle" label="Gradle">
-        ```json
-        wirespec {
-            input = "$projectDir/src/main/wirespec"
-            kotlin {
-                packageName = "community.flock.wirespec.generated"
-                output = "$buildDir/generated/community/flock/wirespec/generated"
-            }
+        Add both the dependency and plugin to your `build.gradle.kts` file:
+        ```gradle
+        implementation("community.flock.wirespec.integration:spring-jvm:0.14.3")
+        ```
+
+        ```gradle
+        tasks.register<CompileWirespecTask>("wirespec-compile") {
+            description = "Compile Wirespec to Java"
+            group = "Wirespec compile"
+            input = layout.projectDirectory.dir("src/main/wirespec")
+            output = layout.buildDirectory.dir("generated")
+            packageName = "community.flock.wirespec.generated.java"
+            emitterClass = "community.flock.wirespec.integration.spring.java.emit.SpringJavaEmitter"::class.java
+            languages = listOf(Language.Java)
         }
         ```
     </TabItem>
 </Tabs>
+
+:::info
+Make sure to use the latest version, found here:
+
+![Maven Central](https://img.shields.io/maven-central/v/community.flock.wirespec.plugin.maven/wirespec-maven-plugin)
+:::
 
 ------------------------------
 
