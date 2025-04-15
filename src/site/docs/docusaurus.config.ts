@@ -6,20 +6,12 @@ const config: Config = {
     title: "Wirespec",
     tagline: "Dinosaurs are cool",
     favicon: "img/wirespec-favicon.png",
-    // Set the production url of your site here
     url: "https://wirespec.io/",
-    // Set the /<baseUrl>/ pathname under which your site is served
-    // For GitHub pages deployment, it is often '/<projectName>/'
     baseUrl: "/",
-    // GitHub pages deployment config.
-    // If you aren't using GitHub pages, you don't need these.
-    organizationName: "flock-community/wirespec", // Usually your GitHub org/user name.
-    projectName: "wirespec", // Usually your repo name.
+    organizationName: 'flock-community/wirespec',
+    projectName: "wirespec",
     onBrokenLinks: "throw",
     onBrokenMarkdownLinks: "warn",
-    // Even if you don't use internationalization, you can use this field to set
-    // useful metadata like html lang. For example, if your site is Chinese, you
-    // may want to replace "en" with "zh-Hans".
     i18n: {
         defaultLocale: "en",
         locales: ["en"],
@@ -51,7 +43,7 @@ const config: Config = {
                 sitemap: {
                     changefreq: "weekly",
                     priority: 0.5,
-                    filename: "sitemap.xml", // optional; default is fine
+                    filename: "sitemap.xml",
                 },
             } satisfies Preset.Options,
         ],
@@ -185,8 +177,13 @@ const config: Config = {
             copyright: `© ${new Date().getFullYear()} Wirespec. All rights reserved.`,
         },
         prism: {
-            theme: prismThemes.vsLight,
-            darkTheme: prismThemes.vsDark,
+            // theme: prismThemes.vsLight,
+            // darkTheme: prismThemes.vsDark, // TODO CHECK
+            theme: prismThemes.github,
+            darkTheme: prismThemes.dracula,
+            // https://docusaurus.io/docs/markdown-features/code-blocks#supported-languages
+            // Note: wirespec is not an official prism language, it's added through prism-include-languages.ts
+            additionalLanguages: ['java', 'typescript', 'bash', 'json', 'properties', 'gradle'],
         },
         // Algolia configuration inside themeConfig
         algolia: {
