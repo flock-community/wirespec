@@ -8,6 +8,8 @@ tags: [wirespec, docs, contract, design]
 
 In today’s software development landscape, designing APIs and interfaces has become a critical part of any application. A **contract-first design approach** is gaining momentum as a structured methodology that emphasizes creating the interface contract before implementation begins. This process focuses on defining the **specification as a blueprint** for APIs, ensuring seamless collaboration and reducing costly revisions. Let’s explore why this approach is becoming the gold standard for API and interface design, and how it empowers teams to achieve design excellence.
 
+<!-- truncate -->
+
 ## The Philosophy of Contract-First Design
 
 The core idea behind contract-first design is simple: **design before implementation**. Instead of diving into coding right away, teams first create a **contract**, which acts as the authoritative source of truth.
