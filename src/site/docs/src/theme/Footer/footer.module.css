@@ -8,7 +8,7 @@
 /* You can override the default Infima variables here. */
 
 :root {
-    --ifm-color-primary: #ffdf00;
+    --ifm-color-primary: #101010;
     --ifm-color-primary-dark: #29784c;
     --ifm-color-primary-darker: #277148;
     --ifm-color-primary-darkest: #205d3b;
@@ -23,14 +23,13 @@
     --ifm-navbar-link-hover-color: #ffdf00;
     --ifm-footer-link-hover-color: #ffdf00;
     --ifm-menu-color-active: #ffffff;
-    --ifm-heading-font-family: "Funnel Display", sans-serif;
 }
 
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
 
 [data-theme='dark'] {
-    --ifm-color-primary: #ffdf00;
+    --ifm-color-primary: #101010;
     --ifm-color-primary-dark: #21af90;
     --ifm-color-primary-darker: #1fa588;
     --ifm-color-primary-darkest: #1a8870;
@@ -42,10 +41,9 @@
     --ifm-navbar-link-hover-color: #ffdf00;
     --ifm-footer-link-hover-color: #ffdf00;
     --ifm-menu-color-active: #ffffff;
-    --ifm-heading-font-family: "Funnel Display", sans-serif;
 }
 
-.footer {
+.footer--dark {
     --ifm-footer-color: #9F9F9F !important;
     --ifm-footer-link-color: #ffffff !important;
 }
@@ -75,7 +73,6 @@ body {
 .container {
     max-width: 1310px;
     padding: 0px 15px;
-    width: 98%;
 }
 
 .container-fluid {
@@ -164,10 +161,6 @@ body {
 .card-nospace {
     padding: 0px !important;
     overflow: hidden;
-}
-
-.language-js {
-    margin-bottom: 0px;
 }
 
 .grid {
@@ -282,15 +275,10 @@ body {
 .table table tr th {
     color: #ffffff;
     font-weight: 600;
-    white-space: nowrap;
 }
 
 .table table tr td {
     font-weight: 400;
-}
-
-.table table tr td:first-child {
-    font-weight: 600;
 }
 
 .table table tr th,
@@ -307,23 +295,6 @@ table tr:nth-child(2n) {
     background-color: #181818;
 }
 
-@media(max-width: 1440px) {
-    .table table tr th,
-    .table table tr td {
-        padding: 15px;
-    }
-}
-
-@media(max-width: 767px) {
-    .table table {
-        width: 100%;
-        min-width: 1024px;
-    }
-    .table table tr td {
-        white-space: nowrap;
-    }
-}
-
 .card-flock {
     min-height: 316px;
     display: flex;
@@ -338,16 +309,8 @@ table tr:nth-child(2n) {
 }
 
 .start-wirespec .card-footer .card-footer-header h2 {
-    font-size: 44px;
-    font-weight: 500;
-    color: white;
-    font-family: "Funnel Display", sans-serif;
     text-align: center;
     margin-bottom: 30px;
-}
-
-.start-wirespec .card-footer .card-footer-header h2 span {
-    color: #ffdf00;
 }
 
 .start-wirespec .card-footer .card-footer-header p {
@@ -355,26 +318,6 @@ table tr:nth-child(2n) {
     color: #9F9F9F;
     margin: 0 auto;
     margin-bottom: 40px;
-}
-
-.start-wirespec .card-footer .footer-action a {
-    display: inline-block;
-    min-width: 166px;
-    padding: 12px 30px;
-    font-size: 18px;
-    font-weight: 400;
-    border-radius: 5px;
-    text-decoration: none !important;
-    transition: background-color .2s cubic-bezier(.08, .52, .52, 1);
-    border: 1px solid transparent;
-    background-color: #FFDF00;
-    color: #101010;
-}
-
-.start-wirespec .card-footer .footer-action a:hover {
-    border-color: #FFDF00;
-    background-color: transparent;
-    color: #FFDF00;
 }
 
 .icon-item-box {
@@ -400,6 +343,7 @@ table tr:nth-child(2n) {
 
 @media (max-width: 768px) {
     .icon-item-group {
+        flex-direction: column;
         align-items: flex-start;
         gap: 20px;
         /* Reduced gap for smaller screens */
@@ -441,21 +385,6 @@ table tr:nth-child(2n) {
 .footer-link-columns {
     padding: 0 15px;
     margin-left: auto;
-    width: 30%;
-}
-
-.header-github-link {
-    margin-left: 0px;
-    display: flex !important;
-}
-
-.footer__links {
-    justify-content: space-between;
-}
-
-.footer__col {
-    width: auto;
-    flex: 0 0 auto;
 }
 
 .logo-column p {
@@ -472,27 +401,11 @@ table tr:nth-child(2n) {
     height: 30px;
 }
 
-.footer {
+.footer--dark {
     background: #101010;
     border-top: 1px solid rgba(255, 223, 0, 0.30);
     padding-top: 235px;
     margin-top: -151px;
-    border-color: color-mix(in srgb, #221f1f 60%, #221f1f 0%);
-}
-
-.docs-footer {
-    margin-top: 0 !important;
-    padding-top: 50px;
-}
-
-
-/* Ensure the entire docs page fills the viewport */
-
-
-/* Make the docs sidebar stick to the top of the viewport */
-
-.docSidebarContainer_YfHR {
-    margin-top: 0% !important;
 }
 
 .footer-bottom {
@@ -587,19 +500,6 @@ table tr:nth-child(2n) {
     position: relative;
 }
 
-.card-flock {
-    padding-top: 58.8% !important;
-    position: relative;
-}
-
-.card-flock iframe {
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    width: 100%;
-    height: 100%;
-}
-
 .card-flock-wrap:before {
     display: block;
     content: '';
@@ -613,170 +513,4 @@ table tr:nth-child(2n) {
     filter: blur(300px);
     z-index: -1;
     transform: translate(-50%, -50%);
-}
-
-.code-block-col img {
-    display: block;
-    margin: 0 auto;
-    max-width: 100%;
-}
-
-@media (max-width: 1440px) {
-    .footer-bottom {
-        margin-top: 80px;
-    }
-    .footer--dark {
-        padding-top: 180px;
-    }
-}
-
-@media (max-width: 1024px) {
-    .footer-bottom {
-        margin-top: 60px;
-    }
-}
-
-@media (max-width: 996px) {
-    .footer-bottom {
-        margin-top: 40px;
-    }
-    .section-header {
-        padding-bottom: 0px;
-    }
-    .designFirstContent {
-        padding: 30px 0px;
-    }
-    .designFirstContent .col--7 {
-        order: 1;
-        padding-top: 30px;
-    }
-    .designFirstContent-left {
-        padding-right: 0px;
-    }
-    .designFirstContent-right {
-        padding-left: 0px;
-    }
-    .inner-section {
-        padding: 30px 0px;
-    }
-    .code-block-col {
-        order: 1;
-        padding-top: 30px;
-    }
-    .how {
-        padding: 40px 0px;
-    }
-    .other-capabilites {
-        padding: 40px 0px;
-    }
-    .other-capabilites h2 {
-        font-size: 40px;
-        margin-bottom: 35px;
-        max-width: 100%;
-    }
-    .card-other h4 {
-        font-size: 24px;
-    }
-    .card-other p {
-        font-size: 16px;
-    }
-    .card-other {
-        padding: 25px;
-    }
-    .steps {
-        padding: 30px 0px;
-    }
-    .card {
-        padding: 35px;
-    }
-    .logo-column {
-        margin-bottom: 20px;
-    }
-    .footer__copyright {
-        text-align: center;
-    }
-    .footer__items.clean-list {}
-    .footer-bottom .footer__items {
-        justify-content: center;
-        margin-top: 15px;
-    }
-}
-
-@media (max-width: 767px) {
-    .card {
-        padding: 25px;
-    }
-    .inner-section {
-        padding: 20px 0px;
-    }
-    .other-capabilites {
-        padding: 30px 0px;
-    }
-    .other-capabilites h2 {
-        font-size: 32px;
-    }
-    .table table tr th,
-    .table table tr td {
-        padding: 10px;
-        font-size: 16px;
-    }
-    .card-footer .icon-item-box p {
-        text-align: left;
-    }
-    .footer-link-columns {
-        margin-left: 0px;
-        width: 100%;
-    }
-    .footer__col {
-        flex: 0 0 100%;
-        width: 100%;
-        margin-bottom: 25px;
-    }
-    .footer__item .footer__link-item {
-        display: inline-block;
-    }
-    .footer-link-columns .footer__item {
-        text-align: center;
-    }
-    .footer-bottom {
-        margin-top: 0px;
-    }
-    .footer--dark {
-        padding-top: 175px;
-    }
-    .card-footer {
-        padding: 35px;
-    }
-    .start-wirespec .card-footer .card-footer-header h2 {
-        font-size: 30px;
-        margin-bottom: 20px;
-    }
-    .start-wirespec .card-footer .card-footer-header p {
-        font-size: 16px;
-    }
-    .card p {
-        font-size: 16px;
-    }
-    .icon-box {
-        width: 36px;
-        height: 36px;
-    }
-    .start-wirespec .card-footer .footer-action a {
-        padding: 8px 20px;
-    }
-    .logo-column {
-        width: 100%;
-        max-width: 100%;
-        text-align: center;
-    }
-    .logo-column p {
-        max-width: 285px;
-        margin: 0 auto;
-        margin-bottom: 15px;
-    }
-}
-
-.custom-code-block {
-    max-height: 400px;
-    overflow-y: auto;
 }
