@@ -177,10 +177,8 @@ const config: Config = {
             copyright: `© ${new Date().getFullYear()} Wirespec. All rights reserved.`,
         },
         prism: {
-            // theme: prismThemes.vsLight,
-            // darkTheme: prismThemes.vsDark, // TODO CHECK
-            theme: prismThemes.github,
-            darkTheme: prismThemes.dracula,
+            theme: prismThemes.vsLight,
+            darkTheme: prismThemes.vsDark,
             // https://docusaurus.io/docs/markdown-features/code-blocks#supported-languages
             // Note: wirespec is not an official prism language, it's added through prism-include-languages.ts
             additionalLanguages: ['java', 'typescript', 'bash', 'json', 'properties', 'gradle'],
