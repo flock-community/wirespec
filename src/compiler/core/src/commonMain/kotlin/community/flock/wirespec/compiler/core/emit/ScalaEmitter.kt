@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.emit
 
 import arrow.core.NonEmptyList
+import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.addBackticks
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_SHARED_PACKAGE_STRING
@@ -11,7 +12,6 @@ import community.flock.wirespec.compiler.core.emit.common.Keywords
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
-import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
@@ -27,6 +27,7 @@ import community.flock.wirespec.compiler.utils.Logger
 
 open class ScalaEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
+    private val emitShared: Boolean = false,
 ) : Emitter() {
 
     val import = """
@@ -50,17 +51,20 @@ open class ScalaEmitter(
 
     override val singleLineComment = "//"
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
-        super.emit(module, logger).map { (typeName, result) ->
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
+        val emitted = nonEmptyListOf(
             Emitted(
-                typeName = typeName,
+                typeName = module.uri.split("/").last().firstToUpper(),
                 result = """
                     |package $packageName
                     |${if (module.needImports()) import else ""}
-                    |${result}
+                    |${super.emit(module, logger).map(Emitted::result).joinToString("\n")}
                 """.trimMargin().trimStart()
             )
-        }
+        )
+
+        return if (emitShared) emitted + Emitted(PackageName(DEFAULT_GENERATED_PACKAGE_STRING).toDir() + "Wirespec", shared.source) else emitted
+    }
 
     override fun emit(type: Type, module: Module) = """
         |case class ${type.emitName()}(
