@@ -21,6 +21,7 @@ import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceOrBooleanObject
 import community.flock.kotlinx.openapi.bindings.v2.StatusCode
 import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
+import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
@@ -39,16 +40,16 @@ import community.flock.kotlinx.openapi.bindings.v2.Type as OpenapiType
 
 object OpenAPIV2Parser {
 
-    fun parse(json: String, strict: Boolean = true): AST = AST(
+    fun parse(moduleContent: ModuleContent, strict: Boolean = true): AST = AST(
         nonEmptyListOf(
             Module(
-                "",
+                moduleContent.src,
                 OpenAPI(
                     json = Json {
                         prettyPrint = true
                         ignoreUnknownKeys = !strict
                     },
-                ).decodeFromString(json).parse().toNonEmptyListOrNull() ?: error("Cannot yield non empty AST for OpenAPI v2"),
+                ).decodeFromString(moduleContent.content).parse().toNonEmptyListOrNull() ?: error("Cannot yield non empty AST for OpenAPI v2"),
             ),
         ),
     )

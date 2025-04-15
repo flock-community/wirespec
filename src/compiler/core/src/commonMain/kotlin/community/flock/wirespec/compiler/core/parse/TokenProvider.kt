@@ -2,16 +2,16 @@ package community.flock.wirespec.compiler.core.parse
 
 import arrow.core.Either
 import arrow.core.Either.Companion.catch
+import arrow.core.NonEmptyList
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.DefinitionNotExistsException
 import community.flock.wirespec.compiler.core.exceptions.NextException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.tokenize.Token
-import community.flock.wirespec.compiler.core.tokenize.TokenizedModule
 import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
 import community.flock.wirespec.compiler.utils.Logger
 
-class TokenProvider(private val logger: Logger, tokens: TokenizedModule) {
+class TokenProvider(private val logger: Logger, tokens: NonEmptyList<Token>) {
 
     var token = tokens.head
 
@@ -59,4 +59,4 @@ class TokenProvider(private val logger: Logger, tokens: TokenizedModule) {
     private fun nextToken() = catch { tokenIterator.next() }.getOrNull()
 }
 
-fun TokenizedModule.toProvider(logger: Logger) = TokenProvider(logger, this)
+fun NonEmptyList<Token>.toProvider(logger: Logger) = TokenProvider(logger, this)

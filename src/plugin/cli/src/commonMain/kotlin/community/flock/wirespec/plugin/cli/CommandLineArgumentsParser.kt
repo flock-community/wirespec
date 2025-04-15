@@ -114,11 +114,11 @@ private class Compile(
 
         val emitters = languages.map {
             when (it) {
-                Language.Java -> JavaEmitter(PackageName(packageName))
-                Language.Kotlin -> KotlinEmitter(PackageName(packageName))
+                Language.Java -> JavaEmitter(PackageName(packageName, shared))
+                Language.Kotlin -> KotlinEmitter(PackageName(packageName, shared))
                 Language.Scala -> ScalaEmitter(PackageName(packageName))
-                Language.TypeScript -> TypeScriptEmitter()
-                Language.Python -> PythonEmitter()
+                Language.TypeScript -> TypeScriptEmitter(shared)
+                Language.Python -> PythonEmitter(emitShared = shared)
                 Language.Wirespec -> WirespecEmitter()
                 Language.OpenAPIV2 -> OpenAPIV2Emitter
                 Language.OpenAPIV3 -> OpenAPIV3Emitter
@@ -162,10 +162,10 @@ private class Convert(
 
         val emitters = languages.map {
             when (it) {
-                Language.Java -> JavaEmitter(PackageName(packageName))
-                Language.Kotlin -> KotlinEmitter(PackageName(packageName))
-                Language.Scala -> ScalaEmitter(PackageName(packageName))
-                Language.TypeScript -> TypeScriptEmitter()
+                Language.Java -> JavaEmitter(PackageName(packageName), shared)
+                Language.Kotlin -> KotlinEmitter(PackageName(packageName), shared)
+                Language.Scala -> ScalaEmitter(PackageName(packageName), shared)
+                Language.TypeScript -> TypeScriptEmitter(shared)
                 Language.Python -> PythonEmitter()
                 Language.Wirespec -> WirespecEmitter()
                 Language.OpenAPIV2 -> OpenAPIV2Emitter

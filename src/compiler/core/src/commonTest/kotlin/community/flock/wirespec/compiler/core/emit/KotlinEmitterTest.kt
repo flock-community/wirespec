@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.emit
 
 import arrow.core.nonEmptyListOf
+import arrow.core.nonEmptySetOf
 import community.flock.wirespec.compiler.core.EmitContext
 import community.flock.wirespec.compiler.core.fixture.NodeFixtures
 import community.flock.wirespec.compiler.core.parse.Definition
@@ -12,12 +13,13 @@ import kotlin.test.Test
 class KotlinEmitterTest {
 
     private val emitContext = object : EmitContext, NoLogger {
-        override val emitter = KotlinEmitter()
+        override val emitters = nonEmptySetOf(KotlinEmitter())
     }
 
     @Test
     fun testEmitterType() {
-        val expected = """
+        val expected = listOf(
+            """
             |package community.flock.wirespec.generated
             |
             |data class Todo(
@@ -27,7 +29,8 @@ class KotlinEmitterTest {
             |  val done: Boolean
             |)
             |
-        """.trimMargin()
+            """.trimMargin(),
+        )
 
         val res = emitContext.emitFirst(NodeFixtures.type)
         res shouldBe expected
@@ -35,7 +38,8 @@ class KotlinEmitterTest {
 
     @Test
     fun testEmitterRefined() {
-        val expected = """
+        val expected = listOf(
+            """
             |package community.flock.wirespec.generated
             |
             |import community.flock.wirespec.kotlin.Wirespec
@@ -47,7 +51,8 @@ class KotlinEmitterTest {
             |
             |fun UUID.validate() = Regex(${"\"\"\""}^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}${"\"\"\""}).matches(value)
             |
-        """.trimMargin()
+            """.trimMargin(),
+        )
 
         val res = emitContext.emitFirst(NodeFixtures.refined)
         res shouldBe expected
@@ -55,7 +60,8 @@ class KotlinEmitterTest {
 
     @Test
     fun testEmitterEnum() {
-        val expected = """
+        val expected = listOf(
+            """
             |package community.flock.wirespec.generated
             |
             |import community.flock.wirespec.kotlin.Wirespec
@@ -70,11 +76,12 @@ class KotlinEmitterTest {
             |  }
             |}
             |
-        """.trimMargin()
+            """.trimMargin(),
+        )
 
         val res = emitContext.emitFirst(NodeFixtures.enum)
         res shouldBe expected
     }
 
-    private fun EmitContext.emitFirst(node: Definition) = emitter.emit(Module("", nonEmptyListOf(node)), logger).first().result
+    private fun EmitContext.emitFirst(node: Definition) = emitters.map { it.emit(Module("", nonEmptyListOf(node)), logger).first().result }
 }
