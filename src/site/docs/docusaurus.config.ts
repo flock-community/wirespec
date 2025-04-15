@@ -134,7 +134,7 @@ const config: Config = {
             darkTheme: prismThemes.dracula,
             // https://docusaurus.io/docs/markdown-features/code-blocks#supported-languages
             // Note: wirespec is not an official prism language, it's added through prism-include-languages.ts
-            additionalLanguages: ['java', 'typescript'],
+            additionalLanguages: ['java', 'typescript', 'bash', 'json', 'properties', 'gradle'],
         },
 
     } satisfies Preset.ThemeConfig,
