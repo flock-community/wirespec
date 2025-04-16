@@ -20,11 +20,10 @@ function HomepageHeader() {
           className={clsx("hero__title hero-heading", styles.heroHeading)}
         >
           Wirespec <br />
-          your <span className="primary-text-color">API's</span>
+          your <span className="primary-text-color">APIs</span>
         </Heading>
         <p className={clsx("hero__subtitle", styles.heroSubtitle)}>
-          Simplify your API development workflows, accelerate implementation,
-          and guarantee strict adherence to defined contract specifications
+          Simplify your API development, with human readable specifications and guarantee strict adherence
         </p>
         <div className={styles.buttons}>
           <Link
@@ -51,7 +50,6 @@ export default function Home(): JSX.Element {
     <Layout
       title="Wirespec your API's"
       description="Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications"
-      image="/img/code-snippet.jpg"
     >
       <HomepageHeader />
       <main className={clsx(styles.page)}>
@@ -61,34 +59,32 @@ export default function Home(): JSX.Element {
               <div className="col col--5">
                 <div className="designFirstContent-left">
                   <Heading as="h2" className={clsx(styles.heading2)}>
-                    Design first{" "}
-                    <span className="primary-text-color">human</span> readable{" "}
+                    <span className="primary-text-color">Human</span> readable{" "}
+                    <br />
+                    spec first
                   </Heading>
                   <p>
-                    Designing, building and testing your can be timeconsuming
-                    and error prone. This can result in inconsistent interfaces,
-                    manual errors, and slow development by automating and
-                    standardizing your workflow
+                    Designing, building and testing interfaces is time consuming and error prone. Automate and
+                    standardize your workflow to eliminate the following problems:
                   </p>
                   <ul className={styles.listItemGroup}>
                     <li className={clsx(styles.listItem)}>
-                      Design interfaces between systems is hard
+                      Negotiating interfaces between teams is hard
                     </li>
                     <li className={clsx(styles.listItem)}>
-                      Multiple tools to describe all interfaces of application
-                      (OpenAPI, AsyncAPI, Avro)
+                      Tool overload to cover all (REST, Queues, Models)
                     </li>
                     <li className={clsx(styles.listItem)}>
-                      Bad developer experience writing specifications
+                      Tedious experience writing specifications
                     </li>
                     <li className={clsx(styles.listItem)}>
                       Dependency hell in generated code
                     </li>
                     <li className={clsx(styles.listItem)}>
-                      Choice paralysis in libraries, tools and framewroks
+                      Choice paralysis in libraries, tools and frameworks
                     </li>
                     <li className={clsx(styles.listItem)}>
-                      Polyglot implementation struggels
+                      Polyglot implementation struggles
                     </li>
                   </ul>
                 </div>
@@ -121,23 +117,17 @@ export default function Home(): JSX.Element {
                     Why <span className="primary-text-color">Wirespec</span>
                   </Heading>
                   <p>
-                    Wirespec simplifies interface design using a
-                    contract-first approach, with concise, human-readable
-                    specifications as the single source of truth. It generates
-                    interface definitions automatically, reducing manual errors
-                    and ensuring consistency.
+                    Wirespec is a language that simplifies interface design. A requirement for truly contract-first
+                    specifications is readability, by humans, not machines.
                   </p>
                   <p>
-                    By automating this process, Wirespec accelerates development
-                    workflows, ensures strict adherence to interface
-                    specifications, and speeds up implementation.
+                    By generating producer and consumer it acts as the single source of truth for your implementations,
+                    reducing errors, ensuring consistency, and enabling simultaneous frontend and backend development.
                   </p>
                   <p>
-                    Additionally, Wirespec’s contracts enable automated testing
-                    and validation, ensuring implementations reliably match the
-                    defined specifications. In short, Wirespec streamlines API
-                    development, reduces errors, and improves team alignment on
-                    interfaces.
+                    Additionally, Wirespec guarantees implementations follow specification by compile-time checks,
+                    automated testing, and validation. In short, Wirespec streamlines API development, reduces errors,
+                    and improves team alignment.
                   </p>
                 </div>
               </div>
@@ -276,12 +266,9 @@ export default function Home(): JSX.Element {
                       Contract
                     </Heading>
                     <p>
-                      Wirespec’s contract-first approach empowers teams by
-                      establishing one clear, authoritative source of truth,
-                      independent of implementation or technology. It drives
-                      robust, consistent interface designs, boosts team
-                      alignment, eliminates ambiguity, and accelerates effective
-                      collaboration.
+                      Wirespec’s contract-first approach empowers teams by establishing one clear, authoritative source
+                      of truth, independent of implementation or technology. It drives robust, consistent interface
+                      designs, boosts team alignment, eliminates ambiguity, and accelerates effective collaboration.
                     </p>
                     <Link
                       className={clsx(
@@ -291,7 +278,7 @@ export default function Home(): JSX.Element {
                       )}
                       to="/how#contract"
                     >
-                      See contract
+                      Explore Key Principles
                     </Link>
                   </div>
                 </div>
@@ -374,13 +361,10 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                       Generate
                     </Heading>
                     <p>
-                      The code generation vision embraces a contract-first
-                      strategy, placing specifications as the definitive source
-                      of truth. This powerful approach ensures durable, reusable
-                      interfaces, isolates domain definitions from
-                      implementation details, and leverages automated, typesafe
-                      code generation—boosting clarity, collaboration, and
-                      efficiency across teams.
+                      Our code generation vision embraces a contract-first strategy, placing specifications as the
+                      definitive source of truth. This powerful approach ensures durable, reusable interfaces, isolates
+                      domain definitions from implementation details, and leverages automated, typesafe code
+                      generation-boosting clarity, collaboration, and efficiency across teams.
                     </p>
                     <Link
                       className={clsx(
@@ -390,7 +374,7 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                       )}
                       to="/how#generate"
                     >
-                      See generate
+                      Code Generation
                     </Link>
                   </div>
                 </div>
@@ -406,13 +390,10 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                       Validate
                     </Heading>
                     <p>
-                      Wirespec specifications serve as the definitive source of
-                      truth, ensuring API implementations align seamlessly with
-                      defined interfaces. Leveraging automated test data
-                      generation and mock servers, they streamline robust
-                      validation, swiftly identify discrepancies, reduce
-                      ambiguity, and boost reliability—empowering teams to
-                      deliver consistent, predictable API behavior.
+                      Wirespec specifications serve as the definitive source of truth, ensuring API implementations
+                      align seamlessly with defined interfaces. Leveraging automated test data generation and mock
+                      servers, they streamline robust validation, swiftly identify discrepancies, reduce ambiguity, and
+                      boost reliability - empowering teams to deliver consistent, predictable API behavior.
                     </p>
                     <Link
                       className={clsx(
@@ -422,7 +403,7 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                       )}
                       to="/how#validate"
                     >
-                      See validate
+                      Ensure Compliance
                     </Link>
                   </div>
                 </div>
@@ -601,9 +582,8 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                   Why Wirespec from <span>Flock</span>
                 </Heading>
                 <p>
-                  When you choose Wirespec, you’re selecting a product developed
-                  and supported by Flock., a community of passionate and driven
-                  professionals committed to continuous improvement.
+                  Choosing Wirespec means selecting a product developed and supported by Flock., a community of
+                  passionate and driven professionals dedicated to continuous improvement.
                 </p>
                 <p>
                   Our dedication to ongoing innovation and quality ensures that
