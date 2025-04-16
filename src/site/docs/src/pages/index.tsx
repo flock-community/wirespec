@@ -50,7 +50,6 @@ export default function Home(): JSX.Element {
     <Layout
       title="Wirespec your API's"
       description="Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications"
-      image="/img/code-snippet.jpg"
     >
       <HomepageHeader />
       <main className={clsx(styles.page)}>
