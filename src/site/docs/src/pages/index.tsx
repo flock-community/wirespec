@@ -361,7 +361,7 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                       Generate
                     </Heading>
                     <p>
-                      The code generation vision embraces a contract-first strategy, placing specifications as the
+                      Our code generation vision embraces a contract-first strategy, placing specifications as the
                       definitive source of truth. This powerful approach ensures durable, reusable interfaces, isolates
                       domain definitions from implementation details, and leverages automated, typesafe code
                       generation-boosting clarity, collaboration, and efficiency across teams.
@@ -393,7 +393,7 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                       Wirespec specifications serve as the definitive source of truth, ensuring API implementations
                       align seamlessly with defined interfaces. Leveraging automated test data generation and mock
                       servers, they streamline robust validation, swiftly identify discrepancies, reduce ambiguity, and
-                      boost reliability-empowering teams to deliver consistent, predictable API behavior.
+                      boost reliability - empowering teams to deliver consistent, predictable API behavior.
                     </p>
                     <Link
                       className={clsx(
@@ -582,9 +582,8 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                   Why Wirespec from <span>Flock</span>
                 </Heading>
                 <p>
-                  When you choose Wirespec, you’re selecting a product developed
-                  and supported by Flock., a community of passionate and driven
-                  professionals committed to continuous improvement.
+                  Choosing Wirespec means selecting a product developed and supported by Flock., a community of
+                  passionate and driven professionals dedicated to continuous improvement.
                 </p>
                 <p>
                   Our dedication to ongoing innovation and quality ensures that
