@@ -264,7 +264,7 @@ export default function Home(): JSX.Element {
                 <div className="col col--6">
                   <div>
                     <Heading as="h2" className={clsx(styles.heading2)}>
-                      Design
+                      Contract
                     </Heading>
                     <p>
                       Wirespec’s contract-first approach empowers teams by establishing one clear, authoritative source
@@ -279,9 +279,7 @@ export default function Home(): JSX.Element {
                       )}
                       to="/how#contract"
                     >
-                      {/*  TODO update link and check page content matches */}
-
-                      See design
+                      Explore Key Principles
                     </Link>
                   </div>
                 </div>
@@ -377,7 +375,7 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                       )}
                       to="/how#generate"
                     >
-                      See generate
+                      Code Generation
                     </Link>
                   </div>
                 </div>
@@ -406,7 +404,7 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                       )}
                       to="/how#validate"
                     >
-                      See validate
+                      Ensure Compliance
                     </Link>
                   </div>
                 </div>
