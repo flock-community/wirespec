@@ -213,6 +213,10 @@ body {
 
 .designFirstContent-left {
     padding-right: 30px;
+
+    h2 {
+        white-space:nowrap;
+    }
 }
 
 .designFirstContent-right {

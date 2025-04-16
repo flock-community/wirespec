@@ -61,8 +61,8 @@ export default function Home(): JSX.Element {
                 <div className="designFirstContent-left">
                   <Heading as="h2" className={clsx(styles.heading2)}>
                     <span className="primary-text-color">Human</span> readable{" "}
+                    <br />
                     spec first
-                  {/* TODO fix formatting */}
                   </Heading>
                   <p>
                     Designing, building and testing interfaces is time consuming and error prone. Automate and
