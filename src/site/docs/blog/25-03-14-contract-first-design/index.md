@@ -1,8 +1,12 @@
 ---
-title: Contract first design
-authors: [wilmveel, nsmnds]
-tags: [wirespec, docs, contract, design]
+title: Contract First Design
+slug: /contract-first-design
+description: Learn about contract-first API development
+authors: [wilmveel]
+tags: [api, contract-first]
+image: /img/code-snippet.png
 ---
+
 
 ## A Contract-First Design Approach
 
@@ -54,4 +58,8 @@ However, modern tools like **Wirespec's contract-first ecosystem** mitigate thes
 
 ## Conclusion
 
-The contract-first design approach is revolutionizing the way teams design and implement APIs. By prioritizing the specification phase, it ensures thoughtfully crafted interfaces, better collaboration, and future-proofed systems. Tools like Wirespec exemplify how this methodology can be seamlessly integrated into workflows, enabling precise and efficient development. In a world driven by ever-evolving interfaces, adopting a contract-first mindset is no longer just an option—it’s becoming a necessity.
+The contract-first design approach is revolutionizing the way teams design and implement APIs. By prioritizing the 
+specification phase, it ensures thoughtfully crafted interfaces, better collaboration, and future-proofed systems. 
+Tools like Wirespec exemplify how this methodology can be seamlessly integrated into workflows, enabling precise and 
+efficient development. In a world driven by ever-evolving interfaces, adopting a contract-first mindset is no longer 
+just an option - it’s becoming a necessity.

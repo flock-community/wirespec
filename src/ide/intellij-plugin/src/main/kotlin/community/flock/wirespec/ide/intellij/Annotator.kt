@@ -6,6 +6,7 @@ import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
+import community.flock.wirespec.compiler.core.TokenizedModule
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.Parser.parse
@@ -18,7 +19,7 @@ class Annotator :
 
     override fun collectInformation(file: PsiFile) = WirespecSpec
         .tokenize(file.text)
-        .run { parse(nonEmptyListOf(this)) }
+        .run { parse(nonEmptyListOf(TokenizedModule("", this))) }
         .fold({ it }, { emptyList() })
 
     override fun doAnnotate(collectedInfo: List<WirespecException>?) = collectedInfo

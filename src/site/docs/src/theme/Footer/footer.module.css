@@ -1,0 +1,516 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+
+/* You can override the default Infima variables here. */
+
+:root {
+    --ifm-color-primary: #101010;
+    --ifm-color-primary-dark: #29784c;
+    --ifm-color-primary-darker: #277148;
+    --ifm-color-primary-darkest: #205d3b;
+    --ifm-color-primary-light: #33925d;
+    --ifm-color-primary-lighter: #359962;
+    --ifm-color-primary-lightest: #3cad6e;
+    --ifm-background-color: #101010 !important;
+    --ifm-code-font-size: 95%;
+    --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+    --ifm-footer-color: #ffffff;
+    --ifm-footer-link-color: #9F9F9F !important;
+    --ifm-navbar-link-hover-color: #ffdf00;
+    --ifm-footer-link-hover-color: #ffdf00;
+    --ifm-menu-color-active: #ffffff;
+}
+
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+
+[data-theme='dark'] {
+    --ifm-color-primary: #101010;
+    --ifm-color-primary-dark: #21af90;
+    --ifm-color-primary-darker: #1fa588;
+    --ifm-color-primary-darkest: #1a8870;
+    --ifm-color-primary-light: #29d5b0;
+    --ifm-color-primary-lighter: #32d8b4;
+    --ifm-color-primary-lightest: #4fddbf;
+    --ifm-background-color: #101010 !important;
+    --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+    --ifm-navbar-link-hover-color: #ffdf00;
+    --ifm-footer-link-hover-color: #ffdf00;
+    --ifm-menu-color-active: #ffffff;
+}
+
+.footer--dark {
+    --ifm-footer-color: #9F9F9F !important;
+    --ifm-footer-link-color: #ffffff !important;
+}
+
+body {
+    font-size: 16px;
+    color: #9F9F9F;
+    line-break: 160%;
+}
+
+.pt-0 {
+    padding-top: 0px !important;
+}
+
+.navbar {
+    transition: background-color 0.3s ease;
+}
+
+.navbar.scrolled {
+    background-color: #101010;
+}
+
+.main-wrapper {
+    overflow: hidden;
+}
+
+.container {
+    max-width: 1310px;
+    padding: 0px 15px;
+}
+
+.container-fluid {
+    max-width: 100%;
+}
+
+.designFirstContent {
+    padding: 87px 0px;
+}
+
+.designFirstContent h2 {
+    max-width: 350px;
+}
+
+.designFirstContent ul {
+    max-width: 413px;
+}
+
+.designFirstContent ul li {
+    margin-bottom: 12px;
+}
+
+.designFirstContent ul li:last-child {
+    margin-bottom: 0px;
+}
+
+.section-header {
+    text-align: center;
+    padding-bottom: 40px;
+}
+
+.how {
+    padding: 75px 0px;
+}
+
+.inner-section {
+    padding: 40px 0px;
+}
+
+.inner-section:last-child {
+    padding-bottom: 0px;
+}
+
+.steps {
+    padding: 87px 0px;
+}
+
+.card {
+    padding: 56px 56px 36px;
+    border: 1px solid;
+    background: linear-gradient(#101010, #101010) padding-box, linear-gradient(90deg, #ffdf00, #ffdf00) border-box;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.card .icon-box {
+    margin: 0 auto 29px;
+}
+
+.card p {
+    font-size: 20px;
+    text-align: center;
+    font-weight: 400;
+    color: #fff;
+    margin-bottom: 0px;
+}
+
+.card-border-top {
+    background: linear-gradient(#101010, #101010) padding-box, linear-gradient(180deg, #101010, #ffdf00) border-box;
+}
+
+.card-border-bottom {
+    background: linear-gradient(#101010, #101010) padding-box, linear-gradient(0deg, #101010, #ffdf00) border-box;
+}
+
+.card-border-left {
+    background: linear-gradient(#101010, #101010) padding-box, linear-gradient(90deg, #101010, #ffdf00) border-box;
+}
+
+.card-border-right {
+    background: linear-gradient(#101010, #101010) padding-box, linear-gradient(90deg, #ffdf00, #101010) border-box;
+}
+
+.card-nospace {
+    padding: 0px !important;
+    overflow: hidden;
+}
+
+.grid {
+    display: grid;
+}
+
+.grid-cols-3 {
+    grid-template-columns: 1fr;
+    gap: 35px;
+}
+
+
+/* Medium screens: 2 columns */
+
+@media (min-width: 640px) {
+    .grid-cols-3 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+
+/* Large screens: 3 columns */
+
+@media (min-width: 1024px) {
+    .grid-cols-3 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.gap-35 {
+    gap: 35px;
+}
+
+.icon-box {
+    width: 46px;
+    height: 46px;
+    background-color: #FFDF00;
+    border-radius: 99999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.designFirstContent-left {
+    padding-right: 30px;
+}
+
+.designFirstContent-right {
+    padding-left: 30px;
+}
+
+.navbar {
+    background-color: transparent;
+}
+
+.navbar--fixed-top {
+    position: fixed;
+    width: 100%;
+    box-shadow: none;
+}
+
+.other-capabilites {
+    padding: 96px 0px;
+}
+
+.other-capabilites h2 {
+    font-size: 60px;
+    font-weight: 500;
+    max-width: 474px;
+}
+
+.card-other {
+    padding: 36px;
+    margin-bottom: 36px;
+    background: linear-gradient(#141414, #141414) padding-box, linear-gradient(0deg, #101010, #ffdf00) border-box;
+}
+
+.card-other h4 {
+    font-size: 28px;
+    font-weight: 500;
+    font-family: "DM Sans", sans-serif;
+}
+
+.card-other p {
+    font-size: 18px;
+    color: #9f9f9f;
+    font-weight: 400;
+    line-break: 160%;
+    text-align: left;
+    margin-bottom: 14px;
+}
+
+.card-other p span {
+    color: white;
+}
+
+.table {
+    overflow-x: auto;
+}
+
+.table table {
+    width: 100%;
+    display: table;
+    margin-bottom: 0px;
+}
+
+.table table thead tr {
+    background-color: #000000;
+    border: none;
+}
+
+.table table tr th {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.table table tr td {
+    font-weight: 400;
+}
+
+.table table tr th,
+.table table tr td {
+    font-size: 18px;
+    color: #ffffff;
+    text-align: left;
+    border: 1px solid rgba(255, 223, 0, 0.30);
+    font-family: "Funnel Display", sans-serif;
+    padding: 20px;
+}
+
+table tr:nth-child(2n) {
+    background-color: #181818;
+}
+
+.card-flock {
+    min-height: 316px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #1C1C1C4D;
+    background: linear-gradient(#000000, #000000) padding-box, linear-gradient(0deg, #101010, #ffdf00) border-box;
+}
+
+.card-flock img {
+    max-width: 173px;
+}
+
+.start-wirespec .card-footer .card-footer-header h2 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.start-wirespec .card-footer .card-footer-header p {
+    max-width: 626px;
+    color: #9F9F9F;
+    margin: 0 auto;
+    margin-bottom: 40px;
+}
+
+.icon-item-box {
+    display: flex;
+    align-items: center;
+}
+
+.icon-item-box .icon-box {
+    margin: 0;
+    margin-right: 12px;
+}
+
+.icon-item-group {
+    display: flex;
+    justify-content: center;
+    gap: 46px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+}
+
+
+/* Responsive adjustments for smaller screens */
+
+@media (max-width: 768px) {
+    .icon-item-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+        /* Reduced gap for smaller screens */
+    }
+}
+
+.footer-action {
+    text-align: center;
+}
+
+.card-footer {
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.card-footer:before {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    z-index: -1;
+    left: 0;
+    top: 0;
+    background-image: url('/img/footer-card-bg.png');
+    background-size: cover;
+}
+
+.footerLogoLink_DDai {
+    opacity: 1;
+}
+
+.logo-column {
+    max-width: 285px;
+    padding: 0px 15px;
+}
+
+.footer-link-columns {
+    padding: 0 15px;
+    margin-left: auto;
+}
+
+.logo-column p {
+    color: #9F9F9F;
+    margin-bottom: 10px;
+}
+
+.logo-column .navbar__link {
+    padding: 0px;
+}
+
+.logo-column .navbar__link svg {
+    width: 30px;
+    height: 30px;
+}
+
+.footer--dark {
+    background: #101010;
+    border-top: 1px solid rgba(255, 223, 0, 0.30);
+    padding-top: 235px;
+    margin-top: -151px;
+}
+
+.footer-bottom {
+    margin-top: 110px;
+}
+
+.footer__item .footer__link-item {}
+
+.footer-bottom .footer__items {
+    display: flex;
+    margin-left: auto;
+    margin-right: 0;
+    justify-content: flex-end;
+    gap: 43px;
+}
+
+.footer-bottom .footer__items .footer__link-item {
+    color: #9F9F9F;
+    font-weight: 400;
+    font-size: 16px;
+    text-decoration: underline;
+}
+
+.footer-bottom .footer__items .footer__link-item:hover {
+    color: #ffffff;
+}
+
+.dropdown>.navbar__link:after {
+    width: 6px;
+    height: 6px;
+    border: none;
+    border-left: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(-45deg);
+    top: -3px;
+    left: 2px;
+}
+
+.designFirstContent-blur {
+    position: relative;
+    z-index: 1;
+}
+
+.designFirstContent-blur:before {
+    content: '';
+    position: absolute;
+    bottom: -23px;
+    right: -337px;
+    width: 537px;
+    height: 475px;
+    background-color: rgba(255, 223, 0, 0.30);
+    border-radius: 100%;
+    filter: blur(300px);
+}
+
+.how {
+    position: relative;
+}
+
+.how:before {
+    display: block;
+    content: '';
+    position: absolute;
+    top: 100px;
+    left: -337px;
+    width: 404px;
+    height: 357px;
+    background-color: rgba(255, 223, 0, 0.30);
+    border-radius: 100%;
+    filter: blur(300px);
+}
+
+.other-capabilites-shadow {
+    position: relative;
+    z-index: 1;
+}
+
+.other-capabilites-shadow:before {
+    display: block;
+    content: '';
+    position: absolute;
+    top: -200px;
+    right: -153px;
+    width: 404px;
+    height: 357px;
+    background-color: rgba(255, 223, 0, 0.30);
+    border-radius: 100%;
+    filter: blur(300px);
+}
+
+.card-flock-wrap {
+    position: relative;
+}
+
+.card-flock-wrap:before {
+    display: block;
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 238px;
+    height: 238px;
+    background-color: rgba(255, 223, 0, 0.30);
+    border-radius: 100%;
+    filter: blur(300px);
+    z-index: -1;
+    transform: translate(-50%, -50%);
+}

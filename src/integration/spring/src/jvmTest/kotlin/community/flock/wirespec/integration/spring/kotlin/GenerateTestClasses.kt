@@ -1,5 +1,6 @@
 package community.flock.wirespec.integration.spring.kotlin
 
+import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.integration.spring.java.emit.SpringJavaEmitter
 import community.flock.wirespec.integration.spring.kotlin.emit.SpringKotlinEmitter
@@ -25,7 +26,7 @@ class GenerateTestClasses {
     @Test
     fun generateKotlin() {
         val petstoreFile = File("src/jvmTest/resources/petstore.json").readText()
-        val ast = OpenAPIV3Parser.parse(petstoreFile)
+        val ast = OpenAPIV3Parser.parse(ModuleContent("src/jvmTest/resources/petstore.json", petstoreFile))
         val emittedKotlin = kotlinEmitter.emit(ast, noLogger)
 
         kotlinOutputDir.mkdirs()
@@ -37,12 +38,13 @@ class GenerateTestClasses {
     @Test
     fun generateJava() {
         val petstoreFile = File("src/jvmTest/resources/petstore.json").readText()
-        val ast = OpenAPIV3Parser.parse(petstoreFile)
+        val ast = OpenAPIV3Parser.parse(ModuleContent("src/jvmTest/resources/petstore.json", petstoreFile))
         val emittedJava = javaEmitter.emit(ast, noLogger)
 
         javaOutputDir.mkdirs()
-        emittedJava.forEach {
-            javaOutputDir.resolve("${it.typeName}.java").writeText(it.result)
-        }
+        emittedJava
+            .filter { "Wirespec" !in it.typeName }.forEach {
+                baseDir.resolve("kotlin").resolve(it.typeName).writeText(it.result)
+            }
     }
 }
