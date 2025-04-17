@@ -3,7 +3,62 @@ title: Avro
 slug: /integration/avro
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
+asdf intro
+
+
+## Setup
+
+
+<Tabs>
+    <TabItem value="maven" label="Maven">
+        ```xml
+        <dependency>
+            <groupId>community.flock.wirespec.integration</groupId>
+            <artifactId>spring-jvm</artifactId>
+            <version>0.14.3</version>
+        </dependency>
+        ```
+
+        ```xml
+        <plugin>
+            <groupId>community.flock.wirespec.plugin.maven</groupId>
+            <artifactId>wirespec-maven-plugin</artifactId>
+            <version>0.14.3</version>
+            <executions>
+                <execution>
+                    <id>java</id>
+                    <goals>
+                        <goal>compile</goal>
+                    </goals>
+                    <configuration>
+                        <input>${project.basedir}/src/main/wirespec</input>
+                        <output>${project.build.directory}/generated-sources</output>
+                        <emitterClass>community.flock.wirespec.integration.avro.java.emit.AvroJavaEmitter</emitterClass>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+        ```
+    </TabItem>
+
+    [//]: # (<TabItem value="gradle" label="Gradle">)
+    [//]: # (</TabItem>)
+</Tabs>
+
+:::info
+Make sure to use the latest version, found here:
+
+![Maven Central](https://img.shields.io/maven-central/v/community.flock.wirespec.plugin.maven/wirespec-maven-plugin)
+:::
+
+------------------------------
+
+## Creating and compiling a definition
+
+##
 
 ```java
 
