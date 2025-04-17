@@ -10,17 +10,14 @@ This document describes how to integrate Wirespec-generated code with Avro, Apac
 simplifies the creation of type-safe and well-defined data structures, and this integration provides a seamless way to
 work with those structures when serializing and deserializing Avro data.
 
-The integration works for both producers and consumers of Avro data.
-
-
-Additionally, Wirespec can convert existing schemas to Wirespac, and .. something something other places
+The integration works for both producers and consumers.
 
 ## Setup
 
-Wirespec comes with an AvroEmitter for both Java and Kotlin.
-
 <Tabs>
-    <TabItem value="maven" label="Maven">
+    <TabItem value="maven-java" label="Maven (Java)">
+        Add both the dependency and plugin to your pom.xml file:
+
         ```xml
         <dependency>
             <groupId>community.flock.wirespec.integration</groupId>
@@ -50,6 +47,38 @@ Wirespec comes with an AvroEmitter for both Java and Kotlin.
         </plugin>
         ```
     </TabItem>
+    <TabItem value="maven-kotlin" label="Maven (Kotlin)">
+        Add both the dependency and plugin to your pom.xml file:
+
+        ```xml
+        <dependency>
+            <groupId>community.flock.wirespec.integration</groupId>
+            <artifactId>spring-jvm</artifactId>
+            <version>0.14.3</version>
+        </dependency>
+        ```
+
+        ```xml
+        <plugin>
+            <groupId>community.flock.wirespec.plugin.maven</groupId>
+            <artifactId>wirespec-maven-plugin</artifactId>
+            <version>0.14.3</version>
+            <executions>
+                <execution>
+                    <id>java</id>
+                    <goals>
+                        <goal>compile</goal>
+                    </goals>
+                    <configuration>
+                        <input>${project.basedir}/src/main/wirespec</input>
+                        <output>${project.build.directory}/generated-sources</output>
+                        <emitterClass>community.flock.wirespec.integration.avro.kotlin.emit.AvroKotlinEmitter</emitterClass>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+        ```
+    </TabItem>
 
     [//]: # (<TabItem value="gradle" label="Gradle">)
     [//]: # (</TabItem>)
@@ -65,25 +94,152 @@ Make sure to use the latest version, found here:
 
 ## Creating and compiling a definition
 
-##
+Now that the setup is complete, we'll add our Wirespec definition in src/main/wirespec/, matching the directory we
+specified as input in the configuration. The example below contains a simple definition of a notification queue channel:
 
-```wirespec
+```wirespec title="src/main/wirespec/notification.ws"
+channel NotificationQueue -> Task
+
 type Task {
     id: Integer,
     content: String
 }
+```
 
-channel NotificationQueue -> Task
+<br />
+
+Now we can compile our definition and generate sources to the specified output directory by running the following
+command:
+
+```bash
+maven install
 ```
 
 
 ## Output
-```java
-```
 
+Let's take a brief look at the code and schemas that get generated as a result:
 
-```kotlin
-```
+<Tabs>
+    <TabItem value="java" label="Java">
+        ```java title="generated-sources/community/flock/wirespec/generated/NotificationQueueChannel.java"
+        package community.flock.wirespec.generated;
 
+        public interface NotificationQueueChannel {
+            void invoke(Task message);
+        }
+        ```
+
+        ```java title="generated-sources/community/flock/wirespec/generated/Task.java"
+        package community.flock.wirespec.generated;
+
+        public record Task (
+            Long id,
+            String content
+        ) {
+            public static class Avro {
+
+                public static final org.apache.avro.Schema SCHEMA = new org.apache.avro.Schema.Parser().parse(
+                    """
+                    {
+                        "type": "record",
+                        "name": "Task",
+                        "namespace": "community.flock.wirespec.generated",
+                        "fields": [{
+                            "name": "id",
+                            "type": "long"
+                        },
+                        {
+                            "name": "content",
+                            "type": "string"
+                        }]
+                    }
+                    """
+                );
+
+                public static Task from(org.apache.avro.generic.GenericData.Record record) {
+                    return new Task((Long) record.get(0),(String) record.get(1).toString());
+                }
+
+                public static org.apache.avro.generic.GenericData.Record to(Task data) {
+                    var record = new org.apache.avro.generic.GenericData.Record(SCHEMA);
+                    record.put(0, data.id());
+                    record.put(1, data.content());
+                    return record;
+                }
+            }
+        };
+        ```
+    </TabItem>
+
+    <TabItem value="kotlin" label="Kotlin">
+        ```kotlin title="generated-sources/community/flock/wirespec/generated/Notification.kt"
+        package community.flock.wirespec.generated
+
+        interface NotificationQueueChannel {
+            operator fun invoke(message: Task)
+        }
+
+        data class Task(
+            val id: Long,
+            val content: String
+        ) {
+            class Avro {
+                companion object {
+                    val SCHEMA = org.apache.avro.Schema.Parser().parse(
+                        """
+                        {
+                          "type": "record",
+                          "name": "Task",
+                          "namespace": "community.flock.wirespec.generated",
+                          "fields": [
+                            {
+                              "name": "id",
+                              "type": "long"
+                            },
+                            {
+                              "name": "content",
+                              "type": "string"
+                            }
+                          ]
+                        }
+                        """.trimIndent()
+                    )
+
+                    @JvmStatic
+                    fun from(record: org.apache.avro.generic.GenericData.Record): Task {
+                        return Task(
+                            record.get(0) as Long,
+                            record.get(1).toString() as String
+                        )
+                    }
+
+                    @JvmStatic
+                    fun to(model: Task): org.apache.avro.generic.GenericData.Record {
+                        val record = org.apache.avro.generic.GenericData.Record(SCHEMA)
+                        record.put(0, model.id)
+                        record.put(1, model.content)
+                        return record
+                    }
+                }
+            }
+        }
+        ```
+    </TabItem>
+</Tabs>
+
+------------------------------
+<br />
+
+Your application code can now make RPCs or interact with your message broker in a type-safe way.
 
 ## Conclusion
+
+Wirespec's Avro integration provides a powerful and efficient way to create type-safe and very readable interfaces.
+
+If you have existing Avro schemas that you'd like to integrate with Wirespec, consider using the
+[converter](../converters/#avro) functionality. This allows you to bridge the gap between existing Avro definitions and
+the benefits of Wirespec's.
+
+A fully running example application
+[can be found in the repository](https://github.com/flock-community/wirespec/tree/master/examples/maven-spring-avro).
