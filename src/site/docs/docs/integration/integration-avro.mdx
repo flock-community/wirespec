@@ -6,11 +6,18 @@ slug: /integration/avro
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-asdf intro
+This document describes how to integrate Wirespec-generated code with Avro, Apache's serialization system. Wirespec
+simplifies the creation of type-safe and well-defined data structures, and this integration provides a seamless way to
+work with those structures when serializing and deserializing Avro data.
 
+The integration works for both producers and consumers of Avro data.
+
+
+Additionally, Wirespec can convert existing schemas to Wirespac, and .. something something other places
 
 ## Setup
 
+Wirespec comes with an AvroEmitter for both Java and Kotlin.
 
 <Tabs>
     <TabItem value="maven" label="Maven">
@@ -60,6 +67,23 @@ Make sure to use the latest version, found here:
 
 ##
 
-```java
+```wirespec
+type Task {
+    id: Integer,
+    content: String
+}
 
+channel NotificationQueue -> Task
 ```
+
+
+## Output
+```java
+```
+
+
+```kotlin
+```
+
+
+## Conclusion
