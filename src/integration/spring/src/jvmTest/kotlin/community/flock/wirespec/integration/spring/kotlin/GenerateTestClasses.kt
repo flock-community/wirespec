@@ -31,7 +31,7 @@ class GenerateTestClasses {
 
         kotlinOutputDir.mkdirs()
         emittedKotlin.forEach {
-            kotlinOutputDir.resolve("Petstorev3.kt").writeText(it.result)
+            baseDir.resolve("kotlin").resolve(it.typeName).writeText(it.result)
         }
     }
 
