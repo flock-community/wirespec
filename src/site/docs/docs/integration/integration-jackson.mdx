@@ -3,21 +3,40 @@ title: Jackson
 slug: /integration/jackson
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 In this document ...
+
+Wirespec can sometimes conflict with the language specifics of the target language.
+For this scenario we have made the jackson integration
 
 ## Setup
 
-```xml
-<dependency>
-    <groupId>community.flock.wirespec.integration</groupId>
-    <artifactId>jackson</artifactId>
-    <version>0.14.3</version>
-</dependency>
-```
+<Tabs>
+    <TabItem value="maven" label="Maven">
+        ```xml title="pom.xml"
+        <dependency>
+            <groupId>community.flock.wirespec.integration</groupId>
+            <artifactId>jackson</artifactId>
+            <version>0.14.3</version>
+        </dependency>
+        ```
+    </TabItem>
+    <TabItem value="gradle" label="Gradle">
+        ```gradle title=""
+        implementation("community.flock.wirespec.integration:jackson:0.14.3")
+        ```
+    </TabItem>
+</Tabs>
 
-```gradle
-implementation("community.flock.wirespec.integration:avro:0.14.3")
-```
+:::info
+Make sure to use the latest version, found here:
+
+![Maven Central](https://img.shields.io/maven-central/v/community.flock.wirespec.plugin.maven/wirespec-maven-plugin)
+:::
+
+------------------------------
 
 ## Serialization example
 
