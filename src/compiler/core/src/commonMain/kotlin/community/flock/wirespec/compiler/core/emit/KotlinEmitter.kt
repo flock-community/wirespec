@@ -58,16 +58,16 @@ open class KotlinEmitter(
     override val singleLineComment = "//"
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
-        val emitted = nonEmptyListOf(
+        val emitted = super.emit(module, logger).map { (typeName, result): Emitted ->
             Emitted(
-                typeName = packageName.toDir() + module.uri.split("/").last().firstToUpper(),
+                typeName = packageName.toDir() + typeName.sanitizeSymbol(),
                 result = """
-                    |package $packageName
-                    |${if (module.needImports()) import else ""}
-                    |${super.emit(module, logger).map(Emitted::result).joinToString("\n")}
-                """.trimMargin().trimStart()
+                            |package $packageName;
+                            |${if (module.needImports()) import else ""}
+                            |$result
+                        """.trimMargin().trimStart()
             )
-        )
+        }
 
         return if (emitShared) emitted + Emitted(PackageName(DEFAULT_GENERATED_PACKAGE_STRING).toDir() + "Wirespec", shared.source) else emitted
     }
