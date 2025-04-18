@@ -116,7 +116,7 @@ maven install
 ```
 
 
-## Output
+## Output and usage
 
 Let's take a brief look at the code and schemas that get generated as a result:
 
@@ -232,6 +232,34 @@ Let's take a brief look at the code and schemas that get generated as a result:
 <br />
 
 Your application code can now make RPCs or interact with your message broker in a type-safe way.
+
+
+### As a producer
+
+```java
+@Service
+public class NotificationService implements NotificationQueueChannel {
+
+    private static final String TOPIC = "my-topic";
+
+    final ProducerFactory<Object, Object> kafkaProducerFactory;
+
+    public NotificationService(ProducerFactory<Object, Object> kafkaProducerFactory) {
+        this.kafkaProducerFactory = kafkaProducerFactory;
+    }
+
+    @Override
+    public void invoke(Task message) {
+        KafkaTemplate<Object, Object> template = new KafkaTemplate<>(kafkaProducerFactory);
+        GenericData.Record avro = Task.Avro.to(message);
+        template.send(TOPIC, avro);
+    }
+}
+```
+
+### As a consumer
+
+
 
 ## Conclusion
 
