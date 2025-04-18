@@ -29,7 +29,7 @@ class SpringKotlinEmitterTest {
         val ast = parse(text)
         val actual = SpringKotlinEmitter("community.flock.wirespec.spring.test")
             .emit(ast, noLogger)
-            .joinToString ("\n"){ it.result }
+            .joinToString("\n") { it.result }
         val expected = """
             |package community.flock.wirespec.spring.test
             |
