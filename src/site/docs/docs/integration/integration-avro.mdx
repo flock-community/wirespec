@@ -242,7 +242,7 @@ public class NotificationService implements NotificationQueueChannel {
 
     private static final String TOPIC = "my-topic";
 
-    final ProducerFactory<Object, Object> kafkaProducerFactory;
+    private final ProducerFactory<Object, Object> kafkaProducerFactory;
 
     public NotificationService(ProducerFactory<Object, Object> kafkaProducerFactory) {
         this.kafkaProducerFactory = kafkaProducerFactory;
@@ -259,6 +259,31 @@ public class NotificationService implements NotificationQueueChannel {
 
 ### As a consumer
 
+```java
+@Service
+public class NotificationService {
+
+    private static final String TOPIC = "my-topic";
+
+    private final ConsumerFactory<Object, Object> kafkaConsumerFactory;
+
+    public NotificationService(ConsumerFactory<Object, Object> kafkaConsumerFactory) {
+        this.kafkaConsumerFactory = kafkaConsumerFactory;
+    }
+
+    public void listen(String groupId, Task listener) {
+        ContainerProperties containerProps = new ContainerProperties(TOPIC);
+        containerProps.setGroupId(groupId);
+        KafkaMessageListenerContainer<Object, Object> container = new KafkaMessageListenerContainer<>(kafkaConsumerFactory, containerProps);
+
+        container.setupMessageListener((MessageListener<String, GenericData.Record>) data -> {
+            Task task = Task.Avro.from(data.value());
+            // Handle task
+        });
+        container.start();
+    }
+}
+```
 
 
 ## Conclusion
