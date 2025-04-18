@@ -6,10 +6,9 @@ slug: /integration/jackson
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-In this document ...
-
-Wirespec can sometimes conflict with the language specifics of the target language.
-For this scenario we have made the jackson integration
+If you're using Jackson for serialization/deserialization you can make use of the Wirespec Jackson plugin to ensure
+proper behaviour in all cases. Though not strictly required in all scenarios we recommend that you always use the
+jackson integration to avoid unexpected behavior.
 
 ## Setup
 
@@ -24,7 +23,7 @@ For this scenario we have made the jackson integration
         ```
     </TabItem>
     <TabItem value="gradle" label="Gradle">
-        ```gradle title=""
+        ```gradle title="build.gradle.kts"
         implementation("community.flock.wirespec.integration:jackson:0.14.3")
         ```
     </TabItem>
@@ -38,22 +37,34 @@ Make sure to use the latest version, found here:
 
 ------------------------------
 
-## Serialization example
+## Enums and Refined types
 
-Example
+We want to make use of the language's built in strong typing/ type safety:
 
-Serializer/Deserializer for
-
-Enum
-Java Reserved keywords
-Kotlin reserved keywords
-Refined
-
+```java
 
 ```
-    addSerializer(Wirespec.Refined::class.java, RefinedSerializer())
-    addSerializer(Wirespec.Enum::class.java, EnumSerializer())
-    setDeserializerModifier(WirespecDeserializerModifier())
-    setNamingStrategy(KotlinReservedKeywordNamingStrategy())
+
+## Language keywords
+
+Wirespec can sometimes conflict with the language specifics of the target language. For example, it is not possible to
+declare a variable in Java named `final`, but we may still want to have such a contract:
+
+```wirespec
+type Document {
+    content: String,
+    // highlight-next-line
+    final: Boolean // A keyword in Java
+}
 ```
 
+In this case, the contract will remain unchanged, but for serialization and deserialization we will prefix this variable
+with an `_`:
+
+```java
+public record Document(
+    String content,
+    // highlight-next-line
+    Boolean _final
+) {}
+```
