@@ -62,7 +62,7 @@ open class KotlinEmitter(
             Emitted(
                 typeName = packageName.toDir() + typeName.sanitizeSymbol(),
                 result = """
-                            |package $packageName;
+                            |package $packageName
                             |${if (module.needImports()) import else ""}
                             |$result
                         """.trimMargin().trimStart()

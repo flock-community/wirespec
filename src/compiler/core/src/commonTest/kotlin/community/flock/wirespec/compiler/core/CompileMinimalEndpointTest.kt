@@ -101,6 +101,11 @@ class CompileMinimalEndpointTest {
             |  }
             |}
             |
+            |package community.flock.wirespec.generated
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |
             |data class TodoDto(
             |  val description: String
             |)

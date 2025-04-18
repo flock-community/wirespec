@@ -166,20 +166,40 @@ class CompileFullEndpointTest {
             |  }
             |}
             |
+            |package community.flock.wirespec.generated
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |
             |data class PotentialTodoDto(
             |  val name: String,
             |  val done: Boolean
             |)
             |
+            |package community.flock.wirespec.generated
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |
             |data class Token(
             |  val iss: String
             |)
+            |
+            |package community.flock.wirespec.generated
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
             |
             |data class TodoDto(
             |  val id: String,
             |  val name: String,
             |  val done: Boolean
             |)
+            |
+            |package community.flock.wirespec.generated
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
             |
             |data class Error(
             |  val code: Long,
