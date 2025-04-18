@@ -120,7 +120,7 @@ maven install
 
 Let's take a brief look at the code and schemas that get generated as a result:
 
-<Tabs>
+<Tabs groupId="language">
     <TabItem value="java" label="Java">
         ```java title="generated-sources/community/flock/wirespec/generated/NotificationQueueChannel.java"
         package community.flock.wirespec.generated;
@@ -171,7 +171,6 @@ Let's take a brief look at the code and schemas that get generated as a result:
         };
         ```
     </TabItem>
-
     <TabItem value="kotlin" label="Kotlin">
         ```kotlin title="generated-sources/community/flock/wirespec/generated/Notification.kt"
         package community.flock.wirespec.generated
@@ -236,55 +235,107 @@ Your application code can now make RPCs or interact with your message broker in 
 
 ### As a producer
 
-```java
-@Service
-public class NotificationService implements NotificationQueueChannel {
+<Tabs groupId="language">
+    <TabItem value="java" label="Java">
+        ```java
+        @Service
+        public class NotificationProducer implements NotificationQueueChannel {
 
-    private static final String TOPIC = "my-topic";
+            private static final String TOPIC = "my-topic";
 
-    private final ProducerFactory<Object, Object> kafkaProducerFactory;
+            private final ProducerFactory<Object, Object> kafkaProducerFactory;
 
-    public NotificationService(ProducerFactory<Object, Object> kafkaProducerFactory) {
-        this.kafkaProducerFactory = kafkaProducerFactory;
-    }
+            public NotificationProducer(ProducerFactory<Object, Object> kafkaProducerFactory) {
+                this.kafkaProducerFactory = kafkaProducerFactory;
+            }
 
-    @Override
-    public void invoke(Task message) {
-        KafkaTemplate<Object, Object> template = new KafkaTemplate<>(kafkaProducerFactory);
-        GenericData.Record avro = Task.Avro.to(message);
-        template.send(TOPIC, avro);
-    }
-}
-```
+            @Override
+            public void invoke(Task message) {
+                KafkaTemplate<Object, Object> template = new KafkaTemplate<>(kafkaProducerFactory);
+                GenericData.Record avro = Task.Avro.to(message);
+                template.send(TOPIC, avro);
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem value="kotlin" label="Kotlin">
+        ```kotlin
+        @Service
+        class NotificationProducer(
+            private val kafkaProducerFactory: ProducerFactory<Any, Any>
+        ) : NotificationQueueChannel {
+
+            companion object {
+                const val TOPIC = "my-topic"
+            }
+
+            override fun invoke(message: Task) {
+                val template = KafkaTemplate(kafkaProducerFactory)
+                val avro = Task.Avro.to(message)
+                template.send(Companion.TOPIC, avro)
+            }
+        }
+        ```
+    </ TabItem>
+</Tabs>
 
 ### As a consumer
 
-```java
-@Service
-public class NotificationService {
 
-    private static final String TOPIC = "my-topic";
+<Tabs groupId="language">
+    <TabItem value="java" label="Java">
+        ```java
+        @Service
+        public class NotificationConsumer {
 
-    private final ConsumerFactory<Object, Object> kafkaConsumerFactory;
+            private static final String TOPIC = "my-topic";
 
-    public NotificationService(ConsumerFactory<Object, Object> kafkaConsumerFactory) {
-        this.kafkaConsumerFactory = kafkaConsumerFactory;
-    }
+            private final ConsumerFactory<Object, Object> kafkaConsumerFactory;
 
-    public void listen(String groupId, Task listener) {
-        ContainerProperties containerProps = new ContainerProperties(TOPIC);
-        containerProps.setGroupId(groupId);
-        KafkaMessageListenerContainer<Object, Object> container = new KafkaMessageListenerContainer<>(kafkaConsumerFactory, containerProps);
+            public NotificationConsumer(ConsumerFactory<Object, Object> kafkaConsumerFactory) {
+                this.kafkaConsumerFactory = kafkaConsumerFactory;
+            }
 
-        container.setupMessageListener((MessageListener<String, GenericData.Record>) data -> {
-            Task task = Task.Avro.from(data.value());
-            // Handle task
-        });
-        container.start();
-    }
-}
-```
+            public void listen(String groupId, Task listener) {
+                ContainerProperties containerProps = new ContainerProperties(TOPIC);
+                containerProps.setGroupId(groupId);
+                KafkaMessageListenerContainer<Object, Object> container =
+                        new KafkaMessageListenerContainer<>(kafkaConsumerFactory, containerProps);
 
+                container.setupMessageListener((MessageListener<String, GenericData.Record>) data -> {
+                    Task task = Task.Avro.from(data.value());
+                    // Handle task
+                });
+                container.start();
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem value="kotlin" label="Kotlin">
+        ```kotlin
+        @Service
+        class NotificationConsumer(private val kafkaConsumerFactory: ConsumerFactory<Any, Any>) {
+
+            companion object {
+                private const val TOPIC = "my-topic"
+            }
+
+            fun listen(groupId: String, listener: Task?) {
+                val containerProps = ContainerProperties(TOPIC)
+                containerProps.groupId = groupId
+                val container =
+                    KafkaMessageListenerContainer(kafkaConsumerFactory, containerProps)
+
+                container.setupMessageListener(MessageListener { data: ConsumerRecord<String?, GenericData.Record?> ->
+                    val task = Task.Avro.from(data.value())
+                    // Handle task
+                })
+                container.start()
+            }
+        }
+        ```
+    </ TabItem>
+</Tabs>
 
 ## Conclusion
 
