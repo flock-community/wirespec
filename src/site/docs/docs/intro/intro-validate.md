@@ -9,7 +9,7 @@ Specifications provide a **blueprint** for the implementation. By describing the
 Using specifications to generate **randomized yet valid test data** ensures that input data conforms to expected formats and constraints. Tools like Wirespec can leverage the detailed schema definitions to create test scenarios that systematically cover edge cases, identifying potential issues early in the development cycle. This automated data generation streamlines testing and improves reliability.
 
 ### Mock Servers for Testing
-Mock servers can be generated based on the same specification, reducing dependency on live systems for testing. These servers simulate the behavior of APIs as defined in the contracts, allowing testing environments to mimic production without requiring complete backend implementations. This approach helps developers verify that their code interacts correctly with the API's interface, ensuring input/output consistency and expected status codes are met.
+Mock servers can be generated based on the same specification, reducing dependency on live systems for testing. These servers simulate the behavior of APIs as defined in the contracts, allowing testing environments to mimic production without requiring complete backend implementations. This approach helps developers verify that their code interacts correctly with the APIs interface, ensuring input/output consistency and expected status codes are met.
 
 ### Detecting Discrepancies Early
 By using the specification to drive both code generation and validation processes, inconsistencies can be detected before they reach production. Automated tests generated directly from the specification confirm that the code adheres to expected behaviors and data formats defined in the agreed-upon contract.
