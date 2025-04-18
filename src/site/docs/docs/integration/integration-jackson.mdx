@@ -46,9 +46,19 @@ Wirespec. As a user of Wirespec there is **no** need to fully understand such in
 
 We want to make use of the language's built in strong typing/ type safety:
 
+We want to deal with the `String` and then and then let the wrapper class deal with the validation (this keeps us
+independent of Jackson's built-in validation).
+
 ```wirespec
 type Name /^[0-9a-zA-Z]{1,50}$/g
+
+type Person {
+  firstname: Name,
+  lastName: Name
+}
 ```
+
+This will give us the following record for the Name type:
 
 ```java
 public record Name(String value) implements Wirespec.Refined {
@@ -64,6 +74,21 @@ public record Name(String value) implements Wirespec.Refined {
     @Override
     public String getValue() {
         return value;
+    }
+}
+```
+
+
+This is great
+However, if we would simply serialize the following Jackson would produce the following JSON:
+
+```json
+{
+    "firstName":{
+      "value": "Foo"
+    },
+    "lastName":{
+      "value": "Bar"
     }
 }
 ```
