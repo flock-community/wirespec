@@ -47,7 +47,7 @@ class GenerateTestClasses {
 
         kotlinDir.mkdirs()
         emittedKotlin.forEach {
-            kotlinDir.resolve("Todo.kt").writeText(it.result)
+            baseDir.resolve("kotlin").resolve(it.typeName).writeText(it.result)
         }
     }
 }
