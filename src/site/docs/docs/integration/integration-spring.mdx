@@ -42,9 +42,6 @@ The integration works for both [producers](#restcontroller) (RestController) and
                     <configuration>
                         <input>${project.basedir}/src/main/wirespec</input>
                         <output>${project.build.directory}/generated-sources</output>
-                        <languages>
-                            <language>Java</language>
-                        </languages>
                         <emitterClass>community.flock.wirespec.integration.spring.java.emit.SpringJavaEmitter</emitterClass>
                     </configuration>
                 </execution>
@@ -69,7 +66,7 @@ The integration works for both [producers](#restcontroller) (RestController) and
             emitterClass = "community.flock.wirespec.integration.spring.java.emit.SpringJavaEmitter"::class.java
             languages = listOf(Language.Java)
         }
-        ````
+        ```
 
     </TabItem>
 </Tabs>
