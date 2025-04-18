@@ -1,7 +1,7 @@
 package community.flock.wirespec.plugin.gradle
 
 import arrow.core.nonEmptySetOf
-import community.flock.wirespec.compiler.core.emit.common.FileExtension.Wirespec
+import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.compile
 import community.flock.wirespec.plugin.io.Directory
@@ -36,7 +36,7 @@ abstract class CompileWirespecTask : BaseWirespecTask() {
             is SourcePath -> nonEmptySetOf(inputPath.readFromClasspath())
             is DirectoryPath -> Directory(inputPath).wirespecSources().or(::handleError)
             is FilePath -> when (inputPath.extension) {
-                Wirespec -> nonEmptySetOf(Source<Wirespec>(inputPath.name, inputPath.read()))
+                FileExtension.Wirespec -> nonEmptySetOf(Source<Wirespec>(inputPath.name, inputPath.read()))
                 else -> throw WirespecFileError()
             }
         }

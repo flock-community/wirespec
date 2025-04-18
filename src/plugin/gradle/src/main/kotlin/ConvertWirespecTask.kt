@@ -1,8 +1,7 @@
 package community.flock.wirespec.plugin.gradle
 
 import arrow.core.nonEmptySetOf
-import community.flock.wirespec.compiler.core.emit.common.FileExtension.Avro
-import community.flock.wirespec.compiler.core.emit.common.FileExtension.JSON
+import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.plugin.ConverterArguments
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.convert
@@ -43,8 +42,8 @@ abstract class ConvertWirespecTask : BaseWirespecTask() {
             is SourcePath -> inputPath.readFromClasspath()
             is DirectoryPath -> throw ConvertNeedsAFile()
             is FilePath -> when (inputPath.extension) {
-                JSON -> Source<JSON>(inputPath.name, inputPath.read())
-                Avro -> Source<JSON>(inputPath.name, inputPath.read())
+                FileExtension.JSON -> Source<JSON>(inputPath.name, inputPath.read())
+                FileExtension.Avro -> Source<JSON>(inputPath.name, inputPath.read())
                 else -> throw JSONFileError()
             }
         }
