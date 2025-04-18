@@ -41,8 +41,26 @@ Make sure to use the latest version, found here:
 
 We want to make use of the language's built in strong typing/ type safety:
 
-```java
+```wirespec
+type Name /^[0-9a-zA-Z]{1,50}$/g
+```
 
+```java
+public record Name(String value) implements Wirespec.Refined {
+    @Override
+    public String toString() {
+        return value;
+    }
+
+    public static boolean validate(Name record) {
+        return java.util.regex.Pattern.compile("^[0-9a-zA-Z]{1,50}$").matcher(record.value).find();
+    }
+
+    @Override
+    public String getValue() {
+        return value;
+    }
+}
 ```
 
 ## Language keywords
