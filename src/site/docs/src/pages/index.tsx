@@ -48,7 +48,7 @@ export default function Home(): JSX.Element {
   const { siteConfig } = useDocusaurusContext();
   return (
     <Layout
-      title="Wirespec your API's"
+      title="Wirespec your APIs"
       description="Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications"
     >
       <HomepageHeader />
