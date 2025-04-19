@@ -8,50 +8,52 @@ sidebar_position: 4
 
 ![Maven Central](https://img.shields.io/maven-central/v/community.flock.wirespec.plugin.maven/wirespec-maven-plugin)
 
-This document describes how to use the Wirespec Gradle plugin to integrate Wirespec compilation into your Gradle build process.  The plugin allows you to automatically generate code from your Wirespec definitions during your build.
+This document describes how to use the Wirespec Gradle plugin to integrate Wirespec compilation into your Gradle build process. The plugin allows you to automatically generate code from your Wirespec definitions during your build.
 
 ## Installation
 
 To use the Wirespec Gradle plugin, you need to add it to your `build.gradle.kts` file. Here's how:
 
-1.  **Add the Plugin:**
+1. **Add the Plugin:**
 
 ```kts
-import community.flock.wirespec.plugin.gradle.CompileWirespecTask
-import community.flock.wirespec.plugin.gradle.ConvertWirespecTask
-import community.flock.wirespec.plugin.gradle.CustomWirespecTask
-
 plugins {
     id("community.flock.wirespec.plugin.gradle") version "{{WIRESPEC_VERSION}}"
 }
+
+// The plugin automatically registers a default task named "wirespec"
+// You can also register custom tasks as shown below:
 
 tasks.register<CompileWirespecTask>("wirespec-typescript") {
     description = "Compile Wirespec to TypeScript"
     input = layout.projectDirectory.dir("src/main/wirespec")
     output = layout.buildDirectory.dir("generated")
-    packageName = "community.flock.wirespec.generated.typescript"
-    languages = listOf(Language.TypeScript)
+    packageName.set("community.flock.wirespec.generated.typescript")
+    languages.set(listOf(Language.TypeScript))
+    shared.set(true)
+    strict.set(false)
 }
 
 tasks.register<ConvertWirespecTask>("wirespec-openapi") {
-    description = "Convert Wirespec to OpenAPISpec"
-    input = layout.projectDirectory.dir("src/main/wirespec")
+    description = "Convert JSON to OpenAPISpec"
+    input = layout.projectDirectory.file("src/main/openapi/schema.json")
     output = layout.buildDirectory.dir("openapi")
-    format = "OpenAPI"
+    format.set(Format.OpenAPIV2)
 }
 
-tasks.register<CustomWirespecTask>("wirespec-kotlin") {
+// Example of using a custom emitter class
+tasks.register<CompileWirespecTask>("wirespec-kotlin") {
     description = "Compile Wirespec to Kotlin"
     group = "Wirespec compile"
     input = layout.projectDirectory.dir("src/main/wirespec")
     output = layout.buildDirectory.dir("generated")
-    packageName = "community.flock.wirespec.generated.kotlin"
-    emitter = KotlinSerializableEmitter::class.java
-    sharedPackage = KotlinShared.packageString
-    sharedSource = KotlinShared.source
-    extension = FileExtension.Kotlin.value
+    packageName.set("community.flock.wirespec.generated.kotlin")
+    emitterClass.set(KotlinSerializableEmitter::class.java)
+    shared.set(true)
+    strict.set(false)
 }
 
+// Example of a custom emitter class
 class KotlinSerializableEmitter : KotlinEmitter("community.flock.wirespec.generated.kotlin", noLogger) {
 
     override fun emit(type: Type, ast: AST): String = """
@@ -64,5 +66,42 @@ class KotlinSerializableEmitter : KotlinEmitter("community.flock.wirespec.genera
         |${super.emit(refined)}
     """.trimMargin()
 }
-
 ```
+
+**Note:** You'll need to add the following imports to your build script:
+```
+import community.flock.wirespec.plugin.gradle.CompileWirespecTask
+import community.flock.wirespec.plugin.gradle.ConvertWirespecTask
+import community.flock.wirespec.plugin.Language
+import community.flock.wirespec.plugin.Format
+```
+
+## Task Types
+
+The Wirespec Gradle plugin provides two main task types:
+
+### CompileWirespecTask
+
+This task compiles Wirespec definitions to various target languages.
+
+**Properties:**
+- `input`: DirectoryProperty - The input directory containing Wirespec files
+- `output`: DirectoryProperty - The output directory for generated code
+- `languages`: ListProperty<Language> - List of target languages (Java, Kotlin, Scala, TypeScript, Python, Wirespec, OpenAPIV2, OpenAPIV3)
+- `packageName`: Property<String> - Package name for generated code
+- `emitterClass`: Property<Class<*>> - Custom emitter class
+- `shared`: Property<Boolean> - Whether to emit shared code (default: true)
+- `strict`: Property<Boolean> - Strict parsing mode (default: false)
+
+### ConvertWirespecTask
+
+This task converts from JSON or Avro to other formats.
+
+**Properties:**
+- `input`: RegularFileProperty - The input file (JSON or Avro)
+- `output`: DirectoryProperty - The output directory for generated code
+- `format`: Property<Format> - The target format (OpenAPIV2, OpenAPIV3, Avro)
+- `packageName`: Property<String> - Package name for generated code
+- `emitterClass`: Property<Class<*>> - Custom emitter class
+- `shared`: Property<Boolean> - Whether to emit shared code (default: true)
+- `strict`: Property<Boolean> - Strict parsing mode (default: false)
