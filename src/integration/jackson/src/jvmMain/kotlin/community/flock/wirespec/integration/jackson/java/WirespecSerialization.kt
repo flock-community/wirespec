@@ -1,7 +1,6 @@
 package community.flock.wirespec.integration.jackson.java
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import community.flock.wirespec.java.Wirespec
 import community.flock.wirespec.java.Wirespec.ParamSerialization
 import community.flock.wirespec.java.Wirespec.Serialization
 import java.lang.reflect.Type
@@ -12,8 +11,9 @@ import java.lang.reflect.Type
  */
 class WirespecSerialization(
     objectMapper: ObjectMapper,
-    paramSerde: ParamSerialization
-) : Serialization<String>, ParamSerialization by paramSerde {
+    paramSerde: ParamSerialization,
+) : Serialization<String>,
+    ParamSerialization by paramSerde {
 
     private val wirespecObjectMapper = objectMapper.copy().registerModule(WirespecModuleJava())
 

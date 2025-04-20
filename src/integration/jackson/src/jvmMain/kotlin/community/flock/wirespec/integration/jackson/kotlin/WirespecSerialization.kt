@@ -1,7 +1,6 @@
 package community.flock.wirespec.integration.jackson.kotlin
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import community.flock.wirespec.kotlin.Wirespec
 import community.flock.wirespec.kotlin.Wirespec.ParamSerialization
 import community.flock.wirespec.kotlin.Wirespec.Serialization
 import kotlin.reflect.KType
@@ -14,8 +13,9 @@ import kotlin.reflect.javaType
 @OptIn(ExperimentalStdlibApi::class)
 class WirespecSerialization(
     objectMapper: ObjectMapper,
-    queryParamSerde: ParamSerialization
-) : Serialization<String>, ParamSerialization by queryParamSerde {
+    queryParamSerde: ParamSerialization,
+) : Serialization<String>,
+    ParamSerialization by queryParamSerde {
 
     private val wirespecObjectMapper = objectMapper.copy().registerModule(WirespecModuleKotlin())
 
