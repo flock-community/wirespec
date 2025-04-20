@@ -87,11 +87,11 @@ This task compiles Wirespec definitions to various target languages.
 **Properties:**
 - `input`: DirectoryProperty - The input directory containing Wirespec files
 - `output`: DirectoryProperty - The output directory for generated code
-- `languages`: ListProperty<Language> - List of target languages (Java, Kotlin, Scala, TypeScript, Python, Wirespec, OpenAPIV2, OpenAPIV3)
-- `packageName`: Property<String> - Package name for generated code
-- `emitterClass`: Property<Class<*>> - Custom emitter class
-- `shared`: Property<Boolean> - Whether to emit shared code (default: true)
-- `strict`: Property<Boolean> - Strict parsing mode (default: false)
+- `languages`: ListProperty&lt;Language&gt; - List of target languages (Java, Kotlin, Scala, TypeScript, Python, Wirespec, OpenAPIV2, OpenAPIV3)
+- `packageName`: Property&lt;String&gt; - Package name for generated code
+- `emitterClass`: Property&lt;Class&lt;*&gt;&gt; - Custom emitter class
+- `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
+- `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)
 
 ### ConvertWirespecTask
 
@@ -100,8 +100,8 @@ This task converts from JSON or Avro to other formats.
 **Properties:**
 - `input`: RegularFileProperty - The input file (JSON or Avro)
 - `output`: DirectoryProperty - The output directory for generated code
-- `format`: Property<Format> - The target format (OpenAPIV2, OpenAPIV3, Avro)
-- `packageName`: Property<String> - Package name for generated code
-- `emitterClass`: Property<Class<*>> - Custom emitter class
-- `shared`: Property<Boolean> - Whether to emit shared code (default: true)
-- `strict`: Property<Boolean> - Strict parsing mode (default: false)
+- `format`: Property&lt;Format&gt; - The target format (OpenAPIV2, OpenAPIV3, Avro)
+- `packageName`: Property&lt;String&gt; - Package name for generated code
+- `emitterClass`: Property&lt;Class&lt;*&gt;&gt; - Custom emitter class
+- `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
+- `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)
