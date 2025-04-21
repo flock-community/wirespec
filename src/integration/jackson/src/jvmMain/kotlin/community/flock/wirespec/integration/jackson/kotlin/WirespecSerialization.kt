@@ -3,19 +3,24 @@ package community.flock.wirespec.integration.jackson.kotlin
 import com.fasterxml.jackson.databind.ObjectMapper
 import community.flock.wirespec.kotlin.Wirespec.ParamSerialization
 import community.flock.wirespec.kotlin.Wirespec.Serialization
+import community.flock.wirespec.kotlin.serde.DefaultParamSerialization
 import kotlin.reflect.KType
 import kotlin.reflect.javaType
 
 /**
  * A reusable implementation of Wirespec.Serialization that uses Jackson for serialization and deserialization.
- * This class delegates parameter serialization and deserialization to a provided ParamSerialization implementation.
+ * This class implements parameter serialization and deserialization using a private ParamSerialization field.
  */
 @OptIn(ExperimentalStdlibApi::class)
 class WirespecSerialization(
     objectMapper: ObjectMapper,
-    queryParamSerde: ParamSerialization,
-) : Serialization<String>,
-    ParamSerialization by queryParamSerde {
+) : Serialization<String> {
+
+    private val queryParamSerde: ParamSerialization = DefaultParamSerialization()
+
+    override fun <T> serializeParam(value: T, kType: KType): List<String> = queryParamSerde.serializeParam(value, kType)
+
+    override fun <T> deserializeParam(values: List<String>, kType: KType): T = queryParamSerde.deserializeParam(values, kType)
 
     private val wirespecObjectMapper = objectMapper.copy().registerModule(WirespecModuleKotlin())
 

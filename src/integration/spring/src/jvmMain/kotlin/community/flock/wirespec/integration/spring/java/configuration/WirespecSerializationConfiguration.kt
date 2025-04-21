@@ -25,6 +25,5 @@ open class WirespecSerializationConfiguration {
     @Bean
     open fun wirespecSerialization(
         objectMapper: ObjectMapper,
-        paramSerde: ParamSerialization,
-    ): Serialization<String> = WirespecSerialization(objectMapper, paramSerde)
+    ): Serialization<String> = WirespecSerialization(objectMapper)
 }
