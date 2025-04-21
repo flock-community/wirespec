@@ -189,7 +189,7 @@ const config: Config = {
       appId: "9QKUCBFICR",
       // Public API key: it is safe to commit it
       apiKey: "b4a1301e4e3b1f1a240e3eee170e216e",
-      indexName: "wirespec-docs",
+      indexName: "wirespec_io_wijtzn3w54_pages",
       // Optional: see doc section below
       contextualSearch: true,
       // Optional: Specify domains where the navigation should occur through window.location instead on history.push. Useful when our Algolia config crawls multiple documentation sites and we want to navigate with window.location.href to them.
