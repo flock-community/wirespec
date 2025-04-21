@@ -51,6 +51,7 @@ const config: Config = {
   themeConfig: {
     colorMode: {
       defaultMode: "dark",
+      disableSwitch: true, 
   },
     metadata: [
       {
