@@ -187,9 +187,9 @@ const config: Config = {
     // Algolia configuration inside themeConfig
     algolia: {
       // The application ID provided by Algolia
-      appId: "9QKUCBFICR",
+      appId: "WIJTZN3W54",
       // Public API key: it is safe to commit it
-      apiKey: "b4a1301e4e3b1f1a240e3eee170e216e",
+      apiKey: "ab006ab5e8aaea60cfcafc0dfa6e3a67",
       indexName: "wirespec_io_wijtzn3w54_pages",
       // Optional: see doc section below
       contextualSearch: true,
