@@ -18,7 +18,7 @@ export default function ContractPage() {
       <div className={styles.mainContainer}>
         <main className={styles.contractMain}>
           <div id="contract">
-            <section className={styles.hero} style={{ paddingTop: "4rem" }}>
+            <section className={styles.hero}>
               <h1>Contract</h1>
               <p>
                 The contract–first approach for interface design, as envisioned
