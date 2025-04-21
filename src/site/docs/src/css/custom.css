@@ -1514,6 +1514,9 @@ table tr:nth-child(2n) {
         margin: 0 auto;
         margin-bottom: 15px;
     }
+    .logo-column .header-github-link{
+        display: inline-flex !important;
+    }
 }
 
 .custom-code-block {
