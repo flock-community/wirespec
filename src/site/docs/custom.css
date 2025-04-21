@@ -35,10 +35,11 @@
 /* Small devices (phones, less than 768px) */
 
 @media (max-width: 767px) {
-    .navbar__items--right> :last-child {
+    .navbar__items--right > :last-child {
         padding-right: 2.5rem;
     }
-    .header-github-link{
+
+    .header-github-link {
         padding-right: 0px;
     }
 }
@@ -47,7 +48,7 @@
 /* Medium devices (tablets, 768px to 1024px) */
 
 @media (min-width: 768px) and (max-width: 996px) {
-    .navbar__items--right> :last-child {
+    .navbar__items--right > :last-child {
         padding-right: 3rem;
     }
 }
@@ -85,8 +86,8 @@
     height: 16px;
 }
 
-@media(min-width:997px) {
-    .navbar__items--right>div.navbarSearchContainer_Bca1 {
+@media (min-width: 997px) {
+    .navbar__items--right > div.navbarSearchContainer_Bca1 {
         padding-left: 0;
     }
 }

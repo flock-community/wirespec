@@ -11,7 +11,7 @@ import CodeBlock from "@theme/CodeBlock";
 export default function ContractPage() {
   return (
     <Layout
-      title="Wirespec your API's"
+      title="Wirespec your APIs"
       description="Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications"
       image="/img/code-snippet.jpg"
     >

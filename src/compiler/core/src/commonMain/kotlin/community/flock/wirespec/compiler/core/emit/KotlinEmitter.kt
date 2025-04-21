@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.emit
 
 import arrow.core.NonEmptyList
+import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.addBackticks
 import community.flock.wirespec.compiler.core.concatGenerics
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
@@ -26,11 +27,13 @@ import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
+import community.flock.wirespec.compiler.core.removeQuestionMark
 import community.flock.wirespec.compiler.utils.Logger
 
 open class KotlinEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
-) : Emitter(false) {
+    private val emitShared: Boolean = false,
+) : Emitter() {
 
     val import = """
         |
@@ -54,17 +57,20 @@ open class KotlinEmitter(
 
     override val singleLineComment = "//"
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
-        super.emit(module, logger).map { (typeName, result) ->
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
+        val emitted = nonEmptyListOf(
             Emitted(
-                typeName = typeName.sanitizeSymbol(),
+                typeName = packageName.toDir() + module.uri.split("/").last().firstToUpper(),
                 result = """
                     |package $packageName
                     |${if (module.needImports()) import else ""}
-                    |$result
+                    |${super.emit(module, logger).map(Emitted::result).joinToString("\n")}
                 """.trimMargin().trimStart()
             )
-        }
+        )
+
+        return if (emitShared) emitted + Emitted(PackageName(DEFAULT_GENERATED_PACKAGE_STRING).toDir() + "Wirespec", shared.source) else emitted
+    }
 
     override fun emit(type: Type, module: Module) =
         if (type.shape.value.isEmpty()) "${Spacer}data object ${type.emitName()}"
@@ -283,7 +289,7 @@ open class KotlinEmitter(
     private fun Endpoint.Segment.Param.emitIdentifier() =
         "request.path.${emit(identifier)}.let{serialization.serialize(it, typeOf<${reference.emit()}>())}"
 
-    private fun Endpoint.Content?.emit() = this?.reference?.emit() ?: "Unit"
+    private fun Endpoint.Content?.emit() = this?.reference?.emit()?.removeQuestionMark() ?: "Unit"
 
     private fun Endpoint.Segment.Param.emit() = "${emit(identifier)}: ${reference.emit()}"
 

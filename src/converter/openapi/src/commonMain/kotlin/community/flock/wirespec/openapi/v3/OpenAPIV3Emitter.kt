@@ -25,7 +25,6 @@ import community.flock.kotlinx.openapi.bindings.v3.StatusCode
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
-import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint

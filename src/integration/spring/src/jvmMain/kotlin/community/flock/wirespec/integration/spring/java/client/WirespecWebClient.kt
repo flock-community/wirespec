@@ -9,7 +9,6 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
 import java.util.concurrent.CompletableFuture
-import kotlin.reflect.full.companionObjectInstance
 
 class WirespecWebClient(
     private val client: WebClient,
@@ -23,7 +22,8 @@ class WirespecWebClient(
             .find { it.simpleName == "Handler" }
             ?: error("Handler not found")
 
-        val instance = handler.kotlin.companionObjectInstance as Wirespec.Client<Req, Res>
+        val handlers = handler.declaredClasses.toList().find { it.simpleName == "Handlers" } ?: error("Handlers not found")
+        val instance = handlers.getDeclaredConstructor().newInstance() as Wirespec.Client<Req, Res>
 
         return with(instance.getClient(wirespecSerde)) {
             executeRequest(to(request), client).thenApply {
