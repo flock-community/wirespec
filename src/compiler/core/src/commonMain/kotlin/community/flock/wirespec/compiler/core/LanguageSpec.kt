@@ -79,7 +79,7 @@ object WirespecSpec : LanguageSpec {
         Regex("^\\b[A-Z][a-zA-Z0-9_]*\\b") to typeIdentifier,
         Regex("^/[a-zA-Z0-9-_]+") to Path,
         Regex("^//.*") to Comment,
-        Regex("/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*/") to Comment,
+        Regex("/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*/") to Comment, // TODO should this start with anchor?
         Regex("^/") to ForwardSlash,
         Regex("^.") to Character, // Catch all regular expression if none of the above matched
     )
