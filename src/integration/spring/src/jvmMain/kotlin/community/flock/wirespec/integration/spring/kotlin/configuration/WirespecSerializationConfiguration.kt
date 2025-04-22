@@ -1,7 +1,6 @@
 package community.flock.wirespec.integration.spring.kotlin.configuration
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import community.flock.wirespec.integration.jackson.kotlin.WirespecSerialization
 import community.flock.wirespec.integration.spring.kotlin.web.WirespecResponseBodyAdvice
 import community.flock.wirespec.kotlin.Wirespec.ParamSerialization
