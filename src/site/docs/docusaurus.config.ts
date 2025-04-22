@@ -58,7 +58,7 @@ const config: Config = {
                 content:
                     "Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications",
             },
-            {property: "og:title", content: `Wirespec your API's`},
+            {property: "og:title", content: `Wirespec your APIs`},
             {
                 property: "og:description",
                 content:
@@ -69,7 +69,7 @@ const config: Config = {
             {property: "og:url", content: "https://wirespec.io/"},
 
             {name: "twitter:card", content: "summary_large_image"},
-            {name: "twitter:title", content: `Wirespec your API's`},
+            {name: "twitter:title", content: `Wirespec your APIs`},
             {
                 name: "twitter:description",
                 content:
