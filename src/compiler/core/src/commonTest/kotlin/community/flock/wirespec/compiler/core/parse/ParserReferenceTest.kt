@@ -144,7 +144,7 @@ class ParserReferenceTest {
             |type Address {
             |  houseNumber: Integer
             |}
-        """.trimIndent()
+        """.trimMargin()
 
         parser(source)
             .shouldBeRight()
@@ -157,7 +157,7 @@ class ParserReferenceTest {
             |  houseNumber: Integer
             |}
             |// This is a comment"
-        """.trimIndent()
+        """.trimMargin()
 
         parser(source)
             .shouldBeRight()
@@ -169,7 +169,7 @@ class ParserReferenceTest {
             |type Address { // This is a comment"
             |  houseNumber: Integer
             |}
-        """.trimIndent()
+        """.trimMargin()
 
         parser(source)
             .shouldBeRight()
