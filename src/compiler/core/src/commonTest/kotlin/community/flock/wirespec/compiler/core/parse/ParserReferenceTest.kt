@@ -128,4 +128,50 @@ class ParserReferenceTest {
                 first().coordinates.idxAndLength.length shouldBe 3
             }
     }
+
+    @Test
+    fun comments0() {
+        val source = "// This is a comment"
+
+        parser(source)
+            .shouldBeRight()
+    }
+
+    @Test
+    fun comments1() {
+        val source = """
+            |// This is a comment"
+            |type Address {
+            |  houseNumber: Integer
+            |}
+        """.trimIndent()
+
+        parser(source)
+            .shouldBeRight()
+    }
+
+    @Test
+    fun comments2() {
+        val source = """
+            |type Address {
+            |  houseNumber: Integer
+            |}
+            |// This is a comment"
+        """.trimIndent()
+
+        parser(source)
+            .shouldBeRight()
+    }
+
+    @Test
+    fun comments3() {
+        val source = """
+            |type Address { // This is a comment"
+            |  houseNumber: Integer
+            |}
+        """.trimIndent()
+
+        parser(source)
+            .shouldBeRight()
+    }
 }
