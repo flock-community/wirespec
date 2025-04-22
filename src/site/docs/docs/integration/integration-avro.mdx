@@ -10,7 +10,7 @@ This document describes how to integrate Wirespec-generated code with Avro, Apac
 simplifies the creation of type-safe and well-defined data structures, and this integration provides a seamless way to
 work with those structures when serializing and deserializing Avro data.
 
-The integration works for both producers and consumers.
+The integration works for both producers and consumers, and can be configured with either Maven or Gradle.
 
 ## Setup
 
@@ -80,8 +80,74 @@ The integration works for both producers and consumers.
         ```
     </TabItem>
 
-    [//]: # (<TabItem value="gradle" label="Gradle">)
-    [//]: # (</TabItem>)
+    <TabItem value="gradle-java" label="Gradle (Java)">
+        Add both the dependency and plugin to your build.gradle.kts file:
+
+        ```kotlin
+        dependencies {
+            implementation("community.flock.wirespec.integration:avro-jvm:0.14.3")
+        }
+
+        plugins {
+            id("community.flock.wirespec.plugin.gradle") version "0.14.3"
+        }
+
+        tasks.register<CompileWirespecTask>("wirespec-avro-java") {
+            description = "Compile Wirespec to Java with Avro integration"
+            group = "Wirespec compile"
+            input = layout.projectDirectory.dir("src/main/wirespec")
+            output = layout.buildDirectory.dir("generated-sources")
+            packageName = "community.flock.wirespec.generated"
+            emitterClass = community.flock.wirespec.integration.avro.java.emit.AvroJavaEmitter::class.java
+        }
+        ```
+
+        Don't forget to add the source directory to your source sets:
+
+        ```kotlin
+        sourceSets {
+            main {
+                java {
+                    srcDir("${layout.buildDirectory.get()}/generated-sources")
+                }
+            }
+        }
+        ```
+    </TabItem>
+    <TabItem value="gradle-kotlin" label="Gradle (Kotlin)">
+        Add both the dependency and plugin to your build.gradle.kts file:
+
+        ```kotlin
+        dependencies {
+            implementation("community.flock.wirespec.integration:avro-jvm:0.14.3")
+        }
+
+        plugins {
+            id("community.flock.wirespec.plugin.gradle") version "0.14.3"
+        }
+
+        tasks.register<CompileWirespecTask>("wirespec-avro-kotlin") {
+            description = "Compile Wirespec to Kotlin with Avro integration"
+            group = "Wirespec compile"
+            input = layout.projectDirectory.dir("src/main/wirespec")
+            output = layout.buildDirectory.dir("generated-sources")
+            packageName = "community.flock.wirespec.generated"
+            emitterClass = community.flock.wirespec.integration.avro.kotlin.emit.AvroKotlinEmitter::class.java
+        }
+        ```
+
+        Don't forget to add the source directory to your source sets:
+
+        ```kotlin
+        sourceSets {
+            main {
+                java {
+                    srcDir("${layout.buildDirectory.get()}/generated-sources")
+                }
+            }
+        }
+        ```
+    </TabItem>
 </Tabs>
 
 :::info
@@ -112,7 +178,12 @@ Now we can compile our definition and generate sources to the specified output d
 command:
 
 ```bash
-maven install
+# For Maven
+mvn install
+
+# For Gradle
+./gradlew wirespec-avro-java  # For Java
+./gradlew wirespec-avro-kotlin  # For Kotlin
 ```
 
 

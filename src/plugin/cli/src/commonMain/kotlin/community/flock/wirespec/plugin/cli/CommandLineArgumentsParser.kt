@@ -114,8 +114,8 @@ private class Compile(
 
         val emitters = languages.map {
             when (it) {
-                Language.Java -> JavaEmitter(PackageName(packageName, shared))
-                Language.Kotlin -> KotlinEmitter(PackageName(packageName, shared))
+                Language.Java -> JavaEmitter(PackageName(packageName), shared)
+                Language.Kotlin -> KotlinEmitter(PackageName(packageName), shared)
                 Language.Scala -> ScalaEmitter(PackageName(packageName))
                 Language.TypeScript -> TypeScriptEmitter(shared)
                 Language.Python -> PythonEmitter(emitShared = shared)
