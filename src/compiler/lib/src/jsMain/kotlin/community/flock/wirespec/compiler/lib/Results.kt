@@ -21,7 +21,7 @@ fun EitherNel<WirespecException, List<Emitted>>.produce(): WsCompilationResult =
 }
 
 fun Emitted.produce() = WsEmitted(
-    typeName = typeName,
+    typeName = file,
     result = result,
 )
 
