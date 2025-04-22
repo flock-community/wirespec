@@ -54,7 +54,7 @@ open class ScalaEmitter(
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
         val emitted = nonEmptyListOf(
             Emitted(
-                typeName = module.uri.split("/").last().firstToUpper(),
+                file = module.uri.split("/").last().firstToUpper(),
                 result = """
                     |package $packageName
                     |${if (module.needImports()) import else ""}

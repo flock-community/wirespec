@@ -11,7 +11,6 @@ import community.flock.wirespec.compiler.core.emit.common.Keywords
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.emit.shared.JavaShared
-import community.flock.wirespec.compiler.core.emit.shared.Shared
 import community.flock.wirespec.compiler.core.orNull
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
@@ -55,9 +54,9 @@ open class JavaEmitter(
     override val singleLineComment = "//"
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
-        val emitted = super.emit(module, logger).map { (typeName, result): Emitted ->
+        val emitted = super.emit(module, logger).map { (file, result): Emitted ->
             Emitted(
-                typeName = packageName.toDir() + typeName.sanitizeSymbol(),
+                file = packageName.toDir() + file.sanitizeSymbol(),
                 result = """
                             |package $packageName;
                             |${if (module.needImports()) import else ""}

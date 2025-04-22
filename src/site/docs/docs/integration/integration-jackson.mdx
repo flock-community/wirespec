@@ -1,0 +1,125 @@
+---
+title: Jackson
+slug: /integration/jackson
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+If you're using Jackson for serialization/deserialization you can make use of the Wirespec Jackson plugin to ensure
+proper behaviour in all cases. Though not strictly required in all scenarios we recommend that you always use the
+jackson integration to avoid unexpected behavior.
+
+## Setup
+
+<Tabs>
+    <TabItem value="maven" label="Maven">
+        ```xml title="pom.xml"
+        <dependency>
+            <groupId>community.flock.wirespec.integration</groupId>
+            <artifactId>jackson</artifactId>
+            <version>0.14.3</version>
+        </dependency>
+        ```
+    </TabItem>
+    <TabItem value="gradle" label="Gradle">
+        ```gradle title="build.gradle.kts"
+        implementation("community.flock.wirespec.integration:jackson:0.14.3")
+        ```
+    </TabItem>
+</Tabs>
+
+:::info
+Make sure to use the latest version, found here:
+
+![Maven Central](https://img.shields.io/maven-central/v/community.flock.wirespec.plugin.maven/wirespec-maven-plugin)
+:::
+
+------------------------------
+
+:::note
+The following sections go into detail about the problems that we must circumvent when using Jackson in combination with
+Wirespec. As a user of Wirespec there is **no** need to fully understand such intricacies, so feel free to skip ahead.
+:::
+
+## Refined and Enum types
+
+For each type we define in Wirespec we want to have a class in the target language representing it. To illustrate the
+problems that arise when working with Jackson let's observe the following Wirespec definition:
+
+```wirespec
+type Name /^[0-9a-zA-Z]{1,50}$/g
+
+type Person {
+  firstname: Name,
+  lastName: Name
+}
+```
+
+This will give us, among others, the following record for the Name type:
+
+```java
+public record Name(String value) implements Wirespec.Refined {
+    @Override
+    public String toString() {
+        return value;
+    }
+
+    public static boolean validate(Name record) {
+        return java.util.regex.Pattern.compile("^[0-9a-zA-Z]{1,50}$").matcher(record.value).find();
+    }
+
+    @Override
+    public String getValue() {
+        return value;
+    }
+}
+```
+
+This is great in terms of type-safety, however, Jackson would serialize to the following JSON:
+
+```json
+{
+    "firstName":{
+      "value": "Foo"
+    },
+    "lastName":{
+      "value": "Bar"
+    }
+}
+```
+
+And, we do not want our implementation to factor in the specific serializer/deserializer being used. The Jackson
+integration package solves this problem by flat-mapping this case for us to what we would expect based on the
+definition:
+
+```json
+{
+    "firstName": "Foo",
+    "lastName": "Bar"
+}
+```
+
+## Language keywords
+
+Wirespec can sometimes conflict with the language specifics of the target language. For example, it is not possible to
+declare a variable in Java named `final`, but we may still want to have such a contract:
+
+```wirespec
+type Document {
+    content: String,
+    // highlight-next-line
+    final: Boolean // A keyword in Java
+}
+```
+
+In this case, the contract will remain unchanged, but for serialization and deserialization we will prefix this variable
+with an `_`:
+
+```java
+public record Document(
+    String content,
+    // highlight-next-line
+    Boolean _final
+) {}
+```

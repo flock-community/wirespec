@@ -70,7 +70,7 @@ open class PythonEmitter(
         val emitted = super.emit(module.copy(statements = statements), logger)
             .map { (typeName, result) ->
                 Emitted(
-                    typeName = typeName.sanitizeSymbol(),
+                    file = typeName.sanitizeSymbol(),
                     result = """
                             |${if (module.needImports()) import else ""}
                             |$result
