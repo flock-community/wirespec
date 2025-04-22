@@ -18,7 +18,7 @@ open class WirespecSerializationConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    open fun objectMapper(): ObjectMapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
+    open fun objectMapper(): ObjectMapper = ObjectMapper()
 
     @Bean
     open fun queryParamSerde(): ParamSerialization = DefaultParamSerialization()
