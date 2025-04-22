@@ -44,10 +44,8 @@ Wirespec. As a user of Wirespec there is **no** need to fully understand such in
 
 ## Refined and Enum types
 
-We want to make use of the language's built in strong typing/ type safety:
-
-We want to deal with the `String` and then and then let the wrapper class deal with the validation (this keeps us
-independent of Jackson's built-in validation).
+For each type we define in Wirespec we want to have a class in the target language representing it. To illustrate the
+problems that arise when working with Jackson let's observe the following Wirespec definition:
 
 ```wirespec
 type Name /^[0-9a-zA-Z]{1,50}$/g
@@ -58,7 +56,7 @@ type Person {
 }
 ```
 
-This will give us the following record for the Name type:
+This will give us, among others, the following record for the Name type:
 
 ```java
 public record Name(String value) implements Wirespec.Refined {
@@ -78,9 +76,7 @@ public record Name(String value) implements Wirespec.Refined {
 }
 ```
 
-
-This is great
-However, if we would simply serialize the following Jackson would produce the following JSON:
+This is great in terms of type-safety, however, Jackson would serialize to the following JSON:
 
 ```json
 {
@@ -92,6 +88,18 @@ However, if we would simply serialize the following Jackson would produce the fo
     }
 }
 ```
+
+And, we do not want our implementation to factor in the specific serializer/deserializer being used. The Jackson
+integration package solves this problem by flat-mapping this case for us to what we would expect based on the
+definition:
+
+```json
+{
+    "firstName": "Foo",
+    "lastName": "Bar"
+}
+```
+
 
 ## Language keywords
 
