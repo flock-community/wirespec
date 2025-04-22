@@ -28,7 +28,7 @@ class WirespecCliTest {
 
         val directoryPath = DirectoryPath("$output/$packageDir")
 
-        FilePath(directoryPath, Name("Type"), FileExtension.Kotlin).read() shouldBe """
+        FilePath(directoryPath, Name("Bla"), FileExtension.Kotlin).read() shouldBe """
             |package community.flock.wirespec.generated
             |
             |data class Bla(
@@ -88,7 +88,7 @@ class WirespecCliTest {
         )
 
         val directoryPath = DirectoryPath("$output/$packageDir")
-        val path = FilePath(directoryPath, Name("Petstore"), FileExtension.Kotlin)
+        val path = FilePath(directoryPath, Name("Pet"), FileExtension.Kotlin)
 
         path.read() shouldContain """
             |data class Pet(
@@ -120,7 +120,7 @@ class WirespecCliTest {
         )
 
         val directoryPath = DirectoryPath("$output/$packageDir")
-        val path = FilePath(directoryPath, Name("Keto"), FileExtension.Kotlin)
+        val path = FilePath(directoryPath, Name("Relationship"), FileExtension.Kotlin)
 
         path.read() shouldContain """
             |data class Relationship(

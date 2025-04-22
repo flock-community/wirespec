@@ -29,7 +29,7 @@ class SpringKotlinEmitterTest {
         val ast = parse(text)
         val actual = SpringKotlinEmitter("community.flock.wirespec.spring.test")
             .emit(ast, noLogger)
-            .first().result
+            .joinToString("\n") { it.result }
         val expected = """
             |package community.flock.wirespec.spring.test
             |
@@ -42,16 +42,31 @@ class SpringKotlinEmitterTest {
             |
             |fun TodoId.validate() = Regex(""${'"'}^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}""${'"'}).matches(value)
             |
+            |package community.flock.wirespec.spring.test
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |
             |data class TodoDto(
             |  val id: TodoId,
             |  val name: String,
             |  val done: Boolean
             |)
             |
+            |package community.flock.wirespec.spring.test
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |
             |data class Error(
             |  val code: Long,
             |  val description: String
             |)
+            |
+            |package community.flock.wirespec.spring.test
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
             |
             |object GetTodosEndpoint : Wirespec.Endpoint {
             |  data object Path : Wirespec.Path
