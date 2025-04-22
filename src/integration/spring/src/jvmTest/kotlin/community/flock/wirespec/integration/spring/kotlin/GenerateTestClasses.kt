@@ -31,7 +31,7 @@ class GenerateTestClasses {
 
         kotlinOutputDir.mkdirs()
         emittedKotlin.forEach {
-            baseDir.resolve("kotlin").resolve(it.typeName).writeText(it.result)
+            baseDir.resolve("kotlin").resolve(it.file).writeText(it.result)
         }
     }
 
@@ -43,8 +43,8 @@ class GenerateTestClasses {
 
         javaOutputDir.mkdirs()
         emittedJava
-            .filter { "Wirespec" !in it.typeName }.forEach {
-                baseDir.resolve("kotlin").resolve(it.typeName).writeText(it.result)
+            .filter { "Wirespec" !in it.file }.forEach {
+                baseDir.resolve("kotlin").resolve(it.file).writeText(it.result)
             }
     }
 }

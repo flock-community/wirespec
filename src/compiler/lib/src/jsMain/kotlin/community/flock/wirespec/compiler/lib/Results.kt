@@ -21,7 +21,7 @@ fun EitherNel<WirespecException, List<Emitted>>.produce(): WsCompilationResult =
 }
 
 fun Emitted.produce() = WsEmitted(
-    typeName = typeName,
+    file = file,
     result = result,
 )
 
@@ -61,6 +61,6 @@ class WsStringResult(
 
 @JsExport
 class WsEmitted(
-    val typeName: String,
+    val file: String,
     val result: String,
 )

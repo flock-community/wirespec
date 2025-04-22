@@ -42,7 +42,7 @@ open class TypeScriptEmitter(val emitShared: Boolean = false) : Emitter() {
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
         val emitted = nonEmptyListOf(
             Emitted(
-                typeName = module.uri.split("/").last().firstToUpper(),
+                file = module.uri.split("/").last().firstToUpper(),
                 result = """
                         |${if (module.hasEndpoints()) TypeScriptShared.source else ""}
                         |${super.emit(module, logger).map(Emitted::result).joinToString("\n")}
