@@ -175,7 +175,6 @@ class ParserReferenceTest {
             .apply { first().comment?.value shouldBe "This is a comment" }
             .apply { first().identifier.value shouldBe "Date" }
             .apply { (first() as Refined).validator.value shouldBe "/^([0-9]{2}-[0-9]{2}-20[0-9]{2})\$/g" }
-
             .apply { get(1).comment?.value shouldBe "This is a comment too" }
             .apply { get(1).identifier.value shouldBe "Address" }
             .apply { get(1).shouldBeInstanceOf<Type>() }

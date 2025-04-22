@@ -35,6 +35,7 @@ class UtilsTest {
 
     @Test
     fun testRemoveCommentMarkers() {
+        "// Simple comment".removeCommentMarkers() shouldBe "Simple comment"
         "/* Simple comment */".removeCommentMarkers() shouldBe "Simple comment"
         "/*    Padded    */".removeCommentMarkers() shouldBe "Padded"
         "/**/".removeCommentMarkers() shouldBe ""
@@ -46,5 +47,8 @@ class UtilsTest {
            | Lines
            | Here
         """.trimMargin()
+
+        "/* //Simple comment */".removeCommentMarkers() shouldBe "//Simple comment"
+        "// /* Simple comment */".removeCommentMarkers() shouldBe "/* Simple comment */"
     }
 }

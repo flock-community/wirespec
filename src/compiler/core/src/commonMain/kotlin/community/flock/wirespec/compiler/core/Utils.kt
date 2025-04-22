@@ -24,4 +24,8 @@ fun String.removeAngularBrackets() = filterNot { it == '<' || it == '>' }
 
 fun String.removeCommasAndSpaces() = filterNot { it == ',' || it == ' ' }
 
-fun String.removeCommentMarkers(): String = removePrefix("//").removePrefix("/*").removeSuffix("*/").trim()
+fun String.removeCommentMarkers(): String = if (startsWith("//")) {
+    removePrefix("//")
+} else {
+    removePrefix("/*").removeSuffix("*/")
+}.trim()
