@@ -15,3 +15,9 @@ class EmptyModule :
         coordinates = Token.Coordinates(),
         message = "AST should not be empty",
     )
+
+class DuplicateEndpointError(coordinates: Token.Coordinates, endpointName: String) :
+    ValidationError(
+        coordinates = coordinates,
+        message = "Endpoint '$endpointName' is already defined",
+    )
