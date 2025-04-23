@@ -12,6 +12,7 @@ import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.validate
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeLeft
+import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.Test
 
@@ -65,4 +66,38 @@ class ValidatorTest {
             .shouldBeLeft()
             .head.shouldBeInstanceOf<DuplicateEndpointError>()
     }
+
+    // region NOT YET IMPLEMENTED
+
+    @Test
+    fun duplicateTypeSameFile() {
+        val source = """
+            |type Foo { str: String }
+            |type Foo { str: String }
+        """.trimMargin()
+
+        validate(source)
+            .shouldBeRight()
+    }
+
+    @Test
+    fun duplicateTypeDifferentFile() {
+        // Should be combined with an import
+        val source1 = """
+            |endpoint Test GET /Test1 -> {
+            |    200 -> String
+            |}
+        """.trimMargin()
+
+        val source2 = """
+            |endpoint Test GET /Test2 -> {
+            |    200 -> String
+            |}
+        """.trimMargin()
+
+        validate(source1, source2)
+            .shouldBeRight()
+    }
+
+    // endregion
 }
