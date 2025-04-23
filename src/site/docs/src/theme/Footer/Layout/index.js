@@ -6,12 +6,7 @@ export default function FooterLayout({ style, links, logo, copyright }) {
     const location = useLocation();
     const isDocsPage = location.pathname.startsWith('/docs');
     return (
-        <footer
-            className={clsx('footer', {
-                'footer--dark': !isDocsPage && style === 'dark',
-                'docs-footer': isDocsPage,
-            })}
-        >
+        <footer className={clsx('footer', { 'footer--dark': !isDocsPage && style === 'dark', 'docs-footer': isDocsPage,})}>
             <div className="container container-fluid">
                 <div className="row">
                     {(logo || copyright) && (
@@ -38,7 +33,6 @@ export default function FooterLayout({ style, links, logo, copyright }) {
                         </div>
                     </div>
                 </div>
-
             </div>
         </footer>
     );

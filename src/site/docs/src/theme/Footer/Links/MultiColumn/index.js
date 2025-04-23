@@ -3,10 +3,7 @@ import clsx from 'clsx';
 import LinkItem from '@theme/Footer/LinkItem';
 function ColumnLinkItem({ item }) {
   return item.html ? (
-    <li
-      className={clsx('footer__item', item.className)}
-      dangerouslySetInnerHTML={{ __html: item.html }}
-    />
+    <li className={clsx('footer__item', item.className)} dangerouslySetInnerHTML={{ __html: item.html }} />
   ) : (
     <li key={item.href ?? item.to} className="footer__item">
       <LinkItem item={item} />
