@@ -297,7 +297,6 @@ class OpenAPIV2ParserTest {
                 path = listOf(Endpoint.Segment.Literal(value = "alisa")),
                 queries = emptyList(),
                 headers = emptyList(),
-                cookies = emptyList(),
                 requests = listOf(Endpoint.Request(content = null)),
                 responses = listOf(
                     Endpoint.Response(
