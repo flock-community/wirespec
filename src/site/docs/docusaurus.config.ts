@@ -195,7 +195,7 @@ const config: Config = {
       // The application ID provided by Algolia
       appId: "WIJTZN3W54",
       // Public API key: it is safe to commit it
-      apiKey: "ab006ab5e8aaea60cfcafc0dfa6e3a6m7",
+      apiKey: "ab006ab5e8aaea60cfcafc0dfa6e3a67",
       indexName: "wirespec_io_wijtzn3w54_pages",
       // Optional: see doc section below
       contextualSearch: true,
