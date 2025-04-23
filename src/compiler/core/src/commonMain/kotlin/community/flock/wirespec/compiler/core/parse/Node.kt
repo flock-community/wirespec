@@ -135,7 +135,6 @@ data class Endpoint(
     val path: List<Segment>,
     val queries: List<Field>,
     val headers: List<Field>,
-    val cookies: List<Field>,
     val requests: List<Request>,
     val responses: List<Response>,
 ) : Definition {

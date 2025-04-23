@@ -20,7 +20,6 @@ object Ast {
             path = listOf(Endpoint.Segment.Literal(value = "test-with-dash")),
             queries = emptyList(),
             headers = emptyList(),
-            cookies = emptyList(),
             requests = listOf(
                 Endpoint.Request(
                     content = Endpoint.Content(
@@ -86,7 +85,6 @@ object Ast {
             path = listOf(Endpoint.Segment.Literal(value = "test")),
             queries = emptyList(),
             headers = emptyList(),
-            cookies = emptyList(),
             requests = listOf(
                 Endpoint.Request(
                     content = null,
@@ -164,7 +162,6 @@ object Ast {
             ),
             queries = emptyList(),
             headers = emptyList(),
-            cookies = emptyList(),
             requests = listOf(
                 Endpoint.Request(
                     content = Endpoint.Content(
@@ -278,7 +275,6 @@ object Ast {
             path = listOf(Endpoint.Segment.Literal(value = "array")),
             queries = emptyList(),
             headers = emptyList(),
-            cookies = emptyList(),
             requests = listOf(
                 Endpoint.Request(
                     content = Endpoint.Content(
@@ -403,7 +399,6 @@ object Ast {
             path = listOf(Endpoint.Segment.Literal(value = "allof")),
             queries = emptyList(),
             headers = emptyList(),
-            cookies = emptyList(),
             requests = listOf(
                 Endpoint.Request(
                     content = null,
@@ -518,7 +513,6 @@ object Ast {
             path = listOf(Endpoint.Segment.Literal(value = "oneof")),
             queries = emptyList(),
             headers = emptyList(),
-            cookies = emptyList(),
             requests = listOf(
                 Endpoint.Request(
                     content = null,
@@ -654,7 +648,6 @@ object Ast {
                 ),
             ),
             headers = emptyList(),
-            cookies = emptyList(),
             requests = listOf(
                 Endpoint.Request(
                     content = null,

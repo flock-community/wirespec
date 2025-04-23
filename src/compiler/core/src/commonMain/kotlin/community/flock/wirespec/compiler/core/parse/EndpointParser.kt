@@ -94,7 +94,6 @@ object EndpointParser {
             path = segments,
             queries = queryParams,
             headers = headers,
-            cookies = emptyList(),
             requests = requests,
             responses = responses,
         )

@@ -380,7 +380,6 @@ class OpenAPIV3ParserTest {
             path = listOf(Endpoint.Segment.Literal(value = "store"), Endpoint.Segment.Literal(value = "inventory")),
             queries = emptyList(),
             headers = emptyList(),
-            cookies = emptyList(),
             requests = listOf(Endpoint.Request(content = null)),
             responses = listOf(
                 Endpoint.Response(
@@ -425,7 +424,6 @@ class OpenAPIV3ParserTest {
                 ),
                 queries = listOf(),
                 headers = listOf(),
-                cookies = listOf(),
                 requests = listOf(
                     Endpoint.Request(null),
                 ),
@@ -496,7 +494,6 @@ class OpenAPIV3ParserTest {
                         Primitive(type = Primitive.Type.Boolean, isNullable = true),
                     ),
                 ),
-                cookies = listOf(),
                 requests = listOf(
                     Endpoint.Request(null),
                 ),
@@ -543,7 +540,6 @@ class OpenAPIV3ParserTest {
                         Primitive(type = Primitive.Type.Boolean, isNullable = true),
                     ),
                 ),
-                cookies = listOf(),
                 requests = listOf(
                     Endpoint.Request(
                         Endpoint.Content(
@@ -593,7 +589,6 @@ class OpenAPIV3ParserTest {
                 ),
                 queries = listOf(),
                 headers = listOf(),
-                cookies = listOf(),
                 requests = listOf(
                     Endpoint.Request(null),
                 ),
@@ -799,7 +794,6 @@ class OpenAPIV3ParserTest {
                 path = listOf(Endpoint.Segment.Literal(value = "responseref")),
                 queries = emptyList(),
                 headers = emptyList(),
-                cookies = emptyList(),
                 requests = listOf(
                     Endpoint.Request(content = null),
                 ),
@@ -919,7 +913,6 @@ class OpenAPIV3ParserTest {
                     ),
                 ),
                 headers = emptyList(),
-                cookies = emptyList(),
                 requests = listOf(Endpoint.Request(content = null)),
                 responses = listOf(
                     Endpoint.Response(
@@ -983,7 +976,6 @@ class OpenAPIV3ParserTest {
                 path = listOf(Endpoint.Segment.Literal(value = "refarray")),
                 queries = emptyList(),
                 headers = emptyList(),
-                cookies = emptyList(),
                 requests = listOf(Endpoint.Request(content = null)),
                 responses = listOf(
                     Endpoint.Response(
@@ -1089,7 +1081,6 @@ class OpenAPIV3ParserTest {
                 path = listOf(Endpoint.Segment.Literal(value = "refprimary")),
                 queries = emptyList(),
                 headers = emptyList(),
-                cookies = emptyList(),
                 requests = listOf(Endpoint.Request(content = null)),
                 responses = listOf(
                     Endpoint.Response(
