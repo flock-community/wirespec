@@ -10,11 +10,7 @@ import CodeBlock from "@theme/CodeBlock";
 
 export default function ContractPage() {
   return (
-    <Layout
-      title="Wirespec your APIs"
-      description="Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications"
-      image="/img/code-snippet.jpg"
-    >
+    <Layout title="Wirespec your APIs" description="Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications" image="/img/code-snippet.jpg">
       <div className={styles.mainContainer}>
         <main className={styles.contractMain}>
           <div id="contract">
@@ -30,10 +26,8 @@ export default function ContractPage() {
                 of this concept:
               </p>
             </section>
-
             <section className={styles.section}>
               <h2>Key Principles of the Contract-First Approach:</h2>
-
               <ol className={styles.principles}>
                 <li>
                   <strong>Single Source of Truth:</strong>
@@ -52,7 +46,6 @@ export default function ContractPage() {
                     </li>
                   </ul>
                 </li>
-
                 <li>
                   <strong>Independence from Implementation:</strong>
                   <ul>
@@ -70,7 +63,6 @@ export default function ContractPage() {
                     </li>
                   </ul>
                 </li>
-
                 <li>
                   <strong>Collaborative Design–Centric Methodology:</strong>
                   <ul>
@@ -91,15 +83,8 @@ export default function ContractPage() {
                 </li>
               </ol>
             </section>
-            <section
-              className="card card-border-bottom card-nospace"
-              style={{ marginTop: "2rem" }}
-            >
-              <CodeBlock
-                language="wirespec"
-                title="todo.ws"
-                className="custom-code-block"
-              >
+            <section className="card card-border-bottom card-nospace" style={{ marginTop: "2rem" }}>
+              <CodeBlock  language="wirespec"  title="todo.ws" className="custom-code-block">
                 {`type TodoDto {
     id: Integer?,
     name: String
@@ -129,7 +114,6 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
               </CodeBlock>
             </section>
           </div>
-
           <div id="generate">
             <section className={styles.generateSection}>
               <h2>Generate</h2>
@@ -164,14 +148,12 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                   <CodeBlock>{`project/out/community/flock/wirespec/generated/
   └─ Todo.ts`}</CodeBlock>
                 </TabItem>
-
                 <TabItem value="Kotlin" label="Kotlin">
                   <CodeBlock language="bash">{`wirespec compile --input . --language kotlin`}</CodeBlock>
                   <p>This will generate the following file:</p>
                   <CodeBlock>{`project/out/community/flock/wirespec/generated/
   └─ Todo.kt`}</CodeBlock>
                 </TabItem>
-
                 <TabItem value="Java" label="Java">
                   <CodeBlock language="bash">{`wirespec compile --input . --language java`}</CodeBlock>
                   <p>This will generate the following files:</p>
@@ -186,7 +168,6 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
               </Tabs>
             </section>
           </div>
-
           <div id="validate">
             <section className={styles.validateSection}>
               <h2>Validate</h2>
@@ -197,7 +178,6 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                 between expected interfaces and actual code, facilitating robust
                 development and testing practices.
               </p>
-
               <div className={styles.validateBlock}>
                 <h3>Validation Through Specifications</h3>
                 <p>
@@ -210,7 +190,6 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                   development.
                 </p>
               </div>
-
               <div className={styles.validateBlock}>
                 <h3>Generating Random Test Data</h3>
                 <p>
@@ -223,7 +202,6 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                   streamlines testing and improves reliability.
                 </p>
               </div>
-
               <div className={styles.validateBlock}>
                 <h3>Mock Servers for Testing</h3>
                 <p>
@@ -237,7 +215,6 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                   and expected status codes are met.
                 </p>
               </div>
-
               <div className={styles.validateBlock}>
                 <h3>Detecting Discrepancies Early</h3>
                 <p>
@@ -249,7 +226,6 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                   contract.
                 </p>
               </div>
-
               <p>
                 In summary, specifications like those enabled by Wirespec
                 empower teams to validate implementations through code

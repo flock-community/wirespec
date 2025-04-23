@@ -128,7 +128,6 @@ body {
     border: 1px solid;
     background: linear-gradient(#101010, #101010) padding-box, linear-gradient(90deg, #ffdf00, #ffdf00) border-box;
     border: 1px solid transparent;
-    border-radius: 12px;
     border-radius: 10px;
     overflow: hidden;
 }
