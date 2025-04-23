@@ -69,7 +69,7 @@ open class KotlinEmitter(
             )
         }
 
-        return if (emitShared) emitted + Emitted(PackageName(DEFAULT_GENERATED_PACKAGE_STRING).toDir() + "Wirespec", shared.source) else emitted
+        return if (emitShared) emitted + Emitted(PackageName("$DEFAULT_GENERATED_PACKAGE_STRING.kotlin").toDir() + "Wirespec", shared.source) else emitted
     }
 
     override fun emit(type: Type, module: Module) =
