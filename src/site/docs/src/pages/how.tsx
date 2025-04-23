@@ -1,9 +1,6 @@
 import React from "react";
 import Layout from "@theme/Layout";
 import styles from "./contract.module.css";
-import Heading from "@theme/Heading";
-import Link from "@docusaurus/Link";
-import clsx from "clsx";
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 import CodeBlock from "@theme/CodeBlock";
@@ -13,7 +10,6 @@ export default function ContractPage() {
     <Layout
       title="Wirespec your APIs"
       description="Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications"
-      image="/img/code-snippet.jpg"
     >
       <div className={styles.mainContainer}>
         <main className={styles.contractMain}>

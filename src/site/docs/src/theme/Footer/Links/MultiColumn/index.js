@@ -1,13 +1,11 @@
 import React from 'react';
 import clsx from 'clsx';
 import LinkItem from '@theme/Footer/LinkItem';
-function ColumnLinkItem({item}) {
+function ColumnLinkItem({ item }) {
   return item.html ? (
     <li
       className={clsx('footer__item', item.className)}
-      // Developer provided the HTML, so assume it's safe.
-      // eslint-disable-next-line react/no-danger
-      dangerouslySetInnerHTML={{__html: item.html}}
+      dangerouslySetInnerHTML={{ __html: item.html }}
     />
   ) : (
     <li key={item.href ?? item.to} className="footer__item">
@@ -15,7 +13,7 @@ function ColumnLinkItem({item}) {
     </li>
   );
 }
-function Column({column}) {
+function Column({ column }) {
   return (
     <div className={clsx('col footer__col', column.className)}>
       <div className="footer__title">{column.title}</div>
@@ -27,7 +25,7 @@ function Column({column}) {
     </div>
   );
 }
-export default function FooterLinksMultiColumn({columns}) {
+export default function FooterLinksMultiColumn({ columns }) {
   return (
     <div className="row footer__links">
       {columns.map((column, i) => (
