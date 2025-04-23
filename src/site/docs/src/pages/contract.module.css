@@ -5,12 +5,21 @@
 }
 
 .contractMain {
-    padding: 0rem 1rem 9rem 1rem;
+    padding: 210px 0px 175px;
     max-width: 960px;
     width: 96%;
     margin: 0 auto;
     color: white;
-    padding-top: 100px;
+    @media(max-width: 1440px) {
+        padding: 150px 0px 90px;
+    }
+    @media(max-width: 1024px) {
+        padding: 100px 0px 50px;
+    }
+    @media(max-width: 767px) {
+        padding: 120px 0px 30px;
+        padding-top: 100px;
+    }
 }
 
 .hero h1 {
@@ -21,6 +30,13 @@
     letter-spacing: -0.03em;
     text-align: left;
     margin-bottom: 1rem;
+    @media (max-width: 1024px){
+        font-size: 48px;
+    }
+    @media (max-width: 767px){
+        font-size: 42px;
+
+    }
 }
 
 .hero p {
@@ -30,6 +46,10 @@
     letter-spacing: -0.01em;
     color: #d1d1d1;
     text-align: left;
+    @media (max-width: 767px) {
+        font-size: 16px;
+        line-height: 140%;
+    }
 }
 
 .section h2 {
@@ -39,6 +59,10 @@
     margin-bottom: 1.5rem;
     color: white;
     font-family: 'DM Sans', sans-serif;
+
+    @media (max-width: 767px) {
+        font-size: 24px;
+    }
 }
 
 .principles {
@@ -47,6 +71,11 @@
     color: #d1d1d1;
     line-height: 1.7;
     padding-left: 1.25rem;
+
+    @media (max-width: 767px) {
+        font-size: 16px;
+        line-height: 140%;
+    }
 }
 
 .principles>li {
@@ -82,6 +111,10 @@
 
 .generateSection {
     padding-top: 4rem;
+
+    @media (max-width: 767px){
+        padding-top: 2rem;
+    }
 }
 
 .generateSection h2 {
@@ -91,6 +124,11 @@
     letter-spacing: -0.02em;
     margin-bottom: 2rem;
     color: white;
+
+    @media (max-width: 767px){
+        font-size: 42px;
+        margin-bottom: 20px;
+    }
 }
 
 .generateSection p {
@@ -101,10 +139,19 @@
     color: #d1d1d1;
     margin-bottom: 1.5rem;
     text-align: justify;
+
+    @media (max-width: 767px) {
+        font-size: 16px;
+        line-height: 140%;
+    }
 }
 
 .validateSection {
     padding-top: 4rem;
+    @media (max-width: 767px){
+        padding-top: 2rem;
+    }
+
 }
 
 .validateSection h2 {
@@ -114,6 +161,11 @@
     letter-spacing: -0.02em;
     margin-bottom: 1.5rem;
     color: white;
+
+    @media (max-width: 767px){
+        margin-bottom: 20px;
+        font-size: 42px;
+    }
 }
 
 .validateSection>p {
@@ -124,6 +176,11 @@
     letter-spacing: -0.01em;
     margin-bottom: 2.5rem;
     text-align: justify;
+
+    @media (max-width: 767px) {
+        font-size: 16px;
+        line-height: 140%;
+    }
 }
 
 .validateBlock {
@@ -136,6 +193,10 @@
     font-weight: 600;
     margin-bottom: 0.75rem;
     color: white;
+
+    @media (max-width: 767px) {
+        font-size: 20px;
+    }
 }
 
 .validateBlock p {
@@ -145,6 +206,11 @@
     line-height: 160%;
     letter-spacing: -0.01em;
     text-align: justify;
+
+    @media (max-width: 767px) {
+        font-size: 16px;
+        line-height: 140%;
+    }
 }
 
 .contractImageSection {
