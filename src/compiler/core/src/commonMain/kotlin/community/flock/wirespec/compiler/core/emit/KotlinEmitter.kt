@@ -46,29 +46,25 @@ open class KotlinEmitter(
 
     override val shared = KotlinShared
 
-    override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> "${emit(identifier)}Endpoint"
-        is Channel -> "${emit(identifier)}Channel"
-        is Enum -> emit(identifier)
-        is Refined -> emit(identifier)
-        is Type -> emit(identifier)
-        is Union -> emit(identifier)
-    }
-
     override val singleLineComment = "//"
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
-        val emitted = super.emit(module, logger)
-        return if (emitShared) emitted + Emitted(PackageName(DEFAULT_GENERATED_PACKAGE_STRING).toDir() + "Wirespec", shared.source)
-        else emitted
-    }
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
+        super.emit(module, logger).let {
+            if (emitShared) it + Emitted(PackageName(DEFAULT_SHARED_PACKAGE_STRING).toDir() + "Wirespec", shared.source)
+            else it
+        }
 
     override fun emit(definition: Definition, module: Module, logger: Logger): Emitted {
         return super.emit(definition, module, logger).let {
+            val subPackageName = when (definition) {
+                is Endpoint -> packageName.extend("endpoint")
+                is Channel -> packageName.extend("channel")
+                else -> packageName.extend("model")
+            }
             Emitted(
-                file = packageName.toDir() + it.file.sanitizeSymbol(),
+                file = subPackageName.toDir() + it.file.sanitizeSymbol(),
                 result = """
-                            |package $packageName
+                            |package $subPackageName
                             |${if (module.needImports()) import else ""}
                             |${it.result}
                         """.trimMargin().trimStart()
@@ -77,9 +73,9 @@ open class KotlinEmitter(
     }
 
     override fun emit(type: Type, module: Module) =
-        if (type.shape.value.isEmpty()) "${Spacer}data object ${type.emitName()}"
+        if (type.shape.value.isEmpty()) "${Spacer}data object${emit(type.identifier)}"
         else """
-            |data class ${type.emitName()}(
+            |data class ${emit(type.identifier)}(
             |${type.shape.emit()}
             |)${type.extends.run { if (isEmpty()) "" else " : ${joinToString(", ") { it.emit() }}" }}
             |
@@ -139,7 +135,7 @@ open class KotlinEmitter(
     """.trimMargin()
 
     override fun emit(union: Union) = """
-        |sealed interface ${union.emitName()}
+        |sealed interface ${emit(union.identifier)}
         |
     """.trimMargin()
 
@@ -151,6 +147,8 @@ open class KotlinEmitter(
     """.trimMargin()
 
     override fun emit(endpoint: Endpoint) = """
+        |${endpoint.importReferences().map { "import ${packageName.value}.model.${it.value}" }.joinToString("\n") { it.trimStart() }}
+        |
         |object ${emit(endpoint.identifier)}Endpoint : Wirespec.Endpoint {
         |${endpoint.pathParams.emitObject("Path", "Wirespec.Path") { it.emit() }}
         |

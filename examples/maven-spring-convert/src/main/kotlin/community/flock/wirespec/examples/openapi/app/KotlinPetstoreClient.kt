@@ -1,7 +1,7 @@
 package community.flock.wirespec.examples.openapi.app
 
-import community.flock.wirespec.generated.kotlin.v3.AddPetEndpoint
-import community.flock.wirespec.generated.kotlin.v3.FindPetsByStatusEndpoint
+import community.flock.wirespec.generated.kotlin.v3.endpoint.AddPetEndpoint
+import community.flock.wirespec.generated.kotlin.v3.endpoint.FindPetsByStatusEndpoint
 import community.flock.wirespec.kotlin.Wirespec
 import java.net.URI
 import org.springframework.http.HttpHeaders
@@ -11,7 +11,6 @@ import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.exchange
-import org.springframework.util.CollectionUtils
 
 interface KotlinPetstoreClient : AddPetEndpoint.Handler, FindPetsByStatusEndpoint.Handler
 

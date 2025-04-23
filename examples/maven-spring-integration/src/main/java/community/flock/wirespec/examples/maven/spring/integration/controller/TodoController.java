@@ -1,11 +1,11 @@
 package community.flock.wirespec.examples.maven.spring.integration.controller;
 
-import community.flock.wirespec.generated.examples.spring.CreateTodoEndpoint;
-import community.flock.wirespec.generated.examples.spring.DeleteTodoEndpoint;
-import community.flock.wirespec.generated.examples.spring.GetTodoByIdEndpoint;
-import community.flock.wirespec.generated.examples.spring.GetTodosEndpoint;
-import community.flock.wirespec.generated.examples.spring.Todo;
-import community.flock.wirespec.generated.examples.spring.UpdateTodoEndpoint;
+import community.flock.wirespec.generated.examples.spring.endpoint.CreateTodo;
+import community.flock.wirespec.generated.examples.spring.endpoint.DeleteTodo;
+import community.flock.wirespec.generated.examples.spring.endpoint.GetTodoById;
+import community.flock.wirespec.generated.examples.spring.endpoint.GetTodos;
+import community.flock.wirespec.generated.examples.spring.model.Todo;
+import community.flock.wirespec.generated.examples.spring.endpoint.UpdateTodo;
 import org.springframework.web.bind.annotation.RestController;
 import community.flock.wirespec.examples.maven.spring.integration.service.TodoService;
 
@@ -15,7 +15,7 @@ import java.util.concurrent.CompletableFuture;
 import static java.lang.Integer.parseInt;
 
 @RestController
-class TodoController implements GetTodosEndpoint.Handler, GetTodoByIdEndpoint.Handler, CreateTodoEndpoint.Handler, UpdateTodoEndpoint.Handler, DeleteTodoEndpoint.Handler {
+class TodoController implements GetTodos.Handler, GetTodoById.Handler, CreateTodo.Handler, UpdateTodo.Handler, DeleteTodo.Handler {
 
     private final TodoService service;
 
@@ -24,9 +24,9 @@ class TodoController implements GetTodosEndpoint.Handler, GetTodoByIdEndpoint.Ha
     }
 
     @Override
-    public CompletableFuture<CreateTodoEndpoint.Response<?>> createTodo(CreateTodoEndpoint.Request request) {
+    public CompletableFuture<CreateTodo.Response<?>> createTodo(CreateTodo.Request request) {
         var todoInput = switch (request){
-            case CreateTodoEndpoint.Request req -> req.getBody();
+            case CreateTodo.Request req -> req.getBody();
         };
         var todo = new Todo(
                 UUID.randomUUID().toString(),
@@ -34,32 +34,32 @@ class TodoController implements GetTodosEndpoint.Handler, GetTodoByIdEndpoint.Ha
                 todoInput.done()
         );
         service.create(todo);
-        var res = new CreateTodoEndpoint.Response200(todo);
+        var res = new CreateTodo.Response200(todo);
         return CompletableFuture.completedFuture(res);
     }
 
     @Override
-    public CompletableFuture<DeleteTodoEndpoint.Response<?>> deleteTodo(DeleteTodoEndpoint.Request request) {
+    public CompletableFuture<DeleteTodo.Response<?>> deleteTodo(DeleteTodo.Request request) {
         return null;
     }
 
     @Override
-    public CompletableFuture<GetTodoByIdEndpoint.Response<?>> getTodoById(GetTodoByIdEndpoint.Request request) {
+    public CompletableFuture<GetTodoById.Response<?>> getTodoById(GetTodoById.Request request) {
         var id = switch (request){
-            case GetTodoByIdEndpoint.Request req -> req.getPath().id();
+            case GetTodoById.Request req -> req.getPath().id();
         };
-        var res = new GetTodoByIdEndpoint.Response200(service.store.get(parseInt(id)));
+        var res = new GetTodoById.Response200(service.store.get(parseInt(id)));
         return CompletableFuture.completedFuture(res);
     }
 
     @Override
-    public CompletableFuture<UpdateTodoEndpoint.Response<?>> updateTodo(UpdateTodoEndpoint.Request request) {
+    public CompletableFuture<UpdateTodo.Response<?>> updateTodo(UpdateTodo.Request request) {
         return null;
     }
 
     @Override
-    public CompletableFuture<GetTodosEndpoint.Response<?>> getTodos(GetTodosEndpoint.Request request) {
-        var res = new GetTodosEndpoint.Response200(service.store);
+    public CompletableFuture<GetTodos.Response<?>> getTodos(GetTodos.Request request) {
+        var res = new GetTodos.Response200(service.store);
         return CompletableFuture.completedFuture(res);
     }
 }

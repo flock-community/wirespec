@@ -16,7 +16,7 @@ object Utils {
         .emit(module)
         .map {
             when (it) {
-                is AvroModel.RecordType -> it.copy(namespace = packageName)
+                is AvroModel.RecordType -> it.copy(namespace = "$packageName.model")
                 else -> it
             }
         }

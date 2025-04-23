@@ -1,9 +1,9 @@
 package community.flock.wirespec.examples.openapi.app
 
-import community.flock.wirespec.generated.kotlin.v3.AddPetEndpoint
-import community.flock.wirespec.generated.kotlin.v3.FindPetsByStatusEndpoint
-import community.flock.wirespec.generated.kotlin.v3.FindPetsByStatusParameterStatus
-import community.flock.wirespec.generated.kotlin.v3.Pet
+import community.flock.wirespec.generated.kotlin.v3.endpoint.AddPetEndpoint
+import community.flock.wirespec.generated.kotlin.v3.endpoint.FindPetsByStatusEndpoint
+import community.flock.wirespec.generated.kotlin.v3.model.FindPetsByStatusParameterStatus
+import community.flock.wirespec.generated.kotlin.v3.model.Pet
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody

@@ -21,6 +21,7 @@ import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Module
+import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -42,29 +43,25 @@ open class JavaEmitter(
 
     override val shared = JavaShared
 
-    override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> "${emit(identifier)}Endpoint"
-        is Channel -> "${emit(identifier)}Channel"
-        is Enum -> emit(identifier)
-        is Refined -> emit(identifier)
-        is Type -> emit(identifier)
-        is Union -> emit(identifier)
-    }
-
     override val singleLineComment = "//"
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
-        val emitted = super.emit(module, logger)
-        return if (emitShared) emitted + Emitted(PackageName(DEFAULT_GENERATED_PACKAGE_STRING).toDir() + "Wirespec", shared.source)
-        else emitted
-    }
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
+        super.emit(module, logger).let {
+            if (emitShared) it + Emitted(PackageName(DEFAULT_SHARED_PACKAGE_STRING).toDir() + "Wirespec", shared.source)
+            else it
+        }
 
     override fun emit(definition: Definition, module: Module, logger: Logger): Emitted {
         return super.emit(definition, module, logger).let {
+            val subPackageName = when (definition) {
+                is Endpoint -> packageName.extend("endpoint")
+                is Channel -> packageName.extend("channel")
+                else -> packageName.extend("model")
+            }
             Emitted(
-                file = packageName.toDir() + it.file.sanitizeSymbol(),
+                file = subPackageName.toDir() + it.file.sanitizeSymbol(),
                 result = """
-                            |package $packageName;
+                            |package $subPackageName;
                             |${if (module.needImports()) import else ""}
                             |${it.result}
                         """.trimMargin().trimStart()
@@ -73,7 +70,7 @@ open class JavaEmitter(
     }
 
     override fun emit(type: Type, module: Module) = """
-        |public record ${type.emitName()} (
+        |public record ${emit(type.identifier)} (
         |${type.shape.emit()}
         |)${type.extends.run { if (isEmpty()) "" else " extends ${joinToString(", ") { it.emit() }}" }}${type.emitUnion(module)} {
         |};
@@ -144,7 +141,7 @@ open class JavaEmitter(
         |public record ${emit(refined.identifier)} (String value) implements Wirespec.Refined {
         |${Spacer}@Override
         |${Spacer}public String toString() { return value; }
-        |${Spacer}public static boolean validate(${refined.emitName()} record) {
+        |${Spacer}public static boolean validate(${emit(refined.identifier)} record) {
         |${Spacer}${refined.validator.emit()}
         |${Spacer}}
         |${Spacer}@Override
@@ -176,19 +173,35 @@ open class JavaEmitter(
     """.trimMargin()
 
     override fun emit(union: Union) = """
-        |public sealed interface ${union.emitName()} permits ${union.entries.joinToString { it.value }} {}
+        |public sealed interface ${emit(union.identifier)} permits ${union.entries.joinToString { it.value }} {}
         |
     """.trimMargin()
 
     override fun emit(channel: Channel) = """
-        |public interface ${emit(channel.identifier)}Channel {
-        |   void invoke(${channel.reference.emitRoot()} message);
+        |${channel.emitImports()}
+        |
+        |public interface ${emit(channel.identifier)} {
+        |   void invoke(${channel.emitFullyQualified(channel.reference)}${channel.reference.emitRoot()} message);
         |}
         |
     """.trimMargin()
 
+    private fun Definition.emitFullyQualified(reference: Reference) =
+        if(identifier.value == reference.value){
+            "${packageName.value}.model."
+        } else {
+            ""
+        }
+
+    fun Definition.emitImports() = importReferences()
+        .filter { this.identifier.value != it.value }
+        .map { "import ${packageName.value}.model.${it.value};" }.joinToString("\n") { it.trimStart() }
+
+
     override fun emit(endpoint: Endpoint) = """
-        |public interface ${emit(endpoint.identifier)}Endpoint extends Wirespec.Endpoint {
+        |${endpoint.emitImports()}
+        |
+        |public interface ${emit(endpoint.identifier)} extends Wirespec.Endpoint {
         |${endpoint.pathParams.emitObject("Path", "Wirespec.Path") { it.emit() }}
         |
         |${endpoint.queries.emitObject("Queries", "Wirespec.Queries") { it.emit() }}

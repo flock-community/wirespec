@@ -19,4 +19,5 @@ class PackageName(override val value: String, val createDirectory: Boolean) : Va
             .let { PackageName(it ?: DEFAULT_SHARED_PACKAGE_STRING, it != null) }
     }
     fun toDir(): String = value.replace(".", "/") + "/"
+    fun extend(subPackage: String) = PackageName("$value.$subPackage")
 }
