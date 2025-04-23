@@ -82,8 +82,6 @@ class ValidatorTest {
             .shouldBeRight()
     }
 
-    // region NOT YET IMPLEMENTED
-
     @Test
     fun duplicateTypeSameFile() {
         val source = """
@@ -95,6 +93,4 @@ class ValidatorTest {
             .shouldBeLeft()
             .head.shouldBeInstanceOf<DuplicateTypeError>()
     }
-
-    // endregion
 }

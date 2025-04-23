@@ -16,8 +16,14 @@ class EmptyModule :
         message = "AST should not be empty",
     )
 
-class DuplicateEndpointError(coordinates: Token.Coordinates, endpointName: String) :
+class DuplicateEndpointError(endpointName: String) :
     ValidationError(
-        coordinates = coordinates,
+        coordinates = Token.Coordinates(),
         message = "Endpoint '$endpointName' is already defined",
+    )
+
+class DuplicateTypeError(typeName: String) :
+    ValidationError(
+        coordinates = Token.Coordinates(),
+        message = "Type '$typeName' is already defined",
     )
