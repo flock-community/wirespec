@@ -4,7 +4,6 @@
  * work well for content-centric websites.
  */
 
-
 /* You can override the default Infima variables here. */
 
 :root {
@@ -25,7 +24,6 @@
     --ifm-menu-color-active: #ffffff;
     --ifm-heading-font-family: "Funnel Display", sans-serif;
 }
-
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
 
@@ -186,7 +184,6 @@ body {
         grid-template-columns: repeat(2, 1fr);
     }
 }
-
 
 /* Large screens: 3 columns */
 
@@ -918,7 +915,6 @@ body {
     gap: 35px;
 }
 
-
 /* Medium screens: 2 columns */
 
 @media (min-width: 640px) {
@@ -1134,7 +1130,6 @@ table tr:nth-child(2n) {
     flex-wrap: wrap;
 }
 
-
 /* Responsive adjustments for smaller screens */
 
 @media (max-width: 768px) {
@@ -1223,12 +1218,6 @@ table tr:nth-child(2n) {
     margin-top: 0 !important;
     padding-top: 50px;
 }
-
-
-/* Ensure the entire docs page fills the viewport */
-
-
-/* Make the docs sidebar stick to the top of the viewport */
 
 .docSidebarContainer_YfHR {
     margin-top: 0% !important;
