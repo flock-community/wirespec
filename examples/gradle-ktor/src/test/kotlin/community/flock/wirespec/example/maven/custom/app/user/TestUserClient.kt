@@ -1,10 +1,10 @@
 package community.flock.wirespec.example.maven.custom.app.user
 
-import community.flock.wirespec.generated.kotlin.DeleteUserByNameEndpoint
-import community.flock.wirespec.generated.kotlin.GetUserByNameEndpoint
-import community.flock.wirespec.generated.kotlin.GetUsersEndpoint
-import community.flock.wirespec.generated.kotlin.PostUserEndpoint
-import community.flock.wirespec.generated.kotlin.UserDto
+import community.flock.wirespec.generated.kotlin.endpoint.DeleteUserByName
+import community.flock.wirespec.generated.kotlin.endpoint.GetUserByName
+import community.flock.wirespec.generated.kotlin.endpoint.GetUsers
+import community.flock.wirespec.generated.kotlin.endpoint.PostUser
+import community.flock.wirespec.generated.kotlin.model.UserDto
 
 class TestUserClient : UserClient {
     private val users =
@@ -12,23 +12,23 @@ class TestUserClient : UserClient {
             UserDto("name"),
         )
 
-    override suspend fun getUsers(request: GetUsersEndpoint.Request) = users
+    override suspend fun getUsers(request: GetUsers.Request) = users
         .toList()
-        .let(GetUsersEndpoint::Response200)
+        .let(GetUsers::Response200)
 
-    override suspend fun getUserByName(request: GetUserByNameEndpoint.Request) = users
+    override suspend fun getUserByName(request: GetUserByName.Request) = users
         .find { it.name == request.path.name }
-        ?.let(GetUserByNameEndpoint::Response200)
-        ?: GetUserByNameEndpoint.Response404(Unit)
+        ?.let(GetUserByName::Response200)
+        ?: GetUserByName.Response404(Unit)
 
-    override suspend fun postUser(request: PostUserEndpoint.Request) = request.body
+    override suspend fun postUser(request: PostUser.Request) = request.body
         .takeIf(users::add)
-        ?.let(PostUserEndpoint::Response200)
-        ?: PostUserEndpoint.Response409(Unit)
+        ?.let(PostUser::Response200)
+        ?: PostUser.Response409(Unit)
 
-    override suspend fun deleteUserByName(request: DeleteUserByNameEndpoint.Request) = users
+    override suspend fun deleteUserByName(request: DeleteUserByName.Request) = users
         .find { it.name == request.path.name }
         ?.also(users::remove)
-        ?.let(DeleteUserByNameEndpoint::Response200)
-        ?: DeleteUserByNameEndpoint.Response404(Unit)
+        ?.let(DeleteUserByName::Response200)
+        ?: DeleteUserByName.Response404(Unit)
 }

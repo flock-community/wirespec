@@ -2,9 +2,9 @@ package community.flock.wirespec.example.maven.custom.app.todo
 
 import community.flock.wirespec.example.maven.custom.app.common.Consumer
 import community.flock.wirespec.example.maven.custom.app.common.Producer
-import community.flock.wirespec.generated.kotlin.PotentialTodoDto
-import community.flock.wirespec.generated.kotlin.TodoDto
-import community.flock.wirespec.generated.kotlin.TodoId
+import community.flock.wirespec.generated.kotlin.model.PotentialTodoDto
+import community.flock.wirespec.generated.kotlin.model.TodoDto
+import community.flock.wirespec.generated.kotlin.model.TodoId
 import java.util.UUID
 
 object TodoConsumer : Consumer<PotentialTodoDto, Todo> {

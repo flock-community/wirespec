@@ -149,7 +149,7 @@ open class KotlinEmitter(
     override fun emit(endpoint: Endpoint) = """
         |${endpoint.importReferences().map { "import ${packageName.value}.model.${it.value}" }.joinToString("\n") { it.trimStart() }}
         |
-        |object ${emit(endpoint.identifier)}Endpoint : Wirespec.Endpoint {
+        |object ${emit(endpoint.identifier)} : Wirespec.Endpoint {
         |${endpoint.pathParams.emitObject("Path", "Wirespec.Path") { it.emit() }}
         |
         |${endpoint.queries.emitObject("Queries", "Wirespec.Queries") { it.emit() }}
