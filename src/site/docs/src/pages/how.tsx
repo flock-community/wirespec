@@ -17,19 +17,18 @@ export default function ContractPage() {
             <section className={styles.hero}>
               <h1>Contract</h1>
               <p>
+                {" "}
                 The contract–first approach for interface design, as envisioned
                 by Wirespec, is a methodology that emphasizes the creation of a
                 formal specification before any implementation occurs. This
                 approach recognizes the importance of defining clear and
                 detailed contracts (specifications) as the cornerstone of
                 building robust interfaces. Here's a more detailed exploration
-                of this concept:
+                of this concept:{" "}
               </p>
             </section>
-
             <section className={styles.section}>
               <h2>Key Principles of the Contract-First Approach:</h2>
-
               <ol className={styles.principles}>
                 <li>
                   <strong>Single Source of Truth:</strong>
@@ -48,7 +47,6 @@ export default function ContractPage() {
                     </li>
                   </ul>
                 </li>
-
                 <li>
                   <strong>Independence from Implementation:</strong>
                   <ul>
@@ -66,7 +64,6 @@ export default function ContractPage() {
                     </li>
                   </ul>
                 </li>
-
                 <li>
                   <strong>Collaborative Design–Centric Methodology:</strong>
                   <ul>
@@ -125,7 +122,6 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
               </CodeBlock>
             </section>
           </div>
-
           <div id="generate">
             <section className={styles.generateSection}>
               <h2>Generate</h2>
@@ -160,14 +156,12 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                   <CodeBlock>{`project/out/community/flock/wirespec/generated/
   └─ Todo.ts`}</CodeBlock>
                 </TabItem>
-
                 <TabItem value="Kotlin" label="Kotlin">
                   <CodeBlock language="bash">{`wirespec compile --input . --language kotlin`}</CodeBlock>
                   <p>This will generate the following file:</p>
                   <CodeBlock>{`project/out/community/flock/wirespec/generated/
   └─ Todo.kt`}</CodeBlock>
                 </TabItem>
-
                 <TabItem value="Java" label="Java">
                   <CodeBlock language="bash">{`wirespec compile --input . --language java`}</CodeBlock>
                   <p>This will generate the following files:</p>
@@ -182,7 +176,6 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
               </Tabs>
             </section>
           </div>
-
           <div id="validate">
             <section className={styles.validateSection}>
               <h2>Validate</h2>
@@ -193,7 +186,6 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                 between expected interfaces and actual code, facilitating robust
                 development and testing practices.
               </p>
-
               <div className={styles.validateBlock}>
                 <h3>Validation Through Specifications</h3>
                 <p>
@@ -206,7 +198,6 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                   development.
                 </p>
               </div>
-
               <div className={styles.validateBlock}>
                 <h3>Generating Random Test Data</h3>
                 <p>
@@ -219,7 +210,6 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                   streamlines testing and improves reliability.
                 </p>
               </div>
-
               <div className={styles.validateBlock}>
                 <h3>Mock Servers for Testing</h3>
                 <p>
@@ -233,7 +223,6 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                   and expected status codes are met.
                 </p>
               </div>
-
               <div className={styles.validateBlock}>
                 <h3>Detecting Discrepancies Early</h3>
                 <p>
@@ -245,7 +234,6 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                   contract.
                 </p>
               </div>
-
               <p>
                 In summary, specifications like those enabled by Wirespec
                 empower teams to validate implementations through code
