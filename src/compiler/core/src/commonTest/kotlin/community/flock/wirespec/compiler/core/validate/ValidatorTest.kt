@@ -15,6 +15,7 @@ import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.collections.shouldContainAll
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.Test
 
@@ -93,6 +94,46 @@ class ValidatorTest {
         validate(source)
             .shouldBeLeft()
             .head.shouldBeInstanceOf<DuplicateTypeError>()
+    }
+
+    @Test
+    fun multipleTypeViolations() {
+        val source = """
+            |endpoint Test GET /Test1 -> {
+            |    200 -> String
+            |}
+            |
+            |endpoint Test GET /Test2 -> {
+            |    200 -> String
+            |}
+        """.trimMargin()
+
+        validate(source)
+            .shouldBeLeft()
+            .size shouldBe 2
+    }
+
+    @Test
+    fun multipleEndpointViolations() {
+        val source1 = """
+            |endpoint Test GET /Test1 -> {
+            |    200 -> String
+            |}
+            |
+            |endpoint Test GET /Test2 -> {
+            |    200 -> String
+            |}
+        """.trimMargin()
+
+        val source2 = """
+            |endpoint Test GET /Test2 -> {
+            |    200 -> String
+            |}
+        """.trimMargin()
+
+        validate(source1, source2)
+            .shouldBeLeft()
+            .size shouldBe 2
     }
 
     @Test
