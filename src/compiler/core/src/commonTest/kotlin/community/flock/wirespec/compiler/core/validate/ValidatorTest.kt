@@ -6,6 +6,7 @@ import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ValidationContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.exceptions.DuplicateEndpointError
+import community.flock.wirespec.compiler.core.exceptions.DuplicateTypeError
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.AST
@@ -67,6 +68,20 @@ class ValidatorTest {
             .head.shouldBeInstanceOf<DuplicateEndpointError>()
     }
 
+    @Test
+    fun duplicateTypeDifferentFile() {
+        val source1 = """
+           |type Foo { str: String }
+       """.trimMargin()
+
+        val source2 = """
+            |type Foo { str: String }
+       """.trimMargin()
+
+        validate(source1, source2)
+            .shouldBeRight()
+    }
+
     // region NOT YET IMPLEMENTED
 
     @Test
@@ -77,26 +92,8 @@ class ValidatorTest {
         """.trimMargin()
 
         validate(source)
-            .shouldBeRight()
-    }
-
-    @Test
-    fun duplicateTypeDifferentFile() {
-        // Should be combined with an import
-        val source1 = """
-            |endpoint Test GET /Test1 -> {
-            |    200 -> String
-            |}
-        """.trimMargin()
-
-        val source2 = """
-            |endpoint Test GET /Test2 -> {
-            |    200 -> String
-            |}
-        """.trimMargin()
-
-        validate(source1, source2)
-            .shouldBeRight()
+            .shouldBeLeft()
+            .head.shouldBeInstanceOf<DuplicateTypeError>()
     }
 
     // endregion
