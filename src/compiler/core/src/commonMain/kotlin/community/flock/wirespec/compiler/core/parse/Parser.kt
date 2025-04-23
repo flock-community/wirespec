@@ -9,7 +9,6 @@ import arrow.core.raise.ensureNotNull
 import arrow.core.right
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.TokenizedModule
-import community.flock.wirespec.compiler.core.exceptions.DuplicateEndpointError
 import community.flock.wirespec.compiler.core.exceptions.EmptyModule
 import community.flock.wirespec.compiler.core.exceptions.UnionError
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
@@ -18,7 +17,6 @@ import community.flock.wirespec.compiler.core.tokenize.ChannelDefinition
 import community.flock.wirespec.compiler.core.tokenize.Comment
 import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
 import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
-import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
 import community.flock.wirespec.compiler.utils.HasLogger
@@ -68,20 +66,6 @@ object Parser {
 
     private fun validate(options: ParseOptions): (Statements) -> EitherNel<WirespecException, Statements> = { defs: Statements ->
         defs.runOption(options.allowUnions) { fillExtendsClause() }
-            .flatMap { defs.checkDuplicateEndpoints() }
-    }
-
-    private fun Statements.checkDuplicateEndpoints(): EitherNel<WirespecException, Statements> = either {
-        val endpointsByName = filterIsInstance<Endpoint>().groupBy { it.identifier.value }
-        val duplicates = endpointsByName.filter { it.value.size > 1 }
-
-        if (duplicates.isNotEmpty()) {
-            val firstDuplicate = duplicates.entries.first()
-            val duplicateEndpointName = firstDuplicate.key
-            raise(DuplicateEndpointError(Token.Coordinates(), duplicateEndpointName).nel())
-        }
-
-        this@checkDuplicateEndpoints
     }
 
     private fun Statements.runOption(bool: Boolean, block: Statements.() -> EitherNel<WirespecException, Statements>) = if (bool) block() else right()

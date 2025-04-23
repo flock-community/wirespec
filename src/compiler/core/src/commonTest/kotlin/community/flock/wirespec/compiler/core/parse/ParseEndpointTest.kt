@@ -9,14 +9,12 @@ import community.flock.wirespec.compiler.core.parse.Endpoint.Method.GET
 import community.flock.wirespec.compiler.core.parse.Endpoint.Method.POST
 import community.flock.wirespec.compiler.core.parse.Endpoint.Segment.Literal
 import community.flock.wirespec.compiler.utils.NoLogger
-import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import community.flock.wirespec.compiler.core.exceptions.DuplicateEndpointError
 import kotlin.test.Test
 
 class ParseEndpointTest {
@@ -230,21 +228,5 @@ class ParseEndpointTest {
                 queries.first().reference.let { it is Reference.Dict }.shouldBeTrue()
                 headers.first().reference.let { it is Reference.Dict }.shouldBeTrue()
             }
-    }
-
-    @Test
-    fun duplicateEndpointNames() {
-        val source = """
-            |endpoint Test GET /Test1 -> {
-            |    200 -> String
-            |}
-            |endpoint Test GET /Test2 -> {
-            |    200 -> String
-            |}
-        """.trimMargin()
-
-        parser(source)
-            .shouldBeLeft()
-            .also { it.head.shouldBeInstanceOf<DuplicateEndpointError>() }
     }
 }
