@@ -54,18 +54,22 @@ open class JavaEmitter(
     override val singleLineComment = "//"
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
-        val emitted = super.emit(module, logger).map { (file, result): Emitted ->
+        val emitted = super.emit(module, logger)
+        return if (emitShared) emitted + Emitted(PackageName(DEFAULT_GENERATED_PACKAGE_STRING).toDir() + "Wirespec", shared.source)
+        else emitted
+    }
+
+    override fun emit(definition: Definition, module: Module, logger: Logger): Emitted {
+        return super.emit(definition, module, logger).let {
             Emitted(
-                file = packageName.toDir() + file.sanitizeSymbol(),
+                file = packageName.toDir() + it.file.sanitizeSymbol(),
                 result = """
                             |package $packageName;
                             |${if (module.needImports()) import else ""}
-                            |$result
+                            |${it.result}
                         """.trimMargin().trimStart()
             )
         }
-
-        return if (emitShared) emitted + Emitted(PackageName("$DEFAULT_GENERATED_PACKAGE_STRING.java").toDir() + "Wirespec", shared.source) else emitted
     }
 
     override fun emit(type: Type, module: Module) = """
