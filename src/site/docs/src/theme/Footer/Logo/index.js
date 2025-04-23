@@ -11,22 +11,12 @@ function LogoImage({logo}) {
     dark: withBaseUrl(logo.srcDark ?? logo.src),
   };
   return (
-    <ThemedImage
-      className={clsx('footer__logo', logo.className)}
-      alt={logo.alt}
-      sources={sources}
-      width={logo.width}
-      height={logo.height}
-      style={logo.style}
-    />
+    <ThemedImage className={clsx('footer__logo', logo.className)} alt={logo.alt} sources={sources} width={logo.width} height={logo.height} style={logo.style} />
   );
 }
 export default function FooterLogo({logo}) {
   return logo.href ? (
-    <Link
-      href={logo.href}
-      className={styles.footerLogoLink}
-      target={logo.target}>
+    <Link href={logo.href} className={styles.footerLogoLink} target={logo.target}>
       <LogoImage logo={logo} />
     </Link>
   ) : (

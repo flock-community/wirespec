@@ -20,9 +20,7 @@ const BlogCard: React.FC<BlogCardProps> = ({ image, title, subtitle, link }) => 
           <h3>{title}</h3>
         </Link>
         <p>{subtitle}</p>
-        <Link to={link} className={styles.readMore}>
-          Read more
-        </Link>
+        <Link to={link} className={styles.readMore}>Read more</Link>
       </div>
     </div>
   );

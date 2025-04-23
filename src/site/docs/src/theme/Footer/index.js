@@ -78,12 +78,7 @@ function Footer() {
                     </div>
                 </section>
             ) }
-            <FooterLayout
-                style={ style }
-                links={ links && links.length > 0 && <FooterLinks links={ links } /> }
-                logo={ logo && <FooterLogo logo={ logo } /> }
-                copyright={ copyright && <FooterCopyright copyright={ copyright } /> }
-            />
+            <FooterLayout style={ style } links={ links && links.length > 0 && <FooterLinks links={ links } /> } logo={ logo && <FooterLogo logo={ logo } /> } copyright={ copyright && <FooterCopyright copyright={ copyright } /> } />
         </>
     );
 }
