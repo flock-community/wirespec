@@ -18,49 +18,73 @@ object Validator {
     fun ValidationContext.validate(ast: EitherNel<WirespecException, AST>): EitherNel<WirespecException, AST> = ast.flatMap { validateAST(it) }
 
     private fun validateAST(ast: AST): EitherNel<WirespecException, AST> {
-        // First validate endpoints
-        val endpointValidation = validateEndpoints(ast)
-        if (endpointValidation is arrow.core.Either.Left) {
-            return endpointValidation
+        val endpointErrors = ast.validateEndpoints()
+        val typeErrors = ast.validateTypes()
+
+        val allErrors = mutableListOf<WirespecException>()
+
+        if (endpointErrors is arrow.core.Either.Left) {
+            allErrors.addAll(endpointErrors.value.all)
         }
 
-        // Then validate types
-        return validateTypes(ast)
+        if (typeErrors is arrow.core.Either.Left) {
+            allErrors.addAll(typeErrors.value.all)
+        }
+
+        return if (allErrors.isNotEmpty()) {
+            allErrors.first().nel().left()
+                .mapLeft { nel -> arrow.core.NonEmptyList(nel.head, allErrors.drop(1)) }
+        } else {
+            ast.right()
+        }
     }
 
-    private fun validateEndpoints(ast: AST): EitherNel<WirespecException, AST> {
+    private fun AST.validateEndpoints(): EitherNel<WirespecException, AST> {
         val endpointNames = mutableSetOf<String>()
+        val errors = mutableListOf<WirespecException>()
 
-        for (module in ast.modules) {
+        for (module in modules) {
             for (statement in module.statements) {
                 if (statement is Endpoint) {
                     val endpointName = statement.identifier.value
                     if (endpointName in endpointNames) {
-                        return DuplicateEndpointError(endpointName).nel().left()
+                        errors.add(DuplicateEndpointError(endpointName))
                     }
                     endpointNames.add(endpointName)
                 }
             }
         }
 
-        return ast.right()
+        return if (errors.isNotEmpty()) {
+            errors.first().nel().left()
+                .mapLeft { nel -> arrow.core.NonEmptyList(nel.head, errors.drop(1)) }
+        } else {
+            right()
+        }
     }
 
-    private fun validateTypes(ast: AST): EitherNel<WirespecException, AST> {
-        for (module in ast.modules) {
+    private fun AST.validateTypes(): EitherNel<WirespecException, AST> {
+        val errors = mutableListOf<WirespecException>()
+
+        for (module in modules) {
             val typeNames = mutableSetOf<String>()
 
             for (statement in module.statements) {
                 if (statement is Type) {
                     val typeName = statement.identifier.value
                     if (typeName in typeNames) {
-                        return DuplicateTypeError(typeName).nel().left()
+                        errors.add(DuplicateTypeError(typeName))
                     }
                     typeNames.add(typeName)
                 }
             }
         }
 
-        return ast.right()
+        return if (errors.isNotEmpty()) {
+            errors.first().nel().left()
+                .mapLeft { nel -> arrow.core.NonEmptyList(nel.head, errors.drop(1)) }
+        } else {
+            right()
+        }
     }
 }

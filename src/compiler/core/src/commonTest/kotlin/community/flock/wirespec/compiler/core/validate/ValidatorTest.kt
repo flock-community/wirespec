@@ -74,11 +74,11 @@ class ValidatorTest {
     fun duplicateTypeDifferentFile() {
         val source1 = """
            |type Foo { str: String }
-       """.trimMargin()
+        """.trimMargin()
 
         val source2 = """
             |type Foo { str: String }
-       """.trimMargin()
+        """.trimMargin()
 
         validate(source1, source2)
             .shouldBeRight()
@@ -99,13 +99,9 @@ class ValidatorTest {
     @Test
     fun multipleTypeViolations() {
         val source = """
-            |endpoint Test GET /Test1 -> {
-            |    200 -> String
-            |}
-            |
-            |endpoint Test GET /Test2 -> {
-            |    200 -> String
-            |}
+            |type Foo { str: String }
+            |type Foo { str: String }
+            |type Foo { str: String }
         """.trimMargin()
 
         validate(source)
@@ -157,8 +153,8 @@ class ValidatorTest {
         errorTypes.shouldContainAll(
             listOf(
                 DuplicateTypeError::class,
-                DuplicateEndpointError::class
-            )
+                DuplicateEndpointError::class,
+            ),
         )
     }
 }
