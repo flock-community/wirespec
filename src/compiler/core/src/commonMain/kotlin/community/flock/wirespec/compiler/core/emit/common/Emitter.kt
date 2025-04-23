@@ -43,17 +43,19 @@ abstract class Emitter : Emitters {
 
     open fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = module
         .statements
-        .map {
-            logger.info("Emitting Node ${it.emitName()}")
-            when (it) {
-                is Type -> Emitted(it.emitName(), emit(it, module))
-                is Endpoint -> Emitted(it.emitName(), emit(it))
-                is Enum -> Emitted(it.emitName(), emit(it, module))
-                is Refined -> Emitted(it.emitName(), emit(it))
-                is Union -> Emitted(it.emitName(), emit(it))
-                is Channel -> Emitted(it.emitName(), emit(it))
-            }
+        .map { emit(it, module, logger) }
+
+    open fun emit(definition: Definition, module: Module, logger: Logger): Emitted {
+        logger.info("Emitting Node ${definition.emitName()}")
+        return when (definition) {
+            is Type -> Emitted(definition.emitName(), emit(definition, module))
+            is Endpoint -> Emitted(definition.emitName(), emit(definition))
+            is Enum -> Emitted(definition.emitName(), emit(definition, module))
+            is Refined -> Emitted(definition.emitName(), emit(definition))
+            is Union -> Emitted(definition.emitName(), emit(definition))
+            is Channel -> Emitted(definition.emitName(), emit(definition))
         }
+    }
 
     fun String.spacer(space: Int = 1) = split("\n")
         .joinToString("\n") {
