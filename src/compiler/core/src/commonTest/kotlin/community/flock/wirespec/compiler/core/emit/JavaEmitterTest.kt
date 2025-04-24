@@ -20,7 +20,7 @@ class JavaEmitterTest {
     fun testEmitterType() {
         val expected = listOf(
             """
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.model;
             |
             |public record Todo (
             |  String name,
@@ -41,7 +41,7 @@ class JavaEmitterTest {
     fun testEmitterRefined() {
         val expected = listOf(
             """
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.model;
             |
             |import community.flock.wirespec.java.Wirespec;
             |
@@ -66,7 +66,7 @@ class JavaEmitterTest {
     fun testEmitterEnum() {
         val expected = listOf(
             """
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.model;
             |
             |import community.flock.wirespec.java.Wirespec;
             |
