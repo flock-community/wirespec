@@ -35,7 +35,7 @@ class AvroKotlinEmitterTest {
 
         val ast = AST(nonEmptyListOf(Module("", nonEmptyListOf(type))))
         val expected = """
-            |package packageName
+            |package packageName.model
             |
             |data class Identifier(
             |  val name: String
@@ -78,7 +78,7 @@ class AvroKotlinEmitterTest {
         )
         val ast = AST(nonEmptyListOf(Module("", nonEmptyListOf(enum))))
         val expected = """
-            |package packageName
+            |package packageName.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
