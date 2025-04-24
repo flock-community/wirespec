@@ -1,7 +1,6 @@
 package community.flock.wirespec.compiler.core.emit
 
 import arrow.core.NonEmptyList
-import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.addBackticks
 import community.flock.wirespec.compiler.core.concatGenerics
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
@@ -12,6 +11,7 @@ import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.emit.common.Keywords
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
+import community.flock.wirespec.compiler.core.emit.common.plus
 import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
 import community.flock.wirespec.compiler.core.orNull
 import community.flock.wirespec.compiler.core.parse.Channel
@@ -54,23 +54,18 @@ open class KotlinEmitter(
             else it
         }
 
-    override fun emit(definition: Definition, module: Module, logger: Logger): Emitted {
-        return super.emit(definition, module, logger).let {
-            val subPackageName = when (definition) {
-                is Endpoint -> packageName.extend("endpoint")
-                is Channel -> packageName.extend("channel")
-                else -> packageName.extend("model")
-            }
+    override fun emit(definition: Definition, module: Module, logger: Logger): Emitted =
+        super.emit(definition, module, logger).let {
+            val subPackageName = packageName + definition
             Emitted(
                 file = subPackageName.toDir() + it.file.sanitizeSymbol(),
                 result = """
-                            |package $subPackageName
-                            |${if (module.needImports()) import else ""}
-                            |${it.result}
-                        """.trimMargin().trimStart()
+                    |package $subPackageName
+                    |${if (module.needImports()) import else ""}
+                    |${it.result}
+                """.trimMargin().trimStart()
             )
         }
-    }
 
     override fun emit(type: Type, module: Module) =
         if (type.shape.value.isEmpty()) "${Spacer}data object${emit(type.identifier)}"
@@ -90,7 +85,7 @@ open class KotlinEmitter(
         is Reference.Iterable -> "List<${reference.emit()}>"
         is Reference.Unit -> "Unit"
         is Reference.Any -> "Any"
-        is Reference.Custom -> value.insertModelInPackagePath()
+        is Reference.Custom -> value
         is Reference.Primitive -> when (type) {
             is Reference.Primitive.Type.String -> "String"
             is Reference.Primitive.Type.Integer -> when (type.precision) {

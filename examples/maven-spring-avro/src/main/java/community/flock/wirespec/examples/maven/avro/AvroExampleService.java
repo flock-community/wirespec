@@ -1,6 +1,6 @@
 package community.flock.wirespec.examples.maven.avro;
 
-import com.eventloopsoftware.channel.TestAvroRecord;
+import com.eventloopsoftware.kafka.channel.TestAvroRecord;
 import org.apache.avro.generic.GenericData;
 import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.ContainerProperties;
@@ -25,9 +25,9 @@ public class AvroExampleService implements TestAvroRecord {
     }
 
     @Override
-    public void invoke(com.eventloopsoftware.model.TestAvroRecord message) {
+    public void invoke(com.eventloopsoftware.kafka.model.TestAvroRecord message) {
         var template = new KafkaTemplate<>(kafkaProducerFactory);
-        var avro = com.eventloopsoftware.model.TestAvroRecord.Avro.to(message);
+        var avro = com.eventloopsoftware.kafka.model.TestAvroRecord.Avro.to(message);
         template.send(TOPIC, avro);
     }
 
@@ -36,7 +36,7 @@ public class AvroExampleService implements TestAvroRecord {
         containerProps.setGroupId(groupId);
         var container = new KafkaMessageListenerContainer<>(kafkaConsumerFactory, containerProps);
         container.setupMessageListener((MessageListener<String, GenericData.Record>) data -> {
-            var message = com.eventloopsoftware.model.TestAvroRecord.Avro.from(data.value());
+            var message = com.eventloopsoftware.kafka.model.TestAvroRecord.Avro.from(data.value());
             listener.invoke(message);
         });
         container.start();

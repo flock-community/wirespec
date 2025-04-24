@@ -44,9 +44,9 @@ abstract class Emitter : Emitters {
         .statements
         .map { emit(it, module, logger) }
 
-    open fun emit(definition: Definition, module: Module, logger: Logger): Emitted {
+    open fun emit(definition: Definition, module: Module, logger: Logger): Emitted = run {
         logger.info("Emitting Node ${definition.identifier.value}")
-        return when (definition) {
+        when (definition) {
             is Type -> Emitted(emit(definition.identifier), emit(definition, module))
             is Endpoint -> Emitted(emit(definition.identifier), emit(definition))
             is Enum -> Emitted(emit(definition.identifier), emit(definition, module))
@@ -158,15 +158,6 @@ abstract class Emitter : Emitters {
         val internalClasses = setOf(
             "Request", "Response"
         )
-        fun String.insertModelInPackagePath() = this
-            .split(".")
-            .let {
-                when (it.size) {
-                    1 -> it
-                    else -> it.dropLast(1) + "model" + it.last()
-                }
-            }
-            .joinToString(".")
     }
 }
 

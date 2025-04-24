@@ -10,6 +10,7 @@ import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.emit.common.Keywords
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
+import community.flock.wirespec.compiler.core.emit.common.plus
 import community.flock.wirespec.compiler.core.emit.shared.JavaShared
 import community.flock.wirespec.compiler.core.orNull
 import community.flock.wirespec.compiler.core.parse.Channel
@@ -50,23 +51,18 @@ open class JavaEmitter(
             else it
         }
 
-    override fun emit(definition: Definition, module: Module, logger: Logger): Emitted {
-        return super.emit(definition, module, logger).let {
-            val subPackageName = when (definition) {
-                is Endpoint -> packageName.extend("endpoint")
-                is Channel -> packageName.extend("channel")
-                else -> packageName.extend("model")
-            }
+    override fun emit(definition: Definition, module: Module, logger: Logger): Emitted =
+        super.emit(definition, module, logger).let {
+            val subPackageName = packageName + definition
             Emitted(
                 file = subPackageName.toDir() + it.file.sanitizeSymbol(),
                 result = """
-                            |package $subPackageName;
-                            |${if (module.needImports()) import else ""}
-                            |${it.result}
-                        """.trimMargin().trimStart()
+                    |package $subPackageName;
+                    |${if (module.needImports()) import else ""}
+                    |${it.result}
+                """.trimMargin().trimStart()
             )
         }
-    }
 
     override fun emit(type: Type, module: Module) = """
         |public record ${emit(type.identifier)} (
@@ -96,7 +92,7 @@ open class JavaEmitter(
         is Reference.Iterable -> "java.util.List<${reference.emit()}>"
         is Reference.Unit -> "void"
         is Reference.Any -> "Object"
-        is Reference.Custom -> value.insertModelInPackagePath()
+        is Reference.Custom -> value
         is Reference.Primitive -> emit()
     }
 
@@ -186,7 +182,7 @@ open class JavaEmitter(
     """.trimMargin()
 
     private fun Definition.emitFullyQualified(reference: Reference) =
-        if(identifier.value == reference.value){
+        if (identifier.value == reference.value) {
             "${packageName.value}.model."
         } else {
             ""

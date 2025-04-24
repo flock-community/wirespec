@@ -1,11 +1,11 @@
 package community.flock.wirespec.examples.maven.avro;
 
-import com.eventloopsoftware.model.TestAvroEnumIdentifier;
-import com.eventloopsoftware.model.TestAvroOrder;
-import com.eventloopsoftware.model.TestAvroOrderLines;
-import com.eventloopsoftware.model.TestAvroRecord;
-import com.eventloopsoftware.model.TestAvroRefNumber;
-import com.eventloopsoftware.kafka.model.model.TestAvroMetadata;
+import com.eventloopsoftware.kafka.model.TestAvroEnumIdentifier;
+import com.eventloopsoftware.kafka.model.TestAvroOrder;
+import com.eventloopsoftware.kafka.model.TestAvroOrderLines;
+import com.eventloopsoftware.kafka.model.TestAvroRecord;
+import com.eventloopsoftware.kafka.model.TestAvroRefNumber;
+import com.eventloopsoftware.kafka.metadata.model.TestAvroMetadata;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
