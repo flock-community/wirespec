@@ -1,7 +1,7 @@
 package community.flock.wirespec.examples.openapi.app
 
-import community.flock.wirespec.generated.kotlin.v3.endpoint.AddPetEndpoint
-import community.flock.wirespec.generated.kotlin.v3.endpoint.FindPetsByStatusEndpoint
+import community.flock.wirespec.generated.kotlin.v3.endpoint.AddPet
+import community.flock.wirespec.generated.kotlin.v3.endpoint.FindPetsByStatus
 import community.flock.wirespec.kotlin.Wirespec
 import java.net.URI
 import org.springframework.http.HttpHeaders
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.exchange
 
-interface KotlinPetstoreClient : AddPetEndpoint.Handler, FindPetsByStatusEndpoint.Handler
+interface KotlinPetstoreClient : AddPet.Handler, FindPetsByStatus.Handler
 
 @Component
 class LiveKotlinPetstoreClient(
@@ -20,13 +20,13 @@ class LiveKotlinPetstoreClient(
     private val client: RestTemplate,
 ) : KotlinPetstoreClient {
 
-    override suspend fun addPet(request: AddPetEndpoint.Request) =
-        with(AddPetEndpoint.Handler.client(serialization)) {
+    override suspend fun addPet(request: AddPet.Request) =
+        with(AddPet.Handler.client(serialization)) {
             to(request).let(::handle).let(::from)
         }
 
-    override suspend fun findPetsByStatus(request: FindPetsByStatusEndpoint.Request) =
-        with(FindPetsByStatusEndpoint.Handler.client(serialization)) {
+    override suspend fun findPetsByStatus(request: FindPetsByStatus.Request) =
+        with(FindPetsByStatus.Handler.client(serialization)) {
             to(request).let(::handle).let(::from)
         }
 
