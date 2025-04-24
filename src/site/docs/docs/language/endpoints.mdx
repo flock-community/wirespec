@@ -91,15 +91,6 @@ endpoint GetTodos GET /todos # {token: String, tenant: Integer} -> {
 }
 ```
 
-You can use backticks to create header names that would otherwise not be valid with the compiler, such as names that
-start with uppercase letters:
-
-```wirespec
-endpoint GetTodos GET /todos # {`Authorization`: String, `Content-Type`: String, `X-Request-ID`: Integer} -> {
-    200 -> Todo
-}
-```
-
 Response headers can similarly be appended after the response type:
 
 ```wirespec
@@ -108,11 +99,12 @@ endpoint CreateTodo POST Todo /todos -> {
 }
 ```
 
-The same backtick syntax can be used for response headers:
+You can use backticks to create header names that would otherwise not be valid with the compiler, such as names that
+start with uppercase letters:
 
 ```wirespec
-endpoint CreateTodo POST Todo /todos -> {
-    201 -> Todo # {`Location`: String, `Content-Type`: String}
+endpoint GetTodos GET /todos # {`Authorization`: String, `Content-Type`: String} -> {
+    200 -> Todo # {`Location`: String}
 }
 ```
 
