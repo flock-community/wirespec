@@ -100,26 +100,28 @@ abstract class Emitter : Emitters {
     ).flatten()
 
 
-    private fun Reference.flattenListDict():Reference = when (this) {
+    private fun Reference.flattenListDict(): Reference = when (this) {
         is Reference.Dict -> reference.flattenListDict()
         is Reference.Iterable -> reference.flattenListDict()
         else -> this
     }
 
-    fun Node.importReferences():List<Reference.Custom> = when (this) {
+    fun Node.importReferences(): List<Reference.Custom> = when (this) {
         is Endpoint -> listOf(
-            path.filterIsInstance< Endpoint.Segment.Param>().map { it.reference },
+            path.filterIsInstance<Endpoint.Segment.Param>().map { it.reference },
             headers.map { it.reference },
             queries.map { it.reference },
             requests.map { it.content?.reference },
-            responses.flatMap { listOf(it.content?.reference) + it.headers.map { it.reference }}
+            responses.flatMap { listOf(it.content?.reference) + it.headers.map { it.reference } }
         ).flatten().filterNotNull().map { it.flattenListDict() }.filterIsInstance<Reference.Custom>().distinct()
+
         is Type -> shape.value
             .filter { identifier.value != it.reference.root().value }
             .map { it.reference.flattenListDict() }
             .filterIsInstance<Reference.Custom>()
             .distinct()
-        is Channel -> if(reference is Reference.Custom) listOf(reference) else emptyList()
+
+        is Channel -> if (reference is Reference.Custom) listOf(reference) else emptyList()
         else -> emptyList()
     }
 
@@ -156,6 +158,15 @@ abstract class Emitter : Emitters {
         val internalClasses = setOf(
             "Request", "Response"
         )
+        fun String.insertModelInPackagePath() = this
+            .split(".")
+            .let {
+                when (it.size) {
+                    1 -> it
+                    else -> it.dropLast(1) + "model" + it.last()
+                }
+            }
+            .joinToString(".")
     }
 }
 

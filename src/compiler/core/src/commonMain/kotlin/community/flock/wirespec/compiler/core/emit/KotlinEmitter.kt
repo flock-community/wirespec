@@ -90,7 +90,7 @@ open class KotlinEmitter(
         is Reference.Iterable -> "List<${reference.emit()}>"
         is Reference.Unit -> "Unit"
         is Reference.Any -> "Any"
-        is Reference.Custom -> value
+        is Reference.Custom -> value.insertModelInPackagePath()
         is Reference.Primitive -> when (type) {
             is Reference.Primitive.Type.String -> "String"
             is Reference.Primitive.Type.Integer -> when (type.precision) {
