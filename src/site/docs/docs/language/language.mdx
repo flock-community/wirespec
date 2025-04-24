@@ -20,17 +20,17 @@ A Wirespec file consists of a set of definitions in any order.
 Just like most modern languages, Wirespec supports single-line (or **end-of-line**) and multi-line (**block**) comments. Comments can only be placed above definitions and are used to document them:
 
 ```wirespec
-// This is an end-of-line comment above a definition
+// This is an end-of-line comment
 endpoint GetTodos GET /todos -> {
     200 -> Todo[]
 }
 
 /* This is a block comment
- * on multiple lines above a definition.
+ * on multiple lines
  */
 type Todo {
-    id: Integer
-    title: String
+    id: Integer,
+    title: String,
     completed: Boolean
 }
 ```
