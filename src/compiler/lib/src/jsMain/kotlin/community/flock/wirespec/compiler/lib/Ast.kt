@@ -43,7 +43,6 @@ fun WsEndpoint.consume(): Endpoint = Endpoint(
     path = path.map { it.consume() },
     queries = queries.map { it.consume() },
     headers = headers.map { it.consume() },
-    cookies = cookies.map { it.consume() },
     requests = requests.map { it.consume() },
     responses = responses.map { it.consume() },
 )
@@ -177,7 +176,6 @@ fun Definition.produce(): WsDefinition = when (this) {
         path = path.produce(),
         queries = queries.produce(),
         headers = headers.produce(),
-        cookies = cookies.produce(),
         requests = requests.produce(),
         responses = responses.produce(),
     )
@@ -309,7 +307,6 @@ data class WsEndpoint(
     val path: Array<WsSegment>,
     val queries: Array<WsField>,
     val headers: Array<WsField>,
-    val cookies: Array<WsField>,
     val requests: Array<WsRequest>,
     val responses: Array<WsResponse>,
 ) : WsDefinition

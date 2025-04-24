@@ -58,7 +58,19 @@ type Person {
 type Name /^[0-9a-zA-Z]{1,50}$/g
 ```
 
-Additionally, fields can be defined as optional using a `?`:
+You can use backticks to create field names that would otherwise not be valid with the compiler, such as names that
+start with uppercase letters:
+
+```wirespec
+type User {
+    `UserID`: Integer,
+    `User-Type`: String
+}
+```
+
+### Field type modifiers
+
+Fields of composite types can be defined as optional using a `?`:
 
 ```wirespec
 type Product {
