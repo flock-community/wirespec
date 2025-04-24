@@ -106,7 +106,7 @@ class ValidatorTest {
 
         validate(source)
             .shouldBeLeft()
-            .size shouldBe 2
+            .size shouldBe 3
     }
 
     @Test
@@ -129,7 +129,7 @@ class ValidatorTest {
 
         validate(source1, source2)
             .shouldBeLeft()
-            .size shouldBe 2
+            .size shouldBe 3
     }
 
     @Test
