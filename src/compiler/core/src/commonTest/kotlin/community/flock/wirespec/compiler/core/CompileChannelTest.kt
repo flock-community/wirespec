@@ -33,6 +33,8 @@ class CompileChannelTest {
         val java = """
             |package community.flock.wirespec.generated.channel;
             |
+            |
+            |
             |public interface Queue {
             |   void invoke(String message);
             |}

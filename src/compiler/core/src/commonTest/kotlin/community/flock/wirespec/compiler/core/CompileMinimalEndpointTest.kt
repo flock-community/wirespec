@@ -23,12 +23,14 @@ class CompileMinimalEndpointTest {
     @Test
     fun kotlin() {
         val kotlin = """
-            |package community.flock.wirespec.generated
+            |package community.flock.wirespec.generated.endpoint
             |
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |
-            |object GetTodosEndpoint : Wirespec.Endpoint {
+            |import community.flock.wirespec.generated.model.TodoDto
+            |
+            |object GetTodos : Wirespec.Endpoint {
             |  data object Path : Wirespec.Path
             |
             |  data object Queries : Wirespec.Queries
@@ -101,7 +103,7 @@ class CompileMinimalEndpointTest {
             |  }
             |}
             |
-            |package community.flock.wirespec.generated
+            |package community.flock.wirespec.generated.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
@@ -118,11 +120,13 @@ class CompileMinimalEndpointTest {
     @Test
     fun java() {
         val java = """
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.endpoint;
             |
             |import community.flock.wirespec.java.Wirespec;
             |
-            |public interface GetTodosEndpoint extends Wirespec.Endpoint {
+            |import community.flock.wirespec.generated.model.TodoDto;
+            |
+            |public interface GetTodos extends Wirespec.Endpoint {
             |  class Path implements Wirespec.Path {}
             |
             |  class Queries implements Wirespec.Queries {}
@@ -210,7 +214,7 @@ class CompileMinimalEndpointTest {
             |  }
             |}
             |
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.model;
             |
             |import community.flock.wirespec.java.Wirespec;
             |
@@ -297,9 +301,9 @@ class CompileMinimalEndpointTest {
             |    method: Wirespec.Method = Wirespec.Method.GET
             |
             |    def __init__(self, ):
-            |      self._path = GetTodosEndpoint.Request.Path()
-            |      self._queries = GetTodosEndpoint.Request.Queries()
-            |      self._headers = GetTodosEndpoint.Request.Headers()
+            |      self._path = GetTodos.Request.Path()
+            |      self._queries =GetTodos.Request.Queries()
+            |      self._headers = GetTodos.Request.Headers()
             |      self._body = None
             |
             |  @dataclass
@@ -320,18 +324,18 @@ class CompileMinimalEndpointTest {
             |    status: int = 200
             |
             |    def __init__(self, body: List[TodoDto]):
-            |      self._headers = GetTodosEndpoint.Response200.Headers()
+            |      self._headers = GetTodos.Response200.Headers()
             |      self._body = body
             |
             |  Response = Response200
             |
             |  class Handler(Wirespec.Endpoint.Handler):
             |    @abstractmethod
-            |    def GetTodos(self, req: 'GetTodosEndpoint.Request') -> 'GetTodosEndpoint.Response': pass
+            |    def GetTodos(self, req: 'GetTodos.Request') -> 'GetTodos.Response': pass
             |
             |  class Convert(Wirespec.Endpoint.Convert[Request, Response]):
             |    @staticmethod
-            |    def to_raw_request(serialization: Wirespec.Serializer, request: 'GetTodosEndpoint.Request') -> Wirespec.RawRequest:
+            |    def to_raw_request(serialization: Wirespec.Serializer, request: 'GetTodos.Request') -> Wirespec.RawRequest:
             |      return Wirespec.RawRequest(
             |        path = ["todos"],
             |        method = request.method.value,
@@ -341,13 +345,13 @@ class CompileMinimalEndpointTest {
             |      )
             |
             |    @staticmethod
-            |    def from_raw_request(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest) -> 'GetTodosEndpoint.Request':
-            |      return GetTodosEndpoint.Request
+            |    def from_raw_request(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest) -> 'GetTodos.Request':
+            |      return GetTodos.Request
             |
             |    @staticmethod
-            |    def to_raw_response(serialization: Wirespec.Serializer, response: 'GetTodosEndpoint.Response') -> Wirespec.RawResponse:
+            |    def to_raw_response(serialization: Wirespec.Serializer, response: 'GetTodos.Response') -> Wirespec.RawResponse:
             |      match response:
-            |        case GetTodosEndpoint.Response200():
+            |        case GetTodos.Response200():
             |          return Wirespec.RawResponse(
             |            status_code = response.status,
             |            headers = {},
@@ -356,10 +360,10 @@ class CompileMinimalEndpointTest {
             |        case _:
             |          raise Exception("Cannot match response with status: " + str(response.status))
             |    @staticmethod
-            |    def from_raw_response(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse) -> 'GetTodosEndpoint.Response':
+            |    def from_raw_response(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse) -> 'GetTodos.Response':
             |      match response.status_code:
             |        case 200:
-            |          return GetTodosEndpoint.Response200(
+            |          return GetTodos.Response200(
             |            body = serialization.deserialize(response.body, List[TodoDto]),
             |          )
             |        case _: 
@@ -367,7 +371,7 @@ class CompileMinimalEndpointTest {
             |
             |
             |
-            |from .GetTodosEndpoint import GetTodosEndpoint
+            |from .GetTodos import GetTodos
             |from .TodoDto import TodoDto
         """.trimMargin()
         compiler { PythonEmitter() } shouldBeRight python

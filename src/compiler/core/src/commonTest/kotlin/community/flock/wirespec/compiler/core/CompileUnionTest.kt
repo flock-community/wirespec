@@ -69,14 +69,14 @@ class CompileUnionTest {
             |public record UserAccountPassword (
             |  String username,
             |  String password
-            |) implements UserAccount {
+            |) extends UserAccountimplements UserAccount {
             |};
             |
             |package community.flock.wirespec.generated.model;
             |
             |public record UserAccountToken (
             |  String token
-            |) implements UserAccount {
+            |) extends UserAccountimplements UserAccount {
             |};
             |
             |package community.flock.wirespec.generated.model;

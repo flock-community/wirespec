@@ -45,6 +45,11 @@ class CompileFullEndpointTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |
+            |import community.flock.wirespec.generated.model.Token
+            |import community.flock.wirespec.generated.model.PotentialTodoDto
+            |import community.flock.wirespec.generated.model.TodoDto
+            |import community.flock.wirespec.generated.model.Error
+            |
             |object PutTodo : Wirespec.Endpoint {
             |  data class Path(
             |    val id: String,
@@ -217,6 +222,11 @@ class CompileFullEndpointTest {
             |package community.flock.wirespec.generated.endpoint;
             |
             |import community.flock.wirespec.java.Wirespec;
+            |
+            |import community.flock.wirespec.generated.model.Token;
+            |import community.flock.wirespec.generated.model.PotentialTodoDto;
+            |import community.flock.wirespec.generated.model.TodoDto;
+            |import community.flock.wirespec.generated.model.Error;
             |
             |public interface PutTodo extends Wirespec.Endpoint {
             |  public record Path(
@@ -648,7 +658,7 @@ class CompileFullEndpointTest {
             |from .TodoDto import TodoDto
             |from .Error import Error
             |
-            |class PutTodo (Wirespec.Endpoint):
+            |class PutTodoEndpoint (Wirespec.Endpoint):
             |  @dataclass
             |  class Request(Wirespec.Request[PotentialTodoDto]):
             |    @dataclass
@@ -685,7 +695,7 @@ class CompileFullEndpointTest {
             |
             |    def __init__(self, id: str, done: bool, token: Token, body: PotentialTodoDto):
             |      self._path = PutTodo.Request.Path(id = id)
-            |      self._queries = PutTodo.Request.Queries(  done = done)
+            |      self._queries =PutTodo.Request.Queries(  done = done)
             |      self._headers = PutTodo.Request.Headers(  token = token)
             |      self._body = body
             |
