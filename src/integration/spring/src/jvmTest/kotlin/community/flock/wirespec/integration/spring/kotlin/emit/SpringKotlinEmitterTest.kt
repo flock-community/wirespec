@@ -31,7 +31,7 @@ class SpringKotlinEmitterTest {
             .emit(ast, noLogger)
             .joinToString("\n") { it.result }
         val expected = """
-            |package community.flock.wirespec.spring.test
+            |package community.flock.wirespec.spring.test.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
@@ -42,7 +42,7 @@ class SpringKotlinEmitterTest {
             |
             |fun TodoId.validate() = Regex(""${'"'}^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}""${'"'}).matches(value)
             |
-            |package community.flock.wirespec.spring.test
+            |package community.flock.wirespec.spring.test.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
@@ -53,7 +53,7 @@ class SpringKotlinEmitterTest {
             |  val done: Boolean
             |)
             |
-            |package community.flock.wirespec.spring.test
+            |package community.flock.wirespec.spring.test.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
@@ -63,12 +63,15 @@ class SpringKotlinEmitterTest {
             |  val description: String
             |)
             |
-            |package community.flock.wirespec.spring.test
+            |package community.flock.wirespec.spring.test.endpoint
             |
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |
-            |object GetTodosEndpoint : Wirespec.Endpoint {
+            |import community.flock.wirespec.spring.test.model.TodoDto
+            |import community.flock.wirespec.spring.test.model.Error
+            |
+            |object GetTodos : Wirespec.Endpoint {
             |  data object Path : Wirespec.Path
             |
             |  data class Queries(

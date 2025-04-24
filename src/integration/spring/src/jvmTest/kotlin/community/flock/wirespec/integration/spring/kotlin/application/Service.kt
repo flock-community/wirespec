@@ -1,6 +1,6 @@
 package community.flock.wirespec.integration.spring.kotlin.application
 
-import community.flock.wirespec.integration.spring.kotlin.generated.Pet
+import community.flock.wirespec.integration.spring.kotlin.generated.model.Pet
 import org.springframework.stereotype.Service
 
 @Service
