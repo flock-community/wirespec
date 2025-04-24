@@ -17,7 +17,7 @@ class CompileChannelTest {
     @Test
     fun kotlin() {
         val kotlin = """
-            |package community.flock.wirespec.generated
+            |package community.flock.wirespec.generated.channel
             |
             |interface QueueChannel {
             |   operator fun invoke(message: String)
@@ -31,9 +31,9 @@ class CompileChannelTest {
     @Test
     fun java() {
         val java = """
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.channel;
             |
-            |public interface QueueChannel {
+            |public interface Queue {
             |   void invoke(String message);
             |}
             |
