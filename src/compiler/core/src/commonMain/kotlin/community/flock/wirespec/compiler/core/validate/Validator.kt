@@ -17,13 +17,18 @@ import community.flock.wirespec.compiler.core.parse.Type
 
 object Validator {
 
-    fun ValidationContext.validate(ast: EitherNel<WirespecException, AST>): EitherNel<WirespecException, AST> = ast.flatMap {
-        zipOrAccumulate(validateEndpoints(it), validateTypes(it)) { _, _ -> it }
-    }
+    fun ValidationContext.validate(ast: EitherNel<WirespecException, AST>): EitherNel<WirespecException, AST> = ast
+        .flatMap {
+            zipOrAccumulate(
+                validateEndpoints(it),
+                validateTypes(it),
+            ) { _, _ -> it }
+        }
 
-    private fun validateEndpoints(ast: AST): EitherNel<WirespecException, AST> = ast.modules.toList().flatMap { module ->
-        module.statements.filterIsInstance<Endpoint>()
-    }.groupBy { it.identifier.value }
+    private fun validateEndpoints(ast: AST): EitherNel<WirespecException, AST> = ast.modules.toList()
+        .flatMap { module ->
+            module.statements.filterIsInstance<Endpoint>()
+        }.groupBy { it.identifier.value }
         .filter { it.value.size > 1 }
         .map { (name, endpoints) -> endpoints.map { DuplicateEndpointError(name) } }
         .flatten()
