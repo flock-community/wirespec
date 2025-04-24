@@ -147,14 +147,13 @@ class ValidatorTest {
             |}
         """.trimMargin()
 
-        val result = validate(source).shouldBeLeft()
-
-        val errorTypes = result.all.map { it::class }
-        errorTypes.shouldContainAll(
-            listOf(
-                DuplicateTypeError::class,
-                DuplicateEndpointError::class,
-            ),
-        )
+        validate(source).shouldBeLeft()
+            .all.map { it::class }
+            .shouldContainAll(
+                listOf(
+                    DuplicateTypeError::class,
+                    DuplicateEndpointError::class,
+                ),
+            )
     }
 }
