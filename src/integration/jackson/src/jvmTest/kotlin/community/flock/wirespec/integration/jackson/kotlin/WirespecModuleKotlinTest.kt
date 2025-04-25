@@ -3,9 +3,9 @@ package community.flock.wirespec.integration.jackson.kotlin
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import community.flock.wirespec.integration.jackson.kotlin.generated.Todo
-import community.flock.wirespec.integration.jackson.kotlin.generated.TodoCategory
-import community.flock.wirespec.integration.jackson.kotlin.generated.TodoId
+import community.flock.wirespec.integration.jackson.kotlin.generated.model.Todo
+import community.flock.wirespec.integration.jackson.kotlin.generated.model.TodoCategory
+import community.flock.wirespec.integration.jackson.kotlin.generated.model.TodoId
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

@@ -1,10 +1,10 @@
 package community.flock.wirespec.example.maven.custom.app.todo;
 
 import community.flock.wirespec.example.maven.custom.app.exception.NotFound;
-import community.flock.wirespec.generated.java.Error;
-import community.flock.wirespec.generated.java.Todo;
-import community.flock.wirespec.generated.java.TodoId;
-import community.flock.wirespec.generated.java.TodoInput;
+import community.flock.wirespec.generated.java.model.Error;
+import community.flock.wirespec.generated.java.model.Todo;
+import community.flock.wirespec.generated.java.model.TodoId;
+import community.flock.wirespec.generated.java.model.TodoInput;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

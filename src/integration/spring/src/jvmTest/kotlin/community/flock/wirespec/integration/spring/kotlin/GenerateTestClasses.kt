@@ -22,6 +22,7 @@ class GenerateTestClasses {
     private val baseDir = File("src/jvmTest")
     private val kotlinOutputDir = baseDir.resolve("kotlin").resolve(pkgToPath(kotlinPkg))
     private val javaOutputDir = baseDir.resolve("kotlin").resolve(pkgToPath(javaPkg))
+    private val modules = listOf("model", "endpoint", "channel")
 
     @Test
     fun generateKotlin() {
@@ -29,7 +30,7 @@ class GenerateTestClasses {
         val ast = OpenAPIV3Parser.parse(ModuleContent("src/jvmTest/resources/petstore.json", petstoreFile))
         val emittedKotlin = kotlinEmitter.emit(ast, noLogger)
 
-        kotlinOutputDir.mkdirs()
+        modules.forEach { kotlinOutputDir.resolve(it).mkdirs() }
         emittedKotlin.forEach {
             baseDir.resolve("kotlin").resolve(it.file).writeText(it.result)
         }
@@ -41,7 +42,7 @@ class GenerateTestClasses {
         val ast = OpenAPIV3Parser.parse(ModuleContent("src/jvmTest/resources/petstore.json", petstoreFile))
         val emittedJava = javaEmitter.emit(ast, noLogger)
 
-        javaOutputDir.mkdirs()
+        modules.forEach { javaOutputDir.resolve(it).mkdirs() }
         emittedJava
             .filter { "Wirespec" !in it.file }.forEach {
                 baseDir.resolve("kotlin").resolve(it.file).writeText(it.result)

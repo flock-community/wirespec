@@ -47,6 +47,7 @@ value class DirectoryPath(override val value: String) :
     FullPath,
     Value<String> {
     override fun toString() = value
+    fun resolve(path: String) = DirectoryPath("$value/$path")
 }
 
 operator fun DirectoryPath.plus(packageName: PackageName) = when (packageName.createDirectory) {

@@ -1,7 +1,6 @@
 package community.flock.wirespec.compiler.core.emit
 
 import arrow.core.NonEmptyList
-import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.addBackticks
 import community.flock.wirespec.compiler.core.concatGenerics
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
@@ -12,6 +11,7 @@ import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.emit.common.Keywords
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
+import community.flock.wirespec.compiler.core.emit.common.plus
 import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
 import community.flock.wirespec.compiler.core.orNull
 import community.flock.wirespec.compiler.core.parse.Channel
@@ -46,36 +46,31 @@ open class KotlinEmitter(
 
     override val shared = KotlinShared
 
-    override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> "${emit(identifier)}Endpoint"
-        is Channel -> "${emit(identifier)}Channel"
-        is Enum -> emit(identifier)
-        is Refined -> emit(identifier)
-        is Type -> emit(identifier)
-        is Union -> emit(identifier)
-    }
-
     override val singleLineComment = "//"
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
-        val emitted = super.emit(module, logger).map { (file, result): Emitted ->
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
+        super.emit(module, logger).let {
+            if (emitShared) it + Emitted(PackageName(DEFAULT_SHARED_PACKAGE_STRING).toDir() + "Wirespec", shared.source)
+            else it
+        }
+
+    override fun emit(definition: Definition, module: Module, logger: Logger): Emitted =
+        super.emit(definition, module, logger).let {
+            val subPackageName = packageName + definition
             Emitted(
-                file = packageName.toDir() + file.sanitizeSymbol(),
+                file = subPackageName.toDir() + it.file.sanitizeSymbol(),
                 result = """
-                            |package $packageName
-                            |${if (module.needImports()) import else ""}
-                            |$result
-                        """.trimMargin().trimStart()
+                    |package $subPackageName
+                    |${if (module.needImports()) import else ""}
+                    |${it.result}
+                """.trimMargin().trimStart()
             )
         }
 
-        return if (emitShared) emitted + Emitted(PackageName("$DEFAULT_GENERATED_PACKAGE_STRING.kotlin").toDir() + "Wirespec", shared.source) else emitted
-    }
-
     override fun emit(type: Type, module: Module) =
-        if (type.shape.value.isEmpty()) "${Spacer}data object ${type.emitName()}"
+        if (type.shape.value.isEmpty()) "${Spacer}data object${emit(type.identifier)}"
         else """
-            |data class ${type.emitName()}(
+            |data class ${emit(type.identifier)}(
             |${type.shape.emit()}
             |)${type.extends.run { if (isEmpty()) "" else " : ${joinToString(", ") { it.emit() }}" }}
             |
@@ -135,7 +130,7 @@ open class KotlinEmitter(
     """.trimMargin()
 
     override fun emit(union: Union) = """
-        |sealed interface ${union.emitName()}
+        |sealed interface ${emit(union.identifier)}
         |
     """.trimMargin()
 
@@ -147,7 +142,9 @@ open class KotlinEmitter(
     """.trimMargin()
 
     override fun emit(endpoint: Endpoint) = """
-        |object ${emit(endpoint.identifier)}Endpoint : Wirespec.Endpoint {
+        |${endpoint.importReferences().map { "import ${packageName.value}.model.${it.value}" }.joinToString("\n") { it.trimStart() }}
+        |
+        |object ${emit(endpoint.identifier)} : Wirespec.Endpoint {
         |${endpoint.pathParams.emitObject("Path", "Wirespec.Path") { it.emit() }}
         |
         |${endpoint.queries.emitObject("Queries", "Wirespec.Queries") { it.emit() }}

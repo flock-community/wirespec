@@ -1,6 +1,6 @@
 package community.flock.wirespec.examples.maven.spring.integration.service;
 
-import community.flock.wirespec.generated.examples.spring.Todo;
+import community.flock.wirespec.generated.examples.spring.model.Todo;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;

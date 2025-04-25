@@ -35,7 +35,7 @@ class AvroJavaEmitterTest {
 
         val ast = AST(nonEmptyListOf(Module("", nonEmptyListOf(type))))
         val expected = """
-            |package packageName;
+            |package packageName.model;
             |
             |public record Identifier (
             |  String name
@@ -73,7 +73,7 @@ class AvroJavaEmitterTest {
         )
         val ast = AST(nonEmptyListOf(Module("", nonEmptyListOf(enum))))
         val expected = """
-            |package packageName;
+            |package packageName.model;
             |
             |import community.flock.wirespec.java.Wirespec;
             |

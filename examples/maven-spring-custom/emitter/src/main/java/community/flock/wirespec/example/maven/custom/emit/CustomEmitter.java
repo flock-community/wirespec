@@ -44,12 +44,6 @@ public class CustomEmitter extends Emitter {
 
     @NotNull
     @Override
-    public String emitName(@NotNull Definition definition) {
-        return emit(definition.getIdentifier()) + "Custom";
-    }
-
-    @NotNull
-    @Override
     public String notYetImplemented() {
         return "";
     }
@@ -93,7 +87,7 @@ public class CustomEmitter extends Emitter {
     @NotNull
     @Override
     public String emit(@NotNull Type type, @NotNull Module module) {
-        return "package hello;\n\npublic class " + emitName(type) + " {}";
+        return "package hello;\n\npublic class " + emit(type.getIdentifier()) + " {}";
     }
 
     @NotNull
@@ -117,6 +111,6 @@ public class CustomEmitter extends Emitter {
     @NotNull
     @Override
     public String emit(@NotNull Identifier identifier) {
-        return identifier.getValue();
+        return identifier.getValue() + "Custom";
     }
 }

@@ -1,6 +1,6 @@
 package community.flock.wirespec.example.maven.custom.app.exception
 
-import community.flock.wirespec.generated.kotlin.Error
+import community.flock.wirespec.generated.kotlin.model.Error
 
 fun handleException(exception: AppException): Error = exception.run {
     when (this) {

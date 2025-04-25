@@ -1,11 +1,11 @@
 {
   "type": "record",
   "name": "TestAvroRecord",
-  "namespace": "com.eventloopsoftware",
+  "namespace": "com.eventloopsoftware.kafka",
   "fields": [
     {
       "name": "metadata",
-      "type": "com.eventloopsoftware.kafka.model.TestAvroMetadata"
+      "type": "com.eventloopsoftware.kafka.metadata.model.TestAvroMetadata"
     },
     {
       "name": "order",

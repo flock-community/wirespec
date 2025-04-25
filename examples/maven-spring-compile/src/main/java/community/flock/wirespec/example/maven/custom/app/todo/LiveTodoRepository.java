@@ -1,7 +1,7 @@
 package community.flock.wirespec.example.maven.custom.app.todo;
 
-import community.flock.wirespec.generated.java.Todo;
-import community.flock.wirespec.generated.java.TodoId;
+import community.flock.wirespec.generated.java.model.Todo;
+import community.flock.wirespec.generated.java.model.TodoId;
 import org.springframework.stereotype.Repository;
 
 import java.util.HashMap;

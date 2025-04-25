@@ -25,12 +25,14 @@ sealed interface Definition : Node {
     val identifier: Identifier
 }
 
+sealed interface Model : Definition
+
 data class Type(
     override val comment: Comment?,
     override val identifier: DefinitionIdentifier,
     val shape: Shape,
     val extends: List<Reference>,
-) : Definition {
+) : Model {
     data class Shape(override val value: List<Field>) : Value<List<Field>>
 }
 
@@ -110,19 +112,19 @@ data class Enum(
     override val comment: Comment?,
     override val identifier: DefinitionIdentifier,
     val entries: Set<String>,
-) : Definition
+) : Model
 
 data class Union(
     override val comment: Comment?,
     override val identifier: DefinitionIdentifier,
     val entries: Set<Reference>,
-) : Definition
+) : Model
 
 data class Refined(
     override val comment: Comment?,
     override val identifier: DefinitionIdentifier,
     val validator: Validator,
-) : Definition {
+) : Model {
     data class Validator(override val value: String) : Value<String> {
         val expression = value.split("/").drop(1).dropLast(1).joinToString("/")
     }

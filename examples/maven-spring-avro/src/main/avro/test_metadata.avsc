@@ -1,7 +1,7 @@
 {
   "type": "record",
   "name": "TestAvroMetadata",
-  "namespace": "com.eventloopsoftware.kafka.model",
+  "namespace": "com.eventloopsoftware.kafka.metadata",
   "fields": [
     {
       "name": "id",

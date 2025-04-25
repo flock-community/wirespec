@@ -1,10 +1,10 @@
 package community.flock.wirespec.example.maven.custom.app.todo
 
 import community.flock.wirespec.example.maven.custom.app.common.Serialization
-import community.flock.wirespec.generated.kotlin.DeleteTodoByIdEndpoint
-import community.flock.wirespec.generated.kotlin.GetTodoByIdEndpoint
-import community.flock.wirespec.generated.kotlin.GetTodosEndpoint
-import community.flock.wirespec.generated.kotlin.PostTodoEndpoint
+import community.flock.wirespec.generated.kotlin.endpoint.DeleteTodoById
+import community.flock.wirespec.generated.kotlin.endpoint.GetTodoById
+import community.flock.wirespec.generated.kotlin.endpoint.GetTodos
+import community.flock.wirespec.generated.kotlin.endpoint.PostTodo
 import community.flock.wirespec.kotlin.Wirespec
 import io.ktor.http.HttpMethod
 import io.ktor.server.application.Application
@@ -22,7 +22,7 @@ fun Application.todoModule(todoRepository: TodoRepository) {
     val handler = TodoHandler(todoRepository)
 
     routing {
-        with(GetTodosEndpoint.Handler) {
+        with(GetTodos.Handler) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
                     call
@@ -34,7 +34,7 @@ fun Application.todoModule(todoRepository: TodoRepository) {
             }
         }
 
-        with(GetTodoByIdEndpoint.Handler) {
+        with(GetTodoById.Handler) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
                     call
@@ -46,7 +46,7 @@ fun Application.todoModule(todoRepository: TodoRepository) {
             }
         }
 
-        with(PostTodoEndpoint.Handler) {
+        with(PostTodo.Handler) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
                     call
@@ -58,7 +58,7 @@ fun Application.todoModule(todoRepository: TodoRepository) {
             }
         }
 
-        with(DeleteTodoByIdEndpoint.Handler) {
+        with(DeleteTodoById.Handler) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
                     call
