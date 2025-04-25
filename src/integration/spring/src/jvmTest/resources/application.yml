@@ -4,5 +4,9 @@ logging:
 
 wirespec:
   spring:
+<<<<<<< Updated upstream
     webclient:
       base-url: http://localhost:8080
+=======
+    web
+>>>>>>> Stashed changes
