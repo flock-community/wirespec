@@ -19,17 +19,12 @@ class PackageName(override val value: String, val createDirectory: Boolean) : Va
 
         @JvmSynthetic
         operator fun invoke(value: String? = null) = value
-            ?.takeIf(String::isNotBlank)
             .let { PackageName(it ?: DEFAULT_SHARED_PACKAGE_STRING, it != null) }
     }
 
     fun toDir(): String = value.replace(".", "/") + "/"
 }
 
-operator fun PackageName.plus(definition: Definition) = this + when (definition) {
-    is Endpoint -> "endpoint"
-    is Channel -> "channel"
-    is Model -> "model"
-}
+operator fun PackageName.plus(definition: Definition) = this + definition.namespace()
 
 private operator fun PackageName.plus(subPackage: String) = PackageName("$value.$subPackage")
