@@ -396,7 +396,6 @@ class CompileFullEndpointTest {
         compiler { JavaEmitter() } shouldBeRight java
     }
 
-
     @Test
     fun typeScript() {
         val ts = """
