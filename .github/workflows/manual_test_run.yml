@@ -22,4 +22,4 @@ jobs:
           node-version: 20
       - name: Run
         run: |
-          make build
+          make all
