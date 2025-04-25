@@ -35,6 +35,33 @@ class ValidatorTest {
     }
 
     @Test
+    fun uniqueEndpoints() {
+        val source = """
+            |endpoint Test1 GET /Test1 -> {
+            |    200 -> String
+            |}
+            |
+            |endpoint Test2 GET /Test2 -> {
+            |    200 -> String
+            |}
+        """.trimMargin()
+
+        validate(source)
+            .shouldBeRight()
+    }
+
+    @Test
+    fun uniqueTypes() {
+        val source = """
+            |type Foo { str: String }
+            |type Bar { str: String }
+        """.trimMargin()
+
+        validate(source)
+            .shouldBeRight()
+    }
+
+    @Test
     fun duplicateEndpointSameFile() {
         val source = """
             |endpoint Test GET /Test1 -> {
