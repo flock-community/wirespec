@@ -6,6 +6,7 @@ import community.flock.wirespec.example.maven.custom.app.exception.Serialization
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.java.serde.DefaultParamSerialization;
 import org.springframework.stereotype.Component;
+
 import java.lang.reflect.Type;
 
 /**
