@@ -27,6 +27,7 @@ import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 
 open class PythonEmitter(
+    private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
     val emitShared: Boolean = false
 ) : Emitter() {
 
@@ -56,19 +57,28 @@ open class PythonEmitter(
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
         val statements = module.statements.sortedBy(::sort).toNonEmptyListOrNull()!!
-        val emitted = super.emit(module.copy(statements = statements), logger)
-            .map { (typeName, result) ->
-                Emitted(
-                    file = typeName.sanitizeSymbol(),
-                    result = """
-                            |${if (module.needImports()) import else ""}
-                            |$result
-                        """.trimMargin().trimStart()
-                )
-            } + Emitted("__init__", module.statements.map { "from .${emit(it.identifier)} import ${emit(it.identifier)}" }.joinToString("\n"))
-
-        return if (emitShared) emitted + Emitted(PackageName(DEFAULT_GENERATED_PACKAGE_STRING).toDir() + "wirespec", shared.source) else emitted
+        return super.emit(module.copy(statements = statements), logger).let {
+            val emitted = it + Emitted("__init__", module.statements.map { "from .${emit(it.identifier)} import ${emit(it.identifier)}" }.joinToString("\n"))
+            if (emitShared) emitted + Emitted(PackageName(DEFAULT_GENERATED_PACKAGE_STRING).toDir() + "wirespec", shared.source) else emitted
+        }
     }
+
+    override fun emit(definition: Definition, module: Module, logger: Logger): Emitted {
+        val subPackageName = when (definition) {
+            is Endpoint -> packageName.extend("endpoint")
+            is Channel -> packageName.extend("channel")
+            else -> packageName.extend("model")
+        }
+        return super.emit(definition, module, logger).let {
+            Emitted(
+                file = subPackageName.toDir() + it.file.sanitizeSymbol(),
+                result = """
+                            |${if (module.needImports()) import else ""}
+                            |${it.result}
+                        """.trimMargin().trimStart()
+            )
+        }
+     }
 
     private fun Reference.Custom.emitReferenceCustomImports() = "from .${value} import $value"
 
