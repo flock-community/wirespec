@@ -32,7 +32,7 @@ class SpringJavaEmitterTest {
             .map { it.result }
         val expected = listOf(
             """
-            |package community.flock.wirespec.spring.test;
+            |package community.flock.wirespec.spring.test.model;
             |
             |import community.flock.wirespec.java.Wirespec;
             |
@@ -48,7 +48,7 @@ class SpringJavaEmitterTest {
             |
             """.trimMargin(),
             """
-            |package community.flock.wirespec.spring.test;
+            |package community.flock.wirespec.spring.test.model;
             |
             |import community.flock.wirespec.java.Wirespec;
             |
@@ -61,7 +61,7 @@ class SpringJavaEmitterTest {
             |
             """.trimMargin(),
             """ 
-            |package community.flock.wirespec.spring.test;
+            |package community.flock.wirespec.spring.test.model;
             |
             |import community.flock.wirespec.java.Wirespec;
             |
@@ -73,11 +73,14 @@ class SpringJavaEmitterTest {
             |
             """.trimMargin(),
             """ 
-            |package community.flock.wirespec.spring.test;
+            |package community.flock.wirespec.spring.test.endpoint;
             |
             |import community.flock.wirespec.java.Wirespec;
             |
-            |public interface GetTodosEndpoint extends Wirespec.Endpoint {
+            |import community.flock.wirespec.spring.test.model.TodoDto;
+            |import community.flock.wirespec.spring.test.model.Error;
+            |
+            |public interface GetTodos extends Wirespec.Endpoint {
             |  class Path implements Wirespec.Path {}
             |
             |  public record Queries(

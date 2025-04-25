@@ -24,15 +24,6 @@ import community.flock.wirespec.compiler.utils.Logger
 
 open class TypeScriptEmitter(val emitShared: Boolean = false) : Emitter() {
 
-    override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> emit(identifier)
-        is Enum -> emit(identifier)
-        is Refined -> emit(identifier)
-        is Type -> emit(identifier)
-        is Union -> emit(identifier)
-        is Channel -> emit(identifier)
-    }
-
     override val extension = FileExtension.TypeScript
 
     override val shared = TypeScriptShared

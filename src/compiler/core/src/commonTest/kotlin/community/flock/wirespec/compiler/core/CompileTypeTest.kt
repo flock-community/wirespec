@@ -24,7 +24,7 @@ class CompileTypeTest {
     @Test
     fun kotlin() {
         val kotlin = """
-            |package community.flock.wirespec.generated
+            |package community.flock.wirespec.generated.model
             |
             |data class Request(
             |  val type: String,
@@ -43,7 +43,7 @@ class CompileTypeTest {
     @Test
     fun java() {
         val java = """
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.model;
             |
             |public record Request (
             |  String type,

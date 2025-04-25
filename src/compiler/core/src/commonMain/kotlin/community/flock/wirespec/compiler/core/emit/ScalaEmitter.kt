@@ -40,15 +40,6 @@ open class ScalaEmitter(
 
     override val shared = ScalaShared
 
-    override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> "${emit(identifier)}Endpoint"
-        is Channel -> "${emit(identifier)}Channel"
-        is Enum -> emit(identifier)
-        is Refined -> emit(identifier)
-        is Type -> emit(identifier)
-        is Union -> emit(identifier)
-    }
-
     override val singleLineComment = "//"
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
@@ -67,7 +58,7 @@ open class ScalaEmitter(
     }
 
     override fun emit(type: Type, module: Module) = """
-        |case class ${type.emitName()}(
+        |case class ${emit(type.identifier)}(
         |${type.shape.emit()}
         |)
         |
@@ -109,7 +100,7 @@ open class ScalaEmitter(
     override fun emit(enum: Enum, module: Module) = enum.run {
         fun String.sanitize() = replace("-", "_").let { if (it.first().isDigit()) "_$it" else it }
         """
-        |sealed abstract class ${emitName()}(val label: String)
+        |sealed abstract class ${emit(identifier)}(val label: String)
         |object ${emit(identifier)} {
         |${entries.joinToString("\n") { """${Spacer}final case object ${it.sanitize().uppercase()} extends ${emit(identifier)}(label = "$it")""" }}
         |}
@@ -117,8 +108,8 @@ open class ScalaEmitter(
     }
 
     override fun emit(refined: Refined) = """
-        |case class ${refined.emitName()}(val value: String) {
-        |${Spacer}implicit class ${refined.emitName()}Ops(val that: ${refined.emitName()}) {
+        |case class ${emit(refined.identifier)}(val value: String) {
+        |${Spacer}implicit class ${emit(refined.identifier)}Ops(val that: ${emit(refined.identifier)}) {
         |${refined.validator.emit()}
         |${Spacer}}
         |}

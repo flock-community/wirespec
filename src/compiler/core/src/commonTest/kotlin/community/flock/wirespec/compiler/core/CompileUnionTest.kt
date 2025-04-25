@@ -28,24 +28,24 @@ class CompileUnionTest {
     @Test
     fun kotlin() {
         val expected = """
-            |package community.flock.wirespec.generated
+            |package community.flock.wirespec.generated.model
             |
             |sealed interface UserAccount
             |
-            |package community.flock.wirespec.generated
+            |package community.flock.wirespec.generated.model
             |
             |data class UserAccountPassword(
             |  val username: String,
             |  val password: String
             |) : UserAccount
             |
-            |package community.flock.wirespec.generated
+            |package community.flock.wirespec.generated.model
             |
             |data class UserAccountToken(
             |  val token: String
             |) : UserAccount
             |
-            |package community.flock.wirespec.generated
+            |package community.flock.wirespec.generated.model
             |
             |data class User(
             |  val username: String,
@@ -60,11 +60,11 @@ class CompileUnionTest {
     @Test
     fun java() {
         val java = """
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.model;
             |
             |public sealed interface UserAccount permits UserAccountPassword, UserAccountToken {}
             |
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.model;
             |
             |public record UserAccountPassword (
             |  String username,
@@ -72,14 +72,14 @@ class CompileUnionTest {
             |) extends UserAccountimplements UserAccount {
             |};
             |
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.model;
             |
             |public record UserAccountToken (
             |  String token
             |) extends UserAccountimplements UserAccount {
             |};
             |
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.model;
             |
             |public record User (
             |  String username,

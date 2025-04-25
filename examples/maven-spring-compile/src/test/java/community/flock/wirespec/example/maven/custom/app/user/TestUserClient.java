@@ -1,11 +1,11 @@
 package community.flock.wirespec.example.maven.custom.app.user;
 
-import community.flock.wirespec.generated.java.DeleteUserByNameEndpoint;
-import community.flock.wirespec.generated.java.GetUserByNameEndpoint;
-import community.flock.wirespec.generated.java.GetUsersEndpoint;
-import community.flock.wirespec.generated.java.PostUserEndpoint;
-import community.flock.wirespec.generated.java.UploadImageEndpoint;
-import community.flock.wirespec.generated.java.UserDto;
+import community.flock.wirespec.generated.java.endpoint.DeleteUserByName;
+import community.flock.wirespec.generated.java.endpoint.GetUserByName;
+import community.flock.wirespec.generated.java.endpoint.GetUsers;
+import community.flock.wirespec.generated.java.endpoint.PostUser;
+import community.flock.wirespec.generated.java.endpoint.UploadImage;
+import community.flock.wirespec.generated.java.model.UserDto;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,49 +26,49 @@ public class TestUserClient implements UserClient {
     public static final Map<String, byte[]> images = new HashMap<>();
 
     @Override
-    public CompletableFuture<GetUsersEndpoint.Response<?>> getUsers(GetUsersEndpoint.Request request) {
+    public CompletableFuture<GetUsers.Response<?>> getUsers(GetUsers.Request request) {
         var filtered = users.stream().filter(it -> Objects.equals(it.name(), request.getQueries().name())).toList();
-        return completedFuture(new GetUsersEndpoint.Response200(filtered));
+        return completedFuture(new GetUsers.Response200(filtered));
     }
 
     @Override
-    public CompletableFuture<GetUserByNameEndpoint.Response<?>> getUserByName(GetUserByNameEndpoint.Request request) {
+    public CompletableFuture<GetUserByName.Response<?>> getUserByName(GetUserByName.Request request) {
         var res = users.stream()
                 .filter(it -> Objects.equals(it.name(), request.getPath().name()))
                 .findFirst()
-                .<GetUserByNameEndpoint.Response<?>>map(GetUserByNameEndpoint.Response200::new)
-                .orElseGet(() -> new GetUserByNameEndpoint.Response404());
+                .<GetUserByName.Response<?>>map(GetUserByName.Response200::new)
+                .orElseGet(() -> new GetUserByName.Response404());
 
         return completedFuture(res);
     }
 
     @Override
-    public CompletableFuture<PostUserEndpoint.Response<?>> postUser(PostUserEndpoint.Request request) {
+    public CompletableFuture<PostUser.Response<?>> postUser(PostUser.Request request) {
         var user = request.getBody();
         if (users.add(user)) {
-            return completedFuture(new PostUserEndpoint.Response200(user));
+            return completedFuture(new PostUser.Response200(user));
         } else {
-            return completedFuture(new PostUserEndpoint.Response409());
+            return completedFuture(new PostUser.Response409());
         }
     }
 
     @Override
-    public CompletableFuture<DeleteUserByNameEndpoint.Response<?>> deleteUserByName(DeleteUserByNameEndpoint.Request request) {
+    public CompletableFuture<DeleteUserByName.Response<?>> deleteUserByName(DeleteUserByName.Request request) {
         var res = users.stream()
                 .filter(it -> Objects.equals(it.name(), request.getPath().name()))
                 .findFirst()
-                .<DeleteUserByNameEndpoint.Response<?>>map(body -> {
+                .<DeleteUserByName.Response<?>>map(body -> {
                     users.remove(body);
-                    return new DeleteUserByNameEndpoint.Response200(body);
+                    return new DeleteUserByName.Response200(body);
                 })
-                .orElseGet(() -> new DeleteUserByNameEndpoint.Response404());
+                .orElseGet(() -> new DeleteUserByName.Response404());
 
         return completedFuture(res);
     }
 
     @Override
-    public CompletableFuture<UploadImageEndpoint.Response<?>> uploadImage(UploadImageEndpoint.Request request) {
+    public CompletableFuture<UploadImage.Response<?>> uploadImage(UploadImage.Request request) {
         images.put(request.getPath().name(),  request.getBody());
-        return completedFuture(new UploadImageEndpoint.Response201());
+        return completedFuture(new UploadImage.Response201());
     }
 }

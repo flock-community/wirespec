@@ -20,7 +20,6 @@ import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Module
-import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -44,16 +43,7 @@ open class PythonEmitter(
     override val extension = FileExtension.Python
 
     override val shared = PythonShared
-
-    override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> "${emit(identifier)}Endpoint"
-        is Channel -> "${emit(identifier)}Channel"
-        is Enum -> emit(identifier)
-        is Refined -> emit(identifier)
-        is Type -> emit(identifier)
-        is Union -> emit(identifier)
-    }
-
+    
     override val singleLineComment = "#"
 
     fun sort (definition: Definition) = when (definition) {
@@ -76,31 +66,9 @@ open class PythonEmitter(
                             |$result
                         """.trimMargin().trimStart()
                 )
-            } + Emitted("__init__", module.statements.map { "from .${it.emitName()} import ${it.emitName()}" }.joinToString("\n"))
+            } + Emitted("__init__", module.statements.map { "from .${emit(it.identifier)} import ${emit(it.identifier)}" }.joinToString("\n"))
 
         return if (emitShared) emitted + Emitted(PackageName(DEFAULT_GENERATED_PACKAGE_STRING).toDir() + "wirespec", shared.source) else emitted
-    }
-
-    private fun Node.localImports():List<Reference.Custom> = when (this) {
-        is Endpoint -> listOf(
-            path.filterIsInstance<Param>().map { it.reference },
-            headers.map { it.reference },
-            queries.map { it.reference },
-            requests.map { it.content?.reference },
-            responses.flatMap { listOf(it.content?.reference) + it.headers.map { it.reference }}
-        ).flatten().filterNotNull().map { it.flattenListDict() }.filterIsInstance<Reference.Custom>().distinct()
-        is Type -> shape.value
-            .filter { identifier.value != it.reference.emitRoot() }
-            .map { it.reference.flattenListDict() }
-            .filterIsInstance<Reference.Custom>()
-            .distinct()
-        else -> emptyList()
-    }
-
-    private fun Reference.flattenListDict():Reference = when (this) {
-        is Reference.Dict -> reference.flattenListDict()
-        is Reference.Iterable -> reference.flattenListDict()
-        else -> this
     }
 
     private fun Reference.Custom.emitReferenceCustomImports() = "from .${value} import ${value}"
@@ -108,18 +76,18 @@ open class PythonEmitter(
     override fun emit(type: Type, module: Module): String =
         if (type.shape.value.isEmpty()) """
             |@dataclass
-            |class ${type.emitName()}:
+            |class ${emit(type.identifier)}:
             |${Spacer}pass
             |
-            |${type.localImports().joinToString ("\n"){ it.emitReferenceCustomImports() }}
+            |${type.importReferences().joinToString ("\n"){ it.emitReferenceCustomImports() }}
             |
         """.trimMargin()
         else """
             |@dataclass
-            |class ${type.emitName()}:
+            |class ${emit(type.identifier)}:
             |${type.shape.emit()}
             |
-            |${type.localImports().joinToString ("\n"){ it.emitReferenceCustomImports() }}
+            |${type.importReferences().joinToString ("\n"){ it.emitReferenceCustomImports() }}
         """.trimMargin()
 
     override fun Type.Shape.emit() = value.joinToString("\n") { "${Spacer}${it.emit()}" }
@@ -131,20 +99,20 @@ open class PythonEmitter(
     private fun Param.emit() = "${emit(identifier)}: ${reference.emit()}"
     private fun Param.emitAssignSelf() = "${emit(identifier)} = ${emit(identifier)}"
     private fun Endpoint.Request.emitAssignSelf(endpoint: Endpoint) = """
-        |self._path = ${endpoint.emitName()}.Request.Path(${paramList(endpoint).filter { it.type == Param.ParamType.PATH }.joinToString { it.emitAssignSelf() }})
-        |self._queries = ${endpoint.emitName()}.Request.Queries(${paramList(endpoint).filter { it.type == Param.ParamType.QUERY }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
-        |self._headers = ${endpoint.emitName()}.Request.Headers(${paramList(endpoint).filter { it.type == Param.ParamType.HEADER }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
+        |self._path = ${emit(endpoint.identifier)}.Request.Path(${paramList(endpoint).filter { it.type == Param.ParamType.PATH }.joinToString { it.emitAssignSelf() }})
+        |self._queries =${emit(endpoint.identifier)}.Request.Queries(${paramList(endpoint).filter { it.type == Param.ParamType.QUERY }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
+        |self._headers = ${emit(endpoint.identifier)}.Request.Headers(${paramList(endpoint).filter { it.type == Param.ParamType.HEADER }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
         |self._body = ${content?.let { "body" } ?: "None"}
     """.trimMargin()
 
     private fun Endpoint.Response.emitAssignSelf(endpoint: Endpoint) = """
-        |self._headers = ${endpoint.emitName()}.Response${status}.Headers(${paramList().filter { it.type == Param.ParamType.HEADER }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
+        |self._headers = ${emit(endpoint.identifier)}.Response${status}.Headers(${paramList().filter { it.type == Param.ParamType.HEADER }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
         |self._body = ${content?.let { "body" } ?: "None"}
     """.trimMargin()
 
     override fun Reference.emit()= emitType().let { if (isNullable) "Optional[$it]" else it }
 
-     private fun Reference.emitType(): String = when (this) {
+    private fun Reference.emitType(): String = when (this) {
         is Reference.Dict -> "Dict[str, ${reference.emit()}]"
         is Reference.Iterable -> "List[${reference.emit()}]"
         is Reference.Unit -> "None"
@@ -188,7 +156,7 @@ open class PythonEmitter(
     """.trimMargin()
 
     override fun emit(endpoint: Endpoint) = """
-        |${endpoint.localImports().joinToString ("\n"){ it.emitReferenceCustomImports() }}
+        |${endpoint.importReferences().joinToString ("\n"){ it.emitReferenceCustomImports() }}
         |
         |class ${emit(endpoint.identifier)}Endpoint (Wirespec.Endpoint):
         |${endpoint.requests.first().emit(endpoint).spacer(1)}
@@ -207,7 +175,7 @@ open class PythonEmitter(
     private fun Endpoint.emitHandleClass() = """
         |class Handler(Wirespec.Endpoint.Handler):
         |${Spacer}@abstractmethod
-        |${Spacer}def ${identifier.value}(self, req: '${emitName()}.Request') -> '${emitName()}.Response': pass
+        |${Spacer}def ${identifier.value}(self, req: '${emit(identifier)}.Request') -> '${emit(identifier)}.Response': pass
         |
     """.trimMargin()
 
@@ -256,7 +224,7 @@ open class PythonEmitter(
 
     private fun Endpoint.Request.emitToRawRequest(endpoint: Endpoint) = """
         |@staticmethod
-        |def to_raw_request(serialization: Wirespec.Serializer, request: '${endpoint.emitName()}.Request') -> Wirespec.RawRequest:
+        |def to_raw_request(serialization: Wirespec.Serializer, request: '${emit(endpoint.identifier)}.Request') -> Wirespec.RawRequest:
         |${Spacer}return Wirespec.RawRequest(
         |${Spacer}${Spacer}path = [${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> "str(request.path.${emit(it.identifier)})"} }}],
         |${Spacer}${Spacer}method = request.method.value,
@@ -269,8 +237,8 @@ open class PythonEmitter(
 
     private fun Endpoint.Request.emitFromRawRequest(endpoint: Endpoint) = """
         |@staticmethod
-        |def from_raw_request(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest) -> '${endpoint.emitName()}.Request':
-        |${Spacer}return ${endpoint.emitName()}.Request${emitDeserializedParams(endpoint)}
+        |def from_raw_request(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest) -> '${emit(endpoint.identifier)}.Request':
+        |${Spacer}return ${emit(endpoint.identifier)}.Request${emitDeserializedParams(endpoint)}
         |
     """.trimMargin()
 
@@ -314,7 +282,7 @@ open class PythonEmitter(
 
     private fun Endpoint.emitToRawResponse() = """
         |@staticmethod
-        |def to_raw_response(serialization: Wirespec.Serializer, response: '${emitName()}.Response') -> Wirespec.RawResponse:
+        |def to_raw_response(serialization: Wirespec.Serializer, response: '${emit(identifier)}.Response') -> Wirespec.RawResponse:
         |${Spacer}match response:
         |${responses.distinctBy { it.status }.joinToString("\n") { it.emitSerialized(this) }.spacer(2)}
         |${Spacer}${Spacer}case _:
@@ -323,7 +291,7 @@ open class PythonEmitter(
 
     private fun Endpoint.emitFromRawResponse() = """
         |@staticmethod
-        |def from_raw_response(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse) -> '${emitName()}.Response':
+        |def from_raw_response(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse) -> '${emit(identifier)}.Response':
         |${Spacer}match response.status_code:
         |${responses.filter { it.status.isStatusCode() }.distinctBy { it.status }.joinToString("\n") { it.emitDeserialized(this) }.spacer(2)}
         |${Spacer(2)}case _: 
@@ -333,7 +301,7 @@ open class PythonEmitter(
 
     private fun Endpoint.Response.emitDeserialized(endpoint: Endpoint) = listOfNotNull(
         "case $status:",
-        "${Spacer}return ${endpoint.emitName()}.Response$status(",
+        "${Spacer}return ${emit(endpoint.identifier)}.Response$status(",
         "${Spacer(2)}body = serialization.deserialize(response.body, ${content?.reference?.emitType() ?: "type(None)"}),",
         headers.joinToString(",\n") { it.emitDeserializedParams("response", "headers") }.orNull()?.spacer(2),
         "${Spacer})"
@@ -341,7 +309,7 @@ open class PythonEmitter(
 
 
     private fun Endpoint.Response.emitSerialized(endpoint: Endpoint) = """
-        |case ${endpoint.emitName()}.Response$status():
+        |case ${emit(endpoint.identifier)}.Response$status():
         |${Spacer(1)}return Wirespec.RawResponse(
         |${Spacer(2)}status_code = response.status,
         |${Spacer(2)}headers = ${if (headers.isNotEmpty()) headers.joinToString(", ", "{", "}") { it.emitSerializedParams("response", "headers") } else "{}"},
@@ -381,7 +349,7 @@ open class PythonEmitter(
     """.trimMargin()
 
     override fun emit(union: Union) = """
-        |class ${union.emitName()}(ABC):
+        |class ${emit(union.identifier)}(ABC):
         |${Spacer}pass
     """.trimMargin()
 

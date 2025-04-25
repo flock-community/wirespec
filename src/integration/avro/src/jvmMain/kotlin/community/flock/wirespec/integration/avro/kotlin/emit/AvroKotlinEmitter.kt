@@ -21,9 +21,9 @@ class AvroKotlinEmitter(private val packageName: String) : KotlinEmitter(Package
         ?: error("Cannot emit avro: ${type.identifier.value}")
 
     override fun emit(type: Type, module: Module) =
-        if (type.shape.value.isEmpty()) "${Spacer}model object ${type.emitName()}"
+        if (type.shape.value.isEmpty()) "${Spacer}model object ${emit(type.identifier)}"
         else """
-            |data class ${type.emitName()}(
+            |data class ${emit(type.identifier)}(
             |${type.shape.emit()}
             |)${type.extends.run { if (isEmpty()) "" else " : ${joinToString(", ") { it.emit() }}" }}
             |{
@@ -38,14 +38,14 @@ class AvroKotlinEmitter(private val packageName: String) : KotlinEmitter(Package
         |      val SCHEMA = org.apache.avro.Schema.Parser().parse("${emitAvroSchema(type, module)}");
         |
         |      @JvmStatic
-        |      fun from(record: org.apache.avro.generic.GenericData.Record): ${type.emitName()} {
-        |        return ${type.emitName()}(
+        |      fun from(record: org.apache.avro.generic.GenericData.Record): ${emit(type.identifier)} {
+        |        return ${emit(type.identifier)}(
         |          ${type.shape.value.mapIndexed(emitFrom(module)).joinToString(",\n${Spacer(5)}")}
         |        );
         |      }
         |
         |      @JvmStatic
-        |      fun to(model: ${type.emitName()} ): org.apache.avro.generic.GenericData.Record {
+        |      fun to(model: ${emit(type.identifier)} ): org.apache.avro.generic.GenericData.Record {
         |        val record = org.apache.avro.generic.GenericData.Record(SCHEMA);
         |        ${type.shape.value.mapIndexed(emitTo).joinToString("\n${Spacer(4)}")}
         |        return record;
@@ -73,12 +73,12 @@ class AvroKotlinEmitter(private val packageName: String) : KotlinEmitter(Package
         |       val SCHEMA: org.apache.avro.Schema = org.apache.avro.Schema.Parser().parse("${emitAvroSchema(enum, module)}");
         |
         |       @JvmStatic
-        |       fun from(record: org.apache.avro.generic.GenericData.EnumSymbol): ${enum.emitName()} {
-        |         return ${enum.emitName()}.valueOf(record.toString());
+        |       fun from(record: org.apache.avro.generic.GenericData.EnumSymbol): ${emit(enum.identifier)} {
+        |         return ${emit(enum.identifier)}.valueOf(record.toString());
         |       }
         |
         |       @JvmStatic
-        |       fun to(model: ${enum.emitName()}): org.apache.avro.generic.GenericData.EnumSymbol {
+        |       fun to(model: ${emit(enum.identifier)}): org.apache.avro.generic.GenericData.EnumSymbol {
         |         return org.apache.avro.generic.GenericData.EnumSymbol(SCHEMA, model.name);
         |       }
         |     }
