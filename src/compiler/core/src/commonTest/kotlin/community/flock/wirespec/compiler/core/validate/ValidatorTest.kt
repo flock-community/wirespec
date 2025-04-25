@@ -5,6 +5,7 @@ import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ValidationContext
 import community.flock.wirespec.compiler.core.WirespecSpec
+import community.flock.wirespec.compiler.core.exceptions.DuplicateChannelError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateEndpointError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateTypeError
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
@@ -55,6 +56,17 @@ class ValidatorTest {
         val source = """
             |type Foo { str: String }
             |type Bar { str: String }
+        """.trimMargin()
+
+        validate(source)
+            .shouldBeRight()
+    }
+
+    @Test
+    fun uniqueChannels() {
+        val source = """
+            |channel Foo -> String
+            |channel Bar -> String
         """.trimMargin()
 
         validate(source)
@@ -160,10 +172,13 @@ class ValidatorTest {
     }
 
     @Test
-    fun bothTypeAndEndpointErrors() {
+    fun severalErrorTypes() {
         val source = """
             |type Foo { str: String }
             |type Foo { str: String }
+            |
+            |channel Foo -> String
+            |channel Foo -> String
             |
             |endpoint Test GET /Test1 -> {
             |    200 -> String
@@ -180,7 +195,51 @@ class ValidatorTest {
                 listOf(
                     DuplicateTypeError::class,
                     DuplicateEndpointError::class,
+                    DuplicateChannelError::class,
                 ),
             )
+    }
+
+    @Test
+    fun duplicateChannelSameFile() {
+        val source = """
+            |channel Foo -> String
+            |channel Foo -> String
+        """.trimMargin()
+
+        validate(source)
+            .shouldBeLeft()
+            .head.shouldBeInstanceOf<DuplicateChannelError>()
+    }
+
+    @Test
+    fun duplicateChannelDifferentFile() {
+        val source1 = """
+            |channel Foo -> String
+        """.trimMargin()
+
+        val source2 = """
+            |channel Foo -> String
+        """.trimMargin()
+
+        validate(source1, source2)
+            .shouldBeLeft()
+            .head.shouldBeInstanceOf<DuplicateChannelError>()
+    }
+
+    @Test
+    fun multipleChannelViolations() {
+        val source1 = """
+            |channel Foo -> String
+            |channel Foo -> String
+        """.trimMargin()
+
+        val source2 = """
+            |channel Foo -> String
+        """.trimMargin()
+
+        validate(source1, source2)
+            .shouldBeLeft()
+            .size shouldBe 3
     }
 }

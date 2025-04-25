@@ -27,3 +27,9 @@ class DuplicateTypeError(typeName: String) :
         coordinates = Token.Coordinates(),
         message = "Type '$typeName' is already defined",
     )
+
+class DuplicateChannelError(typeName: String) :
+    ValidationError(
+        coordinates = Token.Coordinates(),
+        message = "Channel '$typeName' is already defined",
+    )
