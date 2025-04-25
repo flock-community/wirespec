@@ -17,7 +17,7 @@ for platform in "${platforms[@]}"; do
     eval "kotlinc $dir/$compiledPackageDir/model/*.kt \
       $dir/$compiledPackageDir/endpoint/*.kt \
       $dir/$sharedPackageDir/*.kt \
-      -d $dir/target/wirespec.jar"
+      -d $dir/wirespec.jar"
   done
 done
 
@@ -29,18 +29,7 @@ for platform in "${platforms[@]}"; do
       $dir/$compiledPackageDir/endpoint/*.java \
       $dir/$sharedPackageDir/*.java \
       -d $dir/target"
-    eval "cd $dir/target && jar cvf wirespec.jar *"
-  done
-done
-
-printf "\nCompiling Scala Classes:\n"
-for platform in "${platforms[@]}"; do
-  for inputDir in "${inputDirs[@]}"; do
-    dir="/app/types/out/$platform/$inputDir/scala"
-    eval "scalac $dir/$compiledPackageDir/model/*.scala \
-      $dir/$compiledPackageDir/endpoint/*.scala \
-      $dir/$sharedPackageDir/*.scala \
-      -d $dir/wirespec.jar"
+    eval "jar cvf $dir/wirespec.jar $dir/target/*"
   done
 done
 
@@ -48,7 +37,8 @@ printf "\nCompiling TypeScript Classes:\n"
 for platform in "${platforms[@]}"; do
   for inputDir in "${inputDirs[@]}"; do
     dir="/app/types/out/$platform/$inputDir/typescript"
-    eval "tsc --noEmit $dir/$compiledPackageDir/*.ts \
+    eval "tsc --noEmit $dir/$compiledPackageDir/model/*.ts \
+      $dir/$compiledPackageDir/endpoint/*.ts \
       $dir/$sharedPackageDir/typescript/*.ts"
   done
 done
