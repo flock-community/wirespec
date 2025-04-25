@@ -69,7 +69,8 @@ object Validator {
         .filter { it.value.size > 1 }
         .map { (name, channels) ->
             println("yolo")
-            channels.map { DuplicateChannelError(name) } }
+            channels.map { DuplicateChannelError(name) }
+        }
         .flatten()
         .let { errors ->
             if (errors.isEmpty()) {
