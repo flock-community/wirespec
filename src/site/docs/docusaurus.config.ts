@@ -194,10 +194,11 @@ const config: Config = {
       appId: "WIJTZN3W54",
       // apiKey: "ab006ab5e8aaea60cfcafc0dfa6e3a67",
       apiKey: "44150fda89d5824c111f2ad14a4ff506",
-      indexName: "wirespec_io_wijtzn3w54_pages",
+      // indexName: "wirespec_io_wijtzn3w54_pages",
+      indexName: "Test",
       contextualSearch: true,
       searchPagePath: "search",
-      insights: true,
+      insights: false,
     },
   } satisfies Preset.ThemeConfig,
   markdown: {
