@@ -87,7 +87,7 @@ This task compiles Wirespec definitions to various target languages.
 **Properties:**
 - `input`: DirectoryProperty - The input directory containing Wirespec files
 - `output`: DirectoryProperty - The output directory for generated code
-- `languages`: ListProperty&lt;Language&gt; - List of target languages (Java, Kotlin, Scala, TypeScript, Python, Wirespec, OpenAPIV2, OpenAPIV3)
+- `languages`: ListProperty&lt;Language&gt; - List of target languages (Java, Kotlin, TypeScript, Python, Wirespec, OpenAPIV2, OpenAPIV3)
 - `packageName`: Property&lt;String&gt; - Package name for generated code
 - `emitterClass`: Property&lt;Class&lt;*&gt;&gt; - Custom emitter class
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
