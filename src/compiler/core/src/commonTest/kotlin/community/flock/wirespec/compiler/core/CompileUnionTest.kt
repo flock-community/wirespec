@@ -2,7 +2,6 @@ package community.flock.wirespec.compiler.core
 
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
-import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import io.kotest.assertions.arrow.core.shouldBeRight
@@ -90,32 +89,6 @@ class CompileUnionTest {
         """.trimMargin()
 
         compiler { JavaEmitter() } shouldBeRight java
-    }
-
-    @Test
-    fun scala() {
-        val scala = """
-            |package community.flock.wirespec.generated
-            |
-            |// TODO("Not yet implemented")
-            |
-            |case class UserAccountPassword(
-            |  val username: String,
-            |  val password: String
-            |)
-            |
-            |case class UserAccountToken(
-            |  val token: String
-            |)
-            |
-            |case class User(
-            |  val username: String,
-            |  val account: UserAccount
-            |)
-            |
-        """.trimMargin()
-
-        compiler { ScalaEmitter() } shouldBeRight scala
     }
 
     @Test
