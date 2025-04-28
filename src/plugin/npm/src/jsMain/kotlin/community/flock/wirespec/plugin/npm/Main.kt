@@ -105,7 +105,7 @@ fun emit(ast: WsAST, emitter: Emitters, packageName: String) = ast
             Emitters.JAVA -> JavaEmitter(PackageName(packageName)).emit(it, noLogger)
             Emitters.KOTLIN -> KotlinEmitter(PackageName(packageName)).emit(it, noLogger)
             Emitters.SCALA -> ScalaEmitter(PackageName(packageName)).emit(it, noLogger)
-            Emitters.PYTHON -> PythonEmitter(PackageName(packageName)).emit(it, noLogger)
+            Emitters.PYTHON -> PythonEmitter().emit(it, noLogger)
             Emitters.OPENAPI_V2 -> listOf(it)
                 .map(OpenAPIV2Emitter::emitSwaggerObject)
                 .map(encode(SwaggerObject.serializer()))

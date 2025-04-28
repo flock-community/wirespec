@@ -27,7 +27,6 @@ import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 
 open class PythonEmitter(
-    private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
     val emitShared: Boolean = false
 ) : Emitter() {
 
@@ -71,7 +70,7 @@ open class PythonEmitter(
         return if (emitShared) emitted + Emitted(PackageName(DEFAULT_GENERATED_PACKAGE_STRING).toDir() + "wirespec", shared.source) else emitted
     }
 
-    private fun Reference.Custom.emitReferenceCustomImports() = "from .${value} import ${value}"
+    private fun Reference.Custom.emitReferenceCustomImports() = "from .${value} import $value"
 
     override fun emit(type: Type, module: Module): String =
         if (type.shape.value.isEmpty()) """
@@ -230,7 +229,7 @@ open class PythonEmitter(
         |${Spacer}${Spacer}method = request.method.value,
         |${Spacer}${Spacer}queries = ${if (endpoint.queries.isNotEmpty()) endpoint.queries.joinToString(",\n", "{", "}") { it.emitSerializedParams("request", "queries") } else "{}"},
         |${Spacer}${Spacer}headers = ${if (endpoint.headers.isNotEmpty()) endpoint.headers.joinToString(",\n", "{", "}") { it.emitSerializedParams("request", "headers") } else "{}"},
-        |${Spacer}${Spacer}body = serialization.serialize(request.body, ${content?.reference?.emitType() ?: "type(None)"}),
+        |${Spacer}${Spacer}body = serialization.serialize(request.body, ${content?.reference?.emitType() ?: NONE}),
         |${Spacer})
         |
     """.trimMargin()
@@ -253,9 +252,6 @@ open class PythonEmitter(
         """${Spacer(3)}${emit(value.identifier)} = serialization.deserialize(request.path[${index}], ${value.reference.emitType()})"""
 
     private fun Field.emitDeserializedParams(type: String, fields: String) =
-        if (reference.isNullable)
-            """${emit(identifier)} = serialization.deserialize_param($type.$fields.get("${identifier.value}".lower()), ${reference.emitType()})"""
-        else
             """${emit(identifier)} = serialization.deserialize_param($type.$fields.get("${identifier.value}".lower()), ${reference.emitType()})"""
 
     fun Endpoint.Response.emit(endpoint: Endpoint) = """
@@ -302,7 +298,7 @@ open class PythonEmitter(
     private fun Endpoint.Response.emitDeserialized(endpoint: Endpoint) = listOfNotNull(
         "case $status:",
         "${Spacer}return ${emit(endpoint.identifier)}.Response$status(",
-        "${Spacer(2)}body = serialization.deserialize(response.body, ${content?.reference?.emitType() ?: "type(None)"}),",
+        "${Spacer(2)}body = serialization.deserialize(response.body, ${content?.reference?.emitType() ?: NONE}),",
         headers.joinToString(",\n") { it.emitDeserializedParams("response", "headers") }.orNull()?.spacer(2),
         "${Spacer})"
     ).joinToString("\n")
@@ -313,7 +309,7 @@ open class PythonEmitter(
         |${Spacer(1)}return Wirespec.RawResponse(
         |${Spacer(2)}status_code = response.status,
         |${Spacer(2)}headers = ${if (headers.isNotEmpty()) headers.joinToString(", ", "{", "}") { it.emitSerializedParams("response", "headers") } else "{}"},
-        |${Spacer(2)}body = ${if (content != null) "serialization.serialize(response.body, ${content.reference.emitType()}" else "type(None)"}),
+        |${Spacer(2)}body = ${if (content != null) "serialization.serialize(response.body, ${content.reference.emitType()}" else NONE}),
         |${Spacer(1)})
     """.trimMargin()
 
@@ -377,5 +373,7 @@ open class PythonEmitter(
             "pass", "raise", "return", "try", "while",
             "with", "yield"
         )
+
+        private const val NONE = "type(None)"
     }
 }

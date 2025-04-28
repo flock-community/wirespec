@@ -64,12 +64,12 @@ public interface GetInventory extends Wirespec.Endpoint {
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
-      return switch (response.statusCode()) {
-        case 200 -> new Response200(
+      switch (response.statusCode()) {
+        case 200: return new Response200(
         serialization.deserialize(response.body(), Wirespec.getType(Integer.class, false))
       );
-        default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
-      };
+        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+      }
     }
 
     @org.springframework.web.bind.annotation.GetMapping("/store/inventory")

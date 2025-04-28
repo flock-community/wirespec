@@ -72,10 +72,10 @@ public interface UpdatePetWithForm extends Wirespec.Endpoint {
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
-      return switch (response.statusCode()) {
-        case 405 -> new Response405();
-        default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
-      };
+      switch (response.statusCode()) {
+        case 405: return new Response405();
+        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+      }
     }
 
     @org.springframework.web.bind.annotation.PostMapping("/pet/{petId}")
