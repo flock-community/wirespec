@@ -3,8 +3,8 @@
 
 ## Type of Change
 <!-- Please check the option that best describes your PR -->
-- [ ] Feature (new functionality)
-- [ ] Bug fix (resolves an issue)
+- [ ] Feature
+- [ ] Bug fix
 - [ ] Documentation update
 - [ ] Refactoring
 - [ ] Performance improvement
