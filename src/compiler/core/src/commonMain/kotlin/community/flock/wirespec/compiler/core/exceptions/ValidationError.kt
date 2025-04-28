@@ -15,3 +15,21 @@ class EmptyModule :
         coordinates = Token.Coordinates(),
         message = "AST should not be empty",
     )
+
+class DuplicateEndpointError(endpointName: String) :
+    ValidationError(
+        coordinates = Token.Coordinates(),
+        message = "Endpoint '$endpointName' is already defined",
+    )
+
+class DuplicateTypeError(typeName: String) :
+    ValidationError(
+        coordinates = Token.Coordinates(),
+        message = "Type '$typeName' is already defined",
+    )
+
+class DuplicateChannelError(typeName: String) :
+    ValidationError(
+        coordinates = Token.Coordinates(),
+        message = "Channel '$typeName' is already defined",
+    )
