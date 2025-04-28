@@ -107,116 +107,130 @@ function RouteComponent() {
       } else {
         return setWirespecErrors([
           {
-            message: "Invalid JSON",
-            startLineNumber: 1,
-            startColumn: 1,
-            endLineNumber: 1,
-            endColumn: 1,
+            value: `Invalid OpenAPI specification; missing 'swagger' or 'openapi' property`,
+            line: 1,
+            position: 1,
+            length: 1,
           },
         ]);
       }
-    } catch (e) {
-      return setWirespecErrors([
-        {
-          message: "Invalid JSON",
-          startLineNumber: 1,
-          startColumn: 1,
-          endLineNumber: 1,
-          endColumn: 1,
-        },
-      ]);
+      setWirespecErrors([]);
+    } catch (error) {
+      if (error instanceof Error) {
+        setWirespecErrors([
+          {value: error.message, line: 1, position: 1, length: 1 },
+        ]);
+      }
     }
   }, [code, emitter, specification]);
 
   useEffect(() => {
-    if (monaco) {
-      initializeMonaco(monaco);
-    }
+    if (!monaco) return;
+    initializeMonaco(monaco);
   }, [monaco]);
 
   useEffect(() => {
-    if (monaco && wirespecOutput?.errors) {
-      setMonacoErrors(monaco, wirespecOutput.errors);
-    }
-  }, [monaco, wirespecOutput?.errors]);
+    if (!monaco) return;
+
+    setMonacoErrors(monaco, wirespecErrors);
+  }, [wirespecErrors, monaco]);
 
   useEffect(() => {
-    if (wirespecOutput?.result) {
-      const result = wirespecOutput.result
-        .map((it) => {
-          return `${createFileHeaderFor(it.typeName, emitter)}${it.result}`;
-        })
-        .join("\n\n");
-      setWirespecResult(result);
-    }
-  }, [wirespecOutput?.result, emitter]);
-
-  useEffect(() => {
-    if (wirespecErrors) {
-      setWirespecResult("");
-    }
-  }, [wirespecErrors]);
-
-  useEffect(() => {
-    if (specification === "wirespec") {
-      setCode(wsExample);
-    } else if (specification === "open_api_v2") {
-      setCode(swaggerExample);
-    } else if (specification === "open_api_v3") {
-      setCode(openapiExample);
+    switch (specification) {
+      case "wirespec":
+        return setCode(wsExample);
+      case "open_api_v2":
+        return setCode(swaggerExample);
+      case "open_api_v3":
+        return setCode(openapiExample);
     }
   }, [specification]);
 
+  useEffect(() => {
+    if (wirespecOutput) {
+      if (wirespecOutput.result.length) {
+        setWirespecResult(
+          wirespecOutput.result
+            .map(
+              (file) =>
+                `${createFileHeaderFor(file.typeName, emitter)}${file.result}`,
+            )
+            .join(""),
+        );
+      }
+      if (wirespecOutput.errors) {
+        setWirespecErrors(wirespecOutput.errors);
+      }
+    }
+  }, [wirespecOutput, emitter]);
+
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        width: "100vw",
-      }}
-    >
+    <Box display="flex">
       <Box
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "1rem",
-          gap: "1rem",
-          borderBottom: "1px solid #e0e0e0",
+        flex={1}
+        display={{
+          xs: mobileDisplay === "input" ? "inline-block" : "none",
+          sm: "block",
         }}
       >
-        <SpecificationSelector />
-        <EmitterSelector />
         <Box
-          sx={{
-            display: { xs: "flex", md: "none" },
-            flexDirection: "row",
-            gap: "1rem",
-          }}
+          marginInline={{ xs: 1, sm: 8 }}
+          display="flex"
+          justifyContent="space-between"
         >
-          <Button
-            variant={mobileDisplay === "input" ? "contained" : "outlined"}
-            onClick={() => setMobileDisplay("input")}
-          >
-            Input
-          </Button>
-          <Button
-            variant={mobileDisplay === "output" ? "contained" : "outlined"}
-            onClick={() => setMobileDisplay("output")}
-          >
-            Output
-          </Button>
+          <SpecificationSelector />
+
+          <Box display={{ sm: "none" }}>
+            <Button
+              sx={{ color: "var(--color-primary)" }}
+              onClick={() => setMobileDisplay("output")}
+            >
+              show output
+            </Button>
+          </Box>
+        </Box>
+        <Box marginTop={1} borderTop="1px solid var(--border-primary)">
+          <PlayGround
+            code={code}
+            setCode={setCode}
+            language={specification === "wirespec" ? "wirespec" : "json"}
+          />
         </Box>
       </Box>
-      <PlayGround
-        code={code}
-        setCode={setCode}
-        wirespecResult={wirespecResult}
-        wirespecOutput={wirespecOutput}
-        mobileDisplay={mobileDisplay}
-      />
+      <Box
+        flex={1}
+        display={{
+          xs: mobileDisplay === "output" ? "inline-block" : "none",
+          sm: "block",
+        }}
+      >
+        <Box
+          marginInline={{ xs: 1, sm: 8 }}
+          display="flex"
+          justifyContent="space-between"
+        >
+          <EmitterSelector />
+          <Box display={{ sm: "none" }}>
+            <Button
+              sx={{ color: "var(--color-primary)" }}
+              onClick={() => setMobileDisplay("input")}
+            >
+              show input
+            </Button>
+          </Box>
+        </Box>
+
+        <Box
+          marginTop={1}
+          borderTop="1px solid var(--border-primary)"
+          borderLeft={{ sm: "1px solid var(--border-primary)" }}
+        >
+          <PlayGround
+            code={wirespecResult}
+            language={wirespecOutput?.language || "wirespec"}
+          />
+        </Box>
+      </Box>
     </Box>
   );
 }

@@ -11,7 +11,7 @@ fi
 
 package="community.flock.generated"
 
-languages=("Java" "Kotlin" "TypeScript" "Python" "Wirespec" "OpenAPIV2" "OpenAPIV3")
+languages=("Java" "Kotlin" "TypeScript" "Python" "Wirespec")
 
 localWorkDir=$(pwd)
 
@@ -32,6 +32,7 @@ macCommand=""
 for lang in "${languages[@]}"; do
    macCommand="$macCommand $(run $macWirespec "$localWorkDir" "native" "$lang") && "
 done
+echo "macCommand $macCommand"
 eval "${macCommand%????}"
 
 printf "\nTest JVM artifact:\n"
@@ -40,6 +41,7 @@ jvmCommand=""
 for lang in "${languages[@]}"; do
   jvmCommand="$jvmCommand $(run "java -jar $jvmWirespec" "$localWorkDir" "jvm" "$lang") && "
 done
+echo "jvmCommand $jvmCommand"
 eval "${jvmCommand%????}"
 
 printf "\nTest Node.js artifact:\n"
@@ -48,6 +50,7 @@ nodeCommand=""
 for lang in "${languages[@]}"; do
   nodeCommand="$nodeCommand $(run "node $nodeWirespec" "$localWorkDir" "node" "$lang") && "
 done
+echo "nodeCommand $nodeCommand"
 eval "${nodeCommand%????}"
 
 printf "\nTest docker image:\n"
@@ -56,4 +59,5 @@ dockerCommand=""
 for lang in "${languages[@]}"; do
   dockerCommand="$dockerCommand $(run "$dockerWirespec" '/app' 'docker' "$lang") && "
 done
+echo "dockerCommand $dockerCommand"
 docker run $archSpecific --rm -it -v "$localWorkDir"/types:/app/types wirespec "${dockerCommand%????}"

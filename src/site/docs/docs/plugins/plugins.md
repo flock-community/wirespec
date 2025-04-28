@@ -16,7 +16,7 @@ The `Compile` operation transforms Wirespec source code into emitted output file
 
 *   **input:** Path to the input Wirespec file or directory.
 *   **output:** Path to the output directory where the generated code will be placed.
-*   **languages:** A comma-separated list of target languages for code generation (e.g., `Java`, `Kotlin`, `TypeScript`, `Python`, `Wirespec`, `OpenAPIV2`, `OpenAPIV3`).
+*   **languages:** A comma-separated list of target languages for code generation (e.g., `Java`, `Kotlin`, `TypeScript`, `Python`, `Wirespec`).
 *   **package name:** The package name for the generated code.
 *   **share:**  A flag to indicate whether shared code should be emitted.
 *   **strict:** A flag to enable strict mode during compilation.
@@ -40,7 +40,7 @@ The `Custom` operation combines the functionality of both `Compile` and `Convert
 *   **input:** Path to the input file or folder.
 *   **output:** Path to the output directory.
 *   **format:** Input format (e.g., `OpenAPIV2`, `OpenAPIV3`, `Avro`).
-*   **languages:** A comma-separated list of target languages for code generation (e.g., `Java`, `Kotlin`, `TypeScript`, `Python`, `Wirespec`, `OpenAPIV2`, `OpenAPIV3`).
+*   **languages:** A comma-separated list of target languages for code generation (e.g., `Java`, `Kotlin`, `TypeScript`, `Python`, `Wirespec`,`OpenAPIV2`, `OpenAPIV3`).
 *   **package name:** The package name for the generated code.
 *   **share:** A flag to indicate whether shared code should be emitted.
 *   **strict:** A flag to enable strict mode during processing.

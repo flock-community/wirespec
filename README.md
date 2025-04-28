@@ -114,7 +114,7 @@ Arguments:
 Options: 
     --output, -o -> Output directory { String }
     --debug, -d [false] -> Debug mode 
-    --languages, -l -> Language type { Value should be one of [Java, Kotlin, TypeScript, Python, Wirespec, OpenAPIV2, OpenAPIV3] }
+    --languages, -l -> Language type { Value should be one of [Java, Kotlin, TypeScript, Python, Wirespec] }
     --packageName, -p [community.flock.wirespec.generated] -> Package name { String }
     --strict, -s [false] -> Strict mode 
     --help, -h -> Usage info 
