@@ -12,10 +12,10 @@ class CompileFullEndpointTest {
 
     private val compiler = """
         |endpoint PutTodo PUT PotentialTodoDto /todos/{id: String}
-        |    ?{done: Boolean}
-        |    #{token: Token} -> {
+        |    ?{done: Boolean, name: String?}
+        |    #{token: Token, refreshToken: Token?} -> {
         |    200 -> TodoDto
-        |    201 -> TodoDto #{token: Token}
+        |    201 -> TodoDto #{token: Token, refreshToken: Token?}
         |    500 -> Error
         |}
         |type PotentialTodoDto {
@@ -223,6 +223,7 @@ class CompileFullEndpointTest {
             |import community.flock.wirespec.java.Wirespec;
             |
             |import community.flock.wirespec.generated.model.Token;
+            |import community.flock.wirespec.generated.model.Token;
             |import community.flock.wirespec.generated.model.PotentialTodoDto;
             |import community.flock.wirespec.generated.model.TodoDto;
             |import community.flock.wirespec.generated.model.Error;
@@ -233,11 +234,13 @@ class CompileFullEndpointTest {
             |  ) implements Wirespec.Path {}
             |
             |  public record Queries(
-            |    Boolean done
+            |    Boolean done,
+            |    java.util.Optional<String> name
             |  ) implements Wirespec.Queries {}
             |
             |  public record RequestHeaders(
-            |    Token token
+            |    Token token,
+            |    java.util.Optional<Token> refreshToken
             |  ) implements Wirespec.Request.Headers {}
             |
             |  class Request implements Wirespec.Request<PotentialTodoDto> {
@@ -246,11 +249,11 @@ class CompileFullEndpointTest {
             |    private final Queries queries;
             |    private final RequestHeaders headers;
             |    private final PotentialTodoDto body;
-            |    public Request(String id, Boolean done, Token token, PotentialTodoDto body) {
+            |    public Request(String id, Boolean done, java.util.Optional<String> name, Token token, java.util.Optional<Token> refreshToken, PotentialTodoDto body) {
             |      this.path = new Path(id);
             |      this.method = Wirespec.Method.PUT;
-            |      this.queries = new Queries(done);
-            |      this.headers = new RequestHeaders(token);
+            |      this.queries = new Queries(done, name);
+            |      this.headers = new RequestHeaders(token, refreshToken);
             |      this.body = body;
             |    }
             |    @Override public Path getPath() { return path; }
@@ -272,12 +275,13 @@ class CompileFullEndpointTest {
             |    @Override public TodoDto getBody() { return body; }
             |    class Headers implements Wirespec.Response.Headers {}
             |  }
-            |  record Response201(Token token, TodoDto body) implements Response2XX<TodoDto>, ResponseTodoDto {
+            |  record Response201(Token token, java.util.Optional<Token> refreshToken, TodoDto body) implements Response2XX<TodoDto>, ResponseTodoDto {
             |    @Override public int getStatus() { return 201; }
-            |    @Override public Headers getHeaders() { return new Headers(token); }
+            |    @Override public Headers getHeaders() { return new Headers(token, refreshToken); }
             |    @Override public TodoDto getBody() { return body; }
             |    public record Headers(
-            |    Token token
+            |    Token token,
+            |    java.util.Optional<Token> refreshToken
             |  ) implements Wirespec.Response.Headers {}
             |  }
             |  record Response500(Error body) implements Response5XX<Error>, ResponseError {
@@ -290,11 +294,21 @@ class CompileFullEndpointTest {
             |  interface Handler extends Wirespec.Handler {
             |
             |    static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
+            |      var queries = new java.util.HashMap<String, java.util.List<String>>() {{
+            |        put("done", serialization.serializeParam(request.queries.done, Wirespec.getType(Boolean.class, false)));
+            |        request.queries.name.ifPresent(it -> put("name", serialization.serializeParam(it, Wirespec.getType(String.class, false))));
+            |      }};
+            |      
+            |      var headers = new java.util.HashMap<String, java.util.List<String>>() {{
+            |        put("token", serialization.serializeParam(request.headers.token, Wirespec.getType(Token.class, false)));
+            |        request.headers.refreshToken.ifPresent(it -> put("refreshToken", serialization.serializeParam(it, Wirespec.getType(Token.class, false))));
+            |      }};
+            |      
             |      return new Wirespec.RawRequest(
             |        request.method.name(),
             |        java.util.List.of("todos", serialization.serialize(request.path.id, Wirespec.getType(String.class, false))),
-            |        java.util.Map.ofEntries(java.util.Map.entry("done", serialization.serializeParam(request.queries.done, Wirespec.getType(Boolean.class, false)))),
-            |        java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serializeParam(request.headers.token, Wirespec.getType(Token.class, false)))),
+            |        queries,
+            |        headers,
             |        serialization.serialize(request.getBody(), Wirespec.getType(PotentialTodoDto.class, false))
             |      );
             |    }
@@ -302,15 +316,15 @@ class CompileFullEndpointTest {
             |    static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
             |      return new Request(
             |        serialization.<String>deserialize(request.path().get(1), Wirespec.getType(String.class, false)),
-            |        java.util.Optional.ofNullable(request.queries().get("done")).map(it -> serialization.<Boolean>deserializeParam(it, Wirespec.getType(Boolean.class, false))).get(),
-            |        java.util.Optional.ofNullable(request.headers().get("token")).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, false))).get(),
+            |        java.util.Optional.ofNullable(request.queries().get("done")).map(it -> serialization.<Boolean>deserializeParam(it, Wirespec.getType(Boolean.class, false))).get(),         java.util.Optional.ofNullable(request.queries().get("name")).map(it -> serialization.<String>deserializeParam(it, Wirespec.getType(String.class, false))),
+            |        java.util.Optional.ofNullable(request.headers().get("token")).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, false))).get(),         java.util.Optional.ofNullable(request.headers().get("refreshToken")).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, false))),
             |        serialization.deserialize(request.body(), Wirespec.getType(PotentialTodoDto.class, false))
             |      );
             |    }
             |
             |    static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
             |      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, false))); }
-            |      if (response instanceof Response201 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serializeParam(r.getHeaders().token(), Wirespec.getType(Token.class, false)))), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, false))); }
+            |      if (response instanceof Response201 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serializeParam(r.getHeaders().token(), Wirespec.getType(Token.class, false))), java.util.Map.entry("refreshToken", serialization.serializeParam(r.getHeaders().refreshToken(), Wirespec.getType(Token.class, false)))), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, false))); }
             |      if (response instanceof Response500 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(Error.class, false))); }
             |      else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
             |    }
@@ -321,7 +335,7 @@ class CompileFullEndpointTest {
             |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, false))
             |      );
             |        case 201: return new Response201(
-            |        java.util.Optional.ofNullable(response.headers().get("token")).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, false))).get(),
+            |        java.util.Optional.ofNullable(response.headers().get("token")).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, false))).get(),         java.util.Optional.ofNullable(response.headers().get("refreshToken")).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, false))),
             |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, false))
             |      );
             |        case 500: return new Response500(
@@ -821,10 +835,11 @@ class CompileFullEndpointTest {
         compiler { PythonEmitter() } shouldBeRight python
     }
 
+    //TODO - Missing request and response headers,
     @Test
     fun wirespec() {
         val wirespec = """
-            |endpoint PutTodo PUT PotentialTodoDto /todos/{id: String} ? {done: Boolean} -> {
+            |endpoint PutTodo PUT PotentialTodoDto /todos/{id: String} ? {done: Boolean,name: String?} -> {
             |  200 -> TodoDto
             |  201 -> TodoDto
             |  500 -> Error
