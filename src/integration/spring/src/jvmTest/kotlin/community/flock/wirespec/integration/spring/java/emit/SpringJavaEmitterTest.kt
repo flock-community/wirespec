@@ -155,16 +155,16 @@ class SpringJavaEmitterTest {
             |    }
             |
             |    static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
-            |      return switch (response.statusCode()) {
-            |        case 200 -> new Response200(
+            |      switch (response.statusCode()) {
+            |        case 200: return new Response200(
             |        java.util.Optional.ofNullable(response.headers().get("total")).map(it -> serialization.<Long>deserializeParam(it, Wirespec.getType(Long.class, false))).get(),
             |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, true))
             |      );
-            |        case 500 -> new Response500(
+            |        case 500: return new Response500(
             |        serialization.deserialize(response.body(), Wirespec.getType(Error.class, false))
             |      );
-            |        default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
-            |      };
+            |        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+            |      }
             |    }
             |
             |    @org.springframework.web.bind.annotation.GetMapping("/api/todos")

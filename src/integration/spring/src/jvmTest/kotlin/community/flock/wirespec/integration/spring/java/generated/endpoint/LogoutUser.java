@@ -64,10 +64,10 @@ public interface LogoutUser extends Wirespec.Endpoint {
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
-      return switch (response.statusCode()) {
+      switch (response.statusCode()) {
 
-        default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
-      };
+        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+      }
     }
 
     @org.springframework.web.bind.annotation.GetMapping("/user/logout")

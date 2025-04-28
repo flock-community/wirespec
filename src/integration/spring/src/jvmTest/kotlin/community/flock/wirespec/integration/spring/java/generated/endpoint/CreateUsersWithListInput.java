@@ -58,13 +58,13 @@ public interface CreateUsersWithListInput extends Wirespec.Endpoint {
         java.util.List.of("user", "createWithList"),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
-        serialization.serialize(request.getBody(), Wirespec.getType(java.util.List<User>.class, true))
+        serialization.serialize(request.getBody(), Wirespec.getType(User.class, true))
       );
     }
 
     static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
       return new Request(
-        serialization.deserialize(request.body(), Wirespec.getType(java.util.List<User>.class, true))
+        serialization.deserialize(request.body(), Wirespec.getType(User.class, true))
       );
     }
 
@@ -75,12 +75,12 @@ public interface CreateUsersWithListInput extends Wirespec.Endpoint {
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
-      return switch (response.statusCode()) {
-        case 200 -> new Response200(
+      switch (response.statusCode()) {
+        case 200: return new Response200(
         serialization.deserialize(response.body(), Wirespec.getType(User.class, false))
       );
-        default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
-      };
+        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+      }
     }
 
     @org.springframework.web.bind.annotation.PostMapping("/user/createWithList")

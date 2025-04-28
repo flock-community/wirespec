@@ -75,11 +75,11 @@ public interface DeleteUser extends Wirespec.Endpoint {
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
-      return switch (response.statusCode()) {
-        case 400 -> new Response400();
-        case 404 -> new Response404();
-        default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
-      };
+      switch (response.statusCode()) {
+        case 400: return new Response400();
+        case 404: return new Response404();
+        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+      }
     }
 
     @org.springframework.web.bind.annotation.DeleteMapping("/user/{username}")
