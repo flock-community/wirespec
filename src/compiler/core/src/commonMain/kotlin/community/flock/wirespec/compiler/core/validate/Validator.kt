@@ -7,7 +7,6 @@ import arrow.core.left
 import arrow.core.nel
 import arrow.core.right
 import arrow.core.toNonEmptyListOrNull
-import community.flock.wirespec.compiler.core.ValidationContext
 import community.flock.wirespec.compiler.core.exceptions.DuplicateChannelError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateEndpointError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateTypeError
@@ -19,7 +18,7 @@ import community.flock.wirespec.compiler.core.parse.Type
 
 object Validator {
 
-    fun ValidationContext.validate(ast: EitherNel<WirespecException, AST>): EitherNel<WirespecException, AST> = ast
+    fun validate(ast: EitherNel<WirespecException, AST>): EitherNel<WirespecException, AST> = ast
         .flatMap {
             zipOrAccumulate(
                 validateEndpoints(it),

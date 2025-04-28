@@ -5,7 +5,6 @@ import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.Stage.EMITTED
 import community.flock.wirespec.compiler.core.Stage.PARSED
 import community.flock.wirespec.compiler.core.Stage.TOKENIZED
-import community.flock.wirespec.compiler.core.Stage.VALIDATED
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.HasEmitters
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
@@ -13,7 +12,6 @@ import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Parser.parse
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.tokenize
-import community.flock.wirespec.compiler.core.validate.Validator.validate
 import community.flock.wirespec.compiler.utils.HasLogger
 
 interface TokenizeContext :
@@ -24,19 +22,14 @@ interface ParseContext :
     TokenizeContext,
     HasLogger
 
-interface ValidationContext :
-    ParseContext,
-    HasLogger
-
 interface EmitContext :
-    ValidationContext,
+    ParseContext,
     HasEmitters,
     HasLogger
 
 interface CompilationContext :
     TokenizeContext,
     ParseContext,
-    ValidationContext,
     EmitContext
 
 data class ModuleContent(val src: String, val content: String)
@@ -49,20 +42,15 @@ fun TokenizeContext.tokenize(source: String): NonEmptyList<Token> = spec
 
 fun ParseContext.parse(source: NonEmptyList<ModuleContent>): EitherNel<WirespecException, AST> = parse(source.map { TokenizedModule(it.src, tokenize(it.content)) }).also(PARSED::log)
 
-fun ValidationContext.validate(ast: EitherNel<WirespecException, AST>): EitherNel<WirespecException, AST> = validate(ast).also(VALIDATED::log)
-
 fun EmitContext.emit(ast: EitherNel<WirespecException, AST>): EitherNel<WirespecException, NonEmptyList<Emitted>> = ast
     .map { emitters.flatMap { emitter -> emitter.emit(it, logger) } }
     .also(EMITTED::log)
 
-fun CompilationContext.compile(source: NonEmptyList<ModuleContent>): EitherNel<WirespecException, NonEmptyList<Emitted>> = emit(
-    validate(parse(source)),
-)
+fun CompilationContext.compile(source: NonEmptyList<ModuleContent>): EitherNel<WirespecException, NonEmptyList<Emitted>> = emit(parse(source))
 
 private enum class Stage {
     TOKENIZED,
     PARSED,
-    VALIDATED,
     EMITTED,
     ;
 

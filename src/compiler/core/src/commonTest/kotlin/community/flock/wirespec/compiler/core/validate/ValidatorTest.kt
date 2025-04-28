@@ -3,7 +3,6 @@ package community.flock.wirespec.compiler.core.validate
 import arrow.core.EitherNel
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.ModuleContent
-import community.flock.wirespec.compiler.core.ValidationContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.exceptions.DuplicateChannelError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateEndpointError
@@ -11,7 +10,6 @@ import community.flock.wirespec.compiler.core.exceptions.DuplicateTypeError
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.validate
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
