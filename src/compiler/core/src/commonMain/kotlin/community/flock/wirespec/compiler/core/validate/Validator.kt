@@ -61,13 +61,10 @@ object Validator {
 
     private fun validateChannels(ast: AST): EitherNel<WirespecException, AST> = ast.modules.toList()
         .flatMap { module ->
-            println(module)
-            println(module.statements)
             module.statements.filterIsInstance<Channel>()
         }.groupBy { it.identifier.value }
         .filter { it.value.size > 1 }
         .map { (name, channels) ->
-            println("yolo")
             channels.map { DuplicateChannelError(name) }
         }
         .flatten()
