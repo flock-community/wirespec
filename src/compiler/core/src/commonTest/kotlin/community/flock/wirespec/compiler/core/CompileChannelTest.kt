@@ -43,7 +43,6 @@ class CompileChannelTest {
         compiler { JavaEmitter() } shouldBeRight java
     }
 
-
     @Test
     fun typeScript() {
         val ts = """
