@@ -13,9 +13,6 @@
 - [ ] Build/CI pipeline changes
 - [ ] Other (please describe):
 
-## Related Issues
-<!-- Link to any related issues using the format: Fixes #issue_number or Relates to #issue_number -->
-
 ## Checklist
 <!-- Please check all that apply -->
 - [ ] I have followed the [contribution guidelines](../CONTRIBUTING.md)
