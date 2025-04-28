@@ -11,7 +11,7 @@ fi
 
 package="community.flock.generated"
 
-languages=("Java" "Kotlin" "Scala" "TypeScript" "Wirespec")
+languages=("Java" "Kotlin" "TypeScript" "Wirespec")
 
 localWorkDir=$(pwd)
 

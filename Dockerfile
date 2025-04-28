@@ -14,7 +14,6 @@ RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && \
     apt clean && \
     sdk install kotlin && \
     sdk install java && \
-    sdk install scala && \
     npm install -g typescript
 
 COPY src/plugin/cli/build/bin/linuxX64/releaseExecutable/cli.kexe /app/wirespec

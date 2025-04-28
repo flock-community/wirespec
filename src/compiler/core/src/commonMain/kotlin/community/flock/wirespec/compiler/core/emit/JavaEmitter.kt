@@ -96,20 +96,15 @@ open class JavaEmitter(
         is Reference.Primitive -> emit()
     }
 
-    fun Reference.emitRoot(void: String = "void"): String = when (this) {
+    fun Reference?.emitRoot(void: String = "void"): String = when (this) {
         is Reference.Dict -> reference.emitRoot()
         is Reference.Iterable -> reference.emitRoot()
         is Reference.Unit -> void
         is Reference.Any -> emitType()
         is Reference.Custom -> emitType()
         is Reference.Primitive -> emitType()
+        null -> void
     }
-
-    private fun Reference.Custom.emit() = value
-        .takeIf { it in internalClasses }
-        ?.let { "$packageName." }
-        .orEmpty()
-        .let { "$it$value" }
 
     private fun Reference.Primitive.emit() = when (type) {
         is Reference.Primitive.Type.String -> "String"
@@ -221,10 +216,10 @@ open class JavaEmitter(
         |${Spacer(2)}}
         |
         |${Spacer(2)}static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
-        |${Spacer(3)}return switch (response.statusCode()) {
+        |${Spacer(3)}switch (response.statusCode()) {
         |${endpoint.responses.distinctBy { it.status }.filter { it.status.isStatusCode() }.joinToString("\n") { it.emitDeserialized() }}
-        |${Spacer(4)}default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
-        |${Spacer(3)}};
+        |${Spacer(4)}default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+        |${Spacer(3)}}
         |${Spacer(2)}}
         |
         |${Spacer(2)}${emitHandleFunction(endpoint)}
@@ -292,9 +287,9 @@ open class JavaEmitter(
         |${Spacer(3)}return new Wirespec.RawRequest(
         |${Spacer(4)}request.method.name(),
         |${Spacer(4)}java.util.List.of(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
-        |${Spacer(4)}${if (endpoint.queries.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.queries.joinToString { it.emitSerializedParams("queries") }})" else "java.util.Collections.emptyMap()"},
-        |${Spacer(4)}${if (endpoint.headers.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.headers.joinToString { it.emitSerializedParams("headers") }})" else "java.util.Collections.emptyMap()"},
-        |${Spacer(4)}serialization.serialize(request.getBody(), Wirespec.getType(${content.emit()}.class, ${content?.reference?.isIterable ?: false}))
+        |${Spacer(4)}${if (endpoint.queries.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.queries.joinToString { it.emitSerializedParams("queries") }})" else EMPTY_MAP},
+        |${Spacer(4)}${if (endpoint.headers.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.headers.joinToString { it.emitSerializedParams("headers") }})" else EMPTY_MAP},
+        |${Spacer(4)}serialization.serialize(request.getBody(), Wirespec.getType(${content?.reference.emitRoot("Void")}.class, ${content?.reference?.isIterable ?: false}))
         |${Spacer(3)});
         |${Spacer(2)}}
         |
@@ -335,22 +330,22 @@ open class JavaEmitter(
         endpoint.indexedPathParams.joinToString { it.emitDeserialized() }.orNull(),
         endpoint.queries.joinToString { it.emitDeserializedParams("queries") }.orNull(),
         endpoint.headers.joinToString { it.emitDeserializedParams("headers") }.orNull(),
-        content?.let { """${Spacer(4)}serialization.deserialize(request.body(), Wirespec.getType(${it.emit()}.class, ${it.reference.isIterable}))""" }
+        content?.let { """${Spacer(4)}serialization.deserialize(request.body(), Wirespec.getType(${it.reference.emitRoot("Void")}.class, ${it.reference.isIterable}))""" }
     ).joinToString(",\n").let { if (it.isBlank()) "" else "\n$it\n${Spacer(3)}" }
 
     private fun Endpoint.Response.emitDeserializedParams() = listOfNotNull(
         headers.joinToString { """${Spacer(4)}java.util.Optional.ofNullable(response.headers().get("${it.identifier.value}")).map(it -> serialization.<${it.reference.emitType()}>deserializeParam(it, Wirespec.getType(${it.reference.emitRoot()}.class, ${it.reference.isIterable})))${if (!it.reference.isNullable) ".get()" else ""}""" }
             .orNull(),
-        content?.let { """${Spacer(4)}serialization.deserialize(response.body(), Wirespec.getType(${it.emitRoot()}.class, ${it.reference.isIterable}))""" }
+        content?.let { """${Spacer(4)}serialization.deserialize(response.body(), Wirespec.getType(${it.reference.emitRoot("Void")}.class, ${it.reference.isIterable}))""" }
     ).joinToString(",\n").let { if (it.isBlank()) "" else "\n$it\n${Spacer(3)}" }
 
     private fun Endpoint.Response.emitSerialized() =
-        """${Spacer(3)}if (response instanceof Response${status.firstToUpper()} r) { return new Wirespec.RawResponse(r.getStatus(), ${if (headers.isNotEmpty()) "java.util.Map.ofEntries(${headers.joinToString { it.emitSerializedHeader() }})" else "java.util.Collections.emptyMap()"}, ${
+        """${Spacer(3)}if (response instanceof Response${status.firstToUpper()} r) { return new Wirespec.RawResponse(r.getStatus(), ${if (headers.isNotEmpty()) "java.util.Map.ofEntries(${headers.joinToString { it.emitSerializedHeader() }})" else EMPTY_MAP}, ${
             if (content != null) "serialization.serialize(r.body, Wirespec.getType(${content.reference.emitRoot("Void")}.class, ${content.reference.isIterable}))"
             else "null"}); }"""
 
     private fun Endpoint.Response.emitDeserialized() =
-        """${Spacer(4)}case $status -> new Response${status.firstToUpper()}(${this.emitDeserializedParams()});"""
+        """${Spacer(4)}case $status: return new Response${status.firstToUpper()}(${this.emitDeserializedParams()});"""
 
     private fun Field.emitSerializedParams(fields: String) =
         """java.util.Map.entry("${identifier.value}", serialization.serializeParam(request.$fields.${emit(identifier)}, Wirespec.getType(${reference.emitRoot()}.class, ${reference.isIterable})))"""
@@ -367,7 +362,6 @@ open class JavaEmitter(
     private fun Endpoint.Segment.Param.emitIdentifier() =
         "serialization.serialize(request.path.${emit(identifier).firstToLower()}, Wirespec.getType(${reference.emitRoot()}.class, ${reference.isIterable}))"
 
-    private fun Endpoint.Content?.emitRoot() = this?.reference?.emitRoot() ?: "Void"
     private fun Endpoint.Content?.emit() = this?.reference?.emit() ?: "Void"
 
     private fun Endpoint.Segment.Param.emit() = "${reference.emit()} ${emit(identifier)}"
@@ -408,5 +402,7 @@ open class JavaEmitter(
             "const", "float", "native", "super", "while",
             "true", "false"
         )
+
+        private const val EMPTY_MAP = "java.util.Collections.emptyMap()"
     }
 }

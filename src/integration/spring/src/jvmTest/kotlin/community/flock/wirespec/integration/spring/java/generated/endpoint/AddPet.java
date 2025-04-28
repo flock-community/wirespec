@@ -75,13 +75,13 @@ public interface AddPet extends Wirespec.Endpoint {
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
-      return switch (response.statusCode()) {
-        case 200 -> new Response200(
+      switch (response.statusCode()) {
+        case 200: return new Response200(
         serialization.deserialize(response.body(), Wirespec.getType(Pet.class, false))
       );
-        case 405 -> new Response405();
-        default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
-      };
+        case 405: return new Response405();
+        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+      }
     }
 
     @org.springframework.web.bind.annotation.PostMapping("/pet")

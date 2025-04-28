@@ -317,19 +317,19 @@ class CompileFullEndpointTest {
             |    }
             |
             |    static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
-            |      return switch (response.statusCode()) {
-            |        case 200 -> new Response200(
+            |      switch (response.statusCode()) {
+            |        case 200: return new Response200(
             |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, false))
             |      );
-            |        case 201 -> new Response201(
+            |        case 201: return new Response201(
             |        java.util.Optional.ofNullable(response.headers().get("token")).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, false))).get(),
             |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, false))
             |      );
-            |        case 500 -> new Response500(
+            |        case 500: return new Response500(
             |        serialization.deserialize(response.body(), Wirespec.getType(Error.class, false))
             |      );
-            |        default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
-            |      };
+            |        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+            |      }
             |    }
             |
             |    java.util.concurrent.CompletableFuture<Response<?>> putTodo(Request request);

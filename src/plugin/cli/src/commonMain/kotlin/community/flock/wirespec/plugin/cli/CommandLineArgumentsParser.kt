@@ -40,7 +40,6 @@ import community.flock.wirespec.plugin.io.DirectoryPath
 import community.flock.wirespec.plugin.io.FilePath
 import community.flock.wirespec.plugin.io.Source
 import community.flock.wirespec.plugin.io.Source.Type.JSON
-import community.flock.wirespec.plugin.io.Source.Type.Wirespec
 import community.flock.wirespec.plugin.io.SourcePath
 import community.flock.wirespec.plugin.io.getFullPath
 import community.flock.wirespec.plugin.io.getOutPutPath
@@ -102,7 +101,7 @@ private class Compile(
             is DirectoryPath -> Directory(inputPath).wirespecSources().or(::handleError)
             is FilePath -> when (inputPath.extension) {
                 FileExtension.Wirespec -> nonEmptySetOf(
-                    Source<Wirespec>(
+                    Source(
                         inputPath.name,
                         inputPath.read(),
                     ),
@@ -118,7 +117,7 @@ private class Compile(
                 Language.Kotlin -> KotlinEmitter(PackageName(packageName), shared)
                 Language.Scala -> ScalaEmitter(PackageName(packageName))
                 Language.TypeScript -> TypeScriptEmitter(shared)
-                Language.Python -> PythonEmitter(emitShared = shared)
+                Language.Python -> PythonEmitter(shared)
                 Language.Wirespec -> WirespecEmitter()
                 Language.OpenAPIV2 -> OpenAPIV2Emitter
                 Language.OpenAPIV3 -> OpenAPIV3Emitter

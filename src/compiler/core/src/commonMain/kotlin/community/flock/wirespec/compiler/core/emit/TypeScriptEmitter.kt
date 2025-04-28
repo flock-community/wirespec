@@ -10,7 +10,6 @@ import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.emit.shared.TypeScriptShared
 import community.flock.wirespec.compiler.core.parse.Channel
-import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
@@ -96,7 +95,7 @@ open class TypeScriptEmitter(val emitShared: Boolean = false) : Emitter() {
           |${endpoint.responses.toSet().joinToString("\n") { it.emitType() }}
           |${Spacer}export type Response = ${endpoint.responses.toSet().joinToString(" | ") { it.emitName() }}
           |${endpoint.requests.first().emitFunction(endpoint)}
-          |${endpoint.responses.joinToString("\n") { it.emitFunction(endpoint) }}
+          |${endpoint.responses.joinToString("\n") { it.emitFunction() }}
           |${Spacer}export type Handler = {
           |${Spacer(2)}${emitHandleFunction(endpoint)}
           |${Spacer}}
@@ -151,7 +150,7 @@ open class TypeScriptEmitter(val emitShared: Boolean = false) : Emitter() {
     """.trimIndent()
 
     private fun Endpoint.Request.emitFunction(endpoint: Endpoint) = """
-      |${Spacer}export const request = (${paramList(endpoint).takeIf { it.isNotEmpty() }?.let { "props: ${it.joinToObject { it.emit() }}" }.orEmpty()}): Request => ({
+      |${Spacer}export const request = (${paramList(endpoint).takeIf { it.isNotEmpty() }?.run { "props: ${joinToObject { it.emit() }}" }.orEmpty()}): Request => ({
       |${Spacer(2)}path: ${endpoint.pathParams.joinToObject { "${emit(it.identifier)}: props[${emit(it.identifier)}]" }},
       |${Spacer(2)}method: "${endpoint.method}",
       |${Spacer(2)}queries: ${endpoint.queries.joinToObject { "${emit(it.identifier)}: props[${emit(it.identifier)}]" }},
@@ -160,8 +159,8 @@ open class TypeScriptEmitter(val emitShared: Boolean = false) : Emitter() {
       |${Spacer}})
     """.trimIndent()
 
-    private fun Endpoint.Response.emitFunction(endpoint: Endpoint) = """
-      |${Spacer}export const response${status.firstToUpper()} = (${paramList().takeIf { it.isNotEmpty() }?.let { "props: ${it.joinToObject { it.emit() }}" }.orEmpty()}): Response${status.firstToUpper()} => ({
+    private fun Endpoint.Response.emitFunction() = """
+      |${Spacer}export const response${status.firstToUpper()} = (${paramList().takeIf { it.isNotEmpty() }?.run { "props: ${joinToObject { it.emit() }}" }.orEmpty()}): Response${status.firstToUpper()} => ({
       |${Spacer(2)}status: ${status},
       |${Spacer(2)}headers: ${headers.joinToObject { "${emit(it.identifier)}: props[${emit(it.identifier)}]" }},
       |${Spacer(2)}body: ${content?.let { "props.body" } ?: "undefined"},

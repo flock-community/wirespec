@@ -71,12 +71,6 @@ abstract class Emitter : Emitters {
             is Endpoint.Segment.Param -> "{${identifier.value}}"
         }
 
-    internal fun Endpoint.Segment.emitMap() =
-        when (this) {
-            is Endpoint.Segment.Literal -> value
-            is Endpoint.Segment.Param -> "${'$'}{props.${emit(identifier)}}"
-        }
-
     internal val Endpoint.pathParams get() = path.filterIsInstance<Endpoint.Segment.Param>()
 
     internal val Endpoint.indexedPathParams
@@ -99,7 +93,6 @@ abstract class Emitter : Emitters {
         listOfNotNull(content?.toParam())
     ).flatten()
 
-
     private fun Reference.flattenListDict(): Reference = when (this) {
         is Reference.Dict -> reference.flattenListDict()
         is Reference.Iterable -> reference.flattenListDict()
@@ -112,7 +105,7 @@ abstract class Emitter : Emitters {
             headers.map { it.reference },
             queries.map { it.reference },
             requests.map { it.content?.reference },
-            responses.flatMap { listOf(it.content?.reference) + it.headers.map { it.reference } }
+            responses.flatMap { listOf(it.content?.reference) + it.headers.map { header -> header.reference } }
         ).flatten().filterNotNull().map { it.flattenListDict() }.filterIsInstance<Reference.Custom>().distinct()
 
         is Type -> shape.value
@@ -155,9 +148,6 @@ abstract class Emitter : Emitters {
         fun Module.needImports() = statements.any { it is Endpoint || it is Enum || it is Refined }
         fun Module.hasEndpoints() = statements.any { it is Endpoint }
         fun String.isStatusCode() = toIntOrNull()?.let { it in 0..599 } ?: false
-        val internalClasses = setOf(
-            "Request", "Response"
-        )
     }
 }
 
