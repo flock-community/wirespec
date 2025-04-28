@@ -15,7 +15,7 @@
 
 ## Checklist
 <!-- Please check all that apply -->
-- [ ] I have followed the [contribution guidelines](../CONTRIBUTING.md)
+- [ ] I have followed the [contribution guidelines](https://github.com/flock-community/wirespec/blob/master/CONTRIBUTING.md)
 - [ ] I have written tests for my changes
 - [ ] I have updated the documentation if necessary
 - [ ] I have written code in a functional style (using [Arrow](https://arrow-kt.io/) where appropriate)
