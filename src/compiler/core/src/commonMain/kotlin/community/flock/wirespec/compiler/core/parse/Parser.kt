@@ -67,8 +67,8 @@ object Parser {
         }
     }
 
-    private fun validate(options: ParseOptions): (Statements) -> EitherNel<WirespecException, Statements> = {
-        defs: Statements -> defs.runOption(options.allowUnions) { fillExtendsClause() }
+    private fun validate(options: ParseOptions): (Statements) -> EitherNel<WirespecException, Statements> = { defs: Statements ->
+        defs.runOption(options.allowUnions) { fillExtendsClause() }
     }
 
     private fun Statements.runOption(bool: Boolean, block: Statements.() -> EitherNel<WirespecException, Statements>) = if (bool) block() else right()

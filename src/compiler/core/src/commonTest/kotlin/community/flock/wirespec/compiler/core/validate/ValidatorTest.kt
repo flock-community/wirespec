@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.validate
 import arrow.core.EitherNel
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.ModuleContent
+import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.exceptions.DuplicateChannelError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateEndpointError
@@ -21,16 +22,12 @@ import kotlin.test.Test
 class ValidatorTest {
 
     private fun validate(vararg sources: String): EitherNel<WirespecException, AST> {
-        val context = object : ValidationContext, NoLogger {
-            override val spec = WirespecSpec
-        }
+        val moduleContents = sources.map { ModuleContent("", it) }.toNonEmptyListOrNull()
+            ?: throw IllegalArgumentException("At least one source is required")
 
-        return context.validate(
-            context.parse(
-                sources.map { ModuleContent("module.ws", it) }.toNonEmptyListOrNull()
-                    ?: throw IndexOutOfBoundsException("No sources provided"),
-            ),
-        )
+        return object : ParseContext, NoLogger {
+            override val spec = WirespecSpec
+        }.parse(moduleContents)
     }
 
     @Test
