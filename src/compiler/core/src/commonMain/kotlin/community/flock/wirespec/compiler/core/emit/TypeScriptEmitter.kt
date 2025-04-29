@@ -161,7 +161,7 @@ open class TypeScriptEmitter(val emitShared: Boolean = false) : Emitter() {
 
     private fun Endpoint.Response.emitFunction() = """
       |${Spacer}export const response${status.firstToUpper()} = (${paramList().takeIf { it.isNotEmpty() }?.run { "props: ${joinToObject { it.emit() }}" }.orEmpty()}): Response${status.firstToUpper()} => ({
-      |${Spacer(2)}status: ${status},
+      |${Spacer(2)}status: ${status.fixStatus()},
       |${Spacer(2)}headers: ${headers.joinToObject { "${emit(it.identifier)}: props[${emit(it.identifier)}]" }},
       |${Spacer(2)}body: ${content?.let { "props.body" } ?: "undefined"},
       |${Spacer}})
@@ -178,7 +178,7 @@ open class TypeScriptEmitter(val emitShared: Boolean = false) : Emitter() {
 
     private fun Endpoint.Response.emitType() = """
       |${Spacer}export type ${emitName()} = {
-      |${Spacer(2)}status: $status
+      |${Spacer(2)}status: ${status.fixStatus()}
       |${Spacer(2)}headers: {${headers.joinToString { "${emit(it.identifier)}: ${it.reference.emit()}" }}}
       |${Spacer(2)}body: ${emitReference()}
       |${Spacer}}
@@ -225,9 +225,9 @@ open class TypeScriptEmitter(val emitShared: Boolean = false) : Emitter() {
     """.trimMargin()
 
     private fun Endpoint.Response.emitClientFromResponse() = """
-        |case ${status}:
+        |case ${status.fixStatus()}:
         |${Spacer(1)}return {
-        |${Spacer(2)}status: ${status},
+        |${Spacer(2)}status: ${status.fixStatus()},
         |${Spacer(2)}headers: {${headers.joinToString { it.emitDeserialize("headers") }}},
         |${Spacer(2)}body: serialization.deserialize<${emitReference()}>(it.body)
         |${Spacer(1)}};

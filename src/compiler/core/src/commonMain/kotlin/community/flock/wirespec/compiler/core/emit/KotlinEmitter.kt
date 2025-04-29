@@ -293,11 +293,6 @@ open class KotlinEmitter(
     private fun String.brace() = wrap("(", ")")
     private fun String.wrap(prefix: String, postfix: String) = if (isEmpty()) "" else "$prefix$this$postfix"
 
-    private fun String.fixStatus(): String = when (this) {
-        "default" -> "200"
-        else -> this
-    }
-
     private fun String.sanitizeSymbol() = this
         .split(".", " ")
         .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }

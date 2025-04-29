@@ -104,9 +104,9 @@ data object PythonShared : Shared {
         |
         |    class Deserializer(Generic[T], ABC):
         |        @abstractmethod
-        |        def deserialize[T](self, value: str | None, t: type[T]) -> T: pass
+        |        def deserialize(self, value: str | None, t: type[T]) -> T: pass
         |        @abstractmethod
-        |        def deserialize_param[T](self, value: List[str] | None, t: type[T]) -> T: pass
+        |        def deserialize_param(self, value: List[str] | None, t: type[T]) -> T: pass
         |
         |    class Serialization(Serializer, Deserializer):
         |        @abstractmethod
@@ -114,9 +114,9 @@ data object PythonShared : Shared {
         |        @abstractmethod
         |        def serialize_param(self, value: T, t: type[T]) -> List[str]: pass
         |        @abstractmethod
-        |        def deserialize[T](self, value: str | None, t: type[T]) -> T: pass
+        |        def deserialize(self, value: str | None, t: type[T]) -> T: pass
         |        @abstractmethod
-        |        def deserialize_param[T](self, value: List[str] | None, t: type[T]) -> T: pass
+        |        def deserialize_param(self, value: List[str] | None, t: type[T]) -> T: pass
         |
         |    @dataclass
         |    class RawRequest:

@@ -368,11 +368,6 @@ open class JavaEmitter(
 
     private val Reference.isIterable get() = this is Reference.Iterable
 
-    private fun String.fixStatus(): String = when (this) {
-        "default" -> "200"
-        else -> this
-    }
-
     private fun String.sanitizeSymbol() = this
         .split(".", " ", "-")
         .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
