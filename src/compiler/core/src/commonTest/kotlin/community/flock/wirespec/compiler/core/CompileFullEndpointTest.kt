@@ -854,7 +854,7 @@ class CompileFullEndpointTest {
         compiler { PythonEmitter() } shouldBeRight python
     }
 
-    //TODO - Missing request and response headers,
+    // TODO - Missing request and response headers,
     @Test
     fun wirespec() {
         val wirespec = """
