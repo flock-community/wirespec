@@ -234,7 +234,7 @@ class CompileMinimalEndpointTest {
             |from dataclasses import dataclass
             |from typing import List, Optional
             |
-            |from .shared.Wirespec import T, Wirespec
+            |from ..wirespec import T, Wirespec
             |
             |@dataclass
             |class TodoDto:
@@ -245,11 +245,11 @@ class CompileMinimalEndpointTest {
             |from dataclasses import dataclass
             |from typing import List, Optional
             |
-            |from .shared.Wirespec import T, Wirespec
+            |from ..wirespec import T, Wirespec
             |
-            |from .TodoDto import TodoDto
+            |from ..model.TodoDto import TodoDto
             |
-            |class GetTodosEndpoint (Wirespec.Endpoint):
+            |class GetTodos (Wirespec.Endpoint):
             |  @dataclass
             |  class Request(Wirespec.Request[None]):
             |    @dataclass
@@ -352,8 +352,10 @@ class CompileMinimalEndpointTest {
             |
             |
             |
-            |from .GetTodos import GetTodos
-            |from .TodoDto import TodoDto
+            |from . import model
+            |from . import endpoint
+            |from . import wirespec
+            |
         """.trimMargin()
         compiler { PythonEmitter() } shouldBeRight python
     }

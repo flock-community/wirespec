@@ -114,8 +114,8 @@ private class Compile(
             when (it) {
                 Language.Java -> JavaEmitter(PackageName(packageName), shared)
                 Language.Kotlin -> KotlinEmitter(PackageName(packageName), shared)
+                Language.Python -> PythonEmitter(PackageName(packageName), shared)
                 Language.TypeScript -> TypeScriptEmitter(shared)
-                Language.Python -> PythonEmitter(shared)
                 Language.Wirespec -> WirespecEmitter()
                 Language.OpenAPIV2 -> OpenAPIV2Emitter
                 Language.OpenAPIV3 -> OpenAPIV3Emitter

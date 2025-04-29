@@ -9,7 +9,7 @@ const val DEFAULT_PACKAGE = "community.flock.wirespec"
 const val DEFAULT_SHARED_PACKAGE_STRING = DEFAULT_PACKAGE
 const val DEFAULT_GENERATED_PACKAGE_STRING = "$DEFAULT_PACKAGE.generated"
 
-fun Definition.namespace () = when (this) {
+fun Definition.namespace() = when (this) {
     is Endpoint -> "endpoint"
     is Channel -> "channel"
     is Model -> "model"

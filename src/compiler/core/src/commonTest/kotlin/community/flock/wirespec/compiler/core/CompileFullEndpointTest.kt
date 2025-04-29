@@ -568,7 +568,7 @@ class CompileFullEndpointTest {
             |from dataclasses import dataclass
             |from typing import List, Optional
             |
-            |from .shared.Wirespec import T, Wirespec
+            |from ..wirespec import T, Wirespec
             |
             |@dataclass
             |class PotentialTodoDto:
@@ -580,7 +580,7 @@ class CompileFullEndpointTest {
             |from dataclasses import dataclass
             |from typing import List, Optional
             |
-            |from .shared.Wirespec import T, Wirespec
+            |from ..wirespec import T, Wirespec
             |
             |@dataclass
             |class Token:
@@ -591,7 +591,7 @@ class CompileFullEndpointTest {
             |from dataclasses import dataclass
             |from typing import List, Optional
             |
-            |from .shared.Wirespec import T, Wirespec
+            |from ..wirespec import T, Wirespec
             |
             |@dataclass
             |class TodoDto:
@@ -604,7 +604,7 @@ class CompileFullEndpointTest {
             |from dataclasses import dataclass
             |from typing import List, Optional
             |
-            |from .shared.Wirespec import T, Wirespec
+            |from ..wirespec import T, Wirespec
             |
             |@dataclass
             |class Error:
@@ -616,14 +616,14 @@ class CompileFullEndpointTest {
             |from dataclasses import dataclass
             |from typing import List, Optional
             |
-            |from .shared.Wirespec import T, Wirespec
+            |from ..wirespec import T, Wirespec
             |
-            |from .Token import Token
-            |from .PotentialTodoDto import PotentialTodoDto
-            |from .TodoDto import TodoDto
-            |from .Error import Error
+            |from ..model.Token import Token
+            |from ..model.PotentialTodoDto import PotentialTodoDto
+            |from ..model.TodoDto import TodoDto
+            |from ..model.Error import Error
             |
-            |class PutTodoEndpoint (Wirespec.Endpoint):
+            |class PutTodo (Wirespec.Endpoint):
             |  @dataclass
             |  class Request(Wirespec.Request[PotentialTodoDto]):
             |    @dataclass
@@ -798,11 +798,10 @@ class CompileFullEndpointTest {
             |
             |
             |
-            |from .PutTodo import PutTodo
-            |from .PotentialTodoDto import PotentialTodoDto
-            |from .Token import Token
-            |from .TodoDto import TodoDto
-            |from .Error import Error
+            |from . import model
+            |from . import endpoint
+            |from . import wirespec
+            |
         """.trimMargin()
         compiler { PythonEmitter() } shouldBeRight python
     }
