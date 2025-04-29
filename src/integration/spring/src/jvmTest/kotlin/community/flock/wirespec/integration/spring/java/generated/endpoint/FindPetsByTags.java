@@ -55,11 +55,16 @@ public interface FindPetsByTags extends Wirespec.Endpoint {
   interface Handler extends Wirespec.Handler {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
+      var queries = new java.util.HashMap<String, java.util.List<String>>() {{
+        request.queries.tags.ifPresent(it -> put("tags", serialization.serializeParam(it, Wirespec.getType(String.class, true))));
+      }};
+      
+      var headers = java.util.Collections.<String,java.util.List<String>>emptyMap();
       return new Wirespec.RawRequest(
         request.method.name(),
         java.util.List.of("pet", "findByTags"),
-        java.util.Map.ofEntries(java.util.Map.entry("tags", serialization.serializeParam(request.queries.tags, Wirespec.getType(String.class, true)))),
-        java.util.Collections.emptyMap(),
+        queries,
+        headers,
         serialization.serialize(request.getBody(), Wirespec.getType(Void.class, false))
       );
     }

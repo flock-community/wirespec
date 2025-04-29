@@ -50,11 +50,17 @@ public interface UpdatePetWithForm extends Wirespec.Endpoint {
   interface Handler extends Wirespec.Handler {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
+      var queries = new java.util.HashMap<String, java.util.List<String>>() {{
+        request.queries.name.ifPresent(it -> put("name", serialization.serializeParam(it, Wirespec.getType(String.class, false))));
+        request.queries.status.ifPresent(it -> put("status", serialization.serializeParam(it, Wirespec.getType(String.class, false))));
+      }};
+      
+      var headers = java.util.Collections.<String,java.util.List<String>>emptyMap();
       return new Wirespec.RawRequest(
         request.method.name(),
         java.util.List.of("pet", serialization.serialize(request.path.petId, Wirespec.getType(Long.class, false))),
-        java.util.Map.ofEntries(java.util.Map.entry("name", serialization.serializeParam(request.queries.name, Wirespec.getType(String.class, false))), java.util.Map.entry("status", serialization.serializeParam(request.queries.status, Wirespec.getType(String.class, false)))),
-        java.util.Collections.emptyMap(),
+        queries,
+        headers,
         serialization.serialize(request.getBody(), Wirespec.getType(Void.class, false))
       );
     }

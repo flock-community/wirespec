@@ -53,11 +53,13 @@ public interface PlaceOrder extends Wirespec.Endpoint {
   interface Handler extends Wirespec.Handler {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
+      var queries = java.util.Collections.<String,java.util.List<String>>emptyMap();
+      var headers = java.util.Collections.<String,java.util.List<String>>emptyMap();
       return new Wirespec.RawRequest(
         request.method.name(),
         java.util.List.of("store", "order"),
-        java.util.Collections.emptyMap(),
-        java.util.Collections.emptyMap(),
+        queries,
+        headers,
         serialization.serialize(request.getBody(), Wirespec.getType(Order.class, false))
       );
     }

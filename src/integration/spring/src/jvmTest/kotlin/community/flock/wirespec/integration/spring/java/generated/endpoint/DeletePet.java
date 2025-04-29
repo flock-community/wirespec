@@ -49,11 +49,16 @@ public interface DeletePet extends Wirespec.Endpoint {
   interface Handler extends Wirespec.Handler {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
+      var queries = java.util.Collections.<String,java.util.List<String>>emptyMap();
+      var headers = new java.util.HashMap<String, java.util.List<String>>() {{
+        request.headers.api_key.ifPresent(it -> put("api_key", serialization.serializeParam(it, Wirespec.getType(String.class, false))));
+      }};
+      
       return new Wirespec.RawRequest(
         request.method.name(),
         java.util.List.of("pet", serialization.serialize(request.path.petId, Wirespec.getType(Long.class, false))),
-        java.util.Collections.emptyMap(),
-        java.util.Map.ofEntries(java.util.Map.entry("api_key", serialization.serializeParam(request.headers.api_key, Wirespec.getType(String.class, false)))),
+        queries,
+        headers,
         serialization.serialize(request.getBody(), Wirespec.getType(Void.class, false))
       );
     }
