@@ -15,19 +15,19 @@ for platform in "${platforms[@]}"; do
   for inputDir in "${inputDirs[@]}"; do
     dir="/app/types/out/$platform/$inputDir/kotlin"
     eval "kotlinc $dir/$compiledPackageDir/model/*.kt \
-      $dir/$compiledPackageDir/endpoint/**/*.kt \
-      $dir/$sharedPackageDir/**/*.kt \
+      $dir/$compiledPackageDir/endpoint/*.kt \
+      $dir/$sharedPackageDir/*.kt \
       -d $dir/wirespec.jar"
-  done
+    done
 done
 
 printf "\nCompiling Java Classes:\n"
 for platform in "${platforms[@]}"; do
   for inputDir in "${inputDirs[@]}"; do
     dir="/app/types/out/$platform/$inputDir/java"
-    eval "javac $dir/$compiledPackageDir/model/**/*.java \
+    eval "javac $dir/$compiledPackageDir/model/*.java \
       $dir/$compiledPackageDir/endpoint/*.java \
-      $dir/$sharedPackageDir/**/*.java \
+      $dir/$sharedPackageDir/**.java \
       -d $dir/target"
     eval "jar cvf $dir/wirespec.jar $dir/target/*"
   done
@@ -42,7 +42,6 @@ for platform in "${platforms[@]}"; do
       $dir/$sharedPackageDir/typescript/*.ts"
   done
 done
-
 
 printf "\nCompiling Python Classes:\n"
 for platform in "${platforms[@]}"; do
