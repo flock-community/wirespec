@@ -16,6 +16,10 @@ RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && \
     sdk install java && \
     npm install -g typescript
 
+RUN apt update && \
+    apt install -y python3 python3-pip && \
+    apt clean
+
 COPY src/plugin/cli/build/bin/linuxX64/releaseExecutable/cli.kexe /app/wirespec
 COPY scripts/docker/compileTypes.sh /app/compileTypes.sh
 

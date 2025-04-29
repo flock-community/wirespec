@@ -15,7 +15,7 @@
     <!-- Text to display as description on Preferences/Settings | Plugin page -->
     <description>
         <![CDATA[
-      Wirespec is a typesafe language to specify data transfer models which are exchanged between services. These models can be transformed into bindings for a specific languages (Typescript, Java, Kotlin, Scala).
+      Wirespec is a typesafe language to specify data transfer models which are exchanged between services. These models can be transformed into bindings for a specific languages (Typescript, Java, Kotlin, Python).
 
       This plugin supports writing Wirespec files by syntax highlighting and compiler feedback for a smooth developer experience.
 

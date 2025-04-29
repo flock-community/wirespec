@@ -9,8 +9,6 @@ const getEmitterFor: (emitter: Emitter) => Emitters = (emitter: Emitter) => {
       return Emitters.TYPESCRIPT;
     case "kotlin":
       return Emitters.KOTLIN;
-    case "scala":
-      return Emitters.SCALA;
     case "python":
       return Emitters.PYTHON;
     case "java":
@@ -28,7 +26,6 @@ const getLanguageFor: (emitter: Emitter) => Language = (emitter: Emitter) => {
   switch (emitter) {
     case "typescript":
     case "kotlin":
-    case "scala":
     case "python":
     case "java":
     case "wirespec":

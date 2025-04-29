@@ -12,14 +12,12 @@ import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.PythonEmitter
-import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.shared.JavaShared
 import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
-import community.flock.wirespec.compiler.core.emit.shared.ScalaShared
 import community.flock.wirespec.compiler.core.emit.shared.TypeScriptShared
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.tokenize.tokenize
@@ -45,7 +43,6 @@ import kotlinx.serialization.json.Json
 enum class Shared(val source: String) {
     KOTLIN(KotlinShared.source),
     JAVA(JavaShared.source),
-    SCALA(ScalaShared.source),
     TYPESCRIPT(TypeScriptShared.source),
 }
 
@@ -55,7 +52,6 @@ enum class Emitters {
     TYPESCRIPT,
     JAVA,
     KOTLIN,
-    SCALA,
     PYTHON,
     OPENAPI_V2,
     OPENAPI_V3,
@@ -104,7 +100,6 @@ fun emit(ast: WsAST, emitter: Emitters, packageName: String) = ast
             Emitters.TYPESCRIPT -> TypeScriptEmitter().emit(it, noLogger)
             Emitters.JAVA -> JavaEmitter(PackageName(packageName)).emit(it, noLogger)
             Emitters.KOTLIN -> KotlinEmitter(PackageName(packageName)).emit(it, noLogger)
-            Emitters.SCALA -> ScalaEmitter(PackageName(packageName)).emit(it, noLogger)
             Emitters.PYTHON -> PythonEmitter().emit(it, noLogger)
             Emitters.OPENAPI_V2 -> listOf(it)
                 .map(OpenAPIV2Emitter::emitSwaggerObject)
