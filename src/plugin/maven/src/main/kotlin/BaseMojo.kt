@@ -4,7 +4,6 @@ import arrow.core.toNonEmptySetOrNull
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.PythonEmitter
-import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
@@ -102,7 +101,6 @@ abstract class BaseMojo : AbstractMojo() {
             when (it) {
                 Language.Java -> JavaEmitter(PackageName(packageName))
                 Language.Kotlin -> KotlinEmitter(PackageName(packageName))
-                Language.Scala -> ScalaEmitter(PackageName(packageName))
                 Language.TypeScript -> TypeScriptEmitter()
                 Language.Python -> PythonEmitter()
                 Language.Wirespec -> WirespecEmitter()
