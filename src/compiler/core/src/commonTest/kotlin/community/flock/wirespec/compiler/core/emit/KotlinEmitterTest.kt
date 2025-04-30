@@ -37,6 +37,20 @@ class KotlinEmitterTest {
     }
 
     @Test
+    fun testEmitterEmptyType() {
+        val expected = listOf(
+            """
+            |package community.flock.wirespec.generated.model
+            |
+            |data object TodoWithoutProperties
+            """.trimMargin(),
+        )
+
+        val res = emitContext.emitFirst(NodeFixtures.emptyType)
+        res shouldBe expected
+    }
+
+    @Test
     fun testEmitterRefined() {
         val expected = listOf(
             """

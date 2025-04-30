@@ -69,4 +69,13 @@ object NodeFixtures {
         ),
         extends = emptyList(),
     )
+
+    val emptyType = Type(
+        comment = null,
+        identifier = DefinitionIdentifier("TodoWithoutProperties"),
+        shape = Type.Shape(
+            value = emptyList(),
+        ),
+        extends = emptyList(),
+    )
 }

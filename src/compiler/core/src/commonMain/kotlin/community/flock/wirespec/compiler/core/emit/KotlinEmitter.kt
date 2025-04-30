@@ -68,7 +68,7 @@ open class KotlinEmitter(
         }
 
     override fun emit(type: Type, module: Module) =
-        if (type.shape.value.isEmpty()) "${Spacer}data object${emit(type.identifier)}"
+        if (type.shape.value.isEmpty()) "data object ${emit(type.identifier)}"
         else """
             |data class ${emit(type.identifier)}(
             |${type.shape.emit()}
