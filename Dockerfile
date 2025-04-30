@@ -2,7 +2,7 @@ FROM debian:12-slim
 
 RUN mkdir -p /app/types && \
     apt update && \
-    apt install -y curl unzip zip && \
+    apt install -y curl unzip zip python3-mypy && \
     apt clean && \
     curl -fsSL "https://deb.nodesource.com/setup_22.x" | bash && \
     curl -s "https://get.sdkman.io" | bash

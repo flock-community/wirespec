@@ -87,11 +87,6 @@ open class WirespecEmitter : Emitter() {
     override fun emit(union: Union) =
         "type ${emit(union.identifier)} = ${union.entries.joinToString(" | ") { it.emit() }}\n"
 
-    private fun String.fixStatus(): String = when (this) {
-        "default" -> "200"
-        else -> this
-    }
-
     private fun List<Endpoint.Segment>.emitPath() = "/" + joinToString("/") {
         when (it) {
             is Endpoint.Segment.Param -> "{${it.identifier.value}: ${it.reference.emit()}}"

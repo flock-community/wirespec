@@ -93,6 +93,11 @@ abstract class Emitter : Emitters {
         listOfNotNull(content?.toParam())
     ).flatten()
 
+    protected fun String.fixStatus(): String = when (this) {
+        "default" -> "200"
+        else -> this
+    }
+
     private fun Reference.flattenListDict(): Reference = when (this) {
         is Reference.Dict -> reference.flattenListDict()
         is Reference.Iterable -> reference.flattenListDict()
