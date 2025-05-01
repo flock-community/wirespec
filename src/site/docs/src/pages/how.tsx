@@ -19,21 +19,21 @@ export default function ContractPage() {
               <h2>Key Principles of the Contract-First Approach:</h2>
               <ol className={styles.principles}>
                 <li>
-                  <strong>Single Source of Truth:</strong>
+                  Single Source of Truth:
                   <ul>
                     <li><span className={styles.bullet}></span> At the heart of the contract–first approach is the idea that a well-defined contract serves as the single authoritative source of truth for the interface.</li>
                     <li><span className={styles.bullet}></span> These specifications are written in a concise and human–readable language, making them accessible and understandable across teams, regardless of their technical expertise.</li>
                   </ul>
                 </li>
                 <li>
-                  <strong>Independence from Implementation:</strong>
+                  Independence from Implementation:
                   <ul>
                     <li><span className={styles.bullet}></span> The interface contract is agnostic of any specific programming language, framework, or architectural style.</li>
                     <li><span className={styles.bullet}></span> By abstracting the specification from implementation details, teams are free to implement the interface in diverse tech stacks while maintaining consistency and adherence to the defined standards.</li>
                   </ul>
                 </li>
                 <li>
-                  <strong>Collaborative Design–Centric Methodology:</strong>
+                  Collaborative Design–Centric Methodology:
                   <ul>
                     <li><span className={styles.bullet}></span> This approach simplifies communication between cross–functional teams (e.g., developers, designers, product managers, and quality assurance teams).</li>
                     <li><span className={styles.bullet}></span> Specifications serve as a shared reference point, ensuring everyone is aligned on expectations and requirements for the interface. This reduces ambiguity and miscommunication during the development lifecycle.</li>

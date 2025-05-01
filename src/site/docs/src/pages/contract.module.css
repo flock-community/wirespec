@@ -5,19 +5,19 @@
 }
 
 .contractMain {
-    padding: 210px 0px 175px;
+    padding: 210px 1rem 175px;
     max-width: 960px;
-    width: 96%;
+    width: 98%;
     margin: 0 auto;
     color: white;
     @media(max-width: 1440px) {
-        padding: 150px 0px 90px;
+        padding: 150px 1rem 90px;
     }
     @media(max-width: 1024px) {
         padding: 100px 0px 50px;
     }
     @media(max-width: 767px) {
-        padding: 120px 0px 30px;
+        padding: 120px 1rem 30px;
         padding-top: 100px;
     }
 }
@@ -96,7 +96,13 @@
 .principles li {
     position: relative;
     margin-bottom: 1rem;
-    padding-left: 1.5rem;
+    padding-left: 0.25rem;
+    ul{
+        margin-top: 5px;
+      li{
+        padding-left: 1.25rem;
+      }   
+    }
 }
 
 .bullet {
@@ -138,7 +144,6 @@
     letter-spacing: -0.01em;
     color: #d1d1d1;
     margin-bottom: 1.5rem;
-    text-align: justify;
 
     @media (max-width: 767px) {
         font-size: 16px;
@@ -175,7 +180,6 @@
     line-height: 160%;
     letter-spacing: -0.01em;
     margin-bottom: 2.5rem;
-    text-align: justify;
 
     @media (max-width: 767px) {
         font-size: 16px;
@@ -205,7 +209,6 @@
     color: #d1d1d1;
     line-height: 160%;
     letter-spacing: -0.01em;
-    text-align: justify;
 
     @media (max-width: 767px) {
         font-size: 16px;
