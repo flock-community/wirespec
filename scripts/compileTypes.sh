@@ -10,6 +10,8 @@ if [[ $(uname -m) = arm64 ]]; then
   archSpecific="--platform=linux/amd64"
 fi
 
+# Compare output directories for same content and copy one of them to a 'combined' dir.
+# Then that combined directory serves as a single input for the type checkers.
 diff -qr "$output/docker/" "$output/jvm/" --exclude='*.jar' && \
 diff -qr "$output/jvm/" "$output/native/" --exclude='*.jar' && \
 diff -qr "$output/native/" "$output/node/" --exclude='*.jar' && \
