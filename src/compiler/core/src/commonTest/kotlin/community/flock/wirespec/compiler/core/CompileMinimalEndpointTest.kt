@@ -322,7 +322,7 @@ class CompileMinimalEndpointTest {
             |        method = request.method.value,
             |        queries = {},
             |        headers = {},
-            |        body = type(None),
+            |        body = serialization.serialize(request.body, type(None)),
             |      )
             |
             |    @staticmethod
