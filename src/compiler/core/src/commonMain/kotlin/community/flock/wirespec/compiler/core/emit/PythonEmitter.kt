@@ -245,7 +245,7 @@ open class PythonEmitter(
         |${Spacer}${Spacer}method = request.method.value,
         |${Spacer}${Spacer}queries = ${if (endpoint.queries.isNotEmpty()) endpoint.queries.joinToString(",\n", "{", "}") { it.emitSerializedParams("request", "queries") } else "{}"},
         |${Spacer}${Spacer}headers = ${if (endpoint.headers.isNotEmpty()) endpoint.headers.joinToString(",\n", "{", "}") { it.emitSerializedParams("request", "headers") } else "{}"},
-        |${Spacer}${Spacer}body = ${content?.let { "serialization.serialize(request.body, ${it.reference.emitType()})" } ?: NONE},
+        |${Spacer}${Spacer}body = serialization.serialize(request.body, ${content?.reference?.emitType() ?: NONE}),
         |${Spacer})
         |
     """.trimMargin()
@@ -314,7 +314,7 @@ open class PythonEmitter(
     private fun Endpoint.Response.emitDeserialized(endpoint: Endpoint) = listOfNotNull(
         "case $status:",
         "${Spacer}return ${emit(endpoint.identifier)}.Response$status(",
-        "${Spacer(2)}body = ${content?.let { "serialization.deserialize(response.body, ${it.reference.emitType()})" } ?: NONE},",
+        "${Spacer(2)}body = serialization.deserialize(response.body, ${content?.reference?.emitType() ?: NONE}),",
         headers.joinToString(",\n") { it.emitDeserializedParams("response", "headers") }.orNull()?.spacer(2),
         "${Spacer})"
     ).joinToString("\n")
@@ -325,7 +325,7 @@ open class PythonEmitter(
         |${Spacer(1)}return Wirespec.RawResponse(
         |${Spacer(2)}status_code = response.status,
         |${Spacer(2)}headers = ${if (headers.isNotEmpty()) headers.joinToString(", ", "{", "}") { it.emitSerializedParams("response", "headers") } else "{}"},
-        |${Spacer(2)}body = ${content?.let { "serialization.serialize(response.body, ${it.reference.emitType()})" } ?: NONE},
+        |${Spacer(2)}body = ${if (content != null) "serialization.serialize(response.body, ${content.reference.emitType()}" else NONE}),
         |${Spacer(1)})
     """.trimMargin()
 
