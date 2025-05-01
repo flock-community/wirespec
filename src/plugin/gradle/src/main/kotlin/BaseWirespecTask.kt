@@ -68,6 +68,7 @@ abstract class BaseWirespecTask : DefaultTask() {
     }
 
     protected fun packageNameValue() = packageName.getOrElse(DEFAULT_GENERATED_PACKAGE_STRING).let(PackageName::invoke)
+    protected fun sharedValue() = shared.getOrElse(false)
 
     protected fun emitter() = try {
         emitterClass.orNull?.getDeclaredConstructor()?.newInstance() as? Emitter
@@ -78,10 +79,10 @@ abstract class BaseWirespecTask : DefaultTask() {
 
     protected fun emitters() = languages.get().map {
         when (it) {
-            Language.Java -> JavaEmitter(packageNameValue())
-            Language.Kotlin -> KotlinEmitter(packageNameValue())
-            Language.TypeScript -> TypeScriptEmitter()
-            Language.Python -> PythonEmitter()
+            Language.Java -> JavaEmitter(packageNameValue(), sharedValue())
+            Language.Kotlin -> KotlinEmitter(packageNameValue(), sharedValue())
+            Language.Python -> PythonEmitter(packageNameValue(), sharedValue())
+            Language.TypeScript -> TypeScriptEmitter(sharedValue())
             Language.Wirespec -> WirespecEmitter()
             Language.OpenAPIV2 -> OpenAPIV2Emitter
             Language.OpenAPIV3 -> OpenAPIV3Emitter
