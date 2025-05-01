@@ -205,20 +205,20 @@ open class JavaEmitter(
         |${endpoint.emitStatusInterfaces()}
         |${endpoint.emitResponseInterfaces()}
         |
-        |${endpoint.responses.distinctBy { it.status }.joinToString("\n") { it.emit() }}
+        |${endpoint.responses.distinctByStatus().joinToString("\n") { it.emit() }}
         |
         |${Spacer}interface Handler extends Wirespec.Handler {
         |
         |${endpoint.requests.first().emitRequestFunctions(endpoint)}
         |
         |${Spacer(2)}static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
-        |${endpoint.responses.distinctBy { it.status }.joinToString("\n") { it.emitSerialized() }}
+        |${endpoint.responses.distinctByStatus().joinToString("\n") { it.emitSerialized() }}
         |${Spacer(3)}else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
         |${Spacer(2)}}
         |
         |${Spacer(2)}static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
         |${Spacer(3)}switch (response.statusCode()) {
-        |${endpoint.responses.distinctBy { it.status }.filter { it.status.isStatusCode() }.joinToString("\n") { it.emitDeserialized() }}
+        |${endpoint.responses.distinctByStatus().filter { it.status.isStatusCode() }.joinToString("\n") { it.emitDeserialized() }}
         |${Spacer(4)}default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
         |${Spacer(3)}}
         |${Spacer(2)}}
@@ -254,7 +254,7 @@ open class JavaEmitter(
         .joinToString("\n") { "${Spacer}sealed interface Response${it}XX<T> extends Response<T> {}" }
 
     private fun Endpoint.emitResponseInterfaces() = responses
-        .distinctBy { it.status }
+        .distinctByStatus()
         .map { it.content.emit() }
         .distinct()
         .joinToString("\n") { "${Spacer}sealed interface Response${it.concatGenerics()} extends Response<$it> {}" }

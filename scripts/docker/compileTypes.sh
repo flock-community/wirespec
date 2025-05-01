@@ -8,27 +8,32 @@ combinedOutputDir="/app/types/out/combined/"
 
 inputDirs=("openapi/petstore" "wirespec")
 
-printf "\nCompiling Kotlin Classes:\n"
-for inputDir in "${inputDirs[@]}"; do
-  dir="$combinedOutputDir$inputDir/kotlin"
-  find "$dir" -name '*.kt' -print0 | xargs -0 kotlinc -d "$dir/wirespec.jar"
-done
+done="Done!"
 
-printf "\nCompiling Java Classes:\n"
+echo -n "Compiling Java Classes: "
 for inputDir in "${inputDirs[@]}"; do
   dir="$combinedOutputDir$inputDir/java"
   find "$dir" -name '*.java' -print0 | xargs -0 javac -d "$dir/target"
-  eval "jar cvf $dir/wirespec.jar $dir/target/*"
 done
+echo "$done"
 
-printf "\nType checking Python files:\n"
+echo -n "Compiling Kotlin Classes: "
+for inputDir in "${inputDirs[@]}"; do
+  dir="$combinedOutputDir$inputDir/kotlin"
+  find "$dir" -name '*.kt' -print0 | xargs -0 kotlinc -d "$dir/target"
+done
+echo "$done"
+
+echo -n "Type checking Python files: "
 for inputDir in "${inputDirs[@]}"; do
   dir="$combinedOutputDir$inputDir/python"
   find "$dir" -name '*.py' -print0 | xargs -0 python3 -m mypy
 done
+echo "$done"
 
-printf "\nType checking TypeScript files:\n"
+echo -n "Type checking TypeScript files: "
 for inputDir in "${inputDirs[@]}"; do
   dir="$combinedOutputDir$inputDir/typescript"
   find "$dir" -name '*.ts' -print0 | xargs -0 tsc --noEmit
 done
+echo "$done"

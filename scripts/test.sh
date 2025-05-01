@@ -12,7 +12,6 @@ fi
 package="community.flock.generated"
 
 languages=("Java" "Kotlin" "Python" "TypeScript" "Wirespec")
-languages=("Java" "Kotlin" "TypeScript" "Python" "Wirespec")
 
 localWorkDir=$(pwd)
 
@@ -27,7 +26,7 @@ function run() {
     echo "$compile && $convert"
 }
 
-success="echo Success!"
+done="echo Done!"
 
 echo -n "Test macOS artifact: "
 macWirespec=./src/plugin/$artifactName/build/bin/$macosArch/releaseExecutable/$artifactName.kexe
@@ -35,7 +34,7 @@ macCommand=""
 for lang in "${languages[@]}"; do
    macCommand="$macCommand $(run $macWirespec "$localWorkDir" "native" "$lang") && "
 done
-eval "$macCommand$success"
+eval "$macCommand$done"
 
 echo -n "Test JVM artifact: "
 jvmWirespec=./src/plugin/$artifactName/build/libs/$artifactName-jvm-0.0.0-SNAPSHOT.jar
@@ -43,7 +42,7 @@ jvmCommand=""
 for lang in "${languages[@]}"; do
   jvmCommand="$jvmCommand $(run "java -jar $jvmWirespec" "$localWorkDir" "jvm" "$lang") && "
 done
-eval "$jvmCommand$success"
+eval "$jvmCommand$done"
 
 echo -n "Test Node.js artifact: "
 nodeWirespec=build/js/packages/wirespec-src-plugin-$artifactName/kotlin/wirespec-src-plugin-$artifactName.js
@@ -51,7 +50,7 @@ nodeCommand=""
 for lang in "${languages[@]}"; do
   nodeCommand="$nodeCommand $(run "node $nodeWirespec" "$localWorkDir" "node" "$lang") && "
 done
-eval "$nodeCommand$success"
+eval "$nodeCommand$done"
 
 echo -n "Test docker image: "
 dockerWirespec=/app/wirespec
@@ -59,4 +58,4 @@ dockerCommand=""
 for lang in "${languages[@]}"; do
   dockerCommand="$dockerCommand $(run "$dockerWirespec" '/app' 'docker' "$lang") && "
 done
-docker run $archSpecific --rm -it -v "$localWorkDir"/types:/app/types wirespec "$dockerCommand$success"
+docker run $archSpecific --rm -it -v "$localWorkDir"/types:/app/types wirespec "$dockerCommand$done"

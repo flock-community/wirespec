@@ -160,16 +160,16 @@ open class KotlinEmitter(
         |
         |${endpoint.emitResponseInterfaces()}
         |
-        |${endpoint.responses.distinctBy { it.status }.joinToString("\n\n") { it.emit() }}
+        |${endpoint.responses.distinctByStatus().joinToString("\n\n") { it.emit() }}
         |
         |${Spacer}fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
         |${Spacer(2)}when(response) {
-        |${endpoint.responses.distinctBy { it.status }.joinToString("\n") { it.emitSerialized() }}
+        |${endpoint.responses.distinctByStatus().joinToString("\n") { it.emitSerialized() }}
         |${Spacer(2)}}
         |
         |${Spacer}fun fromResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
         |${Spacer(2)}when (response.statusCode) {
-        |${endpoint.responses.filter { it.status.isStatusCode() }.distinctBy { it.status }.joinToString("\n") { it.emitDeserialized() }}
+        |${endpoint.responses.distinctByStatus().filter { it.status.isStatusCode() }.joinToString("\n") { it.emitDeserialized() }}
         |${Spacer(3)}else -> error("Cannot match response with status: ${'$'}{response.statusCode}")
         |${Spacer(2)}}
         |
