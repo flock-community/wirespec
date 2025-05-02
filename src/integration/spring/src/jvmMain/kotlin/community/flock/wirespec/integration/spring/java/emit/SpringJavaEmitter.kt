@@ -5,7 +5,7 @@ import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.parse.Endpoint
 
-class SpringJavaEmitter(packageName: String) : JavaEmitter(PackageName(packageName)) {
+class SpringJavaEmitter(packageName: PackageName) : JavaEmitter(packageName) {
     override fun emitHandleFunction(endpoint: Endpoint): String {
         val path = "/${endpoint.path.joinToString("/") { it.emit() }}"
         val annotation = when (endpoint.method) {

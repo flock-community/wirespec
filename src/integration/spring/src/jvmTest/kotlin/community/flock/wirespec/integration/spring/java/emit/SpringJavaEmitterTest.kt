@@ -4,6 +4,7 @@ import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
+import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.utils.NoLogger
@@ -27,7 +28,7 @@ class SpringJavaEmitterTest {
         val text = SystemFileSystem.source(path).buffered().readString()
 
         val ast = parse(text)
-        val actual = SpringJavaEmitter("community.flock.wirespec.spring.test")
+        val actual = SpringJavaEmitter(PackageName("community.flock.wirespec.spring.test"))
             .emit(ast, noLogger)
             .map { it.result }
         val expected = listOf(

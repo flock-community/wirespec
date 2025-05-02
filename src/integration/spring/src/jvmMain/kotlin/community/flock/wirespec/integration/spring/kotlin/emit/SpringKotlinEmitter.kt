@@ -6,7 +6,7 @@ import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.utils.Logger
 
-class SpringKotlinEmitter(packageName: String) : KotlinEmitter(PackageName(packageName)) {
+class SpringKotlinEmitter(packageName: PackageName) : KotlinEmitter(packageName) {
     override fun emitHandleFunction(endpoint: Endpoint): String {
         val path = "/${endpoint.path.joinToString("/") { it.emit() }}"
         val annotation = when (endpoint.method) {

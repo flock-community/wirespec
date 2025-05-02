@@ -24,4 +24,4 @@ class PackageName(override val value: String, val createDirectory: Boolean) : Va
 
 operator fun PackageName.plus(definition: Definition) = this + definition.namespace()
 
-private operator fun PackageName.plus(subPackage: String) = PackageName("$value.$subPackage")
+operator fun PackageName.plus(subPackage: String) = PackageName("$value.$subPackage")

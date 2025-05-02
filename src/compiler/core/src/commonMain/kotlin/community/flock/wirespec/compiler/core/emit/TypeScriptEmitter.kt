@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.emit
 import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.EmitShared
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
@@ -21,7 +22,7 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 
-open class TypeScriptEmitter(val emitShared: Boolean = false) : Emitter() {
+open class TypeScriptEmitter(val emitShared: EmitShared = EmitShared()) : Emitter() {
 
     override val extension = FileExtension.TypeScript
 
@@ -40,7 +41,7 @@ open class TypeScriptEmitter(val emitShared: Boolean = false) : Emitter() {
             )
         )
 
-        return if (emitShared) emitted + Emitted(PackageName(DEFAULT_GENERATED_PACKAGE_STRING).toDir() + "Wirespec", shared.source) else emitted
+        return if (emitShared.value) emitted + Emitted(PackageName(DEFAULT_GENERATED_PACKAGE_STRING).toDir() + "Wirespec", shared.source) else emitted
     }
 
     override fun emit(type: Type, module: Module) =

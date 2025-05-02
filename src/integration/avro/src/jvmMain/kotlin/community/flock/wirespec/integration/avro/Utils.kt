@@ -1,6 +1,7 @@
 package community.flock.wirespec.integration.avro
 
 import arrow.core.escaped
+import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Module
@@ -12,11 +13,11 @@ import kotlinx.serialization.json.Json
 
 object Utils {
 
-    fun emitAvroSchema(packageName: String, type: Definition, module: Module) = AvroEmitter
+    fun emitAvroSchema(packageName: PackageName, type: Definition, module: Module) = AvroEmitter
         .emit(module)
         .map {
             when (it) {
-                is AvroModel.RecordType -> it.copy(namespace = packageName)
+                is AvroModel.RecordType -> it.copy(namespace = packageName.value)
                 else -> it
             }
         }

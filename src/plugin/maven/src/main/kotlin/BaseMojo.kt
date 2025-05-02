@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.emit.PythonEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.EmitShared
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.utils.Logger
@@ -86,7 +87,8 @@ abstract class BaseMojo : AbstractMojo() {
             val args: List<Any> = constructor.parameters
                 .map {
                     when (it.type) {
-                        String::class.java -> packageName
+                        PackageName::class.java -> PackageName(packageName)
+                        EmitShared::class.java -> EmitShared(shared)
                         else -> error("Cannot map constructor parameter")
                     }
                 }
@@ -99,10 +101,10 @@ abstract class BaseMojo : AbstractMojo() {
     val emitters
         get() = languages.map {
             when (it) {
-                Language.Java -> JavaEmitter(PackageName(packageName))
-                Language.Kotlin -> KotlinEmitter(PackageName(packageName))
+                Language.Java -> JavaEmitter(PackageName(packageName), EmitShared(shared))
+                Language.Kotlin -> KotlinEmitter(PackageName(packageName), EmitShared(shared))
+                Language.Python -> PythonEmitter(PackageName(packageName), EmitShared(shared))
                 Language.TypeScript -> TypeScriptEmitter()
-                Language.Python -> PythonEmitter()
                 Language.Wirespec -> WirespecEmitter()
                 Language.OpenAPIV2 -> OpenAPIV2Emitter
                 Language.OpenAPIV3 -> OpenAPIV3Emitter
