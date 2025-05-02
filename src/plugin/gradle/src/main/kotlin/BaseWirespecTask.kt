@@ -72,16 +72,18 @@ abstract class BaseWirespecTask : DefaultTask() {
     protected fun sharedValue() = shared.getOrElse(false).let(EmitShared::invoke)
 
     protected fun emitter() = try {
-        val constructor = emitterClass.orNull?.declaredConstructors?.first() ?: error("No constructor found")
-        val args: List<Any> = constructor.parameters
-            .map {
-                when (it.type) {
-                    PackageName::class.java -> packageNameValue()
-                    EmitShared::class.java -> sharedValue()
-                    else -> error("Cannot map constructor parameter")
+        emitterClass.orNull?.declaredConstructors?.first()?.let { constructor ->
+            val args: List<Any> = constructor.parameters
+                ?.map {
+                    when (it.type) {
+                        PackageName::class.java -> packageNameValue()
+                        EmitShared::class.java -> sharedValue()
+                        else -> error("Cannot map constructor parameter")
+                    }
                 }
-            }
-        constructor.newInstance(*args.toTypedArray()) as? Emitter
+                .orEmpty()
+            constructor.newInstance(*args.toTypedArray()) as? Emitter
+        }
     } catch (e: Exception) {
         logger.error("Cannot create instance of emitter: ${emitterClass.orNull?.simpleName}", e)
         throw e
