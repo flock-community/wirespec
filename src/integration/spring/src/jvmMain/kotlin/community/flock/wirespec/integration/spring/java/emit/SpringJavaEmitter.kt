@@ -1,11 +1,12 @@
 package community.flock.wirespec.integration.spring.java.emit
 
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
+import community.flock.wirespec.compiler.core.emit.common.EmitShared
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.parse.Endpoint
 
-class SpringJavaEmitter(packageName: PackageName) : JavaEmitter(packageName) {
+class SpringJavaEmitter(packageName: PackageName) : JavaEmitter(packageName, EmitShared(false)) {
     override fun emitHandleFunction(endpoint: Endpoint): String {
         val path = "/${endpoint.path.joinToString("/") { it.emit() }}"
         val annotation = when (endpoint.method) {
