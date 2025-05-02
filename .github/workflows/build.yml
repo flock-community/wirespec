@@ -36,7 +36,7 @@ jobs:
           make build
       - name: Verify
         run: |
-          make verify
+          make image test verify
       - name: Archive linux cli
         uses: actions/upload-artifact@v4
         with:
