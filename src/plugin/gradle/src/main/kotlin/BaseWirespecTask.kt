@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.emit.PythonEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.EmitShared
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.utils.Logger
@@ -68,10 +69,21 @@ abstract class BaseWirespecTask : DefaultTask() {
     }
 
     protected fun packageNameValue() = packageName.getOrElse(DEFAULT_GENERATED_PACKAGE_STRING).let(PackageName::invoke)
-    protected fun sharedValue() = shared.getOrElse(false)
+    protected fun sharedValue() = shared.getOrElse(false).let(EmitShared::invoke)
 
     protected fun emitter() = try {
-        emitterClass.orNull?.getDeclaredConstructor()?.newInstance() as? Emitter
+        emitterClass.orNull?.declaredConstructors?.first()?.let { constructor ->
+            val args: List<Any> = constructor.parameters
+                ?.map {
+                    when (it.type) {
+                        PackageName::class.java -> packageNameValue()
+                        EmitShared::class.java -> sharedValue()
+                        else -> error("Cannot map constructor parameter")
+                    }
+                }
+                .orEmpty()
+            constructor.newInstance(*args.toTypedArray()) as? Emitter
+        }
     } catch (e: Exception) {
         logger.error("Cannot create instance of emitter: ${emitterClass.orNull?.simpleName}", e)
         throw e

@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.emit
 import arrow.core.NonEmptyList
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.EmitShared
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
@@ -31,7 +32,7 @@ import community.flock.wirespec.compiler.utils.Logger
 
 open class PythonEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
-    val emitShared: Boolean = false
+    private val emitShared: EmitShared = EmitShared()
 ) : Emitter() {
 
     val import = """
@@ -66,7 +67,7 @@ open class PythonEmitter(
             val initEndpoint = Emitted(packageName.toDir() + "endpoint/" + "__init__", module.statements.filter { it is Endpoint }.map { stmt -> emitInit(stmt) }.joinToString("\n"))
             val initModel = Emitted(packageName.toDir() + "model/" + "__init__", module.statements.filter { it is Model }.map { stmt -> emitInit(stmt) }.joinToString("\n"))
             val shared = Emitted(packageName.toDir() + "wirespec", shared.source)
-            if (emitShared)
+            if (emitShared.value)
                 it + init + initEndpoint + initModel + shared
             else
                 it + init

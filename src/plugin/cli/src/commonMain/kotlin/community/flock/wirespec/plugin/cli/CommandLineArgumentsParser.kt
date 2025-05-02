@@ -20,6 +20,7 @@ import community.flock.wirespec.compiler.core.emit.PythonEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.EmitShared
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.utils.Logger
@@ -112,10 +113,10 @@ private class Compile(
 
         val emitters = languages.map {
             when (it) {
-                Language.Java -> JavaEmitter(PackageName(packageName), shared)
-                Language.Kotlin -> KotlinEmitter(PackageName(packageName), shared)
-                Language.Python -> PythonEmitter(PackageName(packageName), shared)
-                Language.TypeScript -> TypeScriptEmitter(shared)
+                Language.Java -> JavaEmitter(PackageName(packageName), EmitShared(shared))
+                Language.Kotlin -> KotlinEmitter(PackageName(packageName), EmitShared(shared))
+                Language.Python -> PythonEmitter(PackageName(packageName), EmitShared(shared))
+                Language.TypeScript -> TypeScriptEmitter(EmitShared(shared))
                 Language.Wirespec -> WirespecEmitter()
                 Language.OpenAPIV2 -> OpenAPIV2Emitter
                 Language.OpenAPIV3 -> OpenAPIV3Emitter
@@ -159,9 +160,9 @@ private class Convert(
 
         val emitters = languages.map {
             when (it) {
-                Language.Java -> JavaEmitter(PackageName(packageName), shared)
-                Language.Kotlin -> KotlinEmitter(PackageName(packageName), shared)
-                Language.TypeScript -> TypeScriptEmitter(shared)
+                Language.Java -> JavaEmitter(PackageName(packageName), EmitShared(shared))
+                Language.Kotlin -> KotlinEmitter(PackageName(packageName), EmitShared(shared))
+                Language.TypeScript -> TypeScriptEmitter(EmitShared(shared))
                 Language.Python -> PythonEmitter()
                 Language.Wirespec -> WirespecEmitter()
                 Language.OpenAPIV2 -> OpenAPIV2Emitter

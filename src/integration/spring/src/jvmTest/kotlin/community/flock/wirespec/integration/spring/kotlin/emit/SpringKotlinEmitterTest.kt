@@ -4,6 +4,7 @@ import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
+import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.utils.NoLogger
@@ -27,7 +28,7 @@ class SpringKotlinEmitterTest {
         val text = SystemFileSystem.source(path).buffered().readString()
 
         val ast = parse(text)
-        val actual = SpringKotlinEmitter("community.flock.wirespec.spring.test")
+        val actual = SpringKotlinEmitter(PackageName("community.flock.wirespec.spring.test"))
             .emit(ast, noLogger)
             .joinToString("\n") { it.result }
         val expected = """

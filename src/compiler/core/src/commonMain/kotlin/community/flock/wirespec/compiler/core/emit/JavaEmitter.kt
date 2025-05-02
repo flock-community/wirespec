@@ -4,6 +4,7 @@ import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.concatGenerics
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_SHARED_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.EmitShared
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
@@ -30,7 +31,7 @@ import community.flock.wirespec.compiler.utils.Logger
 
 open class JavaEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
-    private val emitShared: Boolean = true,
+    private val emitShared: EmitShared = EmitShared()
 ) : Emitter() {
 
     val import = """
@@ -47,7 +48,7 @@ open class JavaEmitter(
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
         super.emit(module, logger).let {
-            if (emitShared) it + Emitted(PackageName(DEFAULT_SHARED_PACKAGE_STRING).toDir() + "Wirespec", shared.source)
+            if (emitShared.value) it + Emitted(PackageName(DEFAULT_SHARED_PACKAGE_STRING).toDir() + "Wirespec", shared.source)
             else it
         }
 
