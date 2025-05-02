@@ -13,7 +13,7 @@ import kotlin.test.Test
 class GenerateTestClasses {
 
     private val basePkg = PackageName("community.flock.wirespec.integration.spring")
-    private val kotlinPkg = basePkg + ".kotlin.generated"
+    private val kotlinPkg = basePkg + "kotlin.generated"
     private val javaPkg = basePkg + "java.generated"
 
     private val kotlinEmitter = SpringKotlinEmitter(kotlinPkg)

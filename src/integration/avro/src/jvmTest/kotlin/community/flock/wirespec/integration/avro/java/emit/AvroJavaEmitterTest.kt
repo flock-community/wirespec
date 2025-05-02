@@ -1,6 +1,7 @@
 package community.flock.wirespec.integration.avro.java.emit
 
 import arrow.core.nonEmptyListOf
+import community.flock.wirespec.compiler.core.emit.common.EmitShared
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
@@ -16,7 +17,7 @@ import org.junit.jupiter.api.Test
 
 class AvroJavaEmitterTest {
 
-    private val emitter = AvroJavaEmitter(PackageName("packageName"))
+    private val emitter = AvroJavaEmitter(PackageName("packageName"), EmitShared(true))
 
     @Test
     fun emitRootFunctionBodyTest() {
