@@ -18,8 +18,8 @@ clean:
 compile:
 	./gradlew assemble
 
-compile-types:
-	$(shell pwd)/scripts/compileTypes.sh
+verify:
+	$(shell pwd)/scripts/verify.sh
 
 example:
 	$(shell pwd)/scripts/example.sh

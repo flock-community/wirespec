@@ -88,7 +88,7 @@ open class PythonEmitter(
             Emitted(
                 file = subPackageName.toDir() + it.file.sanitizeSymbol(),
                 result = """
-                    |${if (module.needImports()) import else ""}
+                    |${import}
                     |${it.result}
                 """.trimMargin().trimStart()
             )
