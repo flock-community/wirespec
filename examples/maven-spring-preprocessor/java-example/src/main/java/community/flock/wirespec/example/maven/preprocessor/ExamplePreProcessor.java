@@ -13,17 +13,18 @@ import java.util.stream.StreamSupport;
 
 public class ExamplePreProcessor implements Function<String, String> {
 
+    ObjectMapper objectMapper = new ObjectMapper();
+
     @Override
     public String apply(String s) {
-        var objectMapper = new ObjectMapper();
         try {
-            var openapi = objectMapper.readTree(s);
+            var openapi = (ObjectNode) objectMapper.readTree(s);
             var paths = openapi.get("paths");
             var spliterator  = Spliterators.spliteratorUnknownSize(paths.fields(), Spliterator.ORDERED);
             var filteredPaths = StreamSupport.stream(spliterator, false)
                     .filter(it -> it.getKey().equals("/pet"))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            ((ObjectNode) openapi).set("paths", objectMapper.valueToTree(filteredPaths));
+            openapi.set("paths", objectMapper.valueToTree(filteredPaths));
             return objectMapper.writeValueAsString(openapi);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Cannot process openapi json file", e);
