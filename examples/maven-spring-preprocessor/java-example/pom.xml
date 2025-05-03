@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>community.flock.wirespec.example.maven</groupId>
+        <artifactId>maven-spring-preprocessor</artifactId>
+        <version>0.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>java-example</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>community.flock.wirespec.plugin.maven</groupId>
+                <artifactId>wirespec-maven-plugin</artifactId>
+                <version>${wirespec.version}</version>
+                <executions>
+                    <execution>
+                        <id>openapi</id>
+                        <goals>
+                            <goal>convert</goal>
+                        </goals>
+                        <configuration>
+                            <input>${project.basedir}/src/main/openapi/petstorev3.json</input>
+                            <output>${project.build.directory}/generated-sources/openapi</output>
+                            <preProcessor>community.flock.wirespec.example.maven.preprocessor.ExamplePreProcessor</preProcessor>
+                            <format>OpenAPIV3</format>
+                            <languages>
+                                <language>Java</language>
+                            </languages>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
