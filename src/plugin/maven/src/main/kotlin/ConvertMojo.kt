@@ -18,20 +18,10 @@ import community.flock.wirespec.plugin.io.getOutPutPath
 import community.flock.wirespec.plugin.io.or
 import community.flock.wirespec.plugin.io.read
 import community.flock.wirespec.plugin.io.write
-import org.apache.maven.plugin.MojoExecutionException
-import org.apache.maven.plugin.MojoFailureException
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.plugins.annotations.ResolutionScope
-import java.io.File
-import java.nio.charset.StandardCharsets
-import java.util.*
-import javax.tools.DiagnosticCollector
-import javax.tools.JavaCompiler
-import javax.tools.JavaFileObject
-import javax.tools.StandardJavaFileManager
-import javax.tools.ToolProvider
 
 
 @Suppress("unused")
@@ -69,7 +59,7 @@ class ConvertMojo : BaseMojo() {
 
             log.info("Preprocessor class not found: $preProcessor. Attempting to compile it...")
 
-            val compiled = compileClass(preProcessor)
+            val compiled = compileJavaClass(preProcessor)
             if (compiled) {
                 val classLoader = getClassLoader(project)
                 try {

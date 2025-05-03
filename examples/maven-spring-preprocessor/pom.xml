@@ -12,7 +12,7 @@
     <packaging>pom</packaging>
 
     <modules>
-        <!--        <module>java-example</module>-->
+        <module>java-example</module>
         <module>kotlin-example</module>
     </modules>
 

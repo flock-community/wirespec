@@ -143,10 +143,10 @@ abstract class BaseMojo : AbstractMojo() {
      * @param className The fully qualified name of the class to compile
      * @return True if compilation was successful, false otherwise
      */
-    protected fun compileClass(className: String): Boolean {
+    protected fun compileJavaClass(className: String): Boolean {
 
         // Convert class name to file path
-        val relativePath = className.replace('.', File.separatorChar) + ".kt"
+        val relativePath = className.replace('.', File.separatorChar) + ".java"
         val primaryTestSourceDir: String = project.build.sourceDirectory
         val sourceFilePath = File(primaryTestSourceDir, relativePath)
 
@@ -171,11 +171,6 @@ abstract class BaseMojo : AbstractMojo() {
 
         // Prepare compiler options
         val options: MutableList<String?>? = buildCompilerOptions(fileManager)
-
-        log.info("Compiler options: " + options)
-        log.info("Compiling: " + sourceFilePath)
-
-
         val diagnostics = DiagnosticCollector<JavaFileObject?>()
         val task: JavaCompiler.CompilationTask? = compiler.getTask(
             null,  // Output writer
