@@ -24,15 +24,19 @@ import org.apache.maven.plugin.MojoFailureException
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
 import java.io.File
+import java.io.IOException
 import java.net.URLClassLoader
 import java.nio.charset.StandardCharsets
-import java.util.ArrayList
-import java.util.Arrays
+import java.nio.file.FileSystems
+import java.nio.file.Path
+import java.util.*
+import java.util.Set
 import javax.tools.DiagnosticCollector
-import javax.tools.JavaCompiler
 import javax.tools.JavaFileObject
 import javax.tools.StandardJavaFileManager
+import javax.tools.StandardLocation
 import javax.tools.ToolProvider
+
 
 abstract class BaseMojo : AbstractMojo() {
 
@@ -140,19 +144,14 @@ abstract class BaseMojo : AbstractMojo() {
 
     /**
      * Compiles a Java or Kotlin source file using the Java Compiler API.
-     * @param className The fully qualified name of the class to compile
+     * @param javaFile Location of the java file to compile.
      * @return True if compilation was successful, false otherwise
      */
-    protected fun compileJavaClass(className: String): Boolean {
-
-        // Convert class name to file path
-        val relativePath = className.replace('.', File.separatorChar) + ".java"
-        val primaryTestSourceDir: String = project.build.sourceDirectory
-        val sourceFilePath = File(primaryTestSourceDir, relativePath)
-
+    protected fun compileJavaClass(javaFile: PreProcessor.JavaFile): List<String> {
+        val sourceFilePath = File(javaFile.filePath)
 
         if (!sourceFilePath.exists()) {
-            log.error("Source file not found: " + sourceFilePath);
+            log.info("Source file not found: " + sourceFilePath);
             throw MojoFailureException("Source file " + sourceFilePath + " does not exist.");
         }
 
@@ -165,14 +164,17 @@ abstract class BaseMojo : AbstractMojo() {
             null,
             null,
             StandardCharsets.UTF_8
-        )
+        ).apply {
+            val outputDir = File(project.build.outputDirectory)
+            outputDir.mkdirs()
+            log.info("Output directory: $outputDir")
+            setLocation(StandardLocation.CLASS_OUTPUT, listOf(outputDir))
+        }
 
-        val compilationUnits: Iterable<out JavaFileObject?>? = fileManager.getJavaFileObjects(sourceFilePath)
-
-        // Prepare compiler options
-        val options: MutableList<String?>? = buildCompilerOptions(fileManager)
+        val compilationUnits = fileManager.getJavaFileObjects(sourceFilePath)
+        val options = buildCompilerOptions(fileManager)
         val diagnostics = DiagnosticCollector<JavaFileObject?>()
-        val task: JavaCompiler.CompilationTask? = compiler.getTask(
+        val task = compiler.getTask(
             null,  // Output writer
             fileManager,
             diagnostics,
@@ -181,7 +183,41 @@ abstract class BaseMojo : AbstractMojo() {
             compilationUnits
         )
 
-        return task?.call() ?: false
+        val success =  task.call()
+
+        log.info("Compilation result: " + success)
+        val outputLocation = StandardLocation.CLASS_OUTPUT
+
+        if (success) {
+            fileManager.flush()
+            log.info("Compiled classes:" + fileManager.list(outputLocation, "", mutableSetOf(JavaFileObject.Kind.SOURCE), true))
+            log.info("Compiled classes:" + fileManager.list(outputLocation, "", mutableSetOf(JavaFileObject.Kind.CLASS), true))
+            try {
+                // Assuming standard output location. This might vary based on fileManager configuration.
+
+                val outputFiles = fileManager.list(outputLocation, "", mutableSetOf(JavaFileObject.Kind.CLASS), true)
+                log.info("outputFiles: $outputFiles")
+                // Get the base output path to correctly relativize class file paths
+                val outputDirectory: Path = Path.of(fileManager.getLocation(outputLocation).iterator().next().toURI())
+
+                val compiledClassNames = outputFiles
+                    .filter { fileObject -> fileObject.kind == JavaFileObject.Kind.CLASS}
+                    .map { fileObject ->
+                        val filePath: Path? = Path.of(fileObject.toUri())
+                        val relativePath: Path = outputDirectory.relativize(filePath)
+                        val className = relativePath.toString()
+                            .replace(FileSystems.getDefault().separator, ".") // Use system-specific separator
+                            .replace(".class", "")
+                        println("className: $className")
+                        className
+                    }
+                return compiledClassNames
+            } catch (e: IOException) {
+                throw MojoFailureException("Error accessing compiled files: ", e)
+            }
+        } else {
+            throw MojoFailureException("Compilation failed.")
+        }
     }
 
     @Throws(MojoExecutionException::class)
@@ -202,7 +238,7 @@ abstract class BaseMojo : AbstractMojo() {
 
 
         // Output directory
-        options.addAll(Arrays.asList("-d", outputDir.getAbsolutePath()))
+        options.addAll(listOf("-d", outputDir.absolutePath))
 
 //        // Source/Target versions
 //        if (sourceVersion != null) {

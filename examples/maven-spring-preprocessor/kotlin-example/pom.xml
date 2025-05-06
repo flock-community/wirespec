@@ -11,6 +11,10 @@
     <artifactId>kotlin-example</artifactId>
 
     <dependencies>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -48,7 +52,7 @@
                         <configuration>
                             <input>${project.basedir}/src/main/openapi/petstorev3.json</input>
                             <output>${project.build.directory}/generated-sources/openapi</output>
-                            <preProcessor>community.flock.wirespec.example.maven.preprocessor.ExamplePreProcessor</preProcessor>
+                            <preProcessor>${project.basedir}/src/main/kotlin/community/flock/wirespec/example/maven/preprocessor/ExamplePreProcessor.kt</preProcessor>
                             <format>OpenAPIV3</format>
                             <languages>
                                 <language>Java</language>
