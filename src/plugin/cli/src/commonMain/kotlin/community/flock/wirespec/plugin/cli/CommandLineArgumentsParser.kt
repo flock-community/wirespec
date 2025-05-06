@@ -111,17 +111,7 @@ private class Compile(
             }
         }
 
-        val emitters = languages.map {
-            when (it) {
-                Language.Java -> JavaEmitter(PackageName(packageName), EmitShared(shared))
-                Language.Kotlin -> KotlinEmitter(PackageName(packageName), EmitShared(shared))
-                Language.Python -> PythonEmitter(PackageName(packageName), EmitShared(shared))
-                Language.TypeScript -> TypeScriptEmitter(EmitShared(shared))
-                Language.Wirespec -> WirespecEmitter()
-                Language.OpenAPIV2 -> OpenAPIV2Emitter
-                Language.OpenAPIV3 -> OpenAPIV3Emitter
-            }
-        }.toNonEmptySetOrNull() ?: nonEmptySetOf(WirespecEmitter())
+        val emitters = languages.toEmitters(PackageName(packageName), EmitShared(shared))
 
         CompilerArguments(
             input = sources,
@@ -158,17 +148,7 @@ private class Convert(
             }
         }
 
-        val emitters = languages.map {
-            when (it) {
-                Language.Java -> JavaEmitter(PackageName(packageName), EmitShared(shared))
-                Language.Kotlin -> KotlinEmitter(PackageName(packageName), EmitShared(shared))
-                Language.TypeScript -> TypeScriptEmitter(EmitShared(shared))
-                Language.Python -> PythonEmitter()
-                Language.Wirespec -> WirespecEmitter()
-                Language.OpenAPIV2 -> OpenAPIV2Emitter
-                Language.OpenAPIV3 -> OpenAPIV3Emitter
-            }
-        }.toNonEmptySetOrNull() ?: nonEmptySetOf(WirespecEmitter())
+        val emitters = languages.toEmitters(PackageName(packageName), EmitShared(shared))
 
         ConverterArguments(
             format = format,
@@ -186,3 +166,15 @@ private class Convert(
 }
 
 private fun handleError(string: String): Nothing = throw CliktError(string)
+
+private fun List<Language>.toEmitters(packageName: PackageName, emitShared: EmitShared) = map {
+    when (it) {
+        Language.Java -> JavaEmitter(packageName, emitShared)
+        Language.Kotlin -> KotlinEmitter(packageName, emitShared)
+        Language.Python -> PythonEmitter(packageName, emitShared)
+        Language.TypeScript -> TypeScriptEmitter(emitShared)
+        Language.Wirespec -> WirespecEmitter()
+        Language.OpenAPIV2 -> OpenAPIV2Emitter
+        Language.OpenAPIV3 -> OpenAPIV3Emitter
+    }
+}.toNonEmptySetOrNull() ?: nonEmptySetOf(WirespecEmitter())

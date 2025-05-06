@@ -564,9 +564,12 @@ class CompileFullEndpointTest {
     @Test
     fun python() {
         val python = """
+            |import re
+            |
             |from abc import abstractmethod
             |from dataclasses import dataclass
             |from typing import List, Optional
+            |from enum import Enum
             |
             |from ..wirespec import T, Wirespec
             |
@@ -576,9 +579,12 @@ class CompileFullEndpointTest {
             |  done: 'bool'
             |
             |
+            |import re
+            |
             |from abc import abstractmethod
             |from dataclasses import dataclass
             |from typing import List, Optional
+            |from enum import Enum
             |
             |from ..wirespec import T, Wirespec
             |
@@ -587,9 +593,12 @@ class CompileFullEndpointTest {
             |  iss: 'str'
             |
             |
+            |import re
+            |
             |from abc import abstractmethod
             |from dataclasses import dataclass
             |from typing import List, Optional
+            |from enum import Enum
             |
             |from ..wirespec import T, Wirespec
             |
@@ -600,9 +609,12 @@ class CompileFullEndpointTest {
             |  done: 'bool'
             |
             |
+            |import re
+            |
             |from abc import abstractmethod
             |from dataclasses import dataclass
             |from typing import List, Optional
+            |from enum import Enum
             |
             |from ..wirespec import T, Wirespec
             |
@@ -612,9 +624,12 @@ class CompileFullEndpointTest {
             |  description: 'str'
             |
             |
+            |import re
+            |
             |from abc import abstractmethod
             |from dataclasses import dataclass
             |from typing import List, Optional
+            |from enum import Enum
             |
             |from ..wirespec import T, Wirespec
             |

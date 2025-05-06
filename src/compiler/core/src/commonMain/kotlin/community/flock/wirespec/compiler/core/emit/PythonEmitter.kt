@@ -35,9 +35,12 @@ open class PythonEmitter(
 ) : Emitter() {
 
     val import = """
+        |import re
+        |
         |from abc import abstractmethod
         |from dataclasses import dataclass
         |from typing import List, Optional
+        |from enum import Enum
         |
         |from ..wirespec import T, Wirespec
         |
@@ -184,7 +187,7 @@ open class PythonEmitter(
         |
         |class ${emit(endpoint.identifier)} (Wirespec.Endpoint):
         |${endpoint.requests.first().emit(endpoint).spacer(1)}
-        |${endpoint.responses.joinToString("\n") { it.emit(endpoint) }.spacer(1)}
+        |${endpoint.responses.distinctByStatus().joinToString("\n") { it.emit(endpoint) }.spacer(1)}
         |${endpoint.emitResponseUnion().spacer(1)}
         |${endpoint.emitHandleClass().spacer(1)}
         |${endpoint.emitConvertClass().spacer(1)}
