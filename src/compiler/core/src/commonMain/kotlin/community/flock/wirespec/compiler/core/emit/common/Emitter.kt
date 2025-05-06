@@ -98,6 +98,9 @@ abstract class Emitter : Emitters {
         else -> this
     }
 
+    protected fun List<Endpoint.Response>.distinctByStatus(): List<Endpoint.Response> =
+        distinctBy { it.status }
+
     private fun Reference.flattenListDict(): Reference = when (this) {
         is Reference.Dict -> reference.flattenListDict()
         is Reference.Iterable -> reference.flattenListDict()

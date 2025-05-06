@@ -230,9 +230,12 @@ class CompileMinimalEndpointTest {
     @Test
     fun python() {
         val python = """
+            |import re
+            |
             |from abc import abstractmethod
             |from dataclasses import dataclass
             |from typing import List, Optional
+            |from enum import Enum
             |
             |from ..wirespec import T, Wirespec
             |
@@ -241,9 +244,12 @@ class CompileMinimalEndpointTest {
             |  description: 'str'
             |
             |
+            |import re
+            |
             |from abc import abstractmethod
             |from dataclasses import dataclass
             |from typing import List, Optional
+            |from enum import Enum
             |
             |from ..wirespec import T, Wirespec
             |

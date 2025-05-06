@@ -6,11 +6,11 @@ all: build image test example
 build:
 	make build-wirespec && make build-site
 
-build-wirespec:
-	./gradlew build && (cd src/ide/vscode && npm i && npm run build)
-
 build-site:
 	(cd src/site && make build)
+
+build-wirespec:
+	./gradlew build && (cd src/ide/vscode && npm i && npm run build)
 
 clean:
 	$(shell pwd)/scripts/clean.sh
@@ -18,20 +18,17 @@ clean:
 compile:
 	./gradlew assemble
 
-compile-types:
-	$(shell pwd)/scripts/compileTypes.sh
-
 example:
 	$(shell pwd)/scripts/example.sh
-
-jvm:
-	./gradlew jvmTest
 
 format:
 	$(shell pwd)/scripts/format.sh
 
 image:
 	$(shell pwd)/scripts/image.sh
+
+jvm:
+	./gradlew jvmTest
 
 local:
 	$(shell pwd)/scripts/local.sh
@@ -44,6 +41,9 @@ test:
 
 update:
 	npm install -g @vscode/vsce
+
+verify:
+	$(shell pwd)/scripts/verify.sh
 
 yolo:
 	$(shell pwd)/scripts/yolo.sh

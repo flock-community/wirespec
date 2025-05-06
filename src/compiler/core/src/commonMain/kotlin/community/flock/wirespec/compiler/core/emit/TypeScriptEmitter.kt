@@ -93,10 +93,10 @@ open class TypeScriptEmitter(val emitShared: EmitShared = EmitShared()) : Emitte
           |${endpoint.queries.emitType("Queries") { it.emit() }}
           |${endpoint.headers.emitType("Headers") { it.emit() }}
           |${endpoint.requests.first().emitType(endpoint)}
-          |${endpoint.responses.toSet().joinToString("\n") { it.emitType() }}
-          |${Spacer}export type Response = ${endpoint.responses.toSet().joinToString(" | ") { it.emitName() }}
+          |${endpoint.responses.distinctByStatus().joinToString("\n") { it.emitType() }}
+          |${Spacer}export type Response = ${endpoint.responses.distinctByStatus().joinToString(" | ") { it.emitName() }}
           |${endpoint.requests.first().emitFunction(endpoint)}
-          |${endpoint.responses.joinToString("\n") { it.emitFunction() }}
+          |${endpoint.responses.distinctByStatus().joinToString("\n") { it.emitFunction() }}
           |${Spacer}export type Handler = {
           |${Spacer(2)}${emitHandleFunction(endpoint)}
           |${Spacer}}
@@ -218,7 +218,7 @@ open class TypeScriptEmitter(val emitShared: EmitShared = EmitShared()) : Emitte
     private fun Endpoint.emitClientFrom() = """
         |from: (it) => {
         |${Spacer(1)}switch (it.status) {
-        |${responses.joinToString("\n") { it.emitClientFromResponse() }.prependIndent(Spacer(2))}
+        |${responses.distinctByStatus().joinToString("\n") { it.emitClientFromResponse() }.prependIndent(Spacer(2))}
         |${Spacer(2)}default:
         |${Spacer(3)}throw new Error(`Cannot internalize response with status: ${'$'}{it.status}`);
         |${Spacer(1)}}
