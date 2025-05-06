@@ -82,9 +82,7 @@ class ConvertMojo : BaseMojo() {
     private fun compileKotlinClass(kotlinFile: PreProcessor.KotlinFile): Boolean {
 
         val kotlinSourceFile = File(kotlinFile.filePath)
-        val outputDir = File(project.build.outputDirectory)
-
-        outputDir.mkdirs()
+        val outputDir = classOutputDir()
 
         val compiler = K2JVMCompiler()
 
@@ -215,14 +213,8 @@ class ConvertMojo : BaseMojo() {
 
             is DirectoryPath -> throw ConvertNeedsAFile()
             is FilePath -> when (inputPath.extension) {
-                JSON -> {
-                    Source<JSON>(inputPath.name, preprocess(inputPath.read()))
-                }
-
-                Avro -> {
-                    Source<JSON>(inputPath.name, preprocess(inputPath.read()))
-                }
-
+                JSON -> { Source(inputPath.name, preprocess(inputPath.read())) }
+                Avro -> { Source(inputPath.name, preprocess(inputPath.read())) }
                 else -> throw JSONFileError()
             }
         }

@@ -128,11 +128,13 @@ abstract class BaseMojo : AbstractMojo() {
             .toNonEmptySetOrNull()
             ?: throw PickAtLeastOneLanguageOrEmitter()
 
+    protected fun classOutputDir () = File(project.build.directory, "wirespec-classes")
+        .apply {  if (!exists()) mkdirs() }
+
     protected fun getClassLoader(project: MavenProject): ClassLoader = try {
         project.compileClasspathElements
             .apply {
-                add(project.build.outputDirectory)
-                add(project.build.testOutputDirectory)
+                add(classOutputDir().absolutePath)
             }
             .map { File(it as String).toURI().toURL() }
             .toTypedArray()
@@ -165,8 +167,7 @@ abstract class BaseMojo : AbstractMojo() {
             null,
             StandardCharsets.UTF_8
         ).apply {
-            val outputDir = File(project.build.outputDirectory)
-            outputDir.mkdirs()
+            val outputDir = classOutputDir()
             log.info("Output directory: $outputDir")
             setLocation(StandardLocation.CLASS_OUTPUT, listOf(outputDir))
         }
@@ -222,10 +223,8 @@ abstract class BaseMojo : AbstractMojo() {
 
     @Throws(MojoExecutionException::class)
     private fun buildCompilerOptions(fileManager: StandardJavaFileManager?): MutableList<String?> {
-        val outputDir = File(project.build.outputDirectory)
+        val outputDir = classOutputDir()
         val options: MutableList<String?> = ArrayList<String?>()
-
-        log.info("outputDir: " + outputDir)
 
         // Classpath (ensure classpathElements is initialized, e.g., via @Parameter)
         if (project.compileClasspathElements != null && project.compileClasspathElements.isNotEmpty()) {
