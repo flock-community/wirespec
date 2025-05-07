@@ -86,7 +86,7 @@ class ConvertMojo : BaseMojo() {
             val classLoader = getClassLoader(project)
             return classLoader.loadClass(compiledClassNames.first())
         } else {
-            throw RuntimeException("Failed to compile preprocessor class $preProcessor")
+            throw MojoExecutionException("Failed to compile preprocessor class $preProcessor")
         }
     }
 
@@ -124,20 +124,14 @@ class ConvertMojo : BaseMojo() {
             .map { fileObject ->
                 val filePath: Path? = Path.of(fileObject.toUri())
                 val relativePath: Path = outputDirectory.relativize(filePath)
-                val className = relativePath.toString()
+                relativePath.toString()
                     .replace(FileSystems.getDefault().separator, ".") // Use system-specific separator
                     .replace(".class", "")
-                println("className: $className")
-                className
             }
         return compiledClassNames
 
     }
 
-    /**
-     * Loads the preprocessor class and returns a function that applies the preprocessor to a string.
-     * If no preprocessor is specified, returns the identity function.
-     */
     private fun loadPreProcessor(): (String) -> String {
         if (preProcessor == null) {
             return { it } // Identity function if no preprocessor is specified
@@ -156,24 +150,17 @@ class ConvertMojo : BaseMojo() {
                 throw RuntimeException("Failed to load preprocessor class $preProcessorFile")
             }
 
+            val method = preprocessorClass.methods
+                .find { m -> m.parameterCount == 1 && m.parameterTypes[0] == String::class.java && m.returnType == String::class.java }
+                ?: throw RuntimeException("Preprocessor class must have a method that takes a String and returns a String")
 
-            // Try to find a method that takes a String and returns a String
-            val method = preprocessorClass.methods.find { m ->
-                m.parameterCount == 1 && m.parameterTypes[0] == String::class.java && m.returnType == String::class.java
-            }
-                ?: throw RuntimeException("Preprocessor class $preProcessorFile must have a method that takes a String and returns a String")
-
-            // Create an instance of the preprocessor class if the method is not static
             val instance = if (Modifier.isStatic(method.modifiers)) {
                 null
             } else {
                 try {
                     preprocessorClass.getDeclaredConstructor().newInstance()
                 } catch (e: Exception) {
-                    throw MojoExecutionException(
-                        "Failed to create an instance of preprocessor class $preProcessorFile. Make sure it has a public no-arg constructor.",
-                        e
-                    )
+                    throw MojoExecutionException("Failed to create an instance of preprocessor class.", e)
                 }
             }
 
@@ -181,11 +168,10 @@ class ConvertMojo : BaseMojo() {
                 try {
                     method.invoke(instance, input) as String
                 } catch (e: Exception) {
-                    throw MojoExecutionException("Failed to apply preprocessor $preProcessorFile to input", e)
+                    throw MojoExecutionException("Failed to apply preprocessor", e)
                 }
             }
         } catch (e: Exception) {
-            log.error("Failed to load preprocessor class: ${e.message}")
             throw MojoExecutionException("Failed to load preprocessor class: $preProcessor", e)
         }
     }

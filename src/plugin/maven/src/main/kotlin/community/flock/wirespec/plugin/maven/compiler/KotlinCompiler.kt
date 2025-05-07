@@ -35,7 +35,6 @@ class KotlinCompiler(val project: MavenProject, val log: Log, val outputDir: Fil
             "-d", outputDir.absolutePath,
             "-cp", project.compileClasspathElements.joinToString(File.pathSeparator),
             "-no-stdlib",
-            "-no-reflect",
             "-version",
         )
 
