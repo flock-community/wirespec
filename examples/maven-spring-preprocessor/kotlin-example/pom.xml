@@ -15,6 +15,11 @@
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib</artifactId>
         </dependency>
+        <dependency>
+            <groupId>community.flock.kotlinx.openapi.bindings</groupId>
+            <artifactId>kotlin-openapi-bindings-jvm</artifactId>
+            <version>0.1.0</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -52,7 +57,7 @@
                         <configuration>
                             <input>${project.basedir}/src/main/openapi/petstorev3.json</input>
                             <output>${project.build.directory}/generated-sources/openapi</output>
-                            <preProcessor>${project.basedir}/src/main/kotlin/community/flock/wirespec/example/maven/preprocessor/ExamplePreProcessor.kt</preProcessor>
+                            <preProcessor>${project.basedir}/src/main/kotlin/community/flock/wirespec/example/maven/preprocessor/PreProcessor.kt</preProcessor>
                             <format>OpenAPIV3</format>
                             <languages>
                                 <language>Java</language>

@@ -1,4 +1,4 @@
-package community.flock.wirespec.plugin.maven
+package community.flock.wirespec.plugin.maven.community.flock.wirespec.plugin.maven.mojo
 
 import arrow.core.toNonEmptySetOrNull
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
@@ -19,23 +19,10 @@ import community.flock.wirespec.plugin.io.Name
 import community.flock.wirespec.plugin.io.Source
 import community.flock.wirespec.plugin.io.SourcePath
 import org.apache.maven.plugin.AbstractMojo
-import org.apache.maven.plugin.MojoExecutionException
-import org.apache.maven.plugin.MojoFailureException
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
 import java.io.File
-import java.io.IOException
 import java.net.URLClassLoader
-import java.nio.charset.StandardCharsets
-import java.nio.file.FileSystems
-import java.nio.file.Path
-import java.util.*
-import java.util.Set
-import javax.tools.DiagnosticCollector
-import javax.tools.JavaFileObject
-import javax.tools.StandardJavaFileManager
-import javax.tools.StandardLocation
-import javax.tools.ToolProvider
 
 
 abstract class BaseMojo : AbstractMojo() {
@@ -128,8 +115,6 @@ abstract class BaseMojo : AbstractMojo() {
             .toNonEmptySetOrNull()
             ?: throw PickAtLeastOneLanguageOrEmitter()
 
-    protected fun classOutputDir () = File(project.build.directory, "wirespec-classes")
-        .apply {  if (!exists()) mkdirs() }
 
     protected fun getClassLoader(project: MavenProject): ClassLoader = try {
         project.compileClasspathElements
@@ -144,116 +129,8 @@ abstract class BaseMojo : AbstractMojo() {
         javaClass.getClassLoader()
     }
 
-    /**
-     * Compiles a Java or Kotlin source file using the Java Compiler API.
-     * @param javaFile Location of the java file to compile.
-     * @return True if compilation was successful, false otherwise
-     */
-    protected fun compileJavaClass(javaFile: PreProcessor.JavaFile): List<String> {
-        val sourceFilePath = File(javaFile.filePath)
-
-        if (!sourceFilePath.exists()) {
-            log.info("Source file not found: " + sourceFilePath);
-            throw MojoFailureException("Source file " + sourceFilePath + " does not exist.");
-        }
-
-        val compiler = ToolProvider.getSystemJavaCompiler()
-        if (compiler == null) {
-            throw MojoExecutionException("Could not get system Java compiler. Ensure you are running Maven with a JDK, not just a JRE.")
-        }
-
-        val fileManager = compiler.getStandardFileManager(
-            null,
-            null,
-            StandardCharsets.UTF_8
-        ).apply {
-            val outputDir = classOutputDir()
-            log.info("Output directory: $outputDir")
-            setLocation(StandardLocation.CLASS_OUTPUT, listOf(outputDir))
-        }
-
-        val compilationUnits = fileManager.getJavaFileObjects(sourceFilePath)
-        val options = buildCompilerOptions(fileManager)
-        val diagnostics = DiagnosticCollector<JavaFileObject?>()
-        val task = compiler.getTask(
-            null,  // Output writer
-            fileManager,
-            diagnostics,
-            options,
-            null,  // Annotation processor class names
-            compilationUnits
-        )
-
-        val success =  task.call()
-
-        log.info("Compilation result: " + success)
-        val outputLocation = StandardLocation.CLASS_OUTPUT
-
-        if (success) {
-            fileManager.flush()
-            log.info("Compiled classes:" + fileManager.list(outputLocation, "", mutableSetOf(JavaFileObject.Kind.SOURCE), true))
-            log.info("Compiled classes:" + fileManager.list(outputLocation, "", mutableSetOf(JavaFileObject.Kind.CLASS), true))
-            try {
-                // Assuming standard output location. This might vary based on fileManager configuration.
-
-                val outputFiles = fileManager.list(outputLocation, "", mutableSetOf(JavaFileObject.Kind.CLASS), true)
-                log.info("outputFiles: $outputFiles")
-                // Get the base output path to correctly relativize class file paths
-                val outputDirectory: Path = Path.of(fileManager.getLocation(outputLocation).iterator().next().toURI())
-
-                val compiledClassNames = outputFiles
-                    .filter { fileObject -> fileObject.kind == JavaFileObject.Kind.CLASS}
-                    .map { fileObject ->
-                        val filePath: Path? = Path.of(fileObject.toUri())
-                        val relativePath: Path = outputDirectory.relativize(filePath)
-                        val className = relativePath.toString()
-                            .replace(FileSystems.getDefault().separator, ".") // Use system-specific separator
-                            .replace(".class", "")
-                        println("className: $className")
-                        className
-                    }
-                return compiledClassNames
-            } catch (e: IOException) {
-                throw MojoFailureException("Error accessing compiled files: ", e)
-            }
-        } else {
-            throw MojoFailureException("Compilation failed.")
-        }
-    }
-
-    @Throws(MojoExecutionException::class)
-    private fun buildCompilerOptions(fileManager: StandardJavaFileManager?): MutableList<String?> {
-        val outputDir = classOutputDir()
-        val options: MutableList<String?> = ArrayList<String?>()
-
-        // Classpath (ensure classpathElements is initialized, e.g., via @Parameter)
-        if (project.compileClasspathElements != null && project.compileClasspathElements.isNotEmpty()) {
-            val classpath = project.compileClasspathElements.joinToString(File.pathSeparator)
-            options.addAll(listOf("-classpath", classpath))
-            log.debug("Classpath: $classpath")
-        } else {
-            log.warn("No compile classpath elements found.")
-        }
-
-
-        // Output directory
-        options.addAll(listOf("-d", outputDir.absolutePath))
-
-//        // Source/Target versions
-//        if (sourceVersion != null) {
-//            options.addAll(Arrays.asList("-source", sourceVersion))
-//        }
-//        if (targetVersion != null) {
-//            options.addAll(Arrays.asList("-target", targetVersion))
-//        }
-//
-//        // Encoding
-//        if (sourceEncoding != null) {
-//            options.addAll(Arrays.asList("-encoding", sourceEncoding))
-//        }
-
-        return options
-    }
+    fun classOutputDir() = File(project.build.directory, "wirespec-classes")
+        .apply { if (!exists()) mkdirs() }
 
     inline fun <reified E : Source.Type> SourcePath.readFromClasspath(): Source<E> {
         val file = File(value)

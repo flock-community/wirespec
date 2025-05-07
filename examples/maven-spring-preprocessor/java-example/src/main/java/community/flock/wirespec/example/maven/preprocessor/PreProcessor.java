@@ -11,7 +11,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public class ExamplePreProcessor implements Function<String, String> {
+public class PreProcessor implements Function<String, String> {
 
     ObjectMapper objectMapper = new ObjectMapper();
 
