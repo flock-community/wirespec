@@ -23,8 +23,6 @@
                     <language>Kotlin</language>
                 </languages>
                 <shared>true</shared>
-                <!-- Optional: Specify a preprocessor class to manipulate the input before conversion -->
-                <!-- <preProcessor>community.flock.wirespec.example.maven.ExamplePreprocessor</preProcessor> -->
             </configuration>
         </execution>
         <execution>
