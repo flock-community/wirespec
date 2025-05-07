@@ -23,7 +23,7 @@ class JavaCompiler(val project: MavenProject, val log: Log, val outputDir: File)
      * @param javaFile Location of the java file to compile.
      * @return True if compilation was successful, false otherwise
      */
-     fun compile(javaFile: PreProcessor.JavaFile): List<String> {
+     fun compile(javaFile: PreProcessor.JavaFile): Boolean? {
         val sourceFilePath = File(javaFile.filePath)
 
         if (!sourceFilePath.exists()) {
@@ -57,36 +57,7 @@ class JavaCompiler(val project: MavenProject, val log: Log, val outputDir: File)
             compilationUnits
         )
 
-        val success =  task.call()
-
-        log.info("Compilation result: " + success)
-
-
-        if (success) {
-            try {
-                val outputLocation = StandardLocation.CLASS_OUTPUT
-                val outputFiles = fileManager.list(outputLocation, "", mutableSetOf(JavaFileObject.Kind.CLASS), true)
-                log.info("outputFiles: $outputFiles")
-
-                val outputDirectory: Path = Path.of(fileManager.getLocation(outputLocation).iterator().next().toURI())
-                val compiledClassNames = outputFiles
-                    .filter { fileObject -> fileObject.kind == JavaFileObject.Kind.CLASS}
-                    .map { fileObject ->
-                        val filePath: Path? = Path.of(fileObject.toUri())
-                        val relativePath: Path = outputDirectory.relativize(filePath)
-                        val className = relativePath.toString()
-                            .replace(FileSystems.getDefault().separator, ".") // Use system-specific separator
-                            .replace(".class", "")
-                        println("className: $className")
-                        className
-                    }
-                return compiledClassNames
-            } catch (e: IOException) {
-                throw MojoFailureException("Error accessing compiled files: ", e)
-            }
-        } else {
-            throw MojoFailureException("Compilation failed.")
-        }
+        return task.call()
     }
 
     private fun buildCompilerOptions(): MutableList<String> {
