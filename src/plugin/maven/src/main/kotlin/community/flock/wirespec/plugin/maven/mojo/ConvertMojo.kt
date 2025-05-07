@@ -33,11 +33,14 @@ import javax.tools.JavaFileObject
 import javax.tools.StandardLocation
 import javax.tools.ToolProvider
 
-
 sealed interface PreProcessor {
     sealed interface File
-    data class KotlinFile(val filePath: String) : PreProcessor, File
-    data class JavaFile(val filePath: String) : PreProcessor, File
+    data class KotlinFile(val filePath: String) :
+        PreProcessor,
+        File
+    data class JavaFile(val filePath: String) :
+        PreProcessor,
+        File
     data class ClassName(val className: String) : PreProcessor
 }
 
@@ -104,12 +107,12 @@ class ConvertMojo : BaseMojo() {
 
         log.info("Preprocessor: $preProcessor")
         val preProcessorFile = when {
-            Regex(".*\\.java$").matches(preProcessor!!) -> PreProcessor.JavaFile(preProcessor!!)
-            Regex(".*\\.kt$").matches(preProcessor!!) -> PreProcessor.KotlinFile(preProcessor!!)
-            Regex("^[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)*$").matches(preProcessor!!) -> PreProcessor.ClassName(
-                preProcessor!!
-            )
-
+            Regex(".*\\.java$").matches(preProcessor!!) ->
+                PreProcessor.JavaFile(preProcessor!!)
+            Regex(".*\\.kt$").matches(preProcessor!!) ->
+                PreProcessor.KotlinFile(preProcessor!!)
+            Regex("^[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)*$").matches(preProcessor!!) ->
+                PreProcessor.ClassName(preProcessor!!)
             else -> throw MojoExecutionException("Unknown preprocessor: $preProcessor!!")
         }
 

@@ -24,7 +24,6 @@ import org.apache.maven.project.MavenProject
 import java.io.File
 import java.net.URLClassLoader
 
-
 abstract class BaseMojo : AbstractMojo() {
 
     /**
@@ -114,7 +113,6 @@ abstract class BaseMojo : AbstractMojo() {
             .mapNotNull { it }
             .toNonEmptySetOrNull()
             ?: throw PickAtLeastOneLanguageOrEmitter()
-
 
     protected fun getClassLoader(project: MavenProject): ClassLoader = try {
         project.compileClasspathElements

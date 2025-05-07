@@ -28,8 +28,10 @@ class KotlinCompiler(val project: MavenProject, val log: Log, val outputDir: Fil
 
         val args = arrayOf(
             kotlinSourceFile.absolutePath,
-            "-d", outputDir.absolutePath,
-            "-cp", project.compileClasspathElements.joinToString(File.pathSeparator),
+            "-d",
+            outputDir.absolutePath,
+            "-cp",
+            project.compileClasspathElements.joinToString(File.pathSeparator),
             "-no-stdlib",
             "-version",
         )
@@ -37,5 +39,4 @@ class KotlinCompiler(val project: MavenProject, val log: Log, val outputDir: Fil
         val exitCode: ExitCode = compiler.exec(mavenLogStream, *args)
         return exitCode == ExitCode.OK || exitCode == ExitCode.COMPILATION_ERROR
     }
-
 }

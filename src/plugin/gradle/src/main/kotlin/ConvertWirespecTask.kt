@@ -50,7 +50,7 @@ abstract class ConvertWirespecTask : BaseWirespecTask() {
         }
         ConverterArguments(
             format = format.get(),
-            preProcessor = {it},
+            preProcessor = { it },
             input = nonEmptySetOf(sources),
             output = Directory(getOutPutPath(inputPath, outputPath).or(::handleError)),
             emitters = emitters(),
