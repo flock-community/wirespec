@@ -21,17 +21,10 @@ import community.flock.wirespec.plugin.io.write
 import community.flock.wirespec.plugin.maven.compiler.JavaCompiler
 import community.flock.wirespec.plugin.maven.compiler.KotlinCompiler
 import org.apache.maven.plugin.MojoExecutionException
-import org.apache.maven.plugin.MojoFailureException
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.plugins.annotations.ResolutionScope
-import org.jetbrains.kotlin.cli.common.ExitCode
-import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
-import org.jetbrains.kotlin.config.Services
-import java.io.File
-import java.io.IOException
-import java.io.PrintStream
 import java.lang.reflect.Modifier
 import java.nio.charset.StandardCharsets
 import java.nio.file.FileSystems
@@ -69,37 +62,16 @@ class ConvertMojo : BaseMojo() {
     @Parameter
     private var preProcessor: String? = null
 
-
-    private fun internalizePreProcessor(input: String): PreProcessor = when {
-        Regex(".*\\.java$").matches(input) -> PreProcessor.JavaFile(input)
-        Regex(".*\\.kt$").matches(input) -> PreProcessor.KotlinFile(input)
-        Regex("^[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)*$").matches(input) ->
-            PreProcessor.ClassName(input)
-        else -> throw MojoExecutionException("Unknown preprocessor: $input")
-    }
-
-    private fun loadKotlinClass(kotlinFile: PreProcessor.KotlinFile): Class<*> {
-        val kotlinCompiler = KotlinCompiler(project, log, classOutputDir())
-        kotlinCompiler.compile(kotlinFile)
-        val compiledClassNames = loadCompiledClasses()
-        if (compiledClassNames.isNotEmpty()) {
-            val classLoader = getClassLoader(project)
-            return classLoader.loadClass(compiledClassNames.first())
-        } else {
-            throw MojoExecutionException("Failed to compile preprocessor class $preProcessor")
+    private fun compileClas(file: PreProcessor.File) {
+        when (file) {
+            is PreProcessor.KotlinFile -> KotlinCompiler(project, log, classOutputDir()).compile(file)
+            is PreProcessor.JavaFile -> JavaCompiler(project, log, classOutputDir()).compile(file)
         }
     }
 
-    private fun loadJavaClass(javaFile: PreProcessor.JavaFile): Class<*> {
-        val javaCompiler = JavaCompiler(project, log, classOutputDir())
-        javaCompiler.compile(javaFile)
-        val compiledClassNames = loadCompiledClasses()
-        if (compiledClassNames.isNotEmpty()) {
-            val classLoader = getClassLoader(project)
-            return classLoader.loadClass(compiledClassNames.first())
-        } else {
-            throw RuntimeException("Failed to compile preprocessor class $preProcessor")
-        }
+    private fun loadClass(className: String): Class<*> {
+        val classLoader = getClassLoader(project)
+        return classLoader.loadClass(className)
     }
 
     private fun loadCompiledClasses(): List<String> {
@@ -108,28 +80,21 @@ class ConvertMojo : BaseMojo() {
             throw MojoExecutionException("Could not get system Java compiler. Ensure you are running Maven with a JDK, not just a JRE.")
         }
 
-        val fileManager = compiler.getStandardFileManager(
-            null,
-            null,
-            StandardCharsets.UTF_8
-        ).apply {
-            setLocation(StandardLocation.CLASS_OUTPUT, listOf(classOutputDir()))
-        }
+        val fileManager = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)
+            .apply { setLocation(StandardLocation.CLASS_OUTPUT, listOf(classOutputDir())) }
 
         val outputLocation = StandardLocation.CLASS_OUTPUT
         val outputFiles = fileManager.list(outputLocation, "", mutableSetOf(JavaFileObject.Kind.CLASS), true)
         val outputDirectory: Path = Path.of(fileManager.getLocation(outputLocation).iterator().next().toURI())
-        val compiledClassNames = outputFiles
-            .filter { fileObject -> fileObject.kind == JavaFileObject.Kind.CLASS}
+        return outputFiles
+            .filter { fileObject -> fileObject.kind == JavaFileObject.Kind.CLASS }
             .map { fileObject ->
-                val filePath: Path? = Path.of(fileObject.toUri())
+                val filePath: Path = Path.of(fileObject.toUri())
                 val relativePath: Path = outputDirectory.relativize(filePath)
                 relativePath.toString()
                     .replace(FileSystems.getDefault().separator, ".") // Use system-specific separator
                     .replace(".class", "")
             }
-        return compiledClassNames
-
     }
 
     private fun loadPreProcessor(): (String) -> String {
@@ -137,28 +102,39 @@ class ConvertMojo : BaseMojo() {
             return { it } // Identity function if no preprocessor is specified
         }
 
+        log.info("Preprocessor: $preProcessor")
+        val preProcessorFile = when {
+            Regex(".*\\.java$").matches(preProcessor!!) -> PreProcessor.JavaFile(preProcessor!!)
+            Regex(".*\\.kt$").matches(preProcessor!!) -> PreProcessor.KotlinFile(preProcessor!!)
+            Regex("^[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)*$").matches(preProcessor!!) -> PreProcessor.ClassName(
+                preProcessor!!
+            )
+
+            else -> throw MojoExecutionException("Unknown preprocessor: $preProcessor!!")
+        }
+
         try {
-            log.info("Compile pre-processor: $preProcessor")
-            val preProcessorFile = internalizePreProcessor(preProcessor!!)
-            val preprocessorClass: Class<*>? = when (preProcessorFile) {
-                is PreProcessor.JavaFile -> loadJavaClass(preProcessorFile)
-                is PreProcessor.KotlinFile -> loadKotlinClass(preProcessorFile)
-                is PreProcessor.ClassName -> TODO()
+            val preProcessorClass: Class<*> = when (preProcessorFile) {
+                is PreProcessor.File -> {
+                    compileClas(preProcessorFile)
+                    val compiledClassNames = loadCompiledClasses()
+                    loadClass(compiledClassNames.first())
+                }
+
+                is PreProcessor.ClassName -> {
+                    loadClass(preProcessorFile.className)
+                }
             }
 
-            if (preprocessorClass == null) {
-                throw RuntimeException("Failed to load preprocessor class $preProcessorFile")
-            }
-
-            val method = preprocessorClass.methods
+            val preProcessorMethod = preProcessorClass.methods
                 .find { m -> m.parameterCount == 1 && m.parameterTypes[0] == String::class.java && m.returnType == String::class.java }
-                ?: throw RuntimeException("Preprocessor class must have a method that takes a String and returns a String")
+                ?: throw MojoExecutionException("Preprocessor class must have a method that takes a String and returns a String")
 
-            val instance = if (Modifier.isStatic(method.modifiers)) {
+            val instance = if (Modifier.isStatic(preProcessorMethod.modifiers)) {
                 null
             } else {
                 try {
-                    preprocessorClass.getDeclaredConstructor().newInstance()
+                    preProcessorClass.getDeclaredConstructor().newInstance()
                 } catch (e: Exception) {
                     throw MojoExecutionException("Failed to create an instance of preprocessor class.", e)
                 }
@@ -166,7 +142,7 @@ class ConvertMojo : BaseMojo() {
 
             return { input: String ->
                 try {
-                    method.invoke(instance, input) as String
+                    preProcessorMethod.invoke(instance, input) as String
                 } catch (e: Exception) {
                     throw MojoExecutionException("Failed to apply preprocessor", e)
                 }
@@ -180,33 +156,30 @@ class ConvertMojo : BaseMojo() {
         project.addCompileSourceRoot(output)
         val inputPath = getFullPath(input).or(::handleError)
 
-        // Load the preprocessor
-        // If a preprocessor is specified but can't be loaded, this will throw an exception
-        // with a helpful error message
-        val preprocess = try {
-            loadPreProcessor()
-        } catch (e: Exception) {
-            log.error("Failed to load or compile the preprocessor: ${e.message}")
-            throw e
-        }
-
         val sources = when (inputPath) {
             null -> throw IsNotAFileOrDirectory(null)
             is SourcePath -> {
                 val source = inputPath.readFromClasspath<JSON>()
-                Source<JSON>(source.name, preprocess(source.content))
+                Source<JSON>(source.name, source.content)
             }
 
             is DirectoryPath -> throw ConvertNeedsAFile()
             is FilePath -> when (inputPath.extension) {
-                JSON -> { Source(inputPath.name, preprocess(inputPath.read())) }
-                Avro -> { Source(inputPath.name, preprocess(inputPath.read())) }
+                JSON -> {
+                    Source(inputPath.name, inputPath.read())
+                }
+
+                Avro -> {
+                    Source(inputPath.name, inputPath.read())
+                }
+
                 else -> throw JSONFileError()
             }
         }
 
         ConverterArguments(
             format = format,
+            preProcessor = loadPreProcessor(),
             input = nonEmptySetOf(sources),
             output = Directory(getOutPutPath(inputPath, output).or(::handleError)),
             emitters = emitters,
@@ -219,8 +192,3 @@ class ConvertMojo : BaseMojo() {
         ).let(::convert)
     }
 }
-
-object Services {
-    val EMPTY = Services.EMPTY
-}
-

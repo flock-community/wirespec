@@ -37,6 +37,7 @@ data class CompilerArguments(
 
 data class ConverterArguments(
     val format: Format,
+    val preProcessor: (String) -> String,
     override val input: NonEmptySet<Source<JSON>>,
     override val output: Directory,
     override val emitters: NonEmptySet<Emitter>,
