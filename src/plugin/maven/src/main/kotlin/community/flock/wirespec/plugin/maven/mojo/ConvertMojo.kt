@@ -18,8 +18,6 @@ import community.flock.wirespec.plugin.io.getOutPutPath
 import community.flock.wirespec.plugin.io.or
 import community.flock.wirespec.plugin.io.read
 import community.flock.wirespec.plugin.io.write
-import community.flock.wirespec.plugin.maven.compiler.JavaCompiler
-import community.flock.wirespec.plugin.maven.compiler.KotlinCompiler
 import org.apache.maven.plugin.MojoExecutionException
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
@@ -32,17 +30,6 @@ import java.nio.file.Path
 import javax.tools.JavaFileObject
 import javax.tools.StandardLocation
 import javax.tools.ToolProvider
-
-sealed interface PreProcessor {
-    sealed interface File
-    data class KotlinFile(val filePath: String) :
-        PreProcessor,
-        File
-    data class JavaFile(val filePath: String) :
-        PreProcessor,
-        File
-    data class ClassName(val className: String) : PreProcessor
-}
 
 @Suppress("unused")
 @Mojo(
@@ -65,17 +52,6 @@ class ConvertMojo : BaseMojo() {
     @Parameter
     private var preProcessor: String? = null
 
-    private fun compileClas(file: PreProcessor.File) {
-        when (file) {
-            is PreProcessor.KotlinFile -> KotlinCompiler(project, log, classOutputDir()).compile(file)
-            is PreProcessor.JavaFile -> JavaCompiler(project, log, classOutputDir()).compile(file)
-        }
-    }
-
-    private fun loadClass(className: String): Class<*> {
-        val classLoader = getClassLoader(project)
-        return classLoader.loadClass(className)
-    }
 
     private fun loadCompiledClasses(): List<String> {
         val compiler = ToolProvider.getSystemJavaCompiler()
@@ -105,30 +81,11 @@ class ConvertMojo : BaseMojo() {
             return { it } // Identity function if no preprocessor is specified
         }
 
-        log.info("Preprocessor: $preProcessor")
-        val preProcessorFile = when {
-            Regex(".*\\.java$").matches(preProcessor!!) ->
-                PreProcessor.JavaFile(preProcessor!!)
-            Regex(".*\\.kt$").matches(preProcessor!!) ->
-                PreProcessor.KotlinFile(preProcessor!!)
-            Regex("^[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)*$").matches(preProcessor!!) ->
-                PreProcessor.ClassName(preProcessor!!)
-            else -> throw MojoExecutionException("Unknown preprocessor: $preProcessor!!")
-        }
+        log.info("load preprocessor: $preProcessor")
 
         try {
-            val preProcessorClass: Class<*> = when (preProcessorFile) {
-                is PreProcessor.File -> {
-                    compileClas(preProcessorFile)
-                    val compiledClassNames = loadCompiledClasses()
-                    loadClass(compiledClassNames.first())
-                }
-
-                is PreProcessor.ClassName -> {
-                    loadClass(preProcessorFile.className)
-                }
-            }
-
+            val classLoader = getClassLoader(project)
+            val preProcessorClass: Class<*> = classLoader.loadClass(preProcessor!!)
             val preProcessorMethod = preProcessorClass.methods
                 .find { m -> m.parameterCount == 1 && m.parameterTypes[0] == String::class.java && m.returnType == String::class.java }
                 ?: throw MojoExecutionException("Preprocessor class must have a method that takes a String and returns a String")
@@ -157,6 +114,7 @@ class ConvertMojo : BaseMojo() {
 
     override fun execute() {
         project.addCompileSourceRoot(output)
+        compileSourceDirectory()
         val inputPath = getFullPath(input).or(::handleError)
 
         val sources = when (inputPath) {

@@ -18,6 +18,8 @@ import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.io.Name
 import community.flock.wirespec.plugin.io.Source
 import community.flock.wirespec.plugin.io.SourcePath
+import community.flock.wirespec.plugin.maven.compiler.JavaCompiler
+import community.flock.wirespec.plugin.maven.compiler.KotlinCompiler
 import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
@@ -69,6 +71,12 @@ abstract class BaseMojo : AbstractMojo() {
      */
     @Parameter
     protected var strict: Boolean = true
+
+    /**
+     * Source directory. Default 'null'.
+     */
+    @Parameter
+    protected var sourceDirectory: String? = null
 
     @Parameter(defaultValue = "\${project}", readonly = true, required = true)
     protected lateinit var project: MavenProject
@@ -129,6 +137,15 @@ abstract class BaseMojo : AbstractMojo() {
 
     fun classOutputDir() = File(project.build.directory, "wirespec-classes")
         .apply { if (!exists()) mkdirs() }
+
+    fun compileSourceDirectory(){
+        if(sourceDirectory == null) return
+        log.info("Compiling source directory: $sourceDirectory")
+        project.addTestCompileSourceRoot(sourceDirectory)
+        val file = File(sourceDirectory!!)
+        KotlinCompiler(project, log, classOutputDir()).compile(file)
+        JavaCompiler(project, log, classOutputDir()).compile(file)
+    }
 
     inline fun <reified E : Source.Type> SourcePath.readFromClasspath(): Source<E> {
         val file = File(value)

@@ -45,7 +45,8 @@
                         <configuration>
                             <input>${project.basedir}/src/main/openapi/petstorev3.json</input>
                             <output>${project.build.directory}/generated-sources/openapi</output>
-                            <preProcessor>${project.basedir}/src/main/java/community/flock/wirespec/example/maven/preprocessor/PreProcessor.java</preProcessor>
+                            <sourceDirectory>${project.basedir}/src/wirespec/java</sourceDirectory>
+                            <preProcessor>community.flock.wirespec.example.maven.preprocessor.PreProcessor</preProcessor>
                             <format>OpenAPIV3</format>
                             <languages>
                                 <language>Java</language>

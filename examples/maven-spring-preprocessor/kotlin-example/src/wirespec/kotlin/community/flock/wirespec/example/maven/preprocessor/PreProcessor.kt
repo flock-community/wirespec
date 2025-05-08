@@ -4,7 +4,7 @@ import community.flock.kotlinx.openapi.bindings.v3.OpenAPI
 
 class PreProcessor : (String) -> String {
     override fun invoke(input: String) =
-        OpenAPI.decodeFromString(input)
+        OpenAPI.Default.decodeFromString(input)
             .run { copy(paths = paths
                 .filterKeys { it.value == "/pet" }
                 .mapValues { it.value.copy(
@@ -12,6 +12,6 @@ class PreProcessor : (String) -> String {
                     post = it.value.post?.copy(operationId = it.value.post?.operationId?.plus("Processed")),
                 ) }
             ) }
-            .let(OpenAPI::encodeToString)
+            .let(OpenAPI.Default::encodeToString)
 
     }
