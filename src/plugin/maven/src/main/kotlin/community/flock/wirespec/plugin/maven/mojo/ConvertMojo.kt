@@ -52,7 +52,6 @@ class ConvertMojo : BaseMojo() {
     @Parameter
     private var preProcessor: String? = null
 
-
     private fun loadCompiledClasses(): List<String> {
         val compiler = ToolProvider.getSystemJavaCompiler()
         if (compiler == null) {

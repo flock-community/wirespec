@@ -138,8 +138,8 @@ abstract class BaseMojo : AbstractMojo() {
     fun classOutputDir() = File(project.build.directory, "wirespec-classes")
         .apply { if (!exists()) mkdirs() }
 
-    fun compileSourceDirectory(){
-        if(sourceDirectory == null) return
+    fun compileSourceDirectory() {
+        if (sourceDirectory == null) return
         log.info("Compiling source directory: $sourceDirectory")
         project.addTestCompileSourceRoot(sourceDirectory)
         val file = File(sourceDirectory!!)

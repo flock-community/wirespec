@@ -28,7 +28,6 @@ class JavaCompiler(val project: MavenProject, val log: Log, val outputDir: File)
      * @throws MojoExecutionException if the system Java compiler cannot be located or other critical issues occur.
      */
     fun compile(sourceDirectory: File): Boolean? {
-
         if (!sourceDirectory.exists()) {
             log.info("Source file not found: " + sourceDirectory)
             throw MojoFailureException("Source file " + sourceDirectory + " does not exist.")
@@ -49,7 +48,7 @@ class JavaCompiler(val project: MavenProject, val log: Log, val outputDir: File)
         }
 
         // Find all Kotlin files in the source directory
-        val javaFiles= if (sourceDirectory.isDirectory) {
+        val javaFiles = if (sourceDirectory.isDirectory) {
             sourceDirectory.walkTopDown()
                 .filter { it.isFile && it.extension == "java" }
                 .toList()
