@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.List;
 import java.util.Collections;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.function.Function;
 
 public interface DefaultParamSerialization extends Wirespec.ParamSerialization {
@@ -34,6 +35,11 @@ public interface DefaultParamSerialization extends Wirespec.ParamSerialization {
       return ((List<?>) value).stream()
           .map(Object::toString)
           .toList();
+    }
+    if(isOptional(type)) {
+      return ((Optional<?>) value)
+              .map(it -> Collections.singletonList(it.toString()))
+              .orElseGet(Collections::emptyList);
     }
     return Collections.singletonList(value.toString());
   }
@@ -103,6 +109,13 @@ public interface DefaultParamSerialization extends Wirespec.ParamSerialization {
       return List.class.isAssignableFrom((Class<?>) parameterizedType.getRawType());
     }
     return type instanceof Class<?> && List.class.isAssignableFrom((Class<?>) type);
+  }
+
+  private boolean isOptional(Type type) {
+    if (type instanceof ParameterizedType parameterizedType) {
+      return Optional.class.isAssignableFrom((Class<?>) parameterizedType.getRawType());
+    }
+    return type instanceof Class<?> && Optional.class.isAssignableFrom((Class<?>) type);
   }
 
   private boolean isWirespecEnum(Class<?> clazz) {
