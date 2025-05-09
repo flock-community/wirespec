@@ -32,12 +32,16 @@
             <plugin>
                 <groupId>community.flock.wirespec.plugin.maven</groupId>
                 <artifactId>wirespec-maven-plugin</artifactId>
-                <version>${wirespec.version}</version>
                 <dependencies>
                     <dependency>
                         <groupId>community.flock.wirespec.example.maven</groupId>
                         <artifactId>emitter</artifactId>
-                        <version>0.0.0-SNAPSHOT</version>
+                        <version>${project.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>community.flock.wirespec.example.maven</groupId>
+                        <artifactId>pre-processor</artifactId>
+                        <version>${project.version}</version>
                     </dependency>
                 </dependencies>
                 <executions>
@@ -61,6 +65,21 @@
                             <input>classpath:test/spec.ws</input>
                             <output>${project.build.directory}/generated-sources/java/hello</output>
                             <emitterClass>community.flock.wirespec.example.maven.custom.emit.CustomEmitter</emitterClass>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>openapi</id>
+                        <goals>
+                            <goal>convert</goal>
+                        </goals>
+                        <configuration>
+                            <input>${project.basedir}/src/main/openapi/petstorev3.json</input>
+                            <output>${project.build.directory}/generated-sources/openapi</output>
+                            <preProcessor>community.flock.wirespec.example.maven.custom.pre_processor.PreProcessor</preProcessor>
+                            <format>OpenAPIV3</format>
+                            <languages>
+                                <language>Java</language>
+                            </languages>
                         </configuration>
                     </execution>
                 </executions>

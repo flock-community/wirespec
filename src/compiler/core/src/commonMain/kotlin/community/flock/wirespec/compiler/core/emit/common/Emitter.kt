@@ -81,14 +81,14 @@ abstract class Emitter : Emitters {
             }
         }
 
-    internal fun Endpoint.Request.paramList(endpoint: Endpoint): List<Param> = listOf(
+    fun Endpoint.Request.paramList(endpoint: Endpoint): List<Param> = listOf(
         endpoint.pathParams.map { it.toParam() },
         endpoint.queries.map { it.toParam(ParamType.QUERY) },
         endpoint.headers.map { it.toParam(ParamType.HEADER) },
         listOfNotNull(content?.toParam()),
     ).flatten()
 
-    internal fun Endpoint.Response.paramList(): List<Param> = listOf(
+    fun Endpoint.Response.paramList(): List<Param> = listOf(
         headers.map { it.toParam(ParamType.HEADER) },
         listOfNotNull(content?.toParam())
     ).flatten()

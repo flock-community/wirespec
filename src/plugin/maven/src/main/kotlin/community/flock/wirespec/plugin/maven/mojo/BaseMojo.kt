@@ -1,4 +1,4 @@
-package community.flock.wirespec.plugin.maven
+package community.flock.wirespec.plugin.maven.mojo
 
 import arrow.core.toNonEmptySetOrNull
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
@@ -18,6 +18,8 @@ import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.io.Name
 import community.flock.wirespec.plugin.io.Source
 import community.flock.wirespec.plugin.io.SourcePath
+import community.flock.wirespec.plugin.maven.compiler.JavaCompiler
+import community.flock.wirespec.plugin.maven.compiler.KotlinCompiler
 import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
@@ -70,6 +72,12 @@ abstract class BaseMojo : AbstractMojo() {
     @Parameter
     protected var strict: Boolean = true
 
+    /**
+     * Source directory. Default 'null'.
+     */
+    @Parameter
+    protected var sourceDirectory: String? = null
+
     @Parameter(defaultValue = "\${project}", readonly = true, required = true)
     protected lateinit var project: MavenProject
 
@@ -114,11 +122,10 @@ abstract class BaseMojo : AbstractMojo() {
             .toNonEmptySetOrNull()
             ?: throw PickAtLeastOneLanguageOrEmitter()
 
-    private fun getClassLoader(project: MavenProject): ClassLoader = try {
+    protected fun getClassLoader(project: MavenProject): ClassLoader = try {
         project.compileClasspathElements
             .apply {
-                add(project.build.outputDirectory)
-                add(project.build.testOutputDirectory)
+                add(classOutputDir().absolutePath)
             }
             .map { File(it as String).toURI().toURL() }
             .toTypedArray()
@@ -126,6 +133,18 @@ abstract class BaseMojo : AbstractMojo() {
     } catch (_: Exception) {
         log.debug("Couldn't get the classloader.")
         javaClass.getClassLoader()
+    }
+
+    fun classOutputDir() = File(project.build.directory, "wirespec-classes")
+        .apply { if (!exists()) mkdirs() }
+
+    fun compileSourceDirectory() {
+        if (sourceDirectory == null) return
+        log.info("Compiling source directory: $sourceDirectory")
+        project.addTestCompileSourceRoot(sourceDirectory)
+        val file = File(sourceDirectory!!)
+        KotlinCompiler(project, log, classOutputDir()).compile(file)
+        JavaCompiler(project, log, classOutputDir()).compile(file)
     }
 
     inline fun <reified E : Source.Type> SourcePath.readFromClasspath(): Source<E> {
