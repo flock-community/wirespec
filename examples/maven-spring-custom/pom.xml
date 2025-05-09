@@ -17,19 +17,4 @@
         <module>pre-processor</module>
     </modules>
 
-    <properties>
-        <wirespec.version>0.0.0-SNAPSHOT</wirespec.version>
-    </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>community.flock.wirespec</groupId>
-                <artifactId>bom</artifactId>
-                <version>${wirespec.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 </project>

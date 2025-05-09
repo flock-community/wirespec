@@ -1,4 +1,4 @@
-package community.flock.wirespec.plugin.maven.community.flock.wirespec.plugin.maven.mojo
+package community.flock.wirespec.plugin.maven.mojo
 
 import arrow.core.toNonEmptySetOrNull
 import community.flock.wirespec.compiler.core.emit.JavaEmitter

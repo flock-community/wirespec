@@ -17,6 +17,8 @@ data class Source<out E : Type>(val name: Name, val content: String) : Input {
         data object Wirespec : Type
         data object JSON : Type
     }
+
+    fun map(fn: (String) -> String) = Source<E>(name = name, content = fn(content))
 }
 
 class Directory(val path: DirectoryPath) :

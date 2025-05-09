@@ -1,4 +1,4 @@
-package community.flock.wirespec.plugin.maven.community.flock.wirespec.plugin.maven.mojo
+package community.flock.wirespec.plugin.maven.mojo
 
 import arrow.core.nonEmptySetOf
 import community.flock.wirespec.compiler.core.emit.common.FileExtension.Avro
@@ -75,9 +75,9 @@ class ConvertMojo : BaseMojo() {
             }
     }
 
-    private fun loadPreProcessor(): (String) -> String {
+    private fun preProcess(input: String): String {
         if (preProcessor == null) {
-            return { it } // Identity function if no preprocessor is specified
+            return input // Identity function if no preprocessor is specified
         }
 
         log.info("load preprocessor: $preProcessor")
@@ -99,12 +99,10 @@ class ConvertMojo : BaseMojo() {
                 }
             }
 
-            return { input: String ->
-                try {
-                    preProcessorMethod.invoke(instance, input) as String
-                } catch (e: Exception) {
-                    throw MojoExecutionException("Failed to apply preprocessor", e)
-                }
+            return try {
+                preProcessorMethod(instance, input) as String
+            } catch (e: Exception) {
+                throw MojoExecutionException("Failed to apply preprocessor", e)
             }
         } catch (e: Exception) {
             throw MojoExecutionException("Failed to load preprocessor class: $preProcessor", e)
@@ -118,28 +116,17 @@ class ConvertMojo : BaseMojo() {
 
         val sources = when (inputPath) {
             null -> throw IsNotAFileOrDirectory(null)
-            is SourcePath -> {
-                val source = inputPath.readFromClasspath<JSON>()
-                Source<JSON>(source.name, source.content)
-            }
-
+            is SourcePath -> inputPath.readFromClasspath<JSON>().let { (name, content) -> Source<JSON>(name, content) }
             is DirectoryPath -> throw ConvertNeedsAFile()
             is FilePath -> when (inputPath.extension) {
-                JSON -> {
-                    Source(inputPath.name, inputPath.read())
-                }
-
-                Avro -> {
-                    Source(inputPath.name, inputPath.read())
-                }
-
+                JSON -> Source(inputPath.name, inputPath.read())
+                Avro -> Source(inputPath.name, inputPath.read())
                 else -> throw JSONFileError()
             }
-        }
+        }.map(::preProcess)
 
         ConverterArguments(
             format = format,
-            preProcessor = loadPreProcessor(),
             input = nonEmptySetOf(sources),
             output = Directory(getOutPutPath(inputPath, output).or(::handleError)),
             emitters = emitters,

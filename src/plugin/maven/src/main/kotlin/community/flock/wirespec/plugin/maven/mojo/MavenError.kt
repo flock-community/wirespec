@@ -1,4 +1,4 @@
-package community.flock.wirespec.plugin.maven.community.flock.wirespec.plugin.maven.mojo
+package community.flock.wirespec.plugin.maven.mojo
 
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
 

@@ -34,7 +34,7 @@ fun convert(arguments: ConverterArguments) {
     }
 
     arguments.input
-        .map { ModuleContent(it.name.value, arguments.preProcessor(it.content)) }
+        .map { ModuleContent(it.name.value, it.content) }
         .map { moduleContent -> parser.invoke(moduleContent, arguments.strict) }
         .flatMap { ast ->
             arguments.emitters.flatMap {

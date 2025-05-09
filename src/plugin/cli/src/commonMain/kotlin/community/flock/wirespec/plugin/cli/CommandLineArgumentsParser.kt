@@ -152,7 +152,6 @@ private class Convert(
 
         ConverterArguments(
             format = format,
-            preProcessor = { it },
             input = nonEmptySetOf(source),
             output = Directory(getOutPutPath(inputPath, output).or(::handleError)),
             emitters = emitters,
