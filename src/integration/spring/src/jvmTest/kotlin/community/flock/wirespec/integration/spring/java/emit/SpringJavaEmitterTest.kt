@@ -73,7 +73,7 @@ class SpringJavaEmitterTest {
             |};
             |
             """.trimMargin(),
-            """ 
+            """
             |package community.flock.wirespec.spring.test.endpoint;
             |
             |import community.flock.wirespec.java.Wirespec;
@@ -134,11 +134,16 @@ class SpringJavaEmitterTest {
             |  interface Handler extends Wirespec.Handler {
             |
             |    static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
+            |      var queries = new java.util.HashMap<String, java.util.List<String>>() {{
+            |        request.queries.done.ifPresent(it -> put("done", serialization.serializeParam(it, Wirespec.getType(Boolean.class, false))));
+            |      }};
+            |      
+            |      var headers = java.util.Collections.<String,java.util.List<String>>emptyMap();
             |      return new Wirespec.RawRequest(
             |        request.method.name(),
             |        java.util.List.of("api", "todos"),
-            |        java.util.Map.ofEntries(java.util.Map.entry("done", serialization.serializeParam(request.queries.done, Wirespec.getType(Boolean.class, false)))),
-            |        java.util.Collections.emptyMap(),
+            |        queries,
+            |        headers,
             |        serialization.serialize(request.getBody(), Wirespec.getType(Void.class, false))
             |      );
             |    }
