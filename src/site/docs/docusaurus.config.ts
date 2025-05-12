@@ -28,6 +28,7 @@ const config: Config = {
           sidebarPath: "./sidebars.ts",
           editUrl:
             "https://github.com/flock-community/wirespec/tree/master/src/site/docs/",
+          routeBasePath: "docs",
         },
         blog: {
           path: "./blog",
@@ -54,12 +55,13 @@ const config: Config = {
       disableSwitch: true,
     },
     metadata: [
+      { name: "title", content: "Wirespec | Contract-First API Design" },
       {
         name: "description",
         content:
           "Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications",
       },
-      { property: "og:title", content: `Wirespec your APIs` },
+      { property: "og:title", content: "Wirespec | Contract-First API Design" },
       {
         property: "og:description",
         content:
@@ -77,6 +79,28 @@ const config: Config = {
           "Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications",
       },
       { name: "twitter:image", content: "/img/code-snippet.jpg" },
+      {
+        name: "docs-description",
+        content:
+          "Find everything you need to get started with Wirespec: intro to the language, plugins, integrations, IDE setup, emitters, and converters—all in one place",
+      },
+      { property: "og:title:docs", content: "Docs | Wirespec" },
+      {
+        property: "og:description:docs",
+        content:
+          "Find everything you need to get started with Wirespec: intro to the language, plugins, integrations, IDE setup, emitters, and converters—all in one place",
+      },
+      {
+        name: "blog-description",
+        content:
+          "Explore in-depth articles on API design, contract-first development, code generation, and interface testing—insights and best practices from the team behind Wirespec",
+      },
+      { property: "og:title:blog", content: "Blog | Wirespec" },
+      {
+        property: "og:description:blog",
+        content:
+          "Explore in-depth articles on API design, contract-first development, code generation, and interface testing—insights and best practices from the team behind Wirespec",
+      },
     ],
     stylesheets: [
       {
@@ -192,7 +216,7 @@ const config: Config = {
     },
     algolia: {
       appId: "8GJ5M7UPF1",
-      
+
       // apiKey: "ab006ab5e8aaea60cfcafc0dfa6e3a67",
       apiKey: "36710561274c40b93985864373d1aadb",
       // indexName: "wirespec_io_wijtzn3w54_pages",
