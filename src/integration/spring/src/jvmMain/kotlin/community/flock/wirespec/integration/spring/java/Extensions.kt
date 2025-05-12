@@ -6,6 +6,7 @@ import java.lang.reflect.Method
 import java.util.function.Function
 import kotlin.reflect.full.companionObjectInstance
 
+@Suppress("UNCHECKED_CAST")
 fun Class<*>.invoke(
     method: Method,
     wirespecSerialization: Wirespec.Serialization<String>,

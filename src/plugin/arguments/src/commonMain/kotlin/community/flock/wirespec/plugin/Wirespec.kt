@@ -4,12 +4,10 @@ import community.flock.wirespec.compiler.core.CompilationContext
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
-import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.converter.avro.AvroParser
+import community.flock.wirespec.converter.common.Parser
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser
-import community.flock.wirespec.plugin.io.FilePath
-import kotlin.reflect.KFunction2
 
 fun compile(arguments: CompilerArguments) {
     val ctx = object : CompilationContext {
@@ -19,29 +17,23 @@ fun compile(arguments: CompilerArguments) {
 
     ctx.compile(arguments.input.map { ModuleContent(it.name.value, it.content) })
         .mapLeft { it.map(WirespecException::message) }
-        .fold({ arguments.error(it.joinToString()) }) {
-            it.forEach { (file, result) ->
-                arguments.writer(FilePath(arguments.output.path.value + "/" + file), result)
-            }
-        }
+        .fold({ arguments.error(it.joinToString()) }) { arguments.writer(it) }
 }
 
 fun convert(arguments: ConverterArguments) {
-    val parser: KFunction2<ModuleContent, Boolean, AST> = when (arguments.format) {
-        Format.OpenAPIV2 -> OpenAPIV2Parser::parse
-        Format.OpenAPIV3 -> OpenAPIV3Parser::parse
-        Format.Avro -> AvroParser::parse
+    val parser: Parser = when (arguments.format) {
+        Format.OpenAPIV2 -> OpenAPIV2Parser
+        Format.OpenAPIV3 -> OpenAPIV3Parser
+        Format.Avro -> AvroParser
     }
 
     arguments.input
         .map { ModuleContent(it.name.value, it.content) }
-        .map { moduleContent -> parser.invoke(moduleContent, arguments.strict) }
+        .map { moduleContent -> parser.parse(moduleContent, arguments.strict) }
         .flatMap { ast ->
             arguments.emitters.flatMap {
                 it.emit(ast, arguments.logger)
             }
         }
-        .forEach { (file, result) ->
-            arguments.writer(FilePath(arguments.output.path.value + "/" + file), result)
-        }
+        .let(arguments.writer)
 }

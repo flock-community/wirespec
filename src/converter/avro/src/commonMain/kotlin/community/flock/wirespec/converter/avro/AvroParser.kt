@@ -10,11 +10,12 @@ import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.converter.avro.AvroConverter.flatten
+import community.flock.wirespec.converter.common.Parser
 import kotlinx.serialization.json.Json
 
-object AvroParser {
+object AvroParser : Parser {
 
-    fun parse(moduleContent: ModuleContent, strict: Boolean = true): AST {
+    override fun parse(moduleContent: ModuleContent, strict: Boolean): AST {
         val json = Json {
             ignoreUnknownKeys = true
             isLenient = true
