@@ -111,7 +111,8 @@ tasks.register<CompileWirespecTask>("wirespec-typescript") {
 }
 
 tasks.register<ConvertWirespecTask>("wirespec-openapi") {
-    description = "Conver OpenApi to Wirespec"
+    description = "Convert OpenApi to Wirespec"
+    group = "Wirespec convert"
     input = layout.projectDirectory.file("src/main/openapi/petstorev3.json")
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.generated.openapi"

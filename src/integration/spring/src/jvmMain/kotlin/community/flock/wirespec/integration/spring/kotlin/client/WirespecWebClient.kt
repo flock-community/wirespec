@@ -15,6 +15,7 @@ class WirespecWebClient(
     private val client: WebClient,
     private val wirespecSerde: Serialization<String>,
 ) {
+    @Suppress("UNCHECKED_CAST")
     suspend fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> send(request: Req): Res {
         val declaringClass = request::class.java.declaringClass
         val handler = declaringClass.declaredClasses.toList()
@@ -38,7 +39,7 @@ class WirespecWebClient(
         .headers { headers ->
             request.headers.filterNotEmpty().forEach { (key, value) -> headers.addAll(key, value) }
         }
-        .bodyValue(request.body)
+        .apply { request.body?.let { bodyValue(it) } }
         .exchangeToMono { response ->
             response.bodyToMono(String::class.java)
                 .map { body ->

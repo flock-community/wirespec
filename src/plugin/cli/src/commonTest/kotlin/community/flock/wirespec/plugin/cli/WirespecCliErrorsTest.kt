@@ -27,7 +27,7 @@ class WirespecCliErrorsTest {
     fun testOnlyCompileArg() = inContext(arrayOf("compile")) {
         statusCode shouldBe 1
         stderr shouldBe """
-            |Usage: wirespec compile [<options>]
+            |Usage: wirespec compile [<options>] [<stdin>]
             |
             |Error: missing option --language
             |
@@ -38,7 +38,7 @@ class WirespecCliErrorsTest {
     fun testOnlyConvertArg() = inContext(arrayOf("convert")) {
         statusCode shouldBe 1
         stderr shouldBe """
-            |Usage: wirespec convert [<options>] <format>
+            |Usage: wirespec convert [<options>] <format> [<stdin>]
             |
             |Error: missing argument <format>
             |

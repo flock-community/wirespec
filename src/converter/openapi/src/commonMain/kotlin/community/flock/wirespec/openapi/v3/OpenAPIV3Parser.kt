@@ -34,21 +34,22 @@ import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
+import community.flock.wirespec.converter.common.Parser
 import community.flock.wirespec.openapi.Common.className
 import community.flock.wirespec.openapi.Common.filterNotNullValues
 import kotlinx.serialization.json.Json
 import community.flock.kotlinx.openapi.bindings.v3.Type as OpenapiType
 
-object OpenAPIV3Parser {
+object OpenAPIV3Parser : Parser {
 
-    fun parse(moduleContent: ModuleContent, strict: Boolean = false): AST = AST(
+    override fun parse(moduleContent: ModuleContent, strict: Boolean): AST = AST(
         nonEmptyListOf(
             Module(
                 moduleContent.src,
                 OpenAPI(
                     json = Json {
                         prettyPrint = true
-                        ignoreUnknownKeys = strict
+                        ignoreUnknownKeys = !strict
                     },
                 ).decodeFromString(moduleContent.content).parse().toNonEmptyListOrNull() ?: error("Cannot yield non empty List<Node> for OpenAPI v3"),
             ),

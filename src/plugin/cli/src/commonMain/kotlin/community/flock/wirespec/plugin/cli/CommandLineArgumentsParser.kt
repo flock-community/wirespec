@@ -1,5 +1,6 @@
 package community.flock.wirespec.plugin.cli
 
+import arrow.core.NonEmptyList
 import arrow.core.getOrElse
 import arrow.core.nonEmptySetOf
 import arrow.core.toNonEmptySetOrNull
@@ -8,6 +9,7 @@ import com.github.ajalt.clikt.core.CliktError
 import com.github.ajalt.clikt.core.NoOpCliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.multiple
@@ -21,6 +23,7 @@ import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.EmitShared
+import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.utils.Logger
@@ -35,12 +38,13 @@ import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.ConverterArguments
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Language
+import community.flock.wirespec.plugin.io.ClassPath
 import community.flock.wirespec.plugin.io.Directory
 import community.flock.wirespec.plugin.io.DirectoryPath
 import community.flock.wirespec.plugin.io.FilePath
+import community.flock.wirespec.plugin.io.Name
 import community.flock.wirespec.plugin.io.Source
 import community.flock.wirespec.plugin.io.Source.Type.JSON
-import community.flock.wirespec.plugin.io.SourcePath
 import community.flock.wirespec.plugin.io.getFullPath
 import community.flock.wirespec.plugin.io.getOutPutPath
 import community.flock.wirespec.plugin.io.or
@@ -60,7 +64,7 @@ enum class Options(vararg val flags: String) {
 
 class WirespecCli : NoOpCliktCommand(name = "wirespec") {
     companion object {
-        fun provide(
+        operator fun invoke(
             compile: (CompilerArguments) -> Unit,
             convert: (ConverterArguments) -> Unit,
         ): WirespecCli = WirespecCli().subcommands(Compile(compile), Convert(convert))
@@ -83,12 +87,20 @@ private abstract class CommonOptions : CliktCommand() {
         "ERROR" -> ERROR
         else -> throw ChooseALogLevel()
     }
+
+    fun writer(directory: Directory?): (NonEmptyList<Emitted>) -> Unit = { emittedList ->
+        emittedList.forEach { emitted ->
+            directory
+                ?.let { FilePath(it.path.value + "/" + emitted.file).write(emitted.result) }
+                ?: echo(emitted.result)
+        }
+    }
 }
 
 private class Compile(
     private val compiler: (CompilerArguments) -> Unit,
 ) : CommonOptions() {
-
+    private val stdin by argument(help = "stdin").optional()
     private val languages by option(*Options.Language.flags, help = "Language")
         .choice(choices = Language.toMap(), ignoreCase = true)
         .multiple(required = true)
@@ -96,8 +108,8 @@ private class Compile(
     override fun run() {
         val inputPath = getFullPath(input).getOrElse { throw CliktError(it.message) }
         val sources = when (inputPath) {
-            null -> throw IsNotAFileOrDirectory(null)
-            is SourcePath -> throw NoClasspathPossible()
+            null -> stdin?.let { nonEmptySetOf(Source(Name("stdin"), it)) } ?: throw NoInputReceived()
+            is ClassPath -> throw NoClasspathPossible()
             is DirectoryPath -> Directory(inputPath).wirespecSources().or(::handleError)
             is FilePath -> when (inputPath.extension) {
                 FileExtension.Wirespec -> nonEmptySetOf(
@@ -113,11 +125,11 @@ private class Compile(
 
         val emitters = languages.toEmitters(PackageName(packageName), EmitShared(shared))
 
+        val outputDir = inputPath?.let { Directory(getOutPutPath(it, output).or(::handleError)) }
         CompilerArguments(
             input = sources,
-            output = Directory(getOutPutPath(inputPath, output).or(::handleError)),
             emitters = emitters,
-            writer = { filePath, string -> filePath.write(string) },
+            writer = writer(outputDir),
             error = ::handleError,
             packageName = PackageName(packageName),
             logger = Logger(logLevel.toLogLevel()),
@@ -132,6 +144,7 @@ private class Convert(
 ) : CommonOptions() {
 
     private val format by argument(help = "Input format").enum<Format>()
+    private val stdin by argument(help = "stdin").optional()
     private val languages by option(*Options.Language.flags, help = "Language")
         .choice(choices = Language.toMap(), ignoreCase = true)
         .multiple()
@@ -139,8 +152,8 @@ private class Convert(
     override fun run() {
         val inputPath = getFullPath(input).or(::handleError)
         val source = when (inputPath) {
-            null -> throw IsNotAFileOrDirectory(null)
-            is SourcePath -> throw NoClasspathPossible()
+            null -> stdin?.let { Source(Name("stdin"), it) } ?: throw NoInputReceived()
+            is ClassPath -> throw NoClasspathPossible()
             is DirectoryPath -> throw ConvertNeedsAFile()
             is FilePath -> when (inputPath.extension) {
                 FileExtension.JSON -> Source<JSON>(inputPath.name, inputPath.read())
@@ -149,13 +162,12 @@ private class Convert(
         }
 
         val emitters = languages.toEmitters(PackageName(packageName), EmitShared(shared))
-
+        val directory = inputPath?.let { Directory(getOutPutPath(it, output).or(::handleError)) }
         ConverterArguments(
             format = format,
             input = nonEmptySetOf(source),
-            output = Directory(getOutPutPath(inputPath, output).or(::handleError)),
             emitters = emitters,
-            writer = { filePath, string -> filePath.write(string) },
+            writer = writer(directory),
             error = ::handleError,
             packageName = PackageName(packageName),
             logger = Logger(logLevel.toLogLevel()),

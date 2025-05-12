@@ -27,21 +27,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api(project(":src:converter:common"))
-                implementation(libs.kotlinx.serialization)
-                implementation(libs.kotlinx.openapi.bindings)
-            }
-        }
-        commonTest {
-            dependencies {
-                implementation(libs.kotlinx.io.core)
-                implementation(libs.kotlin.test)
-                implementation(libs.bundles.kotest)
-            }
-        }
-        jvmTest {
-            dependencies {
-                implementation(libs.bundles.jackson)
+                api(project(":src:compiler:core"))
             }
         }
     }

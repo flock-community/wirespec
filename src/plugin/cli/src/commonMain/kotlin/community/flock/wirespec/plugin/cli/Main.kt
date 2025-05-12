@@ -1,11 +1,12 @@
 package community.flock.wirespec.plugin.cli
 
+import com.github.ajalt.clikt.core.main
 import community.flock.wirespec.plugin.compile
 import community.flock.wirespec.plugin.convert
 
 fun main(args: Array<String>) {
-    (0..20)
+    // Filter platform-specific arguments.
+    (0 until 20)
         .mapNotNull(args::orNull)
-        .toTypedArray()
-        .let(WirespecCli.provide(::compile, ::convert)::main)
+        .let { WirespecCli(::compile, ::convert).main(it) }
 }

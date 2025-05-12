@@ -36,9 +36,9 @@ object Parser {
 
     fun HasLogger.parse(modules: NonEmptyList<TokenizedModule>, options: ParseOptions = ParseOptions()): EitherNel<WirespecException, AST> = modules
         .map { it.tokens.toProvider(logger).parseModule(it.src, options) }
-        .let { l -> either { l.bindAll() } }
+        .let { either { it.bindAll() } }
         .map { AST(it) }
-        .let { Validator.validate(it) }
+        .let(Validator::validate)
 
     private fun TokenProvider.parseModule(src: String, options: ParseOptions): EitherNel<WirespecException, Module> = either {
         mutableListOf<EitherNel<WirespecException, Definition>>()

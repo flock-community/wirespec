@@ -33,14 +33,15 @@ import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.converter.common.Parser
 import community.flock.wirespec.openapi.Common.className
 import community.flock.wirespec.openapi.Common.filterNotNullValues
 import kotlinx.serialization.json.Json
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenapiType
 
-object OpenAPIV2Parser {
+object OpenAPIV2Parser : Parser {
 
-    fun parse(moduleContent: ModuleContent, strict: Boolean = true): AST = AST(
+    override fun parse(moduleContent: ModuleContent, strict: Boolean): AST = AST(
         nonEmptyListOf(
             Module(
                 moduleContent.src,

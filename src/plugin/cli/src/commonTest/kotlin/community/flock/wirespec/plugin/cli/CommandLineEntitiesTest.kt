@@ -1,5 +1,6 @@
 package community.flock.wirespec.plugin.cli
 
+import com.github.ajalt.clikt.core.main
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.plugin.Format
@@ -31,10 +32,9 @@ class CommandLineEntitiesTest {
                 },
             )
         }.toTypedArray()
-        WirespecCli.provide(
+        WirespecCli(
             noopCompiler {
                 it.input.shouldHaveSize(2).first().name.value shouldBe "todo"
-                it.output.path.value shouldBe "src/commonTest/resources/wirespec"
                 it.emitters.shouldHaveSize(1).first().shouldBeTypeOf<WirespecEmitter>()
                 it.packageName.shouldNotBeNull().value shouldBe "packageName"
                 it.logger.run {
@@ -52,12 +52,11 @@ class CommandLineEntitiesTest {
 
     @Test
     fun testMinimumCliArgumentsForConvert() {
-        WirespecCli.provide(
+        WirespecCli(
             noopCompiler { },
             noopConverter {
                 it.format.shouldBeTypeOf<Format>() shouldBe OpenAPIV2
                 it.input.shouldHaveSize(1).first().name.value shouldBe "keto"
-                it.output.path.value shouldBe "src/commonTest/resources/openapi/out"
                 it.emitters.shouldHaveSize(1).first().shouldBeTypeOf<WirespecEmitter>()
                 it.packageName.shouldNotBeNull().value shouldBe DEFAULT_GENERATED_PACKAGE_STRING
                 it.logger.run {

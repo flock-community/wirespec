@@ -1,5 +1,6 @@
 package community.flock.wirespec.plugin.cli
 
+import com.github.ajalt.clikt.core.main
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.plugin.compile
@@ -23,7 +24,7 @@ class WirespecCliTest {
         val input = "$inputDir/wirespec"
         val output = outputDir()
 
-        WirespecCli.provide(::compile, ::convert)
+        WirespecCli(::compile, ::convert)
             .main(arrayOf("compile", "-i", input, "-o", output, "-l", "Kotlin"))
 
         val directoryPath = DirectoryPath("$output/$packageDir")
@@ -46,7 +47,7 @@ class WirespecCliTest {
         val input = "$inputDir/wirespec"
         val output = outputDir()
 
-        WirespecCli.provide(::compile, ::convert).main(
+        WirespecCli(::compile, ::convert).main(
             arrayOf(
                 "compile",
                 "-i", input,
@@ -77,7 +78,7 @@ class WirespecCliTest {
         val input = "$inputDir/openapi/petstore.json"
         val output = outputDir()
 
-        WirespecCli.provide(::compile, ::convert).main(
+        WirespecCli(::compile, ::convert).main(
             arrayOf(
                 "convert", "openapiv2",
                 "-i", input,
@@ -109,7 +110,7 @@ class WirespecCliTest {
         val input = "$inputDir/openapi/keto.json"
         val output = outputDir()
 
-        WirespecCli.provide(::compile, ::convert).main(
+        WirespecCli(::compile, ::convert).main(
             arrayOf(
                 "convert", "openapiv3",
                 "-i", input,
@@ -138,7 +139,7 @@ class WirespecCliTest {
         val input = "$inputDir/openapi/petstore.json"
         val output = outputDir()
 
-        WirespecCli.provide(::compile, ::convert).main(
+        WirespecCli(::compile, ::convert).main(
             arrayOf(
                 "convert",
                 "openapiv2",

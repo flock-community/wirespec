@@ -25,6 +25,7 @@ include(
     "src:plugin:maven",
     "src:plugin:npm",
     "src:plugin:gradle",
+    "src:converter:common",
     "src:converter:avro",
     "src:converter:openapi",
     "src:integration:avro",

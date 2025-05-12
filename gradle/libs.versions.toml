@@ -1,6 +1,6 @@
 [versions]
 arrow = "1.2.4"
-clikt = "4.4.0"
+clikt = "5.0.3"
 default = "0.0.0-SNAPSHOT"
 dokka = "1.9.20"
 from_env = "VERSION"

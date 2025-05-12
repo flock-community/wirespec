@@ -29,7 +29,7 @@ class GenerateTestClasses {
     @Test
     fun generateKotlin() {
         val petstoreFile = File("src/jvmTest/resources/petstore.json").readText()
-        val ast = OpenAPIV3Parser.parse(ModuleContent("src/jvmTest/resources/petstore.json", petstoreFile))
+        val ast = OpenAPIV3Parser.parse(ModuleContent("src/jvmTest/resources/petstore.json", petstoreFile), false)
         val emittedKotlin = kotlinEmitter.emit(ast, noLogger)
 
         modules.forEach { kotlinOutputDir.resolve(it).mkdirs() }
@@ -41,7 +41,7 @@ class GenerateTestClasses {
     @Test
     fun generateJava() {
         val petstoreFile = File("src/jvmTest/resources/petstore.json").readText()
-        val ast = OpenAPIV3Parser.parse(ModuleContent("src/jvmTest/resources/petstore.json", petstoreFile))
+        val ast = OpenAPIV3Parser.parse(ModuleContent("src/jvmTest/resources/petstore.json", petstoreFile), false)
         val emittedJava = javaEmitter.emit(ast, noLogger)
 
         modules.forEach { javaOutputDir.resolve(it).mkdirs() }
