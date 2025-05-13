@@ -230,7 +230,7 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE
       - name: Run
         run: |
-          ./gradlew publishKotlinMultiplatformPublicationToSonatypeRepository
+          ./gradlew build publishKotlinMultiplatformPublicationToSonatypeRepository
 
   release-lib-npm:
 
