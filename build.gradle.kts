@@ -3,10 +3,13 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform) apply false
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.spotless)
-    id("io.github.gradle-nexus.publish-plugin") version "2.0.0" apply false
+    id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
     `maven-publish`
     signing
 }
+
+group = libs.versions.group.id.get()
+version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.get()
 
 repositories {
     mavenCentral()
