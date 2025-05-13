@@ -3,12 +3,24 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform) apply false
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.spotless)
+    id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
     `maven-publish`
     signing
 }
 
 repositories {
     mavenCentral()
+}
+
+nexusPublishing {
+    repositories {
+        sonatype {
+            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
+            username.set(System.getenv("SONATYPE_USERNAME"))
+            password.set(System.getenv("SONATYPE_PASSWORD"))
+        }
+    }
 }
 
 val dokkaId = libs.plugins.dokka.get().pluginId
@@ -58,7 +70,6 @@ subprojects {
             target("**/*.ws")
             targetExclude(*exclude)
             endWithNewline()
-//            nativeCmd("wirespec", "/usr/local/bin/wirespec", listOf("fmt", "-")) // name, path to binary, additional arguments
         }
 
         kotlin {
@@ -74,23 +85,11 @@ subprojects {
         }
     }
 
+
     publishing {
         publications {
-            repositories {
-                maven {
-                    name = "oss"
-                    val releasesRepoUrl = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/")
-                    val snapshotsRepoUrl = uri("https://central.sonatype.com/repository/maven-snapshots/")
-                    url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
-                    credentials {
-                        username = System.getenv("SONATYPE_USERNAME")
-                        password = System.getenv("SONATYPE_PASSWORD")
-                    }
-                }
-            }
             withType<MavenPublication> {
 
-                // Stub javadoc.jar artifact
                 artifact(tasks.register("${name}JavadocJar", Jar::class) {
                     archiveClassifier.set("javadoc")
                     archiveAppendix.set(this@withType.name)
@@ -129,12 +128,6 @@ subprojects {
         }
     }
 
-    // We're using kotlinx.io in tests as well. For (node)js test, test-resources aren't readily available.
-    // With this additional config of adding two copy tasks, and setting an explicit dependency on the
-    // test tasks ensures the test-resources are readily available within every sub-project
-    //
-    // https://github.com/Kotlin/kotlinx-io/issues/265
-    // https://gist.github.com/dellisd/a1df42787d42b41cd3ce16f573984674
     afterEvaluate {
         val copyTestResourcesForJs by tasks.registering(Copy::class) {
             group = "nodejs"
@@ -155,4 +148,3 @@ subprojects {
         }
     }
 }
-
