@@ -299,9 +299,9 @@ open class JavaEmitter(
         |${Spacer(2)}}
     """.trimMargin()
 
-    private fun Reference.emitGetType() = "Wirespec.getType(${emitRoot("Void")}.class, ${emitGetTypeRaw()})"
-    private fun Reference.emitGetTypeRaw() = when {
-        this.isNullable -> "java.util.Optional.class"
+    private fun Reference?.emitGetType() = "Wirespec.getType(${emitRoot("Void")}.class, ${emitGetTypeRaw()})"
+    private fun Reference?.emitGetTypeRaw() = when {
+        this?.isNullable?:false -> "java.util.Optional.class"
         this is Reference.Iterable -> "java.util.List.class"
         else -> null
     }
