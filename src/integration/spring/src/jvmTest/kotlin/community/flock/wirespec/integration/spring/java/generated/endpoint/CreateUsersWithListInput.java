@@ -58,18 +58,18 @@ public interface CreateUsersWithListInput extends Wirespec.Endpoint {
         java.util.List.of("user", "createWithList"),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
-        serialization.serialize(request.getBody(), Wirespec.getType(User.class, true))
+        serialization.serialize(request.getBody(), Wirespec.getType(User.class, java.util.List.class))
       );
     }
 
     static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
       return new Request(
-        serialization.deserialize(request.body(), Wirespec.getType(User.class, true))
+        serialization.deserialize(request.body(), Wirespec.getType(User.class, java.util.List.class))
       );
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(User.class, false))); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(User.class, null))); }
       if (response instanceof ResponseDefault r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), null); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
     }
@@ -77,7 +77,7 @@ public interface CreateUsersWithListInput extends Wirespec.Endpoint {
     static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
       switch (response.statusCode()) {
         case 200: return new Response200(
-        serialization.deserialize(response.body(), Wirespec.getType(User.class, false))
+        serialization.deserialize(response.body(), Wirespec.getType(User.class, null))
       );
         default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
       }

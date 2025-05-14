@@ -58,20 +58,20 @@ public interface FindPetsByTags extends Wirespec.Endpoint {
       return new Wirespec.RawRequest(
         request.method.name(),
         java.util.List.of("pet", "findByTags"),
-        java.util.Map.ofEntries(java.util.Map.entry("tags", serialization.serializeParam(request.queries.tags, Wirespec.getType(String.class, true)))),
+        java.util.Map.ofEntries(java.util.Map.entry("tags", serialization.serializeParam(request.queries.tags, Wirespec.getType(String.class, java.util.Optional.class)))),
         java.util.Collections.emptyMap(),
-        serialization.serialize(request.getBody(), Wirespec.getType(Void.class, false))
+        serialization.serialize(request.getBody(), null)
       );
     }
 
     static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
       return new Request(
-        java.util.Optional.ofNullable(request.queries().get("tags")).map(it -> serialization.<java.util.List<String>>deserializeParam(it, Wirespec.getType(String.class, true)))
+        serialization.deserializeParam(request.queries().getOrDefault("tags", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class))
       );
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(Pet.class, true))); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(Pet.class, java.util.List.class))); }
       if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), null); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
     }
@@ -79,7 +79,7 @@ public interface FindPetsByTags extends Wirespec.Endpoint {
     static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
       switch (response.statusCode()) {
         case 200: return new Response200(
-        serialization.deserialize(response.body(), Wirespec.getType(Pet.class, true))
+        serialization.deserialize(response.body(), Wirespec.getType(Pet.class, java.util.List.class))
       );
         case 400: return new Response400();
         default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());

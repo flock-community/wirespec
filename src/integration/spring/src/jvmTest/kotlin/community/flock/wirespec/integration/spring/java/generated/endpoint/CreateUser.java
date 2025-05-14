@@ -50,18 +50,18 @@ public interface CreateUser extends Wirespec.Endpoint {
         java.util.List.of("user"),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
-        serialization.serialize(request.getBody(), Wirespec.getType(User.class, false))
+        serialization.serialize(request.getBody(), Wirespec.getType(User.class, null))
       );
     }
 
     static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
       return new Request(
-        serialization.deserialize(request.body(), Wirespec.getType(User.class, false))
+        serialization.deserialize(request.body(), Wirespec.getType(User.class, null))
       );
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
-      if (response instanceof ResponseDefault r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(User.class, false))); }
+      if (response instanceof ResponseDefault r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(User.class, null))); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
     }
 
