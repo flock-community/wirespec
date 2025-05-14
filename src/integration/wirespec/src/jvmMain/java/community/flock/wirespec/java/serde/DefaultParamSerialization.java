@@ -50,6 +50,9 @@ public interface DefaultParamSerialization extends Wirespec.ParamSerialization {
     if (isList(type)) {
       return (T) deserializeList(values, type);
     }
+    if (isOptional(type)) {
+      return (T) deserializeOptional(values, type);
+    }
     Class<?> rawType = getRawType(type);
     if (isWirespecEnum(rawType)) {
       return (T) deserializeEnum(values, rawType);
@@ -58,7 +61,7 @@ public interface DefaultParamSerialization extends Wirespec.ParamSerialization {
   }
 
   private List<?> deserializeList(List<String> values, Type type) {
-    Type elementType = getListElementType(type);
+    Type elementType = getElementType(type);
     Class<?> rawElementType = getRawType(elementType);
 
     if (isWirespecEnum(rawElementType)) {
@@ -67,6 +70,18 @@ public interface DefaultParamSerialization extends Wirespec.ParamSerialization {
           .toList();
     }
     return deserializePrimitiveList(values, rawElementType);
+  }
+
+  private Optional<?> deserializeOptional(List<String> values, Type type) {
+    Type elementType = getElementType(type);
+    Class<?> rawElementType = getRawType(elementType);
+
+    if (isWirespecEnum(rawElementType)) {
+      return values.stream()
+              .map(value -> findEnumByLabel(rawElementType, value))
+              .findFirst();
+    }
+    return deserializePrimitiveList(values, rawElementType).stream().findFirst();
   }
 
   private Object deserializePrimitive(List<String> values, Class<?> clazz) {
@@ -123,7 +138,7 @@ public interface DefaultParamSerialization extends Wirespec.ParamSerialization {
         .anyMatch(iface -> iface == Wirespec.Enum.class);
   }
 
-  private Type getListElementType(Type type) {
+  private Type getElementType(Type type) {
     if (type instanceof ParameterizedType parameterizedType) {
       Type[] typeArguments = parameterizedType.getActualTypeArguments();
       if (typeArguments.length == 1) {
