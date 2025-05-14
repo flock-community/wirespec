@@ -292,40 +292,40 @@ class CompileFullEndpointTest {
             |    static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
             |      return new Wirespec.RawRequest(
             |        request.method.name(),
-            |        java.util.List.of("todos", serialization.serialize(request.path.id, Wirespec.getType(String.class, false))),
-            |        java.util.Map.ofEntries(java.util.Map.entry("done", serialization.serializeParam(request.queries.done, Wirespec.getType(Boolean.class, false)))),
-            |        java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serializeParam(request.headers.token, Wirespec.getType(Token.class, false)))),
-            |        serialization.serialize(request.getBody(), Wirespec.getType(PotentialTodoDto.class, false))
+            |        java.util.List.of("todos", serialization.serialize(request.path.id, Wirespec.getType(String.class, null))),
+            |        java.util.Map.ofEntries(java.util.Map.entry("done", serialization.serializeParam(request.queries.done, Wirespec.getType(Boolean.class, null)))),
+            |        java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serializeParam(request.headers.token, Wirespec.getType(Token.class, null)))),
+            |        serialization.serialize(request.getBody(), Wirespec.getType(PotentialTodoDto.class, null))
             |      );
             |    }
             |
             |    static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
             |      return new Request(
-            |        serialization.<String>deserialize(request.path().get(1), Wirespec.getType(String.class, false)),
-            |        java.util.Optional.ofNullable(request.queries().get("done")).map(it -> serialization.<Boolean>deserializeParam(it, Wirespec.getType(Boolean.class, false))).get(),
-            |        java.util.Optional.ofNullable(request.headers().get("token")).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, false))).get(),
-            |        serialization.deserialize(request.body(), Wirespec.getType(PotentialTodoDto.class, false))
+            |        serialization.deserialize(request.path().get(1), Wirespec.getType(String.class, null)),
+            |        serialization.deserializeParam(request.queries().getOrDefault("done", java.util.Collections.emptyList()), Wirespec.getType(Boolean.class, null)),
+            |        serialization.deserializeParam(request.headers().getOrDefault("token", java.util.Collections.emptyList()), Wirespec.getType(Token.class, null)),
+            |        serialization.deserialize(request.body(), Wirespec.getType(PotentialTodoDto.class, null))
             |      );
             |    }
             |
             |    static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
-            |      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, false))); }
-            |      if (response instanceof Response201 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serializeParam(r.getHeaders().token(), Wirespec.getType(Token.class, false)))), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, false))); }
-            |      if (response instanceof Response500 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(Error.class, false))); }
+            |      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, null))); }
+            |      if (response instanceof Response201 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serializeParam(r.getHeaders().token(), Wirespec.getType(Token.class, null)))), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, null))); }
+            |      if (response instanceof Response500 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(Error.class, null))); }
             |      else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
             |    }
             |
             |    static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
             |      switch (response.statusCode()) {
             |        case 200: return new Response200(
-            |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, false))
+            |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, null))
             |      );
             |        case 201: return new Response201(
-            |        java.util.Optional.ofNullable(response.headers().get("token")).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, false))).get(),
-            |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, false))
+            |        serialization.deserializeParam(response.headers().getOrDefault("token", java.util.Collections.emptyList()), Wirespec.getType(Token.class, null)),
+            |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, null))
             |      );
             |        case 500: return new Response500(
-            |        serialization.deserialize(response.body(), Wirespec.getType(Error.class, false))
+            |        serialization.deserialize(response.body(), Wirespec.getType(Error.class, null))
             |      );
             |        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
             |      }
