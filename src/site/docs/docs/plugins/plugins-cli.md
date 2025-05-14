@@ -37,6 +37,7 @@ sudo mv ./wirespec /usr/local/bin/wirespec
 ```
 
 ## Use
+
 After running these commands, the wirespec command will be available in your terminal.
 You can verify the installation by running wirespec -h
 

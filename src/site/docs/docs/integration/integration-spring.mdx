@@ -3,8 +3,8 @@ title: Spring
 slug: /integration/spring
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 This document describes how to integrate Wirespec-generated code with Spring Boot applications. Wirespec simplifies the
 creation of type-safe and well-defined APIs, and this integration provides a seamless way to use those APIs within your
@@ -69,6 +69,7 @@ The integration works for both [producers](#restcontroller) (RestController) and
         ```
 
     </TabItem>
+
 </Tabs>
 
 :::info
@@ -77,14 +78,15 @@ Make sure to use the latest version, found here:
 ![Maven Central](https://img.shields.io/maven-central/v/community.flock.wirespec.plugin.maven/wirespec-maven-plugin)
 :::
 
-------------------------------
+---
 
 ## Creating and compiling a definition
 
 Now that the setup is complete, we'll add our Wirespec definition in `src/main/wirespec/`, matching the directory we
 specified as input in the configuration. The example below contains a simple Todo type and GET endpoint:
 
-[//]: # (Could be the same as in getting-started maybe?)
+[//]: # "Could be the same as in getting-started maybe?"
+
 ```wirespec title="src/main/wirespec/todo.ws"
 type TodoDto {
     id: Integer,
@@ -110,7 +112,6 @@ maven install
 It's not necessary to understand the ins and outs of the generated code, so we won't go into detail here.
 However, if you're interested to learn more you can look [here](../emitters/java).
 :::
-
 
 ## RestController
 
@@ -172,13 +173,10 @@ we can access it like so:
 Long id = request.getPath().id();
 ```
 
-
-
 ## WebClient
 
 To enable the WebClient integration you can simply add the `@EnableWirespecWebClient` annotation to your application's
 configuration class:
-
 
 ```java
 @SpringBootApplication
@@ -193,7 +191,7 @@ public class App {
 
 :::note
 
-If you want to use both the Controller *and* WebClient you can use: `@EnableWirespec`
+If you want to use both the Controller _and_ WebClient you can use: `@EnableWirespec`
 
 :::
 
@@ -231,9 +229,10 @@ you can do so by declaring a configuration bean.
         }
         ```
     </TabItem>
+
 </Tabs>
 
-------------------------------
+---
 
 <br />
 

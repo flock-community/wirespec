@@ -154,9 +154,9 @@ To use the convert mojo, add it to your `pom.xml` file with the `convert` goal:
 In addition to the common parameters (input, output, languages), the convert mojo has the following specific parameters:
 
 - **format** (required): Specifies the format to convert from. Supported formats are:
-    - `OpenAPIV2`: OpenAPI Specification version 2.0 (formerly Swagger)
-    - `OpenAPIV3`: OpenAPI Specification version 3.0
-    - `Avro`: Apache Avro schema format
+  - `OpenAPIV2`: OpenAPI Specification version 2.0 (formerly Swagger)
+  - `OpenAPIV3`: OpenAPI Specification version 3.0
+  - `Avro`: Apache Avro schema format
 
 ### Running the Convert Goal
 
@@ -200,6 +200,7 @@ The `preProcessor` parameter allows you to specify a class that preprocesses the
 The preprocessor class can be implemented in either Java or Kotlin:
 
 **Kotlin Example:**
+
 ```kotlin
 class MyPreProcessor : (String) -> String {
     override fun invoke(input: String): String {
@@ -210,6 +211,7 @@ class MyPreProcessor : (String) -> String {
 ```
 
 **Java Example:**
+
 ```java
 public class MyPreProcessor implements Function<String, String> {
     @Override

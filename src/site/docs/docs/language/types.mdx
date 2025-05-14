@@ -10,14 +10,15 @@ In Wirespec, everything that gets sent over the wire is a type.
 ## Primitive
 
 This section describes the primitive types used in Wirespec:
- - `String`
- - `Boolean`
- - `Integer`
- - `Integer32`
- - `Number` (For Real numbers, so i.e. float/double)
- - `Number32`
- - `Bytes`
- - `Unit` (Only used to indicate the absence of a response body)
+
+- `String`
+- `Boolean`
+- `Integer`
+- `Integer32`
+- `Number` (For Real numbers, so i.e. float/double)
+- `Number32`
+- `Bytes`
+- `Unit` (Only used to indicate the absence of a response body)
 
 ## Composite
 
@@ -79,6 +80,7 @@ type Product {
 ```
 
 Or, as a list using `[]`:
+
 ```wirespec
 type Product {
     tags: String[]
@@ -87,6 +89,7 @@ type Product {
 
 Lastly, you can create a dictionary by placing brackets around the type. The resulting map/dict will map from `String`
 to the specified type, `String -> String` in this example:
+
 ```wirespec
 type Person {
     details: { String }

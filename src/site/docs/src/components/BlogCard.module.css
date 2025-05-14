@@ -1,68 +1,68 @@
 .card {
-    padding: 56px 56px 36px;
-    border: 1px solid;
-    background: linear-gradient(#101010, #101010) padding-box, linear-gradient(90deg, #ffdf00, #ffdf00) border-box;
-    border: 1px solid transparent;
-    border-radius: 12px;
-    border-radius: 10px;
-    overflow: hidden;
-    margin: 0rem auto;
+  padding: 56px 56px 36px;
+  border: 1px solid;
+  background:
+    linear-gradient(#101010, #101010) padding-box,
+    linear-gradient(90deg, #ffdf00, #ffdf00) border-box;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 0rem auto;
 }
 
 .cardImage {
-    width: 100%;
-    height: auto;
-    display: block;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  width: 100%;
+  height: auto;
+  display: block;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .cardContent {
-    padding: 1.5rem;
-    text-align: left;
+  padding: 1.5rem;
+  text-align: left;
 }
 
 .cardContent h3 {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 28px;
-    font-weight: 500;
-    color: #ffffff;
+  font-family: "DM Sans", sans-serif;
+  font-size: 28px;
+  font-weight: 500;
+  color: #ffffff;
 
-    @media(max-width: 1024px){
-        font-size: 24px;
-
-    }
-    @media(max-width: 767px){
-        font-size: 20px;
-    }
+  @media (max-width: 1024px) {
+    font-size: 24px;
+  }
+  @media (max-width: 767px) {
+    font-size: 20px;
+  }
 }
 
 .cardContent p {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 18px;
-    font-weight: 400;
-    color: #9F9F9F;
-    text-align: left;
+  font-family: "DM Sans", sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: #9f9f9f;
+  text-align: left;
 
-    @media(max-width: 767px){
-        font-size: 16px;
-    }
+  @media (max-width: 767px) {
+    font-size: 16px;
+  }
 }
-.headinglink:hover{
-    text-decoration: none;
-
+.headinglink:hover {
+  text-decoration: none;
 }
 
 .readMore {
-    color: #f7e600;
-    font-size: 18px;
-    font-weight: 400;
-    text-decoration: underline;
+  color: #f7e600;
+  font-size: 18px;
+  font-weight: 400;
+  text-decoration: underline;
 
-    @media(max-width: 767px){
-        font-size: 16px;
-    }
+  @media (max-width: 767px) {
+    font-size: 16px;
+  }
 }
 
 .readMore:hover {
-    text-decoration: none;
+  text-decoration: none;
 }

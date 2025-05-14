@@ -1,22 +1,18 @@
 import React from "react";
 import Layout from "@theme/Layout";
 import styles from "./vision.module.css";
-import Heading from "@theme/Heading";
-import Link from "@docusaurus/Link";
-import clsx from "clsx";
 
 export default function VisionPage() {
   return (
     <Layout
       title="Wirespec your APIs"
       description="Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications"
-      image="/img/code-snippet.jpg"
     >
       <main className={styles.visionMain}>
         <section className={styles.visionSection}>
           <div className={styles.visionContent}>
             <h1 className={styles.title}>
-              Wirespec <br /> <span>vision</span>{" "}
+              Wirespec <br /> <span>vision</span>
             </h1>
             <p className={styles.paragraph}>
               Wirespec envisions a future where interface design is streamlined
@@ -37,7 +33,6 @@ export default function VisionPage() {
               strict adherence to the defined contract specifications.
             </p>
             <p className={styles.paragraph}>
-              Furthermore, Wirespec’s contract specifications are invaluable for
               validating and testing the implementation against the agreed-upon
               interface. The contract acts as a blueprint, allowing for
               automated testing to ensure that the implementation adheres to the

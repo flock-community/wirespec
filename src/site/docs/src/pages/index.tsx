@@ -1,17 +1,15 @@
 import clsx from "clsx";
 import Link from "@docusaurus/Link";
-import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import Layout from "@theme/Layout";
 import CodeBlock from "@theme/CodeBlock";
-import HomepageFeatures from "@site/src/components/HomepageFeatures";
 import Heading from "@theme/Heading";
 import "../css/custom.css";
 import styles from "./index.module.css";
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
+import { JSX } from "react";
 
 function HomepageHeader() {
-  const { siteConfig } = useDocusaurusContext();
   return (
     <header className={clsx("hero hero--primary", styles.heroBanner)}>
       <div className="container">
@@ -19,11 +17,11 @@ function HomepageHeader() {
           as="h1"
           className={clsx("hero__title hero-heading", styles.heroHeading)}
         >
-          Wirespec <br />
-          your <span className="primary-text-color">APIs</span>
+          Wirespec <br /> your <span className="primary-text-color">APIs</span>
         </Heading>
         <p className={clsx("hero__subtitle", styles.heroSubtitle)}>
-          Simplify your API development, with human readable specifications and guarantee strict adherence
+          Simplify your API development, with human readable specifications and
+          guarantee strict adherence
         </p>
         <div className={styles.buttons}>
           <Link
@@ -45,7 +43,6 @@ function HomepageHeader() {
 }
 
 export default function Home(): JSX.Element {
-  const { siteConfig } = useDocusaurusContext();
   return (
     <Layout
       title="Wirespec your APIs"
@@ -61,11 +58,12 @@ export default function Home(): JSX.Element {
                   <Heading as="h2" className={clsx(styles.heading2)}>
                     <span className="primary-text-color">Human</span> readable{" "}
                     <br />
-                    spec first
+                    spec first{" "}
                   </Heading>
                   <p>
-                    Designing, building and testing interfaces is time consuming and error prone. Automate and
-                    standardize your workflow to eliminate the following problems:
+                    Designing, building and testing interfaces is time consuming
+                    and error prone. Automate and standardize your workflow to
+                    eliminate the following problems:
                   </p>
                   <ul className={styles.listItemGroup}>
                     <li className={clsx(styles.listItem)}>
@@ -90,7 +88,7 @@ export default function Home(): JSX.Element {
                 </div>
               </div>
               <div className="col col--7">
-                <div className=" card-nospace">
+                <div className="card-nospace">
                   <img
                     src="/img/design-first-human-readable.png"
                     alt="design-first-human-readable"
@@ -117,17 +115,21 @@ export default function Home(): JSX.Element {
                     Why <span className="primary-text-color">Wirespec</span>
                   </Heading>
                   <p>
-                    Wirespec is a language that simplifies interface design. A requirement for truly contract-first
-                    specifications is readability, by humans, not machines.
+                    Wirespec is a language that simplifies interface design. A
+                    requirement for truly contract-first specifications is
+                    readability, by humans, not machines.
                   </p>
                   <p>
-                    By generating producer and consumer it acts as the single source of truth for your implementations,
-                    reducing errors, ensuring consistency, and enabling simultaneous frontend and backend development.
+                    By generating producer and consumer it acts as the single
+                    source of truth for your implementations, reducing errors,
+                    ensuring consistency, and enabling simultaneous frontend and
+                    backend development.
                   </p>
                   <p>
-                    Additionally, Wirespec guarantees implementations follow specification by compile-time checks,
-                    automated testing, and validation. In short, Wirespec streamlines API development, reduces errors,
-                    and improves team alignment.
+                    Additionally, Wirespec guarantees implementations follow
+                    specification by compile-time checks, automated testing, and
+                    validation. In short, Wirespec streamlines API development,
+                    reduces errors, and improves team alignment.
                   </p>
                 </div>
               </div>
@@ -266,15 +268,18 @@ export default function Home(): JSX.Element {
                       Contract
                     </Heading>
                     <p>
-                      Wirespec’s contract-first approach empowers teams by establishing one clear, authoritative source
-                      of truth, independent of implementation or technology. It drives robust, consistent interface
-                      designs, boosts team alignment, eliminates ambiguity, and accelerates effective collaboration.
+                      Wirespec’s contract-first approach empowers teams by
+                      establishing one clear, authoritative source of truth,
+                      independent of implementation or technology. It drives
+                      robust, consistent interface designs, boosts team
+                      alignment, eliminates ambiguity, and accelerates effective
+                      collaboration.{" "}
                     </p>
                     <Link
                       className={clsx(
                         "button-link",
                         styles.button,
-                        styles.buttonPrimary
+                        styles.buttonPrimary,
                       )}
                       to="/how#contract"
                     >
@@ -361,16 +366,19 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                       Generate
                     </Heading>
                     <p>
-                      Our code generation vision embraces a contract-first strategy, placing specifications as the
-                      definitive source of truth. This powerful approach ensures durable, reusable interfaces, isolates
-                      domain definitions from implementation details, and leverages automated, typesafe code
-                      generation-boosting clarity, collaboration, and efficiency across teams.
+                      Our code generation vision embraces a contract-first
+                      strategy, placing specifications as the definitive source
+                      of truth. This powerful approach ensures durable, reusable
+                      interfaces, isolates domain definitions from
+                      implementation details, and leverages automated, typesafe
+                      code generation-boosting clarity, collaboration, and
+                      efficiency across teams.
                     </p>
                     <Link
                       className={clsx(
                         "button-link",
                         styles.button,
-                        styles.buttonPrimary
+                        styles.buttonPrimary,
                       )}
                       to="/how#generate"
                     >
@@ -390,16 +398,19 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                       Validate
                     </Heading>
                     <p>
-                      Wirespec specifications serve as the definitive source of truth, ensuring API implementations
-                      align seamlessly with defined interfaces. Leveraging automated test data generation and mock
-                      servers, they streamline robust validation, swiftly identify discrepancies, reduce ambiguity, and
-                      boost reliability - empowering teams to deliver consistent, predictable API behavior.
+                      Wirespec specifications serve as the definitive source of
+                      truth, ensuring API implementations align seamlessly with
+                      defined interfaces. Leveraging automated test data
+                      generation and mock servers, they streamline robust
+                      validation, swiftly identify discrepancies, reduce
+                      ambiguity, and boost reliability - empowering teams to
+                      deliver consistent, predictable API behavior.
                     </p>
                     <Link
                       className={clsx(
                         "button-link",
                         styles.button,
-                        styles.buttonPrimary
+                        styles.buttonPrimary,
                       )}
                       to="/how#validate"
                     >
@@ -429,10 +440,10 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                   </Heading>
                   <p>
                     Wirespec supports various plugins for integration into a
-                    variety of ecosystems.
+                    variety of ecosystems.{" "}
                   </p>
                   <p>
-                    <span>Plugins:</span> Cli, Gradle, Maven, NPM
+                    <span>Plugins:</span> Cli, Gradle, Maven, NPM{" "}
                   </p>
                 </div>
               </div>
@@ -582,8 +593,9 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                   Why Wirespec from <span>Flock</span>
                 </Heading>
                 <p>
-                  Choosing Wirespec means selecting a product developed and supported by Flock., a community of
-                  passionate and driven professionals dedicated to continuous improvement.
+                  Choosing Wirespec means selecting a product developed and
+                  supported by Flock., a community of passionate and driven
+                  professionals dedicated to continuous improvement.
                 </p>
                 <p>
                   Our dedication to ongoing innovation and quality ensures that
@@ -609,7 +621,7 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                       src="https://www.youtube.com/embed/LMA5ByWUhBo?si=4BK1w7GIIVfr2doG"
                       title="YouTube video player"
                       frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allow="accelerometer; autoplay; clipboard-write;  encrypted-media; gyroscope; picture-in-picture; web-share"
                       referrerPolicy="strict-origin-when-cross-origin"
                       allowFullScreen
                     ></iframe>

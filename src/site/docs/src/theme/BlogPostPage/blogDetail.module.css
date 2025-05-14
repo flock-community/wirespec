@@ -1,80 +1,79 @@
 .blogMain {
-    color: white;
-    padding: 210px 0px;
-    background-image: url('/img/blog-bg.png');
-    background-repeat: no-repeat;
-    background-size: 100%;
-    background-position: center top;
-    &>* {
-        max-width: 982px;
-        width: 96%;
-        margin: 0 auto;
-    }
-    @media(max-width: 1440px) {
-        padding: 150px 0px 100px;
-    }
-    @media(max-width: 1024px) {
-        padding: 120px 0px 80px;
-    }
-    @media(max-width: 767px) {
-        padding: 100px 0px 50px;
-    }
+  color: white;
+  padding: 210px 0px;
+  background-image: url("/img/blog-bg.png");
+  background-repeat: no-repeat;
+  background-size: 100%;
+  background-position: center top;
+  & > * {
+    max-width: 982px;
+    width: 96%;
+    margin: 0 auto;
+  }
+  @media (max-width: 1440px) {
+    padding: 150px 0px 100px;
+  }
+  @media (max-width: 1024px) {
+    padding: 120px 0px 80px;
+  }
+  @media (max-width: 767px) {
+    padding: 100px 0px 50px;
+  }
 }
 
 .hero h1 {
-    font-family: 'Funnel Display', sans-serif;
-    font-weight: 500;
-    font-size: 54px;
-    line-height: 104%;
-    letter-spacing: -0.03em;
-    text-align: left;
-    margin-bottom: 2rem;
-    color: white;
+  font-family: "Funnel Display", sans-serif;
+  font-weight: 500;
+  font-size: 54px;
+  line-height: 104%;
+  letter-spacing: -0.03em;
+  text-align: left;
+  margin-bottom: 2rem;
+  color: white;
 }
 
 .imageSection {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 2rem;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
 }
 
 .heroImage {
-    max-width: 100%;
-    border-radius: 10px;
+  max-width: 100%;
+  border-radius: 10px;
 }
 
 .content p {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 160%;
-    letter-spacing: -0.01em;
-    text-align: justify;
-    color: #9F9F9F;
+  font-family: "DM Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 160%;
+  letter-spacing: -0.01em;
+  text-align: justify;
+  color: #9f9f9f;
 }
 
 .content h2 {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 28px;
-    font-weight: 500;
-    margin-top: 2rem;
-    color: #ffffff;
+  font-family: "DM Sans", sans-serif;
+  font-size: 28px;
+  font-weight: 500;
+  margin-top: 2rem;
+  color: #ffffff;
 }
-
 
 /* Mobile-specific styles */
 
 @media (max-width: 768px) {
-    .hero h1 {
-        font-size: 32px;
-        /* Adjust h1 for mobile devices */
-    }
-    .content h2 {
-        font-size: 24px;
-        /* Adjust h2 for mobile devices */
-    }
-    .content p {
-        font-size: 16px;
-        /* Keep the p tags at 16px on mobile */
-    }
+  .hero h1 {
+    font-size: 32px;
+    /* Adjust h1 for mobile devices */
+  }
+  .content h2 {
+    font-size: 24px;
+    /* Adjust h2 for mobile devices */
+  }
+  .content p {
+    font-size: 16px;
+    /* Keep the p tags at 16px on mobile */
+  }
 }

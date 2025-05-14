@@ -69,6 +69,7 @@ class KotlinSerializableEmitter : KotlinEmitter("community.flock.wirespec.genera
 ```
 
 **Note:** You'll need to add the following imports to your build script:
+
 ```
 import community.flock.wirespec.plugin.gradle.CompileWirespecTask
 import community.flock.wirespec.plugin.gradle.ConvertWirespecTask
@@ -85,11 +86,12 @@ The Wirespec Gradle plugin provides two main task types:
 This task compiles Wirespec definitions to various target languages.
 
 **Properties:**
+
 - `input`: DirectoryProperty - The input directory containing Wirespec files
 - `output`: DirectoryProperty - The output directory for generated code
 - `languages`: ListProperty&lt;Language&gt; - List of target languages (Java, Kotlin, TypeScript, Python, Wirespec, OpenAPIV2, OpenAPIV3)
 - `packageName`: Property&lt;String&gt; - Package name for generated code
-- `emitterClass`: Property&lt;Class&lt;*&gt;&gt; - Custom emitter class
+- `emitterClass`: Property&lt;Class&lt;\*&gt;&gt; - Custom emitter class
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
 - `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)
 
@@ -98,10 +100,11 @@ This task compiles Wirespec definitions to various target languages.
 This task converts from JSON or Avro to other formats.
 
 **Properties:**
+
 - `input`: RegularFileProperty - The input file (JSON or Avro)
 - `output`: DirectoryProperty - The output directory for generated code
 - `format`: Property&lt;Format&gt; - The target format (OpenAPIV2, OpenAPIV3, Avro)
 - `packageName`: Property&lt;String&gt; - Package name for generated code
-- `emitterClass`: Property&lt;Class&lt;*&gt;&gt; - Custom emitter class
+- `emitterClass`: Property&lt;Class&lt;\*&gt;&gt; - Custom emitter class
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
 - `strict`: Property&lt;Boolean&gt; - Strict parsing mode (default: false)

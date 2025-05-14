@@ -2,14 +2,12 @@ import React from "react";
 import Layout from "@theme/Layout";
 import BlogCard from "@site/src/components/BlogCard";
 import styles from "./blogs.module.css";
-import Seo from "@site/src/components/Seo";
 
 export default function BlogListPage({ metadata, items }) {
   return (
     <Layout
       title="Wirespec Blogs"
       description="Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications"
-      image="/img/code-snippet.jpg"
     >
       <main className={styles.blogMain}>
         <h1 className={styles.heading}>Blog</h1>

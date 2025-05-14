@@ -1,77 +1,77 @@
 .visionMain {
-    background-color: #101010;
-    background-image: url('/img/vision-bg.png');
-    background-size: 100%;
-    color: white;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    background-repeat: no-repeat;
+  background-color: #101010;
+  background-image: url("/img/vision-bg.png");
+  background-size: 100%;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background-repeat: no-repeat;
 }
 
 .visionSection {
-    max-width: 1023px;
-    margin: 0 auto;
-    width: 96%;
-    padding: 210px 0px 175px;
-    text-align: center;
-    @media(max-width: 1440px) {
-        padding: 150px 0px 90px;
-    }
-    @media(max-width: 1024px) {
-        padding: 100px 0px 50px;
-    }
-    @media(max-width: 767px) {
-        padding: 120px 0px 30px;
-        padding-top: 100px;
-    }
+  max-width: 1023px;
+  margin: 0 auto;
+  width: 96%;
+  padding: 210px 0px 175px;
+  text-align: center;
+  @media (max-width: 1440px) {
+    padding: 150px 0px 90px;
+  }
+  @media (max-width: 1024px) {
+    padding: 100px 0px 50px;
+  }
+  @media (max-width: 767px) {
+    padding: 120px 0px 30px;
+    padding-top: 100px;
+  }
 }
 
 .visionContent {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 .title {
-    font-family: 'Funnel Display', sans-serif;
-    font-weight: 500;
-    font-size: 74px;
-    line-height: 104%;
-    letter-spacing: -0.03em;
-    text-align: center;
-    color: #FFFFFF;
-    margin: 0%;
-    margin-bottom: 30px;
-    span {
-        color: #FFDF00;
-    }
-    @media(max-width: 1024px) {
-        font-size: 48px;
-    }
-    @media(max-width: 767px) {
-        font-size: 42px;
-    }
+  font-family: "Funnel Display", sans-serif;
+  font-weight: 500;
+  font-size: 74px;
+  line-height: 104%;
+  letter-spacing: -0.03em;
+  text-align: center;
+  color: #ffffff;
+  margin: 0%;
+  margin-bottom: 30px;
+  span {
+    color: #ffdf00;
+  }
+  @media (max-width: 1024px) {
+    font-size: 48px;
+  }
+  @media (max-width: 767px) {
+    font-size: 42px;
+  }
 }
 
 .subtitle {
-    font-family: 'Funnel Display', sans-serif;
-    font-weight: 500;
-    font-size: 74px;
-    line-height: 104%;
-    letter-spacing: -0.03em;
-    text-align: center;
-    color: #FFDF00;
+  font-family: "Funnel Display", sans-serif;
+  font-weight: 500;
+  font-size: 74px;
+  line-height: 104%;
+  letter-spacing: -0.03em;
+  text-align: center;
+  color: #ffdf00;
 }
 
 .paragraph {
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 400;
-    font-size: 18px;
-    line-height: 160%;
-    letter-spacing: -0.01em;
-    color: #9F9F9F;
-    @media (max-width: 767px) {
-        font-size: 16px;
-        line-height: 140%;
-    }
+  font-family: "DM Sans", sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 160%;
+  letter-spacing: -0.01em;
+  color: #9f9f9f;
+  @media (max-width: 767px) {
+    font-size: 16px;
+    line-height: 140%;
+  }
 }

@@ -1,168 +1,245 @@
 .mainContainer {
-    background-image: url('/img/how-bg.png');
-    background-size: 100%;
-    background-repeat: no-repeat;
+  background-image: url("/img/how-bg.png");
+  background-size: 100%;
+  background-repeat: no-repeat;
 }
 
 .contractMain {
-    padding: 0rem 1rem 9rem 1rem;
-    max-width: 960px;
-    width: 96%;
-    margin: 0 auto;
-    color: white;
+  padding: 210px 1rem 175px;
+  max-width: 960px;
+  width: 98%;
+  margin: 0 auto;
+  color: white;
+  @media (max-width: 1440px) {
+    padding: 150px 1rem 90px;
+  }
+  @media (max-width: 1024px) {
+    padding: 100px 0px 50px;
+  }
+  @media (max-width: 767px) {
+    padding: 120px 1rem 30px;
     padding-top: 100px;
+  }
 }
 
 .hero h1 {
-    font-family: 'Funnel Display', sans-serif;
-    font-weight: 500;
-    font-size: 54px;
-    line-height: 104%;
-    letter-spacing: -0.03em;
-    text-align: left;
-    margin-bottom: 1rem;
+  font-family: "Funnel Display", sans-serif;
+  font-weight: 500;
+  font-size: 54px;
+  line-height: 104%;
+  letter-spacing: -0.03em;
+  text-align: left;
+  margin-bottom: 1rem;
+  @media (max-width: 1024px) {
+    font-size: 48px;
+  }
+  @media (max-width: 767px) {
+    font-size: 42px;
+  }
 }
 
 .hero p {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 18px;
-    line-height: 160%;
-    letter-spacing: -0.01em;
-    color: #d1d1d1;
-    text-align: left;
+  font-family: "DM Sans", sans-serif;
+  font-size: 18px;
+  line-height: 160%;
+  letter-spacing: -0.01em;
+  color: #d1d1d1;
+  text-align: left;
+  @media (max-width: 767px) {
+    font-size: 16px;
+    line-height: 140%;
+  }
 }
 
 .section h2 {
-    font-size: 28px;
-    font-weight: 600;
-    margin-top: 3rem;
-    margin-bottom: 1.5rem;
-    color: white;
-    font-family: 'DM Sans', sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  margin-top: 3rem;
+  margin-bottom: 1.5rem;
+  color: white;
+  font-family: "DM Sans", sans-serif;
+
+  @media (max-width: 767px) {
+    font-size: 24px;
+  }
 }
 
 .principles {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 18px;
-    color: #d1d1d1;
-    line-height: 1.7;
-    padding-left: 1.25rem;
+  font-family: "DM Sans", sans-serif;
+  font-size: 18px;
+  color: #d1d1d1;
+  line-height: 1.7;
+  padding-left: 1.25rem;
+
+  @media (max-width: 767px) {
+    font-size: 16px;
+    line-height: 140%;
+  }
 }
 
-.principles>li {
-    margin-bottom: 2rem;
+.principles > li {
+  margin-bottom: 2rem;
 }
 
 .principles strong {
-    display: block;
-    margin-bottom: 0.5rem;
-    color: white;
+  display: block;
+  margin-bottom: 0.5rem;
+  color: white;
 }
 
 .principles ul {
-    list-style: none;
-    padding-left: 0;
+  list-style: none;
+  padding-left: 0;
 }
 
 .principles li {
-    position: relative;
-    margin-bottom: 1rem;
-    padding-left: 1.5rem;
+  position: relative;
+  margin-bottom: 1rem;
+  padding-left: 0.25rem;
+  ul {
+    margin-top: 5px;
+    li {
+      padding-left: 1.25rem;
+    }
+  }
 }
 
 .bullet {
-    position: absolute;
-    left: 0;
-    top: 0.4em;
-    width: 10px;
-    height: 10px;
-    background-color: #FFDF00;
-    border-radius: 50%;
+  position: absolute;
+  left: 0;
+  top: 0.4em;
+  width: 10px;
+  height: 10px;
+  background-color: #ffdf00;
+  border-radius: 50%;
 }
 
 .generateSection {
-    padding-top: 4rem;
+  padding-top: 4rem;
+
+  @media (max-width: 767px) {
+    padding-top: 2rem;
+  }
 }
 
 .generateSection h2 {
-    font-family: 'Funnel Display', sans-serif;
-    font-weight: 500;
-    font-size: 48px;
-    letter-spacing: -0.02em;
-    margin-bottom: 2rem;
-    color: white;
+  font-family: "Funnel Display", sans-serif;
+  font-weight: 500;
+  font-size: 48px;
+  letter-spacing: -0.02em;
+  margin-bottom: 2rem;
+  color: white;
+
+  @media (max-width: 767px) {
+    font-size: 42px;
+    margin-bottom: 20px;
+  }
 }
 
 .generateSection p {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 18px;
-    line-height: 160%;
-    letter-spacing: -0.01em;
-    color: #d1d1d1;
-    margin-bottom: 1.5rem;
-    text-align: justify;
+  font-family: "DM Sans", sans-serif;
+  font-size: 18px;
+  line-height: 160%;
+  letter-spacing: -0.01em;
+  color: #d1d1d1;
+  margin-bottom: 1.5rem;
+
+  @media (max-width: 767px) {
+    font-size: 16px;
+    line-height: 140%;
+  }
 }
 
 .validateSection {
-    padding-top: 4rem;
+  padding-top: 4rem;
+  @media (max-width: 767px) {
+    padding-top: 2rem;
+  }
 }
 
 .validateSection h2 {
-    font-family: 'Funnel Display', sans-serif;
-    font-weight: 500;
-    font-size: 48px;
-    letter-spacing: -0.02em;
-    margin-bottom: 1.5rem;
-    color: white;
+  font-family: "Funnel Display", sans-serif;
+  font-weight: 500;
+  font-size: 48px;
+  letter-spacing: -0.02em;
+  margin-bottom: 1.5rem;
+  color: white;
+
+  @media (max-width: 767px) {
+    margin-bottom: 20px;
+    font-size: 42px;
+  }
 }
 
-.validateSection>p {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 18px;
-    color: #d1d1d1;
-    line-height: 160%;
-    letter-spacing: -0.01em;
-    margin-bottom: 2.5rem;
-    text-align: justify;
+.validateSection > p {
+  font-family: "DM Sans", sans-serif;
+  font-size: 18px;
+  color: #d1d1d1;
+  line-height: 160%;
+  letter-spacing: -0.01em;
+  margin-bottom: 2.5rem;
+
+  @media (max-width: 767px) {
+    font-size: 16px;
+    line-height: 140%;
+  }
 }
 
 .validateBlock {
-    margin-bottom: 2rem;
+  margin-bottom: 2rem;
 }
 
 .validateBlock h3 {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 22px;
-    font-weight: 600;
-    margin-bottom: 0.75rem;
-    color: white;
+  font-family: "DM Sans", sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: white;
+
+  @media (max-width: 767px) {
+    font-size: 20px;
+  }
 }
 
 .validateBlock p {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 18px;
-    color: #d1d1d1;
-    line-height: 160%;
-    letter-spacing: -0.01em;
-    text-align: justify;
+  font-family: "DM Sans", sans-serif;
+  font-size: 18px;
+  color: #d1d1d1;
+  line-height: 160%;
+  letter-spacing: -0.01em;
+
+  @media (max-width: 767px) {
+    font-size: 16px;
+    line-height: 140%;
+  }
 }
 
 .contractImageSection {
-    border: 1px solid;
-    border-image-source: linear-gradient(180deg, #FFDF00 0%, rgba(16, 16, 16, 0) 100%);
-    border-image-slice: 1;
-    border-radius: 10px;
-    margin: 1rem auto;
+  border: 1px solid;
+  border-image-source: linear-gradient(
+    180deg,
+    #ffdf00 0%,
+    rgba(16, 16, 16, 0) 100%
+  );
+  border-image-slice: 1;
+  border-radius: 10px;
+  margin: 1rem auto;
 }
 
 .generateImageSection {
-    border: 1px solid;
-    border-image-source: linear-gradient(180deg, #FFDF00 0%, rgba(16, 16, 16, 0) 100%);
-    border-image-slice: 1;
-    border-radius: 10px;
-    margin: 1rem auto;
+  border: 1px solid;
+  border-image-source: linear-gradient(
+    180deg,
+    #ffdf00 0%,
+    rgba(16, 16, 16, 0) 100%
+  );
+  border-image-slice: 1;
+  border-radius: 10px;
+  margin: 1rem auto;
 }
 
 .heroImage {
-    background: linear-gradient(#101010, #101010) padding-box, linear-gradient(0deg, #101010, #ffdf00) border-box;
+  background:
+    linear-gradient(#101010, #101010) padding-box,
+    linear-gradient(0deg, #101010, #ffdf00) border-box;
 }

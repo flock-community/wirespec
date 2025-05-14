@@ -1,9 +1,6 @@
 import React from "react";
 import Layout from "@theme/Layout";
 import styles from "./contract.module.css";
-import Heading from "@theme/Heading";
-import Link from "@docusaurus/Link";
-import clsx from "clsx";
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 import CodeBlock from "@theme/CodeBlock";
@@ -13,12 +10,11 @@ export default function ContractPage() {
     <Layout
       title="Wirespec your APIs"
       description="Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications"
-      image="/img/code-snippet.jpg"
     >
       <div className={styles.mainContainer}>
         <main className={styles.contractMain}>
           <div id="contract">
-            <section className={styles.hero} style={{ paddingTop: "4rem" }}>
+            <section className={styles.hero}>
               <h1>Contract</h1>
               <p>
                 The contract–first approach for interface design, as envisioned
@@ -30,13 +26,11 @@ export default function ContractPage() {
                 of this concept:
               </p>
             </section>
-
             <section className={styles.section}>
               <h2>Key Principles of the Contract-First Approach:</h2>
-
               <ol className={styles.principles}>
                 <li>
-                  <strong>Single Source of Truth:</strong>
+                  Single Source of Truth:
                   <ul>
                     <li>
                       <span className={styles.bullet}></span> At the heart of
@@ -52,9 +46,8 @@ export default function ContractPage() {
                     </li>
                   </ul>
                 </li>
-
                 <li>
-                  <strong>Independence from Implementation:</strong>
+                  Independence from Implementation:
                   <ul>
                     <li>
                       <span className={styles.bullet}></span> The interface
@@ -70,9 +63,8 @@ export default function ContractPage() {
                     </li>
                   </ul>
                 </li>
-
                 <li>
-                  <strong>Collaborative Design–Centric Methodology:</strong>
+                  Collaborative Design–Centric Methodology:
                   <ul>
                     <li>
                       <span className={styles.bullet}></span> This approach
@@ -129,7 +121,6 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
               </CodeBlock>
             </section>
           </div>
-
           <div id="generate">
             <section className={styles.generateSection}>
               <h2>Generate</h2>
@@ -138,7 +129,8 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                 contract–first approach where specifications act as the single
                 source of truth. By prioritizing the specification over the
                 implementation, development is streamlined, reducing ambiguity
-                and fostering better collaboration among cross–functional teams.
+                and fostering better collaboration among cross–functional
+                teams.{" "}
               </p>
               <p>
                 Interfaces, often mapped to the domain, play a pivotal role in
@@ -164,14 +156,12 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                   <CodeBlock>{`project/out/community/flock/wirespec/generated/
   └─ Todo.ts`}</CodeBlock>
                 </TabItem>
-
                 <TabItem value="Kotlin" label="Kotlin">
                   <CodeBlock language="bash">{`wirespec compile --input . --language kotlin`}</CodeBlock>
                   <p>This will generate the following file:</p>
                   <CodeBlock>{`project/out/community/flock/wirespec/generated/
   └─ Todo.kt`}</CodeBlock>
                 </TabItem>
-
                 <TabItem value="Java" label="Java">
                   <CodeBlock language="bash">{`wirespec compile --input . --language java`}</CodeBlock>
                   <p>This will generate the following files:</p>
@@ -186,7 +176,6 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
               </Tabs>
             </section>
           </div>
-
           <div id="validate">
             <section className={styles.validateSection}>
               <h2>Validate</h2>
@@ -197,7 +186,6 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                 between expected interfaces and actual code, facilitating robust
                 development and testing practices.
               </p>
-
               <div className={styles.validateBlock}>
                 <h3>Validation Through Specifications</h3>
                 <p>
@@ -210,7 +198,6 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                   development.
                 </p>
               </div>
-
               <div className={styles.validateBlock}>
                 <h3>Generating Random Test Data</h3>
                 <p>
@@ -220,10 +207,9 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                   schema definitions to create test scenarios that
                   systematically cover edge cases, identifying potential issues
                   early in the development cycle. This automated data generation
-                  streamlines testing and improves reliability.
+                  streamlines testing and improves reliability.{" "}
                 </p>
               </div>
-
               <div className={styles.validateBlock}>
                 <h3>Mock Servers for Testing</h3>
                 <p>
@@ -234,10 +220,9 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                   requiring complete backend implementations. This approach
                   helps developers verify that their code interacts correctly
                   with the API’s interface, ensuring input/output consistency
-                  and expected status codes are met.
+                  and expected status codes are met.{" "}
                 </p>
               </div>
-
               <div className={styles.validateBlock}>
                 <h3>Detecting Discrepancies Early</h3>
                 <p>
@@ -249,12 +234,11 @@ endpoint UpdateTodo PUT TodoDto /api/todos/{id: Integer} -> {
                   contract.
                 </p>
               </div>
-
               <p>
                 In summary, specifications like those enabled by Wirespec
                 empower teams to validate implementations through code
                 generation, automated testing, and mock servers, ensuring
-                reliable and predictable API behavior.
+                reliable and predictable API behavior.{" "}
               </p>
             </section>
           </div>

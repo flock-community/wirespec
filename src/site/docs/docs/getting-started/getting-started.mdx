@@ -5,8 +5,8 @@ slug: /getting-started
 sidebar_position: 0
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 ## What is Wirespec?
 
@@ -19,7 +19,7 @@ Wirespec distinguishes itself by using a simple language model and multi-languag
 WireSpec can be installed either as an npm package for use within a project or as a standalone command-line interface
 (CLI) tool.
 
-[//]: # (TODO should be Npm + Docker + Homebrew)
+[//]: # "TODO should be Npm + Docker + Homebrew"
 
 <Tabs>
     <TabItem value="npm" label="Npm">
@@ -57,15 +57,17 @@ WireSpec can be installed either as an npm package for use within a project or a
         sudo mv ./wirespec /usr/local/bin/wirespec
         ```
     </TabItem>
+
 </Tabs>
-------------------------------
+
+---
 
 Alongside the CLI tool Wirespec is also available as various [plugins](plugins).
 
 ## Example
 
 Imagine a common situation where a frontend (TypeScript) and backend (Kotlin/Java) have negotiated a contract. This
-means that the API's structure and behavior are defined *before* any code is written, ensuring a shared understanding
+means that the API's structure and behavior are defined _before_ any code is written, ensuring a shared understanding
 and facilitating parallel development.
 
 ### Creating a Definition
@@ -152,9 +154,10 @@ one of the following commands referencing the directory where you put your `todo
           └─ UpdateTodoEndpoint.java
         ```
     </TabItem>
+
 </Tabs>
 
-------------------------------
+---
 
 The output contains the required Data Transfer Objects (DTOs), endpoint structures with defined response codes, etc.
 Once you've plugged in your HTTP client it is now **easy** for both sides to adhere to the contract.
@@ -162,24 +165,47 @@ Once you've plugged in your HTTP client it is now **easy** for both sides to adh
 From here there are several options to integrate Wirespec further into your landscape, development environment, and
 create more elaborate definitions.
 
-[//]: # (Gotta knock it out of the park here)
+[//]: # "Gotta knock it out of the park here"
 
 ## What's next?
 
-<div style={{ display: 'flex', gap: '20px' }}>  {}
-    <div style={{ flex: '1', border: '1px solid #ccc', padding: '15px', borderRadius: '5px' }}>
-        <h3>Wirespec Language</h3>
-        <p>A concise overview of the language concepts in Wirespec.</p>
-        <a href="/docs/language">Read More</a>
-    </div>
-    <div style={{ flex: '1', border: '1px solid #ccc', padding: '15px', borderRadius: '5px' }}>
-        <h3>Integration</h3>
-        <p>Explore different ways to hook up your HTTP client.</p>
-        <a href="/docs/integration">Read More</a>
-    </div>
-    <div style={{ flex: '1', border: '1px solid #ccc', padding: '15px', borderRadius: '5px' }}>
-        <h3>IDE Plugin</h3>
-        <p>Wirespec supports two IDEs: IntelliJ IDEA and VS Code.</p>
-        <a href="/docs/integration">Read More</a>
-    </div>
+<div style={{ display: "flex", gap: "20px" }}>
+  {" "}
+  {}
+  <div
+    style={{
+      flex: "1",
+      border: "1px solid #ccc",
+      padding: "15px",
+      borderRadius: "5px",
+    }}
+  >
+    <h3>Wirespec Language</h3>
+    <p>A concise overview of the language concepts in Wirespec.</p>
+    <a href="/docs/language">Read More</a>
+  </div>
+  <div
+    style={{
+      flex: "1",
+      border: "1px solid #ccc",
+      padding: "15px",
+      borderRadius: "5px",
+    }}
+  >
+    <h3>Integration</h3>
+    <p>Explore different ways to hook up your HTTP client.</p>
+    <a href="/docs/integration">Read More</a>
+  </div>
+  <div
+    style={{
+      flex: "1",
+      border: "1px solid #ccc",
+      padding: "15px",
+      borderRadius: "5px",
+    }}
+  >
+    <h3>IDE Plugin</h3>
+    <p>Wirespec supports two IDEs: IntelliJ IDEA and VS Code.</p>
+    <a href="/docs/integration">Read More</a>
+  </div>
 </div>
