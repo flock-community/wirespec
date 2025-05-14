@@ -36,12 +36,12 @@ import kotlin.reflect.KClass
  * ```
  * Task{id: Id("123"), title: "improve API contracts"}
  * ```
- * will serialise to:
+ * will serialize to:
  * ```json
  * {id:"123", title: "improve API contracts"}
  * ```
  * flattening the Wirespec.Refined as a String. Conversely, such JSON will deserialize back
- * into the original `Task`, expanding the `id` field into a type safe Id data class.
+ * into the original `Task`, expanding the `id` field into a type safe `Id` data class.
  *
  * @see Wirespec.Refined
  */
@@ -104,7 +104,7 @@ private class EnumDeserializer(private val vc: Class<*>) : StdDeserializer<Enum<
 }
 
 /**
- * Jackson modifier intercept the deserialization of Wirespec.Enum and Wirespec.Refined and modifies the deserializer
+ * Jackson modifier intercepts the deserialization of Wirespec.Enum and Wirespec.Refined and modifies the deserializer
  *
  * @see Wirespec.Enum
  * @see WirespecModuleKotlin

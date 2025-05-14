@@ -7,17 +7,16 @@ import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.plugin.ConverterArguments
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.convert
+import community.flock.wirespec.plugin.io.ClassPath
 import community.flock.wirespec.plugin.io.Directory
 import community.flock.wirespec.plugin.io.DirectoryPath
 import community.flock.wirespec.plugin.io.FilePath
 import community.flock.wirespec.plugin.io.Source
 import community.flock.wirespec.plugin.io.Source.Type.JSON
-import community.flock.wirespec.plugin.io.SourcePath
 import community.flock.wirespec.plugin.io.getFullPath
 import community.flock.wirespec.plugin.io.getOutPutPath
 import community.flock.wirespec.plugin.io.or
 import community.flock.wirespec.plugin.io.read
-import community.flock.wirespec.plugin.io.write
 import org.apache.maven.plugin.MojoExecutionException
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
@@ -116,7 +115,7 @@ class ConvertMojo : BaseMojo() {
 
         val sources = when (inputPath) {
             null -> throw IsNotAFileOrDirectory(null)
-            is SourcePath -> inputPath.readFromClasspath<JSON>().let { (name, content) -> Source<JSON>(name, content) }
+            is ClassPath -> inputPath.readFromClasspath<JSON>().let { (name, content) -> Source<JSON>(name, content) }
             is DirectoryPath -> throw ConvertNeedsAFile()
             is FilePath -> when (inputPath.extension) {
                 JSON -> Source(inputPath.name, inputPath.read())
@@ -125,12 +124,12 @@ class ConvertMojo : BaseMojo() {
             }
         }.map(::preProcess)
 
+        val outputDir = Directory(getOutPutPath(inputPath, output).or(::handleError))
         ConverterArguments(
             format = format,
             input = nonEmptySetOf(sources),
-            output = Directory(getOutPutPath(inputPath, output).or(::handleError)),
             emitters = emitters,
-            writer = { filePath, string -> filePath.write(string) },
+            writer = writer(outputDir),
             error = { throw RuntimeException(it) },
             packageName = PackageName(packageName),
             logger = logger,

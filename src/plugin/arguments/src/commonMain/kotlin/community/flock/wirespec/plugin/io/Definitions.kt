@@ -2,7 +2,6 @@ package community.flock.wirespec.plugin.io
 
 import community.flock.wirespec.compiler.core.Value
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
-import community.flock.wirespec.compiler.core.emit.common.FileExtension.Wirespec
 import community.flock.wirespec.compiler.core.emit.common.FileExtension.entries
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.plugin.io.Source.Type
@@ -21,24 +20,24 @@ data class Source<out E : Type>(val name: Name, val content: String) : Input {
     fun map(fn: (String) -> String) = Source<E>(name = name, content = fn(content))
 }
 
+data class Sink(val name: String, val content: String) : Output
+
 class Directory(val path: DirectoryPath) :
     Input,
     Output
-
-fun Directory.toFilePath(name: Name) = FilePath(path, name, Wirespec)
 
 operator fun Directory.plus(packageName: PackageName) = Directory(path + packageName)
 
 sealed interface FullPath
 
 fun FullPath.path() = when (this) {
-    is SourcePath -> value
+    is ClassPath -> value
     is DirectoryPath -> value
     is FilePath -> directory.value
 }
 
 @JvmInline
-value class SourcePath(override val value: String) :
+value class ClassPath(override val value: String) :
     FullPath,
     Value<String> {
     override fun toString() = value

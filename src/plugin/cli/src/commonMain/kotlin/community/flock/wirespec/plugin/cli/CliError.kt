@@ -6,6 +6,8 @@ import community.flock.wirespec.compiler.utils.Logger
 
 class IsNotAFileOrDirectory(input: String?) : CliktError("Input is not a file or directory: $input.")
 
+class NoInputReceived : CliktError("No input file, directory, or stdin received.")
+
 class ChooseALogLevel : CliktError("Choose one of these log levels: ${Logger.Level}.")
 
 class ConvertNeedsAFile : CliktError("To convert, please specify a file.")

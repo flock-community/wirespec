@@ -18,7 +18,7 @@ fun <B> Either<IOError, B>.or(errorFn: (String) -> Nothing) = getOrElse { errorF
 fun getFullPath(input: String?, createIfNotExists: Boolean = false): Either<IOError, FullPath?> = either {
     when {
         input == null -> null
-        input.startsWith("classpath:") -> SourcePath(input.substringAfter("classpath:"))
+        input.startsWith("classpath:") -> ClassPath(input.substringAfter("classpath:"))
         else -> {
             val path = Path(input).createIfNotExists(createIfNotExists)
             val meta = SystemFileSystem.metadataOrNull(path) ?: raise(CannotAccessFileOrDirectory(input))
@@ -36,7 +36,7 @@ fun getOutPutPath(inputPath: FullPath, output: String?): Either<IOError, Directo
     when (val it = getFullPath(output, true).bind()) {
         null -> DirectoryPath("${inputPath.path()}/out")
         is DirectoryPath -> it
-        is FilePath, is SourcePath -> raise(OutputShouldBeADirectory())
+        is FilePath, is ClassPath -> raise(OutputShouldBeADirectory())
     }
 }
 

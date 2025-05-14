@@ -118,7 +118,7 @@ class AvroEmitterTest {
         val path = Path("src/commonTest/resources/example.avsc")
         val text = SystemFileSystem.source(path).buffered().readString()
 
-        val ast = AvroParser.parse(ModuleContent("", text))
+        val ast = AvroParser.parse(ModuleContent("", text), true)
         val actual = AvroEmitter.emit(ast.modules.first()).let { json.encodeToString(it) }
 
         val expected = """
