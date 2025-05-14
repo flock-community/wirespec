@@ -58,18 +58,18 @@ public interface PlaceOrder extends Wirespec.Endpoint {
         java.util.List.of("store", "order"),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
-        serialization.serialize(request.getBody(), Wirespec.getType(Order.class, false))
+        serialization.serialize(request.getBody(), Wirespec.getType(Order.class, null))
       );
     }
 
     static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
       return new Request(
-        serialization.deserialize(request.body(), Wirespec.getType(Order.class, false))
+        serialization.deserialize(request.body(), Wirespec.getType(Order.class, null))
       );
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(Order.class, false))); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(Order.class, null))); }
       if (response instanceof Response405 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), null); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
     }
@@ -77,7 +77,7 @@ public interface PlaceOrder extends Wirespec.Endpoint {
     static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
       switch (response.statusCode()) {
         case 200: return new Response200(
-        serialization.deserialize(response.body(), Wirespec.getType(Order.class, false))
+        serialization.deserialize(response.body(), Wirespec.getType(Order.class, null))
       );
         case 405: return new Response405();
         default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());

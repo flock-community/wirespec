@@ -62,20 +62,21 @@ public interface LoginUser extends Wirespec.Endpoint {
       return new Wirespec.RawRequest(
         request.method.name(),
         java.util.List.of("user", "login"),
-        java.util.Map.ofEntries(java.util.Map.entry("username", serialization.serializeParam(request.queries.username, Wirespec.getType(String.class, false))), java.util.Map.entry("password", serialization.serializeParam(request.queries.password, Wirespec.getType(String.class, false)))),
+        java.util.Map.ofEntries(java.util.Map.entry("username", serialization.serializeParam(request.queries.username, Wirespec.getType(String.class, java.util.Optional.class))), java.util.Map.entry("password", serialization.serializeParam(request.queries.password, Wirespec.getType(String.class, java.util.Optional.class)))),
         java.util.Collections.emptyMap(),
-        serialization.serialize(request.getBody(), Wirespec.getType(Void.class, false))
+        serialization.serialize(request.getBody(), null)
       );
     }
 
     static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
       return new Request(
-        java.util.Optional.ofNullable(request.queries().get("username")).map(it -> serialization.<String>deserializeParam(it, Wirespec.getType(String.class, false))),         java.util.Optional.ofNullable(request.queries().get("password")).map(it -> serialization.<String>deserializeParam(it, Wirespec.getType(String.class, false)))
+        serialization.deserializeParam(request.queries().getOrDefault("username", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
+        serialization.deserializeParam(request.queries().getOrDefault("password", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class))
       );
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Map.ofEntries(java.util.Map.entry("X-Rate-Limit", serialization.serializeParam(r.getHeaders().XRateLimit(), Wirespec.getType(Integer.class, false))), java.util.Map.entry("X-Expires-After", serialization.serializeParam(r.getHeaders().XExpiresAfter(), Wirespec.getType(String.class, false)))), serialization.serialize(r.body, Wirespec.getType(String.class, false))); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Map.ofEntries(java.util.Map.entry("X-Rate-Limit", serialization.serializeParam(r.getHeaders().XRateLimit(), Wirespec.getType(Integer.class, java.util.Optional.class))), java.util.Map.entry("X-Expires-After", serialization.serializeParam(r.getHeaders().XExpiresAfter(), Wirespec.getType(String.class, java.util.Optional.class)))), serialization.serialize(r.body, Wirespec.getType(String.class, null))); }
       if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), null); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
     }
@@ -83,8 +84,9 @@ public interface LoginUser extends Wirespec.Endpoint {
     static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
       switch (response.statusCode()) {
         case 200: return new Response200(
-        java.util.Optional.ofNullable(response.headers().get("X-Rate-Limit")).map(it -> serialization.<Integer>deserializeParam(it, Wirespec.getType(Integer.class, false))),         java.util.Optional.ofNullable(response.headers().get("X-Expires-After")).map(it -> serialization.<String>deserializeParam(it, Wirespec.getType(String.class, false))),
-        serialization.deserialize(response.body(), Wirespec.getType(String.class, false))
+        serialization.deserializeParam(response.headers().getOrDefault("X-Rate-Limit", java.util.Collections.emptyList()), Wirespec.getType(Integer.class, java.util.Optional.class)),
+        serialization.deserializeParam(response.headers().getOrDefault("X-Expires-After", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
+        serialization.deserialize(response.body(), Wirespec.getType(String.class, null))
       );
         case 400: return new Response400();
         default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());

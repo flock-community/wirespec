@@ -50,7 +50,7 @@ public interface LogoutUser extends Wirespec.Endpoint {
         java.util.List.of("user", "logout"),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
-        serialization.serialize(request.getBody(), Wirespec.getType(Void.class, false))
+        serialization.serialize(request.getBody(), null)
       );
     }
 
