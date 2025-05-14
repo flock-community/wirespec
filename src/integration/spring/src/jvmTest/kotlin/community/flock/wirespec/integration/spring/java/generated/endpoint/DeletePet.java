@@ -51,17 +51,17 @@ public interface DeletePet extends Wirespec.Endpoint {
     static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method.name(),
-        java.util.List.of("pet", serialization.serialize(request.path.petId, Wirespec.getType(Long.class, false))),
+        java.util.List.of("pet", serialization.serialize(request.path.petId, Wirespec.getType(Long.class, null))),
         java.util.Collections.emptyMap(),
-        java.util.Map.ofEntries(java.util.Map.entry("api_key", serialization.serializeParam(request.headers.api_key, Wirespec.getType(String.class, false)))),
-        serialization.serialize(request.getBody(), Wirespec.getType(Void.class, false))
+        java.util.Map.ofEntries(java.util.Map.entry("api_key", serialization.serializeParam(request.headers.api_key, Wirespec.getType(String.class, java.util.Optional.class)))),
+        serialization.serialize(request.getBody(), null)
       );
     }
 
     static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
       return new Request(
-        serialization.<Long>deserialize(request.path().get(1), Wirespec.getType(Long.class, false)),
-        java.util.Optional.ofNullable(request.headers().get("api_key")).map(it -> serialization.<String>deserializeParam(it, Wirespec.getType(String.class, false)))
+        serialization.deserialize(request.path().get(1), Wirespec.getType(Long.class, null)),
+        serialization.deserializeParam(request.headers().getOrDefault("api_key", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class))
       );
     }
 

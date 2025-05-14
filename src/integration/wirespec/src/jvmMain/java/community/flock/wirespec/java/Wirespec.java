@@ -1,7 +1,7 @@
 package community.flock.wirespec.java;
 
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.ParameterizedType;
 import java.util.List;
 import java.util.Map;
 
@@ -42,14 +42,14 @@ public interface Wirespec {
     interface Deserializer<RAW> extends ParamDeserializer { <T> T deserialize(RAW raw, Type type); }
     record RawRequest(String method, List<String> path, Map<String, List<String>> queries, Map<String, List<String>> headers, String body) {}
     record RawResponse(int statusCode, Map<String, List<String>> headers, String body) {}
-    static Type getType(final Class<?> type, final boolean isIterable) {
-        if(isIterable) {
+    static Type getType(final Class<?> actualTypeArguments, final Class<?> rawType) {
+        if(rawType != null) {
             return new ParameterizedType() {
-                public Type getRawType() { return java.util.List.class; }
-                public Type[] getActualTypeArguments() { return new Class<?>[]{type}; }
+                public Type getRawType() { return rawType; }
+                public Type[] getActualTypeArguments() { return new Class<?>[]{actualTypeArguments}; }
                 public Type getOwnerType() { return null; }
             };
         }
-        else { return type; }
+        else { return actualTypeArguments; }
     }
 }

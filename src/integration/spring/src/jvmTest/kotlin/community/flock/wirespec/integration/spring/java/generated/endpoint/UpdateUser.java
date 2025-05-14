@@ -49,17 +49,17 @@ public interface UpdateUser extends Wirespec.Endpoint {
     static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method.name(),
-        java.util.List.of("user", serialization.serialize(request.path.username, Wirespec.getType(String.class, false))),
+        java.util.List.of("user", serialization.serialize(request.path.username, Wirespec.getType(String.class, null))),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
-        serialization.serialize(request.getBody(), Wirespec.getType(User.class, false))
+        serialization.serialize(request.getBody(), Wirespec.getType(User.class, null))
       );
     }
 
     static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
       return new Request(
-        serialization.<String>deserialize(request.path().get(1), Wirespec.getType(String.class, false)),
-        serialization.deserialize(request.body(), Wirespec.getType(User.class, false))
+        serialization.deserialize(request.path().get(1), Wirespec.getType(String.class, null)),
+        serialization.deserialize(request.body(), Wirespec.getType(User.class, null))
       );
     }
 
