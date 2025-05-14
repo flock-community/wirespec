@@ -59,11 +59,17 @@ public interface LoginUser extends Wirespec.Endpoint {
   interface Handler extends Wirespec.Handler {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
+      var queries = new java.util.HashMap<String, java.util.List<String>>() {{
+        request.queries.username.ifPresent(it -> put("username", serialization.serializeParam(it, Wirespec.getType(String.class, false))));
+        request.queries.password.ifPresent(it -> put("password", serialization.serializeParam(it, Wirespec.getType(String.class, false))));
+      }};
+      
+      var headers = java.util.Collections.<String,java.util.List<String>>emptyMap();
       return new Wirespec.RawRequest(
         request.method.name(),
         java.util.List.of("user", "login"),
-        java.util.Map.ofEntries(java.util.Map.entry("username", serialization.serializeParam(request.queries.username, Wirespec.getType(String.class, false))), java.util.Map.entry("password", serialization.serializeParam(request.queries.password, Wirespec.getType(String.class, false)))),
-        java.util.Collections.emptyMap(),
+        queries,
+        headers,
         serialization.serialize(request.getBody(), Wirespec.getType(Void.class, false))
       );
     }
