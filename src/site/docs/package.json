@@ -11,9 +11,9 @@
     "clear": "docusaurus clear",
     "serve": "docusaurus serve",
     "clean": "npm run clean:docusaurus && npm run clean:build && npm run clean:node_modules",
-    "clean:docusaurus": "npx rimraf ./.docusaurus",
-    "clean:build": "npx rimraf ./build",
-    "clean:node_modules": "npx rimraf ./node_modules",
+    "clean:docusaurus": "npx --yes rimraf ./.docusaurus",
+    "clean:build": "npx --yes rimraf ./build",
+    "clean:node_modules": "npx --yes rimraf ./node_modules",
     "write-translations": "docusaurus write-translations",
     "write-heading-ids": "docusaurus write-heading-ids",
     "typecheck": "tsc"

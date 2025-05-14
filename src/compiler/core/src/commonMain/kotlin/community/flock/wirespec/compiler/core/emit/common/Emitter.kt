@@ -13,6 +13,7 @@ import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Module
+import community.flock.wirespec.compiler.core.parse.Node
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -35,25 +36,25 @@ abstract class Emitter : Emitters {
 
     abstract val shared: Shared?
 
-    abstract fun Definition.emitName(): String
-
     fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast
         .modules.flatMap { emit(it, logger) }
-        .map { e -> Emitted(e.typeName + "." + extension.value, e.result) }
+        .map { e -> Emitted(e.file + "." + extension.value, e.result) }
 
     open fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = module
         .statements
-        .map {
-            logger.info("Emitting Node ${it.emitName()}")
-            when (it) {
-                is Type -> Emitted(it.emitName(), emit(it, module))
-                is Endpoint -> Emitted(it.emitName(), emit(it))
-                is Enum -> Emitted(it.emitName(), emit(it, module))
-                is Refined -> Emitted(it.emitName(), emit(it))
-                is Union -> Emitted(it.emitName(), emit(it))
-                is Channel -> Emitted(it.emitName(), emit(it))
-            }
+        .map { emit(it, module, logger) }
+
+    open fun emit(definition: Definition, module: Module, logger: Logger): Emitted = run {
+        logger.info("Emitting Node ${definition.identifier.value}")
+        when (definition) {
+            is Type -> Emitted(emit(definition.identifier), emit(definition, module))
+            is Endpoint -> Emitted(emit(definition.identifier), emit(definition))
+            is Enum -> Emitted(emit(definition.identifier), emit(definition, module))
+            is Refined -> Emitted(emit(definition.identifier), emit(definition))
+            is Union -> Emitted(emit(definition.identifier), emit(definition))
+            is Channel -> Emitted(emit(definition.identifier), emit(definition))
         }
+    }
 
     fun String.spacer(space: Int = 1) = split("\n")
         .joinToString("\n") {
@@ -70,12 +71,6 @@ abstract class Emitter : Emitters {
             is Endpoint.Segment.Param -> "{${identifier.value}}"
         }
 
-    internal fun Endpoint.Segment.emitMap() =
-        when (this) {
-            is Endpoint.Segment.Literal -> value
-            is Endpoint.Segment.Param -> "${'$'}{props.${emit(identifier)}}"
-        }
-
     internal val Endpoint.pathParams get() = path.filterIsInstance<Endpoint.Segment.Param>()
 
     internal val Endpoint.indexedPathParams
@@ -86,23 +81,62 @@ abstract class Emitter : Emitters {
             }
         }
 
-    internal fun Endpoint.Request.paramList(endpoint: Endpoint): List<Param> = listOf(
+    fun Endpoint.Request.paramList(endpoint: Endpoint): List<Param> = listOf(
         endpoint.pathParams.map { it.toParam() },
         endpoint.queries.map { it.toParam(ParamType.QUERY) },
         endpoint.headers.map { it.toParam(ParamType.HEADER) },
         listOfNotNull(content?.toParam()),
     ).flatten()
 
-    internal fun Endpoint.Response.paramList(): List<Param> = listOf(
+    fun Endpoint.Response.paramList(): List<Param> = listOf(
         headers.map { it.toParam(ParamType.HEADER) },
         listOfNotNull(content?.toParam())
     ).flatten()
+
+    protected fun String.fixStatus(): String = when (this) {
+        "default" -> "200"
+        else -> this
+    }
+
+    protected fun List<Endpoint.Response>.distinctByStatus(): List<Endpoint.Response> =
+        distinctBy { it.status }
+
+    private fun Reference.flattenListDict(): Reference = when (this) {
+        is Reference.Dict -> reference.flattenListDict()
+        is Reference.Iterable -> reference.flattenListDict()
+        else -> this
+    }
+
+    fun Node.importReferences(): List<Reference.Custom> = when (this) {
+        is Endpoint -> listOf(
+            path.filterIsInstance<Endpoint.Segment.Param>().map { it.reference },
+            headers.map { it.reference },
+            queries.map { it.reference },
+            requests.map { it.content?.reference },
+            responses.flatMap { listOf(it.content?.reference) + it.headers.map { header -> header.reference } }
+        ).flatten().filterNotNull().map { it.flattenListDict() }.filterIsInstance<Reference.Custom>().distinct()
+
+        is Type -> shape.value
+            .filter { identifier.value != it.reference.root().value }
+            .map { it.reference.flattenListDict() }
+            .filterIsInstance<Reference.Custom>()
+            .distinct()
+
+        is Channel -> if (reference is Reference.Custom) listOf(reference) else emptyList()
+        else -> emptyList()
+    }
 
     private fun Endpoint.Segment.Param.toParam() = Param(
         type = ParamType.PATH,
         identifier = identifier,
         reference = reference,
     )
+
+    private fun Reference.root() = when (this) {
+        is Reference.Dict -> reference
+        is Reference.Iterable -> reference
+        else -> this
+    }
 
     private fun Endpoint.Content.toParam() = Param(
         type = ParamType.BODY,
@@ -122,9 +156,6 @@ abstract class Emitter : Emitters {
         fun Module.needImports() = statements.any { it is Endpoint || it is Enum || it is Refined }
         fun Module.hasEndpoints() = statements.any { it is Endpoint }
         fun String.isStatusCode() = toIntOrNull()?.let { it in 0..599 } ?: false
-        val internalClasses = setOf(
-            "Request", "Response"
-        )
     }
 }
 

@@ -4,47 +4,36 @@
 
 source /root/.bashrc
 
-compiledPackageDir="community/flock/generated"
-sharedPackageDir="community/flock/wirespec"
+combinedOutputDir="/app/types/out/combined/"
 
-platforms=("docker" "jvm" "native" "node")
 inputDirs=("openapi/petstore" "wirespec")
 
-printf "\nCompiling Kotlin Classes:\n"
-for platform in "${platforms[@]}"; do
-  for inputDir in "${inputDirs[@]}"; do
-    dir="/app/types/out/$platform/$inputDir/kotlin"
-    eval "kotlinc $dir/$compiledPackageDir/*.kt \
-     $dir/$sharedPackageDir/kotlin/*.kt \
-     -d $dir/wirespec.jar"
-  done
-done
+done="Done!"
 
-printf "\nCompiling Java Classes:\n"
-for platform in "${platforms[@]}"; do
-  for inputDir in "${inputDirs[@]}"; do
-    dir="/app/types/out/$platform/$inputDir/java"
-    eval "javac $dir/$compiledPackageDir/*.java \
-     $dir/$sharedPackageDir/java/*.java \
-     -d $dir/wirespec.jar"
-  done
+echo -n "Compiling Java Classes: "
+for inputDir in "${inputDirs[@]}"; do
+  dir="$combinedOutputDir$inputDir/java"
+  find "$dir" -name '*.java' -print0 | xargs -0 javac -d "$dir/target"
 done
+echo "$done"
 
-printf "\nCompiling Scala Classes:\n"
-for platform in "${platforms[@]}"; do
-  for inputDir in "${inputDirs[@]}"; do
-    dir="/app/types/out/$platform/$inputDir/scala"
-    eval "scalac $dir/$compiledPackageDir/*.scala \
-     $dir/$sharedPackageDir/scala/*.scala \
-     -d $dir/wirespec.jar"
-  done
+echo -n "Compiling Kotlin Classes: "
+for inputDir in "${inputDirs[@]}"; do
+  dir="$combinedOutputDir$inputDir/kotlin"
+  find "$dir" -name '*.kt' -print0 | xargs -0 kotlinc -d "$dir/target"
 done
+echo "$done"
 
-printf "\nCompiling TypeScript Classes:\n"
-for platform in "${platforms[@]}"; do
-  for inputDir in "${inputDirs[@]}"; do
-    dir="/app/types/out/$platform/$inputDir/typescript"
-    eval "tsc --noEmit $dir/$compiledPackageDir/*.ts \
-     $dir/$sharedPackageDir/typescript/*.ts"
-  done
+echo -n "Type checking Python files: "
+for inputDir in "${inputDirs[@]}"; do
+  dir="$combinedOutputDir$inputDir/python"
+  find "$dir" -name '*.py' -print0 | xargs -0 python3 -m mypy
 done
+echo "$done"
+
+echo -n "Type checking TypeScript files: "
+for inputDir in "${inputDirs[@]}"; do
+  dir="$combinedOutputDir$inputDir/typescript"
+  find "$dir" -name '*.ts' -print0 | xargs -0 tsc --noEmit
+done
+echo "$done"

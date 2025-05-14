@@ -26,7 +26,6 @@ export type Specification = CompileSpecification | ConvertSpecification;
 export type CompilerEmitter =
   | "typescript"
   | "kotlin"
-  | "scala"
   | "python"
   | "java"
   | "open_api_v2"
@@ -40,7 +39,6 @@ export type Language =
   | "kotlin"
   | "java"
   | "typescript"
-  | "scala"
   | "python"
   | "json";
 
@@ -59,7 +57,6 @@ const createFileHeaderFor = (fileName: string, emitter: Emitter): string => {
   switch (emitter) {
     case "typescript":
     case "kotlin":
-    case "scala":
     case "open_api_v2":
     case "open_api_v3":
     case "avro":
@@ -121,7 +118,7 @@ function RouteComponent() {
     } catch (error) {
       if (error instanceof Error) {
         setWirespecErrors([
-          { value: error.message, line: 1, position: 1, length: 1 },
+          {value: error.message, line: 1, position: 1, length: 1 },
         ]);
       }
     }

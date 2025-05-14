@@ -6,7 +6,6 @@ import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.emit.common.Keywords
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.parse.Channel
-import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -20,15 +19,6 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 
 open class WirespecEmitter : Emitter() {
-
-    override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> emit(identifier)
-        is Enum -> emit(identifier)
-        is Refined -> emit(identifier)
-        is Type -> emit(identifier)
-        is Union -> emit(identifier)
-        is Channel -> emit(identifier)
-    }
 
     override val extension = FileExtension.Wirespec
 
@@ -96,11 +86,6 @@ open class WirespecEmitter : Emitter() {
 
     override fun emit(union: Union) =
         "type ${emit(union.identifier)} = ${union.entries.joinToString(" | ") { it.emit() }}\n"
-
-    private fun String.fixStatus(): String = when (this) {
-        "default" -> "200"
-        else -> this
-    }
 
     private fun List<Endpoint.Segment>.emitPath() = "/" + joinToString("/") {
         when (it) {

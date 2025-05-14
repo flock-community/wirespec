@@ -28,8 +28,8 @@ class WirespecCliTest {
 
         val directoryPath = DirectoryPath("$output/$packageDir")
 
-        FilePath(directoryPath, Name("Type"), FileExtension.Kotlin).read() shouldBe """
-            |package community.flock.wirespec.generated
+        FilePath(directoryPath.resolve("model"), Name("Bla"), FileExtension.Kotlin).read() shouldBe """
+            |package community.flock.wirespec.generated.model
             |
             |data class Bla(
             |  val yolo: String,
@@ -58,8 +58,8 @@ class WirespecCliTest {
 
         val directoryPath = DirectoryPath("$output/$packageDir")
 
-        FilePath(directoryPath, Name("Bla"), FileExtension.Java).read() shouldBe """
-            |package community.flock.next;
+        FilePath(directoryPath.resolve("model"), Name("Bla"), FileExtension.Java).read() shouldBe """
+            |package community.flock.next.model;
             |
             |public record Bla (
             |  String yolo,
@@ -88,7 +88,7 @@ class WirespecCliTest {
         )
 
         val directoryPath = DirectoryPath("$output/$packageDir")
-        val path = FilePath(directoryPath, Name("Petstore"), FileExtension.Kotlin)
+        val path = FilePath(directoryPath.resolve("model"), Name("Pet"), FileExtension.Kotlin)
 
         path.read() shouldContain """
             |data class Pet(
@@ -120,7 +120,7 @@ class WirespecCliTest {
         )
 
         val directoryPath = DirectoryPath("$output/$packageDir")
-        val path = FilePath(directoryPath, Name("Keto"), FileExtension.Kotlin)
+        val path = FilePath(directoryPath.resolve("model"), Name("Relationship"), FileExtension.Kotlin)
 
         path.read() shouldContain """
             |data class Relationship(
@@ -135,8 +135,6 @@ class WirespecCliTest {
 
     @Test
     fun testCliOpenapiTypesScript() {
-        val packageName = "community.flock.openapi"
-        val packageDir = packageName.replace(".", "/")
         val input = "$inputDir/openapi/petstore.json"
         val output = outputDir()
 

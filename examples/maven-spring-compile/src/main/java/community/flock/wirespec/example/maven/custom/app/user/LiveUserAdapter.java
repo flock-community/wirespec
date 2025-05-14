@@ -3,11 +3,11 @@ package community.flock.wirespec.example.maven.custom.app.user;
 import community.flock.wirespec.example.maven.custom.app.exception.CallInterrupted;
 import community.flock.wirespec.example.maven.custom.app.exception.Conflict;
 import community.flock.wirespec.example.maven.custom.app.exception.NotFound;
-import community.flock.wirespec.generated.java.DeleteUserByNameEndpoint;
-import community.flock.wirespec.generated.java.GetUserByNameEndpoint;
-import community.flock.wirespec.generated.java.GetUsersEndpoint;
-import community.flock.wirespec.generated.java.PostUserEndpoint;
-import community.flock.wirespec.generated.java.UploadImageEndpoint;
+import community.flock.wirespec.generated.java.endpoint.DeleteUserByName;
+import community.flock.wirespec.generated.java.endpoint.GetUserByName;
+import community.flock.wirespec.generated.java.endpoint.GetUsers;
+import community.flock.wirespec.generated.java.endpoint.PostUser;
+import community.flock.wirespec.generated.java.endpoint.UploadImage;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -30,42 +30,42 @@ public class LiveUserAdapter implements UserAdapter {
     }
 
     public List<User> getAllUsers(String name) {
-        var res = complete(client.getUsers(new GetUsersEndpoint.Request(name, UserClient.version)));
+        var res = complete(client.getUsers(new GetUsers.Request(name, UserClient.version)));
         return switch (res) {
-            case GetUsersEndpoint.Response200 r -> converter.internalize(r.getBody());
+            case GetUsers.Response200 r -> converter.internalize(r.getBody());
         };
     }
 
     public User getUserByName(final String name) {
-        var res = complete(client.getUserByName(new GetUserByNameEndpoint.Request(name)));
+        var res = complete(client.getUserByName(new GetUserByName.Request(name)));
         return switch (res) {
-            case GetUserByNameEndpoint.Response200 r -> converter.internalize(r.getBody());
-            case GetUserByNameEndpoint.Response404 ignored -> throw new NotFound.User();
+            case GetUserByName.Response200 r -> converter.internalize(r.getBody());
+            case GetUserByName.Response404 ignored -> throw new NotFound.User();
         };
     }
 
     public User saveUser(final User user) {
-        var res = complete(client.postUser(new PostUserEndpoint.Request(converter.externalize(user))));
+        var res = complete(client.postUser(new PostUser.Request(converter.externalize(user))));
         return switch (res) {
-            case PostUserEndpoint.Response200 r -> converter.internalize(r.getBody());
-            case PostUserEndpoint.Response409 ignored -> throw new Conflict.User();
+            case PostUser.Response200 r -> converter.internalize(r.getBody());
+            case PostUser.Response409 ignored -> throw new Conflict.User();
         };
     }
 
     public User deleteUserByName(final String name) {
-        var res = complete(client.deleteUserByName(new DeleteUserByNameEndpoint.Request(name)));
+        var res = complete(client.deleteUserByName(new DeleteUserByName.Request(name)));
         return switch (res) {
-            case DeleteUserByNameEndpoint.Response200 r -> converter.internalize(r.getBody());
-            case DeleteUserByNameEndpoint.Response404 ignored -> throw new NotFound.User();
+            case DeleteUserByName.Response200 r -> converter.internalize(r.getBody());
+            case DeleteUserByName.Response404 ignored -> throw new NotFound.User();
         };
     }
 
     @Override
     public void uploadImage(String name, byte[] bytes) {
-        var res = complete(client.uploadImage(new UploadImageEndpoint.Request(name, bytes)));
+        var res = complete(client.uploadImage(new UploadImage.Request(name, bytes)));
         switch (res) {
-            case UploadImageEndpoint.Response201 ignored -> {}
-            case UploadImageEndpoint.Response404 ignored -> throw new NotFound.User();
+            case UploadImage.Response201 ignored -> {}
+            case UploadImage.Response404 ignored -> throw new NotFound.User();
         };
     }
 

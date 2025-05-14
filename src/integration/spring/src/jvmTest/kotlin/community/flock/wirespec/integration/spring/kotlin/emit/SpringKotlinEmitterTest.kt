@@ -4,6 +4,7 @@ import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
+import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.utils.NoLogger
@@ -27,11 +28,11 @@ class SpringKotlinEmitterTest {
         val text = SystemFileSystem.source(path).buffered().readString()
 
         val ast = parse(text)
-        val actual = SpringKotlinEmitter("community.flock.wirespec.spring.test")
+        val actual = SpringKotlinEmitter(PackageName("community.flock.wirespec.spring.test"))
             .emit(ast, noLogger)
-            .first().result
+            .joinToString("\n") { it.result }
         val expected = """
-            |package community.flock.wirespec.spring.test
+            |package community.flock.wirespec.spring.test.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
@@ -42,18 +43,36 @@ class SpringKotlinEmitterTest {
             |
             |fun TodoId.validate() = Regex(""${'"'}^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}""${'"'}).matches(value)
             |
+            |package community.flock.wirespec.spring.test.model
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |
             |data class TodoDto(
             |  val id: TodoId,
             |  val name: String,
             |  val done: Boolean
             |)
             |
+            |package community.flock.wirespec.spring.test.model
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |
             |data class Error(
             |  val code: Long,
             |  val description: String
             |)
             |
-            |object GetTodosEndpoint : Wirespec.Endpoint {
+            |package community.flock.wirespec.spring.test.endpoint
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |
+            |import community.flock.wirespec.spring.test.model.TodoDto
+            |import community.flock.wirespec.spring.test.model.Error
+            |
+            |object GetTodos : Wirespec.Endpoint {
             |  data object Path : Wirespec.Path
             |
             |  data class Queries(

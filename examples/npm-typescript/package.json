@@ -5,9 +5,9 @@
   "scripts": {
     "build": "npm install && npm run generate && npm test",
     "clean": "npm run clean:node_modules && npm run clean:generated",
-    "clean:wirespec": "npx rimraf node_modules/.bin/wirespec",
-    "clean:node_modules": "npx rimraf ./node_modules",
-    "clean:generated": "npx rimraf ./src/gen",
+    "clean:wirespec": "npx --yes rimraf node_modules/.bin/wirespec",
+    "clean:node_modules": "npx --yes rimraf ./node_modules",
+    "clean:generated": "npx --yes rimraf ./src/gen",
     "generate": "wirespec compile -i ./wirespec -o ./src/gen -l TypeScript -p ''",
     "test": "npm run test:client && npm run test:server",
     "test:client": "ts-node src/clientSimple.ts && ts-node src/clientProxy.ts",

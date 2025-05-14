@@ -34,8 +34,8 @@
   "scripts": {
     "build": "npm run esbuild && npm run vscode:package",
     "clean": "npm run clean:build && npm run clean:node_modules",
-    "clean:build": "npx rimraf build",
-    "clean:node_modules": "npx rimraf node_modules",
+    "clean:build": "npx --yes rimraf build",
+    "clean:node_modules": "npx --yes rimraf node_modules",
     "compile": "tsc",
     "esbuild": "npm run esbuild:extension && npm run esbuild:server",
     "esbuild:extension": "esbuild src/extension.ts --bundle --outfile=build/extension.js --external:vscode --format=cjs --platform=node",

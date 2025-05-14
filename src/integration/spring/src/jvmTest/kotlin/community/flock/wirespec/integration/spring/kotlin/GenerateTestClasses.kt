@@ -1,6 +1,8 @@
 package community.flock.wirespec.integration.spring.kotlin
 
 import community.flock.wirespec.compiler.core.ModuleContent
+import community.flock.wirespec.compiler.core.emit.common.PackageName
+import community.flock.wirespec.compiler.core.emit.common.plus
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.integration.spring.java.emit.SpringJavaEmitter
 import community.flock.wirespec.integration.spring.kotlin.emit.SpringKotlinEmitter
@@ -10,18 +12,19 @@ import kotlin.test.Test
 
 class GenerateTestClasses {
 
-    private val basePkg = "community.flock.wirespec.integration.spring"
-    private val kotlinPkg = "$basePkg.kotlin.generated"
-    private val javaPkg = "$basePkg.java.generated"
+    private val basePkg = PackageName("community.flock.wirespec.integration.spring")
+    private val kotlinPkg = basePkg + "kotlin.generated"
+    private val javaPkg = basePkg + "java.generated"
 
     private val kotlinEmitter = SpringKotlinEmitter(kotlinPkg)
     private val javaEmitter = SpringJavaEmitter(javaPkg)
 
-    private fun pkgToPath(pkg: String) = pkg.split(".").joinToString("/")
+    private fun pkgToPath(pkg: PackageName) = pkg.value.split(".").joinToString("/")
 
     private val baseDir = File("src/jvmTest")
     private val kotlinOutputDir = baseDir.resolve("kotlin").resolve(pkgToPath(kotlinPkg))
     private val javaOutputDir = baseDir.resolve("kotlin").resolve(pkgToPath(javaPkg))
+    private val modules = listOf("model", "endpoint", "channel")
 
     @Test
     fun generateKotlin() {
@@ -29,9 +32,9 @@ class GenerateTestClasses {
         val ast = OpenAPIV3Parser.parse(ModuleContent("src/jvmTest/resources/petstore.json", petstoreFile))
         val emittedKotlin = kotlinEmitter.emit(ast, noLogger)
 
-        kotlinOutputDir.mkdirs()
+        modules.forEach { kotlinOutputDir.resolve(it).mkdirs() }
         emittedKotlin.forEach {
-            kotlinOutputDir.resolve("Petstorev3.kt").writeText(it.result)
+            baseDir.resolve("kotlin").resolve(it.file).writeText(it.result)
         }
     }
 
@@ -41,10 +44,10 @@ class GenerateTestClasses {
         val ast = OpenAPIV3Parser.parse(ModuleContent("src/jvmTest/resources/petstore.json", petstoreFile))
         val emittedJava = javaEmitter.emit(ast, noLogger)
 
-        javaOutputDir.mkdirs()
+        modules.forEach { javaOutputDir.resolve(it).mkdirs() }
         emittedJava
-            .filter { "Wirespec" !in it.typeName }.forEach {
-                baseDir.resolve("kotlin").resolve(it.typeName).writeText(it.result)
+            .filter { "Wirespec" !in it.file }.forEach {
+                baseDir.resolve("kotlin").resolve(it.file).writeText(it.result)
             }
     }
 }

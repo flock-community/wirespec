@@ -42,8 +42,6 @@ object OpenAPIV2Emitter : Emitter() {
 
     override val shared = null
 
-    override fun Definition.emitName() = notYetImplemented()
-
     override val singleLineComment = ""
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =

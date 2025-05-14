@@ -1,6 +1,7 @@
 package community.flock.wirespec.integration.avro.java.emit
 
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
+import community.flock.wirespec.compiler.core.emit.common.EmitShared
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.parse.Definition
@@ -12,7 +13,7 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.integration.avro.Utils
 import community.flock.wirespec.integration.avro.Utils.isEnum
 
-class AvroJavaEmitter(private val packageName: String) : JavaEmitter(PackageName(packageName)) {
+class AvroJavaEmitter(private val packageName: PackageName, emitShared: EmitShared) : JavaEmitter(packageName, emitShared) {
 
     private fun emitAvroSchema(type: Definition, module: Module) = Utils.emitAvroSchema(packageName, type, module)
         ?.replace("\\\"<<<<<", "\" + ")
@@ -20,7 +21,7 @@ class AvroJavaEmitter(private val packageName: String) : JavaEmitter(PackageName
         ?: error("Cannot emit avro: ${type.identifier.value}")
 
     override fun emit(type: Type, module: Module) = """
-        |public record ${type.emitName()} (
+        |public record ${emit(type.identifier)} (
         |${type.shape.emit()}
         |)${type.extends.run { if (isEmpty()) "" else " extends ${joinToString(", ") { it.emit() }}" }}${type.emitUnion(module)} {
         |${emitTypeFunctionBody(type, module)}
@@ -34,13 +35,13 @@ class AvroJavaEmitter(private val packageName: String) : JavaEmitter(PackageName
         |    public static final org.apache.avro.Schema SCHEMA = 
         |      new org.apache.avro.Schema.Parser().parse("${emitAvroSchema(type, module)}");
         |
-        |    public static ${type.emitName()} from(org.apache.avro.generic.GenericData.Record record) {
-        |       return new ${type.emitName()}(
+        |    public static ${emit(type.identifier)} from(org.apache.avro.generic.GenericData.Record record) {
+        |       return new ${emit(type.identifier)}(
         |       ${type.shape.value.mapIndexed(emitFrom(module)).joinToString(",\n${Spacer(4)}")}
         |      );
         |    }
         |    
-        |    public static org.apache.avro.generic.GenericData.Record to(${type.emitName()} data) {
+        |    public static org.apache.avro.generic.GenericData.Record to(${emit(type.identifier)} data) {
         |      var record = new org.apache.avro.generic.GenericData.Record(SCHEMA);
         |      ${type.shape.value.mapIndexed(emitTo).joinToString("\n${Spacer(3)}")}
         |      return record;
@@ -74,11 +75,11 @@ class AvroJavaEmitter(private val packageName: String) : JavaEmitter(PackageName
         |    public static final org.apache.avro.Schema SCHEMA = 
         |      new org.apache.avro.Schema.Parser().parse("${emitAvroSchema(enum, module)}");
         |    
-        |    public static ${enum.emitName()} from(org.apache.avro.generic.GenericData.EnumSymbol record) {
-        |      return ${enum.emitName()}.valueOf(record.toString());
+        |    public static ${emit(enum.identifier)} from(org.apache.avro.generic.GenericData.EnumSymbol record) {
+        |      return ${emit(enum.identifier)}.valueOf(record.toString());
         |    }
         |    
-        |    public static org.apache.avro.generic.GenericData.EnumSymbol to(${enum.emitName()} data) {
+        |    public static org.apache.avro.generic.GenericData.EnumSymbol to(${emit(enum.identifier)} data) {
         |      return new org.apache.avro.generic.GenericData.EnumSymbol(SCHEMA, data.name());
         |    }
         |  }

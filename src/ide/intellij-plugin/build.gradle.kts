@@ -17,13 +17,6 @@ repositories {
     }
 }
 
-plugins.withId("maven-publish") {
-    tasks.withType(AbstractPublishToMaven::class) {
-        logger.info("Disabling $name task in project ${project.name}...")
-        enabled = false
-    }
-}
-
 dependencies {
     intellijPlatform {
         intellijIdeaCommunity("2025.1")

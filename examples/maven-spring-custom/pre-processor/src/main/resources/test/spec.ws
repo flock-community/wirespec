@@ -1,0 +1,3 @@
+type Custom {
+    custom: String
+}

@@ -3,7 +3,6 @@ package community.flock.wirespec.plugin
 enum class Language {
     Java,
     Kotlin,
-    Scala,
     TypeScript,
     Python,
     Wirespec,

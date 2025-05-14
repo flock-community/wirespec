@@ -20,7 +20,7 @@ class KotlinEmitterTest {
     fun testEmitterType() {
         val expected = listOf(
             """
-            |package community.flock.wirespec.generated
+            |package community.flock.wirespec.generated.model
             |
             |data class Todo(
             |  val name: String,
@@ -37,10 +37,24 @@ class KotlinEmitterTest {
     }
 
     @Test
+    fun testEmitterEmptyType() {
+        val expected = listOf(
+            """
+            |package community.flock.wirespec.generated.model
+            |
+            |data object TodoWithoutProperties
+            """.trimMargin(),
+        )
+
+        val res = emitContext.emitFirst(NodeFixtures.emptyType)
+        res shouldBe expected
+    }
+
+    @Test
     fun testEmitterRefined() {
         val expected = listOf(
             """
-            |package community.flock.wirespec.generated
+            |package community.flock.wirespec.generated.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
@@ -62,7 +76,7 @@ class KotlinEmitterTest {
     fun testEmitterEnum() {
         val expected = listOf(
             """
-            |package community.flock.wirespec.generated
+            |package community.flock.wirespec.generated.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf

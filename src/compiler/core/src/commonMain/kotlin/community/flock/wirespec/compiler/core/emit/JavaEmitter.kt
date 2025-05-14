@@ -4,14 +4,15 @@ import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.concatGenerics
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_SHARED_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.EmitShared
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.emit.common.Keywords
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
+import community.flock.wirespec.compiler.core.emit.common.plus
 import community.flock.wirespec.compiler.core.emit.shared.JavaShared
-import community.flock.wirespec.compiler.core.emit.shared.Shared
 import community.flock.wirespec.compiler.core.orNull
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
@@ -30,7 +31,7 @@ import community.flock.wirespec.compiler.utils.Logger
 
 open class JavaEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
-    private val emitShared: Boolean = true,
+    private val emitShared: EmitShared = EmitShared()
 ) : Emitter() {
 
     val import = """
@@ -43,34 +44,29 @@ open class JavaEmitter(
 
     override val shared = JavaShared
 
-    override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> "${emit(identifier)}Endpoint"
-        is Channel -> "${emit(identifier)}Channel"
-        is Enum -> emit(identifier)
-        is Refined -> emit(identifier)
-        is Type -> emit(identifier)
-        is Union -> emit(identifier)
-    }
-
     override val singleLineComment = "//"
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
-        val emitted = super.emit(module, logger).map { (typeName, result): Emitted ->
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
+        super.emit(module, logger).let {
+            if (emitShared.value) it + Emitted(PackageName(DEFAULT_SHARED_PACKAGE_STRING).toDir() + "Wirespec", shared.source)
+            else it
+        }
+
+    override fun emit(definition: Definition, module: Module, logger: Logger): Emitted =
+        super.emit(definition, module, logger).let {
+            val subPackageName = packageName + definition
             Emitted(
-                typeName = packageName.toDir() + typeName.sanitizeSymbol(),
+                file = subPackageName.toDir() + it.file.sanitizeSymbol(),
                 result = """
-                            |package $packageName;
-                            |${if (module.needImports()) import else ""}
-                            |$result
-                        """.trimMargin().trimStart()
+                    |package $subPackageName;
+                    |${if (module.needImports()) import else ""}
+                    |${it.result}
+                """.trimMargin().trimStart()
             )
         }
 
-        return if (emitShared) emitted + Emitted(PackageName(DEFAULT_GENERATED_PACKAGE_STRING).toDir() + "Wirespec", shared.source) else emitted
-    }
-
     override fun emit(type: Type, module: Module) = """
-        |public record ${type.emitName()} (
+        |public record ${emit(type.identifier)} (
         |${type.shape.emit()}
         |)${type.extends.run { if (isEmpty()) "" else " extends ${joinToString(", ") { it.emit() }}" }}${type.emitUnion(module)} {
         |};
@@ -101,20 +97,15 @@ open class JavaEmitter(
         is Reference.Primitive -> emit()
     }
 
-    fun Reference.emitRoot(void: String = "void"): String = when (this) {
+    fun Reference?.emitRoot(void: String = "void"): String = when (this) {
         is Reference.Dict -> reference.emitRoot()
         is Reference.Iterable -> reference.emitRoot()
         is Reference.Unit -> void
         is Reference.Any -> emitType()
         is Reference.Custom -> emitType()
         is Reference.Primitive -> emitType()
+        null -> void
     }
-
-    private fun Reference.Custom.emit() = value
-        .takeIf { it in internalClasses }
-        ?.let { "$packageName." }
-        .orEmpty()
-        .let { "$it$value" }
 
     private fun Reference.Primitive.emit() = when (type) {
         is Reference.Primitive.Type.String -> "String"
@@ -141,7 +132,7 @@ open class JavaEmitter(
         |public record ${emit(refined.identifier)} (String value) implements Wirespec.Refined {
         |${Spacer}@Override
         |${Spacer}public String toString() { return value; }
-        |${Spacer}public static boolean validate(${refined.emitName()} record) {
+        |${Spacer}public static boolean validate(${emit(refined.identifier)} record) {
         |${Spacer}${refined.validator.emit()}
         |${Spacer}}
         |${Spacer}@Override
@@ -173,19 +164,35 @@ open class JavaEmitter(
     """.trimMargin()
 
     override fun emit(union: Union) = """
-        |public sealed interface ${union.emitName()} permits ${union.entries.joinToString { it.value }} {}
+        |public sealed interface ${emit(union.identifier)} permits ${union.entries.joinToString { it.value }} {}
         |
     """.trimMargin()
 
     override fun emit(channel: Channel) = """
-        |public interface ${emit(channel.identifier)}Channel {
-        |   void invoke(${channel.reference.emitRoot()} message);
+        |${channel.emitImports()}
+        |
+        |public interface ${emit(channel.identifier)} {
+        |   void invoke(${channel.emitFullyQualified(channel.reference)}${channel.reference.emitRoot()} message);
         |}
         |
     """.trimMargin()
 
+    private fun Definition.emitFullyQualified(reference: Reference) =
+        if (identifier.value == reference.value) {
+            "${packageName.value}.model."
+        } else {
+            ""
+        }
+
+    fun Definition.emitImports() = importReferences()
+        .filter { this.identifier.value != it.value }
+        .map { "import ${packageName.value}.model.${it.value};" }.joinToString("\n") { it.trimStart() }
+
+
     override fun emit(endpoint: Endpoint) = """
-        |public interface ${emit(endpoint.identifier)}Endpoint extends Wirespec.Endpoint {
+        |${endpoint.emitImports()}
+        |
+        |public interface ${emit(endpoint.identifier)} extends Wirespec.Endpoint {
         |${endpoint.pathParams.emitObject("Path", "Wirespec.Path") { it.emit() }}
         |
         |${endpoint.queries.emitObject("Queries", "Wirespec.Queries") { it.emit() }}
@@ -198,22 +205,22 @@ open class JavaEmitter(
         |${endpoint.emitStatusInterfaces()}
         |${endpoint.emitResponseInterfaces()}
         |
-        |${endpoint.responses.distinctBy { it.status }.joinToString("\n") { it.emit() }}
+        |${endpoint.responses.distinctByStatus().joinToString("\n") { it.emit() }}
         |
         |${Spacer}interface Handler extends Wirespec.Handler {
         |
         |${endpoint.requests.first().emitRequestFunctions(endpoint)}
         |
         |${Spacer(2)}static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
-        |${endpoint.responses.distinctBy { it.status }.joinToString("\n") { it.emitSerialized() }}
+        |${endpoint.responses.distinctByStatus().joinToString("\n") { it.emitSerialized() }}
         |${Spacer(3)}else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
         |${Spacer(2)}}
         |
         |${Spacer(2)}static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
-        |${Spacer(3)}return switch (response.statusCode()) {
-        |${endpoint.responses.distinctBy { it.status }.filter { it.status.isStatusCode() }.joinToString("\n") { it.emitDeserialized() }}
-        |${Spacer(4)}default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
-        |${Spacer(3)}};
+        |${Spacer(3)}switch (response.statusCode()) {
+        |${endpoint.responses.distinctByStatus().filter { it.status.isStatusCode() }.joinToString("\n") { it.emitDeserialized() }}
+        |${Spacer(4)}default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+        |${Spacer(3)}}
         |${Spacer(2)}}
         |
         |${Spacer(2)}${emitHandleFunction(endpoint)}
@@ -247,7 +254,7 @@ open class JavaEmitter(
         .joinToString("\n") { "${Spacer}sealed interface Response${it}XX<T> extends Response<T> {}" }
 
     private fun Endpoint.emitResponseInterfaces() = responses
-        .distinctBy { it.status }
+        .distinctByStatus()
         .map { it.content.emit() }
         .distinct()
         .joinToString("\n") { "${Spacer}sealed interface Response${it.concatGenerics()} extends Response<$it> {}" }
@@ -281,9 +288,9 @@ open class JavaEmitter(
         |${Spacer(3)}return new Wirespec.RawRequest(
         |${Spacer(4)}request.method.name(),
         |${Spacer(4)}java.util.List.of(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
-        |${Spacer(4)}${if (endpoint.queries.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.queries.joinToString { it.emitSerializedParams("queries") }})" else "java.util.Collections.emptyMap()"},
-        |${Spacer(4)}${if (endpoint.headers.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.headers.joinToString { it.emitSerializedParams("headers") }})" else "java.util.Collections.emptyMap()"},
-        |${Spacer(4)}serialization.serialize(request.getBody(), Wirespec.getType(${content.emit()}.class, ${content?.reference?.isIterable ?: false}))
+        |${Spacer(4)}${if (endpoint.queries.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.queries.joinToString { it.emitSerializedParams("queries") }})" else EMPTY_MAP},
+        |${Spacer(4)}${if (endpoint.headers.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.headers.joinToString { it.emitSerializedParams("headers") }})" else EMPTY_MAP},
+        |${Spacer(4)}serialization.serialize(request.getBody(), Wirespec.getType(${content?.reference.emitRoot("Void")}.class, ${content?.reference?.isIterable ?: false}))
         |${Spacer(3)});
         |${Spacer(2)}}
         |
@@ -324,22 +331,22 @@ open class JavaEmitter(
         endpoint.indexedPathParams.joinToString { it.emitDeserialized() }.orNull(),
         endpoint.queries.joinToString { it.emitDeserializedParams("queries") }.orNull(),
         endpoint.headers.joinToString { it.emitDeserializedParams("headers") }.orNull(),
-        content?.let { """${Spacer(4)}serialization.deserialize(request.body(), Wirespec.getType(${it.emit()}.class, ${it.reference.isIterable}))""" }
+        content?.let { """${Spacer(4)}serialization.deserialize(request.body(), Wirespec.getType(${it.reference.emitRoot("Void")}.class, ${it.reference.isIterable}))""" }
     ).joinToString(",\n").let { if (it.isBlank()) "" else "\n$it\n${Spacer(3)}" }
 
     private fun Endpoint.Response.emitDeserializedParams() = listOfNotNull(
         headers.joinToString { """${Spacer(4)}java.util.Optional.ofNullable(response.headers().get("${it.identifier.value}")).map(it -> serialization.<${it.reference.emitType()}>deserializeParam(it, Wirespec.getType(${it.reference.emitRoot()}.class, ${it.reference.isIterable})))${if (!it.reference.isNullable) ".get()" else ""}""" }
             .orNull(),
-        content?.let { """${Spacer(4)}serialization.deserialize(response.body(), Wirespec.getType(${it.emitRoot()}.class, ${it.reference.isIterable}))""" }
+        content?.let { """${Spacer(4)}serialization.deserialize(response.body(), Wirespec.getType(${it.reference.emitRoot("Void")}.class, ${it.reference.isIterable}))""" }
     ).joinToString(",\n").let { if (it.isBlank()) "" else "\n$it\n${Spacer(3)}" }
 
     private fun Endpoint.Response.emitSerialized() =
-        """${Spacer(3)}if (response instanceof Response${status.firstToUpper()} r) { return new Wirespec.RawResponse(r.getStatus(), ${if (headers.isNotEmpty()) "java.util.Map.ofEntries(${headers.joinToString { it.emitSerializedHeader() }})" else "java.util.Collections.emptyMap()"}, ${
+        """${Spacer(3)}if (response instanceof Response${status.firstToUpper()} r) { return new Wirespec.RawResponse(r.getStatus(), ${if (headers.isNotEmpty()) "java.util.Map.ofEntries(${headers.joinToString { it.emitSerializedHeader() }})" else EMPTY_MAP}, ${
             if (content != null) "serialization.serialize(r.body, Wirespec.getType(${content.reference.emitRoot("Void")}.class, ${content.reference.isIterable}))"
             else "null"}); }"""
 
     private fun Endpoint.Response.emitDeserialized() =
-        """${Spacer(4)}case $status -> new Response${status.firstToUpper()}(${this.emitDeserializedParams()});"""
+        """${Spacer(4)}case $status: return new Response${status.firstToUpper()}(${this.emitDeserializedParams()});"""
 
     private fun Field.emitSerializedParams(fields: String) =
         """java.util.Map.entry("${identifier.value}", serialization.serializeParam(request.$fields.${emit(identifier)}, Wirespec.getType(${reference.emitRoot()}.class, ${reference.isIterable})))"""
@@ -356,17 +363,11 @@ open class JavaEmitter(
     private fun Endpoint.Segment.Param.emitIdentifier() =
         "serialization.serialize(request.path.${emit(identifier).firstToLower()}, Wirespec.getType(${reference.emitRoot()}.class, ${reference.isIterable}))"
 
-    private fun Endpoint.Content?.emitRoot() = this?.reference?.emitRoot() ?: "Void"
     private fun Endpoint.Content?.emit() = this?.reference?.emit() ?: "Void"
 
     private fun Endpoint.Segment.Param.emit() = "${reference.emit()} ${emit(identifier)}"
 
     private val Reference.isIterable get() = this is Reference.Iterable
-
-    private fun String.fixStatus(): String = when (this) {
-        "default" -> "200"
-        else -> this
-    }
 
     private fun String.sanitizeSymbol() = this
         .split(".", " ", "-")
@@ -397,5 +398,7 @@ open class JavaEmitter(
             "const", "float", "native", "super", "while",
             "true", "false"
         )
+
+        private const val EMPTY_MAP = "java.util.Collections.emptyMap()"
     }
 }

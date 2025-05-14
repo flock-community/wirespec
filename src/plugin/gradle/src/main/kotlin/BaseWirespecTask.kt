@@ -4,10 +4,10 @@ import arrow.core.toNonEmptySetOrNull
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.PythonEmitter
-import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.EmitShared
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.utils.Logger
@@ -69,9 +69,21 @@ abstract class BaseWirespecTask : DefaultTask() {
     }
 
     protected fun packageNameValue() = packageName.getOrElse(DEFAULT_GENERATED_PACKAGE_STRING).let(PackageName::invoke)
+    protected fun sharedValue() = shared.getOrElse(false).let(EmitShared::invoke)
 
     protected fun emitter() = try {
-        emitterClass.orNull?.getDeclaredConstructor()?.newInstance() as? Emitter
+        emitterClass.orNull?.declaredConstructors?.first()?.let { constructor ->
+            val args: List<Any> = constructor.parameters
+                ?.map {
+                    when (it.type) {
+                        PackageName::class.java -> packageNameValue()
+                        EmitShared::class.java -> sharedValue()
+                        else -> error("Cannot map constructor parameter")
+                    }
+                }
+                .orEmpty()
+            constructor.newInstance(*args.toTypedArray()) as? Emitter
+        }
     } catch (e: Exception) {
         logger.error("Cannot create instance of emitter: ${emitterClass.orNull?.simpleName}", e)
         throw e
@@ -79,11 +91,10 @@ abstract class BaseWirespecTask : DefaultTask() {
 
     protected fun emitters() = languages.get().map {
         when (it) {
-            Language.Java -> JavaEmitter(packageNameValue())
-            Language.Kotlin -> KotlinEmitter(packageNameValue())
-            Language.Scala -> ScalaEmitter(packageNameValue())
-            Language.TypeScript -> TypeScriptEmitter()
-            Language.Python -> PythonEmitter()
+            Language.Java -> JavaEmitter(packageNameValue(), sharedValue())
+            Language.Kotlin -> KotlinEmitter(packageNameValue(), sharedValue())
+            Language.Python -> PythonEmitter(packageNameValue(), sharedValue())
+            Language.TypeScript -> TypeScriptEmitter(sharedValue())
             Language.Wirespec -> WirespecEmitter()
             Language.OpenAPIV2 -> OpenAPIV2Emitter
             Language.OpenAPIV3 -> OpenAPIV3Emitter

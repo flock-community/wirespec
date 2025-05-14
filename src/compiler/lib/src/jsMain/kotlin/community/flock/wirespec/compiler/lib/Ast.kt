@@ -41,9 +41,8 @@ fun WsEndpoint.consume(): Endpoint = Endpoint(
     identifier = DefinitionIdentifier(identifier),
     method = method.consume(),
     path = path.map { it.consume() },
-    queries = query.map { it.consume() },
-    headers = query.map { it.consume() },
-    cookies = query.map { it.consume() },
+    queries = queries.map { it.consume() },
+    headers = headers.map { it.consume() },
     requests = requests.map { it.consume() },
     responses = responses.map { it.consume() },
 )
@@ -175,9 +174,8 @@ fun Definition.produce(): WsDefinition = when (this) {
         comment = comment?.value,
         method = method.produce(),
         path = path.produce(),
-        query = queries.produce(),
+        queries = queries.produce(),
         headers = headers.produce(),
-        cookies = cookies.produce(),
         requests = requests.produce(),
         responses = responses.produce(),
     )
@@ -307,9 +305,8 @@ data class WsEndpoint(
     override val comment: String?,
     val method: WsMethod,
     val path: Array<WsSegment>,
-    val query: Array<WsField>,
+    val queries: Array<WsField>,
     val headers: Array<WsField>,
-    val cookies: Array<WsField>,
     val requests: Array<WsRequest>,
     val responses: Array<WsResponse>,
 ) : WsDefinition

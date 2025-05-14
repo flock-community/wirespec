@@ -1,17 +1,18 @@
 package community.flock.wirespec.compiler.core.emit
 
 import arrow.core.NonEmptyList
-import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.addBackticks
 import community.flock.wirespec.compiler.core.concatGenerics
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_SHARED_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.EmitShared
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.emit.common.Keywords
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
+import community.flock.wirespec.compiler.core.emit.common.plus
 import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
 import community.flock.wirespec.compiler.core.orNull
 import community.flock.wirespec.compiler.core.parse.Channel
@@ -32,7 +33,7 @@ import community.flock.wirespec.compiler.utils.Logger
 
 open class KotlinEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
-    private val emitShared: Boolean = false,
+    private val emitShared: EmitShared = EmitShared(),
 ) : Emitter() {
 
     val import = """
@@ -46,36 +47,31 @@ open class KotlinEmitter(
 
     override val shared = KotlinShared
 
-    override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> "${emit(identifier)}Endpoint"
-        is Channel -> "${emit(identifier)}Channel"
-        is Enum -> emit(identifier)
-        is Refined -> emit(identifier)
-        is Type -> emit(identifier)
-        is Union -> emit(identifier)
-    }
-
     override val singleLineComment = "//"
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
-        val emitted = nonEmptyListOf(
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
+        super.emit(module, logger).let {
+            if (emitShared.value) it + Emitted(PackageName(DEFAULT_SHARED_PACKAGE_STRING).toDir() + "Wirespec", shared.source)
+            else it
+        }
+
+    override fun emit(definition: Definition, module: Module, logger: Logger): Emitted =
+        super.emit(definition, module, logger).let {
+            val subPackageName = packageName + definition
             Emitted(
-                typeName = packageName.toDir() + module.uri.split("/").last().firstToUpper(),
+                file = subPackageName.toDir() + it.file.sanitizeSymbol(),
                 result = """
-                    |package $packageName
+                    |package $subPackageName
                     |${if (module.needImports()) import else ""}
-                    |${super.emit(module, logger).map(Emitted::result).joinToString("\n")}
+                    |${it.result}
                 """.trimMargin().trimStart()
             )
-        )
-
-        return if (emitShared) emitted + Emitted(PackageName(DEFAULT_GENERATED_PACKAGE_STRING).toDir() + "Wirespec", shared.source) else emitted
-    }
+        }
 
     override fun emit(type: Type, module: Module) =
-        if (type.shape.value.isEmpty()) "${Spacer}data object ${type.emitName()}"
+        if (type.shape.value.isEmpty()) "data object ${emit(type.identifier)}"
         else """
-            |data class ${type.emitName()}(
+            |data class ${emit(type.identifier)}(
             |${type.shape.emit()}
             |)${type.extends.run { if (isEmpty()) "" else " : ${joinToString(", ") { it.emit() }}" }}
             |
@@ -135,7 +131,7 @@ open class KotlinEmitter(
     """.trimMargin()
 
     override fun emit(union: Union) = """
-        |sealed interface ${union.emitName()}
+        |sealed interface ${emit(union.identifier)}
         |
     """.trimMargin()
 
@@ -147,7 +143,9 @@ open class KotlinEmitter(
     """.trimMargin()
 
     override fun emit(endpoint: Endpoint) = """
-        |object ${emit(endpoint.identifier)}Endpoint : Wirespec.Endpoint {
+        |${endpoint.importReferences().map { "import ${packageName.value}.model.${it.value}" }.joinToString("\n") { it.trimStart() }}
+        |
+        |object ${emit(endpoint.identifier)} : Wirespec.Endpoint {
         |${endpoint.pathParams.emitObject("Path", "Wirespec.Path") { it.emit() }}
         |
         |${endpoint.queries.emitObject("Queries", "Wirespec.Queries") { it.emit() }}
@@ -162,16 +160,16 @@ open class KotlinEmitter(
         |
         |${endpoint.emitResponseInterfaces()}
         |
-        |${endpoint.responses.distinctBy { it.status }.joinToString("\n\n") { it.emit() }}
+        |${endpoint.responses.distinctByStatus().joinToString("\n\n") { it.emit() }}
         |
         |${Spacer}fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
         |${Spacer(2)}when(response) {
-        |${endpoint.responses.distinctBy { it.status }.joinToString("\n") { it.emitSerialized() }}
+        |${endpoint.responses.distinctByStatus().joinToString("\n") { it.emitSerialized() }}
         |${Spacer(2)}}
         |
         |${Spacer}fun fromResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
         |${Spacer(2)}when (response.statusCode) {
-        |${endpoint.responses.filter { it.status.isStatusCode() }.distinctBy { it.status }.joinToString("\n") { it.emitDeserialized() }}
+        |${endpoint.responses.distinctByStatus().filter { it.status.isStatusCode() }.joinToString("\n") { it.emitDeserialized() }}
         |${Spacer(3)}else -> error("Cannot match response with status: ${'$'}{response.statusCode}")
         |${Spacer(2)}}
         |
@@ -227,8 +225,8 @@ open class KotlinEmitter(
         |${Spacer(2)}Wirespec.RawRequest(
         |${Spacer(3)}path = listOf(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
         |${Spacer(3)}method = request.method.name,
-        |${Spacer(3)}queries = ${if (endpoint.queries.isNotEmpty()) endpoint.queries.joinToString(" + ") { "(${it.emitSerializedParams("request", "queries")})" } else "emptyMap()"},
-        |${Spacer(3)}headers = ${if (endpoint.headers.isNotEmpty()) endpoint.headers.joinToString(" + ") { "(${it.emitSerializedParams("request", "headers")})" } else "emptyMap()"},
+        |${Spacer(3)}queries = ${if (endpoint.queries.isNotEmpty()) endpoint.queries.joinToString(" + ") { "(${it.emitSerializedParams("request", "queries")})" } else EMPTY_MAP},
+        |${Spacer(3)}headers = ${if (endpoint.headers.isNotEmpty()) endpoint.headers.joinToString(" + ") { "(${it.emitSerializedParams("request", "headers")})" } else EMPTY_MAP},
         |${Spacer(3)}body = serialization.serialize(request.body, typeOf<${content.emit()}>()),
         |${Spacer(2)})
         |
@@ -262,7 +260,7 @@ open class KotlinEmitter(
     private fun Endpoint.Response.emitSerialized() = """
         |${Spacer(3)}is Response$status -> Wirespec.RawResponse(
         |${Spacer(4)}statusCode = response.status,
-        |${Spacer(4)}headers = ${if (headers.isNotEmpty()) headers.joinToString(" + ") { "(${it.emitSerializedParams("response", "headers")})" } else "emptyMap()"},
+        |${Spacer(4)}headers = ${if (headers.isNotEmpty()) headers.joinToString(" + ") { "(${it.emitSerializedParams("response", "headers")})" } else EMPTY_MAP},
         |${Spacer(4)}body = ${if (content != null) "serialization.serialize(response.body, typeOf<${content.emit()}>())" else "null"},
         |${Spacer(3)})
     """.trimMargin()
@@ -296,11 +294,6 @@ open class KotlinEmitter(
     private fun String.brace() = wrap("(", ")")
     private fun String.wrap(prefix: String, postfix: String) = if (isEmpty()) "" else "$prefix$this$postfix"
 
-    private fun String.fixStatus(): String = when (this) {
-        "default" -> "200"
-        else -> this
-    }
-
     private fun String.sanitizeSymbol() = this
         .split(".", " ")
         .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
@@ -325,5 +318,7 @@ open class KotlinEmitter(
             "this", "throw", "true", "try", "typealias",
             "typeof", "val", "var", "when", "while", "private", "public"
         )
+
+        private const val EMPTY_MAP = "emptyMap()"
     }
 }

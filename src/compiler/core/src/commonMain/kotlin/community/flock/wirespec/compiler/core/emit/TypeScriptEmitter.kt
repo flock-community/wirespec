@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.emit
 import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.EmitShared
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
@@ -10,7 +11,6 @@ import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.emit.shared.TypeScriptShared
 import community.flock.wirespec.compiler.core.parse.Channel
-import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
@@ -22,16 +22,7 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 
-open class TypeScriptEmitter(val emitShared: Boolean = false) : Emitter() {
-
-    override fun Definition.emitName(): String = when (this) {
-        is Endpoint -> emit(identifier)
-        is Enum -> emit(identifier)
-        is Refined -> emit(identifier)
-        is Type -> emit(identifier)
-        is Union -> emit(identifier)
-        is Channel -> emit(identifier)
-    }
+open class TypeScriptEmitter(val emitShared: EmitShared = EmitShared()) : Emitter() {
 
     override val extension = FileExtension.TypeScript
 
@@ -42,7 +33,7 @@ open class TypeScriptEmitter(val emitShared: Boolean = false) : Emitter() {
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
         val emitted = nonEmptyListOf(
             Emitted(
-                typeName = module.uri.split("/").last().firstToUpper(),
+                file = module.uri.split("/").last().firstToUpper(),
                 result = """
                         |${if (module.hasEndpoints()) TypeScriptShared.source else ""}
                         |${super.emit(module, logger).map(Emitted::result).joinToString("\n")}
@@ -50,7 +41,7 @@ open class TypeScriptEmitter(val emitShared: Boolean = false) : Emitter() {
             )
         )
 
-        return if (emitShared) emitted + Emitted(PackageName(DEFAULT_GENERATED_PACKAGE_STRING).toDir() + "Wirespec", shared.source) else emitted
+        return if (emitShared.value) emitted + Emitted(PackageName(DEFAULT_GENERATED_PACKAGE_STRING).toDir() + "Wirespec", shared.source) else emitted
     }
 
     override fun emit(type: Type, module: Module) =
@@ -102,10 +93,10 @@ open class TypeScriptEmitter(val emitShared: Boolean = false) : Emitter() {
           |${endpoint.queries.emitType("Queries") { it.emit() }}
           |${endpoint.headers.emitType("Headers") { it.emit() }}
           |${endpoint.requests.first().emitType(endpoint)}
-          |${endpoint.responses.toSet().joinToString("\n") { it.emitType() }}
-          |${Spacer}export type Response = ${endpoint.responses.toSet().joinToString(" | ") { it.emitName() }}
+          |${endpoint.responses.distinctByStatus().joinToString("\n") { it.emitType() }}
+          |${Spacer}export type Response = ${endpoint.responses.distinctByStatus().joinToString(" | ") { it.emitName() }}
           |${endpoint.requests.first().emitFunction(endpoint)}
-          |${endpoint.responses.joinToString("\n") { it.emitFunction(endpoint) }}
+          |${endpoint.responses.distinctByStatus().joinToString("\n") { it.emitFunction() }}
           |${Spacer}export type Handler = {
           |${Spacer(2)}${emitHandleFunction(endpoint)}
           |${Spacer}}
@@ -160,7 +151,7 @@ open class TypeScriptEmitter(val emitShared: Boolean = false) : Emitter() {
     """.trimIndent()
 
     private fun Endpoint.Request.emitFunction(endpoint: Endpoint) = """
-      |${Spacer}export const request = (${paramList(endpoint).takeIf { it.isNotEmpty() }?.let { "props: ${it.joinToObject { it.emit() }}" }.orEmpty()}): Request => ({
+      |${Spacer}export const request = (${paramList(endpoint).takeIf { it.isNotEmpty() }?.run { "props: ${joinToObject { it.emit() }}" }.orEmpty()}): Request => ({
       |${Spacer(2)}path: ${endpoint.pathParams.joinToObject { "${emit(it.identifier)}: props[${emit(it.identifier)}]" }},
       |${Spacer(2)}method: "${endpoint.method}",
       |${Spacer(2)}queries: ${endpoint.queries.joinToObject { "${emit(it.identifier)}: props[${emit(it.identifier)}]" }},
@@ -169,9 +160,9 @@ open class TypeScriptEmitter(val emitShared: Boolean = false) : Emitter() {
       |${Spacer}})
     """.trimIndent()
 
-    private fun Endpoint.Response.emitFunction(endpoint: Endpoint) = """
-      |${Spacer}export const response${status.firstToUpper()} = (${paramList().takeIf { it.isNotEmpty() }?.let { "props: ${it.joinToObject { it.emit() }}" }.orEmpty()}): Response${status.firstToUpper()} => ({
-      |${Spacer(2)}status: ${status},
+    private fun Endpoint.Response.emitFunction() = """
+      |${Spacer}export const response${status.firstToUpper()} = (${paramList().takeIf { it.isNotEmpty() }?.run { "props: ${joinToObject { it.emit() }}" }.orEmpty()}): Response${status.firstToUpper()} => ({
+      |${Spacer(2)}status: ${status.fixStatus()},
       |${Spacer(2)}headers: ${headers.joinToObject { "${emit(it.identifier)}: props[${emit(it.identifier)}]" }},
       |${Spacer(2)}body: ${content?.let { "props.body" } ?: "undefined"},
       |${Spacer}})
@@ -188,7 +179,7 @@ open class TypeScriptEmitter(val emitShared: Boolean = false) : Emitter() {
 
     private fun Endpoint.Response.emitType() = """
       |${Spacer}export type ${emitName()} = {
-      |${Spacer(2)}status: $status
+      |${Spacer(2)}status: ${status.fixStatus()}
       |${Spacer(2)}headers: {${headers.joinToString { "${emit(it.identifier)}: ${it.reference.emit()}" }}}
       |${Spacer(2)}body: ${emitReference()}
       |${Spacer}}
@@ -227,7 +218,7 @@ open class TypeScriptEmitter(val emitShared: Boolean = false) : Emitter() {
     private fun Endpoint.emitClientFrom() = """
         |from: (it) => {
         |${Spacer(1)}switch (it.status) {
-        |${responses.joinToString("\n") { it.emitClientFromResponse() }.prependIndent(Spacer(2))}
+        |${responses.distinctByStatus().joinToString("\n") { it.emitClientFromResponse() }.prependIndent(Spacer(2))}
         |${Spacer(2)}default:
         |${Spacer(3)}throw new Error(`Cannot internalize response with status: ${'$'}{it.status}`);
         |${Spacer(1)}}
@@ -235,9 +226,9 @@ open class TypeScriptEmitter(val emitShared: Boolean = false) : Emitter() {
     """.trimMargin()
 
     private fun Endpoint.Response.emitClientFromResponse() = """
-        |case ${status}:
+        |case ${status.fixStatus()}:
         |${Spacer(1)}return {
-        |${Spacer(2)}status: ${status},
+        |${Spacer(2)}status: ${status.fixStatus()},
         |${Spacer(2)}headers: {${headers.joinToString { it.emitDeserialize("headers") }}},
         |${Spacer(2)}body: serialization.deserialize<${emitReference()}>(it.body)
         |${Spacer(1)}};

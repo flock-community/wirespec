@@ -132,7 +132,6 @@ object OpenAPIV2Parser {
                         path = segments,
                         queries = query,
                         headers = headers,
-                        cookies = emptyList(),
                         requests = requests,
                         responses = responses,
                     ),

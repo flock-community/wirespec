@@ -2,7 +2,6 @@ package community.flock.wirespec.compiler.core
 
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
-import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import io.kotest.assertions.arrow.core.shouldBeRight
@@ -17,7 +16,7 @@ class CompileChannelTest {
     @Test
     fun kotlin() {
         val kotlin = """
-            |package community.flock.wirespec.generated
+            |package community.flock.wirespec.generated.channel
             |
             |interface QueueChannel {
             |   operator fun invoke(message: String)
@@ -31,27 +30,17 @@ class CompileChannelTest {
     @Test
     fun java() {
         val java = """
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.channel;
             |
-            |public interface QueueChannel {
+            |
+            |
+            |public interface Queue {
             |   void invoke(String message);
             |}
             |
         """.trimMargin()
 
         compiler { JavaEmitter() } shouldBeRight java
-    }
-
-    @Test
-    fun scala() {
-        val scala = """
-            |package community.flock.wirespec.generated
-            |
-            |// TODO("Not yet implemented")
-            |
-        """.trimMargin()
-
-        compiler { ScalaEmitter() } shouldBeRight scala
     }
 
     @Test

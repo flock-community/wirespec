@@ -2,7 +2,6 @@ package community.flock.wirespec.compiler.core
 
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
-import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import io.kotest.assertions.arrow.core.shouldBeRight
@@ -19,7 +18,7 @@ class CompileEnumTest {
     @Test
     fun kotlin() {
         val kotlin = """
-            |package community.flock.wirespec.generated
+            |package community.flock.wirespec.generated.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
@@ -42,7 +41,7 @@ class CompileEnumTest {
     @Test
     fun java() {
         val java = """
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.model;
             |
             |import community.flock.wirespec.java.Wirespec;
             |
@@ -68,26 +67,6 @@ class CompileEnumTest {
         """.trimMargin()
 
         compiler { JavaEmitter() } shouldBeRight java
-    }
-
-    @Test
-    fun scala() {
-        val scala = """
-            |package community.flock.wirespec.generated
-            |
-            |import community.flock.wirespec.scala.Wirespec
-            |
-            |sealed abstract class MyAwesomeEnum(val label: String)
-            |object MyAwesomeEnum {
-            |  final case object ONE extends MyAwesomeEnum(label = "ONE")
-            |  final case object TWO extends MyAwesomeEnum(label = "Two")
-            |  final case object THREE_MORE extends MyAwesomeEnum(label = "THREE_MORE")
-            |  final case object UNITEDKINGDOM extends MyAwesomeEnum(label = "UnitedKingdom")
-            |}
-            |
-        """.trimMargin()
-
-        compiler { ScalaEmitter() } shouldBeRight scala
     }
 
     @Test

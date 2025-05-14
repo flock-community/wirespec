@@ -1,6 +1,8 @@
 package community.flock.wirespec.integration.avro.kotlin.emit
 
 import arrow.core.nonEmptyListOf
+import community.flock.wirespec.compiler.core.emit.common.EmitShared
+import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -15,7 +17,7 @@ import org.junit.jupiter.api.Test
 
 class AvroKotlinEmitterTest {
 
-    private val emitter = AvroKotlinEmitter("packageName")
+    private val emitter = AvroKotlinEmitter(PackageName("packageName"), EmitShared(true))
 
     @Test
     fun emitTypeFunctionBodyTest() {
@@ -35,7 +37,7 @@ class AvroKotlinEmitterTest {
 
         val ast = AST(nonEmptyListOf(Module("", nonEmptyListOf(type))))
         val expected = """
-            |package packageName
+            |package packageName.model
             |
             |data class Identifier(
             |  val name: String
@@ -78,7 +80,7 @@ class AvroKotlinEmitterTest {
         )
         val ast = AST(nonEmptyListOf(Module("", nonEmptyListOf(enum))))
         val expected = """
-            |package packageName
+            |package packageName.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf

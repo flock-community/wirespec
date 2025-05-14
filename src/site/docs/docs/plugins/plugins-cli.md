@@ -64,7 +64,7 @@ Options:
   --log-level=<text>                                                          Log level: DEBUG, INFO, WARN, ERROR
   --shared                                                                    Generate shared wirespec code
   --strict                                                                    Strict mode
-  -l, --language=(Java|Kotlin|Scala|TypeScript|Wirespec|OpenAPIV2|OpenAPIV3)  Language
+  -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3)  Language
   -h, --help                                                                  Show this message and exit
 ```
 
@@ -80,7 +80,7 @@ Options:
   --log-level=<text>                                                          Log level: DEBUG, INFO, WARN, ERROR
   --shared                                                                    Generate shared wirespec code
   --strict                                                                    Strict mode
-  -l, --language=(Java|Kotlin|Scala|TypeScript|Wirespec|OpenAPIV2|OpenAPIV3)  Language
+  -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3)  Language
   -h, --help                                                                  Show this message and exit
 
 Arguments:

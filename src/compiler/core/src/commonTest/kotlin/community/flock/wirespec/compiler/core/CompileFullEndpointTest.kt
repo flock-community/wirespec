@@ -3,7 +3,6 @@ package community.flock.wirespec.compiler.core
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.PythonEmitter
-import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import io.kotest.assertions.arrow.core.shouldBeRight
@@ -40,12 +39,17 @@ class CompileFullEndpointTest {
     @Test
     fun kotlin() {
         val kotlin = """
-            |package community.flock.wirespec.generated
+            |package community.flock.wirespec.generated.endpoint
             |
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |
-            |object PutTodoEndpoint : Wirespec.Endpoint {
+            |import community.flock.wirespec.generated.model.Token
+            |import community.flock.wirespec.generated.model.PotentialTodoDto
+            |import community.flock.wirespec.generated.model.TodoDto
+            |import community.flock.wirespec.generated.model.Error
+            |
+            |object PutTodo : Wirespec.Endpoint {
             |  data class Path(
             |    val id: String,
             |  ) : Wirespec.Path
@@ -166,20 +170,40 @@ class CompileFullEndpointTest {
             |  }
             |}
             |
+            |package community.flock.wirespec.generated.model
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |
             |data class PotentialTodoDto(
             |  val name: String,
             |  val done: Boolean
             |)
             |
+            |package community.flock.wirespec.generated.model
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |
             |data class Token(
             |  val iss: String
             |)
+            |
+            |package community.flock.wirespec.generated.model
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
             |
             |data class TodoDto(
             |  val id: String,
             |  val name: String,
             |  val done: Boolean
             |)
+            |
+            |package community.flock.wirespec.generated.model
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
             |
             |data class Error(
             |  val code: Long,
@@ -194,11 +218,16 @@ class CompileFullEndpointTest {
     @Test
     fun java() {
         val java = """
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.endpoint;
             |
             |import community.flock.wirespec.java.Wirespec;
             |
-            |public interface PutTodoEndpoint extends Wirespec.Endpoint {
+            |import community.flock.wirespec.generated.model.Token;
+            |import community.flock.wirespec.generated.model.PotentialTodoDto;
+            |import community.flock.wirespec.generated.model.TodoDto;
+            |import community.flock.wirespec.generated.model.Error;
+            |
+            |public interface PutTodo extends Wirespec.Endpoint {
             |  public record Path(
             |    String id
             |  ) implements Wirespec.Path {}
@@ -287,19 +316,19 @@ class CompileFullEndpointTest {
             |    }
             |
             |    static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
-            |      return switch (response.statusCode()) {
-            |        case 200 -> new Response200(
+            |      switch (response.statusCode()) {
+            |        case 200: return new Response200(
             |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, false))
             |      );
-            |        case 201 -> new Response201(
+            |        case 201: return new Response201(
             |        java.util.Optional.ofNullable(response.headers().get("token")).map(it -> serialization.<Token>deserializeParam(it, Wirespec.getType(Token.class, false))).get(),
             |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, false))
             |      );
-            |        case 500 -> new Response500(
+            |        case 500: return new Response500(
             |        serialization.deserialize(response.body(), Wirespec.getType(Error.class, false))
             |      );
-            |        default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
-            |      };
+            |        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+            |      }
             |    }
             |
             |    java.util.concurrent.CompletableFuture<Response<?>> putTodo(Request request);
@@ -322,7 +351,7 @@ class CompileFullEndpointTest {
             |  }
             |}
             |
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.model;
             |
             |import community.flock.wirespec.java.Wirespec;
             |
@@ -332,7 +361,7 @@ class CompileFullEndpointTest {
             |) {
             |};
             |
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.model;
             |
             |import community.flock.wirespec.java.Wirespec;
             |
@@ -341,7 +370,7 @@ class CompileFullEndpointTest {
             |) {
             |};
             |
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.model;
             |
             |import community.flock.wirespec.java.Wirespec;
             |
@@ -352,7 +381,7 @@ class CompileFullEndpointTest {
             |) {
             |};
             |
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.model;
             |
             |import community.flock.wirespec.java.Wirespec;
             |
@@ -365,40 +394,6 @@ class CompileFullEndpointTest {
         """.trimMargin()
 
         compiler { JavaEmitter() } shouldBeRight java
-    }
-
-    @Test
-    fun scala() {
-        val scala = """
-            |package community.flock.wirespec.generated
-            |
-            |import community.flock.wirespec.scala.Wirespec
-            |
-            |// TODO("Not yet implemented")
-            |
-            |case class PotentialTodoDto(
-            |  val name: String,
-            |  val done: Boolean
-            |)
-            |
-            |case class Token(
-            |  val iss: String
-            |)
-            |
-            |case class TodoDto(
-            |  val id: String,
-            |  val name: String,
-            |  val done: Boolean
-            |)
-            |
-            |case class Error(
-            |  val code: Long,
-            |  val description: String
-            |)
-            |
-        """.trimMargin()
-
-        compiler { ScalaEmitter() } shouldBeRight scala
     }
 
     @Test
@@ -569,11 +564,14 @@ class CompileFullEndpointTest {
     @Test
     fun python() {
         val python = """
+            |import re
+            |
             |from abc import abstractmethod
             |from dataclasses import dataclass
             |from typing import List, Optional
+            |from enum import Enum
             |
-            |from .shared.Wirespec import T, Wirespec
+            |from ..wirespec import T, Wirespec
             |
             |@dataclass
             |class PotentialTodoDto:
@@ -581,22 +579,28 @@ class CompileFullEndpointTest {
             |  done: 'bool'
             |
             |
+            |import re
+            |
             |from abc import abstractmethod
             |from dataclasses import dataclass
             |from typing import List, Optional
+            |from enum import Enum
             |
-            |from .shared.Wirespec import T, Wirespec
+            |from ..wirespec import T, Wirespec
             |
             |@dataclass
             |class Token:
             |  iss: 'str'
             |
             |
+            |import re
+            |
             |from abc import abstractmethod
             |from dataclasses import dataclass
             |from typing import List, Optional
+            |from enum import Enum
             |
-            |from .shared.Wirespec import T, Wirespec
+            |from ..wirespec import T, Wirespec
             |
             |@dataclass
             |class TodoDto:
@@ -605,11 +609,14 @@ class CompileFullEndpointTest {
             |  done: 'bool'
             |
             |
+            |import re
+            |
             |from abc import abstractmethod
             |from dataclasses import dataclass
             |from typing import List, Optional
+            |from enum import Enum
             |
-            |from .shared.Wirespec import T, Wirespec
+            |from ..wirespec import T, Wirespec
             |
             |@dataclass
             |class Error:
@@ -617,18 +624,21 @@ class CompileFullEndpointTest {
             |  description: 'str'
             |
             |
+            |import re
+            |
             |from abc import abstractmethod
             |from dataclasses import dataclass
             |from typing import List, Optional
+            |from enum import Enum
             |
-            |from .shared.Wirespec import T, Wirespec
+            |from ..wirespec import T, Wirespec
             |
-            |from .Token import Token
-            |from .PotentialTodoDto import PotentialTodoDto
-            |from .TodoDto import TodoDto
-            |from .Error import Error
+            |from ..model.Token import Token
+            |from ..model.PotentialTodoDto import PotentialTodoDto
+            |from ..model.TodoDto import TodoDto
+            |from ..model.Error import Error
             |
-            |class PutTodoEndpoint (Wirespec.Endpoint):
+            |class PutTodo (Wirespec.Endpoint):
             |  @dataclass
             |  class Request(Wirespec.Request[PotentialTodoDto]):
             |    @dataclass
@@ -664,9 +674,9 @@ class CompileFullEndpointTest {
             |    method: Wirespec.Method = Wirespec.Method.PUT
             |
             |    def __init__(self, id: str, done: bool, token: Token, body: PotentialTodoDto):
-            |      self._path = PutTodoEndpoint.Request.Path(id = id)
-            |      self._queries = PutTodoEndpoint.Request.Queries(  done = done)
-            |      self._headers = PutTodoEndpoint.Request.Headers(  token = token)
+            |      self._path = PutTodo.Request.Path(id = id)
+            |      self._queries =PutTodo.Request.Queries(  done = done)
+            |      self._headers = PutTodo.Request.Headers(  token = token)
             |      self._body = body
             |
             |  @dataclass
@@ -687,7 +697,7 @@ class CompileFullEndpointTest {
             |    status: int = 200
             |
             |    def __init__(self, body: TodoDto):
-            |      self._headers = PutTodoEndpoint.Response200.Headers()
+            |      self._headers = PutTodo.Response200.Headers()
             |      self._body = body
             |
             |  @dataclass
@@ -709,7 +719,7 @@ class CompileFullEndpointTest {
             |    status: int = 201
             |
             |    def __init__(self, token: Token, body: TodoDto):
-            |      self._headers = PutTodoEndpoint.Response201.Headers(  token = token)
+            |      self._headers = PutTodo.Response201.Headers(  token = token)
             |      self._body = body
             |
             |  @dataclass
@@ -730,18 +740,18 @@ class CompileFullEndpointTest {
             |    status: int = 500
             |
             |    def __init__(self, body: Error):
-            |      self._headers = PutTodoEndpoint.Response500.Headers()
+            |      self._headers = PutTodo.Response500.Headers()
             |      self._body = body
             |
             |  Response = Response200 | Response201 | Response500
             |
             |  class Handler(Wirespec.Endpoint.Handler):
             |    @abstractmethod
-            |    def PutTodo(self, req: 'PutTodoEndpoint.Request') -> 'PutTodoEndpoint.Response': pass
+            |    def PutTodo(self, req: 'PutTodo.Request') -> 'PutTodo.Response': pass
             |
             |  class Convert(Wirespec.Endpoint.Convert[Request, Response]):
             |    @staticmethod
-            |    def to_raw_request(serialization: Wirespec.Serializer, request: 'PutTodoEndpoint.Request') -> Wirespec.RawRequest:
+            |    def to_raw_request(serialization: Wirespec.Serializer, request: 'PutTodo.Request') -> Wirespec.RawRequest:
             |      return Wirespec.RawRequest(
             |        path = ["todos", str(request.path.id)],
             |        method = request.method.value,
@@ -751,8 +761,8 @@ class CompileFullEndpointTest {
             |      )
             |
             |    @staticmethod
-            |    def from_raw_request(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest) -> 'PutTodoEndpoint.Request':
-            |      return PutTodoEndpoint.Request(
+            |    def from_raw_request(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest) -> 'PutTodo.Request':
+            |      return PutTodo.Request(
             |          id = serialization.deserialize(request.path[1], str),
             |    done = serialization.deserialize_param(request.queries.get("done".lower()), bool),
             |    token = serialization.deserialize_param(request.headers.get("token".lower()), Token),
@@ -760,21 +770,21 @@ class CompileFullEndpointTest {
             |    )
             |
             |    @staticmethod
-            |    def to_raw_response(serialization: Wirespec.Serializer, response: 'PutTodoEndpoint.Response') -> Wirespec.RawResponse:
+            |    def to_raw_response(serialization: Wirespec.Serializer, response: 'PutTodo.Response') -> Wirespec.RawResponse:
             |      match response:
-            |        case PutTodoEndpoint.Response200():
+            |        case PutTodo.Response200():
             |          return Wirespec.RawResponse(
             |            status_code = response.status,
             |            headers = {},
             |            body = serialization.serialize(response.body, TodoDto),
             |          )
-            |        case PutTodoEndpoint.Response201():
+            |        case PutTodo.Response201():
             |          return Wirespec.RawResponse(
             |            status_code = response.status,
             |            headers = {"token": serialization.serialize_param(response.headers.token, Token)},
             |            body = serialization.serialize(response.body, TodoDto),
             |          )
-            |        case PutTodoEndpoint.Response500():
+            |        case PutTodo.Response500():
             |          return Wirespec.RawResponse(
             |            status_code = response.status,
             |            headers = {},
@@ -783,19 +793,19 @@ class CompileFullEndpointTest {
             |        case _:
             |          raise Exception("Cannot match response with status: " + str(response.status))
             |    @staticmethod
-            |    def from_raw_response(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse) -> 'PutTodoEndpoint.Response':
+            |    def from_raw_response(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse) -> 'PutTodo.Response':
             |      match response.status_code:
             |        case 200:
-            |          return PutTodoEndpoint.Response200(
+            |          return PutTodo.Response200(
             |            body = serialization.deserialize(response.body, TodoDto),
             |          )
             |        case 201:
-            |          return PutTodoEndpoint.Response201(
+            |          return PutTodo.Response201(
             |            body = serialization.deserialize(response.body, TodoDto),
             |            token = serialization.deserialize_param(response.headers.get("token".lower()), Token)
             |          )
             |        case 500:
-            |          return PutTodoEndpoint.Response500(
+            |          return PutTodo.Response500(
             |            body = serialization.deserialize(response.body, Error),
             |          )
             |        case _: 
@@ -803,11 +813,10 @@ class CompileFullEndpointTest {
             |
             |
             |
-            |from .PutTodoEndpoint import PutTodoEndpoint
-            |from .PotentialTodoDto import PotentialTodoDto
-            |from .Token import Token
-            |from .TodoDto import TodoDto
-            |from .Error import Error
+            |from . import model
+            |from . import endpoint
+            |from . import wirespec
+            |
         """.trimMargin()
         compiler { PythonEmitter() } shouldBeRight python
     }

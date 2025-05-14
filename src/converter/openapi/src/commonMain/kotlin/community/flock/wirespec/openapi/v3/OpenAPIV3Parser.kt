@@ -75,9 +75,6 @@ object OpenAPIV3Parser {
                 val headers = parameters
                     .filter { it.`in` == ParameterLocation.HEADER }
                     .map { toField(it, className(name, "Parameter", it.name)) }
-                val cookies = parameters
-                    .filter { it.`in` == ParameterLocation.COOKIE }
-                    .map { toField(it, className(name, "Parameter", it.name)) }
                 val requests = operation.requestBody?.let { resolve(it) }
                     ?.let { requestBody ->
                         val isNullable = false
@@ -140,7 +137,6 @@ object OpenAPIV3Parser {
                     path = segments,
                     queries = query,
                     headers = headers,
-                    cookies = cookies,
                     requests = requests,
                     responses = responses,
                 )

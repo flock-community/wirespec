@@ -2,7 +2,6 @@ package community.flock.wirespec.compiler.core
 
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
-import community.flock.wirespec.compiler.core.emit.ScalaEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import io.kotest.assertions.arrow.core.shouldBeRight
@@ -28,18 +27,24 @@ class CompileUnionTest {
     @Test
     fun kotlin() {
         val expected = """
-            |package community.flock.wirespec.generated
+            |package community.flock.wirespec.generated.model
             |
             |sealed interface UserAccount
+            |
+            |package community.flock.wirespec.generated.model
             |
             |data class UserAccountPassword(
             |  val username: String,
             |  val password: String
             |) : UserAccount
             |
+            |package community.flock.wirespec.generated.model
+            |
             |data class UserAccountToken(
             |  val token: String
             |) : UserAccount
+            |
+            |package community.flock.wirespec.generated.model
             |
             |data class User(
             |  val username: String,
@@ -54,11 +59,11 @@ class CompileUnionTest {
     @Test
     fun java() {
         val java = """
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.model;
             |
             |public sealed interface UserAccount permits UserAccountPassword, UserAccountToken {}
             |
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.model;
             |
             |public record UserAccountPassword (
             |  String username,
@@ -66,14 +71,14 @@ class CompileUnionTest {
             |) extends UserAccountimplements UserAccount {
             |};
             |
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.model;
             |
             |public record UserAccountToken (
             |  String token
             |) extends UserAccountimplements UserAccount {
             |};
             |
-            |package community.flock.wirespec.generated;
+            |package community.flock.wirespec.generated.model;
             |
             |public record User (
             |  String username,
@@ -84,32 +89,6 @@ class CompileUnionTest {
         """.trimMargin()
 
         compiler { JavaEmitter() } shouldBeRight java
-    }
-
-    @Test
-    fun scala() {
-        val scala = """
-            |package community.flock.wirespec.generated
-            |
-            |// TODO("Not yet implemented")
-            |
-            |case class UserAccountPassword(
-            |  val username: String,
-            |  val password: String
-            |)
-            |
-            |case class UserAccountToken(
-            |  val token: String
-            |)
-            |
-            |case class User(
-            |  val username: String,
-            |  val account: UserAccount
-            |)
-            |
-        """.trimMargin()
-
-        compiler { ScalaEmitter() } shouldBeRight scala
     }
 
     @Test
