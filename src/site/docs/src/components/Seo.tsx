@@ -1,5 +1,5 @@
-import React from 'react';
-import Head from '@docusaurus/Head';
+import React from "react";
+import Head from "@docusaurus/Head";
 
 type Props = {
   title: string;
@@ -7,7 +7,7 @@ type Props = {
   image?: string;
 };
 
-const Seo = ({ title, description, image = '/img/default.png' }: Props) => (
+const Seo = ({ title, description, image = "/img/default.png" }: Props) => (
   <Head>
     <title>{title}</title>
     <meta name="description" content={description} />

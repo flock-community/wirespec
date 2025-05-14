@@ -3,8 +3,8 @@ title: Jackson
 slug: /integration/jackson
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 If you're using Jackson for serialization/deserialization you can make use of the Wirespec Jackson plugin to ensure
 proper behaviour in all cases. Though not strictly required in all scenarios we recommend that you always use the
@@ -13,20 +13,19 @@ jackson integration to avoid unexpected behavior.
 ## Setup
 
 <Tabs>
-    <TabItem value="maven" label="Maven">
-        ```xml title="pom.xml"
-        <dependency>
-            <groupId>community.flock.wirespec.integration</groupId>
-            <artifactId>jackson</artifactId>
-            <version>0.14.3</version>
-        </dependency>
-        ```
-    </TabItem>
-    <TabItem value="gradle" label="Gradle">
-        ```gradle title="build.gradle.kts"
-        implementation("community.flock.wirespec.integration:jackson:0.14.3")
-        ```
-    </TabItem>
+  <TabItem value="maven" label="Maven">
+    ```xml title="pom.xml"
+    <dependency>
+      <groupId>community.flock.wirespec.integration</groupId>
+      <artifactId>jackson</artifactId>
+      <version>0.14.3</version>
+    </dependency>
+    ```
+  </TabItem>
+  <TabItem value="gradle" label="Gradle">
+    ```gradle title="build.gradle.kts"
+    implementation("community.flock.wirespec.integration:jackson:0.14.3") ```
+  </TabItem>
 </Tabs>
 
 :::info
@@ -35,7 +34,7 @@ Make sure to use the latest version, found here:
 ![Maven Central](https://img.shields.io/maven-central/v/community.flock.wirespec.plugin.maven/wirespec-maven-plugin)
 :::
 
-------------------------------
+---
 
 :::note
 The following sections go into detail about the problems that we must circumvent when using Jackson in combination with
@@ -80,12 +79,12 @@ This is great in terms of type-safety, however, Jackson would serialize to the f
 
 ```json
 {
-    "firstName":{
-      "value": "Foo"
-    },
-    "lastName":{
-      "value": "Bar"
-    }
+  "firstName": {
+    "value": "Foo"
+  },
+  "lastName": {
+    "value": "Bar"
+  }
 }
 ```
 
@@ -95,8 +94,8 @@ definition:
 
 ```json
 {
-    "firstName": "Foo",
-    "lastName": "Bar"
+  "firstName": "Foo",
+  "lastName": "Bar"
 }
 ```
 

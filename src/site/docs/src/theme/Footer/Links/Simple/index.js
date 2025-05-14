@@ -1,13 +1,13 @@
-import React from 'react';
-import clsx from 'clsx';
-import LinkItem from '@theme/Footer/LinkItem';
+import React from "react";
+import clsx from "clsx";
+import LinkItem from "@theme/Footer/LinkItem";
 function Separator() {
   return <span className="footer__link-separator">·</span>;
 }
 function SimpleLinkItem({ item }) {
   return item.html ? (
     <span
-      className={clsx('footer__link-item', item.className)}
+      className={clsx("footer__link-item", item.className)}
       dangerouslySetInnerHTML={{ __html: item.html }}
     />
   ) : (

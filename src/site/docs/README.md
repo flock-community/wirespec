@@ -10,17 +10,17 @@ As the `docs` are part of the wirespec monorepo, they will automatically be buil
 
 To run docusaurus locally:
 
-1. Navigate to the docs folder 
-    ```bash
+1. Navigate to the docs folder
+
+   ```bash
    cd src/site/docs
-    ```
+   ```
 
 2. Install dependencies:
    ```bash
    npm install
    ```
-   
 3. Run docusaurus
-    ```bash
+   ```bash
    npm start
-    ```
+   ```

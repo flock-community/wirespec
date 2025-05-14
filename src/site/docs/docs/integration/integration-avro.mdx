@@ -3,8 +3,8 @@ title: Avro
 slug: /integration/avro
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
 
 This document describes how to integrate Wirespec-generated code with Avro, Apache's serialization system. Wirespec
 simplifies the creation of type-safe and well-defined data structures, and this integration provides a seamless way to
@@ -148,6 +148,7 @@ The integration works for both producers and consumers, and can be configured wi
         }
         ```
     </TabItem>
+
 </Tabs>
 
 :::info
@@ -156,7 +157,7 @@ Make sure to use the latest version, found here:
 ![Maven Central](https://img.shields.io/maven-central/v/community.flock.wirespec.plugin.maven/wirespec-maven-plugin)
 :::
 
-------------------------------
+---
 
 ## Creating and compiling a definition
 
@@ -185,7 +186,6 @@ mvn install
 ./gradlew wirespec-avro-java  # For Java
 ./gradlew wirespec-avro-kotlin  # For Kotlin
 ```
-
 
 ## Output and usage
 
@@ -296,9 +296,11 @@ Let's take a brief look at the code and schemas that get generated as a result:
         }
         ```
     </TabItem>
+
 </Tabs>
 
-------------------------------
+---
+
 <br />
 
 Your application code can now make RPCs or interact with your message broker in a type-safe way. Let's look at some
@@ -348,10 +350,10 @@ examples from both the producer and consumer side.
         }
         ```
     </ TabItem>
+
 </Tabs>
 
 ### As a consumer
-
 
 <Tabs groupId="language">
     <TabItem value="java" label="Java">
@@ -406,6 +408,7 @@ examples from both the producer and consumer side.
         }
         ```
     </ TabItem>
+
 </Tabs>
 
 ## Conclusion

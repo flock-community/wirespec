@@ -1,123 +1,114 @@
 :root {
-    --ifm-heading-color: #fcde00;
+  --ifm-heading-color: #fcde00;
 }
-
 
 /* Control the order of items in the right navbar */
 
 .navbar__items--right {
-    display: flex;
-    align-items: center;
-    margin-left: 32px;
+  display: flex;
+  align-items: center;
+  margin-left: 32px;
 }
-
 
 /* DocSearch should appear first */
 
 .DocSearch-Button {
-    order: 1;
+  order: 1;
 }
-
 
 /* GitHub link should appear after search */
 
 .header-github-link {
-    margin-left: 8px;
-    display: flex !important;
+  margin-left: 8px;
+  display: flex !important;
 }
 
 .navbar__items--right .colorModeToggle_DEke {
-    order: 3;
-    display: none;
+  order: 3;
+  display: none;
 }
-
 
 /* Small devices (phones, less than 768px) */
 
 @media (max-width: 767px) {
-    .navbar__items--right > :last-child {
-        padding-right: 2.5rem;
-    }
+  .navbar__items--right > :last-child {
+    padding-right: 2.5rem;
+  }
 
-    .header-github-link {
-        padding-right: 0px;
-    }
+  .header-github-link {
+    padding-right: 0px;
+  }
 }
-
 
 /* Medium devices (tablets, 768px to 1024px) */
 
 @media (min-width: 768px) and (max-width: 996px) {
-    .navbar__items--right > :last-child {
-        padding-right: 3rem;
-    }
+  .navbar__items--right > :last-child {
+    padding-right: 3rem;
+  }
 }
-
 
 /* Theme toggle should appear last */
 
 .navbar__items--right .colorModeToggle {
-    order: 3;
-    margin-left: 8px;
+  order: 3;
+  margin-left: 8px;
 }
 
 .navbar__items .navbar__brand {
-    margin-right: auto;
+  margin-right: auto;
 }
 
 .navbarSearchContainer_Bca1 .DocSearch.DocSearch-Button {
-    background: transparent;
-    border: 0.5px solid #fff;
-    width: 110px;
-    height: 30px;
+  background: transparent;
+  border: 0.5px solid #fff;
+  width: 110px;
+  height: 30px;
 }
 
 .navbarSearchContainer_Bca1 .DocSearch-Button-Keys {
-    display: none;
+  display: none;
 }
 
 .DocSearch-Button-Container svg {
-    width: 16px;
-    height: 16px;
+  width: 16px;
+  height: 16px;
 }
 
 .DocSearch-Button-Container svg {
-    width: 16px;
-    height: 16px;
+  width: 16px;
+  height: 16px;
 }
 
 @media (min-width: 997px) {
-    .navbar__items--right > div.navbarSearchContainer_Bca1 {
-        padding-left: 0;
-    }
+  .navbar__items--right > div.navbarSearchContainer_Bca1 {
+    padding-left: 0;
+  }
 }
-
 
 /* Breadcrumb container */
 
 .breadcrumbs {
-    margin-top: 3.75rem;
+  margin-top: 3.75rem;
 }
-
 
 /* Breadcrumb link (text like "Intro") */
 
 .breadcrumbs__link {
-    color: white !important;
-    font-size: 1rem;
-    /* You can increase this if needed */
-    font-weight: 500;
+  color: white !important;
+  font-size: 1rem;
+  /* You can increase this if needed */
+  font-weight: 500;
 }
-
 
 /* Breadcrumb arrow (separator icon) */
 
 .breadcrumbs__item svg {
-    width: 1.5rem;
-    height: 1.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .breadcrumbs__item:not(:last-child)::after {
-    color: white !important;
-    opacity: 1;
+  color: white !important;
+  opacity: 1;
 }

@@ -1,5 +1,5 @@
-import {parse, emit, Emitters, Shared} from "@flock/wirespec"
-import CodeBlock from '@theme/CodeBlock';
+import { parse, emit, Emitters, Shared } from "@flock/wirespec";
+import CodeBlock from "@theme/CodeBlock";
 
 // language=ws
 const example = `
@@ -69,37 +69,49 @@ endpoint DeleteTodo DELETE /todos/{id: UUID} # {soft:Boolean} -> {
   Sync Todo
  */
 channel SyncTodo -> Todo
-`
+`;
 
 export const WirespecExample = () => {
-    return <CodeBlock language="wirespec">{example}</CodeBlock>
-
-}
+  return <CodeBlock language="wirespec">{example}</CodeBlock>;
+};
 
 type WirespecProps = {
-    emitter: Emitters,
-}
-export const WirespecShared = ({emitter}:WirespecProps ) => {
-    switch (emitter){
-        case Emitters.KOTLIN : return  <CodeBlock language="kotlin">{Shared.KOTLIN.source}</CodeBlock>
-        case Emitters.JAVA : return  <CodeBlock language="kotlin">{Shared.JAVA.source}</CodeBlock>
-        case Emitters.TYPESCRIPT : return  <CodeBlock language="kotlin">{Shared.TYPESCRIPT.source}</CodeBlock>
-    }
-}
+  emitter: Emitters;
+};
+export const WirespecShared = ({ emitter }: WirespecProps) => {
+  switch (emitter) {
+    case Emitters.KOTLIN:
+      return <CodeBlock language="kotlin">{Shared.KOTLIN.source}</CodeBlock>;
+    case Emitters.JAVA:
+      return <CodeBlock language="kotlin">{Shared.JAVA.source}</CodeBlock>;
+    case Emitters.TYPESCRIPT:
+      return (
+        <CodeBlock language="kotlin">{Shared.TYPESCRIPT.source}</CodeBlock>
+      );
+  }
+};
 
-export const WirespecCompile = ({emitter}:WirespecProps) => {
-    const ast = parse(example)
+export const WirespecCompile = ({ emitter }: WirespecProps) => {
+  const ast = parse(example);
 
-    if(ast.result){
-        const source = emit(ast.result, emitter, "")
-        return source.map(it => {
-            if(emitter === Emitters.OPENAPI_V2){
-                const json = JSON.parse(it.result)
-                return <CodeBlock title={`${it.typeName}.json`} language="json">{JSON.stringify(json, null, 4)}</CodeBlock>
-            }
-            return <CodeBlock title={`${it.typeName}.java`} language="kotlin">{it.result}</CodeBlock>
-        })
-    }else{
-        return <pre>{ast.errors.join("\n")}</pre>
-    }
-}
+  if (ast.result) {
+    const source = emit(ast.result, emitter, "");
+    return source.map((it) => {
+      if (emitter === Emitters.OPENAPI_V2) {
+        const json = JSON.parse(it.result);
+        return (
+          <CodeBlock title={`${it.typeName}.json`} language="json">
+            {JSON.stringify(json, null, 4)}
+          </CodeBlock>
+        );
+      }
+      return (
+        <CodeBlock title={`${it.typeName}.java`} language="kotlin">
+          {it.result}
+        </CodeBlock>
+      );
+    });
+  } else {
+    return <pre>{ast.errors.join("\n")}</pre>;
+  }
+};

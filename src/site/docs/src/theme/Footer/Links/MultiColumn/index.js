@@ -1,9 +1,12 @@
-import React from 'react';
-import clsx from 'clsx';
-import LinkItem from '@theme/Footer/LinkItem';
+import React from "react";
+import clsx from "clsx";
+import LinkItem from "@theme/Footer/LinkItem";
 function ColumnLinkItem({ item }) {
   return item.html ? (
-    <li className={clsx('footer__item', item.className)} dangerouslySetInnerHTML={{ __html: item.html }} />
+    <li
+      className={clsx("footer__item", item.className)}
+      dangerouslySetInnerHTML={{ __html: item.html }}
+    />
   ) : (
     <li key={item.href ?? item.to} className="footer__item">
       <LinkItem item={item} />
@@ -12,7 +15,7 @@ function ColumnLinkItem({ item }) {
 }
 function Column({ column }) {
   return (
-    <div className={clsx('col footer__col', column.className)}>
+    <div className={clsx("col footer__col", column.className)}>
       <div className="footer__title">{column.title}</div>
       <ul className="footer__items clean-list">
         {column.items.map((item, i) => (

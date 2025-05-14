@@ -1,63 +1,62 @@
 .blogMain {
-    padding: 210px 0px;
-    background-image: url('/img/blog-bg.png');
-    background-repeat: no-repeat;
-    background-size: 100%;
-    background-position: center top;
-    @media(max-width: 1440px) {
-        padding: 150px 0px 100px;
-    }
-    @media(max-width: 1024px) {
-        padding: 120px 0px 80px;
-    }
-    @media(max-width: 767px) {
-        padding: 100px 0px 50px;
-    }
+  padding: 210px 0px;
+  background-image: url("/img/blog-bg.png");
+  background-repeat: no-repeat;
+  background-size: 100%;
+  background-position: center top;
+  @media (max-width: 1440px) {
+    padding: 150px 0px 100px;
+  }
+  @media (max-width: 1024px) {
+    padding: 120px 0px 80px;
+  }
+  @media (max-width: 767px) {
+    padding: 100px 0px 50px;
+  }
 }
 
 .heading {
-    font-family: 'Funnel Display', sans-serif;
-    font-weight: 500;
-    font-size: 74px;
-    line-height: 104%;
-    letter-spacing: -0.03em;
-    text-align: center;
-    color: white;
-    margin-bottom: 86px;
-    @media(max-width: 1440px) {
-        font-size: 62px;
-        margin-bottom: 50px;
-    }
-    @media(max-width: 1024px) {
-        font-size: 52px;
-        margin-bottom: 40px;
-    }
-    @media(max-width: 767px) {
-        font-size: 42px;
-        margin-bottom: 35px;
-    }
+  font-family: "Funnel Display", sans-serif;
+  font-weight: 500;
+  font-size: 74px;
+  line-height: 104%;
+  letter-spacing: -0.03em;
+  text-align: center;
+  color: white;
+  margin-bottom: 86px;
+  @media (max-width: 1440px) {
+    font-size: 62px;
+    margin-bottom: 50px;
+  }
+  @media (max-width: 1024px) {
+    font-size: 52px;
+    margin-bottom: 40px;
+  }
+  @media (max-width: 767px) {
+    font-size: 42px;
+    margin-bottom: 35px;
+  }
 }
 
 .grid {
-    display: grid;
-    gap: 2rem;
-    grid-template-columns: repeat(1, 1fr);
-    justify-content: center;
-    align-items: stretch;
-    max-width: 1280px;
-    width: 96%;
-    margin: 0 auto;
-    @media(width: 767px) {
-        gap: 1rem;
-    }
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: repeat(1, 1fr);
+  justify-content: center;
+  align-items: stretch;
+  max-width: 1280px;
+  width: 96%;
+  margin: 0 auto;
+  @media (width: 767px) {
+    gap: 1rem;
+  }
 }
-
 
 /* For medium and up (tablet & desktop) */
 
 @media (min-width: 768px) {
-    .grid {
-        grid-template-columns: repeat(2, 1fr);
-        /* 2 cards per row */
-    }
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    /* 2 cards per row */
+  }
 }

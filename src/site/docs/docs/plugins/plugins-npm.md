@@ -12,9 +12,9 @@ The Wirespec NPM plugin allows you to seamlessly integrate Wirespec into your Ja
 
 ## Features
 
-*   **CLI Tool:** Compile Wirespec files directly from your command line.
-*   **ES Module Bundle:** Use Wirespec programmatically in your JavaScript/TypeScript projects.
-*   **TypeScript Support:** Generate TypeScript definitions from your Wirespec files.
+- **CLI Tool:** Compile Wirespec files directly from your command line.
+- **ES Module Bundle:** Use Wirespec programmatically in your JavaScript/TypeScript projects.
+- **TypeScript Support:** Generate TypeScript definitions from your Wirespec files.
 
 ## Installation
 
@@ -32,7 +32,7 @@ npm install --save-dev @flock/wirespec
 
 ## Use
 
-You can use the wirespec cli in your npm project. For all the cli options see [CLI](/docs/plugins/cli). 
+You can use the wirespec cli in your npm project. For all the cli options see [CLI](/docs/plugins/cli).
 
 ```json
 {
@@ -49,10 +49,10 @@ You can use the wirespec cli in your npm project. For all the cli options see [C
 Wirespec can be used programaticly to build your custom integrations. Here is a simple example of how to emit Typescript code.
 
 ```typescript
-import fs from 'node:fs/promises';
-import { parse, emit, Emitters } from 'wirespec'
+import fs from "node:fs/promises";
+import { parse, emit, Emitters } from "wirespec";
 
-const src = await fs.readFile('/todo.ws')
-const ast = parse(src)
-const ts = emit(ast.result, Emitters.TYPESCRIPT, '')
+const src = await fs.readFile("/todo.ws");
+const ast = parse(src);
+const ts = emit(ast.result, Emitters.TYPESCRIPT, "");
 ```

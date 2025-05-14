@@ -118,7 +118,7 @@ function RouteComponent() {
     } catch (error) {
       if (error instanceof Error) {
         setWirespecErrors([
-          {value: error.message, line: 1, position: 1, length: 1 },
+          { value: error.message, line: 1, position: 1, length: 1 },
         ]);
       }
     }

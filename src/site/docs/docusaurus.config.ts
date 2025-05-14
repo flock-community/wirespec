@@ -209,7 +209,7 @@ const config: Config = {
       };
       return fileContent.replaceAll(
         "{{WIRESPEC_VERSION}}",
-        variables.WIRESPEC_VERSION
+        variables.WIRESPEC_VERSION,
       );
     },
   },
