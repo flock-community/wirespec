@@ -171,7 +171,7 @@ class CompileMinimalEndpointTest {
             |        java.util.List.of("todos"),
             |        java.util.Collections.emptyMap(),
             |        java.util.Collections.emptyMap(),
-            |        serialization.serialize(request.getBody(), Wirespec.getType(Void.class, false))
+            |        serialization.serialize(request.getBody(), null)
             |      );
             |    }
             |
@@ -180,14 +180,14 @@ class CompileMinimalEndpointTest {
             |    }
             |
             |    static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
-            |      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, true))); }
+            |      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, java.util.List.class))); }
             |      else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
             |    }
             |
             |    static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
             |      switch (response.statusCode()) {
             |        case 200: return new Response200(
-            |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, true))
+            |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, java.util.List.class))
             |      );
             |        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
             |      }

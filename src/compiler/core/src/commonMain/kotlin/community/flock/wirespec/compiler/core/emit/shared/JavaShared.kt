@@ -51,15 +51,15 @@ data object JavaShared : Shared {
         |${Spacer}interface Deserializer<RAW> extends ParamDeserializer { <T> T deserialize(RAW raw, Type type); }
         |${Spacer}record RawRequest(String method, List<String> path, Map<String, List<String>> queries, Map<String, List<String>> headers, String body) {} 
         |${Spacer}record RawResponse(int statusCode, Map<String, List<String>> headers, String body) {}
-        |${Spacer}static Type getType(final Class<?> type, final boolean isIterable) {
-        |${Spacer(2)}if(isIterable) {
+        |${Spacer}static Type getType(final Class<?> actualTypeArguments, final Class<?> rawType) {
+        |${Spacer(2)}if(rawType != null) {
         |${Spacer(3)}return new ParameterizedType() {
-        |${Spacer(4)}public Type getRawType() { return java.util.List.class; }
-        |${Spacer(4)}public Type[] getActualTypeArguments() { return new Class<?>[]{type}; }
+        |${Spacer(4)}public Type getRawType() { return rawType; }
+        |${Spacer(4)}public Type[] getActualTypeArguments() { return new Class<?>[]{actualTypeArguments}; }
         |${Spacer(4)}public Type getOwnerType() { return null; }
         |${Spacer(3)}};
         |${Spacer(2)}}
-        |${Spacer(2)}else { return type; }
+        |${Spacer(2)}else { return actualTypeArguments; }
         |$Spacer}
         |}
         |

@@ -63,21 +63,21 @@ public interface GetPetById extends Wirespec.Endpoint {
     static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method.name(),
-        java.util.List.of("pet", serialization.serialize(request.path.petId, Wirespec.getType(Long.class, false))),
+        java.util.List.of("pet", serialization.serialize(request.path.petId, Wirespec.getType(Long.class, null))),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
-        serialization.serialize(request.getBody(), Wirespec.getType(Void.class, false))
+        serialization.serialize(request.getBody(), null)
       );
     }
 
     static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
       return new Request(
-        serialization.<Long>deserialize(request.path().get(1), Wirespec.getType(Long.class, false))
+        serialization.deserialize(request.path().get(1), Wirespec.getType(Long.class, null))
       );
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(Pet.class, false))); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(Pet.class, null))); }
       if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), null); }
       if (response instanceof Response404 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), null); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
@@ -86,7 +86,7 @@ public interface GetPetById extends Wirespec.Endpoint {
     static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
       switch (response.statusCode()) {
         case 200: return new Response200(
-        serialization.deserialize(response.body(), Wirespec.getType(Pet.class, false))
+        serialization.deserialize(response.body(), Wirespec.getType(Pet.class, null))
       );
         case 400: return new Response400();
         case 404: return new Response404();

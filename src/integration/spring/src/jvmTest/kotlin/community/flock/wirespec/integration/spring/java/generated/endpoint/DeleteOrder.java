@@ -55,16 +55,16 @@ public interface DeleteOrder extends Wirespec.Endpoint {
     static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method.name(),
-        java.util.List.of("store", "order", serialization.serialize(request.path.orderId, Wirespec.getType(Long.class, false))),
+        java.util.List.of("store", "order", serialization.serialize(request.path.orderId, Wirespec.getType(Long.class, null))),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
-        serialization.serialize(request.getBody(), Wirespec.getType(Void.class, false))
+        serialization.serialize(request.getBody(), null)
       );
     }
 
     static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
       return new Request(
-        serialization.<Long>deserialize(request.path().get(2), Wirespec.getType(Long.class, false))
+        serialization.deserialize(request.path().get(2), Wirespec.getType(Long.class, null))
       );
     }
 
