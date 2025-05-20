@@ -112,7 +112,7 @@ abstract class BaseMojo : AbstractMojo() {
                 Language.Java -> JavaEmitter(PackageName(packageName), EmitShared(shared))
                 Language.Kotlin -> KotlinEmitter(PackageName(packageName), EmitShared(shared))
                 Language.Python -> PythonEmitter(PackageName(packageName), EmitShared(shared))
-                Language.TypeScript -> TypeScriptEmitter()
+                Language.TypeScript -> TypeScriptEmitter(EmitShared(shared))
                 Language.Wirespec -> WirespecEmitter()
                 Language.OpenAPIV2 -> OpenAPIV2Emitter
                 Language.OpenAPIV3 -> OpenAPIV3Emitter

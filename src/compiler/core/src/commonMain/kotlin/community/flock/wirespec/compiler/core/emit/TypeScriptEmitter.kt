@@ -1,16 +1,18 @@
 package community.flock.wirespec.compiler.core.emit
 
 import arrow.core.NonEmptyList
-import arrow.core.nonEmptyListOf
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.common.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.EmitShared
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
+import community.flock.wirespec.compiler.core.emit.common.namespace
+import community.flock.wirespec.compiler.core.emit.common.plus
 import community.flock.wirespec.compiler.core.emit.shared.TypeScriptShared
 import community.flock.wirespec.compiler.core.parse.Channel
+import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
@@ -22,7 +24,7 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 
-open class TypeScriptEmitter(val emitShared: EmitShared = EmitShared()) : Emitter() {
+open class TypeScriptEmitter(val emitShared: EmitShared) : Emitter() {
 
     override val extension = FileExtension.TypeScript
 
@@ -30,26 +32,34 @@ open class TypeScriptEmitter(val emitShared: EmitShared = EmitShared()) : Emitte
 
     override val singleLineComment = "//"
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
-        val emitted = nonEmptyListOf(
-            Emitted(
-                file = module.uri.split("/").last().firstToUpper(),
-                result = """
-                        |${if (module.hasEndpoints()) TypeScriptShared.source else ""}
-                        |${super.emit(module, logger).map(Emitted::result).joinToString("\n")}
-                """.trimMargin().trimStart()
-            )
-        )
-
-        return if (emitShared.value) emitted + Emitted(PackageName(DEFAULT_GENERATED_PACKAGE_STRING).toDir() + "Wirespec", shared.source) else emitted
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = super.emit(module, logger).let {
+        val index = module.statements
+            .groupBy { def -> def.namespace() }
+            .map { (ns, defs) -> Emitted("${ns}/index", defs.joinToString ("\n"){ "export {${it.identifier.value}} from './${it.identifier.value}'"}) }
+        if (emitShared.value) it + index + Emitted("Wirespec", shared.source) else it + index
     }
 
+    override fun emit(definition: Definition, module: Module, logger: Logger): Emitted =
+        super.emit(definition, module, logger).let {
+            val subPackageName = PackageName("") + definition
+            Emitted(
+                file = subPackageName.toDir() + it.file.sanitizeSymbol(),
+                result = """
+                    |${TypeScriptShared.source}
+                    |
+                    |${it.result}
+                """.trimMargin()
+            )
+        }
+
     override fun emit(type: Type, module: Module) =
-        """export type ${type.identifier.sanitizeSymbol()} = {
+        """
+            ||${type.importReferences().map { "import {${it.value}} from '../model/${it.value}'" }.joinToString("\n") { it.trimStart() }}
+            |export type ${type.identifier.sanitizeSymbol()} = {
             |${type.shape.emit()}
             |}
             |
-            |""".trimMargin()
+        """.trimMargin()
 
     override fun emit(enum: Enum, module: Module) =
         "export type ${enum.identifier.sanitizeSymbol()} = ${enum.entries.joinToString(" | ") { """"$it"""" }}\n"
@@ -88,6 +98,7 @@ open class TypeScriptEmitter(val emitShared: EmitShared = EmitShared()) : Emitte
 
     override fun emit(endpoint: Endpoint) =
         """
+          |${endpoint.importReferences().map { "import {${it.value}} from '../model/${it.value}'" }.joinToString("\n") { it.trimStart() }}
           |export namespace ${endpoint.identifier.sanitizeSymbol()} {
           |${endpoint.pathParams.emitType("Path") { it.emit() }}
           |${endpoint.queries.emitType("Queries") { it.emit() }}
