@@ -12,10 +12,10 @@ class CompileFullEndpointTest {
 
     private val compiler = """
         |endpoint PutTodo PUT PotentialTodoDto /todos/{id: String}
-        |    ?{done: Boolean}
-        |    #{token: Token} -> {
+        |    ?{done: Boolean, name: String?}
+        |    #{token: Token, refreshToken: Token?} -> {
         |    200 -> TodoDto
-        |    201 -> TodoDto #{token: Token}
+        |    201 -> TodoDto #{token: Token, refreshToken: Token?}
         |    500 -> Error
         |}
         |type PotentialTodoDto {
@@ -45,6 +45,7 @@ class CompileFullEndpointTest {
             |import kotlin.reflect.typeOf
             |
             |import community.flock.wirespec.generated.model.Token
+            |import community.flock.wirespec.generated.model.Token
             |import community.flock.wirespec.generated.model.PotentialTodoDto
             |import community.flock.wirespec.generated.model.TodoDto
             |import community.flock.wirespec.generated.model.Error
@@ -56,38 +57,40 @@ class CompileFullEndpointTest {
             |
             |  data class Queries(
             |    val done: Boolean,
+            |    val name: String?,
             |  ) : Wirespec.Queries
             |
             |  data class Headers(
             |    val token: Token,
+            |    val refreshToken: Token?,
             |  ) : Wirespec.Request.Headers
             |
             |  class Request(
             |    id: String,
-            |    done: Boolean,
-            |    token: Token,
+            |    done: Boolean,     name: String?,
+            |    token: Token,     refreshToken: Token?,
             |    override val body: PotentialTodoDto,
             |  ) : Wirespec.Request<PotentialTodoDto> {
             |    override val path = Path(id)
             |    override val method = Wirespec.Method.PUT
-            |    override val queries = Queries(done)
-            |    override val headers = Headers(token)
+            |    override val queries = Queries(done, name)
+            |    override val headers = Headers(token, refreshToken)
             |  }
             |
             |  fun toRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
             |    Wirespec.RawRequest(
             |      path = listOf("todos", request.path.id.let{serialization.serialize(it, typeOf<String>())}),
             |      method = request.method.name,
-            |      queries = (mapOf("done" to (request.queries.done?.let{ serialization.serializeParam(it, typeOf<Boolean>()) } ?: emptyList()))),
-            |      headers = (mapOf("token" to (request.headers.token?.let{ serialization.serializeParam(it, typeOf<Token>()) } ?: emptyList()))),
+            |      queries = (mapOf("done" to (request.queries.done?.let{ serialization.serializeParam(it, typeOf<Boolean>()) } ?: emptyList()))) + (mapOf("name" to (request.queries.name?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
+            |      headers = (mapOf("token" to (request.headers.token?.let{ serialization.serializeParam(it, typeOf<Token>()) } ?: emptyList()))) + (mapOf("refreshToken" to (request.headers.refreshToken?.let{ serialization.serializeParam(it, typeOf<Token?>()) } ?: emptyList()))),
             |      body = serialization.serialize(request.body, typeOf<PotentialTodoDto>()),
             |    )
             |
             |  fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
             |    Request(
             |      id = serialization.deserialize(request.path[1], typeOf<String>()),
-            |      done = serialization.deserializeParam(requireNotNull(request.queries["done"]) { "done is null" }, typeOf<Boolean>()),
-            |      token = serialization.deserializeParam(requireNotNull(request.headers["token"]) { "token is null" }, typeOf<Token>()),
+            |      done = serialization.deserializeParam(requireNotNull(request.queries["done"]) { "done is null" }, typeOf<Boolean>()),       name = request.queries["name"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) },
+            |      token = serialization.deserializeParam(requireNotNull(request.headers["token"]) { "token is null" }, typeOf<Token>()),       refreshToken = request.headers["refreshToken"]?.let{ serialization.deserializeParam(it, typeOf<Token?>()) },
             |      body = serialization.deserialize(requireNotNull(request.body) { "body is null" }, typeOf<PotentialTodoDto>()),
             |    )
             |
@@ -105,11 +108,12 @@ class CompileFullEndpointTest {
             |    data object ResponseHeaders : Wirespec.Response.Headers
             |  }
             |
-            |  data class Response201(override val body: TodoDto, val token: Token) : Response2XX<TodoDto>, ResponseTodoDto {
+            |  data class Response201(override val body: TodoDto, val token: Token, val refreshToken: Token?) : Response2XX<TodoDto>, ResponseTodoDto {
             |    override val status = 201
-            |    override val headers = ResponseHeaders(token)
+            |    override val headers = ResponseHeaders(token, refreshToken)
             |    data class ResponseHeaders(
             |      val token: Token,
+            |      val refreshToken: Token?,
             |    ) : Wirespec.Response.Headers
             |  }
             |
@@ -128,7 +132,7 @@ class CompileFullEndpointTest {
             |      )
             |      is Response201 -> Wirespec.RawResponse(
             |        statusCode = response.status,
-            |        headers = (mapOf("token" to (response.headers.token?.let{ serialization.serializeParam(it, typeOf<Token>()) } ?: emptyList()))),
+            |        headers = (mapOf("token" to (response.headers.token?.let{ serialization.serializeParam(it, typeOf<Token>()) } ?: emptyList()))) + (mapOf("refreshToken" to (response.headers.refreshToken?.let{ serialization.serializeParam(it, typeOf<Token?>()) } ?: emptyList()))),
             |        body = serialization.serialize(response.body, typeOf<TodoDto>()),
             |      )
             |      is Response500 -> Wirespec.RawResponse(
@@ -145,7 +149,8 @@ class CompileFullEndpointTest {
             |      )
             |      201 -> Response201(
             |        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<TodoDto>()),
-            |        token = serialization.deserializeParam(requireNotNull(response.headers["token"]) { "token is null" }, typeOf<Token>())
+            |        token = serialization.deserializeParam(requireNotNull(response.headers["token"]) { "token is null" }, typeOf<Token>()),
+            |        refreshToken = response.headers["refreshToken"]?.let{ serialization.deserializeParam(it, typeOf<Token?>()) }
             |      )
             |      500 -> Response500(
             |        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<Error>()),
@@ -209,7 +214,7 @@ class CompileFullEndpointTest {
             |  val code: Long,
             |  val description: String
             |)
-            |
+|
         """.trimMargin()
 
         compiler { KotlinEmitter() } shouldBeRight kotlin
@@ -223,6 +228,7 @@ class CompileFullEndpointTest {
             |import community.flock.wirespec.java.Wirespec;
             |
             |import community.flock.wirespec.generated.model.Token;
+            |import community.flock.wirespec.generated.model.Token;
             |import community.flock.wirespec.generated.model.PotentialTodoDto;
             |import community.flock.wirespec.generated.model.TodoDto;
             |import community.flock.wirespec.generated.model.Error;
@@ -233,11 +239,13 @@ class CompileFullEndpointTest {
             |  ) implements Wirespec.Path {}
             |
             |  public record Queries(
-            |    Boolean done
+            |    Boolean done,
+            |    java.util.Optional<String> name
             |  ) implements Wirespec.Queries {}
             |
             |  public record RequestHeaders(
-            |    Token token
+            |    Token token,
+            |    java.util.Optional<Token> refreshToken
             |  ) implements Wirespec.Request.Headers {}
             |
             |  class Request implements Wirespec.Request<PotentialTodoDto> {
@@ -246,11 +254,11 @@ class CompileFullEndpointTest {
             |    private final Queries queries;
             |    private final RequestHeaders headers;
             |    private final PotentialTodoDto body;
-            |    public Request(String id, Boolean done, Token token, PotentialTodoDto body) {
+            |    public Request(String id, Boolean done, java.util.Optional<String> name, Token token, java.util.Optional<Token> refreshToken, PotentialTodoDto body) {
             |      this.path = new Path(id);
             |      this.method = Wirespec.Method.PUT;
-            |      this.queries = new Queries(done);
-            |      this.headers = new RequestHeaders(token);
+            |      this.queries = new Queries(done, name);
+            |      this.headers = new RequestHeaders(token, refreshToken);
             |      this.body = body;
             |    }
             |    @Override public Path getPath() { return path; }
@@ -272,12 +280,13 @@ class CompileFullEndpointTest {
             |    @Override public TodoDto getBody() { return body; }
             |    class Headers implements Wirespec.Response.Headers {}
             |  }
-            |  record Response201(Token token, TodoDto body) implements Response2XX<TodoDto>, ResponseTodoDto {
+            |  record Response201(Token token, java.util.Optional<Token> refreshToken, TodoDto body) implements Response2XX<TodoDto>, ResponseTodoDto {
             |    @Override public int getStatus() { return 201; }
-            |    @Override public Headers getHeaders() { return new Headers(token); }
+            |    @Override public Headers getHeaders() { return new Headers(token, refreshToken); }
             |    @Override public TodoDto getBody() { return body; }
             |    public record Headers(
-            |    Token token
+            |    Token token,
+            |    java.util.Optional<Token> refreshToken
             |  ) implements Wirespec.Response.Headers {}
             |  }
             |  record Response500(Error body) implements Response5XX<Error>, ResponseError {
@@ -293,8 +302,8 @@ class CompileFullEndpointTest {
             |      return new Wirespec.RawRequest(
             |        request.method.name(),
             |        java.util.List.of("todos", serialization.serialize(request.path.id, Wirespec.getType(String.class, null))),
-            |        java.util.Map.ofEntries(java.util.Map.entry("done", serialization.serializeParam(request.queries.done, Wirespec.getType(Boolean.class, null)))),
-            |        java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serializeParam(request.headers.token, Wirespec.getType(Token.class, null)))),
+            |        java.util.Map.ofEntries(java.util.Map.entry("done", serialization.serializeParam(request.queries.done, Wirespec.getType(Boolean.class, null))), java.util.Map.entry("name", serialization.serializeParam(request.queries.name, Wirespec.getType(String.class, java.util.Optional.class)))),
+            |        java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serializeParam(request.headers.token, Wirespec.getType(Token.class, null))), java.util.Map.entry("refreshToken", serialization.serializeParam(request.headers.refreshToken, Wirespec.getType(Token.class, java.util.Optional.class)))),
             |        serialization.serialize(request.getBody(), Wirespec.getType(PotentialTodoDto.class, null))
             |      );
             |    }
@@ -303,14 +312,16 @@ class CompileFullEndpointTest {
             |      return new Request(
             |        serialization.deserialize(request.path().get(1), Wirespec.getType(String.class, null)),
             |        serialization.deserializeParam(request.queries().getOrDefault("done", java.util.Collections.emptyList()), Wirespec.getType(Boolean.class, null)),
+            |        serialization.deserializeParam(request.queries().getOrDefault("name", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
             |        serialization.deserializeParam(request.headers().getOrDefault("token", java.util.Collections.emptyList()), Wirespec.getType(Token.class, null)),
+            |        serialization.deserializeParam(request.headers().getOrDefault("refreshToken", java.util.Collections.emptyList()), Wirespec.getType(Token.class, java.util.Optional.class)),
             |        serialization.deserialize(request.body(), Wirespec.getType(PotentialTodoDto.class, null))
             |      );
             |    }
             |
             |    static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
             |      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, null))); }
-            |      if (response instanceof Response201 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serializeParam(r.getHeaders().token(), Wirespec.getType(Token.class, null)))), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, null))); }
+            |      if (response instanceof Response201 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serializeParam(r.getHeaders().token(), Wirespec.getType(Token.class, null))), java.util.Map.entry("refreshToken", serialization.serializeParam(r.getHeaders().refreshToken(), Wirespec.getType(Token.class, java.util.Optional.class)))), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, null))); }
             |      if (response instanceof Response500 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(Error.class, null))); }
             |      else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
             |    }
@@ -322,6 +333,7 @@ class CompileFullEndpointTest {
             |      );
             |        case 201: return new Response201(
             |        serialization.deserializeParam(response.headers().getOrDefault("token", java.util.Collections.emptyList()), Wirespec.getType(Token.class, null)),
+            |        serialization.deserializeParam(response.headers().getOrDefault("refreshToken", java.util.Collections.emptyList()), Wirespec.getType(Token.class, java.util.Optional.class)),
             |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, null))
             |      );
             |        case 500: return new Response500(
@@ -416,9 +428,11 @@ class CompileFullEndpointTest {
             |  }
             |  type Queries = {
             |    "done": boolean,
+            |    "name": string | undefined,
             |  }
             |  type Headers = {
             |    "token": Token,
+            |    "refreshToken": Token | undefined,
             |  }
             |  export type Request = { 
             |    path: Path
@@ -434,7 +448,7 @@ class CompileFullEndpointTest {
             |  }
             |  export type Response201 = {
             |    status: 201
-            |    headers: {"token": Token}
+            |    headers: {"token": Token, "refreshToken": Token | undefined}
             |    body: TodoDto
             |  }
             |  export type Response500 = {
@@ -443,11 +457,11 @@ class CompileFullEndpointTest {
             |    body: Error
             |  }
             |  export type Response = Response200 | Response201 | Response500
-            |  export const request = (props: {"id": string, "done": boolean, "token": Token, "body": PotentialTodoDto}): Request => ({
+            |  export const request = (props: {"id": string, "done": boolean, "name": string | undefined, "token": Token, "refreshToken": Token | undefined, "body": PotentialTodoDto}): Request => ({
             |    path: {"id": props["id"]},
             |    method: "PUT",
-            |    queries: {"done": props["done"]},
-            |    headers: {"token": props["token"]},
+            |    queries: {"done": props["done"], "name": props["name"]},
+            |    headers: {"token": props["token"], "refreshToken": props["refreshToken"]},
             |    body: props.body,
             |  })
             |  export const response200 = (props: {"body": TodoDto}): Response200 => ({
@@ -455,9 +469,9 @@ class CompileFullEndpointTest {
             |    headers: {},
             |    body: props.body,
             |  })
-            |  export const response201 = (props: {"token": Token, "body": TodoDto}): Response201 => ({
+            |  export const response201 = (props: {"token": Token, "refreshToken": Token | undefined, "body": TodoDto}): Response201 => ({
             |    status: 201,
-            |    headers: {"token": props["token"]},
+            |    headers: {"token": props["token"], "refreshToken": props["refreshToken"]},
             |    body: props.body,
             |  })
             |  export const response500 = (props: {"body": Error}): Response500 => ({
@@ -472,8 +486,8 @@ class CompileFullEndpointTest {
             |    to: (it) => ({
             |      method: "PUT",
             |      path: ["todos", serialization.serialize(it.path["id"])],
-            |      queries: {"done": serialization.serialize(it.queries["done"])},
-            |      headers: {"token": serialization.serialize(it.headers["token"])},
+            |      queries: {"done": serialization.serialize(it.queries["done"]), "name": serialization.serialize(it.queries["name"])},
+            |      headers: {"token": serialization.serialize(it.headers["token"]), "refreshToken": serialization.serialize(it.headers["refreshToken"])},
             |      body: serialization.serialize(it.body)
             |    }),
             |    from: (it) => {
@@ -487,7 +501,7 @@ class CompileFullEndpointTest {
             |        case 201:
             |          return {
             |            status: 201,
-            |            headers: {"token": serialization.deserialize(it.headers["token"])},
+            |            headers: {"token": serialization.deserialize(it.headers["token"]), "refreshToken": serialization.deserialize(it.headers["refreshToken"])},
             |            body: serialization.deserialize<TodoDto>(it.body)
             |          };
             |        case 500:
@@ -509,10 +523,10 @@ class CompileFullEndpointTest {
             |          "id": serialization.deserialize(it.path[1])
             |        },
             |        queries: {
-            |          "done": serialization.deserialize(it.queries["done"])
+            |          "done": serialization.deserialize(it.queries["done"]),      "name": serialization.deserialize(it.queries["name"])
             |        },
             |        headers: {
-            |          "token": serialization.deserialize(it.headers["token"])
+            |          "token": serialization.deserialize(it.headers["token"]),      "refreshToken": serialization.deserialize(it.headers["refreshToken"])
             |        },
             |        body: serialization.deserialize(it.body)
             |      }
@@ -565,266 +579,279 @@ class CompileFullEndpointTest {
     fun python() {
         val python = """
             |import re
-            |
-            |from abc import abstractmethod
-            |from dataclasses import dataclass
-            |from typing import List, Optional
-            |from enum import Enum
-            |
-            |from ..wirespec import T, Wirespec
-            |
-            |@dataclass
-            |class PotentialTodoDto:
-            |  name: 'str'
-            |  done: 'bool'
-            |
-            |
-            |import re
-            |
-            |from abc import abstractmethod
-            |from dataclasses import dataclass
-            |from typing import List, Optional
-            |from enum import Enum
-            |
-            |from ..wirespec import T, Wirespec
-            |
-            |@dataclass
-            |class Token:
-            |  iss: 'str'
-            |
-            |
-            |import re
-            |
-            |from abc import abstractmethod
-            |from dataclasses import dataclass
-            |from typing import List, Optional
-            |from enum import Enum
-            |
-            |from ..wirespec import T, Wirespec
-            |
-            |@dataclass
-            |class TodoDto:
-            |  id: 'str'
-            |  name: 'str'
-            |  done: 'bool'
-            |
-            |
-            |import re
-            |
-            |from abc import abstractmethod
-            |from dataclasses import dataclass
-            |from typing import List, Optional
-            |from enum import Enum
-            |
-            |from ..wirespec import T, Wirespec
-            |
-            |@dataclass
-            |class Error:
-            |  code: 'int'
-            |  description: 'str'
-            |
-            |
-            |import re
-            |
-            |from abc import abstractmethod
-            |from dataclasses import dataclass
-            |from typing import List, Optional
-            |from enum import Enum
-            |
-            |from ..wirespec import T, Wirespec
-            |
-            |from ..model.Token import Token
-            |from ..model.PotentialTodoDto import PotentialTodoDto
-            |from ..model.TodoDto import TodoDto
-            |from ..model.Error import Error
-            |
-            |class PutTodo (Wirespec.Endpoint):
-            |  @dataclass
-            |  class Request(Wirespec.Request[PotentialTodoDto]):
-            |    @dataclass
-            |    class Path (Wirespec.Request.Path):
-            |        id: str 
-            |    @dataclass
-            |    class Queries (Wirespec.Request.Queries):
-            |        done: 'bool'
-            |    @dataclass
-            |    class Headers (Wirespec.Request.Headers):
-            |        token: 'Token'
-            | 
-            |    @property
-            |    def body(self) -> PotentialTodoDto:
-            |      return self._body
-            |
-            |    @property
-            |    def path(self) -> Path:
-            |      return self._path
-            |
-            |    @property
-            |    def queries(self) -> Queries:
-            |      return self._queries
-            |
-            |    @property
-            |    def headers(self) -> Headers:
-            |      return self._headers
-            |
-            |    _body:  PotentialTodoDto
-            |    _headers: Headers
-            |    _queries: Queries
-            |    _path: Path
-            |    method: Wirespec.Method = Wirespec.Method.PUT
-            |
-            |    def __init__(self, id: str, done: bool, token: Token, body: PotentialTodoDto):
-            |      self._path = PutTodo.Request.Path(id = id)
-            |      self._queries =PutTodo.Request.Queries(  done = done)
-            |      self._headers = PutTodo.Request.Headers(  token = token)
-            |      self._body = body
-            |
-            |  @dataclass
-            |  class Response200(Wirespec.Response[TodoDto]):
-            |    @dataclass
-            |    class Headers (Wirespec.Response.Headers): pass
-            |
-            |    @property
-            |    def headers(self) -> Headers:
-            |      return self._headers
-            |
-            |    @property
-            |    def body(self) -> TodoDto:
-            |      return self._body
-            |
-            |    _body: TodoDto
-            |    _headers: Headers
-            |    status: int = 200
-            |
-            |    def __init__(self, body: TodoDto):
-            |      self._headers = PutTodo.Response200.Headers()
-            |      self._body = body
-            |
-            |  @dataclass
-            |  class Response201(Wirespec.Response[TodoDto]):
-            |    @dataclass
-            |    class Headers (Wirespec.Response.Headers):
-            |        token: 'Token'
-            |
-            |    @property
-            |    def headers(self) -> Headers:
-            |      return self._headers
-            |
-            |    @property
-            |    def body(self) -> TodoDto:
-            |      return self._body
-            |
-            |    _body: TodoDto
-            |    _headers: Headers
-            |    status: int = 201
-            |
-            |    def __init__(self, token: Token, body: TodoDto):
-            |      self._headers = PutTodo.Response201.Headers(  token = token)
-            |      self._body = body
-            |
-            |  @dataclass
-            |  class Response500(Wirespec.Response[Error]):
-            |    @dataclass
-            |    class Headers (Wirespec.Response.Headers): pass
-            |
-            |    @property
-            |    def headers(self) -> Headers:
-            |      return self._headers
-            |
-            |    @property
-            |    def body(self) -> Error:
-            |      return self._body
-            |
-            |    _body: Error
-            |    _headers: Headers
-            |    status: int = 500
-            |
-            |    def __init__(self, body: Error):
-            |      self._headers = PutTodo.Response500.Headers()
-            |      self._body = body
-            |
-            |  Response = Response200 | Response201 | Response500
-            |
-            |  class Handler(Wirespec.Endpoint.Handler):
-            |    @abstractmethod
-            |    def PutTodo(self, req: 'PutTodo.Request') -> 'PutTodo.Response': pass
-            |
-            |  class Convert(Wirespec.Endpoint.Convert[Request, Response]):
-            |    @staticmethod
-            |    def to_raw_request(serialization: Wirespec.Serializer, request: 'PutTodo.Request') -> Wirespec.RawRequest:
-            |      return Wirespec.RawRequest(
-            |        path = ["todos", str(request.path.id)],
-            |        method = request.method.value,
-            |        queries = {"done": serialization.serialize_param(request.queries.done, bool)},
-            |        headers = {"token": serialization.serialize_param(request.headers.token, Token)},
-            |        body = serialization.serialize(request.body, PotentialTodoDto),
-            |      )
-            |
-            |    @staticmethod
-            |    def from_raw_request(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest) -> 'PutTodo.Request':
-            |      return PutTodo.Request(
-            |          id = serialization.deserialize(request.path[1], str),
-            |    done = serialization.deserialize_param(request.queries.get("done".lower()), bool),
-            |    token = serialization.deserialize_param(request.headers.get("token".lower()), Token),
-            |          body = serialization.deserialize(request.body, PotentialTodoDto),
-            |    )
-            |
-            |    @staticmethod
-            |    def to_raw_response(serialization: Wirespec.Serializer, response: 'PutTodo.Response') -> Wirespec.RawResponse:
-            |      match response:
-            |        case PutTodo.Response200():
-            |          return Wirespec.RawResponse(
-            |            status_code = response.status,
-            |            headers = {},
-            |            body = serialization.serialize(response.body, TodoDto),
-            |          )
-            |        case PutTodo.Response201():
-            |          return Wirespec.RawResponse(
-            |            status_code = response.status,
-            |            headers = {"token": serialization.serialize_param(response.headers.token, Token)},
-            |            body = serialization.serialize(response.body, TodoDto),
-            |          )
-            |        case PutTodo.Response500():
-            |          return Wirespec.RawResponse(
-            |            status_code = response.status,
-            |            headers = {},
-            |            body = serialization.serialize(response.body, Error),
-            |          )
-            |        case _:
-            |          raise Exception("Cannot match response with status: " + str(response.status))
-            |    @staticmethod
-            |    def from_raw_response(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse) -> 'PutTodo.Response':
-            |      match response.status_code:
-            |        case 200:
-            |          return PutTodo.Response200(
-            |            body = serialization.deserialize(response.body, TodoDto),
-            |          )
-            |        case 201:
-            |          return PutTodo.Response201(
-            |            body = serialization.deserialize(response.body, TodoDto),
-            |            token = serialization.deserialize_param(response.headers.get("token".lower()), Token)
-            |          )
-            |        case 500:
-            |          return PutTodo.Response500(
-            |            body = serialization.deserialize(response.body, Error),
-            |          )
-            |        case _: 
-            |          raise Exception("Cannot match response with status: " + str(response.status_code))
-            |
-            |
-            |
-            |from . import model
-            |from . import endpoint
-            |from . import wirespec
-            |
+        |
+        |from abc import abstractmethod
+        |from dataclasses import dataclass
+        |from typing import List, Optional
+        |from enum import Enum
+        |
+        |from ..wirespec import T, Wirespec
+        |
+        |@dataclass
+        |class PotentialTodoDto:
+        |  name: 'str'
+        |  done: 'bool'
+        |
+        |
+        |import re
+        |
+        |from abc import abstractmethod
+        |from dataclasses import dataclass
+        |from typing import List, Optional
+        |from enum import Enum
+        |
+        |from ..wirespec import T, Wirespec
+        |
+        |@dataclass
+        |class Token:
+        |  iss: 'str'
+        |
+        |
+        |import re
+        |
+        |from abc import abstractmethod
+        |from dataclasses import dataclass
+        |from typing import List, Optional
+        |from enum import Enum
+        |
+        |from ..wirespec import T, Wirespec
+        |
+        |@dataclass
+        |class TodoDto:
+        |  id: 'str'
+        |  name: 'str'
+        |  done: 'bool'
+        |
+        |
+        |import re
+        |
+        |from abc import abstractmethod
+        |from dataclasses import dataclass
+        |from typing import List, Optional
+        |from enum import Enum
+        |
+        |from ..wirespec import T, Wirespec
+        |
+        |@dataclass
+        |class Error:
+        |  code: 'int'
+        |  description: 'str'
+        |
+        |
+        |import re
+        |
+        |from abc import abstractmethod
+        |from dataclasses import dataclass
+        |from typing import List, Optional
+        |from enum import Enum
+        |
+        |from ..wirespec import T, Wirespec
+        |
+        |from ..model.Token import Token
+        |from ..model.Token import Token
+        |from ..model.PotentialTodoDto import PotentialTodoDto
+        |from ..model.TodoDto import TodoDto
+        |from ..model.Error import Error
+        |
+        |class PutTodo (Wirespec.Endpoint):
+        |  @dataclass
+        |  class Request(Wirespec.Request[PotentialTodoDto]):
+        |    @dataclass
+        |    class Path (Wirespec.Request.Path):
+        |        id: str 
+        |    @dataclass
+        |    class Queries (Wirespec.Request.Queries):
+        |        done: 'bool'
+        |        name: 'Optional[str]'
+        |    @dataclass
+        |    class Headers (Wirespec.Request.Headers):
+        |        token: 'Token'
+        |        refreshToken: 'Optional[Token]'
+        | 
+        |    @property
+        |    def body(self) -> PotentialTodoDto:
+        |      return self._body
+        |
+        |    @property
+        |    def path(self) -> Path:
+        |      return self._path
+        |
+        |    @property
+        |    def queries(self) -> Queries:
+        |      return self._queries
+        |
+        |    @property
+        |    def headers(self) -> Headers:
+        |      return self._headers
+        |
+        |    _body:  PotentialTodoDto
+        |    _headers: Headers
+        |    _queries: Queries
+        |    _path: Path
+        |    method: Wirespec.Method = Wirespec.Method.PUT
+        |
+        |    def __init__(self, id: str, done: bool, name: Optional[str], token: Token, refreshToken: Optional[Token], body: PotentialTodoDto):
+        |      self._path = PutTodo.Request.Path(id = id)
+        |      self._queries =PutTodo.Request.Queries(  done = done,
+        |        name = name)
+        |      self._headers = PutTodo.Request.Headers(  token = token,
+        |        refreshToken = refreshToken)
+        |      self._body = body
+        |
+        |  @dataclass
+        |  class Response200(Wirespec.Response[TodoDto]):
+        |    @dataclass
+        |    class Headers (Wirespec.Response.Headers): pass
+        |
+        |    @property
+        |    def headers(self) -> Headers:
+        |      return self._headers
+        |
+        |    @property
+        |    def body(self) -> TodoDto:
+        |      return self._body
+        |
+        |    _body: TodoDto
+        |    _headers: Headers
+        |    status: int = 200
+        |
+        |    def __init__(self, body: TodoDto):
+        |      self._headers = PutTodo.Response200.Headers()
+        |      self._body = body
+        |
+        |  @dataclass
+        |  class Response201(Wirespec.Response[TodoDto]):
+        |    @dataclass
+        |    class Headers (Wirespec.Response.Headers):
+        |        token: 'Token'
+        |        refreshToken: 'Optional[Token]'
+        |
+        |    @property
+        |    def headers(self) -> Headers:
+        |      return self._headers
+        |
+        |    @property
+        |    def body(self) -> TodoDto:
+        |      return self._body
+        |
+        |    _body: TodoDto
+        |    _headers: Headers
+        |    status: int = 201
+        |
+        |    def __init__(self, token: Token, refreshToken: Optional[Token], body: TodoDto):
+        |      self._headers = PutTodo.Response201.Headers(  token = token,
+        |        refreshToken = refreshToken)
+        |      self._body = body
+        |
+        |  @dataclass
+        |  class Response500(Wirespec.Response[Error]):
+        |    @dataclass
+        |    class Headers (Wirespec.Response.Headers): pass
+        |
+        |    @property
+        |    def headers(self) -> Headers:
+        |      return self._headers
+        |
+        |    @property
+        |    def body(self) -> Error:
+        |      return self._body
+        |
+        |    _body: Error
+        |    _headers: Headers
+        |    status: int = 500
+        |
+        |    def __init__(self, body: Error):
+        |      self._headers = PutTodo.Response500.Headers()
+        |      self._body = body
+        |
+        |  Response = Response200 | Response201 | Response500
+        |
+        |  class Handler(Wirespec.Endpoint.Handler):
+        |    @abstractmethod
+        |    def PutTodo(self, req: 'PutTodo.Request') -> 'PutTodo.Response': pass
+        |
+        |  class Convert(Wirespec.Endpoint.Convert[Request, Response]):
+        |    @staticmethod
+        |    def to_raw_request(serialization: Wirespec.Serializer, request: 'PutTodo.Request') -> Wirespec.RawRequest:
+        |      return Wirespec.RawRequest(
+        |        path = ["todos", str(request.path.id)],
+        |        method = request.method.value,
+        |        queries = {"done": serialization.serialize_param(request.queries.done, bool),
+        |    "name": serialization.serialize_param(request.queries.name, str)},
+        |        headers = {"token": serialization.serialize_param(request.headers.token, Token),
+        |    "refreshToken": serialization.serialize_param(request.headers.refreshToken, Token)},
+        |        body = serialization.serialize(request.body, PotentialTodoDto),
+        |      )
+        |
+        |    @staticmethod
+        |    def from_raw_request(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest) -> 'PutTodo.Request':
+        |      return PutTodo.Request(
+        |          id = serialization.deserialize(request.path[1], str),
+        |    done = serialization.deserialize_param(request.queries.get("done".lower()), bool),
+        |    name = serialization.deserialize_param(request.queries.get("name".lower()), str),
+        |    token = serialization.deserialize_param(request.headers.get("token".lower()), Token),
+        |    refreshToken = serialization.deserialize_param(request.headers.get("refreshToken".lower()), Token),
+        |          body = serialization.deserialize(request.body, PotentialTodoDto),
+        |    )
+        |
+        |    @staticmethod
+        |    def to_raw_response(serialization: Wirespec.Serializer, response: 'PutTodo.Response') -> Wirespec.RawResponse:
+        |      match response:
+        |        case PutTodo.Response200():
+        |          return Wirespec.RawResponse(
+        |            status_code = response.status,
+        |            headers = {},
+        |            body = serialization.serialize(response.body, TodoDto),
+        |          )
+        |        case PutTodo.Response201():
+        |          return Wirespec.RawResponse(
+        |            status_code = response.status,
+        |            headers = {"token": serialization.serialize_param(response.headers.token, Token), "refreshToken": serialization.serialize_param(response.headers.refreshToken, Token)},
+        |            body = serialization.serialize(response.body, TodoDto),
+        |          )
+        |        case PutTodo.Response500():
+        |          return Wirespec.RawResponse(
+        |            status_code = response.status,
+        |            headers = {},
+        |            body = serialization.serialize(response.body, Error),
+        |          )
+        |        case _:
+        |          raise Exception("Cannot match response with status: " + str(response.status))
+        |    @staticmethod
+        |    def from_raw_response(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse) -> 'PutTodo.Response':
+        |      match response.status_code:
+        |        case 200:
+        |          return PutTodo.Response200(
+        |            body = serialization.deserialize(response.body, TodoDto),
+        |          )
+        |        case 201:
+        |          return PutTodo.Response201(
+        |            body = serialization.deserialize(response.body, TodoDto),
+        |            token = serialization.deserialize_param(response.headers.get("token".lower()), Token),
+        |            refreshToken = serialization.deserialize_param(response.headers.get("refreshToken".lower()), Token)
+        |          )
+        |        case 500:
+        |          return PutTodo.Response500(
+        |            body = serialization.deserialize(response.body, Error),
+        |          )
+        |        case _: 
+        |          raise Exception("Cannot match response with status: " + str(response.status_code))
+        |
+        |
+        |
+        |from . import model
+        |from . import endpoint
+        |from . import wirespec
+        |
         """.trimMargin()
         compiler { PythonEmitter() } shouldBeRight python
     }
 
+    // TODO - Missing request and response headers,
     @Test
     fun wirespec() {
         val wirespec = """
-            |endpoint PutTodo PUT PotentialTodoDto /todos/{id: String} ? {done: Boolean} -> {
+            |endpoint PutTodo PUT PotentialTodoDto /todos/{id: String} ? {done: Boolean,name: String?} -> {
             |  200 -> TodoDto
             |  201 -> TodoDto
             |  500 -> Error
