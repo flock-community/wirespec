@@ -1,11 +1,15 @@
 import { FormControl, ListSubheader, MenuItem, Select } from "@mui/material";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { type Specification } from "../routes/index";
+import pkg from "../../package.json";
 
 type CompileOption = { value: Specification; label: string };
 
 export function SpecificationSelector() {
-  const compileOption: CompileOption = { value: "wirespec", label: "Wirespec" };
+  const compileOption: CompileOption = {
+    value: "wirespec",
+    label: `Wirespec v${pkg.version}`,
+  };
   const convertOptions: CompileOption[] = [
     { value: "open_api_v2", label: "Open API v2" },
     { value: "open_api_v3", label: "Open API v3" },
