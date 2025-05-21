@@ -1,5 +1,6 @@
 package community.flock.wirespec.plugin.maven.mojo
 
+import arrow.core.NonEmptyList
 import arrow.core.toNonEmptySetOrNull
 import community.flock.wirespec.compiler.core.emit.JavaEmitter
 import community.flock.wirespec.compiler.core.emit.KotlinEmitter
@@ -8,6 +9,7 @@ import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.EmitShared
+import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.utils.Logger
@@ -15,9 +17,12 @@ import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
 import community.flock.wirespec.openapi.v2.OpenAPIV2Emitter
 import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter
 import community.flock.wirespec.plugin.Language
+import community.flock.wirespec.plugin.io.ClassPath
+import community.flock.wirespec.plugin.io.Directory
+import community.flock.wirespec.plugin.io.FilePath
 import community.flock.wirespec.plugin.io.Name
 import community.flock.wirespec.plugin.io.Source
-import community.flock.wirespec.plugin.io.SourcePath
+import community.flock.wirespec.plugin.io.write
 import community.flock.wirespec.plugin.maven.compiler.JavaCompiler
 import community.flock.wirespec.plugin.maven.compiler.KotlinCompiler
 import org.apache.maven.plugin.AbstractMojo
@@ -102,7 +107,7 @@ abstract class BaseMojo : AbstractMojo() {
                 }
             constructor.newInstance(*args.toTypedArray()) as Emitter
         } catch (e: Exception) {
-            e.printStackTrace()
+            logger.debug(e.toString())
             null
         }
 
@@ -135,6 +140,12 @@ abstract class BaseMojo : AbstractMojo() {
         javaClass.getClassLoader()
     }
 
+    protected fun writer(directory: Directory): (NonEmptyList<Emitted>) -> Unit = { emittedList ->
+        emittedList.forEach { emitted ->
+            FilePath(directory.path.value + "/" + emitted.file).write(emitted.result)
+        }
+    }
+
     fun classOutputDir() = File(project.build.directory, "wirespec-classes")
         .apply { if (!exists()) mkdirs() }
 
@@ -147,7 +158,7 @@ abstract class BaseMojo : AbstractMojo() {
         JavaCompiler(project, log, classOutputDir()).compile(file)
     }
 
-    inline fun <reified E : Source.Type> SourcePath.readFromClasspath(): Source<E> {
+    inline fun <reified E : Source.Type> ClassPath.readFromClasspath(): Source<E> {
         val file = File(value)
         val classLoader = javaClass.classLoader
         val inputStream =
