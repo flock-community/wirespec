@@ -1,7 +1,6 @@
 package community.flock.wirespec.compiler.core.emit
 
 import arrow.core.NonEmptyList
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.EmitShared
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
@@ -11,6 +10,7 @@ import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.emit.common.namespace
 import community.flock.wirespec.compiler.core.emit.common.plus
 import community.flock.wirespec.compiler.core.emit.shared.TypeScriptShared
+import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
@@ -24,19 +24,28 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 
-open class TypeScriptEmitter(val emitShared: EmitShared) : Emitter() {
+open class TypeScriptEmitter(val emitShared: EmitShared = EmitShared()) : Emitter() {
 
     override val extension = FileExtension.TypeScript
 
     override val shared = TypeScriptShared
 
     override val singleLineComment = "//"
+    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = super.emit(ast, logger).let {
+        it + ast.modules
+            .flatMap { it.statements }
+            .distinctBy { def -> def.identifier.value }
+            .groupBy { def -> def.namespace() }
+            .map { (ns, defs) ->
+                Emitted(
+                    "${ns}/index.${extension.value}",
+                    defs.joinToString("\n") { "export {${it.identifier.value}} from './${it.identifier.value}'" }
+                )
+            }
+    }
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = super.emit(module, logger).let {
-        val index = module.statements
-            .groupBy { def -> def.namespace() }
-            .map { (ns, defs) -> Emitted("${ns}/index", defs.joinToString ("\n"){ "export {${it.identifier.value}} from './${it.identifier.value}'"}) }
-        if (emitShared.value) it + index + Emitted("Wirespec", shared.source) else it + index
+        if (emitShared.value) it + Emitted("Wirespec", shared.source) else it
     }
 
     override fun emit(definition: Definition, module: Module, logger: Logger): Emitted =
@@ -54,7 +63,10 @@ open class TypeScriptEmitter(val emitShared: EmitShared) : Emitter() {
 
     override fun emit(type: Type, module: Module) =
         """
-            ||${type.importReferences().map { "import {${it.value}} from '../model/${it.value}'" }.joinToString("\n") { it.trimStart() }}
+            ||${
+            type.importReferences().map { "import {${it.value}} from '../model/${it.value}'" }
+                .joinToString("\n") { it.trimStart() }
+        }
             |export type ${type.identifier.sanitizeSymbol()} = {
             |${type.shape.emit()}
             |}
@@ -98,14 +110,19 @@ open class TypeScriptEmitter(val emitShared: EmitShared) : Emitter() {
 
     override fun emit(endpoint: Endpoint) =
         """
-          |${endpoint.importReferences().map { "import {${it.value}} from '../model/${it.value}'" }.joinToString("\n") { it.trimStart() }}
+          |${
+            endpoint.importReferences().map { "import {${it.value}} from '../model/${it.value}'" }
+                .joinToString("\n") { it.trimStart() }
+        }
           |export namespace ${endpoint.identifier.sanitizeSymbol()} {
           |${endpoint.pathParams.emitType("Path") { it.emit() }}
           |${endpoint.queries.emitType("Queries") { it.emit() }}
           |${endpoint.headers.emitType("Headers") { it.emit() }}
           |${endpoint.requests.first().emitType(endpoint)}
           |${endpoint.responses.distinctByStatus().joinToString("\n") { it.emitType() }}
-          |${Spacer}export type Response = ${endpoint.responses.distinctByStatus().joinToString(" | ") { it.emitName() }}
+          |${Spacer}export type Response = ${
+            endpoint.responses.distinctByStatus().joinToString(" | ") { it.emitName() }
+        }
           |${endpoint.requests.first().emitFunction(endpoint)}
           |${endpoint.responses.distinctByStatus().joinToString("\n") { it.emitFunction() }}
           |${Spacer}export type Handler = {
@@ -162,7 +179,9 @@ open class TypeScriptEmitter(val emitShared: EmitShared) : Emitter() {
     """.trimIndent()
 
     private fun Endpoint.Request.emitFunction(endpoint: Endpoint) = """
-      |${Spacer}export const request = (${paramList(endpoint).takeIf { it.isNotEmpty() }?.run { "props: ${joinToObject { it.emit() }}" }.orEmpty()}): Request => ({
+      |${Spacer}export const request = (${
+        paramList(endpoint).takeIf { it.isNotEmpty() }?.run { "props: ${joinToObject { it.emit() }}" }.orEmpty()
+    }): Request => ({
       |${Spacer(2)}path: ${endpoint.pathParams.joinToObject { "${emit(it.identifier)}: props[${emit(it.identifier)}]" }},
       |${Spacer(2)}method: "${endpoint.method}",
       |${Spacer(2)}queries: ${endpoint.queries.joinToObject { "${emit(it.identifier)}: props[${emit(it.identifier)}]" }},
@@ -172,7 +191,9 @@ open class TypeScriptEmitter(val emitShared: EmitShared) : Emitter() {
     """.trimIndent()
 
     private fun Endpoint.Response.emitFunction() = """
-      |${Spacer}export const response${status.firstToUpper()} = (${paramList().takeIf { it.isNotEmpty() }?.run { "props: ${joinToObject { it.emit() }}" }.orEmpty()}): Response${status.firstToUpper()} => ({
+      |${Spacer}export const response${status.firstToUpper()} = (${
+        paramList().takeIf { it.isNotEmpty() }?.run { "props: ${joinToObject { it.emit() }}" }.orEmpty()
+    }): Response${status.firstToUpper()} => ({
       |${Spacer(2)}status: ${status.fixStatus()},
       |${Spacer(2)}headers: ${headers.joinToObject { "${emit(it.identifier)}: props[${emit(it.identifier)}]" }},
       |${Spacer(2)}body: ${content?.let { "props.body" } ?: "undefined"},

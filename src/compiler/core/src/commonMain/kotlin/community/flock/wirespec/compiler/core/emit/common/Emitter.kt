@@ -36,7 +36,7 @@ abstract class Emitter : Emitters {
 
     abstract val shared: Shared?
 
-    fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast
+    open fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast
         .modules.flatMap { emit(it, logger) }
         .map { e -> Emitted(e.file + "." + extension.value, e.result) }
 
