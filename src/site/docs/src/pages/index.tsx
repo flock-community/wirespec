@@ -47,7 +47,7 @@ export default function Home(): JSX.Element {
   return (
     <Layout>
       <SEO
-        title="Wirespec your APIs | Wirespec"
+        title=" Wirespec your APIs | Wirespec"
         description="Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications"
         type="website"
       />

@@ -12,7 +12,7 @@ export default function BlogPostPage(props: Props): JSX.Element {
   return (
     <Layout>
       <SEO
-        title={`${title} | Wirespec Blog`}
+        title={title}
         description={description}
         type="article"
         url={permalink}

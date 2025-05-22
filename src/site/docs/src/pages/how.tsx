@@ -10,7 +10,7 @@ export default function ContractPage() {
   return (
     <Layout>
       <SEO
-        title="How | Wirespec"
+        title="How"
         description="Learn how Wirespec uses a contract-first approach to generate typesafe code and validate APIs automatically—streamlining development and ensuring consistency."
         type="website"
       />

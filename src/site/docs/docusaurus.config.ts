@@ -3,8 +3,9 @@ import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
 
 const config: Config = {
+  // Remove default title to allow pages to set their own titles
   title: "Wirespec",
-  tagline: "Dinosaurs are cool",
+  tagline: "Contract-First API Design",
   favicon: "img/wirespec-favicon.png",
   url: "https://wirespec.io/",
   baseUrl: "/",
@@ -55,13 +56,13 @@ const config: Config = {
       disableSwitch: true,
     },
     metadata: [
-      { name: "title", content: "Wirespec | Contract-First API Design" },
+      { name: "title", content: "Wirespec your APIs | Wirespec" },
       {
         name: "description",
         content:
           "Simplify your API development workflows, accelerate implementation, and guarantee strict adherence to defined contract specifications",
       },
-      { property: "og:title", content: "Wirespec | Contract-First API Design" },
+      { property: "og:title", content: "Wirespec your APIs | Wirespec" },
       {
         property: "og:description",
         content:
@@ -72,7 +73,7 @@ const config: Config = {
       { property: "og:url", content: "https://wirespec.io/" },
 
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: `Wirespec your APIs` },
+      { name: "twitter:title", content: "Wirespec your APIs | Wirespec" },
       {
         name: "twitter:description",
         content:
@@ -100,6 +101,18 @@ const config: Config = {
         property: "og:description:blog",
         content:
           "Explore in-depth articles on API design, contract-first development, code generation, and interface testing—insights and best practices from the team behind Wirespec",
+      },
+      { property: "og:title:vision", content: "Vision | Wirespec" },
+      {
+        property: "og:description:vision",
+        content:
+          "Wirespec envisions API design with contract-first specs, automated code generation, and built-in testing for consistent, reliable implementations.",
+      },
+      { property: "og:title:how", content: "How | Wirespec" },
+      {
+        property: "og:description:how",
+        content:
+          "Learn how Wirespec uses a contract-first approach to generate typesafe code and validate APIs automatically—streamlining development and ensuring consistency.",
       },
     ],
     stylesheets: [

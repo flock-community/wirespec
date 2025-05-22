@@ -2,15 +2,31 @@ import React from "react";
 import Layout from "@theme/Layout";
 import styles from "./vision.module.css";
 import SEO from "../components/SEO";
+import Head from "@docusaurus/Head";
 
 export default function VisionPage() {
   return (
-    <Layout>
-      <SEO
-        title="Vision | Wirespec"
+    <Layout
+      title="Vision | Wirespec"
+      description="Wirespec envisions API design with contract-first specs, automated code generation, and built-in testing for consistent, reliable implementations."
+    >
+      <Head>
+        <title>Vision | Wirespec</title>
+        <meta
+          name="description"
+          content="Wirespec envisions API design with contract-first specs, automated code generation, and built-in testing for consistent, reliable implementations."
+        />
+        <meta property="og:title" content="Vision | Wirespec" />
+        <meta
+          property="og:description"
+          content="Wirespec envisions API design with contract-first specs, automated code generation, and built-in testing for consistent, reliable implementations."
+        />
+      </Head>
+      {/* <SEO
+        title="Vision"
         description="Wirespec envisions API design with contract-first specs, automated code generation, and built-in testing for consistent, reliable implementations."
         type="website"
-      />
+      /> */}
       <main className={styles.visionMain}>
         <section className={styles.visionSection}>
           <div className={styles.visionContent}>

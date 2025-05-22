@@ -1,5 +1,6 @@
 import React from "react";
 import Head from "@docusaurus/Head";
+import { useLocation } from "@docusaurus/router";
 
 interface SEOProps {
   title: string;
@@ -24,21 +25,34 @@ export default function SEO({
     "Wirespec",
   ],
 }: SEOProps) {
+  const location = useLocation();
   const siteUrl = "https://wirespec.io";
   const fullUrl = url.startsWith("http") ? url : `${siteUrl}${url}`;
   const fullImageUrl = image.startsWith("http") ? image : `${siteUrl}${image}`;
 
+  // Determine the full title based on the current path
+  let fullTitle = title;
+  if (location.pathname === "/") {
+    fullTitle = "Wirespec your APIs";
+  } else if (location.pathname.startsWith("/docs/")) {
+    fullTitle = `${title} | Docs | Wirespec`;
+  } else if (location.pathname === "/blog") {
+    fullTitle = "Blog | Wirespec";
+  } else if (title !== "Wirespec your APIs") {
+    fullTitle = `${title} | Wirespec`;
+  }
+
   return (
     <Head>
       {/* Basic meta tags */}
-      <title>{title}</title>
+      <title>{fullTitle}</title>
       <meta name="description" content={description} />
       <meta name="keywords" content={keywords.join(", ")} />
       <meta name="author" content="Wirespec Team" />
 
       {/* OpenGraph tags */}
       <meta property="og:type" content={type} />
-      <meta property="og:title" content={title} />
+      <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={fullImageUrl} />
       <meta property="og:url" content={fullUrl} />
@@ -49,7 +63,7 @@ export default function SEO({
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:site" content="@wirespec" />
       <meta name="twitter:creator" content="@wirespec" />
-      <meta name="twitter:title" content={title} />
+      <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={fullImageUrl} />
     </Head>
