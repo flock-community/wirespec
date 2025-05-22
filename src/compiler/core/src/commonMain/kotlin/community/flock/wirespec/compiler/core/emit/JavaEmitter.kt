@@ -48,7 +48,7 @@ open class JavaEmitter(
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
         super.emit(module, logger).let {
-            if (emitShared.value) it + Emitted(PackageName(DEFAULT_SHARED_PACKAGE_STRING).toDir() + "Wirespec", shared.source)
+            if (emitShared.value) it + Emitted(PackageName("${DEFAULT_SHARED_PACKAGE_STRING}.java").toDir() + "Wirespec", shared.source)
             else it
         }
 
