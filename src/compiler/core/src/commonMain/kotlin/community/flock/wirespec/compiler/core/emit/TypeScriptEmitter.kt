@@ -63,10 +63,7 @@ open class TypeScriptEmitter(val emitShared: EmitShared = EmitShared()) : Emitte
 
     override fun emit(type: Type, module: Module) =
         """
-            ||${
-            type.importReferences().map { "import {${it.value}} from '../model/${it.value}'" }
-                .joinToString("\n") { it.trimStart() }
-        }
+            |${type.importReferences().map { "import {${it.value}} from '../model/${it.value}'" }.joinToString("\n") { it.trimStart() }}
             |export type ${type.identifier.sanitizeSymbol()} = {
             |${type.shape.emit()}
             |}

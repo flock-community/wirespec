@@ -478,7 +478,7 @@ class CompileMinimalEndpointTest {
             |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
             |}
             |
-            ||
+            |
             |export type TodoDto = {
             |  "description": string
             |}
