@@ -107,19 +107,14 @@ open class TypeScriptEmitter(val emitShared: EmitShared = EmitShared()) : Emitte
 
     override fun emit(endpoint: Endpoint) =
         """
-          |${
-            endpoint.importReferences().map { "import {${it.value}} from '../model/${it.value}'" }
-                .joinToString("\n") { it.trimStart() }
-        }
+          |${endpoint.importReferences().map { "import {${it.value}} from '../model/${it.value}'" }.joinToString("\n") { it.trimStart() }}
           |export namespace ${endpoint.identifier.sanitizeSymbol()} {
           |${endpoint.pathParams.emitType("Path") { it.emit() }}
           |${endpoint.queries.emitType("Queries") { it.emit() }}
           |${endpoint.headers.emitType("Headers") { it.emit() }}
           |${endpoint.requests.first().emitType(endpoint)}
           |${endpoint.responses.distinctByStatus().joinToString("\n") { it.emitType() }}
-          |${Spacer}export type Response = ${
-            endpoint.responses.distinctByStatus().joinToString(" | ") { it.emitName() }
-        }
+          |${Spacer}export type Response = ${endpoint.responses.distinctByStatus().joinToString(" | ") { it.emitName() }}
           |${endpoint.requests.first().emitFunction(endpoint)}
           |${endpoint.responses.distinctByStatus().joinToString("\n") { it.emitFunction() }}
           |${Spacer}export type Handler = {
@@ -147,8 +142,11 @@ open class TypeScriptEmitter(val emitShared: EmitShared = EmitShared()) : Emitte
     private fun emitHandleFunction(endpoint: Endpoint) =
         "${endpoint.identifier.sanitizeSymbol().firstToLower()}: (request:Request) => Promise<Response>"
 
-    override fun emit(union: Union) =
-        "export type ${union.identifier.sanitizeSymbol()} = ${union.entries.joinToString(" | ") { it.emit() }}\n"
+    override fun emit(union: Union) = """
+        |${union.importReferences().map { "import {${it.value}} from '../model/${it.value}'" }.joinToString("\n") { it.trimStart() }}
+        |export type ${union.identifier.sanitizeSymbol()} = ${union.entries.joinToString(" | ") { it.emit() }}
+        |
+    """.trimMargin()
 
     override fun emit(identifier: Identifier) = """"${identifier.value}""""
 
