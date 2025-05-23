@@ -106,6 +106,8 @@ class CompileUnionTest {
             |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
             |}
             |
+            |import {UserAccountPassword} from '../model'
+            |import {UserAccountToken} from '../model'
             |export type UserAccount = UserAccountPassword | UserAccountToken
             |
             |export namespace Wirespec {
@@ -155,7 +157,7 @@ class CompileUnionTest {
             |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
             |}
             |
-            |import {UserAccount} from '../model/UserAccount'
+            |import {UserAccount} from '../model'
             |export type User = {
             |  "username": string,
             |  "account": UserAccount

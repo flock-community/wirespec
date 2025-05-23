@@ -423,11 +423,10 @@ class CompileFullEndpointTest {
             |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
             |}
             |
-            |import {Token} from '../model/Token'
-            |import {Token} from '../model/Token'
-            |import {PotentialTodoDto} from '../model/PotentialTodoDto'
-            |import {TodoDto} from '../model/TodoDto'
-            |import {Error} from '../model/Error'
+            |import {Token} from '../model'
+            |import {PotentialTodoDto} from '../model'
+            |import {TodoDto} from '../model'
+            |import {Error} from '../model'
             |export namespace PutTodo {
             |  type Path = {
             |    "id": string,

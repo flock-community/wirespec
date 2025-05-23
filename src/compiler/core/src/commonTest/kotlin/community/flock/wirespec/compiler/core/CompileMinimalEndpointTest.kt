@@ -381,7 +381,7 @@ class CompileMinimalEndpointTest {
             |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
             |}
             |
-            |import {TodoDto} from '../model/TodoDto'
+            |import {TodoDto} from '../model'
             |export namespace GetTodos {
             |  type Path = {}
             |  type Queries = {}

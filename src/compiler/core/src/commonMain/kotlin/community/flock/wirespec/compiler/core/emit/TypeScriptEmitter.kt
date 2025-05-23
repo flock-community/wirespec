@@ -63,7 +63,7 @@ open class TypeScriptEmitter(val emitShared: EmitShared = EmitShared()) : Emitte
 
     override fun emit(type: Type, module: Module) =
         """
-            |${type.importReferences().map { "import {${it.value}} from '../model/${it.value}'" }.joinToString("\n") { it.trimStart() }}
+            |${type.importReferences().distinctBy { it.value }.map { "import {${it.value}} from '../model'" }.joinToString("\n") { it.trimStart() }}
             |export type ${type.identifier.sanitizeSymbol()} = {
             |${type.shape.emit()}
             |}
@@ -107,7 +107,7 @@ open class TypeScriptEmitter(val emitShared: EmitShared = EmitShared()) : Emitte
 
     override fun emit(endpoint: Endpoint) =
         """
-          |${endpoint.importReferences().map { "import {${it.value}} from '../model/${it.value}'" }.joinToString("\n") { it.trimStart() }}
+          |${endpoint.importReferences().distinctBy { it.value }.map { "import {${it.value}} from '../model'" }.joinToString("\n") { it.trimStart() }}
           |export namespace ${endpoint.identifier.sanitizeSymbol()} {
           |${endpoint.pathParams.emitType("Path") { it.emit() }}
           |${endpoint.queries.emitType("Queries") { it.emit() }}
@@ -143,7 +143,7 @@ open class TypeScriptEmitter(val emitShared: EmitShared = EmitShared()) : Emitte
         "${endpoint.identifier.sanitizeSymbol().firstToLower()}: (request:Request) => Promise<Response>"
 
     override fun emit(union: Union) = """
-        |${union.importReferences().map { "import {${it.value}} from '../model/${it.value}'" }.joinToString("\n") { it.trimStart() }}
+        |${union.importReferences().distinctBy { it.value }.map { "import {${it.value}} from '../model'" }.joinToString("\n") { it.trimStart() }}
         |export type ${union.identifier.sanitizeSymbol()} = ${union.entries.joinToString(" | ") { it.emit() }}
         |
     """.trimMargin()

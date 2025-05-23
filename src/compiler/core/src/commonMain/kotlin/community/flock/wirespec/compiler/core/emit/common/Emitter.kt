@@ -121,7 +121,7 @@ abstract class Emitter : Emitters {
             .map { it.reference.flattenListDict() }
             .filterIsInstance<Reference.Custom>()
             .distinct()
-
+        is Union -> entries.filterIsInstance<Reference.Custom>()
         is Channel -> if (reference is Reference.Custom) listOf(reference) else emptyList()
         else -> emptyList()
     }
