@@ -151,10 +151,10 @@ class WirespecCliTest {
             ),
         )
 
-        val directoryPath = DirectoryPath("${output}/model")
-        val path = FilePath(directoryPath,  Name("Pet"), FileExtension.TypeScript)
+        val directoryPath = DirectoryPath("$output/model")
+        val path = FilePath(directoryPath, Name("Pet"), FileExtension.TypeScript)
 
-        path.read() shouldBe  """
+        path.read() shouldBe """
             |export namespace Wirespec {
             |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
             |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string>, headers: Record<string, string>, body?: string }
