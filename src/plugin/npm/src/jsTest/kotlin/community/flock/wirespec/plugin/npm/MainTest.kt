@@ -71,8 +71,8 @@ class MainTest {
             override val spec = WirespecSpec
         }.parse(nonEmptyListOf(ModuleContent("", personWs))).getOrNull()
         assertNotNull(res)
-        val openApiV2 = emit(res.produce(), Emitters.OPENAPI_V2, "")
-        val openApiV3 = emit(res.produce(), Emitters.OPENAPI_V3, "")
+        val openApiV2 = emit(res.produce(), Emitters.OPENAPI_V2, "", true)
+        val openApiV3 = emit(res.produce(), Emitters.OPENAPI_V3, "", true)
         assertEquals("""{"swagger":"2.0"""", openApiV2.first().result.substring(0, 16))
         assertEquals("""{"openapi":"3.0.0"""", openApiV3.first().result.substring(0, 18))
     }

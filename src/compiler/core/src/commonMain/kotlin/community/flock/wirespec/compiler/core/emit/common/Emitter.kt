@@ -36,7 +36,7 @@ abstract class Emitter : Emitters {
 
     abstract val shared: Shared?
 
-    fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast
+    open fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast
         .modules.flatMap { emit(it, logger) }
         .map { e -> Emitted(e.file + "." + extension.value, e.result) }
 
@@ -121,7 +121,7 @@ abstract class Emitter : Emitters {
             .map { it.reference.flattenListDict() }
             .filterIsInstance<Reference.Custom>()
             .distinct()
-
+        is Union -> entries.filterIsInstance<Reference.Custom>()
         is Channel -> if (reference is Reference.Custom) listOf(reference) else emptyList()
         else -> emptyList()
     }

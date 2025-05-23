@@ -14,6 +14,7 @@ import community.flock.wirespec.compiler.core.emit.KotlinEmitter
 import community.flock.wirespec.compiler.core.emit.PythonEmitter
 import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
 import community.flock.wirespec.compiler.core.emit.WirespecEmitter
+import community.flock.wirespec.compiler.core.emit.common.EmitShared
 import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.shared.JavaShared
@@ -91,16 +92,16 @@ fun generate(source: String, type: String): WsStringResult = object : ParseConte
     .produce()
 
 @JsExport
-fun emit(ast: WsAST, emitter: Emitters, packageName: String) = ast
+fun emit(ast: WsAST, emitter: Emitters, packageName: String, emitShared: Boolean) = ast
     .modules
     .map { module -> module.consume() }
     .flatMap {
         when (emitter) {
             Emitters.WIRESPEC -> WirespecEmitter().emit(it, noLogger)
-            Emitters.TYPESCRIPT -> TypeScriptEmitter().emit(it, noLogger)
-            Emitters.JAVA -> JavaEmitter(PackageName(packageName)).emit(it, noLogger)
-            Emitters.KOTLIN -> KotlinEmitter(PackageName(packageName)).emit(it, noLogger)
-            Emitters.PYTHON -> PythonEmitter().emit(it, noLogger)
+            Emitters.TYPESCRIPT -> TypeScriptEmitter(EmitShared(emitShared)).emit(it, noLogger)
+            Emitters.JAVA -> JavaEmitter(PackageName(packageName), EmitShared(emitShared)).emit(it, noLogger)
+            Emitters.KOTLIN -> KotlinEmitter(PackageName(packageName), EmitShared(emitShared)).emit(it, noLogger)
+            Emitters.PYTHON -> PythonEmitter(PackageName(packageName), EmitShared(emitShared)).emit(it, noLogger)
             Emitters.OPENAPI_V2 -> listOf(it)
                 .map(OpenAPIV2Emitter::emitSwaggerObject)
                 .map(encode(SwaggerObject.serializer()))

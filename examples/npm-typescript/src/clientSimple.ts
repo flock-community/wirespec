@@ -1,4 +1,5 @@
-import { GetTodoById, GetTodos, PostTodo, Wirespec } from "./gen/Todo";
+import { GetTodoById, GetTodos, PostTodo } from "./gen/endpoint";
+import { Wirespec } from "./gen/Wirespec";
 import * as assert from "node:assert";
 
 const serialization: Wirespec.Serialization = {
