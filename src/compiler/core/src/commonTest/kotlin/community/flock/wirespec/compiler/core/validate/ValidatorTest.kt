@@ -115,21 +115,6 @@ class ValidatorTest {
         """.trimMargin()
 
         validate(source1, source2)
-            .shouldBeLeft()
-            .head.shouldBeInstanceOf<DuplicateTypeError>()
-    }
-
-    @Test
-    fun uniqueTypeDifferentFile() {
-        val source1 = """
-           |type Foo { str: String }
-        """.trimMargin()
-
-        val source2 = """
-            |type Bar { str: String }
-        """.trimMargin()
-
-        validate(source1, source2)
             .shouldBeRight()
     }
 

@@ -43,11 +43,14 @@ object Validator {
         }
 
     private fun validateTypes(ast: AST): EitherNel<WirespecException, AST> = ast.modules.toList()
-        .flatMap { module -> module.statements.filterIsInstance<Type>() }
-        .groupBy { it.identifier.value }
-        .filter { it.value.size > 1 }
-        .map { (name, types) -> types.map { DuplicateTypeError(name) } }
-        .flatten()
+        .flatMap { module ->
+            module.statements
+                .filterIsInstance<Type>()
+                .groupBy { it.identifier.value }
+                .filter { it.value.size > 1 }
+                .map { (name, types) -> types.map { DuplicateTypeError(name) } }
+                .flatten()
+        }
         .let { errors ->
             if (errors.isEmpty()) {
                 ast.right()

@@ -34,7 +34,6 @@ open class TypeScriptEmitter(val emitShared: EmitShared = EmitShared()) : Emitte
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = super.emit(ast, logger).let {
         it + ast.modules
             .flatMap { it.statements }
-            .distinctBy { def -> def.identifier.value }
             .groupBy { def -> def.namespace() }
             .map { (ns, defs) ->
                 Emitted(
@@ -63,7 +62,7 @@ open class TypeScriptEmitter(val emitShared: EmitShared = EmitShared()) : Emitte
 
     override fun emit(type: Type, module: Module) =
         """
-            |${type.importReferences().distinctBy { it.value }.map { "import {${it.value}} from '../model'" }.joinToString("\n") { it.trimStart() }}
+            |${type.importReferences().distinctBy { it.value }.map { "import {${it.value}} from './${it.value}'" }.joinToString("\n") { it.trimStart() }}
             |export type ${type.identifier.sanitizeSymbol()} = {
             |${type.shape.emit()}
             |}
