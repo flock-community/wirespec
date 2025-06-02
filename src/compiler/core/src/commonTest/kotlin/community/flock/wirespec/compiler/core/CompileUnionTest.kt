@@ -157,7 +157,7 @@ class CompileUnionTest {
             |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
             |}
             |
-            |import {UserAccount} from '../model'
+            |import {UserAccount} from './UserAccount'
             |export type User = {
             |  "username": string,
             |  "account": UserAccount
