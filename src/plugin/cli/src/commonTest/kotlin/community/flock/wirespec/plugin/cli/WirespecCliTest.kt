@@ -167,9 +167,9 @@ class WirespecCliTest {
             |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
             |}
             |
-            |import {Category} from '../model/Category'
-            |import {Tag} from '../model/Tag'
-            |import {PetStatus} from '../model/PetStatus'
+            |import {Category} from './Category'
+            |import {Tag} from './Tag'
+            |import {PetStatus} from './PetStatus'
             |export type Pet = {
             |  "id": number | undefined,
             |  "category": Category | undefined,
