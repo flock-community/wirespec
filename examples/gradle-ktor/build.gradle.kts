@@ -117,7 +117,7 @@ tasks.register<ConvertWirespecTask>("wirespec-openapi") {
     packageName = "community.flock.wirespec.generated.openapi"
     languages = listOf(Language.Wirespec)
     format = Format.OpenAPIV3
-    preProcessor = { it.replaceFirst("{", "{ \"test\": \"test\", ") }
+    preProcessor = { it.replaceFirst("http://www.apache.org/licenses/LICENSE-2.0.html", "https://flock.community") }
 }
 
 class KotlinSerializableEmitter : KotlinEmitter(PackageName("community.flock.wirespec.generated.kotlin")) {
