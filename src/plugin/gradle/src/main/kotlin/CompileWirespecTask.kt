@@ -33,7 +33,7 @@ abstract class CompileWirespecTask : BaseWirespecTask() {
         val outputPath = output.get().asFile.absolutePath
         val sources = when (inputPath) {
             null -> throw IsNotAFileOrDirectory(null)
-            is SourcePath -> nonEmptySetOf(inputPath.readFromClasspath())
+            is SourcePath -> nonEmptySetOf(inputPath.readFromClasspath({ it }))
             is DirectoryPath -> Directory(inputPath).wirespecSources().or(::handleError)
             is FilePath -> when (inputPath.extension) {
                 Wirespec -> nonEmptySetOf(Source<Wirespec>(inputPath.name, inputPath.read()))

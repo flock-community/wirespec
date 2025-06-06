@@ -104,14 +104,14 @@ abstract class BaseWirespecTask : DefaultTask() {
         .toNonEmptySetOrNull()
         ?: throw PickAtLeastOneLanguageOrEmitter()
 
-    inline fun <reified E : Source.Type> SourcePath.readFromClasspath(): Source<E> {
+    inline fun <reified E : Source.Type> SourcePath.readFromClasspath(preProcess: ((String) -> String)): Source<E> {
         val file = File(value)
         val classLoader = javaClass.classLoader
-        val inputStream =
-            classLoader.getResourceAsStream(value) ?: error("Could not find file: $value on the classpath.")
+        val inputStream = classLoader
+            .getResourceAsStream(value) ?: error("Could not find file: $value on the classpath.")
         val content = inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
         val name = file.name.split(".").first()
-        return Source<E>(name = Name(name), content = content)
+        return Source<E>(name = Name(name), content = preProcess(content))
     }
 
     protected fun handleError(string: String): Nothing = throw RuntimeException(string)

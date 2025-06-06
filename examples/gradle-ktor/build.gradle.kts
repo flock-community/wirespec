@@ -4,8 +4,10 @@ import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.gradle.CompileWirespecTask
+import community.flock.wirespec.plugin.gradle.ConvertWirespecTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -44,6 +46,7 @@ dependencies {
 tasks.withType<KotlinCompile> {
     dependsOn("wirespec-kotlin")
     dependsOn("wirespec-typescript")
+    dependsOn("wirespec-openapi")
     compilerOptions {
         freeCompilerArgs.add("-Xjsr305=strict")
     }
@@ -52,6 +55,7 @@ tasks.withType<KotlinCompile> {
 tasks.withType<SpotlessTask> {
     dependsOn("wirespec-kotlin")
     dependsOn("wirespec-typescript")
+    dependsOn("wirespec-openapi")
 }
 
 sourceSets {
@@ -104,6 +108,16 @@ tasks.register<CompileWirespecTask>("wirespec-typescript") {
     output = layout.buildDirectory.dir("generated")
     packageName = "community.flock.wirespec.generated.typescript"
     languages = listOf(Language.TypeScript)
+}
+
+tasks.register<ConvertWirespecTask>("wirespec-openapi") {
+    description = "Conver OpenApi to Wirespec"
+    input = layout.projectDirectory.file("src/main/openapi/petstorev3.json")
+    output = layout.buildDirectory.dir("generated")
+    packageName = "community.flock.wirespec.generated.openapi"
+    languages = listOf(Language.Wirespec)
+    format = Format.OpenAPIV3
+    preProcessor = { it.replaceFirst("http://www.apache.org/licenses/LICENSE-2.0.html", "https://flock.community") }
 }
 
 class KotlinSerializableEmitter : KotlinEmitter(PackageName("community.flock.wirespec.generated.kotlin")) {

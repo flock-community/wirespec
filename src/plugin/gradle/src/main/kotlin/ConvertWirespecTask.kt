@@ -34,20 +34,26 @@ abstract class ConvertWirespecTask : BaseWirespecTask() {
     @get:Option(option = "format", description = "formats list")
     abstract val format: Property<Format>
 
+    @get:Input
+    @get:Option(option = "preProcessor", description = "pre-processor")
+    abstract val preProcessor: Property<(String) -> String>
+
     @TaskAction
     fun convert() {
+        val preProcessorFunction = preProcessor.getOrElse({ it })
         val inputPath = getFullPath(input.get().asFile.absolutePath).or(::handleError)
         val outputPath = output.get().asFile.absolutePath
         val sources: Source<JSON> = when (inputPath) {
             null -> throw IsNotAFileOrDirectory(null)
-            is SourcePath -> inputPath.readFromClasspath()
+            is SourcePath -> inputPath.readFromClasspath(preProcessorFunction)
             is DirectoryPath -> throw ConvertNeedsAFile()
             is FilePath -> when (inputPath.extension) {
-                JSON -> Source(inputPath.name, inputPath.read())
-                Avro -> Source(inputPath.name, inputPath.read())
+                JSON -> Source(inputPath.name, preProcessorFunction(inputPath.read()))
+                Avro -> Source(inputPath.name, preProcessorFunction(inputPath.read()))
                 else -> throw JSONFileError()
             }
         }
+
         ConverterArguments(
             format = format.get(),
             input = nonEmptySetOf(sources),

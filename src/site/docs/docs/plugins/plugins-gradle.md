@@ -38,7 +38,9 @@ tasks.register<ConvertWirespecTask>("wirespec-openapi") {
     description = "Convert JSON to OpenAPISpec"
     input = layout.projectDirectory.file("src/main/openapi/schema.json")
     output = layout.buildDirectory.dir("openapi")
-    format.set(Format.OpenAPIV2)
+    format = Format.OpenAPIV2
+    // Example of using preProcessor to modify the input content before conversion
+    preProcessor = { it }
 }
 
 // Example of using a custom emitter class
@@ -49,8 +51,8 @@ tasks.register<CompileWirespecTask>("wirespec-kotlin") {
     output = layout.buildDirectory.dir("generated")
     packageName.set("community.flock.wirespec.generated.kotlin")
     emitterClass.set(KotlinSerializableEmitter::class.java)
-    shared.set(true)
-    strict.set(false)
+    shared = true
+    strict = false
 }
 
 // Example of a custom emitter class
@@ -104,6 +106,7 @@ This task converts from JSON or Avro to other formats.
 - `input`: RegularFileProperty - The input file (JSON or Avro)
 - `output`: DirectoryProperty - The output directory for generated code
 - `format`: Property&lt;Format&gt; - The target format (OpenAPIV2, OpenAPIV3, Avro)
+- `preProcessor`: Property&lt;(String) -> String&gt; - Function to preprocess the input content before conversion
 - `packageName`: Property&lt;String&gt; - Package name for generated code
 - `emitterClass`: Property&lt;Class&lt;\*&gt;&gt; - Custom emitter class
 - `shared`: Property&lt;Boolean&gt; - Whether to emit shared code (default: true)
