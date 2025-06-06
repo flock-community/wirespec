@@ -11,16 +11,10 @@ import kotlin.reflect.javaType
  * A reusable implementation of Wirespec.Serialization that uses Jackson for serialization and deserialization.
  * This class implements parameter serialization and deserialization using a private ParamSerialization field.
  */
-@OptIn(ExperimentalStdlibApi::class)
 class WirespecSerialization(
     objectMapper: ObjectMapper,
-) : Serialization<String> {
-
-    private val queryParamSerde: ParamSerialization = DefaultParamSerialization()
-
-    override fun <T> serializeParam(value: T, kType: KType): List<String> = queryParamSerde.serializeParam(value, kType)
-
-    override fun <T> deserializeParam(values: List<String>, kType: KType): T = queryParamSerde.deserializeParam(values, kType)
+) : Serialization<String>,
+    ParamSerialization by DefaultParamSerialization() {
 
     private val wirespecObjectMapper = objectMapper.copy().registerModule(WirespecModuleKotlin())
 
@@ -29,6 +23,8 @@ class WirespecSerialization(
         else -> wirespecObjectMapper.writeValueAsString(t)
     }
 
+    @Suppress("UNCHECKED_CAST")
+    @OptIn(ExperimentalStdlibApi::class)
     override fun <T> deserialize(raw: String, kType: KType): T = when {
         kType.classifier == String::class -> raw as T
         else ->

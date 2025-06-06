@@ -20,6 +20,7 @@ class WirespecResponseBodyAdvice(
 
     override fun supports(returnType: MethodParameter, converterType: Class<out HttpMessageConverter<*>?>): Boolean = Wirespec.Response::class.java.isAssignableFrom(returnType.parameterType)
 
+    @Suppress("UNCHECKED_CAST")
     override fun beforeBodyWrite(
         body: Any?,
         returnType: MethodParameter,

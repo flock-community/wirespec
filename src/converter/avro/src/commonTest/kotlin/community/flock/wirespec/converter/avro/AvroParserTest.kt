@@ -7,6 +7,9 @@ import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
+import io.kotest.assertions.throwables.shouldNotThrow
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.shouldBe
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -21,7 +24,7 @@ class AvroParserTest {
         val path = Path("src/commonTest/resources/customer.avsc")
         val resource = SystemFileSystem.source(path).buffered().readString()
 
-        AvroParser.parse(ModuleContent("", resource))
+        AvroParser.parse(ModuleContent("", resource), true)
     }
 
     @Test
@@ -29,12 +32,9 @@ class AvroParserTest {
         val path = Path("src/commonTest/resources/union_simple.avsc")
         val resource = SystemFileSystem.source(path).buffered().readString()
 
-        try {
-            AvroParser.parse(ModuleContent("", resource))
-            assertEquals(true, false)
-        } catch (e: Exception) {
-            assertEquals("Cannot have multiple SimpleTypes in Union", e.message)
-        }
+        shouldThrow<Exception> {
+            AvroParser.parse(ModuleContent("", resource), true)
+        }.message shouldBe "Cannot have multiple SimpleTypes in Union"
     }
 
     @Test
@@ -42,10 +42,8 @@ class AvroParserTest {
         val path = Path("src/commonTest/resources/union_complex.avsc")
         val resource = SystemFileSystem.source(path).buffered().readString()
 
-        try {
-            AvroParser.parse(ModuleContent("", resource))
-        } catch (e: Exception) {
-            assertEquals("Cannot have multiple SimpleTypes in Union", e.message)
+        shouldNotThrow<Exception> {
+            AvroParser.parse(ModuleContent("", resource), true)
         }
     }
 
@@ -54,7 +52,7 @@ class AvroParserTest {
         val path = Path("src/commonTest/resources/example.avsc")
         val resource = SystemFileSystem.source(path).buffered().readString()
 
-        val ast = AvroParser.parse(ModuleContent("", resource))
+        val ast = AvroParser.parse(ModuleContent("", resource), true)
 
         assertEquals(
             listOf("User", "EmailAddress", "TwitterAccount", "OAuthStatus", "ToDoItem", "ToDoStatus", "User"),

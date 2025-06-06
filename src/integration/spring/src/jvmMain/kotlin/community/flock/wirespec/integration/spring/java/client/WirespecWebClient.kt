@@ -14,6 +14,7 @@ class WirespecWebClient(
     private val client: WebClient,
     private val wirespecSerde: Serialization<String>,
 ) {
+    @Suppress("UNCHECKED_CAST")
     fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> send(
         request: Req,
     ): CompletableFuture<Res> {

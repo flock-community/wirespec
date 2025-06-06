@@ -28,7 +28,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(project(":src:compiler:core"))
+                api(project(":src:converter:common"))
                 implementation(libs.kotlinx.serialization)
             }
         }

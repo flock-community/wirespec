@@ -6,7 +6,8 @@ sidebar_position: 1
 
 # Wirespec CLI
 
-Wirespec provides a command-line interface (CLI) for various platforms, enabling you to compile Wirespec files and convert between different formats.
+Wirespec provides a command-line interface (CLI) for various platforms, enabling you to compile Wirespec files and
+convert between different formats.
 
 ## Installation
 
@@ -65,8 +66,12 @@ Options:
   --log-level=<text>                                                          Log level: DEBUG, INFO, WARN, ERROR
   --shared                                                                    Generate shared wirespec code
   --strict                                                                    Strict mode
-  -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3)  Language
+  -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3) Language
   -h, --help                                                                  Show this message and exit
+```
+
+```shell
+wirespec compile "type SomeType { someField: String }"
 ```
 
 ### convert
@@ -81,9 +86,13 @@ Options:
   --log-level=<text>                                                          Log level: DEBUG, INFO, WARN, ERROR
   --shared                                                                    Generate shared wirespec code
   --strict                                                                    Strict mode
-  -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3)  Language
+  -l, --language=(Java|Kotlin|TypeScript|Python|Wirespec|OpenAPIV2|OpenAPIV3) Language
   -h, --help                                                                  Show this message and exit
 
 Arguments:
   <format>  Input format
+```
+
+```shell
+wirespec convert OpenAPIV2 "$(cat types/openapi/petstore.json)"
 ```
