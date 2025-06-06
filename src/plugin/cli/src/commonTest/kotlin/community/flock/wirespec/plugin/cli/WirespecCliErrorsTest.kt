@@ -27,9 +27,7 @@ class WirespecCliErrorsTest {
     fun testOnlyCompileArg() = inContext(arrayOf("compile")) {
         statusCode shouldBe 1
         stderr shouldBe """
-            |Usage: wirespec compile [<options>] [<stdin>]
-            |
-            |Error: missing option --language
+            |No input file, directory, or stdin received.
             |
         """.trimMargin()
     }

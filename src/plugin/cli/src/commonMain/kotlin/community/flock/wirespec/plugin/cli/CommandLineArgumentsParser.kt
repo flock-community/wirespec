@@ -103,7 +103,7 @@ private class Compile(
     private val stdin by argument(help = "stdin").optional()
     private val languages by option(*Options.Language.flags, help = "Language")
         .choice(choices = Language.toMap(), ignoreCase = true)
-        .multiple(required = true)
+        .multiple(default = listOf(Language.Kotlin))
 
     override fun run() {
         val inputPath = getFullPath(input).getOrElse { throw CliktError(it.message) }
