@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test
 
 class AvroKotlinEmitterTest {
 
-    private val emitter = AvroKotlinEmitter(PackageName("packageName"), EmitShared(true))
+    private val emitter = AvroEmitter(PackageName("packageName"), EmitShared(true))
 
     @Test
     fun emitTypeFunctionBodyTest() {
