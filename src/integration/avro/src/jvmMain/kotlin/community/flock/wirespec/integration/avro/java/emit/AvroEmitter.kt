@@ -13,7 +13,7 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.integration.avro.Utils
 import community.flock.wirespec.integration.avro.Utils.isEnum
 
-class AvroJavaEmitter(private val packageName: PackageName, emitShared: EmitShared) : JavaEmitter(packageName, emitShared) {
+class AvroEmitter(private val packageName: PackageName, emitShared: EmitShared) : JavaEmitter(packageName, emitShared) {
 
     private fun emitAvroSchema(type: Definition, module: Module) = Utils.emitAvroSchema(packageName, type, module)
         ?.replace("\\\"<<<<<", "\" + ")

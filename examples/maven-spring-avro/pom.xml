@@ -77,7 +77,7 @@
                             <input>${project.basedir}/src/main/avro/test_metadata.avsc</input>
                             <output>${project.build.directory}/generated-sources</output>
                             <format>Avro</format>
-                            <emitterClass>community.flock.wirespec.integration.avro.java.emit.AvroJavaEmitter</emitterClass>
+                            <emitterClass>community.flock.wirespec.integration.avro.java.emit.AvroEmitter</emitterClass>
                             <packageName>com.eventloopsoftware.kafka.metadata</packageName>
                             <shared>true</shared>
                         </configuration>
@@ -91,7 +91,7 @@
                             <input>${project.basedir}/src/main/avro/test_avro_001.avsc</input>
                             <output>${project.build.directory}/generated-sources</output>
                             <format>Avro</format>
-                            <emitterClass>community.flock.wirespec.integration.avro.java.emit.AvroJavaEmitter</emitterClass>
+                            <emitterClass>community.flock.wirespec.integration.avro.java.emit.AvroEmitter</emitterClass>
                             <packageName>com.eventloopsoftware.kafka</packageName>
                         </configuration>
                     </execution>

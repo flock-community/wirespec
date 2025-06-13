@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test
 
 class AvroJavaEmitterTest {
 
-    private val emitter = AvroJavaEmitter(PackageName("packageName"), EmitShared(true))
+    private val emitter = AvroEmitter(PackageName("packageName"), EmitShared(true))
 
     @Test
     fun emitRootFunctionBodyTest() {

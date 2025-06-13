@@ -18,6 +18,8 @@ class CompileChannelTest {
         val kotlin = """
             |package community.flock.wirespec.generated.channel
             |
+            |
+            |
             |interface QueueChannel {
             |   operator fun invoke(message: String)
             |}

@@ -184,8 +184,8 @@ open class JavaEmitter(
             ""
         }
 
-    fun Definition.emitImports() = importReferences()
-        .filter { this.identifier.value != it.value }
+    private fun Definition.emitImports() = importReferences()
+        .filter { identifier.value != it.value }
         .map { "import ${packageName.value}.model.${it.value};" }.joinToString("\n") { it.trimStart() }
 
 

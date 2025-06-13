@@ -136,11 +136,17 @@ open class KotlinEmitter(
     """.trimMargin()
 
     override fun emit(channel: Channel) = """
+        |${channel.emitImports()}
+        |
         |interface ${emit(channel.identifier)}Channel {
         |   operator fun invoke(message: ${channel.reference.emit()})
         |}
         |
     """.trimMargin()
+
+    private fun Definition.emitImports() = importReferences()
+        .filter { identifier.value != it.value }
+        .map { "import ${packageName.value}.model.${it.value};" }.joinToString("\n") { it.trimStart() }
 
     override fun emit(endpoint: Endpoint) = """
         |${endpoint.importReferences().map { "import ${packageName.value}.model.${it.value}" }.joinToString("\n") { it.trimStart() }}
