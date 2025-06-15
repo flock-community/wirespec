@@ -11,13 +11,20 @@ image: /img/blog/bunq-hero.png
 
 ## Introduction
 
-The Bunq SDK project emerged from the Flock innovation days (https://flock.community). During these innovation days, the team took on an exciting challenge: to generate four different SDKs (Java, Kotlin, TypeScript/JavaScript, and Python) from a single OpenAPI specification using Wirespec (https://wirespec.io).
+The Bunq SDK project emerged from the Flock innovation days (https://flock.community). During these innovation days, the
+team took on an exciting challenge: to generate four different SDKs (Java, Kotlin, TypeScript/JavaScript, and Python)
+from a single OpenAPI specification using Wirespec (https://wirespec.io). Note that Bunq is used here as an illustrative
+example to demonstrate the capabilities of Wirespec.
 
-This approach addresses a common problem in API development - maintaining consistent client libraries across multiple programming languages. By using a single source of truth (the OpenAPI specification) and an automated code generation tool, the team was able to ensure that all SDKs provide the same functionality and follow the same patterns, while still feeling native to each language.
+This approach addresses a common problem in API development - maintaining consistent client libraries across multiple
+programming languages. By using a single source of truth (the OpenAPI specification) and an automated code generation
+tool, the team was able to ensure that all SDKs provide the same functionality and follow the same patterns, while still
+feeling native to each language.
 
 ## Challenges of the Project
 
-Creating SDKs from an OpenAPI specification isn't always straightforward. The team faced several challenges during the implementation:
+Creating SDKs from an OpenAPI specification isn't always straightforward. We faced several challenges during the
+implementation. Let's explore some of the key challenges that arose during this process and how we addressed them:
 
 ### Specification vs. Implementation Mismatches
 
