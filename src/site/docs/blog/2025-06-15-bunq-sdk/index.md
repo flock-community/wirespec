@@ -11,9 +11,11 @@ image: /img/blog/bunq-hero.png
 
 ## Introduction
 
+Bunq is a Dutch digital bank that offers a modern banking experience through its mobile app and API. As part of their developer ecosystem, bunq maintains several official SDKs for different programming languages to facilitate integration with their banking services.
+
 The Bunq SDK project emerged from the Flock innovation days (https://flock.community). During these innovation days, the
 team took on an exciting challenge: to generate four different SDKs (Java, Kotlin, TypeScript/JavaScript, and Python)
-from a single OpenAPI specification using Wirespec (https://wirespec.io). Note that Bunq is used here as an illustrative
+from a single OpenAPI specification using Wirespec (https://wirespec.io). The complete project is available in our [bunq-SDK repository on GitHub](https://github.com/flock-community/bunq-sdk). Note that Bunq is used here as an illustrative
 example to demonstrate the capabilities of Wirespec.
 
 This approach addresses a common problem in API development - maintaining consistent client libraries across multiple
