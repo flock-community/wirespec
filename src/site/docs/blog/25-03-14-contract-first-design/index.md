@@ -4,7 +4,7 @@ slug: /contract-first-design
 description: Learn about contract-first API development
 authors: [wilmveel]
 tags: [api, contract-first]
-image: /img/code-snippet.png
+image: /img/blog/contract-first-design.png
 ---
 
 ## A Contract-First Design Approach
