@@ -6,7 +6,6 @@ import arrow.core.getOrElse
 import arrow.core.raise.either
 import arrow.core.toNonEmptySetOrNull
 import community.flock.wirespec.compiler.core.emit.common.FileExtension.Wirespec
-import community.flock.wirespec.plugin.io.Source.Type.Wirespec
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -58,13 +57,13 @@ fun FilePath.write(string: String) = Path(toString())
             .flush()
     }
 
-fun Directory.wirespecSources(): Either<WirespecFileError, NonEmptySet<Source<Wirespec>>> = either {
+fun Directory.wirespecSources(): Either<WirespecFileError, NonEmptySet<Source<Source.Type.Wirespec>>> = either {
     Path(path.value)
         .let(SystemFileSystem::list)
         .filter(::isRegularFile)
         .filter(::isWirespecFile)
         .map { FilePath(it.toString()) to SystemFileSystem.source(it).buffered().readString() }
-        .map { (path, source) -> Source<Wirespec>(name = path.name, content = source) }
+        .map { (path, source) -> Source<Source.Type.Wirespec>(name = path.name, content = source) }
         .toNonEmptySetOrNull()
         ?: raise(WirespecFileError())
 }

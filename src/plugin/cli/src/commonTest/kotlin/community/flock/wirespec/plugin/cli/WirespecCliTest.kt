@@ -1,6 +1,5 @@
 package community.flock.wirespec.plugin.cli
 
-import com.github.ajalt.clikt.core.main
 import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.plugin.compile
