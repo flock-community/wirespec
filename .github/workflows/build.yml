@@ -229,7 +229,16 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE
       - name: Run
         run: |
-          ./gradlew --no-configuration-cache -Dorg.gradle.workers.max=1 publishToSonatype closeSonatypeStagingRepository
+          ./gradlew :src:bom:publishToSonatype closeSonatypeStagingRepository
+          ./gradlew :src:compiler:core:publishToSonatype closeSonatypeStagingRepository
+          ./gradlew :src:compiler:lib:publishToSonatype closeSonatypeStagingRepository
+          ./gradlew :src:integration:avro:publishToSonatype closeSonatypeStagingRepository
+          ./gradlew :src:integration:jackson:publishToSonatype closeSonatypeStagingRepository
+          ./gradlew :src:integration:spring:publishToSonatype closeSonatypeStagingRepository
+          ./gradlew :src:integration:wirespec:publishToSonatype closeSonatypeStagingRepository
+          ./gradlew :src:plugin:gradle:publishToSonatype closeSonatypeStagingRepository
+          ./gradlew :src:plugin:maven:publishToSonatype closeSonatypeStagingRepository
+          ./gradlew :src:tools:generator:publishToSonatype closeSonatypeStagingRepository
 
   release-lib-npm:
 
