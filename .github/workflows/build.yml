@@ -209,10 +209,10 @@ jobs:
     runs-on: ubuntu-latest
 
     needs:
-      - build
+      - version
 
     env:
-      VERSION: "0.0.0"
+      VERSION: ${{needs.version.outputs.version}}
       SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
       SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
       SONATYPE_STAGING_PROFILE_ID: "staging-${{needs.version.outputs.version}}"
@@ -226,7 +226,6 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           gpg-passphrase: GPG_PASSPHRASE
       - name: Run
