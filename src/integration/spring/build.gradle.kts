@@ -1,5 +1,5 @@
 plugins {
-    id("root.publication")
+    id("module.publication")
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
