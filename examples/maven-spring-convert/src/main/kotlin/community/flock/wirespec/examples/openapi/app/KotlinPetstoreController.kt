@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/kotlin/pets")
 class KotlinPetstoreController(
-    private val kotlinPetstoreClient: KotlinPetstoreClient,
+    private val kotlinPetstoreClient: KotlinPetstoreClient
 ) {
 
     @PostMapping
