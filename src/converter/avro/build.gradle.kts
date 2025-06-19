@@ -1,4 +1,5 @@
 plugins {
+    id("root.publication")
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlinx.serialization)
 }
