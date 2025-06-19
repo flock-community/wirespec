@@ -1,8 +1,12 @@
+import java.time.Duration
+
 plugins {
     id("io.github.gradle-nexus.publish-plugin")
 }
 
 nexusPublishing {
+    connectTimeout = Duration.ofMinutes(10)
+    clientTimeout = Duration.ofMinutes(10)
     repositories {
         sonatype {
             nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
