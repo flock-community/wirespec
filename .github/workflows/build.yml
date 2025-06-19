@@ -208,6 +208,9 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    needs:
+      - build
+
     env:
       VERSION: "0.0.0"
       SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
