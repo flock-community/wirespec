@@ -208,13 +208,11 @@ jobs:
 
     runs-on: macos-latest
 
-    needs:
-      - version
-
     env:
-      VERSION: ${{needs.version.outputs.version}}
+      VERSION: "0.0.0"
       SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
       SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+      SONATYPE_STAGING_PROFILE_ID: "72f97d27-6a0a-44c4-87af-ac6224ba58a7"
       GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
       GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
@@ -229,7 +227,7 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE
       - name: Run
         run: |
-          ./gradlew -Dorg.gradle.parallel=false publishToSonatype closeSonatypeStagingRepository
+          ./gradlew publishToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false
 
   release-lib-npm:
 

@@ -13,6 +13,7 @@ nexusPublishing {
             snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
             username.set(System.getenv("SONATYPE_USERNAME"))
             password.set(System.getenv("SONATYPE_PASSWORD"))
+            stagingProfileId.set(System.getenv("SONATYPE_STAGING_PROFILE_ID"))
         }
     }
 }
