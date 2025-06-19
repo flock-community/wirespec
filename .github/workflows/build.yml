@@ -206,7 +206,7 @@ jobs:
 
   release-maven-central:
 
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
 
     needs:
       - version
@@ -215,6 +215,7 @@ jobs:
       VERSION: ${{needs.version.outputs.version}}
       SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
       SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+      SONATYPE_STAGING_PROFILE_ID: "staging-${{needs.version.outputs.version}}"
       GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
       GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
@@ -229,7 +230,7 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE
       - name: Run
         run: |
-          ./gradlew -Dorg.gradle.parallel=false publishToSonatype closeSonatypeStagingRepository
+          ./gradlew publishToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false
 
   release-lib-npm:
 

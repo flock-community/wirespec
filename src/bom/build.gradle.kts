@@ -1,4 +1,5 @@
 plugins {
+    id("module.publication")
     alias(libs.plugins.gradlebom.generator)
 }
 
