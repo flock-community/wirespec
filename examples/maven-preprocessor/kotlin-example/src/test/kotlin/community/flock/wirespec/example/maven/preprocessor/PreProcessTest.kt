@@ -1,9 +1,8 @@
 package community.flock.wirespec.example.maven.preprocessor
 
+import community.flock.wirespec.generated.endpoint.AddPetProcessed
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-
-import community.flock.wirespec.generated.endpoint.AddPetProcessed
 
 class PreProcessTest {
 

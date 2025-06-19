@@ -23,6 +23,7 @@ maven_plugin = "0.4.3"
 maven_plugin_api = "3.9.8"
 maven_plugin_annotations = "3.13.1"
 maven_project = "2.2.1"
+nexus-publish = "2.0.0"
 spotless = "7.0.2"
 spring_boot = "3.3.4"
 spring_webflux = "6.1.13"
@@ -53,6 +54,7 @@ kotlinx_serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-
 maven_plugin_api = { module = "org.apache.maven:maven-plugin-api", version.ref = "maven_plugin_api" }
 maven_plugin_annotations = { module = "org.apache.maven.plugin-tools:maven-plugin-annotations", version.ref = "maven_plugin_annotations" }
 maven_project = { module = "org.apache.maven:maven-project", version.ref = "maven_project" }
+nexus-publish = { module = "io.github.gradle-nexus.publish-plugin:io.github.gradle-nexus.publish-plugin.gradle.plugin", version.ref = "nexus-publish" }
 spring_boot_web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring_boot" }
 spring_webflux = { module = "org.springframework:spring-webflux", version.ref = "spring_webflux" }
 spring_boot_test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring_boot" }

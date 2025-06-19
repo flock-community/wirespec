@@ -10,4 +10,3 @@ type Error {
 endpoint GetUsers GET /api/users -> {
     200 -> User[]
 }
-

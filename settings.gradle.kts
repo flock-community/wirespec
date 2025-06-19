@@ -1,6 +1,7 @@
 rootProject.name = "wirespec"
 
 pluginManagement {
+    includeBuild("plugins/publish-sonatype")
     repositories {
         mavenLocal()
         gradlePluginPortal()

@@ -2,11 +2,11 @@ name: Java CI with Gradle
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "fix-publish" ]
   pull_request:
     branches:
   release:
-    types: [ "created" ]
+    branches: [ "fix-publish-sonatype" ]
 
 concurrency:
   group: ${{ github.ref }}
