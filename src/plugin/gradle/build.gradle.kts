@@ -1,6 +1,5 @@
 plugins {
     id("module.publication")
-    id("module.publication")
     alias(libs.plugins.kotlin.jvm)
     `java-gradle-plugin`
 }
