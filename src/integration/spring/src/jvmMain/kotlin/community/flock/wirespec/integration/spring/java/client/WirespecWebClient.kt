@@ -4,6 +4,7 @@ import community.flock.wirespec.integration.spring.shared.filterNotEmpty
 import community.flock.wirespec.java.Wirespec
 import community.flock.wirespec.java.Wirespec.Serialization
 import org.springframework.http.HttpMethod
+import org.springframework.http.MediaType
 import org.springframework.util.CollectionUtils.toMultiValueMap
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
@@ -47,7 +48,12 @@ class WirespecWebClient(
         .headers { headers ->
             request.headers.filterNotEmpty().forEach { (key, value) -> headers.addAll(key, value) }
         }
-        .bodyValue(request.body)
+        .apply {
+            request.body?.let {
+                contentType(MediaType.APPLICATION_JSON)
+                bodyValue(it)
+            }
+        }
         .exchangeToMono { response ->
             response.bodyToMono(String::class.java)
                 .map { body ->
