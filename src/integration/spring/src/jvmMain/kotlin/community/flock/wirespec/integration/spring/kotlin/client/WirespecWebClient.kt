@@ -40,9 +40,11 @@ class WirespecWebClient(
         .headers { headers ->
             request.headers.filterNotEmpty().forEach { (key, value) -> headers.addAll(key, value) }
         }
-        .apply { request.body?.let {
-            contentType(MediaType.APPLICATION_JSON)
-            bodyValue(it) }
+        .apply {
+            request.body?.let {
+                contentType(MediaType.APPLICATION_JSON)
+                bodyValue(it)
+            }
         }
         .exchangeToMono { response ->
             response.bodyToMono(String::class.java)
