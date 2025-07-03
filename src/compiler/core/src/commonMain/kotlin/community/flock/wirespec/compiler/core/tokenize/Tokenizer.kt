@@ -22,7 +22,34 @@ private tailrec fun LanguageSpec.tokenize(source: String, incompleteTokens: NonE
     val tokens = incompleteTokens + token
     return when (token.type) {
         is EndOfProgram -> tokens
+        is LeftParentheses -> potentialRegex(remaining, tokens)
         else -> tokenize(remaining, tokens)
+    }
+}
+
+private fun LanguageSpec.potentialRegex(
+    source: String,
+    incompleteTokens: NonEmptyList<Token>,
+): NonEmptyList<Token> {
+    val (token, remaining) = extractToken(source, incompleteTokens.last().coordinates)
+    return when (token.type) {
+        is WhiteSpaceExceptNewLine -> potentialRegex(remaining, incompleteTokens)
+        is ForwardSlash -> extractRegex(source.drop(1), "/", incompleteTokens)
+        else -> tokenize(source, incompleteTokens)
+    }
+}
+
+private fun LanguageSpec.extractRegex(source: String, regex: String, incompleteTokens: NonEmptyList<Token>): NonEmptyList<Token> {
+    val escapedForwardSlash = Regex("^\\\\/")
+    val endOfRegex = Regex("^/[gimsuy]*")
+    val match = endOfRegex.find(source)
+    return when {
+        escapedForwardSlash.containsMatchIn(source) -> extractRegex(source.drop(2), regex + source.first(), incompleteTokens)
+        match == null -> extractRegex(source.drop(1), regex + source.first(), incompleteTokens)
+        else -> {
+            val tokens = incompleteTokens + Token(value = regex + match.value, type = RegExp, coordinates = Coordinates())
+            tokenize(source.removePrefix(match.value), tokens)
+        }
     }
 }
 

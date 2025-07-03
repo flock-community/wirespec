@@ -10,6 +10,8 @@ data object QuestionMark : TokenType
 data object Hash : TokenType
 data object Brackets : TokenType
 data object Comment : TokenType
+data object Number : TokenType
+data object Integer : TokenType
 data object Character : TokenType
 data object Arrow : TokenType
 data object Pipe : TokenType
@@ -22,6 +24,7 @@ interface FieldIdentifier : WirespecIdentifier {
     val caseVariants: List<Pair<Regex, CaseVariant>>
 }
 
+data object RegExp : WirespecIdentifier
 sealed interface CaseVariant : WirespecIdentifier
 data object PascalCaseIdentifier : CaseVariant
 data object DromedaryCaseIdentifier : CaseVariant
@@ -32,6 +35,8 @@ data object ScreamingSnakeCaseIdentifier : CaseVariant
 
 sealed interface TypeDefinitionStart : TokenType
 data object LeftCurly : TypeDefinitionStart
+data object LeftParentheses : TypeDefinitionStart
+data object RightParentheses : TypeDefinitionStart
 data object ForwardSlash : TypeDefinitionStart
 data object Equals : TypeDefinitionStart
 
