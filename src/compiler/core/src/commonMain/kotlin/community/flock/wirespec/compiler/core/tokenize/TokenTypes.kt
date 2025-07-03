@@ -26,7 +26,7 @@ interface FieldIdentifier : WirespecIdentifier {
     val caseVariants: List<Pair<Regex, CaseVariant>>
 }
 
-data object RegExp : WirespecIdentifier
+data object RegExp : TokenType
 sealed interface CaseVariant : WirespecIdentifier
 data object PascalCaseIdentifier : CaseVariant
 data object DromedaryCaseIdentifier : CaseVariant

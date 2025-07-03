@@ -38,14 +38,14 @@ object NodeFixtures {
                 Field(
                     identifier = FieldIdentifier("name"),
                     reference = Primitive(
-                        type = Primitive.Type.String,
+                        type = Primitive.Type.String(),
                         isNullable = false,
                     ),
                 ),
                 Field(
                     identifier = FieldIdentifier("description"),
                     reference = Primitive(
-                        type = Primitive.Type.String,
+                        type = Primitive.Type.String(),
                         isNullable = true,
                     ),
                 ),
@@ -53,7 +53,7 @@ object NodeFixtures {
                     identifier = FieldIdentifier("notes"),
                     reference = Reference.Iterable(
                         reference = Primitive(
-                            type = Primitive.Type.String,
+                            type = Primitive.Type.String(),
                             isNullable = false,
                         ),
                         isNullable = false,

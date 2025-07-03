@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.Test
 
 class ParseTest {
@@ -124,9 +125,92 @@ class ParseTest {
         """.trimMargin()
 
         parser(source)
-            .shouldBeRight().filterIsInstance<Definition>().map { it.comment?.value } shouldBe listOf(
-            "comment Name",
-            "comment Address",
-        )
+            .shouldBeRight()
+            .map { it.comment?.value } shouldBe listOf("comment Name", "comment Address")
+    }
+
+    @Test
+    fun testParserWithRefinedType() {
+        val source = """
+            |type Bla {
+            |  foo: String(/.{0,50}/g)
+            |}
+
+        """.trimMargin()
+
+        parser(source)
+            .shouldBeRight()
+            .apply {
+                size shouldBe 1
+                first().apply {
+                    shouldBeInstanceOf<Type>()
+                    identifier.value shouldBe "Bla"
+                    shape.value.size shouldBe 1
+                    shape.value[0].reference.apply {
+                        shouldBeInstanceOf<Reference.Primitive>()
+                        type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
+                        isNullable shouldBe false
+                        type.pattern shouldBe Reference.Primitive.Type.Pattern("/.{0,50}/g")
+                    }
+                }
+            }
+    }
+
+    @Test
+    fun testParserWithRefinedTypeOptional() {
+        val source = """
+            |type Bla {
+            |  foo: String?(/.{0,50}/g)
+            |}
+
+        """.trimMargin()
+
+        parser(source)
+            .shouldBeRight()
+            .apply {
+                size shouldBe 1
+                this[0].apply {
+                    shouldBeInstanceOf<Type>()
+                    identifier.value shouldBe "Bla"
+                    shape.value.size shouldBe 1
+                    shape.value[0].apply {
+                        reference.shouldBeInstanceOf<Reference.Primitive>()
+                        reference.type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
+                        reference.isNullable shouldBe true
+                        reference.type.pattern shouldBe Reference.Primitive.Type.Pattern("/.{0,50}/g")
+                    }
+                }
+            }
+    }
+
+    @Test
+    fun testParserWithRefinedTypeArray() {
+        val source = """
+            |type Bla {
+            |  foo: String?(/.{0,50}/g)[]?
+            |}
+
+        """.trimMargin()
+
+        parser(source)
+            .shouldBeRight()
+            .apply {
+                size shouldBe 1
+                this[0].apply {
+                    shouldBeInstanceOf<Type>()
+                    identifier.value shouldBe "Bla"
+                    shape.value.size shouldBe 1
+                    shape.value[0].reference.apply {
+                        shouldBeInstanceOf<Reference.Iterable>()
+                        isNullable shouldBe true
+                        reference.apply {
+                            shouldBeInstanceOf<Reference.Primitive>()
+                            type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
+                            isNullable shouldBe true
+                            type.pattern shouldBe Reference.Primitive.Type.Pattern("/.{0,50}/g")
+                        }
+                    }
+                }
+            }
     }
 }

@@ -58,7 +58,10 @@ object TypeParser {
         }.let(Type::Shape)
     }
 
-    private fun TokenProvider.parseRefined(identifier: DefinitionIdentifier, comment: Comment?): Either<WirespecException, Refined> = either {
+    private fun TokenProvider.parseRefined(
+        identifier: DefinitionIdentifier,
+        comment: Comment?,
+    ): Either<WirespecException, Refined> = either {
         eatToken().bind()
         when (token.type) {
             is WsString -> Refined(
@@ -67,6 +70,7 @@ object TypeParser {
                 type = Refined.Type.String,
                 validator = parseRefinedValidator().bind(),
             )
+
             else -> raise(WrongTokenException<WsString>(token))
         }
     }
@@ -81,6 +85,7 @@ object TypeParser {
                     else -> raise(WrongTokenException<RegExp>(token))
                 }
             }
+
             else -> raise(WrongTokenException<LeftParentheses>(token))
         }
     }
@@ -103,11 +108,32 @@ object TypeParser {
         }
     }
 
+    private fun TokenProvider.parseWirespecTypePattern(): Either<WirespecException, Reference.Primitive.Type.Pattern?> = either {
+        when (token.type) {
+            is LeftParentheses -> {
+                eatToken().bind()
+                when (token.type) {
+                    is RegExp -> Reference.Primitive.Type.Pattern(token.value)
+                        .also { eatToken<LeftParentheses>().bind() }
+                        .also { eatToken().bind() }
+
+                    else -> raise(WrongTokenException<RegExp>(token))
+                }
+            }
+
+            else -> null
+        }
+    }
+
+
+
     fun TokenProvider.parseWirespecType(type: WirespecType) = parseToken { current ->
         val wirespecType = when (type) {
             is WsString -> { it ->
                 Reference.Primitive(
-                    type = Reference.Primitive.Type.String,
+                    type = Reference.Primitive.Type.String(
+                        pattern = parseWirespecTypePattern().bind(),
+                    ),
                     isNullable = it,
                 )
             }
@@ -121,7 +147,9 @@ object TypeParser {
 
             is WsInteger -> { it ->
                 Reference.Primitive(
-                    type = Reference.Primitive.Type.Integer(type.precision.toPrimitivePrecision()),
+                    type = Reference.Primitive.Type.Integer(
+                        precision = type.precision.toPrimitivePrecision(),
+                    ),
                     isNullable = it,
                 )
             }
@@ -158,6 +186,7 @@ object TypeParser {
                     isNullable = isNullable().bind(),
                 )
             }
+
             else -> wirespecType
         }
     }

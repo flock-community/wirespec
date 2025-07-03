@@ -12,13 +12,16 @@ import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
 import community.flock.wirespec.compiler.utils.Logger
+import kotlin.jvm.JvmName
 
 class TokenProvider(private val logger: Logger, tokens: NonEmptyList<Token>) {
 
     var token = tokens.head
 
     private val tokenIterator = tokens.tail.iterator()
-    private var nextToken = nextToken()
+
+    @PublishedApi
+    internal var nextToken = nextToken()
 
     private val definitionNames: List<String> = tokens
         .zipWithNext()
@@ -49,10 +52,18 @@ class TokenProvider(private val logger: Logger, tokens: NonEmptyList<Token>) {
         previousToken
     }
 
+    @JvmName("eatTokenTyped")
+    inline fun <reified T : TokenType> eatToken(): Either<WirespecException, Token> = either {
+        val previousToken = token
+        token = nextToken ?: raise(NextException(previousToken.coordinates))
+        nextToken = nextToken()
+        if (nextToken?.type is T) raise(WrongTokenException<T>(token))
+        token
+    }
+
     fun eatToken(type: TokenType): Either<WirespecException, Token> = either {
         val previousToken = token
         token = nextToken ?: raise(NextException(previousToken.coordinates))
-        if (token.type != type) raise(WrongTokenException(type, token))
         nextToken = nextToken()
         printTokens(previousToken)
         previousToken
@@ -69,7 +80,8 @@ class TokenProvider(private val logger: Logger, tokens: NonEmptyList<Token>) {
         logger.debug("$prev$curr$next")
     }
 
-    private fun nextToken() = catch { tokenIterator.next() }.getOrNull()
+    @PublishedApi
+    internal fun nextToken() = catch { tokenIterator.next() }.getOrNull()
 }
 
 fun NonEmptyList<Token>.toProvider(logger: Logger) = TokenProvider(logger, this)

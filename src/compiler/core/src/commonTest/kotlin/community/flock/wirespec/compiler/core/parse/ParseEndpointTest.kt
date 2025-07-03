@@ -121,7 +121,7 @@ class ParseEndpointTest {
                     Endpoint.Segment.Param(
                         identifier = FieldIdentifier("id"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String,
+                            type = Reference.Primitive.Type.String(),
                             isNullable = false,
                         ),
                     ),
@@ -151,12 +151,12 @@ class ParseEndpointTest {
                 val (one, two) = it
                 one.run {
                     identifier.value shouldBe "name"
-                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String
+                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String()
                     reference.isNullable shouldBe false
                 }
                 two.run {
                     identifier.value shouldBe "date"
-                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String
+                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String()
                     reference.isNullable shouldBe false
                 }
             }
@@ -179,12 +179,12 @@ class ParseEndpointTest {
                 val (one, two) = it
                 one.run {
                     identifier.value shouldBe "name"
-                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String
+                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String()
                     reference.isNullable shouldBe false
                 }
                 two.run {
                     identifier.value shouldBe "date"
-                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String
+                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String()
                     reference.isNullable shouldBe false
                 }
             }
@@ -207,7 +207,7 @@ class ParseEndpointTest {
             .first().run {
                 headers.size shouldBe 1
                 headers.first().identifier.value shouldBe "token"
-                headers.first().reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String
+                headers.first().reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String()
             }
     }
 

@@ -20,7 +20,7 @@ object AvroConverter {
         "float" -> Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P32)
         "double" -> Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P64)
         "bytes" -> Reference.Primitive.Type.Bytes
-        "string" -> Reference.Primitive.Type.String
+        "string" -> Reference.Primitive.Type.String()
         else -> TODO("primitive not mapped ${this.value}")
     }
 

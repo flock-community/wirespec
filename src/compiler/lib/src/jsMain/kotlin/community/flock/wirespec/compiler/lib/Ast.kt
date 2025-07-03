@@ -156,7 +156,7 @@ private fun WsReference.consume(): Reference = when (this) {
 }
 
 private fun WsPrimitiveType.consume() = when (this) {
-    WsPrimitiveType.String -> Reference.Primitive.Type.String
+    WsPrimitiveType.String -> Reference.Primitive.Type.String()
     WsPrimitiveType.Integer -> Reference.Primitive.Type.Integer()
     WsPrimitiveType.Number -> Reference.Primitive.Type.Number()
     WsPrimitiveType.Boolean -> Reference.Primitive.Type.Boolean

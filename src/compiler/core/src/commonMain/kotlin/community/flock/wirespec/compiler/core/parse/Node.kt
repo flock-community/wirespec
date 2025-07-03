@@ -83,19 +83,25 @@ sealed interface Reference : Value<String> {
         val type: Type,
         override val isNullable: Boolean,
     ) : Reference {
+
         sealed interface Type {
             val name: kotlin.String
 
             enum class Precision { P32, P64 }
-            data object String : Type {
+
+            @JvmInline
+            value class Pattern(override val value: kotlin.String) : Value<kotlin.String>
+            data class Bound(val min: kotlin.String, val max: kotlin.String)
+
+            data class String(val pattern: Pattern? = null) : Type {
                 override val name = "String"
             }
 
-            data class Integer(val precision: Precision = P64) : Type {
+            data class Integer(val precision: Precision = P64, val bound: Bound? = null) : Type {
                 override val name = "Integer"
             }
 
-            data class Number(val precision: Precision = P64) : Type {
+            data class Number(val precision: Precision = P64, val bound: Bound? = null) : Type {
                 override val name = "Number"
             }
 

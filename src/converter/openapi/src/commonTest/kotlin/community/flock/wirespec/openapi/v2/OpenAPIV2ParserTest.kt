@@ -38,7 +38,7 @@ class OpenAPIV2ParserTest {
 
         val expected = Iterable(
             reference = Primitive(
-                type = Primitive.Type.String,
+                type = Primitive.Type.String(),
                 isNullable = false,
             ),
             isNullable = true,
@@ -69,11 +69,11 @@ class OpenAPIV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("type"),
-                            reference = Primitive(type = Primitive.Type.String, isNullable = true),
+                            reference = Primitive(type = Primitive.Type.String(), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("message"),
-                            reference = Primitive(type = Primitive.Type.String, isNullable = true),
+                            reference = Primitive(type = Primitive.Type.String(), isNullable = true),
                         ),
                     ),
                 ),
@@ -90,7 +90,7 @@ class OpenAPIV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("name"),
-                            reference = Primitive(type = Primitive.Type.String, isNullable = true),
+                            reference = Primitive(type = Primitive.Type.String(), isNullable = true),
                         ),
                     ),
                 ),
@@ -111,13 +111,13 @@ class OpenAPIV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("name"),
-                            reference = Primitive(type = Primitive.Type.String, isNullable = false),
+                            reference = Primitive(type = Primitive.Type.String(), isNullable = false),
                         ),
                         Field(
                             identifier = FieldIdentifier("photoUrls"),
                             reference = Iterable(
                                 reference = Primitive(
-                                    type = Primitive.Type.String,
+                                    type = Primitive.Type.String(),
                                     isNullable = false,
                                 ),
                                 isNullable = false,
@@ -149,7 +149,7 @@ class OpenAPIV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("name"),
-                            reference = Primitive(type = Primitive.Type.String, isNullable = true),
+                            reference = Primitive(type = Primitive.Type.String(), isNullable = true),
                         ),
                     ),
                 ),
@@ -177,7 +177,7 @@ class OpenAPIV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("shipDate"),
-                            reference = Primitive(type = Primitive.Type.String, isNullable = true),
+                            reference = Primitive(type = Primitive.Type.String(), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("status"),
@@ -202,27 +202,27 @@ class OpenAPIV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("username"),
-                            reference = Primitive(type = Primitive.Type.String, isNullable = true),
+                            reference = Primitive(type = Primitive.Type.String(), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("firstName"),
-                            reference = Primitive(type = Primitive.Type.String, isNullable = true),
+                            reference = Primitive(type = Primitive.Type.String(), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("lastName"),
-                            reference = Primitive(type = Primitive.Type.String, isNullable = true),
+                            reference = Primitive(type = Primitive.Type.String(), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("email"),
-                            reference = Primitive(type = Primitive.Type.String, isNullable = true),
+                            reference = Primitive(type = Primitive.Type.String(), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("password"),
-                            reference = Primitive(type = Primitive.Type.String, isNullable = true),
+                            reference = Primitive(type = Primitive.Type.String(), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("phone"),
-                            reference = Primitive(type = Primitive.Type.String, isNullable = true),
+                            reference = Primitive(type = Primitive.Type.String(), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("userStatus"),
@@ -317,7 +317,7 @@ class OpenAPIV2ParserTest {
                         Field(
                             identifier = FieldIdentifier("a"),
                             reference = Primitive(
-                                type = Primitive.Type.String,
+                                type = Primitive.Type.String(),
                                 isNullable = true,
                             ),
                         ),

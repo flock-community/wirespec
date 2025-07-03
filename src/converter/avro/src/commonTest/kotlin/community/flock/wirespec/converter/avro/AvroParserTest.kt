@@ -76,14 +76,14 @@ class AvroParserTest {
                         Field(
                             identifier = FieldIdentifier("username"),
                             reference = Reference.Primitive(
-                                type = Reference.Primitive.Type.String,
+                                type = Reference.Primitive.Type.String(),
                                 isNullable = false,
                             ),
                         ),
                         Field(
                             identifier = FieldIdentifier("passwordHash"),
                             reference = Reference.Primitive(
-                                type = Reference.Primitive.Type.String,
+                                type = Reference.Primitive.Type.String(),
                                 isNullable = false,
                             ),
                         ),

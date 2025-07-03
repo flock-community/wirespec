@@ -5,7 +5,6 @@ import community.flock.wirespec.compiler.core.emit.common.EmitShared
 import community.flock.wirespec.compiler.core.emit.common.PackageName
 import community.flock.wirespec.compiler.core.emit.common.Spacer
 import community.flock.wirespec.compiler.core.parse.Endpoint
-import community.flock.wirespec.compiler.utils.Logger
 
 class SpringKotlinEmitter(packageName: PackageName) : KotlinEmitter(packageName, EmitShared(false)) {
     override fun emitHandleFunction(endpoint: Endpoint): String {

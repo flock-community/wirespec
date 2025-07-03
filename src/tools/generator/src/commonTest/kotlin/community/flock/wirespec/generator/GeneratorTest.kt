@@ -19,10 +19,10 @@ import kotlin.test.assertNotEquals
 class GeneratorTest {
 
     private val src = """
-        |type UUID /^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}${'$'}/g
-        |type Name /^[0-9a-zA-Z]{1,50}${'$'}/g
-        |type DutchPostalCode /^([0-9]{4}[A-Z]{2})${'$'}/g
-        |type Date /^([0-9]{2}-[0-9]{2}-20[0-9]{2})${'$'}/g
+        |type UUID -> String(/^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$/g)
+        |type Name -> String(/^[0-9a-zA-Z]{1,50}${'$'}/g)
+        |type DutchPostalCode -> String(/^([0-9]{4}[A-Z]{2})${'$'}/g)
+        |type Date -> String(/^([0-9]{2}-[0-9]{2}-20[0-9]{2})${'$'}/g)
         |
         |type Address {
         |  street: Name,
@@ -60,7 +60,7 @@ class GeneratorTest {
     fun generatePrimitive() {
         val ast = parser(src)
         val random = Random(0L)
-        val res = ast.generate(Primitive(type = Type.String, isNullable = false), random)
+        val res = ast.generate(Primitive(type = Type.String(), isNullable = false), random)
         val expect = "ZKN8V5p8ktkmmMX"
         assertEquals(expect, res.jsonPrimitive.content)
     }

@@ -210,7 +210,7 @@ object OpenAPIV2Parser : Parser {
         .flatMap { flatten(it.value, className(it.key)) }
 
     private fun String.mapType(format: String?) = when (lowercase()) {
-        "string" -> Reference.Primitive.Type.String
+        "string" -> Reference.Primitive.Type.String()
         "number" -> Reference.Primitive.Type.Number(if (format == "float") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
         "integer" -> Reference.Primitive.Type.Integer(if (format == "int32") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
         "boolean" -> Reference.Primitive.Type.Boolean
@@ -457,7 +457,7 @@ object OpenAPIV2Parser : Parser {
     private fun ReferenceObject.getReference() = ref.value.split("/")[2]
 
     private fun OpenapiType.toPrimitive(format: String?) = when (this) {
-        OpenapiType.STRING -> Reference.Primitive.Type.String
+        OpenapiType.STRING -> Reference.Primitive.Type.String()
         OpenapiType.INTEGER -> Reference.Primitive.Type.Integer(if (format == "int32") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
         OpenapiType.NUMBER -> Reference.Primitive.Type.Number(if (format == "float") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
         OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean
