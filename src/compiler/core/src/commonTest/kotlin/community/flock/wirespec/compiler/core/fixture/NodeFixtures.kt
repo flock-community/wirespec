@@ -14,6 +14,7 @@ object NodeFixtures {
     val refined = Refined(
         comment = null,
         identifier = DefinitionIdentifier("UUID"),
+        type = Refined.Type.String,
         validator = Refined.Validator(
             "/^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}\$/",
         ),

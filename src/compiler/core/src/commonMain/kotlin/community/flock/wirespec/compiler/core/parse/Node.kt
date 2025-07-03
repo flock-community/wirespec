@@ -132,8 +132,14 @@ data class Union(
 data class Refined(
     override val comment: Comment?,
     override val identifier: DefinitionIdentifier,
+    val type: Type,
     val validator: Validator,
 ) : Model {
+    enum class Type {
+        String,
+        Integer,
+        Number,
+    }
     data class Validator(override val value: String) : Value<String> {
         val expression = value.split("/").drop(1).dropLast(1).joinToString("/")
     }

@@ -3,20 +3,21 @@ package community.flock.wirespec.compiler.core.parse
 import arrow.core.Either
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
+import community.flock.wirespec.compiler.core.exceptions.WrongTokenException
+import community.flock.wirespec.compiler.core.tokenize.Arrow
 import community.flock.wirespec.compiler.core.tokenize.Brackets
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.Comma
-import community.flock.wirespec.compiler.core.tokenize.EndOfProgram
 import community.flock.wirespec.compiler.core.tokenize.Equals
-import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
+import community.flock.wirespec.compiler.core.tokenize.LeftParentheses
 import community.flock.wirespec.compiler.core.tokenize.Pipe
 import community.flock.wirespec.compiler.core.tokenize.Precision
 import community.flock.wirespec.compiler.core.tokenize.QuestionMark
+import community.flock.wirespec.compiler.core.tokenize.RegExp
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinitionStart
 import community.flock.wirespec.compiler.core.tokenize.TypeIdentifier
-import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
 import community.flock.wirespec.compiler.core.tokenize.WirespecIdentifier
 import community.flock.wirespec.compiler.core.tokenize.WirespecType
 import community.flock.wirespec.compiler.core.tokenize.WsBoolean
@@ -25,7 +26,6 @@ import community.flock.wirespec.compiler.core.tokenize.WsInteger
 import community.flock.wirespec.compiler.core.tokenize.WsNumber
 import community.flock.wirespec.compiler.core.tokenize.WsString
 import community.flock.wirespec.compiler.core.tokenize.WsUnit
-import community.flock.wirespec.compiler.core.tokenize.Comment as CommentToken
 
 object TypeParser {
 
@@ -58,10 +58,30 @@ object TypeParser {
         }.let(Type::Shape)
     }
 
-    private fun TokenProvider.parseRefinedValidator(accumulatedString: String): Either<WirespecException, String> = parseToken {
+    private fun TokenProvider.parseRefined(identifier: DefinitionIdentifier, comment: Comment?): Either<WirespecException, Refined> = either {
+        eatToken().bind()
         when (token.type) {
-            is WirespecDefinition, EndOfProgram, CommentToken -> accumulatedString
-            else -> parseRefinedValidator(accumulatedString + token.value).bind()
+            is WsString -> Refined(
+                identifier = identifier,
+                comment = comment,
+                type = Refined.Type.String,
+                validator = parseRefinedValidator().bind(),
+            )
+            else -> raise(WrongTokenException<WsString>(token))
+        }
+    }
+
+    private fun TokenProvider.parseRefinedValidator(): Either<WirespecException, Refined.Validator> = either {
+        eatToken().bind()
+        when (token.type) {
+            is LeftParentheses -> {
+                eatToken().bind()
+                when (token.type) {
+                    is RegExp -> Refined.Validator(token.value).also { eatToken().bind() }.also { eatToken().bind() }
+                    else -> raise(WrongTokenException<RegExp>(token))
+                }
+            }
+            else -> raise(WrongTokenException<LeftParentheses>(token))
         }
     }
 
@@ -151,11 +171,7 @@ object TypeParser {
                 extends = emptyList(),
             )
 
-            is ForwardSlash -> Refined(
-                comment = comment,
-                identifier = typeName,
-                validator = Refined.Validator(parseRefinedValidator("/").bind()),
-            )
+            is Arrow -> parseRefined(typeName, comment).bind()
 
             is Equals -> Union(
                 comment = comment,

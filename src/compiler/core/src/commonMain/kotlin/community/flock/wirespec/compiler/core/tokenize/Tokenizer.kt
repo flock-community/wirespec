@@ -47,7 +47,7 @@ private fun LanguageSpec.extractRegex(source: String, regex: String, incompleteT
     return when {
         source.isEmpty() || newLine.containsMatchIn(source) -> {
             val token = incompleteTokens.last().nextToken(RegExp, regex)
-            tokenize(source,  incompleteTokens + token)
+            tokenize(source, incompleteTokens + token)
         }
         escapedForwardSlash.containsMatchIn(source) -> extractRegex(source.drop(2), regex + source.first(), incompleteTokens)
         match == null -> extractRegex(source.drop(1), regex + source.first(), incompleteTokens)
@@ -65,14 +65,11 @@ private fun LanguageSpec.extractToken(source: String, previousTokenCoordinates: 
 
 private fun MatchResult.toToken(type: TokenType, previousTokenCoordinates: Coordinates) = Token(value, type, previousTokenCoordinates.nextCoordinates(type, value))
 
-
-private fun Token.nextToken(type: TokenType, value: String):Token {
-   return this.copy(
-       type = type,
-       value = value,
-       coordinates = coordinates.nextCoordinates(type, value)
-   )
-}
+private fun Token.nextToken(type: TokenType, value: String): Token = this.copy(
+    type = type,
+    value = value,
+    coordinates = coordinates.nextCoordinates(type, value),
+)
 private fun Coordinates.nextCoordinates(type: TokenType, value: String) = when (type) {
     is NewLine -> Coordinates(line = line + 1, idxAndLength = idxAndLength + value.length)
     else -> this + value.length

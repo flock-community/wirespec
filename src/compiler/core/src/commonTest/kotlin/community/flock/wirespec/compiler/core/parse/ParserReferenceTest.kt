@@ -162,7 +162,7 @@ class ParserReferenceTest {
     fun afterRegex() {
         val source = """
             |/* This is a comment */
-            |type Date /^([0-9]{2}-[0-9]{2}-20[0-9]{2})${'$'}/g
+            |type Date -> String(/^([0-9]{2}-[0-9]{2}-20[0-9]{2})$/g)
             |
             |// This is a comment too
             |type Address {

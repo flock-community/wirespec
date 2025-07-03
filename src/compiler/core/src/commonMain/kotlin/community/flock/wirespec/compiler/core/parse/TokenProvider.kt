@@ -7,7 +7,9 @@ import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.DefinitionNotExistsException
 import community.flock.wirespec.compiler.core.exceptions.NextException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
+import community.flock.wirespec.compiler.core.exceptions.WrongTokenException
 import community.flock.wirespec.compiler.core.tokenize.Token
+import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
 import community.flock.wirespec.compiler.utils.Logger
 
@@ -42,6 +44,15 @@ class TokenProvider(private val logger: Logger, tokens: NonEmptyList<Token>) {
     fun eatToken(): Either<WirespecException, Token> = either {
         val previousToken = token.also(::logToken)
         token = nextToken ?: raise(NextException(previousToken.coordinates))
+        nextToken = nextToken()
+        printTokens(previousToken)
+        previousToken
+    }
+
+    fun eatToken(type: TokenType): Either<WirespecException, Token> = either {
+        val previousToken = token
+        token = nextToken ?: raise(NextException(previousToken.coordinates))
+        if (token.type != type) raise(WrongTokenException(type, token))
         nextToken = nextToken()
         printTokens(previousToken)
         previousToken

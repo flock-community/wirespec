@@ -50,7 +50,7 @@ class ParseTypeTest {
     @Test
     fun testRefinedParser() {
         val source = """
-            |type DutchPostalCode /^([0-9]{4}[A-Z]{2})$/g
+            |type DutchPostalCode -> String(/^([0-9]{4}[A-Z]{2})$/g)
         """.trimMargin()
 
         parser(source)
@@ -58,9 +58,12 @@ class ParseTypeTest {
             .also { it.size shouldBe 1 }
             .first()
             .shouldBeInstanceOf<Refined>()
-            .also { it.identifier.value shouldBe "DutchPostalCode" }
-            .validator.shouldBeInstanceOf<Refined.Validator>()
-            .value shouldBe "/^([0-9]{4}[A-Z]{2})$/g"
+            .apply {
+                identifier.value shouldBe "DutchPostalCode"
+                type shouldBe Refined.Type.String
+                validator.shouldBeInstanceOf<Refined.Validator>()
+                validator.value shouldBe "/^([0-9]{4}[A-Z]{2})$/g"
+            }
     }
 
     @Test

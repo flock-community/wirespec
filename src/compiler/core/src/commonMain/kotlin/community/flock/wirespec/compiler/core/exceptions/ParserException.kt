@@ -14,6 +14,7 @@ class WrongTokenException(expected: KClass<out TokenType>, actual: Token) :
         actual.coordinates,
         "${expected.simpleName} expected, not: ${actual.type.name()} at line ${actual.coordinates.line} and position ${actual.coordinates.position - actual.value.length}",
     ) {
+    constructor(expected: TokenType, actual: Token) : this(expected::class, actual)
     companion object {
         inline operator fun <reified T : TokenType> invoke(actual: Token) = WrongTokenException(T::class, actual)
     }

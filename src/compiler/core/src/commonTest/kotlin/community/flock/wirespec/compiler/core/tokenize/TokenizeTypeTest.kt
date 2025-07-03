@@ -217,7 +217,7 @@ class TokenizeTypeTest {
         """.trimMargin(),
         TypeDefinition, WirespecType, Arrow, WsString, LeftParentheses, RegExp,
         TypeDefinition, WirespecType, LeftCurly, DromedaryCaseIdentifier, Colon, WirespecType, Comma, RightCurly,
-        EndOfProgram
+        EndOfProgram,
     )
 
     @Test
@@ -230,6 +230,6 @@ class TokenizeTypeTest {
         TypeDefinition, WirespecType, LeftCurly,
         DromedaryCaseIdentifier, Colon, WsString, LeftParentheses, RegExp,
         RightCurly,
-        EndOfProgram
+        EndOfProgram,
     )
 }
