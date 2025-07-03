@@ -33,9 +33,9 @@ object EndpointParser {
 
         val requests = listOf(
             with(TypeParser) {
-                when (val type = token.type) {
+                when (token.type) {
                     is LeftCurly -> parseDict().bind()
-                    is WirespecType -> parseWirespecType(type).bind()
+                    is WirespecType -> parseWirespecType().bind()
                     else -> null
                 }
             },
@@ -116,9 +116,9 @@ object EndpointParser {
             else -> raiseWrongToken<Colon>().bind()
         }
         val reference = with(TypeParser) {
-            when (val type = token.type) {
+            when (token.type) {
                 is LeftCurly -> parseDict().bind()
-                is WirespecType -> parseWirespecType(type).bind()
+                is WirespecType -> parseWirespecType().bind()
                 else -> raiseWrongToken<WirespecType>().bind()
             }
         }
@@ -155,9 +155,9 @@ object EndpointParser {
         eatToken().bind()
 
         val reference = with(TypeParser) {
-            when (val type = token.type) {
+            when (token.type) {
                 is LeftCurly -> parseDict().bind()
-                is WirespecType -> parseWirespecType(type).bind()
+                is WirespecType -> parseWirespecType().bind()
                 else -> raiseWrongToken<WirespecType>().bind()
             }
         }

@@ -96,7 +96,7 @@ class ParseTypeTest {
         """.trimMargin()
 
         parser(source)
-            .shouldBeRight()
+            .shouldBeRight { it.head.message }
             .also { it.size shouldBe 2 }
             .let { (first, second) ->
                 first shouldBe Type(

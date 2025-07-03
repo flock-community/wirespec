@@ -29,7 +29,7 @@ class ParseTest {
         """.trimMargin()
 
         parser(source)
-            .shouldBeRight()
+            .shouldBeRight { it.head.message }
             .size shouldBe 1
     }
 
@@ -166,7 +166,7 @@ class ParseTest {
         """.trimMargin()
 
         parser(source)
-            .shouldBeRight()
+            .shouldBeRight { it.head.message }
             .apply {
                 size shouldBe 1
                 this[0].apply {
@@ -193,7 +193,7 @@ class ParseTest {
         """.trimMargin()
 
         parser(source)
-            .shouldBeRight()
+            .shouldBeRight { it.head.message }
             .apply {
                 size shouldBe 1
                 this[0].apply {

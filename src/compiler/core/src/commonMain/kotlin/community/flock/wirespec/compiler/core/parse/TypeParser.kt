@@ -16,6 +16,7 @@ import community.flock.wirespec.compiler.core.tokenize.Precision
 import community.flock.wirespec.compiler.core.tokenize.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.RegExp
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
+import community.flock.wirespec.compiler.core.tokenize.RightParentheses
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinitionStart
 import community.flock.wirespec.compiler.core.tokenize.TypeIdentifier
 import community.flock.wirespec.compiler.core.tokenize.WirespecIdentifier
@@ -91,9 +92,9 @@ object TypeParser {
     }
 
     fun TokenProvider.parseDict() = parseToken {
-        when (val type = token.type) {
+        when (token.type) {
             is WirespecType -> Reference.Dict(
-                reference = parseWirespecType(type).bind(),
+                reference = parseWirespecType().bind(),
                 isNullable = when (token.type) {
                     is RightCurly -> {
                         eatToken().bind()
@@ -111,73 +112,83 @@ object TypeParser {
     private fun TokenProvider.parseWirespecTypePattern(): Either<WirespecException, Reference.Primitive.Type.Pattern?> = either {
         when (token.type) {
             is LeftParentheses -> {
-                eatToken().bind()
-                when (token.type) {
-                    is RegExp -> Reference.Primitive.Type.Pattern(token.value)
-                        .also { eatToken<LeftParentheses>().bind() }
-                        .also { eatToken().bind() }
-
-                    else -> raise(WrongTokenException<RegExp>(token))
+                val regex = eatToken<RegExp>().bind()
+                Reference.Primitive.Type.Pattern(regex.value).also {
+                    eatToken<RightParentheses>().bind()
+                    eatToken().bind()
                 }
             }
-
             else -> null
         }
     }
 
 
 
-    fun TokenProvider.parseWirespecType(type: WirespecType) = parseToken { current ->
-        val wirespecType = when (type) {
-            is WsString -> { it ->
+    fun TokenProvider.parseWirespecType() = either {
+        val wirespecType = when (val type = token.type) {
+            is WsString -> {
+                eatToken().bind()
                 Reference.Primitive(
+                    isNullable = isNullable().bind(),
                     type = Reference.Primitive.Type.String(
                         pattern = parseWirespecTypePattern().bind(),
                     ),
-                    isNullable = it,
                 )
             }
 
-            is WsBytes -> { it ->
+            is WsBytes -> {
+                eatToken().bind()
                 Reference.Primitive(
                     type = Reference.Primitive.Type.Bytes,
-                    isNullable = it,
+                    isNullable = isNullable().bind(),
                 )
             }
 
-            is WsInteger -> { it ->
+            is WsInteger -> {
+                eatToken().bind()
                 Reference.Primitive(
                     type = Reference.Primitive.Type.Integer(
                         precision = type.precision.toPrimitivePrecision(),
                     ),
-                    isNullable = it,
+                    isNullable = isNullable().bind(),
                 )
             }
 
-            is WsNumber -> { it ->
+            is WsNumber -> {
+                eatToken().bind()
                 Reference.Primitive(
                     type = Reference.Primitive.Type.Number(type.precision.toPrimitivePrecision()),
-                    isNullable = it,
+                    isNullable = isNullable().bind(),
                 )
             }
 
-            is WsBoolean -> { it ->
+            is WsBoolean -> {
+                eatToken().bind()
                 Reference.Primitive(
                     type = Reference.Primitive.Type.Boolean,
-                    isNullable = it,
+                    isNullable = isNullable().bind(),
                 )
             }
 
-            is WsUnit -> Reference::Unit
+            is WsUnit -> {
+                eatToken().bind()
+                Reference.Unit(
+                    isNullable = isNullable().bind(),
+                )
+            }
 
-            is TypeIdentifier -> { it ->
-                current.shouldBeDefined().bind()
+            is TypeIdentifier -> {
+                token.shouldBeDefined().bind()
+                val value = token.value
+                eatToken().bind()
                 Reference.Custom(
-                    value = current.value,
-                    isNullable = it,
+                    value = value,
+                    isNullable = isNullable().bind(),
                 )
             }
-        }(isNullable().bind())
+
+            else -> raise(WrongTokenException<TypeDefinitionStart>(token))
+        }
         when (token.type) {
             is Brackets -> {
                 eatToken().bind()
@@ -186,7 +197,6 @@ object TypeParser {
                     isNullable = isNullable().bind(),
                 )
             }
-
             else -> wirespecType
         }
     }
@@ -218,7 +228,7 @@ object TypeParser {
             else -> raiseWrongToken<Colon>().bind()
         }
 
-        when (val type = token.type) {
+        when (token.type) {
             is LeftCurly -> Field(
                 identifier = identifier,
                 reference = parseDict().bind(),
@@ -226,7 +236,7 @@ object TypeParser {
 
             is WirespecType -> Field(
                 identifier = identifier,
-                reference = parseWirespecType(type).bind(),
+                reference = parseWirespecType().bind(),
             )
 
             else -> raiseWrongToken<WirespecType>().bind()

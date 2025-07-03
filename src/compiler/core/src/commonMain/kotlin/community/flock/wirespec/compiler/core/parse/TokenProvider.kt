@@ -57,23 +57,17 @@ class TokenProvider(private val logger: Logger, tokens: NonEmptyList<Token>) {
         val previousToken = token
         token = nextToken ?: raise(NextException(previousToken.coordinates))
         nextToken = nextToken()
-        if (nextToken?.type is T) raise(WrongTokenException<T>(token))
-        token
-    }
-
-    fun eatToken(type: TokenType): Either<WirespecException, Token> = either {
-        val previousToken = token
-        token = nextToken ?: raise(NextException(previousToken.coordinates))
-        nextToken = nextToken()
         printTokens(previousToken)
-        previousToken
+        if (token.type !is T) raise(WrongTokenException<T>(token))
+        token
     }
 
     private fun logToken(token: Token) = with(token) {
         logger.debug("Eating: '$value', with type: $type, at line ${coordinates.line} position ${coordinates.position}")
     }
 
-    private fun printTokens(previousToken: Token? = null) {
+    @PublishedApi
+    internal fun printTokens(previousToken: Token? = null) {
         val prev = previousToken?.run { "Eating: '$value', " } ?: ""
         val curr = token.run { "Current: '$value'" }
         val next = nextToken?.run { ", Next: '$value'" } ?: ""

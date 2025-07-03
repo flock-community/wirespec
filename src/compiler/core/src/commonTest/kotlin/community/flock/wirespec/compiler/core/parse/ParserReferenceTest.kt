@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.parse
 
 import arrow.core.nonEmptyListOf
+import arrow.core.right
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
@@ -28,7 +29,20 @@ class ParserReferenceTest {
         """.trimMargin()
 
         parser(source)
-            .shouldBeRight()
+            .shouldBeRight { it.head.message }
+            .apply { size shouldBe 1 }
+            .apply {
+                first().apply {
+                    shouldBeInstanceOf<Type>()
+                    identifier.value shouldBe "Self"
+                    shape.value.first().apply {
+                        identifier.value shouldBe "self"
+                        reference.shouldBeInstanceOf<Reference.Custom>()
+                        reference.value shouldBe "Self"
+                        reference.isNullable shouldBe false
+                    }
+                }
+            }
     }
 
     @Test
@@ -81,6 +95,8 @@ class ParserReferenceTest {
             |}
         """.trimMargin()
 
+        val r = parser(source).right()
+        println(r)
         parser(source)
             .shouldBeLeft()
             .apply { size shouldBe 1 }
