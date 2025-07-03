@@ -16,12 +16,12 @@ import community.flock.wirespec.compiler.core.tokenize.FieldIdentifier
 import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.Hash
 import community.flock.wirespec.compiler.core.tokenize.Integer
-import community.flock.wirespec.compiler.core.tokenize.Number
 import community.flock.wirespec.compiler.core.tokenize.KebabCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.LeftParentheses
 import community.flock.wirespec.compiler.core.tokenize.Method
 import community.flock.wirespec.compiler.core.tokenize.NewLine
+import community.flock.wirespec.compiler.core.tokenize.Number
 import community.flock.wirespec.compiler.core.tokenize.PascalCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.Path
 import community.flock.wirespec.compiler.core.tokenize.Pipe

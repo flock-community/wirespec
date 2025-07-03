@@ -1,6 +1,5 @@
 package community.flock.wirespec.compiler.core.tokenize
 
-import community.flock.wirespec.compiler.core.WirespecField
 import community.flock.wirespec.compiler.core.WirespecType
 import community.flock.wirespec.compiler.core.tokenize.Precision.P64
 import kotlin.test.Test
@@ -30,7 +29,7 @@ class TokenizeTest {
             |/**
             |  * comment Name
             |  */
-            |type Name -> String(/^[0-9a-zA-Z]{1,50}${'$'}/g)
+            |type Name -> String(/^[0-9a-zA-Z]{1,50}$/g)
             |/**
             |  * comment Address
             |  */

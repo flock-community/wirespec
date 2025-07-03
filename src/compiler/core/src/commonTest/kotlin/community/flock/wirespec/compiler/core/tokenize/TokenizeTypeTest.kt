@@ -169,4 +169,67 @@ class TokenizeTypeTest {
             )
         }
     }
+
+    @Test
+    fun testRegexWithComplexTypes() = testTokenizer(
+        """
+                |type DutchPostalCode -> String(/^([0-9]{4}[A-Z]{2})$}/g)
+                |type Model {
+                |  postalCode: DutchPostalCode,
+                |  postalCodeOptional: DutchPostalCode?,
+                |  postalCodesArray: DutchPostalCode[],
+                |  postalCodesDict: {DutchPostalCode},
+                |  simpleString: String,
+                |  refinedString: String(/.+/),
+                |  refinedString: String(/.+/),
+                |  refinedStringOptional: String(/.+/)?,
+                |  refinedStringArray: String(/.+/)[],
+                |  refinedInteger: Integer(0, 100),
+                |  refinedIntegerOptional: Integer(0, 100)?,
+                |  refinedIntegerArray: Integer(0, 100)?[]?
+                |}
+        """.trimMargin(),
+        TypeDefinition, WirespecType, Arrow, WsString, LeftParentheses, RegExp, RightParentheses,
+        TypeDefinition, WirespecType, LeftCurly,
+        DromedaryCaseIdentifier, Colon, WirespecType, Comma,
+        DromedaryCaseIdentifier, Colon, WirespecType, QuestionMark, Comma,
+        DromedaryCaseIdentifier, Colon, WirespecType, Brackets, Comma,
+        DromedaryCaseIdentifier, Colon, LeftCurly, WirespecType, RightCurly, Comma,
+        DromedaryCaseIdentifier, Colon, WsString, Comma,
+        DromedaryCaseIdentifier, Colon, WsString, LeftParentheses, RegExp, RightParentheses, Comma,
+        DromedaryCaseIdentifier, Colon, WsString, LeftParentheses, RegExp, RightParentheses, Comma,
+        DromedaryCaseIdentifier, Colon, WsString, LeftParentheses, RegExp, RightParentheses, QuestionMark, Comma,
+        DromedaryCaseIdentifier, Colon, WsString, LeftParentheses, RegExp, RightParentheses, Brackets, Comma,
+        DromedaryCaseIdentifier, Colon, WsInteger(Precision.P64), LeftParentheses, Integer, Comma, Integer, RightParentheses, Comma,
+        DromedaryCaseIdentifier, Colon, WsInteger(Precision.P64), LeftParentheses, Integer, Comma, Integer, RightParentheses, QuestionMark, Comma,
+        DromedaryCaseIdentifier, Colon, WsInteger(Precision.P64), LeftParentheses, Integer, Comma, Integer, RightParentheses, QuestionMark, Brackets, QuestionMark,
+        RightCurly,
+        EndOfProgram,
+    )
+
+    @Test
+    fun testRegexRefinedNotEnding() = testTokenizer(
+        """
+                |type DutchPostalCode -> String(/^([0-9]))
+                |type Model {
+                |  postalCode: DutchPostalCode,
+                |}
+        """.trimMargin(),
+        TypeDefinition, WirespecType, Arrow, WsString, LeftParentheses, RegExp,
+        TypeDefinition, WirespecType, LeftCurly, DromedaryCaseIdentifier, Colon, WirespecType, Comma, RightCurly,
+        EndOfProgram
+    )
+
+    @Test
+    fun testRegexAdhocNotEnding() = testTokenizer(
+        """
+                |type Model {
+                |  name: String(/^([0-9]))?,
+                |}
+        """.trimMargin(),
+        TypeDefinition, WirespecType, LeftCurly,
+        DromedaryCaseIdentifier, Colon, WsString, LeftParentheses, RegExp,
+        RightCurly,
+        EndOfProgram
+    )
 }
