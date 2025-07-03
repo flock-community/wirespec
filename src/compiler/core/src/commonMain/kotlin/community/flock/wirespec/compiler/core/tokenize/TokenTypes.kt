@@ -55,7 +55,6 @@ data object EndpointDefinition : WirespecDefinition
 sealed interface ChannelTokenType : TokenType
 data object Method : ChannelTokenType
 data object Path : ChannelTokenType
-data object StatusCode : ChannelTokenType
 
 sealed interface WirespecType : TokenType
 sealed interface SpecificType : WirespecType

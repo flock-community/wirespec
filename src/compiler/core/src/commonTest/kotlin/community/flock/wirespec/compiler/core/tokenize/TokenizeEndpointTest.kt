@@ -6,12 +6,11 @@ import kotlin.test.Test
 class TokenizeEndpointTest {
 
     @Test
-    fun testStatusCodeTokenize() = testTokenizer(
+    fun testIntegerTokenize() = testTokenizer(
         """000 099 100 199 200 299 300 399 400 499 500 599 600 699""",
-        Character, Character, Character, Character, Character, Character,
-        StatusCode, StatusCode, StatusCode, StatusCode, StatusCode,
-        StatusCode, StatusCode, StatusCode, StatusCode, StatusCode,
-        Character, Character, Character, Character, Character, Character,
+        Integer, Integer, Integer, Integer, Integer,
+        Integer, Integer, Integer, Integer, Integer,
+        Integer, Integer, Integer, Integer,
         EndOfProgram,
     )
 
@@ -25,8 +24,8 @@ class TokenizeEndpointTest {
         """.trimMargin(),
         EndpointDefinition,
         WirespecType, Method, Path, ForwardSlash, LeftCurly, DromedaryCaseIdentifier, Colon, WsString,
-        RightCurly, Arrow, LeftCurly, StatusCode, Arrow,
-        WirespecType, Brackets, StatusCode, Arrow,
+        RightCurly, Arrow, LeftCurly, Integer, Arrow,
+        WirespecType, Brackets, Integer, Arrow,
         WirespecType,
         RightCurly, EndOfProgram,
     )
@@ -41,7 +40,7 @@ class TokenizeEndpointTest {
         EndpointDefinition,
         WirespecType,
         WirespecType, Method, Path, Arrow, LeftCurly,
-        StatusCode, Arrow,
+        Integer, Arrow,
         WirespecType, RightCurly, EndOfProgram,
     )
 
@@ -56,7 +55,7 @@ class TokenizeEndpointTest {
         EndpointDefinition,
         WirespecType, Method, Path, QuestionMark, LeftCurly, DromedaryCaseIdentifier, Colon,
         WsString, Comma, DromedaryCaseIdentifier, Colon, WsString, RightCurly, Arrow, LeftCurly,
-        StatusCode, Arrow,
+        Integer, Arrow,
         WirespecType, Brackets, RightCurly, EndOfProgram,
     )
 
@@ -71,7 +70,7 @@ class TokenizeEndpointTest {
         EndpointDefinition,
         WirespecType, Method, Path, Hash, LeftCurly, DromedaryCaseIdentifier, Colon,
         WsString, Comma, DromedaryCaseIdentifier, Colon, WsString, RightCurly, Arrow, LeftCurly,
-        StatusCode, Arrow,
+        Integer, Arrow,
         WirespecType, Brackets, RightCurly, EndOfProgram,
     )
 }

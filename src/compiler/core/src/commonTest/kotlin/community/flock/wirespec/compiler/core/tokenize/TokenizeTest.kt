@@ -30,7 +30,7 @@ class TokenizeTest {
             |/**
             |  * comment Name
             |  */
-            |type Name /^[0-9a-zA-Z]{1,50}${'$'}/g
+            |type Name -> String(/^[0-9a-zA-Z]{1,50}${'$'}/g)
             |/**
             |  * comment Address
             |  */
@@ -39,9 +39,13 @@ class TokenizeTest {
             |  houseNumber: Integer
             |}
         """.trimMargin(),
-        Comment, TypeDefinition, WirespecType, ForwardSlash, Character, Character, Character, Character, Character,
-        WirespecField, Character, LeftCurly, Character, Comma, Character, Character, RightCurly, Character, Path,
-        Comment, TypeDefinition, WirespecType, LeftCurly, DromedaryCaseIdentifier, Colon, WirespecType, QuestionMark,
-        Comma, DromedaryCaseIdentifier, Colon, WsInteger(P64), RightCurly, EndOfProgram,
+        Comment,
+        TypeDefinition, WirespecType, Arrow, WsString, LeftParentheses, RegExp, RightParentheses,
+        Comment,
+        TypeDefinition, WirespecType, LeftCurly,
+        DromedaryCaseIdentifier, Colon, WirespecType, QuestionMark, Comma,
+        DromedaryCaseIdentifier, Colon, WsInteger(P64),
+        RightCurly,
+        EndOfProgram,
     )
 }

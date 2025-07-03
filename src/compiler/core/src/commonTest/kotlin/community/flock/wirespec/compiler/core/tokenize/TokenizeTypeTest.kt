@@ -61,13 +61,37 @@ class TokenizeTypeTest {
     )
 
     @Test
-    fun testBoundsSimple() = testTokenizer(
+    fun testBoundsIntegerSimple() = testTokenizer(
         """Integer(0, 1)""",
         WsInteger(Precision.P64),
         LeftParentheses,
-        Character,
+        Integer,
         Comma,
-        Character,
+        Integer,
+        RightParentheses,
+        EndOfProgram,
+    )
+
+    @Test
+    fun testBoundsIntegerStatusCode() = testTokenizer(
+        """Integer(200, 500)""",
+        WsInteger(Precision.P64),
+        LeftParentheses,
+        Integer,
+        Comma,
+        Integer,
+        RightParentheses,
+        EndOfProgram,
+    )
+
+    @Test
+    fun testBoundsNumberSimple() = testTokenizer(
+        """Number(0.0, 1.0)""",
+        WsNumber(Precision.P64),
+        LeftParentheses,
+        Number,
+        Comma,
+        Number,
         RightParentheses,
         EndOfProgram,
     )
