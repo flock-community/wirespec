@@ -1,9 +1,11 @@
 package community.flock.wirespec.compiler.core.parse
 
+import arrow.core.Either
 import arrow.core.EitherNel
 import arrow.core.NonEmptyList
 import arrow.core.flatMap
 import arrow.core.nel
+import arrow.core.raise.Raise
 import arrow.core.raise.either
 import arrow.core.raise.ensureNotNull
 import arrow.core.right
@@ -17,6 +19,8 @@ import community.flock.wirespec.compiler.core.tokenize.ChannelDefinition
 import community.flock.wirespec.compiler.core.tokenize.Comment
 import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
 import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
+import community.flock.wirespec.compiler.core.tokenize.Token
+import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
 import community.flock.wirespec.compiler.core.validate.Validator
@@ -50,7 +54,6 @@ object Parser {
         .map { Module(src, it) }
 
     private fun TokenProvider.parseDefinition() = either {
-        token.log()
         val comment = when (token.type) {
             is Comment -> Comment(token.value).also { eatToken().bind() }
             else -> null
@@ -63,7 +66,7 @@ object Parser {
                 is ChannelDefinition -> with(channelParser) { parseChannel(comment) }.bind()
             }
 
-            else -> raise(WrongTokenException<WirespecDefinition>(token).also { eatToken().bind() })
+            else -> raiseWrongToken<WirespecDefinition>().bind()
         }
     }
 
@@ -99,4 +102,12 @@ object Parser {
             }
         }
     }
+}
+
+fun <A> TokenProvider.parseToken(block: Raise<WirespecException>.(Token) -> A) = either {
+    block(eatToken().bind())
+}
+
+inline fun <reified T : TokenType> TokenProvider.raiseWrongToken(): Either<WirespecException, Nothing> = either {
+    raise(WrongTokenException<T>(token).also { eatToken().bind() })
 }

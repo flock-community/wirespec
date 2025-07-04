@@ -3,7 +3,6 @@ package community.flock.wirespec.compiler.core.parse
 import arrow.core.Either
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
-import community.flock.wirespec.compiler.core.exceptions.WrongTokenException
 import community.flock.wirespec.compiler.core.tokenize.Arrow
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
@@ -19,21 +18,17 @@ import community.flock.wirespec.compiler.core.tokenize.WirespecType
 
 object EndpointParser {
 
-    fun TokenProvider.parseEndpoint(comment: Comment?): Either<WirespecException, Endpoint> = either {
-        eatToken().bind()
-        token.log()
+    fun TokenProvider.parseEndpoint(comment: Comment?): Either<WirespecException, Endpoint> = parseToken {
         when (token.type) {
             is WirespecType -> parseEndpointDefinition(comment, DefinitionIdentifier(token.value)).bind()
-            else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })
+            else -> raiseWrongToken<WirespecType>().bind()
         }
     }
 
-    private fun TokenProvider.parseEndpointDefinition(comment: Comment?, name: DefinitionIdentifier) = either {
-        eatToken().bind()
-        token.log()
+    private fun TokenProvider.parseEndpointDefinition(comment: Comment?, name: DefinitionIdentifier) = parseToken {
         val method = when (token.type) {
             is Method -> Endpoint.Method.valueOf(token.value)
-            else -> raise(WrongTokenException<Method>(token))
+            else -> raiseWrongToken<Method>().bind()
         }.also { eatToken().bind() }
 
         val requests = listOf(
@@ -66,7 +61,7 @@ object EndpointParser {
                 eatToken().bind()
                 when (token.type) {
                     is LeftCurly -> with(TypeParser) { parseTypeShape().bind() }.value
-                    else -> raise(WrongTokenException<LeftCurly>(token))
+                    else -> raiseWrongToken<LeftCurly>().bind()
                 }
             }
 
@@ -77,12 +72,12 @@ object EndpointParser {
 
         when (token.type) {
             is Arrow -> eatToken().bind()
-            else -> raise(WrongTokenException<Arrow>(token))
+            else -> raiseWrongToken<Arrow>().bind()
         }
 
         when (token.type) {
             is LeftCurly -> Unit
-            else -> raise(WrongTokenException<LeftCurly>(token))
+            else -> raiseWrongToken<LeftCurly>().bind()
         }.also { eatToken().bind() }
 
         val responses = parseEndpointResponses().bind()
@@ -100,39 +95,36 @@ object EndpointParser {
     }
 
     private fun TokenProvider.parseEndpointSegments() = either {
-        token.log()
         when (token.type) {
             is Path -> Endpoint.Segment.Literal(token.value.drop(1)).also { eatToken().bind() }
             is ForwardSlash -> parseEndpointSegmentParam().bind()
-            else -> raise(WrongTokenException<Path>(token))
+            else -> raiseWrongToken<Path>().bind()
         }
     }
 
-    private fun TokenProvider.parseEndpointSegmentParam() = either {
-        eatToken().bind()
-        token.log()
+    private fun TokenProvider.parseEndpointSegmentParam() = parseToken {
         when (token.type) {
             is LeftCurly -> eatToken().bind()
-            else -> raise(WrongTokenException<LeftCurly>(token))
+            else -> raiseWrongToken<LeftCurly>().bind()
         }
         val identifier = when (token.type) {
             is WirespecIdentifier -> FieldIdentifier(token.value).also { eatToken().bind() }
-            else -> raise(WrongTokenException<WirespecIdentifier>(token))
+            else -> raiseWrongToken<WirespecIdentifier>().bind()
         }
         when (token.type) {
             is Colon -> eatToken().bind()
-            else -> raise(WrongTokenException<Colon>(token))
+            else -> raiseWrongToken<Colon>().bind()
         }
         val reference = with(TypeParser) {
             when (val type = token.type) {
                 is LeftCurly -> parseDict().bind()
                 is WirespecType -> parseWirespecType(type).bind()
-                else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })
+                else -> raiseWrongToken<WirespecType>().bind()
             }
         }
         when (token.type) {
             is RightCurly -> eatToken().bind()
-            else -> raise(WrongTokenException<RightCurly>(token))
+            else -> raiseWrongToken<RightCurly>().bind()
         }
         Endpoint.Segment.Param(
             identifier = identifier,
@@ -141,36 +133,32 @@ object EndpointParser {
     }
 
     private fun TokenProvider.parseEndpointResponses() = either {
-        token.log()
         val responses = mutableListOf<Endpoint.Response>()
         while (token.type !is RightCurly) {
             when (token.type) {
                 is StatusCode -> responses.add(parseEndpointResponse(token.value).bind())
-                else -> raise(WrongTokenException<StatusCode>(token))
+                else -> raiseWrongToken<StatusCode>().bind()
             }
         }
         when (token.type) {
             is RightCurly -> Unit
-            else -> raise(WrongTokenException<RightCurly>(token))
+            else -> raiseWrongToken<RightCurly>().bind()
         }.also { eatToken().bind() }
         responses.toList()
     }
 
-    private fun TokenProvider.parseEndpointResponse(statusCode: String) = either {
-        eatToken().bind()
-        token.log()
+    private fun TokenProvider.parseEndpointResponse(statusCode: String) = parseToken {
         when (token.type) {
             is Arrow -> Unit
-            else -> raise(WrongTokenException<Arrow>(token))
+            else -> raiseWrongToken<Arrow>().bind()
         }
         eatToken().bind()
-        token.log()
 
         val reference = with(TypeParser) {
             when (val type = token.type) {
                 is LeftCurly -> parseDict().bind()
                 is WirespecType -> parseWirespecType(type).bind()
-                else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })
+                else -> raiseWrongToken<WirespecType>().bind()
             }
         }
 
@@ -190,13 +178,12 @@ object EndpointParser {
     }
 
     private fun TokenProvider.parseHeaders() = either {
-        token.log()
         when (token.type) {
             is Hash -> {
                 eatToken().bind()
                 when (token.type) {
                     is LeftCurly -> with(TypeParser) { parseTypeShape().bind() }.value
-                    else -> raise(WrongTokenException<LeftCurly>(token))
+                    else -> raiseWrongToken<LeftCurly>().bind()
                 }
             }
 
