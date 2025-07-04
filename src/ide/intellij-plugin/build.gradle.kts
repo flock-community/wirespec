@@ -19,7 +19,7 @@ repositories {
 
 dependencies {
     intellijPlatform {
-        intellijIdeaCommunity("2025.1")
+        intellijIdeaCommunity("2025.2")
         pluginVerifier()
         zipSigner()
         instrumentationTools()
