@@ -1,5 +1,6 @@
 plugins {
     id("module.publication")
+    id("module.spotless")
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.maven.plugin.development)
 }
@@ -13,6 +14,7 @@ kotlin {
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {

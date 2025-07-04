@@ -42,5 +42,6 @@ interface Types {
         val REG_EXP = ElementType("REG_EXP")
         val NUMBER = ElementType("NUMBER")
         val INTEGER = ElementType("INTEGER")
+        val UNDERSCORE = ElementType("UNDERSCORE")
     }
 }

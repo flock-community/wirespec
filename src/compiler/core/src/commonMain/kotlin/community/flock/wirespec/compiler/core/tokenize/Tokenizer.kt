@@ -33,7 +33,7 @@ private fun LanguageSpec.potentialRegex(
 ): NonEmptyList<Token> {
     val (token, remaining) = extractToken(source, incompleteTokens.last().coordinates)
     return when (token.type) {
-        is WhiteSpaceExceptNewLine -> potentialRegex(remaining, incompleteTokens)
+        is WhiteSpaceExceptNewLine -> potentialRegex(remaining, incompleteTokens + token)
         is ForwardSlash -> extractRegex(source.drop(1), "/", incompleteTokens)
         else -> tokenize(source, incompleteTokens)
     }

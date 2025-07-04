@@ -177,7 +177,12 @@ class OpenAPIV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("shipDate"),
-                            reference = Primitive(type = Primitive.Type.String(), isNullable = true),
+                            reference = Primitive(
+                                type = Primitive.Type.String(
+                                    pattern = Primitive.Type.Pattern.Format("date-time"),
+                                ),
+                                isNullable = true,
+                            ),
                         ),
                         Field(
                             identifier = FieldIdentifier("status"),

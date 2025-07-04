@@ -29,6 +29,7 @@ import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.TokenizeOptions
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.TypeIdentifier
+import community.flock.wirespec.compiler.core.tokenize.Underscore
 import community.flock.wirespec.compiler.core.tokenize.WhiteSpace
 import community.flock.wirespec.compiler.core.tokenize.WirespecIdentifier
 import community.flock.wirespec.compiler.core.tokenize.WsBoolean
@@ -94,6 +95,7 @@ class Lexer : IntellijLexer() {
         is RightParentheses -> Types.RIGHT_PARENTHESES
         is LeftParentheses -> Types.LEFT_PARENTHESES
         is RegExp -> Types.REG_EXP
+        is Underscore -> Types.UNDERSCORE
     }
 
     override fun getTokenStart() = tokens[index]

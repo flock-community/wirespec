@@ -16,7 +16,7 @@ kotlin = "2.0.21"
 kotlin_compiler = "2.0"
 kotlinx_coroutines = "1.9.0"
 kotlinx_io = "0.6.0"
-kotlinx_openapi_bindings = "0.0.24"
+kotlinx_openapi_bindings = "0.1.1-SNAPSHOT"
 kotlinx_rgxgen = "0.0.1"
 kotlinx_serialization = "1.7.0"
 maven_plugin = "0.4.3"
@@ -24,7 +24,7 @@ maven_plugin_api = "3.9.8"
 maven_plugin_annotations = "3.13.1"
 maven_project = "2.2.1"
 nexus-publish = "2.0.0"
-spotless = "7.0.2"
+spotless = "7.0.4"
 spring_boot = "3.3.4"
 spring_webflux = "6.1.13"
 spring_dependency_management = "1.1.6"
@@ -58,6 +58,7 @@ nexus-publish = { module = "io.github.gradle-nexus.publish-plugin:io.github.grad
 spring_boot_web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring_boot" }
 spring_webflux = { module = "org.springframework:spring-webflux", version.ref = "spring_webflux" }
 spring_boot_test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring_boot" }
+spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
 
 [bundles]
 jackson = ["jackson_databind", "jackson_kotlin"]
@@ -73,7 +74,6 @@ kotlin_jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin_multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinx_serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 maven_plugin_development = { id = "de.benediktritter.maven-plugin-development", version.ref = "maven_plugin" }
-spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 spring_boot = { id = "org.springframework.boot", version.ref = "spring_boot" }
 spring_dependency_management = { id = "io.spring.dependency-management", version.ref = "spring_dependency_management" }
 gradlebom_generator = { id = "io.github.gradlebom.generator-plugin", version.ref = "gradlebom_plugin" }

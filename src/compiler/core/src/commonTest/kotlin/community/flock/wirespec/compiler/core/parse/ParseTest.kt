@@ -150,7 +150,7 @@ class ParseTest {
                         shouldBeInstanceOf<Reference.Primitive>()
                         type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
                         isNullable shouldBe false
-                        type.pattern shouldBe Reference.Primitive.Type.Pattern("/.{0,50}/g")
+                        type.pattern shouldBe Reference.Primitive.Type.Pattern.RegExp("/.{0,50}/g")
                     }
                 }
             }
@@ -177,7 +177,7 @@ class ParseTest {
                         reference.shouldBeInstanceOf<Reference.Primitive>()
                         reference.type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
                         reference.isNullable shouldBe true
-                        reference.type.pattern shouldBe Reference.Primitive.Type.Pattern("/.{0,50}/g")
+                        reference.type.pattern shouldBe Reference.Primitive.Type.Pattern.RegExp("/.{0,50}/g")
                     }
                 }
             }
@@ -207,7 +207,7 @@ class ParseTest {
                             shouldBeInstanceOf<Reference.Primitive>()
                             type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
                             isNullable shouldBe true
-                            type.pattern shouldBe Reference.Primitive.Type.Pattern("/.{0,50}/g")
+                            type.pattern shouldBe Reference.Primitive.Type.Pattern.RegExp("/.{0,50}/g")
                         }
                     }
                 }

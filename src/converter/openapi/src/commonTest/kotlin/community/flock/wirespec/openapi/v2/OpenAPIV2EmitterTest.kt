@@ -2,7 +2,6 @@ package community.flock.wirespec.openapi.v2
 
 import arrow.core.toNonEmptyListOrNull
 import community.flock.kotlinx.openapi.bindings.v2.OpenAPI
-import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser.parse
 import kotlinx.io.buffered
@@ -18,7 +17,7 @@ class OpenAPIV2EmitterTest {
     val json = Json { prettyPrint = true }
 
     @Test
-    fun objectInRequest() {
+    fun petstoreParseEmitParse() {
         val path = Path("src/commonTest/resources/v2/petstore.json")
         val petstoreJson = SystemFileSystem.source(path).buffered().readString()
 
@@ -29,9 +28,9 @@ class OpenAPIV2EmitterTest {
         val petstoreConvertedOpenAPiAst = petstoreConvertedOpenAPI.parse()
 
         assertEquals(
-            petstoreAst.filterIsInstance<Definition>().sortedBy { it.identifier.value }
+            petstoreAst.toList().sortedBy { it.identifier.value }
                 .joinToString("\n") { it.toString() },
-            petstoreConvertedOpenAPiAst.filterIsInstance<Definition>().sortedBy { it.identifier.value }
+            petstoreConvertedOpenAPiAst.sortedBy { it.identifier.value }
                 .joinToString("\n") { it.toString() },
         )
     }

@@ -96,13 +96,31 @@ open class TypeScriptEmitter(val emitShared: EmitShared = EmitShared()) : Emitte
     }.let { "$it${if (isNullable) " | undefined" else ""}" }
 
     override fun emit(refined: Refined) =
-        """export type ${refined.identifier.sanitizeSymbol()} = string;
-            |const regExp${refined.identifier.value} = ${refined.validator.emit()};
-            |export const validate${refined.identifier.value} = (value: string): value is ${refined.identifier.sanitizeSymbol()} => 
-            |${Spacer}regExp${refined.identifier.value}.test(value);
-            |""".trimMargin()
+        """
+          |export type ${refined.identifier.sanitizeSymbol()} = string;
+          |export const validate${refined.identifier.value} = (value: string): value is ${refined.identifier.sanitizeSymbol()} => 
+          |${Spacer}${refined.emitValidator()};
+          |
+        """.trimMargin()
 
-    override fun Refined.Validator.emit() = value
+    override fun Refined.emitValidator():String {
+        val defaultReturn = "true;"
+        return when (val type = reference.type) {
+            is Reference.Primitive.Type.Integer -> type.bound?.emit() ?: defaultReturn
+            is Reference.Primitive.Type.Number -> type.bound?.emit() ?: defaultReturn
+            is Reference.Primitive.Type.String -> type.pattern?.emit() ?: defaultReturn
+            Reference.Primitive.Type.Boolean -> defaultReturn
+            Reference.Primitive.Type.Bytes -> defaultReturn
+        }
+    }
+
+    override fun Reference.Primitive.Type.Pattern.emit() = when (this) {
+        is Reference.Primitive.Type.Pattern.RegExp -> """$value.test(value)"""
+        is Reference.Primitive.Type.Pattern.Format -> null
+    }
+
+    override fun Reference.Primitive.Type.Bound.emit() =
+        """$min < value && value < $max;"""
 
     override fun emit(endpoint: Endpoint) =
         """

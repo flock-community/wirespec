@@ -9,6 +9,8 @@ sealed class ParserException(coordinates: Token.Coordinates, message: String) : 
 
 sealed class EatTokenException(coordinates: Token.Coordinates, message: String) : ParserException(coordinates, message)
 
+class GenericParserException(coordinates: Token.Coordinates, message: String) : ParserException(coordinates, message)
+
 class WrongTokenException(expected: KClass<out TokenType>, actual: Token) :
     EatTokenException(
         actual.coordinates,

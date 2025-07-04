@@ -43,12 +43,13 @@ class ParseTypeTest {
                     .reference.shouldBeInstanceOf<Reference.Primitive>().run {
                         type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
                         isNullable.shouldBeFalse()
+                        type.pattern shouldBe null
                     }
             }
     }
 
     @Test
-    fun testRefinedParser() {
+    fun testRefinedParserString() {
         val source = """
             |type DutchPostalCode -> String(/^([0-9]{4}[A-Z]{2})$/g)
         """.trimMargin()
@@ -60,9 +61,106 @@ class ParseTypeTest {
             .shouldBeInstanceOf<Refined>()
             .apply {
                 identifier.value shouldBe "DutchPostalCode"
-                type shouldBe Refined.Type.String
-                validator.shouldBeInstanceOf<Refined.Validator>()
-                validator.value shouldBe "/^([0-9]{4}[A-Z]{2})$/g"
+                reference.apply {
+                    shouldBeInstanceOf<Reference.Primitive>()
+                    type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
+                    isNullable.shouldBeFalse()
+                    type.pattern shouldBe Reference.Primitive.Type.Pattern.RegExp("/^([0-9]{4}[A-Z]{2})$/g")
+                }
+            }
+    }
+
+    @Test
+    fun testRefinedParserStringLiteral() {
+        val source = """
+            |type DutchPostalCode -> String(test)
+        """.trimMargin()
+
+        parser(source)
+            .shouldBeRight()
+            .also { it.size shouldBe 1 }
+            .first()
+            .shouldBeInstanceOf<Refined>()
+            .apply {
+                identifier.value shouldBe "DutchPostalCode"
+                reference.apply {
+                    shouldBeInstanceOf<Reference.Primitive>()
+                    type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
+                    isNullable.shouldBeFalse()
+                    type.pattern shouldBe Reference.Primitive.Type.Pattern.Format("test")
+                }
+            }
+    }
+
+    @Test
+    fun testRefinedParserInteger() {
+        val source = """
+            |type Age -> Integer(0,99)
+        """.trimMargin()
+
+        parser(source)
+            .shouldBeRight { it.head.message }
+            .also { it.size shouldBe 1 }
+            .first()
+            .shouldBeInstanceOf<Refined>()
+            .apply {
+                identifier.value shouldBe "Age"
+                reference.apply {
+                    isNullable shouldBe false
+                    type.apply {
+                        shouldBeInstanceOf<Reference.Primitive.Type.Integer>()
+                        bound?.min shouldBe "0"
+                        bound?.max shouldBe "99"
+                    }
+                }
+            }
+    }
+
+    @Test
+    fun testRefinedParserIntegerMinEmpty() {
+        val source = """
+            |type Age -> Integer(_,99)
+        """.trimMargin()
+
+        parser(source)
+            .shouldBeRight { it.head.message }
+            .also { it.size shouldBe 1 }
+            .first()
+            .shouldBeInstanceOf<Refined>()
+            .apply {
+                identifier.value shouldBe "Age"
+                reference.apply {
+                    isNullable shouldBe false
+                    type.apply {
+                        shouldBeInstanceOf<Reference.Primitive.Type.Integer>()
+                        bound?.min shouldBe null
+                        bound?.max shouldBe "99"
+                    }
+                }
+            }
+    }
+
+    @Test
+    fun testRefinedParserNumber() {
+        val source = """
+            |type Age -> Number(0.0,9.9)
+        """.trimMargin()
+
+        parser(source)
+            .shouldBeRight { it.head.message }
+            .also { it.size shouldBe 1 }
+            .first()
+            .shouldBeInstanceOf<Refined>()
+            .apply {
+                identifier.value shouldBe "Age"
+                reference.apply {
+                    isNullable shouldBe false
+                    type.apply {
+                        shouldBeInstanceOf<Reference.Primitive.Type.Number>()
+                        bound?.min shouldBe "0.0"
+                        bound?.max shouldBe "9.9"
+                    }
+                }
             }
     }
 

@@ -25,7 +25,7 @@ object ChannelParser {
         val reference = with(TypeParser) {
             when (token.type) {
                 is LeftCurly -> parseDict().bind()
-                is WirespecType -> parseWirespecType().bind()
+                is WirespecType -> parseType().bind()
                 else -> raiseWrongToken<WirespecType>().bind()
             }
         }

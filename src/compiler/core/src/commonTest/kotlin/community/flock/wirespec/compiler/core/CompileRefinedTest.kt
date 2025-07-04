@@ -70,9 +70,8 @@ class CompileRefinedTest {
             |}
             |
             |export type TodoId = string;
-            |const regExpTodoId = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}/g;
             |export const validateTodoId = (value: string): value is TodoId => 
-            |  regExpTodoId.test(value);
+            |  /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}/g.test(value);
             |
             |export {TodoId} from './TodoId'
         """.trimMargin()
@@ -83,7 +82,7 @@ class CompileRefinedTest {
     @Test
     fun wirespec() {
         val wirespec = """
-            |type TodoId /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}/g
+            |type TodoId -> String(/^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/g)
             |
         """.trimMargin()
 

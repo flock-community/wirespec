@@ -78,12 +78,7 @@ private fun WsEnum.consume() = Enum(
 private fun WsRefined.consume() = Refined(
     identifier = DefinitionIdentifier(identifier),
     comment = comment?.let { Comment(it) },
-    validator = Refined.Validator(validator),
-    type = when (type) {
-        WsRefined.Type.String -> Refined.Type.String
-        WsRefined.Type.Integer -> Refined.Type.Integer
-        WsRefined.Type.Number -> Refined.Type.Number
-    },
+    reference = reference.consume() as? Reference.Primitive ?: error("Cannot refine non-primitive type"),
 )
 
 private fun WsType.consume() = Type(
@@ -194,12 +189,7 @@ fun Definition.produce(): WsDefinition = when (this) {
     is Refined -> WsRefined(
         identifier = identifier.value,
         comment = comment?.value,
-        validator = validator.value,
-        type = when (type) {
-            Refined.Type.String -> WsRefined.Type.String
-            Refined.Type.Integer -> WsRefined.Type.Integer
-            Refined.Type.Number -> WsRefined.Type.Number
-        },
+        reference = reference.produce(),
     )
 
     is Union -> WsUnion(
@@ -346,15 +336,8 @@ data class WsChannel(
 data class WsRefined(
     override val identifier: String,
     override val comment: String?,
-    val validator: String,
-    val type: Type,
-) : WsDefinition {
-    enum class Type {
-        String,
-        Integer,
-        Number,
-    }
-}
+    val reference: WsReference,
+) : WsDefinition
 
 @JsExport
 enum class WsMethod { GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH, TRACE }

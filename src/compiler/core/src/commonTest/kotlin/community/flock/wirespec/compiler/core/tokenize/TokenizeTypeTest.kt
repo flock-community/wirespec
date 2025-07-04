@@ -97,11 +97,43 @@ class TokenizeTypeTest {
     )
 
     @Test
+    fun testBoundsNumberSimpleMinUndefined() = testTokenizer(
+        """Number(   _   , 1.0)""",
+        WsNumber(Precision.P64),
+        LeftParentheses,
+        Underscore,
+        Comma,
+        Number,
+        RightParentheses,
+        EndOfProgram,
+    )
+
+    @Test
     fun testRegexSimple() = testTokenizer(
         """String(/.*/)""",
         WsString,
         LeftParentheses,
         RegExp,
+        RightParentheses,
+        EndOfProgram,
+    )
+
+    @Test
+    fun testLiteralSimple() = testTokenizer(
+        """String(datetime)""",
+        WsString,
+        LeftParentheses,
+        DromedaryCaseIdentifier,
+        RightParentheses,
+        EndOfProgram,
+    )
+
+    @Test
+    fun testLiteralCaseSimple() = testTokenizer(
+        """String(`EMAIL_ADDRESS`)""",
+        WsString,
+        LeftParentheses,
+        ScreamingSnakeCaseIdentifier,
         RightParentheses,
         EndOfProgram,
     )

@@ -36,6 +36,7 @@ import community.flock.wirespec.compiler.core.tokenize.SnakeCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.TypeIdentifier
+import community.flock.wirespec.compiler.core.tokenize.Underscore
 import community.flock.wirespec.compiler.core.tokenize.WhiteSpaceExceptNewLine
 import community.flock.wirespec.compiler.core.tokenize.WsBoolean
 import community.flock.wirespec.compiler.core.tokenize.WsBytes
@@ -87,6 +88,7 @@ object WirespecSpec : LanguageSpec {
         Regex("^/") to ForwardSlash,
         Regex("^[0-9]+\\.[0-9]+") to Number,
         Regex("^[0-9]+") to Integer,
+        Regex("^_") to Underscore,
         Regex("^.") to Character, // Catch-all regular expression if none of the above matched
     )
 }

@@ -188,15 +188,25 @@ class ParserReferenceTest {
 
         parser(source)
             .shouldBeRight()
-            .apply { first().comment?.value shouldBe "This is a comment" }
-            .apply { first().identifier.value shouldBe "Date" }
-            .apply { (first() as Refined).validator.value shouldBe "/^([0-9]{2}-[0-9]{2}-20[0-9]{2})\$/g" }
-            .apply { get(1).comment?.value shouldBe "This is a comment too" }
-            .apply { get(1).identifier.value shouldBe "Address" }
-            .apply { get(1).shouldBeInstanceOf<Type>() }
+            .apply {
+                first().apply {
+                    shouldBeInstanceOf<Refined>()
+                    comment?.value shouldBe "This is a comment"
+                    identifier.value shouldBe "Date"
+                    reference.apply {
+                        shouldBeInstanceOf<Reference.Primitive>()
+                        type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
+                        isNullable shouldBe false
+                        type.pattern shouldBe Reference.Primitive.Type.Pattern.RegExp("/^([0-9]{2}-[0-9]{2}-20[0-9]{2})$/g")
+                    }
+                }
+                get(1).apply {
+                    shouldBeInstanceOf<Type>()
+                    comment?.value shouldBe "This is a comment too"
+                    identifier.value shouldBe "Address"
+                }
+            }
     }
-
-    // region NOT YET SUPPORTED
 
     @Test
     fun loseComments() {
@@ -230,6 +240,4 @@ class ParserReferenceTest {
         parser(source)
             .shouldBeLeft()
     }
-
-    // endregion
 }

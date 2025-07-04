@@ -1,5 +1,6 @@
 plugins {
     id("module.publication")
+    id("module.spotless")
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlinx.serialization)
 }
@@ -9,6 +10,7 @@ version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.g
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 kotlin {

@@ -14,6 +14,8 @@ data object Brackets : TokenType
 data object Comment : TokenType
 data object Number : TokenType
 data object Integer : TokenType
+
+data object Underscore : TokenType
 data object Character : TokenType
 data object Arrow : TokenType
 data object Pipe : TokenType

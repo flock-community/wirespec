@@ -1,5 +1,6 @@
 plugins {
     id("module.publication")
+    id("module.spotless")
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
@@ -10,6 +11,7 @@ version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.g
 
 repositories {
     mavenCentral()
+    mavenLocal()
     maven(uri("https://packages.confluent.io/maven"))
 }
 

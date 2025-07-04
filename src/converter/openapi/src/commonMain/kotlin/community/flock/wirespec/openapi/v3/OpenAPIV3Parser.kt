@@ -470,7 +470,7 @@ object OpenAPIV3Parser : Parser {
             )
 
             schema.type.isPrimitive() -> Reference.Primitive(
-                type = schema.type!!.toPrimitive(schema.format),
+                type = schema.toPrimitive(),
                 isNullable = isNullable,
             )
 
@@ -524,9 +524,9 @@ object OpenAPIV3Parser : Parser {
         schema.enum != null -> Reference.Custom(value = name.sanitize(), isNullable = isNullable)
             .let { if (schema.additionalProperties != null) Reference.Dict(reference = it, isNullable = false) else it }
 
-        else -> when (val type = schema.type) {
+        else -> when (schema.type) {
             OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Reference.Primitive(
-                type = type.toPrimitive(schema.format),
+                type = schema.toPrimitive(),
                 isNullable = isNullable,
             ).let { if (schema.additionalProperties != null) Reference.Dict(it, isNullable = false) else it }
 
@@ -570,8 +570,12 @@ object OpenAPIV3Parser : Parser {
         .split("/").getOrNull(3)
         ?: error("Wrong reference: ${ref.value}")
 
-    private fun OpenapiType.toPrimitive(format: String?) = when (this) {
-        OpenapiType.STRING -> Reference.Primitive.Type.String()
+    private fun SchemaObject.toPrimitive() = when (this.type) {
+        OpenapiType.STRING -> when {
+            format != null -> Reference.Primitive.Type.String(pattern = Reference.Primitive.Type.Pattern.Format(format!!))
+            pattern != null -> Reference.Primitive.Type.String(pattern = Reference.Primitive.Type.Pattern.RegExp(pattern!!))
+            else -> Reference.Primitive.Type.String()
+        }
         OpenapiType.INTEGER -> Reference.Primitive.Type.Integer(if (format == "int32") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
         OpenapiType.NUMBER -> Reference.Primitive.Type.Number(if (format == "float") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
         OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean

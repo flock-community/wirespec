@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithHostTests
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsTargetDsl
 
 plugins {
+    id("module.spotless")
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotest)
 }
@@ -11,6 +12,7 @@ version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.g
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 kotlin {
