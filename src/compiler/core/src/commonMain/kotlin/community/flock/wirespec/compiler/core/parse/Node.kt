@@ -44,7 +44,7 @@ sealed interface Reference : Value<String> {
         is Custom -> copy(isNullable = isNullable ?: this.isNullable)
         is Dict -> copy(isNullable = isNullable ?: this.isNullable)
         is Iterable -> copy(isNullable = isNullable ?: this.isNullable)
-        is Primitive ->copy(isNullable = isNullable ?: this.isNullable)
+        is Primitive -> copy(isNullable = isNullable ?: this.isNullable)
         is Unit -> copy(isNullable = isNullable ?: this.isNullable)
     }
 
