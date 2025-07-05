@@ -3,7 +3,6 @@ package community.flock.wirespec.compiler.core.parse
 import arrow.core.Either
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
-import community.flock.wirespec.compiler.core.exceptions.WrongTokenException
 import community.flock.wirespec.compiler.core.tokenize.Brackets
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.Comma
@@ -30,18 +29,14 @@ import community.flock.wirespec.compiler.core.tokenize.Comment as CommentToken
 
 object TypeParser {
 
-    fun TokenProvider.parseType(comment: Comment?): Either<WirespecException, Definition> = either {
-        eatToken().bind()
-        token.log()
+    fun TokenProvider.parseType(comment: Comment?): Either<WirespecException, Definition> = parseToken {
         when (token.type) {
             is TypeIdentifier -> parseTypeDefinition(comment, DefinitionIdentifier(token.value)).bind()
-            else -> raise(WrongTokenException<TypeIdentifier>(token).also { eatToken().bind() })
+            else -> raiseWrongToken<TypeIdentifier>().bind()
         }
     }
 
-    fun TokenProvider.parseTypeShape(): Either<WirespecException, Type.Shape> = either {
-        eatToken().bind()
-        token.log()
+    fun TokenProvider.parseTypeShape(): Either<WirespecException, Type.Shape> = parseToken {
         when (token.type) {
             is WirespecIdentifier -> mutableListOf<Field>().apply {
                 add(parseField(FieldIdentifier(token.value)).bind())
@@ -49,31 +44,28 @@ object TypeParser {
                     eatToken().bind()
                     when (token.type) {
                         is WirespecIdentifier -> add(parseField(FieldIdentifier(token.value)).bind())
-                        else -> raise(WrongTokenException<WirespecIdentifier>(token).also { eatToken().bind() })
+                        else -> raiseWrongToken<WirespecIdentifier>().bind()
                     }
                 }
             }
 
-            else -> raise(WrongTokenException<WirespecIdentifier>(token).also { eatToken().bind() })
+            else -> raiseWrongToken<WirespecIdentifier>().bind()
         }.also {
             when (token.type) {
                 is RightCurly -> eatToken().bind()
-                else -> raise(WrongTokenException<RightCurly>(token).also { eatToken().bind() })
+                else -> raiseWrongToken<RightCurly>().bind()
             }
         }.let(Type::Shape)
     }
 
-    private fun TokenProvider.parseRefinedValidator(accumulatedString: String): Either<WirespecException, String> = either {
-        eatToken().bind()
-        token.log()
+    private fun TokenProvider.parseRefinedValidator(accumulatedString: String): Either<WirespecException, String> = parseToken {
         when (token.type) {
             is WirespecDefinition, EndOfProgram, CommentToken -> accumulatedString
             else -> parseRefinedValidator(accumulatedString + token.value).bind()
         }
     }
 
-    fun TokenProvider.parseDict() = either {
-        eatToken().bind()
+    fun TokenProvider.parseDict() = parseToken {
         when (val type = token.type) {
             is WirespecType -> Reference.Dict(
                 reference = parseWirespecType(type).bind(),
@@ -83,16 +75,15 @@ object TypeParser {
                         isNullable().bind()
                     }
 
-                    else -> raise(WrongTokenException<RightCurly>(token).also { eatToken().bind() })
+                    else -> raiseWrongToken<RightCurly>().bind()
                 },
             )
 
-            else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })
+            else -> raiseWrongToken<WirespecType>().bind()
         }
     }
 
-    fun TokenProvider.parseWirespecType(type: WirespecType) = either {
-        val current = eatToken().bind()
+    fun TokenProvider.parseWirespecType(type: WirespecType) = parseToken { current ->
         val wirespecType = when (type) {
             is WsString -> { it ->
                 Reference.Primitive(
@@ -151,9 +142,7 @@ object TypeParser {
         }
     }
 
-    private fun TokenProvider.parseTypeDefinition(comment: Comment?, typeName: DefinitionIdentifier) = either {
-        eatToken().bind()
-        token.log()
+    private fun TokenProvider.parseTypeDefinition(comment: Comment?, typeName: DefinitionIdentifier) = parseToken {
         when (token.type) {
             is LeftCurly -> Type(
                 comment = comment,
@@ -174,16 +163,14 @@ object TypeParser {
                 entries = parseUnionTypeEntries().bind(),
             )
 
-            else -> raise(WrongTokenException<TypeDefinitionStart>(token).also { eatToken().bind() })
+            else -> raiseWrongToken<TypeDefinitionStart>().bind()
         }
     }
 
-    private fun TokenProvider.parseField(identifier: FieldIdentifier) = either {
-        eatToken().bind()
-        token.log()
+    private fun TokenProvider.parseField(identifier: FieldIdentifier) = parseToken {
         when (token.type) {
             is Colon -> eatToken().bind()
-            else -> raise(WrongTokenException<Colon>(token).also { eatToken().bind() })
+            else -> raiseWrongToken<Colon>().bind()
         }
 
         when (val type = token.type) {
@@ -197,13 +184,11 @@ object TypeParser {
                 reference = parseWirespecType(type).bind(),
             )
 
-            else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })
+            else -> raiseWrongToken<WirespecType>().bind()
         }
     }
 
-    private fun TokenProvider.parseUnionTypeEntries() = either {
-        eatToken().bind()
-        token.log()
+    private fun TokenProvider.parseUnionTypeEntries() = parseToken {
         when (token.type) {
             is TypeIdentifier -> mutableListOf<Reference>().apply {
                 token.shouldBeDefined().bind()
@@ -217,12 +202,12 @@ object TypeParser {
                             add(Reference.Custom(token.value, false)).also { eatToken().bind() }
                         }
 
-                        else -> raise(WrongTokenException<TypeIdentifier>(token).also { eatToken().bind() })
+                        else -> raiseWrongToken<TypeIdentifier>().bind()
                     }
                 }
             }
 
-            else -> raise(WrongTokenException<TypeIdentifier>(token).also { eatToken().bind() })
+            else -> raiseWrongToken<TypeIdentifier>().bind()
         }.toSet()
     }
 

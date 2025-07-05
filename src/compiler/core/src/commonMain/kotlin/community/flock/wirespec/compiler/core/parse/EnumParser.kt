@@ -1,9 +1,7 @@
 package community.flock.wirespec.compiler.core.parse
 
 import arrow.core.Either
-import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
-import community.flock.wirespec.compiler.core.exceptions.WrongTokenException
 import community.flock.wirespec.compiler.core.tokenize.Comma
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
@@ -11,18 +9,14 @@ import community.flock.wirespec.compiler.core.tokenize.WirespecType
 
 object EnumParser {
 
-    fun TokenProvider.parseEnum(comment: Comment?): Either<WirespecException, Enum> = either {
-        eatToken().bind()
-        token.log()
+    fun TokenProvider.parseEnum(comment: Comment?): Either<WirespecException, Enum> = parseToken {
         when (token.type) {
             is WirespecType -> parseEnumTypeDefinition(comment, DefinitionIdentifier(token.value)).bind()
-            else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })
+            else -> raiseWrongToken<WirespecType>().bind()
         }
     }
 
-    private fun TokenProvider.parseEnumTypeDefinition(comment: Comment?, typeName: DefinitionIdentifier) = either {
-        eatToken().bind()
-        token.log()
+    private fun TokenProvider.parseEnumTypeDefinition(comment: Comment?, typeName: DefinitionIdentifier) = parseToken {
         when (token.type) {
             is LeftCurly -> Enum(
                 comment = comment,
@@ -30,18 +24,16 @@ object EnumParser {
                 entries = parseEnumTypeEntries().bind(),
             )
 
-            else -> raise(WrongTokenException<LeftCurly>(token).also { eatToken().bind() })
+            else -> raiseWrongToken<LeftCurly>().bind()
         }.also {
             when (token.type) {
                 is RightCurly -> eatToken().bind()
-                else -> raise(WrongTokenException<RightCurly>(token).also { eatToken().bind() })
+                else -> raiseWrongToken<RightCurly>().bind()
             }
         }
     }
 
-    private fun TokenProvider.parseEnumTypeEntries() = either {
-        eatToken().bind()
-        token.log()
+    private fun TokenProvider.parseEnumTypeEntries() = parseToken {
         when (token.type) {
             is WirespecType -> mutableListOf<String>().apply {
                 add(token.value)
@@ -50,12 +42,12 @@ object EnumParser {
                     eatToken().bind()
                     when (token.type) {
                         is WirespecType -> add(token.value).also { eatToken().bind() }
-                        else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })
+                        else -> raiseWrongToken<WirespecType>().bind()
                     }
                 }
             }
 
-            else -> raise(WrongTokenException<WirespecType>(token).also { eatToken().bind() })
+            else -> raiseWrongToken<WirespecType>().bind()
         }.toSet()
     }
 }
