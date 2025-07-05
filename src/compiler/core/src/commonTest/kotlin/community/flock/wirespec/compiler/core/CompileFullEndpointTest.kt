@@ -462,7 +462,7 @@ class CompileFullEndpointTest {
             |    body: Error
             |  }
             |  export type Response = Response200 | Response201 | Response500
-            |  export const request = (props: {"id": string, "done": boolean, "name": string | undefined, "token": Token, "refreshToken": Token | undefined, "body": PotentialTodoDto}): Request => ({
+            |  export const request = (props: {"id": string, "done": boolean, "name"?: string, "token": Token, "refreshToken"?: Token, "body": PotentialTodoDto}): Request => ({
             |    path: {"id": props["id"]},
             |    method: "PUT",
             |    queries: {"done": props["done"], "name": props["name"]},
@@ -474,7 +474,7 @@ class CompileFullEndpointTest {
             |    headers: {},
             |    body: props.body,
             |  })
-            |  export const response201 = (props: {"token": Token, "refreshToken": Token | undefined, "body": TodoDto}): Response201 => ({
+            |  export const response201 = (props: {"token": Token, "refreshToken"?: Token, "body": TodoDto}): Response201 => ({
             |    status: 201,
             |    headers: {"token": props["token"], "refreshToken": props["refreshToken"]},
             |    body: props.body,
