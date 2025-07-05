@@ -29,7 +29,7 @@ class TokenizeTest {
             |/**
             |  * comment Name
             |  */
-            |type Name -> String(/^[0-9a-zA-Z]{1,50}$/g)
+            |type Name = String(/^[0-9a-zA-Z]{1,50}$/g)
             |/**
             |  * comment Address
             |  */
@@ -39,7 +39,7 @@ class TokenizeTest {
             |}
         """.trimMargin(),
         Comment,
-        TypeDefinition, WirespecType, Arrow, WsString, LeftParentheses, RegExp, RightParentheses,
+        TypeDefinition, WirespecType, Equals, WsString, LeftParentheses, RegExp, RightParentheses,
         Comment,
         TypeDefinition, WirespecType, LeftCurly,
         DromedaryCaseIdentifier, Colon, WirespecType, QuestionMark, Comma,

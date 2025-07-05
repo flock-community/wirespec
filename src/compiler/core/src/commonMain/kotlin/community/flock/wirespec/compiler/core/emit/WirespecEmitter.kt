@@ -73,7 +73,7 @@ open class WirespecEmitter : Emitter() {
     override fun emit(enum: Enum, module: Module) =
         "enum ${emit(enum.identifier)} {\n${Spacer}${enum.entries.joinToString(", ") { it.capitalize() }}\n}\n"
 
-    override fun emit(refined: Refined) = "type ${emit(refined.identifier)} -> ${refined.reference.emit()}${refined.emitValidator()}\n"
+    override fun emit(refined: Refined) = "type ${emit(refined.identifier)} = ${refined.reference.emit()}${refined.emitValidator()}\n"
 
     override fun Refined.emitValidator():String {
         return when (val type = reference.type) {

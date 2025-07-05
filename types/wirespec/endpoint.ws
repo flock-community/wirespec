@@ -1,7 +1,7 @@
-type TodoIdentifier -> String(/^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$/g)
-type Name -> String(/^[0-9a-zA-Z]{1,50}$/g)
-type DutchPostalCode -> String(/^([0-9]{4}[A-Z]{2})$/g)
-type Date -> String(/^([0-9]{2}-[0-9]{2}-20[0-9]{2})$/g)
+type TodoIdentifier = String(/^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$/g)
+type Name = String(/^[0-9a-zA-Z]{1,50}$/g)
+type DutchPostalCode = String(/^([0-9]{4}[A-Z]{2})$/g)
+type Date = String(/^([0-9]{2}-[0-9]{2}-20[0-9]{2})$/g)
 
 type Address {
   street: Name,

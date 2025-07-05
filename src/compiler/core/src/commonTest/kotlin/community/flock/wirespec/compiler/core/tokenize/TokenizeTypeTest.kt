@@ -30,8 +30,8 @@ class TokenizeTypeTest {
 
     @Test
     fun testRefinedTypeTokenize() = testTokenizer(
-        "type DutchPostalCode -> String(/^([0-9]{4}[A-Z]{2})$/g)",
-        TypeDefinition, WirespecType, Arrow, WsString, LeftParentheses, RegExp, RightParentheses,
+        "type DutchPostalCode = String(/^([0-9]{4}[A-Z]{2})$/g)",
+        TypeDefinition, WirespecType, Equals, WsString, LeftParentheses, RegExp, RightParentheses,
         EndOfProgram,
     )
 
@@ -205,7 +205,7 @@ class TokenizeTypeTest {
     @Test
     fun testRegexWithComplexTypes() = testTokenizer(
         """
-                |type DutchPostalCode -> String(/^([0-9]{4}[A-Z]{2})$}/g)
+                |type DutchPostalCode = String(/^([0-9]{4}[A-Z]{2})$}/g)
                 |type Model {
                 |  postalCode: DutchPostalCode,
                 |  postalCodeOptional: DutchPostalCode?,
@@ -221,7 +221,7 @@ class TokenizeTypeTest {
                 |  refinedIntegerArray: Integer(0, 100)?[]?
                 |}
         """.trimMargin(),
-        TypeDefinition, WirespecType, Arrow, WsString, LeftParentheses, RegExp, RightParentheses,
+        TypeDefinition, WirespecType, Equals, WsString, LeftParentheses, RegExp, RightParentheses,
         TypeDefinition, WirespecType, LeftCurly,
         DromedaryCaseIdentifier, Colon, WirespecType, Comma,
         DromedaryCaseIdentifier, Colon, WirespecType, QuestionMark, Comma,
@@ -242,12 +242,12 @@ class TokenizeTypeTest {
     @Test
     fun testRegexRefinedNotEnding() = testTokenizer(
         """
-                |type DutchPostalCode -> String(/^([0-9]))
+                |type DutchPostalCode = String(/^([0-9]))
                 |type Model {
                 |  postalCode: DutchPostalCode,
                 |}
         """.trimMargin(),
-        TypeDefinition, WirespecType, Arrow, WsString, LeftParentheses, RegExp,
+        TypeDefinition, WirespecType, Equals, WsString, LeftParentheses, RegExp,
         TypeDefinition, WirespecType, LeftCurly, DromedaryCaseIdentifier, Colon, WirespecType, Comma, RightCurly,
         EndOfProgram,
     )

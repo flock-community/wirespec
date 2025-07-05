@@ -5,7 +5,6 @@ import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.GenericParserException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WrongTokenException
-import community.flock.wirespec.compiler.core.tokenize.Arrow
 import community.flock.wirespec.compiler.core.tokenize.Brackets
 import community.flock.wirespec.compiler.core.tokenize.CaseVariant
 import community.flock.wirespec.compiler.core.tokenize.Colon
@@ -66,30 +65,6 @@ object TypeParser {
         }.let(Type::Shape)
     }
 
-    private fun TokenProvider.parseRefined(
-        identifier: DefinitionIdentifier,
-        comment: Comment?,
-    ): Either<WirespecException, Refined> = either {
-        eatToken().bind()
-        when (token.type) {
-            is SpecificType -> Refined(
-                identifier = identifier,
-                comment = comment,
-                reference = parseType().bind().let {
-                    it as? Reference.Primitive
-                        ?: raise(
-                            GenericParserException(
-                                token.coordinates,
-                                "Refined types can only be primitive types",
-                            ),
-                        )
-                },
-            )
-
-            else -> raise(WrongTokenException<SpecificType>(token))
-        }
-    }
-
     fun TokenProvider.parseDict() = parseToken {
         when (token.type) {
             is WirespecType -> Reference.Dict(
@@ -106,6 +81,88 @@ object TypeParser {
 
             else -> raiseWrongToken<WirespecType>().bind()
         }
+    }
+
+    private fun TokenProvider.parseTypeDefinition(comment: Comment?, typeName: DefinitionIdentifier) = parseToken {
+        when (token.type) {
+            is Equals -> parseRefinedOrUnion(comment, typeName).bind()
+            is LeftCurly -> Type(
+                comment = comment,
+                identifier = typeName,
+                shape = parseTypeShape().bind(),
+                extends = emptyList(),
+            )
+
+            else -> raiseWrongToken<TypeDefinitionStart>().bind()
+        }
+    }
+
+    private fun TokenProvider.parseRefinedOrUnion(
+        comment: Comment?,
+        identifier: DefinitionIdentifier,
+    ) = parseToken {
+        when (token.type) {
+            is SpecificType -> parseRefined(comment, identifier).bind()
+            is TypeIdentifier -> parseUnion(comment, identifier).bind()
+            else -> raiseWrongToken<WirespecType>().bind()
+        }
+    }
+
+    private fun TokenProvider.parseRefined(
+        comment: Comment?,
+        identifier: DefinitionIdentifier,
+    ): Either<WirespecException, Refined> = either {
+        when (token.type) {
+            is SpecificType -> Refined(
+                comment = comment,
+                identifier = identifier,
+                reference = parseType().bind().let {
+                    it as? Reference.Primitive
+                        ?: raise(
+                            GenericParserException(
+                                token.coordinates,
+                                "Refined types can only be primitive types",
+                            ),
+                        )
+                },
+            )
+
+            else -> raise(WrongTokenException<SpecificType>(token))
+        }
+    }
+
+    private fun TokenProvider.parseUnion(
+        comment: Comment?,
+        identifier: DefinitionIdentifier,
+    ) = either {
+        Union(
+            comment = comment,
+            identifier = identifier,
+            entries = parseUnionTypeEntries().bind(),
+        )
+    }
+
+    private fun TokenProvider.parseUnionTypeEntries() = either {
+        when (token.type) {
+            is TypeIdentifier -> mutableListOf<Reference>().apply {
+                token.shouldBeDefined().bind()
+                add(Reference.Custom(token.value, false))
+                eatToken().bind()
+                while (token.type == Pipe) {
+                    eatToken().bind()
+                    when (token.type) {
+                        is TypeIdentifier -> {
+                            token.shouldBeDefined().bind()
+                            add(Reference.Custom(token.value, false)).also { eatToken().bind() }
+                        }
+
+                        else -> raiseWrongToken<TypeIdentifier>().bind()
+                    }
+                }
+            }
+
+            else -> raiseWrongToken<TypeIdentifier>().bind()
+        }.toSet()
     }
 
     private fun TokenProvider.parseTypePattern(): Either<WirespecException, Reference.Primitive.Type.Pattern?> = either {
@@ -236,27 +293,6 @@ object TypeParser {
         }
     }
 
-    private fun TokenProvider.parseTypeDefinition(comment: Comment?, typeName: DefinitionIdentifier) = parseToken {
-        when (token.type) {
-            is LeftCurly -> Type(
-                comment = comment,
-                identifier = typeName,
-                shape = parseTypeShape().bind(),
-                extends = emptyList(),
-            )
-
-            is Arrow -> parseRefined(typeName, comment).bind()
-
-            is Equals -> Union(
-                comment = comment,
-                identifier = typeName,
-                entries = parseUnionTypeEntries().bind(),
-            )
-
-            else -> raiseWrongToken<TypeDefinitionStart>().bind()
-        }
-    }
-
     private fun TokenProvider.parseField(identifier: FieldIdentifier) = parseToken {
         when (token.type) {
             is Colon -> eatToken().bind()
@@ -276,29 +312,6 @@ object TypeParser {
 
             else -> raiseWrongToken<WirespecType>().bind()
         }
-    }
-
-    private fun TokenProvider.parseUnionTypeEntries() = parseToken {
-        when (token.type) {
-            is TypeIdentifier -> mutableListOf<Reference>().apply {
-                token.shouldBeDefined().bind()
-                add(Reference.Custom(token.value, false))
-                eatToken().bind()
-                while (token.type == Pipe) {
-                    eatToken().bind()
-                    when (token.type) {
-                        is TypeIdentifier -> {
-                            token.shouldBeDefined().bind()
-                            add(Reference.Custom(token.value, false)).also { eatToken().bind() }
-                        }
-
-                        else -> raiseWrongToken<TypeIdentifier>().bind()
-                    }
-                }
-            }
-
-            else -> raiseWrongToken<TypeIdentifier>().bind()
-        }.toSet()
     }
 
     private fun TokenProvider.isNullable() = either {

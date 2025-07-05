@@ -51,7 +51,7 @@ class ParseTypeTest {
     @Test
     fun testRefinedParserString() {
         val source = """
-            |type DutchPostalCode -> String(/^([0-9]{4}[A-Z]{2})$/g)
+            |type DutchPostalCode = String(/^([0-9]{4}[A-Z]{2})$/g)
         """.trimMargin()
 
         parser(source)
@@ -73,7 +73,7 @@ class ParseTypeTest {
     @Test
     fun testRefinedParserStringLiteral() {
         val source = """
-            |type DutchPostalCode -> String(test)
+            |type DutchPostalCode = String(test)
         """.trimMargin()
 
         parser(source)
@@ -95,7 +95,7 @@ class ParseTypeTest {
     @Test
     fun testRefinedParserInteger() {
         val source = """
-            |type Age -> Integer(0,99)
+            |type Age = Integer(0,99)
         """.trimMargin()
 
         parser(source)
@@ -119,7 +119,7 @@ class ParseTypeTest {
     @Test
     fun testRefinedParserIntegerMinEmpty() {
         val source = """
-            |type Age -> Integer(_,99)
+            |type Age = Integer(_,99)
         """.trimMargin()
 
         parser(source)
@@ -143,7 +143,7 @@ class ParseTypeTest {
     @Test
     fun testRefinedParserNumber() {
         val source = """
-            |type Age -> Number(0.0,9.9)
+            |type Age = Number(0.0,9.9)
         """.trimMargin()
 
         parser(source)

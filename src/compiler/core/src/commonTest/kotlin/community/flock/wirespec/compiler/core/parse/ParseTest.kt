@@ -114,7 +114,7 @@ class ParseTest {
             |/*
             |  comment Name
             |  */
-            |type Name -> String(/^[0-9a-zA-Z]{1,50}$/g)
+            |type Name = String(/^[0-9a-zA-Z]{1,50}$/g)
             |/*
             |  comment Address
             |  */
