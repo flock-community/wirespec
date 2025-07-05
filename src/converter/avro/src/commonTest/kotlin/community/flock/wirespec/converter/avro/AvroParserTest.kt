@@ -69,28 +69,28 @@ class AvroParserTest {
                         Field(
                             identifier = FieldIdentifier("id"),
                             reference = Reference.Primitive(
-                                type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32),
+                                type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32, null),
                                 isNullable = false,
                             ),
                         ),
                         Field(
                             identifier = FieldIdentifier("username"),
                             reference = Reference.Primitive(
-                                type = Reference.Primitive.Type.String(),
+                                type = Reference.Primitive.Type.String(null),
                                 isNullable = false,
                             ),
                         ),
                         Field(
                             identifier = FieldIdentifier("passwordHash"),
                             reference = Reference.Primitive(
-                                type = Reference.Primitive.Type.String(),
+                                type = Reference.Primitive.Type.String(null),
                                 isNullable = false,
                             ),
                         ),
                         Field(
                             identifier = FieldIdentifier("signupDate"),
                             reference = Reference.Primitive(
-                                type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P64),
+                                type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P64, null),
                                 isNullable = false,
                             ),
                         ),

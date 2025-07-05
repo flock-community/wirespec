@@ -453,10 +453,10 @@ object OpenAPIV2Parser : Parser {
         OpenapiType.STRING -> when {
             pattern != null -> Reference.Primitive.Type.String(pattern = Reference.Primitive.Type.Pattern.RegExp(pattern!!))
             format != null -> Reference.Primitive.Type.String(pattern = Reference.Primitive.Type.Pattern.Format(format!!))
-            else -> Reference.Primitive.Type.String()
+            else -> Reference.Primitive.Type.String(null)
         }
-        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer(if (format == "int32") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
-        OpenapiType.NUMBER -> Reference.Primitive.Type.Number(if (format == "float") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
+        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer(if (format == "int32") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64, null)
+        OpenapiType.NUMBER -> Reference.Primitive.Type.Number(if (format == "float") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64, null)
         OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean
         else -> error("Type is not a primitive")
     }
@@ -502,14 +502,14 @@ object OpenAPIV2Parser : Parser {
             val isNullable = !(parameter.required ?: false)
             when {
                 parameter.enum != null -> Reference.Custom(className(name, "Parameter", schema.name).sanitize(), isNullable = isNullable)
-                else -> when (val type = schema.type) {
+                else -> when (schema.type) {
                     OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN ->
                         schema
                             .toPrimitive()
                             .let { primitive -> Reference.Primitive(primitive, isNullable = isNullable) }
 
                     OpenapiType.ARRAY -> schema.items?.let { items -> resolve(items) }
-                        ?.let { it?.toPrimitive() }
+                        ?.toPrimitive()
                         ?.let { primitive ->
                             Reference.Iterable(
                                 Reference.Primitive(primitive, false),

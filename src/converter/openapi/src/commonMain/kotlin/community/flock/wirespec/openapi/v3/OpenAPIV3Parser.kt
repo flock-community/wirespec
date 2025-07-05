@@ -574,10 +574,10 @@ object OpenAPIV3Parser : Parser {
         OpenapiType.STRING -> when {
             format != null -> Reference.Primitive.Type.String(pattern = Reference.Primitive.Type.Pattern.Format(format!!))
             pattern != null -> Reference.Primitive.Type.String(pattern = Reference.Primitive.Type.Pattern.RegExp(pattern!!))
-            else -> Reference.Primitive.Type.String()
+            else -> Reference.Primitive.Type.String(null)
         }
-        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer(if (format == "int32") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
-        OpenapiType.NUMBER -> Reference.Primitive.Type.Number(if (format == "float") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
+        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer(if (format == "int32") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64, null)
+        OpenapiType.NUMBER -> Reference.Primitive.Type.Number(if (format == "float") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64, null)
         OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean
         else -> error("Type is not a primitive")
     }
@@ -615,7 +615,7 @@ object OpenAPIV3Parser : Parser {
         return when (val s = parameter.schema) {
             is ReferenceObject -> toReference(s, isNullable)
             is SchemaObject -> toReference(s, isNullable, name + if (s.type == OpenapiType.ARRAY) "Array" else "")
-            null -> Reference.Primitive(type = Reference.Primitive.Type.String(), isNullable = isNullable)
+            null -> Reference.Primitive(type = Reference.Primitive.Type.String(null), isNullable = isNullable)
         }.let { Field(FieldIdentifier(parameter.name), it) }
     }
 
@@ -624,7 +624,7 @@ object OpenAPIV3Parser : Parser {
         return when (val s = header.schema) {
             is ReferenceObject -> toReference(s, isNullable)
             is SchemaObject -> toReference(s, isNullable, name)
-            null -> Reference.Primitive(type = Reference.Primitive.Type.String(), isNullable = isNullable)
+            null -> Reference.Primitive(type = Reference.Primitive.Type.String(null), isNullable = isNullable)
         }.let { Field(FieldIdentifier(identifier), it) }
     }
 

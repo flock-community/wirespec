@@ -208,7 +208,7 @@ class ParseTypeTest {
                             Field(
                                 identifier = FieldIdentifier("int32"),
                                 reference = Reference.Primitive(
-                                    type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32),
+                                    type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32, null),
                                     isNullable = false,
                                 ),
                             ),
@@ -217,7 +217,7 @@ class ParseTypeTest {
                                 reference = Reference.Iterable(
                                     isNullable = false,
                                     reference = Reference.Primitive(
-                                        type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P64),
+                                        type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P64, null),
                                         isNullable = false,
                                     ),
                                 ),
@@ -234,14 +234,14 @@ class ParseTypeTest {
                             Field(
                                 identifier = FieldIdentifier("num32"),
                                 reference = Reference.Primitive(
-                                    type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P32),
+                                    type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P32, null),
                                     isNullable = false,
                                 ),
                             ),
                             Field(
                                 identifier = FieldIdentifier("num64"),
                                 reference = Reference.Primitive(
-                                    type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P64),
+                                    type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P64, null),
                                     isNullable = true,
                                 ),
                             ),

@@ -11,7 +11,6 @@ import community.flock.wirespec.compiler.core.parse.Endpoint.Segment.Literal
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.assertions.arrow.core.shouldHaveSize
-import io.kotest.data.headers
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
@@ -124,7 +123,7 @@ class ParseEndpointTest {
                     Endpoint.Segment.Param(
                         identifier = FieldIdentifier("id"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String(),
+                            type = Reference.Primitive.Type.String(null),
                             isNullable = false,
                         ),
                     ),
@@ -154,12 +153,12 @@ class ParseEndpointTest {
                 val (one, two) = it
                 one.run {
                     identifier.value shouldBe "name"
-                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String()
+                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String(null)
                     reference.isNullable shouldBe false
                 }
                 two.run {
                     identifier.value shouldBe "date"
-                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String()
+                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String(null)
                     reference.isNullable shouldBe false
                 }
             }
@@ -182,12 +181,12 @@ class ParseEndpointTest {
                 val (one, two) = it
                 one.run {
                     identifier.value shouldBe "name"
-                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String()
+                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String(null)
                     reference.isNullable shouldBe false
                 }
                 two.run {
                     identifier.value shouldBe "date"
-                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String()
+                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String(null)
                     reference.isNullable shouldBe false
                 }
             }
@@ -211,7 +210,7 @@ class ParseEndpointTest {
             .first()
             .headers.shouldHaveSize(1).first().run {
                 identifier.value shouldBe "token"
-                reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String()
+                reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String(null)
             }
     }
 

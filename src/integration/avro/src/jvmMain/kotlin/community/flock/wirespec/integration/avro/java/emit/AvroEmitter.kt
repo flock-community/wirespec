@@ -112,7 +112,7 @@ class AvroEmitter(private val packageName: PackageName, emitShared: EmitShared) 
                     is Reference.Primitive -> when {
                         reference.isNullable -> "(${reference.emit()}) java.util.Optional.ofNullable((${field.reference.emitRoot()}) record.get(${index}))"
                         reference.type == Reference.Primitive.Type.Bytes -> "(${reference.emit()}) ((java.nio.ByteBuffer) record.get(${index})).array()"
-                        reference.type == Reference.Primitive.Type.String() -> "(${reference.emit()}) record.get(${index}).toString()"
+                        reference.type == Reference.Primitive.Type.String(null) -> "(${reference.emit()}) record.get(${index}).toString()"
                         else -> "(${reference.emit()}) record.get(${index})"
                     }
 

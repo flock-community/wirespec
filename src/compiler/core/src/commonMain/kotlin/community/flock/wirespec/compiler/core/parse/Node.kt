@@ -103,15 +103,15 @@ sealed interface Reference : Value<String> {
 
             data class Bound(val min: kotlin.String?, val max: kotlin.String?)
 
-            data class String(val pattern: Pattern? = null) : Type {
+            data class String(val pattern: Pattern?) : Type {
                 override val name = "String"
             }
 
-            data class Integer(val precision: Precision = P64, val bound: Bound? = null) : Type {
+            data class Integer(val precision: Precision = P64, val bound: Bound?) : Type {
                 override val name = "Integer"
             }
 
-            data class Number(val precision: Precision = P64, val bound: Bound? = null) : Type {
+            data class Number(val precision: Precision = P64, val bound: Bound?) : Type {
                 override val name = "Number"
             }
 
