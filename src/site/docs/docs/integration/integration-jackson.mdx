@@ -48,7 +48,7 @@ For each type we define in Wirespec we want to have a class in the target langua
 problems that arise when working with Jackson let's observe the following Wirespec definition:
 
 ```wirespec
-type Name /^[0-9a-zA-Z]{1,50}$/g
+type Name -> String(/^[0-9a-zA-Z]{1,50}$/g)
 
 type Person {
   firstname: Name,
