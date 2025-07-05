@@ -4,20 +4,6 @@ plugins {
 
 spotless {
     val exclude = listOf(
-        "**/.github/**",
-        "**/.gradle/**",
-        "**/.idea/**",
-        "**/.intellijPlatform/**",
-        "**/.kotlin/**",
-        "**/build/**",
-        "**/vscode/**",
-        "**/docs/**",
-        "**/playground/**",
-        "**/tmp/**",
-        "**/generated/**",
-        "**/resources/**",
-        "**/node_modules/**",
-        "**/*.lock",
         "**/*Emitter.kt",
     ).toTypedArray()
 

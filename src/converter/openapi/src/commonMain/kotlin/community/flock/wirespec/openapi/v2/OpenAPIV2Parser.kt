@@ -464,7 +464,7 @@ object OpenAPIV2Parser : Parser {
     private fun SwaggerObject.toField(header: HeaderObject, identifier: String) = Field(
         identifier = FieldIdentifier(identifier),
         reference = when (header.type) {
-            "array" -> header.items?.let { resolve(it) }?.let { toReference(it, identifier, false) }
+            OpenapiType.ARRAY -> header.items?.let { resolve(it) }?.let { toReference(it, identifier, false) }
                 ?: error("Item cannot be null")
 
             else -> Reference.Primitive(

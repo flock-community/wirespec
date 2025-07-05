@@ -196,7 +196,7 @@ object OpenAPIV2Emitter : Emitter() {
                     description = comment?.value ?: "${identifier.value} ${response.status} response",
                     headers = response.headers.associate {
                         it.identifier.value to HeaderObject(
-                            type = it.reference.emitType().name,
+                            type = it.reference.emitType(),
                             format = it.reference.emitFormat(),
                             pattern = it.reference.emitPattern(),
                             items = (it.reference as? Reference.Iterable)?.reference?.toSchemaOrReference()
@@ -262,7 +262,7 @@ object OpenAPIV2Emitter : Emitter() {
         is Reference.Primitive.Type.Bytes -> OpenAPIType.STRING
     }
 
-    private fun Reference.emitType() =
+    private fun Reference.emitType():OpenAPIType =
         when (this) {
             is Reference.Dict -> OpenAPIType.OBJECT
             is Reference.Iterable -> OpenAPIType.ARRAY
