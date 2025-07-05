@@ -14,8 +14,8 @@ import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.assertions.arrow.core.shouldHaveSize
 import io.kotest.matchers.collections.shouldContainAll
-import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.Test
 
@@ -140,7 +140,7 @@ class ValidatorTest {
 
         validate(source)
             .shouldBeLeft()
-            .size shouldBe 3
+            .shouldHaveSize(3)
     }
 
     @Test
@@ -163,7 +163,7 @@ class ValidatorTest {
 
         validate(source1, source2)
             .shouldBeLeft()
-            .size shouldBe 3
+            .shouldHaveSize(3)
     }
 
     @Test
@@ -235,6 +235,6 @@ class ValidatorTest {
 
         validate(source1, source2)
             .shouldBeLeft()
-            .size shouldBe 3
+            .shouldHaveSize(3)
     }
 }

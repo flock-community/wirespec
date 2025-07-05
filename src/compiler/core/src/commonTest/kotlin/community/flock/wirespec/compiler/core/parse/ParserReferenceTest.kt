@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.assertions.arrow.core.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.Test
@@ -55,7 +56,7 @@ class ParserReferenceTest {
 
         parser(source)
             .shouldBeLeft()
-            .also { it.size shouldBe 1 }
+            .shouldHaveSize(1)
             .first()
             .run {
                 message shouldBe "Cannot find reference: Bar"

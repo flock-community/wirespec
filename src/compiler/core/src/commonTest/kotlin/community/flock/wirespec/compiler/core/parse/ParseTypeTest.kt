@@ -7,7 +7,9 @@ import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.assertions.arrow.core.shouldHaveSize
 import io.kotest.matchers.booleans.shouldBeFalse
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.Test
@@ -28,12 +30,12 @@ class ParseTypeTest {
 
         parser(source)
             .shouldBeRight()
-            .also { it.size shouldBe 1 }
+            .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Type>()
             .also { it.identifier.value shouldBe "Foo" }
             .shape.value
-            .also { it.size shouldBe 1 }
+            .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Field>()
             .run {
@@ -56,7 +58,7 @@ class ParseTypeTest {
 
         parser(source)
             .shouldBeRight()
-            .also { it.size shouldBe 1 }
+            .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Refined>()
             .apply {
@@ -78,7 +80,7 @@ class ParseTypeTest {
 
         parser(source)
             .shouldBeRight()
-            .also { it.size shouldBe 1 }
+            .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Refined>()
             .apply {
@@ -100,7 +102,7 @@ class ParseTypeTest {
 
         parser(source)
             .shouldBeRight { it.head.message }
-            .also { it.size shouldBe 1 }
+            .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Refined>()
             .apply {
@@ -124,7 +126,7 @@ class ParseTypeTest {
 
         parser(source)
             .shouldBeRight { it.head.message }
-            .also { it.size shouldBe 1 }
+            .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Refined>()
             .apply {
@@ -148,7 +150,7 @@ class ParseTypeTest {
 
         parser(source)
             .shouldBeRight { it.head.message }
-            .also { it.size shouldBe 1 }
+            .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Refined>()
             .apply {
@@ -174,11 +176,11 @@ class ParseTypeTest {
 
         parser(source)
             .shouldBeRight()
-            .also { it.size shouldBe 3 }[2]
+            .shouldHaveSize(3)[2]
             .shouldBeInstanceOf<Union>()
             .also { it.identifier.value shouldBe "Foo" }
             .entries
-            .also { it.size shouldBe 2 }
+            .shouldHaveSize(2)
             .let {
                 val (first, second) = it.toList()
                 first shouldBe Reference.Custom(value = "Bar", isNullable = false)
@@ -195,7 +197,7 @@ class ParseTypeTest {
 
         parser(source)
             .shouldBeRight { it.head.message }
-            .also { it.size shouldBe 2 }
+            .shouldHaveSize(2)
             .let { (first, second) ->
                 first shouldBe Type(
                     comment = null,

@@ -175,8 +175,8 @@ object TypeParser {
                     else -> raise(GenericParserException(token.coordinates, "Expected a RegExp of Literal"))
                 }
                 pattern.also {
-                    eatToken<RightParentheses>().bind()
                     eatToken().bind()
+                    if (eatToken().bind().type !is RightParentheses) raiseWrongToken<RightParentheses>().bind()
                 }
             }
             else -> null
@@ -187,11 +187,12 @@ object TypeParser {
         when (token.type) {
             is LeftParentheses -> {
                 val min = parseTypeBoundValue<T>().bind()
-                eatToken<Comma>().bind()
+                eatToken().bind()
+                if (token.type !is Comma) raiseWrongToken<Comma>().bind()
                 val max = parseTypeBoundValue<T>().bind()
                 Reference.Primitive.Type.Bound(min, max).also {
-                    eatToken<RightParentheses>().bind()
                     eatToken().bind()
+                    if (eatToken().bind().type !is RightParentheses) raiseWrongToken<RightParentheses>().bind()
                 }
             }
             else -> null
@@ -212,10 +213,9 @@ object TypeParser {
         }
     }
 
-    fun TokenProvider.parseType(): Either<WirespecException, Reference> = either {
-        val reference = when (val type = token.type) {
+    fun TokenProvider.parseType(): Either<WirespecException, Reference> = parseToken { previousToken ->
+        val reference = when (val type = previousToken.type) {
             is WsString -> {
-                eatToken().bind()
                 Reference.Primitive(
                     isNullable = isNullable().bind(),
                     type = Reference.Primitive.Type.String(
@@ -225,7 +225,6 @@ object TypeParser {
             }
 
             is WsBytes -> {
-                eatToken().bind()
                 Reference.Primitive(
                     type = Reference.Primitive.Type.Bytes,
                     isNullable = isNullable().bind(),
@@ -233,7 +232,6 @@ object TypeParser {
             }
 
             is WsInteger -> {
-                eatToken().bind()
                 Reference.Primitive(
                     type = Reference.Primitive.Type.Integer(
                         precision = type.precision.toPrimitivePrecision(),
@@ -244,7 +242,6 @@ object TypeParser {
             }
 
             is WsNumber -> {
-                eatToken().bind()
                 Reference.Primitive(
                     type = Reference.Primitive.Type.Number(
                         precision = type.precision.toPrimitivePrecision(),
@@ -255,7 +252,6 @@ object TypeParser {
             }
 
             is WsBoolean -> {
-                eatToken().bind()
                 Reference.Primitive(
                     type = Reference.Primitive.Type.Boolean,
                     isNullable = isNullable().bind(),
@@ -263,23 +259,19 @@ object TypeParser {
             }
 
             is WsUnit -> {
-                eatToken().bind()
                 Reference.Unit(
                     isNullable = isNullable().bind(),
                 )
             }
 
             is TypeIdentifier -> {
-                token.shouldBeDefined().bind()
-                val value = token.value
-                eatToken().bind()
                 Reference.Custom(
-                    value = value,
+                    value = previousToken.shouldBeDefined().bind().value,
                     isNullable = isNullable().bind(),
                 )
             }
 
-            else -> raise(WrongTokenException<TypeDefinitionStart>(token))
+            else -> raise(WrongTokenException<TypeDefinitionStart>(previousToken))
         }
         when (token.type) {
             is Brackets -> {

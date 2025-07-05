@@ -8,6 +8,10 @@ import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.assertions.arrow.core.shouldHaveSize
+import io.kotest.matchers.booleans.shouldBeFalse
+import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.Test
@@ -30,7 +34,7 @@ class ParseTest {
 
         parser(source)
             .shouldBeRight { it.head.message }
-            .size shouldBe 1
+            .shouldHaveSize(1)
     }
 
     @Test
@@ -45,7 +49,7 @@ class ParseTest {
 
         parser(source)
             .shouldBeRight()
-            .size shouldBe 1
+            .shouldHaveSize(1)
     }
 
     @Test
@@ -60,7 +64,7 @@ class ParseTest {
 
         parser(source)
             .shouldBeLeft()
-            .also { it.size shouldBe 1 }
+            .shouldHaveSize(1)
             .first()
             .message shouldBe "RightCurly expected, not: DromedaryCaseIdentifier at line 3 and position 3"
     }
@@ -80,7 +84,7 @@ class ParseTest {
 
         parser(source)
             .shouldBeRight()
-            .size shouldBe 1
+            .shouldHaveSize(1)
     }
 
     @Test
@@ -102,7 +106,7 @@ class ParseTest {
         """.trimMargin()
 
         parser(source)
-            .shouldBeRight().filterIsInstance<Definition>().map { it.comment?.value } shouldBe listOf(
+            .shouldBeRight().map { it.comment?.value } shouldBe listOf(
             "This is comment 1",
             "This is comment 2",
         )
@@ -140,18 +144,12 @@ class ParseTest {
 
         parser(source)
             .shouldBeRight()
-            .apply {
-                size shouldBe 1
-                first().apply {
-                    shouldBeInstanceOf<Type>()
-                    identifier.value shouldBe "Bla"
-                    shape.value.size shouldBe 1
-                    shape.value[0].reference.apply {
-                        shouldBeInstanceOf<Reference.Primitive>()
-                        type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
-                        isNullable shouldBe false
-                        type.pattern shouldBe Reference.Primitive.Type.Pattern.RegExp("/.{0,50}/g")
-                    }
+            .shouldHaveSize(1).first().shouldBeInstanceOf<Type>().apply {
+                identifier.value shouldBe "Bla"
+                shape.value.shouldHaveSize(1).first().reference.shouldBeInstanceOf<Reference.Primitive>().apply {
+                    type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
+                    isNullable.shouldBeFalse()
+                    type.pattern shouldBe Reference.Primitive.Type.Pattern.RegExp("/.{0,50}/g")
                 }
             }
     }
@@ -167,18 +165,13 @@ class ParseTest {
 
         parser(source)
             .shouldBeRight { it.head.message }
-            .apply {
-                size shouldBe 1
-                this[0].apply {
-                    shouldBeInstanceOf<Type>()
-                    identifier.value shouldBe "Bla"
-                    shape.value.size shouldBe 1
-                    shape.value[0].apply {
-                        reference.shouldBeInstanceOf<Reference.Primitive>()
-                        reference.type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
-                        reference.isNullable shouldBe true
-                        reference.type.pattern shouldBe Reference.Primitive.Type.Pattern.RegExp("/.{0,50}/g")
-                    }
+            .shouldHaveSize(1).first()
+            .shouldBeInstanceOf<Type>().apply {
+                identifier.value shouldBe "Bla"
+                shape.value.shouldHaveSize(1).first().reference.shouldBeInstanceOf<Reference.Primitive>().apply {
+                    type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
+                    isNullable.shouldBeTrue()
+                    type.pattern shouldBe Reference.Primitive.Type.Pattern.RegExp("/.{0,50}/g")
                 }
             }
     }
@@ -194,21 +187,14 @@ class ParseTest {
 
         parser(source)
             .shouldBeRight { it.head.message }
-            .apply {
-                size shouldBe 1
-                this[0].apply {
-                    shouldBeInstanceOf<Type>()
-                    identifier.value shouldBe "Bla"
-                    shape.value.size shouldBe 1
-                    shape.value[0].reference.apply {
-                        shouldBeInstanceOf<Reference.Iterable>()
-                        isNullable shouldBe true
-                        reference.apply {
-                            shouldBeInstanceOf<Reference.Primitive>()
-                            type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
-                            isNullable shouldBe true
-                            type.pattern shouldBe Reference.Primitive.Type.Pattern.RegExp("/.{0,50}/g")
-                        }
+            .shouldHaveSize(1).first().shouldBeInstanceOf<Type>().apply {
+                identifier.value shouldBe "Bla"
+                shape.value.shouldHaveSize(1).first().reference.shouldBeInstanceOf<Reference.Iterable>().apply {
+                    isNullable.shouldBeTrue()
+                    reference.shouldBeInstanceOf<Reference.Primitive>().apply {
+                        type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
+                        isNullable.shouldBeTrue()
+                        type.pattern shouldBe Reference.Primitive.Type.Pattern.RegExp("/.{0,50}/g")
                     }
                 }
             }
