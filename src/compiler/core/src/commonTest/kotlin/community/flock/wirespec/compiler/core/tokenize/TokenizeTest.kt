@@ -39,7 +39,7 @@ class TokenizeTest {
             |}
         """.trimMargin(),
         Comment,
-        TypeDefinition, WirespecType, Equals, WsString, LeftParentheses, RegExp, RightParentheses,
+        TypeDefinition, WirespecType, Equals, WsString, LeftParenthesis, RegExp, RightParenthesis,
         Comment,
         TypeDefinition, WirespecType, LeftCurly,
         DromedaryCaseIdentifier, Colon, WirespecType, QuestionMark, Comma,

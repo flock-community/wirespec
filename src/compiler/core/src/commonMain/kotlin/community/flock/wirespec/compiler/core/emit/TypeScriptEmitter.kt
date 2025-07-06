@@ -106,21 +106,18 @@ open class TypeScriptEmitter(val emitShared: EmitShared = EmitShared()) : Emitte
     override fun Refined.emitValidator():String {
         val defaultReturn = "true;"
         return when (val type = reference.type) {
-            is Reference.Primitive.Type.Integer -> type.bound?.emit() ?: defaultReturn
-            is Reference.Primitive.Type.Number -> type.bound?.emit() ?: defaultReturn
-            is Reference.Primitive.Type.String -> type.pattern?.emit() ?: defaultReturn
+            is Reference.Primitive.Type.Integer -> type.constraint?.emit() ?: defaultReturn
+            is Reference.Primitive.Type.Number -> type.constraint?.emit() ?: defaultReturn
+            is Reference.Primitive.Type.String -> type.constraint?.emit() ?: defaultReturn
             Reference.Primitive.Type.Boolean -> defaultReturn
             Reference.Primitive.Type.Bytes -> defaultReturn
         }
     }
 
-    override fun Reference.Primitive.Type.Pattern.emit() = when (this) {
-        is Reference.Primitive.Type.Pattern.RegExp -> """$value.test(value)"""
-        is Reference.Primitive.Type.Pattern.Format -> null
+    override fun Reference.Primitive.Type.Constraint.emit() = when (this) {
+        is Reference.Primitive.Type.Constraint.RegExp -> """$value.test(value)"""
+        is Reference.Primitive.Type.Constraint.Bound -> """$min < value && value < $max;"""
     }
-
-    override fun Reference.Primitive.Type.Bound.emit() =
-        """$min < value && value < $max;"""
 
     override fun emit(endpoint: Endpoint) =
         """

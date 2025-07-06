@@ -114,15 +114,9 @@ public class CustomEmitter extends Emitter {
         return notYetImplemented();
     }
 
-    @Nullable
-    @Override
-    public String emit(@NotNull Reference.Primitive.Type.Pattern pattern)  {
-        return notYetImplemented();
-    }
-
     @NotNull
     @Override
-    public String emit(@NotNull Reference.Primitive.Type.Bound bound)  {
+    public String emit(@NotNull Reference.Primitive.Type.Constraint constraint)  {
         return notYetImplemented();
     }
 }

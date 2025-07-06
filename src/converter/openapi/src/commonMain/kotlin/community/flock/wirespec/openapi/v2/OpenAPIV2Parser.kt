@@ -451,8 +451,7 @@ object OpenAPIV2Parser : Parser {
 
     private fun BaseObject.toPrimitive() = when (this.type) {
         OpenapiType.STRING -> when {
-            pattern != null -> Reference.Primitive.Type.String(pattern = Reference.Primitive.Type.Pattern.RegExp(pattern!!))
-            format != null -> Reference.Primitive.Type.String(pattern = Reference.Primitive.Type.Pattern.Format(format!!))
+            pattern != null -> Reference.Primitive.Type.String(constraint = Reference.Primitive.Type.Constraint.RegExp(pattern!!))
             else -> Reference.Primitive.Type.String(null)
         }
         OpenapiType.INTEGER -> Reference.Primitive.Type.Integer(if (format == "int32") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64, null)

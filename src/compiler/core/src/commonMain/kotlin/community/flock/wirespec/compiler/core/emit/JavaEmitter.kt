@@ -143,23 +143,19 @@ open class JavaEmitter(
 
     override fun Refined.emitValidator():String {
         val defaultReturn = "true;"
-         return when (val type = reference.type) {
-            is Reference.Primitive.Type.Integer -> type.bound?.emit() ?: defaultReturn
-            is Reference.Primitive.Type.Number -> type.bound?.emit() ?: defaultReturn
-            is Reference.Primitive.Type.String -> type.pattern?.emit() ?: defaultReturn
+        return when (val type = reference.type) {
+            is Reference.Primitive.Type.Integer -> type.constraint?.emit() ?: defaultReturn
+            is Reference.Primitive.Type.Number -> type.constraint?.emit() ?: defaultReturn
+            is Reference.Primitive.Type.String -> type.constraint?.emit() ?: defaultReturn
             Reference.Primitive.Type.Boolean -> defaultReturn
             Reference.Primitive.Type.Bytes -> defaultReturn
         }
     }
 
-    override fun Reference.Primitive.Type.Pattern.emit() = when(this){
-        is Reference.Primitive.Type.Pattern.RegExp -> """java.util.regex.Pattern.compile("${expression.replace("\\", "\\\\")}").matcher(record.value).find();"""
-        is Reference.Primitive.Type.Pattern.Format -> null
+    override fun Reference.Primitive.Type.Constraint.emit() = when(this){
+        is Reference.Primitive.Type.Constraint.RegExp -> """java.util.regex.Pattern.compile("${expression.replace("\\", "\\\\")}").matcher(record.value).find();"""
+        is Reference.Primitive.Type.Constraint.Bound -> """$min < record.value && record.value < $max;"""
     }
-
-
-    override fun Reference.Primitive.Type.Bound.emit() =
-        """$min < record.value && record.value < $max;"""
 
     override fun emit(enum: Enum, module: Module) = """
         |public enum ${emit(enum.identifier)} implements Wirespec.Enum {

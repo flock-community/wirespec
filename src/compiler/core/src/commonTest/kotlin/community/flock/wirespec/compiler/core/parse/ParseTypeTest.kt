@@ -45,7 +45,7 @@ class ParseTypeTest {
                     .reference.shouldBeInstanceOf<Reference.Primitive>().run {
                         type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
                         isNullable.shouldBeFalse()
-                        type.pattern shouldBe null
+                        type.constraint shouldBe null
                     }
             }
     }
@@ -67,7 +67,7 @@ class ParseTypeTest {
                     shouldBeInstanceOf<Reference.Primitive>()
                     type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
                     isNullable.shouldBeFalse()
-                    type.pattern shouldBe Reference.Primitive.Type.Pattern.RegExp("/^([0-9]{4}[A-Z]{2})$/g")
+                    type.constraint shouldBe Reference.Primitive.Type.Constraint.RegExp("/^([0-9]{4}[A-Z]{2})$/g")
                 }
             }
     }
@@ -89,8 +89,8 @@ class ParseTypeTest {
                     isNullable shouldBe false
                     type.apply {
                         shouldBeInstanceOf<Reference.Primitive.Type.Integer>()
-                        bound?.min shouldBe "0"
-                        bound?.max shouldBe "99"
+                        constraint?.min shouldBe "0"
+                        constraint?.max shouldBe "99"
                     }
                 }
             }
@@ -113,8 +113,8 @@ class ParseTypeTest {
                     isNullable shouldBe false
                     type.apply {
                         shouldBeInstanceOf<Reference.Primitive.Type.Integer>()
-                        bound?.min shouldBe null
-                        bound?.max shouldBe "99"
+                        constraint?.min shouldBe null
+                        constraint?.max shouldBe "99"
                     }
                 }
             }
@@ -137,8 +137,8 @@ class ParseTypeTest {
                     isNullable shouldBe false
                     type.apply {
                         shouldBeInstanceOf<Reference.Primitive.Type.Number>()
-                        bound?.min shouldBe "0.0"
-                        bound?.max shouldBe "9.9"
+                        constraint?.min shouldBe "0.0"
+                        constraint?.max shouldBe "9.9"
                     }
                 }
             }

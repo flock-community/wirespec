@@ -31,7 +31,7 @@ class TokenizeTypeTest {
     @Test
     fun testRefinedTypeTokenize() = testTokenizer(
         "type DutchPostalCode = String(/^([0-9]{4}[A-Z]{2})$/g)",
-        TypeDefinition, WirespecType, Equals, WsString, LeftParentheses, RegExp, RightParentheses,
+        TypeDefinition, WirespecType, Equals, WsString, LeftParenthesis, RegExp, RightParenthesis,
         EndOfProgram,
     )
 
@@ -64,11 +64,11 @@ class TokenizeTypeTest {
     fun testBoundsIntegerSimple() = testTokenizer(
         """Integer(0, 1)""",
         WsInteger(Precision.P64),
-        LeftParentheses,
+        LeftParenthesis,
         Integer,
         Comma,
         Integer,
-        RightParentheses,
+        RightParenthesis,
         EndOfProgram,
     )
 
@@ -76,11 +76,11 @@ class TokenizeTypeTest {
     fun testBoundsIntegerStatusCode() = testTokenizer(
         """Integer(200, 500)""",
         WsInteger(Precision.P64),
-        LeftParentheses,
+        LeftParenthesis,
         Integer,
         Comma,
         Integer,
-        RightParentheses,
+        RightParenthesis,
         EndOfProgram,
     )
 
@@ -88,11 +88,11 @@ class TokenizeTypeTest {
     fun testBoundsNumberSimple() = testTokenizer(
         """Number(0.0, 1.0)""",
         WsNumber(Precision.P64),
-        LeftParentheses,
+        LeftParenthesis,
         Number,
         Comma,
         Number,
-        RightParentheses,
+        RightParenthesis,
         EndOfProgram,
     )
 
@@ -100,11 +100,11 @@ class TokenizeTypeTest {
     fun testBoundsNumberSimpleMinUndefined() = testTokenizer(
         """Number(   _   , 1.0)""",
         WsNumber(Precision.P64),
-        LeftParentheses,
+        LeftParenthesis,
         Underscore,
         Comma,
         Number,
-        RightParentheses,
+        RightParenthesis,
         EndOfProgram,
     )
 
@@ -112,9 +112,9 @@ class TokenizeTypeTest {
     fun testRegexSimple() = testTokenizer(
         """String(/.*/)""",
         WsString,
-        LeftParentheses,
+        LeftParenthesis,
         RegExp,
-        RightParentheses,
+        RightParenthesis,
         EndOfProgram,
     )
 
@@ -122,9 +122,9 @@ class TokenizeTypeTest {
     fun testLiteralSimple() = testTokenizer(
         """String(datetime)""",
         WsString,
-        LeftParentheses,
+        LeftParenthesis,
         DromedaryCaseIdentifier,
-        RightParentheses,
+        RightParenthesis,
         EndOfProgram,
     )
 
@@ -132,9 +132,9 @@ class TokenizeTypeTest {
     fun testLiteralCaseSimple() = testTokenizer(
         """String(`EMAIL_ADDRESS`)""",
         WsString,
-        LeftParentheses,
+        LeftParenthesis,
         ScreamingSnakeCaseIdentifier,
-        RightParentheses,
+        RightParenthesis,
         EndOfProgram,
     )
 
@@ -142,9 +142,9 @@ class TokenizeTypeTest {
     fun testRegexWithFlag() = testTokenizer(
         """String(/.*/g)""",
         WsString,
-        LeftParentheses,
+        LeftParenthesis,
         RegExp,
-        RightParentheses,
+        RightParenthesis,
         EndOfProgram,
     )
 
@@ -152,9 +152,9 @@ class TokenizeTypeTest {
     fun testRegexWithEscapedForwardSlash() = testTokenizer(
         """String(/.*\//g)""",
         WsString,
-        LeftParentheses,
+        LeftParenthesis,
         RegExp,
-        RightParentheses,
+        RightParenthesis,
         EndOfProgram,
     )
 
@@ -162,9 +162,9 @@ class TokenizeTypeTest {
     fun testRegexWithExtraSpaces() = testTokenizer(
         """String(  /.*\//g  )""",
         WsString,
-        LeftParentheses,
+        LeftParenthesis,
         RegExp,
-        RightParentheses,
+        RightParenthesis,
         EndOfProgram,
     )
 
@@ -186,17 +186,17 @@ class TokenizeTypeTest {
             testTokenizer(
                 """String(/$it/g)""",
                 WsString,
-                LeftParentheses,
+                LeftParenthesis,
                 RegExp,
-                RightParentheses,
+                RightParenthesis,
                 EndOfProgram,
             )
             testTokenizer(
                 """String(/$it/)""",
                 WsString,
-                LeftParentheses,
+                LeftParenthesis,
                 RegExp,
-                RightParentheses,
+                RightParenthesis,
                 EndOfProgram,
             )
         }
@@ -221,20 +221,20 @@ class TokenizeTypeTest {
                 |  refinedIntegerArray: Integer(0, 100)?[]?
                 |}
         """.trimMargin(),
-        TypeDefinition, WirespecType, Equals, WsString, LeftParentheses, RegExp, RightParentheses,
+        TypeDefinition, WirespecType, Equals, WsString, LeftParenthesis, RegExp, RightParenthesis,
         TypeDefinition, WirespecType, LeftCurly,
         DromedaryCaseIdentifier, Colon, WirespecType, Comma,
         DromedaryCaseIdentifier, Colon, WirespecType, QuestionMark, Comma,
         DromedaryCaseIdentifier, Colon, WirespecType, Brackets, Comma,
         DromedaryCaseIdentifier, Colon, LeftCurly, WirespecType, RightCurly, Comma,
         DromedaryCaseIdentifier, Colon, WsString, Comma,
-        DromedaryCaseIdentifier, Colon, WsString, LeftParentheses, RegExp, RightParentheses, Comma,
-        DromedaryCaseIdentifier, Colon, WsString, LeftParentheses, RegExp, RightParentheses, Comma,
-        DromedaryCaseIdentifier, Colon, WsString, LeftParentheses, RegExp, RightParentheses, QuestionMark, Comma,
-        DromedaryCaseIdentifier, Colon, WsString, LeftParentheses, RegExp, RightParentheses, Brackets, Comma,
-        DromedaryCaseIdentifier, Colon, WsInteger(Precision.P64), LeftParentheses, Integer, Comma, Integer, RightParentheses, Comma,
-        DromedaryCaseIdentifier, Colon, WsInteger(Precision.P64), LeftParentheses, Integer, Comma, Integer, RightParentheses, QuestionMark, Comma,
-        DromedaryCaseIdentifier, Colon, WsInteger(Precision.P64), LeftParentheses, Integer, Comma, Integer, RightParentheses, QuestionMark, Brackets, QuestionMark,
+        DromedaryCaseIdentifier, Colon, WsString, LeftParenthesis, RegExp, RightParenthesis, Comma,
+        DromedaryCaseIdentifier, Colon, WsString, LeftParenthesis, RegExp, RightParenthesis, Comma,
+        DromedaryCaseIdentifier, Colon, WsString, LeftParenthesis, RegExp, RightParenthesis, QuestionMark, Comma,
+        DromedaryCaseIdentifier, Colon, WsString, LeftParenthesis, RegExp, RightParenthesis, Brackets, Comma,
+        DromedaryCaseIdentifier, Colon, WsInteger(Precision.P64), LeftParenthesis, Integer, Comma, Integer, RightParenthesis, Comma,
+        DromedaryCaseIdentifier, Colon, WsInteger(Precision.P64), LeftParenthesis, Integer, Comma, Integer, RightParenthesis, QuestionMark, Comma,
+        DromedaryCaseIdentifier, Colon, WsInteger(Precision.P64), LeftParenthesis, Integer, Comma, Integer, RightParenthesis, QuestionMark, Brackets, QuestionMark,
         RightCurly,
         EndOfProgram,
     )
@@ -247,7 +247,7 @@ class TokenizeTypeTest {
                 |  postalCode: DutchPostalCode,
                 |}
         """.trimMargin(),
-        TypeDefinition, WirespecType, Equals, WsString, LeftParentheses, RegExp,
+        TypeDefinition, WirespecType, Equals, WsString, LeftParenthesis, RegExp,
         TypeDefinition, WirespecType, LeftCurly, DromedaryCaseIdentifier, Colon, WirespecType, Comma, RightCurly,
         EndOfProgram,
     )
@@ -260,7 +260,7 @@ class TokenizeTypeTest {
                 |}
         """.trimMargin(),
         TypeDefinition, WirespecType, LeftCurly,
-        DromedaryCaseIdentifier, Colon, WsString, LeftParentheses, RegExp,
+        DromedaryCaseIdentifier, Colon, WsString, LeftParenthesis, RegExp,
         RightCurly,
         EndOfProgram,
     )

@@ -10,7 +10,7 @@ class TokenizerRegexTest {
     @Test
     fun testRegexValue() {
         val tokens = WirespecSpec.tokenize("""type Test { test: String(/.*/) } """, TokenizeOptions(removeWhitespace = false))
-        tokens.map { it.type } shouldBe listOf(StartOfProgram, TypeDefinition, WhiteSpaceExceptNewLine, WirespecType, WhiteSpaceExceptNewLine, LeftCurly, WhiteSpaceExceptNewLine, DromedaryCaseIdentifier, Colon, WhiteSpaceExceptNewLine, WsString, LeftParentheses, RegExp, RightParentheses, WhiteSpaceExceptNewLine, RightCurly, WhiteSpaceExceptNewLine, EndOfProgram)
+        tokens.map { it.type } shouldBe listOf(StartOfProgram, TypeDefinition, WhiteSpaceExceptNewLine, WirespecType, WhiteSpaceExceptNewLine, LeftCurly, WhiteSpaceExceptNewLine, DromedaryCaseIdentifier, Colon, WhiteSpaceExceptNewLine, WsString, LeftParenthesis, RegExp, RightParenthesis, WhiteSpaceExceptNewLine, RightCurly, WhiteSpaceExceptNewLine, EndOfProgram)
         tokens.find { it.type == RegExp }?.value shouldBe """/.*/"""
         tokens.shouldBeSound()
     }
@@ -18,7 +18,7 @@ class TokenizerRegexTest {
     @Test
     fun testRegexValueNotEnding() {
         val tokens = WirespecSpec.tokenize("""type Test { test: String(/.*) } """, TokenizeOptions(removeWhitespace = false))
-        tokens.map { it.type } shouldBe listOf(StartOfProgram, TypeDefinition, WhiteSpaceExceptNewLine, WirespecType, WhiteSpaceExceptNewLine, LeftCurly, WhiteSpaceExceptNewLine, DromedaryCaseIdentifier, Colon, WhiteSpaceExceptNewLine, WsString, LeftParentheses, RegExp, EndOfProgram)
+        tokens.map { it.type } shouldBe listOf(StartOfProgram, TypeDefinition, WhiteSpaceExceptNewLine, WirespecType, WhiteSpaceExceptNewLine, LeftCurly, WhiteSpaceExceptNewLine, DromedaryCaseIdentifier, Colon, WhiteSpaceExceptNewLine, WsString, LeftParenthesis, RegExp, EndOfProgram)
         tokens.find { it.type == RegExp }?.value shouldBe """/.*) } """
         tokens.shouldBeSound()
     }
@@ -26,7 +26,7 @@ class TokenizerRegexTest {
     @Test
     fun testBoundValue() {
         val tokens = WirespecSpec.tokenize("""type Test { test: Integer(   1,    5    ) } """, TokenizeOptions(removeWhitespace = false))
-        tokens.map { it.type } shouldBe listOf(StartOfProgram, TypeDefinition, WhiteSpaceExceptNewLine, WirespecType, WhiteSpaceExceptNewLine, LeftCurly, WhiteSpaceExceptNewLine, DromedaryCaseIdentifier, Colon, WhiteSpaceExceptNewLine, WsInteger(Precision.P64), LeftParentheses, WhiteSpaceExceptNewLine, Integer, Comma, WhiteSpaceExceptNewLine, Integer, WhiteSpaceExceptNewLine, RightParentheses, WhiteSpaceExceptNewLine, RightCurly, WhiteSpaceExceptNewLine, EndOfProgram)
+        tokens.map { it.type } shouldBe listOf(StartOfProgram, TypeDefinition, WhiteSpaceExceptNewLine, WirespecType, WhiteSpaceExceptNewLine, LeftCurly, WhiteSpaceExceptNewLine, DromedaryCaseIdentifier, Colon, WhiteSpaceExceptNewLine, WsInteger(Precision.P64), LeftParenthesis, WhiteSpaceExceptNewLine, Integer, Comma, WhiteSpaceExceptNewLine, Integer, WhiteSpaceExceptNewLine, RightParenthesis, WhiteSpaceExceptNewLine, RightCurly, WhiteSpaceExceptNewLine, EndOfProgram)
         tokens.shouldBeSound()
     }
 
@@ -46,9 +46,9 @@ class TokenizerRegexTest {
             StartOfProgram,
             TypeDefinition, WhiteSpaceExceptNewLine, WirespecType, WhiteSpaceExceptNewLine, LeftCurly, NewLine, WhiteSpaceExceptNewLine,
             DromedaryCaseIdentifier, Colon, WhiteSpaceExceptNewLine, WirespecType, Comma, NewLine, WhiteSpaceExceptNewLine,
-            DromedaryCaseIdentifier, Colon, WhiteSpaceExceptNewLine, WsString, LeftParentheses, RegExp, RightParentheses, Comma, NewLine, WhiteSpaceExceptNewLine,
-            DromedaryCaseIdentifier, Colon, WhiteSpaceExceptNewLine, WsInteger(Precision.P64), LeftParentheses, WhiteSpaceExceptNewLine, Underscore, Comma, Integer, RightParentheses, Comma, NewLine, WhiteSpaceExceptNewLine,
-            DromedaryCaseIdentifier, Colon, WhiteSpaceExceptNewLine, WsNumber(Precision.P64), LeftParentheses, WhiteSpaceExceptNewLine, Number, Comma, Number, RightParentheses, NewLine, RightCurly,
+            DromedaryCaseIdentifier, Colon, WhiteSpaceExceptNewLine, WsString, LeftParenthesis, RegExp, RightParenthesis, Comma, NewLine, WhiteSpaceExceptNewLine,
+            DromedaryCaseIdentifier, Colon, WhiteSpaceExceptNewLine, WsInteger(Precision.P64), LeftParenthesis, WhiteSpaceExceptNewLine, Underscore, Comma, Integer, RightParenthesis, Comma, NewLine, WhiteSpaceExceptNewLine,
+            DromedaryCaseIdentifier, Colon, WhiteSpaceExceptNewLine, WsNumber(Precision.P64), LeftParenthesis, WhiteSpaceExceptNewLine, Number, Comma, Number, RightParenthesis, NewLine, RightCurly,
             EndOfProgram,
         )
         tokens.shouldBeSound()

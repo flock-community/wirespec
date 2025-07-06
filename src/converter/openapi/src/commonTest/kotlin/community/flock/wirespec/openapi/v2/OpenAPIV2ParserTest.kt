@@ -86,7 +86,7 @@ class OpenAPIV2ParserTest {
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier("id"),
-                            reference = Primitive(type = Primitive.Type.Integer(bound = null), isNullable = true),
+                            reference = Primitive(type = Primitive.Type.Integer(constraint = null), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("name"),
@@ -103,7 +103,7 @@ class OpenAPIV2ParserTest {
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier("id"),
-                            reference = Primitive(type = Primitive.Type.Integer(bound = null), isNullable = true),
+                            reference = Primitive(type = Primitive.Type.Integer(constraint = null), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("category"),
@@ -145,7 +145,7 @@ class OpenAPIV2ParserTest {
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier("id"),
-                            reference = Primitive(type = Primitive.Type.Integer(bound = null), isNullable = true),
+                            reference = Primitive(type = Primitive.Type.Integer(constraint = null), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("name"),
@@ -162,11 +162,11 @@ class OpenAPIV2ParserTest {
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier("id"),
-                            reference = Primitive(type = Primitive.Type.Integer(bound = null), isNullable = true),
+                            reference = Primitive(type = Primitive.Type.Integer(constraint = null), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("petId"),
-                            reference = Primitive(type = Primitive.Type.Integer(bound = null), isNullable = true),
+                            reference = Primitive(type = Primitive.Type.Integer(constraint = null), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("quantity"),
@@ -179,7 +179,7 @@ class OpenAPIV2ParserTest {
                             identifier = FieldIdentifier("shipDate"),
                             reference = Primitive(
                                 type = Primitive.Type.String(
-                                    pattern = Primitive.Type.Pattern.Format("date-time"),
+                                    constraint = null,
                                 ),
                                 isNullable = true,
                             ),
@@ -203,7 +203,7 @@ class OpenAPIV2ParserTest {
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier("id"),
-                            reference = Primitive(type = Primitive.Type.Integer(bound = null), isNullable = true),
+                            reference = Primitive(type = Primitive.Type.Integer(constraint = null), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("username"),

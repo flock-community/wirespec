@@ -68,21 +68,20 @@ private fun randomRegex(regex: String, random: Random) = RgxGen
     .generate(random)
 
 private fun generateRefined(def: Refined, random: Random) = when (val type = def.reference.type) {
-    is Reference.Primitive.Type.String -> when (val pattern = type.pattern) {
-        is Reference.Primitive.Type.Pattern.Format -> defaultGenerator(random)
-        is Reference.Primitive.Type.Pattern.RegExp -> randomRegex(pattern.value, random).let(::JsonPrimitive)
+    is Reference.Primitive.Type.String -> when (val pattern = type.constraint) {
+        is Reference.Primitive.Type.Constraint.RegExp -> randomRegex(pattern.value, random).let(::JsonPrimitive)
         null -> defaultGenerator(random)
     }
     Reference.Primitive.Type.Boolean -> random.nextBoolean().let(::JsonPrimitive)
     Reference.Primitive.Type.Bytes -> defaultGenerator(random)
     is Reference.Primitive.Type.Integer -> random.nextInt(
-        from = type.bound?.min?.toInt() ?: 0,
-        until = type.bound?.max?.toInt() ?: 0,
+        from = type.constraint?.min?.toInt() ?: 0,
+        until = type.constraint?.max?.toInt() ?: 0,
     ).let(::JsonPrimitive)
 
     is Reference.Primitive.Type.Number -> random.nextDouble(
-        from = type.bound?.min?.toDouble() ?: 0.0,
-        until = type.bound?.max?.toDouble() ?: 0.0,
+        from = type.constraint?.min?.toDouble() ?: 0.0,
+        until = type.constraint?.max?.toDouble() ?: 0.0,
     ).let(::JsonPrimitive)
 }
 

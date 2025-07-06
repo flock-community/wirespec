@@ -16,7 +16,7 @@ import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.Hash
 import community.flock.wirespec.compiler.core.tokenize.Integer
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
-import community.flock.wirespec.compiler.core.tokenize.LeftParentheses
+import community.flock.wirespec.compiler.core.tokenize.LeftParenthesis
 import community.flock.wirespec.compiler.core.tokenize.Method
 import community.flock.wirespec.compiler.core.tokenize.Number
 import community.flock.wirespec.compiler.core.tokenize.Path
@@ -24,7 +24,7 @@ import community.flock.wirespec.compiler.core.tokenize.Pipe
 import community.flock.wirespec.compiler.core.tokenize.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.RegExp
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
-import community.flock.wirespec.compiler.core.tokenize.RightParentheses
+import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.TokenizeOptions
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
@@ -92,8 +92,8 @@ class Lexer : IntellijLexer() {
         is Pipe -> Types.PIPE
         is Integer -> Types.INTEGER
         is Number -> Types.NUMBER
-        is RightParentheses -> Types.RIGHT_PARENTHESES
-        is LeftParentheses -> Types.LEFT_PARENTHESES
+        is RightParenthesis -> Types.RIGHT_PARENTHESES
+        is LeftParenthesis -> Types.LEFT_PARENTHESES
         is RegExp -> Types.REG_EXP
         is Underscore -> Types.UNDERSCORE
     }

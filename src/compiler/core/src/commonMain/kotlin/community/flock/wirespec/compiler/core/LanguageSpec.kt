@@ -18,7 +18,7 @@ import community.flock.wirespec.compiler.core.tokenize.Hash
 import community.flock.wirespec.compiler.core.tokenize.Integer
 import community.flock.wirespec.compiler.core.tokenize.KebabCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
-import community.flock.wirespec.compiler.core.tokenize.LeftParentheses
+import community.flock.wirespec.compiler.core.tokenize.LeftParenthesis
 import community.flock.wirespec.compiler.core.tokenize.Method
 import community.flock.wirespec.compiler.core.tokenize.NewLine
 import community.flock.wirespec.compiler.core.tokenize.Number
@@ -29,7 +29,7 @@ import community.flock.wirespec.compiler.core.tokenize.Precision.P32
 import community.flock.wirespec.compiler.core.tokenize.Precision.P64
 import community.flock.wirespec.compiler.core.tokenize.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
-import community.flock.wirespec.compiler.core.tokenize.RightParentheses
+import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
 import community.flock.wirespec.compiler.core.tokenize.ScreamingKebabCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.ScreamingSnakeCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.SnakeCaseIdentifier
@@ -69,8 +69,8 @@ object WirespecSpec : LanguageSpec {
         Regex("^[\\r\\n]") to NewLine,
         Regex("^\\{") to LeftCurly,
         Regex("^\\}") to RightCurly,
-        Regex("^\\(") to LeftParentheses,
-        Regex("^\\)") to RightParentheses,
+        Regex("^\\(") to LeftParenthesis,
+        Regex("^\\)") to RightParenthesis,
         Regex("^->") to Arrow,
         Regex("^=") to Equals,
         Regex("^\\|") to Pipe,

@@ -54,9 +54,7 @@ object OpenAPIV2Emitter : Emitter() {
 
     override fun Refined.emitValidator() = notYetImplemented()
 
-    override fun Reference.Primitive.Type.Pattern.emit() = notYetImplemented()
-
-    override fun Reference.Primitive.Type.Bound.emit() = notYetImplemented()
+    override fun Reference.Primitive.Type.Constraint.emit() = notYetImplemented()
 
     override fun emit(type: Type, module: Module) = notYetImplemented()
 
@@ -119,26 +117,22 @@ object OpenAPIV2Emitter : Emitter() {
                         is Reference.Primitive.Type.Integer ->
                             refined.identifier.value to SchemaObject(
                                 type = OpenAPIType.INTEGER,
-                                minimum = type.bound?.min?.toDouble(),
-                                maximum = type.bound?.min?.toDouble(),
+                                minimum = type.constraint?.min?.toDouble(),
+                                maximum = type.constraint?.min?.toDouble(),
                             )
 
                         is Reference.Primitive.Type.Number ->
                             refined.identifier.value to SchemaObject(
                                 type = OpenAPIType.NUMBER,
-                                minimum = type.bound?.min?.toDouble(),
-                                maximum = type.bound?.min?.toDouble(),
+                                minimum = type.constraint?.min?.toDouble(),
+                                maximum = type.constraint?.min?.toDouble(),
                             )
 
                         is Reference.Primitive.Type.String ->
-                            refined.identifier.value to when(val pattern = type.pattern){
-                                is Reference.Primitive.Type.Pattern.RegExp -> SchemaObject(
+                            refined.identifier.value to when(val pattern = type.constraint){
+                                is Reference.Primitive.Type.Constraint.RegExp -> SchemaObject(
                                     type = OpenAPIType.STRING,
                                     pattern = pattern.value,
-                                )
-                                is Reference.Primitive.Type.Pattern.Format -> SchemaObject(
-                                    type = OpenAPIType.STRING,
-                                    format = pattern.value,
                                 )
                                 null -> SchemaObject(
                                     type = OpenAPIType.STRING,
@@ -275,10 +269,6 @@ object OpenAPIV2Emitter : Emitter() {
     private fun Reference.emitFormat() =
         when (this) {
             is Reference.Primitive -> when (val t = type) {
-                is Reference.Primitive.Type.String -> when (val p = t.pattern) {
-                    is Reference.Primitive.Type.Pattern.Format -> p.value
-                    else -> null
-                }
                 is Reference.Primitive.Type.Number -> when (t.precision) {
                     Reference.Primitive.Type.Precision.P32 -> "float"
                     Reference.Primitive.Type.Precision.P64 -> "double"
@@ -300,8 +290,8 @@ object OpenAPIV2Emitter : Emitter() {
     private fun Reference.emitPattern() =
         when (this) {
             is Reference.Primitive -> when (val t = type) {
-                is Reference.Primitive.Type.String -> when (val p = t.pattern) {
-                    is Reference.Primitive.Type.Pattern.RegExp -> p.value
+                is Reference.Primitive.Type.String -> when (val p = t.constraint) {
+                    is Reference.Primitive.Type.Constraint.RegExp -> p.value
                     else -> null
                 }
                 else -> null
@@ -312,8 +302,8 @@ object OpenAPIV2Emitter : Emitter() {
     private fun Reference.emitMinimum() =
         when (this) {
             is Reference.Primitive -> when (val t = type) {
-                is Reference.Primitive.Type.Number -> t.bound?.min?.toDouble()
-                is Reference.Primitive.Type.Integer -> t.bound?.min?.toDouble()
+                is Reference.Primitive.Type.Number -> t.constraint?.min?.toDouble()
+                is Reference.Primitive.Type.Integer -> t.constraint?.min?.toDouble()
                 else -> null
             }
             else -> null
@@ -322,8 +312,8 @@ object OpenAPIV2Emitter : Emitter() {
     private fun Reference.emitMaximum() =
         when (this) {
             is Reference.Primitive -> when (val t = type) {
-                is Reference.Primitive.Type.Number -> t.bound?.max?.toDouble()
-                is Reference.Primitive.Type.Integer -> t.bound?.max?.toDouble()
+                is Reference.Primitive.Type.Number -> t.constraint?.max?.toDouble()
+                is Reference.Primitive.Type.Integer -> t.constraint?.max?.toDouble()
                 else -> null
             }
             else -> null

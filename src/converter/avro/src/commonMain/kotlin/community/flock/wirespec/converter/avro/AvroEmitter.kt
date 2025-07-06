@@ -132,11 +132,7 @@ object AvroEmitter : Emitter() {
         TODO("Not yet implemented")
     }
 
-    override fun Reference.Primitive.Type.Pattern.emit(): String? {
-        TODO("Not yet implemented")
-    }
-
-    override fun Reference.Primitive.Type.Bound.emit(): String {
+    override fun Reference.Primitive.Type.Constraint.emit(): String {
         TODO("Not yet implemented")
     }
 

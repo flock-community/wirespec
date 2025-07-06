@@ -66,11 +66,11 @@ object Ast {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("a"),
-                        reference = Reference.Primitive(type = Reference.Primitive.Type.Number(bound = null), isNullable = true),
+                        reference = Reference.Primitive(type = Reference.Primitive.Type.Number(constraint = null), isNullable = true),
                     ),
                     Field(
                         identifier = FieldIdentifier("b"),
-                        reference = Reference.Primitive(type = Reference.Primitive.Type.Number(bound = null), isNullable = true),
+                        reference = Reference.Primitive(type = Reference.Primitive.Type.Number(constraint = null), isNullable = true),
                     ),
                 ),
             ),
@@ -135,14 +135,14 @@ object Ast {
                     Field(
                         identifier = FieldIdentifier("a"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.Number(bound = null),
+                            type = Reference.Primitive.Type.Number(constraint = null),
                             isNullable = true,
                         ),
                     ),
                     Field(
                         identifier = FieldIdentifier("b"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.Number(bound = null),
+                            type = Reference.Primitive.Type.Number(constraint = null),
                             isNullable = true,
                         ),
                     ),
@@ -228,7 +228,7 @@ object Ast {
                     Field(
                         identifier = FieldIdentifier("code"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.Integer(bound = null),
+                            type = Reference.Primitive.Type.Integer(constraint = null),
                             isNullable = true,
                         ),
                     ),
@@ -251,7 +251,7 @@ object Ast {
                     Field(
                         identifier = FieldIdentifier("code"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.Integer(bound = null),
+                            type = Reference.Primitive.Type.Integer(constraint = null),
                             isNullable = true,
                         ),
                     ),
@@ -351,7 +351,7 @@ object Ast {
                     Field(
                         identifier = FieldIdentifier("code"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.Number(bound = null),
+                            type = Reference.Primitive.Type.Number(constraint = null),
                             isNullable = true,
                         ),
                     ),
@@ -374,7 +374,7 @@ object Ast {
                     Field(
                         identifier = FieldIdentifier("code"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.Number(bound = null),
+                            type = Reference.Primitive.Type.Number(constraint = null),
                             isNullable = true,
                         ),
                     ),

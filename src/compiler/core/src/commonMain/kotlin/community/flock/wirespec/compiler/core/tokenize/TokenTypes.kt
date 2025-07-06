@@ -4,7 +4,7 @@ fun TokenType.name(): String = this::class.simpleName!!
 
 sealed interface TokenType
 data object RightCurly : TokenType
-data object RightParentheses : TokenType
+data object RightParenthesis : TokenType
 
 data object Colon : TokenType
 data object Comma : TokenType
@@ -39,7 +39,7 @@ data object ScreamingSnakeCaseIdentifier : CaseVariant
 
 sealed interface TypeDefinitionStart : TokenType
 data object LeftCurly : TypeDefinitionStart
-data object LeftParentheses : TypeDefinitionStart
+data object LeftParenthesis : TypeDefinitionStart
 data object ForwardSlash : TypeDefinitionStart
 data object Equals : TypeDefinitionStart
 

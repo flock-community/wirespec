@@ -149,7 +149,7 @@ class ParseTest {
                 shape.value.shouldHaveSize(1).first().reference.shouldBeInstanceOf<Reference.Primitive>().apply {
                     type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
                     isNullable.shouldBeFalse()
-                    type.pattern shouldBe Reference.Primitive.Type.Pattern.RegExp("/.{0,50}/g")
+                    type.constraint shouldBe Reference.Primitive.Type.Constraint.RegExp("/.{0,50}/g")
                 }
             }
     }
@@ -171,7 +171,7 @@ class ParseTest {
                 shape.value.shouldHaveSize(1).first().reference.shouldBeInstanceOf<Reference.Primitive>().apply {
                     type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
                     isNullable.shouldBeTrue()
-                    type.pattern shouldBe Reference.Primitive.Type.Pattern.RegExp("/.{0,50}/g")
+                    type.constraint shouldBe Reference.Primitive.Type.Constraint.RegExp("/.{0,50}/g")
                 }
             }
     }
@@ -194,7 +194,7 @@ class ParseTest {
                     reference.shouldBeInstanceOf<Reference.Primitive>().apply {
                         type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
                         isNullable.shouldBeTrue()
-                        type.pattern shouldBe Reference.Primitive.Type.Pattern.RegExp("/.{0,50}/g")
+                        type.constraint shouldBe Reference.Primitive.Type.Constraint.RegExp("/.{0,50}/g")
                     }
                 }
             }

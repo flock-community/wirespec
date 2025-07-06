@@ -17,7 +17,7 @@ object NodeFixtures {
         reference = Primitive(
             isNullable = false,
             type = Primitive.Type.String(
-                pattern = Primitive.Type.Pattern.RegExp("/^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}$/"),
+                constraint = Primitive.Type.Constraint.RegExp("/^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}$/"),
             ),
         ),
     )

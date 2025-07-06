@@ -9,7 +9,7 @@ import community.flock.wirespec.compiler.core.tokenize.Comma
 import community.flock.wirespec.compiler.core.tokenize.Equals
 import community.flock.wirespec.compiler.core.tokenize.Integer
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
-import community.flock.wirespec.compiler.core.tokenize.LeftParentheses
+import community.flock.wirespec.compiler.core.tokenize.LeftParenthesis
 import community.flock.wirespec.compiler.core.tokenize.Number
 import community.flock.wirespec.compiler.core.tokenize.Pipe
 import community.flock.wirespec.compiler.core.tokenize.Precision
@@ -17,7 +17,7 @@ import community.flock.wirespec.compiler.core.tokenize.PrimitiveType
 import community.flock.wirespec.compiler.core.tokenize.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.RegExp
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
-import community.flock.wirespec.compiler.core.tokenize.RightParentheses
+import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
 import community.flock.wirespec.compiler.core.tokenize.SpecificType
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.TokenType
@@ -178,41 +178,35 @@ object TypeParser {
         }.toSet()
     }
 
-    private fun TokenProvider.parseTypePattern() = either {
+    private fun TokenProvider.parseTypeConstraint() = parseToken {
         when (token.type) {
-            is LeftParentheses -> {
-                eatToken().bind()
-                when (token.type) {
-                    is RegExp -> Reference.Primitive.Type.Pattern.RegExp(token.value)
-                    else -> raiseWrongToken<RegExp>().bind()
-                }.also {
-                    eatToken().bind()
-                    if (eatToken().bind().type !is RightParentheses) raiseWrongToken<RightParentheses>().bind()
-                }
+            is RegExp -> Reference.Primitive.Type.Constraint.RegExp(token.value).also { eatToken().bind() }
+            else -> raiseWrongToken<RegExp>().bind()
+        }.also {
+            when (token.type) {
+                is RightParenthesis -> eatToken().bind()
+                else -> raiseWrongToken<RightParenthesis>().bind()
             }
-            else -> null
         }
     }
 
-    private inline fun <reified T : TokenType> TokenProvider.parseTypeBound() = either {
+    private inline fun <reified T : TokenType> TokenProvider.parseTypeBound() = parseToken {
+        val min = parseTypeBoundValue<T>().bind()
         when (token.type) {
-            is LeftParentheses -> {
-                val min = parseTypeBoundValue<T>().bind()
-                eatToken().bind()
-                if (token.type !is Comma) raiseWrongToken<Comma>().bind()
-                val max = parseTypeBoundValue<T>().bind()
-                Reference.Primitive.Type.Bound(min, max).also {
-                    eatToken().bind()
-                    if (eatToken().bind().type !is RightParentheses) raiseWrongToken<RightParentheses>().bind()
-                }
-            }
-            else -> null
+            is Comma -> eatToken().bind()
+            else -> raiseWrongToken<Comma>().bind()
         }
+        val max = parseTypeBoundValue<T>().bind()
+        when (token.type) {
+            is RightParenthesis -> eatToken().bind()
+            else -> raiseWrongToken<RightParenthesis>().bind()
+        }
+        Reference.Primitive.Type.Constraint.Bound(min, max)
     }
 
-    private inline fun <reified T : TokenType> TokenProvider.parseTypeBoundValue() = parseToken {
-        when (token.type) {
-            is T -> token.value
+    private inline fun <reified T : TokenType> TokenProvider.parseTypeBoundValue() = parseToken { previousToken ->
+        when (previousToken.type) {
+            is T -> previousToken.value
             is Underscore -> null
             else -> raiseWrongToken<T>().bind()
         }
@@ -224,7 +218,10 @@ object TypeParser {
                 Reference.Primitive(
                     isNullable = isNullable().bind(),
                     type = Reference.Primitive.Type.String(
-                        pattern = parseTypePattern().bind(),
+                        constraint = when (token.type) {
+                            is LeftParenthesis -> parseTypeConstraint().bind()
+                            else -> null
+                        },
                     ),
                 )
             }
@@ -240,7 +237,11 @@ object TypeParser {
                 Reference.Primitive(
                     type = Reference.Primitive.Type.Integer(
                         precision = type.precision.toPrimitivePrecision(),
-                        bound = parseTypeBound<Integer>().bind(),
+                        constraint = when (token.type) {
+                            is LeftParenthesis -> parseTypeBound<Integer>().bind()
+                            else -> null
+                        },
+
                     ),
                     isNullable = isNullable().bind(),
                 )
@@ -250,7 +251,10 @@ object TypeParser {
                 Reference.Primitive(
                     type = Reference.Primitive.Type.Number(
                         precision = type.precision.toPrimitivePrecision(),
-                        bound = parseTypeBound<Number>().bind(),
+                        constraint = when (token.type) {
+                            is LeftParenthesis -> parseTypeBound<Number>().bind()
+                            else -> null
+                        },
                     ),
                     isNullable = isNullable().bind(),
                 )

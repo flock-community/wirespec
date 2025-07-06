@@ -185,21 +185,18 @@ open class PythonEmitter(
     override fun Refined.emitValidator():String {
         val defaultReturn = "true"
         return when (val type = reference.type) {
-            is Reference.Primitive.Type.Integer -> type.bound?.emit() ?: defaultReturn
-            is Reference.Primitive.Type.Number -> type.bound?.emit() ?: defaultReturn
-            is Reference.Primitive.Type.String -> type.pattern?.emit() ?: defaultReturn
+            is Reference.Primitive.Type.Integer -> type.constraint?.emit() ?: defaultReturn
+            is Reference.Primitive.Type.Number -> type.constraint?.emit() ?: defaultReturn
+            is Reference.Primitive.Type.String -> type.constraint?.emit() ?: defaultReturn
             Reference.Primitive.Type.Boolean -> defaultReturn
             Reference.Primitive.Type.Bytes -> defaultReturn
         }
     }
 
-    override fun Reference.Primitive.Type.Pattern.emit() = when (this) {
-        is Reference.Primitive.Type.Pattern.Format -> null
-        is Reference.Primitive.Type.Pattern.RegExp ->  """${Spacer}bool(re.match(r"${value}", self.value))"""
+    override fun Reference.Primitive.Type.Constraint.emit() = when (this) {
+        is Reference.Primitive.Type.Constraint.RegExp ->  """${Spacer}bool(re.match(r"$value", self.value))"""
+        is Reference.Primitive.Type.Constraint.Bound -> """${Spacer}$min < record.value < $max;"""
     }
-
-    override fun Reference.Primitive.Type.Bound.emit() =
-        """${Spacer}$min < record.value < $max;"""
 
     override fun emit(endpoint: Endpoint) = """
         |${endpoint.importReferences().joinToString("\n") { it.emitReferenceCustomImports() }}

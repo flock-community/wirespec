@@ -126,7 +126,7 @@ abstract class Emitter : Emitters {
         else -> emptyList()
     }
 
-    val Reference.Primitive.Type.Pattern.RegExp.expression get() =
+    val Reference.Primitive.Type.Constraint.RegExp.expression get() =
         value.split("/").drop(1).dropLast(1).joinToString("/")
 
     private fun Endpoint.Segment.Param.toParam() = Param(

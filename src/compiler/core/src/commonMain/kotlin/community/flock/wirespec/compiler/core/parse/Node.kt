@@ -89,29 +89,24 @@ sealed interface Reference : Value<String> {
 
             enum class Precision { P32, P64 }
 
-            sealed interface Pattern {
+            sealed interface Constraint {
                 @JvmInline
                 value class RegExp(override val value: kotlin.String) :
                     Value<kotlin.String>,
-                    Pattern
+                    Constraint
 
-                @JvmInline
-                value class Format(override val value: kotlin.String) :
-                    Value<kotlin.String>,
-                    Pattern
+                data class Bound(val min: kotlin.String?, val max: kotlin.String?) : Constraint
             }
 
-            data class Bound(val min: kotlin.String?, val max: kotlin.String?)
-
-            data class String(val pattern: Pattern?) : Type {
+            data class String(val constraint: Constraint.RegExp?) : Type {
                 override val name = "String"
             }
 
-            data class Integer(val precision: Precision = P64, val bound: Bound?) : Type {
+            data class Integer(val precision: Precision = P64, val constraint: Constraint.Bound?) : Type {
                 override val name = "Integer"
             }
 
-            data class Number(val precision: Precision = P64, val bound: Bound?) : Type {
+            data class Number(val precision: Precision = P64, val constraint: Constraint.Bound?) : Type {
                 override val name = "Number"
             }
 

@@ -198,7 +198,7 @@ class ParserReferenceTest {
                         shouldBeInstanceOf<Reference.Primitive>()
                         type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
                         isNullable shouldBe false
-                        type.pattern shouldBe Reference.Primitive.Type.Pattern.RegExp("/^([0-9]{2}-[0-9]{2}-20[0-9]{2})$/g")
+                        type.constraint shouldBe Reference.Primitive.Type.Constraint.RegExp("/^([0-9]{2}-[0-9]{2}-20[0-9]{2})$/g")
                     }
                 }
                 get(1).apply {

@@ -68,7 +68,7 @@ class OpenAPIV3ParserTest {
                             identifier = FieldIdentifier("shipDate"),
                             reference = Primitive(
                                 type = Primitive.Type.String(
-                                    pattern = Primitive.Type.Pattern.Format("date-time"),
+                                    constraint = null,
                                 ),
                                 isNullable = true,
                             ),
@@ -859,7 +859,7 @@ class OpenAPIV3ParserTest {
                             identifier = FieldIdentifier(name = "houseNumber"),
                             reference = Primitive(
                                 type = Primitive.Type.String(
-                                    pattern = Primitive.Type.Pattern.RegExp("^[\\d-]+\$"),
+                                    constraint = Primitive.Type.Constraint.RegExp("^[\\d-]+\$"),
                                 ),
                                 isNullable = true,
                             ),
@@ -1031,7 +1031,7 @@ class OpenAPIV3ParserTest {
                             identifier = FieldIdentifier(name = "id"),
                             reference = Primitive(
                                 type = Primitive.Type.String(
-                                    pattern = Primitive.Type.Pattern.RegExp("^\\d+\$"),
+                                    constraint = Primitive.Type.Constraint.RegExp("^\\d+\$"),
                                 ),
                                 isNullable = false,
                             ),
@@ -1061,7 +1061,7 @@ class OpenAPIV3ParserTest {
                             identifier = FieldIdentifier(name = "updatedAt"),
                             reference = Primitive(
                                 type = Primitive.Type.String(
-                                    pattern = Primitive.Type.Pattern.Format("date-time"),
+                                    constraint = null,
                                 ),
                                 isNullable = false,
                             ),
@@ -1099,7 +1099,7 @@ class OpenAPIV3ParserTest {
                             type = "application/json",
                             reference = Primitive(
                                 type = Primitive.Type.String(
-                                    pattern = Primitive.Type.Pattern.RegExp("^\\d+\$"),
+                                    constraint = Primitive.Type.Constraint.RegExp("^\\d+\$"),
                                 ),
                                 isNullable = false,
                             ),
@@ -1116,7 +1116,7 @@ class OpenAPIV3ParserTest {
                             identifier = FieldIdentifier(name = "entityId"),
                             reference = Primitive(
                                 type = Primitive.Type.String(
-                                    pattern = Primitive.Type.Pattern.RegExp("^\\d+\$"),
+                                    constraint = Primitive.Type.Constraint.RegExp("^\\d+\$"),
                                 ),
                                 isNullable = true,
                             ),
@@ -1147,7 +1147,7 @@ class OpenAPIV3ParserTest {
                             identifier = FieldIdentifier(name = "email"),
                             reference = Primitive(
                                 type = Primitive.Type.String(
-                                    pattern = Primitive.Type.Pattern.Format("email"),
+                                    constraint = null,
                                 ),
                                 isNullable = false,
                             ),

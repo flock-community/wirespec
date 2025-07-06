@@ -22,7 +22,7 @@ private tailrec fun LanguageSpec.tokenize(source: String, incompleteTokens: NonE
     val tokens = incompleteTokens + token
     return when (token.type) {
         is EndOfProgram -> tokens
-        is LeftParentheses -> potentialRegex(remaining, tokens)
+        is LeftParenthesis -> potentialRegex(remaining, tokens)
         else -> tokenize(remaining, tokens)
     }
 }
