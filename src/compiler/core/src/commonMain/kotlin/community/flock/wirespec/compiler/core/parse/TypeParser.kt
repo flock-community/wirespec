@@ -2,11 +2,8 @@ package community.flock.wirespec.compiler.core.parse
 
 import arrow.core.Either
 import arrow.core.raise.either
-import community.flock.wirespec.compiler.core.exceptions.GenericParserException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
-import community.flock.wirespec.compiler.core.exceptions.WrongTokenException
 import community.flock.wirespec.compiler.core.tokenize.Brackets
-import community.flock.wirespec.compiler.core.tokenize.CaseVariant
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.Comma
 import community.flock.wirespec.compiler.core.tokenize.Equals
@@ -16,11 +13,13 @@ import community.flock.wirespec.compiler.core.tokenize.LeftParentheses
 import community.flock.wirespec.compiler.core.tokenize.Number
 import community.flock.wirespec.compiler.core.tokenize.Pipe
 import community.flock.wirespec.compiler.core.tokenize.Precision
+import community.flock.wirespec.compiler.core.tokenize.PrimitiveType
 import community.flock.wirespec.compiler.core.tokenize.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.RegExp
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.RightParentheses
 import community.flock.wirespec.compiler.core.tokenize.SpecificType
+import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinitionStart
 import community.flock.wirespec.compiler.core.tokenize.TypeIdentifier
@@ -65,7 +64,7 @@ object TypeParser {
         }.let(Type::Shape)
     }
 
-    fun TokenProvider.parseDict() = parseToken {
+    fun TokenProvider.parseDict(): Either<WirespecException, Reference.Dict> = parseToken {
         when (token.type) {
             is WirespecType -> Reference.Dict(
                 reference = parseType().bind(),
@@ -83,6 +82,37 @@ object TypeParser {
         }
     }
 
+    fun TokenProvider.parseType(): Either<WirespecException, Reference> = parseToken { previousToken ->
+        val reference = when (previousToken.type) {
+            is PrimitiveType -> parsePrimitiveType(previousToken).bind()
+
+            is WsUnit -> {
+                Reference.Unit(
+                    isNullable = isNullable().bind(),
+                )
+            }
+
+            is TypeIdentifier -> {
+                Reference.Custom(
+                    value = previousToken.shouldBeDefined().bind().value,
+                    isNullable = isNullable().bind(),
+                )
+            }
+
+            else -> raiseWrongToken<TypeDefinitionStart>(previousToken).bind()
+        }
+        when (token.type) {
+            is Brackets -> {
+                eatToken().bind()
+                Reference.Iterable(
+                    reference = reference,
+                    isNullable = isNullable().bind(),
+                )
+            }
+            else -> reference
+        }
+    }
+
     private fun TokenProvider.parseTypeDefinition(comment: Comment?, typeName: DefinitionIdentifier) = parseToken {
         when (token.type) {
             is Equals -> parseRefinedOrUnion(comment, typeName).bind()
@@ -97,10 +127,7 @@ object TypeParser {
         }
     }
 
-    private fun TokenProvider.parseRefinedOrUnion(
-        comment: Comment?,
-        identifier: DefinitionIdentifier,
-    ) = parseToken {
+    private fun TokenProvider.parseRefinedOrUnion(comment: Comment?, identifier: DefinitionIdentifier) = parseToken {
         when (token.type) {
             is SpecificType -> parseRefined(comment, identifier).bind()
             is TypeIdentifier -> parseUnion(comment, identifier).bind()
@@ -108,33 +135,19 @@ object TypeParser {
         }
     }
 
-    private fun TokenProvider.parseRefined(
-        comment: Comment?,
-        identifier: DefinitionIdentifier,
-    ): Either<WirespecException, Refined> = either {
+    private fun TokenProvider.parseRefined(comment: Comment?, identifier: DefinitionIdentifier) = either {
         when (token.type) {
-            is SpecificType -> Refined(
+            is PrimitiveType -> Refined(
                 comment = comment,
                 identifier = identifier,
-                reference = parseType().bind().let {
-                    it as? Reference.Primitive
-                        ?: raise(
-                            GenericParserException(
-                                token.coordinates,
-                                "Refined types can only be primitive types",
-                            ),
-                        )
-                },
+                reference = parsePrimitiveType(eatToken().bind()).bind(),
             )
 
-            else -> raise(WrongTokenException<SpecificType>(token))
+            else -> raiseWrongToken<SpecificType>().bind()
         }
     }
 
-    private fun TokenProvider.parseUnion(
-        comment: Comment?,
-        identifier: DefinitionIdentifier,
-    ) = either {
+    private fun TokenProvider.parseUnion(comment: Comment?, identifier: DefinitionIdentifier) = either {
         Union(
             comment = comment,
             identifier = identifier,
@@ -165,16 +178,14 @@ object TypeParser {
         }.toSet()
     }
 
-    private fun TokenProvider.parseTypePattern(): Either<WirespecException, Reference.Primitive.Type.Pattern?> = either {
+    private fun TokenProvider.parseTypePattern() = either {
         when (token.type) {
             is LeftParentheses -> {
                 eatToken().bind()
-                val pattern = when (token.type) {
-                    is CaseVariant -> Reference.Primitive.Type.Pattern.Format(token.value)
+                when (token.type) {
                     is RegExp -> Reference.Primitive.Type.Pattern.RegExp(token.value)
-                    else -> raise(GenericParserException(token.coordinates, "Expected a RegExp of Literal"))
-                }
-                pattern.also {
+                    else -> raiseWrongToken<RegExp>().bind()
+                }.also {
                     eatToken().bind()
                     if (eatToken().bind().type !is RightParentheses) raiseWrongToken<RightParentheses>().bind()
                 }
@@ -183,7 +194,7 @@ object TypeParser {
         }
     }
 
-    private inline fun <reified T : TokenType> TokenProvider.parseTypeBound(): Either<WirespecException, Reference.Primitive.Type.Bound?> = either {
+    private inline fun <reified T : TokenType> TokenProvider.parseTypeBound() = either {
         when (token.type) {
             is LeftParentheses -> {
                 val min = parseTypeBoundValue<T>().bind()
@@ -199,22 +210,16 @@ object TypeParser {
         }
     }
 
-    private inline fun <reified T : TokenType> TokenProvider.parseTypeBoundValue(): Either<WirespecException, String?> = either {
-        eatToken().bind()
+    private inline fun <reified T : TokenType> TokenProvider.parseTypeBoundValue() = parseToken {
         when (token.type) {
             is T -> token.value
             is Underscore -> null
-            else -> raise(
-                GenericParserException(
-                    token.coordinates,
-                    "Bound value must be a ${T::class.simpleName} or an underscore (_). Got ${token.type::class.simpleName} instead.",
-                ),
-            )
+            else -> raiseWrongToken<T>().bind()
         }
     }
 
-    fun TokenProvider.parseType(): Either<WirespecException, Reference> = parseToken { previousToken ->
-        val reference = when (val type = previousToken.type) {
+    private fun TokenProvider.parsePrimitiveType(previousToken: Token) = either {
+        when (val type = previousToken.type) {
             is WsString -> {
                 Reference.Primitive(
                     isNullable = isNullable().bind(),
@@ -257,31 +262,7 @@ object TypeParser {
                     isNullable = isNullable().bind(),
                 )
             }
-
-            is WsUnit -> {
-                Reference.Unit(
-                    isNullable = isNullable().bind(),
-                )
-            }
-
-            is TypeIdentifier -> {
-                Reference.Custom(
-                    value = previousToken.shouldBeDefined().bind().value,
-                    isNullable = isNullable().bind(),
-                )
-            }
-
-            else -> raise(WrongTokenException<TypeDefinitionStart>(previousToken))
-        }
-        when (token.type) {
-            is Brackets -> {
-                eatToken().bind()
-                Reference.Iterable(
-                    reference = reference,
-                    isNullable = isNullable().bind(),
-                )
-            }
-            else -> reference
+            else -> raiseWrongToken<PrimitiveType>().bind()
         }
     }
 
@@ -314,7 +295,7 @@ object TypeParser {
     }
 }
 
-fun Precision.toPrimitivePrecision() = when (this) {
+fun Precision.toPrimitivePrecision(): Reference.Primitive.Type.Precision = when (this) {
     Precision.P32 -> Reference.Primitive.Type.Precision.P32
     Precision.P64 -> Reference.Primitive.Type.Precision.P64
 }

@@ -33,11 +33,6 @@ data class ParseOptions(
 
 object Parser {
 
-    private val typeParser = TypeParser
-    private val enumParser = EnumParser
-    private val endpointParser = EndpointParser
-    private val channelParser = ChannelParser
-
     fun HasLogger.parse(modules: NonEmptyList<TokenizedModule>, options: ParseOptions = ParseOptions()): EitherNel<WirespecException, AST> = modules
         .map { it.tokens.toProvider(logger).parseModule(it.src, options) }
         .let { either { it.bindAll() } }
@@ -60,10 +55,10 @@ object Parser {
         }
         when (token.type) {
             is WirespecDefinition -> when (token.type as WirespecDefinition) {
-                is TypeDefinition -> with(typeParser) { parseType(comment) }.bind()
-                is EnumTypeDefinition -> with(enumParser) { parseEnum(comment) }.bind()
-                is EndpointDefinition -> with(endpointParser) { parseEndpoint(comment) }.bind()
-                is ChannelDefinition -> with(channelParser) { parseChannel(comment) }.bind()
+                is TypeDefinition -> with(TypeParser) { parseType(comment) }.bind()
+                is EnumTypeDefinition -> with(EnumParser) { parseEnum(comment) }.bind()
+                is EndpointDefinition -> with(EndpointParser) { parseEndpoint(comment) }.bind()
+                is ChannelDefinition -> with(ChannelParser) { parseChannel(comment) }.bind()
             }
 
             else -> raiseWrongToken<WirespecDefinition>().bind()
@@ -108,6 +103,6 @@ fun <A> TokenProvider.parseToken(block: Raise<WirespecException>.(Token) -> A) =
     block(eatToken().bind())
 }
 
-inline fun <reified T : TokenType> TokenProvider.raiseWrongToken(): Either<WirespecException, Nothing> = either {
-    raise(WrongTokenException<T>(token).also { eatToken().bind() })
+inline fun <reified T : TokenType> TokenProvider.raiseWrongToken(token: Token? = null): Either<WirespecException, Nothing> = either {
+    raise(WrongTokenException<T>(token ?: this@raiseWrongToken.token).also { eatToken().bind() })
 }

@@ -61,20 +61,21 @@ data object Path : ChannelTokenType
 
 sealed interface WirespecType : TokenType
 sealed interface SpecificType : WirespecType
+sealed interface PrimitiveType : SpecificType
 interface TypeIdentifier : WirespecType {
     val specificTypes: Map<String, SpecificType>
 }
 
-data object WsString : SpecificType
-data object WsBoolean : SpecificType
-data object WsBytes : SpecificType
 data object WsUnit : SpecificType
+data object WsString : PrimitiveType
+data object WsBoolean : PrimitiveType
+data object WsBytes : PrimitiveType
 data class WsInteger(override val precision: Precision) :
-    SpecificType,
+    PrimitiveType,
     HasPrecision
 
 data class WsNumber(override val precision: Precision) :
-    SpecificType,
+    PrimitiveType,
     HasPrecision
 
 interface HasPrecision {

@@ -73,28 +73,6 @@ class ParseTypeTest {
     }
 
     @Test
-    fun testRefinedParserStringLiteral() {
-        val source = """
-            |type DutchPostalCode = String(test)
-        """.trimMargin()
-
-        parser(source)
-            .shouldBeRight()
-            .shouldHaveSize(1)
-            .first()
-            .shouldBeInstanceOf<Refined>()
-            .apply {
-                identifier.value shouldBe "DutchPostalCode"
-                reference.apply {
-                    shouldBeInstanceOf<Reference.Primitive>()
-                    type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
-                    isNullable.shouldBeFalse()
-                    type.pattern shouldBe Reference.Primitive.Type.Pattern.Format("test")
-                }
-            }
-    }
-
-    @Test
     fun testRefinedParserInteger() {
         val source = """
             |type Age = Integer(0,99)
