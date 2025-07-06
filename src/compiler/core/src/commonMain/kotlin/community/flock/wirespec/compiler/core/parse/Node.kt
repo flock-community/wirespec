@@ -39,6 +39,15 @@ data class Type(
 sealed interface Reference : Value<String> {
     val isNullable: Boolean
 
+    fun copy(isNullable: Boolean? = null) = when (this) {
+        is Any -> copy(isNullable = isNullable ?: this.isNullable)
+        is Custom -> copy(isNullable = isNullable ?: this.isNullable)
+        is Dict -> copy(isNullable = isNullable ?: this.isNullable)
+        is Iterable -> copy(isNullable = isNullable ?: this.isNullable)
+        is Primitive -> copy(isNullable = isNullable ?: this.isNullable)
+        is Unit -> copy(isNullable = isNullable ?: this.isNullable)
+    }
+
     data class Any(
         override val isNullable: Boolean,
     ) : Reference {

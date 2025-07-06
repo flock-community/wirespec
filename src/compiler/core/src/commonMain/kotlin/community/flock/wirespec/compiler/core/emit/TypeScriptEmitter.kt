@@ -197,7 +197,7 @@ open class TypeScriptEmitter(val emitShared: EmitShared = EmitShared()) : Emitte
     private fun <T> Iterable<T>.joinToObject(transform: ((T) -> CharSequence)) =
         joinToString(", ", "{", "}", transform = transform)
 
-    private fun Param.emit() = "${emit(identifier)}: ${reference.emit()}"
+    private fun Param.emit() = "${emit(identifier)}${if(reference.isNullable) "?" else ""}: ${reference.copy(isNullable = false).emit()}"
 
     private fun Endpoint.Response.emitName() = "Response" + status.firstToUpper()
 

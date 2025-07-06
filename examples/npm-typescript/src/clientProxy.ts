@@ -67,7 +67,7 @@ const webClient: WebClient = (...apis) => {
 const api = webClient(PostTodo.api, GetTodos.api, GetTodoById.api, GetUsers.api)
 
 const testGetTodos = async () => {
-    const request: GetTodos.Request = GetTodos.request({done: true});
+    const request: GetTodos.Request = GetTodos.request({});
     const response = await api.getTodos(request);
     const expected = {status: 200, headers: {total: 2}, body};
     assert.deepEqual(response, expected);
