@@ -61,8 +61,8 @@ class WirespecWebClient(
                             statusCode = response.statusCode().value(),
                             headers = toMultiValueMap(response.headers().asHttpHeaders()),
                             body = null,
-                        )
-                    )
+                        ),
+                    ),
                 )
         }
         .onErrorResume { throwable ->
