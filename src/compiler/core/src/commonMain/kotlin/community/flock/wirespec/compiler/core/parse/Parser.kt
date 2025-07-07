@@ -70,7 +70,7 @@ object Parser {
         }
     }
 
-    private fun validate(options: ParseOptions): (Statements) -> EitherNel<WirespecException, Statements> = { defs: Statements ->
+    fun validate(options: ParseOptions): (Statements) -> EitherNel<WirespecException, Statements> = { defs: Statements ->
         defs.runOption(options.allowUnions) { fillExtendsClause() }
     }
 
