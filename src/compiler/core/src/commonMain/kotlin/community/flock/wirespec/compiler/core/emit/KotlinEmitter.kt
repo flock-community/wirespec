@@ -273,7 +273,11 @@ open class KotlinEmitter(
 
     private fun Endpoint.Response.emitDeserialized() = listOfNotNull(
         "${Spacer(3)}$status -> Response$status(",
-        "${Spacer(4)}body = serialization.deserialize(requireNotNull(response.body) { \"body is null\" }, typeOf<${content.emit()}>()),",
+        if (content != null) {
+            "${Spacer(4)}body = serialization.deserialize(requireNotNull(response.body) { \"body is null\" }, typeOf<${content.emit()}>()),"
+        } else {
+            "${Spacer(4)}body = Unit,"
+        },
         headers.joinToString(",\n") { it.emitDeserializedParams("response", "headers", 4) }.orNull(),
         "${Spacer(3)})"
     ).joinToString("\n")

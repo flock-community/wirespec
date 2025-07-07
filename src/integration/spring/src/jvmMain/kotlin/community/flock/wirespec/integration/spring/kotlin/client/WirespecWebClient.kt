@@ -55,6 +55,15 @@ class WirespecWebClient(
                         body = body,
                     )
                 }
+                .switchIfEmpty(
+                    Mono.just(
+                        Wirespec.RawResponse(
+                            statusCode = response.statusCode().value(),
+                            headers = toMultiValueMap(response.headers().asHttpHeaders()),
+                            body = null,
+                        ),
+                    ),
+                )
         }
         .onErrorResume { throwable ->
             when (throwable) {
