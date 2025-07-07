@@ -1161,8 +1161,9 @@ class OpenAPIV3ParserTest {
             ),
         )
         assertEquals(expected, ast)
-    }@Test
+    }
 
+    @Test
     fun componentsResponses() {
         val path = Path("src/commonTest/resources/v3/components-responses.json")
         val json = SystemFileSystem.source(path).buffered().readString()
@@ -1172,34 +1173,35 @@ class OpenAPIV3ParserTest {
 
         val expected = nonEmptyListOf(
             Endpoint(
-                comment=null,
-                identifier=DefinitionIdentifier(name="OneofGET"),
-                method= Endpoint.Method.GET, path=listOf(
-                    Endpoint.Segment.Literal(value = "oneof")
+                comment = null,
+                identifier = DefinitionIdentifier(name = "OneofGET"),
+                method = Endpoint.Method.GET,
+                path = listOf(
+                    Endpoint.Segment.Literal(value = "oneof"),
                 ),
-                queries=emptyList(),
-                headers=emptyList(),
-                requests=listOf(
-                    Endpoint.Request(content = null)
+                queries = emptyList(),
+                headers = emptyList(),
+                requests = listOf(
+                    Endpoint.Request(content = null),
                 ),
-                responses=listOf(
+                responses = listOf(
                     Endpoint.Response(
                         status = "200",
                         headers = emptyList(),
                         content = Endpoint.Content(
                             type = "application/json",
-                            reference = Custom(value = "OneofGET200ResponseBody", isNullable = false)
-                        )
-                    )
-                )
+                            reference = Custom(value = "OneofGET200ResponseBody", isNullable = false),
+                        ),
+                    ),
+                ),
             ),
             Union(
                 comment = null,
                 identifier = DefinitionIdentifier(name = "OneofGET200ResponseBody"),
                 entries = setOf(
                     Custom(value = "Foo", isNullable = false),
-                    Custom(value = "Bar", isNullable = false)
-                )
+                    Custom(value = "Bar", isNullable = false),
+                ),
             ),
             Type(
                 comment = null,

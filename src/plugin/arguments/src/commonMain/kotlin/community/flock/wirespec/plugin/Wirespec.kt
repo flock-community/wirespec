@@ -14,7 +14,7 @@ import community.flock.wirespec.openapi.v3.OpenAPIV3Parser
 
 fun ConverterArguments.parseOptions() = ParseOptions(
     strict = strict,
-    allowUnions = true
+    allowUnions = true,
 )
 
 fun compile(arguments: CompilerArguments) {
@@ -40,11 +40,11 @@ fun convert(arguments: ConverterArguments) {
         .map { moduleContent -> parser.parse(moduleContent, arguments.strict) }
         .map { ast ->
             ast.copy(
-                modules = ast.modules.map {module ->
+                modules = ast.modules.map { module ->
                     module.copy(
-                        statements = validate(options)(module.statements).getOrElse { error("Invalid statements") }
+                        statements = validate(options)(module.statements).getOrElse { error("Invalid statements") },
                     )
-                }
+                },
             )
         }
         .flatMap { ast ->
