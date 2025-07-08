@@ -1,0 +1,61 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Object in response",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/oneof": {
+      "get": {
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ContactResponse"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "responses": {
+      "ContactResponse": {
+        "description": "Created contact",
+        "content": {
+          "application/json": {
+            "schema": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/Foo"
+                },
+                {
+                  "$ref": "#/components/schemas/Bar"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Foo": {
+        "type": "object",
+        "properties": {
+          "a": {
+            "type": "string"
+          }
+        }
+      },
+      "Bar": {
+        "type": "object",
+        "required": [
+          "b"
+        ],
+        "properties": {
+          "b": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
+

@@ -12,6 +12,7 @@ import community.flock.wirespec.compiler.core.parse.Reference.Custom
 import community.flock.wirespec.compiler.core.parse.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape
+import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.openapi.common.Ast
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser.parse
 import kotlinx.io.buffered
@@ -1151,6 +1152,82 @@ class OpenAPIV3ParserTest {
                                     type = Primitive.Type.String,
                                     isNullable = false,
                                 ),
+                                isNullable = false,
+                            ),
+                        ),
+                    ),
+                ),
+                extends = emptyList(),
+            ),
+        )
+        assertEquals(expected, ast)
+    }
+
+    @Test
+    fun componentsResponses() {
+        val path = Path("src/commonTest/resources/v3/components-responses.json")
+        val json = SystemFileSystem.source(path).buffered().readString()
+
+        val openApi = OpenAPI.decodeFromString(json)
+        val ast = openApi.parse()
+
+        val expected = nonEmptyListOf(
+            Endpoint(
+                comment = null,
+                identifier = DefinitionIdentifier(name = "OneofGET"),
+                method = Endpoint.Method.GET,
+                path = listOf(
+                    Endpoint.Segment.Literal(value = "oneof"),
+                ),
+                queries = emptyList(),
+                headers = emptyList(),
+                requests = listOf(
+                    Endpoint.Request(content = null),
+                ),
+                responses = listOf(
+                    Endpoint.Response(
+                        status = "200",
+                        headers = emptyList(),
+                        content = Endpoint.Content(
+                            type = "application/json",
+                            reference = Custom(value = "OneofGET200ResponseBody", isNullable = false),
+                        ),
+                    ),
+                ),
+            ),
+            Union(
+                comment = null,
+                identifier = DefinitionIdentifier(name = "OneofGET200ResponseBody"),
+                entries = setOf(
+                    Custom(value = "Foo", isNullable = false),
+                    Custom(value = "Bar", isNullable = false),
+                ),
+            ),
+            Type(
+                comment = null,
+                identifier = DefinitionIdentifier("Foo"),
+                shape = Type.Shape(
+                    value = listOf(
+                        Field(
+                            identifier = FieldIdentifier("a"),
+                            reference = Reference.Primitive(
+                                type = Reference.Primitive.Type.String,
+                                isNullable = true,
+                            ),
+                        ),
+                    ),
+                ),
+                extends = emptyList(),
+            ),
+            Type(
+                comment = null,
+                identifier = DefinitionIdentifier("Bar"),
+                shape = Type.Shape(
+                    value = listOf(
+                        Field(
+                            identifier = FieldIdentifier("b"),
+                            reference = Reference.Primitive(
+                                type = Reference.Primitive.Type.String,
                                 isNullable = false,
                             ),
                         ),
