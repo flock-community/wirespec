@@ -75,7 +75,7 @@ object PlaceOrder : Wirespec.Endpoint {
         body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<Order>()),
       )
       405 -> Response405(
-        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<Unit>()),
+        body = Unit,
       )
       else -> error("Cannot match response with status: ${response.statusCode}")
     }

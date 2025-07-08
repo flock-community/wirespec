@@ -1224,8 +1224,8 @@ class OpenAPIV3ParserTest {
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier("a"),
-                            reference = Reference.Primitive(
-                                type = Reference.Primitive.Type.String,
+                            reference = Primitive(
+                                type = Primitive.Type.String(null),
                                 isNullable = true,
                             ),
                         ),
@@ -1240,8 +1240,8 @@ class OpenAPIV3ParserTest {
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier("b"),
-                            reference = Reference.Primitive(
-                                type = Reference.Primitive.Type.String,
+                            reference = Primitive(
+                                type = Primitive.Type.String(null),
                                 isNullable = false,
                             ),
                         ),

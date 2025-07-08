@@ -67,7 +67,7 @@ object UpdatePetWithForm : Wirespec.Endpoint {
   fun fromResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
     when (response.statusCode) {
       405 -> Response405(
-        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<Unit>()),
+        body = Unit,
       )
       else -> error("Cannot match response with status: ${response.statusCode}")
     }
