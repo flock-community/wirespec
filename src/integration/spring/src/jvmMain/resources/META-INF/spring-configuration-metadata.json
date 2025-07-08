@@ -18,7 +18,7 @@
   ],
   "hints": [
     {
-      "property": "wirespec.spring.webclient.base-url",
+      "name": "wirespec.spring.webclient.base-url",
       "value": "Ensure this is set to a valid URL, such as 'https://api.example.com'."
     }
   ]
