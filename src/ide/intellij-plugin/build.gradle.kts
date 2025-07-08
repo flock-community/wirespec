@@ -1,4 +1,5 @@
 plugins {
+    id("module.spotless")
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.intellij)
 }
@@ -12,6 +13,7 @@ kotlin {
 
 repositories {
     mavenCentral()
+    mavenLocal()
     intellijPlatform {
         defaultRepositories()
     }
@@ -22,7 +24,6 @@ dependencies {
         intellijIdeaCommunity("2025.1")
         pluginVerifier()
         zipSigner()
-        instrumentationTools()
     }
     implementation(project(":src:compiler:core"))
 }

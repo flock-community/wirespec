@@ -78,7 +78,7 @@ private fun WsEnum.consume() = Enum(
 private fun WsRefined.consume() = Refined(
     identifier = DefinitionIdentifier(identifier),
     comment = comment?.let { Comment(it) },
-    validator = Refined.Validator(validator),
+    reference = reference.consume() as? Reference.Primitive ?: error("Cannot refine non-primitive type"),
 )
 
 private fun WsType.consume() = Type(
@@ -151,9 +151,9 @@ private fun WsReference.consume(): Reference = when (this) {
 }
 
 private fun WsPrimitiveType.consume() = when (this) {
-    WsPrimitiveType.String -> Reference.Primitive.Type.String
-    WsPrimitiveType.Integer -> Reference.Primitive.Type.Integer()
-    WsPrimitiveType.Number -> Reference.Primitive.Type.Number()
+    WsPrimitiveType.String -> Reference.Primitive.Type.String(null)
+    WsPrimitiveType.Integer -> Reference.Primitive.Type.Integer(constraint = null)
+    WsPrimitiveType.Number -> Reference.Primitive.Type.Number(constraint = null)
     WsPrimitiveType.Boolean -> Reference.Primitive.Type.Boolean
     WsPrimitiveType.Bytes -> Reference.Primitive.Type.Bytes
 }
@@ -189,7 +189,7 @@ fun Definition.produce(): WsDefinition = when (this) {
     is Refined -> WsRefined(
         identifier = identifier.value,
         comment = comment?.value,
-        validator = validator.value,
+        reference = reference.produce(),
     )
 
     is Union -> WsUnion(
@@ -336,7 +336,7 @@ data class WsChannel(
 data class WsRefined(
     override val identifier: String,
     override val comment: String?,
-    val validator: String,
+    val reference: WsReference,
 ) : WsDefinition
 
 @JsExport

@@ -470,7 +470,7 @@ object OpenAPIV3Parser : Parser {
             )
 
             schema.type.isPrimitive() -> Reference.Primitive(
-                type = schema.type!!.toPrimitive(schema.format),
+                type = schema.toPrimitive(),
                 isNullable = isNullable,
             )
 
@@ -524,9 +524,9 @@ object OpenAPIV3Parser : Parser {
         schema.enum != null -> Reference.Custom(value = name.sanitize(), isNullable = isNullable)
             .let { if (schema.additionalProperties != null) Reference.Dict(reference = it, isNullable = false) else it }
 
-        else -> when (val type = schema.type) {
+        else -> when (schema.type) {
             OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN -> Reference.Primitive(
-                type = type.toPrimitive(schema.format),
+                type = schema.toPrimitive(),
                 isNullable = isNullable,
             ).let { if (schema.additionalProperties != null) Reference.Dict(it, isNullable = false) else it }
 
@@ -570,10 +570,13 @@ object OpenAPIV3Parser : Parser {
         .split("/").getOrNull(3)
         ?: error("Wrong reference: ${ref.value}")
 
-    private fun OpenapiType.toPrimitive(format: String?) = when (this) {
-        OpenapiType.STRING -> Reference.Primitive.Type.String
-        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer(if (format == "int32") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
-        OpenapiType.NUMBER -> Reference.Primitive.Type.Number(if (format == "float") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
+    private fun SchemaObject.toPrimitive() = when (this.type) {
+        OpenapiType.STRING -> when {
+            pattern != null -> Reference.Primitive.Type.String(constraint = Reference.Primitive.Type.Constraint.RegExp(pattern!!))
+            else -> Reference.Primitive.Type.String(null)
+        }
+        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer(if (format == "int32") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64, null)
+        OpenapiType.NUMBER -> Reference.Primitive.Type.Number(if (format == "float") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64, null)
         OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean
         else -> error("Type is not a primitive")
     }
@@ -611,7 +614,7 @@ object OpenAPIV3Parser : Parser {
         return when (val s = parameter.schema) {
             is ReferenceObject -> toReference(s, isNullable)
             is SchemaObject -> toReference(s, isNullable, name + if (s.type == OpenapiType.ARRAY) "Array" else "")
-            null -> Reference.Primitive(type = Reference.Primitive.Type.String, isNullable = isNullable)
+            null -> Reference.Primitive(type = Reference.Primitive.Type.String(null), isNullable = isNullable)
         }.let { Field(FieldIdentifier(parameter.name), it) }
     }
 
@@ -620,7 +623,7 @@ object OpenAPIV3Parser : Parser {
         return when (val s = header.schema) {
             is ReferenceObject -> toReference(s, isNullable)
             is SchemaObject -> toReference(s, isNullable, name)
-            null -> Reference.Primitive(type = Reference.Primitive.Type.String, isNullable = isNullable)
+            null -> Reference.Primitive(type = Reference.Primitive.Type.String(null), isNullable = isNullable)
         }.let { Field(FieldIdentifier(identifier), it) }
     }
 

@@ -15,12 +15,12 @@ object AvroConverter {
     private fun AvroModel.TypeList.isNullable() = contains(nullType)
     private fun AvroModel.SimpleType.toPrimitive() = when (this.value) {
         "boolean" -> Reference.Primitive.Type.Boolean
-        "int" -> Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32)
-        "long" -> Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P64)
-        "float" -> Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P32)
-        "double" -> Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P64)
+        "int" -> Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32, null)
+        "long" -> Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P64, null)
+        "float" -> Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P32, null)
+        "double" -> Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P64, null)
         "bytes" -> Reference.Primitive.Type.Bytes
-        "string" -> Reference.Primitive.Type.String
+        "string" -> Reference.Primitive.Type.String(null)
         else -> TODO("primitive not mapped ${this.value}")
     }
 

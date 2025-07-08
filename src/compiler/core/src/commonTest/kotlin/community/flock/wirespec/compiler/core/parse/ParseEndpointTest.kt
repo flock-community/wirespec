@@ -10,7 +10,9 @@ import community.flock.wirespec.compiler.core.parse.Endpoint.Method.POST
 import community.flock.wirespec.compiler.core.parse.Endpoint.Segment.Literal
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.assertions.arrow.core.shouldHaveSize
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -34,7 +36,7 @@ class ParseEndpointTest {
 
         parser(source)
             .shouldBeRight()
-            .also { it.size shouldBe 2 }[1]
+            .shouldHaveSize(2)[1]
             .shouldBeInstanceOf<Endpoint>()
             .run {
                 identifier.value shouldBe "GetTodos"
@@ -59,7 +61,7 @@ class ParseEndpointTest {
 
         parser(source)
             .shouldBeRight()
-            .also { it.size shouldBe 2 }[1]
+            .shouldHaveSize(2)[1]
             .shouldBeInstanceOf<Endpoint>()
             .run {
                 identifier.value shouldBe "GetTodos"
@@ -84,12 +86,12 @@ class ParseEndpointTest {
 
         parser(source)
             .shouldBeRight()
-            .also { it.size shouldBe 2 }[1]
+            .shouldHaveSize(2)[1]
             .shouldBeInstanceOf<Endpoint>()
             .run {
                 identifier.value shouldBe "PostTodo"
                 method shouldBe POST
-                requests.shouldNotBeEmpty().also { it.size shouldBe 1 }.first().run {
+                requests.shouldNotBeEmpty().shouldHaveSize(1).first().run {
                     content.shouldNotBeNull().run {
                         type shouldBe "application/json"
                         reference.shouldBeInstanceOf<Reference.Custom>().run {
@@ -111,7 +113,7 @@ class ParseEndpointTest {
 
         parser(source)
             .shouldBeRight()
-            .also { it.size shouldBe 2 }[1]
+            .shouldHaveSize(2)[1]
             .shouldBeInstanceOf<Endpoint>()
             .run {
                 identifier.value shouldBe "GetTodo"
@@ -121,7 +123,7 @@ class ParseEndpointTest {
                     Endpoint.Segment.Param(
                         identifier = FieldIdentifier("id"),
                         reference = Reference.Primitive(
-                            type = Reference.Primitive.Type.String,
+                            type = Reference.Primitive.Type.String(null),
                             isNullable = false,
                         ),
                     ),
@@ -145,18 +147,18 @@ class ParseEndpointTest {
 
         parser(source)
             .shouldBeRight()
-            .also { it.size shouldBe 2 }[1]
+            .shouldHaveSize(2)[1]
             .shouldBeInstanceOf<Endpoint>()
-            .queries.shouldNotBeEmpty().also { it.size shouldBe 2 }.take(2).let {
+            .queries.shouldNotBeEmpty().shouldHaveSize(2).take(2).let {
                 val (one, two) = it
                 one.run {
                     identifier.value shouldBe "name"
-                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String
+                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String(null)
                     reference.isNullable shouldBe false
                 }
                 two.run {
                     identifier.value shouldBe "date"
-                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String
+                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String(null)
                     reference.isNullable shouldBe false
                 }
             }
@@ -173,18 +175,18 @@ class ParseEndpointTest {
 
         parser(source)
             .shouldBeRight()
-            .also { it.size shouldBe 2 }[1]
+            .shouldHaveSize(2)[1]
             .shouldBeInstanceOf<Endpoint>()
-            .headers.shouldNotBeEmpty().also { it.size shouldBe 2 }.take(2).let {
+            .headers.shouldNotBeEmpty().shouldHaveSize(2).take(2).let {
                 val (one, two) = it
                 one.run {
                     identifier.value shouldBe "name"
-                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String
+                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String(null)
                     reference.isNullable shouldBe false
                 }
                 two.run {
                     identifier.value shouldBe "date"
-                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String
+                    reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String(null)
                     reference.isNullable shouldBe false
                 }
             }
@@ -201,13 +203,14 @@ class ParseEndpointTest {
 
         parser(source)
             .shouldBeRight()
-            .also { it.size shouldBe 2 }[1]
+            .shouldHaveSize(2)[1]
             .shouldBeInstanceOf<Endpoint>()
-            .responses.shouldNotBeEmpty().also { it.size shouldBe 1 }
-            .first().run {
-                headers.size shouldBe 1
-                headers.first().identifier.value shouldBe "token"
-                headers.first().reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String
+            .responses.shouldNotBeEmpty()
+            .shouldHaveSize(1)
+            .first()
+            .headers.shouldHaveSize(1).first().run {
+                identifier.value shouldBe "token"
+                reference.shouldBeInstanceOf<Reference.Primitive>().type shouldBe Reference.Primitive.Type.String(null)
             }
     }
 
@@ -221,7 +224,8 @@ class ParseEndpointTest {
 
         parser(source)
             .shouldBeRight()
-            .also { it.size shouldBe 1 }[0]
+            .shouldHaveSize(1)
+            .first()
             .shouldBeInstanceOf<Endpoint>().run {
                 responses.shouldNotBeEmpty()
                 responses.first().content?.reference?.let { it is Reference.Dict }?.shouldBeTrue()

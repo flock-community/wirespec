@@ -83,19 +83,30 @@ sealed interface Reference : Value<String> {
         val type: Type,
         override val isNullable: Boolean,
     ) : Reference {
+
         sealed interface Type {
             val name: kotlin.String
 
             enum class Precision { P32, P64 }
-            data object String : Type {
+
+            sealed interface Constraint {
+                @JvmInline
+                value class RegExp(override val value: kotlin.String) :
+                    Value<kotlin.String>,
+                    Constraint
+
+                data class Bound(val min: kotlin.String?, val max: kotlin.String?) : Constraint
+            }
+
+            data class String(val constraint: Constraint.RegExp?) : Type {
                 override val name = "String"
             }
 
-            data class Integer(val precision: Precision = P64) : Type {
+            data class Integer(val precision: Precision = P64, val constraint: Constraint.Bound?) : Type {
                 override val name = "Integer"
             }
 
-            data class Number(val precision: Precision = P64) : Type {
+            data class Number(val precision: Precision = P64, val constraint: Constraint.Bound?) : Type {
                 override val name = "Number"
             }
 
@@ -132,12 +143,8 @@ data class Union(
 data class Refined(
     override val comment: Comment?,
     override val identifier: DefinitionIdentifier,
-    val validator: Validator,
-) : Model {
-    data class Validator(override val value: String) : Value<String> {
-        val expression = value.split("/").drop(1).dropLast(1).joinToString("/")
-    }
-}
+    val reference: Reference.Primitive,
+) : Model
 
 data class Endpoint(
     override val comment: Comment?,

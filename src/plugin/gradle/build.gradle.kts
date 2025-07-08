@@ -1,5 +1,6 @@
 plugins {
     id("module.publication")
+    id("module.spotless")
     alias(libs.plugins.kotlin.jvm)
     `java-gradle-plugin`
 }
@@ -13,6 +14,7 @@ kotlin {
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {

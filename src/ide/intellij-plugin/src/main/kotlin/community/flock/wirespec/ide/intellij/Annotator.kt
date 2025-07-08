@@ -19,7 +19,7 @@ class Annotator :
 
     override fun collectInformation(file: PsiFile) = WirespecSpec
         .tokenize(file.text)
-        .run { parse(nonEmptyListOf(TokenizedModule("", this))) }
+        .let { parse(nonEmptyListOf(TokenizedModule("", it))) }
         .fold({ it }, { emptyList() })
 
     override fun doAnnotate(collectedInfo: List<WirespecException>?) = collectedInfo

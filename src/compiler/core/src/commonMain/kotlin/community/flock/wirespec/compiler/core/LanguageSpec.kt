@@ -15,10 +15,13 @@ import community.flock.wirespec.compiler.core.tokenize.Equals
 import community.flock.wirespec.compiler.core.tokenize.FieldIdentifier
 import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.Hash
+import community.flock.wirespec.compiler.core.tokenize.Integer
 import community.flock.wirespec.compiler.core.tokenize.KebabCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
+import community.flock.wirespec.compiler.core.tokenize.LeftParenthesis
 import community.flock.wirespec.compiler.core.tokenize.Method
 import community.flock.wirespec.compiler.core.tokenize.NewLine
+import community.flock.wirespec.compiler.core.tokenize.Number
 import community.flock.wirespec.compiler.core.tokenize.PascalCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.Path
 import community.flock.wirespec.compiler.core.tokenize.Pipe
@@ -26,13 +29,14 @@ import community.flock.wirespec.compiler.core.tokenize.Precision.P32
 import community.flock.wirespec.compiler.core.tokenize.Precision.P64
 import community.flock.wirespec.compiler.core.tokenize.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
+import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
 import community.flock.wirespec.compiler.core.tokenize.ScreamingKebabCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.ScreamingSnakeCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.SnakeCaseIdentifier
-import community.flock.wirespec.compiler.core.tokenize.StatusCode
 import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.TypeIdentifier
+import community.flock.wirespec.compiler.core.tokenize.Underscore
 import community.flock.wirespec.compiler.core.tokenize.WhiteSpaceExceptNewLine
 import community.flock.wirespec.compiler.core.tokenize.WsBoolean
 import community.flock.wirespec.compiler.core.tokenize.WsBytes
@@ -65,6 +69,8 @@ object WirespecSpec : LanguageSpec {
         Regex("^[\\r\\n]") to NewLine,
         Regex("^\\{") to LeftCurly,
         Regex("^\\}") to RightCurly,
+        Regex("^\\(") to LeftParenthesis,
+        Regex("^\\)") to RightParenthesis,
         Regex("^->") to Arrow,
         Regex("^=") to Equals,
         Regex("^\\|") to Pipe,
@@ -74,13 +80,15 @@ object WirespecSpec : LanguageSpec {
         Regex("^#") to Hash,
         Regex("^\\[\\]") to Brackets,
         Regex("^\\b(GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE)\\b") to Method,
-        Regex("^[1-5][0-9][0-9]") to StatusCode,
         Regex("^[a-z`][a-zA-Z0-9_\\-`]*") to fieldIdentifier,
         Regex("^\\b[A-Z][a-zA-Z0-9_]*\\b") to typeIdentifier,
         Regex("^/[a-zA-Z0-9-_]+") to Path,
-        Regex("^//.*") to Comment,
+        Regex("^//.*\n") to Comment,
         Regex("^\\/\\*(\\*(?!\\/)|[^*])*\\*\\/") to Comment,
         Regex("^/") to ForwardSlash,
+        Regex("^[0-9]+\\.[0-9]+") to Number,
+        Regex("^[0-9]+") to Integer,
+        Regex("^_") to Underscore,
         Regex("^.") to Character, // Catch-all regular expression if none of the above matched
     )
 }

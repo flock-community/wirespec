@@ -89,10 +89,10 @@ object GetOrderById : Wirespec.Endpoint {
         body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<Order>()),
       )
       400 -> Response400(
-        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<Unit>()),
+        body = Unit,
       )
       404 -> Response404(
-        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<Unit>()),
+        body = Unit,
       )
       else -> error("Cannot match response with status: ${response.statusCode}")
     }

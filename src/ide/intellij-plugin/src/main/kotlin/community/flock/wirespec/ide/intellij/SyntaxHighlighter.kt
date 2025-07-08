@@ -5,8 +5,11 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.COMMA
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.DOC_COMMENT_MARKUP
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.IDENTIFIER
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.KEYWORD
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.LINE_COMMENT
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.PARAMETER
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.PARENTHESES
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.SEMICOLON
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.STRING
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.openapi.project.Project
@@ -22,10 +25,10 @@ class SyntaxHighlighter : SyntaxHighlighterBase() {
         Types.COMMA -> arrayOf(COMMA)
         Types.WIRESPEC_IDENTIFIER -> arrayOf(PARAMETER)
         Types.TYPE_IDENTIFIER -> arrayOf(IDENTIFIER)
-        Types.BOOLEAN -> arrayOf(KEYWORD)
-        Types.INTEGER -> arrayOf(KEYWORD)
-        Types.NUMBER -> arrayOf(KEYWORD)
-        Types.STRING -> arrayOf(KEYWORD)
+        Types.WS_BOOLEAN -> arrayOf(KEYWORD)
+        Types.WS_INTEGER -> arrayOf(KEYWORD)
+        Types.WS_NUMBER -> arrayOf(KEYWORD)
+        Types.WS_STRING -> arrayOf(KEYWORD)
         Types.UNIT -> arrayOf(KEYWORD)
         Types.TYPE_DEF -> arrayOf(KEYWORD)
         Types.ENDPOINT_DEF -> arrayOf(KEYWORD)
@@ -33,7 +36,11 @@ class SyntaxHighlighter : SyntaxHighlighterBase() {
         Types.ENUM_DEF -> arrayOf(KEYWORD)
         Types.LEFT_CURLY -> arrayOf(BRACKETS)
         Types.RIGHT_CURLY -> arrayOf(BRACKETS)
+        Types.LEFT_PARENTHESES -> arrayOf(PARENTHESES)
+        Types.RIGHT_PARENTHESES -> arrayOf(PARENTHESES)
         Types.QUESTION_MARK -> arrayOf(IDENTIFIER)
+        Types.REG_EXP -> arrayOf(STRING)
+        Types.UNDERSCORE -> arrayOf(LINE_COMMENT)
         else -> arrayOfNulls(0)
     }
 

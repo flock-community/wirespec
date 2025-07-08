@@ -73,9 +73,22 @@ open class WirespecEmitter : Emitter() {
     override fun emit(enum: Enum, module: Module) =
         "enum ${emit(enum.identifier)} {\n${Spacer}${enum.entries.joinToString(", ") { it.capitalize() }}\n}\n"
 
-    override fun emit(refined: Refined) = "type ${emit(refined.identifier)} ${refined.validator.emit()}\n"
+    override fun emit(refined: Refined) = "type ${emit(refined.identifier)} = ${refined.reference.emit()}${refined.emitValidator()}\n"
 
-    override fun Refined.Validator.emit() = value
+    override fun Refined.emitValidator():String {
+        return when (val type = reference.type) {
+            is Reference.Primitive.Type.Integer -> type.constraint?.emit() ?: ""
+            is Reference.Primitive.Type.Number -> type.constraint?.emit() ?: ""
+            is Reference.Primitive.Type.String -> type.constraint?.emit() ?: ""
+            Reference.Primitive.Type.Boolean -> ""
+            Reference.Primitive.Type.Bytes -> ""
+        }
+    }
+
+    override fun Reference.Primitive.Type.Constraint.emit() = when(this){
+        is Reference.Primitive.Type.Constraint.RegExp -> "(${value})"
+        is Reference.Primitive.Type.Constraint.Bound -> "(${min}, ${max})"
+    }
 
     override fun emit(endpoint: Endpoint) = """
         |endpoint ${emit(endpoint.identifier)} ${endpoint.method}${endpoint.requests.emitRequest()} ${endpoint.path.emitPath()}${endpoint.queries.emitQuery()} -> {

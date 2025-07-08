@@ -7,7 +7,9 @@ import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.assertions.arrow.core.shouldHaveSize
 import io.kotest.matchers.booleans.shouldBeFalse
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.Test
@@ -28,12 +30,12 @@ class ParseTypeTest {
 
         parser(source)
             .shouldBeRight()
-            .also { it.size shouldBe 1 }
+            .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Type>()
             .also { it.identifier.value shouldBe "Foo" }
             .shape.value
-            .also { it.size shouldBe 1 }
+            .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Field>()
             .run {
@@ -43,24 +45,103 @@ class ParseTypeTest {
                     .reference.shouldBeInstanceOf<Reference.Primitive>().run {
                         type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
                         isNullable.shouldBeFalse()
+                        type.constraint shouldBe null
                     }
             }
     }
 
     @Test
-    fun testRefinedParser() {
+    fun testRefinedParserString() {
         val source = """
-            |type DutchPostalCode /^([0-9]{4}[A-Z]{2})$/g
+            |type DutchPostalCode = String(/^([0-9]{4}[A-Z]{2})$/g)
         """.trimMargin()
 
         parser(source)
             .shouldBeRight()
-            .also { it.size shouldBe 1 }
+            .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Refined>()
-            .also { it.identifier.value shouldBe "DutchPostalCode" }
-            .validator.shouldBeInstanceOf<Refined.Validator>()
-            .value shouldBe "/^([0-9]{4}[A-Z]{2})$/g"
+            .apply {
+                identifier.value shouldBe "DutchPostalCode"
+                reference.apply {
+                    shouldBeInstanceOf<Reference.Primitive>()
+                    type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
+                    isNullable.shouldBeFalse()
+                    type.constraint shouldBe Reference.Primitive.Type.Constraint.RegExp("/^([0-9]{4}[A-Z]{2})$/g")
+                }
+            }
+    }
+
+    @Test
+    fun testRefinedParserInteger() {
+        val source = """
+            |type Age = Integer(0,99)
+        """.trimMargin()
+
+        parser(source)
+            .shouldBeRight { it.head.message }
+            .shouldHaveSize(1)
+            .first()
+            .shouldBeInstanceOf<Refined>()
+            .apply {
+                identifier.value shouldBe "Age"
+                reference.apply {
+                    isNullable shouldBe false
+                    type.apply {
+                        shouldBeInstanceOf<Reference.Primitive.Type.Integer>()
+                        constraint?.min shouldBe "0"
+                        constraint?.max shouldBe "99"
+                    }
+                }
+            }
+    }
+
+    @Test
+    fun testRefinedParserIntegerMinEmpty() {
+        val source = """
+            |type Age = Integer(_,99)
+        """.trimMargin()
+
+        parser(source)
+            .shouldBeRight { it.head.message }
+            .shouldHaveSize(1)
+            .first()
+            .shouldBeInstanceOf<Refined>()
+            .apply {
+                identifier.value shouldBe "Age"
+                reference.apply {
+                    isNullable shouldBe false
+                    type.apply {
+                        shouldBeInstanceOf<Reference.Primitive.Type.Integer>()
+                        constraint?.min shouldBe null
+                        constraint?.max shouldBe "99"
+                    }
+                }
+            }
+    }
+
+    @Test
+    fun testRefinedParserNumber() {
+        val source = """
+            |type Age = Number(0.0,9.9)
+        """.trimMargin()
+
+        parser(source)
+            .shouldBeRight { it.head.message }
+            .shouldHaveSize(1)
+            .first()
+            .shouldBeInstanceOf<Refined>()
+            .apply {
+                identifier.value shouldBe "Age"
+                reference.apply {
+                    isNullable shouldBe false
+                    type.apply {
+                        shouldBeInstanceOf<Reference.Primitive.Type.Number>()
+                        constraint?.min shouldBe "0.0"
+                        constraint?.max shouldBe "9.9"
+                    }
+                }
+            }
     }
 
     @Test
@@ -73,11 +154,11 @@ class ParseTypeTest {
 
         parser(source)
             .shouldBeRight()
-            .also { it.size shouldBe 3 }[2]
+            .shouldHaveSize(3)[2]
             .shouldBeInstanceOf<Union>()
             .also { it.identifier.value shouldBe "Foo" }
             .entries
-            .also { it.size shouldBe 2 }
+            .shouldHaveSize(2)
             .let {
                 val (first, second) = it.toList()
                 first shouldBe Reference.Custom(value = "Bar", isNullable = false)
@@ -93,8 +174,8 @@ class ParseTypeTest {
         """.trimMargin()
 
         parser(source)
-            .shouldBeRight()
-            .also { it.size shouldBe 2 }
+            .shouldBeRight { it.head.message }
+            .shouldHaveSize(2)
             .let { (first, second) ->
                 first shouldBe Type(
                     comment = null,
@@ -105,7 +186,7 @@ class ParseTypeTest {
                             Field(
                                 identifier = FieldIdentifier("int32"),
                                 reference = Reference.Primitive(
-                                    type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32),
+                                    type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32, null),
                                     isNullable = false,
                                 ),
                             ),
@@ -114,7 +195,7 @@ class ParseTypeTest {
                                 reference = Reference.Iterable(
                                     isNullable = false,
                                     reference = Reference.Primitive(
-                                        type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P64),
+                                        type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P64, null),
                                         isNullable = false,
                                     ),
                                 ),
@@ -131,14 +212,14 @@ class ParseTypeTest {
                             Field(
                                 identifier = FieldIdentifier("num32"),
                                 reference = Reference.Primitive(
-                                    type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P32),
+                                    type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P32, null),
                                     isNullable = false,
                                 ),
                             ),
                             Field(
                                 identifier = FieldIdentifier("num64"),
                                 reference = Reference.Primitive(
-                                    type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P64),
+                                    type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P64, null),
                                     isNullable = true,
                                 ),
                             ),

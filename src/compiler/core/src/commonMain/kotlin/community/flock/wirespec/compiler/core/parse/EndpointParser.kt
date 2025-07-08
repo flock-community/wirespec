@@ -7,12 +7,12 @@ import community.flock.wirespec.compiler.core.tokenize.Arrow
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.Hash
+import community.flock.wirespec.compiler.core.tokenize.Integer
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.Method
 import community.flock.wirespec.compiler.core.tokenize.Path
 import community.flock.wirespec.compiler.core.tokenize.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
-import community.flock.wirespec.compiler.core.tokenize.StatusCode
 import community.flock.wirespec.compiler.core.tokenize.WirespecIdentifier
 import community.flock.wirespec.compiler.core.tokenize.WirespecType
 
@@ -33,9 +33,9 @@ object EndpointParser {
 
         val requests = listOf(
             with(TypeParser) {
-                when (val type = token.type) {
+                when (token.type) {
                     is LeftCurly -> parseDict().bind()
-                    is WirespecType -> parseWirespecType(type).bind()
+                    is WirespecType -> parseType().bind()
                     else -> null
                 }
             },
@@ -116,9 +116,9 @@ object EndpointParser {
             else -> raiseWrongToken<Colon>().bind()
         }
         val reference = with(TypeParser) {
-            when (val type = token.type) {
+            when (token.type) {
                 is LeftCurly -> parseDict().bind()
-                is WirespecType -> parseWirespecType(type).bind()
+                is WirespecType -> parseType().bind()
                 else -> raiseWrongToken<WirespecType>().bind()
             }
         }
@@ -136,8 +136,8 @@ object EndpointParser {
         val responses = mutableListOf<Endpoint.Response>()
         while (token.type !is RightCurly) {
             when (token.type) {
-                is StatusCode -> responses.add(parseEndpointResponse(token.value).bind())
-                else -> raiseWrongToken<StatusCode>().bind()
+                is Integer -> responses.add(parseEndpointResponse(token.value).bind())
+                else -> raiseWrongToken<Integer>().bind()
             }
         }
         when (token.type) {
@@ -155,9 +155,9 @@ object EndpointParser {
         eatToken().bind()
 
         val reference = with(TypeParser) {
-            when (val type = token.type) {
+            when (token.type) {
                 is LeftCurly -> parseDict().bind()
-                is WirespecType -> parseWirespecType(type).bind()
+                is WirespecType -> parseType().bind()
                 else -> raiseWrongToken<WirespecType>().bind()
             }
         }

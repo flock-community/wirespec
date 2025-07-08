@@ -128,7 +128,11 @@ object AvroEmitter : Emitter() {
         TODO("Not yet implemented")
     }
 
-    override fun Refined.Validator.emit(): String {
+    override fun Refined.emitValidator(): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun Reference.Primitive.Type.Constraint.emit(): String {
         TODO("Not yet implemented")
     }
 

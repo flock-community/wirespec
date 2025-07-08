@@ -84,7 +84,7 @@ object LoginUser : Wirespec.Endpoint {
         XExpiresAfter = response.headers["X-Expires-After"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) }
       )
       400 -> Response400(
-        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<Unit>()),
+        body = Unit,
       )
       else -> error("Cannot match response with status: ${response.statusCode}")
     }

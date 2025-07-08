@@ -80,12 +80,6 @@ public class CustomEmitter extends Emitter {
 
     @NotNull
     @Override
-    public String emit(@NotNull Refined.Validator validator) {
-        return notYetImplemented();
-    }
-
-    @NotNull
-    @Override
     public String emit(@NotNull Type type, @NotNull Module module) {
         return "package hello;\n\npublic class " + emit(type.getIdentifier()) + " {}";
     }
@@ -112,5 +106,17 @@ public class CustomEmitter extends Emitter {
     @Override
     public String emit(@NotNull Identifier identifier) {
         return identifier.getValue() + "Custom";
+    }
+
+    @NotNull
+    @Override
+    public String emitValidator(@NotNull Refined refined)  {
+        return notYetImplemented();
+    }
+
+    @NotNull
+    @Override
+    public String emit(@NotNull Reference.Primitive.Type.Constraint constraint)  {
+        return notYetImplemented();
     }
 }

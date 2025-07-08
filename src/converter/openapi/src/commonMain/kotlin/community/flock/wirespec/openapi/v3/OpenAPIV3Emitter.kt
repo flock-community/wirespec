@@ -26,7 +26,6 @@ import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.parse.Channel
-import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
@@ -63,7 +62,9 @@ object OpenAPIV3Emitter : Emitter() {
 
     override fun Reference.emit() = notYetImplemented()
 
-    override fun Refined.Validator.emit() = notYetImplemented()
+    override fun Refined.emitValidator() = notYetImplemented()
+
+    override fun Reference.Primitive.Type.Constraint.emit() = notYetImplemented()
 
     override fun emit(type: Type, module: Module) = notYetImplemented()
 
@@ -124,10 +125,33 @@ object OpenAPIV3Emitter : Emitter() {
         .toMap()
 
     private fun Refined.emit(): SchemaObject =
-        SchemaObject(
-            type = OpenAPIType.STRING,
-            pattern = validator.value
-        )
+        when(val type = reference.type) {
+            is Reference.Primitive.Type.Integer -> SchemaObject(
+                type = OpenAPIType.STRING,
+                minimum = type.constraint?.min?.toDouble(),
+                maximum = type.constraint?.max?.toDouble(),
+            )
+            is Reference.Primitive.Type.Number -> SchemaObject(
+                type = OpenAPIType.STRING,
+                minimum = type.constraint?.min?.toDouble(),
+                maximum = type.constraint?.max?.toDouble(),
+            )
+            is Reference.Primitive.Type.String -> when(val pattern = type.constraint){
+                is Reference.Primitive.Type.Constraint.RegExp -> SchemaObject(
+                    type = OpenAPIType.STRING,
+                    pattern = pattern.value,
+                )
+                null -> SchemaObject(
+                    type = OpenAPIType.STRING,
+                )
+            }
+            Reference.Primitive.Type.Boolean -> SchemaObject(
+                type = OpenAPIType.BOOLEAN,
+            )
+            Reference.Primitive.Type.Bytes ->  SchemaObject(
+                type = OpenAPIType.STRING,
+            )
+        }
 
 
 
@@ -240,7 +264,10 @@ object OpenAPIV3Emitter : Emitter() {
             is Reference.Custom -> ReferenceObject(ref = Ref("#/components/schemas/${value}"))
             is Reference.Primitive -> SchemaObject(
                 type = type.emitType(),
-                format = emitFormat()
+                format = emitFormat(),
+                pattern = emitPattern(),
+                minimum = emitMinimum(),
+                maximum = emitMaximum(),
             )
             is Reference.Any -> error("Cannot map Any")
             is Reference.Unit -> error("Cannot map Unit")
@@ -277,6 +304,38 @@ object OpenAPIV3Emitter : Emitter() {
                 else -> null
             }
 
+            else -> null
+        }
+
+    private fun Reference.emitPattern() =
+        when (this) {
+            is Reference.Primitive -> when (val t = type) {
+                is Reference.Primitive.Type.String -> when (val p = t.constraint) {
+                    is Reference.Primitive.Type.Constraint.RegExp -> p.value
+                    else -> null
+                }
+                else -> null
+            }
+            else -> null
+        }
+
+    private fun Reference.emitMinimum() =
+        when (this) {
+            is Reference.Primitive -> when (val t = type) {
+                is Reference.Primitive.Type.Number -> t.constraint?.min?.toDouble()
+                is Reference.Primitive.Type.Integer -> t.constraint?.min?.toDouble()
+                else -> null
+            }
+            else -> null
+        }
+
+    private fun Reference.emitMaximum() =
+        when (this) {
+            is Reference.Primitive -> when (val t = type) {
+                is Reference.Primitive.Type.Number -> t.constraint?.max?.toDouble()
+                is Reference.Primitive.Type.Integer -> t.constraint?.max?.toDouble()
+                else -> null
+            }
             else -> null
         }
 }

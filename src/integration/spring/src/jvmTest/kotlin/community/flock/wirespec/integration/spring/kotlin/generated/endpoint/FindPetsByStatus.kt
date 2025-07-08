@@ -79,7 +79,7 @@ object FindPetsByStatus : Wirespec.Endpoint {
         body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<List<Pet>>()),
       )
       400 -> Response400(
-        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<Unit>()),
+        body = Unit,
       )
       else -> error("Cannot match response with status: ${response.statusCode}")
     }

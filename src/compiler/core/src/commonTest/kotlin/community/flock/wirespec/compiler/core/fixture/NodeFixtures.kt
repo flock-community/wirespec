@@ -14,8 +14,11 @@ object NodeFixtures {
     val refined = Refined(
         comment = null,
         identifier = DefinitionIdentifier("UUID"),
-        validator = Refined.Validator(
-            "/^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}\$/",
+        reference = Primitive(
+            isNullable = false,
+            type = Primitive.Type.String(
+                constraint = Primitive.Type.Constraint.RegExp("/^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}$/"),
+            ),
         ),
     )
 
@@ -37,14 +40,14 @@ object NodeFixtures {
                 Field(
                     identifier = FieldIdentifier("name"),
                     reference = Primitive(
-                        type = Primitive.Type.String,
+                        type = Primitive.Type.String(null),
                         isNullable = false,
                     ),
                 ),
                 Field(
                     identifier = FieldIdentifier("description"),
                     reference = Primitive(
-                        type = Primitive.Type.String,
+                        type = Primitive.Type.String(null),
                         isNullable = true,
                     ),
                 ),
@@ -52,7 +55,7 @@ object NodeFixtures {
                     identifier = FieldIdentifier("notes"),
                     reference = Reference.Iterable(
                         reference = Primitive(
-                            type = Primitive.Type.String,
+                            type = Primitive.Type.String(null),
                             isNullable = false,
                         ),
                         isNullable = false,

@@ -4,6 +4,7 @@ import arrow.core.Either
 import arrow.core.Either.Companion.catch
 import arrow.core.NonEmptyList
 import arrow.core.raise.either
+import arrow.core.raise.ensure
 import community.flock.wirespec.compiler.core.exceptions.DefinitionNotExistsException
 import community.flock.wirespec.compiler.core.exceptions.NextException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
@@ -13,12 +14,12 @@ import community.flock.wirespec.compiler.utils.Logger
 
 class TokenProvider(private val logger: Logger, tokens: NonEmptyList<Token>) {
 
-    var token = tokens.head
+    var token: Token = tokens.head
 
     private val tokenIterator = tokens.tail.iterator()
     private var nextToken = nextToken()
 
-    private val definitionNames: List<String> = tokens
+    private val definitionNames = tokens
         .zipWithNext()
         .mapNotNull { (first, second) ->
             when (first.type) {
@@ -26,12 +27,6 @@ class TokenProvider(private val logger: Logger, tokens: NonEmptyList<Token>) {
                 else -> null
             }
         }
-
-    fun Token.shouldBeDefined(): Either<WirespecException, Unit> = either {
-        if (value !in definitionNames) {
-            raise(DefinitionNotExistsException(value, coordinates))
-        }
-    }
 
     init {
         printTokens()
@@ -45,6 +40,13 @@ class TokenProvider(private val logger: Logger, tokens: NonEmptyList<Token>) {
         nextToken = nextToken()
         printTokens(previousToken)
         previousToken
+    }
+
+    fun Token.shouldBeDefined(): Either<WirespecException, Token> = either {
+        ensure(value in definitionNames) {
+            raise(DefinitionNotExistsException(value, coordinates))
+        }
+        this@shouldBeDefined
     }
 
     private fun logToken(token: Token) = with(token) {

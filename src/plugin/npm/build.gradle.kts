@@ -1,4 +1,5 @@
 plugins {
+    id("module.spotless")
     alias(libs.plugins.kotlin.multiplatform)
 }
 
@@ -7,6 +8,7 @@ version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.g
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 kotlin {

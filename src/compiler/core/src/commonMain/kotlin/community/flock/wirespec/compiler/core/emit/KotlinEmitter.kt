@@ -114,11 +114,25 @@ open class KotlinEmitter(
         |${Spacer}override fun toString() = value
         |}
         |
-        |fun ${refined.identifier.value}.validate() = ${refined.validator.emit()}
+        |fun ${refined.identifier.value}.validate() = ${refined.emitValidator()}
         |
     """.trimMargin()
 
-    override fun Refined.Validator.emit() = "Regex(\"\"\"${expression}\"\"\").matches(value)"
+    override fun Refined.emitValidator():String {
+        val defaultReturn = "true"
+        return when (val type = reference.type) {
+            is Reference.Primitive.Type.Integer -> type.constraint?.emit() ?: defaultReturn
+            is Reference.Primitive.Type.Number -> type.constraint?.emit() ?: defaultReturn
+            is Reference.Primitive.Type.String -> type.constraint?.emit() ?: defaultReturn
+            Reference.Primitive.Type.Boolean -> defaultReturn
+            Reference.Primitive.Type.Bytes -> defaultReturn
+        }
+    }
+
+    override fun Reference.Primitive.Type.Constraint.emit() = when(this){
+        is Reference.Primitive.Type.Constraint.RegExp -> "Regex(\"\"\"$expression\"\"\").matches(value)"
+        is Reference.Primitive.Type.Constraint.Bound -> """${Spacer}$min < record.value < $max;"""
+    }
 
     override fun emit(enum: Enum, module: Module) = """
         |enum class ${enum.identifier.value.sanitizeSymbol()} (override val label: String): Wirespec.Enum {

@@ -14,17 +14,22 @@ import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.Equals
 import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.Hash
+import community.flock.wirespec.compiler.core.tokenize.Integer
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
+import community.flock.wirespec.compiler.core.tokenize.LeftParenthesis
 import community.flock.wirespec.compiler.core.tokenize.Method
+import community.flock.wirespec.compiler.core.tokenize.Number
 import community.flock.wirespec.compiler.core.tokenize.Path
 import community.flock.wirespec.compiler.core.tokenize.Pipe
 import community.flock.wirespec.compiler.core.tokenize.QuestionMark
+import community.flock.wirespec.compiler.core.tokenize.RegExp
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
-import community.flock.wirespec.compiler.core.tokenize.StatusCode
+import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.TokenizeOptions
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.TypeIdentifier
+import community.flock.wirespec.compiler.core.tokenize.Underscore
 import community.flock.wirespec.compiler.core.tokenize.WhiteSpace
 import community.flock.wirespec.compiler.core.tokenize.WirespecIdentifier
 import community.flock.wirespec.compiler.core.tokenize.WsBoolean
@@ -73,19 +78,24 @@ class Lexer : IntellijLexer() {
         is EnumTypeDefinition -> Types.ENUM_DEF
         is EndpointDefinition -> Types.ENDPOINT_DEF
         is ChannelDefinition -> Types.CHANNEL_DEF
-        is WsString -> Types.STRING
-        is WsInteger -> Types.INTEGER
-        is WsNumber -> Types.NUMBER
-        is WsBoolean -> Types.BOOLEAN
-        is WsBytes -> Types.BYTES
+        is WsString -> Types.WS_STRING
+        is WsInteger -> Types.WS_INTEGER
+        is WsNumber -> Types.WS_NUMBER
+        is WsBoolean -> Types.WS_BOOLEAN
+        is WsBytes -> Types.WS_BYTES
         is TypeIdentifier -> Types.TYPE_IDENTIFIER
         is WsUnit -> Types.UNIT
         is Method -> Types.METHOD
         is Path -> Types.PATH
-        is StatusCode -> Types.STATUS_CODE
         is Arrow -> Types.ARROW
         is Equals -> Types.EQUALS
         is Pipe -> Types.PIPE
+        is Integer -> Types.INTEGER
+        is Number -> Types.NUMBER
+        is RightParenthesis -> Types.RIGHT_PARENTHESES
+        is LeftParenthesis -> Types.LEFT_PARENTHESES
+        is RegExp -> Types.REG_EXP
+        is Underscore -> Types.UNDERSCORE
     }
 
     override fun getTokenStart() = tokens[index]

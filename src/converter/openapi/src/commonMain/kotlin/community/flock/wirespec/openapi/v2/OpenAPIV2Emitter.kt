@@ -20,7 +20,6 @@ import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.emit.common.Emitter
 import community.flock.wirespec.compiler.core.emit.common.FileExtension
 import community.flock.wirespec.compiler.core.parse.Channel
-import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
@@ -53,7 +52,9 @@ object OpenAPIV2Emitter : Emitter() {
 
     override fun Reference.emit() = notYetImplemented()
 
-    override fun Refined.Validator.emit() = notYetImplemented()
+    override fun Refined.emitValidator() = notYetImplemented()
+
+    override fun Reference.Primitive.Type.Constraint.emit() = notYetImplemented()
 
     override fun emit(type: Type, module: Module) = notYetImplemented()
 
@@ -86,6 +87,8 @@ object OpenAPIV2Emitter : Emitter() {
                             name = it.identifier.value,
                             type = it.reference.emitType(),
                             format = it.reference.emitFormat(),
+                            pattern = it.reference.emitPattern(),
+                            minimum = it.reference.emitMinimum(),
                         )
                     },
                     get = endpoints.emit(Endpoint.Method.GET),
@@ -99,11 +102,44 @@ object OpenAPIV2Emitter : Emitter() {
                 )
             }.toMap(),
             definitions = module.statements
-                .filterIsInstance<Refined>().associate { type ->
-                    type.identifier.value to SchemaObject(
-                        type = OpenAPIType.STRING,
-                        pattern = type.validator.value
-                    )
+                .filterIsInstance<Refined>().associate { refined ->
+                    when (val type = refined.reference.type) {
+                        Reference.Primitive.Type.Boolean ->
+                            refined.identifier.value to SchemaObject(
+                                type = OpenAPIType.BOOLEAN,
+                            )
+
+                        Reference.Primitive.Type.Bytes ->
+                            refined.identifier.value to SchemaObject(
+                                type = OpenAPIType.FILE,
+                            )
+
+                        is Reference.Primitive.Type.Integer ->
+                            refined.identifier.value to SchemaObject(
+                                type = OpenAPIType.INTEGER,
+                                minimum = type.constraint?.min?.toDouble(),
+                                maximum = type.constraint?.min?.toDouble(),
+                            )
+
+                        is Reference.Primitive.Type.Number ->
+                            refined.identifier.value to SchemaObject(
+                                type = OpenAPIType.NUMBER,
+                                minimum = type.constraint?.min?.toDouble(),
+                                maximum = type.constraint?.min?.toDouble(),
+                            )
+
+                        is Reference.Primitive.Type.String ->
+                            refined.identifier.value to when(val pattern = type.constraint){
+                                is Reference.Primitive.Type.Constraint.RegExp -> SchemaObject(
+                                    type = OpenAPIType.STRING,
+                                    pattern = pattern.value,
+                                )
+                                null -> SchemaObject(
+                                    type = OpenAPIType.STRING,
+                                )
+                            }
+                    }
+
                 } + module.statements
                 .filterIsInstance<Type>().associate { type ->
                     type.identifier.value to SchemaObject(
@@ -154,8 +190,9 @@ object OpenAPIV2Emitter : Emitter() {
                     description = comment?.value ?: "${identifier.value} ${response.status} response",
                     headers = response.headers.associate {
                         it.identifier.value to HeaderObject(
-                            type = it.reference.emitType().name,
+                            type = it.reference.emitType(),
                             format = it.reference.emitFormat(),
+                            pattern = it.reference.emitPattern(),
                             items = (it.reference as? Reference.Iterable)?.reference?.toSchemaOrReference()
                         )
                     },
@@ -189,6 +226,7 @@ object OpenAPIV2Emitter : Emitter() {
             name = identifier.value,
             type = reference.emitType(),
             format = reference.emitFormat(),
+            pattern = reference.emitPattern(),
             items = when (val ref = reference) {
                 is Reference.Iterable -> when (val emit = ref.toSchemaOrReference()) {
                     is ReferenceObject -> emit
@@ -204,7 +242,7 @@ object OpenAPIV2Emitter : Emitter() {
         is Reference.Dict -> SchemaObject(type = OpenAPIType.OBJECT, items = reference.toSchemaOrReference())
         is Reference.Iterable -> SchemaObject(type = OpenAPIType.ARRAY, items = reference.toSchemaOrReference())
         is Reference.Custom -> ReferenceObject(ref = Ref("#/definitions/${value}"))
-        is Reference.Primitive -> SchemaObject(type = type.emitType(), format = emitFormat())
+        is Reference.Primitive -> SchemaObject(type = type.emitType(), format = emitFormat(), pattern = emitPattern())
         is Reference.Any -> error("Cannot map Any")
         is Reference.Unit -> error("Cannot map Unit")
     }
@@ -218,7 +256,7 @@ object OpenAPIV2Emitter : Emitter() {
         is Reference.Primitive.Type.Bytes -> OpenAPIType.STRING
     }
 
-    private fun Reference.emitType() =
+    private fun Reference.emitType():OpenAPIType =
         when (this) {
             is Reference.Dict -> OpenAPIType.OBJECT
             is Reference.Iterable -> OpenAPIType.ARRAY
@@ -246,6 +284,38 @@ object OpenAPIV2Emitter : Emitter() {
                 else -> null
             }
 
+            else -> null
+        }
+
+    private fun Reference.emitPattern() =
+        when (this) {
+            is Reference.Primitive -> when (val t = type) {
+                is Reference.Primitive.Type.String -> when (val p = t.constraint) {
+                    is Reference.Primitive.Type.Constraint.RegExp -> p.value
+                    else -> null
+                }
+                else -> null
+            }
+            else -> null
+        }
+
+    private fun Reference.emitMinimum() =
+        when (this) {
+            is Reference.Primitive -> when (val t = type) {
+                is Reference.Primitive.Type.Number -> t.constraint?.min?.toDouble()
+                is Reference.Primitive.Type.Integer -> t.constraint?.min?.toDouble()
+                else -> null
+            }
+            else -> null
+        }
+
+    private fun Reference.emitMaximum() =
+        when (this) {
+            is Reference.Primitive -> when (val t = type) {
+                is Reference.Primitive.Type.Number -> t.constraint?.max?.toDouble()
+                is Reference.Primitive.Type.Integer -> t.constraint?.max?.toDouble()
+                else -> null
+            }
             else -> null
         }
 }

@@ -3,6 +3,7 @@ package community.flock.wirespec.openapi.v2
 import arrow.core.filterIsInstance
 import arrow.core.nonEmptyListOf
 import arrow.core.toNonEmptyListOrNull
+import community.flock.kotlinx.openapi.bindings.v2.BaseObject
 import community.flock.kotlinx.openapi.bindings.v2.BooleanObject
 import community.flock.kotlinx.openapi.bindings.v2.HeaderObject
 import community.flock.kotlinx.openapi.bindings.v2.HeaderOrReferenceObject
@@ -209,14 +210,6 @@ object OpenAPIV2Parser : Parser {
         .filter { it.value.additionalProperties == null }
         .flatMap { flatten(it.value, className(it.key)) }
 
-    private fun String.mapType(format: String?) = when (lowercase()) {
-        "string" -> Reference.Primitive.Type.String
-        "number" -> Reference.Primitive.Type.Number(if (format == "float") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
-        "integer" -> Reference.Primitive.Type.Integer(if (format == "int32") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
-        "boolean" -> Reference.Primitive.Type.Boolean
-        else -> error("Cannot map type: $this")
-    }
-
     private fun SwaggerObject.resolveParameters(operation: OperationObject) = operation.parameters.orEmpty()
         .map {
             when (it) {
@@ -365,7 +358,7 @@ object OpenAPIV2Parser : Parser {
             )
 
             schema.type.isPrimitive() -> Reference.Primitive(
-                schema.type!!.toPrimitive(schema.format),
+                schema.toPrimitive(),
                 isNullable = isNullable,
             )
 
@@ -405,9 +398,9 @@ object OpenAPIV2Parser : Parser {
         else -> when (val type = schema.type) {
             OpenapiType.STRING, OpenapiType.INTEGER, OpenapiType.NUMBER, OpenapiType.BOOLEAN -> {
                 if (schema.additionalProperties != null) {
-                    Reference.Dict(Reference.Primitive(type.toPrimitive(schema.format), isNullable = false), isNullable = isNullable)
+                    Reference.Dict(Reference.Primitive(schema.toPrimitive(), isNullable = false), isNullable = isNullable)
                 } else {
-                    Reference.Primitive(type.toPrimitive(schema.format), isNullable = isNullable)
+                    Reference.Primitive(schema.toPrimitive(), isNullable = isNullable)
                 }
             }
 
@@ -456,10 +449,13 @@ object OpenAPIV2Parser : Parser {
 
     private fun ReferenceObject.getReference() = ref.value.split("/")[2]
 
-    private fun OpenapiType.toPrimitive(format: String?) = when (this) {
-        OpenapiType.STRING -> Reference.Primitive.Type.String
-        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer(if (format == "int32") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
-        OpenapiType.NUMBER -> Reference.Primitive.Type.Number(if (format == "float") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64)
+    private fun BaseObject.toPrimitive() = when (this.type) {
+        OpenapiType.STRING -> when {
+            pattern != null -> Reference.Primitive.Type.String(constraint = Reference.Primitive.Type.Constraint.RegExp(pattern!!))
+            else -> Reference.Primitive.Type.String(null)
+        }
+        OpenapiType.INTEGER -> Reference.Primitive.Type.Integer(if (format == "int32") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64, null)
+        OpenapiType.NUMBER -> Reference.Primitive.Type.Number(if (format == "float") Reference.Primitive.Type.Precision.P32 else Reference.Primitive.Type.Precision.P64, null)
         OpenapiType.BOOLEAN -> Reference.Primitive.Type.Boolean
         else -> error("Type is not a primitive")
     }
@@ -467,11 +463,11 @@ object OpenAPIV2Parser : Parser {
     private fun SwaggerObject.toField(header: HeaderObject, identifier: String) = Field(
         identifier = FieldIdentifier(identifier),
         reference = when (header.type) {
-            "array" -> header.items?.let { resolve(it) }?.let { toReference(it, identifier, false) }
+            OpenapiType.ARRAY -> header.items?.let { resolve(it) }?.let { toReference(it, identifier, false) }
                 ?: error("Item cannot be null")
 
             else -> Reference.Primitive(
-                header.type.mapType(header.format),
+                header.toPrimitive(),
                 isNullable = false,
             )
         },
@@ -501,18 +497,18 @@ object OpenAPIV2Parser : Parser {
     }
 
     private fun SwaggerObject.toField(parameter: ParameterObject, name: String) = resolve(parameter)
-        .let {
+        .let { schema ->
             val isNullable = !(parameter.required ?: false)
             when {
-                parameter.enum != null -> Reference.Custom(className(name, "Parameter", it.name).sanitize(), isNullable = isNullable)
-                else -> when (val type = it.type) {
+                parameter.enum != null -> Reference.Custom(className(name, "Parameter", schema.name).sanitize(), isNullable = isNullable)
+                else -> when (schema.type) {
                     OpenapiType.STRING, OpenapiType.NUMBER, OpenapiType.INTEGER, OpenapiType.BOOLEAN ->
-                        type
-                            .toPrimitive(it.format)
+                        schema
+                            .toPrimitive()
                             .let { primitive -> Reference.Primitive(primitive, isNullable = isNullable) }
 
-                    OpenapiType.ARRAY -> it.items?.let { items -> resolve(items) }
-                        ?.let { it.type?.toPrimitive(it.format) }
+                    OpenapiType.ARRAY -> schema.items?.let { items -> resolve(items) }
+                        ?.toPrimitive()
                         ?.let { primitive ->
                             Reference.Iterable(
                                 Reference.Primitive(primitive, false),
@@ -535,7 +531,7 @@ object OpenAPIV2Parser : Parser {
                 val param = segment.substring(1, segment.length - 1)
                 parameters
                     .find { it.name == param }
-                    ?.let { it.type?.toPrimitive(it.format) }
+                    ?.toPrimitive()
                     ?.let {
                         Endpoint.Segment.Param(
                             FieldIdentifier(param),

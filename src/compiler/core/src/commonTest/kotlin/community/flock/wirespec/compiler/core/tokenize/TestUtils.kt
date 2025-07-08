@@ -12,7 +12,7 @@ fun testTokenizer(
     WirespecSpec
         .tokenize(source, TokenizeOptions(removeWhitespace = removeWhiteSpace))
         .shouldNotBeEmpty()
-        .apply { size shouldBe expected.size }
         .map { it.type }
-        .onEachIndexed { index, tokenType -> tokenType shouldBe expected[index] }
+        .also { println(it) }
+        .let { it shouldBe expected }
 }

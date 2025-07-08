@@ -30,7 +30,9 @@ interface TypeDefinitionEmitter {
 
     fun Reference.emit(): String
 
-    fun Refined.Validator.emit(): String
+    fun Refined.emitValidator(): String
+
+    fun Reference.Primitive.Type.Constraint.emit(): String
 }
 
 interface EnumDefinitionEmitter {

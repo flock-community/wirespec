@@ -8,7 +8,12 @@ import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.assertions.arrow.core.shouldHaveSize
+import io.kotest.matchers.booleans.shouldBeFalse
+import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.Test
 
 class ParseTest {
@@ -28,8 +33,8 @@ class ParseTest {
         """.trimMargin()
 
         parser(source)
-            .shouldBeRight()
-            .size shouldBe 1
+            .shouldBeRight { it.head.message }
+            .shouldHaveSize(1)
     }
 
     @Test
@@ -44,7 +49,7 @@ class ParseTest {
 
         parser(source)
             .shouldBeRight()
-            .size shouldBe 1
+            .shouldHaveSize(1)
     }
 
     @Test
@@ -59,7 +64,7 @@ class ParseTest {
 
         parser(source)
             .shouldBeLeft()
-            .also { it.size shouldBe 1 }
+            .shouldHaveSize(1)
             .first()
             .message shouldBe "RightCurly expected, not: DromedaryCaseIdentifier at line 3 and position 3"
     }
@@ -79,7 +84,7 @@ class ParseTest {
 
         parser(source)
             .shouldBeRight()
-            .size shouldBe 1
+            .shouldHaveSize(1)
     }
 
     @Test
@@ -101,7 +106,7 @@ class ParseTest {
         """.trimMargin()
 
         parser(source)
-            .shouldBeRight().filterIsInstance<Definition>().map { it.comment?.value } shouldBe listOf(
+            .shouldBeRight().map { it.comment?.value } shouldBe listOf(
             "This is comment 1",
             "This is comment 2",
         )
@@ -113,7 +118,7 @@ class ParseTest {
             |/*
             |  comment Name
             |  */
-            |type Name /^[0-9a-zA-Z]{1,50}${'$'}/g
+            |type Name = String(/^[0-9a-zA-Z]{1,50}$/g)
             |/*
             |  comment Address
             |  */
@@ -124,9 +129,74 @@ class ParseTest {
         """.trimMargin()
 
         parser(source)
-            .shouldBeRight().filterIsInstance<Definition>().map { it.comment?.value } shouldBe listOf(
-            "comment Name",
-            "comment Address",
-        )
+            .shouldBeRight()
+            .map { it.comment?.value } shouldBe listOf("comment Name", "comment Address")
+    }
+
+    @Test
+    fun testParserWithRefinedType() {
+        val source = """
+            |type Bla {
+            |  foo: String(/.{0,50}/g)
+            |}
+
+        """.trimMargin()
+
+        parser(source)
+            .shouldBeRight()
+            .shouldHaveSize(1).first().shouldBeInstanceOf<Type>().apply {
+                identifier.value shouldBe "Bla"
+                shape.value.shouldHaveSize(1).first().reference.shouldBeInstanceOf<Reference.Primitive>().apply {
+                    type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
+                    isNullable.shouldBeFalse()
+                    type.constraint shouldBe Reference.Primitive.Type.Constraint.RegExp("/.{0,50}/g")
+                }
+            }
+    }
+
+    @Test
+    fun testParserWithRefinedTypeOptional() {
+        val source = """
+            |type Bla {
+            |  foo: String?(/.{0,50}/g)
+            |}
+
+        """.trimMargin()
+
+        parser(source)
+            .shouldBeRight { it.head.message }
+            .shouldHaveSize(1).first()
+            .shouldBeInstanceOf<Type>().apply {
+                identifier.value shouldBe "Bla"
+                shape.value.shouldHaveSize(1).first().reference.shouldBeInstanceOf<Reference.Primitive>().apply {
+                    type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
+                    isNullable.shouldBeTrue()
+                    type.constraint shouldBe Reference.Primitive.Type.Constraint.RegExp("/.{0,50}/g")
+                }
+            }
+    }
+
+    @Test
+    fun testParserWithRefinedTypeArray() {
+        val source = """
+            |type Bla {
+            |  foo: String?(/.{0,50}/g)[]?
+            |}
+
+        """.trimMargin()
+
+        parser(source)
+            .shouldBeRight { it.head.message }
+            .shouldHaveSize(1).first().shouldBeInstanceOf<Type>().apply {
+                identifier.value shouldBe "Bla"
+                shape.value.shouldHaveSize(1).first().reference.shouldBeInstanceOf<Reference.Iterable>().apply {
+                    isNullable.shouldBeTrue()
+                    reference.shouldBeInstanceOf<Reference.Primitive>().apply {
+                        type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
+                        isNullable.shouldBeTrue()
+                        type.constraint shouldBe Reference.Primitive.Type.Constraint.RegExp("/.{0,50}/g")
+                    }
+                }
+            }
     }
 }

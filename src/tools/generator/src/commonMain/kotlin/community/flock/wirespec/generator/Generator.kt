@@ -18,6 +18,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlin.random.Random
 
+fun defaultGenerator(random: Random) = RgxGen.parse("\\w{1,50}").generate(random).let(::JsonPrimitive)
 fun AST.generate(type: String, random: Random = Random.Default): JsonElement = Reference.Custom(
     value = type.removeSuffix("[]"),
     isNullable = false,
@@ -42,7 +43,7 @@ private fun AST.generateReference(ref: Reference, random: Random) = when (ref) {
         is Reference.Primitive.Type.Integer -> random.nextInt().let(::JsonPrimitive)
         is Reference.Primitive.Type.Number -> random.nextDouble().let(::JsonPrimitive)
         is Reference.Primitive.Type.Boolean -> random.nextBoolean().let(::JsonPrimitive)
-        else -> RgxGen.parse("\\w{1,50}").generate(random).let(::JsonPrimitive)
+        else -> defaultGenerator(random)
     }
 
     is Reference.Custom -> generateObject(resolveReference(ref), random)
@@ -66,8 +67,23 @@ private fun randomRegex(regex: String, random: Random) = RgxGen
     .parse(regex.substring(1, regex.length - 2))
     .generate(random)
 
-private fun generateRefined(def: Refined, random: Random) = randomRegex(def.validator.value, random)
-    .let(::JsonPrimitive)
+private fun generateRefined(def: Refined, random: Random) = when (val type = def.reference.type) {
+    is Reference.Primitive.Type.String -> when (val pattern = type.constraint) {
+        is Reference.Primitive.Type.Constraint.RegExp -> randomRegex(pattern.value, random).let(::JsonPrimitive)
+        null -> defaultGenerator(random)
+    }
+    Reference.Primitive.Type.Boolean -> random.nextBoolean().let(::JsonPrimitive)
+    Reference.Primitive.Type.Bytes -> defaultGenerator(random)
+    is Reference.Primitive.Type.Integer -> random.nextInt(
+        from = type.constraint?.min?.toInt() ?: 0,
+        until = type.constraint?.max?.toInt() ?: 0,
+    ).let(::JsonPrimitive)
+
+    is Reference.Primitive.Type.Number -> random.nextDouble(
+        from = type.constraint?.min?.toDouble() ?: 0.0,
+        until = type.constraint?.max?.toDouble() ?: 0.0,
+    ).let(::JsonPrimitive)
+}
 
 private fun generateEnum(def: Enum, random: Random) = random
     .nextInt(def.entries.size)

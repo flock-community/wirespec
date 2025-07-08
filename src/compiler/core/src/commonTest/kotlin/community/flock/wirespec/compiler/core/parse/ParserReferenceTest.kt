@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.parse
 
 import arrow.core.nonEmptyListOf
+import arrow.core.right
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
@@ -8,6 +9,7 @@ import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.assertions.arrow.core.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.Test
@@ -28,7 +30,20 @@ class ParserReferenceTest {
         """.trimMargin()
 
         parser(source)
-            .shouldBeRight()
+            .shouldBeRight { it.head.message }
+            .apply { size shouldBe 1 }
+            .apply {
+                first().apply {
+                    shouldBeInstanceOf<Type>()
+                    identifier.value shouldBe "Self"
+                    shape.value.first().apply {
+                        identifier.value shouldBe "self"
+                        reference.shouldBeInstanceOf<Reference.Custom>()
+                        reference.value shouldBe "Self"
+                        reference.isNullable shouldBe false
+                    }
+                }
+            }
     }
 
     @Test
@@ -41,7 +56,7 @@ class ParserReferenceTest {
 
         parser(source)
             .shouldBeLeft()
-            .also { it.size shouldBe 1 }
+            .shouldHaveSize(1)
             .first()
             .run {
                 message shouldBe "Cannot find reference: Bar"
@@ -81,6 +96,8 @@ class ParserReferenceTest {
             |}
         """.trimMargin()
 
+        val r = parser(source).right()
+        println(r)
         parser(source)
             .shouldBeLeft()
             .apply { size shouldBe 1 }
@@ -162,7 +179,7 @@ class ParserReferenceTest {
     fun afterRegex() {
         val source = """
             |/* This is a comment */
-            |type Date /^([0-9]{2}-[0-9]{2}-20[0-9]{2})${'$'}/g
+            |type Date = String(/^([0-9]{2}-[0-9]{2}-20[0-9]{2})$/g)
             |
             |// This is a comment too
             |type Address {
@@ -172,15 +189,25 @@ class ParserReferenceTest {
 
         parser(source)
             .shouldBeRight()
-            .apply { first().comment?.value shouldBe "This is a comment" }
-            .apply { first().identifier.value shouldBe "Date" }
-            .apply { (first() as Refined).validator.value shouldBe "/^([0-9]{2}-[0-9]{2}-20[0-9]{2})\$/g" }
-            .apply { get(1).comment?.value shouldBe "This is a comment too" }
-            .apply { get(1).identifier.value shouldBe "Address" }
-            .apply { get(1).shouldBeInstanceOf<Type>() }
+            .apply {
+                first().apply {
+                    shouldBeInstanceOf<Refined>()
+                    comment?.value shouldBe "This is a comment"
+                    identifier.value shouldBe "Date"
+                    reference.apply {
+                        shouldBeInstanceOf<Reference.Primitive>()
+                        type.shouldBeInstanceOf<Reference.Primitive.Type.String>()
+                        isNullable shouldBe false
+                        type.constraint shouldBe Reference.Primitive.Type.Constraint.RegExp("/^([0-9]{2}-[0-9]{2}-20[0-9]{2})$/g")
+                    }
+                }
+                get(1).apply {
+                    shouldBeInstanceOf<Type>()
+                    comment?.value shouldBe "This is a comment too"
+                    identifier.value shouldBe "Address"
+                }
+            }
     }
-
-    // region NOT YET SUPPORTED
 
     @Test
     fun loseComments() {
@@ -214,6 +241,4 @@ class ParserReferenceTest {
         parser(source)
             .shouldBeLeft()
     }
-
-    // endregion
 }
