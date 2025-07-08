@@ -199,4 +199,28 @@ class ParseTest {
                 }
             }
     }
+
+    @Test
+    fun testMultipleParseErrors() {
+        val source = """
+            |type Foo {
+            |  foo1: String
+            |  bar2: String
+            |}
+            |
+            |type Bar {
+            |  foo1: String
+            |  bar2: String
+            |}
+
+        """.trimMargin()
+
+        parser(source)
+            .shouldBeLeft()
+            .shouldHaveSize(2)
+            .apply {
+                head.message shouldBe "WirespecDefinition expected, not: Colon at line 3 and position 7"
+                get(1).message shouldBe "RightCurly expected, not: DromedaryCaseIdentifier at line 8 and position 3"
+            }
+    }
 }

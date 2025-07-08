@@ -4,10 +4,12 @@ import arrow.core.Either
 import arrow.core.EitherNel
 import arrow.core.NonEmptyList
 import arrow.core.flatMap
+import arrow.core.leftNel
 import arrow.core.nel
 import arrow.core.raise.Raise
 import arrow.core.raise.either
 import arrow.core.raise.ensureNotNull
+import arrow.core.raise.zipOrAccumulate
 import arrow.core.right
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.TokenizedModule
@@ -17,8 +19,10 @@ import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WrongTokenException
 import community.flock.wirespec.compiler.core.tokenize.ChannelDefinition
 import community.flock.wirespec.compiler.core.tokenize.Comment
+import community.flock.wirespec.compiler.core.tokenize.EndOfProgram
 import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
 import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
+import community.flock.wirespec.compiler.core.tokenize.Keyword
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.TokenType
 import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
@@ -41,28 +45,48 @@ object Parser {
 
     private fun TokenProvider.parseModule(src: String, options: ParseOptions): EitherNel<WirespecException, Module> = either {
         mutableListOf<EitherNel<WirespecException, Definition>>()
-            .apply { while (hasNext()) add(parseDefinition().mapLeft { it.nel() }) }
+            .apply { while (hasNext()) add(parseDefinition()) }
             .map { it.bind() }
             .toNonEmptyListOrNull()
             .let { ensureNotNull(it) { EmptyModule().nel() } }
     }.flatMap(validate(options))
         .map { Module(src, it) }
 
-    private fun TokenProvider.parseDefinition() = either {
+    private fun TokenProvider.parseDefinition(): EitherNel<WirespecException, Definition> = either {
         val comment = when (token.type) {
-            is Comment -> Comment(token.value).also { eatToken().bind() }
+            is Comment -> Comment(token.value).also { eatToken() }
             else -> null
+        }
+        fun Either<WirespecException, Definition>.go(): EitherNel<WirespecException, Definition> {
+            if(isRight()){
+                return this.mapLeft { it.nel() }
+            }else{
+                while (token.type !is Keyword && token.type !is EndOfProgram){
+                    eatToken()
+                }
+                if(token.type is EndOfProgram){
+                    return this.mapLeft { it.nel() }
+                } else {
+                    return zipOrAccumulate(
+                        this,
+                        parseDefinition()
+                    ){_,_ -> Unit }
+                }
+
+            }
         }
         when (token.type) {
             is WirespecDefinition -> when (token.type as WirespecDefinition) {
-                is TypeDefinition -> with(TypeParser) { parseType(comment) }.bind()
-                is EnumTypeDefinition -> with(EnumParser) { parseEnum(comment) }.bind()
-                is EndpointDefinition -> with(EndpointParser) { parseEndpoint(comment) }.bind()
-                is ChannelDefinition -> with(ChannelParser) { parseChannel(comment) }.bind()
+                is TypeDefinition -> with(TypeParser) { parseType(comment) }.go().bind()
+                is EnumTypeDefinition -> with(EnumParser) { parseEnum(comment) }.go().bind()
+                is EndpointDefinition -> with(EndpointParser) { parseEndpoint(comment) }.go().bind()
+                is ChannelDefinition -> with(ChannelParser) { parseChannel(comment) }.go().bind()
             }
 
-            else -> raiseWrongToken<WirespecDefinition>().bind()
+            else -> raiseWrongToken<WirespecDefinition>().mapLeft { it.nel() }.bind()
         }
+
+
     }
 
     fun validate(options: ParseOptions): (Statements) -> EitherNel<WirespecException, Statements> = { defs: Statements ->
