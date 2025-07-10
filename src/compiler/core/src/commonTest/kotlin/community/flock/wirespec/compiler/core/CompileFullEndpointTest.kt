@@ -462,27 +462,31 @@ class CompileFullEndpointTest {
             |    body: Error
             |  }
             |  export type Response = Response200 | Response201 | Response500
-            |  export const request = (props: {"id": string, "done": boolean, "name"?: string, "token": Token, "refreshToken"?: Token, "body": PotentialTodoDto}): Request => ({
-            |    path: {"id": props["id"]},
+            |  export type RequestParams = {"id": string, "done": boolean, "name"?: string, "token": Token, "refreshToken"?: Token, "body": PotentialTodoDto}
+            |  export const request = (params: RequestParams): Request => ({
+            |    path: {"id": params["id"]},
             |    method: "PUT",
-            |    queries: {"done": props["done"], "name": props["name"]},
-            |    headers: {"token": props["token"], "refreshToken": props["refreshToken"]},
-            |    body: props.body,
+            |    queries: {"done": params["done"], "name": params["name"]},
+            |    headers: {"token": params["token"], "refreshToken": params["refreshToken"]},
+            |    body: params.body,
             |  })
-            |  export const response200 = (props: {"body": TodoDto}): Response200 => ({
+            |  export type Response200Params = {"body": TodoDto}
+            |  export const response200 = (params: Response200Params): Response200 => ({
             |    status: 200,
             |    headers: {},
-            |    body: props.body,
+            |    body: params.body,
             |  })
-            |  export const response201 = (props: {"token": Token, "refreshToken"?: Token, "body": TodoDto}): Response201 => ({
+            |  export type Response201Params = {"token": Token, "refreshToken"?: Token, "body": TodoDto}
+            |  export const response201 = (params: Response201Params): Response201 => ({
             |    status: 201,
-            |    headers: {"token": props["token"], "refreshToken": props["refreshToken"]},
-            |    body: props.body,
+            |    headers: {"token": params["token"], "refreshToken": params["refreshToken"]},
+            |    body: params.body,
             |  })
-            |  export const response500 = (props: {"body": Error}): Response500 => ({
+            |  export type Response500Params = {"body": Error}
+            |  export const response500 = (params: Response500Params): Response500 => ({
             |    status: 500,
             |    headers: {},
-            |    body: props.body,
+            |    body: params.body,
             |  })
             |  export type Handler = {
             |    putTodo: (request:Request) => Promise<Response>
