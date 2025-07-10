@@ -399,6 +399,7 @@ class CompileMinimalEndpointTest {
             |    body: TodoDto[]
             |  }
             |  export type Response = Response200
+            |  export type RequestParams = {}
             |  export const request = (): Request => ({
             |    path: {},
             |    method: "GET",
@@ -406,10 +407,11 @@ class CompileMinimalEndpointTest {
             |    headers: {},
             |    body: undefined,
             |  })
-            |  export const response200 = (props: {"body": TodoDto[]}): Response200 => ({
+            |  export type Response200Params = {"body": TodoDto[]}
+            |  export const response200 = (params: Response200Params): Response200 => ({
             |    status: 200,
             |    headers: {},
-            |    body: props.body,
+            |    body: params.body,
             |  })
             |  export type Handler = {
             |    getTodos: (request:Request) => Promise<Response>
