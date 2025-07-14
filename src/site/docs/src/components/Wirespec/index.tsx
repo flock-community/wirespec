@@ -6,12 +6,12 @@ const example = `
 /*
   A UUID v4 type
 */
-type UUID /^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$/g
+type UUID = String(/^[0-9a-f]{8}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{4}\\b-[0-9a-f]{12}$/g)
 
 /*
   Date format YYYY-MM-DD
 */
-type Date /^20[0-9]{2}-[0-9]{2}-[0-9]{2}$/g
+type Date = String(/^20[0-9]{2}-[0-9]{2}-[0-9]{2}$/g)
 
 /*
   Todo shape
