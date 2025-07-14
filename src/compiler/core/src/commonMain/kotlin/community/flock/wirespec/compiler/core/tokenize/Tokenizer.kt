@@ -49,7 +49,7 @@ private fun LanguageSpec.extractRegex(source: String, regex: String, incompleteT
             val token = incompleteTokens.last().nextToken(RegExp, regex)
             tokenize(source, incompleteTokens + token)
         }
-        escapedForwardSlash.containsMatchIn(source) -> extractRegex(source.drop(2), regex + source.first(), incompleteTokens)
+        escapedForwardSlash.containsMatchIn(source) -> extractRegex(source.drop(2), regex + source.substring(0, 2), incompleteTokens)
         match == null -> extractRegex(source.drop(1), regex + source.first(), incompleteTokens)
         else -> {
             val token = incompleteTokens.last().nextToken(RegExp, regex + match.value)
