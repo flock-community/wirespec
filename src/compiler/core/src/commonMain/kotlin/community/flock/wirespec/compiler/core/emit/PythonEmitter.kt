@@ -290,7 +290,7 @@ open class PythonEmitter(
         endpoint.queries.joinToString(",\n") { it.emitDeserializedParams("request", "queries") }.orNull(),
         endpoint.headers.joinToString(",\n") { it.emitDeserializedParams("request", "headers") }.orNull(),
         content?.let { """${Spacer(3)}body = serialization.deserialize(request.body, ${it.reference.emitType()}),""" }
-    ).joinToString(",\n").let { if (it.isBlank()) "" else "(\n$it\n)" }
+    ).joinToString(",\n").let { if (it.isBlank()) "()" else "(\n$it\n)" }
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
         """${Spacer(3)}${emit(value.identifier)} = serialization.deserialize(request.path[${index}], ${value.reference.emitType()})"""
