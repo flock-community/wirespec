@@ -333,7 +333,7 @@ class CompileMinimalEndpointTest {
             |
             |    @staticmethod
             |    def from_raw_request(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest) -> 'GetTodos.Request':
-            |      return GetTodos.Request
+            |      return GetTodos.Request()
             |
             |    @staticmethod
             |    def to_raw_response(serialization: Wirespec.Serializer, response: 'GetTodos.Response') -> Wirespec.RawResponse:
