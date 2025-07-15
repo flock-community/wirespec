@@ -1,7 +1,7 @@
 package community.flock.wirespec.integration.avro
 
 import arrow.core.escaped
-import community.flock.wirespec.compiler.core.emit.common.PackageName
+import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Module

@@ -1,10 +1,11 @@
 package community.flock.wirespec.integration.spring.java.emit
 
-import community.flock.wirespec.compiler.core.emit.JavaEmitter
-import community.flock.wirespec.compiler.core.emit.common.EmitShared
-import community.flock.wirespec.compiler.core.emit.common.PackageName
-import community.flock.wirespec.compiler.core.emit.common.Spacer
+
+import community.flock.wirespec.compiler.core.emit.EmitShared
+import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.emitters.java.JavaEmitter
 
 class SpringJavaEmitter(packageName: PackageName) : JavaEmitter(packageName, EmitShared(false)) {
     override fun emitHandleFunction(endpoint: Endpoint): String {

@@ -5,7 +5,7 @@ package community.flock.wirespec.compiler.lib
 import arrow.core.Either.Left
 import arrow.core.Either.Right
 import arrow.core.EitherNel
-import community.flock.wirespec.compiler.core.emit.common.Emitted
+import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.AST
 

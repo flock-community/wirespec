@@ -1,24 +1,19 @@
 package community.flock.wirespec.example.maven.custom.emit;
 
-import arrow.core.NonEmptyList;
-import community.flock.wirespec.compiler.core.emit.common.Emitted;
-import community.flock.wirespec.compiler.core.emit.common.Emitter;
-import community.flock.wirespec.compiler.core.emit.common.FileExtension;
-import community.flock.wirespec.compiler.core.emit.shared.Shared;
+
+import community.flock.wirespec.compiler.core.emit.Emitter;
+import community.flock.wirespec.compiler.core.emit.FileExtension;
+import community.flock.wirespec.compiler.core.emit.Shared;
 import community.flock.wirespec.compiler.core.parse.Channel;
-import community.flock.wirespec.compiler.core.parse.Definition;
 import community.flock.wirespec.compiler.core.parse.Endpoint;
 import community.flock.wirespec.compiler.core.parse.Enum;
 import community.flock.wirespec.compiler.core.parse.Field;
 import community.flock.wirespec.compiler.core.parse.Identifier;
-import community.flock.wirespec.compiler.core.parse.Node;
 import community.flock.wirespec.compiler.core.parse.Reference;
 import community.flock.wirespec.compiler.core.parse.Refined;
 import community.flock.wirespec.compiler.core.parse.Type;
 import community.flock.wirespec.compiler.core.parse.Union;
 import community.flock.wirespec.compiler.core.parse.Module;
-import community.flock.wirespec.compiler.core.parse.AST;
-import community.flock.wirespec.compiler.utils.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

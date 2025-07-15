@@ -5,10 +5,10 @@ import arrow.core.nonEmptySetOf
 import community.flock.wirespec.compiler.core.CompilationContext
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.compile
-import community.flock.wirespec.compiler.core.emit.KotlinEmitter
-import community.flock.wirespec.compiler.core.emit.WirespecEmitter
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
+import community.flock.wirespec.emitters.kotlin.KotlinEmitter
+import community.flock.wirespec.emitters.wirespec.WirespecEmitter
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser
 import io.kotest.assertions.arrow.core.shouldBeRight

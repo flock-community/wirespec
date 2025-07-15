@@ -18,7 +18,7 @@ import com.fasterxml.jackson.databind.introspect.AnnotatedMethod
 import com.fasterxml.jackson.databind.introspect.AnnotatedParameter
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
-import community.flock.wirespec.compiler.core.emit.JavaEmitter
+import community.flock.wirespec.emitters.java.JavaEmitter
 import community.flock.wirespec.integration.jackson.common.translator
 import community.flock.wirespec.java.Wirespec
 import java.io.IOException

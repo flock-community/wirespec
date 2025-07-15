@@ -1,8 +1,8 @@
 package community.flock.wirespec.integration.spring.kotlin
 
 import community.flock.wirespec.compiler.core.ModuleContent
-import community.flock.wirespec.compiler.core.emit.common.PackageName
-import community.flock.wirespec.compiler.core.emit.common.plus
+import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.emit.plus
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.integration.spring.java.emit.SpringJavaEmitter
 import community.flock.wirespec.integration.spring.kotlin.emit.SpringKotlinEmitter

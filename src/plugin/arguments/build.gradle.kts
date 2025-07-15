@@ -34,6 +34,11 @@ kotlin {
         commonMain {
             dependencies {
                 api(project(":src:compiler:core"))
+                api(project(":src:compiler:emitters:kotlin"))
+                api(project(":src:compiler:emitters:java"))
+                api(project(":src:compiler:emitters:typescript"))
+                api(project(":src:compiler:emitters:python"))
+                api(project(":src:compiler:emitters:wirespec"))
                 implementation(project(":src:converter:avro"))
                 implementation(project(":src:converter:openapi"))
                 implementation(libs.kotlinx.io.core)

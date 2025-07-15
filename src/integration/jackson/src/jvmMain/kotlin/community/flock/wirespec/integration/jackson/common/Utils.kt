@@ -1,6 +1,6 @@
 package community.flock.wirespec.integration.jackson.common
 
-import community.flock.wirespec.compiler.core.emit.common.Keywords
+import community.flock.wirespec.compiler.core.emit.Keywords
 
 fun translator(reserved: Keywords): String.() -> String = {
     val keywords = reserved.reservedKeywords.map { "_$it" }

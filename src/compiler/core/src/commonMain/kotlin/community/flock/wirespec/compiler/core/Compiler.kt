@@ -5,8 +5,8 @@ import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.Stage.EMITTED
 import community.flock.wirespec.compiler.core.Stage.PARSED
 import community.flock.wirespec.compiler.core.Stage.TOKENIZED
-import community.flock.wirespec.compiler.core.emit.common.Emitted
-import community.flock.wirespec.compiler.core.emit.common.HasEmitters
+import community.flock.wirespec.compiler.core.emit.Emitted
+import community.flock.wirespec.compiler.core.emit.HasEmitters
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Parser.parse

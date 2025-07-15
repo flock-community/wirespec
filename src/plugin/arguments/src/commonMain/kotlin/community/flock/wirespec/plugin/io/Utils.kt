@@ -5,7 +5,7 @@ import arrow.core.NonEmptySet
 import arrow.core.getOrElse
 import arrow.core.raise.either
 import arrow.core.toNonEmptySetOrNull
-import community.flock.wirespec.compiler.core.emit.common.FileExtension.Wirespec
+import community.flock.wirespec.compiler.core.emit.FileExtension
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -70,7 +70,7 @@ fun Directory.wirespecSources(): Either<WirespecFileError, NonEmptySet<Source<So
 
 private fun isRegularFile(path: Path) = SystemFileSystem.metadataOrNull(path)?.isRegularFile == true
 
-private fun isWirespecFile(path: Path) = path.extension == Wirespec.value
+private fun isWirespecFile(path: Path) = path.extension == FileExtension.Wirespec.value
 
 private val Path.extension
     get() = name.substringAfterLast('.', "")

@@ -1,8 +1,8 @@
 package community.flock.wirespec.plugin.maven.mojo
 
 import arrow.core.nonEmptySetOf
-import community.flock.wirespec.compiler.core.emit.common.FileExtension.Wirespec
-import community.flock.wirespec.compiler.core.emit.common.PackageName
+import community.flock.wirespec.compiler.core.emit.FileExtension
+import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.compile
 import community.flock.wirespec.plugin.io.ClassPath
@@ -36,7 +36,7 @@ class CompileMojo : BaseMojo() {
             is ClassPath -> nonEmptySetOf(inputPath.readFromClasspath())
             is DirectoryPath -> Directory(inputPath).wirespecSources().or(::handleError)
             is FilePath -> when (inputPath.extension) {
-                Wirespec -> nonEmptySetOf(Source<Wirespec>(inputPath.name, inputPath.read()))
+                FileExtension.Wirespec -> nonEmptySetOf(Source(inputPath.name, inputPath.read()))
                 else -> throw WirespecFileError()
             }
         }

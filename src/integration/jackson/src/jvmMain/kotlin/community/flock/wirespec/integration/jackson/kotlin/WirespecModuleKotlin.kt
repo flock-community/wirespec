@@ -17,7 +17,7 @@ import com.fasterxml.jackson.databind.introspect.AnnotatedMethod
 import com.fasterxml.jackson.databind.introspect.AnnotatedParameter
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
-import community.flock.wirespec.compiler.core.emit.KotlinEmitter
+import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 import community.flock.wirespec.integration.jackson.common.translator
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.KClass

@@ -1,7 +1,7 @@
 package community.flock.wirespec.plugin.cli
 
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
-import community.flock.wirespec.compiler.core.emit.common.FileExtension
+import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.plugin.compile
 import community.flock.wirespec.plugin.convert
 import community.flock.wirespec.plugin.io.DirectoryPath

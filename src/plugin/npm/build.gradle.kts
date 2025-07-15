@@ -54,6 +54,7 @@ kotlin {
             dependencies {
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:compiler:lib"))
+                implementation(project(":src:plugin:arguments"))
                 implementation(project(":src:plugin:cli"))
                 implementation(project(":src:converter:openapi"))
                 implementation(project(":src:converter:avro"))

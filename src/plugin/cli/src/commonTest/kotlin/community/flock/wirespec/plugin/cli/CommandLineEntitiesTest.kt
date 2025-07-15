@@ -1,7 +1,7 @@
 package community.flock.wirespec.plugin.cli
 
-import community.flock.wirespec.compiler.core.emit.WirespecEmitter
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
+import community.flock.wirespec.emitters.wirespec.WirespecEmitter
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Format.OpenAPIV2
 import io.kotest.matchers.booleans.shouldBeFalse

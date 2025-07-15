@@ -1,7 +1,7 @@
 package community.flock.wirespec.converter.avro
 
-import community.flock.wirespec.compiler.core.emit.common.Emitter
-import community.flock.wirespec.compiler.core.emit.common.FileExtension
+import community.flock.wirespec.compiler.core.emit.Emitter
+import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint

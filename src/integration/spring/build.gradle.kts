@@ -35,6 +35,8 @@ kotlin {
         jvmMain {
             dependencies {
                 compileOnly(project(":src:compiler:core"))
+                compileOnly(project(":src:compiler:emitters:kotlin"))
+                compileOnly(project(":src:compiler:emitters:java"))
                 api(project(":src:integration:wirespec"))
                 implementation(project(":src:integration:jackson"))
                 implementation(libs.jackson.kotlin)

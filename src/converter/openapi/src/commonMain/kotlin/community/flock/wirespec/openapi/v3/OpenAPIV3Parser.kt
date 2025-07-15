@@ -22,7 +22,7 @@ import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceOrBooleanObject
 import community.flock.kotlinx.openapi.bindings.v3.StatusCode
 import community.flock.wirespec.compiler.core.ModuleContent
-import community.flock.wirespec.compiler.core.emit.common.Emitter.Companion.firstToUpper
+import community.flock.wirespec.compiler.core.emit.Emitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier

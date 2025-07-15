@@ -1,6 +1,6 @@
 package community.flock.wirespec.plugin.io
 
-import community.flock.wirespec.compiler.core.emit.common.FileExtension
+import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.utils.Logger
 
 sealed class IOError(val message: String)
