@@ -1,5 +1,6 @@
 package community.flock.wirespec.compiler.core.emit
 
+import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -33,6 +34,9 @@ interface TypeDefinitionEmitter {
     fun Refined.emitValidator(): String
 
     fun Reference.Primitive.Type.Constraint.emit(): String
+
+    val Reference.Primitive.Type.Constraint.RegExp.expression get() =
+        value.split("/").drop(1).dropLast(1).joinToString("/")
 }
 
 interface EnumDefinitionEmitter {
@@ -57,6 +61,15 @@ interface ChannelDefinitionEmitter {
 
 interface IdentifierEmitter {
     fun emit(identifier: Identifier): String
+}
+
+interface ClientEmitter {
+    fun emitClient(ast: AST): Emitted
+
+    fun AST.emitClientEndpointRequest() = modules
+        .flatMap { it.statements }
+        .filterIsInstance<Endpoint>()
+        .map { endpoint -> Pair(endpoint, endpoint.requests.first()) }
 }
 
 interface NotYetImplemented {

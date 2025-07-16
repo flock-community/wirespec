@@ -1,6 +1,8 @@
 import { GetTodoById, GetTodos, PostTodo } from "./gen/endpoint";
 import { Wirespec } from "./gen/Wirespec";
 import * as assert from "node:assert";
+import {test, expect} from "vitest";
+
 
 const serialization: Wirespec.Serialization = {
     deserialize<T>(raw: string | undefined): T {
@@ -57,21 +59,21 @@ const api: Api = {
     getTodoById: handleFetch(GetTodoById.client)
 };
 
-const testGetTodos = async () => {
+test('testGetTodos', async () => {
     const request: GetTodos.Request = GetTodos.request({done:undefined});
     const response = await api.getTodos(request);
     const expected = { status: 200, headers: {total:2}, body };
-    assert.deepEqual(response, expected);
-};
+    expect(response).toEqual(expected)
+})
 
-const testGetTodoById = async () => {
+test('testGetTodoById', async () => {
     const request: GetTodoById.Request = GetTodoById.request({ id: "1" });
     const response = await api.getTodoById(request);
     const expected = GetTodoById.response200({ body: body[0] });
-    assert.deepEqual(response, expected);
-};
+    expect(response).toEqual(expected)
+})
 
-const testPostTodo = async () => {
+test('testPostTodo', async () => {
     const request: PostTodo.Request = {
         method: "POST",
         path: {},
@@ -81,11 +83,5 @@ const testPostTodo = async () => {
     };
     const response = await api.postTodo(request);
     const expected = PostTodo.response200({ body: { id: "3", name: "Do more", done: true } });
-    assert.deepEqual(response, expected);
-};
-
-Promise.all([
-    testGetTodos(),
-    testGetTodoById(),
-    testPostTodo()
-]);
+    expect(response).toEqual(expected)
+})

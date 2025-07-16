@@ -100,7 +100,7 @@ fun emit(ast: WsAST, emitter: Emitters, packageName: String, emitShared: Boolean
     .flatMap {
         when (emitter) {
             Emitters.WIRESPEC -> WirespecEmitter().emit(it, noLogger)
-            Emitters.TYPESCRIPT -> TypeScriptEmitter(EmitShared(emitShared)).emit(it, noLogger)
+            Emitters.TYPESCRIPT -> TypeScriptEmitter().emit(it, noLogger)
             Emitters.JAVA -> JavaEmitter(PackageName(packageName), EmitShared(emitShared)).emit(it, noLogger)
             Emitters.KOTLIN -> KotlinEmitter(PackageName(packageName), EmitShared(emitShared)).emit(it, noLogger)
             Emitters.PYTHON -> PythonEmitter(PackageName(packageName), EmitShared(emitShared)).emit(it, noLogger)

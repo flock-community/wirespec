@@ -11,7 +11,7 @@ type PotentialTodoDto {
     done: Boolean
 }
 
-type Error {
+type TodoError {
     code: Integer,
     description: String
 }
@@ -22,7 +22,7 @@ endpoint GetTodos GET /api/todos ? {done:Boolean?} -> {
 
 endpoint GetTodoById GET /api/todos/{id: TodoId} -> {
     200 -> TodoDto
-    404 -> Error
+    404 -> TodoError
 }
 
 endpoint PostTodo POST PotentialTodoDto /api/todos -> {
@@ -31,5 +31,5 @@ endpoint PostTodo POST PotentialTodoDto /api/todos -> {
 
 endpoint DeleteTodoById DELETE /api/todos/{id: TodoId} -> {
     200 -> TodoDto
-    404 -> Error
+    404 -> TodoError
 }

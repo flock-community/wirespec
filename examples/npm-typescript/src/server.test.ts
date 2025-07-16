@@ -2,7 +2,7 @@ import { GetTodoById} from "./gen/endpoint";
 import { GetTodos} from "./gen/endpoint";
 import { PostTodo } from "./gen/endpoint";
 import { Wirespec } from "./gen/Wirespec";
-import * as assert from "node:assert";
+import {expect, test} from "vitest";
 
 const serialization: Wirespec.Serialization = {
     deserialize<T>(raw: string | undefined): T {
@@ -44,7 +44,7 @@ const api: Api = {
     }
 };
 
-const testGetTodos = async () => {
+test('testGetTodos', async () => {
     const rawRequest: Wirespec.RawRequest = {
         method: "GET",
         path: ["todos"],
@@ -56,10 +56,11 @@ const testGetTodos = async () => {
     const response = await api.getTodos(request);
     const rawResponse = server.to(response);
     const expected = { status: 200, headers: {}, body: JSON.stringify(body) };
-    assert.deepEqual(rawResponse, expected);
-};
+    expect(rawResponse).toEqual(expected)
+});
 
-const testGetTodoById = async () => {
+
+test('testGetTodoById', async () => {
     const rawRequest: Wirespec.RawRequest = {
         method: "GET",
         path: ["todos", "1"],
@@ -71,10 +72,10 @@ const testGetTodoById = async () => {
     const response = await api.getTodoById(request);
     const rawResponse = server.to(response);
     const expected = { status: 200, headers: {}, body: JSON.stringify(body[0]) };
-    assert.deepEqual(rawResponse, expected);
-};
+    expect(rawResponse).toEqual(expected)
+});
 
-const testPostTodo = async () => {
+test('testPostTodo', async () => {
     const rawRequest: Wirespec.RawRequest = {
         method: "GET",
         path: ["todos"],
@@ -87,11 +88,5 @@ const testPostTodo = async () => {
     const response = await api.postTodo(request);
     const rawResponse = server.to(response);
     const expected = { status: 200, headers: {}, body: JSON.stringify({ id: "3", name: "Do it later", done: false }) };
-    assert.deepEqual(rawResponse, expected);
-};
-
-Promise.all([
-    testGetTodos(),
-    testGetTodoById(),
-    testPostTodo()
-]);
+    expect(rawResponse).toEqual(expected)
+});

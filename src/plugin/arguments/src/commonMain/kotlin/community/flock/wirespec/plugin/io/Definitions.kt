@@ -62,7 +62,7 @@ data class FilePath(val directory: DirectoryPath, val name: Name, val extension:
             val list = input.split("/").let { it.dropLast(1) + it.last().split(".") }
             val extension = list.last().lowercase()
                 .let { ext -> entries.find { it.value == ext } }
-                ?: error("Invalid file extension")
+                ?: error("Invalid file extension: ${list.last().lowercase()}")
             val idxOfFileName = list.size - 2
             val filename = Name(list[idxOfFileName])
             val path = list.subList(0, idxOfFileName).joinToString("/")

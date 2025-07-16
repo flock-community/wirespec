@@ -4,6 +4,7 @@ import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Model
+import community.flock.wirespec.compiler.core.parse.Reference
 
 const val DEFAULT_PACKAGE = "community.flock.wirespec"
 const val DEFAULT_SHARED_PACKAGE_STRING = DEFAULT_PACKAGE
@@ -15,11 +16,13 @@ fun Definition.namespace() = when (this) {
     is Model -> "model"
 }
 
-data object Spacer {
-    private const val SPACER = "  "
-
-    override fun toString() = SPACER
-
-    operator fun invoke(times: Int) = SPACER.repeat(times)
-    operator fun invoke(block: () -> String) = "$SPACER${block().split("\n").joinToString("\n$SPACER")}"
+fun Reference.root() = when (this) {
+    is Reference.Dict -> reference
+    is Reference.Iterable -> reference
+    else -> this
+}
+fun Reference.flattenListDict(): Reference = when (this) {
+    is Reference.Dict -> reference.flattenListDict()
+    is Reference.Iterable -> reference.flattenListDict()
+    else -> this
 }

@@ -36,6 +36,10 @@ kotlin {
                         "types" to "./wirespec-fetch.d.ts",
                         "default" to "./wirespec-fetch.mjs",
                     ),
+                    "./serialization" to mapOf(
+                        "types" to "./wirespec-serialization.d.ts",
+                        "default" to "./wirespec-serialization.mjs",
+                    ),
                 ),
             )
             customField("repository", mapOf("type" to "git", "url" to "https://github.com/flock-community/wirespec"))
