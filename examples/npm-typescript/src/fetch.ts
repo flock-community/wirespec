@@ -2,7 +2,7 @@ import * as assert from "node:assert";
 
 // @ts-ignore
 const handler = async (path, init)=> {
-    assert.equal(path, "test?test=test")
+    assert.equal(path, "/test?test=test")
     assert.deepEqual(init.headers, {"test":"TEST"})
     return Promise.resolve({
         headers: new Map([
