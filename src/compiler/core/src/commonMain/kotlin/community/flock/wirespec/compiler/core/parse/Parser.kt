@@ -8,11 +8,9 @@ import arrow.core.nel
 import arrow.core.raise.Raise
 import arrow.core.raise.either
 import arrow.core.raise.ensureNotNull
-import arrow.core.right
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.TokenizedModule
 import community.flock.wirespec.compiler.core.exceptions.EmptyModule
-import community.flock.wirespec.compiler.core.exceptions.UnionError
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WrongTokenException
 import community.flock.wirespec.compiler.core.tokenize.ChannelDefinition
@@ -34,19 +32,19 @@ data class ParseOptions(
 object Parser {
 
     fun HasLogger.parse(modules: NonEmptyList<TokenizedModule>, options: ParseOptions = ParseOptions()): EitherNel<WirespecException, AST> = modules
-        .map { it.tokens.toProvider(logger).parseModule(it.src, options) }
+        .map { it.tokens.toProvider(logger).parseModule(it.src) }
         .let { either { it.bindAll() } }
-        .map { AST(it) }
-        .let(Validator::validate)
+        .map(::AST)
+        .flatMap { Validator.validate(options, it) }
 
-    private fun TokenProvider.parseModule(src: String, options: ParseOptions): EitherNel<WirespecException, Module> = either {
+    private fun TokenProvider.parseModule(src: String): EitherNel<WirespecException, Module> = either {
         mutableListOf<EitherNel<WirespecException, Definition>>()
             .apply { while (hasNext()) add(parseDefinition().mapLeft { it.nel() }) }
             .map { it.bind() }
             .toNonEmptyListOrNull()
             .let { ensureNotNull(it) { EmptyModule().nel() } }
-    }.flatMap(validate(options))
-        .map { Module(src, it) }
+            .let { Module(src, it) }
+    }
 
     private fun TokenProvider.parseDefinition() = either {
         val comment = when (token.type) {
@@ -62,39 +60,6 @@ object Parser {
             }
 
             else -> raiseWrongToken<WirespecDefinition>().bind()
-        }
-    }
-
-    fun validate(options: ParseOptions): (Statements) -> EitherNel<WirespecException, Statements> = { defs: Statements ->
-        defs.runOption(options.allowUnions) { fillExtendsClause() }
-    }
-
-    private fun Statements.runOption(bool: Boolean, block: Statements.() -> EitherNel<WirespecException, Statements>) = if (bool) block() else right()
-
-    private fun Statements.fillExtendsClause(): EitherNel<WirespecException, Statements> = either {
-        map { definition ->
-            when (definition) {
-                is Channel -> definition
-                is Endpoint -> definition
-                is Enum -> definition
-                is Refined -> definition
-                is Type -> definition.copy(
-                    extends = filterIsInstance<Union>()
-                        .filter { union ->
-                            union.entries
-                                .map {
-                                    when (it) {
-                                        is Reference.Custom -> it.value
-                                        else -> raise(UnionError().nel())
-                                    }
-                                }
-                                .contains(definition.identifier.value)
-                        }
-                        .map { Reference.Custom(value = it.identifier.value, isNullable = false) },
-                )
-
-                is Union -> definition
-            }
         }
     }
 }
