@@ -1,9 +1,15 @@
 package community.flock.wirespec.plugin
 
+import arrow.core.EitherNel
+import arrow.core.NonEmptyList
+import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.CompilationContext
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.compile
+import community.flock.wirespec.compiler.core.emit.common.Emitted
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
+import community.flock.wirespec.compiler.core.parse.ParseOptions
+import community.flock.wirespec.compiler.core.validate.Validator
 import community.flock.wirespec.converter.avro.AvroParser
 import community.flock.wirespec.converter.common.Parser
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser
@@ -15,9 +21,9 @@ fun compile(arguments: CompilerArguments) {
         override val emitters = arguments.emitters
     }
 
-    ctx.compile(arguments.input.map { ModuleContent(it.name.value, it.content) })
-        .mapLeft { it.map(WirespecException::message) }
-        .fold({ arguments.error(it.joinToString()) }) { arguments.writer(it) }
+    ctx
+        .compile(arguments.input.map { ModuleContent(it.name.value, it.content) })
+        .fold(arguments)
 }
 
 fun convert(arguments: ConverterArguments) {
@@ -26,13 +32,25 @@ fun convert(arguments: ConverterArguments) {
         Format.OpenAPIV3 -> OpenAPIV3Parser
         Format.Avro -> AvroParser
     }
+    val options = ParseOptions(
+        strict = arguments.strict,
+    )
     arguments.input
         .map { ModuleContent(it.name.value, it.content) }
         .map { moduleContent -> parser.parse(moduleContent, arguments.strict) }
-        .flatMap { ast ->
-            arguments.emitters.flatMap {
-                it.emit(ast, arguments.logger)
+        .map { Validator.validate(options, it) }
+        .let { either { it.bindAll() } }
+        .map { list ->
+            list.flatMap { ast ->
+                arguments.emitters.flatMap {
+                    it.emit(ast, arguments.logger)
+                }
             }
         }
-        .let(arguments.writer)
+        .fold(arguments)
 }
+
+private fun EitherNel<WirespecException, NonEmptyList<Emitted>>.fold(arguments: WirespecArguments) = this
+    .mapLeft { it.map(WirespecException::message) }
+    .mapLeft { it.joinToString() }
+    .fold(arguments.error, arguments.writer)
