@@ -9,9 +9,10 @@
     "clean:node_modules": "npx --yes rimraf ./node_modules",
     "clean:generated": "npx --yes rimraf ./src/gen",
     "generate": "wirespec compile -i ./wirespec -o ./src/gen -l TypeScript --shared",
-    "test": "npm run test:client && npm run test:server",
+    "test": "npm run test:client && npm run test:server && npm run test:fetch",
     "test:client": "ts-node src/clientSimple.ts && ts-node src/clientProxy.ts",
     "test:server": "ts-node src/server.ts",
+    "test:fetch": "ts-node src/fetch.ts",
     "update": "npx --yes update-ruecksichtslos"
   },
   "author": "",

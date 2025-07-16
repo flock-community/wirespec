@@ -25,6 +25,19 @@ kotlin {
                 "Simplify your API development workflows, accelerate implementation, and guarantee strict adherence " +
                     "to defined contract specifications",
             )
+            customField(
+                "exports",
+                mapOf(
+                    "." to mapOf(
+                        "types" to "./wirespec-src-plugin-npm.d.ts",
+                        "default" to "./wirespec-src-plugin-npm.mjs",
+                    ),
+                    "./fetch" to mapOf(
+                        "types" to "./wirespec-fetch.d.ts",
+                        "default" to "./wirespec-fetch.mjs",
+                    ),
+                ),
+            )
             customField("repository", mapOf("type" to "git", "url" to "https://github.com/flock-community/wirespec"))
             customField("license", "Apache-2.0")
         }
