@@ -13,9 +13,10 @@ export async function wirespecFetch(req, handler) {
             return `${key}=${value}`;
         })
         .join('&');
-    const url = `${req.path
+    const path = req.path
         .map(segment => encodeURIComponent(segment))
-        .join('/')}${query ? `?${query}` : ''}`;
+        .join('/')
+    const url = `/${path}${query ? `?${query}` : ''}`;
     const init = {method: req.method, body, headers: {...req.headers, ...contentHeader}}
     const res = handler ? await handler(url, init) : await fetch(url, init)
     const contentType = res.headers.get('Content-Type');
