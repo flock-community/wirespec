@@ -30,7 +30,7 @@ fun Language.toEmitter(packageName: PackageName, emitShared: EmitShared) = when 
     Language.Java -> JavaEmitter(packageName, emitShared)
     Language.Kotlin -> KotlinEmitter(packageName, emitShared)
     Language.Python -> PythonEmitter(packageName, emitShared)
-    Language.TypeScript -> TypeScriptEmitter(emitShared)
+    Language.TypeScript -> TypeScriptEmitter()
     Language.Wirespec -> WirespecEmitter()
     Language.OpenAPIV2 -> OpenAPIV2Emitter
     Language.OpenAPIV3 -> OpenAPIV3Emitter
