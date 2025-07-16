@@ -16,24 +16,18 @@ import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.enum
-import community.flock.wirespec.compiler.core.emit.JavaEmitter
-import community.flock.wirespec.compiler.core.emit.KotlinEmitter
-import community.flock.wirespec.compiler.core.emit.PythonEmitter
-import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
-import community.flock.wirespec.compiler.core.emit.WirespecEmitter
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
-import community.flock.wirespec.compiler.core.emit.common.EmitShared
-import community.flock.wirespec.compiler.core.emit.common.Emitted
-import community.flock.wirespec.compiler.core.emit.common.FileExtension
-import community.flock.wirespec.compiler.core.emit.common.PackageName
+import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.EmitShared
+import community.flock.wirespec.compiler.core.emit.Emitted
+import community.flock.wirespec.compiler.core.emit.FileExtension
+import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.Logger.Level
 import community.flock.wirespec.compiler.utils.Logger.Level.DEBUG
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
 import community.flock.wirespec.compiler.utils.Logger.Level.INFO
 import community.flock.wirespec.compiler.utils.Logger.Level.WARN
-import community.flock.wirespec.openapi.v2.OpenAPIV2Emitter
-import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter
+import community.flock.wirespec.emitters.wirespec.WirespecEmitter
 import community.flock.wirespec.plugin.CompilerArguments
 import community.flock.wirespec.plugin.ConverterArguments
 import community.flock.wirespec.plugin.Format
@@ -51,6 +45,7 @@ import community.flock.wirespec.plugin.io.or
 import community.flock.wirespec.plugin.io.read
 import community.flock.wirespec.plugin.io.wirespecSources
 import community.flock.wirespec.plugin.io.write
+import community.flock.wirespec.plugin.toEmitter
 
 enum class Options(vararg val flags: String) {
     Input("-i", "--input"),
@@ -179,14 +174,6 @@ private class Convert(
 
 private fun handleError(string: String): Nothing = throw CliktError(string)
 
-private fun List<Language>.toEmitters(packageName: PackageName, emitShared: EmitShared) = map {
-    when (it) {
-        Language.Java -> JavaEmitter(packageName, emitShared)
-        Language.Kotlin -> KotlinEmitter(packageName, emitShared)
-        Language.Python -> PythonEmitter(packageName, emitShared)
-        Language.TypeScript -> TypeScriptEmitter(emitShared)
-        Language.Wirespec -> WirespecEmitter()
-        Language.OpenAPIV2 -> OpenAPIV2Emitter
-        Language.OpenAPIV3 -> OpenAPIV3Emitter
-    }
-}.toNonEmptySetOrNull() ?: nonEmptySetOf(WirespecEmitter())
+private fun List<Language>.toEmitters(packageName: PackageName, emitShared: EmitShared) = this
+    .map { it.toEmitter(packageName, emitShared) }
+    .toNonEmptySetOrNull() ?: nonEmptySetOf(WirespecEmitter())

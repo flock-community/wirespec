@@ -1,9 +1,8 @@
 package community.flock.wirespec.plugin.maven.mojo
 
 import arrow.core.nonEmptySetOf
-import community.flock.wirespec.compiler.core.emit.common.FileExtension.Avro
-import community.flock.wirespec.compiler.core.emit.common.FileExtension.JSON
-import community.flock.wirespec.compiler.core.emit.common.PackageName
+import community.flock.wirespec.compiler.core.emit.FileExtension
+import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.plugin.ConverterArguments
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.convert
@@ -118,8 +117,8 @@ class ConvertMojo : BaseMojo() {
             is ClassPath -> inputPath.readFromClasspath<JSON>().let { (name, content) -> Source<JSON>(name, content) }
             is DirectoryPath -> throw ConvertNeedsAFile()
             is FilePath -> when (inputPath.extension) {
-                JSON -> Source(inputPath.name, inputPath.read())
-                Avro -> Source(inputPath.name, inputPath.read())
+                FileExtension.JSON -> Source(inputPath.name, inputPath.read())
+                FileExtension.Avro -> Source(inputPath.name, inputPath.read())
                 else -> throw JSONFileError()
             }
         }.map(::preProcess)

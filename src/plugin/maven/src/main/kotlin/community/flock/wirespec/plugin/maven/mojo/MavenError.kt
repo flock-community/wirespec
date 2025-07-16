@@ -1,6 +1,6 @@
 package community.flock.wirespec.plugin.maven.mojo
 
-import community.flock.wirespec.compiler.core.emit.common.FileExtension
+import community.flock.wirespec.compiler.core.emit.FileExtension
 
 class IsNotAFileOrDirectory(input: String?) : RuntimeException("Input is not a file or directory: $input.")
 

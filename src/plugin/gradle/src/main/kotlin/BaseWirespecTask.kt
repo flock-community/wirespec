@@ -2,20 +2,13 @@ package community.flock.wirespec.plugin.gradle
 
 import arrow.core.NonEmptyList
 import arrow.core.toNonEmptySetOrNull
-import community.flock.wirespec.compiler.core.emit.JavaEmitter
-import community.flock.wirespec.compiler.core.emit.KotlinEmitter
-import community.flock.wirespec.compiler.core.emit.PythonEmitter
-import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
-import community.flock.wirespec.compiler.core.emit.WirespecEmitter
-import community.flock.wirespec.compiler.core.emit.common.DEFAULT_GENERATED_PACKAGE_STRING
-import community.flock.wirespec.compiler.core.emit.common.EmitShared
-import community.flock.wirespec.compiler.core.emit.common.Emitted
-import community.flock.wirespec.compiler.core.emit.common.Emitter
-import community.flock.wirespec.compiler.core.emit.common.PackageName
+import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
+import community.flock.wirespec.compiler.core.emit.EmitShared
+import community.flock.wirespec.compiler.core.emit.Emitted
+import community.flock.wirespec.compiler.core.emit.Emitter
+import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
-import community.flock.wirespec.openapi.v2.OpenAPIV2Emitter
-import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.io.ClassPath
 import community.flock.wirespec.plugin.io.Directory
@@ -23,6 +16,7 @@ import community.flock.wirespec.plugin.io.FilePath
 import community.flock.wirespec.plugin.io.Name
 import community.flock.wirespec.plugin.io.Source
 import community.flock.wirespec.plugin.io.write
+import community.flock.wirespec.plugin.toEmitter
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
@@ -94,17 +88,9 @@ abstract class BaseWirespecTask : DefaultTask() {
         throw e
     }
 
-    protected fun emitters() = languages.get().map {
-        when (it) {
-            Language.Java -> JavaEmitter(packageNameValue(), sharedValue())
-            Language.Kotlin -> KotlinEmitter(packageNameValue(), sharedValue())
-            Language.Python -> PythonEmitter(packageNameValue(), sharedValue())
-            Language.TypeScript -> TypeScriptEmitter(sharedValue())
-            Language.Wirespec -> WirespecEmitter()
-            Language.OpenAPIV2 -> OpenAPIV2Emitter
-            Language.OpenAPIV3 -> OpenAPIV3Emitter
-        }
-    }.plus(emitter())
+    protected fun emitters() = languages.get()
+        .map { it.toEmitter(packageNameValue(), sharedValue()) }
+        .plus(emitter())
         .mapNotNull { it }
         .toNonEmptySetOrNull()
         ?: throw PickAtLeastOneLanguageOrEmitter()

@@ -2,9 +2,9 @@ package community.flock.wirespec.plugin
 
 import arrow.core.NonEmptyList
 import arrow.core.NonEmptySet
-import community.flock.wirespec.compiler.core.emit.common.Emitted
-import community.flock.wirespec.compiler.core.emit.common.Emitter
-import community.flock.wirespec.compiler.core.emit.common.PackageName
+import community.flock.wirespec.compiler.core.emit.Emitted
+import community.flock.wirespec.compiler.core.emit.Emitter
+import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.plugin.io.Source
 import community.flock.wirespec.plugin.io.Source.Type

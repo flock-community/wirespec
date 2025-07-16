@@ -1,10 +1,11 @@
 package community.flock.wirespec.integration.spring.kotlin.emit
 
-import community.flock.wirespec.compiler.core.emit.KotlinEmitter
-import community.flock.wirespec.compiler.core.emit.common.EmitShared
-import community.flock.wirespec.compiler.core.emit.common.PackageName
-import community.flock.wirespec.compiler.core.emit.common.Spacer
+
+import community.flock.wirespec.compiler.core.emit.EmitShared
+import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 
 class SpringKotlinEmitter(packageName: PackageName) : KotlinEmitter(packageName, EmitShared(false)) {
     override fun emitHandleFunction(endpoint: Endpoint): String {

@@ -36,6 +36,8 @@ kotlin {
         jvmMain {
             dependencies {
                 implementation(project(":src:compiler:core"))
+                implementation(project(":src:compiler:emitters:kotlin"))
+                implementation(project(":src:compiler:emitters:java"))
                 compileOnly(libs.bundles.jackson)
             }
         }

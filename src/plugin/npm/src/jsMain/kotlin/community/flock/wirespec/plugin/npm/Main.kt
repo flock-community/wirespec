@@ -9,17 +9,9 @@ import community.flock.kotlinx.openapi.bindings.v3.OpenAPIObject
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
-import community.flock.wirespec.compiler.core.emit.JavaEmitter
-import community.flock.wirespec.compiler.core.emit.KotlinEmitter
-import community.flock.wirespec.compiler.core.emit.PythonEmitter
-import community.flock.wirespec.compiler.core.emit.TypeScriptEmitter
-import community.flock.wirespec.compiler.core.emit.WirespecEmitter
-import community.flock.wirespec.compiler.core.emit.common.EmitShared
-import community.flock.wirespec.compiler.core.emit.common.Emitted
-import community.flock.wirespec.compiler.core.emit.common.PackageName
-import community.flock.wirespec.compiler.core.emit.shared.JavaShared
-import community.flock.wirespec.compiler.core.emit.shared.KotlinShared
-import community.flock.wirespec.compiler.core.emit.shared.TypeScriptShared
+import community.flock.wirespec.compiler.core.emit.EmitShared
+import community.flock.wirespec.compiler.core.emit.Emitted
+import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.lib.WsAST
@@ -30,6 +22,15 @@ import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.converter.avro.AvroEmitter
 import community.flock.wirespec.converter.avro.AvroParser
+import community.flock.wirespec.emitters.java.JavaEmitter
+import community.flock.wirespec.emitters.java.JavaShared
+import community.flock.wirespec.emitters.kotlin.KotlinEmitter
+import community.flock.wirespec.emitters.kotlin.KotlinShared
+import community.flock.wirespec.emitters.python.PythonEmitter
+import community.flock.wirespec.emitters.python.PythonShared
+import community.flock.wirespec.emitters.typescript.TypeScriptEmitter
+import community.flock.wirespec.emitters.typescript.TypeScriptShared
+import community.flock.wirespec.emitters.wirespec.WirespecEmitter
 import community.flock.wirespec.generator.generate
 import community.flock.wirespec.openapi.v2.OpenAPIV2Emitter
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser
@@ -45,6 +46,7 @@ enum class Shared(val source: String) {
     KOTLIN(KotlinShared.source),
     JAVA(JavaShared.source),
     TYPESCRIPT(TypeScriptShared.source),
+    PYTHON(PythonShared.source),
 }
 
 @JsExport

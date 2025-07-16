@@ -1,9 +1,9 @@
 package community.flock.wirespec.integration.avro.kotlin.emit
 
-import community.flock.wirespec.compiler.core.emit.KotlinEmitter
-import community.flock.wirespec.compiler.core.emit.common.EmitShared
-import community.flock.wirespec.compiler.core.emit.common.PackageName
-import community.flock.wirespec.compiler.core.emit.common.Spacer
+
+import community.flock.wirespec.compiler.core.emit.EmitShared
+import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
@@ -12,6 +12,7 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.integration.avro.Utils
 import community.flock.wirespec.integration.avro.Utils.isEnum
 import community.flock.wirespec.compiler.core.parse.Module
+import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 
 class AvroEmitter(private val packageName: PackageName, emitShared: EmitShared) : KotlinEmitter(packageName, emitShared) {
 

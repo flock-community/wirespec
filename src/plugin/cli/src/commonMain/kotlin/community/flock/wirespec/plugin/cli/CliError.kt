@@ -1,7 +1,7 @@
 package community.flock.wirespec.plugin.cli
 
 import com.github.ajalt.clikt.core.CliktError
-import community.flock.wirespec.compiler.core.emit.common.FileExtension
+import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.utils.Logger
 
 class IsNotAFileOrDirectory(input: String?) : CliktError("Input is not a file or directory: $input.")

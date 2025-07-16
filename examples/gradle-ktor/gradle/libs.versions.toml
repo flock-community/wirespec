@@ -19,6 +19,7 @@ ktor_server_netty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "k
 ktor_test_server_tests_jvm = { module = "io.ktor:ktor-server-tests-jvm", version.ref = "ktor" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 wirespec_compiler = { module = "community.flock.wirespec.compiler:core-jvm", version.ref = "wirespec" }
+wirespec_emitters_kotlin = { module = "community.flock.wirespec.compiler.emitters:kotlin-jvm", version.ref = "wirespec" }
 wirespec_integration = { module = "community.flock.wirespec.integration:wirespec-jvm", version.ref = "wirespec" }
 
 [bundles]

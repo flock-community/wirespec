@@ -38,6 +38,8 @@ kotlin {
                 compileOnly(project(":src:compiler:core"))
                 compileOnly(project(":src:integration:wirespec"))
                 compileOnly("io.confluent:kafka-avro-serializer:7.7.1")
+                implementation(project(":src:compiler:emitters:kotlin"))
+                implementation(project(":src:compiler:emitters:java"))
                 implementation(project(":src:converter:avro"))
                 implementation(libs.jackson.kotlin)
                 implementation(libs.jackson.kotlin)
