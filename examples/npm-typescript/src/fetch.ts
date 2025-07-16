@@ -25,7 +25,7 @@ const req = {
     body: "",
 }
 
-const fetch = async () => {
+const fetchTest = async () => {
     const { wirespecFetch } = await import("wirespec/fetch");
     // @ts-ignore
     const res = await wirespecFetch(req, handler)
@@ -33,5 +33,5 @@ const fetch = async () => {
     assert.equal(res.body, "{}")
 }
 
-fetch()
+fetchTest()
 

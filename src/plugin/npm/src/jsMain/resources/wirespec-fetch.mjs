@@ -21,7 +21,7 @@ export async function wirespecFetch(req, handler) {
     return {
         status: res.status,
         headers: {
-            ...headers,
+            ...res.headers,
             'Content-Type': contentType,
         },
         body: contentLength !== '0' && contentType ? await res.text() : undefined,
