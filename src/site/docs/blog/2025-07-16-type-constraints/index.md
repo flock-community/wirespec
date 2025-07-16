@@ -4,7 +4,7 @@ slug: /type-constraints
 description: Learn about the new type constraints feature introduced in Wirespec 0.16.0
 authors: [wilmveel]
 tags: [wirespec, types, constraints, validation]
-image: /img/code-snippet.png
+image: /img/blog/type-constraints.png
 ---
 
 ## Introducing Type Constraints in Wirespec 0.16.0
