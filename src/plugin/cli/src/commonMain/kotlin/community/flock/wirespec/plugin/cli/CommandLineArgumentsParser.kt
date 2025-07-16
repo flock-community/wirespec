@@ -118,10 +118,7 @@ private class Compile(
             }
         }
 
-        val emitters = languages
-            .map { it.toEmitter(PackageName(packageName), EmitShared(shared)) }
-            .toNonEmptySetOrNull()
-            ?: nonEmptySetOf(WirespecEmitter())
+        val emitters = languages.toEmitters(PackageName(packageName), EmitShared(shared))
 
         val outputDir = inputPath?.let { Directory(getOutPutPath(it, output).or(::handleError)) }
         CompilerArguments(
@@ -159,9 +156,7 @@ private class Convert(
             }
         }
 
-        val emitters = languages
-            .map { it.toEmitter(PackageName(packageName), EmitShared(shared)) }.toNonEmptySetOrNull()
-            ?: nonEmptySetOf(WirespecEmitter())
+        val emitters = languages.toEmitters(PackageName(packageName), EmitShared(shared))
         val directory = inputPath?.let { Directory(getOutPutPath(it, output).or(::handleError)) }
         ConverterArguments(
             format = format,
@@ -178,3 +173,7 @@ private class Convert(
 }
 
 private fun handleError(string: String): Nothing = throw CliktError(string)
+
+private fun List<Language>.toEmitters(packageName: PackageName, emitShared: EmitShared) = this
+    .map { it.toEmitter(packageName, emitShared) }
+    .toNonEmptySetOrNull() ?: nonEmptySetOf(WirespecEmitter())
