@@ -19,7 +19,7 @@ interface KotlinEnumDefinitionEmitter: KotlinIdentifierEmitter, EnumDefinitionEm
         |
     """.trimMargin()
 
-    private fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//")
+    fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//")
         .joinToString("_")
         .sanitizeFirstIsDigit()
 
