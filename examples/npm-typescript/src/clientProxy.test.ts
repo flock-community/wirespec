@@ -24,7 +24,7 @@ const mocks = [
 ];
 
 type ApiClient<REQ, RES> = (req: REQ) => Promise<RES>;
-type WebClient = <Apis extends Wirespec.Api<Wirespec.Request<unknown>, Wirespec.Response<unknown>>[]>(...apis: Apis) => {
+type WebClient = <Apis extends Wirespec.Api<any, any>[]>(...apis: Apis) => {
     [K in Apis[number]['name']]: Extract<Apis[number], { name: K }> extends Wirespec.Api<infer Req, infer Res> ?
         ApiClient<Req, Res> : never
 };
