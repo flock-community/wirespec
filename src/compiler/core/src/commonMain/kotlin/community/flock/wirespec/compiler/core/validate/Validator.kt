@@ -2,45 +2,82 @@ package community.flock.wirespec.compiler.core.validate
 
 import arrow.core.Either.Companion.zipOrAccumulate
 import arrow.core.EitherNel
-import arrow.core.flatMap
 import arrow.core.left
 import arrow.core.nel
+import arrow.core.raise.either
 import arrow.core.right
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.exceptions.DuplicateChannelError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateEndpointError
 import community.flock.wirespec.compiler.core.exceptions.DuplicateTypeError
+import community.flock.wirespec.compiler.core.exceptions.UnionError
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Module
+import community.flock.wirespec.compiler.core.parse.ParseOptions
+import community.flock.wirespec.compiler.core.parse.Reference
+import community.flock.wirespec.compiler.core.parse.Refined
+import community.flock.wirespec.compiler.core.parse.Statements
 import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.core.parse.Union
 
 object Validator {
 
-    fun validate(ast: EitherNel<WirespecException, AST>): EitherNel<WirespecException, AST> = ast
-        .flatMap {
-            zipOrAccumulate(
-                validateEndpoints(it),
-                validateTypes(it),
-                validateChannels(it),
-            ) { _, _, _ -> it }
+    fun validate(options: ParseOptions, ast: AST): EitherNel<WirespecException, AST> = zipOrAccumulate(
+        validateWithOptions(ast, options),
+        validateEndpoints(ast),
+        validateTypes(ast),
+        validateChannels(ast),
+    ) { a, _, _, _ -> a }
+
+    private fun validateWithOptions(ast: AST, options: ParseOptions): EitherNel<WirespecException, AST> = ast.modules
+        .map { (uri, statements) -> runValidateOptions(options)(statements).map { Module(uri, it) } }
+        .let { either { it.bindAll() } }
+        .map { AST(it) }
+
+    private fun runValidateOptions(options: ParseOptions): (Statements) -> EitherNel<WirespecException, Statements> = { it.runOption(options.allowUnions) { fillExtendsClause() } }
+
+    private fun Statements.runOption(bool: Boolean, block: Statements.() -> EitherNel<WirespecException, Statements>) = if (bool) block() else right()
+
+    private fun Statements.fillExtendsClause(): EitherNel<WirespecException, Statements> = either {
+        map { definition ->
+            when (definition) {
+                is Channel -> definition
+                is Endpoint -> definition
+                is Enum -> definition
+                is Refined -> definition
+                is Type -> definition.copy(
+                    extends = filterIsInstance<Union>()
+                        .filter { union ->
+                            union.entries
+                                .map {
+                                    when (it) {
+                                        is Reference.Custom -> it.value
+                                        else -> raise(UnionError().nel())
+                                    }
+                                }
+                                .contains(definition.identifier.value)
+                        }
+                        .map { Reference.Custom(value = it.identifier.value, isNullable = false) },
+                )
+
+                is Union -> definition
+            }
         }
+    }
 
     private fun validateEndpoints(ast: AST): EitherNel<WirespecException, AST> = ast.modules.toList()
-        .flatMap { module ->
-            module.statements.filterIsInstance<Endpoint>()
-        }.groupBy { it.identifier.value }
+        .flatMap { it.statements.filterIsInstance<Endpoint>() }
+        .groupBy { it.identifier.value }
         .filter { it.value.size > 1 }
         .map { (name, endpoints) -> endpoints.map { DuplicateEndpointError(name) } }
         .flatten()
-        .let { errors ->
-            if (errors.isEmpty()) {
-                ast.right()
-            } else {
-                (errors.toNonEmptyListOrNull() ?: errors.first().nel()).left()
-            }
-        }
+        .toNonEmptyListOrNull()
+        ?.left()
+        ?: ast.right()
 
     private fun validateTypes(ast: AST): EitherNel<WirespecException, AST> = ast.modules.toList()
         .flatMap { module ->
@@ -51,28 +88,17 @@ object Validator {
                 .map { (name, types) -> types.map { DuplicateTypeError(name) } }
                 .flatten()
         }
-        .let { errors ->
-            if (errors.isEmpty()) {
-                ast.right()
-            } else {
-                (errors.toNonEmptyListOrNull() ?: errors.first().nel()).left()
-            }
-        }
+        .toNonEmptyListOrNull()
+        ?.left()
+        ?: ast.right()
 
     private fun validateChannels(ast: AST): EitherNel<WirespecException, AST> = ast.modules.toList()
-        .flatMap { module ->
-            module.statements.filterIsInstance<Channel>()
-        }.groupBy { it.identifier.value }
+        .flatMap { it.statements.filterIsInstance<Channel>() }
+        .groupBy { it.identifier.value }
         .filter { it.value.size > 1 }
-        .map { (name, channels) ->
-            channels.map { DuplicateChannelError(name) }
-        }
+        .map { (name, channels) -> channels.map { DuplicateChannelError(name) } }
         .flatten()
-        .let { errors ->
-            if (errors.isEmpty()) {
-                ast.right()
-            } else {
-                (errors.toNonEmptyListOrNull() ?: errors.first().nel()).left()
-            }
-        }
+        .toNonEmptyListOrNull()
+        ?.left()
+        ?: ast.right()
 }
