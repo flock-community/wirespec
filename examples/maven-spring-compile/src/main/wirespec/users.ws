@@ -1,5 +1,16 @@
 type UserDto {
-    name: String
+    name: String,
+    authentication: Authentication
+}
+
+type Authentication = AuthenticationPassword | AuthenticationToken
+
+type AuthenticationPassword {
+    secret: String
+}
+
+type AuthenticationToken {
+    token: String
 }
 
 endpoint GetUsers GET /api/users

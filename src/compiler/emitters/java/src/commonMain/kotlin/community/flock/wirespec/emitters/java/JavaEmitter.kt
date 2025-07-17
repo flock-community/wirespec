@@ -77,7 +77,7 @@ open class JavaEmitter(
         .filter { union -> union.entries.filterIsInstance<Reference.Custom>().any { it.value == identifier.value } }
         .map { it.identifier.value }
         .takeIf { it.isNotEmpty() }
-        ?.joinToString(", ", "implements ")
+        ?.joinToString(", ", " implements ")
         .orEmpty()
 
     override fun Type.Shape.emit() = value.joinToString("\n") { "${Spacer}${it.emit()}," }.dropLast(1)
