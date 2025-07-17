@@ -499,14 +499,14 @@ class JavaEmitterTest {
             |public record UserAccountPassword (
             |  String username,
             |  String password
-            |) extends UserAccountimplements UserAccount {
+            |) implements UserAccount {
             |};
             |
             |package community.flock.wirespec.generated.model;
             |
             |public record UserAccountToken (
             |  String token
-            |) extends UserAccountimplements UserAccount {
+            |) implements UserAccount {
             |};
             |
             |package community.flock.wirespec.generated.model;
