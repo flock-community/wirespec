@@ -7,9 +7,11 @@
       "es6",
       "WebWorker"
     ],
+    "strict": true,
     "noImplicitAny": true,
     "removeComments": true,
     "preserveConstEnums": true,
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "strictFunctionTypes": false
   }
 }

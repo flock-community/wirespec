@@ -2,20 +2,8 @@ import { GetTodoById} from "./gen/endpoint";
 import { GetTodos} from "./gen/endpoint";
 import { PostTodo } from "./gen/endpoint";
 import { Wirespec } from "./gen/Wirespec";
-import {expect, test} from "vitest";
-
-const serialization: Wirespec.Serialization = {
-    deserialize<T>(raw: string | undefined): T {
-        if (raw) {
-            return JSON.parse(raw) as T;
-        } else {
-            return undefined;
-        }
-    },
-    serialize<T>(type: T): string {
-        return JSON.stringify(type);
-    }
-};
+import { expect, test } from "vitest";
+import { wirespecSerialization } from 'wirespec/serialization'
 
 const body = [
     { id: "1", name: "Do it now", done: true },
@@ -51,7 +39,7 @@ test('testGetTodos', async () => {
         queries: {},
         headers: {}
     };
-    const server = GetTodos.server(serialization);
+    const server = GetTodos.server(wirespecSerialization);
     const request = server.from(rawRequest);
     const response = await api.getTodos(request);
     const rawResponse = server.to(response);
@@ -67,7 +55,7 @@ test('testGetTodoById', async () => {
         queries: {},
         headers: {}
     };
-    const server = GetTodoById.server(serialization);
+    const server = GetTodoById.server(wirespecSerialization);
     const request = server.from(rawRequest);
     const response = await api.getTodoById(request);
     const rawResponse = server.to(response);
@@ -83,7 +71,7 @@ test('testPostTodo', async () => {
         headers: {},
         body: JSON.stringify({ name: "Do it later", done: false })
     };
-    const server = PostTodo.server(serialization);
+    const server = PostTodo.server(wirespecSerialization);
     const request = server.from(rawRequest);
     const response = await api.postTodo(request);
     const rawResponse = server.to(response);
