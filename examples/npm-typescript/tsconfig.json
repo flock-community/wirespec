@@ -1,12 +1,15 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "lib": ["es6"],
+    "rootDir": "./src",
+    "outDir": "./lib",
+    "target": "ES2015",
+    "lib": [
+      "es6",
+      "WebWorker"
+    ],
     "noImplicitAny": true,
     "removeComments": true,
     "preserveConstEnums": true,
-    "sourceMap": true,
-    "moduleResolution": "nodenext",
-    "module": "NodeNext"
+    "moduleResolution": "bundler"
   }
 }

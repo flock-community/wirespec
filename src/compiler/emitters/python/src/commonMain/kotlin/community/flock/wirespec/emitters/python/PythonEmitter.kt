@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.emit.ParamEmitter
 import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.emit.plus
 import community.flock.wirespec.compiler.core.orNull
@@ -122,17 +123,17 @@ open class PythonEmitter(
 
     override fun Field.emit() = "${emit(identifier)}: '${reference.emit()}'"
 
-    private fun Param.emit() = "${emit(identifier)}: ${reference.emit()}"
-    private fun Param.emitAssignSelf() = "${emit(identifier)} = ${emit(identifier)}"
+    private fun ParamEmitter.Param.emit() = "${emit(identifier)}: ${reference.emit()}"
+    private fun ParamEmitter.Param.emitAssignSelf() = "${emit(identifier)} = ${emit(identifier)}"
     private fun Endpoint.Request.emitAssignSelf(endpoint: Endpoint) = """
-        |self._path = ${emit(endpoint.identifier)}.Request.Path(${paramList(endpoint).filter { it.type == Param.ParamType.PATH }.joinToString { it.emitAssignSelf() }})
-        |self._queries =${emit(endpoint.identifier)}.Request.Queries(${paramList(endpoint).filter { it.type == Param.ParamType.QUERY }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
-        |self._headers = ${emit(endpoint.identifier)}.Request.Headers(${paramList(endpoint).filter { it.type == Param.ParamType.HEADER }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
+        |self._path = ${emit(endpoint.identifier)}.Request.Path(${paramList(endpoint).filter { it.type == ParamEmitter.Param.ParamType.PATH }.joinToString { it.emitAssignSelf() }})
+        |self._queries =${emit(endpoint.identifier)}.Request.Queries(${paramList(endpoint).filter { it.type == ParamEmitter.Param.ParamType.QUERY }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
+        |self._headers = ${emit(endpoint.identifier)}.Request.Headers(${paramList(endpoint).filter { it.type == ParamEmitter.Param.ParamType.HEADER }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
         |self._body = ${content?.let { "body" } ?: "None"}
     """.trimMargin()
 
     private fun Endpoint.Response.emitAssignSelf(endpoint: Endpoint) = """
-        |self._headers = ${emit(endpoint.identifier)}.Response${status}.Headers(${paramList().filter { it.type == Param.ParamType.HEADER }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
+        |self._headers = ${emit(endpoint.identifier)}.Response${status}.Headers(${paramList().filter { it.type == ParamEmitter.Param.ParamType.HEADER }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
         |self._body = ${content?.let { "body" } ?: "None"}
     """.trimMargin()
 

@@ -15,17 +15,7 @@ class TypeScriptEmitterTest {
     @Test
     fun compileFullEndpointTest() {
         val ts = """
-            |export namespace Wirespec {
-            |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
-            |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string>, headers: Record<string, string>, body?: string }
-            |  export type RawResponse = { status: number, headers: Record<string, string>, body?: string }
-            |  export type Request<T> = { path: Record<string, unknown>, method: Method, queries?: Record<string, unknown>, headers?: Record<string, unknown>, body?:T }
-            |  export type Response<T> = { status:number, headers?: Record<string, unknown>, body?:T }
-            |  export type Serialization = { serialize: <T>(type: T) => string; deserialize: <T>(raw: string | undefined) => T }
-            |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
-            |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
-            |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
-            |}
+            |import {Wirespec} from '../Wirespec'
             |
             |import {Token} from '../model'
             |import {PotentialTodoDto} from '../model'
@@ -159,17 +149,7 @@ class TypeScriptEmitterTest {
             |  } as const
             |}
             |
-            |export namespace Wirespec {
-            |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
-            |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string>, headers: Record<string, string>, body?: string }
-            |  export type RawResponse = { status: number, headers: Record<string, string>, body?: string }
-            |  export type Request<T> = { path: Record<string, unknown>, method: Method, queries?: Record<string, unknown>, headers?: Record<string, unknown>, body?:T }
-            |  export type Response<T> = { status:number, headers?: Record<string, unknown>, body?:T }
-            |  export type Serialization = { serialize: <T>(type: T) => string; deserialize: <T>(raw: string | undefined) => T }
-            |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
-            |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
-            |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
-            |}
+            |import {Wirespec} from '../Wirespec'
             |
             |
             |export type PotentialTodoDto = {
@@ -177,34 +157,14 @@ class TypeScriptEmitterTest {
             |  "done": boolean
             |}
             |
-            |export namespace Wirespec {
-            |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
-            |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string>, headers: Record<string, string>, body?: string }
-            |  export type RawResponse = { status: number, headers: Record<string, string>, body?: string }
-            |  export type Request<T> = { path: Record<string, unknown>, method: Method, queries?: Record<string, unknown>, headers?: Record<string, unknown>, body?:T }
-            |  export type Response<T> = { status:number, headers?: Record<string, unknown>, body?:T }
-            |  export type Serialization = { serialize: <T>(type: T) => string; deserialize: <T>(raw: string | undefined) => T }
-            |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
-            |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
-            |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
-            |}
+            |import {Wirespec} from '../Wirespec'
             |
             |
             |export type Token = {
             |  "iss": string
             |}
             |
-            |export namespace Wirespec {
-            |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
-            |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string>, headers: Record<string, string>, body?: string }
-            |  export type RawResponse = { status: number, headers: Record<string, string>, body?: string }
-            |  export type Request<T> = { path: Record<string, unknown>, method: Method, queries?: Record<string, unknown>, headers?: Record<string, unknown>, body?:T }
-            |  export type Response<T> = { status:number, headers?: Record<string, unknown>, body?:T }
-            |  export type Serialization = { serialize: <T>(type: T) => string; deserialize: <T>(raw: string | undefined) => T }
-            |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
-            |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
-            |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
-            |}
+            |import {Wirespec} from '../Wirespec'
             |
             |
             |export type TodoDto = {
@@ -213,23 +173,33 @@ class TypeScriptEmitterTest {
             |  "done": boolean
             |}
             |
-            |export namespace Wirespec {
-            |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
-            |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string>, headers: Record<string, string>, body?: string }
-            |  export type RawResponse = { status: number, headers: Record<string, string>, body?: string }
-            |  export type Request<T> = { path: Record<string, unknown>, method: Method, queries?: Record<string, unknown>, headers?: Record<string, unknown>, body?:T }
-            |  export type Response<T> = { status:number, headers?: Record<string, unknown>, body?:T }
-            |  export type Serialization = { serialize: <T>(type: T) => string; deserialize: <T>(raw: string | undefined) => T }
-            |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
-            |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
-            |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
-            |}
+            |import {Wirespec} from '../Wirespec'
             |
             |
             |export type Error = {
             |  "code": number,
             |  "description": string
             |}
+            |
+            |import {Wirespec} from "./Wirespec"
+            |
+            |import {PutTodo} from "./endpoint/PutTodo"
+            |
+            |import {Token} from "./model/Token"
+            |import {PotentialTodoDto} from "./model/PotentialTodoDto"
+            |import {TodoDto} from "./model/TodoDto"
+            |import {Error} from "./model/Error"
+            |
+            |type RawHandler = (req: Wirespec.RawRequest) => Promise<Wirespec.RawResponse>
+            |
+            |export const Client = (serialization: Wirespec.Serialization, handler: RawHandler) => ({
+            |  PutTodo: async (props: {id: string, done: boolean, name: string | undefined, token: Token, refreshToken: Token | undefined, body: PotentialTodoDto}) => {
+            |    const req = PutTodo.request(props)
+            |    const rawRequest = PutTodo.client(serialization).to(req)
+            |    const rawResponse = await handler(rawRequest)
+            |    return PutTodo.client(serialization).from(rawResponse)
+            |  },
+            |})
             |
             |export {PutTodo} from './PutTodo'
             |export {PotentialTodoDto} from './PotentialTodoDto'
@@ -244,17 +214,7 @@ class TypeScriptEmitterTest {
     @Test
     fun compileMinimalEndpointTest() {
         val ts = """
-            |export namespace Wirespec {
-            |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
-            |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string>, headers: Record<string, string>, body?: string }
-            |  export type RawResponse = { status: number, headers: Record<string, string>, body?: string }
-            |  export type Request<T> = { path: Record<string, unknown>, method: Method, queries?: Record<string, unknown>, headers?: Record<string, unknown>, body?:T }
-            |  export type Response<T> = { status:number, headers?: Record<string, unknown>, body?:T }
-            |  export type Serialization = { serialize: <T>(type: T) => string; deserialize: <T>(raw: string | undefined) => T }
-            |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
-            |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
-            |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
-            |}
+            |import {Wirespec} from '../Wirespec'
             |
             |import {TodoDto} from '../model'
             |export namespace GetTodos {
@@ -343,22 +303,29 @@ class TypeScriptEmitterTest {
             |  } as const
             |}
             |
-            |export namespace Wirespec {
-            |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
-            |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string>, headers: Record<string, string>, body?: string }
-            |  export type RawResponse = { status: number, headers: Record<string, string>, body?: string }
-            |  export type Request<T> = { path: Record<string, unknown>, method: Method, queries?: Record<string, unknown>, headers?: Record<string, unknown>, body?:T }
-            |  export type Response<T> = { status:number, headers?: Record<string, unknown>, body?:T }
-            |  export type Serialization = { serialize: <T>(type: T) => string; deserialize: <T>(raw: string | undefined) => T }
-            |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
-            |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
-            |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
-            |}
+            |import {Wirespec} from '../Wirespec'
             |
             |
             |export type TodoDto = {
             |  "description": string
             |}
+            |
+            |import {Wirespec} from "./Wirespec"
+            |
+            |import {GetTodos} from "./endpoint/GetTodos"
+            |
+            |import {TodoDto} from "./model/TodoDto"
+            |
+            |type RawHandler = (req: Wirespec.RawRequest) => Promise<Wirespec.RawResponse>
+            |
+            |export const Client = (serialization: Wirespec.Serialization, handler: RawHandler) => ({
+            |  GetTodos: async (props: {}) => {
+            |    const req = GetTodos.request()
+            |    const rawRequest = GetTodos.client(serialization).to(req)
+            |    const rawResponse = await handler(rawRequest)
+            |    return GetTodos.client(serialization).from(rawResponse)
+            |  },
+            |})
             |
             |export {GetTodos} from './GetTodos'
             |export {TodoDto} from './TodoDto'
@@ -370,17 +337,7 @@ class TypeScriptEmitterTest {
     @Test
     fun compileChannelTest() {
         val ts = """
-            |export namespace Wirespec {
-            |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
-            |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string>, headers: Record<string, string>, body?: string }
-            |  export type RawResponse = { status: number, headers: Record<string, string>, body?: string }
-            |  export type Request<T> = { path: Record<string, unknown>, method: Method, queries?: Record<string, unknown>, headers?: Record<string, unknown>, body?:T }
-            |  export type Response<T> = { status:number, headers?: Record<string, unknown>, body?:T }
-            |  export type Serialization = { serialize: <T>(type: T) => string; deserialize: <T>(raw: string | undefined) => T }
-            |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
-            |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
-            |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
-            |}
+            |import {Wirespec} from '../Wirespec'
             |
             |// TODO("Not yet implemented")
             |
@@ -393,17 +350,7 @@ class TypeScriptEmitterTest {
     @Test
     fun compileEnumTest() {
         val ts = """
-            |export namespace Wirespec {
-            |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
-            |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string>, headers: Record<string, string>, body?: string }
-            |  export type RawResponse = { status: number, headers: Record<string, string>, body?: string }
-            |  export type Request<T> = { path: Record<string, unknown>, method: Method, queries?: Record<string, unknown>, headers?: Record<string, unknown>, body?:T }
-            |  export type Response<T> = { status:number, headers?: Record<string, unknown>, body?:T }
-            |  export type Serialization = { serialize: <T>(type: T) => string; deserialize: <T>(raw: string | undefined) => T }
-            |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
-            |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
-            |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
-            |}
+            |import {Wirespec} from '../Wirespec'
             |
             |export type MyAwesomeEnum = "ONE" | "Two" | "THREE_MORE" | "UnitedKingdom"
             |
@@ -416,17 +363,7 @@ class TypeScriptEmitterTest {
     @Test
     fun compileRefinedTest() {
         val ts = """
-            |export namespace Wirespec {
-            |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
-            |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string>, headers: Record<string, string>, body?: string }
-            |  export type RawResponse = { status: number, headers: Record<string, string>, body?: string }
-            |  export type Request<T> = { path: Record<string, unknown>, method: Method, queries?: Record<string, unknown>, headers?: Record<string, unknown>, body?:T }
-            |  export type Response<T> = { status:number, headers?: Record<string, unknown>, body?:T }
-            |  export type Serialization = { serialize: <T>(type: T) => string; deserialize: <T>(raw: string | undefined) => T }
-            |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
-            |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
-            |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
-            |}
+            |import {Wirespec} from '../Wirespec'
             |
             |export type TodoId = string;
             |export const validateTodoId = (value: string): value is TodoId => 
@@ -441,33 +378,13 @@ class TypeScriptEmitterTest {
     @Test
     fun compileUnionTest() {
         val ts = """
-            |export namespace Wirespec {
-            |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
-            |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string>, headers: Record<string, string>, body?: string }
-            |  export type RawResponse = { status: number, headers: Record<string, string>, body?: string }
-            |  export type Request<T> = { path: Record<string, unknown>, method: Method, queries?: Record<string, unknown>, headers?: Record<string, unknown>, body?:T }
-            |  export type Response<T> = { status:number, headers?: Record<string, unknown>, body?:T }
-            |  export type Serialization = { serialize: <T>(type: T) => string; deserialize: <T>(raw: string | undefined) => T }
-            |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
-            |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
-            |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
-            |}
+            |import {Wirespec} from '../Wirespec'
             |
             |import {UserAccountPassword} from '../model'
             |import {UserAccountToken} from '../model'
             |export type UserAccount = UserAccountPassword | UserAccountToken
             |
-            |export namespace Wirespec {
-            |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
-            |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string>, headers: Record<string, string>, body?: string }
-            |  export type RawResponse = { status: number, headers: Record<string, string>, body?: string }
-            |  export type Request<T> = { path: Record<string, unknown>, method: Method, queries?: Record<string, unknown>, headers?: Record<string, unknown>, body?:T }
-            |  export type Response<T> = { status:number, headers?: Record<string, unknown>, body?:T }
-            |  export type Serialization = { serialize: <T>(type: T) => string; deserialize: <T>(raw: string | undefined) => T }
-            |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
-            |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
-            |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
-            |}
+            |import {Wirespec} from '../Wirespec'
             |
             |
             |export type UserAccountPassword = {
@@ -475,34 +392,14 @@ class TypeScriptEmitterTest {
             |  "password": string
             |}
             |
-            |export namespace Wirespec {
-            |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
-            |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string>, headers: Record<string, string>, body?: string }
-            |  export type RawResponse = { status: number, headers: Record<string, string>, body?: string }
-            |  export type Request<T> = { path: Record<string, unknown>, method: Method, queries?: Record<string, unknown>, headers?: Record<string, unknown>, body?:T }
-            |  export type Response<T> = { status:number, headers?: Record<string, unknown>, body?:T }
-            |  export type Serialization = { serialize: <T>(type: T) => string; deserialize: <T>(raw: string | undefined) => T }
-            |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
-            |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
-            |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
-            |}
+            |import {Wirespec} from '../Wirespec'
             |
             |
             |export type UserAccountToken = {
             |  "token": string
             |}
             |
-            |export namespace Wirespec {
-            |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
-            |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string>, headers: Record<string, string>, body?: string }
-            |  export type RawResponse = { status: number, headers: Record<string, string>, body?: string }
-            |  export type Request<T> = { path: Record<string, unknown>, method: Method, queries?: Record<string, unknown>, headers?: Record<string, unknown>, body?:T }
-            |  export type Response<T> = { status:number, headers?: Record<string, unknown>, body?:T }
-            |  export type Serialization = { serialize: <T>(type: T) => string; deserialize: <T>(raw: string | undefined) => T }
-            |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
-            |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
-            |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
-            |}
+            |import {Wirespec} from '../Wirespec'
             |
             |import {UserAccount} from './UserAccount'
             |export type User = {
@@ -522,17 +419,7 @@ class TypeScriptEmitterTest {
     @Test
     fun compileTypeTest() {
         val ts = """
-            |export namespace Wirespec {
-            |  export type Method = "GET" | "PUT" | "POST" | "DELETE" | "OPTIONS" | "HEAD" | "PATCH" | "TRACE"
-            |  export type RawRequest = { method: Method, path: string[], queries: Record<string, string>, headers: Record<string, string>, body?: string }
-            |  export type RawResponse = { status: number, headers: Record<string, string>, body?: string }
-            |  export type Request<T> = { path: Record<string, unknown>, method: Method, queries?: Record<string, unknown>, headers?: Record<string, unknown>, body?:T }
-            |  export type Response<T> = { status:number, headers?: Record<string, unknown>, body?:T }
-            |  export type Serialization = { serialize: <T>(type: T) => string; deserialize: <T>(raw: string | undefined) => T }
-            |  export type Client<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { to: (request: REQ) => RawRequest; from: (response: RawResponse) => RES }
-            |  export type Server<REQ extends Request<unknown>, RES extends Response<unknown>> = (serialization: Serialization) => { from: (request: RawRequest) => REQ; to: (response: RES) => RawResponse }
-            |  export type Api<REQ extends Request<unknown>, RES extends Response<unknown>> = { name: string; method: Method, path: string, client: Client<REQ, RES>; server: Server<REQ, RES> }
-            |}
+            |import {Wirespec} from '../Wirespec'
             |
             |
             |export type Request = {
