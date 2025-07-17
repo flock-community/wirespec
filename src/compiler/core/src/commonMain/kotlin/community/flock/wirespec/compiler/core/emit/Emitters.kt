@@ -61,6 +61,17 @@ interface ChannelDefinitionEmitter {
 
 interface IdentifierEmitter {
     fun emit(identifier: Identifier): String
+
+    fun Identifier.sanitize(): String = value
+}
+
+interface ClientEmitter {
+    fun emitClient(ast: AST): Emitted
+
+    fun AST.emitClientEndpointRequest() = modules
+        .flatMap { it.statements }
+        .filterIsInstance<Endpoint>()
+        .map { endpoint -> Pair(endpoint, endpoint.requests.first()) }
 }
 
 interface ClientEmitter {
