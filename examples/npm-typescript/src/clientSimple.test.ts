@@ -1,25 +1,7 @@
 import { GetTodoById, GetTodos, PostTodo } from "./gen/endpoint";
 import { Wirespec } from "./gen/Wirespec";
-import * as assert from "node:assert";
-import {test, expect} from "vitest";
-
-
-const serialization: Wirespec.Serialization = {
-    deserialize<T>(raw: string | undefined): T {
-        if (raw === undefined) {
-            return undefined;
-        } else {
-            return JSON.parse(raw) as T;
-        }
-    },
-    serialize<T>(type: T): string {
-        if (typeof type === "string") {
-            return type;
-        } else {
-            return JSON.stringify(type);
-        }
-    }
-};
+import { test, expect } from "vitest";
+import { wirespecSerialization } from 'wirespec/serialization'
 
 const body = [
     { id: "1", name: "Do it now", done: true },
@@ -44,13 +26,13 @@ const handleFetch = <Req extends Wirespec.Request<any>, Res extends Wirespec.Res
         mock("GET", ["api", "todos", "1"], 200, {}, JSON.stringify(body[0])),
         mock("POST", ["api", "todos"], 200, {}, JSON.stringify({ id: "3", name: "Do more", done: true }))
     ];
-    const rawRequest = client(serialization).to(request);
-    const rawResponse: Wirespec.RawResponse = mocks.find(it =>
+    const rawRequest = client(wirespecSerialization).to(request);
+    const rawResponse = mocks.find(it =>
         it.method === rawRequest.method &&
         it.path.join("/") === rawRequest.path.join("/")
     );
-    assert.notEqual(rawResponse, undefined);
-    return Promise.resolve(client(serialization).from(rawResponse));
+    if(rawResponse == undefined) throw new Error("Request is undefined")
+    return Promise.resolve(client(wirespecSerialization).from(rawResponse));
 };
 
 const api: Api = {
