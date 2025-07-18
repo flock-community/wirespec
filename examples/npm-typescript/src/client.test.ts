@@ -1,7 +1,7 @@
 import { wirespecFetch, HandleFetch } from "wirespec/fetch";
 import { wirespecSerialization } from "wirespec/serialization";
 import {expect, test, vi} from "vitest";
-import {Client} from "./gen/client";
+import {client} from "./gen/client";
 
 // @ts-ignore
 const mockHandler = vi.fn<HandleFetch>(() => Promise.resolve({
@@ -14,7 +14,7 @@ const mockHandler = vi.fn<HandleFetch>(() => Promise.resolve({
 }))
 
 test('testGetTodoById', async () => {
-    const client = Client(wirespecSerialization, (req) => wirespecFetch(req, mockHandler))
+    const apiClient = client(wirespecSerialization, (req) => wirespecFetch(req, mockHandler))
     const res = await client.GetTodoById({id: "123"})
     expect(res.status).toEqual(200)
     expect(res.headers).toEqual({})
