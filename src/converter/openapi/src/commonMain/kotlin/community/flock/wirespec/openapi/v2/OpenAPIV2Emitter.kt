@@ -43,8 +43,7 @@ object OpenAPIV2Emitter : Emitter() {
 
     override val singleLineComment = ""
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
-        nonEmptyListOf(Emitted("SwaggerObject", json.encodeToString(emitSwaggerObject(module))))
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = nonEmptyListOf(Emitted("SwaggerObject", json.encodeToString(emitSwaggerObject(module))))
 
     override fun Type.Shape.emit() = notYetImplemented()
 
@@ -70,99 +69,95 @@ object OpenAPIV2Emitter : Emitter() {
 
     override fun emit(channel: Channel) = notYetImplemented()
 
-    fun emitSwaggerObject(module: Module): SwaggerObject =
-        SwaggerObject(
-            swagger = "2.0",
-            info = InfoObject(
-                title = "Wirespec",
-                version = "0.0.0"
-            ),
-            consumes = listOf("application/json"),
-            produces = listOf("application/json"),
-            paths = module.statements.filterIsInstance<Endpoint>().groupBy { it.path }.map { (segments, endpoints) ->
-                Path(segments.emitSegment()) to PathItemObject(
-                    parameters = segments.filterIsInstance<Endpoint.Segment.Param>().map {
-                        ParameterObject(
-                            `in` = ParameterLocation.PATH,
-                            name = it.identifier.value,
-                            type = it.reference.emitType(),
-                            format = it.reference.emitFormat(),
-                            pattern = it.reference.emitPattern(),
-                            minimum = it.reference.emitMinimum(),
+    fun emitSwaggerObject(module: Module): SwaggerObject = SwaggerObject(
+        swagger = "2.0",
+        info = InfoObject(
+            title = "Wirespec",
+            version = "0.0.0",
+        ),
+        consumes = listOf("application/json"),
+        produces = listOf("application/json"),
+        paths = module.statements.filterIsInstance<Endpoint>().groupBy { it.path }.map { (segments, endpoints) ->
+            Path(segments.emitSegment()) to PathItemObject(
+                parameters = segments.filterIsInstance<Endpoint.Segment.Param>().map {
+                    ParameterObject(
+                        `in` = ParameterLocation.PATH,
+                        name = it.identifier.value,
+                        type = it.reference.emitType(),
+                        format = it.reference.emitFormat(),
+                        pattern = it.reference.emitPattern(),
+                        minimum = it.reference.emitMinimum(),
+                    )
+                },
+                get = endpoints.emit(Endpoint.Method.GET),
+                post = endpoints.emit(Endpoint.Method.POST),
+                put = endpoints.emit(Endpoint.Method.PUT),
+                delete = endpoints.emit(Endpoint.Method.DELETE),
+                patch = endpoints.emit(Endpoint.Method.PATCH),
+                options = endpoints.emit(Endpoint.Method.OPTIONS),
+                trace = endpoints.emit(Endpoint.Method.TRACE),
+                head = endpoints.emit(Endpoint.Method.HEAD),
+            )
+        }.toMap(),
+        definitions = module.statements
+            .filterIsInstance<Refined>().associate { refined ->
+                when (val type = refined.reference.type) {
+                    Reference.Primitive.Type.Boolean ->
+                        refined.identifier.value to SchemaObject(
+                            type = OpenAPIType.BOOLEAN,
                         )
-                    },
-                    get = endpoints.emit(Endpoint.Method.GET),
-                    post = endpoints.emit(Endpoint.Method.POST),
-                    put = endpoints.emit(Endpoint.Method.PUT),
-                    delete = endpoints.emit(Endpoint.Method.DELETE),
-                    patch = endpoints.emit(Endpoint.Method.PATCH),
-                    options = endpoints.emit(Endpoint.Method.OPTIONS),
-                    trace = endpoints.emit(Endpoint.Method.TRACE),
-                    head = endpoints.emit(Endpoint.Method.HEAD),
-                )
-            }.toMap(),
-            definitions = module.statements
-                .filterIsInstance<Refined>().associate { refined ->
-                    when (val type = refined.reference.type) {
-                        Reference.Primitive.Type.Boolean ->
-                            refined.identifier.value to SchemaObject(
-                                type = OpenAPIType.BOOLEAN,
+
+                    Reference.Primitive.Type.Bytes ->
+                        refined.identifier.value to SchemaObject(
+                            type = OpenAPIType.FILE,
+                        )
+
+                    is Reference.Primitive.Type.Integer ->
+                        refined.identifier.value to SchemaObject(
+                            type = OpenAPIType.INTEGER,
+                            minimum = type.constraint?.min?.toDouble(),
+                            maximum = type.constraint?.min?.toDouble(),
+                        )
+
+                    is Reference.Primitive.Type.Number ->
+                        refined.identifier.value to SchemaObject(
+                            type = OpenAPIType.NUMBER,
+                            minimum = type.constraint?.min?.toDouble(),
+                            maximum = type.constraint?.min?.toDouble(),
+                        )
+
+                    is Reference.Primitive.Type.String ->
+                        refined.identifier.value to when (val pattern = type.constraint) {
+                            is Reference.Primitive.Type.Constraint.RegExp -> SchemaObject(
+                                type = OpenAPIType.STRING,
+                                pattern = pattern.value,
                             )
-
-                        Reference.Primitive.Type.Bytes ->
-                            refined.identifier.value to SchemaObject(
-                                type = OpenAPIType.FILE,
+                            null -> SchemaObject(
+                                type = OpenAPIType.STRING,
                             )
-
-                        is Reference.Primitive.Type.Integer ->
-                            refined.identifier.value to SchemaObject(
-                                type = OpenAPIType.INTEGER,
-                                minimum = type.constraint?.min?.toDouble(),
-                                maximum = type.constraint?.min?.toDouble(),
-                            )
-
-                        is Reference.Primitive.Type.Number ->
-                            refined.identifier.value to SchemaObject(
-                                type = OpenAPIType.NUMBER,
-                                minimum = type.constraint?.min?.toDouble(),
-                                maximum = type.constraint?.min?.toDouble(),
-                            )
-
-                        is Reference.Primitive.Type.String ->
-                            refined.identifier.value to when(val pattern = type.constraint){
-                                is Reference.Primitive.Type.Constraint.RegExp -> SchemaObject(
-                                    type = OpenAPIType.STRING,
-                                    pattern = pattern.value,
-                                )
-                                null -> SchemaObject(
-                                    type = OpenAPIType.STRING,
-                                )
-                            }
-                    }
-
-                } + module.statements
-                .filterIsInstance<Type>().associate { type ->
-                    type.identifier.value to SchemaObject(
-                        properties = type.shape.value.associate { it.toProperties() },
-                        required = type.shape.value
-                            .filter { !it.reference.isNullable }
-                            .map { it.identifier.value }
-                            .takeIf { it.isNotEmpty() }
-                    )
-                } + module.statements
-                .filterIsInstance<Enum>().associate { enum ->
-                    enum.identifier.value to SchemaObject(
-                        type = OpenAPIType.STRING,
-                        enum = enum.entries.map { JsonPrimitive(it) }
-                    )
+                        }
                 }
-        )
+            } + module.statements
+            .filterIsInstance<Type>().associate { type ->
+                type.identifier.value to SchemaObject(
+                    properties = type.shape.value.associate { it.toProperties() },
+                    required = type.shape.value
+                        .filter { !it.reference.isNullable }
+                        .map { it.identifier.value }
+                        .takeIf { it.isNotEmpty() },
+                )
+            } + module.statements
+            .filterIsInstance<Enum>().associate { enum ->
+                enum.identifier.value to SchemaObject(
+                    type = OpenAPIType.STRING,
+                    enum = enum.entries.map { JsonPrimitive(it) },
+                )
+            },
+    )
 
-    private fun Field.toProperties(): Pair<String, SchemaOrReferenceObject> =
-        identifier.value to reference.toSchemaOrReference()
+    private fun Field.toProperties(): Pair<String, SchemaOrReferenceObject> = identifier.value to reference.toSchemaOrReference()
 
-    private fun List<Endpoint>.emit(method: Endpoint.Method): OperationObject? =
-        filter { it.method == method }.map { it.emit() }.firstOrNull()
+    private fun List<Endpoint>.emit(method: Endpoint.Method): OperationObject? = filter { it.method == method }.map { it.emit() }.firstOrNull()
 
     private fun Endpoint.emit() = OperationObject(
         operationId = identifier.value,
@@ -181,7 +176,7 @@ object OpenAPIV2Emitter : Emitter() {
                 )
             } + queries.map { it.emitParameter(ParameterLocation.QUERY) } + headers.map {
             it.emitParameter(
-                ParameterLocation.HEADER
+                ParameterLocation.HEADER,
             )
         },
         responses = responses
@@ -193,7 +188,7 @@ object OpenAPIV2Emitter : Emitter() {
                             type = it.reference.emitType(),
                             format = it.reference.emitFormat(),
                             pattern = it.reference.emitPattern(),
-                            items = (it.reference as? Reference.Iterable)?.reference?.toSchemaOrReference()
+                            items = (it.reference as? Reference.Iterable)?.reference?.toSchemaOrReference(),
                         )
                     },
                     schema = response.content
@@ -202,14 +197,14 @@ object OpenAPIV2Emitter : Emitter() {
                             when (val ref = content.reference) {
                                 is Reference.Iterable -> SchemaObject(
                                     type = OpenAPIType.ARRAY,
-                                    items = ref.reference.toSchemaOrReference()
+                                    items = ref.reference.toSchemaOrReference(),
                                 )
 
                                 else -> ref.toSchemaOrReference()
                             }
-                        }
+                        },
                 )
-            }
+            },
     )
 
     private fun List<Endpoint.Segment>.emitSegment() = "/" + joinToString("/") {
@@ -219,34 +214,31 @@ object OpenAPIV2Emitter : Emitter() {
         }
     }
 
+    private fun Field.emitParameter(location: ParameterLocation) = ParameterObject(
+        `in` = location,
+        name = identifier.value,
+        type = reference.emitType(),
+        format = reference.emitFormat(),
+        pattern = reference.emitPattern(),
+        items = when (val ref = reference) {
+            is Reference.Iterable -> when (val emit = ref.toSchemaOrReference()) {
+                is ReferenceObject -> emit
+                is SchemaObject -> emit.items
+            }
 
-    private fun Field.emitParameter(location: ParameterLocation) =
-        ParameterObject(
-            `in` = location,
-            name = identifier.value,
-            type = reference.emitType(),
-            format = reference.emitFormat(),
-            pattern = reference.emitPattern(),
-            items = when (val ref = reference) {
-                is Reference.Iterable -> when (val emit = ref.toSchemaOrReference()) {
-                    is ReferenceObject -> emit
-                    is SchemaObject -> emit.items
-                }
-
-                else -> null
-            },
-            required = !reference.isNullable,
-        )
+            else -> null
+        },
+        required = !reference.isNullable,
+    )
 
     private fun Reference.toSchemaOrReference(): SchemaOrReferenceObject = when (this) {
         is Reference.Dict -> SchemaObject(type = OpenAPIType.OBJECT, items = reference.toSchemaOrReference())
         is Reference.Iterable -> SchemaObject(type = OpenAPIType.ARRAY, items = reference.toSchemaOrReference())
-        is Reference.Custom -> ReferenceObject(ref = Ref("#/definitions/${value}"))
+        is Reference.Custom -> ReferenceObject(ref = Ref("#/definitions/$value"))
         is Reference.Primitive -> SchemaObject(type = type.emitType(), format = emitFormat(), pattern = emitPattern())
         is Reference.Any -> error("Cannot map Any")
         is Reference.Unit -> error("Cannot map Unit")
     }
-
 
     private fun Reference.Primitive.Type.emitType(): OpenAPIType = when (this) {
         is Reference.Primitive.Type.String -> OpenAPIType.STRING
@@ -256,66 +248,61 @@ object OpenAPIV2Emitter : Emitter() {
         is Reference.Primitive.Type.Bytes -> OpenAPIType.STRING
     }
 
-    private fun Reference.emitType():OpenAPIType =
-        when (this) {
-            is Reference.Dict -> OpenAPIType.OBJECT
-            is Reference.Iterable -> OpenAPIType.ARRAY
-            is Reference.Primitive -> type.emitType()
-            is Reference.Custom -> OpenAPIType.OBJECT
-            is Reference.Any -> OpenAPIType.OBJECT
-            is Reference.Unit -> OpenAPIType.OBJECT
-        }
+    private fun Reference.emitType(): OpenAPIType = when (this) {
+        is Reference.Dict -> OpenAPIType.OBJECT
+        is Reference.Iterable -> OpenAPIType.ARRAY
+        is Reference.Primitive -> type.emitType()
+        is Reference.Custom -> OpenAPIType.OBJECT
+        is Reference.Any -> OpenAPIType.OBJECT
+        is Reference.Unit -> OpenAPIType.OBJECT
+    }
 
-    private fun Reference.emitFormat() =
-        when (this) {
-            is Reference.Primitive -> when (val t = type) {
-                is Reference.Primitive.Type.Number -> when (t.precision) {
-                    Reference.Primitive.Type.Precision.P32 -> "float"
-                    Reference.Primitive.Type.Precision.P64 -> "double"
-                }
-
-                is Reference.Primitive.Type.Integer -> when (t.precision) {
-                    Reference.Primitive.Type.Precision.P32 -> "int32"
-                    Reference.Primitive.Type.Precision.P64 -> "int64"
-                }
-
-                is Reference.Primitive.Type.Bytes -> "binary"
-
-                else -> null
+    private fun Reference.emitFormat() = when (this) {
+        is Reference.Primitive -> when (val t = type) {
+            is Reference.Primitive.Type.Number -> when (t.precision) {
+                Reference.Primitive.Type.Precision.P32 -> "float"
+                Reference.Primitive.Type.Precision.P64 -> "double"
             }
+
+            is Reference.Primitive.Type.Integer -> when (t.precision) {
+                Reference.Primitive.Type.Precision.P32 -> "int32"
+                Reference.Primitive.Type.Precision.P64 -> "int64"
+            }
+
+            is Reference.Primitive.Type.Bytes -> "binary"
 
             else -> null
         }
 
-    private fun Reference.emitPattern() =
-        when (this) {
-            is Reference.Primitive -> when (val t = type) {
-                is Reference.Primitive.Type.String -> when (val p = t.constraint) {
-                    is Reference.Primitive.Type.Constraint.RegExp -> p.value
-                    else -> null
-                }
-                else -> null
-            }
-            else -> null
-        }
+        else -> null
+    }
 
-    private fun Reference.emitMinimum() =
-        when (this) {
-            is Reference.Primitive -> when (val t = type) {
-                is Reference.Primitive.Type.Number -> t.constraint?.min?.toDouble()
-                is Reference.Primitive.Type.Integer -> t.constraint?.min?.toDouble()
+    private fun Reference.emitPattern() = when (this) {
+        is Reference.Primitive -> when (val t = type) {
+            is Reference.Primitive.Type.String -> when (val p = t.constraint) {
+                is Reference.Primitive.Type.Constraint.RegExp -> p.value
                 else -> null
             }
             else -> null
         }
+        else -> null
+    }
 
-    private fun Reference.emitMaximum() =
-        when (this) {
-            is Reference.Primitive -> when (val t = type) {
-                is Reference.Primitive.Type.Number -> t.constraint?.max?.toDouble()
-                is Reference.Primitive.Type.Integer -> t.constraint?.max?.toDouble()
-                else -> null
-            }
+    private fun Reference.emitMinimum() = when (this) {
+        is Reference.Primitive -> when (val t = type) {
+            is Reference.Primitive.Type.Number -> t.constraint?.min?.toDouble()
+            is Reference.Primitive.Type.Integer -> t.constraint?.min?.toDouble()
             else -> null
         }
+        else -> null
+    }
+
+    private fun Reference.emitMaximum() = when (this) {
+        is Reference.Primitive -> when (val t = type) {
+            is Reference.Primitive.Type.Number -> t.constraint?.max?.toDouble()
+            is Reference.Primitive.Type.Integer -> t.constraint?.max?.toDouble()
+            else -> null
+        }
+        else -> null
+    }
 }

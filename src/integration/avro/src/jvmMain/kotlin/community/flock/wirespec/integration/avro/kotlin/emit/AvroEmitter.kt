@@ -1,18 +1,17 @@
 package community.flock.wirespec.integration.avro.kotlin.emit
 
-
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 import community.flock.wirespec.integration.avro.Utils
 import community.flock.wirespec.integration.avro.Utils.isEnum
-import community.flock.wirespec.compiler.core.parse.Module
-import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 
 class AvroEmitter(private val packageName: PackageName, emitShared: EmitShared) : KotlinEmitter(packageName, emitShared) {
 
@@ -21,9 +20,10 @@ class AvroEmitter(private val packageName: PackageName, emitShared: EmitShared) 
         ?.replace(">>>>>\\\"", ".Avro.SCHEMA + \"")
         ?: error("Cannot emit avro: ${type.identifier.value}")
 
-    override fun emit(type: Type, module: Module) =
-        if (type.shape.value.isEmpty()) "${Spacer}model object ${emit(type.identifier)}"
-        else """
+    override fun emit(type: Type, module: Module) = if (type.shape.value.isEmpty()) {
+        "${Spacer}model object ${emit(type.identifier)}"
+    } else {
+        """
             |data class ${emit(type.identifier)}(
             |${type.shape.emit()}
             |)${type.extends.run { if (isEmpty()) "" else " : ${joinToString(", ") { it.emit() }}" }}
@@ -32,6 +32,7 @@ class AvroEmitter(private val packageName: PackageName, emitShared: EmitShared) 
             |}
             |
         """.trimMargin()
+    }
 
     private fun emitAvro(type: Type, module: Module) = """
         |  class Avro {
@@ -61,7 +62,7 @@ class AvroEmitter(private val packageName: PackageName, emitShared: EmitShared) 
         |${enum.entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }.spacer()};
         |${Spacer}override fun toString(): String {
         |${Spacer(2)}return label
-        |${Spacer}}
+        |$Spacer}
         |${emitAvro(enum, module)}
         |}
         |
@@ -89,11 +90,11 @@ class AvroEmitter(private val packageName: PackageName, emitShared: EmitShared) 
 
     private val emitTo: (index: Int, field: Field) -> String = { index, field ->
         when (val reference = field.reference) {
-            is Reference.Iterable -> "record.put(${index}, model.${emit(field.identifier)}.map{${reference.reference.value}.Avro.to(it)});"
-            is Reference.Custom -> "record.put(${index}, ${field.reference.emit()}.Avro.to(model.${emit(field.identifier)}));"
+            is Reference.Iterable -> "record.put($index, model.${emit(field.identifier)}.map{${reference.reference.value}.Avro.to(it)});"
+            is Reference.Custom -> "record.put($index, ${field.reference.emit()}.Avro.to(model.${emit(field.identifier)}));"
             is Reference.Primitive -> when {
-                reference.type == Reference.Primitive.Type.Bytes -> "record.put(${index}, java.nio.ByteBuffer.wrap(model.${emit(field.identifier)}.toByteArray()));"
-                else -> "record.put(${index}, model.${emit(field.identifier)});"
+                reference.type == Reference.Primitive.Type.Bytes -> "record.put($index, java.nio.ByteBuffer.wrap(model.${emit(field.identifier)}.toByteArray()));"
+                else -> "record.put($index, model.${emit(field.identifier)});"
             }
 
             else -> TODO()
@@ -104,22 +105,20 @@ class AvroEmitter(private val packageName: PackageName, emitShared: EmitShared) 
         { module ->
             { index, field ->
                 when (val reference = field.reference) {
-                    is Reference.Iterable -> "(record.get(${index}) as java.util.List<org.apache.avro.generic.GenericData.Record>).map{${reference.reference.emit()}.Avro.from(it)}"
+                    is Reference.Iterable -> "(record.get($index) as java.util.List<org.apache.avro.generic.GenericData.Record>).map{${reference.reference.emit()}.Avro.from(it)}"
                     is Reference.Custom -> when {
-                        reference.isEnum(module) -> "${field.reference.emit()}.Avro.from(record.get(${index}) as org.apache.avro.generic.GenericData.EnumSymbol)"
-                        else -> "${field.reference.emit()}.Avro.from(record.get(${index}) as org.apache.avro.generic.GenericData.Record)"
+                        reference.isEnum(module) -> "${field.reference.emit()}.Avro.from(record.get($index) as org.apache.avro.generic.GenericData.EnumSymbol)"
+                        else -> "${field.reference.emit()}.Avro.from(record.get($index) as org.apache.avro.generic.GenericData.Record)"
                     }
 
                     is Reference.Primitive -> when (reference.type) {
-                        Reference.Primitive.Type.Bytes -> "String((record.get(${index}) as java.nio.ByteBuffer).array())"
-                        is Reference.Primitive.Type.String -> "record.get(${index}).toString() as ${reference.emit()}"
-                        else -> "record.get(${index}) as ${reference.emit()}"
+                        Reference.Primitive.Type.Bytes -> "String((record.get($index) as java.nio.ByteBuffer).array())"
+                        is Reference.Primitive.Type.String -> "record.get($index).toString() as ${reference.emit()}"
+                        else -> "record.get($index) as ${reference.emit()}"
                     }
 
-                    else -> "record.get(${index}): ${reference.emit()}"
+                    else -> "record.get($index): ${reference.emit()}"
                 }
             }
         }
-
-
 }

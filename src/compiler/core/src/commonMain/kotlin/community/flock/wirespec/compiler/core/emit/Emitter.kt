@@ -13,7 +13,13 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 
-abstract class Emitter : Emitters, BaseEmitter, ParamEmitter, SpaceEmitter, ImportEmitter, EndpointEmitter {
+abstract class Emitter :
+    Emitters,
+    BaseEmitter,
+    ParamEmitter,
+    SpaceEmitter,
+    ImportEmitter,
+    EndpointEmitter {
 
     open fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast
         .modules.flatMap { emit(it, logger) }

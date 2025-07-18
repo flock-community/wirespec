@@ -4,7 +4,7 @@ plugins {
 
 spotless {
     val exclude = listOf(
-        "**/*Emitter.kt",
+        "**/emitters/**/*Emitter.kt",
         "**/generated/**",
         "**/resources/**",
     ).toTypedArray()
@@ -23,7 +23,7 @@ spotless {
 
     kotlin {
         target("**/*.kt", "**/*.kts")
-        targetExclude(*exclude, "**/*Emitter.kt")
+        targetExclude(*exclude)
         ktlint().editorConfigOverride(
             mapOf("ktlint_code_style" to "intellij_idea"),
         )

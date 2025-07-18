@@ -19,5 +19,4 @@ interface SpaceEmitter {
                 it
             }
         }
-
 }

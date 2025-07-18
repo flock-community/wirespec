@@ -1,6 +1,5 @@
 package community.flock.wirespec.integration.spring.java.emit
 
-
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.Spacer
@@ -21,7 +20,7 @@ class SpringJavaEmitter(packageName: PackageName) : JavaEmitter(packageName, Emi
             Endpoint.Method.TRACE -> "@org.springframework.web.bind.annotation.RequestMapping(value=\"${path}\", method = RequestMethod.TRACE)"
         }
         return """
-            |${annotation}
+            |$annotation
             |${Spacer(2)}${super.emitHandleFunction(endpoint)}
             |
         """.trimMargin()
