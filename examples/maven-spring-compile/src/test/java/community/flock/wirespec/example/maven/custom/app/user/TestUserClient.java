@@ -5,6 +5,7 @@ import community.flock.wirespec.generated.java.endpoint.GetUserByName;
 import community.flock.wirespec.generated.java.endpoint.GetUsers;
 import community.flock.wirespec.generated.java.endpoint.PostUser;
 import community.flock.wirespec.generated.java.endpoint.UploadImage;
+import community.flock.wirespec.generated.java.model.AuthenticationPassword;
 import community.flock.wirespec.generated.java.model.UserDto;
 
 import java.util.HashMap;
@@ -19,8 +20,8 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 public class TestUserClient implements UserClient {
 
     public static final Set<UserDto> users = new HashSet<>(Set.of(
-            new UserDto("name"),
-            new UserDto("other name")
+            new UserDto("name", new AuthenticationPassword("secret")),
+            new UserDto("other name", new AuthenticationPassword("secret"))
     ));
 
     public static final Map<String, byte[]> images = new HashMap<>();

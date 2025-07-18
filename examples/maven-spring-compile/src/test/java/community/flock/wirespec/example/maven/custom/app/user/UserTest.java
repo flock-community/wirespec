@@ -1,5 +1,6 @@
 package community.flock.wirespec.example.maven.custom.app.user;
 
+import community.flock.wirespec.generated.java.model.AuthenticationPassword;
 import org.junit.jupiter.api.Test;
 
 import java.util.function.Consumer;
@@ -34,7 +35,7 @@ class UserTest {
     @Test
     void testPostUser() {
         testContext(it -> {
-            var user = saveUser(it, new User("newName"));
+            var user = saveUser(it, new User("newName","secret"));
             assertEquals("newName", user.name());
         });
     }
@@ -42,7 +43,7 @@ class UserTest {
     @Test
     void testDeleteUser() {
         testContext(it -> {
-            saveUser(it, new User("newName"));
+            saveUser(it, new User("newName", "secret"));
             var user = deleteUserByName(it, "newName");
             assertEquals("newName", user.name());
         });

@@ -67,18 +67,10 @@ open class JavaEmitter(
     override fun emit(type: Type, module: Module) = """
         |public record ${emit(type.identifier)} (
         |${type.shape.emit()}
-        |)${type.extends.run { if (isEmpty()) "" else " extends ${joinToString(", ") { it.emit() }}" }}${type.emitUnion(module)} {
+        |)${type.extends.run { if (isEmpty()) "" else " implements ${joinToString(", ") { it.emit() }}" }} {
         |};
         |
     """.trimMargin()
-
-    fun Type.emitUnion(module: Module) = module.statements
-        .filterIsInstance<Union>()
-        .filter { union -> union.entries.filterIsInstance<Reference.Custom>().any { it.value == identifier.value } }
-        .map { it.identifier.value }
-        .takeIf { it.isNotEmpty() }
-        ?.joinToString(", ", "implements ")
-        .orEmpty()
 
     override fun Type.Shape.emit() = value.joinToString("\n") { "${Spacer}${it.emit()}," }.dropLast(1)
 

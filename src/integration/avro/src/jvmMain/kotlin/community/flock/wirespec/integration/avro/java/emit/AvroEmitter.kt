@@ -24,7 +24,7 @@ class AvroEmitter(private val packageName: PackageName, emitShared: EmitShared) 
     override fun emit(type: Type, module: Module) = """
         |public record ${emit(type.identifier)} (
         |${type.shape.emit()}
-        |)${type.extends.run { if (isEmpty()) "" else " extends ${joinToString(", ") { it.emit() }}" }}${type.emitUnion(module)} {
+        |)${type.extends.run { if (isEmpty()) "" else " implements ${joinToString(", ") { it.emit() }}" }} {
         |${emitTypeFunctionBody(type, module)}
         |};
         |
