@@ -15,7 +15,7 @@ const mockHandler = vi.fn<HandleFetch>(() => Promise.resolve({
 
 test('testGetTodoById', async () => {
     const apiClient = client(wirespecSerialization, (req) => wirespecFetch(req, mockHandler))
-    const res = await client.GetTodoById({id: "123"})
+    const res = await apiClient.GetTodoById({id: "123"})
     expect(res.status).toEqual(200)
     expect(res.headers).toEqual({})
     expect(res.body).toEqual({

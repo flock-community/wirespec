@@ -44,7 +44,7 @@ const api: Api = {
 test('testGetTodos', async () => {
     const request: GetTodos.Request = GetTodos.request({done:undefined});
     const response = await api.getTodos(request);
-    const expected = { status: 200, headers: {total:2}, body };
+    const expected = { status: 200, headers: {total:"2"}, body };
     expect(response).toEqual(expected)
 })
 
