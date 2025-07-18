@@ -14,7 +14,10 @@ interface ParamEmitter {
         val reference: Reference,
     ) {
         enum class ParamType {
-            PATH, QUERY, HEADER, BODY
+            PATH,
+            QUERY,
+            HEADER,
+            BODY,
         }
     }
 
@@ -29,7 +32,7 @@ interface ParamEmitter {
 
     fun Endpoint.Response.paramList(): List<Param> = listOf(
         headers.map { it.toParam(Param.ParamType.HEADER) },
-        listOfNotNull(content?.toParam())
+        listOfNotNull(content?.toParam()),
     ).flatten()
 
     private fun Endpoint.Segment.Param.toParam() = Param(

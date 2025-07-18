@@ -53,8 +53,7 @@ object OpenAPIV3Emitter : Emitter() {
 
     override val singleLineComment = ""
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
-        nonEmptyListOf(Emitted("OpenAPIObject", json.encodeToString(emitOpenAPIObject(module, null))))
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = nonEmptyListOf(Emitted("OpenAPIObject", json.encodeToString(emitOpenAPIObject(module, null))))
 
     override fun Type.Shape.emit() = notYetImplemented()
 
@@ -84,10 +83,10 @@ object OpenAPIV3Emitter : Emitter() {
         openapi = "3.0.0",
         info = InfoObject(
             title = options?.title ?: "Wirespec",
-            version = options?.version ?: "0.0.0"
+            version = options?.version ?: "0.0.0",
         ),
         paths = module.emitPaths(),
-        components = module.emitComponents()
+        components = module.emitComponents(),
     )
 
     private fun Module.emitComponents() = statements.toList()
@@ -124,63 +123,56 @@ object OpenAPIV3Emitter : Emitter() {
         }
         .toMap()
 
-    private fun Refined.emit(): SchemaObject =
-        when(val type = reference.type) {
-            is Reference.Primitive.Type.Integer -> SchemaObject(
+    private fun Refined.emit(): SchemaObject = when (val type = reference.type) {
+        is Reference.Primitive.Type.Integer -> SchemaObject(
+            type = OpenAPIType.STRING,
+            minimum = type.constraint?.min?.toDouble(),
+            maximum = type.constraint?.max?.toDouble(),
+        )
+        is Reference.Primitive.Type.Number -> SchemaObject(
+            type = OpenAPIType.STRING,
+            minimum = type.constraint?.min?.toDouble(),
+            maximum = type.constraint?.max?.toDouble(),
+        )
+        is Reference.Primitive.Type.String -> when (val pattern = type.constraint) {
+            is Reference.Primitive.Type.Constraint.RegExp -> SchemaObject(
                 type = OpenAPIType.STRING,
-                minimum = type.constraint?.min?.toDouble(),
-                maximum = type.constraint?.max?.toDouble(),
+                pattern = pattern.value,
             )
-            is Reference.Primitive.Type.Number -> SchemaObject(
-                type = OpenAPIType.STRING,
-                minimum = type.constraint?.min?.toDouble(),
-                maximum = type.constraint?.max?.toDouble(),
-            )
-            is Reference.Primitive.Type.String -> when(val pattern = type.constraint){
-                is Reference.Primitive.Type.Constraint.RegExp -> SchemaObject(
-                    type = OpenAPIType.STRING,
-                    pattern = pattern.value,
-                )
-                null -> SchemaObject(
-                    type = OpenAPIType.STRING,
-                )
-            }
-            Reference.Primitive.Type.Boolean -> SchemaObject(
-                type = OpenAPIType.BOOLEAN,
-            )
-            Reference.Primitive.Type.Bytes ->  SchemaObject(
+            null -> SchemaObject(
                 type = OpenAPIType.STRING,
             )
         }
-
-
-
-    private fun Type.emit(): SchemaObject =
-        SchemaObject(
-            description = comment?.value,
-            properties = shape.value.associate { it.emitSchema() },
-            required = shape.value
-                .filter { !it.reference.isNullable }
-                .map { it.identifier.value }
-                .takeIf { it.isNotEmpty() }
+        Reference.Primitive.Type.Boolean -> SchemaObject(
+            type = OpenAPIType.BOOLEAN,
         )
-
-    private fun Enum.emit(): SchemaObject =
-        SchemaObject(
-            description = comment?.value,
+        Reference.Primitive.Type.Bytes -> SchemaObject(
             type = OpenAPIType.STRING,
-            enum = entries.map { JsonPrimitive(it) }
         )
+    }
 
-    private fun Union.emit(): SchemaObject =
-        SchemaObject(
-            description = comment?.value,
-            type = OpenAPIType.STRING,
-            oneOf = entries.map { it.emitSchema() }
-        )
+    private fun Type.emit(): SchemaObject = SchemaObject(
+        description = comment?.value,
+        properties = shape.value.associate { it.emitSchema() },
+        required = shape.value
+            .filter { !it.reference.isNullable }
+            .map { it.identifier.value }
+            .takeIf { it.isNotEmpty() },
+    )
 
-    private fun List<Endpoint>.emit(method: Endpoint.Method): OperationObject? =
-        filter { it.method == method }.map { it.emit() }.firstOrNull()
+    private fun Enum.emit(): SchemaObject = SchemaObject(
+        description = comment?.value,
+        type = OpenAPIType.STRING,
+        enum = entries.map { JsonPrimitive(it) },
+    )
+
+    private fun Union.emit(): SchemaObject = SchemaObject(
+        description = comment?.value,
+        type = OpenAPIType.STRING,
+        oneOf = entries.map { it.emitSchema() },
+    )
+
+    private fun List<Endpoint>.emit(method: Endpoint.Method): OperationObject? = filter { it.method == method }.map { it.emit() }.firstOrNull()
 
     private fun Endpoint.emit(): OperationObject = OperationObject(
         operationId = identifier.value,
@@ -188,7 +180,7 @@ object OpenAPIV3Emitter : Emitter() {
         parameters = path.filterIsInstance<Endpoint.Segment.Param>()
             .map { it.emitParameter() } + queries.map { it.emitParameter(ParameterLocation.QUERY) } + headers.map {
             it.emitParameter(
-                ParameterLocation.HEADER
+                ParameterLocation.HEADER,
             )
         },
         requestBody = requests.mapNotNull { it.content?.emit() }
@@ -197,7 +189,7 @@ object OpenAPIV3Emitter : Emitter() {
             ?.let { content ->
                 RequestBodyObject(
                     content = content,
-                    required = !requests.any { it.content?.reference?.isNullable == true }
+                    required = !requests.any { it.content?.reference?.isNullable == true },
                 )
             },
         responses = responses
@@ -209,10 +201,10 @@ object OpenAPIV3Emitter : Emitter() {
                     content = res
                         .mapNotNull { it.content }
                         .associate { it.emit() }
-                        .ifEmpty { null }
+                        .ifEmpty { null },
                 )
             }
-            .toMap()
+            .toMap(),
     )
 
     private fun List<Endpoint.Segment>.emitSegment() = "/" + joinToString("/") {
@@ -225,13 +217,13 @@ object OpenAPIV3Emitter : Emitter() {
     private fun Field.emitParameter(location: ParameterLocation): ParameterObject = ParameterObject(
         `in` = location,
         name = identifier.value,
-        schema = reference.emitSchema()
+        schema = reference.emitSchema(),
     )
 
     private fun Endpoint.Segment.Param.emitParameter(): ParameterObject = ParameterObject(
         `in` = ParameterLocation.PATH,
         name = identifier.value,
-        schema = reference.emitSchema()
+        schema = reference.emitSchema(),
     )
 
     private fun Field.emitHeader(): Pair<String, HeaderOrReferenceObject> = identifier.value to reference.emitHeader()
@@ -239,39 +231,38 @@ object OpenAPIV3Emitter : Emitter() {
     private fun Field.emitSchema(): Pair<String, SchemaOrReferenceObject> = identifier.value to reference.emitSchema()
 
     private fun Reference.emitHeader() = when (this) {
-        is Reference.Dict -> ReferenceObject(ref = Ref("#/components/headers/${value}"))
-        is Reference.Iterable -> ReferenceObject(ref = Ref("#/components/headers/${value}"))
-        is Reference.Custom -> ReferenceObject(ref = Ref("#/components/headers/${value}"))
+        is Reference.Dict -> ReferenceObject(ref = Ref("#/components/headers/$value"))
+        is Reference.Iterable -> ReferenceObject(ref = Ref("#/components/headers/$value"))
+        is Reference.Custom -> ReferenceObject(ref = Ref("#/components/headers/$value"))
         is Reference.Primitive -> HeaderObject(schema = emitSchema())
         is Reference.Any -> error("Cannot map Any")
         is Reference.Unit -> error("Cannot map Unit")
     }
 
-    private fun Reference.emitSchema(): SchemaOrReferenceObject =
-        when (this) {
-            is Reference.Dict -> SchemaObject(
-                nullable = reference.isNullable,
-                type = OpenAPIType.OBJECT,
-                additionalProperties = reference.emitSchema() as SchemaOrReferenceOrBooleanObject
-            )
+    private fun Reference.emitSchema(): SchemaOrReferenceObject = when (this) {
+        is Reference.Dict -> SchemaObject(
+            nullable = reference.isNullable,
+            type = OpenAPIType.OBJECT,
+            additionalProperties = reference.emitSchema() as SchemaOrReferenceOrBooleanObject,
+        )
 
-            is Reference.Iterable -> SchemaObject(
-                nullable = reference.isNullable,
-                type = OpenAPIType.ARRAY,
-                items = reference.emitSchema()
-            )
+        is Reference.Iterable -> SchemaObject(
+            nullable = reference.isNullable,
+            type = OpenAPIType.ARRAY,
+            items = reference.emitSchema(),
+        )
 
-            is Reference.Custom -> ReferenceObject(ref = Ref("#/components/schemas/${value}"))
-            is Reference.Primitive -> SchemaObject(
-                type = type.emitType(),
-                format = emitFormat(),
-                pattern = emitPattern(),
-                minimum = emitMinimum(),
-                maximum = emitMaximum(),
-            )
-            is Reference.Any -> error("Cannot map Any")
-            is Reference.Unit -> error("Cannot map Unit")
-        }
+        is Reference.Custom -> ReferenceObject(ref = Ref("#/components/schemas/$value"))
+        is Reference.Primitive -> SchemaObject(
+            type = type.emitType(),
+            format = emitFormat(),
+            pattern = emitPattern(),
+            minimum = emitMinimum(),
+            maximum = emitMaximum(),
+        )
+        is Reference.Any -> error("Cannot map Any")
+        is Reference.Unit -> error("Cannot map Unit")
+    }
 
     private fun Reference.Primitive.Type.emitType(): OpenAPIType = when (this) {
         is Reference.Primitive.Type.String -> OpenAPIType.STRING
@@ -281,61 +272,56 @@ object OpenAPIV3Emitter : Emitter() {
         is Reference.Primitive.Type.Bytes -> OpenAPIType.STRING
     }
 
-    private fun Endpoint.Content.emit(): Pair<MediaType, MediaTypeObject> =
-        MediaType(type) to MediaTypeObject(
-            schema = reference.emitSchema()
-        )
+    private fun Endpoint.Content.emit(): Pair<MediaType, MediaTypeObject> = MediaType(type) to MediaTypeObject(
+        schema = reference.emitSchema(),
+    )
 
-    private fun Reference.emitFormat() =
-        when (this) {
-            is Reference.Primitive -> when (val t = type) {
-                is Reference.Primitive.Type.Number -> when (t.precision) {
-                    Reference.Primitive.Type.Precision.P32 -> "float"
-                    Reference.Primitive.Type.Precision.P64 -> "double"
-                }
-
-                is Reference.Primitive.Type.Integer -> when (t.precision) {
-                    Reference.Primitive.Type.Precision.P32 -> "int32"
-                    Reference.Primitive.Type.Precision.P64 -> "int64"
-                }
-
-                is Reference.Primitive.Type.Bytes -> "binary"
-
-                else -> null
+    private fun Reference.emitFormat() = when (this) {
+        is Reference.Primitive -> when (val t = type) {
+            is Reference.Primitive.Type.Number -> when (t.precision) {
+                Reference.Primitive.Type.Precision.P32 -> "float"
+                Reference.Primitive.Type.Precision.P64 -> "double"
             }
+
+            is Reference.Primitive.Type.Integer -> when (t.precision) {
+                Reference.Primitive.Type.Precision.P32 -> "int32"
+                Reference.Primitive.Type.Precision.P64 -> "int64"
+            }
+
+            is Reference.Primitive.Type.Bytes -> "binary"
 
             else -> null
         }
 
-    private fun Reference.emitPattern() =
-        when (this) {
-            is Reference.Primitive -> when (val t = type) {
-                is Reference.Primitive.Type.String -> when (val p = t.constraint) {
-                    is Reference.Primitive.Type.Constraint.RegExp -> p.value
-                    else -> null
-                }
-                else -> null
-            }
-            else -> null
-        }
+        else -> null
+    }
 
-    private fun Reference.emitMinimum() =
-        when (this) {
-            is Reference.Primitive -> when (val t = type) {
-                is Reference.Primitive.Type.Number -> t.constraint?.min?.toDouble()
-                is Reference.Primitive.Type.Integer -> t.constraint?.min?.toDouble()
+    private fun Reference.emitPattern() = when (this) {
+        is Reference.Primitive -> when (val t = type) {
+            is Reference.Primitive.Type.String -> when (val p = t.constraint) {
+                is Reference.Primitive.Type.Constraint.RegExp -> p.value
                 else -> null
             }
             else -> null
         }
+        else -> null
+    }
 
-    private fun Reference.emitMaximum() =
-        when (this) {
-            is Reference.Primitive -> when (val t = type) {
-                is Reference.Primitive.Type.Number -> t.constraint?.max?.toDouble()
-                is Reference.Primitive.Type.Integer -> t.constraint?.max?.toDouble()
-                else -> null
-            }
+    private fun Reference.emitMinimum() = when (this) {
+        is Reference.Primitive -> when (val t = type) {
+            is Reference.Primitive.Type.Number -> t.constraint?.min?.toDouble()
+            is Reference.Primitive.Type.Integer -> t.constraint?.min?.toDouble()
             else -> null
         }
+        else -> null
+    }
+
+    private fun Reference.emitMaximum() = when (this) {
+        is Reference.Primitive -> when (val t = type) {
+            is Reference.Primitive.Type.Number -> t.constraint?.max?.toDouble()
+            is Reference.Primitive.Type.Integer -> t.constraint?.max?.toDouble()
+            else -> null
+        }
+        else -> null
+    }
 }

@@ -1,6 +1,5 @@
 package community.flock.wirespec.integration.avro.java.emit
 
-
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.Spacer
@@ -56,21 +55,21 @@ class AvroEmitter(private val packageName: PackageName, emitShared: EmitShared) 
         |${Spacer}public final String label;
         |${Spacer}${emit(enum.identifier)}(String label) {
         |${Spacer(2)}this.label = label;
-        |${Spacer}}
-        |${Spacer}@Override
+        |$Spacer}
+        |$Spacer@Override
         |${Spacer}public String toString() {
         |${Spacer(2)}return label;
-        |${Spacer}}
-        |${Spacer}@Override
+        |$Spacer}
+        |$Spacer@Override
         |${Spacer}public String getLabel() {
         |${Spacer(2)}return label;
-        |${Spacer}}
+        |$Spacer}
         |${emitEnumFunctionBody(enum, module)}
         |}
         |
     """.trimMargin()
 
-     private fun emitEnumFunctionBody(enum: Enum, module: Module) = """
+    private fun emitEnumFunctionBody(enum: Enum, module: Module) = """
         |  public static class Avro {
         |
         |    public static final org.apache.avro.Schema SCHEMA = 
@@ -86,13 +85,13 @@ class AvroEmitter(private val packageName: PackageName, emitShared: EmitShared) 
         |  }
     """.trimMargin()
 
-    private val emitTo:  (index: Int, field: Field) -> String = { index, field ->
+    private val emitTo: (index: Int, field: Field) -> String = { index, field ->
         when (val reference = field.reference) {
-            is Reference.Iterable -> "record.put(${index}, data.${emit(field.identifier)}().stream().map(it -> ${reference.reference.value}.Avro.to(it)).toList());"
-            is Reference.Custom -> "record.put(${index}, ${field.reference.emit()}.Avro.to(data.${emit(field.identifier)}()));"
-            is Reference.Primitive -> when(reference.type) {
-                is Reference.Primitive.Type.Bytes -> "record.put(${index}, java.nio.ByteBuffer.wrap(data.${emit(field.identifier)}()));"
-                else -> "record.put(${index}, data.${emit(field.identifier)}()${if (reference.isNullable) ".orElse(null)" else ""});"
+            is Reference.Iterable -> "record.put($index, data.${emit(field.identifier)}().stream().map(it -> ${reference.reference.value}.Avro.to(it)).toList());"
+            is Reference.Custom -> "record.put($index, ${field.reference.emit()}.Avro.to(data.${emit(field.identifier)}()));"
+            is Reference.Primitive -> when (reference.type) {
+                is Reference.Primitive.Type.Bytes -> "record.put($index, java.nio.ByteBuffer.wrap(data.${emit(field.identifier)}()));"
+                else -> "record.put($index, data.${emit(field.identifier)}()${if (reference.isNullable) ".orElse(null)" else ""});"
             }
 
             else -> TODO()
@@ -103,24 +102,22 @@ class AvroEmitter(private val packageName: PackageName, emitShared: EmitShared) 
         { module ->
             { index, field ->
                 when (val reference = field.reference) {
-                    is Reference.Iterable -> "((java.util.List<org.apache.avro.generic.GenericData.Record>) record.get(${index})).stream().map(it -> ${reference.reference.emitRoot()}.Avro.from(it)).toList()"
+                    is Reference.Iterable -> "((java.util.List<org.apache.avro.generic.GenericData.Record>) record.get($index)).stream().map(it -> ${reference.reference.emitRoot()}.Avro.from(it)).toList()"
                     is Reference.Custom -> when {
-                        reference.isNullable -> "(${reference.emit()}) java.util.Optional.ofNullable((${field.reference.emitRoot()}) record.get(${index}))"
-                        reference.isEnum(module) -> "${field.reference.emit()}.Avro.from((org.apache.avro.generic.GenericData.EnumSymbol) record.get(${index}))"
-                        else -> "${field.reference.emit()}.Avro.from((org.apache.avro.generic.GenericData.Record) record.get(${index}))"
+                        reference.isNullable -> "(${reference.emit()}) java.util.Optional.ofNullable((${field.reference.emitRoot()}) record.get($index))"
+                        reference.isEnum(module) -> "${field.reference.emit()}.Avro.from((org.apache.avro.generic.GenericData.EnumSymbol) record.get($index))"
+                        else -> "${field.reference.emit()}.Avro.from((org.apache.avro.generic.GenericData.Record) record.get($index))"
                     }
 
                     is Reference.Primitive -> when {
-                        reference.isNullable -> "(${reference.emit()}) java.util.Optional.ofNullable((${field.reference.emitRoot()}) record.get(${index}))"
-                        reference.type == Reference.Primitive.Type.Bytes -> "(${reference.emit()}) ((java.nio.ByteBuffer) record.get(${index})).array()"
-                        reference.type == Reference.Primitive.Type.String(null) -> "(${reference.emit()}) record.get(${index}).toString()"
-                        else -> "(${reference.emit()}) record.get(${index})"
+                        reference.isNullable -> "(${reference.emit()}) java.util.Optional.ofNullable((${field.reference.emitRoot()}) record.get($index))"
+                        reference.type == Reference.Primitive.Type.Bytes -> "(${reference.emit()}) ((java.nio.ByteBuffer) record.get($index)).array()"
+                        reference.type == Reference.Primitive.Type.String(null) -> "(${reference.emit()}) record.get($index).toString()"
+                        else -> "(${reference.emit()}) record.get($index)"
                     }
 
-                    else -> "(${reference.emit()}) record.get(${index})"
+                    else -> "(${reference.emit()}) record.get($index)"
                 }
             }
         }
-
-
 }

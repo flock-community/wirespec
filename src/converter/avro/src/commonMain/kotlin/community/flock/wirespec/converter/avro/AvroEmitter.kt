@@ -7,8 +7,8 @@ import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
@@ -27,12 +27,12 @@ object AvroEmitter : Emitter() {
     fun Enum.emit(): AvroModel.EnumType = AvroModel.EnumType(
         type = "enum",
         name = identifier.value,
-        symbols = entries.toList()
+        symbols = entries.toList(),
     )
 
     fun Union.emit(): AvroModel.UnionType = AvroModel.UnionType(
         name = identifier.value,
-        type = AvroModel.TypeList(entries.map { AvroModel.SimpleType(it.value) })
+        type = AvroModel.TypeList(entries.map { AvroModel.SimpleType(it.value) }),
     )
 
     fun Reference.emit(module: Module, hasEmitted: MutableList<String>): AvroModel.Type = when (this) {
@@ -74,14 +74,13 @@ object AvroEmitter : Emitter() {
         is Reference.Unit -> TODO()
     }
 
-    fun Field.emit(module: Module, hasEmitted: MutableList<String>) =
-        when (val ref = reference) {
-            is Reference.Iterable -> AvroModel.ArrayType(
-                type = "array",
-                items = ref.reference.emit(module, hasEmitted)
-            )
-            else -> ref.emit(module, hasEmitted)
-        }
+    fun Field.emit(module: Module, hasEmitted: MutableList<String>) = when (val ref = reference) {
+        is Reference.Iterable -> AvroModel.ArrayType(
+            type = "array",
+            items = ref.reference.emit(module, hasEmitted),
+        )
+        else -> ref.emit(module, hasEmitted)
+    }
 
     fun Type.emit(module: Module, hasEmitted: MutableList<String>): AvroModel.RecordType = AvroModel.RecordType(
         name = identifier.value,
@@ -92,13 +91,13 @@ object AvroEmitter : Emitter() {
                 type = if (field.reference.isNullable) {
                     AvroModel.TypeList(
                         AvroModel.SimpleType("null"),
-                        field.emit(module, hasEmitted)
+                        field.emit(module, hasEmitted),
                     )
                 } else {
                     AvroModel.TypeList(field.emit(module, hasEmitted))
-                }
+                },
             )
-        }
+        },
     )
 
     fun emit(module: Module): List<AvroModel.Type> {
