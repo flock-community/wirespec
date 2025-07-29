@@ -14,10 +14,10 @@ class SpringKotlinEmitter(packageName: PackageName) : KotlinEmitter(packageName,
             Endpoint.Method.POST -> "@org.springframework.web.bind.annotation.PostMapping(\"${path}\")"
             Endpoint.Method.PUT -> "@org.springframework.web.bind.annotation.PutMapping(\"${path}\")"
             Endpoint.Method.DELETE -> "@org.springframework.web.bind.annotation.DeleteMapping(\"${path}\")"
-            Endpoint.Method.OPTIONS -> "@org.springframework.web.bind.annotation.RequestMapping(value=\"${path}\", method = RequestMethod.OPTIONS)"
-            Endpoint.Method.HEAD -> "@org.springframework.web.bind.annotation.RequestMapping(value=\"${path}\", method = RequestMethod.HEAD)"
-            Endpoint.Method.PATCH -> "@org.springframework.web.bind.annotation.RequestMapping(value=\"${path}\", method = RequestMethod.PATCH)"
-            Endpoint.Method.TRACE -> "@org.springframework.web.bind.annotation.RequestMapping(value=\"${path}\", method = RequestMethod.TRACE)"
+            Endpoint.Method.PATCH -> "@org.springframework.web.bind.annotation.PatchMapping(\"${path}\")"
+            Endpoint.Method.OPTIONS -> "@org.springframework.web.bind.annotation.RequestMapping(value=[\"${path}\"], method = [org.springframework.web.bind.annotation.RequestMethod.OPTIONS])"
+            Endpoint.Method.HEAD -> "@org.springframework.web.bind.annotation.RequestMapping(value=[\"${path}\"], method = [org.springframework.web.bind.annotation.RequestMethod.HEAD])"
+            Endpoint.Method.TRACE -> "@org.springframework.web.bind.annotation.RequestMapping(value=[\"${path}\"], method = [org.springframework.web.bind.annotation.RequestMethod.TRACE])"
         }
         return """
             |$annotation
