@@ -1278,7 +1278,7 @@ class OpenAPIV3ParserTest {
                     Endpoint.Response(
                         status = "200",
                         headers = emptyList(),
-                        content = null
+                        content = null,
                     ),
                 ),
             ),
