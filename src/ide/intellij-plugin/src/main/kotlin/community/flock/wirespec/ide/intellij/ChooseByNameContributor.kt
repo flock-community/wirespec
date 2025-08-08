@@ -2,7 +2,6 @@ package community.flock.wirespec.ide.intellij
 
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
@@ -13,9 +12,7 @@ import com.intellij.navigation.ChooseByNameContributor as IntellijChooseByNameCo
 
 class ChooseByNameContributor : IntellijChooseByNameContributor {
 
-    private lateinit var map: Map<String, PsiElement>
-
-    override fun getNames(project: Project, includeNonProjectItems: Boolean) = FileTypeIndex
+    fun getMap(project: Project) = FileTypeIndex
         .getFiles(FileType, GlobalSearchScope.allScope(project))
         .map(PsiManager.getInstance(project)::findFile)
         .flatMap { file ->
@@ -25,8 +22,8 @@ class ChooseByNameContributor : IntellijChooseByNameContributor {
                 .map { it.chars.toString() to it.psi }
         }
         .toMap()
-        .also { map = it }
-        .keys.toTypedArray()
 
-    override fun getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean) = listOfNotNull(map[name] as NavigationItem).toTypedArray()
+    override fun getNames(project: Project, includeNonProjectItems: Boolean) = getMap(project).keys.toTypedArray()
+
+    override fun getItemsByName(name: String, pattern: String, project: Project, includeNonProjectItems: Boolean): Array<NavigationItem> = listOfNotNull((getMap(project)[name]) as NavigationItem).toTypedArray()
 }
