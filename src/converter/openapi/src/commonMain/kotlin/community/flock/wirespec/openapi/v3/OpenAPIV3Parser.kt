@@ -99,27 +99,39 @@ object OpenAPIV3Parser : Parser {
 
                 val responses = operation.responses.orEmpty().flatMap { (status, res) ->
                     resolve(res).let { response ->
-                        response.content?.map { (contentType, media) ->
-                            val isNullable = media.schema?.let { resolve(it) }?.nullable ?: false
-                            Endpoint.Response(
-                                status = status.value,
-                                headers = response.headers?.map { entry ->
-                                    toField(resolve(entry.value), entry.key, className(name, "ResponseHeader"))
-                                }.orEmpty(),
-                                content = Endpoint.Content(
-                                    type = contentType.value,
-                                    reference = when (val schema = media.schema) {
-                                        is ReferenceObject -> toReference(schema, isNullable)
-                                        is SchemaObject -> toReference(
-                                            schema,
-                                            isNullable,
-                                            className(name, status.value, "ResponseBody"),
-                                        )
-
-                                        null -> Reference.Any(isNullable)
-                                    },
+                        if (response.content.isNullOrEmpty()) {
+                            listOf(
+                                Endpoint.Response(
+                                    status = status.value,
+                                    headers = response.headers?.map { entry ->
+                                        toField(resolve(entry.value), entry.key, className(name, "ResponseHeader"))
+                                    }.orEmpty(),
+                                    content = null,
                                 ),
                             )
+                        } else {
+                            response.content?.map { (contentType, media) ->
+                                val isNullable = media.schema?.let { resolve(it) }?.nullable ?: false
+                                Endpoint.Response(
+                                    status = status.value,
+                                    headers = response.headers?.map { entry ->
+                                        toField(resolve(entry.value), entry.key, className(name, "ResponseHeader"))
+                                    }.orEmpty(),
+                                    content = Endpoint.Content(
+                                        type = contentType.value,
+                                        reference = when (val schema = media.schema) {
+                                            is ReferenceObject -> toReference(schema, isNullable)
+                                            is SchemaObject -> toReference(
+                                                schema,
+                                                isNullable,
+                                                className(name, status.value, "ResponseBody"),
+                                            )
+
+                                            null -> Reference.Any(isNullable)
+                                        },
+                                    ),
+                                )
+                            }
                         }
                     }
                         ?: listOf(
