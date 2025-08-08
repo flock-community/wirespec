@@ -81,10 +81,10 @@ fun tokenize(source: String) = WirespecSpec
 fun parse(source: String) = object : ParseContext, NoLogger {}.parse(nonEmptyListOf(ModuleContent("", source))).produce()
 
 @JsExport
-fun convert(source: String, converters: Converters) = when (converters) {
-    Converters.OPENAPI_V2 -> OpenAPIV2Parser.parse(ModuleContent("", source), true).produce()
-    Converters.OPENAPI_V3 -> OpenAPIV3Parser.parse(ModuleContent("", source), true).produce()
-    Converters.AVRO -> AvroParser.parse(ModuleContent("", source), true).produce()
+fun convert(source: String, converters: Converters, strict: Boolean = false) = when (converters) {
+    Converters.OPENAPI_V2 -> OpenAPIV2Parser.parse(ModuleContent("", source), strict).produce()
+    Converters.OPENAPI_V3 -> OpenAPIV3Parser.parse(ModuleContent("", source), strict).produce()
+    Converters.AVRO -> AvroParser.parse(ModuleContent("", source), strict).produce()
 }
 
 @JsExport
