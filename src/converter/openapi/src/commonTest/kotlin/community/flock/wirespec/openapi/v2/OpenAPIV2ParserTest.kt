@@ -57,6 +57,7 @@ class OpenAPIV2ParserTest {
         val expectedTypeDefinitions = listOf(
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("ApiResponse"),
                 shape = Shape(
                     value = listOf(
@@ -81,6 +82,7 @@ class OpenAPIV2ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("Category"),
                 shape = Shape(
                     value = listOf(
@@ -98,6 +100,7 @@ class OpenAPIV2ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("Pet"),
                 shape = Shape(
                     value = listOf(
@@ -140,6 +143,7 @@ class OpenAPIV2ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("Tag"),
                 shape = Shape(
                     value = listOf(
@@ -157,6 +161,7 @@ class OpenAPIV2ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("Order"),
                 shape = Shape(
                     value = listOf(
@@ -198,6 +203,7 @@ class OpenAPIV2ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("User"),
                 shape = Shape(
                     value = listOf(
@@ -245,11 +251,13 @@ class OpenAPIV2ParserTest {
         val expectedEnumDefinitions = listOf(
             Enum(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("PetStatus"),
                 entries = setOf("available", "pending", "sold"),
             ),
             Enum(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("OrderStatus"),
                 entries = setOf("placed", "approved", "delivered"),
             ),
@@ -297,6 +305,7 @@ class OpenAPIV2ParserTest {
         val expected = listOf(
             Endpoint(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("AlisaGET"),
                 method = Endpoint.Method.GET,
                 path = listOf(Endpoint.Segment.Literal(value = "alisa")),
@@ -316,6 +325,7 @@ class OpenAPIV2ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("Foo"),
                 shape = Shape(
                     value = listOf(

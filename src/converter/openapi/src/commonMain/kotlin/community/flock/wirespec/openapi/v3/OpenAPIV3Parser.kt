@@ -145,6 +145,7 @@ object OpenAPIV3Parser : Parser {
 
                 Endpoint(
                     comment = null,
+                    annotations = emptyList(),
                     identifier = DefinitionIdentifier(name),
                     method = method,
                     path = segments,
@@ -372,6 +373,7 @@ object OpenAPIV3Parser : Parser {
         schemaObject.oneOf != null || schemaObject.anyOf != null -> listOf(
             Union(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier(name.sanitize()),
                 entries = schemaObject.oneOf
                     .orEmpty()
@@ -397,6 +399,7 @@ object OpenAPIV3Parser : Parser {
         schemaObject.allOf != null -> listOf(
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier(name.sanitize()),
                 shape = Type.Shape(
                     schemaObject.allOf.orEmpty().flatMap { toField(resolve(it), name) }
@@ -422,7 +425,7 @@ object OpenAPIV3Parser : Parser {
             schemaObject.enum!!
                 .map { it.content }
                 .toSet()
-                .let { listOf(Enum(comment = null, identifier = DefinitionIdentifier(name), entries = it)) }
+                .let { listOf(Enum(comment = null, annotations = emptyList(), identifier = DefinitionIdentifier(name), entries = it)) }
 
         else -> when (schemaObject.type) {
             null, OpenapiType.OBJECT -> {
@@ -432,6 +435,7 @@ object OpenAPIV3Parser : Parser {
                 val schema = listOf(
                     Type(
                         comment = null,
+                        annotations = emptyList(),
                         identifier = DefinitionIdentifier(name),
                         shape = Type.Shape(toField(schemaObject, name)),
                         extends = emptyList(),

@@ -23,6 +23,7 @@ class AvroJavaEmitterTest {
     fun emitRootFunctionBodyTest() {
         val type = Type(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("Identifier"),
             shape = Type.Shape(
                 listOf(
@@ -70,6 +71,7 @@ class AvroJavaEmitterTest {
     fun emitEnumFunctionBodyTest() {
         val enum = Enum(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("Identifier"),
             entries = setOf("ONE", "TWO", "THREE"),
         )

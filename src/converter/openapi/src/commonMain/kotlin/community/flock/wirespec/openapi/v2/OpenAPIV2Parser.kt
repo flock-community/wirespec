@@ -129,6 +129,7 @@ object OpenAPIV2Parser : Parser {
                 listOf(
                     Endpoint(
                         comment = null,
+                        annotations = emptyList(),
                         identifier = DefinitionIdentifier(name.sanitize()),
                         method = method,
                         path = segments,
@@ -159,6 +160,7 @@ object OpenAPIV2Parser : Parser {
                 parameter.enum != null -> listOf(
                     Enum(
                         comment = null,
+                        annotations = emptyList(),
                         identifier = DefinitionIdentifier(className(name, "Parameter", parameter.name).sanitize()),
                         entries = parameter.enum!!.map { it.content }.toSet(),
                     ),
@@ -278,6 +280,7 @@ object OpenAPIV2Parser : Parser {
         schemaObject.allOf != null -> listOf(
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier(name.sanitize()),
                 shape = Type.Shape(
                     schemaObject.allOf
@@ -310,7 +313,7 @@ object OpenAPIV2Parser : Parser {
             schemaObject.enum!!
                 .map { it.content }
                 .toSet()
-                .let { listOf(Enum(comment = null, identifier = DefinitionIdentifier(name.sanitize()), entries = it)) }
+                .let { listOf(Enum(comment = null, annotations = emptyList(), identifier = DefinitionIdentifier(name.sanitize()), entries = it)) }
 
         else -> when (schemaObject.type) {
             null, OpenapiType.OBJECT -> {
@@ -320,6 +323,7 @@ object OpenAPIV2Parser : Parser {
                 val schema = listOf(
                     Type(
                         comment = null,
+                        annotations = emptyList(),
                         identifier = DefinitionIdentifier(name.sanitize()),
                         shape = Type.Shape(toField(schemaObject, name)),
                         extends = emptyList(),

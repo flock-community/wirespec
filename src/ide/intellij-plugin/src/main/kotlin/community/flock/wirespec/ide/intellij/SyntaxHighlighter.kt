@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.DOC_COMMENT_
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.IDENTIFIER
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.KEYWORD
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.LINE_COMMENT
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.METADATA
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.PARAMETER
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.PARENTHESES
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.SEMICOLON
@@ -41,6 +42,7 @@ class SyntaxHighlighter : SyntaxHighlighterBase() {
         Types.QUESTION_MARK -> arrayOf(IDENTIFIER)
         Types.REG_EXP -> arrayOf(STRING)
         Types.UNDERSCORE -> arrayOf(LINE_COMMENT)
+        Types.AT -> arrayOf(METADATA)
         else -> arrayOfNulls(0)
     }
 
