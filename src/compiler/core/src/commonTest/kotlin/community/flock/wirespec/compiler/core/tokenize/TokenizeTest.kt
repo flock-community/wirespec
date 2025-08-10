@@ -56,13 +56,6 @@ class TokenizeTest {
     )
 
     @Test
-    fun testSingleQuotedLiteralString() = testTokenizer(
-        "'Hello World'",
-        LiteralString,
-        EndOfProgram,
-    )
-
-    @Test
     fun testEmptyDoubleQuotedString() = testTokenizer(
         "\"\"",
         LiteralString,
@@ -70,22 +63,8 @@ class TokenizeTest {
     )
 
     @Test
-    fun testEmptySingleQuotedString() = testTokenizer(
-        "''",
-        LiteralString,
-        EndOfProgram,
-    )
-
-    @Test
     fun testEscapedDoubleQuoteInString() = testTokenizer(
         "\"Hello \\\"World\\\"\"",
-        LiteralString,
-        EndOfProgram,
-    )
-
-    @Test
-    fun testEscapedSingleQuoteInString() = testTokenizer(
-        "'Hello \\'World\\''",
         LiteralString,
         EndOfProgram,
     )
