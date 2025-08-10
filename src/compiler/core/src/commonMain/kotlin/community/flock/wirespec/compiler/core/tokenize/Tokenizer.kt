@@ -15,9 +15,8 @@ data class TokenizeOptions(
     val groupAnnotations: Boolean = true,
 )
 
-fun LanguageSpec.tokenize(source: String, options: TokenizeOptions = TokenizeOptions()): NonEmptyList<Token> =
-    tokenize(source, nonEmptyListOf(Token(type = StartOfProgram, value = "", coordinates = Coordinates())))
-        .let(optimize(options))
+fun LanguageSpec.tokenize(source: String, options: TokenizeOptions = TokenizeOptions()): NonEmptyList<Token> = tokenize(source, nonEmptyListOf(Token(type = StartOfProgram, value = "", coordinates = Coordinates())))
+    .let(optimize(options))
 
 private tailrec fun LanguageSpec.tokenize(source: String, incompleteTokens: NonEmptyList<Token>): NonEmptyList<Token> {
     val (token, remaining) = extractToken(source, incompleteTokens.last().coordinates)
@@ -44,7 +43,7 @@ private fun LanguageSpec.potentialRegex(
 private fun LanguageSpec.extractRegex(
     source: String,
     regex: String,
-    incompleteTokens: NonEmptyList<Token>
+    incompleteTokens: NonEmptyList<Token>,
 ): NonEmptyList<Token> {
     val newLine = Regex("^[\\r\\n]")
     val escapedForwardSlash = Regex("^\\\\/")
@@ -59,7 +58,7 @@ private fun LanguageSpec.extractRegex(
         escapedForwardSlash.containsMatchIn(source) -> extractRegex(
             source.drop(2),
             regex + source.substring(0, 2),
-            incompleteTokens
+            incompleteTokens,
         )
 
         match == null -> extractRegex(source.drop(1), regex + source.first(), incompleteTokens)
@@ -75,8 +74,7 @@ private fun LanguageSpec.extractToken(source: String, previousTokenCoordinates: 
     ?.let { it to source.removePrefix(it.value) }
     ?: Pair(endToken(previousTokenCoordinates), "")
 
-private fun MatchResult.toToken(type: TokenType, previousTokenCoordinates: Coordinates) =
-    Token(value, type, previousTokenCoordinates.nextCoordinates(type, value))
+private fun MatchResult.toToken(type: TokenType, previousTokenCoordinates: Coordinates) = Token(value, type, previousTokenCoordinates.nextCoordinates(type, value))
 
 private fun Token.nextToken(type: TokenType, value: String): Token = this.copy(
     type = type,
@@ -103,11 +101,9 @@ private fun LanguageSpec.optimize(options: TokenizeOptions) = { tokens: NonEmpty
         .runOption(options.groupAnnotations) { this.groupAnnotations() }
 }
 
-private fun NonEmptyList<Token>.runOption(bool: Boolean, block: NonEmptyList<Token>.() -> NonEmptyList<Token>) =
-    if (bool) block() else this
+private fun NonEmptyList<Token>.runOption(bool: Boolean, block: NonEmptyList<Token>.() -> NonEmptyList<Token>) = if (bool) block() else this
 
-private fun NonEmptyList<Token>.removeWhiteSpace(): NonEmptyList<Token> =
-    filterNot { it.type is WhiteSpace }.toNonEmptyListOrNull() ?: endToken().nel()
+private fun NonEmptyList<Token>.removeWhiteSpace(): NonEmptyList<Token> = filterNot { it.type is WhiteSpace }.toNonEmptyListOrNull() ?: endToken().nel()
 
 private fun Token.specifyType(entries: Map<String, SpecificType>) = when (type) {
     is TypeIdentifier -> entries[value]
@@ -151,8 +147,8 @@ private fun List<Token>.mergeTokens(tokenType: TokenType): Token {
         position = last().coordinates.position,
         idxAndLength = Coordinates.IdxAndLength(
             idx = last().coordinates.idxAndLength.idx,
-            length = value.length
-        )
+            length = value.length,
+        ),
     )
     return Token(value, tokenType, coordinates)
 }
