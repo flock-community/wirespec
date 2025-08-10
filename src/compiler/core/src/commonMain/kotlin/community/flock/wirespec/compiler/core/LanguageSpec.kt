@@ -89,7 +89,6 @@ object WirespecSpec : LanguageSpec {
         Regex("^//.*\n") to Comment,
         Regex("^\\/\\*(\\*(?!\\/)|[^*])*\\*\\/") to Comment,
         Regex("^\"([^\"\\\\]|\\\\.)*\"") to LiteralString,
-        Regex("^'([^'\\\\]|\\\\.)*'") to LiteralString,
         Regex("^/") to ForwardSlash,
         Regex("^[0-9]+\\.[0-9]+") to Number,
         Regex("^[0-9]+") to Integer,
