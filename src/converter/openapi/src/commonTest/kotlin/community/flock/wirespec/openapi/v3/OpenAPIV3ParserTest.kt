@@ -35,11 +35,13 @@ class OpenAPIV3ParserTest {
         val expect = listOf(
             Enum(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("FindPetsByStatusParameterStatus"),
                 entries = setOf("available", "pending", "sold"),
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("Order"),
                 shape = Shape(
                     value = listOf(
@@ -93,11 +95,13 @@ class OpenAPIV3ParserTest {
             ),
             Enum(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("OrderStatus"),
                 entries = setOf("placed", "approved", "delivered"),
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("Customer"),
                 shape = Shape(
                     value = listOf(
@@ -131,6 +135,7 @@ class OpenAPIV3ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("Address"),
                 shape = Shape(
                     value = listOf(
@@ -168,6 +173,7 @@ class OpenAPIV3ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("Category"),
                 shape = Shape(
                     value = listOf(
@@ -191,6 +197,7 @@ class OpenAPIV3ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("User"),
                 shape = Shape(
                     value = listOf(
@@ -256,6 +263,7 @@ class OpenAPIV3ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("Tag"),
                 shape = Shape(
                     value = listOf(
@@ -279,6 +287,7 @@ class OpenAPIV3ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("Pet"),
                 shape = Shape(
                     value = listOf(
@@ -336,11 +345,13 @@ class OpenAPIV3ParserTest {
             ),
             Enum(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("PetStatus"),
                 entries = setOf("available", "pending", "sold"),
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("ApiResponse"),
                 shape = Shape(
                     value = listOf(
@@ -378,6 +389,7 @@ class OpenAPIV3ParserTest {
 
         val expectedEndpoint = Endpoint(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("GetInventory"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "store"), Endpoint.Segment.Literal(value = "inventory")),
@@ -415,6 +427,7 @@ class OpenAPIV3ParserTest {
         val expect = listOf(
             Endpoint(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("PizzasPizzaIdIngredientsGET"),
                 method = Endpoint.Method.GET,
                 path = listOf(
@@ -454,6 +467,7 @@ class OpenAPIV3ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("Ingredient"),
                 shape = Shape(
                     listOf(
@@ -480,6 +494,7 @@ class OpenAPIV3ParserTest {
         val expect = listOf(
             Endpoint(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("TodosList"),
                 method = Endpoint.Method.GET,
                 path = listOf(
@@ -531,6 +546,7 @@ class OpenAPIV3ParserTest {
             ),
             Endpoint(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("TodosPOST"),
                 method = Endpoint.Method.POST,
                 path = listOf(
@@ -584,6 +600,7 @@ class OpenAPIV3ParserTest {
             ),
             Endpoint(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("TodosIdGET"),
                 method = Endpoint.Method.GET,
                 path = listOf(
@@ -622,6 +639,7 @@ class OpenAPIV3ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("Todo_input"),
                 shape = Shape(
                     listOf(
@@ -633,6 +651,7 @@ class OpenAPIV3ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("Todo"),
                 shape = Shape(
                     listOf(
@@ -646,6 +665,7 @@ class OpenAPIV3ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("TodoAlert"),
                 shape = Shape(
                     listOf(
@@ -657,6 +677,7 @@ class OpenAPIV3ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("TodoAlertMessage"),
                 shape = Shape(
                     listOf(
@@ -668,6 +689,7 @@ class OpenAPIV3ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("TodosnestedArray"),
                 shape = Shape(
                     listOf(
@@ -680,6 +702,7 @@ class OpenAPIV3ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("Error"),
                 shape = Shape(
                     listOf(
@@ -792,6 +815,7 @@ class OpenAPIV3ParserTest {
         val expected = listOf(
             Endpoint(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier(name = "ResponserefGET"),
                 method = Endpoint.Method.GET,
                 path = listOf(Endpoint.Segment.Literal(value = "responseref")),
@@ -827,6 +851,7 @@ class OpenAPIV3ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier(
                     name = "ResponserefGET202ResponseBody",
                 ),
@@ -845,6 +870,7 @@ class OpenAPIV3ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier(name = "Address"),
                 shape = Shape(
                     value = listOf(
@@ -892,6 +918,7 @@ class OpenAPIV3ParserTest {
         val expected = listOf(
             Endpoint(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier(name = "ResponserefGET"),
                 method = Endpoint.Method.GET,
                 path = listOf(Endpoint.Segment.Literal(value = "responseref")),
@@ -935,6 +962,7 @@ class OpenAPIV3ParserTest {
             ),
             Enum(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier(
                     name = "ResponserefGETParameterEmbedArray",
                 ),
@@ -942,6 +970,7 @@ class OpenAPIV3ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier(name = "ResponserefGET201ResponseBody"),
                 shape = Shape(
                     value = listOf(
@@ -958,6 +987,7 @@ class OpenAPIV3ParserTest {
             ),
             Enum(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier(name = "EmbedParamsArray"),
                 entries = setOf("links"),
             ),
@@ -976,6 +1006,7 @@ class OpenAPIV3ParserTest {
         val expected = listOf(
             Endpoint(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier(name = "RefarrayGET"),
                 method = Endpoint.Method.GET,
                 path = listOf(Endpoint.Segment.Literal(value = "refarray")),
@@ -998,6 +1029,7 @@ class OpenAPIV3ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier(name = "RefarrayGET200ResponseBody"),
                 shape = Shape(
                     value = listOf(
@@ -1024,6 +1056,7 @@ class OpenAPIV3ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier(name = "Proposal"),
                 shape = Shape(
                     value = listOf(
@@ -1085,6 +1118,7 @@ class OpenAPIV3ParserTest {
         val expected = listOf(
             Endpoint(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier(name = "RefprimaryGET"),
                 method = Endpoint.Method.GET,
                 path = listOf(Endpoint.Segment.Literal(value = "refprimary")),
@@ -1109,6 +1143,7 @@ class OpenAPIV3ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier(name = "Address"),
                 shape = Shape(
                     value = listOf(
@@ -1140,6 +1175,7 @@ class OpenAPIV3ParserTest {
         val expected = nonEmptyListOf(
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier(name = "User"),
                 shape = Shape(
                     value = listOf(
@@ -1188,6 +1224,7 @@ class OpenAPIV3ParserTest {
         val expected = nonEmptyListOf(
             Endpoint(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier(name = "OneofGET"),
                 method = Endpoint.Method.GET,
                 path = listOf(
@@ -1211,6 +1248,7 @@ class OpenAPIV3ParserTest {
             ),
             Union(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier(name = "OneofGET200ResponseBody"),
                 entries = setOf(
                     Custom(value = "Foo", isNullable = false),
@@ -1219,6 +1257,7 @@ class OpenAPIV3ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("Foo"),
                 shape = Type.Shape(
                     value = listOf(
@@ -1235,6 +1274,7 @@ class OpenAPIV3ParserTest {
             ),
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("Bar"),
                 shape = Type.Shape(
                     value = listOf(

@@ -19,6 +19,8 @@ data object Underscore : TokenType
 data object Character : TokenType
 data object Arrow : TokenType
 data object Pipe : TokenType
+data object At : TokenType
+data object LiteralString : TokenType
 data object EndOfProgram : TokenType {
     const val VALUE = "EOP"
 }
@@ -36,6 +38,8 @@ data object KebabCaseIdentifier : CaseVariant
 data object ScreamingKebabCaseIdentifier : CaseVariant
 data object SnakeCaseIdentifier : CaseVariant
 data object ScreamingSnakeCaseIdentifier : CaseVariant
+
+data object Annotation : TokenType
 
 sealed interface TypeDefinitionStart : TokenType
 data object LeftCurly : TypeDefinitionStart

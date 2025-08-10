@@ -24,6 +24,7 @@ class AvroKotlinEmitterTest {
     fun emitTypeFunctionBodyTest() {
         val type = Type(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("Identifier"),
             shape = Type.Shape(
                 listOf(
@@ -71,6 +72,7 @@ class AvroKotlinEmitterTest {
     fun emitEnumFunctionBodyTest() {
         val enum = Enum(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("Identifier"),
             entries = setOf("ONE", "TWO", "THREE"),
         )

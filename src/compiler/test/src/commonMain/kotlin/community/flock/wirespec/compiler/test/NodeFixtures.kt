@@ -12,6 +12,7 @@ object NodeFixtures {
 
     val refined = Refined(
         comment = null,
+        annotations = emptyList(),
         identifier = DefinitionIdentifier("UUID"),
         reference = Reference.Primitive(
             isNullable = false,
@@ -23,6 +24,7 @@ object NodeFixtures {
 
     val enum = Enum(
         comment = null,
+        annotations = emptyList(),
         identifier = DefinitionIdentifier("TodoStatus"),
         entries = setOf(
             "OPEN",
@@ -33,6 +35,7 @@ object NodeFixtures {
 
     val type = Type(
         comment = null,
+        annotations = emptyList(),
         identifier = DefinitionIdentifier("Todo"),
         shape = Type.Shape(
             value = listOf(
@@ -74,6 +77,7 @@ object NodeFixtures {
 
     val emptyType = Type(
         comment = null,
+        annotations = emptyList(),
         identifier = DefinitionIdentifier("TodoWithoutProperties"),
         shape = Type.Shape(
             value = emptyList(),

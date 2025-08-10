@@ -14,6 +14,7 @@ interface Types {
         val COMMA = ElementType("COMMA")
         val QUESTION_MARK = ElementType("QUESTION_MARK")
         val HASH = ElementType("HASH")
+        val AT = ElementType("AT")
         val FORWARD_SLASH = ElementType("FORWARD_SLASH")
         val BRACKETS = ElementType("BRACKETS")
         val WIRESPEC_IDENTIFIER = ElementType("CUSTOM_VALUE")

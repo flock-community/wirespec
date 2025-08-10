@@ -52,6 +52,7 @@ object AvroConverter {
 
     private fun AvroModel.RecordType.toType() = Type(
         comment = null,
+        annotations = emptyList(),
         identifier = DefinitionIdentifier(name),
         extends = emptyList(),
         shape = Type.Shape(
@@ -66,12 +67,14 @@ object AvroConverter {
 
     private fun AvroModel.EnumType.toEnum() = Enum(
         comment = null,
+        annotations = emptyList(),
         identifier = DefinitionIdentifier(name),
         entries = symbols.toSet(),
     )
 
     private fun AvroModel.UnionType.toUnion(name: String) = Union(
         comment = null,
+        annotations = emptyList(),
         identifier = DefinitionIdentifier(name),
         entries = this.type.map { it.toReference(false) }.toSet(),
     )

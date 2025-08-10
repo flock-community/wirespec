@@ -7,11 +7,13 @@ import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.LanguageSpec
 import community.flock.wirespec.compiler.core.removeBackticks
 import community.flock.wirespec.compiler.core.tokenize.Token.Coordinates
+import kotlin.Annotation
 
 data class TokenizeOptions(
     val removeWhitespace: Boolean = true,
     val specifyTypes: Boolean = true,
     val specifyFieldIdentifiers: Boolean = true,
+    val groupAnnotations: Boolean = true,
 )
 
 fun LanguageSpec.tokenize(source: String, options: TokenizeOptions = TokenizeOptions()): NonEmptyList<Token> = tokenize(source, nonEmptyListOf(Token(type = StartOfProgram, value = "", coordinates = Coordinates())))
@@ -86,6 +88,7 @@ private fun LanguageSpec.optimize(options: TokenizeOptions) = { tokens: NonEmpty
         .runOption(options.removeWhitespace) { removeWhiteSpace() }
         .runOption(options.specifyTypes) { map { it.specifyType(typeIdentifier.specificTypes) } }
         .runOption(options.specifyFieldIdentifiers) { map { it.specifyFieldIdentifier(fieldIdentifier.caseVariants) } }
+        .runOption(options.groupAnnotations) { this.groupAnnotations() }
 }
 
 private fun NonEmptyList<Token>.runOption(bool: Boolean, block: NonEmptyList<Token>.() -> NonEmptyList<Token>) = if (bool) block() else this
@@ -110,3 +113,17 @@ private fun Token.specifyFieldIdentifier(caseVariants: List<Pair<Regex, CaseVari
 
     else -> null
 } ?: this
+
+private fun List<Token>.groupAnnotations() = this
+    .windowed(2, 1, true) { tokens ->
+        when {
+            tokens[0].type is At && tokens[1].type is CaseVariant -> tokens.mergeTokens(Annotation)
+            else -> tokens[0]
+        }
+    }
+    .toNonEmptyListOrNull() ?: endToken().nel()
+
+private fun List<Token>.mergeTokens(tokenType: TokenType): Token {
+    val value = joinToString("") { it.value }
+    return Token(value, tokenType, Coordinates(line = first().coordinates.line, idxAndLength = first().coordinates.idxAndLength + value.length))
+}

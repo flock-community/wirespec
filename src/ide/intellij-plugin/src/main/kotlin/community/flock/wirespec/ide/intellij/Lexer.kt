@@ -2,6 +2,7 @@ package community.flock.wirespec.ide.intellij
 
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.tokenize.Arrow
+import community.flock.wirespec.compiler.core.tokenize.At
 import community.flock.wirespec.compiler.core.tokenize.Brackets
 import community.flock.wirespec.compiler.core.tokenize.ChannelDefinition
 import community.flock.wirespec.compiler.core.tokenize.Character
@@ -17,6 +18,7 @@ import community.flock.wirespec.compiler.core.tokenize.Hash
 import community.flock.wirespec.compiler.core.tokenize.Integer
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.LeftParenthesis
+import community.flock.wirespec.compiler.core.tokenize.LiteralString
 import community.flock.wirespec.compiler.core.tokenize.Method
 import community.flock.wirespec.compiler.core.tokenize.Number
 import community.flock.wirespec.compiler.core.tokenize.Path
@@ -67,6 +69,7 @@ class Lexer : IntellijLexer() {
         is Comma -> Types.COMMA
         is QuestionMark -> Types.QUESTION_MARK
         is Hash -> Types.HASH
+        is At -> Types.AT
         is ForwardSlash -> Types.FORWARD_SLASH
         is Brackets -> Types.BRACKETS
         is WirespecIdentifier -> Types.WIRESPEC_IDENTIFIER
@@ -96,6 +99,7 @@ class Lexer : IntellijLexer() {
         is LeftParenthesis -> Types.LEFT_PARENTHESES
         is RegExp -> Types.REG_EXP
         is Underscore -> Types.UNDERSCORE
+        is LiteralString -> TODO()
     }
 
     override fun getTokenStart() = tokens[index]

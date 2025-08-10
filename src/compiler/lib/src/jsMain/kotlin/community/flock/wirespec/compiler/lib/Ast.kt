@@ -39,6 +39,7 @@ fun WsDefinition.consume(): Definition = when (this) {
 
 fun WsEndpoint.consume(): Endpoint = Endpoint(
     comment = comment?.let { Comment(it) },
+    annotations = emptyList(),
     identifier = DefinitionIdentifier(identifier),
     method = method.consume(),
     path = path.map { it.consume() },
@@ -71,33 +72,38 @@ private fun WsClassIdentifier.consume() = DefinitionIdentifier(value)
 private fun WsFieldIdentifier.consume() = FieldIdentifier(value)
 
 private fun WsEnum.consume() = Enum(
-    identifier = DefinitionIdentifier(identifier),
     comment = comment?.let { Comment(it) },
+    annotations = emptyList(),
+    identifier = DefinitionIdentifier(identifier),
     entries = entries.toSet(),
 )
 
 private fun WsRefined.consume() = Refined(
-    identifier = DefinitionIdentifier(identifier),
     comment = comment?.let { Comment(it) },
+    annotations = emptyList(),
+    identifier = DefinitionIdentifier(identifier),
     reference = reference.consume() as? Reference.Primitive ?: error("Cannot refine non-primitive type"),
 )
 
 private fun WsType.consume() = Type(
-    identifier = DefinitionIdentifier(identifier),
     comment = comment?.let { Comment(it) },
+    annotations = emptyList(),
+    identifier = DefinitionIdentifier(identifier),
     shape = Type.Shape(shape.value.map { it.consume() }),
     extends = emptyList(),
 )
 
 private fun WsUnion.consume() = Union(
-    identifier = DefinitionIdentifier(identifier),
     comment = comment?.let { Comment(it) },
+    annotations = emptyList(),
+    identifier = DefinitionIdentifier(identifier),
     entries = entries.map { it.consume() }.toSet(),
 )
 
 private fun WsChannel.consume() = Channel(
-    identifier = DefinitionIdentifier(identifier),
     comment = comment?.let { Comment(it) },
+    annotations = emptyList(),
+    identifier = DefinitionIdentifier(identifier),
     reference = reference.consume(),
 )
 
