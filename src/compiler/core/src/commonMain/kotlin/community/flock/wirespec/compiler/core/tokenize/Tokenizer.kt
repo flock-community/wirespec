@@ -7,7 +7,6 @@ import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.LanguageSpec
 import community.flock.wirespec.compiler.core.removeBackticks
 import community.flock.wirespec.compiler.core.tokenize.Token.Coordinates
-import kotlin.Annotation
 
 data class TokenizeOptions(
     val removeWhitespace: Boolean = true,
@@ -16,8 +15,9 @@ data class TokenizeOptions(
     val groupAnnotations: Boolean = true,
 )
 
-fun LanguageSpec.tokenize(source: String, options: TokenizeOptions = TokenizeOptions()): NonEmptyList<Token> = tokenize(source, nonEmptyListOf(Token(type = StartOfProgram, value = "", coordinates = Coordinates())))
-    .let(optimize(options))
+fun LanguageSpec.tokenize(source: String, options: TokenizeOptions = TokenizeOptions()): NonEmptyList<Token> =
+    tokenize(source, nonEmptyListOf(Token(type = StartOfProgram, value = "", coordinates = Coordinates())))
+        .let(optimize(options))
 
 private tailrec fun LanguageSpec.tokenize(source: String, incompleteTokens: NonEmptyList<Token>): NonEmptyList<Token> {
     val (token, remaining) = extractToken(source, incompleteTokens.last().coordinates)
@@ -41,7 +41,11 @@ private fun LanguageSpec.potentialRegex(
     }
 }
 
-private fun LanguageSpec.extractRegex(source: String, regex: String, incompleteTokens: NonEmptyList<Token>): NonEmptyList<Token> {
+private fun LanguageSpec.extractRegex(
+    source: String,
+    regex: String,
+    incompleteTokens: NonEmptyList<Token>
+): NonEmptyList<Token> {
     val newLine = Regex("^[\\r\\n]")
     val escapedForwardSlash = Regex("^\\\\/")
     val endOfRegex = Regex("^/[gimsuy]*")
@@ -51,7 +55,13 @@ private fun LanguageSpec.extractRegex(source: String, regex: String, incompleteT
             val token = incompleteTokens.last().nextToken(RegExp, regex)
             tokenize(source, incompleteTokens + token)
         }
-        escapedForwardSlash.containsMatchIn(source) -> extractRegex(source.drop(2), regex + source.substring(0, 2), incompleteTokens)
+
+        escapedForwardSlash.containsMatchIn(source) -> extractRegex(
+            source.drop(2),
+            regex + source.substring(0, 2),
+            incompleteTokens
+        )
+
         match == null -> extractRegex(source.drop(1), regex + source.first(), incompleteTokens)
         else -> {
             val token = incompleteTokens.last().nextToken(RegExp, regex + match.value)
@@ -65,13 +75,15 @@ private fun LanguageSpec.extractToken(source: String, previousTokenCoordinates: 
     ?.let { it to source.removePrefix(it.value) }
     ?: Pair(endToken(previousTokenCoordinates), "")
 
-private fun MatchResult.toToken(type: TokenType, previousTokenCoordinates: Coordinates) = Token(value, type, previousTokenCoordinates.nextCoordinates(type, value))
+private fun MatchResult.toToken(type: TokenType, previousTokenCoordinates: Coordinates) =
+    Token(value, type, previousTokenCoordinates.nextCoordinates(type, value))
 
 private fun Token.nextToken(type: TokenType, value: String): Token = this.copy(
     type = type,
     value = value,
     coordinates = coordinates.nextCoordinates(type, value),
 )
+
 private fun Coordinates.nextCoordinates(type: TokenType, value: String) = when (type) {
     is NewLine -> Coordinates(line = line + 1, idxAndLength = idxAndLength + value.length)
     else -> this + value.length
@@ -91,9 +103,11 @@ private fun LanguageSpec.optimize(options: TokenizeOptions) = { tokens: NonEmpty
         .runOption(options.groupAnnotations) { this.groupAnnotations() }
 }
 
-private fun NonEmptyList<Token>.runOption(bool: Boolean, block: NonEmptyList<Token>.() -> NonEmptyList<Token>) = if (bool) block() else this
+private fun NonEmptyList<Token>.runOption(bool: Boolean, block: NonEmptyList<Token>.() -> NonEmptyList<Token>) =
+    if (bool) block() else this
 
-private fun NonEmptyList<Token>.removeWhiteSpace(): NonEmptyList<Token> = filterNot { it.type is WhiteSpace }.toNonEmptyListOrNull() ?: endToken().nel()
+private fun NonEmptyList<Token>.removeWhiteSpace(): NonEmptyList<Token> =
+    filterNot { it.type is WhiteSpace }.toNonEmptyListOrNull() ?: endToken().nel()
 
 private fun Token.specifyType(entries: Map<String, SpecificType>) = when (type) {
     is TypeIdentifier -> entries[value]
@@ -114,16 +128,31 @@ private fun Token.specifyFieldIdentifier(caseVariants: List<Pair<Regex, CaseVari
     else -> null
 } ?: this
 
-private fun List<Token>.groupAnnotations() = this
-    .windowed(2, 1, true) { tokens ->
-        when {
-            tokens[0].type is At && tokens[1].type is CaseVariant -> tokens.mergeTokens(Annotation)
-            else -> tokens[0]
+private fun List<Token>.groupAnnotations() = run {
+    val result = mutableListOf<Token>()
+    var i = 0
+    while (i < this.size) {
+        val current = this[i]
+        if (i + 1 < this.size && current.type is At && this[i + 1].type is WirespecIdentifier) {
+            result.add(listOf(current, this[i + 1]).mergeTokens(Annotation))
+            i += 2
+        } else {
+            result.add(current)
+            i += 1
         }
     }
-    .toNonEmptyListOrNull() ?: endToken().nel()
+    result.toNonEmptyListOrNull() ?: endToken().nel()
+}
 
 private fun List<Token>.mergeTokens(tokenType: TokenType): Token {
     val value = joinToString("") { it.value }
-    return Token(value, tokenType, Coordinates(line = first().coordinates.line, idxAndLength = first().coordinates.idxAndLength + value.length))
+    val coordinates = Coordinates(
+        line = first().coordinates.line,
+        position = last().coordinates.position,
+        idxAndLength = Coordinates.IdxAndLength(
+            idx = last().coordinates.idxAndLength.idx,
+            length = value.length
+        )
+    )
+    return Token(value, tokenType, coordinates)
 }
