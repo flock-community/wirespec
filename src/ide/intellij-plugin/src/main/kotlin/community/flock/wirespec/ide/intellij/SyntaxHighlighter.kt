@@ -7,17 +7,16 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.IDENTIFIER
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.KEYWORD
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.LINE_COMMENT
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.METADATA
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.NUMBER
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.PARAMETER
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.PARENTHESES
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.SEMICOLON
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.STRING
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.NUMBER
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.tree.IElementType
-import community.flock.wirespec.compiler.core.tokenize.Integer
 
 class SyntaxHighlighter : SyntaxHighlighterBase() {
 
