@@ -14,7 +14,6 @@ interface Types {
         val COMMA = ElementType("COMMA")
         val QUESTION_MARK = ElementType("QUESTION_MARK")
         val HASH = ElementType("HASH")
-        val AT = ElementType("AT")
         val FORWARD_SLASH = ElementType("FORWARD_SLASH")
         val BRACKETS = ElementType("BRACKETS")
         val WIRESPEC_IDENTIFIER = ElementType("CUSTOM_VALUE")
@@ -35,7 +34,6 @@ interface Types {
         val UNIT = ElementType("UNIT")
         val METHOD = ElementType("METHOD")
         val PATH = ElementType("PATH")
-        val STATUS_CODE = ElementType("STATUS_CODE")
         val ARROW = ElementType("ARROW")
         val EQUALS = ElementType("EQUALS")
         val PIPE = ElementType("PIPE")
@@ -44,5 +42,9 @@ interface Types {
         val NUMBER = ElementType("NUMBER")
         val INTEGER = ElementType("INTEGER")
         val UNDERSCORE = ElementType("UNDERSCORE")
+
+        val ANNOTATION = ElementType("ANNOTATION")
+        val LITERAL_STRING = ElementType("STRING_LITERAL")
+        val AT = ElementType("AT")
     }
 }

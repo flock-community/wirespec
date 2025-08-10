@@ -11,11 +11,13 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.PARAMETER
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.PARENTHESES
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.SEMICOLON
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.STRING
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.NUMBER
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.tree.IElementType
+import community.flock.wirespec.compiler.core.tokenize.Integer
 
 class SyntaxHighlighter : SyntaxHighlighterBase() {
 
@@ -42,7 +44,10 @@ class SyntaxHighlighter : SyntaxHighlighterBase() {
         Types.QUESTION_MARK -> arrayOf(IDENTIFIER)
         Types.REG_EXP -> arrayOf(STRING)
         Types.UNDERSCORE -> arrayOf(LINE_COMMENT)
-        Types.AT -> arrayOf(METADATA)
+        Types.ANNOTATION -> arrayOf(METADATA)
+        Types.LITERAL_STRING -> arrayOf(STRING)
+        Types.NUMBER -> arrayOf(NUMBER)
+        Types.INTEGER -> arrayOf(NUMBER)
         else -> arrayOfNulls(0)
     }
 

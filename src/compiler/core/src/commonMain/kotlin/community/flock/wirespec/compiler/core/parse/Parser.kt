@@ -111,19 +111,14 @@ private fun TokenProvider.parseDefinition() = either {
 
     private fun TokenProvider.parseAnnotations() = either {
         val annotations = mutableListOf<Annotation>()
-        while (token.type is At) {
+        while (token.type is community.flock.wirespec.compiler.core.tokenize.Annotation) {
             annotations.add(parseAnnotation().bind())
         }
         annotations
     }
 
     private fun TokenProvider.parseAnnotation() = either {
-        eatToken().bind() // consume @
-        val name = when (token.type) {
-            is FieldIdentifier -> token.value.also { eatToken().bind() }
-            is DromedaryCaseIdentifier -> token.value.also { eatToken().bind() }
-            else -> raiseWrongToken<FieldIdentifier>().bind()
-        }
+        val name = token.value.drop(1).also { eatToken().bind() }
         val parameters = if (token.type is LeftParenthesis) {
             eatToken().bind() // consume (
             parseAnnotationParameters().bind().also {
