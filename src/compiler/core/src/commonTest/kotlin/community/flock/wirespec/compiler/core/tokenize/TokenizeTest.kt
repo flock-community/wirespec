@@ -47,4 +47,74 @@ class TokenizeTest {
         RightCurly,
         EndOfProgram,
     )
+
+    @Test
+    fun testDoubleQuotedLiteralString() = testTokenizer(
+        "\"Hello World\"",
+        LiteralString,
+        EndOfProgram,
+    )
+
+    @Test
+    fun testSingleQuotedLiteralString() = testTokenizer(
+        "'Hello World'",
+        LiteralString,
+        EndOfProgram,
+    )
+
+    @Test
+    fun testEmptyDoubleQuotedString() = testTokenizer(
+        "\"\"",
+        LiteralString,
+        EndOfProgram,
+    )
+
+    @Test
+    fun testEmptySingleQuotedString() = testTokenizer(
+        "''",
+        LiteralString,
+        EndOfProgram,
+    )
+
+    @Test
+    fun testEscapedDoubleQuoteInString() = testTokenizer(
+        "\"Hello \\\"World\\\"\"",
+        LiteralString,
+        EndOfProgram,
+    )
+
+    @Test
+    fun testEscapedSingleQuoteInString() = testTokenizer(
+        "'Hello \\'World\\''",
+        LiteralString,
+        EndOfProgram,
+    )
+
+    @Test
+    fun testLiteralStringWithEscapedBackslash() = testTokenizer(
+        "\"Path\\\\to\\\\file\"",
+        LiteralString,
+        EndOfProgram,
+    )
+
+    @Test
+    fun testLiteralStringWithNewlineEscape() = testTokenizer(
+        "\"Hello\\nWorld\"",
+        LiteralString,
+        EndOfProgram,
+    )
+
+    @Test
+    fun testLiteralStringWithTabEscape() = testTokenizer(
+        "\"Hello\\tWorld\"",
+        LiteralString,
+        EndOfProgram,
+    )
+
+    @Test
+    fun testLiteralStringWithSpecialCharacters() = testTokenizer(
+        "\"Hello @#\$%^&*()_+{}|:<>?[]\\\\;',./ World\"",
+        LiteralString,
+        EndOfProgram,
+    )
 }

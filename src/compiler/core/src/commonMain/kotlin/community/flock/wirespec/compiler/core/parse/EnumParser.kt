@@ -9,17 +9,18 @@ import community.flock.wirespec.compiler.core.tokenize.WirespecType
 
 object EnumParser {
 
-    fun TokenProvider.parseEnum(comment: Comment?): Either<WirespecException, Enum> = parseToken {
+    fun TokenProvider.parseEnum(comment: Comment?, annotations: List<Annotation>): Either<WirespecException, Enum> = parseToken {
         when (token.type) {
-            is WirespecType -> parseEnumTypeDefinition(comment, DefinitionIdentifier(token.value)).bind()
+            is WirespecType -> parseEnumTypeDefinition(comment, annotations, DefinitionIdentifier(token.value)).bind()
             else -> raiseWrongToken<WirespecType>().bind()
         }
     }
 
-    private fun TokenProvider.parseEnumTypeDefinition(comment: Comment?, typeName: DefinitionIdentifier) = parseToken {
+    private fun TokenProvider.parseEnumTypeDefinition(comment: Comment?, annotations: List<Annotation>, typeName: DefinitionIdentifier) = parseToken {
         when (token.type) {
             is LeftCurly -> Enum(
                 comment = comment,
+                annotations = annotations,
                 identifier = typeName,
                 entries = parseEnumTypeEntries().bind(),
             )

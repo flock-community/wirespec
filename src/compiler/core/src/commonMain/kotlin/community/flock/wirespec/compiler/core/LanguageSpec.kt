@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core
 
 import community.flock.wirespec.compiler.core.tokenize.Arrow
+import community.flock.wirespec.compiler.core.tokenize.At
 import community.flock.wirespec.compiler.core.tokenize.Brackets
 import community.flock.wirespec.compiler.core.tokenize.CaseVariant
 import community.flock.wirespec.compiler.core.tokenize.ChannelDefinition
@@ -19,6 +20,7 @@ import community.flock.wirespec.compiler.core.tokenize.Integer
 import community.flock.wirespec.compiler.core.tokenize.KebabCaseIdentifier
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.LeftParenthesis
+import community.flock.wirespec.compiler.core.tokenize.LiteralString
 import community.flock.wirespec.compiler.core.tokenize.Method
 import community.flock.wirespec.compiler.core.tokenize.NewLine
 import community.flock.wirespec.compiler.core.tokenize.Number
@@ -77,6 +79,7 @@ object WirespecSpec : LanguageSpec {
         Regex("^:") to Colon,
         Regex("^,") to Comma,
         Regex("^\\?") to QuestionMark,
+        Regex("^@") to At,
         Regex("^#") to Hash,
         Regex("^\\[\\]") to Brackets,
         Regex("^\\b(GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE)\\b") to Method,
@@ -85,6 +88,8 @@ object WirespecSpec : LanguageSpec {
         Regex("^/[a-zA-Z0-9-_]+") to Path,
         Regex("^//.*\n") to Comment,
         Regex("^\\/\\*(\\*(?!\\/)|[^*])*\\*\\/") to Comment,
+        Regex("^\"([^\"\\\\]|\\\\.)*\"") to LiteralString,
+        Regex("^'([^'\\\\]|\\\\.)*'") to LiteralString,
         Regex("^/") to ForwardSlash,
         Regex("^[0-9]+\\.[0-9]+") to Number,
         Regex("^[0-9]+") to Integer,
