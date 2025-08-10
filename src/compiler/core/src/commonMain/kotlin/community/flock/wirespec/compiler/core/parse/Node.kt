@@ -129,6 +129,7 @@ sealed interface Reference : Value<String> {
 data class Field(
     val identifier: FieldIdentifier,
     val reference: Reference,
+    val annotations: List<Annotation> = emptyList(),
 )
 
 data class Enum(
