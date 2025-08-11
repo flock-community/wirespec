@@ -106,60 +106,64 @@ private fun TokenProvider.parseDefinition() = either {
         else -> raiseWrongToken<WirespecDefinition>().bind()
     }
 
-    private fun TokenProvider.parseAnnotations() = either {
-        val annotations = mutableListOf<Annotation>()
-        while (token.type is community.flock.wirespec.compiler.core.tokenize.Annotation) {
-            annotations.add(parseAnnotation().bind())
+    fun TokenProvider.parseAnnotations(): Either<WirespecException, List<Annotation>> = either {
+        when (token.type) {
+            is community.flock.wirespec.compiler.core.tokenize.Annotation -> {
+                val annotation = parseAnnotation().bind()
+                val remaining = parseAnnotations().bind()
+                listOf(annotation) + remaining
+            }
+            else -> emptyList()
         }
-        annotations
     }
 
     private fun TokenProvider.parseAnnotation() = either {
         val name = token.value.drop(1).also { eatToken().bind() }
-        val parameters = if (token.type is LeftParenthesis) {
-            eatToken().bind() // consume (
-            parseAnnotationParameters().bind().also {
-                if (token.type is RightParenthesis) {
-                    eatToken().bind() // consume )
-                } else {
-                    raiseWrongToken<RightParenthesis>().bind()
+        val parameters = when (token.type) {
+            is LeftParenthesis -> {
+                eatToken().bind() // consume (
+                parseAnnotationParameters().bind().also {
+                    when (token.type) {
+                        RightParenthesis -> eatToken().bind() // consume )
+                        else -> raiseWrongToken<RightParenthesis>().bind()
+                    }
                 }
             }
-        } else {
-            emptyList()
+            else -> emptyList()
         }
         Annotation(name, parameters)
     }
 
-    private fun TokenProvider.parseAnnotationParameters() = either {
-        val parameters = mutableListOf<AnnotationParameter>()
-        while (token.type !is RightParenthesis && hasNext()) {
-            val param = parseAnnotationParameter().bind()
-            parameters.add(param)
-            if (token.type is Comma) {
-                eatToken().bind() // consume comma
-            } else if (token.type !is RightParenthesis) {
-                break // no comma, but also not closing paren - exit loop
+    private fun TokenProvider.parseAnnotationParameters(): Either<WirespecException, List<AnnotationParameter>> = either {
+        when (token.type) {
+            is RightParenthesis -> emptyList()
+            else -> {
+                val param = parseAnnotationParameter().bind()
+                val remaining = when (token.type) {
+                    is Comma -> {
+                        eatToken().bind() // consume comma
+                        parseAnnotationParameters().bind()
+                    }
+                    is RightParenthesis -> emptyList()
+                    else -> emptyList() // no comma, but also not closing paren - stop parsing
+                }
+                listOf(param) + remaining
             }
         }
-        parameters
     }
 
     private fun TokenProvider.parseAnnotationParameter() = either {
-        val nameAndValue = if (hasNext()) {
-            // Simple approach: collect the current token value
-            val value = token.value.also { eatToken().bind() }
+        // Simple approach: collect the current token value
+        val value = token.value.also { eatToken().bind() }
 
-            // Check if next token is colon (for named parameters)
-            if (token.type is Colon) {
+        // Check if next token is colon (for named parameters)
+        val nameAndValue = when (token.type) {
+            is Colon -> {
                 eatToken().bind() // consume :
                 val actualValue = token.value.also { eatToken().bind() }
                 value to actualValue // name to value
-            } else {
-                null to value // positional parameter
             }
-        } else {
-            null to ""
+            else -> null to value // positional parameter
         }
         AnnotationParameter(nameAndValue.first, nameAndValue.second)
     }

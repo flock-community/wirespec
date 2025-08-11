@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.parse
 import arrow.core.Either
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
+import community.flock.wirespec.compiler.core.parse.Parser.parseAnnotations
 import community.flock.wirespec.compiler.core.tokenize.Brackets
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.Comma
@@ -50,7 +51,7 @@ object TypeParser {
                 is WirespecIdentifier -> add(parseField(FieldIdentifier(token.value), firstFieldAnnotations).bind())
                 else -> raiseWrongToken<WirespecIdentifier>().bind()
             }
-            
+
             // Parse remaining fields
             while (token.type == Comma) {
                 eatToken().bind()
@@ -305,64 +306,6 @@ object TypeParser {
             is QuestionMark -> true.also { eatToken().bind() }
             else -> false
         }
-    }
-
-    private fun TokenProvider.parseAnnotations() = either {
-        val annotations = mutableListOf<Annotation>()
-        while (token.type is community.flock.wirespec.compiler.core.tokenize.Annotation) {
-            annotations.add(parseAnnotation().bind())
-        }
-        annotations
-    }
-
-    private fun TokenProvider.parseAnnotation() = either {
-        val name = token.value.drop(1).also { eatToken().bind() }
-        val parameters = if (token.type is LeftParenthesis) {
-            eatToken().bind() // consume (
-            parseAnnotationParameters().bind().also {
-                if (token.type is RightParenthesis) {
-                    eatToken().bind() // consume )
-                } else {
-                    raiseWrongToken<RightParenthesis>().bind()
-                }
-            }
-        } else {
-            emptyList()
-        }
-        Annotation(name, parameters)
-    }
-
-    private fun TokenProvider.parseAnnotationParameters() = either {
-        val parameters = mutableListOf<AnnotationParameter>()
-        while (token.type !is RightParenthesis && hasNext()) {
-            val param = parseAnnotationParameter().bind()
-            parameters.add(param)
-            if (token.type is Comma) {
-                eatToken().bind() // consume comma
-            } else if (token.type !is RightParenthesis) {
-                break // no comma, but also not closing paren - exit loop
-            }
-        }
-        parameters
-    }
-
-    private fun TokenProvider.parseAnnotationParameter() = either {
-        val nameAndValue = if (hasNext()) {
-            // Simple approach: collect the current token value
-            val value = token.value.also { eatToken().bind() }
-
-            // Check if next token is colon (for named parameters)
-            if (token.type is Colon) {
-                eatToken().bind() // consume :
-                val actualValue = token.value.also { eatToken().bind() }
-                value to actualValue // name to value
-            } else {
-                null to value // positional parameter
-            }
-        } else {
-            null to ""
-        }
-        AnnotationParameter(nameAndValue.first, nameAndValue.second)
     }
 }
 
