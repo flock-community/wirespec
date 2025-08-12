@@ -1252,4 +1252,37 @@ class OpenAPIV3ParserTest {
         )
         assertEquals(expected, ast)
     }
+
+    @Test
+    fun emptyResponses() {
+        val path = Path("src/commonTest/resources/v3/empty-response.json")
+        val json = SystemFileSystem.source(path).buffered().readString()
+
+        val openApi = OpenAPI.decodeFromString(json)
+        val ast = openApi.parse()
+
+        val expected = listOf(
+            Endpoint(
+                comment = null,
+                identifier = DefinitionIdentifier(name = "EmptyGET"),
+                method = Endpoint.Method.GET,
+                path = listOf(
+                    Endpoint.Segment.Literal(value = "empty"),
+                ),
+                queries = emptyList(),
+                headers = emptyList(),
+                requests = listOf(
+                    Endpoint.Request(content = null),
+                ),
+                responses = listOf(
+                    Endpoint.Response(
+                        status = "200",
+                        headers = emptyList(),
+                        content = null,
+                    ),
+                ),
+            ),
+        )
+        assertEquals(expected, ast)
+    }
 }
