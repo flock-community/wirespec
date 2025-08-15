@@ -64,4 +64,9 @@ open class TypeScriptEmitter() : Emitter(), TypeScriptEnumDefinitionEmitter, Typ
 
 
     override fun emit(channel: Channel) = notYetImplemented()
+
+
+
+
+
 }
