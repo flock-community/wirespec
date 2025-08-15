@@ -34,7 +34,6 @@ interface Types {
         val UNIT = ElementType("UNIT")
         val METHOD = ElementType("METHOD")
         val PATH = ElementType("PATH")
-        val STATUS_CODE = ElementType("STATUS_CODE")
         val ARROW = ElementType("ARROW")
         val EQUALS = ElementType("EQUALS")
         val PIPE = ElementType("PIPE")
@@ -43,5 +42,9 @@ interface Types {
         val NUMBER = ElementType("NUMBER")
         val INTEGER = ElementType("INTEGER")
         val UNDERSCORE = ElementType("UNDERSCORE")
+
+        val ANNOTATION = ElementType("ANNOTATION")
+        val LITERAL_STRING = ElementType("STRING_LITERAL")
+        val AT = ElementType("AT")
     }
 }

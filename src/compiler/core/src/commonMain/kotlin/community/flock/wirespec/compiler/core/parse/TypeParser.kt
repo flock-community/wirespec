@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.parse
 import arrow.core.Either
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
+import community.flock.wirespec.compiler.core.parse.Parser.parseAnnotations
 import community.flock.wirespec.compiler.core.tokenize.Brackets
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.Comma
@@ -35,27 +36,31 @@ import community.flock.wirespec.compiler.core.tokenize.WsUnit
 
 object TypeParser {
 
-    fun TokenProvider.parseType(comment: Comment?): Either<WirespecException, Definition> = parseToken {
+    fun TokenProvider.parseType(comment: Comment?, annotations: List<Annotation>): Either<WirespecException, Definition> = parseToken {
         when (token.type) {
-            is TypeIdentifier -> parseTypeDefinition(comment, DefinitionIdentifier(token.value)).bind()
+            is TypeIdentifier -> parseTypeDefinition(comment, annotations, DefinitionIdentifier(token.value)).bind()
             else -> raiseWrongToken<TypeIdentifier>().bind()
         }
     }
 
     fun TokenProvider.parseTypeShape(): Either<WirespecException, Type.Shape> = parseToken {
-        when (token.type) {
-            is WirespecIdentifier -> mutableListOf<Field>().apply {
-                add(parseField(FieldIdentifier(token.value)).bind())
-                while (token.type == Comma) {
-                    eatToken().bind()
-                    when (token.type) {
-                        is WirespecIdentifier -> add(parseField(FieldIdentifier(token.value)).bind())
-                        else -> raiseWrongToken<WirespecIdentifier>().bind()
-                    }
-                }
+        mutableListOf<Field>().apply {
+            // Parse first field with potential annotations
+            val firstFieldAnnotations = parseAnnotations().bind()
+            when (token.type) {
+                is WirespecIdentifier -> add(parseField(FieldIdentifier(token.value), firstFieldAnnotations).bind())
+                else -> raiseWrongToken<WirespecIdentifier>().bind()
             }
 
-            else -> raiseWrongToken<WirespecIdentifier>().bind()
+            // Parse remaining fields
+            while (token.type == Comma) {
+                eatToken().bind()
+                val fieldAnnotations = parseAnnotations().bind()
+                when (token.type) {
+                    is WirespecIdentifier -> add(parseField(FieldIdentifier(token.value), fieldAnnotations).bind())
+                    else -> raiseWrongToken<WirespecIdentifier>().bind()
+                }
+            }
         }.also {
             when (token.type) {
                 is RightCurly -> eatToken().bind()
@@ -113,11 +118,12 @@ object TypeParser {
         }
     }
 
-    private fun TokenProvider.parseTypeDefinition(comment: Comment?, typeName: DefinitionIdentifier) = parseToken {
+    private fun TokenProvider.parseTypeDefinition(comment: Comment?, annotations: List<Annotation>, typeName: DefinitionIdentifier) = parseToken {
         when (token.type) {
-            is Equals -> parseRefinedOrUnion(comment, typeName).bind()
+            is Equals -> parseRefinedOrUnion(comment, annotations, typeName).bind()
             is LeftCurly -> Type(
                 comment = comment,
+                annotations = annotations,
                 identifier = typeName,
                 shape = parseTypeShape().bind(),
                 extends = emptyList(),
@@ -127,18 +133,19 @@ object TypeParser {
         }
     }
 
-    private fun TokenProvider.parseRefinedOrUnion(comment: Comment?, identifier: DefinitionIdentifier) = parseToken {
+    private fun TokenProvider.parseRefinedOrUnion(comment: Comment?, annotations: List<Annotation>, identifier: DefinitionIdentifier) = parseToken {
         when (token.type) {
-            is SpecificType -> parseRefined(comment, identifier).bind()
-            is TypeIdentifier -> parseUnion(comment, identifier).bind()
+            is SpecificType -> parseRefined(comment, annotations, identifier).bind()
+            is TypeIdentifier -> parseUnion(comment, annotations, identifier).bind()
             else -> raiseWrongToken<WirespecType>().bind()
         }
     }
 
-    private fun TokenProvider.parseRefined(comment: Comment?, identifier: DefinitionIdentifier) = either {
+    private fun TokenProvider.parseRefined(comment: Comment?, annotations: List<Annotation>, identifier: DefinitionIdentifier) = either {
         when (token.type) {
             is PrimitiveType -> Refined(
                 comment = comment,
+                annotations = annotations,
                 identifier = identifier,
                 reference = parsePrimitiveType(eatToken().bind()).bind(),
             )
@@ -147,9 +154,10 @@ object TypeParser {
         }
     }
 
-    private fun TokenProvider.parseUnion(comment: Comment?, identifier: DefinitionIdentifier) = either {
+    private fun TokenProvider.parseUnion(comment: Comment?, annotations: List<Annotation>, identifier: DefinitionIdentifier) = either {
         Union(
             comment = comment,
+            annotations = annotations,
             identifier = identifier,
             entries = parseUnionTypeEntries().bind(),
         )
@@ -270,7 +278,7 @@ object TypeParser {
         }
     }
 
-    private fun TokenProvider.parseField(identifier: FieldIdentifier) = parseToken {
+    private fun TokenProvider.parseField(identifier: FieldIdentifier, annotations: List<Annotation> = emptyList()) = parseToken {
         when (token.type) {
             is Colon -> eatToken().bind()
             else -> raiseWrongToken<Colon>().bind()
@@ -280,11 +288,13 @@ object TypeParser {
             is LeftCurly -> Field(
                 identifier = identifier,
                 reference = parseDict().bind(),
+                annotations = annotations,
             )
 
             is WirespecType -> Field(
                 identifier = identifier,
                 reference = parseType().bind(),
+                annotations = annotations,
             )
 
             else -> raiseWrongToken<WirespecType>().bind()

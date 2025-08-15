@@ -62,6 +62,7 @@ class AvroParserTest {
         assertEquals(
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("User"),
                 extends = emptyList(),
                 shape = Type.Shape(
@@ -133,6 +134,7 @@ class AvroParserTest {
         assertEquals(
             Channel(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("User"),
                 reference = Reference.Custom(
                     "User",

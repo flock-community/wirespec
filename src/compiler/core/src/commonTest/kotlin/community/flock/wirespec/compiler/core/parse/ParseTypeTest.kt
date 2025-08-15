@@ -179,6 +179,7 @@ class ParseTypeTest {
             .let { (first, second) ->
                 first shouldBe Type(
                     comment = null,
+                    annotations = emptyList(),
                     identifier = DefinitionIdentifier("Bar"),
                     extends = emptyList(),
                     shape = Type.Shape(
@@ -205,6 +206,7 @@ class ParseTypeTest {
                 )
                 second shouldBe Type(
                     comment = null,
+                    annotations = emptyList(),
                     identifier = DefinitionIdentifier("Foo"),
                     extends = emptyList(),
                     shape = Type.Shape(
