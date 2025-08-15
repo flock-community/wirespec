@@ -10,6 +10,7 @@ jackson_databind = "2.16.1"
 jackson_kotlin = "2.14.2"
 java = "17"
 junit_launcher = "1.11.3"
+kafka_avro = "7.7.1"
 kotest = "5.9.1"
 kotest_arrow = "1.4.0"
 kotlin = "2.0.21"
@@ -37,6 +38,7 @@ clikt = { module = "com.github.ajalt.clikt:clikt", version.ref = "clikt" }
 jackson_databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson_databind" }
 jackson_kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson_kotlin" }
 junit_launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit_launcher" }
+kafka_avro = { module = "io.confluent:kafka-avro-serializer", version.ref ="kafka_avro"}
 kotest_assertions = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 kotest_assertions_arrow = { module = "io.kotest.extensions:kotest-assertions-arrow", version.ref = "kotest_arrow" }
 kotest_engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
@@ -56,7 +58,7 @@ kotlinx_serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-
 maven_plugin_api = { module = "org.apache.maven:maven-plugin-api", version.ref = "maven_plugin_api" }
 maven_plugin_annotations = { module = "org.apache.maven.plugin-tools:maven-plugin-annotations", version.ref = "maven_plugin_annotations" }
 maven_project = { module = "org.apache.maven:maven-project", version.ref = "maven_project" }
-nexus-publish = { module = "io.github.gradle-nexus.publish-plugin:io.github.gradle-nexus.publish-plugin.gradle.plugin", version.ref = "nexus-publish" }
+nexus_publish = { module = "io.github.gradle-nexus.publish-plugin:io.github.gradle-nexus.publish-plugin.gradle.plugin", version.ref = "nexus-publish" }
 spring_boot_web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring_boot" }
 spring_webflux = { module = "org.springframework:spring-webflux", version.ref = "spring_webflux" }
 spring_boot_test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring_boot" }

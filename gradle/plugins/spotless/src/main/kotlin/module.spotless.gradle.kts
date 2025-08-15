@@ -5,7 +5,9 @@ plugins {
 spotless {
     val exclude = listOf(
         "**/emitters/**/*Emitter.kt",
+        "**/build/**",
         "**/generated/**",
+        "**/generated-sources/**",
         "**/resources/**",
     ).toTypedArray()
 

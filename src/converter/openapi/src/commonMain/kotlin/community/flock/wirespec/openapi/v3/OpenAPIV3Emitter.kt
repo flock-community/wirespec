@@ -36,7 +36,7 @@ import community.flock.wirespec.compiler.core.parse.Statements
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.openapi.Common.json
+import community.flock.wirespec.openapi.json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 import community.flock.kotlinx.openapi.bindings.v3.Type as OpenAPIType
