@@ -304,6 +304,34 @@ class JavaEmitterTest {
             |) {
             |};
             |
+            |package community.flock.wirespec.generated;
+            |
+            |import community.flock.wirespec.java.Wirespec;
+            |
+            |import community.flock.wirespec.generated.endpoint.PutTodo;
+            |
+            |import community.flock.wirespec.generated.model.Token;
+            |import community.flock.wirespec.generated.model.PotentialTodoDto;
+            |import community.flock.wirespec.generated.model.TodoDto;
+            |import community.flock.wirespec.generated.model.Error;   
+            |
+            |public class Client {
+            |  private final java.util.function.Function<Wirespec.Request<?>, java.util.concurrent.CompletableFuture<Wirespec.Response<?>>> handler;
+            |
+            |  public Client(java.util.function.Function<Wirespec.Request<?>, java.util.concurrent.CompletableFuture<Wirespec.Response<?>>> handler) {
+            |    this.handler = handler;
+            |  }
+            |
+            |  public <Req extends Wirespec.Request<?>, Res extends Wirespec.Response<?>> java.util.concurrent.CompletableFuture<Res> handle(Req req) {
+            |    return (java.util.concurrent.CompletableFuture<Res>) this.handler.apply(req);
+            |}
+            |
+            |  public java.util.concurrent.CompletableFuture<PutTodo.Response<?>> putTodo(String id, Boolean done, java.util.Optional<String> name, Token token, java.util.Optional<Token> refreshToken, PotentialTodoDto body) {
+            |    var req = new PutTodo.Request(id, done, name, token, refreshToken, body);
+            |    return handle(req); 
+            |  }
+            |
+            |}
         """.trimMargin()
         CompileFullEndpointTest.compiler { JavaEmitter() } shouldBeRight java
     }
@@ -461,6 +489,31 @@ class JavaEmitterTest {
             |) {
             |};
             |
+            |package community.flock.wirespec.generated;
+            |
+            |import community.flock.wirespec.java.Wirespec;
+            |
+            |import community.flock.wirespec.generated.endpoint.GetTodos;
+            |
+            |import community.flock.wirespec.generated.model.TodoDto;   
+            |
+            |public class Client {
+            |  private final java.util.function.Function<Wirespec.Request<?>, java.util.concurrent.CompletableFuture<Wirespec.Response<?>>> handler;
+            |
+            |  public Client(java.util.function.Function<Wirespec.Request<?>, java.util.concurrent.CompletableFuture<Wirespec.Response<?>>> handler) {
+            |    this.handler = handler;
+            |  }
+            |
+            |  public <Req extends Wirespec.Request<?>, Res extends Wirespec.Response<?>> java.util.concurrent.CompletableFuture<Res> handle(Req req) {
+            |    return (java.util.concurrent.CompletableFuture<Res>) this.handler.apply(req);
+            |}
+            |
+            |  public java.util.concurrent.CompletableFuture<GetTodos.Response<?>> getTodos() {
+            |    var req = new GetTodos.Request();
+            |    return handle(req); 
+            |  }
+            |
+            |}
         """.trimMargin()
         CompileMinimalEndpointTest.compiler { JavaEmitter() } shouldBeRight java
     }

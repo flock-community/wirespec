@@ -323,6 +323,23 @@ class KotlinEmitterTest {
             |  val description: String
             |)
             |
+            |package community.flock.wirespec.generated
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |
+            |import community.flock.wirespec.generated.endpoint.PutTodo
+            |
+            |import community.flock.wirespec.generated.model.Token
+            |import community.flock.wirespec.generated.model.PotentialTodoDto
+            |import community.flock.wirespec.generated.model.TodoDto
+            |import community.flock.wirespec.generated.model.Error
+            |
+            |class Client(val handler: (Wirespec.Request<*>) -> Wirespec.Response<*> ){
+            |  suspend fun PutTodo(id: String, done: Boolean, name: String?, token: Token, refreshToken: Token?, body: PotentialTodoDto) = 
+            |     PutTodo.Request(id, done, name, token, refreshToken, body)
+            |       .let{req -> handler(req) as PutTodo.Response<*> }
+            |}
+            |
         """.trimMargin()
 
         CompileFullEndpointTest.compiler { KotlinEmitter() } shouldBeRight kotlin
@@ -419,6 +436,20 @@ class KotlinEmitterTest {
             |data class TodoDto(
             |  val description: String
             |)
+            |
+            |package community.flock.wirespec.generated
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |
+            |import community.flock.wirespec.generated.endpoint.GetTodos
+            |
+            |import community.flock.wirespec.generated.model.TodoDto
+            |
+            |class Client(val handler: (Wirespec.Request<*>) -> Wirespec.Response<*> ){
+            |  suspend fun GetTodos() = 
+            |     GetTodos.Request
+            |       .let{req -> handler(req) as GetTodos.Response<*> }
+            |}
             |
         """.trimMargin()
 

@@ -7,7 +7,7 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 
 interface JavaClientEmitter: BaseEmitter, ClientEmitter,PackageNameEmitter, ParamEmitter, SpaceEmitter, ImportEmitter, JavaTypeDefinitionEmitter {
 
-    override fun emitClient(ast: AST): Emitted = Emitted("Client.${extension.value}", """
+    override fun emitClient(ast: AST): Emitted = Emitted("${packageName.toDir()}/Client.${extension.value}", """
         |package ${packageName.value};
         |
         |import community.flock.wirespec.java.Wirespec;
