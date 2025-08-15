@@ -1,13 +1,11 @@
 package community.flock.wirespec.emitters.java
 
-import community.flock.wirespec.compiler.core.addBackticks
 import community.flock.wirespec.compiler.core.emit.Emitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.IdentifierEmitter
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.emitters.java.JavaEmitter.Companion.reservedKeywords
-import community.flock.wirespec.emitters.kotlin.KotlinEmitter.Companion.reservedKeywords
 
 interface JavaIdentifierEmitter: IdentifierEmitter {
 

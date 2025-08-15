@@ -11,16 +11,13 @@ import community.flock.wirespec.compiler.core.emit.ImportEmitter
 import community.flock.wirespec.compiler.core.emit.PackageNameEmitter
 import community.flock.wirespec.compiler.core.emit.ParamEmitter
 import community.flock.wirespec.compiler.core.emit.Spacer
-import community.flock.wirespec.compiler.core.emit.TypeDefinitionEmitter
 import community.flock.wirespec.compiler.core.orNull
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Reference
-import community.flock.wirespec.compiler.core.removeQuestionMark
-import community.flock.wirespec.emitters.java.JavaEmitter.Companion.EMPTY_MAP
 
-interface JavaEndpointDefinitionEmitter: ParamEmitter, PackageNameEmitter, IdentifierEmitter, EndpointEmitter, EndpointDefinitionEmitter, TypeDefinitionEmitter, ImportEmitter {
+interface JavaEndpointDefinitionEmitter: JavaTypeDefinitionEmitter, ParamEmitter, PackageNameEmitter, IdentifierEmitter, EndpointEmitter, EndpointDefinitionEmitter, ImportEmitter {
 
     override fun emit(endpoint: Endpoint) = """
         |${endpoint.emitImports()}
