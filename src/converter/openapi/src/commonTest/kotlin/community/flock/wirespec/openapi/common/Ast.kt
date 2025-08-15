@@ -12,7 +12,7 @@ import community.flock.wirespec.compiler.core.parse.Union
 
 object Ast {
 
-    val objectInRequest = listOf(
+    val objectInRequest = nonEmptyListOf(
         Endpoint(
             comment = null,
             identifier = DefinitionIdentifier("TestWithDashGET"),
@@ -77,7 +77,8 @@ object Ast {
             extends = emptyList(),
         ),
     )
-    val objectInResponse = listOf(
+
+    val objectInResponse = nonEmptyListOf(
         Endpoint(
             comment = null,
             identifier = DefinitionIdentifier("Test"),
@@ -151,7 +152,8 @@ object Ast {
             extends = emptyList(),
         ),
     )
-    val additionalProperties = listOf(
+
+    val additionalProperties = nonEmptyListOf(
         Endpoint(
             comment = null,
             identifier = DefinitionIdentifier("AdditionalProperties"),
@@ -267,6 +269,7 @@ object Ast {
             extends = emptyList(),
         ),
     )
+
     val array = nonEmptyListOf(
         Endpoint(
             comment = null,
@@ -391,7 +394,7 @@ object Ast {
         ),
     )
 
-    val allOf = listOf(
+    val allOf = nonEmptyListOf(
         Endpoint(
             comment = null,
             identifier = DefinitionIdentifier("AllofGET"),
@@ -505,7 +508,7 @@ object Ast {
         ),
     )
 
-    val oneOf = listOf(
+    val oneOf = nonEmptyListOf(
         Endpoint(
             comment = null,
             identifier = DefinitionIdentifier("OneofGET"),
@@ -632,7 +635,7 @@ object Ast {
         ),
     )
 
-    val enum = listOf(
+    val enum = nonEmptyListOf(
         Endpoint(
             comment = null,
             identifier = DefinitionIdentifier("EnumGET"),

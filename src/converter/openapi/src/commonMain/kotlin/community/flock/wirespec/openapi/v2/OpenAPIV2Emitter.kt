@@ -30,7 +30,8 @@ import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.openapi.Common.json
+import community.flock.wirespec.openapi.APPLICATION_JSON
+import community.flock.wirespec.openapi.json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenAPIType
@@ -75,8 +76,8 @@ object OpenAPIV2Emitter : Emitter() {
             title = "Wirespec",
             version = "0.0.0",
         ),
-        consumes = listOf("application/json"),
-        produces = listOf("application/json"),
+        consumes = listOf(APPLICATION_JSON),
+        produces = listOf(APPLICATION_JSON),
         paths = module.statements.filterIsInstance<Endpoint>().groupBy { it.path }.map { (segments, endpoints) ->
             Path(segments.emitSegment()) to PathItemObject(
                 parameters = segments.filterIsInstance<Endpoint.Segment.Param>().map {
