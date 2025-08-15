@@ -419,6 +419,7 @@ class OpenAPIV2ParserTest {
         val expected = listOf(
             Endpoint(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier(name = "EmptyGET"),
                 method = Endpoint.Method.GET,
                 path = listOf(
