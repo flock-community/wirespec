@@ -15,6 +15,7 @@ import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.openapi.common.Ast
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser.parse
+import io.kotest.matchers.nulls.shouldNotBeNull
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -30,7 +31,7 @@ class OpenAPIV3ParserTest {
         val json = SystemFileSystem.source(path).buffered().readString()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         val expect = listOf(
             Enum(
@@ -456,7 +457,7 @@ class OpenAPIV3ParserTest {
         val json = SystemFileSystem.source(path).buffered().readString()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         val expect = listOf(
             Endpoint(
@@ -535,7 +536,7 @@ class OpenAPIV3ParserTest {
 
         val openApi = OpenAPI.decodeFromString(json)
 
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         val expect = listOf(
             Endpoint(
@@ -836,7 +837,7 @@ class OpenAPIV3ParserTest {
         val json = SystemFileSystem.source(path).buffered().readString()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         assertEquals(Ast.objectInRequest, ast)
 
@@ -849,7 +850,7 @@ class OpenAPIV3ParserTest {
         val json = SystemFileSystem.source(path).buffered().readString()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         assertEquals(Ast.objectInResponse, ast)
 
@@ -861,7 +862,7 @@ class OpenAPIV3ParserTest {
         val path = Path("src/commonTest/resources/v3/additionalproperties.json")
         val json = SystemFileSystem.source(path).buffered().readString()
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         assertEquals(Ast.additionalProperties, ast)
 
@@ -874,7 +875,7 @@ class OpenAPIV3ParserTest {
         val json = SystemFileSystem.source(path).buffered().readString()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         assertEquals(Ast.array, ast)
 
@@ -887,7 +888,7 @@ class OpenAPIV3ParserTest {
         val json = SystemFileSystem.source(path).buffered().readString()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         assertEquals(Ast.allOf, ast)
     }
@@ -898,7 +899,7 @@ class OpenAPIV3ParserTest {
         val json = SystemFileSystem.source(path).buffered().readString()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         Ast.oneOf.zip(ast).forEach { (expected, actual) ->
             println(expected.identifier)
@@ -912,7 +913,7 @@ class OpenAPIV3ParserTest {
         val json = SystemFileSystem.source(path).buffered().readString()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         assertEquals(Ast.enum, ast)
     }
@@ -923,7 +924,7 @@ class OpenAPIV3ParserTest {
         val json = SystemFileSystem.source(path).buffered().readString()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         val expected = listOf(
             Endpoint(
@@ -1030,7 +1031,7 @@ class OpenAPIV3ParserTest {
         val json = SystemFileSystem.source(path).buffered().readString()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         val expected = listOf(
             Endpoint(
@@ -1121,7 +1122,7 @@ class OpenAPIV3ParserTest {
         val json = SystemFileSystem.source(path).buffered().readString()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         val expected = listOf(
             Endpoint(
@@ -1240,7 +1241,7 @@ class OpenAPIV3ParserTest {
         val json = SystemFileSystem.source(path).buffered().readString()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         val expected = listOf(
             Endpoint(
@@ -1298,7 +1299,7 @@ class OpenAPIV3ParserTest {
         val json = SystemFileSystem.source(path).buffered().readString()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         val expected = nonEmptyListOf(
             Type(
@@ -1350,7 +1351,7 @@ class OpenAPIV3ParserTest {
         val json = SystemFileSystem.source(path).buffered().readString()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         val expected = nonEmptyListOf(
             Endpoint(
@@ -1390,7 +1391,7 @@ class OpenAPIV3ParserTest {
                 comment = null,
                 annotations = emptyList(),
                 identifier = DefinitionIdentifier("Foo"),
-                shape = Type.Shape(
+                shape = Shape(
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier("a"),
@@ -1408,7 +1409,7 @@ class OpenAPIV3ParserTest {
                 comment = null,
                 annotations = emptyList(),
                 identifier = DefinitionIdentifier("Bar"),
-                shape = Type.Shape(
+                shape = Shape(
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier("b"),
@@ -1432,9 +1433,9 @@ class OpenAPIV3ParserTest {
         val json = SystemFileSystem.source(path).buffered().readString()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
-        val expected = listOf(
+        val expected = nonEmptyListOf(
             Endpoint(
                 comment = null,
                 annotations = emptyList(),
