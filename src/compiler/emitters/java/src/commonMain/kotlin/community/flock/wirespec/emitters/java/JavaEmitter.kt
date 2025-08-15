@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.plus
+import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.utils.Logger
@@ -20,7 +21,8 @@ interface JavaEmitters :
     JavaChannelDefinitionEmitter,
     JavaEnumDefinitionEmitter,
     JavaUnionDefinitionEmitter,
-    JavaRefinedTypeDefinitionEmitter
+    JavaRefinedTypeDefinitionEmitter,
+    JavaClientEmitter
 
 open class JavaEmitter(
     override val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
@@ -38,6 +40,11 @@ open class JavaEmitter(
     override val shared = JavaShared
 
     override val singleLineComment = "//"
+
+    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> {
+        return super<Emitter>.emit(ast, logger)
+            .run { if(ast.hasEndpoints()){ plus(emitClient(ast) ) } else this }
+    }
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
         super<LanguageEmitter>.emit(module, logger).let {
