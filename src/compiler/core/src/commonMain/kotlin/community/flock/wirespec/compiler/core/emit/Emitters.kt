@@ -61,6 +61,8 @@ interface ChannelDefinitionEmitter {
 
 interface IdentifierEmitter {
     fun emit(identifier: Identifier): String
+
+    fun Identifier.sanitize(): String = value
 }
 
 interface ClientEmitter {
