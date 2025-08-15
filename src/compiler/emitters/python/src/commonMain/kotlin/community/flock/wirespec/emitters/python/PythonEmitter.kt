@@ -29,7 +29,6 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 
-
 interface E :
     PythonIdentifierEmitter,
     PythonTypeDefinitionEmitter,
