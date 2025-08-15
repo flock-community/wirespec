@@ -275,6 +275,25 @@ class PythonEmitterTest {
         |from . import endpoint
         |from . import wirespec
         |
+        |from . import endpoint
+        |
+        |from typing import List, Optional
+        |
+        |from .model.Token import Token
+        |from .model.PotentialTodoDto import PotentialTodoDto
+        |from .model.TodoDto import TodoDto
+        |from .model.Error import Error
+        |
+        |class Client():
+        |
+        |  def __init__(self, handler, serialization):
+        |    self.handler = handler
+        |    self.serialization = serialization
+        |
+        |  def PutTodo(self, id: str, done: bool, name: Optional[str], token: Token, refreshToken: Optional[Token], body: PotentialTodoDto):
+        |     req = endpoint.PutTodo.Request(id, done, name, token, refreshToken, body)
+        |     return self.handler(endpoint.PutTodo, req)
+        |
         """.trimMargin()
         CompileFullEndpointTest.compiler { PythonEmitter() } shouldBeRight python
     }
@@ -413,6 +432,22 @@ class PythonEmitterTest {
             |from . import model
             |from . import endpoint
             |from . import wirespec
+            |
+            |from . import endpoint
+            |
+            |from typing import List, Optional
+            |
+            |from .model.TodoDto import TodoDto
+            |
+            |class Client():
+            |
+            |  def __init__(self, handler, serialization):
+            |    self.handler = handler
+            |    self.serialization = serialization
+            |
+            |  def GetTodos(self, ):
+            |     req = endpoint.GetTodos.Request
+            |     return self.handler(endpoint.GetTodos, req)
             |
         """.trimMargin()
         CompileMinimalEndpointTest.compiler { PythonEmitter() } shouldBeRight python

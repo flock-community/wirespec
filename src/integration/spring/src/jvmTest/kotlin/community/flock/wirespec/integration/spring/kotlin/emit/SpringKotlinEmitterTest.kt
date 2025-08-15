@@ -173,6 +173,22 @@ class SpringKotlinEmitterTest {
             |  }
             |}
             |
+            |package community.flock.wirespec.spring.test
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |
+            |import community.flock.wirespec.spring.test.endpoint.GetTodos
+            |
+            |import community.flock.wirespec.spring.test.model.TodoId
+            |import community.flock.wirespec.spring.test.model.TodoDto
+            |import community.flock.wirespec.spring.test.model.Error
+            |
+            |class Client(val handler: (Wirespec.Request<*>) -> Wirespec.Response<*> ){
+            |  suspend fun GetTodos(done: Boolean?) = 
+            |     GetTodos.Request(done)
+            |       .let{req -> handler(req) as GetTodos.Response<*> }
+            |}
+            |
         """.trimMargin()
 
         assertEquals(expected, actual)

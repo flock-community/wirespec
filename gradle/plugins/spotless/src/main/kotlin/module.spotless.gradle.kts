@@ -7,6 +7,7 @@ spotless {
         "**/emitters/**/*Emitter.kt",
         "**/generated/**",
         "**/resources/**",
+        "src/jvmTest/kotlin/Client.kt",
     ).toTypedArray()
 
     format("misc") {
