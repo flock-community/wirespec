@@ -17,15 +17,13 @@ interface JavaClientEmitter: BaseEmitter, ClientEmitter,PackageNameEmitter, Para
         |${ast.modules.flatMap { it.statements }.toList().flatMap { it.importReferences() }.distinctBy { it.value }.joinToString("\n") { "import ${packageName.value}.model.${it.value};" }}   
         |
         |public class Client {
-        |${Spacer}private final java.util.function.Function<Wirespec.Request<?>, java.util.concurrent.CompletableFuture<Wirespec.Response<?>>> handler;
+        |${Spacer}private final Wirespec.Serialization<String> serialization;
+        |${Spacer}private final java.util.function.Function<Wirespec.RawRequest, java.util.concurrent.CompletableFuture<Wirespec.RawResponse>> handler;
         |
-        |${Spacer}public Client(java.util.function.Function<Wirespec.Request<?>, java.util.concurrent.CompletableFuture<Wirespec.Response<?>>> handler) {
+        |${Spacer}public Client(Wirespec.Serialization<String> serialization, java.util.function.Function<Wirespec.RawRequest, java.util.concurrent.CompletableFuture<Wirespec.RawResponse>> handler) {
+        |${Spacer(2)}this.serialization = serialization;
         |${Spacer(2)}this.handler = handler;
         |${Spacer}}
-        |
-        |${Spacer}public <Req extends Wirespec.Request<?>, Res extends Wirespec.Response<?>> java.util.concurrent.CompletableFuture<Res> handle(Req req) {
-        |${Spacer(2)}return (java.util.concurrent.CompletableFuture<Res>) this.handler.apply(req);
-        |}
         |
         |${ast.emitClientEndpointRequest().joinToString("\n") {(endpoint, request) -> endpoint.emitMethod(request) }.spacer(1)}
         |}
@@ -34,7 +32,9 @@ interface JavaClientEmitter: BaseEmitter, ClientEmitter,PackageNameEmitter, Para
     fun Endpoint.emitMethod(request: Endpoint.Request) = """
         |public java.util.concurrent.CompletableFuture<${emit(identifier)}.Response<?>> ${emit(identifier).firstToLower()}(${request.emitClientInterface(this)}) {
         |${Spacer}var req = new ${emit(identifier)}.Request(${request.paramList(this).joinToString(", ") { emit(it.identifier) }});
-        |${Spacer}return handle(req); 
+        |${Spacer}var rawReq = ${emit(identifier)}.Handler.toRequest(serialization, req);
+        |${Spacer}return handler.apply(rawReq)
+        |   .thenApply(rawRes -> ${emit(identifier)}.Handler.fromResponse(serialization, rawRes));
         |}
         |
     """.trimMargin()

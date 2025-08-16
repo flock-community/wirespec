@@ -26,7 +26,7 @@ interface KotlinClientEmitter: BaseEmitter, ClientEmitter,PackageNameEmitter, Pa
         |
         |${ast.modules.flatMap { it.statements }.toList().flatMap { it.importReferences() }.distinctBy { it.value }.joinToString("\n") { "import ${packageName.value}.model.${it.value}" }}
         |
-        |class Client(val handler: (Wirespec.Request<*>) -> Wirespec.Response<*> ){
+        |open class Client(val serialization: Wirespec.Serialization<String>, val handler: (Wirespec.RawRequest) -> Wirespec.RawResponse ){
         |${ast.emitClientEndpointRequest().joinToString("\n") { (endpoint, request) -> emitFunction(endpoint, request) }.spacer(1)}
         |}
         |
@@ -36,8 +36,10 @@ interface KotlinClientEmitter: BaseEmitter, ClientEmitter,PackageNameEmitter, Pa
         this.paramList(endpoint).joinToString(", ") { "${emit(it.identifier)}: ${it.reference.emit()}" }
 
     fun emitFunction(endpoint: Endpoint, request: Endpoint.Request) = """
-        |suspend fun ${emit(endpoint.identifier)}(${request.emitClientInterface(endpoint)}) = 
+        |suspend fun ${emit(endpoint.identifier).firstToLower()}(${request.emitClientInterface(endpoint)}) = 
         |   ${emit(endpoint.identifier)}.Request${request.paramList(endpoint).takeIf { it.isNotEmpty() }?.joinToString(", ", "(", ")") { emit(it.identifier) }.orEmpty()}
-        |     .let{req -> handler(req) as ${emit(endpoint.identifier)}.Response<*> }
+        |     .let { req -> ${endpoint.identifier.value}.toRequest(serialization, req) }
+        |     .let { rawReq -> handler(rawReq) }
+        |     .let { rawRes -> ${endpoint.identifier.value}.fromResponse(serialization, rawRes) }
     """.trimMargin()
 }
