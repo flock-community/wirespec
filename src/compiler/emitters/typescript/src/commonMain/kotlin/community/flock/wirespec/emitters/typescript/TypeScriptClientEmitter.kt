@@ -2,6 +2,7 @@ package community.flock.wirespec.emitters.typescript
 
 import community.flock.wirespec.compiler.core.emit.ClientEmitter
 import community.flock.wirespec.compiler.core.emit.Emitted
+import community.flock.wirespec.compiler.core.emit.Emitter.Companion.firstToLower
 import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.emit.paramList
@@ -30,7 +31,7 @@ interface TypeScriptClientEmitter: ClientEmitter, TypeScriptTypeDefinitionEmitte
         paramList(endpoint).joinToString(", ") { "${it.identifier.value}: ${it.reference.emit()}" }
 
     private fun emitFunction(endpoint: Endpoint, request: Endpoint.Request) = """
-        |${endpoint.identifier.value}: async (props: {${request.emitClientInterface(endpoint)}}) => {
+        |${endpoint.identifier.value.firstToLower()}: async (props: {${request.emitClientInterface(endpoint)}}) => {
         |${Spacer}const req = ${endpoint.identifier.value}.request(${request.paramList(endpoint).takeIf { it.isNotEmpty() }?.let { "props" }.orEmpty()})
         |${Spacer}const rawRequest = ${endpoint.identifier.value}.client(serialization).to(req)
         |${Spacer}const rawResponse = await handler(rawRequest)
