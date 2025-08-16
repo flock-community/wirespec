@@ -466,6 +466,7 @@ object OpenAPIV2Parser : Parser {
 
     private fun SwaggerObject.toField(header: HeaderObject, identifier: String) = Field(
         identifier = FieldIdentifier(identifier),
+        annotations = emptyList(),
         reference = when (header.type) {
             OpenapiType.ARRAY -> header.items?.let { resolve(it) }?.let { toReference(it, identifier, false) }
                 ?: error("Item cannot be null")
@@ -483,6 +484,7 @@ object OpenAPIV2Parser : Parser {
             is SchemaObject -> {
                 Field(
                     identifier = FieldIdentifier(key),
+                    annotations = emptyList(),
                     reference = when {
                         value.enum != null -> toReference(value, className(name, key), isNullable)
                         value.type == OpenapiType.ARRAY -> toReference(value, className(name, key, "Array"), isNullable)
@@ -494,6 +496,7 @@ object OpenAPIV2Parser : Parser {
             is ReferenceObject -> {
                 Field(
                     identifier = FieldIdentifier(key),
+                    annotations = emptyList(),
                     reference = toReference(value, isNullable),
                 )
             }
@@ -526,7 +529,13 @@ object OpenAPIV2Parser : Parser {
                     null -> TODO("Not yet implemented")
                 }
             }
-        }.let { Field(FieldIdentifier(parameter.name), it) }
+        }.let {
+            Field(
+                identifier = FieldIdentifier(parameter.name),
+                annotations = emptyList(),
+                reference = it,
+            )
+        }
 
     private fun Path.toSegments(parameters: List<ParameterObject>) = value.split("/").drop(1).map { segment ->
         val isParam = segment.isNotEmpty() && segment[0] == '{' && segment[segment.length - 1] == '}'

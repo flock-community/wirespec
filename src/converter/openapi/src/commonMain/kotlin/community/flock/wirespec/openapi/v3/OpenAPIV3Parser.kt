@@ -603,6 +603,7 @@ object OpenAPIV3Parser : Parser {
             is SchemaObject -> {
                 Field(
                     identifier = FieldIdentifier(key),
+                    annotations = emptyList(),
                     reference = when {
                         value.enum != null -> toReference(value, isNullable, className(name, key))
                         value.type == OpenapiType.ARRAY -> toReference(
@@ -618,8 +619,9 @@ object OpenAPIV3Parser : Parser {
 
             is ReferenceObject -> {
                 Field(
-                    FieldIdentifier(key),
-                    toReference(value, isNullable),
+                    identifier = FieldIdentifier(key),
+                    annotations = emptyList(),
+                    reference = toReference(value, isNullable),
                 )
             }
         }
@@ -631,7 +633,13 @@ object OpenAPIV3Parser : Parser {
             is ReferenceObject -> toReference(s, isNullable)
             is SchemaObject -> toReference(s, isNullable, name + if (s.type == OpenapiType.ARRAY) "Array" else "")
             null -> Reference.Primitive(type = Reference.Primitive.Type.String(null), isNullable = isNullable)
-        }.let { Field(FieldIdentifier(parameter.name), it) }
+        }.let {
+            Field(
+                identifier = FieldIdentifier(parameter.name),
+                annotations = emptyList(),
+                reference = it,
+            )
+        }
     }
 
     private fun OpenAPIObject.toField(header: HeaderObject, identifier: String, name: String): Field {
@@ -640,7 +648,13 @@ object OpenAPIV3Parser : Parser {
             is ReferenceObject -> toReference(s, isNullable)
             is SchemaObject -> toReference(s, isNullable, name)
             null -> Reference.Primitive(type = Reference.Primitive.Type.String(null), isNullable = isNullable)
-        }.let { Field(FieldIdentifier(identifier), it) }
+        }.let {
+            Field(
+                identifier = FieldIdentifier(identifier),
+                annotations = emptyList(),
+                reference = it,
+            )
+        }
     }
 
     private data class FlattenRequest(

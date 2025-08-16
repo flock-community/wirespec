@@ -45,15 +45,12 @@ object TypeParser {
 
     fun TokenProvider.parseTypeShape(): Either<WirespecException, Type.Shape> = parseToken {
         mutableListOf<Field>().apply {
-            // Parse first field with potential annotations
             val firstFieldAnnotations = parseAnnotations().bind()
             when (token.type) {
                 is WirespecIdentifier -> add(parseField(FieldIdentifier(token.value), firstFieldAnnotations).bind())
                 else -> raiseWrongToken<WirespecIdentifier>().bind()
             }
-
-            // Parse remaining fields
-            while (token.type == Comma) {
+            while (token.type is Comma) {
                 eatToken().bind()
                 val fieldAnnotations = parseAnnotations().bind()
                 when (token.type) {
@@ -278,7 +275,7 @@ object TypeParser {
         }
     }
 
-    private fun TokenProvider.parseField(identifier: FieldIdentifier, annotations: List<Annotation> = emptyList()) = parseToken {
+    private fun TokenProvider.parseField(identifier: FieldIdentifier, annotations: List<Annotation>) = parseToken {
         when (token.type) {
             is Colon -> eatToken().bind()
             else -> raiseWrongToken<Colon>().bind()

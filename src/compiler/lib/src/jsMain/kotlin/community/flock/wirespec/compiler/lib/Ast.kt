@@ -109,6 +109,7 @@ private fun WsChannel.consume() = Channel(
 
 private fun WsField.consume() = Field(
     identifier = identifier.consume(),
+    annotations = emptyList(),
     reference = reference.consume(),
 )
 

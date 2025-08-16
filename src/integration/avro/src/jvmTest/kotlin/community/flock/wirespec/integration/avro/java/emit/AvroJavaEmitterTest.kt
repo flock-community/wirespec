@@ -30,7 +30,11 @@ class AvroJavaEmitterTest {
                 listOf(
                     Field(
                         identifier = FieldIdentifier(name = "name"),
-                        reference = Reference.Primitive(type = Reference.Primitive.Type.String(null), isNullable = false),
+                        annotations = emptyList(),
+                        reference = Reference.Primitive(
+                            type = Reference.Primitive.Type.String(null),
+                            isNullable = false,
+                        ),
                     ),
                 ),
             ),

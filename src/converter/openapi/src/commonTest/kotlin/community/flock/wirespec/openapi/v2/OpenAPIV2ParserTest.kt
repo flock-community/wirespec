@@ -63,6 +63,7 @@ class OpenAPIV2ParserTest {
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier("code"),
+                            annotations = emptyList(),
                             reference = Primitive(
                                 type = Primitive.Type.Integer(Primitive.Type.Precision.P32, null),
                                 isNullable = true,
@@ -70,10 +71,12 @@ class OpenAPIV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("type"),
+                            annotations = emptyList(),
                             reference = Primitive(type = Primitive.Type.String(null), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("message"),
+                            annotations = emptyList(),
                             reference = Primitive(type = Primitive.Type.String(null), isNullable = true),
                         ),
                     ),
@@ -88,10 +91,12 @@ class OpenAPIV2ParserTest {
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier("id"),
+                            annotations = emptyList(),
                             reference = Primitive(type = Primitive.Type.Integer(constraint = null), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("name"),
+                            annotations = emptyList(),
                             reference = Primitive(type = Primitive.Type.String(null), isNullable = true),
                         ),
                     ),
@@ -106,18 +111,22 @@ class OpenAPIV2ParserTest {
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier("id"),
+                            annotations = emptyList(),
                             reference = Primitive(type = Primitive.Type.Integer(constraint = null), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("category"),
+                            annotations = emptyList(),
                             reference = Custom(value = "Category", isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("name"),
+                            annotations = emptyList(),
                             reference = Primitive(type = Primitive.Type.String(null), isNullable = false),
                         ),
                         Field(
                             identifier = FieldIdentifier("photoUrls"),
+                            annotations = emptyList(),
                             reference = Iterable(
                                 reference = Primitive(
                                     type = Primitive.Type.String(null),
@@ -128,6 +137,7 @@ class OpenAPIV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("tags"),
+                            annotations = emptyList(),
                             reference = Iterable(
                                 reference = Custom(value = "Tag", isNullable = false),
                                 isNullable = true,
@@ -135,6 +145,7 @@ class OpenAPIV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("status"),
+                            annotations = emptyList(),
                             reference = Custom(value = "PetStatus", isNullable = true),
                         ),
                     ),
@@ -149,10 +160,12 @@ class OpenAPIV2ParserTest {
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier("id"),
+                            annotations = emptyList(),
                             reference = Primitive(type = Primitive.Type.Integer(constraint = null), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("name"),
+                            annotations = emptyList(),
                             reference = Primitive(type = Primitive.Type.String(null), isNullable = true),
                         ),
                     ),
@@ -167,14 +180,17 @@ class OpenAPIV2ParserTest {
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier("id"),
+                            annotations = emptyList(),
                             reference = Primitive(type = Primitive.Type.Integer(constraint = null), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("petId"),
+                            annotations = emptyList(),
                             reference = Primitive(type = Primitive.Type.Integer(constraint = null), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("quantity"),
+                            annotations = emptyList(),
                             reference = Primitive(
                                 type = Primitive.Type.Integer(Primitive.Type.Precision.P32, null),
                                 isNullable = true,
@@ -182,6 +198,7 @@ class OpenAPIV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("shipDate"),
+                            annotations = emptyList(),
                             reference = Primitive(
                                 type = Primitive.Type.String(
                                     constraint = null,
@@ -191,10 +208,12 @@ class OpenAPIV2ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("status"),
+                            annotations = emptyList(),
                             reference = Custom(value = "OrderStatus", isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("complete"),
+                            annotations = emptyList(),
                             reference = Primitive(type = Primitive.Type.Boolean, isNullable = true),
                         ),
                     ),
@@ -209,34 +228,42 @@ class OpenAPIV2ParserTest {
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier("id"),
+                            annotations = emptyList(),
                             reference = Primitive(type = Primitive.Type.Integer(constraint = null), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("username"),
+                            annotations = emptyList(),
                             reference = Primitive(type = Primitive.Type.String(null), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("firstName"),
+                            annotations = emptyList(),
                             reference = Primitive(type = Primitive.Type.String(null), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("lastName"),
+                            annotations = emptyList(),
                             reference = Primitive(type = Primitive.Type.String(null), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("email"),
+                            annotations = emptyList(),
                             reference = Primitive(type = Primitive.Type.String(null), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("password"),
+                            annotations = emptyList(),
                             reference = Primitive(type = Primitive.Type.String(null), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("phone"),
+                            annotations = emptyList(),
                             reference = Primitive(type = Primitive.Type.String(null), isNullable = true),
                         ),
                         Field(
                             identifier = FieldIdentifier("userStatus"),
+                            annotations = emptyList(),
                             reference = Primitive(
                                 type = Primitive.Type.Integer(Primitive.Type.Precision.P32, null),
                                 isNullable = true,
@@ -331,6 +358,7 @@ class OpenAPIV2ParserTest {
                     value = listOf(
                         Field(
                             identifier = FieldIdentifier("a"),
+                            annotations = emptyList(),
                             reference = Primitive(
                                 type = Primitive.Type.String(null),
                                 isNullable = true,

@@ -129,7 +129,7 @@ sealed interface Reference : Value<String> {
 data class Field(
     val identifier: FieldIdentifier,
     val reference: Reference,
-    val annotations: List<Annotation> = emptyList(),
+    val annotations: List<Annotation>,
 )
 
 data class Enum(
@@ -196,11 +196,11 @@ value class Comment private constructor(override val value: String) : Value<Stri
 
 data class Annotation(
     val name: String,
-    val parameters: List<AnnotationParameter> = emptyList(),
+    val parameters: List<AnnotationParameter>,
 ) : Node
 
 data class AnnotationParameter(
-    val name: String?,
+    val name: String,
     val value: String,
 ) : Node
 

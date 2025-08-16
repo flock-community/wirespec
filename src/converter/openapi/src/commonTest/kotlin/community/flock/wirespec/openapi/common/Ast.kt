@@ -51,10 +51,12 @@ object Ast {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("id"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(type = Reference.Primitive.Type.String(null), isNullable = true),
                     ),
                     Field(
                         identifier = FieldIdentifier("nest"),
+                        annotations = emptyList(),
                         reference = Reference.Custom(value = "TestWithDashGETRequestBodyNest", isNullable = true),
                     ),
                 ),
@@ -69,10 +71,12 @@ object Ast {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("a"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(type = Reference.Primitive.Type.Number(constraint = null), isNullable = true),
                     ),
                     Field(
                         identifier = FieldIdentifier("b"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(type = Reference.Primitive.Type.Number(constraint = null), isNullable = true),
                     ),
                 ),
@@ -116,6 +120,7 @@ object Ast {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("id"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -123,6 +128,7 @@ object Ast {
                     ),
                     Field(
                         identifier = FieldIdentifier("nest"),
+                        annotations = emptyList(),
                         reference = Reference.Custom(
                             value = "Test200ResponseBodyNest",
                             isNullable = true,
@@ -140,6 +146,7 @@ object Ast {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("a"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number(constraint = null),
                             isNullable = true,
@@ -147,6 +154,7 @@ object Ast {
                     ),
                     Field(
                         identifier = FieldIdentifier("b"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number(constraint = null),
                             isNullable = true,
@@ -235,6 +243,7 @@ object Ast {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("code"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Integer(constraint = null),
                             isNullable = true,
@@ -242,6 +251,7 @@ object Ast {
                     ),
                     Field(
                         identifier = FieldIdentifier("text"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -259,6 +269,7 @@ object Ast {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("code"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Integer(constraint = null),
                             isNullable = true,
@@ -266,6 +277,7 @@ object Ast {
                     ),
                     Field(
                         identifier = FieldIdentifier("text"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -361,6 +373,7 @@ object Ast {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("code"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number(constraint = null),
                             isNullable = true,
@@ -368,6 +381,7 @@ object Ast {
                     ),
                     Field(
                         identifier = FieldIdentifier("text"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -385,6 +399,7 @@ object Ast {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("code"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number(constraint = null),
                             isNullable = true,
@@ -392,6 +407,7 @@ object Ast {
                     ),
                     Field(
                         identifier = FieldIdentifier("text"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -439,6 +455,7 @@ object Ast {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("a"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -446,6 +463,7 @@ object Ast {
                     ),
                     Field(
                         identifier = FieldIdentifier("b"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = false,
@@ -453,6 +471,7 @@ object Ast {
                     ),
                     Field(
                         identifier = FieldIdentifier("c"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -460,6 +479,7 @@ object Ast {
                     ),
                     Field(
                         identifier = FieldIdentifier("d"),
+                        annotations = emptyList(),
                         reference = Reference.Custom(
                             value = "AllofGET200ResponseBodyD",
                             isNullable = true,
@@ -477,6 +497,7 @@ object Ast {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("e"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -494,6 +515,7 @@ object Ast {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("a"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -511,6 +533,7 @@ object Ast {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("b"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = false,
@@ -575,6 +598,7 @@ object Ast {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("c"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -592,6 +616,7 @@ object Ast {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("d"),
+                        annotations = emptyList(),
                         reference = Reference.Custom(
                             value = "OneofGET200ResponseBody3D",
                             isNullable = true,
@@ -608,9 +633,8 @@ object Ast {
             shape = Type.Shape(
                 value = listOf(
                     Field(
-                        identifier = FieldIdentifier(
-                            "e",
-                        ),
+                        identifier = FieldIdentifier("e"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -628,6 +652,7 @@ object Ast {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("a"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -645,6 +670,7 @@ object Ast {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("b"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = false,
@@ -666,6 +692,7 @@ object Ast {
             queries = listOf(
                 Field(
                     identifier = FieldIdentifier("order"),
+                    annotations = emptyList(),
                     reference = Reference.Custom(
                         value = "EnumGETParameterOrder",
                         isNullable = true,
@@ -717,6 +744,7 @@ object Ast {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("code"),
+                        annotations = emptyList(),
                         reference = Reference.Custom(
                             value = "EnumGET201ResponseBodyCode",
                             isNullable = false,
@@ -724,6 +752,7 @@ object Ast {
                     ),
                     Field(
                         identifier = FieldIdentifier("text"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -747,6 +776,7 @@ object Ast {
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("code"),
+                        annotations = emptyList(),
                         reference = Reference.Iterable(
                             reference = Reference.Custom(
                                 value = "ErrorType",
@@ -757,6 +787,7 @@ object Ast {
                     ),
                     Field(
                         identifier = FieldIdentifier("text"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
