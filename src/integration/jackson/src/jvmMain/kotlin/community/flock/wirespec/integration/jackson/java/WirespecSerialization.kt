@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import community.flock.wirespec.java.Wirespec.ParamSerialization
 import community.flock.wirespec.java.Wirespec.Serialization
 import community.flock.wirespec.java.serde.DefaultParamSerialization
-import jdk.jfr.ContentType
 import java.lang.reflect.Type
 
 /**
