@@ -77,7 +77,7 @@ abstract class BaseWirespecTask : DefaultTask() {
                     when (it.type) {
                         PackageName::class.java -> packageNameValue()
                         EmitShared::class.java -> sharedValue()
-                        else -> error("Cannot map constructor parameter")
+                        else -> error("Cannot map constructor parameter: ${it.type.name}")
                     }
                 }
                 .orEmpty()

@@ -193,7 +193,7 @@ class TypeScriptEmitterTest {
             |type RawHandler = (req: Wirespec.RawRequest) => Promise<Wirespec.RawResponse>
             |
             |export const Client = (serialization: Wirespec.Serialization, handler: RawHandler) => ({
-            |  PutTodo: async (props: {id: string, done: boolean, name: string | undefined, token: Token, refreshToken: Token | undefined, body: PotentialTodoDto}) => {
+            |  putTodo: async (props: {id: string, done: boolean, name: string | undefined, token: Token, refreshToken: Token | undefined, body: PotentialTodoDto}) => {
             |    const req = PutTodo.request(props)
             |    const rawRequest = PutTodo.client(serialization).to(req)
             |    const rawResponse = await handler(rawRequest)
@@ -319,7 +319,7 @@ class TypeScriptEmitterTest {
             |type RawHandler = (req: Wirespec.RawRequest) => Promise<Wirespec.RawResponse>
             |
             |export const Client = (serialization: Wirespec.Serialization, handler: RawHandler) => ({
-            |  GetTodos: async (props: {}) => {
+            |  getTodos: async (props: {}) => {
             |    const req = GetTodos.request()
             |    const rawRequest = GetTodos.client(serialization).to(req)
             |    const rawResponse = await handler(rawRequest)

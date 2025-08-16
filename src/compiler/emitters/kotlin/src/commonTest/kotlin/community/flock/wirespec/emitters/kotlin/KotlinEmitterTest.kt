@@ -323,6 +323,25 @@ class KotlinEmitterTest {
             |  val description: String
             |)
             |
+            |package community.flock.wirespec.generated
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |
+            |import community.flock.wirespec.generated.endpoint.PutTodo
+            |
+            |import community.flock.wirespec.generated.model.Token
+            |import community.flock.wirespec.generated.model.PotentialTodoDto
+            |import community.flock.wirespec.generated.model.TodoDto
+            |import community.flock.wirespec.generated.model.Error
+            |
+            |open class Client(val serialization: Wirespec.Serialization<String>, val handler: (Wirespec.RawRequest) -> Wirespec.RawResponse ){
+            |  suspend fun putTodo(id: String, done: Boolean, name: String?, token: Token, refreshToken: Token?, body: PotentialTodoDto) = 
+            |     PutTodo.Request(id, done, name, token, refreshToken, body)
+            |       .let { req -> PutTodo.toRequest(serialization, req) }
+            |       .let { rawReq -> handler(rawReq) }
+            |       .let { rawRes -> PutTodo.fromResponse(serialization, rawRes) }
+            |}
+            |
         """.trimMargin()
 
         CompileFullEndpointTest.compiler { KotlinEmitter() } shouldBeRight kotlin
@@ -419,6 +438,22 @@ class KotlinEmitterTest {
             |data class TodoDto(
             |  val description: String
             |)
+            |
+            |package community.flock.wirespec.generated
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |
+            |import community.flock.wirespec.generated.endpoint.GetTodos
+            |
+            |import community.flock.wirespec.generated.model.TodoDto
+            |
+            |open class Client(val serialization: Wirespec.Serialization<String>, val handler: (Wirespec.RawRequest) -> Wirespec.RawResponse ){
+            |  suspend fun getTodos() = 
+            |     GetTodos.Request
+            |       .let { req -> GetTodos.toRequest(serialization, req) }
+            |       .let { rawReq -> handler(rawReq) }
+            |       .let { rawRes -> GetTodos.fromResponse(serialization, rawRes) }
+            |}
             |
         """.trimMargin()
 
