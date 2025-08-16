@@ -41,6 +41,7 @@ object NodeFixtures {
             value = listOf(
                 Field(
                     identifier = FieldIdentifier("name"),
+                    annotations = emptyList(),
                     reference = Reference.Primitive(
                         type = Reference.Primitive.Type.String(null),
                         isNullable = false,
@@ -48,6 +49,7 @@ object NodeFixtures {
                 ),
                 Field(
                     identifier = FieldIdentifier("description"),
+                    annotations = emptyList(),
                     reference = Reference.Primitive(
                         type = Reference.Primitive.Type.String(null),
                         isNullable = true,
@@ -55,6 +57,7 @@ object NodeFixtures {
                 ),
                 Field(
                     identifier = FieldIdentifier("notes"),
+                    annotations = emptyList(),
                     reference = Reference.Iterable(
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
@@ -65,6 +68,7 @@ object NodeFixtures {
                 ),
                 Field(
                     identifier = FieldIdentifier("done"),
+                    annotations = emptyList(),
                     reference = Reference.Primitive(
                         type = Reference.Primitive.Type.Boolean,
                         isNullable = false,

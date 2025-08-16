@@ -83,7 +83,7 @@ class ParseAnnotationTest {
                     name shouldBe "since"
                     parameters.shouldHaveSize(1)
                     parameters.first().apply {
-                        name shouldBe null // positional parameter
+                        name shouldBe "default" // positional parameter
                         value shouldBe "\"1.0.0\""
                     }
                 }
@@ -202,7 +202,7 @@ class ParseAnnotationTest {
                     name shouldBe "config"
                     parameters.shouldHaveSize(3)
                     parameters[0].apply {
-                        name shouldBe null // positional
+                        name shouldBe "default" // positional
                         value shouldBe "\"development\""
                     }
                     parameters[1].apply {

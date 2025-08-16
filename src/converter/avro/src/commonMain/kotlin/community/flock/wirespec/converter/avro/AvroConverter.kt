@@ -59,6 +59,7 @@ object AvroConverter {
             fields.map {
                 Field(
                     identifier = FieldIdentifier(it.name),
+                    annotations = emptyList(),
                     reference = it.type.toReference(),
                 )
             },

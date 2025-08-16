@@ -27,6 +27,7 @@ import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
 import community.flock.wirespec.compiler.core.validate.Validator
 import community.flock.wirespec.compiler.utils.HasLogger
+import community.flock.wirespec.compiler.core.tokenize.Annotation as AnnotationToken
 
 data class ParseOptions(
     val strict: Boolean = false,
@@ -70,7 +71,7 @@ object Parser {
 
     fun TokenProvider.parseAnnotations(): Either<WirespecException, List<Annotation>> = either {
         when (token.type) {
-            is community.flock.wirespec.compiler.core.tokenize.Annotation -> {
+            is AnnotationToken -> {
                 val annotation = parseAnnotation().bind()
                 val remaining = parseAnnotations().bind()
                 listOf(annotation) + remaining
@@ -103,11 +104,10 @@ object Parser {
                 val param = parseAnnotationParameter().bind()
                 val remaining = when (token.type) {
                     is Comma -> {
-                        eatToken().bind() // consume comma
+                        eatToken().bind()
                         parseAnnotationParameters().bind()
                     }
-                    is RightParenthesis -> emptyList()
-                    else -> emptyList() // no comma, but also not closing paren - stop parsing
+                    else -> emptyList()
                 }
                 listOf(param) + remaining
             }
@@ -115,17 +115,14 @@ object Parser {
     }
 
     private fun TokenProvider.parseAnnotationParameter() = either {
-        // Simple approach: collect the current token value
         val value = token.value.also { eatToken().bind() }
-
-        // Check if next token is colon (for named parameters)
         val nameAndValue = when (token.type) {
             is Colon -> {
-                eatToken().bind() // consume :
+                eatToken().bind()
                 val actualValue = token.value.also { eatToken().bind() }
-                value to actualValue // name to value
+                value to actualValue
             }
-            else -> null to value // positional parameter
+            else -> "default" to value
         }
         AnnotationParameter(nameAndValue.first, nameAndValue.second)
     }
