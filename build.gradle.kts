@@ -25,11 +25,10 @@ subprojects {
             into("$buildDir/js/packages/${rootProject.name}$projectFullName-test/src")
         }
 
-        if (project.tasks.findByName("jsNodeTest") != null) {
+        project.tasks.findByName("jsNodeTest")?.let {
             project.tasks.named("jsNodeTest").configure {
                 dependsOn(copyTestResourcesForJs)
             }
         }
     }
 }
-
