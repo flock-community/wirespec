@@ -33,62 +33,100 @@ import community.flock.wirespec.integration.spring.kotlin.generated.model.Catego
 import community.flock.wirespec.integration.spring.kotlin.generated.model.Tag
 import community.flock.wirespec.integration.spring.kotlin.generated.model.PetStatus
 
-class Client(val handler: (Wirespec.Request<*>) -> Wirespec.Response<*> ){
-  suspend fun AddPet(body: Pet) = 
+open class Client(val serialization: Wirespec.Serialization<String>, val handler: (Wirespec.RawRequest) -> Wirespec.RawResponse ){
+  suspend fun addPet(body: Pet) = 
      AddPet.Request(body)
-       .let{req -> handler(req) as AddPet.Response<*> }
-  suspend fun UpdatePet(body: Pet) = 
+       .let { req -> AddPet.toRequest(serialization, req) }
+       .let { rawReq -> handler(rawReq) }
+       .let { rawRes -> AddPet.fromResponse(serialization, rawRes) }
+  suspend fun updatePet(body: Pet) = 
      UpdatePet.Request(body)
-       .let{req -> handler(req) as UpdatePet.Response<*> }
-  suspend fun FindPetsByStatus(status: FindPetsByStatusParameterStatus?) = 
+       .let { req -> UpdatePet.toRequest(serialization, req) }
+       .let { rawReq -> handler(rawReq) }
+       .let { rawRes -> UpdatePet.fromResponse(serialization, rawRes) }
+  suspend fun findPetsByStatus(status: FindPetsByStatusParameterStatus?) = 
      FindPetsByStatus.Request(status)
-       .let{req -> handler(req) as FindPetsByStatus.Response<*> }
-  suspend fun FindPetsByTags(tags: List<String>?) = 
+       .let { req -> FindPetsByStatus.toRequest(serialization, req) }
+       .let { rawReq -> handler(rawReq) }
+       .let { rawRes -> FindPetsByStatus.fromResponse(serialization, rawRes) }
+  suspend fun findPetsByTags(tags: List<String>?) = 
      FindPetsByTags.Request(tags)
-       .let{req -> handler(req) as FindPetsByTags.Response<*> }
-  suspend fun GetPetById(petId: Long) = 
+       .let { req -> FindPetsByTags.toRequest(serialization, req) }
+       .let { rawReq -> handler(rawReq) }
+       .let { rawRes -> FindPetsByTags.fromResponse(serialization, rawRes) }
+  suspend fun getPetById(petId: Long) = 
      GetPetById.Request(petId)
-       .let{req -> handler(req) as GetPetById.Response<*> }
-  suspend fun UpdatePetWithForm(petId: Long, name: String?, status: String?) = 
+       .let { req -> GetPetById.toRequest(serialization, req) }
+       .let { rawReq -> handler(rawReq) }
+       .let { rawRes -> GetPetById.fromResponse(serialization, rawRes) }
+  suspend fun updatePetWithForm(petId: Long, name: String?, status: String?) = 
      UpdatePetWithForm.Request(petId, name, status)
-       .let{req -> handler(req) as UpdatePetWithForm.Response<*> }
-  suspend fun DeletePet(petId: Long, api_key: String?) = 
+       .let { req -> UpdatePetWithForm.toRequest(serialization, req) }
+       .let { rawReq -> handler(rawReq) }
+       .let { rawRes -> UpdatePetWithForm.fromResponse(serialization, rawRes) }
+  suspend fun deletePet(petId: Long, api_key: String?) = 
      DeletePet.Request(petId, api_key)
-       .let{req -> handler(req) as DeletePet.Response<*> }
-  suspend fun UploadFile(petId: Long, additionalMetadata: String?, body: String) = 
+       .let { req -> DeletePet.toRequest(serialization, req) }
+       .let { rawReq -> handler(rawReq) }
+       .let { rawRes -> DeletePet.fromResponse(serialization, rawRes) }
+  suspend fun uploadFile(petId: Long, additionalMetadata: String?, body: String) = 
      UploadFile.Request(petId, additionalMetadata, body)
-       .let{req -> handler(req) as UploadFile.Response<*> }
-  suspend fun GetInventory() = 
+       .let { req -> UploadFile.toRequest(serialization, req) }
+       .let { rawReq -> handler(rawReq) }
+       .let { rawRes -> UploadFile.fromResponse(serialization, rawRes) }
+  suspend fun getInventory() = 
      GetInventory.Request
-       .let{req -> handler(req) as GetInventory.Response<*> }
-  suspend fun PlaceOrder(body: Order) = 
+       .let { req -> GetInventory.toRequest(serialization, req) }
+       .let { rawReq -> handler(rawReq) }
+       .let { rawRes -> GetInventory.fromResponse(serialization, rawRes) }
+  suspend fun placeOrder(body: Order) = 
      PlaceOrder.Request(body)
-       .let{req -> handler(req) as PlaceOrder.Response<*> }
-  suspend fun GetOrderById(orderId: Long) = 
+       .let { req -> PlaceOrder.toRequest(serialization, req) }
+       .let { rawReq -> handler(rawReq) }
+       .let { rawRes -> PlaceOrder.fromResponse(serialization, rawRes) }
+  suspend fun getOrderById(orderId: Long) = 
      GetOrderById.Request(orderId)
-       .let{req -> handler(req) as GetOrderById.Response<*> }
-  suspend fun DeleteOrder(orderId: Long) = 
+       .let { req -> GetOrderById.toRequest(serialization, req) }
+       .let { rawReq -> handler(rawReq) }
+       .let { rawRes -> GetOrderById.fromResponse(serialization, rawRes) }
+  suspend fun deleteOrder(orderId: Long) = 
      DeleteOrder.Request(orderId)
-       .let{req -> handler(req) as DeleteOrder.Response<*> }
-  suspend fun CreateUser(body: User) = 
+       .let { req -> DeleteOrder.toRequest(serialization, req) }
+       .let { rawReq -> handler(rawReq) }
+       .let { rawRes -> DeleteOrder.fromResponse(serialization, rawRes) }
+  suspend fun createUser(body: User) = 
      CreateUser.Request(body)
-       .let{req -> handler(req) as CreateUser.Response<*> }
-  suspend fun CreateUsersWithListInput(body: List<User>) = 
+       .let { req -> CreateUser.toRequest(serialization, req) }
+       .let { rawReq -> handler(rawReq) }
+       .let { rawRes -> CreateUser.fromResponse(serialization, rawRes) }
+  suspend fun createUsersWithListInput(body: List<User>) = 
      CreateUsersWithListInput.Request(body)
-       .let{req -> handler(req) as CreateUsersWithListInput.Response<*> }
-  suspend fun LoginUser(username: String?, password: String?) = 
+       .let { req -> CreateUsersWithListInput.toRequest(serialization, req) }
+       .let { rawReq -> handler(rawReq) }
+       .let { rawRes -> CreateUsersWithListInput.fromResponse(serialization, rawRes) }
+  suspend fun loginUser(username: String?, password: String?) = 
      LoginUser.Request(username, password)
-       .let{req -> handler(req) as LoginUser.Response<*> }
-  suspend fun LogoutUser() = 
+       .let { req -> LoginUser.toRequest(serialization, req) }
+       .let { rawReq -> handler(rawReq) }
+       .let { rawRes -> LoginUser.fromResponse(serialization, rawRes) }
+  suspend fun logoutUser() = 
      LogoutUser.Request
-       .let{req -> handler(req) as LogoutUser.Response<*> }
-  suspend fun GetUserByName(username: String) = 
+       .let { req -> LogoutUser.toRequest(serialization, req) }
+       .let { rawReq -> handler(rawReq) }
+       .let { rawRes -> LogoutUser.fromResponse(serialization, rawRes) }
+  suspend fun getUserByName(username: String) = 
      GetUserByName.Request(username)
-       .let{req -> handler(req) as GetUserByName.Response<*> }
-  suspend fun UpdateUser(username: String, body: User) = 
+       .let { req -> GetUserByName.toRequest(serialization, req) }
+       .let { rawReq -> handler(rawReq) }
+       .let { rawRes -> GetUserByName.fromResponse(serialization, rawRes) }
+  suspend fun updateUser(username: String, body: User) = 
      UpdateUser.Request(username, body)
-       .let{req -> handler(req) as UpdateUser.Response<*> }
-  suspend fun DeleteUser(username: String) = 
+       .let { req -> UpdateUser.toRequest(serialization, req) }
+       .let { rawReq -> handler(rawReq) }
+       .let { rawRes -> UpdateUser.fromResponse(serialization, rawRes) }
+  suspend fun deleteUser(username: String) = 
      DeleteUser.Request(username)
-       .let{req -> handler(req) as DeleteUser.Response<*> }
+       .let { req -> DeleteUser.toRequest(serialization, req) }
+       .let { rawReq -> handler(rawReq) }
+       .let { rawRes -> DeleteUser.fromResponse(serialization, rawRes) }
 }

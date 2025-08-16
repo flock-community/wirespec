@@ -34,109 +34,126 @@ import community.flock.wirespec.integration.spring.java.generated.model.Tag;
 import community.flock.wirespec.integration.spring.java.generated.model.PetStatus;   
 
 public class Client {
-  private final java.util.function.Function<Wirespec.Request<?>, java.util.concurrent.CompletableFuture<Wirespec.Response<?>>> handler;
+  private final Wirespec.Serialization<String> serialization;
+  private final java.util.function.Function<Wirespec.RawRequest, java.util.concurrent.CompletableFuture<Wirespec.RawResponse>> handler;
 
-  public Client(java.util.function.Function<Wirespec.Request<?>, java.util.concurrent.CompletableFuture<Wirespec.Response<?>>> handler) {
+  public Client(Wirespec.Serialization<String> serialization, java.util.function.Function<Wirespec.RawRequest, java.util.concurrent.CompletableFuture<Wirespec.RawResponse>> handler) {
+    this.serialization = serialization;
     this.handler = handler;
   }
 
-  public <Req extends Wirespec.Request<?>, Res extends Wirespec.Response<?>> java.util.concurrent.CompletableFuture<Res> handle(Req req) {
-    return (java.util.concurrent.CompletableFuture<Res>) this.handler.apply(req);
-}
-
   public java.util.concurrent.CompletableFuture<AddPet.Response<?>> addPet(Pet body) {
     var req = new AddPet.Request(body);
-    return handle(req); 
+    var rawReq = AddPet.Handler.toRequest(serialization, req);
+    return handler.apply(rawReq)
+     .thenApply(rawRes -> AddPet.Handler.fromResponse(serialization, rawRes));
   }
-
   public java.util.concurrent.CompletableFuture<UpdatePet.Response<?>> updatePet(Pet body) {
     var req = new UpdatePet.Request(body);
-    return handle(req); 
+    var rawReq = UpdatePet.Handler.toRequest(serialization, req);
+    return handler.apply(rawReq)
+     .thenApply(rawRes -> UpdatePet.Handler.fromResponse(serialization, rawRes));
   }
-
   public java.util.concurrent.CompletableFuture<FindPetsByStatus.Response<?>> findPetsByStatus(java.util.Optional<FindPetsByStatusParameterStatus> status) {
     var req = new FindPetsByStatus.Request(status);
-    return handle(req); 
+    var rawReq = FindPetsByStatus.Handler.toRequest(serialization, req);
+    return handler.apply(rawReq)
+     .thenApply(rawRes -> FindPetsByStatus.Handler.fromResponse(serialization, rawRes));
   }
-
   public java.util.concurrent.CompletableFuture<FindPetsByTags.Response<?>> findPetsByTags(java.util.Optional<java.util.List<String>> tags) {
     var req = new FindPetsByTags.Request(tags);
-    return handle(req); 
+    var rawReq = FindPetsByTags.Handler.toRequest(serialization, req);
+    return handler.apply(rawReq)
+     .thenApply(rawRes -> FindPetsByTags.Handler.fromResponse(serialization, rawRes));
   }
-
   public java.util.concurrent.CompletableFuture<GetPetById.Response<?>> getPetById(Long petId) {
     var req = new GetPetById.Request(petId);
-    return handle(req); 
+    var rawReq = GetPetById.Handler.toRequest(serialization, req);
+    return handler.apply(rawReq)
+     .thenApply(rawRes -> GetPetById.Handler.fromResponse(serialization, rawRes));
   }
-
   public java.util.concurrent.CompletableFuture<UpdatePetWithForm.Response<?>> updatePetWithForm(Long petId, java.util.Optional<String> name, java.util.Optional<String> status) {
     var req = new UpdatePetWithForm.Request(petId, name, status);
-    return handle(req); 
+    var rawReq = UpdatePetWithForm.Handler.toRequest(serialization, req);
+    return handler.apply(rawReq)
+     .thenApply(rawRes -> UpdatePetWithForm.Handler.fromResponse(serialization, rawRes));
   }
-
   public java.util.concurrent.CompletableFuture<DeletePet.Response<?>> deletePet(Long petId, java.util.Optional<String> api_key) {
     var req = new DeletePet.Request(petId, api_key);
-    return handle(req); 
+    var rawReq = DeletePet.Handler.toRequest(serialization, req);
+    return handler.apply(rawReq)
+     .thenApply(rawRes -> DeletePet.Handler.fromResponse(serialization, rawRes));
   }
-
   public java.util.concurrent.CompletableFuture<UploadFile.Response<?>> uploadFile(Long petId, java.util.Optional<String> additionalMetadata, String body) {
     var req = new UploadFile.Request(petId, additionalMetadata, body);
-    return handle(req); 
+    var rawReq = UploadFile.Handler.toRequest(serialization, req);
+    return handler.apply(rawReq)
+     .thenApply(rawRes -> UploadFile.Handler.fromResponse(serialization, rawRes));
   }
-
   public java.util.concurrent.CompletableFuture<GetInventory.Response<?>> getInventory() {
     var req = new GetInventory.Request();
-    return handle(req); 
+    var rawReq = GetInventory.Handler.toRequest(serialization, req);
+    return handler.apply(rawReq)
+     .thenApply(rawRes -> GetInventory.Handler.fromResponse(serialization, rawRes));
   }
-
   public java.util.concurrent.CompletableFuture<PlaceOrder.Response<?>> placeOrder(Order body) {
     var req = new PlaceOrder.Request(body);
-    return handle(req); 
+    var rawReq = PlaceOrder.Handler.toRequest(serialization, req);
+    return handler.apply(rawReq)
+     .thenApply(rawRes -> PlaceOrder.Handler.fromResponse(serialization, rawRes));
   }
-
   public java.util.concurrent.CompletableFuture<GetOrderById.Response<?>> getOrderById(Long orderId) {
     var req = new GetOrderById.Request(orderId);
-    return handle(req); 
+    var rawReq = GetOrderById.Handler.toRequest(serialization, req);
+    return handler.apply(rawReq)
+     .thenApply(rawRes -> GetOrderById.Handler.fromResponse(serialization, rawRes));
   }
-
   public java.util.concurrent.CompletableFuture<DeleteOrder.Response<?>> deleteOrder(Long orderId) {
     var req = new DeleteOrder.Request(orderId);
-    return handle(req); 
+    var rawReq = DeleteOrder.Handler.toRequest(serialization, req);
+    return handler.apply(rawReq)
+     .thenApply(rawRes -> DeleteOrder.Handler.fromResponse(serialization, rawRes));
   }
-
   public java.util.concurrent.CompletableFuture<CreateUser.Response<?>> createUser(User body) {
     var req = new CreateUser.Request(body);
-    return handle(req); 
+    var rawReq = CreateUser.Handler.toRequest(serialization, req);
+    return handler.apply(rawReq)
+     .thenApply(rawRes -> CreateUser.Handler.fromResponse(serialization, rawRes));
   }
-
   public java.util.concurrent.CompletableFuture<CreateUsersWithListInput.Response<?>> createUsersWithListInput(java.util.List<User> body) {
     var req = new CreateUsersWithListInput.Request(body);
-    return handle(req); 
+    var rawReq = CreateUsersWithListInput.Handler.toRequest(serialization, req);
+    return handler.apply(rawReq)
+     .thenApply(rawRes -> CreateUsersWithListInput.Handler.fromResponse(serialization, rawRes));
   }
-
   public java.util.concurrent.CompletableFuture<LoginUser.Response<?>> loginUser(java.util.Optional<String> username, java.util.Optional<String> password) {
     var req = new LoginUser.Request(username, password);
-    return handle(req); 
+    var rawReq = LoginUser.Handler.toRequest(serialization, req);
+    return handler.apply(rawReq)
+     .thenApply(rawRes -> LoginUser.Handler.fromResponse(serialization, rawRes));
   }
-
   public java.util.concurrent.CompletableFuture<LogoutUser.Response<?>> logoutUser() {
     var req = new LogoutUser.Request();
-    return handle(req); 
+    var rawReq = LogoutUser.Handler.toRequest(serialization, req);
+    return handler.apply(rawReq)
+     .thenApply(rawRes -> LogoutUser.Handler.fromResponse(serialization, rawRes));
   }
-
   public java.util.concurrent.CompletableFuture<GetUserByName.Response<?>> getUserByName(String username) {
     var req = new GetUserByName.Request(username);
-    return handle(req); 
+    var rawReq = GetUserByName.Handler.toRequest(serialization, req);
+    return handler.apply(rawReq)
+     .thenApply(rawRes -> GetUserByName.Handler.fromResponse(serialization, rawRes));
   }
-
   public java.util.concurrent.CompletableFuture<UpdateUser.Response<?>> updateUser(String username, User body) {
     var req = new UpdateUser.Request(username, body);
-    return handle(req); 
+    var rawReq = UpdateUser.Handler.toRequest(serialization, req);
+    return handler.apply(rawReq)
+     .thenApply(rawRes -> UpdateUser.Handler.fromResponse(serialization, rawRes));
   }
-
   public java.util.concurrent.CompletableFuture<DeleteUser.Response<?>> deleteUser(String username) {
     var req = new DeleteUser.Request(username);
-    return handle(req); 
+    var rawReq = DeleteUser.Handler.toRequest(serialization, req);
+    return handler.apply(rawReq)
+     .thenApply(rawRes -> DeleteUser.Handler.fromResponse(serialization, rawRes));
   }
-
 }

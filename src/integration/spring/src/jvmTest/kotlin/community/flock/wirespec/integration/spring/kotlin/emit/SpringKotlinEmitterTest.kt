@@ -182,10 +182,12 @@ class SpringKotlinEmitterTest {
             |import community.flock.wirespec.spring.test.model.TodoDto
             |import community.flock.wirespec.spring.test.model.Error
             |
-            |class Client(val handler: (Wirespec.Request<*>) -> Wirespec.Response<*> ){
-            |  suspend fun GetTodos(done: Boolean?) = 
+            |open class Client(val serialization: Wirespec.Serialization<String>, val handler: (Wirespec.RawRequest) -> Wirespec.RawResponse ){
+            |  suspend fun getTodos(done: Boolean?) = 
             |     GetTodos.Request(done)
-            |       .let{req -> handler(req) as GetTodos.Response<*> }
+            |       .let { req -> GetTodos.toRequest(serialization, req) }
+            |       .let { rawReq -> handler(rawReq) }
+            |       .let { rawRes -> GetTodos.fromResponse(serialization, rawRes) }
             |}
             |
         """.trimMargin()
