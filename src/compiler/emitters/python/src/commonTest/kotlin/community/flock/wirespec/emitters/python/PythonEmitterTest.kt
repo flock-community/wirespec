@@ -286,13 +286,15 @@ class PythonEmitterTest {
         |
         |class Client():
         |
-        |  def __init__(self, handler, serialization):
-        |    self.handler = handler
+        |  def __init__(self, serialization, handler):
         |    self.serialization = serialization
+        |    self.handler = handler
         |
-        |  def PutTodo(self, id: str, done: bool, name: Optional[str], token: Token, refreshToken: Optional[Token], body: PotentialTodoDto):
+        |  def putTodo(self, id: str, done: bool, name: Optional[str], token: Token, refreshToken: Optional[Token], body: PotentialTodoDto):
         |     req = endpoint.PutTodo.Request(id, done, name, token, refreshToken, body)
-        |     return self.handler(endpoint.PutTodo, req)
+        |     raw_req = endpoint.PutTodo.Convert.to_raw_request(self.serialization, req)
+        |     raw_res = self.handler(raw_req)
+        |     return endpoint.PutTodo.Convert.from_raw_response(self.serialization, raw_res)
         |
         """.trimMargin()
         CompileFullEndpointTest.compiler { PythonEmitter() } shouldBeRight python
@@ -441,13 +443,15 @@ class PythonEmitterTest {
             |
             |class Client():
             |
-            |  def __init__(self, handler, serialization):
-            |    self.handler = handler
+            |  def __init__(self, serialization, handler):
             |    self.serialization = serialization
+            |    self.handler = handler
             |
-            |  def GetTodos(self, ):
+            |  def getTodos(self, ):
             |     req = endpoint.GetTodos.Request
-            |     return self.handler(endpoint.GetTodos, req)
+            |     raw_req = endpoint.GetTodos.Convert.to_raw_request(self.serialization, req)
+            |     raw_res = self.handler(raw_req)
+            |     return endpoint.GetTodos.Convert.from_raw_response(self.serialization, raw_res)
             |
         """.trimMargin()
         CompileMinimalEndpointTest.compiler { PythonEmitter() } shouldBeRight python

@@ -336,10 +336,12 @@ class KotlinEmitterTest {
             |import community.flock.wirespec.generated.model.TodoDto
             |import community.flock.wirespec.generated.model.Error
             |
-            |class Client(val handler: (Wirespec.Request<*>) -> Wirespec.Response<*> ){
-            |  suspend fun PutTodo(id: String, done: Boolean, name: String?, token: Token, refreshToken: Token?, body: PotentialTodoDto) = 
+            |open class Client(val serialization: Wirespec.Serialization<String>, val handler: (Wirespec.RawRequest) -> Wirespec.RawResponse ){
+            |  suspend fun putTodo(id: String, done: Boolean, name: String?, token: Token, refreshToken: Token?, body: PotentialTodoDto) = 
             |     PutTodo.Request(id, done, name, token, refreshToken, body)
-            |       .let{req -> handler(req) as PutTodo.Response<*> }
+            |       .let { req -> PutTodo.toRequest(serialization, req) }
+            |       .let { rawReq -> handler(rawReq) }
+            |       .let { rawRes -> PutTodo.fromResponse(serialization, rawRes) }
             |}
             |
         """.trimMargin()
@@ -447,10 +449,12 @@ class KotlinEmitterTest {
             |
             |import community.flock.wirespec.generated.model.TodoDto
             |
-            |class Client(val handler: (Wirespec.Request<*>) -> Wirespec.Response<*> ){
-            |  suspend fun GetTodos() = 
+            |open class Client(val serialization: Wirespec.Serialization<String>, val handler: (Wirespec.RawRequest) -> Wirespec.RawResponse ){
+            |  suspend fun getTodos() = 
             |     GetTodos.Request
-            |       .let{req -> handler(req) as GetTodos.Response<*> }
+            |       .let { req -> GetTodos.toRequest(serialization, req) }
+            |       .let { rawReq -> handler(rawReq) }
+            |       .let { rawRes -> GetTodos.fromResponse(serialization, rawRes) }
             |}
             |
         """.trimMargin()

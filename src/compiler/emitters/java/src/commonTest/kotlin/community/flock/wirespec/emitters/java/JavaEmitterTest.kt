@@ -318,21 +318,20 @@ class JavaEmitterTest {
             |import community.flock.wirespec.generated.model.Error;   
             |
             |public class Client {
-            |  private final java.util.function.Function<Wirespec.Request<?>, java.util.concurrent.CompletableFuture<Wirespec.Response<?>>> handler;
+            |  private final Wirespec.Serialization<String> serialization;
+            |  private final java.util.function.Function<Wirespec.RawRequest, java.util.concurrent.CompletableFuture<Wirespec.RawResponse>> handler;
             |
-            |  public Client(java.util.function.Function<Wirespec.Request<?>, java.util.concurrent.CompletableFuture<Wirespec.Response<?>>> handler) {
+            |  public Client(Wirespec.Serialization<String> serialization, java.util.function.Function<Wirespec.RawRequest, java.util.concurrent.CompletableFuture<Wirespec.RawResponse>> handler) {
+            |    this.serialization = serialization;
             |    this.handler = handler;
             |  }
             |
-            |  public <Req extends Wirespec.Request<?>, Res extends Wirespec.Response<?>> java.util.concurrent.CompletableFuture<Res> handle(Req req) {
-            |    return (java.util.concurrent.CompletableFuture<Res>) this.handler.apply(req);
-            |}
-            |
             |  public java.util.concurrent.CompletableFuture<PutTodo.Response<?>> putTodo(String id, Boolean done, java.util.Optional<String> name, Token token, java.util.Optional<Token> refreshToken, PotentialTodoDto body) {
             |    var req = new PutTodo.Request(id, done, name, token, refreshToken, body);
-            |    return handle(req); 
+            |    var rawReq = PutTodo.Handler.toRequest(serialization, req);
+            |    return handler.apply(rawReq)
+            |     .thenApply(rawRes -> PutTodo.Handler.fromResponse(serialization, rawRes));
             |  }
-            |
             |}
         """.trimMargin()
         CompileFullEndpointTest.compiler { JavaEmitter() } shouldBeRight java
@@ -500,21 +499,20 @@ class JavaEmitterTest {
             |import community.flock.wirespec.generated.model.TodoDto;   
             |
             |public class Client {
-            |  private final java.util.function.Function<Wirespec.Request<?>, java.util.concurrent.CompletableFuture<Wirespec.Response<?>>> handler;
+            |  private final Wirespec.Serialization<String> serialization;
+            |  private final java.util.function.Function<Wirespec.RawRequest, java.util.concurrent.CompletableFuture<Wirespec.RawResponse>> handler;
             |
-            |  public Client(java.util.function.Function<Wirespec.Request<?>, java.util.concurrent.CompletableFuture<Wirespec.Response<?>>> handler) {
+            |  public Client(Wirespec.Serialization<String> serialization, java.util.function.Function<Wirespec.RawRequest, java.util.concurrent.CompletableFuture<Wirespec.RawResponse>> handler) {
+            |    this.serialization = serialization;
             |    this.handler = handler;
             |  }
             |
-            |  public <Req extends Wirespec.Request<?>, Res extends Wirespec.Response<?>> java.util.concurrent.CompletableFuture<Res> handle(Req req) {
-            |    return (java.util.concurrent.CompletableFuture<Res>) this.handler.apply(req);
-            |}
-            |
             |  public java.util.concurrent.CompletableFuture<GetTodos.Response<?>> getTodos() {
             |    var req = new GetTodos.Request();
-            |    return handle(req); 
+            |    var rawReq = GetTodos.Handler.toRequest(serialization, req);
+            |    return handler.apply(rawReq)
+            |     .thenApply(rawRes -> GetTodos.Handler.fromResponse(serialization, rawRes));
             |  }
-            |
             |}
         """.trimMargin()
         CompileMinimalEndpointTest.compiler { JavaEmitter() } shouldBeRight java

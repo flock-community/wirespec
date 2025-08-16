@@ -36,7 +36,6 @@ interface JavaClientEmitter: BaseEmitter, ClientEmitter,PackageNameEmitter, Para
         |${Spacer}return handler.apply(rawReq)
         |   .thenApply(rawRes -> ${emit(identifier)}.Handler.fromResponse(serialization, rawRes));
         |}
-        |
     """.trimMargin()
 
     fun Endpoint.Request.emitClientInterface(endpoint: Endpoint) =
