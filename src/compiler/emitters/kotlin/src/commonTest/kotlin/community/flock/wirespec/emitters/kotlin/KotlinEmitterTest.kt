@@ -3,6 +3,7 @@ package community.flock.wirespec.emitters.kotlin
 import arrow.core.nonEmptyListOf
 import arrow.core.nonEmptySetOf
 import community.flock.wirespec.compiler.core.EmitContext
+import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.test.CompileChannelTest
@@ -495,5 +496,15 @@ class KotlinEmitterTest {
         CompileUnionTest.compiler { KotlinEmitter() } shouldBeRight expected
     }
 
-    private fun EmitContext.emitFirst(node: Definition) = emitters.map { it.emit(Module("", nonEmptyListOf(node)), logger).first().result }
+    private fun EmitContext.emitFirst(node: Definition) = emitters.map {
+        val ast = AST(
+            nonEmptyListOf(
+                Module(
+                    "",
+                    nonEmptyListOf(node),
+                ),
+            ),
+        )
+        it.emit(ast, logger).first().result
+    }
 }
