@@ -129,7 +129,7 @@ private fun List<Token>.groupAnnotations() = run {
     var i = 0
     while (i < this.size) {
         val current = this[i]
-        if (i + 1 < this.size && current.type is At && this[i + 1].type is WirespecIdentifier) {
+        if (i + 1 < this.size && current.type is At && this[i + 1].type is WirespecType) {
             result.add(listOf(current, this[i + 1]).mergeTokens(Annotation))
             i += 2
         } else {

@@ -21,6 +21,7 @@ import community.flock.wirespec.compiler.core.tokenize.Comment
 import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
 import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.LeftParenthesis
+import community.flock.wirespec.compiler.core.tokenize.LiteralString
 import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.TokenType
@@ -153,14 +154,22 @@ private fun TokenProvider.parseDefinition() = either {
     }
 
     private fun TokenProvider.parseAnnotationParameter() = either {
-        val value = token.value.also { eatToken().bind() }
+        val value = when (token.type) {
+            LiteralString -> token.value.removeSurrounding("\"")
+            else -> token.value
+        }
+        eatToken().bind()
         val nameAndValue = when (token.type) {
             is Colon -> {
                 eatToken().bind()
-                val actualValue = token.value.also { eatToken().bind() }
+                val actualValue = when (token.type) {
+                    LiteralString -> token.value.removeSurrounding("\"")
+                    else -> token.value
+                }
+                eatToken().bind()
                 value to actualValue
             }
-            else -> "default" to value
+            else -> "default" to  value
         }
         AnnotationParameter(nameAndValue.first, nameAndValue.second)
     }

@@ -22,7 +22,7 @@ class ParseAnnotationTest {
     @Test
     fun testSimpleAnnotationOnType() {
         val source = """
-            |@deprecated
+            |@Deprecated
             |type User = String
         """.trimMargin()
 
@@ -44,8 +44,8 @@ class ParseAnnotationTest {
     @Test
     fun testMultipleAnnotationsOnType() {
         val source = """
-            |@deprecated
-            |@internal
+            |@Deprecated
+            |@Internal
             |type User {
             |  name: String
             |}
@@ -67,7 +67,7 @@ class ParseAnnotationTest {
     @Test
     fun testAnnotationWithParametersOnType() {
         val source = """
-            |@since("1.0.0")
+            |@Since("1.0.0")
             |type User = String
         """.trimMargin()
 
@@ -93,7 +93,7 @@ class ParseAnnotationTest {
     @Test
     fun testAnnotationWithNamedParametersOnType() {
         val source = """
-            |@validate(min: 0, max: 100)
+            |@Validate(min: 0, max: 100)
             |type Age = Integer
         """.trimMargin()
 
@@ -123,7 +123,7 @@ class ParseAnnotationTest {
     @Test
     fun testAnnotationOnEnum() {
         val source = """
-            |@deprecated
+            |@Deprecated
             |enum Status {
             |  ACTIVE,
             |  INACTIVE
@@ -145,7 +145,7 @@ class ParseAnnotationTest {
     @Test
     fun testAnnotationOnEndpoint() {
         val source = """
-            |@authenticated
+            |@Authenticated
             |endpoint GetUser GET /user/{id:String} -> {
             |   200 -> String
             |}
@@ -167,7 +167,7 @@ class ParseAnnotationTest {
     @Test
     fun testAnnotationOnChannel() {
         val source = """
-            |@secured
+            |@Secured
             |channel UserUpdates -> String
         """.trimMargin()
 
@@ -186,7 +186,7 @@ class ParseAnnotationTest {
     @Test
     fun testComplexAnnotationWithMixedParameters() {
         val source = """
-            |@config("development", env: "test", debug: true)
+            |@Config("development", env: "test", debug: true)
             |type Config = String(/^([0-9]{2}-[0-9]{2}-20[0-9]{2})$/g)
         """.trimMargin()
 
@@ -220,7 +220,7 @@ class ParseAnnotationTest {
     @Test
     fun testAnnotationWithCommentOnType() {
         val source = """
-            |@deprecated
+            |@Deprecated
             |/*
             | * This is a user type
             | */
@@ -245,8 +245,8 @@ class ParseAnnotationTest {
     @Test
     fun testMultipleAnnotationsWithParametersOnEndpoint() {
         val source = """
-            |@rateLimit(requests: 100, window: 60)
-            |@authenticated
+            |@RateLimit(requests: 100, window: 60)
+            |@Authenticated
             |endpoint GetUsers GET /users -> {
             | 200 -> String
             |}
@@ -282,7 +282,7 @@ class ParseAnnotationTest {
     @Test
     fun testAnnotationWithEmptyParametersOnType() {
         val source = """
-            |@experimental()
+            |@Experimental()
             |type NewFeature = String
         """.trimMargin()
 

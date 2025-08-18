@@ -8,7 +8,7 @@ class TokenizeAnnotationTest {
 
     @Test
     fun testSimpleAnnotation() = testTokenizer(
-        "@deprecated",
+        "@Deprecated",
         Annotation,
         EndOfProgram,
     )
@@ -16,7 +16,7 @@ class TokenizeAnnotationTest {
     @Test
     fun testAnnotationWithType() = testTokenizer(
         """
-        |@deprecated
+        |@Deprecated
         |type User = String
         """.trimMargin(),
         Annotation,
@@ -30,8 +30,8 @@ class TokenizeAnnotationTest {
     @Test
     fun testMultipleAnnotations() = testTokenizer(
         """
-        |@deprecated
-        |@internal
+        |@Deprecated
+        |@Internal
         |type User = String
         """.trimMargin(),
         Annotation,
@@ -46,7 +46,7 @@ class TokenizeAnnotationTest {
     @Test
     fun testAnnotationWithParameters() = testTokenizer(
         """
-        |@since("1.0.0")
+        |@Since("1.0.0")
         |type User = String
         """.trimMargin(),
         Annotation, LeftParenthesis, LiteralString, RightParenthesis,
@@ -57,7 +57,7 @@ class TokenizeAnnotationTest {
     @Test
     fun testAnnotationOnEndpoint() = testTokenizer(
         """
-        |@authenticated
+        |@Authenticated
         |endpoint GetUser GET /user/{id} -> User
         """.trimMargin(),
         Annotation,
@@ -68,7 +68,7 @@ class TokenizeAnnotationTest {
     @Test
     fun testAnnotationOnEnum() = testTokenizer(
         """
-        |@deprecated
+        |@Deprecated
         |enum Status {
         |  ACTIVE,
         |  INACTIVE
@@ -86,9 +86,9 @@ class TokenizeAnnotationTest {
     fun testAnnotationOnField() = testTokenizer(
         """
         |type User {
-        |  @required
+        |  @Required
         |  name: String,
-        |  @optional
+        |  @Optional
         |  email: String?
         |}
         """.trimMargin(),
@@ -104,7 +104,7 @@ class TokenizeAnnotationTest {
     @Test
     fun testComplexAnnotationWithMultipleParameters() = testTokenizer(
         """
-        |@validate(min: 0, max: 100)
+        |@Validate(min: 0, max: 100)
         |type Age = Integer
         """.trimMargin(),
         Annotation, LeftParenthesis,
@@ -117,7 +117,7 @@ class TokenizeAnnotationTest {
     @Test
     fun testAnnotationWithSingleQuotedString() = testTokenizer(
         """
-        |@description("This is a description")
+        |@Description("This is a description")
         |type User = String
         """.trimMargin(),
         Annotation, LeftParenthesis, LiteralString, RightParenthesis,
@@ -128,7 +128,7 @@ class TokenizeAnnotationTest {
     @Test
     fun testAnnotationWithEscapedQuotesInString() = testTokenizer(
         """
-        |@example("Say \"Hello World\"")
+        |@Example("Say \"Hello World\"")
         |type Message = String
         """.trimMargin(),
         Annotation, LeftParenthesis, LiteralString, RightParenthesis,
@@ -139,7 +139,7 @@ class TokenizeAnnotationTest {
     @Test
     fun testAnnotationWithMixedParameterTypes() = testTokenizer(
         """
-        |@config(name: "database", port: 5432, enabled: true)
+        |@Config(name: "database", port: 5432, enabled: true)
         |type Config = String
         """.trimMargin(),
         Annotation, LeftParenthesis,
@@ -153,8 +153,8 @@ class TokenizeAnnotationTest {
     @Test
     fun testMultipleAnnotationsWithLiteralStrings() = testTokenizer(
         """
-        |@description("User entity")
-        |@example("John Doe")
+        |@Description("User entity")
+        |@Example("John Doe")
         |type User = String
         """.trimMargin(),
         Annotation, LeftParenthesis, LiteralString, RightParenthesis,
@@ -166,7 +166,7 @@ class TokenizeAnnotationTest {
     @Test
     fun testAnnotationWithEmptyString() = testTokenizer(
         """
-        |@default("")
+        |@Default("")
         |type OptionalField = String
         """.trimMargin(),
         Annotation, LeftParenthesis, LiteralString, RightParenthesis,
@@ -177,7 +177,7 @@ class TokenizeAnnotationTest {
     @Test
     fun testAnnotationWithStringContainingSpecialCharacters() = testTokenizer(
         """
-        |@pattern("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+        |@Pattern("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
         |type Email = String
         """.trimMargin(),
         Annotation, LeftParenthesis, LiteralString, RightParenthesis,
