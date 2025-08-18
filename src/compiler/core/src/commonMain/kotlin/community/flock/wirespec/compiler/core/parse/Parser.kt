@@ -20,8 +20,10 @@ import community.flock.wirespec.compiler.core.tokenize.Comma
 import community.flock.wirespec.compiler.core.tokenize.Comment
 import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
 import community.flock.wirespec.compiler.core.tokenize.EnumTypeDefinition
+import community.flock.wirespec.compiler.core.tokenize.LeftBracket
 import community.flock.wirespec.compiler.core.tokenize.LeftParenthesis
 import community.flock.wirespec.compiler.core.tokenize.LiteralString
+import community.flock.wirespec.compiler.core.tokenize.RightBracket
 import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.TokenType
@@ -140,7 +142,7 @@ private fun TokenProvider.parseDefinition() = either {
         when (token.type) {
             is RightParenthesis -> emptyList()
             else -> {
-                val param = parseAnnotationParameter().bind()
+                val params = parseAnnotationParameter().bind()
                 val remaining = when (token.type) {
                     is Comma -> {
                         eatToken().bind()
@@ -148,29 +150,77 @@ private fun TokenProvider.parseDefinition() = either {
                     }
                     else -> emptyList()
                 }
-                listOf(param) + remaining
+                params + remaining
             }
         }
     }
 
-    private fun TokenProvider.parseAnnotationParameter() = either {
-        val value = when (token.type) {
-            LiteralString -> token.value.removeSurrounding("\"")
-            else -> token.value
-        }
-        eatToken().bind()
-        val nameAndValue = when (token.type) {
-            is Colon -> {
-                eatToken().bind()
-                val actualValue = when (token.type) {
+    private fun TokenProvider.parseAnnotationParameter(): Either<WirespecException, List<AnnotationParameter>> = either {
+        when (token.type) {
+            is LeftBracket -> {
+                eatToken().bind() // consume [
+                val arrayValues = mutableListOf<String>()
+                while (token.type != RightBracket) {
+                    val value = when (token.type) {
+                        LiteralString -> token.value.removeSurrounding("\"")
+                        else -> token.value
+                    }
+                    arrayValues.add(value)
+                    eatToken().bind()
+                    if (token.type is Comma) {
+                        eatToken().bind() // consume comma
+                    }
+                }
+                when (token.type) {
+                    RightBracket -> eatToken().bind() // consume ]
+                    else -> raiseWrongToken<RightBracket>().bind()
+                }
+                arrayValues.map { AnnotationParameter("default", it) }
+            }
+            else -> {
+                val value = when (token.type) {
                     LiteralString -> token.value.removeSurrounding("\"")
                     else -> token.value
                 }
                 eatToken().bind()
-                value to actualValue
+                val nameAndValue = when (token.type) {
+                    is Colon -> {
+                        eatToken().bind()
+                        when (token.type) {
+                            is LeftBracket -> {
+                                eatToken().bind() // consume [
+                                val arrayValues = mutableListOf<String>()
+                                while (token.type != RightBracket) {
+                                    val arrayValue = when (token.type) {
+                                        LiteralString -> token.value.removeSurrounding("\"")
+                                        else -> token.value
+                                    }
+                                    arrayValues.add(arrayValue)
+                                    eatToken().bind()
+                                    if (token.type is Comma) {
+                                        eatToken().bind() // consume comma
+                                    }
+                                }
+                                when (token.type) {
+                                    RightBracket -> eatToken().bind() // consume ]
+                                    else -> raiseWrongToken<RightBracket>().bind()
+                                }
+                                return@either arrayValues.map { AnnotationParameter(value, it) }
+                            }
+                            else -> {
+                                val actualValue = when (token.type) {
+                                    LiteralString -> token.value.removeSurrounding("\"")
+                                    else -> token.value
+                                }
+                                eatToken().bind()
+                                value to actualValue
+                            }
+                        }
+                    }
+                    else -> "default" to value
+                }
+                listOf(AnnotationParameter(nameAndValue.first, nameAndValue.second))
             }
-            else -> "default" to value
         }
-        AnnotationParameter(nameAndValue.first, nameAndValue.second)
     }
 }

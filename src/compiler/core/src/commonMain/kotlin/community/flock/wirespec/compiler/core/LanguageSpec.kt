@@ -18,6 +18,7 @@ import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.Hash
 import community.flock.wirespec.compiler.core.tokenize.Integer
 import community.flock.wirespec.compiler.core.tokenize.KebabCaseIdentifier
+import community.flock.wirespec.compiler.core.tokenize.LeftBracket
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.LeftParenthesis
 import community.flock.wirespec.compiler.core.tokenize.LiteralString
@@ -30,6 +31,7 @@ import community.flock.wirespec.compiler.core.tokenize.Pipe
 import community.flock.wirespec.compiler.core.tokenize.Precision.P32
 import community.flock.wirespec.compiler.core.tokenize.Precision.P64
 import community.flock.wirespec.compiler.core.tokenize.QuestionMark
+import community.flock.wirespec.compiler.core.tokenize.RightBracket
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
 import community.flock.wirespec.compiler.core.tokenize.ScreamingKebabCaseIdentifier
@@ -82,6 +84,8 @@ object WirespecSpec : LanguageSpec {
         Regex("^@") to At,
         Regex("^#") to Hash,
         Regex("^\\[\\]") to Brackets,
+        Regex("^\\[") to LeftBracket,
+        Regex("^\\]") to RightBracket,
         Regex("^\\b(GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE)\\b") to Method,
         Regex("^[a-z`][a-zA-Z0-9_\\-`]*") to fieldIdentifier,
         Regex("^\\b[A-Z][a-zA-Z0-9_]*\\b") to typeIdentifier,

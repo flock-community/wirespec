@@ -23,6 +23,8 @@ class SyntaxHighlighter : SyntaxHighlighterBase() {
     override fun getTokenHighlights(tokenType: IElementType) = when (tokenType) {
         Types.COMMENT -> arrayOf(DOC_COMMENT_MARKUP)
         Types.BRACKETS -> arrayOf(BRACKETS)
+        Types.LEFT_BRACKET -> arrayOf(BRACKETS)
+        Types.RIGHT_BRACKET -> arrayOf(BRACKETS)
         Types.COLON -> arrayOf(SEMICOLON)
         Types.COMMA -> arrayOf(COMMA)
         Types.WIRESPEC_IDENTIFIER -> arrayOf(PARAMETER)

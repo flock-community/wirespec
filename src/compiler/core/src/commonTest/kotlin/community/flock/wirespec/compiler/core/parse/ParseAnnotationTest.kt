@@ -300,4 +300,106 @@ class ParseAnnotationTest {
                 }
             }
     }
+
+    @Test
+    fun testAnnotationWithUnnamedArrayParameter() {
+        val source = """
+            |@Tag(["TagA", "TagB"])
+            |endpoint GetUser GET /user/{id:String} -> {
+            |   200 -> String
+            |}
+        """.trimMargin()
+
+        parser(source)
+            .shouldBeRight { it.joinToString { it.message } }
+            .shouldHaveSize(1)
+            .first()
+            .shouldBeInstanceOf<Endpoint>()
+            .apply {
+                identifier.value shouldBe "GetUser"
+                annotations.shouldHaveSize(1)
+                annotations.first().apply {
+                    name shouldBe "Tag"
+                    parameters.shouldHaveSize(2)
+                    parameters[0].apply {
+                        name shouldBe "default"
+                        value shouldBe "TagA"
+                    }
+                    parameters[1].apply {
+                        name shouldBe "default"
+                        value shouldBe "TagB"
+                    }
+                }
+            }
+    }
+
+    @Test
+    fun testAnnotationWithNamedArrayParameter() {
+        val source = """
+            |@Security(roles: ["RoleA", "RoleB"])
+            |endpoint GetUser GET /user/{id:String} -> {
+            |   200 -> String
+            |}
+        """.trimMargin()
+
+        parser(source)
+            .shouldBeRight { it.joinToString { it.message } }
+            .shouldHaveSize(1)
+            .first()
+            .shouldBeInstanceOf<Endpoint>()
+            .apply {
+                identifier.value shouldBe "GetUser"
+                annotations.shouldHaveSize(1)
+                annotations.first().apply {
+                    name shouldBe "Security"
+                    parameters.shouldHaveSize(2)
+                    parameters[0].apply {
+                        name shouldBe "roles"
+                        value shouldBe "RoleA"
+                    }
+                    parameters[1].apply {
+                        name shouldBe "roles"
+                        value shouldBe "RoleB"
+                    }
+                }
+            }
+    }
+
+    @Test
+    fun testAnnotationWithMixedArrayAndSingleParameters() {
+        val source = """
+            |@Config(environment: "dev", tags: ["tag1", "tag2"], debug: true)
+            |type AppConfig = String
+        """.trimMargin()
+
+        parser(source)
+            .shouldBeRight { it.joinToString { it.message } }
+            .shouldHaveSize(1)
+            .first()
+            .shouldBeInstanceOf<Refined>()
+            .apply {
+                identifier.value shouldBe "AppConfig"
+                annotations.shouldHaveSize(1)
+                annotations.first().apply {
+                    name shouldBe "Config"
+                    parameters.shouldHaveSize(4)
+                    parameters[0].apply {
+                        name shouldBe "environment"
+                        value shouldBe "dev"
+                    }
+                    parameters[1].apply {
+                        name shouldBe "tags"
+                        value shouldBe "tag1"
+                    }
+                    parameters[2].apply {
+                        name shouldBe "tags"
+                        value shouldBe "tag2"
+                    }
+                    parameters[3].apply {
+                        name shouldBe "debug"
+                        value shouldBe "true"
+                    }
+                }
+            }
+    }
 }

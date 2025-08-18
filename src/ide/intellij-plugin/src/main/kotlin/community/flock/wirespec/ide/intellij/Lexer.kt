@@ -17,6 +17,7 @@ import community.flock.wirespec.compiler.core.tokenize.Equals
 import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
 import community.flock.wirespec.compiler.core.tokenize.Hash
 import community.flock.wirespec.compiler.core.tokenize.Integer
+import community.flock.wirespec.compiler.core.tokenize.LeftBracket
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.LeftParenthesis
 import community.flock.wirespec.compiler.core.tokenize.LiteralString
@@ -26,6 +27,7 @@ import community.flock.wirespec.compiler.core.tokenize.Path
 import community.flock.wirespec.compiler.core.tokenize.Pipe
 import community.flock.wirespec.compiler.core.tokenize.QuestionMark
 import community.flock.wirespec.compiler.core.tokenize.RegExp
+import community.flock.wirespec.compiler.core.tokenize.RightBracket
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
 import community.flock.wirespec.compiler.core.tokenize.Token
@@ -73,6 +75,8 @@ class Lexer : IntellijLexer() {
         is Annotation -> Types.ANNOTATION
         is ForwardSlash -> Types.FORWARD_SLASH
         is Brackets -> Types.BRACKETS
+        is LeftBracket -> Types.LEFT_BRACKET
+        is RightBracket -> Types.RIGHT_BRACKET
         is WirespecIdentifier -> Types.WIRESPEC_IDENTIFIER
         is Comment -> Types.COMMENT
         is Character -> Types.CHARACTER
