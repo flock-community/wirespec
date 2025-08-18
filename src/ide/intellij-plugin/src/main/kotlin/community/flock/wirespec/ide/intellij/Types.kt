@@ -16,6 +16,8 @@ interface Types {
         val HASH = ElementType("HASH")
         val FORWARD_SLASH = ElementType("FORWARD_SLASH")
         val BRACKETS = ElementType("BRACKETS")
+        val LEFT_BRACKET = ElementType("LEFT_BRACKET")
+        val RIGHT_BRACKET = ElementType("RIGHT_BRACKET")
         val WIRESPEC_IDENTIFIER = ElementType("CUSTOM_VALUE")
         val COMMENT = ElementType("COMMENT")
         val CHARACTER = ElementType("CHARACTER")

@@ -5,6 +5,8 @@ fun TokenType.name(): String = this::class.simpleName!!
 sealed interface TokenType
 data object RightCurly : TokenType
 data object RightParenthesis : TokenType
+data object LeftBracket : TokenType
+data object RightBracket : TokenType
 
 data object Colon : TokenType
 data object Comma : TokenType
