@@ -15,7 +15,13 @@ import community.flock.wirespec.compiler.core.parse.Module
 
 interface PythonClientEmitter: BaseEmitter, ClientEmitter,PackageNameEmitter, ParamEmitter, SpaceEmitter, ImportEmitter, PythonTypeDefinitionEmitter {
 
-    override fun emitClient(ast: AST): Emitted = Emitted("${packageName.toDir()}/client.${extension.value}", """
+    override fun emitClient(ast: AST): List<Emitted> {
+        return emitClientInterfaces(ast) + listOf(emitClientClass(ast))
+    }
+
+    override fun emitClientInterfaces(ast: AST): List<Emitted> = emptyList()
+
+    override fun emitClientClass(ast: AST): Emitted = Emitted("${packageName.toDir()}/client.${extension.value}", """
         |from . import endpoint
         |
         |from typing import List, Optional

@@ -12,7 +12,13 @@ import community.flock.wirespec.compiler.core.parse.Endpoint
 
 interface TypeScriptClientEmitter: ClientEmitter, TypeScriptTypeDefinitionEmitter {
 
-    override fun emitClient(ast: AST) = Emitted("client.${extension.value}", """
+    override fun emitClient(ast: AST): List<Emitted> {
+        return emitClientInterfaces(ast) + listOf(emitClientClass(ast))
+    }
+
+    override fun emitClientInterfaces(ast: AST): List<Emitted> = emptyList()
+
+    override fun emitClientClass(ast: AST) = Emitted("client.${extension.value}", """
         |import {Wirespec} from "./Wirespec"
         |
         |${ast.emitClientEndpointRequest().joinToString("\n") { (endpoint) -> "import {${endpoint.identifier.value}} from \"./endpoint/${endpoint.identifier.value}\"" }}

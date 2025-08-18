@@ -10,23 +10,49 @@ import community.flock.wirespec.compiler.core.emit.ImportEmitter
 import community.flock.wirespec.compiler.core.emit.PackageNameEmitter
 import community.flock.wirespec.compiler.core.emit.ParamEmitter
 import community.flock.wirespec.compiler.core.emit.SpaceEmitter
+import community.flock.wirespec.compiler.core.emit.root
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Module
+import community.flock.wirespec.compiler.core.parse.Reference
 import kotlin.compareTo
 
-interface KotlinClientEmitter: BaseEmitter, ClientEmitter,PackageNameEmitter, ParamEmitter, SpaceEmitter, ImportEmitter, KotlinTypeDefinitionEmitter {
+interface KotlinClientEmitter: BaseEmitter, ClientEmitter, PackageNameEmitter, ParamEmitter, SpaceEmitter, ImportEmitter, KotlinTypeDefinitionEmitter {
 
-    override fun emitClient(ast: AST): Emitted = Emitted("${packageName.toDir()}/Client.${extension.value}", """
+    override fun emitClient(ast: AST): List<Emitted> {
+        return emitClientInterfaces(ast) + listOf(emitClientClass(ast))
+    }
+    override fun emitClientInterfaces(ast: AST): List<Emitted> = ast.statements
+        .filterIsInstance<Endpoint>()
+        .map { endpoint ->
+            Emitted("${packageName.toDir()}/client/${emit(endpoint.identifier)}Client.${extension.value}", """
+             |package ${packageName.value}.client
+             |
+             |import ${packageName.value}.endpoint.${emit(endpoint.identifier)}
+             |
+             |${endpoint.requests.first().paramList(endpoint).map { it.reference.root() }.filterIsInstance<Reference.Custom>().distinctBy { it.value }.joinToString("\n") { "import ${packageName.value}.model.${it.value}" }}
+             |
+             |interface ${emit(endpoint.identifier)}Client {
+             |  suspend fun ${emit(endpoint.identifier).firstToLower()}(${endpoint.requests.first().paramList(endpoint).joinToString(", ") { "${emit(it.identifier)}: ${it.reference.emit()}"}}): ${emit(endpoint.identifier)}.Response<*>
+             |}
+            """.trimMargin())
+        }
+
+    override fun emitClientClass(ast: AST): Emitted = Emitted("${packageName.toDir()}/Client.${extension.value}", """
         |package ${packageName.value}
         |
         |import community.flock.wirespec.kotlin.Wirespec
+        |
+        |${ast.statements.filterIsInstance<Endpoint>().joinToString("\n") { "import ${packageName.value}.client.${emit(it.identifier)}Client" }}
         |
         |${ast.emitClientEndpointRequest().joinToString("\n") { (endpoint) -> "import ${packageName.value}.endpoint.${emit(endpoint.identifier)}" }}
         |
         |${ast.modules.flatMap { it.statements }.toList().flatMap { it.importReferences() }.distinctBy { it.value }.joinToString("\n") { "import ${packageName.value}.model.${it.value}" }}
         |
-        |open class Client(val serialization: Wirespec.Serialization<String>, val handler: (Wirespec.RawRequest) -> Wirespec.RawResponse ){
+        |interface C: 
+        |${ast.statements.filterIsInstance<Endpoint>().joinToString(",\n") { "${emit(it.identifier)}Client" }.spacer(1)}
+        |
+        |open class Client(val serialization: Wirespec.Serialization<String>, val handler: (Wirespec.RawRequest) -> Wirespec.RawResponse ): C {
         |${ast.emitClientEndpointRequest().joinToString("\n") { (endpoint, request) -> emitFunction(endpoint, request) }.spacer(1)}
         |}
         |
@@ -36,7 +62,7 @@ interface KotlinClientEmitter: BaseEmitter, ClientEmitter,PackageNameEmitter, Pa
         this.paramList(endpoint).joinToString(", ") { "${emit(it.identifier)}: ${it.reference.emit()}" }
 
     fun emitFunction(endpoint: Endpoint, request: Endpoint.Request) = """
-        |suspend fun ${emit(endpoint.identifier).firstToLower()}(${request.emitClientInterface(endpoint)}) = 
+        |override suspend fun ${emit(endpoint.identifier).firstToLower()}(${request.emitClientInterface(endpoint)}) = 
         |   ${emit(endpoint.identifier)}.Request${request.paramList(endpoint).takeIf { it.isNotEmpty() }?.joinToString(", ", "(", ")") { emit(it.identifier) }.orEmpty()}
         |     .let { req -> ${endpoint.identifier.value}.toRequest(serialization, req) }
         |     .let { rawReq -> handler(rawReq) }
