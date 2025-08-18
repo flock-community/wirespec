@@ -35,7 +35,7 @@ class ParseAnnotationTest {
                 identifier.value shouldBe "User"
                 annotations.shouldHaveSize(1)
                 annotations.first().apply {
-                    name shouldBe "deprecated"
+                    name shouldBe "Deprecated"
                     parameters shouldHaveSize 0
                 }
             }
@@ -59,8 +59,8 @@ class ParseAnnotationTest {
             .apply {
                 identifier.value shouldBe "User"
                 annotations.shouldHaveSize(2)
-                annotations[0].name shouldBe "deprecated"
-                annotations[1].name shouldBe "internal"
+                annotations[0].name shouldBe "Deprecated"
+                annotations[1].name shouldBe "Internal"
             }
     }
 
@@ -80,11 +80,11 @@ class ParseAnnotationTest {
                 identifier.value shouldBe "User"
                 annotations.shouldHaveSize(1)
                 annotations.first().apply {
-                    name shouldBe "since"
+                    name shouldBe "Since"
                     parameters.shouldHaveSize(1)
                     parameters.first().apply {
                         name shouldBe "default" // positional parameter
-                        value shouldBe "\"1.0.0\""
+                        value shouldBe "1.0.0"
                     }
                 }
             }
@@ -106,7 +106,7 @@ class ParseAnnotationTest {
                 identifier.value shouldBe "Age"
                 annotations.shouldHaveSize(1)
                 annotations.first().apply {
-                    name shouldBe "validate"
+                    name shouldBe "Validate"
                     parameters.shouldHaveSize(2)
                     parameters[0].apply {
                         name shouldBe "min"
@@ -138,7 +138,7 @@ class ParseAnnotationTest {
             .apply {
                 identifier.value shouldBe "Status"
                 annotations.shouldHaveSize(1)
-                annotations.first().name shouldBe "deprecated"
+                annotations.first().name shouldBe "Deprecated"
             }
     }
 
@@ -159,7 +159,7 @@ class ParseAnnotationTest {
             .apply {
                 identifier.value shouldBe "GetUser"
                 annotations.shouldHaveSize(1)
-                annotations.first().name shouldBe "authenticated"
+                annotations.first().name shouldBe "Authenticated"
                 method shouldBe Endpoint.Method.GET
             }
     }
@@ -179,7 +179,7 @@ class ParseAnnotationTest {
             .apply {
                 identifier.value shouldBe "UserUpdates"
                 annotations.shouldHaveSize(1)
-                annotations.first().name shouldBe "secured"
+                annotations.first().name shouldBe "Secured"
             }
     }
 
@@ -199,15 +199,15 @@ class ParseAnnotationTest {
                 identifier.value shouldBe "Config"
                 annotations.shouldHaveSize(1)
                 annotations.first().apply {
-                    name shouldBe "config"
+                    name shouldBe "Config"
                     parameters.shouldHaveSize(3)
                     parameters[0].apply {
                         name shouldBe "default" // positional
-                        value shouldBe "\"development\""
+                        value shouldBe "development"
                     }
                     parameters[1].apply {
                         name shouldBe "env"
-                        value shouldBe "\"test\""
+                        value shouldBe "test"
                     }
                     parameters[2].apply {
                         name shouldBe "debug"
@@ -235,7 +235,7 @@ class ParseAnnotationTest {
             .apply {
                 identifier.value shouldBe "User"
                 annotations.shouldHaveSize(1)
-                annotations.first().name shouldBe "deprecated"
+                annotations.first().name shouldBe "Deprecated"
                 comment?.value shouldBe """
                     |* This is a user type
                 """.trimMargin()
@@ -261,7 +261,7 @@ class ParseAnnotationTest {
                 identifier.value shouldBe "GetUsers"
                 annotations.shouldHaveSize(2)
                 annotations[0].apply {
-                    name shouldBe "rateLimit"
+                    name shouldBe "RateLimit"
                     parameters.shouldHaveSize(2)
                     parameters[0].apply {
                         name shouldBe "requests"
@@ -273,7 +273,7 @@ class ParseAnnotationTest {
                     }
                 }
                 annotations[1].apply {
-                    name shouldBe "authenticated"
+                    name shouldBe "Authenticated"
                     parameters shouldHaveSize 0
                 }
             }
@@ -295,7 +295,7 @@ class ParseAnnotationTest {
                 identifier.value shouldBe "NewFeature"
                 annotations.shouldHaveSize(1)
                 annotations.first().apply {
-                    name shouldBe "experimental"
+                    name shouldBe "Experimental"
                     parameters shouldHaveSize 0
                 }
             }
