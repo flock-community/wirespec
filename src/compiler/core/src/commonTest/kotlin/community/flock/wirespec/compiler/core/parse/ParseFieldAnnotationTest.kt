@@ -23,7 +23,7 @@ class ParseFieldAnnotationTest {
     fun testSimpleAnnotationOnField() {
         val source = """
             |type User {
-            |  @deprecated
+            |  @Deprecated
             |  name: String
             |}
         """.trimMargin()
@@ -39,7 +39,7 @@ class ParseFieldAnnotationTest {
                 shape.value.first().apply {
                     identifier.value shouldBe "name"
                     annotations.shouldHaveSize(1)
-                    annotations.first().name shouldBe "deprecated"
+                    annotations.first().name shouldBe "Deprecated"
                 }
             }
     }
@@ -48,8 +48,8 @@ class ParseFieldAnnotationTest {
     fun testMultipleAnnotationsOnField() {
         val source = """
             |type User {
-            |  @deprecated
-            |  @internal
+            |  @Deprecated
+            |  @Internal
             |  name: String,
             |  age: Integer
             |}
@@ -66,8 +66,8 @@ class ParseFieldAnnotationTest {
                 shape.value[0].apply {
                     identifier.value shouldBe "name"
                     annotations.shouldHaveSize(2)
-                    annotations[0].name shouldBe "deprecated"
-                    annotations[1].name shouldBe "internal"
+                    annotations[0].name shouldBe "Deprecated"
+                    annotations[1].name shouldBe "Internal"
                 }
                 shape.value[1].apply {
                     identifier.value shouldBe "age"
@@ -80,7 +80,7 @@ class ParseFieldAnnotationTest {
     fun testAnnotationWithParametersOnField() {
         val source = """
             |type User {
-            |  @validate(min: 1, max: 100)
+            |  @Validate(min: 1, max: 100)
             |  name: String
             |}
         """.trimMargin()
@@ -97,7 +97,7 @@ class ParseFieldAnnotationTest {
                     identifier.value shouldBe "name"
                     annotations.shouldHaveSize(1)
                     annotations.first().apply {
-                        name shouldBe "validate"
+                        name shouldBe "Validate"
                         parameters.shouldHaveSize(2)
                         parameters[0].apply {
                             name shouldBe "min"
