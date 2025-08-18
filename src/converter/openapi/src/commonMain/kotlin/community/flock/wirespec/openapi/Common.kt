@@ -1,6 +1,6 @@
 package community.flock.wirespec.openapi
 
-import community.flock.wirespec.compiler.core.emit.Emitter.Companion.firstToUpper
+import community.flock.wirespec.compiler.core.emit.AbstractEmitter.Companion.firstToUpper
 import kotlinx.serialization.json.Json
 
 object Common {

@@ -1,9 +1,9 @@
 package community.flock.wirespec.emitters.java
 
 import community.flock.wirespec.compiler.core.concatGenerics
-import community.flock.wirespec.compiler.core.emit.Emitter.Companion.firstToLower
-import community.flock.wirespec.compiler.core.emit.Emitter.Companion.firstToUpper
-import community.flock.wirespec.compiler.core.emit.Emitter.Companion.isStatusCode
+import community.flock.wirespec.compiler.core.emit.AbstractEmitter.Companion.firstToLower
+import community.flock.wirespec.compiler.core.emit.AbstractEmitter.Companion.firstToUpper
+import community.flock.wirespec.compiler.core.emit.AbstractEmitter.Companion.isStatusCode
 import community.flock.wirespec.compiler.core.emit.EndpointDefinitionEmitter
 import community.flock.wirespec.compiler.core.emit.EndpointEmitter
 import community.flock.wirespec.compiler.core.emit.IdentifierEmitter

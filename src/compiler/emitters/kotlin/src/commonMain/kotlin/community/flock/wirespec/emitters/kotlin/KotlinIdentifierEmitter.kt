@@ -1,7 +1,7 @@
 package community.flock.wirespec.emitters.kotlin
 
 import community.flock.wirespec.compiler.core.addBackticks
-import community.flock.wirespec.compiler.core.emit.Emitter.Companion.firstToUpper
+import community.flock.wirespec.compiler.core.emit.AbstractEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.IdentifierEmitter
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier

@@ -1,7 +1,7 @@
 package community.flock.wirespec.example.maven.custom.emit;
 
 
-import community.flock.wirespec.compiler.core.emit.Emitter;
+import community.flock.wirespec.compiler.core.emit.AbstractEmitter;
 import community.flock.wirespec.compiler.core.emit.FileExtension;
 import community.flock.wirespec.compiler.core.emit.Shared;
 import community.flock.wirespec.compiler.core.parse.Channel;
@@ -17,7 +17,7 @@ import community.flock.wirespec.compiler.core.parse.Module;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CustomEmitter extends Emitter {
+public class CustomEmitter extends AbstractEmitter {
 
     @NotNull
     @Override

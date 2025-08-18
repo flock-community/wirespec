@@ -16,8 +16,8 @@ import community.flock.kotlinx.openapi.bindings.v2.SchemaObject
 import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v2.StatusCode
 import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
+import community.flock.wirespec.compiler.core.emit.AbstractEmitter
 import community.flock.wirespec.compiler.core.emit.Emitted
-import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Endpoint
@@ -35,7 +35,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenAPIType
 
-object OpenAPIV2Emitter : Emitter() {
+object OpenAPIV2Emitter : AbstractEmitter() {
 
     override val extension = FileExtension.JSON
 

@@ -1,6 +1,6 @@
 package community.flock.wirespec.converter.avro
 
-import community.flock.wirespec.compiler.core.emit.Emitter
+import community.flock.wirespec.compiler.core.emit.AbstractEmitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
@@ -14,7 +14,7 @@ import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 
-object AvroEmitter : Emitter() {
+object AvroEmitter : AbstractEmitter() {
 
     override val extension = FileExtension.JSON
 

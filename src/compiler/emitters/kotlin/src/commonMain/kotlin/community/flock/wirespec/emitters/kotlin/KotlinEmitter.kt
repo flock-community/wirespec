@@ -5,7 +5,7 @@ import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STR
 import community.flock.wirespec.compiler.core.emit.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitted
-import community.flock.wirespec.compiler.core.emit.Emitter
+import community.flock.wirespec.compiler.core.emit.AbstractEmitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.emit.PackageName
@@ -26,7 +26,7 @@ interface E :
 open class KotlinEmitter(
     override val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
     private val emitShared: EmitShared = EmitShared(),
-) : Emitter(), E {
+) : AbstractEmitter(), E {
 
     val import = """
         |
@@ -42,7 +42,7 @@ open class KotlinEmitter(
     override val singleLineComment = "//"
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
-        super<Emitter>.emit(module, logger).let {
+        super<AbstractEmitter>.emit(module, logger).let {
             if (emitShared.value) it + Emitted(
                 PackageName("${DEFAULT_SHARED_PACKAGE_STRING}.kotlin").toDir() + "Wirespec",
                 shared.source
@@ -51,7 +51,7 @@ open class KotlinEmitter(
         }
 
     override fun emit(definition: Definition, module: Module, logger: Logger): Emitted =
-        super<Emitter>.emit(definition, module, logger).let {
+        super<AbstractEmitter>.emit(definition, module, logger).let {
             val subPackageName = packageName + definition
             Emitted(
                 file = subPackageName.toDir() + it.file,
