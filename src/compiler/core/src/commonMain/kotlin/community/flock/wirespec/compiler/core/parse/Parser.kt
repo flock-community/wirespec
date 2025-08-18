@@ -169,7 +169,7 @@ private fun TokenProvider.parseDefinition() = either {
                 eatToken().bind()
                 value to actualValue
             }
-            else -> "default" to  value
+            else -> "default" to value
         }
         AnnotationParameter(nameAndValue.first, nameAndValue.second)
     }
