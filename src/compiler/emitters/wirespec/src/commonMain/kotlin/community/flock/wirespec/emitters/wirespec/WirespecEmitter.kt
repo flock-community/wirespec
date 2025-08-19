@@ -1,6 +1,6 @@
 package community.flock.wirespec.emitters.wirespec
 
-import community.flock.wirespec.compiler.core.emit.AbstractEmitter
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.parse.Reference
@@ -14,7 +14,7 @@ interface E:
     WirespecUnionDefinitionEmitter,
     WirespecRefinedTypeDefinitionEmitter
 
-open class WirespecEmitter : AbstractEmitter(), E {
+open class WirespecEmitter : LanguageEmitter(), E {
 
     override val extension = FileExtension.Wirespec
 

@@ -22,7 +22,7 @@ import community.flock.kotlinx.openapi.bindings.v3.SchemaObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceObject
 import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceOrBooleanObject
 import community.flock.kotlinx.openapi.bindings.v3.StatusCode
-import community.flock.wirespec.compiler.core.emit.AbstractEmitter
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.parse.Channel
@@ -41,7 +41,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 import community.flock.kotlinx.openapi.bindings.v3.Type as OpenAPIType
 
-object OpenAPIV3Emitter : AbstractEmitter() {
+object OpenAPIV3Emitter : LanguageEmitter() {
     data class Options(
         val title: String,
         val version: String,

@@ -5,7 +5,7 @@ import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STR
 import community.flock.wirespec.compiler.core.emit.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitted
-import community.flock.wirespec.compiler.core.emit.AbstractEmitter
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.emit.PackageName
@@ -26,7 +26,7 @@ interface E :
 open class JavaEmitter(
     override val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
     private val emitShared: EmitShared = EmitShared(),
-) : E, AbstractEmitter() {
+) : E, LanguageEmitter() {
 
     val import = """
         |
@@ -41,13 +41,13 @@ open class JavaEmitter(
     override val singleLineComment = "//"
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
-        super<AbstractEmitter>.emit(module, logger).let {
+        super<LanguageEmitter>.emit(module, logger).let {
             if (emitShared.value) it + Emitted(PackageName("${DEFAULT_SHARED_PACKAGE_STRING}.java").toDir() + "Wirespec", shared.source)
             else it
         }
 
     override fun emit(definition: Definition, module: Module, logger: Logger): Emitted =
-        super<AbstractEmitter>.emit(definition, module, logger).let {
+        super<LanguageEmitter>.emit(definition, module, logger).let {
             val subPackageName = packageName + definition
             Emitted(
                 file = subPackageName.toDir() + it.file.sanitizeSymbol(),

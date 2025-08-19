@@ -5,7 +5,7 @@ import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitted
-import community.flock.wirespec.compiler.core.emit.AbstractEmitter
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.emit.PackageName
@@ -33,7 +33,7 @@ interface E :
 open class PythonEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
     private val emitShared: EmitShared = EmitShared()
-) : AbstractEmitter(), E {
+) : LanguageEmitter(), E {
 
     val import = """
         |import re
@@ -64,7 +64,7 @@ open class PythonEmitter(
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
         val statements = module.statements.sortedBy(::sort).toNonEmptyListOrNull()!!
-        return super<AbstractEmitter>.emit(module.copy(statements = statements), logger).let {
+        return super<LanguageEmitter>.emit(module.copy(statements = statements), logger).let {
             fun emitInit(def: Definition) = "from .${emit(def.identifier)} import ${emit(def.identifier)}"
             val init = Emitted(
                 packageName.toDir() + "__init__",
@@ -88,7 +88,7 @@ open class PythonEmitter(
 
     override fun emit(definition: Definition, module: Module, logger: Logger): Emitted {
         val subPackageName = packageName + definition
-        return super<AbstractEmitter>.emit(definition, module, logger).let {
+        return super<LanguageEmitter>.emit(definition, module, logger).let {
             Emitted(
                 file = subPackageName.toDir() + it.file,
                 result = """

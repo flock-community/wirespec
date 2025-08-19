@@ -1,6 +1,6 @@
 package community.flock.wirespec.emitters.python
 
-import community.flock.wirespec.compiler.core.emit.AbstractEmitter.Companion.isStatusCode
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.isStatusCode
 import community.flock.wirespec.compiler.core.emit.EndpointDefinitionEmitter
 import community.flock.wirespec.compiler.core.emit.EndpointEmitter
 import community.flock.wirespec.compiler.core.emit.IdentifierEmitter
