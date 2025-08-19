@@ -12,27 +12,27 @@ class LiveUserAdapter(
     private val client: UserClient,
 ) : UserAdapter {
     override fun getAllUsers(): List<User> = runBlocking {
-        when (val res = client.getUsers(GetUsers.Request)) {
+        when (val res = client.getUsers()) {
             is GetUsers.Response200 -> res.body.map { it.internalize() }
         }
     }
 
     override fun getUserByName(name: String): User = runBlocking {
-        when (val res = client.getUserByName(GetUserByName.Request(name))) {
+        when (val res = client.getUserByName(name)) {
             is GetUserByName.Response200 -> res.body.internalize()
             is GetUserByName.Response404 -> TODO()
         }
     }
 
     override fun saveUser(user: User): User = runBlocking {
-        when (val res = client.postUser(PostUser.Request(UserDto(name = user.name)))) {
+        when (val res = client.postUser(UserDto(name = user.name))) {
             is PostUser.Response200 -> res.body.internalize()
             is PostUser.Response409 -> TODO()
         }
     }
 
     override fun deleteUserByName(name: String): User = runBlocking {
-        when (val res = client.deleteUserByName(DeleteUserByName.Request(name))) {
+        when (val res = client.deleteUserByName(name)) {
             is DeleteUserByName.Response200 -> res.body.internalize()
             is DeleteUserByName.Response404 -> TODO()
         }

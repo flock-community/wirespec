@@ -12,22 +12,22 @@ class TestUserClient : UserClient {
             UserDto("name"),
         )
 
-    override suspend fun getUsers(request: GetUsers.Request) = users
+    override suspend fun getUsers() = users
         .toList()
         .let(GetUsers::Response200)
 
-    override suspend fun getUserByName(request: GetUserByName.Request) = users
-        .find { it.name == request.path.name }
+    override suspend fun getUserByName(name: String) = users
+        .find { it.name == name }
         ?.let(GetUserByName::Response200)
         ?: GetUserByName.Response404(Unit)
 
-    override suspend fun postUser(request: PostUser.Request) = request.body
+    override suspend fun postUser(body: UserDto) = body
         .takeIf(users::add)
         ?.let(PostUser::Response200)
         ?: PostUser.Response409(Unit)
 
-    override suspend fun deleteUserByName(request: DeleteUserByName.Request) = users
-        .find { it.name == request.path.name }
+    override suspend fun deleteUserByName(name: String) = users
+        .find { it.name == name }
         ?.also(users::remove)
         ?.let(DeleteUserByName::Response200)
         ?: DeleteUserByName.Response404(Unit)
