@@ -172,9 +172,20 @@ class SpringKotlinEmitterTest {
             |  }
             |}
             |
+            |package community.flock.wirespec.spring.test.client
+            |
+            |import community.flock.wirespec.spring.test.endpoint.GetTodos
+            |
+            |
+            |
+            |interface GetTodosClient {
+            |  suspend fun getTodos(done: Boolean?): GetTodos.Response<*>
+            |}
             |package community.flock.wirespec.spring.test
             |
             |import community.flock.wirespec.kotlin.Wirespec
+            |
+            |import community.flock.wirespec.spring.test.client.GetTodosClient
             |
             |import community.flock.wirespec.spring.test.endpoint.GetTodos
             |
@@ -182,8 +193,11 @@ class SpringKotlinEmitterTest {
             |import community.flock.wirespec.spring.test.model.TodoDto
             |import community.flock.wirespec.spring.test.model.Error
             |
-            |open class Client(val serialization: Wirespec.Serialization<String>, val handler: (Wirespec.RawRequest) -> Wirespec.RawResponse ){
-            |  suspend fun getTodos(done: Boolean?) = 
+            |interface C: 
+            |  GetTodosClient
+            |
+            |open class Client(val serialization: Wirespec.Serialization<String>, val handler: (Wirespec.RawRequest) -> Wirespec.RawResponse ): C {
+            |  override suspend fun getTodos(done: Boolean?) = 
             |     GetTodos.Request(done)
             |       .let { req -> GetTodos.toRequest(serialization, req) }
             |       .let { rawReq -> handler(rawReq) }
