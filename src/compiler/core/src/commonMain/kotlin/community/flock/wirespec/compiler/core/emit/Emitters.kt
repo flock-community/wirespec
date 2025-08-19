@@ -66,7 +66,9 @@ interface IdentifierEmitter {
 }
 
 interface ClientEmitter {
-    fun emitClient(ast: AST): Emitted
+    fun emitClient(ast: AST): List<Emitted>
+    fun emitClientInterfaces(ast: AST): List<Emitted>
+    fun emitClientClass(ast: AST): Emitted
 
     fun AST.emitClientEndpointRequest() = modules
         .flatMap { it.statements }

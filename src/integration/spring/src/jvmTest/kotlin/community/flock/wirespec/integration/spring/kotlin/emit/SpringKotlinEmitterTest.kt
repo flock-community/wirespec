@@ -20,7 +20,7 @@ class SpringKotlinEmitterTest {
 
     private fun parse(source: String): AST = object : ParseContext, NoLogger {
         override val spec = WirespecSpec
-    }.parse(nonEmptyListOf(ModuleContent("", source))).getOrNull() ?: error("Parsing failed.")
+    }.parse(nonEmptyListOf(ModuleContent("hello/test.ws", source))).getOrNull() ?: error("Parsing failed.")
 
     @Test
     fun `Should emit the full wirespec, and add annotation to the handler method`() {
@@ -170,6 +170,41 @@ class SpringKotlinEmitterTest {
             |      }
             |    }
             |  }
+            |}
+            |
+            |package community.flock.wirespec.spring.test.client
+            |
+            |import community.flock.wirespec.spring.test.endpoint.GetTodos
+            |
+            |
+            |
+            |interface GetTodosClient {
+            |  suspend fun getTodos(done: Boolean?): GetTodos.Response<*>
+            |}
+            |package community.flock.wirespec.spring.test
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |
+            |import community.flock.wirespec.spring.test.client.GetTodosClient
+            |
+            |import community.flock.wirespec.spring.test.endpoint.GetTodos
+            |
+            |import community.flock.wirespec.spring.test.model.TodoId
+            |import community.flock.wirespec.spring.test.model.TodoDto
+            |import community.flock.wirespec.spring.test.model.Error
+            |
+            |interface TestModule: 
+            |  GetTodosClient
+            |
+            |interface All: 
+            |  TestModule
+            |
+            |open class Client(val serialization: Wirespec.Serialization<String>, val handler: (Wirespec.RawRequest) -> Wirespec.RawResponse ): All {
+            |  override suspend fun getTodos(done: Boolean?) = 
+            |     GetTodos.Request(done)
+            |       .let { req -> GetTodos.toRequest(serialization, req) }
+            |       .let { rawReq -> handler(rawReq) }
+            |       .let { rawRes -> GetTodos.fromResponse(serialization, rawRes) }
             |}
             |
         """.trimMargin()

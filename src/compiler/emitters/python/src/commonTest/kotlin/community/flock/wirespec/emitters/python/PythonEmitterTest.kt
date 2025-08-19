@@ -275,6 +275,27 @@ class PythonEmitterTest {
         |from . import endpoint
         |from . import wirespec
         |
+        |from . import endpoint
+        |
+        |from typing import List, Optional
+        |
+        |from .model.Token import Token
+        |from .model.PotentialTodoDto import PotentialTodoDto
+        |from .model.TodoDto import TodoDto
+        |from .model.Error import Error
+        |
+        |class Client():
+        |
+        |  def __init__(self, serialization, handler):
+        |    self.serialization = serialization
+        |    self.handler = handler
+        |
+        |  def putTodo(self, id: str, done: bool, name: Optional[str], token: Token, refreshToken: Optional[Token], body: PotentialTodoDto):
+        |     req = endpoint.PutTodo.Request(id, done, name, token, refreshToken, body)
+        |     raw_req = endpoint.PutTodo.Convert.to_raw_request(self.serialization, req)
+        |     raw_res = self.handler(raw_req)
+        |     return endpoint.PutTodo.Convert.from_raw_response(self.serialization, raw_res)
+        |
         """.trimMargin()
         CompileFullEndpointTest.compiler { PythonEmitter() } shouldBeRight python
     }
@@ -413,6 +434,24 @@ class PythonEmitterTest {
             |from . import model
             |from . import endpoint
             |from . import wirespec
+            |
+            |from . import endpoint
+            |
+            |from typing import List, Optional
+            |
+            |from .model.TodoDto import TodoDto
+            |
+            |class Client():
+            |
+            |  def __init__(self, serialization, handler):
+            |    self.serialization = serialization
+            |    self.handler = handler
+            |
+            |  def getTodos(self, ):
+            |     req = endpoint.GetTodos.Request
+            |     raw_req = endpoint.GetTodos.Convert.to_raw_request(self.serialization, req)
+            |     raw_res = self.handler(raw_req)
+            |     return endpoint.GetTodos.Convert.from_raw_response(self.serialization, raw_res)
             |
         """.trimMargin()
         CompileMinimalEndpointTest.compiler { PythonEmitter() } shouldBeRight python

@@ -1,7 +1,6 @@
 package community.flock.wirespec.emitters.java
 
 import arrow.core.NonEmptyList
-import community.flock.wirespec.compiler.core.concatGenerics
 import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
@@ -10,22 +9,10 @@ import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.emit.PackageName
-import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.emit.plus
-import community.flock.wirespec.compiler.core.orNull
-import community.flock.wirespec.compiler.core.parse.Channel
+import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
-import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
-import community.flock.wirespec.compiler.core.parse.Endpoint
-import community.flock.wirespec.compiler.core.parse.Enum
-import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.FieldIdentifier
-import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Module
-import community.flock.wirespec.compiler.core.parse.Reference
-import community.flock.wirespec.compiler.core.parse.Refined
-import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 
 interface E :
@@ -35,7 +22,8 @@ interface E :
     JavaChannelDefinitionEmitter,
     JavaEnumDefinitionEmitter,
     JavaUnionDefinitionEmitter,
-    JavaRefinedTypeDefinitionEmitter
+    JavaRefinedTypeDefinitionEmitter,
+    JavaClientEmitter
 
 open class JavaEmitter(
     override val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
@@ -53,6 +41,11 @@ open class JavaEmitter(
     override val shared = JavaShared
 
     override val singleLineComment = "//"
+
+    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> {
+        return super<Emitter>.emit(ast, logger)
+            .run { if(ast.hasEndpoints()){ plus(emitClient(ast) ) } else this }
+    }
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
         super<Emitter>.emit(module, logger).let {

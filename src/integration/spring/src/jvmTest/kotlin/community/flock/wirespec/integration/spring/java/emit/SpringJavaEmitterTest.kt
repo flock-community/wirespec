@@ -191,6 +191,34 @@ class SpringJavaEmitterTest {
             |}
             |
             """.trimMargin(),
+            """
+            |package community.flock.wirespec.spring.test;
+            |
+            |import community.flock.wirespec.java.Wirespec;
+            |
+            |import community.flock.wirespec.spring.test.endpoint.GetTodos;
+            |
+            |import community.flock.wirespec.spring.test.model.TodoId;
+            |import community.flock.wirespec.spring.test.model.TodoDto;
+            |import community.flock.wirespec.spring.test.model.Error;   
+            |
+            |public class Client {
+            |  private final Wirespec.Serialization<String> serialization;
+            |  private final java.util.function.Function<Wirespec.RawRequest, java.util.concurrent.CompletableFuture<Wirespec.RawResponse>> handler;
+            |
+            |  public Client(Wirespec.Serialization<String> serialization, java.util.function.Function<Wirespec.RawRequest, java.util.concurrent.CompletableFuture<Wirespec.RawResponse>> handler) {
+            |    this.serialization = serialization;
+            |    this.handler = handler;
+            |  }
+            |
+            |  public java.util.concurrent.CompletableFuture<GetTodos.Response<?>> getTodos(java.util.Optional<Boolean> done) {
+            |    var req = new GetTodos.Request(done);
+            |    var rawReq = GetTodos.Handler.toRequest(serialization, req);
+            |    return handler.apply(rawReq)
+            |     .thenApply(rawRes -> GetTodos.Handler.fromResponse(serialization, rawRes));
+            |  }
+            |}
+            """.trimMargin(),
         )
 
         assertEquals(expected.toSet(), actual.toSet())
