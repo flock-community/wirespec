@@ -21,7 +21,7 @@ class SpringKotlinEmitterTest {
 
     private fun parse(source: String): AST = object : ParseContext, NoLogger {
         override val spec = WirespecSpec
-    }.parse(nonEmptyListOf(ModuleContent(FileUri(""), source))).getOrNull() ?: error("Parsing failed.")
+    }.parse(nonEmptyListOf(ModuleContent(FileUri("hello/test.ws"), source))).getOrNull() ?: error("Parsing failed.")
 
     @Test
     fun `Should emit the full wirespec, and add annotation to the handler method`() {
@@ -194,10 +194,13 @@ class SpringKotlinEmitterTest {
             |import community.flock.wirespec.spring.test.model.TodoDto
             |import community.flock.wirespec.spring.test.model.Error
             |
-            |interface C: 
+            |interface TestModule: 
             |  GetTodosClient
             |
-            |open class Client(val serialization: Wirespec.Serialization<String>, val handler: (Wirespec.RawRequest) -> Wirespec.RawResponse ): C {
+            |interface All: 
+            |  TestModule
+            |
+            |open class Client(val serialization: Wirespec.Serialization<String>, val handler: (Wirespec.RawRequest) -> Wirespec.RawResponse ): All {
             |  override suspend fun getTodos(done: Boolean?) = 
             |     GetTodos.Request(done)
             |       .let { req -> GetTodos.toRequest(serialization, req) }

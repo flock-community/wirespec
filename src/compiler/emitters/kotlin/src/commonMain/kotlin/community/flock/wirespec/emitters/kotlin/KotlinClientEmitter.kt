@@ -5,6 +5,7 @@ import community.flock.wirespec.compiler.core.emit.BaseEmitter
 import community.flock.wirespec.compiler.core.emit.ClientEmitter
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter.Companion.firstToLower
+import community.flock.wirespec.compiler.core.emit.Emitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.IdentifierEmitter
 import community.flock.wirespec.compiler.core.emit.ImportEmitter
 import community.flock.wirespec.compiler.core.emit.PackageNameEmitter
@@ -49,10 +50,12 @@ interface KotlinClientEmitter: BaseEmitter, ClientEmitter, PackageNameEmitter, P
         |
         |${ast.modules.flatMap { it.statements }.toList().flatMap { it.importReferences() }.distinctBy { it.value }.joinToString("\n") { "import ${packageName.value}.model.${it.value}" }}
         |
-        |interface C: 
-        |${ast.statements.filterIsInstance<Endpoint>().joinToString(",\n") { "${emit(it.identifier)}Client" }.spacer(1)}
+        |${ast.emitModuleInterfaces().joinToString("\n")}
         |
-        |open class Client(val serialization: Wirespec.Serialization<String>, val handler: (Wirespec.RawRequest) -> Wirespec.RawResponse ): C {
+        |interface All: 
+        |${ast.modules.map { it.emitInterfaceName() }.joinToString(",\n").spacer(1)}
+        |
+        |open class Client(val serialization: Wirespec.Serialization<String>, val handler: (Wirespec.RawRequest) -> Wirespec.RawResponse ): All {
         |${ast.emitClientEndpointRequest().joinToString("\n") { (endpoint, request) -> emitFunction(endpoint, request) }.spacer(1)}
         |}
         |
@@ -68,4 +71,16 @@ interface KotlinClientEmitter: BaseEmitter, ClientEmitter, PackageNameEmitter, P
         |     .let { rawReq -> handler(rawReq) }
         |     .let { rawRes -> ${endpoint.identifier.value}.fromResponse(serialization, rawRes) }
     """.trimMargin()
+
+    fun Module.emitInterfaceName() = uri
+        .split(".").first()
+        .split("/").last()
+        .firstToUpper()
+        .let { "${it}Module" }
+
+    fun AST.emitModuleInterfaces() = modules.map {  """
+        |interface ${it.emitInterfaceName()}: 
+        |${it.statements.filterIsInstance<Endpoint>().joinToString(",\n") { "${emit(it.identifier)}Client" }.spacer(1)}
+    """.trimMargin()}
+
 }
