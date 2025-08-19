@@ -2,11 +2,29 @@ package community.flock.wirespec.openapi.v2
 
 import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
-import community.flock.kotlinx.openapi.bindings.v2.*
+import community.flock.kotlinx.openapi.bindings.v2.HeaderObject
+import community.flock.kotlinx.openapi.bindings.v2.InfoObject
+import community.flock.kotlinx.openapi.bindings.v2.OperationObject
+import community.flock.kotlinx.openapi.bindings.v2.ParameterLocation
+import community.flock.kotlinx.openapi.bindings.v2.ParameterObject
+import community.flock.kotlinx.openapi.bindings.v2.Path
+import community.flock.kotlinx.openapi.bindings.v2.PathItemObject
+import community.flock.kotlinx.openapi.bindings.v2.Ref
+import community.flock.kotlinx.openapi.bindings.v2.ReferenceObject
+import community.flock.kotlinx.openapi.bindings.v2.ResponseObject
+import community.flock.kotlinx.openapi.bindings.v2.SchemaObject
+import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceObject
+import community.flock.kotlinx.openapi.bindings.v2.StatusCode
+import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
-import community.flock.wirespec.compiler.core.parse.*
+import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Module
+import community.flock.wirespec.compiler.core.parse.Reference
+import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.openapi.Common.json
@@ -20,14 +38,12 @@ object OpenAPIV2Emitter : Emitter {
 
     override fun emit(
         ast: AST,
-        logger: Logger
-    ): NonEmptyList<Emitted> =
-        ast.modules.flatMap { emit(it) }
+        logger: Logger,
+    ): NonEmptyList<Emitted> = ast.modules.flatMap { emit(it) }
 
-    private fun emit(module: Module): NonEmptyList<Emitted> =
-        nonEmptyListOf(Emitted("SwaggerObject", json.encodeToString(emitSwaggerObject(module))))
+    private fun emit(module: Module): NonEmptyList<Emitted> = nonEmptyListOf(Emitted("SwaggerObject", json.encodeToString(emitSwaggerObject(module))))
 
-    private fun emitSwaggerObject(module: Module): SwaggerObject = SwaggerObject(
+    fun emitSwaggerObject(module: Module): SwaggerObject = SwaggerObject(
         swagger = "2.0",
         info = InfoObject(
             title = "Wirespec",
@@ -107,7 +123,8 @@ object OpenAPIV2Emitter : Emitter {
                         .takeIf { it.isNotEmpty() },
                 )
             } + module.statements
-            .filterIsInstance<Enum>().associate { enum ->
+            .filterIsInstance<community.flock.wirespec.compiler.core.parse.Enum>()
+            .associate { enum ->
                 enum.identifier.value to SchemaObject(
                     type = OpenAPIType.STRING,
                     enum = enum.entries.map { JsonPrimitive(it) },
@@ -115,11 +132,9 @@ object OpenAPIV2Emitter : Emitter {
             },
     )
 
-    private fun Field.toProperties(): Pair<String, SchemaOrReferenceObject> =
-        identifier.value to reference.toSchemaOrReference()
+    private fun Field.toProperties(): Pair<String, SchemaOrReferenceObject> = identifier.value to reference.toSchemaOrReference()
 
-    private fun List<Endpoint>.emit(method: Endpoint.Method): OperationObject? =
-        filter { it.method == method }.map { it.emit() }.firstOrNull()
+    private fun List<Endpoint>.emit(method: Endpoint.Method): OperationObject? = filter { it.method == method }.map { it.emit() }.firstOrNull()
 
     private fun Endpoint.emit() = OperationObject(
         operationId = identifier.value,
@@ -197,19 +212,19 @@ object OpenAPIV2Emitter : Emitter {
     private fun Reference.toSchemaOrReference(): SchemaOrReferenceObject = when (this) {
         is Reference.Dict -> SchemaObject(
             type = OpenAPIType.OBJECT,
-            items = reference.toSchemaOrReference()
+            items = reference.toSchemaOrReference(),
         )
 
         is Reference.Iterable -> SchemaObject(
             type = OpenAPIType.ARRAY,
-            items = reference.toSchemaOrReference()
+            items = reference.toSchemaOrReference(),
         )
 
         is Reference.Custom -> ReferenceObject(ref = Ref("#/definitions/$value"))
         is Reference.Primitive -> SchemaObject(
             type = type.emitType(),
             format = emitFormat(),
-            pattern = emitPattern()
+            pattern = emitPattern(),
         )
 
         is Reference.Any -> error("Cannot map Any")

@@ -2,12 +2,39 @@ package community.flock.wirespec.openapi.v3
 
 import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
-import community.flock.kotlinx.openapi.bindings.v3.*
+import community.flock.kotlinx.openapi.bindings.v3.ComponentsObject
+import community.flock.kotlinx.openapi.bindings.v3.HeaderObject
+import community.flock.kotlinx.openapi.bindings.v3.HeaderOrReferenceObject
+import community.flock.kotlinx.openapi.bindings.v3.InfoObject
+import community.flock.kotlinx.openapi.bindings.v3.MediaType
+import community.flock.kotlinx.openapi.bindings.v3.MediaTypeObject
+import community.flock.kotlinx.openapi.bindings.v3.OpenAPIObject
+import community.flock.kotlinx.openapi.bindings.v3.OperationObject
+import community.flock.kotlinx.openapi.bindings.v3.ParameterLocation
+import community.flock.kotlinx.openapi.bindings.v3.ParameterObject
+import community.flock.kotlinx.openapi.bindings.v3.Path
+import community.flock.kotlinx.openapi.bindings.v3.PathItemObject
+import community.flock.kotlinx.openapi.bindings.v3.Ref
+import community.flock.kotlinx.openapi.bindings.v3.ReferenceObject
+import community.flock.kotlinx.openapi.bindings.v3.RequestBodyObject
+import community.flock.kotlinx.openapi.bindings.v3.ResponseObject
+import community.flock.kotlinx.openapi.bindings.v3.SchemaObject
+import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceObject
+import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceOrBooleanObject
+import community.flock.kotlinx.openapi.bindings.v3.StatusCode
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
-import community.flock.wirespec.compiler.core.parse.*
+import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.Channel
+import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.Enum
+import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.Module
+import community.flock.wirespec.compiler.core.parse.Reference
+import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.openapi.Common.json
 import kotlinx.serialization.encodeToString
@@ -24,19 +51,17 @@ object OpenAPIV3Emitter : Emitter {
 
     override fun emit(
         ast: AST,
-        logger: Logger
+        logger: Logger,
     ): NonEmptyList<Emitted> = ast.modules.flatMap { emit(it) }
 
+    private fun emit(module: Module): NonEmptyList<Emitted> = nonEmptyListOf(
+        Emitted(
+            "OpenAPIObject",
+            json.encodeToString(emitOpenAPIObject(module, null)),
+        ),
+    )
 
-    private fun emit(module: Module): NonEmptyList<Emitted> =
-        nonEmptyListOf(
-            Emitted(
-                "OpenAPIObject",
-                json.encodeToString(emitOpenAPIObject(module, null))
-            )
-        )
-
-    private fun emitOpenAPIObject(module: Module, options: Options? = null) = OpenAPIObject(
+    fun emitOpenAPIObject(module: Module, options: Options? = null) = OpenAPIObject(
         openapi = "3.0.0",
         info = InfoObject(
             title = options?.title ?: "Wirespec",
@@ -134,8 +159,7 @@ object OpenAPIV3Emitter : Emitter {
         oneOf = entries.map { it.emitSchema() },
     )
 
-    private fun List<Endpoint>.emit(method: Endpoint.Method): OperationObject? =
-        filter { it.method == method }.map { it.emit() }.firstOrNull()
+    private fun List<Endpoint>.emit(method: Endpoint.Method): OperationObject? = filter { it.method == method }.map { it.emit() }.firstOrNull()
 
     private fun Endpoint.emit(): OperationObject = OperationObject(
         operationId = identifier.value,
@@ -189,11 +213,9 @@ object OpenAPIV3Emitter : Emitter {
         schema = reference.emitSchema(),
     )
 
-    private fun Field.emitHeader(): Pair<String, HeaderOrReferenceObject> =
-        identifier.value to reference.emitHeader()
+    private fun Field.emitHeader(): Pair<String, HeaderOrReferenceObject> = identifier.value to reference.emitHeader()
 
-    private fun Field.emitSchema(): Pair<String, SchemaOrReferenceObject> =
-        identifier.value to reference.emitSchema()
+    private fun Field.emitSchema(): Pair<String, SchemaOrReferenceObject> = identifier.value to reference.emitSchema()
 
     private fun Reference.emitHeader() = when (this) {
         is Reference.Dict -> ReferenceObject(ref = Ref("#/components/headers/$value"))
@@ -238,10 +260,9 @@ object OpenAPIV3Emitter : Emitter {
         is Reference.Primitive.Type.Bytes -> OpenAPIType.STRING
     }
 
-    private fun Endpoint.Content.emit(): Pair<MediaType, MediaTypeObject> =
-        MediaType(type) to MediaTypeObject(
-            schema = reference.emitSchema(),
-        )
+    private fun Endpoint.Content.emit(): Pair<MediaType, MediaTypeObject> = MediaType(type) to MediaTypeObject(
+        schema = reference.emitSchema(),
+    )
 
     private fun Reference.emitFormat() = when (this) {
         is Reference.Primitive -> when (val t = type) {

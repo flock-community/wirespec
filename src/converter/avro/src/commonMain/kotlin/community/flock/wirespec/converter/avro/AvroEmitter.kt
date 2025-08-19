@@ -1,28 +1,33 @@
 package community.flock.wirespec.converter.avro
 
-import community.flock.wirespec.compiler.core.emit.LanguageEmitter
+import arrow.core.NonEmptyList
+import community.flock.wirespec.compiler.core.emit.Emitted
+import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
-import community.flock.wirespec.compiler.core.parse.Channel
+import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
-import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
+import community.flock.wirespec.compiler.utils.Logger
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
-object AvroEmitter : LanguageEmitter() {
+object AvroEmitter : Emitter {
 
     override val extension = FileExtension.JSON
 
-    override val shared = null
-
-    override fun emit(type: Type, module: Module): String {
-        TODO("Not yet implemented")
-    }
+    override fun emit(
+        ast: AST,
+        logger: Logger,
+    ): NonEmptyList<Emitted> = ast.modules
+        .map { emit(it) }
+        .map { Json.encodeToString(it) }
+        .map { Emitted("schema.avsc", it) }
 
     fun Enum.emit(): AvroModel.EnumType = AvroModel.EnumType(
         type = "enum",
@@ -114,51 +119,4 @@ object AvroEmitter : LanguageEmitter() {
     }
 
     private fun Module.findType(name: String): Definition? = statements.toList().find { it.identifier.value == name }
-
-    override fun Type.Shape.emit(): String {
-        TODO("Not yet implemented")
-    }
-
-    override fun Field.emit(): String {
-        TODO("Not yet implemented")
-    }
-
-    override fun Reference.emit(): String {
-        TODO("Not yet implemented")
-    }
-
-    override fun Refined.emitValidator(): String {
-        TODO("Not yet implemented")
-    }
-
-    override fun Reference.Primitive.Type.Constraint.emit(): String {
-        TODO("Not yet implemented")
-    }
-
-    override fun emit(enum: Enum, module: Module): String {
-        TODO("Not yet implemented")
-    }
-
-    override fun emit(refined: Refined): String {
-        TODO("Not yet implemented")
-    }
-
-    override fun emit(endpoint: Endpoint): String {
-        TODO("Not yet implemented")
-    }
-
-    override fun emit(union: Union): String {
-        TODO("Not yet implemented")
-    }
-
-    override fun emit(identifier: Identifier): String {
-        TODO("Not yet implemented")
-    }
-
-    override fun emit(channel: Channel): String {
-        TODO("Not yet implemented")
-    }
-
-    override val singleLineComment: String
-        get() = TODO("Not yet implemented")
 }
