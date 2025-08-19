@@ -23,6 +23,7 @@ import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
 import community.flock.wirespec.compiler.core.validate.Validator
 import community.flock.wirespec.compiler.utils.HasLogger
+import kotlin.collections.zipWithNext
 
 data class ParseOptions(
     val strict: Boolean = false,
@@ -32,12 +33,23 @@ data class ParseOptions(
 object Parser {
 
     fun HasLogger.parse(modules: NonEmptyList<TokenizedModule>, options: ParseOptions = ParseOptions()): EitherNel<WirespecException, AST> = modules
-        .map { it.tokens.toProvider(logger).parseModule(it.src) }
+        .let {
+            val definitionNames = it.flatMap { it.tokens }
+                .zipWithNext()
+                .mapNotNull { (first, second) ->
+                    when (first.type) {
+                        is WirespecDefinition -> second.value
+                        else -> null
+                    }
+                }
+                .toSet()
+            it.map { it.toProvider(definitionNames, logger).parseModule() }
+        }
         .let { either { it.bindAll() } }
         .map(::AST)
         .flatMap { Validator.validate(options, it) }
 
-    private fun TokenProvider.parseModule(src: String): EitherNel<WirespecException, Module> = either {
+    private fun TokenProvider.parseModule(): EitherNel<WirespecException, Module> = either {
         mutableListOf<EitherNel<WirespecException, Definition>>()
             .apply { while (hasNext()) add(parseDefinition().mapLeft { it.nel() }) }
             .map { it.bind() }
@@ -69,5 +81,5 @@ fun <A> TokenProvider.parseToken(block: Raise<WirespecException>.(Token) -> A) =
 }
 
 inline fun <reified T : TokenType> TokenProvider.raiseWrongToken(token: Token? = null): Either<WirespecException, Nothing> = either {
-    raise(WrongTokenException<T>(token ?: this@raiseWrongToken.token).also { eatToken().bind() })
+    raise(WrongTokenException<T>(src, token ?: this@raiseWrongToken.token).also { eatToken().bind() })
 }

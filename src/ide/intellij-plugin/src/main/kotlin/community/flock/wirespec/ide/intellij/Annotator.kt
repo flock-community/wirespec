@@ -1,6 +1,6 @@
 package community.flock.wirespec.ide.intellij
 
-import arrow.core.nonEmptyListOf
+import arrow.core.toNonEmptyListOrNull
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.lang.annotation.HighlightSeverity
@@ -14,28 +14,37 @@ import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.NoLogger
 
 class Annotator :
-    ExternalAnnotator<List<WirespecException>, List<WirespecException>>(),
+    ExternalAnnotator<Map<PsiFile, TokenizedModule>, List<WirespecException>>(),
     NoLogger {
 
-    override fun collectInformation(file: PsiFile) = WirespecSpec
-        .tokenize(file.text)
-        .let { parse(nonEmptyListOf(TokenizedModule("", it))) }
-        .fold({ it }, { emptyList() })
+    override fun collectInformation(file: PsiFile): Map<PsiFile, TokenizedModule> = file.containingDirectory.files
+        .associateWith { file -> TokenizedModule(file.name, WirespecSpec.tokenize(file.text)) }
 
-    override fun doAnnotate(collectedInfo: List<WirespecException>?) = collectedInfo
+    override fun doAnnotate(collectedInfo: Map<PsiFile, TokenizedModule>): List<WirespecException>? {
+        println(collectedInfo.keys.map { it.name })
+        return collectedInfo.values.toNonEmptyListOrNull()
+            ?.let { parse(it) }
+            ?.fold({ it }, { emptyList() })
+    }
 
-    override fun apply(file: PsiFile, annotationResult: List<WirespecException>?, holder: AnnotationHolder) {
-        annotationResult?.forEach {
-            holder
-                .newAnnotation(HighlightSeverity.ERROR, it.message)
-                .range(
-                    TextRange(
-                        it.coordinates.idxAndLength.idx - it.coordinates.idxAndLength.length,
-                        it.coordinates.idxAndLength.idx,
-                    ),
-                )
-                .create()
-        }
+    override fun apply(
+        file: PsiFile,
+        annotationResult: List<WirespecException>?,
+        holder: AnnotationHolder,
+    ) {
+        annotationResult
+            ?.filter { it.src == file.name }
+            ?.forEach {
+                holder
+                    .newAnnotation(HighlightSeverity.ERROR, it.message)
+                    .range(
+                        TextRange(
+                            it.coordinates.idxAndLength.idx - it.coordinates.idxAndLength.length,
+                            it.coordinates.idxAndLength.idx,
+                        ),
+                    )
+                    .create()
+            }
         super.apply(file, annotationResult, holder)
     }
 }
