@@ -1,6 +1,7 @@
-[![Maven Central](https://img.shields.io/maven-central/v/community.flock.wirespec.compiler/lib)](https://mvnrepository.com/artifact/community.flock.wirespec.compiler/core-jvm)
-[![Apache 2.0 License](https://img.shields.io/badge/License-Apache_2.0-blue)](LICENSE)
+[![Maven Central](https://img.shields.io/maven-central/v/community.flock.wirespec.compiler/core-jvm)](https://mvnrepository.com/artifact/community.flock.wirespec.compiler/core-jvm)
 ![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/flock-community/wirespec/build.yml)
+[![Apache 2.0 License](https://img.shields.io/badge/License-Apache_2.0-blue)](LICENSE)
+[![Documentation](https://img.shields.io/badge/docs-wirespec.io-a97bff.svg?logo=kotlin)](https://wirespec.io)
 
 <div align="center">
 <h1>
@@ -20,7 +21,7 @@ Simplify your API development workflows, accelerate implementation, and guarante
 
 
 Wirespec is a modern tool that enhances software development by streamlining the process of designing, documenting, and implementing APIs.
-While the software industry offers numerous solutions for designing contracts between services, Wirespec distinguishes itself by using a simple language model and multi-language compatibility.
+While the software industry offers many solutions for designing contracts between services, Wirespec distinguishes itself by using a simple language model and multi-language compatibility.
 
 Here are some key reasons why you might want to use Wirespec:
 
@@ -57,16 +58,18 @@ wirespec compile ./todo.ws -o ./tmp -l Kotlin
 * Maven
 * Gradle
 
-## Extentions
+## Extensions
 
 * IntelliJ IDEA
 * Visual Studio Code
 
 ## Integration
 
-Wirespec offers integration libraries with differ libraries.
+Wirespec offers integration libraries like:
 
+* [Avro](src/integration/avro)
 * [Jackson](src/integration/jackson)
+* [Spring](src/integration/spring)
 
 # CLI
 
