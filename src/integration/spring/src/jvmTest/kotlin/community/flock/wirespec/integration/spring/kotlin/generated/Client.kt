@@ -53,7 +53,7 @@ import community.flock.wirespec.integration.spring.kotlin.generated.model.Catego
 import community.flock.wirespec.integration.spring.kotlin.generated.model.Tag
 import community.flock.wirespec.integration.spring.kotlin.generated.model.PetStatus
 
-interface C: 
+interface PetstoreModule: 
   AddPetClient,
   UpdatePetClient,
   FindPetsByStatusClient,
@@ -74,7 +74,10 @@ interface C:
   UpdateUserClient,
   DeleteUserClient
 
-open class Client(val serialization: Wirespec.Serialization<String>, val handler: (Wirespec.RawRequest) -> Wirespec.RawResponse ): C {
+interface All: 
+  PetstoreModule
+
+open class Client(val serialization: Wirespec.Serialization<String>, val handler: (Wirespec.RawRequest) -> Wirespec.RawResponse ): All {
   override suspend fun addPet(body: Pet) = 
      AddPet.Request(body)
        .let { req -> AddPet.toRequest(serialization, req) }
