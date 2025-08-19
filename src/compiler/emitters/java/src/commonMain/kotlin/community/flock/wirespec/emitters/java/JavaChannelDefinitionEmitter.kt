@@ -1,11 +1,9 @@
 package community.flock.wirespec.emitters.java
 
-import community.flock.wirespec.compiler.core.emit.BaseEmitter
 import community.flock.wirespec.compiler.core.emit.ChannelDefinitionEmitter
 import community.flock.wirespec.compiler.core.emit.IdentifierEmitter
 import community.flock.wirespec.compiler.core.emit.ImportEmitter
 import community.flock.wirespec.compiler.core.emit.PackageNameEmitter
-import community.flock.wirespec.compiler.core.emit.TypeDefinitionEmitter
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Reference

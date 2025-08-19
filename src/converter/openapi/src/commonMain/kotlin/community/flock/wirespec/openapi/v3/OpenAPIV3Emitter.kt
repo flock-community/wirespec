@@ -2,46 +2,19 @@ package community.flock.wirespec.openapi.v3
 
 import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
-import community.flock.kotlinx.openapi.bindings.v3.ComponentsObject
-import community.flock.kotlinx.openapi.bindings.v3.HeaderObject
-import community.flock.kotlinx.openapi.bindings.v3.HeaderOrReferenceObject
-import community.flock.kotlinx.openapi.bindings.v3.InfoObject
-import community.flock.kotlinx.openapi.bindings.v3.MediaType
-import community.flock.kotlinx.openapi.bindings.v3.MediaTypeObject
-import community.flock.kotlinx.openapi.bindings.v3.OpenAPIObject
-import community.flock.kotlinx.openapi.bindings.v3.OperationObject
-import community.flock.kotlinx.openapi.bindings.v3.ParameterLocation
-import community.flock.kotlinx.openapi.bindings.v3.ParameterObject
-import community.flock.kotlinx.openapi.bindings.v3.Path
-import community.flock.kotlinx.openapi.bindings.v3.PathItemObject
-import community.flock.kotlinx.openapi.bindings.v3.Ref
-import community.flock.kotlinx.openapi.bindings.v3.ReferenceObject
-import community.flock.kotlinx.openapi.bindings.v3.RequestBodyObject
-import community.flock.kotlinx.openapi.bindings.v3.ResponseObject
-import community.flock.kotlinx.openapi.bindings.v3.SchemaObject
-import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceObject
-import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceOrBooleanObject
-import community.flock.kotlinx.openapi.bindings.v3.StatusCode
-import community.flock.wirespec.compiler.core.emit.LanguageEmitter
+import community.flock.kotlinx.openapi.bindings.v3.*
 import community.flock.wirespec.compiler.core.emit.Emitted
+import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
-import community.flock.wirespec.compiler.core.parse.Channel
-import community.flock.wirespec.compiler.core.parse.Endpoint
-import community.flock.wirespec.compiler.core.parse.Enum
-import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Identifier
-import community.flock.wirespec.compiler.core.parse.Module
-import community.flock.wirespec.compiler.core.parse.Reference
-import community.flock.wirespec.compiler.core.parse.Refined
+import community.flock.wirespec.compiler.core.parse.*
 import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.openapi.Common.json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 import community.flock.kotlinx.openapi.bindings.v3.Type as OpenAPIType
 
-object OpenAPIV3Emitter : LanguageEmitter() {
+object OpenAPIV3Emitter : Emitter {
     data class Options(
         val title: String,
         val version: String,
@@ -49,37 +22,21 @@ object OpenAPIV3Emitter : LanguageEmitter() {
 
     override val extension = FileExtension.JSON
 
-    override val shared = null
+    override fun emit(
+        ast: AST,
+        logger: Logger
+    ): NonEmptyList<Emitted> = ast.modules.flatMap { emit(it) }
 
-    override val singleLineComment = ""
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = nonEmptyListOf(Emitted("OpenAPIObject", json.encodeToString(emitOpenAPIObject(module, null))))
+    private fun emit(module: Module): NonEmptyList<Emitted> =
+        nonEmptyListOf(
+            Emitted(
+                "OpenAPIObject",
+                json.encodeToString(emitOpenAPIObject(module, null))
+            )
+        )
 
-    override fun Type.Shape.emit() = notYetImplemented()
-
-    override fun Field.emit() = notYetImplemented()
-
-    override fun Reference.emit() = notYetImplemented()
-
-    override fun Refined.emitValidator() = notYetImplemented()
-
-    override fun Reference.Primitive.Type.Constraint.emit() = notYetImplemented()
-
-    override fun emit(type: Type, module: Module) = notYetImplemented()
-
-    override fun emit(enum: Enum, module: Module) = notYetImplemented()
-
-    override fun emit(refined: Refined) = notYetImplemented()
-
-    override fun emit(endpoint: Endpoint) = notYetImplemented()
-
-    override fun emit(union: Union) = notYetImplemented()
-
-    override fun emit(identifier: Identifier) = notYetImplemented()
-
-    override fun emit(channel: Channel) = notYetImplemented()
-
-    fun emitOpenAPIObject(module: Module, options: Options? = null) = OpenAPIObject(
+    private fun emitOpenAPIObject(module: Module, options: Options? = null) = OpenAPIObject(
         openapi = "3.0.0",
         info = InfoObject(
             title = options?.title ?: "Wirespec",
@@ -129,23 +86,28 @@ object OpenAPIV3Emitter : LanguageEmitter() {
             minimum = type.constraint?.min?.toDouble(),
             maximum = type.constraint?.max?.toDouble(),
         )
+
         is Reference.Primitive.Type.Number -> SchemaObject(
             type = OpenAPIType.STRING,
             minimum = type.constraint?.min?.toDouble(),
             maximum = type.constraint?.max?.toDouble(),
         )
+
         is Reference.Primitive.Type.String -> when (val pattern = type.constraint) {
             is Reference.Primitive.Type.Constraint.RegExp -> SchemaObject(
                 type = OpenAPIType.STRING,
                 pattern = pattern.value,
             )
+
             null -> SchemaObject(
                 type = OpenAPIType.STRING,
             )
         }
+
         Reference.Primitive.Type.Boolean -> SchemaObject(
             type = OpenAPIType.BOOLEAN,
         )
+
         Reference.Primitive.Type.Bytes -> SchemaObject(
             type = OpenAPIType.STRING,
         )
@@ -172,7 +134,8 @@ object OpenAPIV3Emitter : LanguageEmitter() {
         oneOf = entries.map { it.emitSchema() },
     )
 
-    private fun List<Endpoint>.emit(method: Endpoint.Method): OperationObject? = filter { it.method == method }.map { it.emit() }.firstOrNull()
+    private fun List<Endpoint>.emit(method: Endpoint.Method): OperationObject? =
+        filter { it.method == method }.map { it.emit() }.firstOrNull()
 
     private fun Endpoint.emit(): OperationObject = OperationObject(
         operationId = identifier.value,
@@ -226,9 +189,11 @@ object OpenAPIV3Emitter : LanguageEmitter() {
         schema = reference.emitSchema(),
     )
 
-    private fun Field.emitHeader(): Pair<String, HeaderOrReferenceObject> = identifier.value to reference.emitHeader()
+    private fun Field.emitHeader(): Pair<String, HeaderOrReferenceObject> =
+        identifier.value to reference.emitHeader()
 
-    private fun Field.emitSchema(): Pair<String, SchemaOrReferenceObject> = identifier.value to reference.emitSchema()
+    private fun Field.emitSchema(): Pair<String, SchemaOrReferenceObject> =
+        identifier.value to reference.emitSchema()
 
     private fun Reference.emitHeader() = when (this) {
         is Reference.Dict -> ReferenceObject(ref = Ref("#/components/headers/$value"))
@@ -260,6 +225,7 @@ object OpenAPIV3Emitter : LanguageEmitter() {
             minimum = emitMinimum(),
             maximum = emitMaximum(),
         )
+
         is Reference.Any -> error("Cannot map Any")
         is Reference.Unit -> error("Cannot map Unit")
     }
@@ -272,9 +238,10 @@ object OpenAPIV3Emitter : LanguageEmitter() {
         is Reference.Primitive.Type.Bytes -> OpenAPIType.STRING
     }
 
-    private fun Endpoint.Content.emit(): Pair<MediaType, MediaTypeObject> = MediaType(type) to MediaTypeObject(
-        schema = reference.emitSchema(),
-    )
+    private fun Endpoint.Content.emit(): Pair<MediaType, MediaTypeObject> =
+        MediaType(type) to MediaTypeObject(
+            schema = reference.emitSchema(),
+        )
 
     private fun Reference.emitFormat() = when (this) {
         is Reference.Primitive -> when (val t = type) {
@@ -302,8 +269,10 @@ object OpenAPIV3Emitter : LanguageEmitter() {
                 is Reference.Primitive.Type.Constraint.RegExp -> p.value
                 else -> null
             }
+
             else -> null
         }
+
         else -> null
     }
 
@@ -313,6 +282,7 @@ object OpenAPIV3Emitter : LanguageEmitter() {
             is Reference.Primitive.Type.Integer -> t.constraint?.min?.toDouble()
             else -> null
         }
+
         else -> null
     }
 
@@ -322,6 +292,7 @@ object OpenAPIV3Emitter : LanguageEmitter() {
             is Reference.Primitive.Type.Integer -> t.constraint?.max?.toDouble()
             else -> null
         }
+
         else -> null
     }
 }

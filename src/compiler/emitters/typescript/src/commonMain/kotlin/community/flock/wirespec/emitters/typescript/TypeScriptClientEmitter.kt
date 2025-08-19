@@ -1,8 +1,8 @@
 package community.flock.wirespec.emitters.typescript
 
-import community.flock.wirespec.compiler.core.emit.BaseEmitter
 import community.flock.wirespec.compiler.core.emit.ClientEmitter
 import community.flock.wirespec.compiler.core.emit.Emitted
+import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.ImportEmitter
 import community.flock.wirespec.compiler.core.emit.ParamEmitter
 import community.flock.wirespec.compiler.core.emit.SpaceEmitter
@@ -10,7 +10,7 @@ import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
 
-interface TypeScriptClientEmitter: BaseEmitter, ClientEmitter, ParamEmitter, SpaceEmitter, ImportEmitter, TypeScriptTypeDefinitionEmitter {
+interface TypeScriptClientEmitter: Emitter, ClientEmitter, ParamEmitter, SpaceEmitter, ImportEmitter, TypeScriptTypeDefinitionEmitter {
 
     override fun emitClient(ast: AST) = Emitted("client.${extension.value}", """
         |import {Wirespec} from "./Wirespec"

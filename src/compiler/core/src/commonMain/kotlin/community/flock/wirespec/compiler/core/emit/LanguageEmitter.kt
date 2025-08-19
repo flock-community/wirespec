@@ -15,11 +15,12 @@ import community.flock.wirespec.compiler.utils.Logger
 abstract class LanguageEmitter :
     Emitter,
     Emitters,
-    BaseEmitter,
     ParamEmitter,
     SpaceEmitter,
     ImportEmitter,
     EndpointEmitter {
+
+    abstract val shared: Shared?
 
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast
         .modules.flatMap { emit(it, logger) }

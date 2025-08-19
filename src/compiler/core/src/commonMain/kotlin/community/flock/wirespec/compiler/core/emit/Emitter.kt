@@ -6,6 +6,9 @@ import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.utils.Logger
 
 interface Emitter {
+
+    val extension: FileExtension
+
     fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted>
 }
 
