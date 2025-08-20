@@ -227,7 +227,10 @@ class ParserReferenceTest {
         """.trimMargin()
 
         parser(source)
-            .shouldBeLeft()
+            .shouldBeRight()
+            .shouldHaveSize(1)
+            .first()
+            .comment?.value shouldBe null
     }
 
     @Test

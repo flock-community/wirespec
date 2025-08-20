@@ -8,6 +8,7 @@ import arrow.core.nel
 import arrow.core.raise.Raise
 import arrow.core.raise.either
 import arrow.core.raise.ensureNotNull
+import arrow.core.raise.mapOrAccumulate
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.TokenizedModule
 import community.flock.wirespec.compiler.core.exceptions.EmptyModule
@@ -23,7 +24,6 @@ import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
 import community.flock.wirespec.compiler.core.validate.Validator
 import community.flock.wirespec.compiler.utils.HasLogger
-import kotlin.collections.zipWithNext
 
 data class ParseOptions(
     val strict: Boolean = false,
@@ -32,7 +32,10 @@ data class ParseOptions(
 
 object Parser {
 
-    fun HasLogger.parse(modules: NonEmptyList<TokenizedModule>, options: ParseOptions = ParseOptions()): EitherNel<WirespecException, AST> = modules
+    fun HasLogger.parse(
+        modules: NonEmptyList<TokenizedModule>,
+        options: ParseOptions = ParseOptions(),
+    ): EitherNel<WirespecException, AST> = modules
         .let {
             val definitionNames = it.flatMap { it.tokens }
                 .zipWithNext()
@@ -50,11 +53,19 @@ object Parser {
         .flatMap { Validator.validate(options, it) }
 
     private fun TokenProvider.parseModule(): EitherNel<WirespecException, Module> = either {
-        mutableListOf<EitherNel<WirespecException, Definition>>()
-            .apply { while (hasNext()) add(parseDefinition().mapLeft { it.nel() }) }
-            .map { it.bind() }
+        mutableListOf<Either<WirespecException, Definition>>()
+            .apply {
+                while (hasNext()) {
+                    when (token.type) {
+                        is Comment -> add(parseDefinition())
+                        is WirespecDefinition -> add(parseDefinition())
+                        else -> eatToken()
+                    }
+                }
+            }
             .toNonEmptyListOrNull()
             .let { ensureNotNull(it) { EmptyModule().nel() } }
+            .let { mapOrAccumulate(it) { it.bind() } }
             .let { Module(src, it) }
     }
 
@@ -70,7 +81,6 @@ object Parser {
                 is EndpointDefinition -> with(EndpointParser) { parseEndpoint(comment) }.bind()
                 is ChannelDefinition -> with(ChannelParser) { parseChannel(comment) }.bind()
             }
-
             else -> raiseWrongToken<WirespecDefinition>().bind()
         }
     }
@@ -81,5 +91,10 @@ fun <A> TokenProvider.parseToken(block: Raise<WirespecException>.(Token) -> A) =
 }
 
 inline fun <reified T : TokenType> TokenProvider.raiseWrongToken(token: Token? = null): Either<WirespecException, Nothing> = either {
-    raise(WrongTokenException<T>(src, token ?: this@raiseWrongToken.token).also { eatToken().bind() })
+    raise(
+        WrongTokenException<T>(
+            src,
+            token ?: this@raiseWrongToken.token,
+        ).also { eatToken().bind() },
+    )
 }
