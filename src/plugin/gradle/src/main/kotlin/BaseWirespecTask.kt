@@ -108,7 +108,7 @@ abstract class BaseWirespecTask : DefaultTask() {
             .getResourceAsStream(value) ?: error("Could not find file: $value on the classpath.")
         val content = inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
         val name = file.name.split(".").first()
-        return Source<E>(name = Name(name), content = preProcess(content))
+        return Source(name = Name(name), content = preProcess(content))
     }
 
     protected fun handleError(string: String): Nothing = throw RuntimeException(string)

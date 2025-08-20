@@ -9,14 +9,11 @@ data object Spacer {
     operator fun invoke(block: () -> String) = "$SPACER${block().split("\n").joinToString("\n$SPACER")}"
 }
 
-interface SpaceEmitter {
-
-    fun String.spacer(space: Int = 1) = split("\n")
-        .joinToString("\n") {
-            if (it.isNotBlank()) {
-                "${(1..space).joinToString("") { "$Spacer" }}$it"
-            } else {
-                it
-            }
+fun String.spacer(space: Int = 1) = split("\n")
+    .joinToString("\n") {
+        if (it.isNotBlank()) {
+            "${(1..space).joinToString("") { "$Spacer" }}$it"
+        } else {
+            it
         }
-}
+    }

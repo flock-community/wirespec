@@ -1,12 +1,11 @@
 package community.flock.wirespec.emitters.python
 
-import community.flock.wirespec.compiler.core.emit.IdentifierEmitter
 import community.flock.wirespec.compiler.core.emit.RefinedTypeDefinitionEmitter
 import community.flock.wirespec.compiler.core.emit.Spacer
-import community.flock.wirespec.compiler.core.emit.TypeDefinitionEmitter
+import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 
-interface PythonRefinedTypeDefinitionEmitter : RefinedTypeDefinitionEmitter, TypeDefinitionEmitter, IdentifierEmitter {
+interface PythonRefinedTypeDefinitionEmitter : RefinedTypeDefinitionEmitter, PythonTypeDefinitionEmitter, PythonIdentifierEmitter {
 
     override fun emit(refined: Refined) = """
         |@dataclass
@@ -19,4 +18,15 @@ interface PythonRefinedTypeDefinitionEmitter : RefinedTypeDefinitionEmitter, Typ
         |${Spacer}def __str__(self) -> str:
         |${Spacer(2)}return self.value
     """.trimMargin()
+
+    override fun Refined.emitValidator():String {
+        val defaultReturn = "true"
+        return when (val type = reference.type) {
+            is Reference.Primitive.Type.Integer -> type.constraint?.emit() ?: defaultReturn
+            is Reference.Primitive.Type.Number -> type.constraint?.emit() ?: defaultReturn
+            is Reference.Primitive.Type.String -> type.constraint?.emit() ?: defaultReturn
+            Reference.Primitive.Type.Boolean -> defaultReturn
+            Reference.Primitive.Type.Bytes -> defaultReturn
+        }
+    }
 }

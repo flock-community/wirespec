@@ -25,11 +25,11 @@ import community.flock.kotlinx.openapi.bindings.v3.StatusCode
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
+import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
@@ -41,7 +41,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 import community.flock.kotlinx.openapi.bindings.v3.Type as OpenAPIType
 
-object OpenAPIV3Emitter : Emitter() {
+object OpenAPIV3Emitter : Emitter {
     data class Options(
         val title: String,
         val version: String,
@@ -49,35 +49,17 @@ object OpenAPIV3Emitter : Emitter() {
 
     override val extension = FileExtension.JSON
 
-    override val shared = null
+    override fun emit(
+        ast: AST,
+        logger: Logger,
+    ): NonEmptyList<Emitted> = ast.modules.flatMap { emit(it) }
 
-    override val singleLineComment = ""
-
-    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = nonEmptyListOf(Emitted("OpenAPIObject", json.encodeToString(emitOpenAPIObject(module, null))))
-
-    override fun Type.Shape.emit() = notYetImplemented()
-
-    override fun Field.emit() = notYetImplemented()
-
-    override fun Reference.emit() = notYetImplemented()
-
-    override fun Refined.emitValidator() = notYetImplemented()
-
-    override fun Reference.Primitive.Type.Constraint.emit() = notYetImplemented()
-
-    override fun emit(type: Type, module: Module) = notYetImplemented()
-
-    override fun emit(enum: Enum, module: Module) = notYetImplemented()
-
-    override fun emit(refined: Refined) = notYetImplemented()
-
-    override fun emit(endpoint: Endpoint) = notYetImplemented()
-
-    override fun emit(union: Union) = notYetImplemented()
-
-    override fun emit(identifier: Identifier) = notYetImplemented()
-
-    override fun emit(channel: Channel) = notYetImplemented()
+    private fun emit(module: Module): NonEmptyList<Emitted> = nonEmptyListOf(
+        Emitted(
+            "OpenAPIObject",
+            json.encodeToString(emitOpenAPIObject(module, null)),
+        ),
+    )
 
     fun emitOpenAPIObject(module: Module, options: Options? = null) = OpenAPIObject(
         openapi = "3.0.0",
@@ -129,23 +111,28 @@ object OpenAPIV3Emitter : Emitter() {
             minimum = type.constraint?.min?.toDouble(),
             maximum = type.constraint?.max?.toDouble(),
         )
+
         is Reference.Primitive.Type.Number -> SchemaObject(
             type = OpenAPIType.STRING,
             minimum = type.constraint?.min?.toDouble(),
             maximum = type.constraint?.max?.toDouble(),
         )
+
         is Reference.Primitive.Type.String -> when (val pattern = type.constraint) {
             is Reference.Primitive.Type.Constraint.RegExp -> SchemaObject(
                 type = OpenAPIType.STRING,
                 pattern = pattern.value,
             )
+
             null -> SchemaObject(
                 type = OpenAPIType.STRING,
             )
         }
+
         Reference.Primitive.Type.Boolean -> SchemaObject(
             type = OpenAPIType.BOOLEAN,
         )
+
         Reference.Primitive.Type.Bytes -> SchemaObject(
             type = OpenAPIType.STRING,
         )
@@ -260,6 +247,7 @@ object OpenAPIV3Emitter : Emitter() {
             minimum = emitMinimum(),
             maximum = emitMaximum(),
         )
+
         is Reference.Any -> error("Cannot map Any")
         is Reference.Unit -> error("Cannot map Unit")
     }
@@ -302,8 +290,10 @@ object OpenAPIV3Emitter : Emitter() {
                 is Reference.Primitive.Type.Constraint.RegExp -> p.value
                 else -> null
             }
+
             else -> null
         }
+
         else -> null
     }
 
@@ -313,6 +303,7 @@ object OpenAPIV3Emitter : Emitter() {
             is Reference.Primitive.Type.Integer -> t.constraint?.min?.toDouble()
             else -> null
         }
+
         else -> null
     }
 
@@ -322,6 +313,7 @@ object OpenAPIV3Emitter : Emitter() {
             is Reference.Primitive.Type.Integer -> t.constraint?.max?.toDouble()
             else -> null
         }
+
         else -> null
     }
 }

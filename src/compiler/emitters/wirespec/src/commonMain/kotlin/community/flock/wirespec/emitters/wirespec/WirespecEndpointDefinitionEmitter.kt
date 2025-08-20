@@ -1,14 +1,12 @@
 package community.flock.wirespec.emitters.wirespec
 
 import community.flock.wirespec.compiler.core.emit.EndpointDefinitionEmitter
-import community.flock.wirespec.compiler.core.emit.EndpointEmitter
-import community.flock.wirespec.compiler.core.emit.IdentifierEmitter
 import community.flock.wirespec.compiler.core.emit.Spacer
-import community.flock.wirespec.compiler.core.emit.TypeDefinitionEmitter
+import community.flock.wirespec.compiler.core.emit.fixStatus
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Field
 
-interface WirespecEndpointDefinitionEmitter: EndpointEmitter, TypeDefinitionEmitter, EndpointDefinitionEmitter, IdentifierEmitter {
+interface WirespecEndpointDefinitionEmitter:  EndpointDefinitionEmitter, WirespecTypeDefinitionEmitter {
 
     override fun emit(endpoint: Endpoint) = """
         |endpoint ${emit(endpoint.identifier)} ${endpoint.method}${endpoint.requests.emitRequest()} ${endpoint.path.emitPath()}${endpoint.queries.emitQuery()} -> {

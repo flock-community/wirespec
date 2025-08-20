@@ -19,55 +19,29 @@ import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
-import community.flock.wirespec.compiler.core.parse.Channel
+import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
-import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.openapi.Common.json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenAPIType
 
-object OpenAPIV2Emitter : Emitter() {
+object OpenAPIV2Emitter : Emitter {
 
     override val extension = FileExtension.JSON
 
-    override val shared = null
+    override fun emit(
+        ast: AST,
+        logger: Logger,
+    ): NonEmptyList<Emitted> = ast.modules.flatMap { emit(it) }
 
-    override val singleLineComment = ""
-
-    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = nonEmptyListOf(Emitted("SwaggerObject", json.encodeToString(emitSwaggerObject(module))))
-
-    override fun Type.Shape.emit() = notYetImplemented()
-
-    override fun Field.emit() = notYetImplemented()
-
-    override fun Reference.emit() = notYetImplemented()
-
-    override fun Refined.emitValidator() = notYetImplemented()
-
-    override fun Reference.Primitive.Type.Constraint.emit() = notYetImplemented()
-
-    override fun emit(type: Type, module: Module) = notYetImplemented()
-
-    override fun emit(enum: Enum, module: Module) = notYetImplemented()
-
-    override fun emit(refined: Refined) = notYetImplemented()
-
-    override fun emit(endpoint: Endpoint) = notYetImplemented()
-
-    override fun emit(union: Union) = notYetImplemented()
-
-    override fun emit(identifier: Identifier) = notYetImplemented()
-
-    override fun emit(channel: Channel) = notYetImplemented()
+    private fun emit(module: Module): NonEmptyList<Emitted> = nonEmptyListOf(Emitted("SwaggerObject", json.encodeToString(emitSwaggerObject(module))))
 
     fun emitSwaggerObject(module: Module): SwaggerObject = SwaggerObject(
         swagger = "2.0",
@@ -77,28 +51,29 @@ object OpenAPIV2Emitter : Emitter() {
         ),
         consumes = listOf("application/json"),
         produces = listOf("application/json"),
-        paths = module.statements.filterIsInstance<Endpoint>().groupBy { it.path }.map { (segments, endpoints) ->
-            Path(segments.emitSegment()) to PathItemObject(
-                parameters = segments.filterIsInstance<Endpoint.Segment.Param>().map {
-                    ParameterObject(
-                        `in` = ParameterLocation.PATH,
-                        name = it.identifier.value,
-                        type = it.reference.emitType(),
-                        format = it.reference.emitFormat(),
-                        pattern = it.reference.emitPattern(),
-                        minimum = it.reference.emitMinimum(),
-                    )
-                },
-                get = endpoints.emit(Endpoint.Method.GET),
-                post = endpoints.emit(Endpoint.Method.POST),
-                put = endpoints.emit(Endpoint.Method.PUT),
-                delete = endpoints.emit(Endpoint.Method.DELETE),
-                patch = endpoints.emit(Endpoint.Method.PATCH),
-                options = endpoints.emit(Endpoint.Method.OPTIONS),
-                trace = endpoints.emit(Endpoint.Method.TRACE),
-                head = endpoints.emit(Endpoint.Method.HEAD),
-            )
-        }.toMap(),
+        paths = module.statements.filterIsInstance<Endpoint>().groupBy { it.path }
+            .map { (segments, endpoints) ->
+                Path(segments.emitSegment()) to PathItemObject(
+                    parameters = segments.filterIsInstance<Endpoint.Segment.Param>().map {
+                        ParameterObject(
+                            `in` = ParameterLocation.PATH,
+                            name = it.identifier.value,
+                            type = it.reference.emitType(),
+                            format = it.reference.emitFormat(),
+                            pattern = it.reference.emitPattern(),
+                            minimum = it.reference.emitMinimum(),
+                        )
+                    },
+                    get = endpoints.emit(Endpoint.Method.GET),
+                    post = endpoints.emit(Endpoint.Method.POST),
+                    put = endpoints.emit(Endpoint.Method.PUT),
+                    delete = endpoints.emit(Endpoint.Method.DELETE),
+                    patch = endpoints.emit(Endpoint.Method.PATCH),
+                    options = endpoints.emit(Endpoint.Method.OPTIONS),
+                    trace = endpoints.emit(Endpoint.Method.TRACE),
+                    head = endpoints.emit(Endpoint.Method.HEAD),
+                )
+            }.toMap(),
         definitions = module.statements
             .filterIsInstance<Refined>().associate { refined ->
                 when (val type = refined.reference.type) {
@@ -132,6 +107,7 @@ object OpenAPIV2Emitter : Emitter() {
                                 type = OpenAPIType.STRING,
                                 pattern = pattern.value,
                             )
+
                             null -> SchemaObject(
                                 type = OpenAPIType.STRING,
                             )
@@ -147,7 +123,8 @@ object OpenAPIV2Emitter : Emitter() {
                         .takeIf { it.isNotEmpty() },
                 )
             } + module.statements
-            .filterIsInstance<Enum>().associate { enum ->
+            .filterIsInstance<community.flock.wirespec.compiler.core.parse.Enum>()
+            .associate { enum ->
                 enum.identifier.value to SchemaObject(
                     type = OpenAPIType.STRING,
                     enum = enum.entries.map { JsonPrimitive(it) },
@@ -182,7 +159,8 @@ object OpenAPIV2Emitter : Emitter() {
         responses = responses
             .associate { response ->
                 StatusCode(response.status) to ResponseObject(
-                    description = comment?.value ?: "${identifier.value} ${response.status} response",
+                    description = comment?.value
+                        ?: "${identifier.value} ${response.status} response",
                     headers = response.headers.associate {
                         it.identifier.value to HeaderObject(
                             type = it.reference.emitType(),
@@ -232,10 +210,23 @@ object OpenAPIV2Emitter : Emitter() {
     )
 
     private fun Reference.toSchemaOrReference(): SchemaOrReferenceObject = when (this) {
-        is Reference.Dict -> SchemaObject(type = OpenAPIType.OBJECT, items = reference.toSchemaOrReference())
-        is Reference.Iterable -> SchemaObject(type = OpenAPIType.ARRAY, items = reference.toSchemaOrReference())
+        is Reference.Dict -> SchemaObject(
+            type = OpenAPIType.OBJECT,
+            items = reference.toSchemaOrReference(),
+        )
+
+        is Reference.Iterable -> SchemaObject(
+            type = OpenAPIType.ARRAY,
+            items = reference.toSchemaOrReference(),
+        )
+
         is Reference.Custom -> ReferenceObject(ref = Ref("#/definitions/$value"))
-        is Reference.Primitive -> SchemaObject(type = type.emitType(), format = emitFormat(), pattern = emitPattern())
+        is Reference.Primitive -> SchemaObject(
+            type = type.emitType(),
+            format = emitFormat(),
+            pattern = emitPattern(),
+        )
+
         is Reference.Any -> error("Cannot map Any")
         is Reference.Unit -> error("Cannot map Unit")
     }
@@ -283,8 +274,10 @@ object OpenAPIV2Emitter : Emitter() {
                 is Reference.Primitive.Type.Constraint.RegExp -> p.value
                 else -> null
             }
+
             else -> null
         }
+
         else -> null
     }
 
@@ -294,6 +287,7 @@ object OpenAPIV2Emitter : Emitter() {
             is Reference.Primitive.Type.Integer -> t.constraint?.min?.toDouble()
             else -> null
         }
+
         else -> null
     }
 
@@ -303,6 +297,7 @@ object OpenAPIV2Emitter : Emitter() {
             is Reference.Primitive.Type.Integer -> t.constraint?.max?.toDouble()
             else -> null
         }
+
         else -> null
     }
 }

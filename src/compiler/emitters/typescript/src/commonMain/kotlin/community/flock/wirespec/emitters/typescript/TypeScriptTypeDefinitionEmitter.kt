@@ -1,16 +1,15 @@
 package community.flock.wirespec.emitters.typescript
 
-import community.flock.wirespec.compiler.core.emit.ImportEmitter
 import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.emit.TypeDefinitionEmitter
+import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
-import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 
-interface TypeScriptTypeDefinitionEmitter: TypeDefinitionEmitter, ImportEmitter, TypeScriptIdentifierEmitter {
+interface TypeScriptTypeDefinitionEmitter: TypeDefinitionEmitter, TypeScriptIdentifierEmitter {
 
     fun Identifier.sanitizeSymbol() = value.sanitizeSymbol()
 
@@ -41,17 +40,6 @@ interface TypeScriptTypeDefinitionEmitter: TypeDefinitionEmitter, ImportEmitter,
             is Reference.Primitive.Type.Bytes -> "ArrayBuffer"
         }
     }.let { "$it${if (isNullable) " | undefined" else ""}" }
-
-    override fun Refined.emitValidator(): String {
-        val defaultReturn = "true;"
-        return when (val type = reference.type) {
-            is Reference.Primitive.Type.Integer -> type.constraint?.emit() ?: defaultReturn
-            is Reference.Primitive.Type.Number -> type.constraint?.emit() ?: defaultReturn
-            is Reference.Primitive.Type.String -> type.constraint?.emit() ?: defaultReturn
-            Reference.Primitive.Type.Boolean -> defaultReturn
-            Reference.Primitive.Type.Bytes -> defaultReturn
-        }
-    }
 
     override fun Reference.Primitive.Type.Constraint.emit() = when (this) {
         is Reference.Primitive.Type.Constraint.RegExp -> """$value.test(value)"""

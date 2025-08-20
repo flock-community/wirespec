@@ -31,8 +31,6 @@ interface TypeDefinitionEmitter {
 
     fun Reference.emit(): String
 
-    fun Refined.emitValidator(): String
-
     fun Reference.Primitive.Type.Constraint.emit(): String
 
     val Reference.Primitive.Type.Constraint.RegExp.expression get() =
@@ -45,6 +43,8 @@ interface EnumDefinitionEmitter {
 
 interface RefinedTypeDefinitionEmitter {
     fun emit(refined: Refined): String
+
+    fun Refined.emitValidator(): String
 }
 
 interface EndpointDefinitionEmitter {
@@ -61,11 +61,9 @@ interface ChannelDefinitionEmitter {
 
 interface IdentifierEmitter {
     fun emit(identifier: Identifier): String
-
-    fun Identifier.sanitize(): String = value
 }
 
-interface ClientEmitter {
+interface ClientEmitter : HasExtension {
     fun emitClient(ast: AST): Emitted
 
     fun AST.emitClientEndpointRequest() = modules

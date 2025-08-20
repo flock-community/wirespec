@@ -3,6 +3,7 @@ package community.flock.wirespec.integration.avro.java.emit
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.Spacer
+import community.flock.wirespec.compiler.core.emit.spacer
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
@@ -51,7 +52,7 @@ class AvroEmitter(override val packageName: PackageName, emitShared: EmitShared)
 
     override fun emit(enum: Enum, module: Module) = """
         |public enum ${emit(enum.identifier)} implements Wirespec.Enum {
-        |${enum.entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }.spacer()};
+        |${enum.entries.joinToString(",\n") { "${it.sanitizeEnum()}(\"$it\")" }.spacer()};
         |${Spacer}public final String label;
         |${Spacer}${emit(enum.identifier)}(String label) {
         |${Spacer(2)}this.label = label;

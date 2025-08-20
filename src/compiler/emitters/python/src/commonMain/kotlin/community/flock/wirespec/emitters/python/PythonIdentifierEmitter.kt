@@ -1,11 +1,11 @@
 package community.flock.wirespec.emitters.python
 
-import community.flock.wirespec.compiler.core.emit.Emitter.Companion.firstToUpper
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.IdentifierEmitter
+import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Identifier
-import community.flock.wirespec.emitters.python.PythonEmitter.Companion.reservedKeywords
 
 interface PythonIdentifierEmitter: IdentifierEmitter {
 
@@ -14,7 +14,7 @@ interface PythonIdentifierEmitter: IdentifierEmitter {
         is FieldIdentifier -> identifier.sanitize().sanitizeKeywords()
     }
 
-    override fun Identifier.sanitize() = value
+     fun Identifier.sanitize() = value
         .split(".", " ")
         .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
         .joinToString("")
@@ -22,4 +22,16 @@ interface PythonIdentifierEmitter: IdentifierEmitter {
         .let { if (it.firstOrNull()?.isDigit() == true) "_$it" else it }
 
     fun String.sanitizeKeywords() = if (this in reservedKeywords) "_$this" else this
+
+    companion object : Keywords {
+        override val reservedKeywords = setOf(
+            "False", "None", "True", "and", "as", "assert",
+            "break", "class", "continue", "def", "del",
+            "elif", "else", "except", "finally", "for",
+            "from", "global", "if", "import", "in",
+            "is", "lambda", "nonlocal", "not", "or",
+            "pass", "raise", "return", "try", "while",
+            "with", "yield"
+        )
+    }
 }

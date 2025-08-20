@@ -1,23 +1,25 @@
 package community.flock.wirespec.emitters.java
 
 import community.flock.wirespec.compiler.core.concatGenerics
-import community.flock.wirespec.compiler.core.emit.Emitter.Companion.firstToLower
-import community.flock.wirespec.compiler.core.emit.Emitter.Companion.firstToUpper
-import community.flock.wirespec.compiler.core.emit.Emitter.Companion.isStatusCode
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToLower
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.isStatusCode
 import community.flock.wirespec.compiler.core.emit.EndpointDefinitionEmitter
-import community.flock.wirespec.compiler.core.emit.EndpointEmitter
-import community.flock.wirespec.compiler.core.emit.IdentifierEmitter
-import community.flock.wirespec.compiler.core.emit.ImportEmitter
-import community.flock.wirespec.compiler.core.emit.PackageNameEmitter
-import community.flock.wirespec.compiler.core.emit.ParamEmitter
+import community.flock.wirespec.compiler.core.emit.HasPackageName
 import community.flock.wirespec.compiler.core.emit.Spacer
+import community.flock.wirespec.compiler.core.emit.distinctByStatus
+import community.flock.wirespec.compiler.core.emit.emit
+import community.flock.wirespec.compiler.core.emit.fixStatus
+import community.flock.wirespec.compiler.core.emit.importReferences
+import community.flock.wirespec.compiler.core.emit.indexedPathParams
+import community.flock.wirespec.compiler.core.emit.pathParams
 import community.flock.wirespec.compiler.core.orNull
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Reference
 
-interface JavaEndpointDefinitionEmitter: JavaTypeDefinitionEmitter, ParamEmitter, PackageNameEmitter, IdentifierEmitter, EndpointEmitter, EndpointDefinitionEmitter, ImportEmitter {
+interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageName, JavaTypeDefinitionEmitter {
 
     override fun emit(endpoint: Endpoint) = """
         |${endpoint.emitImports()}
@@ -170,7 +172,6 @@ interface JavaEndpointDefinitionEmitter: JavaTypeDefinitionEmitter, ParamEmitter
     private fun Endpoint.Segment.Param.emit() = "${reference.emit()} ${emit(identifier)}"
 
     private val Reference.isIterable get() = this is Reference.Iterable
-
 
     private fun Definition.emitImports() = importReferences()
         .filter { identifier.value != it.value }

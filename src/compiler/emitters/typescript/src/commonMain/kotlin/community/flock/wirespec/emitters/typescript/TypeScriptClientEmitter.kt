@@ -1,16 +1,15 @@
 package community.flock.wirespec.emitters.typescript
 
-import community.flock.wirespec.compiler.core.emit.BaseEmitter
 import community.flock.wirespec.compiler.core.emit.ClientEmitter
 import community.flock.wirespec.compiler.core.emit.Emitted
-import community.flock.wirespec.compiler.core.emit.ImportEmitter
-import community.flock.wirespec.compiler.core.emit.ParamEmitter
-import community.flock.wirespec.compiler.core.emit.SpaceEmitter
 import community.flock.wirespec.compiler.core.emit.Spacer
+import community.flock.wirespec.compiler.core.emit.importReferences
+import community.flock.wirespec.compiler.core.emit.paramList
+import community.flock.wirespec.compiler.core.emit.spacer
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
 
-interface TypeScriptClientEmitter: BaseEmitter, ClientEmitter, ParamEmitter, SpaceEmitter, ImportEmitter, TypeScriptTypeDefinitionEmitter {
+interface TypeScriptClientEmitter: ClientEmitter, TypeScriptTypeDefinitionEmitter {
 
     override fun emitClient(ast: AST) = Emitted("client.${extension.value}", """
         |import {Wirespec} from "./Wirespec"
@@ -28,7 +27,7 @@ interface TypeScriptClientEmitter: BaseEmitter, ClientEmitter, ParamEmitter, Spa
     """.trimMargin())
 
     private fun Endpoint.Request.emitClientInterface(endpoint: Endpoint) =
-        this.paramList(endpoint).joinToString(", ") { "${it.identifier.value}: ${it.reference.emit()}" }
+        paramList(endpoint).joinToString(", ") { "${it.identifier.value}: ${it.reference.emit()}" }
 
     private fun emitFunction(endpoint: Endpoint, request: Endpoint.Request) = """
         |${endpoint.identifier.value}: async (props: {${request.emitClientInterface(endpoint)}}) => {

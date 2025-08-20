@@ -2,10 +2,10 @@ package community.flock.wirespec.emitters.wirespec
 
 import community.flock.wirespec.compiler.core.addBackticks
 import community.flock.wirespec.compiler.core.emit.IdentifierEmitter
+import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Identifier
-import community.flock.wirespec.emitters.wirespec.WirespecEmitter.Companion.reservedKeywords
 
 interface WirespecIdentifierEmitter: IdentifierEmitter {
 
@@ -16,4 +16,9 @@ interface WirespecIdentifierEmitter: IdentifierEmitter {
         }
     }
 
+    companion object : Keywords {
+        override val reservedKeywords = setOf(
+            "type", "enum", "endpoint"
+        )
+    }
 }

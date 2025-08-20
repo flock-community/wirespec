@@ -2,9 +2,11 @@ package community.flock.wirespec.emitters.typescript
 
 import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.emit.Emitted
-import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.emit.hasEndpoints
+import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.emit.namespace
 import community.flock.wirespec.compiler.core.emit.plus
 import community.flock.wirespec.compiler.core.parse.AST
@@ -14,7 +16,15 @@ import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 
-open class TypeScriptEmitter() : Emitter(), TypeScriptEnumDefinitionEmitter, TypeScriptIdentifierEmitter, TypeScriptTypeDefinitionEmitter, TypeScriptClientEmitter, TypeScriptEndpointDefinitionEmitter, TypeScriptRefinedTypeDefinitionEmitter {
+interface TypeScriptEmitters:
+    TypeScriptEnumDefinitionEmitter,
+    TypeScriptIdentifierEmitter,
+    TypeScriptTypeDefinitionEmitter,
+    TypeScriptClientEmitter,
+    TypeScriptEndpointDefinitionEmitter,
+    TypeScriptRefinedTypeDefinitionEmitter
+
+open class TypeScriptEmitter() : LanguageEmitter(), TypeScriptEmitters {
 
     override val extension = FileExtension.TypeScript
 
@@ -22,7 +32,7 @@ open class TypeScriptEmitter() : Emitter(), TypeScriptEnumDefinitionEmitter, Typ
 
     override val singleLineComment = "//"
 
-    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = super<Emitter>.emit(ast, logger)
+    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = super<LanguageEmitter>.emit(ast, logger)
         .run { if(ast.hasEndpoints()){ plus(emitClient(ast) ) } else this }
         .plus(
             ast.modules
@@ -36,12 +46,12 @@ open class TypeScriptEmitter() : Emitter(), TypeScriptEnumDefinitionEmitter, Typ
                 }
         )
 
-    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = super<Emitter>.emit(module, logger).let {
+    override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = super<LanguageEmitter>.emit(module, logger).let {
         it + Emitted("Wirespec", shared.source)
     }
 
     override fun emit(definition: Definition, module: Module, logger: Logger): Emitted =
-        super<Emitter>.emit(definition, module, logger).let {
+        super<LanguageEmitter>.emit(definition, module, logger).let {
             val subPackageName = PackageName("") + definition
             Emitted(
                 file = subPackageName.toDir() + it.file.sanitizeSymbol(),

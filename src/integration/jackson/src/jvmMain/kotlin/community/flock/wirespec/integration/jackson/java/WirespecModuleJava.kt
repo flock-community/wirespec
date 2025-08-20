@@ -18,7 +18,7 @@ import com.fasterxml.jackson.databind.introspect.AnnotatedMethod
 import com.fasterxml.jackson.databind.introspect.AnnotatedParameter
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
-import community.flock.wirespec.emitters.java.JavaEmitter
+import community.flock.wirespec.emitters.java.JavaIdentifierEmitter
 import community.flock.wirespec.integration.jackson.common.translator
 import community.flock.wirespec.java.Wirespec
 import java.io.IOException
@@ -135,7 +135,7 @@ private class WirespecDeserializerModifier : BeanDeserializerModifier() {
 
 private class JavaReservedKeywordNamingStrategy : PropertyNamingStrategy() {
 
-    private val translate = translator(JavaEmitter)
+    private val translate = translator(JavaIdentifierEmitter)
 
     override fun nameForGetterMethod(config: MapperConfig<*>, method: AnnotatedMethod, defaultName: String): String = defaultName.translateIfRecord(method.declaringClass)
 

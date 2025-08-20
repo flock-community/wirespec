@@ -5,7 +5,7 @@ import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STR
 import community.flock.wirespec.compiler.core.emit.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitted
-import community.flock.wirespec.compiler.core.emit.Emitter
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.emit.PackageName
@@ -14,7 +14,7 @@ import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.utils.Logger
 
-interface E :
+interface KotlinEmitters :
     KotlinIdentifierEmitter,
     KotlinTypeDefinitionEmitter,
     KotlinEndpointDefinitionEmitter,
@@ -26,7 +26,7 @@ interface E :
 open class KotlinEmitter(
     override val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
     private val emitShared: EmitShared = EmitShared(),
-) : Emitter(), E {
+) : LanguageEmitter(), KotlinEmitters {
 
     val import = """
         |
@@ -42,7 +42,7 @@ open class KotlinEmitter(
     override val singleLineComment = "//"
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
-        super<Emitter>.emit(module, logger).let {
+        super<LanguageEmitter>.emit(module, logger).let {
             if (emitShared.value) it + Emitted(
                 PackageName("${DEFAULT_SHARED_PACKAGE_STRING}.kotlin").toDir() + "Wirespec",
                 shared.source
@@ -51,7 +51,7 @@ open class KotlinEmitter(
         }
 
     override fun emit(definition: Definition, module: Module, logger: Logger): Emitted =
-        super<Emitter>.emit(definition, module, logger).let {
+        super<LanguageEmitter>.emit(definition, module, logger).let {
             val subPackageName = packageName + definition
             Emitted(
                 file = subPackageName.toDir() + it.file,
@@ -62,15 +62,4 @@ open class KotlinEmitter(
                 """.trimMargin().trimStart()
             )
         }
-
-    companion object : Keywords {
-        override val reservedKeywords = setOf(
-            "as", "break", "class", "continue", "do",
-            "else", "false", "for", "fun", "if",
-            "in", "interface", "internal", "is", "null",
-            "object", "open", "package", "return", "super",
-            "this", "throw", "true", "try", "typealias",
-            "typeof", "val", "var", "when", "while", "private", "public"
-        )
-    }
 }

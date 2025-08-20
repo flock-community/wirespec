@@ -1,14 +1,12 @@
 package community.flock.wirespec.emitters.kotlin
 
 import community.flock.wirespec.compiler.core.emit.ChannelDefinitionEmitter
-import community.flock.wirespec.compiler.core.emit.IdentifierEmitter
-import community.flock.wirespec.compiler.core.emit.ImportEmitter
-import community.flock.wirespec.compiler.core.emit.PackageNameEmitter
-import community.flock.wirespec.compiler.core.emit.TypeDefinitionEmitter
+import community.flock.wirespec.compiler.core.emit.HasPackageName
+import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 
-interface KotlinChannelDefinitionEmitter: PackageNameEmitter, ChannelDefinitionEmitter, ImportEmitter, TypeDefinitionEmitter, IdentifierEmitter {
+interface KotlinChannelDefinitionEmitter : ChannelDefinitionEmitter, HasPackageName, KotlinTypeDefinitionEmitter {
 
     override fun emit(channel: Channel) = """
         |${channel.emitImports()}
