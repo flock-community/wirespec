@@ -16,12 +16,8 @@ private interface TodoApi :
     DeleteTodoById.Handler
 
 class TodoHandler(
-    liveTodoRepository: TodoRepository,
+    private val service: TodoService,
 ) : TodoApi {
-    private val service =
-        object : TodoService {
-            override val todoRepository = liveTodoRepository
-        }
 
     override suspend fun getTodos(request: GetTodos.Request): GetTodos.Response200 = service
         .getAllTodos()

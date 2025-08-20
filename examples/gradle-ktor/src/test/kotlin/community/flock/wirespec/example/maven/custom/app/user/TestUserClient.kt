@@ -1,12 +1,13 @@
 package community.flock.wirespec.example.maven.custom.app.user
 
+import community.flock.wirespec.generated.kotlin.UsersModule
 import community.flock.wirespec.generated.kotlin.endpoint.DeleteUserByName
 import community.flock.wirespec.generated.kotlin.endpoint.GetUserByName
 import community.flock.wirespec.generated.kotlin.endpoint.GetUsers
 import community.flock.wirespec.generated.kotlin.endpoint.PostUser
 import community.flock.wirespec.generated.kotlin.model.UserDto
 
-class TestUserClient : UserClient {
+class TestUserClient : UsersModule {
     private val users =
         mutableSetOf(
             UserDto("name"),

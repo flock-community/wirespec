@@ -14,9 +14,10 @@ import kotlinx.serialization.serializer
 import kotlin.reflect.KType
 import kotlin.reflect.full.createType
 
-class WirespecClient(
-    private val httpClient: HttpClient = HttpClient(),
-) {
+object WirespecClient {
+
+    private val httpClient: HttpClient = HttpClient()
+
     fun handle(request: Wirespec.RawRequest): Wirespec.RawResponse = runBlocking {
         val response =
             httpClient.request("http://localhost:8080/") {

@@ -1,6 +1,8 @@
 package community.flock.wirespec.example.maven.custom.app
 
 import community.flock.wirespec.example.maven.custom.app.todo.LiveTodoRepository
+import community.flock.wirespec.example.maven.custom.app.todo.TodoHandler
+import community.flock.wirespec.example.maven.custom.app.todo.TodoService
 import community.flock.wirespec.example.maven.custom.app.todo.todoModule
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
@@ -14,7 +16,11 @@ class ApplicationTest {
     fun testRoot() = testApplication {
         application {
             config()
-            todoModule(LiveTodoRepository())
+
+            object : TodoService {
+                override val todoRepository = LiveTodoRepository()
+            }.let(::TodoHandler)
+                .let(::todoModule)
         }
 
         client.get("/api/todos").apply {

@@ -1,6 +1,7 @@
 package community.flock.wirespec.example.maven.custom.app.user
 
 import community.flock.wirespec.example.maven.custom.app.user.UserConverter.internalize
+import community.flock.wirespec.generated.kotlin.UsersModule
 import community.flock.wirespec.generated.kotlin.endpoint.DeleteUserByName
 import community.flock.wirespec.generated.kotlin.endpoint.GetUserByName
 import community.flock.wirespec.generated.kotlin.endpoint.GetUsers
@@ -9,7 +10,7 @@ import community.flock.wirespec.generated.kotlin.model.UserDto
 import kotlinx.coroutines.runBlocking
 
 class LiveUserAdapter(
-    private val client: UserClient,
+    private val client: UsersModule,
 ) : UserAdapter {
     override fun getAllUsers(): List<User> = runBlocking {
         when (val res = client.getUsers()) {
