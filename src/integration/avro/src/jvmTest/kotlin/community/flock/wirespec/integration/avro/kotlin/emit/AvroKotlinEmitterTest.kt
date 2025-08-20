@@ -1,6 +1,7 @@
 package community.flock.wirespec.integration.avro.kotlin.emit
 
 import arrow.core.nonEmptyListOf
+import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.parse.AST
@@ -35,7 +36,7 @@ class AvroKotlinEmitterTest {
             extends = emptyList(),
         )
 
-        val ast = AST(nonEmptyListOf(Module("", nonEmptyListOf(type))))
+        val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(type))))
         val expected = """
             |package packageName.model
             |
@@ -78,7 +79,7 @@ class AvroKotlinEmitterTest {
             identifier = DefinitionIdentifier("Identifier"),
             entries = setOf("ONE", "TWO", "THREE"),
         )
-        val ast = AST(nonEmptyListOf(Module("", nonEmptyListOf(enum))))
+        val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(enum))))
         val expected = """
             |package packageName.model
             |

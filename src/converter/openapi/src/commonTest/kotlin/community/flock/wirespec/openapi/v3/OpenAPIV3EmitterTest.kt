@@ -2,6 +2,7 @@ package community.flock.wirespec.openapi.v3
 
 import arrow.core.toNonEmptyListOrNull
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPI
+import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.openapi.common.Ast
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser.parse
@@ -20,7 +21,7 @@ class OpenAPIV3EmitterTest {
 
     @Test
     fun astArray() {
-        val res = OpenAPIV3Emitter.emitOpenAPIObject(Module("", Ast.array), null)
+        val res = OpenAPIV3Emitter.emitOpenAPIObject(Module(FileUri("test.ws"), Ast.array), null)
         val openapi = json.encodeToString(res)
         val expect = """
             {
@@ -145,7 +146,7 @@ class OpenAPIV3EmitterTest {
         val petstoreOpenAPi = OpenAPI.decodeFromString(petstoreJson)
         val petstoreAst = petstoreOpenAPi.parse().toNonEmptyListOrNull() ?: error("AST should not be empty")
 
-        val petstoreConvertedOpenAPi = OpenAPIV3Emitter.emitOpenAPIObject(Module("", petstoreAst), null)
+        val petstoreConvertedOpenAPi = OpenAPIV3Emitter.emitOpenAPIObject(Module(FileUri("test.ws"), petstoreAst), null)
 
         val petstoreConvertedOpenAPiAst = petstoreConvertedOpenAPi.parse()
 

@@ -3,6 +3,7 @@ package community.flock.wirespec.emitters.java
 import arrow.core.nonEmptyListOf
 import arrow.core.nonEmptySetOf
 import community.flock.wirespec.compiler.core.EmitContext
+import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Module
@@ -547,7 +548,7 @@ class JavaEmitterTest {
         val ast = AST(
             nonEmptyListOf(
                 Module(
-                    "",
+                    FileUri(""),
                     nonEmptyListOf(node),
                 ),
             ),

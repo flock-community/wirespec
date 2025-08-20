@@ -66,7 +66,7 @@ object Parser {
             .toNonEmptyListOrNull()
             .let { ensureNotNull(it) { EmptyModule().nel() } }
             .let { mapOrAccumulate(it) { it.bind() } }
-            .let { Module(src, it) }
+            .let { Module(fileUri, it) }
     }
 
     private fun TokenProvider.parseDefinition() = either {
@@ -93,7 +93,7 @@ fun <A> TokenProvider.parseToken(block: Raise<WirespecException>.(Token) -> A) =
 inline fun <reified T : TokenType> TokenProvider.raiseWrongToken(token: Token? = null): Either<WirespecException, Nothing> = either {
     raise(
         WrongTokenException<T>(
-            src,
+            fileUri,
             token ?: this@raiseWrongToken.token,
         ).also { eatToken().bind() },
     )

@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.parse
 
 import arrow.core.nonEmptyListOf
+import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
@@ -15,7 +16,7 @@ class ParseMultipleErrorsTest {
 
     private fun parser(source: String) = object : ParseContext, NoLogger {
         override val spec = WirespecSpec
-    }.parse(nonEmptyListOf(ModuleContent("", source))).map { it.modules.flatMap(Module::statements) }
+    }.parse(nonEmptyListOf(ModuleContent(FileUri("test.ws"), source))).map { it.modules.flatMap(Module::statements) }
 
     @Test
     fun testParserWithCorrectInput() {

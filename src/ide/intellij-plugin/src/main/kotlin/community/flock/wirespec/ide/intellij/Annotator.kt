@@ -6,6 +6,7 @@ import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
+import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.TokenizedModule
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
@@ -18,7 +19,7 @@ class Annotator :
     NoLogger {
 
     override fun collectInformation(file: PsiFile): Map<PsiFile, TokenizedModule> = file.containingDirectory.files
-        .associateWith { file -> TokenizedModule(file.name, WirespecSpec.tokenize(file.text)) }
+        .associateWith { file -> TokenizedModule(FileUri(file.name), WirespecSpec.tokenize(file.text)) }
 
     override fun doAnnotate(collectedInfo: Map<PsiFile, TokenizedModule>): List<WirespecException>? {
         println(collectedInfo.keys.map { it.name })
@@ -33,7 +34,7 @@ class Annotator :
         holder: AnnotationHolder,
     ) {
         annotationResult
-            ?.filter { it.src == file.name }
+            ?.filter { it.fileUri.value == file.name }
             ?.forEach {
                 holder
                     .newAnnotation(HighlightSeverity.ERROR, it.message)

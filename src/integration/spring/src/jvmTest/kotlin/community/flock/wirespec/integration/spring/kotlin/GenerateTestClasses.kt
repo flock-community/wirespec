@@ -1,5 +1,6 @@
 package community.flock.wirespec.integration.spring.kotlin
 
+import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.plus
@@ -29,7 +30,7 @@ class GenerateTestClasses {
     @Test
     fun generateKotlin() {
         val petstoreFile = File("src/jvmTest/resources/petstore.json").readText()
-        val ast = OpenAPIV3Parser.parse(ModuleContent("src/jvmTest/resources/petstore.json", petstoreFile), false)
+        val ast = OpenAPIV3Parser.parse(ModuleContent(FileUri("src/jvmTest/resources/petstore.json"), petstoreFile), false)
         val emittedKotlin = kotlinEmitter.emit(ast, noLogger)
 
         modules.forEach { kotlinOutputDir.resolve(it).mkdirs() }
@@ -41,7 +42,7 @@ class GenerateTestClasses {
     @Test
     fun generateJava() {
         val petstoreFile = File("src/jvmTest/resources/petstore.json").readText()
-        val ast = OpenAPIV3Parser.parse(ModuleContent("src/jvmTest/resources/petstore.json", petstoreFile), false)
+        val ast = OpenAPIV3Parser.parse(ModuleContent(FileUri("src/jvmTest/resources/petstore.json"), petstoreFile), false)
         val emittedJava = javaEmitter.emit(ast, noLogger)
 
         modules.forEach { javaOutputDir.resolve(it).mkdirs() }

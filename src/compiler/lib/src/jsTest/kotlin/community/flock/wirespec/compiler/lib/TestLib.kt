@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.lib
 
 import arrow.core.nonEmptyListOf
+import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
@@ -21,7 +22,7 @@ class TestLib {
         val source = SystemFileSystem.source(path).buffered().readString()
         object : ParseContext, NoLogger {
             override val spec = WirespecSpec
-        }.parse(nonEmptyListOf(ModuleContent("", source))).map { ast ->
+        }.parse(nonEmptyListOf(ModuleContent(FileUri(""), source))).map { ast ->
             val output = ast.produce()
             val input = output.consume()
             assertEquals(input, ast)

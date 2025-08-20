@@ -5,6 +5,7 @@ import arrow.core.Either.Companion.catch
 import arrow.core.NonEmptyList
 import arrow.core.raise.either
 import arrow.core.raise.ensure
+import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.TokenizedModule
 import community.flock.wirespec.compiler.core.exceptions.DefinitionNotExistsException
 import community.flock.wirespec.compiler.core.exceptions.NextException
@@ -12,7 +13,7 @@ import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.utils.Logger
 
-class TokenProvider(private val logger: Logger, val definitionNames: Set<String>, val src: String, tokens: NonEmptyList<Token>) {
+class TokenProvider(private val logger: Logger, val definitionNames: Set<String>, val fileUri: FileUri, tokens: NonEmptyList<Token>) {
 
     var token: Token = tokens.head
 
@@ -27,7 +28,7 @@ class TokenProvider(private val logger: Logger, val definitionNames: Set<String>
 
     fun eatToken(): Either<WirespecException, Token> = either {
         val previousToken = token.also(::logToken)
-        token = nextToken ?: raise(NextException(src, previousToken.coordinates))
+        token = nextToken ?: raise(NextException(fileUri, previousToken.coordinates))
         nextToken = nextToken()
         printTokens(previousToken)
         previousToken
@@ -35,7 +36,7 @@ class TokenProvider(private val logger: Logger, val definitionNames: Set<String>
 
     fun Token.shouldBeDefined(): Either<WirespecException, Token> = either {
         ensure(value in definitionNames) {
-            raise(DefinitionNotExistsException(src, value, coordinates))
+            raise(DefinitionNotExistsException(fileUri, value, coordinates))
         }
         this@shouldBeDefined
     }
@@ -54,4 +55,4 @@ class TokenProvider(private val logger: Logger, val definitionNames: Set<String>
     private fun nextToken() = catch { tokenIterator.next() }.getOrNull()
 }
 
-fun TokenizedModule.toProvider(definitionNames: Set<String>, logger: Logger) = TokenProvider(logger, definitionNames, src, tokens)
+fun TokenizedModule.toProvider(definitionNames: Set<String>, logger: Logger) = TokenProvider(logger, definitionNames, fileUri, tokens)

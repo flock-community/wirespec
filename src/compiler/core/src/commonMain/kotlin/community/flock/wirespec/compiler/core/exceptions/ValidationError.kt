@@ -1,8 +1,14 @@
 package community.flock.wirespec.compiler.core.exceptions
 
+import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.tokenize.Token
 
-sealed class ValidationError(coordinates: Token.Coordinates, message: String) : WirespecException("", message, coordinates)
+sealed class ValidationError(coordinates: Token.Coordinates, message: String) :
+    WirespecException(
+        FileUri(""),
+        message,
+        coordinates,
+    )
 
 class UnionError :
     ValidationError(
