@@ -1,17 +1,14 @@
 package community.flock.wirespec.emitters.python
 
-import community.flock.wirespec.compiler.core.emit.IdentifierEmitter
-import community.flock.wirespec.compiler.core.emit.ImportEmitter
 import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.emit.TypeDefinitionEmitter
-import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
-import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 
-interface PythonTypeDefinitionEmitter: TypeDefinitionEmitter, ImportEmitter, IdentifierEmitter {
+interface PythonTypeDefinitionEmitter : TypeDefinitionEmitter, PythonIdentifierEmitter {
 
     override fun emit(type: Type, module: Module): String =
         if (type.shape.value.isEmpty()) """
@@ -64,19 +61,8 @@ interface PythonTypeDefinitionEmitter: TypeDefinitionEmitter, ImportEmitter, Ide
 
 
     override fun Reference.Primitive.Type.Constraint.emit() = when (this) {
-        is Reference.Primitive.Type.Constraint.RegExp ->  """${Spacer}bool(re.match(r"$value", self.value))"""
+        is Reference.Primitive.Type.Constraint.RegExp -> """${Spacer}bool(re.match(r"$value", self.value))"""
         is Reference.Primitive.Type.Constraint.Bound -> """${Spacer}$min < record.value < $max;"""
-    }
-
-    override fun Refined.emitValidator():String {
-        val defaultReturn = "true"
-        return when (val type = reference.type) {
-            is Reference.Primitive.Type.Integer -> type.constraint?.emit() ?: defaultReturn
-            is Reference.Primitive.Type.Number -> type.constraint?.emit() ?: defaultReturn
-            is Reference.Primitive.Type.String -> type.constraint?.emit() ?: defaultReturn
-            Reference.Primitive.Type.Boolean -> defaultReturn
-            Reference.Primitive.Type.Bytes -> defaultReturn
-        }
     }
 
     fun Reference.Custom.emitReferenceCustomImports() = "from ..model.${value} import $value"

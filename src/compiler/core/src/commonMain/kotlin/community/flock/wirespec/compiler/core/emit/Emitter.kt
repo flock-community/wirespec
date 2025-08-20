@@ -5,13 +5,14 @@ import arrow.core.NonEmptySet
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.utils.Logger
 
-interface Emitter {
-
-    val extension: FileExtension
-
+interface Emitter : HasExtension {
     fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted>
 }
 
 interface HasEmitters {
     val emitters: NonEmptySet<Emitter>
+}
+
+interface HasExtension {
+    val extension: FileExtension
 }

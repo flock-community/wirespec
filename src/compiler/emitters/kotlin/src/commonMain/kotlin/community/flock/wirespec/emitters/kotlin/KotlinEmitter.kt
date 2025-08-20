@@ -14,7 +14,7 @@ import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.utils.Logger
 
-interface E :
+interface KotlinEmitters :
     KotlinIdentifierEmitter,
     KotlinTypeDefinitionEmitter,
     KotlinEndpointDefinitionEmitter,
@@ -26,7 +26,7 @@ interface E :
 open class KotlinEmitter(
     override val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
     private val emitShared: EmitShared = EmitShared(),
-) : LanguageEmitter(), E {
+) : LanguageEmitter(), KotlinEmitters {
 
     val import = """
         |
@@ -62,15 +62,4 @@ open class KotlinEmitter(
                 """.trimMargin().trimStart()
             )
         }
-
-    companion object : Keywords {
-        override val reservedKeywords = setOf(
-            "as", "break", "class", "continue", "do",
-            "else", "false", "for", "fun", "if",
-            "in", "interface", "internal", "is", "null",
-            "object", "open", "package", "return", "super",
-            "this", "throw", "true", "try", "typealias",
-            "typeof", "val", "var", "when", "while", "private", "public"
-        )
-    }
 }

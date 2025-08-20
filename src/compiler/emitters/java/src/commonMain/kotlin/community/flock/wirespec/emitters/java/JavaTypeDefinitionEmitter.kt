@@ -6,7 +6,6 @@ import community.flock.wirespec.compiler.core.emit.TypeDefinitionEmitter
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
-import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 
 interface JavaTypeDefinitionEmitter: TypeDefinitionEmitter, IdentifierEmitter {
@@ -59,17 +58,6 @@ interface JavaTypeDefinitionEmitter: TypeDefinitionEmitter, IdentifierEmitter {
 
         is Reference.Primitive.Type.Boolean -> "Boolean"
         is Reference.Primitive.Type.Bytes -> "byte[]"
-    }
-
-    override fun Refined.emitValidator():String {
-        val defaultReturn = "true;"
-        return when (val type = reference.type) {
-            is Reference.Primitive.Type.Integer -> type.constraint?.emit() ?: defaultReturn
-            is Reference.Primitive.Type.Number -> type.constraint?.emit() ?: defaultReturn
-            is Reference.Primitive.Type.String -> type.constraint?.emit() ?: defaultReturn
-            Reference.Primitive.Type.Boolean -> defaultReturn
-            Reference.Primitive.Type.Bytes -> defaultReturn
-        }
     }
 
     override fun Reference.Primitive.Type.Constraint.emit() = when(this){

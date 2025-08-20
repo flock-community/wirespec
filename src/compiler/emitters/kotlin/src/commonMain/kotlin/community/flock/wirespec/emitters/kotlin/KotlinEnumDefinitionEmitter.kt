@@ -1,13 +1,12 @@
 package community.flock.wirespec.emitters.kotlin
 
 import community.flock.wirespec.compiler.core.emit.EnumDefinitionEmitter
-import community.flock.wirespec.compiler.core.emit.IdentifierEmitter
-import community.flock.wirespec.compiler.core.emit.SpaceEmitter
 import community.flock.wirespec.compiler.core.emit.Spacer
+import community.flock.wirespec.compiler.core.emit.spacer
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Module
 
-interface KotlinEnumDefinitionEmitter: KotlinIdentifierEmitter, EnumDefinitionEmitter, SpaceEmitter {
+interface KotlinEnumDefinitionEmitter : EnumDefinitionEmitter, KotlinIdentifierEmitter {
 
     override fun emit(enum: Enum, module: Module) = """
         |enum class ${enum.identifier.sanitize()} (override val label: String): Wirespec.Enum {

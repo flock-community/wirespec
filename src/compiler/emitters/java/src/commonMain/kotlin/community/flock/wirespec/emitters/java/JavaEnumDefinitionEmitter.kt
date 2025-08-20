@@ -1,17 +1,16 @@
 package community.flock.wirespec.emitters.java
 
 import community.flock.wirespec.compiler.core.emit.EnumDefinitionEmitter
-import community.flock.wirespec.compiler.core.emit.IdentifierEmitter
-import community.flock.wirespec.compiler.core.emit.SpaceEmitter
 import community.flock.wirespec.compiler.core.emit.Spacer
+import community.flock.wirespec.compiler.core.emit.spacer
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Module
 
-interface JavaEnumDefinitionEmitter: JavaIdentifierEmitter, EnumDefinitionEmitter, SpaceEmitter {
+interface JavaEnumDefinitionEmitter: EnumDefinitionEmitter, JavaIdentifierEmitter {
 
     override fun emit(enum: Enum, module: Module) = """
         |public enum ${emit(enum.identifier)} implements Wirespec.Enum {
-        |${enum.entries.joinToString(",\n") { "${it.sanitizeEnum().sanitizeKeywords()}(\"$it\")" }.spacer()};
+        |${enum.entries.joinToString(",\n") { "${it.sanitizeEnum()}(\"$it\")" }.spacer()};
         |${Spacer}public final String label;
         |${Spacer}${emit(enum.identifier)}(String label) {
         |${Spacer(2)}this.label = label;
@@ -28,6 +27,9 @@ interface JavaEnumDefinitionEmitter: JavaIdentifierEmitter, EnumDefinitionEmitte
         |
     """.trimMargin()
 
-    fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//").joinToString("_").sanitizeFirstIsDigit()
+    fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//")
+        .joinToString("_")
+        .sanitizeFirstIsDigit()
+        .sanitizeKeywords()
 
 }

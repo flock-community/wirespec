@@ -2,9 +2,11 @@ package community.flock.wirespec.emitters.typescript
 
 import arrow.core.NonEmptyList
 import community.flock.wirespec.compiler.core.emit.Emitted
-import community.flock.wirespec.compiler.core.emit.LanguageEmitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.emit.hasEndpoints
+import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.emit.namespace
 import community.flock.wirespec.compiler.core.emit.plus
 import community.flock.wirespec.compiler.core.parse.AST
@@ -14,7 +16,15 @@ import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 
-open class TypeScriptEmitter() : LanguageEmitter(), TypeScriptEnumDefinitionEmitter, TypeScriptIdentifierEmitter, TypeScriptTypeDefinitionEmitter, TypeScriptClientEmitter, TypeScriptEndpointDefinitionEmitter, TypeScriptRefinedTypeDefinitionEmitter {
+interface TypeScriptEmitters:
+    TypeScriptEnumDefinitionEmitter,
+    TypeScriptIdentifierEmitter,
+    TypeScriptTypeDefinitionEmitter,
+    TypeScriptClientEmitter,
+    TypeScriptEndpointDefinitionEmitter,
+    TypeScriptRefinedTypeDefinitionEmitter
+
+open class TypeScriptEmitter() : LanguageEmitter(), TypeScriptEmitters {
 
     override val extension = FileExtension.TypeScript
 

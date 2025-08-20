@@ -5,16 +5,15 @@ import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STR
 import community.flock.wirespec.compiler.core.emit.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitted
-import community.flock.wirespec.compiler.core.emit.LanguageEmitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
-import community.flock.wirespec.compiler.core.emit.Keywords
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.plus
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.utils.Logger
 
-interface E :
+interface JavaEmitters :
     JavaIdentifierEmitter,
     JavaTypeDefinitionEmitter,
     JavaEndpointDefinitionEmitter,
@@ -26,7 +25,7 @@ interface E :
 open class JavaEmitter(
     override val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
     private val emitShared: EmitShared = EmitShared(),
-) : E, LanguageEmitter() {
+) : JavaEmitters, LanguageEmitter() {
 
     val import = """
         |
@@ -58,20 +57,4 @@ open class JavaEmitter(
                 """.trimMargin().trimStart()
             )
         }
-
-    companion object : Keywords {
-        override val reservedKeywords = setOf(
-            "abstract", "continue", "for", "new", "switch",
-            "assert", "default", "goto", "package", "synchronized",
-            "boolean", "do", "if", "private", "this",
-            "break", "double", "implements", "protected", "throw",
-            "byte", "else", "import", "public", "throws",
-            "case", "enum", "instanceof", "return", "transient",
-            "catch", "extends", "int", "short", "try",
-            "char", "final", "interface", "static", "void",
-            "class", "finally", "long", "strictfp", "volatile",
-            "const", "float", "native", "super", "while",
-            "true", "false"
-        )
-    }
 }

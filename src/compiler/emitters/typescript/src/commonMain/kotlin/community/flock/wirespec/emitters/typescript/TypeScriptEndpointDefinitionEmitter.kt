@@ -3,14 +3,18 @@ package community.flock.wirespec.emitters.typescript
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToLower
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.emit.EndpointDefinitionEmitter
-import community.flock.wirespec.compiler.core.emit.EndpointEmitter
-import community.flock.wirespec.compiler.core.emit.ImportEmitter
-import community.flock.wirespec.compiler.core.emit.ParamEmitter
+import community.flock.wirespec.compiler.core.emit.Param
 import community.flock.wirespec.compiler.core.emit.Spacer
+import community.flock.wirespec.compiler.core.emit.distinctByStatus
+import community.flock.wirespec.compiler.core.emit.fixStatus
+import community.flock.wirespec.compiler.core.emit.importReferences
+import community.flock.wirespec.compiler.core.emit.indexedPathParams
+import community.flock.wirespec.compiler.core.emit.paramList
+import community.flock.wirespec.compiler.core.emit.pathParams
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Field
 
-interface TypeScriptEndpointDefinitionEmitter: ImportEmitter, ParamEmitter, EndpointEmitter, EndpointDefinitionEmitter, TypeScriptTypeDefinitionEmitter {
+interface TypeScriptEndpointDefinitionEmitter: EndpointDefinitionEmitter, TypeScriptTypeDefinitionEmitter {
     override fun emit(endpoint: Endpoint) =
         """
           |${endpoint.importReferences().distinctBy { it.value }.map { "import {${it.value}} from '../model'" }.joinToString("\n") { it.trimStart() }}
@@ -39,7 +43,7 @@ interface TypeScriptEndpointDefinitionEmitter: ImportEmitter, ParamEmitter, Endp
           |
         """.trimMargin()
 
-    override fun Endpoint.Segment.emit() =
+    private fun Endpoint.Segment.emit() =
         when (this) {
             is Endpoint.Segment.Literal -> value
             is Endpoint.Segment.Param -> ":${identifier.value}"
@@ -181,7 +185,7 @@ interface TypeScriptEndpointDefinitionEmitter: ImportEmitter, ParamEmitter, Endp
     private fun Endpoint.Segment.Param.emit() =
         "${Spacer}${emit(identifier)}: ${reference.emit()}"
 
-    private fun ParamEmitter.Param.emit() =
+    private fun Param.emit() =
         "${emit(identifier)}${if (reference.isNullable) "?" else ""}: ${reference.copy(isNullable = false).emit()}"
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialize() =

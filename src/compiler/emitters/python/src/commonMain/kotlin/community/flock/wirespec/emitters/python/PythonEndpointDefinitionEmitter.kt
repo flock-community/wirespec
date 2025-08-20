@@ -1,19 +1,20 @@
 package community.flock.wirespec.emitters.python
 
-import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.isStatusCode
 import community.flock.wirespec.compiler.core.emit.EndpointDefinitionEmitter
-import community.flock.wirespec.compiler.core.emit.EndpointEmitter
-import community.flock.wirespec.compiler.core.emit.IdentifierEmitter
-import community.flock.wirespec.compiler.core.emit.ImportEmitter
-import community.flock.wirespec.compiler.core.emit.ParamEmitter
-import community.flock.wirespec.compiler.core.emit.SpaceEmitter
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.isStatusCode
+import community.flock.wirespec.compiler.core.emit.Param
 import community.flock.wirespec.compiler.core.emit.Spacer
-import community.flock.wirespec.compiler.core.emit.TypeDefinitionEmitter
+import community.flock.wirespec.compiler.core.emit.distinctByStatus
+import community.flock.wirespec.compiler.core.emit.importReferences
+import community.flock.wirespec.compiler.core.emit.indexedPathParams
+import community.flock.wirespec.compiler.core.emit.paramList
+import community.flock.wirespec.compiler.core.emit.pathParams
+import community.flock.wirespec.compiler.core.emit.spacer
 import community.flock.wirespec.compiler.core.orNull
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Field
 
-interface PythonEndpointDefinitionEmitter: EndpointDefinitionEmitter, PythonTypeDefinitionEmitter, EndpointEmitter, IdentifierEmitter, TypeDefinitionEmitter, ParamEmitter, ImportEmitter, SpaceEmitter {
+interface PythonEndpointDefinitionEmitter: EndpointDefinitionEmitter, PythonTypeDefinitionEmitter {
 
     override fun emit(endpoint: Endpoint) = """
         |${endpoint.importReferences().joinToString("\n") { it.emitReferenceCustomImports() }}
@@ -109,17 +110,17 @@ interface PythonEndpointDefinitionEmitter: EndpointDefinitionEmitter, PythonType
         |
     """.trimMargin()
 
-    private fun ParamEmitter.Param.emit() = "${emit(identifier)}: ${reference.emit()}"
-    private fun ParamEmitter.Param.emitAssignSelf() = "${emit(identifier)} = ${emit(identifier)}"
+    private fun Param.emit() = "${emit(identifier)}: ${reference.emit()}"
+    private fun Param.emitAssignSelf() = "${emit(identifier)} = ${emit(identifier)}"
     private fun Endpoint.Request.emitAssignSelf(endpoint: Endpoint) = """
-        |self._path = ${emit(endpoint.identifier)}.Request.Path(${paramList(endpoint).filter { it.type == ParamEmitter.Param.ParamType.PATH }.joinToString { it.emitAssignSelf() }})
-        |self._queries =${emit(endpoint.identifier)}.Request.Queries(${paramList(endpoint).filter { it.type == ParamEmitter.Param.ParamType.QUERY }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
-        |self._headers = ${emit(endpoint.identifier)}.Request.Headers(${paramList(endpoint).filter { it.type == ParamEmitter.Param.ParamType.HEADER }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
+        |self._path = ${emit(endpoint.identifier)}.Request.Path(${paramList(endpoint).filter { it.type == Param.ParamType.PATH }.joinToString { it.emitAssignSelf() }})
+        |self._queries =${emit(endpoint.identifier)}.Request.Queries(${paramList(endpoint).filter { it.type == Param.ParamType.QUERY }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
+        |self._headers = ${emit(endpoint.identifier)}.Request.Headers(${paramList(endpoint).filter { it.type == Param.ParamType.HEADER }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
         |self._body = ${content?.let { "body" } ?: "None"}
     """.trimMargin()
 
     private fun Endpoint.Response.emitAssignSelf(endpoint: Endpoint) = """
-        |self._headers = ${emit(endpoint.identifier)}.Response${status}.Headers(${paramList().filter { it.type == ParamEmitter.Param.ParamType.HEADER }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
+        |self._headers = ${emit(endpoint.identifier)}.Response${status}.Headers(${paramList().filter { it.type == Param.ParamType.HEADER }.joinToString(",\n") { it.emitAssignSelf() }.spacer(1)})
         |self._body = ${content?.let { "body" } ?: "None"}
     """.trimMargin()
 

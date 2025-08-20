@@ -14,11 +14,7 @@ import community.flock.wirespec.compiler.utils.Logger
 
 abstract class LanguageEmitter :
     Emitter,
-    Emitters,
-    ParamEmitter,
-    SpaceEmitter,
-    ImportEmitter,
-    EndpointEmitter {
+    Emitters {
 
     abstract val shared: Shared?
 

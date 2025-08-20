@@ -5,9 +5,9 @@ import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitted
-import community.flock.wirespec.compiler.core.emit.LanguageEmitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.Keywords
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.plus
 import community.flock.wirespec.compiler.core.parse.Channel
@@ -21,7 +21,7 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 
-interface E :
+interface PythonEmitters:
     PythonIdentifierEmitter,
     PythonTypeDefinitionEmitter,
     PythonEndpointDefinitionEmitter,
@@ -33,7 +33,7 @@ interface E :
 open class PythonEmitter(
     private val packageName: PackageName = PackageName(DEFAULT_GENERATED_PACKAGE_STRING),
     private val emitShared: EmitShared = EmitShared()
-) : LanguageEmitter(), E {
+) : LanguageEmitter(), PythonEmitters {
 
     val import = """
         |import re
@@ -97,17 +97,5 @@ open class PythonEmitter(
                 """.trimMargin().trimStart()
             )
         }
-    }
-
-    companion object : Keywords {
-        override val reservedKeywords = setOf(
-            "False", "None", "True", "and", "as", "assert",
-            "break", "class", "continue", "def", "del",
-            "elif", "else", "except", "finally", "for",
-            "from", "global", "if", "import", "in",
-            "is", "lambda", "nonlocal", "not", "or",
-            "pass", "raise", "return", "try", "while",
-            "with", "yield"
-        )
     }
 }

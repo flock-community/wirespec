@@ -1,22 +1,23 @@
 package community.flock.wirespec.emitters.kotlin
 
 import community.flock.wirespec.compiler.core.concatGenerics
+import community.flock.wirespec.compiler.core.emit.EndpointDefinitionEmitter
+import community.flock.wirespec.compiler.core.emit.HasPackageName
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToLower
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.isStatusCode
-import community.flock.wirespec.compiler.core.emit.EndpointDefinitionEmitter
-import community.flock.wirespec.compiler.core.emit.EndpointEmitter
-import community.flock.wirespec.compiler.core.emit.IdentifierEmitter
-import community.flock.wirespec.compiler.core.emit.ImportEmitter
-import community.flock.wirespec.compiler.core.emit.PackageNameEmitter
-import community.flock.wirespec.compiler.core.emit.ParamEmitter
 import community.flock.wirespec.compiler.core.emit.Spacer
-import community.flock.wirespec.compiler.core.emit.TypeDefinitionEmitter
+import community.flock.wirespec.compiler.core.emit.distinctByStatus
+import community.flock.wirespec.compiler.core.emit.emit
+import community.flock.wirespec.compiler.core.emit.fixStatus
+import community.flock.wirespec.compiler.core.emit.importReferences
+import community.flock.wirespec.compiler.core.emit.indexedPathParams
+import community.flock.wirespec.compiler.core.emit.pathParams
 import community.flock.wirespec.compiler.core.orNull
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.removeQuestionMark
 
-interface KotlinEndpointDefinitionEmitter: ParamEmitter, PackageNameEmitter, IdentifierEmitter, EndpointEmitter, EndpointDefinitionEmitter, TypeDefinitionEmitter, ImportEmitter {
+interface KotlinEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageName, KotlinTypeDefinitionEmitter {
 
     override fun emit(endpoint: Endpoint) = """
         |${endpoint.importReferences().map { "import ${packageName.value}.model.${it.value}" }.joinToString("\n") { it.trimStart() }}

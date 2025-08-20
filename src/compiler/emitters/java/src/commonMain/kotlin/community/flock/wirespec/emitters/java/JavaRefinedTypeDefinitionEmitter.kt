@@ -1,13 +1,11 @@
 package community.flock.wirespec.emitters.java
 
-import community.flock.wirespec.compiler.core.emit.IdentifierEmitter
 import community.flock.wirespec.compiler.core.emit.RefinedTypeDefinitionEmitter
 import community.flock.wirespec.compiler.core.emit.Spacer
-import community.flock.wirespec.compiler.core.emit.TypeDefinitionEmitter
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 
-interface JavaRefinedTypeDefinitionEmitter: RefinedTypeDefinitionEmitter, IdentifierEmitter, TypeDefinitionEmitter {
+interface JavaRefinedTypeDefinitionEmitter: RefinedTypeDefinitionEmitter, JavaTypeDefinitionEmitter {
 
     override fun emit(refined: Refined) = """
         |public record ${emit(refined.identifier)} (String value) implements Wirespec.Refined {
@@ -21,5 +19,16 @@ interface JavaRefinedTypeDefinitionEmitter: RefinedTypeDefinitionEmitter, Identi
         |}
         |
     """.trimMargin()
+
+    override fun Refined.emitValidator():String {
+        val defaultReturn = "true;"
+        return when (val type = reference.type) {
+            is Reference.Primitive.Type.Integer -> type.constraint?.emit() ?: defaultReturn
+            is Reference.Primitive.Type.Number -> type.constraint?.emit() ?: defaultReturn
+            is Reference.Primitive.Type.String -> type.constraint?.emit() ?: defaultReturn
+            Reference.Primitive.Type.Boolean -> defaultReturn
+            Reference.Primitive.Type.Bytes -> defaultReturn
+        }
+    }
 
 }
