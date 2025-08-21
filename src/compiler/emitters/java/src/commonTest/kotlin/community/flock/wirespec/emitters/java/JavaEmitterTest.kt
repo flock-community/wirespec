@@ -411,7 +411,7 @@ class JavaEmitterTest {
             |        java.util.List.of("todos"),
             |        java.util.Collections.emptyMap(),
             |        java.util.Collections.emptyMap(),
-            |        serialization.serialize(request.getBody(), null)
+            |        null
             |      );
             |    }
             |
