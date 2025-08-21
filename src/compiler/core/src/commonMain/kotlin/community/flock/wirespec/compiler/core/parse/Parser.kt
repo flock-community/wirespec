@@ -33,9 +33,6 @@ data class ParseOptions(
     val allowUnions: Boolean = true,
 )
 
-
-
-
 object Parser {
     fun HasLogger.parse(
         modules: NonEmptyList<TokenizedModule>,
