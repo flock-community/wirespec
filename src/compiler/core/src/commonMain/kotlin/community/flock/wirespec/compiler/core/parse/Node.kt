@@ -1,6 +1,7 @@
 package community.flock.wirespec.compiler.core.parse
 
 import arrow.core.NonEmptyList
+import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.Value
 import community.flock.wirespec.compiler.core.parse.Reference.Primitive.Type.Precision.P64
 import community.flock.wirespec.compiler.core.removeBackticks
@@ -14,7 +15,7 @@ data class AST(
 ) : Node
 
 data class Module(
-    val uri: String,
+    val fileUri: FileUri,
     val statements: Statements,
 ) : Node
 

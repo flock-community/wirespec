@@ -60,7 +60,7 @@ public interface FindPetsByTags extends Wirespec.Endpoint {
         java.util.List.of("pet", "findByTags"),
         java.util.Map.ofEntries(java.util.Map.entry("tags", serialization.serializeParam(request.queries.tags, Wirespec.getType(String.class, java.util.Optional.class)))),
         java.util.Collections.emptyMap(),
-        serialization.serialize(request.getBody(), null)
+        null
       );
     }
 

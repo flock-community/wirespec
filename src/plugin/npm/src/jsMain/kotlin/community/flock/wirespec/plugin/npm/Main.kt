@@ -6,6 +6,7 @@ import arrow.core.curried
 import arrow.core.nonEmptyListOf
 import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
 import community.flock.kotlinx.openapi.bindings.v3.OpenAPIObject
+import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
@@ -78,18 +79,18 @@ fun tokenize(source: String) = WirespecSpec
     .toTypedArray()
 
 @JsExport
-fun parse(source: String) = object : ParseContext, NoLogger {}.parse(nonEmptyListOf(ModuleContent("", source))).produce()
+fun parse(source: String) = object : ParseContext, NoLogger {}.parse(nonEmptyListOf(ModuleContent(FileUri(""), source))).produce()
 
 @JsExport
 fun convert(source: String, converters: Converters, strict: Boolean = false) = when (converters) {
-    Converters.OPENAPI_V2 -> OpenAPIV2Parser.parse(ModuleContent("", source), strict).produce()
-    Converters.OPENAPI_V3 -> OpenAPIV3Parser.parse(ModuleContent("", source), strict).produce()
-    Converters.AVRO -> AvroParser.parse(ModuleContent("", source), strict).produce()
+    Converters.OPENAPI_V2 -> OpenAPIV2Parser.parse(ModuleContent(FileUri(""), source), strict).produce()
+    Converters.OPENAPI_V3 -> OpenAPIV3Parser.parse(ModuleContent(FileUri(""), source), strict).produce()
+    Converters.AVRO -> AvroParser.parse(ModuleContent(FileUri(""), source), strict).produce()
 }
 
 @JsExport
 fun generate(source: String, type: String): WsStringResult = object : ParseContext, NoLogger {}
-    .parse(nonEmptyListOf(ModuleContent("", source)))
+    .parse(nonEmptyListOf(ModuleContent(FileUri(""), source)))
     .map { it.generate(type).toString() }
     .produce()
 

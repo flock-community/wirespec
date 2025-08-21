@@ -4,6 +4,7 @@ import arrow.core.EitherNel
 import arrow.core.NonEmptyList
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.CompilationContext
+import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.compile
 import community.flock.wirespec.compiler.core.emit.Emitted
@@ -22,7 +23,7 @@ fun compile(arguments: CompilerArguments) {
     }
 
     ctx
-        .compile(arguments.input.map { ModuleContent(it.name.value, it.content) })
+        .compile(arguments.input.map { ModuleContent(FileUri(it.name.value), it.content) })
         .fold(arguments)
 }
 
@@ -36,7 +37,7 @@ fun convert(arguments: ConverterArguments) {
         strict = arguments.strict,
     )
     arguments.input
-        .map { ModuleContent(it.name.value, it.content) }
+        .map { ModuleContent(FileUri(it.name.value), it.content) }
         .map { moduleContent -> parser.parse(moduleContent, arguments.strict) }
         .map { Validator.validate(options, it) }
         .let { either { it.bindAll() } }

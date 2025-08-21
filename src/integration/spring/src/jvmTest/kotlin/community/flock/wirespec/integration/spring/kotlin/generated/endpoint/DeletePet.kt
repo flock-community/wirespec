@@ -33,7 +33,7 @@ object DeletePet : Wirespec.Endpoint {
       method = request.method.name,
       queries = emptyMap(),
       headers = (mapOf("api_key" to (request.headers.api_key?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
-      body = serialization.serialize(request.body, typeOf<Unit>()),
+      body = null,
     )
 
   fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =

@@ -64,7 +64,7 @@ public interface LoginUser extends Wirespec.Endpoint {
         java.util.List.of("user", "login"),
         java.util.Map.ofEntries(java.util.Map.entry("username", serialization.serializeParam(request.queries.username, Wirespec.getType(String.class, java.util.Optional.class))), java.util.Map.entry("password", serialization.serializeParam(request.queries.password, Wirespec.getType(String.class, java.util.Optional.class)))),
         java.util.Collections.emptyMap(),
-        serialization.serialize(request.getBody(), null)
+        null
       );
     }
 

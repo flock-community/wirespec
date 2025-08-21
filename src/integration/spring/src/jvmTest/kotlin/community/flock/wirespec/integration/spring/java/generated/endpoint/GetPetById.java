@@ -66,7 +66,7 @@ public interface GetPetById extends Wirespec.Endpoint {
         java.util.List.of("pet", serialization.serialize(request.path.petId, Wirespec.getType(Long.class, null))),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
-        serialization.serialize(request.getBody(), null)
+        null
       );
     }
 

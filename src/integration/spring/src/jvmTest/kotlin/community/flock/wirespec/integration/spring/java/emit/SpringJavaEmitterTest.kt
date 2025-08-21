@@ -1,6 +1,7 @@
 package community.flock.wirespec.integration.spring.java.emit
 
 import arrow.core.nonEmptyListOf
+import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
@@ -20,7 +21,7 @@ class SpringJavaEmitterTest {
 
     private fun parse(source: String): AST = object : ParseContext, NoLogger {
         override val spec = WirespecSpec
-    }.parse(nonEmptyListOf(ModuleContent("", source))).getOrNull() ?: error("Parsing failed.")
+    }.parse(nonEmptyListOf(ModuleContent(FileUri(""), source))).getOrNull() ?: error("Parsing failed.")
 
     @Test
     fun `Should emit the full wirespec, and add annotation to the handler method`() {
@@ -139,7 +140,7 @@ class SpringJavaEmitterTest {
             |        java.util.List.of("api", "todos"),
             |        java.util.Map.ofEntries(java.util.Map.entry("done", serialization.serializeParam(request.queries.done, Wirespec.getType(Boolean.class, java.util.Optional.class)))),
             |        java.util.Collections.emptyMap(),
-            |        serialization.serialize(request.getBody(), null)
+            |        null
             |      );
             |    }
             |

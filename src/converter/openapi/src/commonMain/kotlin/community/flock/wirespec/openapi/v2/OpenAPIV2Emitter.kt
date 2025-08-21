@@ -28,6 +28,7 @@ import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.openapi.Common.json
+import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenAPIType
@@ -41,7 +42,7 @@ object OpenAPIV2Emitter : Emitter {
         logger: Logger,
     ): NonEmptyList<Emitted> = ast.modules.flatMap { emit(it) }
 
-    private fun emit(module: Module): NonEmptyList<Emitted> = nonEmptyListOf(Emitted("SwaggerObject", json.encodeToString(emitSwaggerObject(module))))
+    private fun emit(module: Module): NonEmptyList<Emitted> = nonEmptyListOf(Emitted("Swagger.${OpenAPIV3Emitter.extension.value}", json.encodeToString(emitSwaggerObject(module))))
 
     fun emitSwaggerObject(module: Module): SwaggerObject = SwaggerObject(
         swagger = "2.0",

@@ -30,7 +30,7 @@ object FindPetsByTags : Wirespec.Endpoint {
       method = request.method.name,
       queries = (mapOf("tags" to (request.queries.tags?.let{ serialization.serializeParam(it, typeOf<List<String>?>()) } ?: emptyList()))),
       headers = emptyMap(),
-      body = serialization.serialize(request.body, typeOf<Unit>()),
+      body = null,
     )
 
   fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =

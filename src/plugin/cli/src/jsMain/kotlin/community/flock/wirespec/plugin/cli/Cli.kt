@@ -4,6 +4,7 @@ package community.flock.wirespec.plugin.cli
 
 import arrow.core.getOrElse
 import arrow.core.nonEmptyListOf
+import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.parse
@@ -19,7 +20,7 @@ fun cli(args: Array<String>) {
 
 @JsExport
 fun parser(source: String): Array<WsNode> = object : ParseContext, NoLogger {}
-    .parse(nonEmptyListOf(ModuleContent("", source)))
+    .parse(nonEmptyListOf(ModuleContent(FileUri(""), source)))
     .getOrElse { error("Cannot parse source: ${it.joinToString { e -> e.message }}") }
     .modules.flatMap(Module::statements).toList()
     .map { it.produce() }

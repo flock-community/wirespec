@@ -5,28 +5,25 @@ import arrow.core.Either.Companion.catch
 import arrow.core.NonEmptyList
 import arrow.core.raise.either
 import arrow.core.raise.ensure
+import community.flock.wirespec.compiler.core.FileUri
+import community.flock.wirespec.compiler.core.TokenizedModule
 import community.flock.wirespec.compiler.core.exceptions.DefinitionNotExistsException
 import community.flock.wirespec.compiler.core.exceptions.NextException
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.tokenize.Token
-import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
 import community.flock.wirespec.compiler.utils.Logger
 
-class TokenProvider(private val logger: Logger, tokens: NonEmptyList<Token>) {
+class TokenProvider(
+    tokens: NonEmptyList<Token>,
+    val fileUri: FileUri,
+    private val definitionNames: Set<String>,
+    private val logger: Logger,
+) {
 
     var token: Token = tokens.head
 
     private val tokenIterator = tokens.tail.iterator()
     private var nextToken = nextToken()
-
-    private val definitionNames = tokens
-        .zipWithNext()
-        .mapNotNull { (first, second) ->
-            when (first.type) {
-                is WirespecDefinition -> second.value
-                else -> null
-            }
-        }
 
     init {
         printTokens()
@@ -36,7 +33,7 @@ class TokenProvider(private val logger: Logger, tokens: NonEmptyList<Token>) {
 
     fun eatToken(): Either<WirespecException, Token> = either {
         val previousToken = token.also(::logToken)
-        token = nextToken ?: raise(NextException(previousToken.coordinates))
+        token = nextToken ?: raise(NextException(fileUri, previousToken.coordinates))
         nextToken = nextToken()
         printTokens(previousToken)
         previousToken
@@ -44,7 +41,7 @@ class TokenProvider(private val logger: Logger, tokens: NonEmptyList<Token>) {
 
     fun Token.shouldBeDefined(): Either<WirespecException, Token> = either {
         ensure(value in definitionNames) {
-            raise(DefinitionNotExistsException(value, coordinates))
+            raise(DefinitionNotExistsException(fileUri, value, coordinates))
         }
         this@shouldBeDefined
     }
@@ -63,4 +60,9 @@ class TokenProvider(private val logger: Logger, tokens: NonEmptyList<Token>) {
     private fun nextToken() = catch { tokenIterator.next() }.getOrNull()
 }
 
-fun NonEmptyList<Token>.toProvider(logger: Logger) = TokenProvider(logger, this)
+fun TokenizedModule.toProvider(definitionNames: Set<String>, logger: Logger) = TokenProvider(
+    tokens = tokens,
+    fileUri = fileUri,
+    definitionNames = definitionNames,
+    logger = logger,
+)

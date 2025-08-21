@@ -69,6 +69,19 @@
                             </languages>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>openapi</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <input>${project.basedir}/src/main/wirespec</input>
+                            <output>${project.build.directory}/openapi</output>
+                            <languages>
+                                <language>OpenAPIV3</language>
+                            </languages>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>

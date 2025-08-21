@@ -55,7 +55,7 @@ public interface UpdatePetWithForm extends Wirespec.Endpoint {
         java.util.List.of("pet", serialization.serialize(request.path.petId, Wirespec.getType(Long.class, null))),
         java.util.Map.ofEntries(java.util.Map.entry("name", serialization.serializeParam(request.queries.name, Wirespec.getType(String.class, java.util.Optional.class))), java.util.Map.entry("status", serialization.serializeParam(request.queries.status, Wirespec.getType(String.class, java.util.Optional.class)))),
         java.util.Collections.emptyMap(),
-        serialization.serialize(request.getBody(), null)
+        null
       );
     }
 

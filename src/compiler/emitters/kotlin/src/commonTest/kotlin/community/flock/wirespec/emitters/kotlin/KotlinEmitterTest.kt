@@ -3,6 +3,7 @@ package community.flock.wirespec.emitters.kotlin
 import arrow.core.nonEmptyListOf
 import arrow.core.nonEmptySetOf
 import community.flock.wirespec.compiler.core.EmitContext
+import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Module
@@ -360,7 +361,7 @@ class KotlinEmitterTest {
             |      method = request.method.name,
             |      queries = emptyMap(),
             |      headers = emptyMap(),
-            |      body = serialization.serialize(request.body, typeOf<Unit>()),
+            |      body = null,
             |    )
             |
             |  fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
@@ -500,7 +501,7 @@ class KotlinEmitterTest {
         val ast = AST(
             nonEmptyListOf(
                 Module(
-                    "",
+                    FileUri(""),
                     nonEmptyListOf(node),
                 ),
             ),
