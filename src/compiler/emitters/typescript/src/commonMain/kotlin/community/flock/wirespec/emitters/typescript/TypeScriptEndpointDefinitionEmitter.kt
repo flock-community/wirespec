@@ -17,7 +17,7 @@ import community.flock.wirespec.compiler.core.parse.Field
 interface TypeScriptEndpointDefinitionEmitter: EndpointDefinitionEmitter, TypeScriptTypeDefinitionEmitter {
     override fun emit(endpoint: Endpoint) =
         """
-          |${endpoint.importReferences().distinctBy { it.value }.map { "import {${it.value}} from '../model'" }.joinToString("\n") { it.trimStart() }}
+          |${endpoint.importReferences().distinctBy { it.value }.map { "import {type ${it.value}} from '../model'" }.joinToString("\n") { it.trimStart() }}
           |export namespace ${endpoint.identifier.sanitizeSymbol()} {
           |${endpoint.pathParams.emitType("Path") { it.emit() }}
           |${endpoint.queries.emitType("Queries") { it.emit() }}

@@ -3,15 +3,12 @@ package community.flock.wirespec.compiler.core.parse
 import arrow.core.Either
 import arrow.core.EitherNel
 import arrow.core.NonEmptyList
-import arrow.core.computations.ResultEffect.bind
-import arrow.core.flatMap
 import arrow.core.flattenOrAccumulate
 import arrow.core.mapOrAccumulate
 import arrow.core.nel
 import arrow.core.raise.Raise
 import arrow.core.raise.either
 import arrow.core.raise.ensureNotNull
-import arrow.core.raise.mapOrAccumulate
 import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.TokenizedModule
 import community.flock.wirespec.compiler.core.exceptions.EmptyModule

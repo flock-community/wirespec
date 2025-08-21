@@ -3,23 +3,7 @@ import {Wirespec} from "./gen/Wirespec";
 import * as assert from "node:assert";
 import {expect, test} from "vitest";
 
-const serialization: Wirespec.Serialization = {
-    deserialize<T>(raw: string | undefined): T {
-        if (raw === undefined) {
-            return undefined;
-        } else {
-            return JSON.parse(raw) as T;
-        }
-    },
-    serialize<T>(type: T): string {
-        if (typeof type === "string") {
-            return type;
-        } else {
-            return JSON.stringify(type);
-        }
-    }
-};
-
+import {wirespecSerialization} from 'wirespec/serialization'
 const body = [
     {id: "1", name: "Do it now", done: true},
     {id: "2", name: "Do it tomorrow", done: false}
@@ -40,7 +24,7 @@ const mocks = [
 ];
 
 type ApiClient<REQ, RES> = (req: REQ) => Promise<RES>;
-type WebClient = <Apis extends Wirespec.Api<Wirespec.Request<unknown>, Wirespec.Response<unknown>>[]>(...apis: Apis) => {
+type WebClient = <Apis extends Wirespec.Api<any, any>[]>(...apis: Apis) => {
     [K in Apis[number]['name']]: Extract<Apis[number], { name: K }> extends Wirespec.Api<infer Req, infer Res> ?
         ApiClient<Req, Res> : never
 };
@@ -49,13 +33,15 @@ const webClient: WebClient = (...apis) => {
     const proxy = new Proxy({}, {
         get: (_, prop) => {
             const api = apis.find(it => it.name === prop);
-            const client = api.client(serialization);
+            if(api == undefined) throw new Error(`Api not found ${prop.toString()}`)
+            const client = api.client(wirespecSerialization);
             return (req: Wirespec.Request<unknown>) => {
                 const rawRequest = client.to(req);
-                const rawResponse: Wirespec.RawResponse = mocks.find(it =>
+                const rawResponse = mocks.find(it =>
                     it.method === rawRequest.method &&
                     it.path.join("/") === rawRequest.path.join("/")
                 );
+                if(rawResponse == undefined) throw new Error("Request is undefined")
                 assert.notEqual(rawResponse, undefined);
                 return Promise.resolve(client.from(rawResponse));
             }
@@ -70,7 +56,7 @@ const api = webClient(PostTodo.api, GetTodos.api, GetTodoById.api, GetUsers.api)
 test('testGetTodos', async () => {
     const request: GetTodos.Request = GetTodos.request({});
     const response = await api.getTodos(request);
-    const expected = {status: 200, headers: {total: 2}, body};
+    const expected = {status: 200, headers: {total: "2"}, body};
     expect(response).toEqual(expected)
 });
 
