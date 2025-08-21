@@ -2,6 +2,7 @@ package community.flock.wirespec.integration.avro
 
 import arrow.core.escaped
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.emit.injectSubPath
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Module
@@ -57,11 +58,13 @@ object Utils {
         is AvroModel.SimpleType -> this.copy(
             value = when (value) {
                 "boolean", "int", "long", "float", "double", "bytes", "string", "null" -> value
-                else -> "<<<<<$value>>>>>"
+                else -> "<<<<<${value.injectSubPath("avro")}>>>>>"
             },
         )
 
         is AvroModel.MapType -> TODO()
         is AvroModel.UnionType -> TODO()
     }
+
+
 }

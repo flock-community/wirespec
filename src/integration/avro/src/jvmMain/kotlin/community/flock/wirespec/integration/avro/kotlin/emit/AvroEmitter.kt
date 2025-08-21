@@ -113,8 +113,8 @@ class AvroEmitter(override val packageName: PackageName, emitShared: EmitShared)
                     }
 
                     is Reference.Primitive -> when (reference.type) {
-                        Reference.Primitive.Type.Bytes -> "String((record.get($index) as java.nio.ByteBuffer).array())"
-                        is Reference.Primitive.Type.String -> "record.get($index).toString() as ${reference.emit()}"
+                        is Reference.Primitive.Type.Bytes -> "String((record.get($index) as java.nio.ByteBuffer).array())"
+                        is Reference.Primitive.Type.String -> "record.get($index)${if(reference.isNullable) "?" else ""}.toString() as ${reference.emit()}"
                         else -> "record.get($index) as ${reference.emit()}"
                     }
 

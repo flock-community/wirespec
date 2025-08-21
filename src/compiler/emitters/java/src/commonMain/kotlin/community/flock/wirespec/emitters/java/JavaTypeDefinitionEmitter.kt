@@ -3,6 +3,7 @@ package community.flock.wirespec.emitters.java
 import community.flock.wirespec.compiler.core.emit.IdentifierEmitter
 import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.emit.TypeDefinitionEmitter
+import community.flock.wirespec.compiler.core.emit.injectSubPath
 import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
@@ -30,7 +31,7 @@ interface JavaTypeDefinitionEmitter: TypeDefinitionEmitter, IdentifierEmitter {
         is Reference.Iterable -> "java.util.List<${reference.emit()}>"
         is Reference.Unit -> "void"
         is Reference.Any -> "Object"
-        is Reference.Custom -> value
+        is Reference.Custom -> value.injectSubPath("model")
         is Reference.Primitive -> emit()
     }
 

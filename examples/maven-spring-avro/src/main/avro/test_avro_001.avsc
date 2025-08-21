@@ -5,7 +5,7 @@
   "fields": [
     {
       "name": "metadata",
-      "type": "com.eventloopsoftware.kafka.metadata.model.TestAvroMetadata"
+      "type": "com.eventloopsoftware.kafka.metadata.TestAvroMetadata"
     },
     {
       "name": "order",
