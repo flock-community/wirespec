@@ -1,29 +1,26 @@
 package community.flock.wirespec.emitters.kotlin
 
-import arrow.core.NonEmptyList
-import community.flock.wirespec.compiler.core.emit.BaseEmitter
 import community.flock.wirespec.compiler.core.emit.ClientEmitter
 import community.flock.wirespec.compiler.core.emit.Emitted
-import community.flock.wirespec.compiler.core.emit.Emitter.Companion.firstToLower
-import community.flock.wirespec.compiler.core.emit.Emitter.Companion.firstToUpper
-import community.flock.wirespec.compiler.core.emit.IdentifierEmitter
-import community.flock.wirespec.compiler.core.emit.ImportEmitter
-import community.flock.wirespec.compiler.core.emit.PackageNameEmitter
-import community.flock.wirespec.compiler.core.emit.ParamEmitter
-import community.flock.wirespec.compiler.core.emit.SpaceEmitter
+import community.flock.wirespec.compiler.core.emit.HasPackageName
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToLower
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
+import community.flock.wirespec.compiler.core.emit.importReferences
+import community.flock.wirespec.compiler.core.emit.paramList
 import community.flock.wirespec.compiler.core.emit.root
+import community.flock.wirespec.compiler.core.emit.spacer
+import community.flock.wirespec.compiler.core.emit.allStatements
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
-import kotlin.compareTo
 
-interface KotlinClientEmitter: BaseEmitter, ClientEmitter, PackageNameEmitter, ParamEmitter, SpaceEmitter, ImportEmitter, KotlinTypeDefinitionEmitter {
+interface KotlinClientEmitter: ClientEmitter, HasPackageName, KotlinTypeDefinitionEmitter {
 
     override fun emitClient(ast: AST): List<Emitted> {
         return emitClientInterfaces(ast) + listOf(emitClientClass(ast))
     }
-    override fun emitClientInterfaces(ast: AST): List<Emitted> = ast.statements
+    override fun emitClientInterfaces(ast: AST): List<Emitted> = ast.allStatements
         .filterIsInstance<Endpoint>()
         .map { endpoint ->
             Emitted("${packageName.toDir()}/client/${emit(endpoint.identifier)}Client.${extension.value}", """
@@ -44,7 +41,7 @@ interface KotlinClientEmitter: BaseEmitter, ClientEmitter, PackageNameEmitter, P
         |
         |import community.flock.wirespec.kotlin.Wirespec
         |
-        |${ast.statements.filterIsInstance<Endpoint>().joinToString("\n") { "import ${packageName.value}.client.${emit(it.identifier)}Client" }}
+        |${ast.allStatements.filterIsInstance<Endpoint>().joinToString("\n") { "import ${packageName.value}.client.${emit(it.identifier)}Client" }}
         |
         |${ast.emitClientEndpointRequest().joinToString("\n") { (endpoint) -> "import ${packageName.value}.endpoint.${emit(endpoint.identifier)}" }}
         |
@@ -72,7 +69,8 @@ interface KotlinClientEmitter: BaseEmitter, ClientEmitter, PackageNameEmitter, P
         |     .let { rawRes -> ${endpoint.identifier.value}.fromResponse(serialization, rawRes) }
     """.trimMargin()
 
-    fun Module.emitInterfaceName() = uri
+    fun Module.emitInterfaceName() = fileUri
+        .value
         .split(".").first()
         .split("/").last()
         .firstToUpper()

@@ -64,19 +64,11 @@ open class TypeScriptEmitter() : LanguageEmitter(), TypeScriptEmitters {
         }
 
     override fun emit(union: Union) = """
-        |${
-        union.importReferences().distinctBy { it.value }.map { "import {${it.value}} from '../model'" }
-            .joinToString("\n") { it.trimStart() }
-    }
+        |${union.importReferences().distinctBy { it.value }.map { "import {${it.value}} from '../model'" }.joinToString("\n") { it.trimStart() }}
         |export type ${union.identifier.sanitizeSymbol()} = ${union.entries.joinToString(" | ") { it.emit() }}
         |
     """.trimMargin()
 
 
     override fun emit(channel: Channel) = notYetImplemented()
-
-
-
-
-
 }

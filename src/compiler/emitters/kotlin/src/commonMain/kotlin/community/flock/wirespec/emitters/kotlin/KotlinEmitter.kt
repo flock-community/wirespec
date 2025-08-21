@@ -5,10 +5,10 @@ import community.flock.wirespec.compiler.core.emit.DEFAULT_GENERATED_PACKAGE_STR
 import community.flock.wirespec.compiler.core.emit.DEFAULT_SHARED_PACKAGE_STRING
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitted
-import community.flock.wirespec.compiler.core.emit.LanguageEmitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
-import community.flock.wirespec.compiler.core.emit.Keywords
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.emit.hasEndpoints
 import community.flock.wirespec.compiler.core.emit.plus
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
@@ -43,10 +43,11 @@ open class KotlinEmitter(
 
     override val singleLineComment = "//"
 
-    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> {
-        return super<Emitter>.emit(ast, logger)
-            .run { if(ast.hasEndpoints()){ plus(emitClient(ast) ) } else this }
-    }
+    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> =
+        super<LanguageEmitter>.emit(ast, logger)
+        .run {
+            if (ast.hasEndpoints()) plus(emitClient(ast)) else this
+        }
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
         super<LanguageEmitter>.emit(module, logger).let {

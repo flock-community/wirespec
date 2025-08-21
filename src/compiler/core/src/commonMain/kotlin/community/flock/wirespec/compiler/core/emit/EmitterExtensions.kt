@@ -1,5 +1,7 @@
 package community.flock.wirespec.compiler.core.emit
 
+import arrow.core.NonEmptyList
+import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Endpoint
@@ -8,6 +10,9 @@ import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
+
+val AST.allStatements: NonEmptyList<Definition>
+    get() = modules.flatMap { it.statements }
 
 fun Definition.importReferences(): List<Reference.Custom> = when (this) {
     is Endpoint -> listOf(

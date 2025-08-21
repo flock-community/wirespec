@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.emit.hasEndpoints
 import community.flock.wirespec.compiler.core.emit.plus
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
@@ -41,10 +42,9 @@ open class JavaEmitter(
 
     override val singleLineComment = "//"
 
-    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> {
-        return super<Emitter>.emit(ast, logger)
-            .run { if(ast.hasEndpoints()){ plus(emitClient(ast) ) } else this }
-    }
+    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> =
+        super<LanguageEmitter>.emit(ast, logger)
+        .run { if(ast.hasEndpoints()) plus(emitClient(ast) ) else this }
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> =
         super<LanguageEmitter>.emit(module, logger).let {

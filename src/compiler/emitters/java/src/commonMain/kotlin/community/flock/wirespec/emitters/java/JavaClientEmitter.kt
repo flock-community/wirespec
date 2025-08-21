@@ -1,11 +1,17 @@
 package community.flock.wirespec.emitters.java
 
-import community.flock.wirespec.compiler.core.emit.*
-import community.flock.wirespec.compiler.core.emit.Emitter.Companion.firstToLower
+import community.flock.wirespec.compiler.core.emit.ClientEmitter
+import community.flock.wirespec.compiler.core.emit.Emitted
+import community.flock.wirespec.compiler.core.emit.HasPackageName
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToLower
+import community.flock.wirespec.compiler.core.emit.Spacer
+import community.flock.wirespec.compiler.core.emit.importReferences
+import community.flock.wirespec.compiler.core.emit.paramList
+import community.flock.wirespec.compiler.core.emit.spacer
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
 
-interface JavaClientEmitter: BaseEmitter, ClientEmitter,PackageNameEmitter, ParamEmitter, SpaceEmitter, ImportEmitter, JavaTypeDefinitionEmitter {
+interface JavaClientEmitter: ClientEmitter, HasPackageName, JavaTypeDefinitionEmitter {
 
     override fun emitClient(ast: AST): List<Emitted> {
         return emitClientInterfaces(ast) + listOf(emitClientClass(ast))

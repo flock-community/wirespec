@@ -1,23 +1,19 @@
 package community.flock.wirespec.emitters.python
 
-import arrow.core.NonEmptyList
-import community.flock.wirespec.compiler.core.emit.BaseEmitter
 import community.flock.wirespec.compiler.core.emit.ClientEmitter
 import community.flock.wirespec.compiler.core.emit.Emitted
-import community.flock.wirespec.compiler.core.emit.Emitter.Companion.firstToLower
-import community.flock.wirespec.compiler.core.emit.ImportEmitter
-import community.flock.wirespec.compiler.core.emit.PackageNameEmitter
-import community.flock.wirespec.compiler.core.emit.ParamEmitter
-import community.flock.wirespec.compiler.core.emit.SpaceEmitter
+import community.flock.wirespec.compiler.core.emit.HasPackageName
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToLower
+import community.flock.wirespec.compiler.core.emit.importReferences
+import community.flock.wirespec.compiler.core.emit.paramList
+import community.flock.wirespec.compiler.core.emit.spacer
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Endpoint
-import community.flock.wirespec.compiler.core.parse.Module
 
-interface PythonClientEmitter: BaseEmitter, ClientEmitter,PackageNameEmitter, ParamEmitter, SpaceEmitter, ImportEmitter, PythonTypeDefinitionEmitter {
+interface PythonClientEmitter: ClientEmitter, HasPackageName, PythonTypeDefinitionEmitter {
 
-    override fun emitClient(ast: AST): List<Emitted> {
-        return emitClientInterfaces(ast) + listOf(emitClientClass(ast))
-    }
+    override fun emitClient(ast: AST): List<Emitted> =
+        emitClientInterfaces(ast) + listOf(emitClientClass(ast))
 
     override fun emitClientInterfaces(ast: AST): List<Emitted> = emptyList()
 

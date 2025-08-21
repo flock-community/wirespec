@@ -8,6 +8,7 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.FileExtension
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter
 import community.flock.wirespec.compiler.core.emit.PackageName
+import community.flock.wirespec.compiler.core.emit.hasEndpoints
 import community.flock.wirespec.compiler.core.emit.plus
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
@@ -21,8 +22,7 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
 
-
-interface PythonEmitters:
+interface PythonEmitters :
     PythonIdentifierEmitter,
     PythonTypeDefinitionEmitter,
     PythonEndpointDefinitionEmitter,
@@ -64,10 +64,9 @@ open class PythonEmitter(
         is Channel -> 6
     }
 
-    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> {
-        return super<Emitter>.emit(ast, logger)
-            .run { if(ast.hasEndpoints()){ plus(emitClient(ast) ) } else this }
-    }
+    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> =
+        super<LanguageEmitter>.emit(ast, logger)
+        .run { if(ast.hasEndpoints()) plus(emitClient(ast) ) else this }
 
     override fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> {
         val statements = module.statements.sortedBy(::sort).toNonEmptyListOrNull()!!

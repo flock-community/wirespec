@@ -2,7 +2,7 @@ package community.flock.wirespec.emitters.typescript
 
 import community.flock.wirespec.compiler.core.emit.ClientEmitter
 import community.flock.wirespec.compiler.core.emit.Emitted
-import community.flock.wirespec.compiler.core.emit.Emitter.Companion.firstToLower
+import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToLower
 import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.emit.paramList
