@@ -56,7 +56,7 @@ const api = webClient(PostTodo.api, GetTodos.api, GetTodoById.api, GetUsers.api)
 test('testGetTodos', async () => {
     const request: GetTodos.Request = GetTodos.request({});
     const response = await api.getTodos(request);
-    const expected = {status: 200, headers: {total: 2}, body};
+    const expected = {status: 200, headers: {total: "2"}, body};
     expect(response).toEqual(expected)
 });
 
