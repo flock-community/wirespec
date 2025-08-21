@@ -31,6 +31,9 @@ fun Definition.importReferences(): List<Reference.Custom> = when (this) {
 }
 
 fun String.injectSubPath(vararg path: String) = split(".").run {
-    if(size > 1)"${dropLast(1).plus(path).joinToString(".")}.${last()}"
-    else joinToString(".")
+    if (size > 1) {
+        "${dropLast(1).plus(path).joinToString(".")}.${last()}"
+    } else {
+        joinToString(".")
+    }
 }

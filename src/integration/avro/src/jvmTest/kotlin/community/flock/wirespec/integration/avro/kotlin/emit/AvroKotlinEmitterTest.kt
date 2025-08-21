@@ -38,30 +38,25 @@ class AvroKotlinEmitterTest {
 
         val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(type))))
         val expected = """
-            |package packageName.model
+            |package packageName.avro
             |
-            |data class Identifier(
-            |  val name: String
-            |)
-            |{
-            |  class Avro {
-            |    companion object {
-            |      val SCHEMA = org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Identifier\",\"namespace\":\"packageName\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"}]}");
+            |import packageName.model.Identifier
             |
-            |      @JvmStatic
-            |      fun from(record: org.apache.avro.generic.GenericData.Record): Identifier {
-            |        return Identifier(
-            |          record.get(0).toString() as String
-            |        );
-            |      }
+            |object IdentifierAvro {
+            |  val SCHEMA = org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Identifier\",\"namespace\":\"packageName\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"}]}")
             |
-            |      @JvmStatic
-            |      fun to(model: Identifier ): org.apache.avro.generic.GenericData.Record {
-            |        val record = org.apache.avro.generic.GenericData.Record(SCHEMA);
-            |        record.put(0, model.name);
-            |        return record;
-            |      }
-            |    }
+            |  @JvmStatic
+            |  fun from(record: org.apache.avro.generic.GenericData.Record): Identifier {
+            |    return Identifier(
+            |      record.get(0).toString() as String
+            |    )
+            |  }
+            |
+            |  @JvmStatic
+            |  fun to(model: Identifier ): org.apache.avro.generic.GenericData.Record {
+            |    val record = org.apache.avro.generic.GenericData.Record(SCHEMA)
+            |    record.put(0, model.name)
+            |    return record
             |  }
             |
             |}
@@ -69,7 +64,7 @@ class AvroKotlinEmitterTest {
         """.trimMargin()
         val actual = emitter.emit(ast, noLogger)
         println(actual.first().result)
-        assertEquals(expected, actual.first().result)
+        assertEquals(expected, actual.find { it.file == "packageName/avro/IdentifierAvro.Kotlin" }?.result)
     }
 
     @Test
@@ -81,33 +76,22 @@ class AvroKotlinEmitterTest {
         )
         val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(enum))))
         val expected = """
-            |package packageName.model
+            |package packageName.avro
             |
-            |import community.flock.wirespec.kotlin.Wirespec
-            |import kotlin.reflect.typeOf
+            |import packageName.model.Identifier
             |
-            |enum class Identifier (override val label: String): Wirespec.Enum {
-            |  ONE("ONE"),
-            |  TWO("TWO"),
-            |  THREE("THREE");
-            |  override fun toString(): String {
-            |    return label
+            |object IdentifierAvro {
+            |
+            |  val SCHEMA: org.apache.avro.Schema = org.apache.avro.Schema.Parser().parse("{\"type\":\"enum\",\"name\":\"Identifier\",\"symbols\":[\"ONE\",\"TWO\",\"THREE\"]}")
+            |
+            |  @JvmStatic
+            |  fun from(record: org.apache.avro.generic.GenericData.EnumSymbol): Identifier {
+            |    return Identifier.valueOf(record.toString())
             |  }
-            |  class Avro {
-            |    companion object {
             |
-            |       val SCHEMA: org.apache.avro.Schema = org.apache.avro.Schema.Parser().parse("{\"type\":\"enum\",\"name\":\"Identifier\",\"symbols\":[\"ONE\",\"TWO\",\"THREE\"]}");
-            |
-            |       @JvmStatic
-            |       fun from(record: org.apache.avro.generic.GenericData.EnumSymbol): Identifier {
-            |         return Identifier.valueOf(record.toString());
-            |       }
-            |
-            |       @JvmStatic
-            |       fun to(model: Identifier): org.apache.avro.generic.GenericData.EnumSymbol {
-            |         return org.apache.avro.generic.GenericData.EnumSymbol(SCHEMA, model.name);
-            |       }
-            |     }
+            |  @JvmStatic
+            |  fun to(model: Identifier): org.apache.avro.generic.GenericData.EnumSymbol {
+            |    return org.apache.avro.generic.GenericData.EnumSymbol(SCHEMA, model.name)
             |  }
             |
             |}
@@ -115,6 +99,6 @@ class AvroKotlinEmitterTest {
         """.trimMargin()
         val actual = emitter.emit(ast, noLogger)
         println(actual)
-        assertEquals(expected, actual.first().result)
+        assertEquals(expected, actual.find { it.file == "packageName/avro/IdentifierAvro.Kotlin" }?.result)
     }
 }

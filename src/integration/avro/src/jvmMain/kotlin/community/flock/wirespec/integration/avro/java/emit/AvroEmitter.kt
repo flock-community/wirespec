@@ -5,13 +5,11 @@ import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.PackageName
-import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.emit.spacer
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Definition
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Identifier
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
@@ -44,8 +42,8 @@ class AvroEmitter(override val packageName: PackageName, emitShared: EmitShared)
         |    new org.apache.avro.Schema.Parser().parse("${emitAvroSchema(type, module)}");
         |
         |  public static ${emit(type.identifier)} from(org.apache.avro.generic.GenericData.Record record) {
-        |     return new ${emit(type.identifier)}(
-        |     ${type.shape.value.mapIndexed(emitFrom(module)).joinToString(",\n${Spacer(4)}")}
+        |    return new ${emit(type.identifier)}(
+        |${type.shape.value.mapIndexed(emitFrom(module)).joinToString(",\n").spacer(3)}
         |    );
         |  }
         |  
@@ -119,7 +117,7 @@ class AvroEmitter(override val packageName: PackageName, emitShared: EmitShared)
     ): List<Emitted> = ast.modules.toList()
         .flatMap {
             it.statements.filterIsInstance<T>()
-                .map { type -> Emitted("${packageName.toDir()}/avro/${emit(type.identifier)}Avro.${extension.name}", e(type, it)) }
+                .map { type -> Emitted("${packageName.toDir()}avro/${emit(type.identifier)}Avro.${extension.name}", e(type, it)) }
         }
 
     private fun String.avroClass(): String = replace(".model.", ".avro.") + "Avro"

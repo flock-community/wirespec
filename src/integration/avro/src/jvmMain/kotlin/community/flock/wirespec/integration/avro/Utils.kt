@@ -65,6 +65,4 @@ object Utils {
         is AvroModel.MapType -> TODO()
         is AvroModel.UnionType -> TODO()
     }
-
-
 }
