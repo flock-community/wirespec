@@ -13,7 +13,12 @@ import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.utils.Logger
 
-class TokenProvider(private val logger: Logger, val definitionNames: Set<String>, val fileUri: FileUri, tokens: NonEmptyList<Token>) {
+class TokenProvider(
+    tokens: NonEmptyList<Token>,
+    val fileUri: FileUri,
+    private val definitionNames: Set<String>,
+    private val logger: Logger,
+) {
 
     var token: Token = tokens.head
 
@@ -55,4 +60,9 @@ class TokenProvider(private val logger: Logger, val definitionNames: Set<String>
     private fun nextToken() = catch { tokenIterator.next() }.getOrNull()
 }
 
-fun TokenizedModule.toProvider(definitionNames: Set<String>, logger: Logger) = TokenProvider(logger, definitionNames, fileUri, tokens)
+fun TokenizedModule.toProvider(definitionNames: Set<String>, logger: Logger) = TokenProvider(
+    tokens = tokens,
+    fileUri = fileUri,
+    definitionNames = definitionNames,
+    logger = logger,
+)

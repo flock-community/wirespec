@@ -35,9 +35,9 @@ class ParseMultipleErrorsTest {
         parser(source)
             .shouldBeLeft()
             .shouldHaveSize(2)
-            .apply {
-                get(0).message shouldBe "WirespecIdentifier expected, not: RightCurly at line 4 and position 1"
-                get(1).message shouldBe "WirespecIdentifier expected, not: RightCurly at line 9 and position 1"
+            .also { (first, second) ->
+                first.message shouldBe "WirespecIdentifier expected, not: RightCurly at line 4 and position 1"
+                second.message shouldBe "WirespecIdentifier expected, not: RightCurly at line 9 and position 1"
             }
     }
 }

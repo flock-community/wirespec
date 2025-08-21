@@ -4,6 +4,7 @@ import arrow.core.Either
 import arrow.core.EitherNel
 import arrow.core.NonEmptyList
 import arrow.core.flatMap
+import arrow.core.mapOrAccumulate
 import arrow.core.nel
 import arrow.core.raise.Raise
 import arrow.core.raise.either
@@ -31,59 +32,14 @@ data class ParseOptions(
 )
 
 object Parser {
-
     fun HasLogger.parse(
         modules: NonEmptyList<TokenizedModule>,
         options: ParseOptions = ParseOptions(),
     ): EitherNel<WirespecException, AST> = modules
-        .let {
-            val definitionNames = it.flatMap { it.tokens }
-                .zipWithNext()
-                .mapNotNull { (first, second) ->
-                    when (first.type) {
-                        is WirespecDefinition -> second.value
-                        else -> null
-                    }
-                }
-                .toSet()
-            it.map { it.toProvider(definitionNames, logger).parseModule() }
-        }
+        .map { it.toProvider(modules.allDefinitions(), logger).parseModule() }
         .let { either { it.bindAll() } }
         .map(::AST)
         .flatMap { Validator.validate(options, it) }
-
-    private fun TokenProvider.parseModule(): EitherNel<WirespecException, Module> = either {
-        mutableListOf<Either<WirespecException, Definition>>()
-            .apply {
-                while (hasNext()) {
-                    when (token.type) {
-                        is Comment -> add(parseDefinition())
-                        is WirespecDefinition -> add(parseDefinition())
-                        else -> eatToken()
-                    }
-                }
-            }
-            .toNonEmptyListOrNull()
-            .let { ensureNotNull(it) { EmptyModule().nel() } }
-            .let { mapOrAccumulate(it) { it.bind() } }
-            .let { Module(fileUri, it) }
-    }
-
-    private fun TokenProvider.parseDefinition() = either {
-        val comment = when (token.type) {
-            is Comment -> Comment(token.value).also { eatToken().bind() }
-            else -> null
-        }
-        when (token.type) {
-            is WirespecDefinition -> when (token.type as WirespecDefinition) {
-                is TypeDefinition -> with(TypeParser) { parseType(comment) }.bind()
-                is EnumTypeDefinition -> with(EnumParser) { parseEnum(comment) }.bind()
-                is EndpointDefinition -> with(EndpointParser) { parseEndpoint(comment) }.bind()
-                is ChannelDefinition -> with(ChannelParser) { parseChannel(comment) }.bind()
-            }
-            else -> raiseWrongToken<WirespecDefinition>().bind()
-        }
-    }
 }
 
 fun <A> TokenProvider.parseToken(block: Raise<WirespecException>.(Token) -> A) = either {
@@ -97,4 +53,48 @@ inline fun <reified T : TokenType> TokenProvider.raiseWrongToken(token: Token? =
             token ?: this@raiseWrongToken.token,
         ).also { eatToken().bind() },
     )
+}
+
+private fun NonEmptyList<TokenizedModule>.allDefinitions() = flatMap { it.tokens }
+    .zipWithNext()
+    .mapNotNull { (first, second) ->
+        when (first.type) {
+            is WirespecDefinition -> second.value
+            else -> null
+        }
+    }
+    .toSet()
+
+private fun TokenProvider.parseModule(): EitherNel<WirespecException, Module> = either {
+    mutableListOf<Either<WirespecException, Definition>>()
+        .apply {
+            while (hasNext()) {
+                when (token.type) {
+                    is Comment -> add(parseDefinition())
+                    is WirespecDefinition -> add(parseDefinition())
+                    else -> eatToken()
+                }
+            }
+        }
+        .mapOrAccumulate { it.bind() }.bind()
+        .toNonEmptyListOrNull()
+        .let { ensureNotNull(it) { EmptyModule().nel() } }
+        .let { Module(fileUri, it) }
+}
+
+private fun TokenProvider.parseDefinition() = either {
+    val comment = when (token.type) {
+        is Comment -> Comment(token.value).also { eatToken().bind() }
+        else -> null
+    }
+    when (token.type) {
+        is WirespecDefinition -> when (token.type as WirespecDefinition) {
+            is TypeDefinition -> with(TypeParser) { parseType(comment) }.bind()
+            is EnumTypeDefinition -> with(EnumParser) { parseEnum(comment) }.bind()
+            is EndpointDefinition -> with(EndpointParser) { parseEndpoint(comment) }.bind()
+            is ChannelDefinition -> with(ChannelParser) { parseChannel(comment) }.bind()
+        }
+
+        else -> raiseWrongToken<WirespecDefinition>().bind()
+    }
 }
