@@ -18,7 +18,9 @@ const BlogCard: React.FC<BlogCardProps> = ({
   return (
     <div className={`card-border-bottom card-nospace ${styles.card}`}>
       <Link to={link}>
-        <img src={image} alt={title} className={styles.cardImage} />
+        <div className={styles.cardCrop}>
+          <img src={image} alt={title} className={styles.cardImage} />
+        </div>
       </Link>
       <div className={styles.cardContent}>
         <Link to={link} className={styles.headinglink}>
