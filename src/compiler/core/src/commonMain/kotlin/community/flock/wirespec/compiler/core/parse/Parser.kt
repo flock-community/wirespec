@@ -4,6 +4,7 @@ import arrow.core.Either
 import arrow.core.EitherNel
 import arrow.core.NonEmptyList
 import arrow.core.flatMap
+import arrow.core.flattenOrAccumulate
 import arrow.core.mapOrAccumulate
 import arrow.core.nel
 import arrow.core.raise.Raise
@@ -35,11 +36,15 @@ object Parser {
     fun HasLogger.parse(
         modules: NonEmptyList<TokenizedModule>,
         options: ParseOptions = ParseOptions(),
-    ): EitherNel<WirespecException, AST> = modules
-        .map { it.toProvider(modules.allDefinitions(), logger).parseModule() }
-        .let { either { it.bindAll() } }
-        .map(::AST)
-        .flatMap { Validator.validate(options, it) }
+    ): EitherNel<WirespecException, AST> = either {
+        modules
+            .map { it.toProvider(modules.allDefinitions(), logger).parseModule() }
+            .flattenOrAccumulate().bind()
+            .toNonEmptyListOrNull()
+            .let { ensureNotNull(it) { EmptyModule().nel() } }
+            .let { AST(it) }
+            .let { Validator.validate(options, it).bind() }
+    }
 }
 
 fun <A> TokenProvider.parseToken(block: Raise<WirespecException>.(Token) -> A) = either {
