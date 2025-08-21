@@ -56,7 +56,7 @@ object OpenAPIV3Emitter : Emitter {
 
     private fun emit(module: Module): NonEmptyList<Emitted> = nonEmptyListOf(
         Emitted(
-            "OpenAPIObject",
+            "OpenAPI.${extension.value}",
             json.encodeToString(emitOpenAPIObject(module, null)),
         ),
     )
