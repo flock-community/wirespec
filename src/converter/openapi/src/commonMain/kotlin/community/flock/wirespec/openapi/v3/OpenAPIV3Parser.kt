@@ -45,7 +45,7 @@ object OpenAPIV3Parser : Parser {
     override fun parse(moduleContent: ModuleContent, strict: Boolean): AST = AST(
         nonEmptyListOf(
             Module(
-                moduleContent.src,
+                moduleContent.fileUri,
                 OpenAPI(
                     json = Json {
                         prettyPrint = true

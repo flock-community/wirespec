@@ -3,6 +3,7 @@
 package community.flock.wirespec.compiler.lib
 
 import arrow.core.toNonEmptyListOrNull
+import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Comment
@@ -23,7 +24,7 @@ fun WsAST.consume(): AST = AST(
 )
 
 fun WsModule.consume(): Module = Module(
-    uri = "",
+    fileUri = FileUri("unknown"),
     statements = statements.map { it.consume() }.toNonEmptyListOrNull()!!,
 )
 

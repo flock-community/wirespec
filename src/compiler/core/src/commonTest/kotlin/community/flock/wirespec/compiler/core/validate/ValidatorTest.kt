@@ -2,6 +2,7 @@ package community.flock.wirespec.compiler.core.validate
 
 import arrow.core.EitherNel
 import arrow.core.toNonEmptyListOrNull
+import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
@@ -22,7 +23,7 @@ import kotlin.test.Test
 class ValidatorTest {
 
     private fun validate(vararg sources: String): EitherNel<WirespecException, AST> {
-        val moduleContents = sources.map { ModuleContent("", it) }.toNonEmptyListOrNull()
+        val moduleContents = sources.map { ModuleContent(FileUri("test.ws"), it) }.toNonEmptyListOrNull()
             ?: throw IllegalArgumentException("At least one source is required")
 
         return object : ParseContext, NoLogger {

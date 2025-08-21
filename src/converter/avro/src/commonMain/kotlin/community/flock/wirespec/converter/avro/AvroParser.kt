@@ -37,6 +37,6 @@ object AvroParser : Parser {
             is AvroModel.MapType -> TODO()
             is AvroModel.UnionType -> TODO()
         }
-        return AST(nonEmptyListOf(Module(moduleContent.src, result.toNonEmptyListOrNull() ?: error("Cannot yield non empty AST"))))
+        return AST(nonEmptyListOf(Module(moduleContent.fileUri, result.toNonEmptyListOrNull() ?: error("Cannot yield non empty AST"))))
     }
 }

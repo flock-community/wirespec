@@ -13,6 +13,7 @@ import community.flock.wirespec.compiler.core.parse.Parser.parse
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.HasLogger
+import kotlin.jvm.JvmInline
 
 interface TokenizeContext :
     HasLanguageSpec,
@@ -32,15 +33,18 @@ interface CompilationContext :
     ParseContext,
     EmitContext
 
-data class ModuleContent(val src: String, val content: String)
+@JvmInline
+value class FileUri(override val value: String) : Value<String>
 
-data class TokenizedModule(val src: String, val tokens: NonEmptyList<Token>)
+data class ModuleContent(val fileUri: FileUri, val content: String)
+
+data class TokenizedModule(val fileUri: FileUri, val tokens: NonEmptyList<Token>)
 
 fun TokenizeContext.tokenize(source: String): NonEmptyList<Token> = spec
     .tokenize(source)
     .also(TOKENIZED::log)
 
-fun ParseContext.parse(source: NonEmptyList<ModuleContent>): EitherNel<WirespecException, AST> = parse(source.map { TokenizedModule(it.src, tokenize(it.content)) }).also(PARSED::log)
+fun ParseContext.parse(source: NonEmptyList<ModuleContent>): EitherNel<WirespecException, AST> = parse(source.map { TokenizedModule(it.fileUri, tokenize(it.content)) }).also(PARSED::log)
 
 fun EmitContext.emit(ast: EitherNel<WirespecException, AST>): EitherNel<WirespecException, NonEmptyList<Emitted>> = ast
     .map { emitters.flatMap { emitter -> emitter.emit(it, logger) } }
