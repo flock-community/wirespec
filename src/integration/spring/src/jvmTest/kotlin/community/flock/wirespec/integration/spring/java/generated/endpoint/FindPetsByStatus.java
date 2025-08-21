@@ -61,7 +61,7 @@ public interface FindPetsByStatus extends Wirespec.Endpoint {
         java.util.List.of("pet", "findByStatus"),
         java.util.Map.ofEntries(java.util.Map.entry("status", serialization.serializeParam(request.queries.status, Wirespec.getType(FindPetsByStatusParameterStatus.class, java.util.Optional.class)))),
         java.util.Collections.emptyMap(),
-        serialization.serialize(request.getBody(), null)
+        null
       );
     }
 

@@ -184,7 +184,7 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
         |${Spacer(4)}java.util.List.of(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
         |${Spacer(4)}${if (endpoint.queries.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.queries.joinToString { it.emitSerializedParams("queries") }})" else EMPTY_MAP},
         |${Spacer(4)}${if (endpoint.headers.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.headers.joinToString { it.emitSerializedParams("headers") }})" else EMPTY_MAP},
-        |${Spacer(4)}serialization.serialize(request.getBody(), ${content?.reference?.emitGetType()})
+        |${Spacer(4)}${if (content != null) "serialization.serialize(request.getBody(), ${content?.reference?.emitGetType()})" else "null"}
         |${Spacer(3)});
         |${Spacer(2)}}
         |

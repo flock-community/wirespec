@@ -31,7 +31,7 @@ object FindPetsByStatus : Wirespec.Endpoint {
       method = request.method.name,
       queries = (mapOf("status" to (request.queries.status?.let{ serialization.serializeParam(it, typeOf<FindPetsByStatusParameterStatus?>()) } ?: emptyList()))),
       headers = emptyMap(),
-      body = serialization.serialize(request.body, typeOf<Unit>()),
+      body = null,
     )
 
   fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =

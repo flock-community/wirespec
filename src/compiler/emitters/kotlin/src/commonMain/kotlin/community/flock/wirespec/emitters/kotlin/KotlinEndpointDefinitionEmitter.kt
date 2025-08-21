@@ -96,7 +96,7 @@ interface KotlinEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackage
         |${Spacer(3)}method = request.method.name,
         |${Spacer(3)}queries = ${if (endpoint.queries.isNotEmpty()) endpoint.queries.joinToString(" + ") { "(${it.emitSerializedParams("request", "queries")})" } else EMPTY_MAP},
         |${Spacer(3)}headers = ${if (endpoint.headers.isNotEmpty()) endpoint.headers.joinToString(" + ") { "(${it.emitSerializedParams("request", "headers")})" } else EMPTY_MAP},
-        |${Spacer(3)}body = serialization.serialize(request.body, typeOf<${content.emit()}>()),
+        |${Spacer(3)}body = ${if(content != null) "serialization.serialize(request.body, typeOf<${content.emit()}>())" else "null"},
         |${Spacer(2)})
         |
         |${Spacer}fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =

@@ -58,7 +58,7 @@ public interface DeleteUser extends Wirespec.Endpoint {
         java.util.List.of("user", serialization.serialize(request.path.username, Wirespec.getType(String.class, null))),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
-        serialization.serialize(request.getBody(), null)
+        null
       );
     }
 

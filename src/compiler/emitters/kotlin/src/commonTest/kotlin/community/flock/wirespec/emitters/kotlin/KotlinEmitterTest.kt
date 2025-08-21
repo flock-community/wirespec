@@ -360,7 +360,7 @@ class KotlinEmitterTest {
             |      method = request.method.name,
             |      queries = emptyMap(),
             |      headers = emptyMap(),
-            |      body = serialization.serialize(request.body, typeOf<Unit>()),
+            |      body = null,
             |    )
             |
             |  fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
