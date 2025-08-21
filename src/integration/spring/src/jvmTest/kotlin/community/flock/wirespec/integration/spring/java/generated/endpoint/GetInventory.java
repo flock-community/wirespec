@@ -50,7 +50,7 @@ public interface GetInventory extends Wirespec.Endpoint {
         java.util.List.of("store", "inventory"),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
-        serialization.serialize(request.getBody(), null)
+        null
       );
     }
 

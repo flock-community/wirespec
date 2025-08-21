@@ -66,7 +66,7 @@ public interface GetOrderById extends Wirespec.Endpoint {
         java.util.List.of("store", "order", serialization.serialize(request.path.orderId, Wirespec.getType(Long.class, null))),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
-        serialization.serialize(request.getBody(), null)
+        null
       );
     }
 

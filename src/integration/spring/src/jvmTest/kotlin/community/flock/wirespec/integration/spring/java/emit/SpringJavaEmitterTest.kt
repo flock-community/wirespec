@@ -139,7 +139,7 @@ class SpringJavaEmitterTest {
             |        java.util.List.of("api", "todos"),
             |        java.util.Map.ofEntries(java.util.Map.entry("done", serialization.serializeParam(request.queries.done, Wirespec.getType(Boolean.class, java.util.Optional.class)))),
             |        java.util.Collections.emptyMap(),
-            |        serialization.serialize(request.getBody(), null)
+            |        null
             |      );
             |    }
             |

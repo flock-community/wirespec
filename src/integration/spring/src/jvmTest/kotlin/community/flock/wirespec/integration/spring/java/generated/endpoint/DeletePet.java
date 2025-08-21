@@ -54,7 +54,7 @@ public interface DeletePet extends Wirespec.Endpoint {
         java.util.List.of("pet", serialization.serialize(request.path.petId, Wirespec.getType(Long.class, null))),
         java.util.Collections.emptyMap(),
         java.util.Map.ofEntries(java.util.Map.entry("api_key", serialization.serializeParam(request.headers.api_key, Wirespec.getType(String.class, java.util.Optional.class)))),
-        serialization.serialize(request.getBody(), null)
+        null
       );
     }
 

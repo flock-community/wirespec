@@ -31,7 +31,7 @@ object LoginUser : Wirespec.Endpoint {
       method = request.method.name,
       queries = (mapOf("username" to (request.queries.username?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))) + (mapOf("password" to (request.queries.password?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
       headers = emptyMap(),
-      body = serialization.serialize(request.body, typeOf<Unit>()),
+      body = null,
     )
 
   fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
