@@ -17,10 +17,10 @@ class TypeScriptEmitterTest {
         val ts = """
             |import {Wirespec} from '../Wirespec'
             |
-            |import {Token} from '../model'
-            |import {PotentialTodoDto} from '../model'
-            |import {TodoDto} from '../model'
-            |import {Error} from '../model'
+            |import {type Token} from '../model'
+            |import {type PotentialTodoDto} from '../model'
+            |import {type TodoDto} from '../model'
+            |import {type Error} from '../model'
             |export namespace PutTodo {
             |  type Path = {
             |    "id": string,
@@ -185,16 +185,16 @@ class TypeScriptEmitterTest {
             |
             |import {PutTodo} from "./endpoint/PutTodo"
             |
-            |import {Token} from "./model/Token"
-            |import {PotentialTodoDto} from "./model/PotentialTodoDto"
-            |import {TodoDto} from "./model/TodoDto"
-            |import {Error} from "./model/Error"
+            |import {type Token} from "./model/Token"
+            |import {type PotentialTodoDto} from "./model/PotentialTodoDto"
+            |import {type TodoDto} from "./model/TodoDto"
+            |import {type Error} from "./model/Error"
             |
             |type RawHandler = (req: Wirespec.RawRequest) => Promise<Wirespec.RawResponse>
             |
-            |export const Client = (serialization: Wirespec.Serialization, handler: RawHandler) => ({
-            |  PutTodo: async (props: {id: string, done: boolean, name: string | undefined, token: Token, refreshToken: Token | undefined, body: PotentialTodoDto}) => {
-            |    const req = PutTodo.request(props)
+            |export const client = (serialization: Wirespec.Serialization, handler: RawHandler) => ({
+            |  PutTodo: async (params: {id: string, done: boolean, name: string | undefined, token: Token, refreshToken: Token | undefined, body: PotentialTodoDto}) => {
+            |    const req = PutTodo.request(params)
             |    const rawRequest = PutTodo.client(serialization).to(req)
             |    const rawResponse = await handler(rawRequest)
             |    return PutTodo.client(serialization).from(rawResponse)
@@ -216,7 +216,7 @@ class TypeScriptEmitterTest {
         val ts = """
             |import {Wirespec} from '../Wirespec'
             |
-            |import {TodoDto} from '../model'
+            |import {type TodoDto} from '../model'
             |export namespace GetTodos {
             |  type Path = {}
             |  type Queries = {}
@@ -314,12 +314,12 @@ class TypeScriptEmitterTest {
             |
             |import {GetTodos} from "./endpoint/GetTodos"
             |
-            |import {TodoDto} from "./model/TodoDto"
+            |import {type TodoDto} from "./model/TodoDto"
             |
             |type RawHandler = (req: Wirespec.RawRequest) => Promise<Wirespec.RawResponse>
             |
-            |export const Client = (serialization: Wirespec.Serialization, handler: RawHandler) => ({
-            |  GetTodos: async (props: {}) => {
+            |export const client = (serialization: Wirespec.Serialization, handler: RawHandler) => ({
+            |  GetTodos: async () => {
             |    const req = GetTodos.request()
             |    const rawRequest = GetTodos.client(serialization).to(req)
             |    const rawResponse = await handler(rawRequest)
@@ -380,8 +380,8 @@ class TypeScriptEmitterTest {
         val ts = """
             |import {Wirespec} from '../Wirespec'
             |
-            |import {UserAccountPassword} from '../model'
-            |import {UserAccountToken} from '../model'
+            |import {type UserAccountPassword} from '../model'
+            |import {type UserAccountToken} from '../model'
             |export type UserAccount = UserAccountPassword | UserAccountToken
             |
             |import {Wirespec} from '../Wirespec'

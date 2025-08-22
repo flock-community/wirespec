@@ -65,7 +65,7 @@ open class TypeScriptEmitter() : LanguageEmitter(), TypeScriptEmitters {
 
     override fun emit(union: Union) = """
         |${
-        union.importReferences().distinctBy { it.value }.map { "import {${it.value}} from '../model'" }
+        union.importReferences().distinctBy { it.value }.map { "import {type ${it.value}} from '../model'" }
             .joinToString("\n") { it.trimStart() }
     }
         |export type ${union.identifier.sanitizeSymbol()} = ${union.entries.joinToString(" | ") { it.emit() }}
