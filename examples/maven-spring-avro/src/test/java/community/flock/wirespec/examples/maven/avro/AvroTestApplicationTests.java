@@ -59,7 +59,6 @@ class AvroTestApplicationTests {
         var latch = new CountDownLatch(2);
 
         var record = new TestAvroRecord(
-                new TestAvroMetadata("321", 1L),
                 new TestAvroOrder(
                         "123",
                         "QR Code".getBytes(),
@@ -94,11 +93,9 @@ class AvroTestApplicationTests {
 
         boolean messageConsumed = latch.await(10, TimeUnit.SECONDS);
         assertTrue(messageConsumed);
-
     }
 
     void assertRecordEquals(TestAvroRecord expected, TestAvroRecord actual){
-        assertEquals(expected.metadata(), actual.metadata());
         assertEquals(expected.order().number(), actual.order().number());
         assertEquals(expected.order().a_number(), actual.order().a_number());
         assertEquals(expected.order().created_at(), actual.order().created_at());

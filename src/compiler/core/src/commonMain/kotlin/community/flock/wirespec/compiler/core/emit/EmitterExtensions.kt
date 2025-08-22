@@ -29,11 +29,3 @@ fun Definition.importReferences(): List<Reference.Custom> = when (this) {
     is Enum -> emptyList()
     is Refined -> emptyList()
 }
-
-fun String.injectSubPath(vararg path: String) = split(".").run {
-    if (size > 1) {
-        "${dropLast(1).plus(path).joinToString(".")}.${last()}"
-    } else {
-        joinToString(".")
-    }
-}
