@@ -57,7 +57,7 @@ object Utils {
         is AvroModel.SimpleType -> this.copy(
             value = when (value) {
                 "boolean", "int", "long", "float", "double", "bytes", "string", "null" -> value
-                else -> "<<<<<${value}>>>>>"
+                else -> "<<<<<$value>>>>>"
             },
         )
 
