@@ -5,7 +5,6 @@ import com.eventloopsoftware.kafka.model.TestAvroOrder;
 import com.eventloopsoftware.kafka.model.TestAvroOrderLines;
 import com.eventloopsoftware.kafka.model.TestAvroRecord;
 import com.eventloopsoftware.kafka.model.TestAvroRefNumber;
-import com.eventloopsoftware.kafka.metadata.model.TestAvroMetadata;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
