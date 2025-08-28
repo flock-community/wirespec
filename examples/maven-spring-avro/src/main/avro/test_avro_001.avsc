@@ -4,10 +4,6 @@
   "namespace": "com.eventloopsoftware.kafka",
   "fields": [
     {
-      "name": "metadata",
-      "type": "com.eventloopsoftware.kafka.metadata.model.TestAvroMetadata"
-    },
-    {
       "name": "order",
       "type": {
         "type": "record",

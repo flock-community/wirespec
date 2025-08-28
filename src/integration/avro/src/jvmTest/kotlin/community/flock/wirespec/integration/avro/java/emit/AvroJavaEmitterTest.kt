@@ -38,33 +38,30 @@ class AvroJavaEmitterTest {
 
         val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(type))))
         val expected = """
-            |package packageName.model;
+            |package packageName.avro;
             |
-            |public record Identifier (
-            |  String name
-            |) {
-            |  public static class Avro {
-            |    
-            |    public static final org.apache.avro.Schema SCHEMA = 
-            |      new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Identifier\",\"namespace\":\"packageName\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"}]}");
+            |import packageName.model.Identifier;
             |
-            |    public static Identifier from(org.apache.avro.generic.GenericData.Record record) {
-            |       return new Identifier(
-            |       (String) record.get(0).toString()
-            |      );
-            |    }
-            |    
-            |    public static org.apache.avro.generic.GenericData.Record to(Identifier data) {
-            |      var record = new org.apache.avro.generic.GenericData.Record(SCHEMA);
-            |      record.put(0, data.name());
-            |      return record;
-            |    }
+            |public class IdentifierAvro {
+            |  
+            |  public static final org.apache.avro.Schema SCHEMA = 
+            |    new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Identifier\",\"namespace\":\"packageName\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"}]}");
+            |
+            |  public static Identifier from(org.apache.avro.generic.GenericData.Record record) {
+            |    return new Identifier(
+            |      (String) record.get(0).toString()
+            |    );
             |  }
-            |};
-            |
+            |  
+            |  public static org.apache.avro.generic.GenericData.Record to(Identifier data) {
+            |    var record = new org.apache.avro.generic.GenericData.Record(SCHEMA);
+            |      record.put(0, data.name());
+            |    return record;
+            |  }
+            |}
         """.trimMargin()
         val actual = emitter.emit(ast, noLogger)
-        assertEquals(expected, actual.first().result)
+        assertEquals(expected, actual.find { it.file == "packageName/avro/IdentifierAvro.Java" }?.result)
     }
 
     @Test
@@ -76,43 +73,25 @@ class AvroJavaEmitterTest {
         )
         val ast = AST(nonEmptyListOf(Module(FileUri(""), nonEmptyListOf(enum))))
         val expected = """
-            |package packageName.model;
+            |package packageName.avro;
             |
-            |import community.flock.wirespec.java.Wirespec;
+            |import packageName.model.Identifier;
             |
-            |public enum Identifier implements Wirespec.Enum {
-            |  ONE("ONE"),
-            |  TWO("TWO"),
-            |  THREE("THREE");
-            |  public final String label;
-            |  Identifier(String label) {
-            |    this.label = label;
-            |  }
-            |  @Override
-            |  public String toString() {
-            |    return label;
-            |  }
-            |  @Override
-            |  public String getLabel() {
-            |    return label;
-            |  }
-            |  public static class Avro {
+            |public class IdentifierAvro {
             |
-            |    public static final org.apache.avro.Schema SCHEMA = 
-            |      new org.apache.avro.Schema.Parser().parse("{\"type\":\"enum\",\"name\":\"Identifier\",\"symbols\":[\"ONE\",\"TWO\",\"THREE\"]}");
-            |    
-            |    public static Identifier from(org.apache.avro.generic.GenericData.EnumSymbol record) {
-            |      return Identifier.valueOf(record.toString());
-            |    }
-            |    
-            |    public static org.apache.avro.generic.GenericData.EnumSymbol to(Identifier data) {
-            |      return new org.apache.avro.generic.GenericData.EnumSymbol(SCHEMA, data.name());
-            |    }
+            |  public static final org.apache.avro.Schema SCHEMA = 
+            |    new org.apache.avro.Schema.Parser().parse("{\"type\":\"enum\",\"name\":\"Identifier\",\"symbols\":[\"ONE\",\"TWO\",\"THREE\"]}");
+            |  
+            |  public static Identifier from(org.apache.avro.generic.GenericData.EnumSymbol record) {
+            |    return Identifier.valueOf(record.toString());
+            |  }
+            |  
+            |  public static org.apache.avro.generic.GenericData.EnumSymbol to(Identifier data) {
+            |    return new org.apache.avro.generic.GenericData.EnumSymbol(SCHEMA, data.name());
             |  }
             |}
-            |
         """.trimMargin()
         val actual = emitter.emit(ast, noLogger)
-        assertEquals(expected, actual.first().result)
+        assertEquals(expected, actual.find { it.file == "packageName/avro/IdentifierAvro.Java" }?.result)
     }
 }
