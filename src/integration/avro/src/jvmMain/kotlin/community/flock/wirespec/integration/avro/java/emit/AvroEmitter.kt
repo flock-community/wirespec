@@ -1,7 +1,6 @@
 package community.flock.wirespec.integration.avro.java.emit
 
 import arrow.core.NonEmptyList
-import arrow.core.toNonEmptyListOrNull
 import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.PackageName
@@ -20,11 +19,8 @@ import community.flock.wirespec.integration.avro.Utils.isEnum
 
 class AvroEmitter(override val packageName: PackageName, emitShared: EmitShared) : JavaEmitter(packageName, emitShared) {
 
-    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> {
-        val type = emitAvro<Type>(ast, ::emitAvroType)
-        val enum = emitAvro<Enum>(ast, ::emitAvroEnum)
-        return (super.emit(ast, logger) + type + enum).toNonEmptyListOrNull() ?: error("Cannot emit avro")
-    }
+    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> =
+        super.emit(ast, logger) + emitAvro<Type>(ast, ::emitAvroType) + emitAvro<Enum>(ast, ::emitAvroEnum)
 
     private fun emitAvroSchema(type: Definition, module: Module) = Utils.emitAvroSchema(packageName, type, module)
         ?.replace("\\\"<<<<<", "\" + ")
@@ -88,7 +84,7 @@ class AvroEmitter(override val packageName: PackageName, emitShared: EmitShared)
         }
     }
 
-    val emitFrom: (module: Module) -> (index: Int, field: Field) -> String =
+    private val emitFrom: (module: Module) -> (index: Int, field: Field) -> String =
         { module ->
             { index, field ->
                 when (val reference = field.reference) {
