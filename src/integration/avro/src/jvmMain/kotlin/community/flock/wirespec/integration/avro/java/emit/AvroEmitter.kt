@@ -19,8 +19,7 @@ import community.flock.wirespec.integration.avro.Utils.isEnum
 
 class AvroEmitter(override val packageName: PackageName, emitShared: EmitShared) : JavaEmitter(packageName, emitShared) {
 
-    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> =
-        super.emit(ast, logger) + emitAvro<Type>(ast, ::emitAvroType) + emitAvro<Enum>(ast, ::emitAvroEnum)
+    override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = super.emit(ast, logger) + emitAvro<Type>(ast, ::emitAvroType) + emitAvro<Enum>(ast, ::emitAvroEnum)
 
     private fun emitAvroSchema(type: Definition, module: Module) = Utils.emitAvroSchema(packageName, type, module)
         ?.replace("\\\"<<<<<", "\" + ")
