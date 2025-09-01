@@ -317,6 +317,7 @@ class JavaEmitterTest {
             |
             |
             |
+            |@FunctionalInterface
             |public interface Queue {
             |   void invoke(String message);
             |}
