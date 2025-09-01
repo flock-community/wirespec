@@ -11,7 +11,7 @@ interface KotlinChannelDefinitionEmitter : ChannelDefinitionEmitter, HasPackageN
     override fun emit(channel: Channel) = """
         |${channel.emitImports()}
         |
-        |interface ${emit(channel.identifier)}Channel {
+        |fun interface ${emit(channel.identifier)}Channel {
         |   operator fun invoke(message: ${channel.reference.emit()})
         |}
         |

@@ -114,7 +114,7 @@ class KotlinEmitterTest {
             |
             |
             |
-            |interface QueueChannel {
+            |fun interface QueueChannel {
             |   operator fun invoke(message: String)
             |}
             |
