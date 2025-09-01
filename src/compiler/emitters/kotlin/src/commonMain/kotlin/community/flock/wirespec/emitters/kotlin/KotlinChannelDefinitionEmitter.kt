@@ -11,14 +11,13 @@ interface KotlinChannelDefinitionEmitter : ChannelDefinitionEmitter, HasPackageN
     override fun emit(channel: Channel) = """
         |${channel.emitImports()}
         |
-        |fun interface ${emit(channel.identifier)}Channel {
+        |fun interface ${emit(channel.identifier)} {
         |   operator fun invoke(message: ${channel.reference.emit()})
         |}
         |
     """.trimMargin()
 
     private fun Definition.emitImports() = importReferences()
-        .filter { identifier.value != it.value }
         .map { "import ${packageName.value}.model.${it.value};" }.joinToString("\n") { it.trimStart() }
 
 }
