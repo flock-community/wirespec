@@ -110,12 +110,23 @@ interface TypeScriptEndpointDefinitionEmitter: EndpointDefinitionEmitter, TypeSc
         |}
     """.trimMargin()
 
-    private fun emitServerTo() = """
-        |to: (it) => ({
-        |${Spacer(1)}status: it.status,
-        |${Spacer(1)}headers: {},
-        |${Spacer(1)}body: serialization.serialize(it.body),
-        |})
+    private fun Endpoint.emitServerTo() = """
+        |to: (it) => {
+        |${Spacer(1)}switch (it.status) {
+        |${responses.distinctByStatus().joinToString("\n") { it.emitServerToResponse() }.prependIndent(Spacer(2))}
+        |${Spacer(2)}default:
+        |${Spacer(3)}throw new Error(`Cannot internalize response with status: ${'$'}{it.status}`);
+        |${Spacer(1)}}
+        |}
+    """.trimMargin()
+
+    private fun Endpoint.Response.emitServerToResponse() = """
+        |case ${status.fixStatus()}:
+        |${Spacer(1)}return {
+        |${Spacer(2)}status: ${status.fixStatus()},
+        |${Spacer(2)}headers: {${headers.joinToString { it.emitSerialize("headers") }}},
+        |${Spacer(2)}body: serialization.serialize(it.body),
+        |${Spacer(1)}};
     """.trimMargin()
 
     private fun <E> List<E>.emitType(name: String, block: (E) -> String) =
