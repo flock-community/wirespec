@@ -134,11 +134,28 @@ class TypeScriptEmitterTest {
             |        body: serialization.deserialize(it.body)
             |      }
             |    },
-            |    to: (it) => ({
-            |      status: it.status,
-            |      headers: {},
-            |      body: serialization.serialize(it.body),
-            |    })
+            |    to: (it) => {
+            |      switch (it.status) {
+            |        case 200:
+            |          return {
+            |            status: 200,
+            |            headers: {},
+            |            body: serialization.serialize(it.body),
+            |          };
+            |        case 201:
+            |          return {
+            |            status: 201,
+            |            headers: {"token": serialization.serialize(it.headers["token"]), "refreshToken": serialization.serialize(it.headers["refreshToken"])},
+            |            body: serialization.serialize(it.body),
+            |          };
+            |        case 500:
+            |          return {
+            |            status: 500,
+            |            headers: {},
+            |            body: serialization.serialize(it.body),
+            |          };
+            |      }
+            |    }
             |  })
             |  export const api = {
             |    name: "putTodo",
@@ -288,11 +305,16 @@ class TypeScriptEmitterTest {
             |        body: serialization.deserialize(it.body)
             |      }
             |    },
-            |    to: (it) => ({
-            |      status: it.status,
-            |      headers: {},
-            |      body: serialization.serialize(it.body),
-            |    })
+            |    to: (it) => {
+            |      switch (it.status) {
+            |        case 200:
+            |          return {
+            |            status: 200,
+            |            headers: {},
+            |            body: serialization.serialize(it.body),
+            |          };
+            |      }
+            |    }
             |  })
             |  export const api = {
             |    name: "getTodos",
