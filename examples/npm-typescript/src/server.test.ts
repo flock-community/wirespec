@@ -1,13 +1,11 @@
-import { GetTodoById} from "./gen/endpoint";
-import { GetTodos} from "./gen/endpoint";
-import { PostTodo } from "./gen/endpoint";
-import { Wirespec } from "./gen/Wirespec";
-import { expect, test } from "vitest";
-import { wirespecSerialization } from 'wirespec/serialization'
+import {GetTodoById, GetTodos, PostTodo} from "./gen/endpoint";
+import {Wirespec} from "./gen/Wirespec";
+import {expect, test} from "vitest";
+import {wirespecSerialization} from 'wirespec/serialization'
 
 const body = [
-    { id: "1", name: "Do it now", done: true },
-    { id: "2", name: "Do it tomorrow", done: false }
+    {id: "1", name: "Do it now", done: true},
+    {id: "2", name: "Do it tomorrow", done: false}
 ];
 
 type Api =
@@ -25,10 +23,10 @@ const api: Api = {
         }));
     },
     getTodos(_: GetTodos.Request): Promise<GetTodos.Response> {
-        return Promise.resolve(GetTodos.response200({ total: 2, body}));
+        return Promise.resolve(GetTodos.response200({total: 2, body}));
     },
     getTodoById(_: GetTodoById.Request): Promise<GetTodoById.Response> {
-        return Promise.resolve(GetTodoById.response200({ body: body[0] }));
+        return Promise.resolve(GetTodoById.response200({body: body[0]}));
     }
 };
 
@@ -43,7 +41,7 @@ test('testGetTodos', async () => {
     const request = server.from(rawRequest);
     const response = await api.getTodos(request);
     const rawResponse = server.to(response);
-    const expected = { status: 200, headers: {}, body: JSON.stringify(body) };
+    const expected = {status: 200, headers: {total: "2"}, body: JSON.stringify(body)};
     expect(rawResponse).toEqual(expected)
 });
 
@@ -59,7 +57,7 @@ test('testGetTodoById', async () => {
     const request = server.from(rawRequest);
     const response = await api.getTodoById(request);
     const rawResponse = server.to(response);
-    const expected = { status: 200, headers: {}, body: JSON.stringify(body[0]) };
+    const expected = {status: 200, headers: {}, body: JSON.stringify(body[0])};
     expect(rawResponse).toEqual(expected)
 });
 
@@ -69,12 +67,12 @@ test('testPostTodo', async () => {
         path: ["todos"],
         queries: {},
         headers: {},
-        body: JSON.stringify({ name: "Do it later", done: false })
+        body: JSON.stringify({name: "Do it later", done: false})
     };
     const server = PostTodo.server(wirespecSerialization);
     const request = server.from(rawRequest);
     const response = await api.postTodo(request);
     const rawResponse = server.to(response);
-    const expected = { status: 200, headers: {}, body: JSON.stringify({ id: "3", name: "Do it later", done: false }) };
+    const expected = {status: 200, headers: {}, body: JSON.stringify({id: "3", name: "Do it later", done: false})};
     expect(rawResponse).toEqual(expected)
 });
