@@ -284,6 +284,8 @@ class TypeScriptEmitterTest {
             |            headers: {},
             |            body: serialization.deserialize<TodoDto[]>(it.body)
             |          };
+            |        default:
+            |          throw new Error(`Cannot internalize response with status: ${'$'}{it.status}`);
             |      }
             |    }
             |  })
@@ -311,8 +313,6 @@ class TypeScriptEmitterTest {
             |            headers: {},
             |            body: serialization.serialize(it.body),
             |          };
-            |        default:
-            |          throw new Error(`Cannot internalize response with status: ${'$'}{it.status}`);
             |      }
             |    }
             |  })
