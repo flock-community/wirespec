@@ -114,8 +114,6 @@ interface TypeScriptEndpointDefinitionEmitter: EndpointDefinitionEmitter, TypeSc
         |to: (it) => {
         |${Spacer(1)}switch (it.status) {
         |${responses.distinctByStatus().joinToString("\n") { it.emitServerToResponse() }.prependIndent(Spacer(2))}
-        |${Spacer(2)}default:
-        |${Spacer(3)}throw new Error(`Cannot internalize response with status: ${'$'}{it.status}`);
         |${Spacer(1)}}
         |}
     """.trimMargin()
