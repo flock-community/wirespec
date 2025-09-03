@@ -112,7 +112,7 @@ class AvroEmitter(override val packageName: PackageName, emitShared: EmitShared)
     ): List<Emitted> = ast.modules.toList()
         .flatMap {
             it.statements.filterIsInstance<T>()
-                .map { type -> Emitted("${packageName.toDir()}avro/${emit(type.identifier)}Avro.${extension.name}", e(type, it)) }
+                .map { type -> Emitted("${packageName.toDir()}avro/${emit(type.identifier)}Avro.${extension.value}", e(type, it)) }
         }
 
     private fun String.avroClass(): String = replace(".model.", ".avro.") + "Avro"

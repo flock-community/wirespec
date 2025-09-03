@@ -64,7 +64,7 @@ class AvroKotlinEmitterTest {
         """.trimMargin()
         val actual = emitter.emit(ast, noLogger)
         println(actual.first().result)
-        assertEquals(expected, actual.find { it.file == "packageName/avro/IdentifierAvro.Kotlin" }?.result)
+        assertEquals(expected, actual.find { it.file == "packageName/avro/IdentifierAvro.kt" }?.result)
     }
 
     @Test
@@ -99,6 +99,6 @@ class AvroKotlinEmitterTest {
         """.trimMargin()
         val actual = emitter.emit(ast, noLogger)
         println(actual)
-        assertEquals(expected, actual.find { it.file == "packageName/avro/IdentifierAvro.Kotlin" }?.result)
+        assertEquals(expected, actual.find { it.file == "packageName/avro/IdentifierAvro.kt" }?.result)
     }
 }
