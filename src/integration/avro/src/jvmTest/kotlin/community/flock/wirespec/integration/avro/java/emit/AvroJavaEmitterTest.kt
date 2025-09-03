@@ -61,7 +61,7 @@ class AvroJavaEmitterTest {
             |}
         """.trimMargin()
         val actual = emitter.emit(ast, noLogger)
-        assertEquals(expected, actual.find { it.file == "packageName/avro/IdentifierAvro.Java" }?.result)
+        assertEquals(expected, actual.find { it.file == "packageName/avro/IdentifierAvro.java" }?.result)
     }
 
     @Test
@@ -92,6 +92,6 @@ class AvroJavaEmitterTest {
             |}
         """.trimMargin()
         val actual = emitter.emit(ast, noLogger)
-        assertEquals(expected, actual.find { it.file == "packageName/avro/IdentifierAvro.Java" }?.result)
+        assertEquals(expected, actual.find { it.file == "packageName/avro/IdentifierAvro.java" }?.result)
     }
 }
