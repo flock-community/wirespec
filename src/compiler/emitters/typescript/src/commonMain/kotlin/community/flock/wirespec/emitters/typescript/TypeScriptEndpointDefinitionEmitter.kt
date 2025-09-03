@@ -122,7 +122,7 @@ interface TypeScriptEndpointDefinitionEmitter: EndpointDefinitionEmitter, TypeSc
         |case ${status.fixStatus()}:
         |${Spacer(1)}return {
         |${Spacer(2)}status: ${status.fixStatus()},
-        |${Spacer(2)}headers: {${headers.joinToString { it.emitSerialize("headers") }}},
+        |${Spacer(2)}headers: {${headers.joinToString { it.emitSerialize("headers") }}} as Record<string, string>,
         |${Spacer(2)}body: serialization.serialize(it.body),
         |${Spacer(1)}};
     """.trimMargin()
