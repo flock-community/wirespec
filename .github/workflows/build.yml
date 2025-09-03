@@ -230,7 +230,7 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE
       - name: Run
         run: |
-          ./gradlew publishToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false
+          ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository -Dorg.gradle.parallel=false
 
   release-lib-npm:
 
