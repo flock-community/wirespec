@@ -139,19 +139,19 @@ class TypeScriptEmitterTest {
             |        case 200:
             |          return {
             |            status: 200,
-            |            headers: {},
+            |            headers: {} as Record<string, string>,
             |            body: serialization.serialize(it.body),
             |          };
             |        case 201:
             |          return {
             |            status: 201,
-            |            headers: {"token": serialization.serialize(it.headers["token"]), "refreshToken": serialization.serialize(it.headers["refreshToken"])},
+            |            headers: {"token": serialization.serialize(it.headers["token"]), "refreshToken": serialization.serialize(it.headers["refreshToken"])} as Record<string, string>,
             |            body: serialization.serialize(it.body),
             |          };
             |        case 500:
             |          return {
             |            status: 500,
-            |            headers: {},
+            |            headers: {} as Record<string, string>,
             |            body: serialization.serialize(it.body),
             |          };
             |      }
@@ -310,7 +310,7 @@ class TypeScriptEmitterTest {
             |        case 200:
             |          return {
             |            status: 200,
-            |            headers: {},
+            |            headers: {} as Record<string, string>,
             |            body: serialization.serialize(it.body),
             |          };
             |      }
