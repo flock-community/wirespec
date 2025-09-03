@@ -13,6 +13,7 @@ import community.flock.wirespec.compiler.core.emit.paramList
 import community.flock.wirespec.compiler.core.emit.pathParams
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 
 interface TypeScriptEndpointDefinitionEmitter: EndpointDefinitionEmitter, TypeScriptTypeDefinitionEmitter {
     override fun emit(endpoint: Endpoint) =
@@ -201,15 +202,23 @@ interface TypeScriptEndpointDefinitionEmitter: EndpointDefinitionEmitter, TypeSc
         """${emit(value.identifier)}: serialization.deserialize(it.path[${index}])"""
 
     private fun Field.emitDeserialize(fields: String) =
-        """${emit(identifier)}: serialization.deserialize(it.$fields[${emit(identifier)}])"""
+        if(fields == "headers")
+            "${emit(identifier)}: serialization.deserialize(Object.entries(it.$fields).find(([key]) => key.toLowerCase() === ${emit(identifier.lowercase())})?.[1])"
+        else
+            "${emit(identifier)}: serialization.deserialize(it.$fields[${emit(identifier)}])"
 
     private fun Field.emitSerialize(fields: String) =
-        """${emit(identifier)}: serialization.serialize(it.$fields[${emit(identifier)}])"""
+        "${emit(identifier)}: serialization.serialize(it.$fields[${emit(identifier)}])"
 
     private fun <T> Iterable<T>.joinToObject(transform: ((T) -> CharSequence)) =
         joinToString(", ", "{", "}", transform = transform)
 
     private fun emitHandleFunction(endpoint: Endpoint) =
         "${endpoint.identifier.sanitizeSymbol().firstToLower()}: (request:Request) => Promise<Response>"
+
+    private fun List<Field>.lowercaseIdentifiers() =
+        map { it.copy(identifier = it.identifier.lowercase()) }
+
+    private fun FieldIdentifier.lowercase() = FieldIdentifier(value.lowercase())
 
 }
