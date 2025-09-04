@@ -180,12 +180,14 @@ class ParseTypeTest {
             .let { (first, second) ->
                 first shouldBe Type(
                     comment = null,
+                    annotations = emptyList(),
                     identifier = DefinitionIdentifier("Bar"),
                     extends = emptyList(),
                     shape = Type.Shape(
                         value = listOf(
                             Field(
                                 identifier = FieldIdentifier("int32"),
+                                annotations = emptyList(),
                                 reference = Reference.Primitive(
                                     type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32, null),
                                     isNullable = false,
@@ -193,6 +195,7 @@ class ParseTypeTest {
                             ),
                             Field(
                                 identifier = FieldIdentifier("int64"),
+                                annotations = emptyList(),
                                 reference = Reference.Iterable(
                                     isNullable = false,
                                     reference = Reference.Primitive(
@@ -206,12 +209,14 @@ class ParseTypeTest {
                 )
                 second shouldBe Type(
                     comment = null,
+                    annotations = emptyList(),
                     identifier = DefinitionIdentifier("Foo"),
                     extends = emptyList(),
                     shape = Type.Shape(
                         value = listOf(
                             Field(
                                 identifier = FieldIdentifier("num32"),
+                                annotations = emptyList(),
                                 reference = Reference.Primitive(
                                     type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P32, null),
                                     isNullable = false,
@@ -219,6 +224,7 @@ class ParseTypeTest {
                             ),
                             Field(
                                 identifier = FieldIdentifier("num64"),
+                                annotations = emptyList(),
                                 reference = Reference.Primitive(
                                     type = Reference.Primitive.Type.Number(Reference.Primitive.Type.Precision.P64, null),
                                     isNullable = true,

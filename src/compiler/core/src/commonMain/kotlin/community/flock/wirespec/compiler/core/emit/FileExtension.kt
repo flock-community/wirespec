@@ -9,5 +9,6 @@ enum class FileExtension(override val value: String) : Value<String> {
     Python("py"),
     Wirespec("ws"),
     JSON("json"),
+    YAML("yaml"),
     Avro("avsc"),
 }

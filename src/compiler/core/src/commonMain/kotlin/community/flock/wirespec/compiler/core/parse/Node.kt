@@ -23,6 +23,7 @@ typealias Statements = NonEmptyList<Definition>
 
 sealed interface Definition : Node {
     val comment: Comment?
+    val annotations: List<Annotation>
     val identifier: Identifier
 }
 
@@ -30,6 +31,7 @@ sealed interface Model : Definition
 
 data class Type(
     override val comment: Comment?,
+    override val annotations: List<Annotation>,
     override val identifier: DefinitionIdentifier,
     val shape: Shape,
     val extends: List<Reference>,
@@ -127,28 +129,33 @@ sealed interface Reference : Value<String> {
 data class Field(
     val identifier: FieldIdentifier,
     val reference: Reference,
+    val annotations: List<Annotation>,
 )
 
 data class Enum(
     override val comment: Comment?,
+    override val annotations: List<Annotation>,
     override val identifier: DefinitionIdentifier,
     val entries: Set<String>,
 ) : Model
 
 data class Union(
     override val comment: Comment?,
+    override val annotations: List<Annotation>,
     override val identifier: DefinitionIdentifier,
     val entries: Set<Reference>,
 ) : Model
 
 data class Refined(
     override val comment: Comment?,
+    override val annotations: List<Annotation>,
     override val identifier: DefinitionIdentifier,
     val reference: Reference.Primitive,
 ) : Model
 
 data class Endpoint(
     override val comment: Comment?,
+    override val annotations: List<Annotation>,
     override val identifier: DefinitionIdentifier,
     val method: Method,
     val path: List<Segment>,
@@ -175,6 +182,7 @@ data class Endpoint(
 
 data class Channel(
     override val comment: Comment?,
+    override val annotations: List<Annotation>,
     override val identifier: DefinitionIdentifier,
     val reference: Reference,
 ) : Definition
@@ -183,6 +191,21 @@ data class Channel(
 value class Comment private constructor(override val value: String) : Value<String> {
     companion object {
         operator fun invoke(comment: String) = Comment(comment.removeCommentMarkers())
+    }
+}
+
+data class Annotation(
+    val name: String,
+    val parameters: List<Parameter>,
+) : Node {
+    data class Parameter(
+        val name: String,
+        val value: Value,
+    ) : Node
+    sealed interface Value {
+        data class Single(val value: String) : Value
+        data class Array(val value: List<Single>) : Value
+        data class Dict(val value: List<Parameter>) : Value
     }
 }
 

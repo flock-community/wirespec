@@ -3,6 +3,8 @@ package community.flock.wirespec.compiler.core.parse
 import arrow.core.Either
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
+import community.flock.wirespec.compiler.core.parse.Parser.parseToken
+import community.flock.wirespec.compiler.core.parse.Parser.raiseWrongToken
 import community.flock.wirespec.compiler.core.tokenize.Arrow
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
@@ -18,14 +20,14 @@ import community.flock.wirespec.compiler.core.tokenize.WirespecType
 
 object EndpointParser {
 
-    fun TokenProvider.parseEndpoint(comment: Comment?): Either<WirespecException, Endpoint> = parseToken {
+    fun TokenProvider.parseEndpoint(comment: Comment?, annotations: List<Annotation>): Either<WirespecException, Endpoint> = parseToken {
         when (token.type) {
-            is WirespecType -> parseEndpointDefinition(comment, DefinitionIdentifier(token.value)).bind()
+            is WirespecType -> parseEndpointDefinition(comment, annotations, DefinitionIdentifier(token.value)).bind()
             else -> raiseWrongToken<WirespecType>().bind()
         }
     }
 
-    private fun TokenProvider.parseEndpointDefinition(comment: Comment?, name: DefinitionIdentifier) = parseToken {
+    private fun TokenProvider.parseEndpointDefinition(comment: Comment?, annotations: List<Annotation>, name: DefinitionIdentifier) = parseToken {
         val method = when (token.type) {
             is Method -> Endpoint.Method.valueOf(token.value)
             else -> raiseWrongToken<Method>().bind()
@@ -84,6 +86,7 @@ object EndpointParser {
 
         Endpoint(
             comment = comment,
+            annotations = annotations,
             identifier = name,
             method = method,
             path = segments,
