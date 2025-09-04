@@ -101,11 +101,11 @@ class ParseFieldAnnotationTest {
                         parameters.shouldHaveSize(2)
                         parameters[0].apply {
                             name shouldBe "min"
-                            value shouldBe "1"
+                            value shouldBe Annotation.Value.Single("1")
                         }
                         parameters[1].apply {
                             name shouldBe "max"
-                            value shouldBe "100"
+                            value shouldBe Annotation.Value.Single("100")
                         }
                     }
                 }

@@ -84,7 +84,8 @@ class ParseAnnotationTest {
                     parameters.shouldHaveSize(1)
                     parameters.first().apply {
                         name shouldBe "default" // positional parameter
-                        value shouldBe "1.0.0"
+                        val v = value.shouldBeInstanceOf<Annotation.Value.Single>()
+                        v.value shouldBe "1.0.0"
                     }
                 }
             }
@@ -110,11 +111,13 @@ class ParseAnnotationTest {
                     parameters.shouldHaveSize(2)
                     parameters[0].apply {
                         name shouldBe "min"
-                        value shouldBe "0"
+                        val v = value.shouldBeInstanceOf<Annotation.Value.Single>()
+                        v.value shouldBe "0"
                     }
                     parameters[1].apply {
                         name shouldBe "max"
-                        value shouldBe "100"
+                        val v = value.shouldBeInstanceOf<Annotation.Value.Single>()
+                        v.value shouldBe "100"
                     }
                 }
             }
@@ -203,15 +206,18 @@ class ParseAnnotationTest {
                     parameters.shouldHaveSize(3)
                     parameters[0].apply {
                         name shouldBe "default" // positional
-                        value shouldBe "development"
+                        val v0 = value.shouldBeInstanceOf<Annotation.Value.Single>()
+                        v0.value shouldBe "development"
                     }
                     parameters[1].apply {
                         name shouldBe "env"
-                        value shouldBe "test"
+                        val v1 = value.shouldBeInstanceOf<Annotation.Value.Single>()
+                        v1.value shouldBe "test"
                     }
                     parameters[2].apply {
                         name shouldBe "debug"
-                        value shouldBe "true"
+                        val v2 = value.shouldBeInstanceOf<Annotation.Value.Single>()
+                        v2.value shouldBe "true"
                     }
                 }
             }
@@ -265,11 +271,13 @@ class ParseAnnotationTest {
                     parameters.shouldHaveSize(2)
                     parameters[0].apply {
                         name shouldBe "requests"
-                        value shouldBe "100"
+                        val v0 = value.shouldBeInstanceOf<Annotation.Value.Single>()
+                        v0.value shouldBe "100"
                     }
                     parameters[1].apply {
                         name shouldBe "window"
-                        value shouldBe "60"
+                        val v1 = value.shouldBeInstanceOf<Annotation.Value.Single>()
+                        v1.value shouldBe "60"
                     }
                 }
                 annotations[1].apply {
@@ -320,14 +328,11 @@ class ParseAnnotationTest {
                 annotations.shouldHaveSize(1)
                 annotations.first().apply {
                     name shouldBe "Tag"
-                    parameters.shouldHaveSize(2)
+                    parameters.shouldHaveSize(1)
                     parameters[0].apply {
                         name shouldBe "default"
-                        value shouldBe "TagA"
-                    }
-                    parameters[1].apply {
-                        name shouldBe "default"
-                        value shouldBe "TagB"
+                        val arr = value.shouldBeInstanceOf<Annotation.Value.Array>()
+                        arr.value.map { it.value } shouldBe listOf("TagA", "TagB")
                     }
                 }
             }
@@ -352,14 +357,11 @@ class ParseAnnotationTest {
                 annotations.shouldHaveSize(1)
                 annotations.first().apply {
                     name shouldBe "Security"
-                    parameters.shouldHaveSize(2)
+                    parameters.shouldHaveSize(1)
                     parameters[0].apply {
                         name shouldBe "roles"
-                        value shouldBe "RoleA"
-                    }
-                    parameters[1].apply {
-                        name shouldBe "roles"
-                        value shouldBe "RoleB"
+                        val arr = value.shouldBeInstanceOf<Annotation.Value.Array>()
+                        arr.value.map { it.value } shouldBe listOf("RoleA", "RoleB")
                     }
                 }
             }
@@ -382,22 +384,63 @@ class ParseAnnotationTest {
                 annotations.shouldHaveSize(1)
                 annotations.first().apply {
                     name shouldBe "Config"
-                    parameters.shouldHaveSize(4)
+                    parameters.shouldHaveSize(3)
                     parameters[0].apply {
                         name shouldBe "environment"
-                        value shouldBe "dev"
+                        val v0 = value.shouldBeInstanceOf<Annotation.Value.Single>()
+                        v0.value shouldBe "dev"
                     }
                     parameters[1].apply {
                         name shouldBe "tags"
-                        value shouldBe "tag1"
+                        val arr = value.shouldBeInstanceOf<Annotation.Value.Array>()
+                        arr.value.map { it.value } shouldBe listOf("tag1", "tag2")
                     }
                     parameters[2].apply {
-                        name shouldBe "tags"
-                        value shouldBe "tag2"
-                    }
-                    parameters[3].apply {
                         name shouldBe "debug"
-                        value shouldBe "true"
+                        val v2 = value.shouldBeInstanceOf<Annotation.Value.Single>()
+                        v2.value shouldBe "true"
+                    }
+                }
+            }
+    }
+
+    @Test
+    fun testAnnotationWithDictParameter() {
+        val source = """
+            |@Test(
+            |    list: ["Test"],
+            |    dict: {test: "hello"}
+            |)
+            |type Hello {
+            |    world: Integer
+            |}
+        """.trimMargin()
+
+        parser(source)
+            .shouldBeRight { it.joinToString { it.message } }
+            .shouldHaveSize(1)
+            .first()
+            .shouldBeInstanceOf<Type>()
+            .apply {
+                identifier.value shouldBe "Hello"
+                annotations.shouldHaveSize(1)
+                annotations.first().apply {
+                    name shouldBe "Test"
+                    parameters.shouldHaveSize(2)
+                    parameters[0].apply {
+                        name shouldBe "list"
+                        val arr = value.shouldBeInstanceOf<Annotation.Value.Array>()
+                        arr.value.map { it.value } shouldBe listOf("Test")
+                    }
+                    parameters[1].apply {
+                        name shouldBe "dict"
+                        val dict = value.shouldBeInstanceOf<Annotation.Value.Dict>()
+                        dict.value.shouldHaveSize(1)
+                        dict.value[0].apply {
+                            name shouldBe "test"
+                            val inner = value.shouldBeInstanceOf<Annotation.Value.Single>()
+                            inner.value shouldBe "hello"
+                        }
                     }
                 }
             }

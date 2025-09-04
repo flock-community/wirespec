@@ -196,13 +196,18 @@ value class Comment private constructor(override val value: String) : Value<Stri
 
 data class Annotation(
     val name: String,
-    val parameters: List<AnnotationParameter>,
-) : Node
-
-data class AnnotationParameter(
-    val name: String,
-    val value: String,
-) : Node
+    val parameters: List<Parameter>,
+) : Node {
+    data class Parameter(
+        val name: String,
+        val value: Value,
+    ) : Node
+    sealed interface Value {
+        data class Single(val value: String) : Value
+        data class Array(val value: List<Single>) : Value
+        data class Dict(val value: List<Parameter>) : Value
+    }
+}
 
 sealed class Identifier(name: String) : Value<String> {
     override val value = name.removeBackticks()

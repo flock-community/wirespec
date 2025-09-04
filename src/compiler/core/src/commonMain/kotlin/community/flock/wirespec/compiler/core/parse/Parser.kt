@@ -24,6 +24,7 @@ import community.flock.wirespec.compiler.core.tokenize.LeftBracket
 import community.flock.wirespec.compiler.core.tokenize.LeftParenthesis
 import community.flock.wirespec.compiler.core.tokenize.LiteralString
 import community.flock.wirespec.compiler.core.tokenize.RightBracket
+import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.RightParenthesis
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.TokenType
@@ -138,7 +139,7 @@ private fun TokenProvider.parseDefinition() = either {
         Annotation(name, parameters)
     }
 
-    private fun TokenProvider.parseAnnotationParameters(): Either<WirespecException, List<AnnotationParameter>> = either {
+    private fun TokenProvider.parseAnnotationParameters(): Either<WirespecException, List<Annotation.Parameter>> = either {
         when (token.type) {
             is RightParenthesis -> emptyList()
             else -> {
@@ -155,72 +156,132 @@ private fun TokenProvider.parseDefinition() = either {
         }
     }
 
-    private fun TokenProvider.parseAnnotationParameter(): Either<WirespecException, List<AnnotationParameter>> = either {
+    private fun TokenProvider.parseAnnotationParameter(): Either<WirespecException, List<Annotation.Parameter>> = either {
         when (token.type) {
             is LeftBracket -> {
-                eatToken().bind() // consume [
-                val arrayValues = mutableListOf<String>()
-                while (token.type != RightBracket) {
-                    val value = when (token.type) {
-                        LiteralString -> token.value.removeSurrounding("\"")
-                        else -> token.value
-                    }
-                    arrayValues.add(value)
-                    eatToken().bind()
-                    if (token.type is Comma) {
-                        eatToken().bind() // consume comma
-                    }
-                }
-                when (token.type) {
-                    RightBracket -> eatToken().bind() // consume ]
-                    else -> raiseWrongToken<RightBracket>().bind()
-                }
-                arrayValues.map { AnnotationParameter("default", it) }
+                val arr = parseArray().bind()
+                listOf(Annotation.Parameter("default", Annotation.Value.Array(arr)))
+            }
+
+            is community.flock.wirespec.compiler.core.tokenize.LeftCurly -> {
+                val dictParams = parseDict().bind()
+                listOf(Annotation.Parameter("default", Annotation.Value.Dict(dictParams)))
             }
             else -> {
-                val value = when (token.type) {
+                val firstTokenValue = when (token.type) {
                     LiteralString -> token.value.removeSurrounding("\"")
                     else -> token.value
                 }
                 eatToken().bind()
-                val nameAndValue = when (token.type) {
+                when (token.type) {
                     is Colon -> {
+                        val name = firstTokenValue
                         eatToken().bind()
-                        when (token.type) {
-                            is LeftBracket -> {
-                                eatToken().bind() // consume [
-                                val arrayValues = mutableListOf<String>()
-                                while (token.type != RightBracket) {
-                                    val arrayValue = when (token.type) {
-                                        LiteralString -> token.value.removeSurrounding("\"")
-                                        else -> token.value
-                                    }
-                                    arrayValues.add(arrayValue)
-                                    eatToken().bind()
-                                    if (token.type is Comma) {
-                                        eatToken().bind() // consume comma
-                                    }
-                                }
-                                when (token.type) {
-                                    RightBracket -> eatToken().bind() // consume ]
-                                    else -> raiseWrongToken<RightBracket>().bind()
-                                }
-                                return@either arrayValues.map { AnnotationParameter(value, it) }
-                            }
-                            else -> {
-                                val actualValue = when (token.type) {
-                                    LiteralString -> token.value.removeSurrounding("\"")
-                                    else -> token.value
-                                }
-                                eatToken().bind()
-                                value to actualValue
-                            }
-                        }
+                        val valueNode = parseAnnotationValue().bind()
+                        listOf(Annotation.Parameter(name, valueNode))
                     }
-                    else -> "default" to value
+                    else -> {
+                        listOf(Annotation.Parameter("default", Annotation.Value.Single(firstTokenValue)))
+                    }
                 }
-                listOf(AnnotationParameter(nameAndValue.first, nameAndValue.second))
             }
         }
     }
+
+    private fun TokenProvider.parseAnnotationValue(): Either<WirespecException, Annotation.Value> = either {
+        when (token.type) {
+            is LeftBracket -> {
+                val arr = parseArray().bind()
+                Annotation.Value.Array(arr)
+            }
+
+            is community.flock.wirespec.compiler.core.tokenize.LeftCurly -> {
+                val dictParams = parseDict().bind()
+                Annotation.Value.Dict(dictParams)
+            }
+
+            LiteralString -> Annotation.Value.Single(token.value.removeSurrounding("\""))
+            else -> Annotation.Value.Single(token.value)
+        }.also {
+            // consume token(s) for Single types here
+            if (it is Annotation.Value.Single) {
+                eatToken().bind()
+            }
+        }
+    }
+
+    private fun TokenProvider.parseArray(): Either<WirespecException, List<Annotation.Value.Single>> = either {
+        when (token.type) {
+            is LeftBracket -> eatToken().bind()
+            else -> raiseWrongToken<LeftBracket>().bind()
+        }
+        val items = mutableListOf<Annotation.Value.Single>()
+        while (token.type != RightBracket) {
+            val v = when (token.type) {
+                LiteralString -> Annotation.Value.Single(token.value.removeSurrounding("\""))
+                else -> Annotation.Value.Single(token.value)
+            }
+            items.add(v)
+            eatToken().bind()
+            if (token.type is Comma) eatToken().bind()
+        }
+        when (token.type) {
+            RightBracket -> eatToken().bind()
+            else -> raiseWrongToken<RightBracket>().bind()
+        }
+        items
+    }
+
+    private fun TokenProvider.parseDict(): Either<WirespecException, List<Annotation.Parameter>> = either {
+        when (token.type) {
+            is community.flock.wirespec.compiler.core.tokenize.LeftCurly -> eatToken().bind()
+            else -> raiseWrongToken<community.flock.wirespec.compiler.core.tokenize.LeftCurly>().bind()
+        }
+        val params = mutableListOf<Annotation.Parameter>()
+        while (token.type !is RightCurly) {
+            val key = token.value
+            eatToken().bind()
+            when (token.type) {
+                is Colon -> eatToken().bind()
+                else -> raiseWrongToken<Colon>().bind()
+            }
+            val value = parseAnnotationValue().bind()
+            params.add(Annotation.Parameter(key, value))
+            if (token.type is Comma) eatToken().bind()
+        }
+        // consume closing }
+        when (token.type) {
+            is RightCurly -> eatToken().bind()
+            else -> raiseWrongToken<RightCurly>().bind()
+        }
+        params
+    }
+}
+
+private fun TokenProvider.captureEnclosedAsRawString(openChar: Char, closeChar: Char): Either<WirespecException, String> = either {
+    val sb = StringBuilder()
+    var depth = 0
+    // Start expecting the opening token already at current position
+    while (true) {
+        val t = token
+        val v = t.value
+        when (t.type) {
+            is community.flock.wirespec.compiler.core.tokenize.LeftCurly -> {
+                depth += 1
+                sb.append(v)
+                eatToken().bind()
+            }
+            is RightCurly -> {
+                depth -= 1
+                sb.append(v)
+                eatToken().bind()
+                if (depth == 0) break
+            }
+            else -> {
+                sb.append(v)
+                eatToken().bind()
+            }
+        }
+    }
+    sb.toString()
 }
