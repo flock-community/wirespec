@@ -43,6 +43,6 @@ abstract class LanguageEmitter :
         fun String.firstToLower() = replaceFirstChar(Char::lowercase)
         fun Module.needImports() = statements.any { it is Endpoint || it is Enum || it is Refined }
         fun Module.hasEndpoints() = statements.any { it is Endpoint }
-        fun String.isStatusCode() = toIntOrNull()?.let { it in 0..599 } ?: false
+        fun String.isStatusCode() = toIntOrNull()?.let { it in 100..599 } ?: false
     }
 }

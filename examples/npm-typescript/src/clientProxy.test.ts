@@ -18,7 +18,7 @@ const mock = (method: Wirespec.Method, path: string[], status: number, headers: 
 });
 
 const mocks = [
-    mock("GET", ["api", "todos"], 200, {total: "2"}, JSON.stringify(body)),
+    mock("GET", ["api", "todos"], 200, {"x-total": "2"}, JSON.stringify(body)),
     mock("GET", ["api", "todos", "1"], 200, {}, JSON.stringify(body[0])),
     mock("POST", ["api", "todos"], 200, {}, JSON.stringify({id: "3", name: "Do more", done: true}))
 ];
@@ -56,7 +56,7 @@ const api = webClient(PostTodo.api, GetTodos.api, GetTodoById.api, GetUsers.api)
 test('testGetTodos', async () => {
     const request: GetTodos.Request = GetTodos.request({});
     const response = await api.getTodos(request);
-    const expected = {status: 200, headers: {total: "2"}, body};
+    const expected = {status: 200, headers: {"X-Total": "2"}, body};
     expect(response).toEqual(expected)
 });
 

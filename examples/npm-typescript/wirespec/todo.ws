@@ -17,7 +17,8 @@ type TodoError {
 }
 
 endpoint GetTodos GET /api/todos ? {done:Boolean?} -> {
-    200 -> TodoDto[] # {total:Integer}
+    200 -> TodoDto[] # {`X-Total`:Integer}
+    400 -> TodoError
 }
 
 endpoint GetTodoById GET /api/todos/{id: TodoId} -> {

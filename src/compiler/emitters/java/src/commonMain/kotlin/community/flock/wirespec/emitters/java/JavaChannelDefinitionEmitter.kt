@@ -12,6 +12,7 @@ interface JavaChannelDefinitionEmitter: ChannelDefinitionEmitter, HasPackageName
     override fun emit(channel: Channel) = """
         |${channel.emitImports()}
         |
+        |@FunctionalInterface
         |public interface ${emit(channel.identifier)} {
         |   void invoke(${channel.emitFullyQualified(channel.reference)}${channel.reference.emitRoot()} message);
         |}

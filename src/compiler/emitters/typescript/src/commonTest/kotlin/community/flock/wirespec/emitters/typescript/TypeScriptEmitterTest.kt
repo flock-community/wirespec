@@ -104,7 +104,7 @@ class TypeScriptEmitterTest {
             |        case 201:
             |          return {
             |            status: 201,
-            |            headers: {"token": serialization.deserialize(it.headers["token"]), "refreshToken": serialization.deserialize(it.headers["refreshToken"])},
+            |            headers: {"token": serialization.deserialize(Object.entries(it.headers).find(([key]) => key.toLowerCase() === "token")?.[1]), "refreshToken": serialization.deserialize(Object.entries(it.headers).find(([key]) => key.toLowerCase() === "refreshtoken")?.[1])},
             |            body: serialization.deserialize<TodoDto>(it.body)
             |          };
             |        case 500:
@@ -129,16 +129,33 @@ class TypeScriptEmitterTest {
             |          "done": serialization.deserialize(it.queries["done"]),      "name": serialization.deserialize(it.queries["name"])
             |        },
             |        headers: {
-            |          "token": serialization.deserialize(it.headers["token"]),      "refreshToken": serialization.deserialize(it.headers["refreshToken"])
+            |          "token": serialization.deserialize(Object.entries(it.headers).find(([key]) => key.toLowerCase() === "token")?.[1]),      "refreshToken": serialization.deserialize(Object.entries(it.headers).find(([key]) => key.toLowerCase() === "refreshtoken")?.[1])
             |        },
             |        body: serialization.deserialize(it.body)
             |      }
             |    },
-            |    to: (it) => ({
-            |      status: it.status,
-            |      headers: {},
-            |      body: serialization.serialize(it.body),
-            |    })
+            |    to: (it) => {
+            |      switch (it.status) {
+            |        case 200:
+            |          return {
+            |            status: 200,
+            |            headers: {} as Record<string, string>,
+            |            body: serialization.serialize(it.body),
+            |          };
+            |        case 201:
+            |          return {
+            |            status: 201,
+            |            headers: {"token": serialization.serialize(it.headers["token"]), "refreshToken": serialization.serialize(it.headers["refreshToken"])} as Record<string, string>,
+            |            body: serialization.serialize(it.body),
+            |          };
+            |        case 500:
+            |          return {
+            |            status: 500,
+            |            headers: {} as Record<string, string>,
+            |            body: serialization.serialize(it.body),
+            |          };
+            |      }
+            |    }
             |  })
             |  export const api = {
             |    name: "putTodo",
@@ -288,11 +305,16 @@ class TypeScriptEmitterTest {
             |        body: serialization.deserialize(it.body)
             |      }
             |    },
-            |    to: (it) => ({
-            |      status: it.status,
-            |      headers: {},
-            |      body: serialization.serialize(it.body),
-            |    })
+            |    to: (it) => {
+            |      switch (it.status) {
+            |        case 200:
+            |          return {
+            |            status: 200,
+            |            headers: {} as Record<string, string>,
+            |            body: serialization.serialize(it.body),
+            |          };
+            |      }
+            |    }
             |  })
             |  export const api = {
             |    name: "getTodos",

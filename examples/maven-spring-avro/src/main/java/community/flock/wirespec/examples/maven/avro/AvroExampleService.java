@@ -27,7 +27,7 @@ public class AvroExampleService implements TestAvroRecord {
     @Override
     public void invoke(com.eventloopsoftware.kafka.model.TestAvroRecord message) {
         var template = new KafkaTemplate<>(kafkaProducerFactory);
-        var avro = com.eventloopsoftware.kafka.model.TestAvroRecord.Avro.to(message);
+        var avro = com.eventloopsoftware.kafka.avro.TestAvroRecordAvro.to(message);
         template.send(TOPIC, avro);
     }
 
@@ -36,7 +36,7 @@ public class AvroExampleService implements TestAvroRecord {
         containerProps.setGroupId(groupId);
         var container = new KafkaMessageListenerContainer<>(kafkaConsumerFactory, containerProps);
         container.setupMessageListener((MessageListener<String, GenericData.Record>) data -> {
-            var message = com.eventloopsoftware.kafka.model.TestAvroRecord.Avro.from(data.value());
+            var message = com.eventloopsoftware.kafka.avro.TestAvroRecordAvro.from(data.value());
             listener.invoke(message);
         });
         container.start();
