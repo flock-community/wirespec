@@ -80,8 +80,7 @@ fun tokenize(source: String) = WirespecSpec
     .toTypedArray()
 
 @JsExport
-fun parse(source: String) =
-    object : ParseContext, NoLogger {}.parse(nonEmptyListOf(ModuleContent(FileUri(""), source))).produce()
+fun parse(source: String) = object : ParseContext, NoLogger {}.parse(nonEmptyListOf(ModuleContent(FileUri(""), source))).produce()
 
 @JsExport
 fun convert(source: String, converters: Converters, strict: Boolean = false) = when (converters) {
@@ -105,21 +104,21 @@ fun emit(wsAst: WsAST, emitter: Emitters, packageName: String, emitShared: Boole
         Emitters.JAVA -> ast.modules.flatMap {
             JavaEmitter(PackageName(packageName), EmitShared(emitShared)).emit(
                 it,
-                noLogger
+                noLogger,
             )
         }
 
         Emitters.KOTLIN -> ast.modules.flatMap {
             KotlinEmitter(PackageName(packageName), EmitShared(emitShared)).emit(
                 it,
-                noLogger
+                noLogger,
             )
         }
 
         Emitters.PYTHON -> ast.modules.flatMap {
             PythonEmitter(PackageName(packageName), EmitShared(emitShared)).emit(
                 it,
-                noLogger
+                noLogger,
             )
         }
 
@@ -130,21 +129,21 @@ fun emit(wsAst: WsAST, emitter: Emitters, packageName: String, emitShared: Boole
                 .let(::Emitted.curried()("openapi")::invoke)
                 .let { nonEmptyListOf(it) }
 
-        Emitters.OPENAPI_V3 -> OpenAPIV3Emitter
-            .emitOpenAPIObject(ast.modules.flatMap { it.statements }, null)
-            .let(encode(OpenAPIObject.serializer()))
-            .let(::Emitted.curried()("openapi")::invoke)
-            .let { nonEmptyListOf(it) }
+        Emitters.OPENAPI_V3 ->
+            OpenAPIV3Emitter
+                .emitOpenAPIObject(ast.modules.flatMap { it.statements }, null)
+                .let(encode(OpenAPIObject.serializer()))
+                .let(::Emitted.curried()("openapi")::invoke)
+                .let { nonEmptyListOf(it) }
 
-        Emitters.AVRO -> ast.modules
-            .map { ast -> AvroEmitter.emit(ast) }
-            .map { Json.encodeToString(it) }
-            .map(::Emitted.curried()("avro")::invoke)
-
+        Emitters.AVRO ->
+            ast.modules
+                .map { ast -> AvroEmitter.emit(ast) }
+                .map { Json.encodeToString(it) }
+                .map(::Emitted.curried()("avro")::invoke)
     }
         .map { it.produce() }
         .toTypedArray()
 }
-
 
 private fun <T> encode(serializer: SerializationStrategy<T>) = { value: T -> Json.encodeToString(serializer, value) }
