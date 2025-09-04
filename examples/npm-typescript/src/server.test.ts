@@ -23,7 +23,7 @@ const api: Api = {
         }));
     },
     getTodos(_: GetTodos.Request): Promise<GetTodos.Response> {
-        return Promise.resolve(GetTodos.response200({total: 2, body}));
+        return Promise.resolve(GetTodos.response200({"X-Total": 2, body}));
     },
     getTodoById(_: GetTodoById.Request): Promise<GetTodoById.Response> {
         return Promise.resolve(GetTodoById.response200({body: body[0]}));
@@ -41,7 +41,7 @@ test('testGetTodos', async () => {
     const request = server.from(rawRequest);
     const response = await api.getTodos(request);
     const rawResponse = server.to(response);
-    const expected = {status: 200, headers: {total: "2"}, body: JSON.stringify(body)};
+    const expected = {status: 200, headers: {"X-Total": "2"}, body: JSON.stringify(body)};
     expect(rawResponse).toEqual(expected)
 });
 

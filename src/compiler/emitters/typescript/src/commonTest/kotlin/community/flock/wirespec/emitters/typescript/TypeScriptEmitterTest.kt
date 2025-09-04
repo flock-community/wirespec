@@ -104,7 +104,7 @@ class TypeScriptEmitterTest {
             |        case 201:
             |          return {
             |            status: 201,
-            |            headers: {"token": serialization.deserialize(it.headers["token"]), "refreshToken": serialization.deserialize(it.headers["refreshToken"])},
+            |            headers: {"token": serialization.deserialize(Object.entries(it.headers).find(([key]) => key.toLowerCase() === "token")?.[1]), "refreshToken": serialization.deserialize(Object.entries(it.headers).find(([key]) => key.toLowerCase() === "refreshtoken")?.[1])},
             |            body: serialization.deserialize<TodoDto>(it.body)
             |          };
             |        case 500:
@@ -129,7 +129,7 @@ class TypeScriptEmitterTest {
             |          "done": serialization.deserialize(it.queries["done"]),      "name": serialization.deserialize(it.queries["name"])
             |        },
             |        headers: {
-            |          "token": serialization.deserialize(it.headers["token"]),      "refreshToken": serialization.deserialize(it.headers["refreshToken"])
+            |          "token": serialization.deserialize(Object.entries(it.headers).find(([key]) => key.toLowerCase() === "token")?.[1]),      "refreshToken": serialization.deserialize(Object.entries(it.headers).find(([key]) => key.toLowerCase() === "refreshtoken")?.[1])
             |        },
             |        body: serialization.deserialize(it.body)
             |      }
