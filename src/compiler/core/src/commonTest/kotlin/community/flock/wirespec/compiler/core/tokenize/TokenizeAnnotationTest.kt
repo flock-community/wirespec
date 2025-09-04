@@ -208,4 +208,18 @@ class TokenizeAnnotationTest {
         TypeDefinition, WirespecType, Equals, WsString,
         EndOfProgram,
     )
+
+    @Test
+    fun testAnnotationWithDictParameter() = testTokenizer(
+        """
+        |@Test(dict: {test: "hello"})
+        |type Hello = Integer
+        """.trimMargin(),
+        Annotation, LeftParenthesis,
+        DromedaryCaseIdentifier, Colon,
+        LeftCurly, DromedaryCaseIdentifier, Colon, LiteralString, RightCurly,
+        RightParenthesis,
+        TypeDefinition, WirespecType, Equals, WsInteger(P64),
+        EndOfProgram,
+    )
 }
