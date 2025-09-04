@@ -25,10 +25,12 @@ import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
+import community.flock.wirespec.compiler.core.parse.Statements
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.openapi.Common.json
 import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter
+import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter.emitOpenAPIObject
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 import community.flock.kotlinx.openapi.bindings.v2.Type as OpenAPIType
@@ -40,11 +42,17 @@ object OpenAPIV2Emitter : Emitter {
     override fun emit(
         ast: AST,
         logger: Logger,
-    ): NonEmptyList<Emitted> = ast.modules.flatMap { emit(it) }
+    ): NonEmptyList<Emitted> = ast.modules
+        .flatMap { it.statements }
+        .let {
+            Emitted(
+                "OpenAPI.${OpenAPIV3Emitter.extension.value}",
+                json.encodeToString(emitOpenAPIObject(it, null)),
+            )
+        }
+        .let { nonEmptyListOf(it) }
 
-    private fun emit(module: Module): NonEmptyList<Emitted> = nonEmptyListOf(Emitted("Swagger.${OpenAPIV3Emitter.extension.value}", json.encodeToString(emitSwaggerObject(module))))
-
-    fun emitSwaggerObject(module: Module): SwaggerObject = SwaggerObject(
+    fun emitSwaggerObject(statements: Statements): SwaggerObject = SwaggerObject(
         swagger = "2.0",
         info = InfoObject(
             title = "Wirespec",
@@ -52,7 +60,7 @@ object OpenAPIV2Emitter : Emitter {
         ),
         consumes = listOf("application/json"),
         produces = listOf("application/json"),
-        paths = module.statements.filterIsInstance<Endpoint>().groupBy { it.path }
+        paths = statements.filterIsInstance<Endpoint>().groupBy { it.path }
             .map { (segments, endpoints) ->
                 Path(segments.emitSegment()) to PathItemObject(
                     parameters = segments.filterIsInstance<Endpoint.Segment.Param>().map {
@@ -75,7 +83,7 @@ object OpenAPIV2Emitter : Emitter {
                     head = endpoints.emit(Endpoint.Method.HEAD),
                 )
             }.toMap(),
-        definitions = module.statements
+        definitions = statements
             .filterIsInstance<Refined>().associate { refined ->
                 when (val type = refined.reference.type) {
                     Reference.Primitive.Type.Boolean ->
@@ -114,7 +122,7 @@ object OpenAPIV2Emitter : Emitter {
                             )
                         }
                 }
-            } + module.statements
+            } + statements
             .filterIsInstance<Type>().associate { type ->
                 type.identifier.value to SchemaObject(
                     properties = type.shape.value.associate { it.toProperties() },
@@ -123,7 +131,7 @@ object OpenAPIV2Emitter : Emitter {
                         .map { it.identifier.value }
                         .takeIf { it.isNotEmpty() },
                 )
-            } + module.statements
+            } + statements
             .filterIsInstance<community.flock.wirespec.compiler.core.parse.Enum>()
             .associate { enum ->
                 enum.identifier.value to SchemaObject(

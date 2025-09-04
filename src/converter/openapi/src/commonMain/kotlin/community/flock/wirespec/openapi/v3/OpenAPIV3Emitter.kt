@@ -30,9 +30,9 @@ import community.flock.wirespec.compiler.core.parse.Channel
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
 import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Refined
+import community.flock.wirespec.compiler.core.parse.Statements
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
@@ -52,26 +52,27 @@ object OpenAPIV3Emitter : Emitter {
     override fun emit(
         ast: AST,
         logger: Logger,
-    ): NonEmptyList<Emitted> = ast.modules.flatMap { emit(it) }
+    ): NonEmptyList<Emitted> = ast.modules
+        .flatMap { it.statements }
+        .let {
+            Emitted(
+                "OpenAPI.${extension.value}",
+                json.encodeToString(emitOpenAPIObject(it, null)),
+            )
+        }
+        .let { nonEmptyListOf(it) }
 
-    private fun emit(module: Module): NonEmptyList<Emitted> = nonEmptyListOf(
-        Emitted(
-            "OpenAPI.${extension.value}",
-            json.encodeToString(emitOpenAPIObject(module, null)),
-        ),
-    )
-
-    fun emitOpenAPIObject(module: Module, options: Options? = null) = OpenAPIObject(
+    fun emitOpenAPIObject(statements: Statements, options: Options? = null) = OpenAPIObject(
         openapi = "3.0.0",
         info = InfoObject(
             title = options?.title ?: "Wirespec",
             version = options?.version ?: "0.0.0",
         ),
-        paths = module.emitPaths(),
-        components = module.emitComponents(),
+        paths = statements.emitPaths(),
+        components = statements.emitComponents(),
     )
 
-    private fun Module.emitComponents() = statements.toList()
+    private fun Statements.emitComponents() = this
         .filter { it !is Endpoint }
         .associate {
             it.identifier.value to when (it) {
@@ -85,7 +86,7 @@ object OpenAPIV3Emitter : Emitter {
         }
         .let { ComponentsObject(it) }
 
-    private fun Module.emitPaths() = statements
+    private fun Statements.emitPaths() = this
         .filterIsInstance<Endpoint>()
         .groupBy { it.path }.map { (path, endpoints) ->
             Path(path.emitSegment()) to PathItemObject(
@@ -159,7 +160,8 @@ object OpenAPIV3Emitter : Emitter {
         oneOf = entries.map { it.emitSchema() },
     )
 
-    private fun List<Endpoint>.emit(method: Endpoint.Method): OperationObject? = filter { it.method == method }.map { it.emit() }.firstOrNull()
+    private fun List<Endpoint>.emit(method: Endpoint.Method): OperationObject? =
+        filter { it.method == method }.map { it.emit() }.firstOrNull()
 
     private fun Endpoint.emit(): OperationObject = OperationObject(
         operationId = identifier.value,
