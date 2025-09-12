@@ -129,6 +129,7 @@ object OpenAPIV2Parser : Parser {
                 listOf(
                     Endpoint(
                         comment = null,
+                        annotations = emptyList(),
                         identifier = DefinitionIdentifier(name.sanitize()),
                         method = method,
                         path = segments,
@@ -159,6 +160,7 @@ object OpenAPIV2Parser : Parser {
                 parameter.enum != null -> listOf(
                     Enum(
                         comment = null,
+                        annotations = emptyList(),
                         identifier = DefinitionIdentifier(className(name, "Parameter", parameter.name).sanitize()),
                         entries = parameter.enum!!.map { it.content }.toSet(),
                     ),
@@ -278,6 +280,7 @@ object OpenAPIV2Parser : Parser {
         schemaObject.allOf != null -> listOf(
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier(name.sanitize()),
                 shape = Type.Shape(
                     schemaObject.allOf
@@ -310,7 +313,7 @@ object OpenAPIV2Parser : Parser {
             schemaObject.enum!!
                 .map { it.content }
                 .toSet()
-                .let { listOf(Enum(comment = null, identifier = DefinitionIdentifier(name.sanitize()), entries = it)) }
+                .let { listOf(Enum(comment = null, annotations = emptyList(), identifier = DefinitionIdentifier(name.sanitize()), entries = it)) }
 
         else -> when (schemaObject.type) {
             null, OpenapiType.OBJECT -> {
@@ -320,6 +323,7 @@ object OpenAPIV2Parser : Parser {
                 val schema = listOf(
                     Type(
                         comment = null,
+                        annotations = emptyList(),
                         identifier = DefinitionIdentifier(name.sanitize()),
                         shape = Type.Shape(toField(schemaObject, name)),
                         extends = emptyList(),
@@ -462,6 +466,7 @@ object OpenAPIV2Parser : Parser {
 
     private fun SwaggerObject.toField(header: HeaderObject, identifier: String) = Field(
         identifier = FieldIdentifier(identifier),
+        annotations = emptyList(),
         reference = when (header.type) {
             OpenapiType.ARRAY -> header.items?.let { resolve(it) }?.let { toReference(it, identifier, false) }
                 ?: error("Item cannot be null")
@@ -479,6 +484,7 @@ object OpenAPIV2Parser : Parser {
             is SchemaObject -> {
                 Field(
                     identifier = FieldIdentifier(key),
+                    annotations = emptyList(),
                     reference = when {
                         value.enum != null -> toReference(value, className(name, key), isNullable)
                         value.type == OpenapiType.ARRAY -> toReference(value, className(name, key, "Array"), isNullable)
@@ -490,6 +496,7 @@ object OpenAPIV2Parser : Parser {
             is ReferenceObject -> {
                 Field(
                     identifier = FieldIdentifier(key),
+                    annotations = emptyList(),
                     reference = toReference(value, isNullable),
                 )
             }
@@ -522,7 +529,13 @@ object OpenAPIV2Parser : Parser {
                     null -> TODO("Not yet implemented")
                 }
             }
-        }.let { Field(FieldIdentifier(parameter.name), it) }
+        }.let {
+            Field(
+                identifier = FieldIdentifier(parameter.name),
+                annotations = emptyList(),
+                reference = it,
+            )
+        }
 
     private fun Path.toSegments(parameters: List<ParameterObject>) = value.split("/").drop(1).map { segment ->
         val isParam = segment.isNotEmpty() && segment[0] == '{' && segment[segment.length - 1] == '}'

@@ -15,6 +15,7 @@ object Ast {
     val objectInRequest = listOf(
         Endpoint(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("TestWithDashGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "test-with-dash")),
@@ -44,15 +45,18 @@ object Ast {
         ),
         Type(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("TestWithDashGETRequestBody"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("id"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(type = Reference.Primitive.Type.String(null), isNullable = true),
                     ),
                     Field(
                         identifier = FieldIdentifier("nest"),
+                        annotations = emptyList(),
                         reference = Reference.Custom(value = "TestWithDashGETRequestBodyNest", isNullable = true),
                     ),
                 ),
@@ -61,15 +65,18 @@ object Ast {
         ),
         Type(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("TestWithDashGETRequestBodyNest"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("a"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(type = Reference.Primitive.Type.Number(constraint = null), isNullable = true),
                     ),
                     Field(
                         identifier = FieldIdentifier("b"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(type = Reference.Primitive.Type.Number(constraint = null), isNullable = true),
                     ),
                 ),
@@ -80,6 +87,7 @@ object Ast {
     val objectInResponse = listOf(
         Endpoint(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("Test"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "test")),
@@ -106,11 +114,13 @@ object Ast {
         ),
         Type(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("Test200ResponseBody"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("id"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -118,6 +128,7 @@ object Ast {
                     ),
                     Field(
                         identifier = FieldIdentifier("nest"),
+                        annotations = emptyList(),
                         reference = Reference.Custom(
                             value = "Test200ResponseBodyNest",
                             isNullable = true,
@@ -129,11 +140,13 @@ object Ast {
         ),
         Type(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("Test200ResponseBodyNest"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("a"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number(constraint = null),
                             isNullable = true,
@@ -141,6 +154,7 @@ object Ast {
                     ),
                     Field(
                         identifier = FieldIdentifier("b"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number(constraint = null),
                             isNullable = true,
@@ -154,6 +168,7 @@ object Ast {
     val additionalProperties = listOf(
         Endpoint(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("AdditionalProperties"),
             method = Endpoint.Method.GET,
             path = listOf(
@@ -222,11 +237,13 @@ object Ast {
         ),
         Type(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("AdditionalProperties404ResponseBody"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("code"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Integer(constraint = null),
                             isNullable = true,
@@ -234,6 +251,7 @@ object Ast {
                     ),
                     Field(
                         identifier = FieldIdentifier("text"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -245,11 +263,13 @@ object Ast {
         ),
         Type(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("Message"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("code"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Integer(constraint = null),
                             isNullable = true,
@@ -257,6 +277,7 @@ object Ast {
                     ),
                     Field(
                         identifier = FieldIdentifier("text"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -270,6 +291,7 @@ object Ast {
     val array = nonEmptyListOf(
         Endpoint(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("ArrayGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "array")),
@@ -345,11 +367,13 @@ object Ast {
         ),
         Type(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("ArrayGET200ResponseBody"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("code"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number(constraint = null),
                             isNullable = true,
@@ -357,6 +381,7 @@ object Ast {
                     ),
                     Field(
                         identifier = FieldIdentifier("text"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -368,11 +393,13 @@ object Ast {
         ),
         Type(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("MessageArray"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("code"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.Number(constraint = null),
                             isNullable = true,
@@ -380,6 +407,7 @@ object Ast {
                     ),
                     Field(
                         identifier = FieldIdentifier("text"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -394,6 +422,7 @@ object Ast {
     val allOf = listOf(
         Endpoint(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("AllofGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "allof")),
@@ -420,11 +449,13 @@ object Ast {
         ),
         Type(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("AllofGET200ResponseBody"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("a"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -432,6 +463,7 @@ object Ast {
                     ),
                     Field(
                         identifier = FieldIdentifier("b"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = false,
@@ -439,6 +471,7 @@ object Ast {
                     ),
                     Field(
                         identifier = FieldIdentifier("c"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -446,6 +479,7 @@ object Ast {
                     ),
                     Field(
                         identifier = FieldIdentifier("d"),
+                        annotations = emptyList(),
                         reference = Reference.Custom(
                             value = "AllofGET200ResponseBodyD",
                             isNullable = true,
@@ -457,11 +491,13 @@ object Ast {
         ),
         Type(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("AllofGET200ResponseBodyD"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("e"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -473,11 +509,13 @@ object Ast {
         ),
         Type(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("Foo"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("a"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -489,11 +527,13 @@ object Ast {
         ),
         Type(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("Bar"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("b"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = false,
@@ -508,6 +548,7 @@ object Ast {
     val oneOf = listOf(
         Endpoint(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("OneofGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "oneof")),
@@ -534,6 +575,7 @@ object Ast {
         ),
         Union(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("OneofGET200ResponseBody"),
             entries = setOf(
                 Reference.Custom(value = "Foo", isNullable = false),
@@ -550,11 +592,13 @@ object Ast {
         ),
         Type(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("OneofGET200ResponseBody2"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("c"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -566,11 +610,13 @@ object Ast {
         ),
         Type(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("OneofGET200ResponseBody3"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("d"),
+                        annotations = emptyList(),
                         reference = Reference.Custom(
                             value = "OneofGET200ResponseBody3D",
                             isNullable = true,
@@ -582,13 +628,13 @@ object Ast {
         ),
         Type(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("OneofGET200ResponseBody3D"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
-                        identifier = FieldIdentifier(
-                            "e",
-                        ),
+                        identifier = FieldIdentifier("e"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -600,11 +646,13 @@ object Ast {
         ),
         Type(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("Foo"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("a"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -616,11 +664,13 @@ object Ast {
         ),
         Type(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("Bar"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("b"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = false,
@@ -635,12 +685,14 @@ object Ast {
     val enum = listOf(
         Endpoint(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("EnumGET"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "enum")),
             queries = listOf(
                 Field(
                     identifier = FieldIdentifier("order"),
+                    annotations = emptyList(),
                     reference = Reference.Custom(
                         value = "EnumGETParameterOrder",
                         isNullable = true,
@@ -680,16 +732,19 @@ object Ast {
         ),
         Enum(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("EnumGETParameterOrder"),
             entries = setOf("ASC", "DESC"),
         ),
         Type(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("EnumGET201ResponseBody"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("code"),
+                        annotations = emptyList(),
                         reference = Reference.Custom(
                             value = "EnumGET201ResponseBodyCode",
                             isNullable = false,
@@ -697,6 +752,7 @@ object Ast {
                     ),
                     Field(
                         identifier = FieldIdentifier("text"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -708,16 +764,19 @@ object Ast {
         ),
         Enum(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("EnumGET201ResponseBodyCode"),
             entries = setOf("WARNING", "ERROR"),
         ),
         Type(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("Message"),
             shape = Type.Shape(
                 value = listOf(
                     Field(
                         identifier = FieldIdentifier("code"),
+                        annotations = emptyList(),
                         reference = Reference.Iterable(
                             reference = Reference.Custom(
                                 value = "ErrorType",
@@ -728,6 +787,7 @@ object Ast {
                     ),
                     Field(
                         identifier = FieldIdentifier("text"),
+                        annotations = emptyList(),
                         reference = Reference.Primitive(
                             type = Reference.Primitive.Type.String(null),
                             isNullable = true,
@@ -739,6 +799,7 @@ object Ast {
         ),
         Enum(
             comment = null,
+            annotations = emptyList(),
             identifier = DefinitionIdentifier("ErrorType"),
             entries = setOf("WARNING", "ERROR"),
         ),
