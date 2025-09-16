@@ -206,12 +206,14 @@ object OpenAPIV3Emitter : Emitter {
         `in` = location,
         name = identifier.value,
         schema = reference.emitSchema(),
+        required = !reference.isNullable,
     )
 
     private fun Endpoint.Segment.Param.emitParameter(): ParameterObject = ParameterObject(
         `in` = ParameterLocation.PATH,
         name = identifier.value,
         schema = reference.emitSchema(),
+        required = !reference.isNullable,
     )
 
     private fun Field.emitHeader(): Pair<String, HeaderOrReferenceObject> = identifier.value to reference.emitHeader()
