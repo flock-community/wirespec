@@ -29,6 +29,22 @@ jackson integration to avoid unexpected behavior.
   </TabItem>
 </Tabs>
 
+:::usage
+
+<Tabs>
+  <TabItem value="kotin" label="Kotlin">
+    ```kotlin
+    val objectMapper = ObjectMapper().registerModule(WirespecModuleJava())
+    ```
+  </TabItem>
+  <TabItem value="java" label="Java">
+    ```java
+    ObjectMapper objectMapper = new ObjectMapper().registerModule(new WirespecModuleJava())
+    ```
+  </TabItem>
+</Tabs>
+val mapper = ObjectMapper.registerModule(WirespecModuleKotlin())
+
 :::info
 Make sure to use the latest version, found here:
 
