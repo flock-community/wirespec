@@ -20,6 +20,25 @@ type Todo {
 }
 ```
 
+## Annotations on Endpoints
+
+Endpoints can be annotated to provide metadata for code generation, documentation, or runtime behavior. Note that you
+need to create a custom emitter to make use of these annotations:
+
+```wirespec
+@ApiOperation("Retrieve all todo items")
+@RateLimit("100/hour")
+endpoint GetTodos GET /todos -> {
+    200 -> Todo[]
+}
+
+@Deprecated("Use CreateTodoV2 instead")
+@RequiresAuth("admin")
+endpoint CreateTodo POST Todo /todos -> {
+    201 -> Unit
+}
+```
+
 ## Request Body
 
 You can specify a [type](types) for the request body like so:

@@ -34,6 +34,18 @@ type User {
 }
 ```
 
+### Annotations on Types
+
+Types can be annotated to provide metadata for code generation or validation:
+
+```wirespec
+@Name("users")
+type User {
+    id: Integer,
+    name: String,
+}
+```
+
 It is also possible to reference other types that you defined:
 
 ```wirespec
@@ -66,6 +78,18 @@ start with uppercase letters:
 type User {
     `UserID`: Integer,
     `User-Type`: String
+}
+```
+
+### Annotations on Fields
+
+Fields within composite types can also be annotated to provide metadata for individual fields:
+
+```wirespec
+type User {
+    @Deprecated
+    name: String,
+    age: Integer
 }
 ```
 
@@ -110,6 +134,17 @@ enum Direction {
 Both upper case and camel case values are accepted:
 
 ```wirespec
+enum Role {
+    SoftwareEngineer,
+    SystemAdmin
+}
+```
+
+Enums can also be annotated:
+
+```wirespec
+@StringEnum
+@JsonProperty("role_type")
 enum Role {
     SoftwareEngineer,
     SystemAdmin

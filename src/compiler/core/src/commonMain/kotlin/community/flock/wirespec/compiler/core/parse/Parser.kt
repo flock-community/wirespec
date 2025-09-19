@@ -14,6 +14,7 @@ import community.flock.wirespec.compiler.core.TokenizedModule
 import community.flock.wirespec.compiler.core.exceptions.EmptyModule
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WrongTokenException
+import community.flock.wirespec.compiler.core.parse.AnnotationParser.parseAnnotations
 import community.flock.wirespec.compiler.core.tokenize.ChannelDefinition
 import community.flock.wirespec.compiler.core.tokenize.Comment
 import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
@@ -24,6 +25,7 @@ import community.flock.wirespec.compiler.core.tokenize.TypeDefinition
 import community.flock.wirespec.compiler.core.tokenize.WirespecDefinition
 import community.flock.wirespec.compiler.core.validate.Validator
 import community.flock.wirespec.compiler.utils.HasLogger
+import community.flock.wirespec.compiler.core.tokenize.Annotation as AnnotationToken
 
 data class ParseOptions(
     val strict: Boolean = false,
@@ -73,6 +75,7 @@ private fun TokenProvider.parseModule(): EitherNel<WirespecException, Module> = 
         .apply {
             while (hasNext()) {
                 when (token.type) {
+                    is AnnotationToken -> add(parseDefinition())
                     is Comment -> add(parseDefinition())
                     is WirespecDefinition -> add(parseDefinition())
                     else -> eatToken()
@@ -86,16 +89,17 @@ private fun TokenProvider.parseModule(): EitherNel<WirespecException, Module> = 
 }
 
 private fun TokenProvider.parseDefinition() = either {
+    val annotations = parseAnnotations().bind()
     val comment = when (token.type) {
         is Comment -> Comment(token.value).also { eatToken().bind() }
         else -> null
     }
     when (token.type) {
         is WirespecDefinition -> when (token.type as WirespecDefinition) {
-            is TypeDefinition -> with(TypeParser) { parseType(comment) }.bind()
-            is EnumTypeDefinition -> with(EnumParser) { parseEnum(comment) }.bind()
-            is EndpointDefinition -> with(EndpointParser) { parseEndpoint(comment) }.bind()
-            is ChannelDefinition -> with(ChannelParser) { parseChannel(comment) }.bind()
+            is TypeDefinition -> with(TypeParser) { parseType(comment, annotations) }.bind()
+            is EnumTypeDefinition -> with(EnumParser) { parseEnum(comment, annotations) }.bind()
+            is EndpointDefinition -> with(EndpointParser) { parseEndpoint(comment, annotations) }.bind()
+            is ChannelDefinition -> with(ChannelParser) { parseChannel(comment, annotations) }.bind()
         }
 
         else -> raiseWrongToken<WirespecDefinition>().bind()

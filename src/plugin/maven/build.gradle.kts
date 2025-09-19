@@ -24,7 +24,7 @@ dependencies {
     implementation(project(":src:plugin:arguments"))
     implementation(libs.kotlin.reflect)
     implementation(libs.bundles.maven.plugin)
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.9.25")
+    implementation(libs.kotlin.compiler.embeddable)
 }
 
 java {

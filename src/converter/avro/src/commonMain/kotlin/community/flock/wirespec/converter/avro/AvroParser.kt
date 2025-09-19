@@ -24,6 +24,7 @@ object AvroParser : Parser {
         val result: List<Definition> = avro.flatten() + when (avro) {
             is AvroModel.RecordType -> Channel(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier(name = avro.name),
                 reference = Reference.Custom(
                     value = avro.name,
