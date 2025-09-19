@@ -1,7 +1,7 @@
-import { wirespecFetch, HandleFetch } from "wirespec/fetch";
-import { wirespecSerialization } from "wirespec/serialization";
-import {expect, test, vi} from "vitest";
-import {client} from "./gen/client";
+import { HandleFetch, wirespecFetch } from "@flock/wirespec/fetch";
+import { wirespecSerialization } from "@flock/wirespec/serialization";
+import { expect, test, vi } from "vitest";
+import { client } from "./gen/client";
 
 test("testGetTodoById", async () => {
   // @ts-ignore
