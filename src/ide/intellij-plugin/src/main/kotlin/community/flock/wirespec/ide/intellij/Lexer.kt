@@ -3,7 +3,6 @@ package community.flock.wirespec.ide.intellij
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.tokenize.Annotation
 import community.flock.wirespec.compiler.core.tokenize.Arrow
-import community.flock.wirespec.compiler.core.tokenize.At
 import community.flock.wirespec.compiler.core.tokenize.Brackets
 import community.flock.wirespec.compiler.core.tokenize.ChannelDefinition
 import community.flock.wirespec.compiler.core.tokenize.Character
@@ -105,7 +104,6 @@ class Lexer : IntellijLexer() {
         is RegExp -> Types.REG_EXP
         is Underscore -> Types.UNDERSCORE
         is LiteralString -> Types.LITERAL_STRING
-        is At -> Types.AT
     }
 
     override fun getTokenStart() = tokens[index]

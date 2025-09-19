@@ -1,7 +1,7 @@
 package community.flock.wirespec.compiler.core
 
+import community.flock.wirespec.compiler.core.tokenize.Annotation
 import community.flock.wirespec.compiler.core.tokenize.Arrow
-import community.flock.wirespec.compiler.core.tokenize.At
 import community.flock.wirespec.compiler.core.tokenize.Brackets
 import community.flock.wirespec.compiler.core.tokenize.CaseVariant
 import community.flock.wirespec.compiler.core.tokenize.ChannelDefinition
@@ -81,12 +81,12 @@ object WirespecSpec : LanguageSpec {
         Regex("^:") to Colon,
         Regex("^,") to Comma,
         Regex("^\\?") to QuestionMark,
-        Regex("^@") to At,
         Regex("^#") to Hash,
         Regex("^\\[\\]") to Brackets,
         Regex("^\\[") to LeftBracket,
         Regex("^\\]") to RightBracket,
         Regex("^\\b(GET|POST|PUT|DELETE|OPTIONS|HEAD|PATCH|TRACE)\\b") to Method,
+        Regex("^@[A-Z][a-zA-Z0-9_]*") to Annotation,
         Regex("^[a-z`][a-zA-Z0-9_\\-`]*") to fieldIdentifier,
         Regex("^\\b[A-Z][a-zA-Z0-9_]*\\b") to typeIdentifier,
         Regex("^/[a-zA-Z0-9-_]+") to Path,

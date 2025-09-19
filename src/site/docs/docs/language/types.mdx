@@ -39,7 +39,7 @@ type User {
 Types can be annotated to provide metadata for code generation or validation:
 
 ```wirespec
-@name("users")
+@Name("users")
 type User {
     id: Integer,
     name: String,
@@ -87,7 +87,7 @@ Fields within composite types can also be annotated to provide metadata for indi
 
 ```wirespec
 type User {
-    @deprecated
+    @Deprecated
     name: String,
     age: Integer
 }

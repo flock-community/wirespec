@@ -47,6 +47,5 @@ interface Types {
 
         val ANNOTATION = ElementType("ANNOTATION")
         val LITERAL_STRING = ElementType("STRING_LITERAL")
-        val AT = ElementType("AT")
     }
 }

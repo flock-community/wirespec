@@ -18,7 +18,8 @@ channel NotificationQueue -> Task
 
 ## Annotations on Channels
 
-Channels can be annotated to provide metadata for message handling, routing, or other channel-specific behavior:
+Channels can be annotated to provide metadata for message handling, routing, or other channel-specific behavior. Note
+that you need to create a custom emitter to make use of these annotations:
 
 ```wirespec
 @QueueType("persistent")

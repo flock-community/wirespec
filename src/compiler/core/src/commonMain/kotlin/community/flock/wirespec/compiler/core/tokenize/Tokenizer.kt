@@ -12,7 +12,6 @@ data class TokenizeOptions(
     val removeWhitespace: Boolean = true,
     val specifyTypes: Boolean = true,
     val specifyFieldIdentifiers: Boolean = true,
-    val groupAnnotations: Boolean = true,
 )
 
 fun LanguageSpec.tokenize(source: String, options: TokenizeOptions = TokenizeOptions()): NonEmptyList<Token> = tokenize(source, nonEmptyListOf(Token(type = StartOfProgram, value = "", coordinates = Coordinates())))
@@ -57,7 +56,7 @@ private fun LanguageSpec.extractRegex(
 
         escapedForwardSlash.containsMatchIn(source) -> extractRegex(
             source.drop(2),
-            regex + source.substring(0, 2),
+            regex + source.take(2),
             incompleteTokens,
         )
 
@@ -98,7 +97,6 @@ private fun LanguageSpec.optimize(options: TokenizeOptions) = { tokens: NonEmpty
         .runOption(options.removeWhitespace) { removeWhiteSpace() }
         .runOption(options.specifyTypes) { map { it.specifyType(typeIdentifier.specificTypes) } }
         .runOption(options.specifyFieldIdentifiers) { map { it.specifyFieldIdentifier(fieldIdentifier.caseVariants) } }
-        .runOption(options.groupAnnotations) { this.groupAnnotations() }
 }
 
 private fun NonEmptyList<Token>.runOption(bool: Boolean, block: NonEmptyList<Token>.() -> NonEmptyList<Token>) = if (bool) block() else this
@@ -123,32 +121,3 @@ private fun Token.specifyFieldIdentifier(caseVariants: List<Pair<Regex, CaseVari
 
     else -> null
 } ?: this
-
-private fun List<Token>.groupAnnotations() = run {
-    val result = mutableListOf<Token>()
-    var i = 0
-    while (i < this.size) {
-        val current = this[i]
-        if (i + 1 < this.size && current.type is At && this[i + 1].type is WirespecType) {
-            result.add(listOf(current, this[i + 1]).mergeTokens(Annotation))
-            i += 2
-        } else {
-            result.add(current)
-            i += 1
-        }
-    }
-    result.toNonEmptyListOrNull() ?: endToken().nel()
-}
-
-private fun List<Token>.mergeTokens(tokenType: TokenType): Token {
-    val value = joinToString("") { it.value }
-    val coordinates = Coordinates(
-        line = first().coordinates.line,
-        position = last().coordinates.position,
-        idxAndLength = Coordinates.IdxAndLength(
-            idx = last().coordinates.idxAndLength.idx,
-            length = value.length,
-        ),
-    )
-    return Token(value, tokenType, coordinates)
-}

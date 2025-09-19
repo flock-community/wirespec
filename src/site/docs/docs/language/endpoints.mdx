@@ -22,7 +22,8 @@ type Todo {
 
 ## Annotations on Endpoints
 
-Endpoints can be annotated to provide metadata for code generation, documentation, or runtime behavior:
+Endpoints can be annotated to provide metadata for code generation, documentation, or runtime behavior. Note that you
+need to create a custom emitter to make use of these annotations:
 
 ```wirespec
 @ApiOperation("Retrieve all todo items")

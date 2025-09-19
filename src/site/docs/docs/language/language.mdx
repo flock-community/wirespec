@@ -36,11 +36,15 @@ type Todo {
 }
 ```
 
-Comments placed above definitions are also used to emit comments in the target languages when code is generated, though this behavior may vary depending on the target language and emitter implementation.
+Comments placed above definitions are also used to emit comments in the target languages when code is generated, though
+this behavior may vary depending on the target language and emitter implementation.
 
 ## Annotations
 
-Annotations provide a way to attach metadata to definitions in Wirespec. They are denoted by the `@` symbol followed by an identifier and can optionally include parameters. Annotations can be applied to endpoints, channels, types, and enums to provide additional information for code generation or processing:
+Annotations provide a way to attach metadata to definitions in Wirespec. They are denoted by the `@` symbol followed by
+an identifier and can optionally include parameters. Annotations can be applied to endpoints, channels, types, and
+enums to provide additional information for code generation or processing. Note that you need to create a custom emitter
+to make use of these annotations:
 
 ```wirespec
 @Deprecated("No longer used in V2")
