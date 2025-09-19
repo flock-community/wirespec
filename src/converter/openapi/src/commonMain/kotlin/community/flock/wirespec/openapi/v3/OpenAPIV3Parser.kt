@@ -145,6 +145,7 @@ object OpenAPIV3Parser : Parser {
 
                 Endpoint(
                     comment = null,
+                    annotations = emptyList(),
                     identifier = DefinitionIdentifier(name),
                     method = method,
                     path = segments,
@@ -372,6 +373,7 @@ object OpenAPIV3Parser : Parser {
         schemaObject.oneOf != null || schemaObject.anyOf != null -> listOf(
             Union(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier(name.sanitize()),
                 entries = schemaObject.oneOf
                     .orEmpty()
@@ -397,6 +399,7 @@ object OpenAPIV3Parser : Parser {
         schemaObject.allOf != null -> listOf(
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier(name.sanitize()),
                 shape = Type.Shape(
                     schemaObject.allOf.orEmpty().flatMap { toField(resolve(it), name) }
@@ -422,7 +425,7 @@ object OpenAPIV3Parser : Parser {
             schemaObject.enum!!
                 .map { it.content }
                 .toSet()
-                .let { listOf(Enum(comment = null, identifier = DefinitionIdentifier(name), entries = it)) }
+                .let { listOf(Enum(comment = null, annotations = emptyList(), identifier = DefinitionIdentifier(name), entries = it)) }
 
         else -> when (schemaObject.type) {
             null, OpenapiType.OBJECT -> {
@@ -432,6 +435,7 @@ object OpenAPIV3Parser : Parser {
                 val schema = listOf(
                     Type(
                         comment = null,
+                        annotations = emptyList(),
                         identifier = DefinitionIdentifier(name),
                         shape = Type.Shape(toField(schemaObject, name)),
                         extends = emptyList(),
@@ -599,6 +603,7 @@ object OpenAPIV3Parser : Parser {
             is SchemaObject -> {
                 Field(
                     identifier = FieldIdentifier(key),
+                    annotations = emptyList(),
                     reference = when {
                         value.enum != null -> toReference(value, isNullable, className(name, key))
                         value.type == OpenapiType.ARRAY -> toReference(
@@ -614,8 +619,9 @@ object OpenAPIV3Parser : Parser {
 
             is ReferenceObject -> {
                 Field(
-                    FieldIdentifier(key),
-                    toReference(value, isNullable),
+                    identifier = FieldIdentifier(key),
+                    annotations = emptyList(),
+                    reference = toReference(value, isNullable),
                 )
             }
         }
@@ -627,7 +633,13 @@ object OpenAPIV3Parser : Parser {
             is ReferenceObject -> toReference(s, isNullable)
             is SchemaObject -> toReference(s, isNullable, name + if (s.type == OpenapiType.ARRAY) "Array" else "")
             null -> Reference.Primitive(type = Reference.Primitive.Type.String(null), isNullable = isNullable)
-        }.let { Field(FieldIdentifier(parameter.name), it) }
+        }.let {
+            Field(
+                identifier = FieldIdentifier(parameter.name),
+                annotations = emptyList(),
+                reference = it,
+            )
+        }
     }
 
     private fun OpenAPIObject.toField(header: HeaderObject, identifier: String, name: String): Field {
@@ -636,7 +648,13 @@ object OpenAPIV3Parser : Parser {
             is ReferenceObject -> toReference(s, isNullable)
             is SchemaObject -> toReference(s, isNullable, name)
             null -> Reference.Primitive(type = Reference.Primitive.Type.String(null), isNullable = isNullable)
-        }.let { Field(FieldIdentifier(identifier), it) }
+        }.let {
+            Field(
+                identifier = FieldIdentifier(identifier),
+                annotations = emptyList(),
+                reference = it,
+            )
+        }
     }
 
     private data class FlattenRequest(

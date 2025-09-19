@@ -10,4 +10,4 @@ sealed class SpecificFile(extension: FileExtension) : RuntimeException("No ${ext
 class JSONFileError : SpecificFile(FileExtension.JSON)
 class WirespecFileError : SpecificFile(FileExtension.Wirespec)
 
-class PickAtLeastOneLanguageOrEmitter : RuntimeException("Pick a least one language or emitter.")
+class PickAtLeastOneLanguageOrEmitter : RuntimeException("Pick at least one language or emitter.")
