@@ -24,7 +24,7 @@ The integration works for both [producers](#restcontroller) (RestController) and
         <dependency>
             <groupId>community.flock.wirespec.integration</groupId>
             <artifactId>spring-jvm</artifactId>
-            <version>0.14.3</version>
+            <version>0.0.0</version>
         </dependency>
         ```
 
@@ -32,7 +32,12 @@ The integration works for both [producers](#restcontroller) (RestController) and
         <plugin>
             <groupId>community.flock.wirespec.plugin.maven</groupId>
             <artifactId>wirespec-maven-plugin</artifactId>
-            <version>0.14.3</version>
+            <version>0.0.0</version>
+            <dependency>
+                <groupId>community.flock.wirespec.integration</groupId>
+                <artifactId>spring-jvm</artifactId>
+                <version>0.0.0</version>
+            </dependency>
             <executions>
                 <execution>
                     <id>java</id>
@@ -51,10 +56,16 @@ The integration works for both [producers](#restcontroller) (RestController) and
 
     </TabItem>
     <TabItem value="gradle" label="Gradle">
-        Add both the dependency and plugin to your `build.gradle.kts` file:
+        Add the dependency to your depedencies, as well as the plugin dependencies
+
+        For single module project this is in the  `build.gradle.kts` file, and the `settings.gradle.kts`
         ```gradle
-        implementation("community.flock.wirespec.integration:spring-jvm:0.14.3")
+        dependencies {
+            implementation("community.flock.wirespec.integration:spring-jvm:0.14.3")
+        }
         ```
+
+        For multi-module projects add the plugin dependency also to your `buildSrc/build.gradle.kts`, and the `build.gradle.kts` of the module to which you want to add the wirespec plugin
 
         ```gradle
         tasks.register<CompileWirespecTask>("wirespec-compile") {
@@ -104,9 +115,19 @@ endpoint GetTodo GET /api/todos/{id: Integer} -> {
 Now we can compile our definition and generate sources to the specified output directory by running the following
 command:
 
-```bash
-maven install
-```
+<Tabs>
+    <TabItem value="maven" label="Maven">
+        ```bash
+        mvn install
+        ```
+    </TabItem>
+    <TabItem value="gradle" label="Gradle">
+        ```bash
+        ./gradlew build
+        ```
+    </TabItem>
+
+</Tabs>
 
 :::note
 It's not necessary to understand the ins and outs of the generated code, so we won't go into detail here.
