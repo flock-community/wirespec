@@ -3,12 +3,14 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "npm install && npm run generate && npm run compile && npm test",
+    "build": "npm run generate && npm run compile && npm test",
     "clean": "npm run clean:node_modules && npm run clean:generated",
-    "clean:wirespec": "npx --yes rimraf node_modules/.bin/wirespec",
-    "clean:node_modules": "npx --yes rimraf ./node_modules",
     "clean:generated": "npx --yes rimraf ./src/gen",
+    "clean:node_modules": "npx --yes rimraf ./node_modules",
+    "clean:wirespec": "npx --yes rimraf node_modules/.bin/wirespec",
     "compile": "tsc",
+    "format": "npm run format:prettier",
+    "format:prettier": "npx --yes prettier --write --ignore-unknown .",
     "generate": "wirespec compile -i ./wirespec -o ./src/gen -l TypeScript --shared",
     "test": "vitest --run",
     "update": "npx --yes update-ruecksichtslos"
