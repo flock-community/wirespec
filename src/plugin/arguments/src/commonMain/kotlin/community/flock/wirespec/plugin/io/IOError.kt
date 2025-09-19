@@ -21,4 +21,4 @@ class OutputShouldBeADirectory : IOError("Output should be a directory.")
 
 class ThisShouldNeverHappen : IOError("This should never happen.")
 
-class PickAtLeastOneLanguageOrEmitter : IOError("Pick a least one language or emitter.")
+class PickAtLeastOneLanguageOrEmitter : IOError("Pick at least one language or emitter.")

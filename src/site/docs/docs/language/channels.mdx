@@ -15,3 +15,18 @@ Channels can be defined using the `channel` keyword, along with an identifier an
 ```wirespec
 channel NotificationQueue -> Task
 ```
+
+## Annotations on Channels
+
+Channels can be annotated to provide metadata for message handling, routing, or other channel-specific behavior. Note
+that you need to create a custom emitter to make use of these annotations:
+
+```wirespec
+@QueueType("persistent")
+@MaxRetries("3")
+channel NotificationQueue -> Task
+
+@Topic("user.events")
+@PartitionKey("userId")
+channel UserEventStream -> UserEvent
+```

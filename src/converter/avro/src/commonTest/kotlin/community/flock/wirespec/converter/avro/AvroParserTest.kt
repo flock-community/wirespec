@@ -63,12 +63,14 @@ class AvroParserTest {
         assertEquals(
             Type(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("User"),
                 extends = emptyList(),
                 shape = Type.Shape(
                     listOf(
                         Field(
                             identifier = FieldIdentifier("id"),
+                            annotations = emptyList(),
                             reference = Reference.Primitive(
                                 type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P32, null),
                                 isNullable = false,
@@ -76,6 +78,7 @@ class AvroParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("username"),
+                            annotations = emptyList(),
                             reference = Reference.Primitive(
                                 type = Reference.Primitive.Type.String(null),
                                 isNullable = false,
@@ -83,6 +86,7 @@ class AvroParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("passwordHash"),
+                            annotations = emptyList(),
                             reference = Reference.Primitive(
                                 type = Reference.Primitive.Type.String(null),
                                 isNullable = false,
@@ -90,6 +94,7 @@ class AvroParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("signupDate"),
+                            annotations = emptyList(),
                             reference = Reference.Primitive(
                                 type = Reference.Primitive.Type.Integer(Reference.Primitive.Type.Precision.P64, null),
                                 isNullable = false,
@@ -97,6 +102,7 @@ class AvroParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("emailAddresses"),
+                            annotations = emptyList(),
                             reference = Reference.Iterable(
                                 reference = Reference.Custom(
                                     "EmailAddress",
@@ -107,6 +113,7 @@ class AvroParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("twitterAccounts"),
+                            annotations = emptyList(),
                             reference = Reference.Iterable(
                                 reference = Reference.Custom(
                                     "TwitterAccount",
@@ -117,6 +124,7 @@ class AvroParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("toDoItems"),
+                            annotations = emptyList(),
                             reference = Reference.Iterable(
                                 reference = Reference.Custom(
                                     "ToDoItem",
@@ -134,6 +142,7 @@ class AvroParserTest {
         assertEquals(
             Channel(
                 comment = null,
+                annotations = emptyList(),
                 identifier = DefinitionIdentifier("User"),
                 reference = Reference.Custom(
                     "User",

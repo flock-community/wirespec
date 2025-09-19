@@ -36,7 +36,54 @@ type Todo {
 }
 ```
 
-Comments placed above definitions are also used to emit comments in the target languages when code is generated, though this behavior may vary depending on the target language and emitter implementation.
+Comments placed above definitions are also used to emit comments in the target languages when code is generated, though
+this behavior may vary depending on the target language and emitter implementation.
+
+## Annotations
+
+Annotations provide a way to attach metadata to definitions in Wirespec. They are denoted by the `@` symbol followed by
+an identifier and can optionally include parameters. Annotations can be applied to endpoints, channels, types, and
+enums to provide additional information for code generation or processing. Note that you need to create a custom emitter
+to make use of these annotations:
+
+```wirespec
+@Deprecated("No longer used in V2")
+type User {
+    id: Integer,
+    name: String
+}
+
+@Deprecated("Use GetUserV2 instead")
+endpoint GetUser GET /users/{id: Integer} -> {
+    200 -> User
+}
+```
+
+Annotations can also have named attributes with different value types:
+
+```wirespec
+@Security(role: "admin", level: 1)
+@RateLimit(requests: 100, period: "hour")
+endpoint AdminEndpoint GET /admin -> {
+    200 -> AdminData
+}
+
+@Validate(min: 1, max: 100, required: true)
+type Score {
+    value: Integer
+}
+```
+
+Multiple annotations can be applied to the same definition:
+
+```wirespec
+@JsonSerializable("strict")
+@ValidateInput
+type CreateUserRequest {
+    name: String,
+    email: String
+}
+```
 
 ## Coding Conventions
 

@@ -4,10 +4,11 @@
   "main": "index.js",
   "scripts": {
     "build": "npm install && npm run generate && npm run compile && npm test",
-    "clean": "npm run clean:node_modules && npm run clean:generated",
+    "clean": "npm run clean:node_modules && npm run clean:generated && npm run clean:lib",
     "clean:wirespec": "npx --yes rimraf node_modules/.bin/wirespec",
     "clean:node_modules": "npx --yes rimraf ./node_modules",
     "clean:generated": "npx --yes rimraf ./src/gen",
+    "clean:lib": "npx --yes rimraf ./lib",
     "compile": "tsc",
     "generate": "wirespec compile -i ./wirespec -o ./src/gen -l TypeScript --shared",
     "test": "vitest --run",
