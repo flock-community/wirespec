@@ -3,28 +3,30 @@ import {Wirespec} from "./gen/Wirespec";
 import { wirespecFetch, HandleFetch } from "wirespec/fetch";
 
 // @ts-ignore
-const mockHandler = vi.fn<HandleFetch>(() => Promise.resolve({
+const mockHandler = vi.fn<HandleFetch>(() =>
+  Promise.resolve({
     headers: new Map([
-        ["Content-Type", "application/json"],
-        ["Content-Length", "2"],
+      ["Content-Type", "application/json"],
+      ["Content-Length", "2"],
     ]),
-    text: () => Promise.resolve("{}")
-}))
+    text: () => Promise.resolve("{}"),
+  })
+);
 
-test('wirespecFetch', async () => {
-    const req: Wirespec.RawRequest = {
-        method: "GET",
-        path: ["test"],
-        queries: {
-            "test": "test"
-        },
-        headers: {
-            "test": "TEST"
-        },
-        body: "",
-    }
-    const res = await wirespecFetch(req, mockHandler)
-    expect(mockHandler).toHaveBeenCalledTimes(1)
-    expect(res.body).toEqual("{}")
-})
+test("wirespecFetch", async () => {
+  const req: Wirespec.RawRequest = {
+    method: "GET",
+    path: ["test"],
+    queries: {
+      test: "test",
+    },
+    headers: {
+      test: "TEST",
+    },
+    body: "",
+  };
+  const res = await wirespecFetch(req, mockHandler);
 
+  expect(mockHandler).toHaveBeenCalledTimes(1);
+  expect(res.body).toEqual("{}");
+});

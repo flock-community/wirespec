@@ -11,7 +11,8 @@ clean:
 	(cd npm-typescript && npm run clean)
 
 format:
-	(cd gradle-ktor && ./gradlew spotlessApply)
+	(cd gradle-ktor && ./gradlew spotlessApply) && \
+	(cd npm-typescript && npm run format)
 
 yolo:
 	./mvnw verify -DskipTests && \
