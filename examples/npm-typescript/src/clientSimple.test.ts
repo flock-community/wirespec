@@ -12,7 +12,7 @@ type Api = GetTodos.Handler & GetTodoById.Handler & PostTodo.Handler;
 
 const handleFetch =
   <Req extends Wirespec.Request<any>, Res extends Wirespec.Response<any>>(
-    client: Wirespec.Client<Req, Res>
+    client: Wirespec.Client<Req, Res>,
   ) =>
   (request: Req): Promise<Res> => {
     const mock = (
@@ -20,7 +20,7 @@ const handleFetch =
       path: string[],
       status: number,
       headers: Record<string, string>,
-      body: any
+      body: any,
     ) => ({
       method,
       path,
@@ -34,7 +34,7 @@ const handleFetch =
         ["api", "todos"],
         200,
         { "x-total": "2" },
-        JSON.stringify(body)
+        JSON.stringify(body),
       ),
       mock("GET", ["api", "todos", "1"], 200, {}, JSON.stringify(body[0])),
       mock(
@@ -42,14 +42,14 @@ const handleFetch =
         ["api", "todos"],
         200,
         {},
-        JSON.stringify({ id: "3", name: "Do more", done: true })
+        JSON.stringify({ id: "3", name: "Do more", done: true }),
       ),
     ];
     const rawRequest = client(wirespecSerialization).to(request);
     const rawResponse = mocks.find(
       (it) =>
         it.method === rawRequest.method &&
-        it.path.join("/") === rawRequest.path.join("/")
+        it.path.join("/") === rawRequest.path.join("/"),
     );
     if (rawResponse == undefined) throw new Error("Request is undefined");
 
