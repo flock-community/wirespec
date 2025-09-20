@@ -1,5 +1,6 @@
 package community.flock.wirespec.openapi.v2
 
+import arrow.core.nonEmptyListOf
 import community.flock.kotlinx.openapi.bindings.v2.OpenAPI
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Endpoint
@@ -13,6 +14,7 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.openapi.common.Ast
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser.parse
+import io.kotest.matchers.nulls.shouldNotBeNull
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -28,7 +30,7 @@ class OpenAPIV2ParserTest {
         val json = SystemFileSystem.source(path).buffered().readString()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         val endpoint = ast
             .filterIsInstance<Endpoint>()
@@ -52,7 +54,7 @@ class OpenAPIV2ParserTest {
         val json = SystemFileSystem.source(path).buffered().readString()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         val expectedTypeDefinitions = listOf(
             Type(
@@ -327,7 +329,7 @@ class OpenAPIV2ParserTest {
         val json = SystemFileSystem.source(path).buffered().readString()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         val expected = listOf(
             Endpoint(
@@ -378,7 +380,7 @@ class OpenAPIV2ParserTest {
         val json = SystemFileSystem.source(path).buffered().readString()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         assertEquals(Ast.objectInRequest, ast)
     }
@@ -389,7 +391,7 @@ class OpenAPIV2ParserTest {
         val json = SystemFileSystem.source(path).buffered().readString()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         assertEquals(Ast.objectInResponse, ast)
     }
@@ -400,7 +402,7 @@ class OpenAPIV2ParserTest {
         val json = SystemFileSystem.source(path).buffered().readString()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         assertEquals(Ast.additionalProperties, ast)
     }
@@ -410,7 +412,7 @@ class OpenAPIV2ParserTest {
         val path = Path("src/commonTest/resources/v2/array.json")
         val json = SystemFileSystem.source(path).buffered().readString()
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         assertEquals(Ast.array, ast)
     }
@@ -421,7 +423,7 @@ class OpenAPIV2ParserTest {
         val json = SystemFileSystem.source(path).buffered().readString()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         assertEquals(Ast.allOf, ast)
     }
@@ -431,7 +433,7 @@ class OpenAPIV2ParserTest {
         val path = Path("src/commonTest/resources/v2/enum.json")
         val json = SystemFileSystem.source(path).buffered().readString()
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
         assertEquals(Ast.enum, ast)
     }
@@ -442,9 +444,9 @@ class OpenAPIV2ParserTest {
         val json = SystemFileSystem.source(path).buffered().readString()
 
         val openApi = OpenAPI.decodeFromString(json)
-        val ast = openApi.parse()
+        val ast = openApi.parse().shouldNotBeNull()
 
-        val expected = listOf(
+        val expected = nonEmptyListOf(
             Endpoint(
                 comment = null,
                 annotations = emptyList(),

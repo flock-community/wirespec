@@ -37,7 +37,7 @@ kotlin {
             dependencies {
                 compileOnly(project(":src:compiler:core"))
                 compileOnly(project(":src:integration:wirespec"))
-                compileOnly("io.confluent:kafka-avro-serializer:7.7.1")
+                compileOnly(libs.kafka.avro)
                 implementation(project(":src:compiler:emitters:kotlin"))
                 implementation(project(":src:compiler:emitters:java"))
                 implementation(project(":src:converter:avro"))
@@ -54,7 +54,7 @@ kotlin {
             dependencies {
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:integration:wirespec"))
-                implementation("io.confluent:kafka-avro-serializer:7.7.1")
+                implementation(libs.kafka.avro)
                 implementation(libs.spring.boot.test)
                 implementation(libs.kotlin.junit)
             }
