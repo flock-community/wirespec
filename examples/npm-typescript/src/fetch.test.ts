@@ -1,6 +1,6 @@
-import { expect, test, vi } from 'vitest'
-import {Wirespec} from "./gen/Wirespec";
-import { wirespecFetch, HandleFetch } from "wirespec/fetch";
+import { HandleFetch, wirespecFetch } from "@flock/wirespec/fetch";
+import { expect, test, vi } from "vitest";
+import { Wirespec } from "./gen/Wirespec";
 
 // @ts-ignore
 const mockHandler = vi.fn<HandleFetch>(() =>

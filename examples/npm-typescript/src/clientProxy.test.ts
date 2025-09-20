@@ -1,9 +1,9 @@
-import {GetTodoById, GetTodos, GetUsers, PostTodo} from "./gen/endpoint";
-import {Wirespec} from "./gen/Wirespec";
+import { wirespecSerialization } from "@flock/wirespec/serialization";
 import * as assert from "node:assert";
-import {expect, test} from "vitest";
+import { expect, test } from "vitest";
+import { Wirespec } from "./gen/Wirespec";
+import { GetTodoById, GetTodos, GetUsers, PostTodo } from "./gen/endpoint";
 
-import {wirespecSerialization} from 'wirespec/serialization'
 const body = [
   { id: "1", name: "Do it now", done: true },
   { id: "2", name: "Do it tomorrow", done: false },

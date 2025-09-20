@@ -1,7 +1,7 @@
-import {GetTodoById, GetTodos, PostTodo} from "./gen/endpoint";
-import {Wirespec} from "./gen/Wirespec";
-import {expect, test} from "vitest";
-import {wirespecSerialization} from 'wirespec/serialization'
+import { wirespecSerialization } from "@flock/wirespec/serialization";
+import { expect, test } from "vitest";
+import { Wirespec } from "./gen/Wirespec";
+import { GetTodoById, GetTodos, PostTodo } from "./gen/endpoint";
 
 const body = [
   { id: "1", name: "Do it now", done: true },
