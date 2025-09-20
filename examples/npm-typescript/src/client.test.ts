@@ -14,10 +14,10 @@ test("testGetTodoById", async () => {
       ]),
       text: () =>
         Promise.resolve(`{"id": 123, "title": "test", "completed": false}`),
-    })
+    }),
   );
   const apiClient = client(wirespecSerialization, (req) =>
-    wirespecFetch(req, mockHandler)
+    wirespecFetch(req, mockHandler),
   );
   const res = await apiClient.GetTodoById({ id: "123" });
 
@@ -42,10 +42,10 @@ test("testGetTodos", async () => {
       ]),
       text: () =>
         Promise.resolve(`[{"id": 123, "title": "test", "completed": false}]`),
-    })
+    }),
   );
   const apiClient = client(wirespecSerialization, (req) =>
-    wirespecFetch(req, mockHandler)
+    wirespecFetch(req, mockHandler),
   );
   const res = await apiClient.GetTodos({ done: undefined });
 

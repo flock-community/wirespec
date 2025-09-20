@@ -14,7 +14,7 @@ const mock = (
   path: string[],
   status: number,
   headers: Record<string, string>,
-  body: any
+  body: any,
 ) => ({
   method,
   path,
@@ -31,7 +31,7 @@ const mocks = [
     ["api", "todos"],
     200,
     {},
-    JSON.stringify({ id: "3", name: "Do more", done: true })
+    JSON.stringify({ id: "3", name: "Do more", done: true }),
   ),
 ];
 
@@ -61,14 +61,14 @@ const webClient: WebClient = (...apis) => {
           const rawResponse = mocks.find(
             (it) =>
               it.method === rawRequest.method &&
-              it.path.join("/") === rawRequest.path.join("/")
+              it.path.join("/") === rawRequest.path.join("/"),
           );
           if (rawResponse == undefined) throw new Error("Request is undefined");
           assert.notEqual(rawResponse, undefined);
           return Promise.resolve(client.from(rawResponse));
         };
       },
-    }
+    },
   );
   return proxy as any;
 };
@@ -77,7 +77,7 @@ const api = webClient(
   PostTodo.api,
   GetTodos.api,
   GetTodoById.api,
-  GetUsers.api
+  GetUsers.api,
 );
 
 test("testGetTodos", async () => {

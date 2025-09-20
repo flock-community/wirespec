@@ -18,7 +18,7 @@ const api: Api = {
           id: "3",
           ...request.body,
         },
-      })
+      }),
     );
   },
   getTodos(_: GetTodos.Request): Promise<GetTodos.Response> {

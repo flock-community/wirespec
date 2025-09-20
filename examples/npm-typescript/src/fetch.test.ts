@@ -10,7 +10,7 @@ const mockHandler = vi.fn<HandleFetch>(() =>
       ["Content-Length", "2"],
     ]),
     text: () => Promise.resolve("{}"),
-  })
+  }),
 );
 
 test("wirespecFetch", async () => {
