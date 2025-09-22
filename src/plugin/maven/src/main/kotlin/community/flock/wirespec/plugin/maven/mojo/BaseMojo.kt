@@ -87,22 +87,21 @@ abstract class BaseMojo : AbstractMojo() {
         override fun error(string: String) = log.error(string)
     }
 
-    private fun emitter() =
-        if (emitterClass != null) {
-            val clazz = getClassLoader(project).loadClass(emitterClass) ?: error("No class found: $emitterClass")
-            val constructor = clazz.constructors.first() ?: error("No constructor found: $emitterClass")
-            val args: List<Any> = constructor.parameters
-                .map {
-                    when (it.type) {
-                        PackageName::class.java -> PackageName(packageName)
-                        EmitShared::class.java -> EmitShared(shared)
-                        else -> error("Cannot map constructor parameter: $emitterClass - ${it.type.simpleName}")
-                    }
+    private fun emitter() = if (emitterClass != null) {
+        val clazz = getClassLoader(project).loadClass(emitterClass) ?: error("No class found: $emitterClass")
+        val constructor = clazz.constructors.first() ?: error("No constructor found: $emitterClass")
+        val args: List<Any> = constructor.parameters
+            .map {
+                when (it.type) {
+                    PackageName::class.java -> PackageName(packageName)
+                    EmitShared::class.java -> EmitShared(shared)
+                    else -> error("Cannot map constructor parameter: $emitterClass - ${it.type.simpleName}")
                 }
-            constructor.newInstance(*args.toTypedArray()) as Emitter
-        } else {
-            null
-        }
+            }
+        constructor.newInstance(*args.toTypedArray()) as Emitter
+    } else {
+        null
+    }
 
     val emitters
         get() = languages
