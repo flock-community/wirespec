@@ -110,7 +110,7 @@ abstract class BaseMojo : AbstractMojo() {
             .plus(emitter())
             .mapNotNull { it }
             .toNonEmptySetOrNull()
-            ?: error("No emitters found: $emitterClass")
+            ?: throw PickAtLeastOneLanguageOrEmitter()
 
     protected fun getClassLoader(project: MavenProject): ClassLoader = try {
         project.compileClasspathElements
