@@ -2,26 +2,27 @@ package community.flock.wirespec.openapi.v3
 
 import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
-import community.flock.kotlinx.openapi.bindings.v3.ComponentsObject
-import community.flock.kotlinx.openapi.bindings.v3.HeaderObject
-import community.flock.kotlinx.openapi.bindings.v3.HeaderOrReferenceObject
-import community.flock.kotlinx.openapi.bindings.v3.InfoObject
-import community.flock.kotlinx.openapi.bindings.v3.MediaType
-import community.flock.kotlinx.openapi.bindings.v3.MediaTypeObject
-import community.flock.kotlinx.openapi.bindings.v3.OpenAPIObject
-import community.flock.kotlinx.openapi.bindings.v3.OperationObject
-import community.flock.kotlinx.openapi.bindings.v3.ParameterLocation
-import community.flock.kotlinx.openapi.bindings.v3.ParameterObject
-import community.flock.kotlinx.openapi.bindings.v3.Path
-import community.flock.kotlinx.openapi.bindings.v3.PathItemObject
-import community.flock.kotlinx.openapi.bindings.v3.Ref
-import community.flock.kotlinx.openapi.bindings.v3.ReferenceObject
-import community.flock.kotlinx.openapi.bindings.v3.RequestBodyObject
-import community.flock.kotlinx.openapi.bindings.v3.ResponseObject
-import community.flock.kotlinx.openapi.bindings.v3.SchemaObject
-import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceObject
-import community.flock.kotlinx.openapi.bindings.v3.SchemaOrReferenceOrBooleanObject
-import community.flock.kotlinx.openapi.bindings.v3.StatusCode
+import community.flock.kotlinx.openapi.bindings.InfoObject
+import community.flock.kotlinx.openapi.bindings.MediaType
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3Components
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3Header
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3HeaderOrReference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3MediaType
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3Model
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3Operation
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3Parameter
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3ParameterLocation
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3PathItem
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3Reference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3RequestBody
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3Response
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3Schema
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3SchemaOrReference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3SchemaOrReferenceOrBoolean
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3Type
+import community.flock.kotlinx.openapi.bindings.Path
+import community.flock.kotlinx.openapi.bindings.Ref
+import community.flock.kotlinx.openapi.bindings.StatusCode
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
@@ -39,7 +40,6 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.openapi.json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
-import community.flock.kotlinx.openapi.bindings.v3.Type as OpenAPIType
 
 object OpenAPIV3Emitter : Emitter {
     data class Options(
@@ -62,7 +62,7 @@ object OpenAPIV3Emitter : Emitter {
         }
         .let { nonEmptyListOf(it) }
 
-    fun emitOpenAPIObject(statements: Statements, options: Options? = null) = OpenAPIObject(
+    fun emitOpenAPIObject(statements: Statements, options: Options? = null) = OpenAPIV3Model(
         openapi = "3.0.0",
         info = InfoObject(
             title = options?.title ?: "Wirespec",
@@ -84,12 +84,12 @@ object OpenAPIV3Emitter : Emitter {
                 is Channel -> error("Cannot emit channel")
             }
         }
-        .let { ComponentsObject(it) }
+        .let { OpenAPIV3Components(it) }
 
     private fun Statements.emitPaths() = this
         .filterIsInstance<Endpoint>()
         .groupBy { it.path }.map { (path, endpoints) ->
-            Path(path.emitSegment()) to PathItemObject(
+            Path(path.emitSegment()) to OpenAPIV3PathItem(
                 parameters = path
                     .filterIsInstance<Endpoint.Segment.Param>()
                     .map { it.emitParameter() }
@@ -106,40 +106,40 @@ object OpenAPIV3Emitter : Emitter {
         }
         .toMap()
 
-    private fun Refined.emit(): SchemaObject = when (val type = reference.type) {
-        is Reference.Primitive.Type.Integer -> SchemaObject(
-            type = OpenAPIType.STRING,
+    private fun Refined.emit(): OpenAPIV3Schema = when (val type = reference.type) {
+        is Reference.Primitive.Type.Integer -> OpenAPIV3Schema(
+            type = OpenAPIV3Type.STRING,
             minimum = type.constraint?.min?.toDouble(),
             maximum = type.constraint?.max?.toDouble(),
         )
 
-        is Reference.Primitive.Type.Number -> SchemaObject(
-            type = OpenAPIType.STRING,
+        is Reference.Primitive.Type.Number -> OpenAPIV3Schema(
+            type = OpenAPIV3Type.STRING,
             minimum = type.constraint?.min?.toDouble(),
             maximum = type.constraint?.max?.toDouble(),
         )
 
         is Reference.Primitive.Type.String -> when (val pattern = type.constraint) {
-            is Reference.Primitive.Type.Constraint.RegExp -> SchemaObject(
-                type = OpenAPIType.STRING,
+            is Reference.Primitive.Type.Constraint.RegExp -> OpenAPIV3Schema(
+                type = OpenAPIV3Type.STRING,
                 pattern = pattern.value,
             )
 
-            null -> SchemaObject(
-                type = OpenAPIType.STRING,
+            null -> OpenAPIV3Schema(
+                type = OpenAPIV3Type.STRING,
             )
         }
 
-        Reference.Primitive.Type.Boolean -> SchemaObject(
-            type = OpenAPIType.BOOLEAN,
+        Reference.Primitive.Type.Boolean -> OpenAPIV3Schema(
+            type = OpenAPIV3Type.BOOLEAN,
         )
 
-        Reference.Primitive.Type.Bytes -> SchemaObject(
-            type = OpenAPIType.STRING,
+        Reference.Primitive.Type.Bytes -> OpenAPIV3Schema(
+            type = OpenAPIV3Type.STRING,
         )
     }
 
-    private fun Type.emit(): SchemaObject = SchemaObject(
+    private fun Type.emit(): OpenAPIV3Schema = OpenAPIV3Schema(
         description = comment?.value,
         properties = shape.value.associate { it.emitSchema() },
         required = shape.value
@@ -148,34 +148,34 @@ object OpenAPIV3Emitter : Emitter {
             .takeIf { it.isNotEmpty() },
     )
 
-    private fun Enum.emit(): SchemaObject = SchemaObject(
+    private fun Enum.emit(): OpenAPIV3Schema = OpenAPIV3Schema(
         description = comment?.value,
-        type = OpenAPIType.STRING,
+        type = OpenAPIV3Type.STRING,
         enum = entries.map { JsonPrimitive(it) },
     )
 
-    private fun Union.emit(): SchemaObject = SchemaObject(
+    private fun Union.emit(): OpenAPIV3Schema = OpenAPIV3Schema(
         description = comment?.value,
-        type = OpenAPIType.STRING,
+        type = OpenAPIV3Type.STRING,
         oneOf = entries.map { it.emitSchema() },
     )
 
-    private fun List<Endpoint>.emit(method: Endpoint.Method): OperationObject? = filter { it.method == method }.map { it.emit() }.firstOrNull()
+    private fun List<Endpoint>.emit(method: Endpoint.Method): OpenAPIV3Operation? = filter { it.method == method }.map { it.emit() }.firstOrNull()
 
-    private fun Endpoint.emit(): OperationObject = OperationObject(
+    private fun Endpoint.emit(): OpenAPIV3Operation = OpenAPIV3Operation(
         operationId = identifier.value,
         description = comment?.value,
         parameters = path.filterIsInstance<Endpoint.Segment.Param>()
-            .map { it.emitParameter() } + queries.map { it.emitParameter(ParameterLocation.QUERY) } + headers.map {
+            .map { it.emitParameter() } + queries.map { it.emitParameter(OpenAPIV3ParameterLocation.QUERY) } + headers.map {
             it.emitParameter(
-                ParameterLocation.HEADER,
+                OpenAPIV3ParameterLocation.HEADER,
             )
         },
         requestBody = requests.mapNotNull { it.content?.emit() }
             .toMap()
             .takeIf { it.isNotEmpty() }
             ?.let { content ->
-                RequestBodyObject(
+                OpenAPIV3RequestBody(
                     content = content,
                     required = !requests.any { it.content?.reference?.isNullable == true },
                 )
@@ -183,7 +183,7 @@ object OpenAPIV3Emitter : Emitter {
         responses = responses
             .groupBy { it.status }
             .map { (statusCode, res) ->
-                StatusCode(statusCode) to ResponseObject(
+                StatusCode(statusCode) to OpenAPIV3Response(
                     headers = res.flatMap { it.headers }.associate { it.emitHeader() },
                     description = "${identifier.value} $statusCode response",
                     content = res
@@ -202,48 +202,48 @@ object OpenAPIV3Emitter : Emitter {
         }
     }
 
-    private fun Field.emitParameter(location: ParameterLocation): ParameterObject = ParameterObject(
+    private fun Field.emitParameter(location: OpenAPIV3ParameterLocation): OpenAPIV3Parameter = OpenAPIV3Parameter(
         `in` = location,
         name = identifier.value,
         schema = reference.emitSchema(),
         required = !reference.isNullable,
     )
 
-    private fun Endpoint.Segment.Param.emitParameter(): ParameterObject = ParameterObject(
-        `in` = ParameterLocation.PATH,
+    private fun Endpoint.Segment.Param.emitParameter(): OpenAPIV3Parameter = OpenAPIV3Parameter(
+        `in` = OpenAPIV3ParameterLocation.PATH,
         name = identifier.value,
         schema = reference.emitSchema(),
         required = !reference.isNullable,
     )
 
-    private fun Field.emitHeader(): Pair<String, HeaderOrReferenceObject> = identifier.value to reference.emitHeader()
+    private fun Field.emitHeader(): Pair<String, OpenAPIV3HeaderOrReference> = identifier.value to reference.emitHeader()
 
-    private fun Field.emitSchema(): Pair<String, SchemaOrReferenceObject> = identifier.value to reference.emitSchema()
+    private fun Field.emitSchema(): Pair<String, OpenAPIV3SchemaOrReference> = identifier.value to reference.emitSchema()
 
     private fun Reference.emitHeader() = when (this) {
-        is Reference.Dict -> ReferenceObject(ref = Ref("#/components/headers/$value"))
-        is Reference.Iterable -> ReferenceObject(ref = Ref("#/components/headers/$value"))
-        is Reference.Custom -> ReferenceObject(ref = Ref("#/components/headers/$value"))
-        is Reference.Primitive -> HeaderObject(schema = emitSchema())
+        is Reference.Dict -> OpenAPIV3Reference(ref = Ref("#/components/headers/$value"))
+        is Reference.Iterable -> OpenAPIV3Reference(ref = Ref("#/components/headers/$value"))
+        is Reference.Custom -> OpenAPIV3Reference(ref = Ref("#/components/headers/$value"))
+        is Reference.Primitive -> OpenAPIV3Header(schema = emitSchema())
         is Reference.Any -> error("Cannot map Any")
         is Reference.Unit -> error("Cannot map Unit")
     }
 
-    private fun Reference.emitSchema(): SchemaOrReferenceObject = when (this) {
-        is Reference.Dict -> SchemaObject(
+    private fun Reference.emitSchema(): OpenAPIV3SchemaOrReference = when (this) {
+        is Reference.Dict -> OpenAPIV3Schema(
             nullable = reference.isNullable,
-            type = OpenAPIType.OBJECT,
-            additionalProperties = reference.emitSchema() as SchemaOrReferenceOrBooleanObject,
+            type = OpenAPIV3Type.OBJECT,
+            additionalProperties = reference.emitSchema() as OpenAPIV3SchemaOrReferenceOrBoolean,
         )
 
-        is Reference.Iterable -> SchemaObject(
+        is Reference.Iterable -> OpenAPIV3Schema(
             nullable = reference.isNullable,
-            type = OpenAPIType.ARRAY,
+            type = OpenAPIV3Type.ARRAY,
             items = reference.emitSchema(),
         )
 
-        is Reference.Custom -> ReferenceObject(ref = Ref("#/components/schemas/$value"))
-        is Reference.Primitive -> SchemaObject(
+        is Reference.Custom -> OpenAPIV3Reference(ref = Ref("#/components/schemas/$value"))
+        is Reference.Primitive -> OpenAPIV3Schema(
             type = type.emitType(),
             format = emitFormat(),
             pattern = emitPattern(),
@@ -255,15 +255,15 @@ object OpenAPIV3Emitter : Emitter {
         is Reference.Unit -> error("Cannot map Unit")
     }
 
-    private fun Reference.Primitive.Type.emitType(): OpenAPIType = when (this) {
-        is Reference.Primitive.Type.String -> OpenAPIType.STRING
-        is Reference.Primitive.Type.Integer -> OpenAPIType.INTEGER
-        is Reference.Primitive.Type.Number -> OpenAPIType.NUMBER
-        is Reference.Primitive.Type.Boolean -> OpenAPIType.BOOLEAN
-        is Reference.Primitive.Type.Bytes -> OpenAPIType.STRING
+    private fun Reference.Primitive.Type.emitType(): OpenAPIV3Type = when (this) {
+        is Reference.Primitive.Type.String -> OpenAPIV3Type.STRING
+        is Reference.Primitive.Type.Integer -> OpenAPIV3Type.INTEGER
+        is Reference.Primitive.Type.Number -> OpenAPIV3Type.NUMBER
+        is Reference.Primitive.Type.Boolean -> OpenAPIV3Type.BOOLEAN
+        is Reference.Primitive.Type.Bytes -> OpenAPIV3Type.STRING
     }
 
-    private fun Endpoint.Content.emit(): Pair<MediaType, MediaTypeObject> = MediaType(type) to MediaTypeObject(
+    private fun Endpoint.Content.emit(): Pair<MediaType, OpenAPIV3MediaType> = MediaType(type) to OpenAPIV3MediaType(
         schema = reference.emitSchema(),
     )
 
