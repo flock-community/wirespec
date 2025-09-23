@@ -1,7 +1,7 @@
 package community.flock.wirespec.openapi.v3
 
 import arrow.core.nonEmptyListOf
-import community.flock.kotlinx.openapi.bindings.v3.OpenAPI
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -16,12 +16,12 @@ import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.openapi.common.Ast
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser.parse
 import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readString
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class OpenAPIV3ParserTest {
 
@@ -30,7 +30,7 @@ class OpenAPIV3ParserTest {
         val path = Path("src/commonTest/resources/v3/petstore.json")
         val json = SystemFileSystem.source(path).buffered().readString()
 
-        val openApi = OpenAPI.decodeFromString(json)
+        val openApi = OpenAPIV3.decodeFromJsonString(json)
         val ast = openApi.parse().shouldNotBeNull()
 
         val expect = listOf(
@@ -417,8 +417,8 @@ class OpenAPIV3ParserTest {
             ),
         )
 
-        assertEquals(expect.filterIsInstance<Type>(), ast.filterIsInstance<Type>())
-        assertEquals(expect.filterIsInstance<Enum>(), ast.filterIsInstance<Enum>())
+        ast.filterIsInstance<Type>() shouldBe expect.filterIsInstance<Type>()
+        ast.filterIsInstance<Enum>() shouldBe expect.filterIsInstance<Enum>()
 
         val endpoint = ast.filterIsInstance<Endpoint>().find { it.identifier.value == "GetInventory" }
 
@@ -448,7 +448,7 @@ class OpenAPIV3ParserTest {
                 ),
             ),
         )
-        assertEquals(expectedEndpoint, endpoint)
+        endpoint shouldBe expectedEndpoint
     }
 
     @Test
@@ -456,7 +456,7 @@ class OpenAPIV3ParserTest {
         val path = Path("src/commonTest/resources/v3/pizza.json")
         val json = SystemFileSystem.source(path).buffered().readString()
 
-        val openApi = OpenAPI.decodeFromString(json)
+        val openApi = OpenAPIV3.decodeFromJsonString(json)
         val ast = openApi.parse().shouldNotBeNull()
 
         val expect = listOf(
@@ -526,7 +526,7 @@ class OpenAPIV3ParserTest {
                 extends = emptyList(),
             ),
         )
-        assertEquals(expect, ast)
+        ast shouldBe expect
     }
 
     @Test
@@ -534,7 +534,7 @@ class OpenAPIV3ParserTest {
         val path = Path("src/commonTest/resources/v3/todo.json")
         val json = SystemFileSystem.source(path).buffered().readString()
 
-        val openApi = OpenAPI.decodeFromString(json)
+        val openApi = OpenAPIV3.decodeFromJsonString(json)
 
         val ast = openApi.parse().shouldNotBeNull()
 
@@ -828,7 +828,7 @@ class OpenAPIV3ParserTest {
             ),
         )
 
-        assertEquals(expect, ast)
+        ast shouldBe expect
     }
 
     @Test
@@ -836,12 +836,10 @@ class OpenAPIV3ParserTest {
         val path = Path("src/commonTest/resources/v3/object-in-request.json")
         val json = SystemFileSystem.source(path).buffered().readString()
 
-        val openApi = OpenAPI.decodeFromString(json)
+        val openApi = OpenAPIV3.decodeFromJsonString(json)
         val ast = openApi.parse().shouldNotBeNull()
 
-        assertEquals(Ast.objectInRequest, ast)
-
-        println(ast)
+        ast shouldBe Ast.objectInRequest
     }
 
     @Test
@@ -849,24 +847,20 @@ class OpenAPIV3ParserTest {
         val path = Path("src/commonTest/resources/v3/object-in-response.json")
         val json = SystemFileSystem.source(path).buffered().readString()
 
-        val openApi = OpenAPI.decodeFromString(json)
+        val openApi = OpenAPIV3.decodeFromJsonString(json)
         val ast = openApi.parse().shouldNotBeNull()
 
-        assertEquals(Ast.objectInResponse, ast)
-
-        println(ast)
+        ast shouldBe Ast.objectInResponse
     }
 
     @Test
     fun additionalProperties() {
         val path = Path("src/commonTest/resources/v3/additionalproperties.json")
         val json = SystemFileSystem.source(path).buffered().readString()
-        val openApi = OpenAPI.decodeFromString(json)
+        val openApi = OpenAPIV3.decodeFromJsonString(json)
         val ast = openApi.parse().shouldNotBeNull()
 
-        assertEquals(Ast.additionalProperties, ast)
-
-        println(ast)
+        ast shouldBe Ast.additionalProperties
     }
 
     @Test
@@ -874,12 +868,10 @@ class OpenAPIV3ParserTest {
         val path = Path("src/commonTest/resources/v3/array.json")
         val json = SystemFileSystem.source(path).buffered().readString()
 
-        val openApi = OpenAPI.decodeFromString(json)
+        val openApi = OpenAPIV3.decodeFromJsonString(json)
         val ast = openApi.parse().shouldNotBeNull()
 
-        assertEquals(Ast.array, ast)
-
-        println(ast)
+        ast shouldBe Ast.array
     }
 
     @Test
@@ -887,10 +879,10 @@ class OpenAPIV3ParserTest {
         val path = Path("src/commonTest/resources/v3/allof.json")
         val json = SystemFileSystem.source(path).buffered().readString()
 
-        val openApi = OpenAPI.decodeFromString(json)
+        val openApi = OpenAPIV3.decodeFromJsonString(json)
         val ast = openApi.parse().shouldNotBeNull()
 
-        assertEquals(Ast.allOf, ast)
+        ast shouldBe Ast.allOf
     }
 
     @Test
@@ -898,12 +890,12 @@ class OpenAPIV3ParserTest {
         val path = Path("src/commonTest/resources/v3/oneof.json")
         val json = SystemFileSystem.source(path).buffered().readString()
 
-        val openApi = OpenAPI.decodeFromString(json)
+        val openApi = OpenAPIV3.decodeFromJsonString(json)
         val ast = openApi.parse().shouldNotBeNull()
 
         Ast.oneOf.zip(ast).forEach { (expected, actual) ->
             println(expected.identifier)
-            assertEquals(expected, actual)
+            actual shouldBe expected
         }
     }
 
@@ -912,10 +904,10 @@ class OpenAPIV3ParserTest {
         val path = Path("src/commonTest/resources/v3/enum.json")
         val json = SystemFileSystem.source(path).buffered().readString()
 
-        val openApi = OpenAPI.decodeFromString(json)
+        val openApi = OpenAPIV3.decodeFromJsonString(json)
         val ast = openApi.parse().shouldNotBeNull()
 
-        assertEquals(Ast.enum, ast)
+        ast shouldBe Ast.enum
     }
 
     @Test
@@ -923,7 +915,7 @@ class OpenAPIV3ParserTest {
         val path = Path("src/commonTest/resources/v3/responseref.json")
         val json = SystemFileSystem.source(path).buffered().readString()
 
-        val openApi = OpenAPI.decodeFromString(json)
+        val openApi = OpenAPIV3.decodeFromJsonString(json)
         val ast = openApi.parse().shouldNotBeNull()
 
         val expected = listOf(
@@ -1022,7 +1014,7 @@ class OpenAPIV3ParserTest {
                 extends = emptyList(),
             ),
         )
-        assertEquals(expected, ast)
+        ast shouldBe expected
     }
 
     @Test
@@ -1030,7 +1022,7 @@ class OpenAPIV3ParserTest {
         val path = Path("src/commonTest/resources/v3/queryref.json")
         val json = SystemFileSystem.source(path).buffered().readString()
 
-        val openApi = OpenAPI.decodeFromString(json)
+        val openApi = OpenAPIV3.decodeFromJsonString(json)
         val ast = openApi.parse().shouldNotBeNull()
 
         val expected = listOf(
@@ -1113,7 +1105,7 @@ class OpenAPIV3ParserTest {
                 entries = setOf("links"),
             ),
         )
-        assertEquals(expected, ast)
+        ast shouldBe expected
     }
 
     @Test
@@ -1121,7 +1113,7 @@ class OpenAPIV3ParserTest {
         val path = Path("src/commonTest/resources/v3/refarray.json")
         val json = SystemFileSystem.source(path).buffered().readString()
 
-        val openApi = OpenAPI.decodeFromString(json)
+        val openApi = OpenAPIV3.decodeFromJsonString(json)
         val ast = openApi.parse().shouldNotBeNull()
 
         val expected = listOf(
@@ -1232,7 +1224,7 @@ class OpenAPIV3ParserTest {
                 extends = emptyList(),
             ),
         )
-        assertEquals(expected, ast)
+        ast shouldBe expected
     }
 
     @Test
@@ -1240,7 +1232,7 @@ class OpenAPIV3ParserTest {
         val path = Path("src/commonTest/resources/v3/refprimary.json")
         val json = SystemFileSystem.source(path).buffered().readString()
 
-        val openApi = OpenAPI.decodeFromString(json)
+        val openApi = OpenAPIV3.decodeFromJsonString(json)
         val ast = openApi.parse().shouldNotBeNull()
 
         val expected = listOf(
@@ -1290,7 +1282,7 @@ class OpenAPIV3ParserTest {
                 extends = emptyList(),
             ),
         )
-        assertEquals(expected, ast)
+        ast shouldBe expected
     }
 
     @Test
@@ -1298,7 +1290,7 @@ class OpenAPIV3ParserTest {
         val path = Path("src/commonTest/resources/v3/deeparraysimple.json")
         val json = SystemFileSystem.source(path).buffered().readString()
 
-        val openApi = OpenAPI.decodeFromString(json)
+        val openApi = OpenAPIV3.decodeFromJsonString(json)
         val ast = openApi.parse().shouldNotBeNull()
 
         val expected = nonEmptyListOf(
@@ -1342,7 +1334,7 @@ class OpenAPIV3ParserTest {
                 extends = emptyList(),
             ),
         )
-        assertEquals(expected, ast)
+        ast shouldBe expected
     }
 
     @Test
@@ -1350,7 +1342,7 @@ class OpenAPIV3ParserTest {
         val path = Path("src/commonTest/resources/v3/components-responses.json")
         val json = SystemFileSystem.source(path).buffered().readString()
 
-        val openApi = OpenAPI.decodeFromString(json)
+        val openApi = OpenAPIV3.decodeFromJsonString(json)
         val ast = openApi.parse().shouldNotBeNull()
 
         val expected = nonEmptyListOf(
@@ -1424,7 +1416,7 @@ class OpenAPIV3ParserTest {
                 extends = emptyList(),
             ),
         )
-        assertEquals(expected, ast)
+        ast shouldBe expected
     }
 
     @Test
@@ -1432,7 +1424,7 @@ class OpenAPIV3ParserTest {
         val path = Path("src/commonTest/resources/v3/empty-response.json")
         val json = SystemFileSystem.source(path).buffered().readString()
 
-        val openApi = OpenAPI.decodeFromString(json)
+        val openApi = OpenAPIV3.decodeFromJsonString(json)
         val ast = openApi.parse().shouldNotBeNull()
 
         val expected = nonEmptyListOf(
@@ -1458,6 +1450,6 @@ class OpenAPIV3ParserTest {
                 ),
             ),
         )
-        assertEquals(expected, ast)
+        ast shouldBe expected
     }
 }

@@ -1,9 +1,11 @@
 package community.flock.wirespec.openapi.v3
 
-import community.flock.kotlinx.openapi.bindings.v3.OpenAPI
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3
 import community.flock.wirespec.openapi.common.Ast
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser.parse
+import io.kotest.assertions.json.shouldEqualJson
 import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -11,7 +13,6 @@ import kotlinx.io.readString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class OpenAPIV3EmitterTest {
 
@@ -133,7 +134,7 @@ class OpenAPIV3EmitterTest {
                 }
             }
         """.trimIndent()
-        assertEquals(expect, openapi)
+        openapi shouldEqualJson expect
     }
 
     @Test
@@ -141,13 +142,13 @@ class OpenAPIV3EmitterTest {
         val path = Path("src/commonTest/resources/v3/petstore.json")
         val petstoreJson = SystemFileSystem.source(path).buffered().readString()
 
-        val petstoreOpenAPi = OpenAPI.decodeFromString(petstoreJson)
+        val petstoreOpenAPi = OpenAPIV3.decodeFromJsonString(petstoreJson)
         val petstoreAst = petstoreOpenAPi.parse().shouldNotBeNull()
 
         val petstoreConvertedOpenAPi = OpenAPIV3Emitter.emitOpenAPIObject(petstoreAst, null)
 
         val petstoreConvertedOpenAPiAst = petstoreConvertedOpenAPi.parse()
 
-        assertEquals(petstoreAst, petstoreConvertedOpenAPiAst)
+        petstoreConvertedOpenAPiAst shouldBe petstoreAst
     }
 }

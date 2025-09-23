@@ -18,7 +18,7 @@ kotlin_compiler = "2.0"
 kotlin_embedded = "1.9.25"
 kotlinx_coroutines = "1.9.0"
 kotlinx_io = "0.6.0"
-kotlinx_openapi_bindings = "0.1.3"
+kotlinx_openapi_bindings = "0.2.0"
 kotlinx_rgxgen = "0.0.1"
 kotlinx_serialization = "1.7.0"
 maven_plugin = "0.4.3"
@@ -41,6 +41,7 @@ junit_launcher = { module = "org.junit.platform:junit-platform-launcher", versio
 kafka_avro = { module = "io.confluent:kafka-avro-serializer", version.ref ="kafka_avro"}
 kotest_assertions = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 kotest_assertions_arrow = { module = "io.kotest.extensions:kotest-assertions-arrow", version.ref = "kotest_arrow" }
+kotest_assertions_json = { module = "io.kotest:kotest-assertions-json", version.ref = "kotest" }
 kotest_engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
 kotlin_compiler_embeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlin_embedded"}
 kotlin_junit = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "kotlin" }
@@ -67,7 +68,7 @@ spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.re
 [bundles]
 jackson = ["jackson_databind", "jackson_kotlin"]
 kotlin_test = ["kotlin_test_common", "kotlin_test_annotations_common", "kotlin_test_junit"]
-kotest = ["kotest_engine", "kotest_assertions", "kotest_assertions_arrow"]
+kotest = ["kotest_engine", "kotest_assertions", "kotest_assertions_json", "kotest_assertions_arrow"]
 maven_plugin = ["maven_plugin_api", "maven_plugin_annotations", "maven_project"]
 
 [plugins]

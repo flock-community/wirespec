@@ -5,7 +5,6 @@ import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.emitters.wirespec.WirespecEmitter
 import community.flock.wirespec.openapi.common.compile
-import community.flock.wirespec.openapi.v3.OpenAPIV3Parser
 import io.kotest.assertions.arrow.core.shouldBeRight
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
