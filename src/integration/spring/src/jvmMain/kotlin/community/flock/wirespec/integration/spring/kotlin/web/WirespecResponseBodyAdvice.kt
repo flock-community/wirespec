@@ -15,7 +15,7 @@ import kotlin.reflect.full.companionObjectInstance
 @ControllerAdvice
 class WirespecResponseBodyAdvice(
     private val objectMapper: ObjectMapper,
-    private val wirespecSerialization: Wirespec.Serialization<String>,
+    private val wirespecSerialization: Wirespec.Serialization,
 ) : ResponseBodyAdvice<Any?> {
 
     override fun supports(returnType: MethodParameter, converterType: Class<out HttpMessageConverter<*>?>): Boolean = Wirespec.Response::class.java.isAssignableFrom(returnType.parameterType)

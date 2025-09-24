@@ -77,5 +77,5 @@ suspend fun ApplicationCall.toRawRequest() = Wirespec.RawRequest(
     path = request.path().split("/").filter { it.isNotBlank() },
     queries = request.queryParameters.toMap(),
     headers = request.headers.toMap(),
-    body = receive<String>(),
+    body = receive<ByteArray>(),
 )

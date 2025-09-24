@@ -13,7 +13,7 @@ import java.util.stream.Collectors
 import kotlin.reflect.full.companionObjectInstance
 
 class WirespecMethodArgumentResolver(
-    private val wirespecSerialization: Wirespec.Serialization<String>,
+    private val wirespecSerialization: Wirespec.Serialization,
 ) : HandlerMethodArgumentResolver {
 
     override fun supportsParameter(parameter: MethodParameter): Boolean = Wirespec.Request::class.java.isAssignableFrom(parameter.parameterType)
@@ -40,5 +40,5 @@ fun HttpServletRequest.toRawRequest(): Wirespec.RawRequest = Wirespec.RawRequest
     path = extractPath(),
     queries = extractQueries(),
     headers = headerNames.toList().associateWith { getHeaders(it).toList() },
-    body = reader.lines().collect(Collectors.joining(System.lineSeparator())),
+    body = reader.lines().collect(Collectors.joining(System.lineSeparator())).toByteArray(),
 )
