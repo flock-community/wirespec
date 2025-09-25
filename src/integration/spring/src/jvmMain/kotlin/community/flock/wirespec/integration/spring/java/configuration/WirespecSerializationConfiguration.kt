@@ -6,6 +6,7 @@ import community.flock.wirespec.integration.spring.java.web.WirespecResponseBody
 import community.flock.wirespec.java.Wirespec.ParamSerialization
 import community.flock.wirespec.java.Wirespec.Serialization
 import community.flock.wirespec.java.serde.DefaultParamSerialization
+import community.flock.wirespec.java.serde.DefaultPathSerialization
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
@@ -15,10 +16,7 @@ import org.springframework.context.annotation.Import
 open class WirespecSerializationConfiguration {
 
     @Bean
-    open fun queryParamSerde(): ParamSerialization = DefaultParamSerialization.create()
-
-    @Bean
     open fun wirespecSerialization(
         objectMapper: ObjectMapper,
-    ): Serialization<String> = WirespecSerialization(objectMapper)
+    ): Serialization = WirespecSerialization(objectMapper)
 }

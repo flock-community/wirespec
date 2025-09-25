@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture
 
 class WirespecWebClient(
     private val client: WebClient,
-    private val wirespecSerde: Serialization<String>,
+    private val wirespecSerde: Serialization,
 ) {
     @Suppress("UNCHECKED_CAST")
     fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> send(
@@ -55,7 +55,7 @@ class WirespecWebClient(
             }
         }
         .exchangeToMono { response ->
-            response.bodyToMono(String::class.java)
+            response.bodyToMono(ByteArray::class.java)
                 .map { body ->
                     Wirespec.RawResponse(
                         response.statusCode().value(),
@@ -70,7 +70,7 @@ class WirespecWebClient(
                     Wirespec.RawResponse(
                         throwable.statusCode.value(),
                         toMultiValueMap(throwable.headers),
-                        throwable.responseBodyAsString,
+                        throwable.responseBodyAsByteArray,
                     ).let { Mono.just(it) }
 
                 else -> Mono.error(throwable)

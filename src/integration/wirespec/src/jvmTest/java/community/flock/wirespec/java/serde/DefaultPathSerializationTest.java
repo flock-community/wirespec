@@ -1,6 +1,5 @@
 package community.flock.wirespec.java.serde;
 
-import community.flock.wirespec.java.Wirespec;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
@@ -9,13 +8,21 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-public class DefaultParamSerializationTest {
+public class DefaultPathSerializationTest {
 
-    private final DefaultParamSerialization serde = new DefaultParamSerialization() {};
+    private final DefaultPathSerialization serde = new DefaultPathSerialization() {};
+
     @Test
     public void shouldSerializePrimitiveTypesCorrectly() {
         primitiveTestCases().forEach(testCase ->
-                assertEquals(testCase.expected, serde.serializeParam(testCase.value, testCase.type))
+                assertEquals(testCase.expected, serde.serializePath(testCase.value, testCase.type))
+        );
+    }
+
+    @Test
+    public void shouldDeserializePrimitiveTypesCorrectly() {
+        primitiveTestCases().forEach(testCase ->
+                assertEquals(testCase.value, serde.deserializePath(testCase.expected, testCase.type))
         );
     }
 
@@ -23,7 +30,7 @@ public class DefaultParamSerializationTest {
             String name,
             Object value,
             Type type,
-            List<String> expected
+            String expected
     ){}
 
     public static List<PrimitiveTestCase> primitiveTestCases() {
@@ -32,55 +39,55 @@ public class DefaultParamSerializationTest {
                         "string",
                         "test",
                         String.class,
-                        List.of("test")
+                        "test"
                 ),
                 new PrimitiveTestCase(
                         "int",
                         42,
                         Integer.class,
-                        List.of("42")
+                        "42"
                 ),
                 new PrimitiveTestCase(
                         "long",
                         42L,
                         Long.class,
-                        List.of("42")
+                        "42"
                 ),
                 new PrimitiveTestCase(
                         "double",
                         42.0,
                         Double.class,
-                        List.of("42.0")
+                        "42.0"
                 ),
                 new PrimitiveTestCase(
                         "float",
                         42.0f,
                         Float.class,
-                        List.of("42.0")
+                        "42.0"
                 ),
                 new PrimitiveTestCase(
                         "boolean",
                         true,
                         Boolean.class,
-                        List.of("true")
+                        "true"
                 ),
                 new PrimitiveTestCase(
                         "char",
                         'a',
                         Character.class,
-                        List.of("a")
+                        "a"
                 ),
                 new PrimitiveTestCase(
                         "byte",
                         (byte) 42,
                         Byte.class,
-                        List.of("42")
+                        "42"
                 ),
                 new PrimitiveTestCase(
                         "short",
                         (short) 42,
                         Short.class,
-                        List.of("42")
+                        "42"
                 )
         );
     }
