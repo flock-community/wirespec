@@ -6,6 +6,6 @@ import kotlin.test.Test
 class LanguageTest {
     @Test
     fun testLanguages() {
-        Language.toString() shouldBe "Java, Kotlin, TypeScript, Python, Wirespec, OpenAPIV2, OpenAPIV3"
+        Language.toString() shouldBe "Java, Kotlin, TypeScript, Python, Wirespec, OpenAPIV2, OpenAPIV3, Avro"
     }
 }
