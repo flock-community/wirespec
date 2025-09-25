@@ -130,8 +130,6 @@ private class WirespecDeserializerModifier : BeanDeserializerModifier() {
     }
 }
 
-
-
 private class KotlinReservedKeywordNamingStrategy : PropertyNamingStrategy() {
 
     private fun translator(reserved: Keywords): String.() -> String = {
