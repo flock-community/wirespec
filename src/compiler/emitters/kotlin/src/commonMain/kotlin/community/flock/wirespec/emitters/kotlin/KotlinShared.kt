@@ -58,7 +58,3 @@ data object KotlinShared : Shared {
         |}
     """.trimMargin()
 }
-
-fun main() {
-    println(KotlinShared.source)
-}
