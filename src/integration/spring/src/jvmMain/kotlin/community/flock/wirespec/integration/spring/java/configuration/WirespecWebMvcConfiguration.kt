@@ -11,7 +11,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 open class WirespecWebMvcConfiguration : WebMvcConfigurer {
 
     @Autowired
-    lateinit var wirespecSerialization: Wirespec.Serialization<String>
+    lateinit var wirespecSerialization: Wirespec.Serialization
 
     override fun addArgumentResolvers(argumentResolvers: MutableList<HandlerMethodArgumentResolver>) {
         argumentResolvers.add(WirespecMethodArgumentResolver(wirespecSerialization))

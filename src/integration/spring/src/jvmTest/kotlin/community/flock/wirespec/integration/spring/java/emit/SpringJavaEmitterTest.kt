@@ -134,7 +134,7 @@ class SpringJavaEmitterTest {
             |
             |  interface Handler extends Wirespec.Handler {
             |
-            |    static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
+            |    static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
             |      return new Wirespec.RawRequest(
             |        request.method.name(),
             |        java.util.List.of("api", "todos"),
@@ -144,26 +144,26 @@ class SpringJavaEmitterTest {
             |      );
             |    }
             |
-            |    static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
+            |    static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
             |      return new Request(
             |        serialization.deserializeParam(request.queries().getOrDefault("done", java.util.Collections.emptyList()), Wirespec.getType(Boolean.class, java.util.Optional.class))
             |      );
             |    }
             |
-            |    static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
-            |      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Map.ofEntries(java.util.Map.entry("total", serialization.serializeParam(r.getHeaders().total(), Wirespec.getType(Long.class, null)))), serialization.serialize(r.body, Wirespec.getType(TodoDto.class, java.util.List.class))); }
-            |      if (response instanceof Response500 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(Error.class, null))); }
+            |    static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
+            |      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Map.ofEntries(java.util.Map.entry("total", serialization.serializeParam(r.getHeaders().total(), Wirespec.getType(Long.class, null)))), serialization.serializeBody(r.body, Wirespec.getType(TodoDto.class, java.util.List.class))); }
+            |      if (response instanceof Response500 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(Error.class, null))); }
             |      else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
             |    }
             |
-            |    static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
+            |    static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
             |      switch (response.statusCode()) {
             |        case 200: return new Response200(
             |        serialization.deserializeParam(response.headers().getOrDefault("total", java.util.Collections.emptyList()), Wirespec.getType(Long.class, null)),
-            |        serialization.deserialize(response.body(), Wirespec.getType(TodoDto.class, java.util.List.class))
+            |        serialization.deserializeBody(response.body(), Wirespec.getType(TodoDto.class, java.util.List.class))
             |      );
             |        case 500: return new Response500(
-            |        serialization.deserialize(response.body(), Wirespec.getType(Error.class, null))
+            |        serialization.deserializeBody(response.body(), Wirespec.getType(Error.class, null))
             |      );
             |        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
             |      }
@@ -175,13 +175,13 @@ class SpringJavaEmitterTest {
             |    class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
             |      @Override public String getPathTemplate() { return "/api/todos"; }
             |      @Override public String getMethod() { return "GET"; }
-            |      @Override public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization<String> serialization) {
+            |      @Override public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization serialization) {
             |        return new Wirespec.ServerEdge<>() {
             |          @Override public Request from(Wirespec.RawRequest request) { return fromRequest(serialization, request); }
             |          @Override public Wirespec.RawResponse to(Response<?> response) { return toResponse(serialization, response); }
             |        };
             |      }
-            |      @Override public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization<String> serialization) {
+            |      @Override public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization serialization) {
             |        return new Wirespec.ClientEdge<>() {
             |          @Override public Wirespec.RawRequest to(Request request) { return toRequest(serialization, request); }
             |          @Override public Response<?> from(Wirespec.RawResponse response) { return fromResponse(serialization, response); }

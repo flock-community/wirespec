@@ -35,7 +35,7 @@ public class WirespecTransporter {
             .headers(headers)
             .body(request.body());
 
-        final var res = restTemplate.exchange(req, String.class);
+        final var res = restTemplate.exchange(req, byte[].class);
         return completedFuture(new RawResponse(
                 res.getStatusCode().value(),
                 toMultiValueMap(res.getHeaders()),

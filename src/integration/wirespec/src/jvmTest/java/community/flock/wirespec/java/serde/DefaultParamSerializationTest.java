@@ -11,7 +11,7 @@ import static org.junit.Assert.assertEquals;
 
 public class DefaultParamSerializationTest {
 
-    private final DefaultParamSerialization serde = DefaultParamSerialization.create();
+    private final DefaultParamSerialization serde = new DefaultParamSerialization() {};
     @Test
     public void shouldSerializePrimitiveTypesCorrectly() {
         primitiveTestCases().forEach(testCase ->

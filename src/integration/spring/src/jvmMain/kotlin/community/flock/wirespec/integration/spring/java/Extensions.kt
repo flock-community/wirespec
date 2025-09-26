@@ -9,7 +9,7 @@ import kotlin.reflect.full.companionObjectInstance
 @Suppress("UNCHECKED_CAST")
 fun Class<*>.invoke(
     method: Method,
-    wirespecSerialization: Wirespec.Serialization<String>,
+    wirespecSerialization: Wirespec.Serialization,
     request: Wirespec.Request<BufferedReader>,
 ): Wirespec.Request<*> = if (isKotlinClass()) {
     val func = method(

@@ -58,7 +58,7 @@ public interface LoginUser extends Wirespec.Endpoint {
 
   interface Handler extends Wirespec.Handler {
 
-    static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
+    static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method.name(),
         java.util.List.of("user", "login"),
@@ -68,25 +68,25 @@ public interface LoginUser extends Wirespec.Endpoint {
       );
     }
 
-    static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
+    static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
       return new Request(
         serialization.deserializeParam(request.queries().getOrDefault("username", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
         serialization.deserializeParam(request.queries().getOrDefault("password", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class))
       );
     }
 
-    static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Map.ofEntries(java.util.Map.entry("X-Rate-Limit", serialization.serializeParam(r.getHeaders().XRateLimit(), Wirespec.getType(Integer.class, java.util.Optional.class))), java.util.Map.entry("X-Expires-After", serialization.serializeParam(r.getHeaders().XExpiresAfter(), Wirespec.getType(String.class, java.util.Optional.class)))), serialization.serialize(r.body, Wirespec.getType(String.class, null))); }
+    static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Map.ofEntries(java.util.Map.entry("X-Rate-Limit", serialization.serializeParam(r.getHeaders().XRateLimit(), Wirespec.getType(Integer.class, java.util.Optional.class))), java.util.Map.entry("X-Expires-After", serialization.serializeParam(r.getHeaders().XExpiresAfter(), Wirespec.getType(String.class, java.util.Optional.class)))), serialization.serializeBody(r.body, Wirespec.getType(String.class, null))); }
       if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), null); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
     }
 
-    static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
+    static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
       switch (response.statusCode()) {
         case 200: return new Response200(
         serialization.deserializeParam(response.headers().getOrDefault("X-Rate-Limit", java.util.Collections.emptyList()), Wirespec.getType(Integer.class, java.util.Optional.class)),
         serialization.deserializeParam(response.headers().getOrDefault("X-Expires-After", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
-        serialization.deserialize(response.body(), Wirespec.getType(String.class, null))
+        serialization.deserializeBody(response.body(), Wirespec.getType(String.class, null))
       );
         case 400: return new Response400();
         default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
@@ -99,13 +99,13 @@ public interface LoginUser extends Wirespec.Endpoint {
     class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
       @Override public String getPathTemplate() { return "/user/login"; }
       @Override public String getMethod() { return "GET"; }
-      @Override public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization<String> serialization) {
+      @Override public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization serialization) {
         return new Wirespec.ServerEdge<>() {
           @Override public Request from(Wirespec.RawRequest request) { return fromRequest(serialization, request); }
           @Override public Wirespec.RawResponse to(Response<?> response) { return toResponse(serialization, response); }
         };
       }
-      @Override public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization<String> serialization) {
+      @Override public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization serialization) {
         return new Wirespec.ClientEdge<>() {
           @Override public Wirespec.RawRequest to(Request request) { return toRequest(serialization, request); }
           @Override public Response<?> from(Wirespec.RawResponse response) { return fromResponse(serialization, response); }

@@ -2,6 +2,7 @@ package community.flock.wirespec.example.maven.custom.app.common
 
 import community.flock.wirespec.kotlin.Wirespec
 import community.flock.wirespec.kotlin.serde.DefaultParamSerialization
+import community.flock.wirespec.kotlin.serde.DefaultPathSerialization
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.request
@@ -46,17 +47,21 @@ class WirespecClient(
  * In this case, you don't need the dependency on community.flock.wirespec.integration:wirespec
  */
 @Suppress("UNCHECKED_CAST")
-object Serialization : Wirespec.Serialization<String>, Wirespec.ParamSerialization by DefaultParamSerialization() {
-    override fun <T> serialize(
+object Serialization :
+    Wirespec.Serialization,
+    Wirespec.ParamSerialization by DefaultParamSerialization(),
+    Wirespec.PathSerialization by DefaultPathSerialization() {
+
+    override fun <T> serializeBody(
         t: T,
         kType: KType,
-    ): String = Json.encodeToString(Json.serializersModule.serializer(kType), t)
+    ): ByteArray = Json.encodeToString(Json.serializersModule.serializer(kType), t).toByteArray()
 
-    override fun <T> deserialize(
-        raw: String,
+    override fun <T> deserializeBody(
+        raw: ByteArray,
         kType: KType,
     ): T = when (kType) {
         String::class.createType() -> raw as T
-        else -> Json.decodeFromString(Json.serializersModule.serializer(kType), raw) as T
+        else -> Json.decodeFromString(Json.serializersModule.serializer(kType), raw.toString()) as T
     }
 }

@@ -24,18 +24,18 @@ object DeleteUser : Wirespec.Endpoint {
     override val body = Unit
   }
 
-  fun toRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
+  fun toRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
-      path = listOf("user", request.path.username.let{serialization.serialize(it, typeOf<String>())}),
+      path = listOf("user", request.path.username.let{serialization.serializePath(it, typeOf<String>())}),
       method = request.method.name,
       queries = emptyMap(),
       headers = emptyMap(),
       body = null,
     )
 
-  fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
+  fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
     Request(
-      username = serialization.deserialize(request.path[1], typeOf<String>())
+      username = serialization.deserializePath(request.path[1], typeOf<String>())
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
@@ -56,7 +56,7 @@ object DeleteUser : Wirespec.Endpoint {
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
-  fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
+  fun toResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Response400 -> Wirespec.RawResponse(
         statusCode = response.status,
@@ -70,7 +70,7 @@ object DeleteUser : Wirespec.Endpoint {
       )
     }
 
-  fun fromResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
+  fun fromResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
     when (response.statusCode) {
       400 -> Response400(
         body = Unit,
@@ -88,11 +88,11 @@ object DeleteUser : Wirespec.Endpoint {
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/user/{username}"
       override val method = "DELETE"
-      override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
+      override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
       }
-      override fun client(serialization: Wirespec.Serialization<String>) = object : Wirespec.ClientEdge<Request, Response<*>> {
+      override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
         override fun to(request: Request) = toRequest(serialization, request)
         override fun from(response: Wirespec.RawResponse) = fromResponse(serialization, response)
       }

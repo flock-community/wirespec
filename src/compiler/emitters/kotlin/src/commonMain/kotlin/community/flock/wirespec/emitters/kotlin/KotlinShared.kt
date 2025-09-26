@@ -31,24 +31,30 @@ data object KotlinShared : Shared {
         |${Spacer}interface Client<Req : Request<*>, Res : Response<*>> {
         |${Spacer(2)}val pathTemplate: String
         |${Spacer(2)}val method: String
-        |${Spacer(2)}fun client(serialization: Serialization<String>): ClientEdge<Req, Res>
+        |${Spacer(2)}fun client(serialization: Serialization): ClientEdge<Req, Res>
         |$Spacer}
         |${Spacer}interface Server<Req : Request<*>, Res : Response<*>> {
         |${Spacer(2)}val pathTemplate: String
         |${Spacer(2)}val method: String
-        |${Spacer(2)}fun server(serialization: Serialization<String>): ServerEdge<Req, Res>
+        |${Spacer(2)}fun server(serialization: Serialization): ServerEdge<Req, Res>
         |$Spacer}
         |${Spacer}enum class Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
         |${Spacer}interface Request<T : Any> { val path: Path; val method: Method; val queries: Queries; val headers: Headers; val body: T; interface Headers : Wirespec.Headers }
         |${Spacer}interface Response<T : Any> { val status: Int; val headers: Headers; val body: T; interface Headers : Wirespec.Headers }
-        |${Spacer}interface Serialization<RAW : Any> : Serializer<RAW>, Deserializer<RAW>, ParamSerialization
-        |${Spacer}interface ParamSerialization: ParamSerializer, ParamDeserializer
+        |${Spacer}interface Serialization : Serializer, Deserializer
+        |${Spacer}interface Serializer : BodySerializer, PathSerializer, ParamSerializer
+        |${Spacer}interface Deserializer : BodyDeserializer, PathDeserializer, ParamDeserializer
+        |${Spacer}interface BodySerialization : BodySerializer, BodyDeserializer
+        |${Spacer}interface BodySerializer { fun <T> serializeBody(t: T, kType: KType): ByteArray }
+        |${Spacer}interface BodyDeserializer { fun <T> deserializeBody(raw: ByteArray, kType: KType): T }
+        |${Spacer}interface PathSerialization : PathSerializer, PathDeserializer
+        |${Spacer}interface PathSerializer { fun <T> serializePath(t: T, kType: KType): String }
+        |${Spacer}interface PathDeserializer { fun <T> deserializePath(raw: String, kType: KType): T }
+        |${Spacer}interface ParamSerialization : ParamSerializer, ParamDeserializer
         |${Spacer}interface ParamSerializer { fun <T> serializeParam(value: T, kType: KType): List<String> }
-        |${Spacer}interface Serializer<RAW : Any> : ParamSerializer { fun <T> serialize(t: T, kType: KType): RAW }
-        |${Spacer}interface Deserializer<RAW: Any>: ParamDeserializer { fun <T> deserialize(raw: RAW, kType: KType): T }
         |${Spacer}interface ParamDeserializer { fun <T> deserializeParam(values: List<String>, kType: KType): T }
-        |${Spacer}data class RawRequest(val method: String, val path: List<String>, val queries: Map<String, List<String>>, val headers: Map<String, List<String>>, val body: String?) 
-        |${Spacer}data class RawResponse(val statusCode: Int, val headers: Map<String, List<String>>, val body: String?)
+        |${Spacer}data class RawRequest(val method: String, val path: List<String>, val queries: Map<String, List<String>>, val headers: Map<String, List<String>>, val body: ByteArray?) 
+        |${Spacer}data class RawResponse(val statusCode: Int, val headers: Map<String, List<String>>, val body: ByteArray?)
         |}
     """.trimMargin()
 }

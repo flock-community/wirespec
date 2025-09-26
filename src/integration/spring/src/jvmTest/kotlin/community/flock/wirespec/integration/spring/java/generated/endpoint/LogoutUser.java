@@ -44,7 +44,7 @@ public interface LogoutUser extends Wirespec.Endpoint {
 
   interface Handler extends Wirespec.Handler {
 
-    static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
+    static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method.name(),
         java.util.List.of("user", "logout"),
@@ -54,16 +54,16 @@ public interface LogoutUser extends Wirespec.Endpoint {
       );
     }
 
-    static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
+    static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
       return new Request();
     }
 
-    static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
+    static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
       if (response instanceof ResponseDefault r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), null); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
     }
 
-    static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
+    static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
       switch (response.statusCode()) {
 
         default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
@@ -76,13 +76,13 @@ public interface LogoutUser extends Wirespec.Endpoint {
     class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
       @Override public String getPathTemplate() { return "/user/logout"; }
       @Override public String getMethod() { return "GET"; }
-      @Override public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization<String> serialization) {
+      @Override public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization serialization) {
         return new Wirespec.ServerEdge<>() {
           @Override public Request from(Wirespec.RawRequest request) { return fromRequest(serialization, request); }
           @Override public Wirespec.RawResponse to(Response<?> response) { return toResponse(serialization, response); }
         };
       }
-      @Override public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization<String> serialization) {
+      @Override public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization serialization) {
         return new Wirespec.ClientEdge<>() {
           @Override public Wirespec.RawRequest to(Request request) { return toRequest(serialization, request); }
           @Override public Response<?> from(Wirespec.RawResponse response) { return fromResponse(serialization, response); }

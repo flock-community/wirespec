@@ -1,9 +1,10 @@
 package community.flock.wirespec.integration.jackson.kotlin
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import community.flock.wirespec.kotlin.Wirespec.ParamSerialization
+import community.flock.wirespec.kotlin.Wirespec
 import community.flock.wirespec.kotlin.Wirespec.Serialization
 import community.flock.wirespec.kotlin.serde.DefaultParamSerialization
+import community.flock.wirespec.kotlin.serde.DefaultPathSerialization
 import kotlin.reflect.KType
 import kotlin.reflect.javaType
 
@@ -13,19 +14,20 @@ import kotlin.reflect.javaType
  */
 class WirespecSerialization(
     objectMapper: ObjectMapper,
-) : Serialization<String>,
-    ParamSerialization by DefaultParamSerialization() {
+) : Serialization,
+    Wirespec.ParamSerialization by DefaultParamSerialization(),
+    Wirespec.PathSerialization by DefaultPathSerialization() {
 
     private val wirespecObjectMapper = objectMapper.copy().registerModule(WirespecModuleKotlin())
 
-    override fun <T> serialize(t: T, kType: KType): String = when (t) {
-        is String -> t
-        else -> wirespecObjectMapper.writeValueAsString(t)
+    override fun <T> serializeBody(t: T, kType: KType): ByteArray = when (t) {
+        is String -> t.toByteArray()
+        else -> wirespecObjectMapper.writeValueAsBytes(t)
     }
 
     @Suppress("UNCHECKED_CAST")
     @OptIn(ExperimentalStdlibApi::class)
-    override fun <T> deserialize(raw: String, kType: KType): T = when {
+    override fun <T> deserializeBody(raw: ByteArray, kType: KType): T = when {
         kType.classifier == String::class -> raw as T
         else ->
             wirespecObjectMapper

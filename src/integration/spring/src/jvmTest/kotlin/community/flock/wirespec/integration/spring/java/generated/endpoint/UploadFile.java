@@ -48,33 +48,33 @@ public interface UploadFile extends Wirespec.Endpoint {
 
   interface Handler extends Wirespec.Handler {
 
-    static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
+    static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method.name(),
-        java.util.List.of("pet", serialization.serialize(request.path.petId, Wirespec.getType(Long.class, null)), "uploadImage"),
+        java.util.List.of("pet", serialization.serializePath(request.path.petId, Wirespec.getType(Long.class, null)), "uploadImage"),
         java.util.Map.ofEntries(java.util.Map.entry("additionalMetadata", serialization.serializeParam(request.queries.additionalMetadata, Wirespec.getType(String.class, java.util.Optional.class)))),
         java.util.Collections.emptyMap(),
-        serialization.serialize(request.getBody(), Wirespec.getType(String.class, null))
+        serialization.serializeBody(request.getBody(), Wirespec.getType(String.class, null))
       );
     }
 
-    static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
+    static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
       return new Request(
-        serialization.deserialize(request.path().get(1), Wirespec.getType(Long.class, null)),
+        serialization.deserializePath(request.path().get(1), Wirespec.getType(Long.class, null)),
         serialization.deserializeParam(request.queries().getOrDefault("additionalMetadata", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
-        serialization.deserialize(request.body(), Wirespec.getType(String.class, null))
+        serialization.deserializeBody(request.body(), Wirespec.getType(String.class, null))
       );
     }
 
-    static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(ApiResponse.class, null))); }
+    static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(ApiResponse.class, null))); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
     }
 
-    static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
+    static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
       switch (response.statusCode()) {
         case 200: return new Response200(
-        serialization.deserialize(response.body(), Wirespec.getType(ApiResponse.class, null))
+        serialization.deserializeBody(response.body(), Wirespec.getType(ApiResponse.class, null))
       );
         default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
       }
@@ -86,13 +86,13 @@ public interface UploadFile extends Wirespec.Endpoint {
     class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
       @Override public String getPathTemplate() { return "/pet/{petId}/uploadImage"; }
       @Override public String getMethod() { return "POST"; }
-      @Override public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization<String> serialization) {
+      @Override public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization serialization) {
         return new Wirespec.ServerEdge<>() {
           @Override public Request from(Wirespec.RawRequest request) { return fromRequest(serialization, request); }
           @Override public Wirespec.RawResponse to(Response<?> response) { return toResponse(serialization, response); }
         };
       }
-      @Override public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization<String> serialization) {
+      @Override public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization serialization) {
         return new Wirespec.ClientEdge<>() {
           @Override public Wirespec.RawRequest to(Request request) { return toRequest(serialization, request); }
           @Override public Response<?> from(Wirespec.RawResponse response) { return fromResponse(serialization, response); }

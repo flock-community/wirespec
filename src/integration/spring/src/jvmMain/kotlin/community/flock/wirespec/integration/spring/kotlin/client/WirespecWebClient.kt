@@ -14,7 +14,7 @@ import kotlin.reflect.full.companionObjectInstance
 
 class WirespecWebClient(
     private val client: WebClient,
-    private val wirespecSerde: Serialization<String>,
+    private val wirespecSerde: Serialization,
 ) {
     @Suppress("UNCHECKED_CAST")
     suspend fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> send(request: Req): Res {
@@ -47,7 +47,7 @@ class WirespecWebClient(
             }
         }
         .exchangeToMono { response ->
-            response.bodyToMono(String::class.java)
+            response.bodyToMono(ByteArray::class.java)
                 .map { body ->
                     Wirespec.RawResponse(
                         statusCode = response.statusCode().value(),
@@ -71,7 +71,7 @@ class WirespecWebClient(
                     Wirespec.RawResponse(
                         statusCode = throwable.statusCode.value(),
                         headers = toMultiValueMap(throwable.headers),
-                        body = throwable.responseBodyAsString,
+                        body = throwable.responseBodyAsByteArray,
                     ).let { Mono.just(it) }
 
                 else -> Mono.error(throwable)

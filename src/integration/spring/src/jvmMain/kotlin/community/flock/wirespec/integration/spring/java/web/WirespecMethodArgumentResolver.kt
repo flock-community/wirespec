@@ -12,7 +12,7 @@ import org.springframework.web.method.support.ModelAndViewContainer
 import java.util.stream.Collectors
 
 class WirespecMethodArgumentResolver(
-    private val wirespecSerialization: Wirespec.Serialization<String>,
+    private val wirespecSerialization: Wirespec.Serialization,
 ) : HandlerMethodArgumentResolver {
 
     override fun supportsParameter(parameter: MethodParameter): Boolean = Wirespec.Request::class.java.isAssignableFrom(parameter.parameterType)
@@ -38,5 +38,5 @@ fun HttpServletRequest.toRawRequest(): Wirespec.RawRequest = Wirespec.RawRequest
     extractPath(),
     extractQueries(),
     headerNames.toList().associateWith { getHeaders(it).toList() },
-    reader.lines().collect(Collectors.joining(System.lineSeparator())),
+    reader.lines().collect(Collectors.joining(System.lineSeparator())).toByteArray(),
 )

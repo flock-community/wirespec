@@ -34,24 +34,30 @@ data object JavaShared : Shared {
         |${Spacer}interface Client<Req extends Request<?>, Res extends Response<?>> {
         |${Spacer(2)}String getPathTemplate();
         |${Spacer(2)}String getMethod();
-        |${Spacer(2)}ClientEdge<Req, Res> getClient(Serialization<String> serialization);
+        |${Spacer(2)}ClientEdge<Req, Res> getClient(Serialization serialization);
         |$Spacer}
         |${Spacer}interface Server<Req extends Request<?>, Res extends Response<?>> {
         |${Spacer(2)}String getPathTemplate();
         |${Spacer(2)}String getMethod();
-        |${Spacer(2)}ServerEdge<Req, Res> getServer(Serialization<String> serialization);
+        |${Spacer(2)}ServerEdge<Req, Res> getServer(Serialization serialization);
         |$Spacer}
         |${Spacer}enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
         |${Spacer}interface Request<T> { Path getPath(); Method getMethod(); Queries getQueries(); Headers getHeaders(); T getBody(); interface Headers extends Wirespec.Headers {} }
         |${Spacer}interface Response<T> { int getStatus(); Headers getHeaders(); T getBody(); interface Headers extends Wirespec.Headers {} }
+        |${Spacer}interface Serialization extends Serializer, Deserializer {}
+        |${Spacer}interface Serializer extends BodySerializer, PathSerializer, ParamSerializer {}
+        |${Spacer}interface Deserializer extends BodyDeserializer, PathDeserializer, ParamDeserializer {}
+        |${Spacer}interface BodySerialization extends BodySerializer, BodyDeserializer {}
+        |${Spacer}interface BodySerializer { <T> byte[] serializeBody(T t, Type type); }
+        |${Spacer}interface BodyDeserializer { <T> T deserializeBody(byte[] raw, Type type); }
+        |${Spacer}interface PathSerialization extends PathSerializer, PathDeserializer {}
+        |${Spacer}interface PathSerializer { <T> String serializePath(T t, Type type); }
+        |${Spacer}interface PathDeserializer { <T> T deserializePath(String raw, Type type); }
         |${Spacer}interface ParamSerialization extends ParamSerializer, ParamDeserializer {}
-        |${Spacer}interface Serialization<RAW> extends Serializer<RAW>, Deserializer<RAW>, ParamSerialization {}
         |${Spacer}interface ParamSerializer { <T> List<String> serializeParam(T value, Type type); }
-        |${Spacer}interface Serializer<RAW> extends ParamSerializer { <T> RAW serialize(T t, Type type); }
         |${Spacer}interface ParamDeserializer { <T> T deserializeParam(List<String> values, Type type); }
-        |${Spacer}interface Deserializer<RAW> extends ParamDeserializer { <T> T deserialize(RAW raw, Type type); }
-        |${Spacer}record RawRequest(String method, List<String> path, Map<String, List<String>> queries, Map<String, List<String>> headers, String body) {} 
-        |${Spacer}record RawResponse(int statusCode, Map<String, List<String>> headers, String body) {}
+        |${Spacer}record RawRequest(String method, List<String> path, Map<String, List<String>> queries, Map<String, List<String>> headers, byte[] body) {} 
+        |${Spacer}record RawResponse(int statusCode, Map<String, List<String>> headers, byte[] body) {}
         |${Spacer}static Type getType(final Class<?> actualTypeArguments, final Class<?> rawType) {
         |${Spacer(2)}if(rawType != null) {
         |${Spacer(3)}return new ParameterizedType() {

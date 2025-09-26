@@ -27,20 +27,20 @@ object UploadFile : Wirespec.Endpoint {
     override val headers = Headers
   }
 
-  fun toRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
+  fun toRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
-      path = listOf("pet", request.path.petId.let{serialization.serialize(it, typeOf<Long>())}, "uploadImage"),
+      path = listOf("pet", request.path.petId.let{serialization.serializePath(it, typeOf<Long>())}, "uploadImage"),
       method = request.method.name,
       queries = (mapOf("additionalMetadata" to (request.queries.additionalMetadata?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
       headers = emptyMap(),
-      body = serialization.serialize(request.body, typeOf<String>()),
+      body = serialization.serializeBody(request.body, typeOf<String>()),
     )
 
-  fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
+  fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
     Request(
-      petId = serialization.deserialize(request.path[1], typeOf<Long>()),
+      petId = serialization.deserializePath(request.path[1], typeOf<Long>()),
       additionalMetadata = request.queries["additionalMetadata"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) },
-      body = serialization.deserialize(requireNotNull(request.body) { "body is null" }, typeOf<String>()),
+      body = serialization.deserializeBody(requireNotNull(request.body) { "body is null" }, typeOf<String>()),
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
@@ -55,19 +55,19 @@ object UploadFile : Wirespec.Endpoint {
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
-  fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
+  fun toResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
         headers = emptyMap(),
-        body = serialization.serialize(response.body, typeOf<ApiResponse>()),
+        body = serialization.serializeBody(response.body, typeOf<ApiResponse>()),
       )
     }
 
-  fun fromResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
+  fun fromResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
     when (response.statusCode) {
       200 -> Response200(
-        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<ApiResponse>()),
+        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<ApiResponse>()),
       )
       else -> error("Cannot match response with status: ${response.statusCode}")
     }
@@ -79,11 +79,11 @@ object UploadFile : Wirespec.Endpoint {
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/pet/{petId}/uploadImage"
       override val method = "POST"
-      override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
+      override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
       }
-      override fun client(serialization: Wirespec.Serialization<String>) = object : Wirespec.ClientEdge<Request, Response<*>> {
+      override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
         override fun to(request: Request) = toRequest(serialization, request)
         override fun from(response: Wirespec.RawResponse) = fromResponse(serialization, response)
       }

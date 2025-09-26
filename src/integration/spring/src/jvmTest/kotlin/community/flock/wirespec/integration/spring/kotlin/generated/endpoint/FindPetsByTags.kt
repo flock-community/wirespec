@@ -24,7 +24,7 @@ object FindPetsByTags : Wirespec.Endpoint {
     override val body = Unit
   }
 
-  fun toRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
+  fun toRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
       path = listOf("pet", "findByTags"),
       method = request.method.name,
@@ -33,7 +33,7 @@ object FindPetsByTags : Wirespec.Endpoint {
       body = null,
     )
 
-  fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
+  fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
     Request(
       tags = request.queries["tags"]?.let{ serialization.deserializeParam(it, typeOf<List<String>?>()) }
     )
@@ -58,12 +58,12 @@ object FindPetsByTags : Wirespec.Endpoint {
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
-  fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
+  fun toResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
         headers = emptyMap(),
-        body = serialization.serialize(response.body, typeOf<List<Pet>>()),
+        body = serialization.serializeBody(response.body, typeOf<List<Pet>>()),
       )
       is Response400 -> Wirespec.RawResponse(
         statusCode = response.status,
@@ -72,10 +72,10 @@ object FindPetsByTags : Wirespec.Endpoint {
       )
     }
 
-  fun fromResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
+  fun fromResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
     when (response.statusCode) {
       200 -> Response200(
-        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<List<Pet>>()),
+        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<List<Pet>>()),
       )
       400 -> Response400(
         body = Unit,
@@ -90,11 +90,11 @@ object FindPetsByTags : Wirespec.Endpoint {
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/pet/findByTags"
       override val method = "GET"
-      override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
+      override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
       }
-      override fun client(serialization: Wirespec.Serialization<String>) = object : Wirespec.ClientEdge<Request, Response<*>> {
+      override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
         override fun to(request: Request) = toRequest(serialization, request)
         override fun from(response: Wirespec.RawResponse) = fromResponse(serialization, response)
       }
