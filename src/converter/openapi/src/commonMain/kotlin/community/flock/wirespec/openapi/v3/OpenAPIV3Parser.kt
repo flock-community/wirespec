@@ -52,7 +52,7 @@ object OpenAPIV3Parser : Parser {
                         prettyPrint = true
                         ignoreUnknownKeys = !strict
                     },
-                ).decodeFromJsonString(moduleContent.content).parse()
+                ).decodeFromString(moduleContent.content).parse()
                     .let { requireNotNull(it) { "Cannot yield empty AST for OpenAPI v3" } },
             ),
         ),
