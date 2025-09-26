@@ -142,7 +142,7 @@ class OpenAPIV3EmitterTest {
         val path = Path("src/commonTest/resources/v3/petstore.json")
         val petstoreJson = SystemFileSystem.source(path).buffered().readString()
 
-        val petstoreOpenAPi = OpenAPIV3.decodeFromJsonString(petstoreJson)
+        val petstoreOpenAPi = OpenAPIV3.decodeFromString(petstoreJson)
         val petstoreAst = petstoreOpenAPi.parse().shouldNotBeNull()
 
         val petstoreConvertedOpenAPi = OpenAPIV3Emitter.emitOpenAPIObject(petstoreAst, null)
