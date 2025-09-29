@@ -93,7 +93,7 @@ class DefaultParamSerializationTest {
 
     @Test
     fun `should throw exception when deserializing missing primitive value`() {
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<IllegalStateException> {
             serde.deserializeParam<String>(
                 emptyList(),
                 typeOf<String>(),
@@ -103,7 +103,7 @@ class DefaultParamSerializationTest {
 
     @Test
     fun `should throw exception when deserializing invalid enum value`() {
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<IllegalStateException> {
             serde.deserializeParam<StatusEnum>(
                 listOf("invalid"),
                 typeOf<StatusEnum>(),

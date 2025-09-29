@@ -21,18 +21,18 @@ object PlaceOrder : Wirespec.Endpoint {
     override val headers = Headers
   }
 
-  fun toRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
+  fun toRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
       path = listOf("store", "order"),
       method = request.method.name,
       queries = emptyMap(),
       headers = emptyMap(),
-      body = serialization.serialize(request.body, typeOf<Order>()),
+      body = serialization.serializeBody(request.body, typeOf<Order>()),
     )
 
-  fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
+  fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
     Request(
-      body = serialization.deserialize(requireNotNull(request.body) { "body is null" }, typeOf<Order>()),
+      body = serialization.deserializeBody(requireNotNull(request.body) { "body is null" }, typeOf<Order>()),
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
@@ -55,12 +55,12 @@ object PlaceOrder : Wirespec.Endpoint {
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
-  fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
+  fun toResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
         headers = emptyMap(),
-        body = serialization.serialize(response.body, typeOf<Order>()),
+        body = serialization.serializeBody(response.body, typeOf<Order>()),
       )
       is Response405 -> Wirespec.RawResponse(
         statusCode = response.status,
@@ -69,10 +69,10 @@ object PlaceOrder : Wirespec.Endpoint {
       )
     }
 
-  fun fromResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
+  fun fromResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
     when (response.statusCode) {
       200 -> Response200(
-        body = serialization.deserialize(requireNotNull(response.body) { "body is null" }, typeOf<Order>()),
+        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<Order>()),
       )
       405 -> Response405(
         body = Unit,
@@ -87,11 +87,11 @@ object PlaceOrder : Wirespec.Endpoint {
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/store/order"
       override val method = "POST"
-      override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
+      override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
       }
-      override fun client(serialization: Wirespec.Serialization<String>) = object : Wirespec.ClientEdge<Request, Response<*>> {
+      override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
         override fun to(request: Request) = toRequest(serialization, request)
         override fun from(response: Wirespec.RawResponse) = fromResponse(serialization, response)
       }

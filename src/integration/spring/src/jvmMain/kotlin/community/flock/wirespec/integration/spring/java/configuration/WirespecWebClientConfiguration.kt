@@ -21,7 +21,7 @@ import org.springframework.web.reactive.function.client.WebClient
 @EnableConfigurationProperties(WebClientConfigurationProperties::class)
 @Order(Ordered.LOWEST_PRECEDENCE)
 open class WirespecWebClientConfiguration(
-    val serialization: Wirespec.Serialization<String>,
+    val serialization: Wirespec.Serialization,
 ) {
     private val log: Logger = getLogger(javaClass)
 

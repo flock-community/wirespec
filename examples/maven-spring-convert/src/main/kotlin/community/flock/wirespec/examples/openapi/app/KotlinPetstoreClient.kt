@@ -16,7 +16,7 @@ interface KotlinPetstoreClient : AddPet.Handler, FindPetsByStatus.Handler
 
 @Component
 class LiveKotlinPetstoreClient(
-    private val serialization: Wirespec.Serialization<String>,
+    private val serialization: Wirespec.Serialization,
     private val client: RestTemplate,
 ) : KotlinPetstoreClient {
 
@@ -38,6 +38,6 @@ class LiveKotlinPetstoreClient(
             )
             .headers(HttpHeaders().apply { putAll(request.headers) })
             .body(request.body ?: Unit)
-            .let { client.exchange<String>(it) }
+            .let { client.exchange<ByteArray>(it) }
             .run { Wirespec.RawResponse(statusCode = statusCode.value(), headers = toMultiValueMap(headers), body = body) }
 }

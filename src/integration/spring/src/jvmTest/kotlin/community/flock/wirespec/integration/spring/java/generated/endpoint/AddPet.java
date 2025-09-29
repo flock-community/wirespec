@@ -52,32 +52,32 @@ public interface AddPet extends Wirespec.Endpoint {
 
   interface Handler extends Wirespec.Handler {
 
-    static Wirespec.RawRequest toRequest(Wirespec.Serializer<String> serialization, Request request) {
+    static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method.name(),
         java.util.List.of("pet"),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
-        serialization.serialize(request.getBody(), Wirespec.getType(Pet.class, null))
+        serialization.serializeBody(request.getBody(), Wirespec.getType(Pet.class, null))
       );
     }
 
-    static Request fromRequest(Wirespec.Deserializer<String> serialization, Wirespec.RawRequest request) {
+    static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
       return new Request(
-        serialization.deserialize(request.body(), Wirespec.getType(Pet.class, null))
+        serialization.deserializeBody(request.body(), Wirespec.getType(Pet.class, null))
       );
     }
 
-    static Wirespec.RawResponse toResponse(Wirespec.Serializer<String> serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serialize(r.body, Wirespec.getType(Pet.class, null))); }
+    static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(Pet.class, null))); }
       if (response instanceof Response405 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), null); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
     }
 
-    static Response<?> fromResponse(Wirespec.Deserializer<String> serialization, Wirespec.RawResponse response) {
+    static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
       switch (response.statusCode()) {
         case 200: return new Response200(
-        serialization.deserialize(response.body(), Wirespec.getType(Pet.class, null))
+        serialization.deserializeBody(response.body(), Wirespec.getType(Pet.class, null))
       );
         case 405: return new Response405();
         default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
@@ -90,13 +90,13 @@ public interface AddPet extends Wirespec.Endpoint {
     class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
       @Override public String getPathTemplate() { return "/pet"; }
       @Override public String getMethod() { return "POST"; }
-      @Override public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization<String> serialization) {
+      @Override public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization serialization) {
         return new Wirespec.ServerEdge<>() {
           @Override public Request from(Wirespec.RawRequest request) { return fromRequest(serialization, request); }
           @Override public Wirespec.RawResponse to(Response<?> response) { return toResponse(serialization, response); }
         };
       }
-      @Override public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization<String> serialization) {
+      @Override public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization serialization) {
         return new Wirespec.ClientEdge<>() {
           @Override public Wirespec.RawRequest to(Request request) { return toRequest(serialization, request); }
           @Override public Response<?> from(Wirespec.RawResponse response) { return fromResponse(serialization, response); }

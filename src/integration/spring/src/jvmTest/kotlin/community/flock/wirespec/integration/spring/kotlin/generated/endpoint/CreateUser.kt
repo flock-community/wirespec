@@ -21,18 +21,18 @@ object CreateUser : Wirespec.Endpoint {
     override val headers = Headers
   }
 
-  fun toRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
+  fun toRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
       path = listOf("user"),
       method = request.method.name,
       queries = emptyMap(),
       headers = emptyMap(),
-      body = serialization.serialize(request.body, typeOf<User>()),
+      body = serialization.serializeBody(request.body, typeOf<User>()),
     )
 
-  fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
+  fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
     Request(
-      body = serialization.deserialize(requireNotNull(request.body) { "body is null" }, typeOf<User>()),
+      body = serialization.deserializeBody(requireNotNull(request.body) { "body is null" }, typeOf<User>()),
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
@@ -47,16 +47,16 @@ object CreateUser : Wirespec.Endpoint {
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
-  fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
+  fun toResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Responsedefault -> Wirespec.RawResponse(
         statusCode = response.status,
         headers = emptyMap(),
-        body = serialization.serialize(response.body, typeOf<User>()),
+        body = serialization.serializeBody(response.body, typeOf<User>()),
       )
     }
 
-  fun fromResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
+  fun fromResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
     when (response.statusCode) {
 
       else -> error("Cannot match response with status: ${response.statusCode}")
@@ -69,11 +69,11 @@ object CreateUser : Wirespec.Endpoint {
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/user"
       override val method = "POST"
-      override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
+      override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
       }
-      override fun client(serialization: Wirespec.Serialization<String>) = object : Wirespec.ClientEdge<Request, Response<*>> {
+      override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
         override fun to(request: Request) = toRequest(serialization, request)
         override fun from(response: Wirespec.RawResponse) = fromResponse(serialization, response)
       }

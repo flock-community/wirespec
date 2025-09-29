@@ -1,10 +1,12 @@
 package community.flock.wirespec.example.maven.custom.app.common;
 
+import java.io.IOException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import community.flock.wirespec.example.maven.custom.app.exception.SerializationException;
 import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.java.serde.DefaultParamSerialization;
+import community.flock.wirespec.java.serde.DefaultPathSerialization;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Type;
@@ -17,7 +19,7 @@ import java.lang.reflect.Type;
  * In this case, you don't need the dependency on community.flock.wirespec.integration:wirespec
  */
 @Component
-public class WirespecSerializer implements Wirespec.Serialization<String>, DefaultParamSerialization {
+public class WirespecSerializer implements Wirespec.Serialization, DefaultParamSerialization, DefaultPathSerialization {
 
     private final ObjectMapper objectMapper;
 
@@ -26,12 +28,9 @@ public class WirespecSerializer implements Wirespec.Serialization<String>, Defau
     }
 
     @Override
-    public <T> String serialize(T body, Type type) {
+    public <T> byte[] serializeBody(T body, Type type) {
         try {
-            if (body instanceof String) {
-                return (String) body;
-            }
-            return objectMapper.writeValueAsString(body);
+            return objectMapper.writeValueAsBytes(body);
         } catch (JsonProcessingException e) {
             throw new SerializationException(e);
         }
@@ -39,16 +38,16 @@ public class WirespecSerializer implements Wirespec.Serialization<String>, Defau
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T deserialize(String raw, Type valueType) {
+    public <T> T deserializeBody(byte[] raw, Type valueType) {
         if (raw == null) {
             return null;
         }
         try {
             if (valueType == String.class) {
-                return (T) raw;
+                return (T) raw.toString();
             }
             return objectMapper.readValue(raw, objectMapper.constructType(valueType));
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             throw new SerializationException(e);
         }
     }

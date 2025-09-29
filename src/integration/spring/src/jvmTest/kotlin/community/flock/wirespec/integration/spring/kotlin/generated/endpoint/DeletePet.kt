@@ -27,18 +27,18 @@ object DeletePet : Wirespec.Endpoint {
     override val body = Unit
   }
 
-  fun toRequest(serialization: Wirespec.Serializer<String>, request: Request): Wirespec.RawRequest =
+  fun toRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
-      path = listOf("pet", request.path.petId.let{serialization.serialize(it, typeOf<Long>())}),
+      path = listOf("pet", request.path.petId.let{serialization.serializePath(it, typeOf<Long>())}),
       method = request.method.name,
       queries = emptyMap(),
       headers = (mapOf("api_key" to (request.headers.api_key?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
       body = null,
     )
 
-  fun fromRequest(serialization: Wirespec.Deserializer<String>, request: Wirespec.RawRequest): Request =
+  fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
     Request(
-      petId = serialization.deserialize(request.path[1], typeOf<Long>()),
+      petId = serialization.deserializePath(request.path[1], typeOf<Long>()),
       api_key = request.headers["api_key"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) }
     )
 
@@ -54,7 +54,7 @@ object DeletePet : Wirespec.Endpoint {
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
-  fun toResponse(serialization: Wirespec.Serializer<String>, response: Response<*>): Wirespec.RawResponse =
+  fun toResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
     when(response) {
       is Response400 -> Wirespec.RawResponse(
         statusCode = response.status,
@@ -63,7 +63,7 @@ object DeletePet : Wirespec.Endpoint {
       )
     }
 
-  fun fromResponse(serialization: Wirespec.Deserializer<String>, response: Wirespec.RawResponse): Response<*> =
+  fun fromResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
     when (response.statusCode) {
       400 -> Response400(
         body = Unit,
@@ -78,11 +78,11 @@ object DeletePet : Wirespec.Endpoint {
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
       override val pathTemplate = "/pet/{petId}"
       override val method = "DELETE"
-      override fun server(serialization: Wirespec.Serialization<String>) = object : Wirespec.ServerEdge<Request, Response<*>> {
+      override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)
       }
-      override fun client(serialization: Wirespec.Serialization<String>) = object : Wirespec.ClientEdge<Request, Response<*>> {
+      override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
         override fun to(request: Request) = toRequest(serialization, request)
         override fun from(response: Wirespec.RawResponse) = fromResponse(serialization, response)
       }
