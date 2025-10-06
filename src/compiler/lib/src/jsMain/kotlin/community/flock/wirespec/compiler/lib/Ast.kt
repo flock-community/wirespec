@@ -15,6 +15,8 @@ import community.flock.wirespec.compiler.core.parse.Field
 import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Module
 import community.flock.wirespec.compiler.core.parse.Reference
+import community.flock.wirespec.compiler.core.parse.Reference.Primitive.Type.Precision.P32
+import community.flock.wirespec.compiler.core.parse.Reference.Primitive.Type.Precision.P64
 import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
@@ -159,9 +161,11 @@ private fun WsReference.consume(): Reference = when (this) {
 }
 
 private fun WsPrimitiveType.consume() = when (this) {
-    WsPrimitiveType.String -> Reference.Primitive.Type.String(null)
-    WsPrimitiveType.Integer -> Reference.Primitive.Type.Integer(constraint = null)
-    WsPrimitiveType.Number -> Reference.Primitive.Type.Number(constraint = null)
+    WsPrimitiveType.String -> Reference.Primitive.Type.String(constraint = null)
+    WsPrimitiveType.Integer -> Reference.Primitive.Type.Integer(precision = P64, constraint = null)
+    WsPrimitiveType.Integer32 -> Reference.Primitive.Type.Integer(precision = P32, constraint = null)
+    WsPrimitiveType.Number -> Reference.Primitive.Type.Number(precision = P64, constraint = null)
+    WsPrimitiveType.Number32 -> Reference.Primitive.Type.Number(precision = P32, constraint = null)
     WsPrimitiveType.Boolean -> Reference.Primitive.Type.Boolean
     WsPrimitiveType.Bytes -> Reference.Primitive.Type.Bytes
 }
@@ -247,8 +251,14 @@ private fun Reference.produce(): WsReference = when (this) {
 
 private fun Reference.Primitive.Type.produce() = when (this) {
     is Reference.Primitive.Type.String -> WsPrimitiveType.String
-    is Reference.Primitive.Type.Integer -> WsPrimitiveType.Integer
-    is Reference.Primitive.Type.Number -> WsPrimitiveType.Number
+    is Reference.Primitive.Type.Integer -> when (precision) {
+        P32 -> WsPrimitiveType.Integer32
+        P64 -> WsPrimitiveType.Integer
+    }
+    is Reference.Primitive.Type.Number -> when (precision) {
+        P32 -> WsPrimitiveType.Number32
+        P64 -> WsPrimitiveType.Number
+    }
     is Reference.Primitive.Type.Boolean -> WsPrimitiveType.Boolean
     is Reference.Primitive.Type.Bytes -> WsPrimitiveType.Bytes
 }
@@ -407,7 +417,7 @@ data class WsPrimitive(
 ) : WsReference
 
 @JsExport
-enum class WsPrimitiveType { String, Integer, Number, Boolean, Bytes }
+enum class WsPrimitiveType { String, Integer, Integer32, Number, Number32, Boolean, Bytes }
 
 @JsExport
 data class WsRequest(val content: WsContent?)
