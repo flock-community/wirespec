@@ -4,8 +4,8 @@ package community.flock.wirespec.plugin.npm
 
 import arrow.core.curried
 import arrow.core.nonEmptyListOf
-import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
-import community.flock.kotlinx.openapi.bindings.v3.OpenAPIObject
+import community.flock.kotlinx.openapi.bindings.OpenAPIV2Model
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3Model
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
@@ -125,14 +125,14 @@ fun emit(wsAst: WsAST, emitter: Emitters, packageName: String, emitShared: Boole
         Emitters.OPENAPI_V2 ->
             OpenAPIV2Emitter
                 .emitSwaggerObject(ast.modules.flatMap { it.statements })
-                .let(encode(SwaggerObject.serializer()))
+                .let(encode(OpenAPIV2Model.serializer()))
                 .let(::Emitted.curried()("openapi")::invoke)
                 .let { nonEmptyListOf(it) }
 
         Emitters.OPENAPI_V3 ->
             OpenAPIV3Emitter
                 .emitOpenAPIObject(ast.modules.flatMap { it.statements }, null)
-                .let(encode(OpenAPIObject.serializer()))
+                .let(encode(OpenAPIV3Model.serializer()))
                 .let(::Emitted.curried()("openapi")::invoke)
                 .let { nonEmptyListOf(it) }
 

@@ -2,20 +2,21 @@ package community.flock.wirespec.openapi.v2
 
 import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
-import community.flock.kotlinx.openapi.bindings.v2.HeaderObject
-import community.flock.kotlinx.openapi.bindings.v2.InfoObject
-import community.flock.kotlinx.openapi.bindings.v2.OperationObject
-import community.flock.kotlinx.openapi.bindings.v2.ParameterLocation
-import community.flock.kotlinx.openapi.bindings.v2.ParameterObject
-import community.flock.kotlinx.openapi.bindings.v2.Path
-import community.flock.kotlinx.openapi.bindings.v2.PathItemObject
-import community.flock.kotlinx.openapi.bindings.v2.Ref
-import community.flock.kotlinx.openapi.bindings.v2.ReferenceObject
-import community.flock.kotlinx.openapi.bindings.v2.ResponseObject
-import community.flock.kotlinx.openapi.bindings.v2.SchemaObject
-import community.flock.kotlinx.openapi.bindings.v2.SchemaOrReferenceObject
-import community.flock.kotlinx.openapi.bindings.v2.StatusCode
-import community.flock.kotlinx.openapi.bindings.v2.SwaggerObject
+import community.flock.kotlinx.openapi.bindings.InfoObject
+import community.flock.kotlinx.openapi.bindings.OpenAPIV2Header
+import community.flock.kotlinx.openapi.bindings.OpenAPIV2Model
+import community.flock.kotlinx.openapi.bindings.OpenAPIV2Operation
+import community.flock.kotlinx.openapi.bindings.OpenAPIV2Parameter
+import community.flock.kotlinx.openapi.bindings.OpenAPIV2ParameterLocation
+import community.flock.kotlinx.openapi.bindings.OpenAPIV2PathItem
+import community.flock.kotlinx.openapi.bindings.OpenAPIV2Reference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV2Response
+import community.flock.kotlinx.openapi.bindings.OpenAPIV2Schema
+import community.flock.kotlinx.openapi.bindings.OpenAPIV2SchemaOrReference
+import community.flock.kotlinx.openapi.bindings.OpenAPIV2Type
+import community.flock.kotlinx.openapi.bindings.Path
+import community.flock.kotlinx.openapi.bindings.Ref
+import community.flock.kotlinx.openapi.bindings.StatusCode
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
@@ -27,12 +28,12 @@ import community.flock.wirespec.compiler.core.parse.Refined
 import community.flock.wirespec.compiler.core.parse.Statements
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.openapi.Common.json
+import community.flock.wirespec.openapi.APPLICATION_JSON
+import community.flock.wirespec.openapi.json
 import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter
 import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter.emitOpenAPIObject
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
-import community.flock.kotlinx.openapi.bindings.v2.Type as OpenAPIType
 
 object OpenAPIV2Emitter : Emitter {
 
@@ -51,20 +52,20 @@ object OpenAPIV2Emitter : Emitter {
         }
         .let { nonEmptyListOf(it) }
 
-    fun emitSwaggerObject(statements: Statements): SwaggerObject = SwaggerObject(
+    fun emitSwaggerObject(statements: Statements): OpenAPIV2Model = OpenAPIV2Model(
         swagger = "2.0",
         info = InfoObject(
             title = "Wirespec",
             version = "0.0.0",
         ),
-        consumes = listOf("application/json"),
-        produces = listOf("application/json"),
+        consumes = listOf(APPLICATION_JSON),
+        produces = listOf(APPLICATION_JSON),
         paths = statements.filterIsInstance<Endpoint>().groupBy { it.path }
             .map { (segments, endpoints) ->
-                Path(segments.emitSegment()) to PathItemObject(
+                Path(segments.emitSegment()) to OpenAPIV2PathItem(
                     parameters = segments.filterIsInstance<Endpoint.Segment.Param>().map {
-                        ParameterObject(
-                            `in` = ParameterLocation.PATH,
+                        OpenAPIV2Parameter(
+                            `in` = OpenAPIV2ParameterLocation.PATH,
                             name = it.identifier.value,
                             type = it.reference.emitType(),
                             format = it.reference.emitFormat(),
@@ -86,44 +87,44 @@ object OpenAPIV2Emitter : Emitter {
             .filterIsInstance<Refined>().associate { refined ->
                 when (val type = refined.reference.type) {
                     Reference.Primitive.Type.Boolean ->
-                        refined.identifier.value to SchemaObject(
-                            type = OpenAPIType.BOOLEAN,
+                        refined.identifier.value to OpenAPIV2Schema(
+                            type = OpenAPIV2Type.BOOLEAN,
                         )
 
                     Reference.Primitive.Type.Bytes ->
-                        refined.identifier.value to SchemaObject(
-                            type = OpenAPIType.FILE,
+                        refined.identifier.value to OpenAPIV2Schema(
+                            type = OpenAPIV2Type.FILE,
                         )
 
                     is Reference.Primitive.Type.Integer ->
-                        refined.identifier.value to SchemaObject(
-                            type = OpenAPIType.INTEGER,
+                        refined.identifier.value to OpenAPIV2Schema(
+                            type = OpenAPIV2Type.INTEGER,
                             minimum = type.constraint?.min?.toDouble(),
                             maximum = type.constraint?.min?.toDouble(),
                         )
 
                     is Reference.Primitive.Type.Number ->
-                        refined.identifier.value to SchemaObject(
-                            type = OpenAPIType.NUMBER,
+                        refined.identifier.value to OpenAPIV2Schema(
+                            type = OpenAPIV2Type.NUMBER,
                             minimum = type.constraint?.min?.toDouble(),
                             maximum = type.constraint?.min?.toDouble(),
                         )
 
                     is Reference.Primitive.Type.String ->
                         refined.identifier.value to when (val pattern = type.constraint) {
-                            is Reference.Primitive.Type.Constraint.RegExp -> SchemaObject(
-                                type = OpenAPIType.STRING,
+                            is Reference.Primitive.Type.Constraint.RegExp -> OpenAPIV2Schema(
+                                type = OpenAPIV2Type.STRING,
                                 pattern = pattern.value,
                             )
 
-                            null -> SchemaObject(
-                                type = OpenAPIType.STRING,
+                            null -> OpenAPIV2Schema(
+                                type = OpenAPIV2Type.STRING,
                             )
                         }
                 }
             } + statements
             .filterIsInstance<Type>().associate { type ->
-                type.identifier.value to SchemaObject(
+                type.identifier.value to OpenAPIV2Schema(
                     properties = type.shape.value.associate { it.toProperties() },
                     required = type.shape.value
                         .filter { !it.reference.isNullable }
@@ -133,18 +134,18 @@ object OpenAPIV2Emitter : Emitter {
             } + statements
             .filterIsInstance<community.flock.wirespec.compiler.core.parse.Enum>()
             .associate { enum ->
-                enum.identifier.value to SchemaObject(
-                    type = OpenAPIType.STRING,
+                enum.identifier.value to OpenAPIV2Schema(
+                    type = OpenAPIV2Type.STRING,
                     enum = enum.entries.map { JsonPrimitive(it) },
                 )
             },
     )
 
-    private fun Field.toProperties(): Pair<String, SchemaOrReferenceObject> = identifier.value to reference.toSchemaOrReference()
+    private fun Field.toProperties(): Pair<String, OpenAPIV2SchemaOrReference> = identifier.value to reference.toSchemaOrReference()
 
-    private fun List<Endpoint>.emit(method: Endpoint.Method): OperationObject? = filter { it.method == method }.map { it.emit() }.firstOrNull()
+    private fun List<Endpoint>.emit(method: Endpoint.Method): OpenAPIV2Operation? = filter { it.method == method }.map { it.emit() }.firstOrNull()
 
-    private fun Endpoint.emit() = OperationObject(
+    private fun Endpoint.emit() = OpenAPIV2Operation(
         operationId = identifier.value,
         description = comment?.value,
         consumes = requests.mapNotNull { it.content?.type }.distinct().ifEmpty { null },
@@ -153,24 +154,24 @@ object OpenAPIV2Emitter : Emitter {
             .mapNotNull { it.content }
             .take(1)
             .map {
-                ParameterObject(
-                    `in` = ParameterLocation.BODY,
+                OpenAPIV2Parameter(
+                    `in` = OpenAPIV2ParameterLocation.BODY,
                     name = "RequestBody",
                     schema = it.reference.toSchemaOrReference(),
                     required = !it.reference.isNullable,
                 )
-            } + queries.map { it.emitParameter(ParameterLocation.QUERY) } + headers.map {
+            } + queries.map { it.emitParameter(OpenAPIV2ParameterLocation.QUERY) } + headers.map {
             it.emitParameter(
-                ParameterLocation.HEADER,
+                OpenAPIV2ParameterLocation.HEADER,
             )
         },
         responses = responses
             .associate { response ->
-                StatusCode(response.status) to ResponseObject(
+                StatusCode(response.status) to OpenAPIV2Response(
                     description = comment?.value
                         ?: "${identifier.value} ${response.status} response",
                     headers = response.headers.associate {
-                        it.identifier.value to HeaderObject(
+                        it.identifier.value to OpenAPIV2Header(
                             type = it.reference.emitType(),
                             format = it.reference.emitFormat(),
                             pattern = it.reference.emitPattern(),
@@ -181,8 +182,8 @@ object OpenAPIV2Emitter : Emitter {
                         ?.takeIf { content -> content.reference !is Reference.Unit }
                         ?.let { content ->
                             when (val ref = content.reference) {
-                                is Reference.Iterable -> SchemaObject(
-                                    type = OpenAPIType.ARRAY,
+                                is Reference.Iterable -> OpenAPIV2Schema(
+                                    type = OpenAPIV2Type.ARRAY,
                                     items = ref.reference.toSchemaOrReference(),
                                 )
 
@@ -200,7 +201,7 @@ object OpenAPIV2Emitter : Emitter {
         }
     }
 
-    private fun Field.emitParameter(location: ParameterLocation) = ParameterObject(
+    private fun Field.emitParameter(location: OpenAPIV2ParameterLocation) = OpenAPIV2Parameter(
         `in` = location,
         name = identifier.value,
         type = reference.emitType(),
@@ -208,8 +209,8 @@ object OpenAPIV2Emitter : Emitter {
         pattern = reference.emitPattern(),
         items = when (val ref = reference) {
             is Reference.Iterable -> when (val emit = ref.toSchemaOrReference()) {
-                is ReferenceObject -> emit
-                is SchemaObject -> emit.items
+                is OpenAPIV2Reference -> emit
+                is OpenAPIV2Schema -> emit.items
             }
 
             else -> null
@@ -217,19 +218,19 @@ object OpenAPIV2Emitter : Emitter {
         required = !reference.isNullable,
     )
 
-    private fun Reference.toSchemaOrReference(): SchemaOrReferenceObject = when (this) {
-        is Reference.Dict -> SchemaObject(
-            type = OpenAPIType.OBJECT,
+    private fun Reference.toSchemaOrReference(): OpenAPIV2SchemaOrReference = when (this) {
+        is Reference.Dict -> OpenAPIV2Schema(
+            type = OpenAPIV2Type.OBJECT,
             items = reference.toSchemaOrReference(),
         )
 
-        is Reference.Iterable -> SchemaObject(
-            type = OpenAPIType.ARRAY,
+        is Reference.Iterable -> OpenAPIV2Schema(
+            type = OpenAPIV2Type.ARRAY,
             items = reference.toSchemaOrReference(),
         )
 
-        is Reference.Custom -> ReferenceObject(ref = Ref("#/definitions/$value"))
-        is Reference.Primitive -> SchemaObject(
+        is Reference.Custom -> OpenAPIV2Reference(ref = Ref("#/definitions/$value"))
+        is Reference.Primitive -> OpenAPIV2Schema(
             type = type.emitType(),
             format = emitFormat(),
             pattern = emitPattern(),
@@ -239,21 +240,21 @@ object OpenAPIV2Emitter : Emitter {
         is Reference.Unit -> error("Cannot map Unit")
     }
 
-    private fun Reference.Primitive.Type.emitType(): OpenAPIType = when (this) {
-        is Reference.Primitive.Type.String -> OpenAPIType.STRING
-        is Reference.Primitive.Type.Integer -> OpenAPIType.INTEGER
-        is Reference.Primitive.Type.Number -> OpenAPIType.NUMBER
-        is Reference.Primitive.Type.Boolean -> OpenAPIType.BOOLEAN
-        is Reference.Primitive.Type.Bytes -> OpenAPIType.STRING
+    private fun Reference.Primitive.Type.emitType(): OpenAPIV2Type = when (this) {
+        is Reference.Primitive.Type.String -> OpenAPIV2Type.STRING
+        is Reference.Primitive.Type.Integer -> OpenAPIV2Type.INTEGER
+        is Reference.Primitive.Type.Number -> OpenAPIV2Type.NUMBER
+        is Reference.Primitive.Type.Boolean -> OpenAPIV2Type.BOOLEAN
+        is Reference.Primitive.Type.Bytes -> OpenAPIV2Type.STRING
     }
 
-    private fun Reference.emitType(): OpenAPIType = when (this) {
-        is Reference.Dict -> OpenAPIType.OBJECT
-        is Reference.Iterable -> OpenAPIType.ARRAY
+    private fun Reference.emitType(): OpenAPIV2Type = when (this) {
+        is Reference.Dict -> OpenAPIV2Type.OBJECT
+        is Reference.Iterable -> OpenAPIV2Type.ARRAY
         is Reference.Primitive -> type.emitType()
-        is Reference.Custom -> OpenAPIType.OBJECT
-        is Reference.Any -> OpenAPIType.OBJECT
-        is Reference.Unit -> OpenAPIType.OBJECT
+        is Reference.Custom -> OpenAPIV2Type.OBJECT
+        is Reference.Any -> OpenAPIV2Type.OBJECT
+        is Reference.Unit -> OpenAPIV2Type.OBJECT
     }
 
     private fun Reference.emitFormat() = when (this) {
