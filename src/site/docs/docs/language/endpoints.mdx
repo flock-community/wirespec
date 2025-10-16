@@ -41,14 +41,14 @@ endpoint CreateTodo POST Todo /todos -> {
 
 ## Request Body
 
-You can specify a [type](types) for the request body like so:
+You can specify a [type](types) for the request body by appending the resource type after the HTTP method like so:
 
 ```wirespec
 endpoint CreateTodo POST Todo /todos -> {
     201 -> Unit
 }
 
-type CreateTodo {
+type Todo {
     task: String
 }
 ```
