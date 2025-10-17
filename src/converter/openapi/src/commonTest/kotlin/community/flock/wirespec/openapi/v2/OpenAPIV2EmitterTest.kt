@@ -1,15 +1,15 @@
 package community.flock.wirespec.openapi.v2
 
-import arrow.core.toNonEmptyListOrNull
-import community.flock.kotlinx.openapi.bindings.v2.OpenAPI
+import community.flock.kotlinx.openapi.bindings.OpenAPIV2
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser.parse
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readString
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class OpenAPIV2EmitterTest {
 
@@ -20,17 +20,16 @@ class OpenAPIV2EmitterTest {
         val path = Path("src/commonTest/resources/v2/petstore.json")
         val petstoreJson = SystemFileSystem.source(path).buffered().readString()
 
-        val petstoreOpenAPi = OpenAPI.decodeFromString(petstoreJson)
-        val petstoreAst = petstoreOpenAPi.parse().toNonEmptyListOrNull() ?: error("AST should not be empty")
+        val petstoreOpenAPi = OpenAPIV2.decodeFromString(petstoreJson)
+        val petstoreAst = petstoreOpenAPi.parse().shouldNotBeNull()
 
         val petstoreConvertedOpenAPI = OpenAPIV2Emitter.emitSwaggerObject(petstoreAst)
-        val petstoreConvertedOpenAPiAst = petstoreConvertedOpenAPI.parse()
+        val petstoreConvertedOpenAPiAst = petstoreConvertedOpenAPI.parse().shouldNotBeNull()
 
-        assertEquals(
-            petstoreAst.toList().sortedBy { it.identifier.value }
-                .joinToString("\n") { it.toString() },
-            petstoreConvertedOpenAPiAst.sortedBy { it.identifier.value }
-                .joinToString("\n") { it.toString() },
-        )
+        petstoreAst.toList()
+            .sortedBy { it.identifier.value }
+            .joinToString("\n") { it.toString() } shouldBe petstoreConvertedOpenAPiAst
+            .sortedBy { it.identifier.value }
+            .joinToString("\n") { it.toString() }
     }
 }
