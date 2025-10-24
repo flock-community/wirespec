@@ -2,7 +2,7 @@ package community.flock.wirespec.compiler.core.emit
 
 import arrow.core.NonEmptyList
 import arrow.core.NonEmptySet
-import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.utils.Logger
 
 interface Emitter : HasExtension {

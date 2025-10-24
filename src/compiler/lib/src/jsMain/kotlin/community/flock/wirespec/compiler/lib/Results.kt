@@ -7,7 +7,7 @@ import arrow.core.Either.Right
 import arrow.core.EitherNel
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
-import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.ast.AST
 
 fun EitherNel<WirespecException, List<Emitted>>.produce(): WsCompilationResult = when (this) {
     is Left -> WsCompilationResult(errors = value.map { it.produce() }.toTypedArray())

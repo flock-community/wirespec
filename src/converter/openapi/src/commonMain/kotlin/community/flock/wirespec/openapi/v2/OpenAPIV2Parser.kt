@@ -26,20 +26,20 @@ import community.flock.kotlinx.openapi.bindings.Path
 import community.flock.kotlinx.openapi.bindings.StatusCode
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
-import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.parse.Definition
-import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
-import community.flock.wirespec.compiler.core.parse.Endpoint
-import community.flock.wirespec.compiler.core.parse.Enum
-import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.FieldIdentifier
-import community.flock.wirespec.compiler.core.parse.Module
-import community.flock.wirespec.compiler.core.parse.Reference
-import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
+import community.flock.wirespec.compiler.core.parse.ast.Endpoint
+import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Field
+import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
+import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.converter.common.Parser
-import community.flock.wirespec.openapi.APPLICATION_JSON
-import community.flock.wirespec.openapi.className
-import community.flock.wirespec.openapi.filterNotNullValues
+import community.flock.wirespec.openapi.common.APPLICATION_JSON
+import community.flock.wirespec.openapi.common.className
+import community.flock.wirespec.openapi.common.filterNotNullValues
 import kotlinx.serialization.json.Json
 
 object OpenAPIV2Parser : Parser {
@@ -275,24 +275,24 @@ private fun OpenAPIV2Model.resolve(parameterOrReference: OpenAPIV2ParameterOrRef
     is OpenAPIV2Reference -> resolveParameterObject(parameterOrReference)
 }
 
-private fun OpenAPIV2Model.flatten(OpenAPIV2Schema: OpenAPIV2Schema, name: String): List<Definition> = when {
-    OpenAPIV2Schema.additionalProperties != null -> when (OpenAPIV2Schema.additionalProperties) {
+private fun OpenAPIV2Model.flatten(openAPIV2Schema: OpenAPIV2Schema, name: String): List<Definition> = when {
+    openAPIV2Schema.additionalProperties != null -> when (openAPIV2Schema.additionalProperties) {
         is BooleanValue -> emptyList()
         else ->
-            OpenAPIV2Schema.additionalProperties
+            openAPIV2Schema.additionalProperties
                 ?.let { resolve(it) }
                 ?.takeIf { it.properties != null }
                 ?.let { flatten(it, name) }
                 ?: emptyList()
     }
 
-    OpenAPIV2Schema.allOf != null -> listOf(
+    openAPIV2Schema.allOf != null -> listOf(
         Type(
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier(name.sanitize()),
             shape = Type.Shape(
-                OpenAPIV2Schema.allOf
+                openAPIV2Schema.allOf
                     .orEmpty()
                     .flatMap {
                         when (it) {
@@ -305,7 +305,7 @@ private fun OpenAPIV2Model.flatten(OpenAPIV2Schema: OpenAPIV2Schema, name: Strin
             extends = emptyList(),
         ),
     ).plus(
-        OpenAPIV2Schema.allOf!!.flatMap {
+        openAPIV2Schema.allOf!!.flatMap {
             when (it) {
                 is OpenAPIV2Reference -> emptyList()
                 is OpenAPIV2Schema -> it.properties.orEmpty().flatMap { (key, value) ->
@@ -318,15 +318,15 @@ private fun OpenAPIV2Model.flatten(OpenAPIV2Schema: OpenAPIV2Schema, name: Strin
         },
     )
 
-    OpenAPIV2Schema.enum != null ->
-        OpenAPIV2Schema.enum!!
+    openAPIV2Schema.enum != null ->
+        openAPIV2Schema.enum!!
             .map { it.content }
             .toSet()
             .let { listOf(Enum(comment = null, annotations = emptyList(), identifier = DefinitionIdentifier(name.sanitize()), entries = it)) }
 
-    else -> when (OpenAPIV2Schema.type) {
+    else -> when (openAPIV2Schema.type) {
         null, OpenAPIV2Type.OBJECT -> {
-            val fields = OpenAPIV2Schema.properties.orEmpty()
+            val fields = openAPIV2Schema.properties.orEmpty()
                 .flatMap { (key, value) -> flatten(value, className(name, key)) }
 
             val schema = listOf(
@@ -334,14 +334,14 @@ private fun OpenAPIV2Model.flatten(OpenAPIV2Schema: OpenAPIV2Schema, name: Strin
                     comment = null,
                     annotations = emptyList(),
                     identifier = DefinitionIdentifier(name.sanitize()),
-                    shape = Type.Shape(toField(OpenAPIV2Schema, name)),
+                    shape = Type.Shape(toField(openAPIV2Schema, name)),
                     extends = emptyList(),
                 ),
             )
             schema + fields
         }
 
-        OpenAPIV2Type.ARRAY -> when (val it = OpenAPIV2Schema.items) {
+        OpenAPIV2Type.ARRAY -> when (val it = openAPIV2Schema.items) {
             is OpenAPIV2Reference -> emptyList()
             is OpenAPIV2Schema -> flatten(it, className(name, "Array"))
             null -> emptyList()

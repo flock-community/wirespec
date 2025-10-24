@@ -1,8 +1,8 @@
 package community.flock.wirespec.emitters.wirespec
 
 import community.flock.wirespec.compiler.core.emit.RefinedTypeDefinitionEmitter
-import community.flock.wirespec.compiler.core.parse.Reference
-import community.flock.wirespec.compiler.core.parse.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Refined
 
 interface WirespecRefinedTypeDefinitionEmitter: RefinedTypeDefinitionEmitter, WirespecTypeDefinitionEmitter {
 

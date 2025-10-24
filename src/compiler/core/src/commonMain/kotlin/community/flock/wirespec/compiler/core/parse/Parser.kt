@@ -15,6 +15,9 @@ import community.flock.wirespec.compiler.core.exceptions.EmptyModule
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.exceptions.WrongTokenException
 import community.flock.wirespec.compiler.core.parse.AnnotationParser.parseAnnotations
+import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.tokenize.ChannelDefinition
 import community.flock.wirespec.compiler.core.tokenize.Comment
 import community.flock.wirespec.compiler.core.tokenize.EndpointDefinition
@@ -91,7 +94,7 @@ private fun TokenProvider.parseModule(): EitherNel<WirespecException, Module> = 
 private fun TokenProvider.parseDefinition() = either {
     val annotations = parseAnnotations().bind()
     val comment = when (token.type) {
-        is Comment -> Comment(token.value).also { eatToken().bind() }
+        is Comment -> community.flock.wirespec.compiler.core.parse.ast.Comment(token.value).also { eatToken().bind() }
         else -> null
     }
     when (token.type) {
