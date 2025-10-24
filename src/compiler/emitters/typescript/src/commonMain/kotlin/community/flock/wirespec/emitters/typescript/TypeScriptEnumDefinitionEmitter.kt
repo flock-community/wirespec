@@ -1,8 +1,8 @@
 package community.flock.wirespec.emitters.typescript
 
 import community.flock.wirespec.compiler.core.emit.EnumDefinitionEmitter
-import community.flock.wirespec.compiler.core.parse.Enum
-import community.flock.wirespec.compiler.core.parse.Module
+import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Module
 
 interface TypeScriptEnumDefinitionEmitter: EnumDefinitionEmitter, TypeScriptTypeDefinitionEmitter {
 

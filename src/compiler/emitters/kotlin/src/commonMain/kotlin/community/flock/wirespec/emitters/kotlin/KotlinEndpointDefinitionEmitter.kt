@@ -13,8 +13,8 @@ import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.emit.indexedPathParams
 import community.flock.wirespec.compiler.core.emit.pathParams
 import community.flock.wirespec.compiler.core.orNull
-import community.flock.wirespec.compiler.core.parse.Endpoint
-import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.ast.Endpoint
+import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.removeQuestionMark
 
 interface KotlinEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageName, KotlinTypeDefinitionEmitter {

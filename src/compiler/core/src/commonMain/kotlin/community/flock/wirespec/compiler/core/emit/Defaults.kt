@@ -1,10 +1,10 @@
 package community.flock.wirespec.compiler.core.emit
 
-import community.flock.wirespec.compiler.core.parse.Channel
-import community.flock.wirespec.compiler.core.parse.Definition
-import community.flock.wirespec.compiler.core.parse.Endpoint
-import community.flock.wirespec.compiler.core.parse.Model
-import community.flock.wirespec.compiler.core.parse.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Channel
+import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.Endpoint
+import community.flock.wirespec.compiler.core.parse.ast.Model
+import community.flock.wirespec.compiler.core.parse.ast.Reference
 
 const val DEFAULT_PACKAGE = "community.flock.wirespec"
 const val DEFAULT_SHARED_PACKAGE_STRING = DEFAULT_PACKAGE

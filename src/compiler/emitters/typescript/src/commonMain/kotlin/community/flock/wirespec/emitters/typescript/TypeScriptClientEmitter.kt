@@ -6,8 +6,8 @@ import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.emit.paramList
 import community.flock.wirespec.compiler.core.emit.spacer
-import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 
 interface TypeScriptClientEmitter: ClientEmitter, TypeScriptTypeDefinitionEmitter {
 

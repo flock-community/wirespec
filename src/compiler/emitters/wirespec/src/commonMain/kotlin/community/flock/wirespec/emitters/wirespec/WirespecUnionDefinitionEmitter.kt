@@ -1,7 +1,7 @@
 package community.flock.wirespec.emitters.wirespec
 
 import community.flock.wirespec.compiler.core.emit.UnionDefinitionEmitter
-import community.flock.wirespec.compiler.core.parse.Union
+import community.flock.wirespec.compiler.core.parse.ast.Union
 
 interface WirespecUnionDefinitionEmitter: UnionDefinitionEmitter, WirespecTypeDefinitionEmitter {
 
