@@ -1,11 +1,11 @@
 package community.flock.wirespec.compiler.core.emit
 
-import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.parse.Endpoint
-import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.FieldIdentifier
-import community.flock.wirespec.compiler.core.parse.Identifier
-import community.flock.wirespec.compiler.core.parse.Reference
+import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.Endpoint
+import community.flock.wirespec.compiler.core.parse.ast.Field
+import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
+import community.flock.wirespec.compiler.core.parse.ast.Identifier
+import community.flock.wirespec.compiler.core.parse.ast.Reference
 
 fun Endpoint.Segment.emit() = when (this) {
     is Endpoint.Segment.Literal -> value

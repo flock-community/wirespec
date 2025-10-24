@@ -8,7 +8,7 @@ import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.parse
-import community.flock.wirespec.compiler.core.parse.Module
+import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.lib.WsNode
 import community.flock.wirespec.compiler.lib.produce
 import community.flock.wirespec.compiler.utils.NoLogger

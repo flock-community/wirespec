@@ -1,4 +1,4 @@
-package community.flock.wirespec.openapi
+package community.flock.wirespec.openapi.common
 
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
 import kotlinx.serialization.json.Json

@@ -2,6 +2,10 @@ package community.flock.wirespec.compiler.core.parse
 
 import arrow.core.Either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
+import community.flock.wirespec.compiler.core.parse.ast.Annotation
+import community.flock.wirespec.compiler.core.parse.ast.Comment
+import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
+import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.tokenize.Comma
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.RightCurly

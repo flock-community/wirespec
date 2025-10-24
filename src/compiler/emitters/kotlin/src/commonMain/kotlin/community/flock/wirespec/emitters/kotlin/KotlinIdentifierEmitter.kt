@@ -4,9 +4,9 @@ import community.flock.wirespec.compiler.core.addBackticks
 import community.flock.wirespec.compiler.core.emit.IdentifierEmitter
 import community.flock.wirespec.compiler.core.emit.Keywords
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
-import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
-import community.flock.wirespec.compiler.core.parse.FieldIdentifier
-import community.flock.wirespec.compiler.core.parse.Identifier
+import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
+import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
+import community.flock.wirespec.compiler.core.parse.ast.Identifier
 
 interface KotlinIdentifierEmitter : IdentifierEmitter {
 

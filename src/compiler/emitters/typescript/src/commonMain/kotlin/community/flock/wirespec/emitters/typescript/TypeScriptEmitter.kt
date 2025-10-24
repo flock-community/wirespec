@@ -9,11 +9,11 @@ import community.flock.wirespec.compiler.core.emit.hasEndpoints
 import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.emit.namespace
 import community.flock.wirespec.compiler.core.emit.plus
-import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.parse.Channel
-import community.flock.wirespec.compiler.core.parse.Definition
-import community.flock.wirespec.compiler.core.parse.Module
-import community.flock.wirespec.compiler.core.parse.Union
+import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.Channel
+import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
 
 interface TypeScriptEmitters:
