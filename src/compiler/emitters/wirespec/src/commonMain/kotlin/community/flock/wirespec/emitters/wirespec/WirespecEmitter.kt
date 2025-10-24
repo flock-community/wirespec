@@ -2,8 +2,7 @@ package community.flock.wirespec.emitters.wirespec
 
 import community.flock.wirespec.compiler.core.emit.LanguageEmitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
-import community.flock.wirespec.compiler.core.emit.Keywords
-import community.flock.wirespec.compiler.core.parse.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Reference
 
 interface WirespecEmitters:
     WirespecIdentifierEmitter,
