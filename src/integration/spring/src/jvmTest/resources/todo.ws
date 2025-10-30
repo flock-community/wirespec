@@ -6,6 +6,11 @@ type TodoDto {
     done: Boolean
 }
 
+type TodoDtoPatch {
+    name: String?,
+    done: Boolean?
+}
+
 type Error {
     code: Integer,
     description: String
@@ -13,5 +18,10 @@ type Error {
 
 endpoint GetTodos GET /api/todos ? {done:Boolean?} -> {
     200 -> TodoDto[] # {total:Integer}
+    500 -> Error
+}
+
+endpoint PatchTodos PATCH TodoDtoPatch /api/todos/{id:String} -> {
+    200 -> TodoDto
     500 -> Error
 }
