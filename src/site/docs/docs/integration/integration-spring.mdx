@@ -24,7 +24,7 @@ The integration works for both [producers](#restcontroller) (RestController) and
         <dependency>
             <groupId>community.flock.wirespec.integration</groupId>
             <artifactId>spring-jvm</artifactId>
-            <version>0.0.0</version>
+            <version>{{WIRESPEC_VERSION}}</version>
         </dependency>
         ```
 
@@ -32,11 +32,11 @@ The integration works for both [producers](#restcontroller) (RestController) and
         <plugin>
             <groupId>community.flock.wirespec.plugin.maven</groupId>
             <artifactId>wirespec-maven-plugin</artifactId>
-            <version>0.0.0</version>
+            <version>{{WIRESPEC_VERSION}}</version>
             <dependency>
                 <groupId>community.flock.wirespec.integration</groupId>
                 <artifactId>spring-jvm</artifactId>
-                <version>0.0.0</version>
+                <version>{{WIRESPEC_VERSION}}</version>
             </dependency>
             <executions>
                 <execution>
@@ -58,10 +58,15 @@ The integration works for both [producers](#restcontroller) (RestController) and
     <TabItem value="gradle" label="Gradle">
         Add the dependency to your depedencies, as well as the plugin dependencies
 
-        For single module project this is in the  `build.gradle.kts` file, and the `settings.gradle.kts`
+        For single module project this is in the `build.gradle.kts`
+
         ```gradle
-        dependencies {
-            implementation("community.flock.wirespec.integration:spring-jvm:0.14.3")
+        import community.flock.wirespec.integration.spring.java.emit.SpringJavaEmitter
+
+        buildscript {
+            dependencies {
+                classpath("community.flock.wirespec.integration:spring:{{WIRESPEC_VERSION}}")
+            }
         }
         ```
 
@@ -74,7 +79,7 @@ The integration works for both [producers](#restcontroller) (RestController) and
             input = layout.projectDirectory.dir("src/main/wirespec")
             output = layout.buildDirectory.dir("generated")
             packageName = "community.flock.wirespec.generated.java"
-            emitterClass = "community.flock.wirespec.integration.spring.java.emit.SpringJavaEmitter"::class.java
+            emitterClass = community.flock.wirespec.integration.spring.java.emit.SpringJavaEmitter::class.java
             languages = listOf(Language.Java)
         }
         ```
