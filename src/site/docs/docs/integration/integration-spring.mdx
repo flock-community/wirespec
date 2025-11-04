@@ -74,7 +74,7 @@ The integration works for both [producers](#restcontroller) (RestController) and
             input = layout.projectDirectory.dir("src/main/wirespec")
             output = layout.buildDirectory.dir("generated")
             packageName = "community.flock.wirespec.generated.java"
-            emitterClass = "community.flock.wirespec.integration.spring.java.emit.SpringJavaEmitter"::class.java
+            emitterClass = community.flock.wirespec.integration.spring.java.emit.SpringJavaEmitter::class.java
             languages = listOf(Language.Java)
         }
         ```
