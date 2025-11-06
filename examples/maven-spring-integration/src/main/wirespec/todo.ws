@@ -13,12 +13,26 @@ endpoint GetTodoById GET /todos/{id: String} -> {
   404 -> Error
 }
 
-endpoint UpdateTodo PUT TodoInput /todos/{id: String} -> {
+endpoint DeleteTodo DELETE /todos/{id: String} -> {
   200 -> Todo
   404 -> Error
 }
 
-endpoint DeleteTodo DELETE /todos/{id: String} -> {
+type Hello {
+    hello: String
+}
+
+type Upload {
+    file: Bytes,
+    json: Hello
+}
+
+endpoint UploadAttachment POST Upload /todos/{id: String}/upload -> {
+  201 -> Unit
+  404 -> Error
+}
+
+endpoint UpdateTodo PUT TodoInput /todos/{id: String} -> {
   200 -> Todo
   404 -> Error
 }

@@ -4,7 +4,9 @@ import community.flock.wirespec.generated.examples.spring.model.Todo;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -14,6 +16,7 @@ import static java.util.stream.Collectors.toList;
 public class TodoService {
 
     public List<Todo> store = new ArrayList<>();
+    public Map<String, byte[]> bucket = new HashMap<>();
 
     public TodoService(){
         store.add(new Todo(UUID.randomUUID().toString(), "First todo", false));
@@ -48,5 +51,9 @@ public class TodoService {
                     return CompletableFuture.completedFuture(todo);
                 })
                 .orElseThrow();
+    }
+
+    public void uploadFile(String filename, byte[] file){
+        bucket.put(filename, file);
     }
 }

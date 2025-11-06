@@ -12,7 +12,7 @@ import kotlin.reflect.javaType
  * A reusable implementation of Wirespec.Serialization that uses Jackson for serialization and deserialization.
  * This class implements parameter serialization and deserialization using a private ParamSerialization field.
  */
-class WirespecSerialization(
+class WirespecJacksonJsonSerialization(
     objectMapper: ObjectMapper,
 ) : Serialization,
     Wirespec.ParamSerialization by DefaultParamSerialization(),

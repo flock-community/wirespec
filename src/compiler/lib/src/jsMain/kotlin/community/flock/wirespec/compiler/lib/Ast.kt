@@ -164,6 +164,7 @@ private fun WsPrimitiveType.consume() = when (this) {
     WsPrimitiveType.String -> Reference.Primitive.Type.String(constraint = null)
     WsPrimitiveType.Integer -> Reference.Primitive.Type.Integer(precision = P64, constraint = null)
     WsPrimitiveType.Integer32 -> Reference.Primitive.Type.Integer(precision = P32, constraint = null)
+    WsPrimitiveType.Integer -> Reference.Primitive.Type.Integer(constraint = null)
     WsPrimitiveType.Number -> Reference.Primitive.Type.Number(precision = P64, constraint = null)
     WsPrimitiveType.Number32 -> Reference.Primitive.Type.Number(precision = P32, constraint = null)
     WsPrimitiveType.Boolean -> Reference.Primitive.Type.Boolean
