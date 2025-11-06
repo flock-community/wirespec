@@ -25,7 +25,6 @@ import community.flock.wirespec.emitters.kotlin.KotlinIdentifierEmitter
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.KClass
 
-
 /**
  * A Jackson module that handles deserialization of all Wirespec.Refined, to ensure
  * collapse / expanse of the wrapper class around the string value.
