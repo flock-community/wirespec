@@ -71,23 +71,31 @@ class TodoTest {
     void shouldUploadAttachment() throws Exception {
 
         MockMultipartFile file = new MockMultipartFile(
-                "file",
+                "plain",
                 "hello.txt",
                 "text/plain",
                 "Hello Wirespec".getBytes()
+        );
+
+        MockMultipartFile csv = new MockMultipartFile(
+                "csv",
+                "hello.csv",
+                "text/csv",
+                "{\"id\": 1, \"name\": \"Todo 1\", \"done\": false}".getBytes()
         );
 
         MockMultipartFile json = new MockMultipartFile(
                 "json",
                 "hello.json",
                 "application/json",
-                "{\"hello\": \"World\"}".getBytes()
+                "id,name,done\n1,'todo 1',true\n2,'todo 2',false".getBytes()
         );
 
         MvcResult mvcMultipartResult = mockMvc
                 .perform(multipart("/todos/{id}/upload", "1")
                         .file(file)
                         .file(json)
+                        .file(csv)
                         .contentType(MULTIPART_FORM_DATA_VALUE))
                 .andExpect(request().asyncStarted())
                 .andReturn();
@@ -95,6 +103,6 @@ class TodoTest {
         mockMvc.perform(asyncDispatch(mvcMultipartResult))
                 .andExpect(status().isCreated());
 
-        assertEquals("Hello Wirespec", new String(service.bucket.get("hello")));
+        assertEquals("Hello Wirespec", new String(service.bucket.get("plain")));
     }
 }
