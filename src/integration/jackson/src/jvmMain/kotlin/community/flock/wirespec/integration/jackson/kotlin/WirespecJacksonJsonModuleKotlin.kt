@@ -45,7 +45,7 @@ import kotlin.reflect.KClass
  *
  * @see Wirespec.Refined
  */
-class WirespecModuleKotlin : SimpleModule() {
+class WirespecJacksonJsonModuleKotlin : SimpleModule() {
 
     override fun getModuleName(): String = "Wirespec Jackson Module for Kotlin"
 
@@ -61,7 +61,7 @@ class WirespecModuleKotlin : SimpleModule() {
  * Serializer that flattens any Wirespec.Refined wrapped String value during serialization.
  *
  * @see Wirespec.Refined
- * @see WirespecModuleKotlin
+ * @see WirespecJacksonJsonModuleKotlin
  */
 private class RefinedSerializer(x: Class<Wirespec.Refined>? = null) : StdSerializer<Wirespec.Refined>(x) {
     override fun serialize(value: Wirespec.Refined, gen: JsonGenerator, provider: SerializerProvider) = gen.writeString(value.value)
@@ -71,7 +71,7 @@ private class RefinedSerializer(x: Class<Wirespec.Refined>? = null) : StdSeriali
  * Serializer Wirespec.Enum classes.
  *
  * @see Wirespec.Enum
- * @see WirespecModuleKotlin
+ * @see WirespecJacksonJsonModuleKotlin
  */
 private class EnumSerializer(x: Class<Wirespec.Enum>? = null) : StdSerializer<Wirespec.Enum>(x) {
     override fun serialize(value: Wirespec.Enum, gen: JsonGenerator, provider: SerializerProvider) = gen.writeString(value.toString())
@@ -81,7 +81,7 @@ private class EnumSerializer(x: Class<Wirespec.Enum>? = null) : StdSerializer<Wi
  * Deserializer Wirespec.Refined classes.
  *
  * @see Wirespec.Refined
- * @see WirespecModuleKotlin
+ * @see WirespecJacksonJsonModuleKotlin
  */
 private class RefinedDeserializer(private val vc: Class<*>) : StdDeserializer<Wirespec.Refined>(vc) {
     override fun deserialize(jp: JsonParser, ctxt: DeserializationContext): Wirespec.Refined = jp
@@ -94,7 +94,7 @@ private class RefinedDeserializer(private val vc: Class<*>) : StdDeserializer<Wi
  * Deserializer Wirespec.Enum classes.
  *
  * @see Wirespec.Enum
- * @see WirespecModuleKotlin
+ * @see WirespecJacksonJsonModuleKotlin
  */
 private class EnumDeserializer(private val vc: Class<*>) : StdDeserializer<Enum<*>>(vc) {
     override fun deserialize(jp: JsonParser, ctxt: DeserializationContext): Enum<*> = jp
@@ -107,7 +107,7 @@ private class EnumDeserializer(private val vc: Class<*>) : StdDeserializer<Enum<
  * Jackson modifier intercepts the deserialization of Wirespec.Enum and Wirespec.Refined and modifies the deserializer
  *
  * @see Wirespec.Enum
- * @see WirespecModuleKotlin
+ * @see WirespecJacksonJsonModuleKotlin
  */
 private class WirespecDeserializerModifier : BeanDeserializerModifier() {
     override fun modifyEnumDeserializer(

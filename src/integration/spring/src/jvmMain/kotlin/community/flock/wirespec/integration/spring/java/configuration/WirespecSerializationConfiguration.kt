@@ -27,24 +27,24 @@ open class WirespecSerializationConfiguration {
     )
 }
 
-class MultipartFormDataSerialization: Serialization, DefaultParamSerialization, DefaultPathSerialization{
-    override fun <T : Any?> serializeBody(t: T?, type: Type?): ByteArray {
-        return t.toString().toByteArray()
-    }
-    override fun <T : Any?> deserializeBody(raw: ByteArray?, type: Type?): T {
-        return raw as T
-    }
+class MultipartFormDataSerialization :
+    Serialization,
+    DefaultParamSerialization,
+    DefaultPathSerialization {
+    override fun <T : Any?> serializeBody(t: T?, type: Type?): ByteArray = t.toString().toByteArray()
+    override fun <T : Any?> deserializeBody(raw: ByteArray?, type: Type?): T = raw as T
 }
 
-class PlainTextDataSerialization: Serialization, DefaultParamSerialization, DefaultPathSerialization{
+class PlainTextDataSerialization :
+    Serialization,
+    DefaultParamSerialization,
+    DefaultPathSerialization {
     override fun <T : Any?> serializeBody(t: T?, type: Type?): ByteArray {
-        return when(t){
+        return when (t) {
             is ByteArray -> return t
             is String -> return t.toByteArray()
             else -> error("Unsupported type ${t?.let { it::class.simpleName }}")
         }
     }
-    override fun <T : Any?> deserializeBody(raw: ByteArray?, type: Type?): T {
-        return raw as T
-    }
+    override fun <T : Any?> deserializeBody(raw: ByteArray?, type: Type?): T = raw as T
 }

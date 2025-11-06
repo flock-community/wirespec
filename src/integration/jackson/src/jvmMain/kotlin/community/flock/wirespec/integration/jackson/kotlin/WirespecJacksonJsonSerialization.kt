@@ -18,7 +18,7 @@ class WirespecJacksonJsonSerialization(
     Wirespec.ParamSerialization by DefaultParamSerialization(),
     Wirespec.PathSerialization by DefaultPathSerialization() {
 
-    private val wirespecObjectMapper = objectMapper.copy().registerModule(WirespecModuleKotlin())
+    private val wirespecObjectMapper = objectMapper.copy().registerModule(WirespecJacksonJsonModuleKotlin())
 
     override fun <T> serializeBody(t: T, kType: KType): ByteArray = when (t) {
         is String -> t.toByteArray()

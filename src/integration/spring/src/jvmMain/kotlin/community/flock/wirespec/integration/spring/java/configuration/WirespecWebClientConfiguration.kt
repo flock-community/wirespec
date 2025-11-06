@@ -2,7 +2,6 @@ package community.flock.wirespec.integration.spring.java.configuration
 
 import community.flock.wirespec.integration.spring.java.client.WirespecWebClient
 import community.flock.wirespec.integration.spring.shared.WebClientConfigurationProperties
-import community.flock.wirespec.java.Wirespec
 import community.flock.wirespec.java.Wirespec.Serialization
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory.getLogger

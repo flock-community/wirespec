@@ -283,7 +283,6 @@ class SpringKotlinEmitterTest {
             |        override fun to(response: Response<*>) = toResponse(serialization, response)
             |      }
             |      override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
-            |      override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
             |        override fun to(request: Request) = toRequest(serialization, request)
             |        override fun from(response: Wirespec.RawResponse) = fromResponse(serialization, response)
             |      }

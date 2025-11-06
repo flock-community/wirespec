@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture
 
 class WirespecWebClient(
     private val client: WebClient,
-    private val wirespecSerdeMap: Map<MediaType, Serialization>
+    private val wirespecSerdeMap: Map<MediaType, Serialization>,
 ) {
     @Suppress("UNCHECKED_CAST")
     fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> send(

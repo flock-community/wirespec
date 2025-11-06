@@ -15,7 +15,6 @@ open class WirespecWebMvcConfiguration : WebMvcConfigurer {
     lateinit var wirespecSerializationMap: Map<MediaType, Wirespec.Serialization>
 
     override fun addArgumentResolvers(argumentResolvers: MutableList<HandlerMethodArgumentResolver>) {
-
         argumentResolvers.add(WirespecMethodArgumentResolver(wirespecSerializationMap))
     }
 }

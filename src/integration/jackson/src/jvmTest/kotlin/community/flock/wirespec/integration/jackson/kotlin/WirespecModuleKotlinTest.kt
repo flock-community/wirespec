@@ -22,7 +22,7 @@ class WirespecModuleKotlinTest {
 
     private val objectMapper: ObjectMapper = ObjectMapper()
         .registerKotlinModule()
-        .registerModules(WirespecModuleKotlin())
+        .registerModules(WirespecJacksonJsonModuleKotlin())
 
     @Test
     fun serializeRefined() {

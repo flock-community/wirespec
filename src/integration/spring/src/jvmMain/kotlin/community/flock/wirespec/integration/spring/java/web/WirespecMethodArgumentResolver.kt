@@ -18,8 +18,7 @@ class WirespecMethodArgumentResolver(
     private val wirespecSerializationMap: Map<MediaType, Wirespec.Serialization>,
 ) : HandlerMethodArgumentResolver {
 
-    override fun supportsParameter(parameter: MethodParameter): Boolean =
-        Wirespec.Request::class.java.isAssignableFrom(parameter.parameterType)
+    override fun supportsParameter(parameter: MethodParameter): Boolean = Wirespec.Request::class.java.isAssignableFrom(parameter.parameterType)
 
     override fun resolveArgument(
         parameter: MethodParameter,
@@ -27,7 +26,6 @@ class WirespecMethodArgumentResolver(
         webRequest: NativeWebRequest,
         binderFactory: WebDataBinderFactory?,
     ): Wirespec.Request<*> {
-
         val servletRequest = webRequest.nativeRequest as HttpServletRequest
         val declaringClass = parameter.parameterType.declaringClass
         val handler = declaringClass.declaredClasses.toList().find { it.simpleName == "Handler" }
@@ -37,7 +35,6 @@ class WirespecMethodArgumentResolver(
             ?: error("No serialization found for media type ${MediaType.APPLICATION_JSON_VALUE}")
         val req = servletRequest.toRawRequest()
         return instance.getServer(jsonSerde).from(req)
-
     }
 }
 
