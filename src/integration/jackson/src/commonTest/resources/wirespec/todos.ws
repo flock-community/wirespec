@@ -4,7 +4,8 @@ type Todo {
     id: TodoId,
     name: String,
     final: Boolean,
-    category: TodoCategory
+    category: TodoCategory,
+    eMail:String
 }
 
 type TodoInput {
