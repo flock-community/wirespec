@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture
 
 class WirespecWebClient(
     private val client: WebClient,
-    private val wirespecSerde: Serialization,
+    private val wirespecSerdeMap: Map<MediaType, Serialization>,
 ) {
     @Suppress("UNCHECKED_CAST")
     fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> send(
@@ -27,7 +27,8 @@ class WirespecWebClient(
         val handlers = handler.declaredClasses.toList().find { it.simpleName == "Handlers" } ?: error("Handlers not found")
         val instance = handlers.getDeclaredConstructor().newInstance() as Wirespec.Client<Req, Res>
 
-        return with(instance.getClient(wirespecSerde)) {
+        val jsonSerialization = wirespecSerdeMap[MediaType.APPLICATION_JSON]
+        return with(instance.getClient(jsonSerialization)) {
             executeRequest(to(request), client).thenApply {
                 from(it)
             }

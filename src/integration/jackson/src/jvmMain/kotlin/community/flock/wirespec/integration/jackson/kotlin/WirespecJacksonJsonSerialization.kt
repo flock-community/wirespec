@@ -12,13 +12,13 @@ import kotlin.reflect.javaType
  * A reusable implementation of Wirespec.Serialization that uses Jackson for serialization and deserialization.
  * This class implements parameter serialization and deserialization using a private ParamSerialization field.
  */
-class WirespecSerialization(
+class WirespecJacksonJsonSerialization(
     objectMapper: ObjectMapper,
 ) : Serialization,
     Wirespec.ParamSerialization by DefaultParamSerialization(),
     Wirespec.PathSerialization by DefaultPathSerialization() {
 
-    private val wirespecObjectMapper = objectMapper.copy().registerModule(WirespecModuleKotlin())
+    private val wirespecObjectMapper = objectMapper.copy().registerModule(WirespecJacksonJsonModuleKotlin())
 
     override fun <T> serializeBody(t: T, kType: KType): ByteArray = when (t) {
         is String -> t.toByteArray()

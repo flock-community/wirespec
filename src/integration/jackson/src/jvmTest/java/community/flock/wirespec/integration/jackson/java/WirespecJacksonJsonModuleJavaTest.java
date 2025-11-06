@@ -9,7 +9,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class WirespecModuleJavaTest {
+public class WirespecJacksonJsonModuleJavaTest {
 
     Todo todo = new Todo(
             new TodoId("123"),
@@ -21,7 +21,7 @@ public class WirespecModuleJavaTest {
     String json = "{\"id\":\"123\",\"name\":\"Do It now\",\"final\":false,\"category\":\"WORK\"}";
 
     ObjectMapper objectMapper = new ObjectMapper()
-            .registerModules(new WirespecModuleJava());
+            .registerModules(new WirespecJacksonJsonModuleJava());
 
     @Test
     public void serializeJavaRefined() throws JsonProcessingException {
