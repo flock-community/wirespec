@@ -59,12 +59,11 @@ class WirespecModuleKotlin : SimpleModule() {
         setNamingStrategy(KotlinReservedKeywordNamingStrategy())
     }
 
-    override fun setupModule(context: SetupContext?) {
+    override fun setupModule(context: SetupContext) {
         super.setupModule(context)
-        val owner: ObjectMapper? = context!!.getOwner()
-        if (owner != null) {
-            owner.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE)
-            owner.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
+        context.getOwner<ObjectMapper>().apply {
+            setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE)
+            setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
         }
     }
 }
