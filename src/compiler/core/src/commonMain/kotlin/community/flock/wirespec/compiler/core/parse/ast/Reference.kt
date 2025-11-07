@@ -66,15 +66,23 @@ sealed interface Reference : Value<String> {
                 data class Bound(val min: kotlin.String?, val max: kotlin.String?) : Constraint
             }
 
+            interface HasConstraint<C : Constraint> {
+                val constraint: C?
+            }
+
             data class String(val constraint: Constraint.RegExp?) : Type {
                 override val name = "String"
             }
 
-            data class Integer(val precision: Precision = P64, val constraint: Constraint.Bound?) : Type {
+            data class Integer(val precision: Precision = P64, override val constraint: Constraint.Bound?) :
+                HasConstraint<Constraint.Bound>,
+                Type {
                 override val name = "Integer"
             }
 
-            data class Number(val precision: Precision = P64, val constraint: Constraint.Bound?) : Type {
+            data class Number(val precision: Precision = P64, override val constraint: Constraint.Bound?) :
+                HasConstraint<Constraint.Bound>,
+                Type {
                 override val name = "Number"
             }
 

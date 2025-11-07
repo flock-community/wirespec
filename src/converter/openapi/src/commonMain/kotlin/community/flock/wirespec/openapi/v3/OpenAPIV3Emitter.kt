@@ -108,13 +108,7 @@ object OpenAPIV3Emitter : Emitter {
         .toMap()
 
     private fun Refined.emit(): OpenAPIV3Schema = when (val type = reference.type) {
-        is Reference.Primitive.Type.Integer -> OpenAPIV3Schema(
-            type = OpenAPIV3Type.STRING,
-            minimum = type.constraint?.min?.toDouble(),
-            maximum = type.constraint?.max?.toDouble(),
-        )
-
-        is Reference.Primitive.Type.Number -> OpenAPIV3Schema(
+        is Reference.Primitive.Type.Integer, is Reference.Primitive.Type.Number -> OpenAPIV3Schema(
             type = OpenAPIV3Type.STRING,
             minimum = type.constraint?.min?.toDouble(),
             maximum = type.constraint?.max?.toDouble(),
