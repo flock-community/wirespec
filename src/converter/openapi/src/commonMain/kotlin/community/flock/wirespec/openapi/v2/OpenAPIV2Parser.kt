@@ -7,6 +7,7 @@ import arrow.core.toNonEmptyListOrNull
 import community.flock.kotlinx.openapi.bindings.BooleanValue
 import community.flock.kotlinx.openapi.bindings.OpenAPIV2
 import community.flock.kotlinx.openapi.bindings.OpenAPIV2Base
+import community.flock.kotlinx.openapi.bindings.OpenAPIV2Boolean
 import community.flock.kotlinx.openapi.bindings.OpenAPIV2Header
 import community.flock.kotlinx.openapi.bindings.OpenAPIV2HeaderOrReference
 import community.flock.kotlinx.openapi.bindings.OpenAPIV2Model
@@ -218,7 +219,14 @@ private fun OpenAPIV2Model.parseResponseBody(): List<Definition> = flatMapRespon
 
 private fun OpenAPIV2Model.parseDefinitions(): List<Definition> = definitions.orEmpty()
     .filterIsInstance<String, OpenAPIV2Schema>()
-    .filter { it.value.additionalProperties == null }
+    .filter {
+        when (it.value.additionalProperties) {
+            is OpenAPIV2Boolean -> true
+            is OpenAPIV2Reference -> false
+            is OpenAPIV2Schema -> true
+            null -> true
+        }
+    }
     .flatMap { flatten(it.value, className(it.key)) }
 
 private fun OpenAPIV2Model.resolveParameters(operation: OpenAPIV2Operation) = operation.parameters.orEmpty()
@@ -276,7 +284,7 @@ private fun OpenAPIV2Model.resolve(parameterOrReference: OpenAPIV2ParameterOrRef
 }
 
 private fun OpenAPIV2Model.flatten(OpenAPIV2Schema: OpenAPIV2Schema, name: String): List<Definition> = when {
-    OpenAPIV2Schema.additionalProperties != null -> when (OpenAPIV2Schema.additionalProperties) {
+    OpenAPIV2Schema.additionalProperties.exists() -> when (OpenAPIV2Schema.additionalProperties) {
         is BooleanValue -> emptyList()
         else ->
             OpenAPIV2Schema.additionalProperties
@@ -322,7 +330,16 @@ private fun OpenAPIV2Model.flatten(OpenAPIV2Schema: OpenAPIV2Schema, name: Strin
         OpenAPIV2Schema.enum!!
             .map { it.content }
             .toSet()
-            .let { listOf(Enum(comment = null, annotations = emptyList(), identifier = DefinitionIdentifier(name.sanitize()), entries = it)) }
+            .let {
+                listOf(
+                    Enum(
+                        comment = null,
+                        annotations = emptyList(),
+                        identifier = DefinitionIdentifier(name.sanitize()),
+                        entries = it,
+                    ),
+                )
+            }
 
     else -> when (OpenAPIV2Schema.type) {
         null, OpenAPIV2Type.OBJECT -> {
@@ -359,10 +376,12 @@ private fun OpenAPIV2Model.flatten(schemaOrReference: OpenAPIV2SchemaOrReference
 private fun OpenAPIV2Model.toReference(reference: OpenAPIV2Reference, isNullable: Boolean): Reference = resolveOpenAPIV2Schema(reference).let { refOrSchema ->
     val schema = resolve(refOrSchema)
     when {
-        schema.additionalProperties != null -> when (val additionalProperties = schema.additionalProperties!!) {
+        schema.additionalProperties.exists() -> when (val additionalProperties = schema.additionalProperties!!) {
             is BooleanValue -> Reference.Dict(Reference.Any(isNullable = false), isNullable = isNullable)
             is OpenAPIV2Reference -> toReference(additionalProperties, false).toDict(isNullable)
-            is OpenAPIV2Schema -> toReference(additionalProperties, reference.getReference(), false).toDict(isNullable)
+            is OpenAPIV2Schema -> toReference(additionalProperties, reference.getReference(), false).toDict(
+                isNullable,
+            )
         }
 
         schema.enum != null -> Reference.Custom(
@@ -389,7 +408,10 @@ private fun OpenAPIV2Model.toReference(reference: OpenAPIV2Reference, isNullable
 
             else -> when (refOrSchema) {
                 is OpenAPIV2Schema -> Reference.Custom(className(reference.getReference()).sanitize(), isNullable)
-                is OpenAPIV2Reference -> Reference.Custom(className(refOrSchema.getReference()).sanitize(), isNullable)
+                is OpenAPIV2Reference -> Reference.Custom(
+                    className(refOrSchema.getReference()).sanitize(),
+                    isNullable,
+                )
             }
         }
     }
@@ -524,7 +546,12 @@ private fun OpenAPIV2Model.toField(schema: OpenAPIV2Schema, name: String) = sche
                 annotations = emptyList(),
                 reference = when {
                     value.enum != null -> toReference(value, className(name, key), isNullable)
-                    value.type == OpenAPIV2Type.ARRAY -> toReference(value, className(name, key, "Array"), isNullable)
+                    value.type == OpenAPIV2Type.ARRAY -> toReference(
+                        value,
+                        className(name, key, "Array"),
+                        isNullable,
+                    )
+
                     else -> toReference(value, className(name, key), isNullable)
                 },
             )
@@ -699,3 +726,10 @@ private fun Reference.toDict(isNullable: Boolean) = Reference.Dict(
     reference = this,
     isNullable = isNullable,
 )
+
+private fun OpenAPIV2SchemaOrReferenceOrBoolean?.exists() = when (this) {
+    is OpenAPIV2SchemaOrReference -> true
+    is BooleanValue -> this.value
+    is OpenAPIV2Reference -> true
+    else -> false
+}

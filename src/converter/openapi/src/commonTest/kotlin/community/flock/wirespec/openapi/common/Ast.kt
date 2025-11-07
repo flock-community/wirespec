@@ -289,6 +289,40 @@ object Ast {
             ),
             extends = emptyList(),
         ),
+        Type(
+            comment = null,
+            annotations = emptyList(),
+            identifier = DefinitionIdentifier("User"),
+            shape = Type.Shape(
+                value = listOf(
+                    Field(
+                        identifier = FieldIdentifier("username"),
+                        annotations = emptyList(),
+                        reference = Reference.Primitive(
+                            type = Reference.Primitive.Type.String(constraint = null),
+                            isNullable = false,
+                        ),
+                    ),
+                    Field(
+                        identifier = FieldIdentifier("email"),
+                        annotations = emptyList(),
+                        reference = Reference.Primitive(
+                            type = Reference.Primitive.Type.String(null),
+                            isNullable = false,
+                        ),
+                    ),
+                    Field(
+                        identifier = FieldIdentifier("age"),
+                        annotations = emptyList(),
+                        reference = Reference.Primitive(
+                            type = Reference.Primitive.Type.Integer(constraint = null, precision = Reference.Primitive.Type.Precision.P64),
+                            isNullable = true,
+                        ),
+                    ),
+                ),
+            ),
+            extends = emptyList(),
+        ),
     )
 
     val array = nonEmptyListOf(

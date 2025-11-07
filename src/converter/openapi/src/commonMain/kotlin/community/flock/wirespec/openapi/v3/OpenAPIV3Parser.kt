@@ -5,6 +5,7 @@ import arrow.core.nonEmptyListOf
 import arrow.core.toNonEmptyListOrNull
 import community.flock.kotlinx.openapi.bindings.BooleanValue
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3Boolean
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3Header
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3HeaderOrReference
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3Model
@@ -223,8 +224,13 @@ private fun OpenAPIV3Model.parseResponseBody(): List<Definition> = flatMapRespon
 private fun OpenAPIV3Model.parseComponents(): List<Definition> = components?.schemas.orEmpty()
     .filter {
         when (val s = it.value) {
-            is OpenAPIV3Schema -> s.additionalProperties == null
-            else -> false
+            is OpenAPIV3Schema -> when (s.additionalProperties) {
+                is OpenAPIV3Boolean -> true
+                is OpenAPIV3Reference -> false
+                is OpenAPIV3Schema -> true
+                null -> true
+            }
+            is OpenAPIV3Reference -> false
         }
     }
     .flatMap { flatten(it.value, className(it.key)) }
@@ -366,7 +372,7 @@ private fun OpenAPIV3Model.resolve(responseOrOpenAPIV3Reference: OpenAPIV3Respon
 }
 
 private fun OpenAPIV3Model.flatten(schemaObject: OpenAPIV3Schema, name: String): List<Definition> = when {
-    schemaObject.additionalProperties != null -> when (schemaObject.additionalProperties) {
+    schemaObject.additionalProperties.exists() -> when (schemaObject.additionalProperties) {
         is BooleanValue -> emptyList()
         else ->
             schemaObject.additionalProperties
@@ -431,7 +437,16 @@ private fun OpenAPIV3Model.flatten(schemaObject: OpenAPIV3Schema, name: String):
         schemaObject.enum!!
             .map { it.content }
             .toSet()
-            .let { listOf(Enum(comment = null, annotations = emptyList(), identifier = DefinitionIdentifier(name), entries = it)) }
+            .let {
+                listOf(
+                    Enum(
+                        comment = null,
+                        annotations = emptyList(),
+                        identifier = DefinitionIdentifier(name),
+                        entries = it,
+                    ),
+                )
+            }
 
     else -> when (schemaObject.type) {
         null, OpenAPIV3Type.OBJECT -> {
@@ -740,3 +755,10 @@ private fun OpenAPIV3Type?.isPrimitive() = when (this) {
 private fun Reference.toIterable(isNullable: Boolean) = Reference.Iterable(reference = this, isNullable = isNullable)
 
 private fun Reference.toDict(isNullable: Boolean) = Reference.Dict(reference = this, isNullable = isNullable)
+
+private fun OpenAPIV3SchemaOrReferenceOrBoolean?.exists() = when (this) {
+    is OpenAPIV3SchemaOrReference -> true
+    is BooleanValue -> this.value
+    is OpenAPIV3Reference -> true
+    else -> false
+}
