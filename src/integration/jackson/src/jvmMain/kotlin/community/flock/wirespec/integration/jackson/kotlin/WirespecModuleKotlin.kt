@@ -1,5 +1,7 @@
 package community.flock.wirespec.integration.jackson.kotlin
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.fasterxml.jackson.annotation.PropertyAccessor
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.BeanDescription
@@ -8,6 +10,7 @@ import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.cfg.MapperConfig
@@ -54,6 +57,14 @@ class WirespecModuleKotlin : SimpleModule() {
         addSerializer(Wirespec.Enum::class.java, EnumSerializer())
         setDeserializerModifier(WirespecDeserializerModifier())
         setNamingStrategy(KotlinReservedKeywordNamingStrategy())
+    }
+
+    override fun setupModule(context: SetupContext) {
+        super.setupModule(context)
+        context.getOwner<ObjectMapper>().apply {
+            setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE)
+            setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
+        }
     }
 }
 
