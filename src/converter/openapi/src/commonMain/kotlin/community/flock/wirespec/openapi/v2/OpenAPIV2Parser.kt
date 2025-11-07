@@ -283,24 +283,24 @@ private fun OpenAPIV2Model.resolve(parameterOrReference: OpenAPIV2ParameterOrRef
     is OpenAPIV2Reference -> resolveParameterObject(parameterOrReference)
 }
 
-private fun OpenAPIV2Model.flatten(OpenAPIV2Schema: OpenAPIV2Schema, name: String): List<Definition> = when {
-    OpenAPIV2Schema.additionalProperties.exists() -> when (OpenAPIV2Schema.additionalProperties) {
+private fun OpenAPIV2Model.flatten(openAPIV2Schema: OpenAPIV2Schema, name: String): List<Definition> = when {
+    openAPIV2Schema.additionalProperties.exists() -> when (openAPIV2Schema.additionalProperties) {
         is BooleanValue -> emptyList()
         else ->
-            OpenAPIV2Schema.additionalProperties
+            openAPIV2Schema.additionalProperties
                 ?.let { resolve(it) }
                 ?.takeIf { it.properties != null }
                 ?.let { flatten(it, name) }
                 ?: emptyList()
     }
 
-    OpenAPIV2Schema.allOf != null -> listOf(
+    openAPIV2Schema.allOf != null -> listOf(
         Type(
             comment = null,
             annotations = emptyList(),
             identifier = DefinitionIdentifier(name.sanitize()),
             shape = Type.Shape(
-                OpenAPIV2Schema.allOf
+                openAPIV2Schema.allOf
                     .orEmpty()
                     .flatMap {
                         when (it) {
@@ -313,7 +313,7 @@ private fun OpenAPIV2Model.flatten(OpenAPIV2Schema: OpenAPIV2Schema, name: Strin
             extends = emptyList(),
         ),
     ).plus(
-        OpenAPIV2Schema.allOf!!.flatMap {
+        openAPIV2Schema.allOf!!.flatMap {
             when (it) {
                 is OpenAPIV2Reference -> emptyList()
                 is OpenAPIV2Schema -> it.properties.orEmpty().flatMap { (key, value) ->
@@ -326,8 +326,8 @@ private fun OpenAPIV2Model.flatten(OpenAPIV2Schema: OpenAPIV2Schema, name: Strin
         },
     )
 
-    OpenAPIV2Schema.enum != null ->
-        OpenAPIV2Schema.enum!!
+    openAPIV2Schema.enum != null ->
+        openAPIV2Schema.enum!!
             .map { it.content }
             .toSet()
             .let {
@@ -341,9 +341,9 @@ private fun OpenAPIV2Model.flatten(OpenAPIV2Schema: OpenAPIV2Schema, name: Strin
                 )
             }
 
-    else -> when (OpenAPIV2Schema.type) {
+    else -> when (openAPIV2Schema.type) {
         null, OpenAPIV2Type.OBJECT -> {
-            val fields = OpenAPIV2Schema.properties.orEmpty()
+            val fields = openAPIV2Schema.properties.orEmpty()
                 .flatMap { (key, value) -> flatten(value, className(name, key)) }
 
             val schema = listOf(
@@ -351,14 +351,14 @@ private fun OpenAPIV2Model.flatten(OpenAPIV2Schema: OpenAPIV2Schema, name: Strin
                     comment = null,
                     annotations = emptyList(),
                     identifier = DefinitionIdentifier(name.sanitize()),
-                    shape = Type.Shape(toField(OpenAPIV2Schema, name)),
+                    shape = Type.Shape(toField(openAPIV2Schema, name)),
                     extends = emptyList(),
                 ),
             )
             schema + fields
         }
 
-        OpenAPIV2Type.ARRAY -> when (val it = OpenAPIV2Schema.items) {
+        OpenAPIV2Type.ARRAY -> when (val it = openAPIV2Schema.items) {
             is OpenAPIV2Reference -> emptyList()
             is OpenAPIV2Schema -> flatten(it, className(name, "Array"))
             null -> emptyList()
