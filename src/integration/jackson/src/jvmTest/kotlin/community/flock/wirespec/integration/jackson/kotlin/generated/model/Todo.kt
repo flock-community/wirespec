@@ -7,5 +7,6 @@ data class Todo(
   val id: TodoId,
   val name: String,
   val final: Boolean,
-  val category: TodoCategory
+  val category: TodoCategory,
+  val eMail: String
 )

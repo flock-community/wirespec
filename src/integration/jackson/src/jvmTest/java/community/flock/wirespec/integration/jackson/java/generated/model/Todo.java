@@ -6,6 +6,7 @@ public record Todo (
   TodoId id,
   String name,
   Boolean _final,
-  TodoCategory category
+  TodoCategory category,
+  String eMail
 ) {
 };

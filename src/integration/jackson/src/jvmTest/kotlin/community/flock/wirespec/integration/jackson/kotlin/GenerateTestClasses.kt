@@ -43,7 +43,7 @@ class GenerateTestClasses {
 
         modules.forEach { javaDir.resolve(it).mkdirs() }
         emittedJava
-            .filter { !it.file.contains("Wirespec") }.forEach {
+            .forEach {
                 baseDir.resolve("java").resolve(it.file).writeText(it.result)
             }
 

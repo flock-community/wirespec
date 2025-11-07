@@ -16,9 +16,10 @@ class WirespecModuleKotlinTest {
         name = "Do It now",
         final = false,
         category = TodoCategory.LIFE,
+        eMail = "test@wirespec.io",
     )
 
-    private val json = "{\"id\":\"123\",\"name\":\"Do It now\",\"final\":false,\"category\":\"LIFE\"}"
+    private val json = "{\"id\":\"123\",\"name\":\"Do It now\",\"final\":false,\"category\":\"LIFE\",\"eMail\":\"test@wirespec.io\"}"
 
     private val objectMapper: ObjectMapper = ObjectMapper()
         .registerKotlinModule()
