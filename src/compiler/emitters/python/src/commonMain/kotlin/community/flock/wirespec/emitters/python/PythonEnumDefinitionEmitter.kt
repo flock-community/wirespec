@@ -2,8 +2,8 @@ package community.flock.wirespec.emitters.python
 
 import community.flock.wirespec.compiler.core.emit.EnumDefinitionEmitter
 import community.flock.wirespec.compiler.core.emit.Spacer
-import community.flock.wirespec.compiler.core.parse.Enum
-import community.flock.wirespec.compiler.core.parse.Module
+import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Module
 
 interface PythonEnumDefinitionEmitter: EnumDefinitionEmitter, PythonIdentifierEmitter {
 

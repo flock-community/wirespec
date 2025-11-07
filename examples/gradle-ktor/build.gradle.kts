@@ -1,8 +1,8 @@
 import com.diffplug.gradle.spotless.SpotlessTask
 import community.flock.wirespec.compiler.core.emit.PackageName
-import community.flock.wirespec.compiler.core.parse.Module
-import community.flock.wirespec.compiler.core.parse.Refined
-import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 import community.flock.wirespec.plugin.Format
 import community.flock.wirespec.plugin.Language

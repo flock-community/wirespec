@@ -2,16 +2,16 @@ package community.flock.wirespec.openapi.v2
 
 import arrow.core.nonEmptyListOf
 import community.flock.kotlinx.openapi.bindings.OpenAPIV2
-import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
-import community.flock.wirespec.compiler.core.parse.Endpoint
-import community.flock.wirespec.compiler.core.parse.Enum
-import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.FieldIdentifier
-import community.flock.wirespec.compiler.core.parse.Reference.Custom
-import community.flock.wirespec.compiler.core.parse.Reference.Iterable
-import community.flock.wirespec.compiler.core.parse.Reference.Primitive
-import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.core.parse.Type.Shape
+import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
+import community.flock.wirespec.compiler.core.parse.ast.Endpoint
+import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Field
+import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
+import community.flock.wirespec.compiler.core.parse.ast.Reference.Custom
+import community.flock.wirespec.compiler.core.parse.ast.Reference.Iterable
+import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive
+import community.flock.wirespec.compiler.core.parse.ast.Type
+import community.flock.wirespec.compiler.core.parse.ast.Type.Shape
 import community.flock.wirespec.openapi.common.Ast
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser.parse
 import io.kotest.matchers.nulls.shouldNotBeNull

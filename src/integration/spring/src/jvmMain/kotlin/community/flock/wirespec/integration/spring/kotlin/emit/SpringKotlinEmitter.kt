@@ -4,7 +4,7 @@ import community.flock.wirespec.compiler.core.emit.EmitShared
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.emit.emit
-import community.flock.wirespec.compiler.core.parse.Endpoint
+import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.emitters.kotlin.KotlinEmitter
 
 class SpringKotlinEmitter(packageName: PackageName) : KotlinEmitter(packageName, EmitShared(false)) {
