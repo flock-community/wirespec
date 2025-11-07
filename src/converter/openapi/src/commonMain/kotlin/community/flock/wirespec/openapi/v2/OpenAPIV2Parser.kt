@@ -2,7 +2,6 @@ package community.flock.wirespec.openapi.v2
 
 import arrow.core.NonEmptyList
 import arrow.core.filterIsInstance
-import arrow.core.nonEmptyListOf
 import arrow.core.toNonEmptyListOrNull
 import community.flock.kotlinx.openapi.bindings.BooleanValue
 import community.flock.kotlinx.openapi.bindings.OpenAPIV2
@@ -24,9 +23,7 @@ import community.flock.kotlinx.openapi.bindings.OpenAPIV2SchemaOrReference
 import community.flock.kotlinx.openapi.bindings.OpenAPIV2SchemaOrReferenceOrBoolean
 import community.flock.kotlinx.openapi.bindings.OpenAPIV2Type
 import community.flock.kotlinx.openapi.bindings.Path
-import community.flock.kotlinx.openapi.bindings.StatusCode
 import community.flock.wirespec.compiler.core.ModuleContent
-import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
@@ -34,129 +31,130 @@ import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
-import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.converter.common.Parser
 import community.flock.wirespec.openapi.common.APPLICATION_JSON
 import community.flock.wirespec.openapi.common.className
-import community.flock.wirespec.openapi.common.filterNotNullValues
-import community.flock.wirespec.openapi.toDescriptionAnnotationList
-import kotlinx.serialization.json.Json
+import community.flock.wirespec.openapi.common.flatMapRequests
+import community.flock.wirespec.openapi.common.flatMapResponses
+import community.flock.wirespec.openapi.common.getReference
+import community.flock.wirespec.openapi.common.jsonDefault
+import community.flock.wirespec.openapi.common.parseOpenApi
+import community.flock.wirespec.openapi.common.sanitize
+import community.flock.wirespec.openapi.common.toDescriptionAnnotationList
+import community.flock.wirespec.openapi.common.toDict
+import community.flock.wirespec.openapi.common.toIterable
+import community.flock.wirespec.openapi.common.toName
+import community.flock.wirespec.openapi.common.toOperationList
 
 object OpenAPIV2Parser : Parser {
 
-    override fun parse(moduleContent: ModuleContent, strict: Boolean): AST = AST(
-        nonEmptyListOf(
-            Module(
-                moduleContent.fileUri,
-                OpenAPIV2(
-                    json = Json {
-                        prettyPrint = true
-                        ignoreUnknownKeys = !strict
-                    },
-                ).decodeFromString(moduleContent.content)
-                    .parse()
-                    .let { requireNotNull(it) { "Cannot yield empty AST for OpenAPI v2" } },
-            ),
-        ),
-    )
+    override fun parse(moduleContent: ModuleContent, strict: Boolean): AST = parseOpenApi(moduleContent) {
+        OpenAPIV2(jsonDefault(strict))
+            .decodeFromString(it)
+            .parse()
+    }
 
-    fun OpenAPIV2Model.parse(): NonEmptyList<Definition>? = listOf(
+    fun OpenAPIV2Model.parse(): NonEmptyList<Definition> = listOf(
         parseEndpoints(),
         parseParameters(),
         parseRequestBody(),
         parseResponseBody(),
         parseDefinitions(),
-    ).reduce(List<Definition>::plus).toNonEmptyListOrNull()
+    ).reduce(List<Definition>::plus)
+        .toNonEmptyListOrNull()
+        .let { requireNotNull(it) { "Cannot yield empty AST for OpenAPI v2" } }
 }
 
 private fun OpenAPIV2Model.parseEndpoints(): List<Definition> = paths
     .flatMap { (path, pathItem) ->
-        pathItem.toOperationList().flatMap { (method, operation) ->
-            val parameters = resolveParameters(pathItem) + resolveParameters(operation)
-            val segments = path.toSegments(parameters)
-            val name = operation.toName() ?: (path.toName() + method.name)
-            val query = parameters
-                .filter { it.`in` == OpenAPIV2ParameterLocation.QUERY }
-                .map { toField(it, name) }
-            val headers = parameters
-                .filter { it.`in` == OpenAPIV2ParameterLocation.HEADER }
-                .map { toField(it, name) }
-            val requests = parameters
-                .filter { it.`in` == OpenAPIV2ParameterLocation.BODY }
-                .flatMap { requestBody ->
-                    (consumes.orEmpty() + operation.consumes.orEmpty())
-                        .distinct()
-                        .ifEmpty { listOf(APPLICATION_JSON) }
-                        .map { type ->
-                            val isNullable = false
-                            Endpoint.Request(
-                                Endpoint.Content(
-                                    type = type,
-                                    reference = when (val schema = requestBody.schema) {
-                                        is OpenAPIV2Reference -> toReference(schema, isNullable)
-                                        is OpenAPIV2Schema -> toReference(
-                                            schema,
-                                            className(name, "RequestBody"),
-                                            isNullable,
-                                        )
-
-                                        null -> TODO("Not yet implemented")
-                                    },
-                                ),
-                            )
-                        }
-                }
-                .ifEmpty { listOf(Endpoint.Request(null)) }
-            val responses = operation.responses.orEmpty()
-                .mapValues { resolve(it.value) }
-                .flatMap { (status, res) ->
-                    (produces.orEmpty() + operation.produces.orEmpty())
-                        .distinct()
-                        .ifEmpty { listOf(APPLICATION_JSON) }.map { type ->
-                            Endpoint.Response(
-                                annotations = res.description.toDescriptionAnnotationList(),
-                                status = status.value,
-                                headers = res.headers
-                                    ?.map { (identifier, header) -> toField(header.resolve(), identifier) }
-                                    .orEmpty(),
-                                content = res.schema?.let { schema ->
+        pathItem.toOperationList()
+            .map { (method, operation) -> method to operation as OpenAPIV2Operation }
+            .flatMap { (method, operation) ->
+                val parameters = resolveParameters(pathItem.parameters) + resolveParameters(operation.parameters)
+                val segments = path.toSegments(parameters)
+                val name = operation.toName() ?: (path.toName() + method.name)
+                val query = parameters
+                    .filter { it.`in` == OpenAPIV2ParameterLocation.QUERY }
+                    .map { toField(it, name) }
+                val headers = parameters
+                    .filter { it.`in` == OpenAPIV2ParameterLocation.HEADER }
+                    .map { toField(it, name) }
+                val requests = parameters
+                    .filter { it.`in` == OpenAPIV2ParameterLocation.BODY }
+                    .flatMap { requestBody ->
+                        (consumes.orEmpty() + operation.consumes.orEmpty())
+                            .distinct()
+                            .ifEmpty { listOf(APPLICATION_JSON) }
+                            .map { type ->
+                                val isNullable = false
+                                Endpoint.Request(
                                     Endpoint.Content(
                                         type = type,
-                                        reference = when (schema) {
-                                            is OpenAPIV2Reference -> toReference(schema, false)
+                                        reference = when (val schema = requestBody.schema) {
+                                            is OpenAPIV2Reference -> toReference(schema, isNullable)
                                             is OpenAPIV2Schema -> toReference(
                                                 schema,
-                                                className(name, status.value, "ResponseBody"),
-                                                false,
+                                                className(name, "RequestBody"),
+                                                isNullable,
                                             )
-                                        },
-                                    )
-                                },
-                            )
-                        }
-                }
-                .distinctBy { it.status to it.content }
 
-            listOf(
-                Endpoint(
-                    comment = null,
-                    annotations = operation.description.toDescriptionAnnotationList(),
-                    identifier = DefinitionIdentifier(name.sanitize()),
-                    method = method,
-                    path = segments,
-                    queries = query,
-                    headers = headers,
-                    requests = requests,
-                    responses = responses,
-                ),
-            )
-        }
+                                            null -> TODO("Not yet implemented")
+                                        },
+                                    ),
+                                )
+                            }
+                    }
+                    .ifEmpty { listOf(Endpoint.Request(null)) }
+                val responses = operation.responses.orEmpty()
+                    .mapValues { resolve(it.value) }
+                    .flatMap { (status, res) ->
+                        (produces.orEmpty() + operation.produces.orEmpty())
+                            .distinct()
+                            .ifEmpty { listOf(APPLICATION_JSON) }.map { type ->
+                                Endpoint.Response(
+                                    annotations = res.description.toDescriptionAnnotationList(),
+                                    status = status.value,
+                                    headers = res.headers
+                                        ?.map { (identifier, header) -> toField(header.resolve(), identifier) }
+                                        .orEmpty(),
+                                    content = res.schema?.let { schema ->
+                                        Endpoint.Content(
+                                            type = type,
+                                            reference = when (schema) {
+                                                is OpenAPIV2Reference -> toReference(schema, false)
+                                                is OpenAPIV2Schema -> toReference(
+                                                    schema,
+                                                    className(name, status.value, "ResponseBody"),
+                                                    false,
+                                                )
+                                            },
+                                        )
+                                    },
+                                )
+                            }
+                    }
+                    .distinctBy { it.status to it.content }
+
+                listOf(
+                    Endpoint(
+                        comment = null,
+                        annotations = operation.description.toDescriptionAnnotationList(),
+                        identifier = DefinitionIdentifier(name.sanitize()),
+                        method = method,
+                        path = segments,
+                        queries = query,
+                        headers = headers,
+                        requests = requests,
+                        responses = responses,
+                    ),
+                )
+            }
     }
 
 private fun OpenAPIV2Model.parseParameters(): List<Definition> = flatMapRequests {
-    val parameters = resolveParameters(pathItem) + resolveParameters(operation)
+    val parameters = resolveParameters((pathItem as OpenAPIV2PathItem).parameters) + resolveParameters((operation as OpenAPIV2Operation).parameters)
     val name = operation.toName() ?: (path.toName() + method.name)
     parameters
         .filter { it.`in` != OpenAPIV2ParameterLocation.BODY }
@@ -166,7 +164,7 @@ private fun OpenAPIV2Model.parseParameters(): List<Definition> = flatMapRequests
 }
 
 private fun OpenAPIV2Model.parseRequestBody(): List<Definition> = flatMapRequests {
-    val parameters = resolveParameters(pathItem) + (resolveParameters(operation))
+    val parameters = resolveParameters((pathItem as OpenAPIV2PathItem).parameters) + (resolveParameters((operation as OpenAPIV2Operation).parameters))
     val name = operation.toName() ?: (path.toName() + method.name)
     val enums: List<Definition> = parameters.flatMap { parameter ->
         when {
@@ -202,8 +200,8 @@ private fun OpenAPIV2Model.parseRequestBody(): List<Definition> = flatMapRequest
 }
 
 private fun OpenAPIV2Model.parseResponseBody(): List<Definition> = flatMapResponses {
-    val schema = resolve(response).schema
-    val name = operation.toName() ?: (path.toName() + method.name)
+    val schema = resolve(response as OpenAPIV2Response).schema
+    val name = (operation as OpenAPIV2Operation).toName() ?: (path.toName() + method.name)
     when (schema) {
         is OpenAPIV2Schema -> when (schema.type) {
             null, OpenAPIV2Type.OBJECT -> flatten(schema, className(name, statusCode.value, "ResponseBody"))
@@ -232,15 +230,7 @@ private fun OpenAPIV2Model.parseDefinitions(): List<Definition> = definitions.or
     }
     .flatMap { flatten(it.value, className(it.key)) }
 
-private fun OpenAPIV2Model.resolveParameters(operation: OpenAPIV2Operation) = operation.parameters.orEmpty()
-    .map {
-        when (it) {
-            is OpenAPIV2Parameter -> it
-            is OpenAPIV2Reference -> resolveParameterObject(it)
-        }
-    }
-
-private fun OpenAPIV2Model.resolveParameters(itemObject: OpenAPIV2PathItem) = itemObject.parameters.orEmpty()
+private fun OpenAPIV2Model.resolveParameters(parameters: List<OpenAPIV2ParameterOrReference>?) = parameters.orEmpty()
     .map {
         when (it) {
             is OpenAPIV2Parameter -> it
@@ -286,35 +276,35 @@ private fun OpenAPIV2Model.resolve(parameterOrReference: OpenAPIV2ParameterOrRef
     is OpenAPIV2Reference -> resolveParameterObject(parameterOrReference)
 }
 
-private fun OpenAPIV2Model.flatten(openAPIV2Schema: OpenAPIV2Schema, name: String): List<Definition> = when {
+private fun OpenAPIV2Model.flatten(schemaObject: OpenAPIV2Schema, name: String): List<Definition> = when {
     // OpenAPI v2 workaround: we sometimes emit `{ allOf: [ { $ref: ... } ], description: ... }`
     // to attach a field-level description to a referenced schema.
     // This wrapper should *not* produce an extra synthetic definition during flattening.
-    openAPIV2Schema.allOf?.size == 1 &&
-        openAPIV2Schema.allOf!!.first() is OpenAPIV2Reference &&
-        openAPIV2Schema.properties == null &&
-        openAPIV2Schema.enum == null &&
-        openAPIV2Schema.type == null &&
-        openAPIV2Schema.items == null &&
-        openAPIV2Schema.additionalProperties == null -> emptyList()
+    schemaObject.allOf?.size == 1 &&
+        schemaObject.allOf!!.first() is OpenAPIV2Reference &&
+        schemaObject.properties == null &&
+        schemaObject.enum == null &&
+        schemaObject.type == null &&
+        schemaObject.items == null &&
+        schemaObject.additionalProperties == null -> emptyList()
 
-    openAPIV2Schema.additionalProperties.exists() -> when (openAPIV2Schema.additionalProperties) {
+    schemaObject.additionalProperties.exists() -> when (schemaObject.additionalProperties) {
         is BooleanValue -> emptyList()
         else ->
-            openAPIV2Schema.additionalProperties
+            schemaObject.additionalProperties
                 ?.let { resolve(it) }
                 ?.takeIf { it.properties != null }
                 ?.let { flatten(it, name) }
                 ?: emptyList()
     }
 
-    openAPIV2Schema.allOf != null -> listOf(
+    schemaObject.allOf != null -> listOf(
         Type(
             comment = null,
-            annotations = openAPIV2Schema.description.toDescriptionAnnotationList(),
+            annotations = schemaObject.description.toDescriptionAnnotationList(),
             identifier = DefinitionIdentifier(name.sanitize()),
             shape = Type.Shape(
-                openAPIV2Schema.allOf
+                schemaObject.allOf
                     .orEmpty()
                     .flatMap {
                         when (it) {
@@ -327,7 +317,7 @@ private fun OpenAPIV2Model.flatten(openAPIV2Schema: OpenAPIV2Schema, name: Strin
             extends = emptyList(),
         ),
     ).plus(
-        openAPIV2Schema.allOf!!.flatMap {
+        schemaObject.allOf!!.flatMap {
             when (it) {
                 is OpenAPIV2Reference -> emptyList()
                 is OpenAPIV2Schema -> it.properties.orEmpty().flatMap { (key, value) ->
@@ -340,39 +330,39 @@ private fun OpenAPIV2Model.flatten(openAPIV2Schema: OpenAPIV2Schema, name: Strin
         },
     )
 
-    openAPIV2Schema.enum != null ->
-        openAPIV2Schema.enum!!
+    schemaObject.enum != null ->
+        schemaObject.enum!!
             .map { it.content }
             .toSet()
             .let {
                 listOf(
                     Enum(
                         comment = null,
-                        annotations = openAPIV2Schema.description.toDescriptionAnnotationList(),
+                        annotations = schemaObject.description.toDescriptionAnnotationList(),
                         identifier = DefinitionIdentifier(name.sanitize()),
                         entries = it,
                     ),
                 )
             }
 
-    else -> when (openAPIV2Schema.type) {
+    else -> when (schemaObject.type) {
         null, OpenAPIV2Type.OBJECT -> {
-            val fields = openAPIV2Schema.properties.orEmpty()
+            val fields = schemaObject.properties.orEmpty()
                 .flatMap { (key, value) -> flatten(value, className(name, key)) }
 
             val schema = listOf(
                 Type(
                     comment = null,
-                    annotations = openAPIV2Schema.description.toDescriptionAnnotationList(),
+                    annotations = schemaObject.description.toDescriptionAnnotationList(),
                     identifier = DefinitionIdentifier(name.sanitize()),
-                    shape = Type.Shape(toField(openAPIV2Schema, name)),
+                    shape = Type.Shape(toField(schemaObject, name)),
                     extends = emptyList(),
                 ),
             )
             schema + fields
         }
 
-        OpenAPIV2Type.ARRAY -> when (val it = openAPIV2Schema.items) {
+        OpenAPIV2Type.ARRAY -> when (val it = schemaObject.items) {
             is OpenAPIV2Reference -> emptyList()
             is OpenAPIV2Schema -> flatten(it, className(name, "Array"))
             null -> emptyList()
@@ -503,23 +493,6 @@ private fun OpenAPIV2Model.toReference(schema: OpenAPIV2Schema, name: String, is
     }
 }
 
-private fun OpenAPIV2PathItem.toOperationList() = Endpoint.Method.entries
-    .associateWith {
-        when (it) {
-            Endpoint.Method.GET -> get
-            Endpoint.Method.POST -> post
-            Endpoint.Method.PUT -> put
-            Endpoint.Method.DELETE -> delete
-            Endpoint.Method.OPTIONS -> options
-            Endpoint.Method.HEAD -> head
-            Endpoint.Method.PATCH -> patch
-            Endpoint.Method.TRACE -> trace
-        }
-    }
-    .filterNotNullValues()
-
-private fun OpenAPIV2Reference.getReference() = ref.value.split("/")[2]
-
 private fun OpenAPIV2Base.toPrimitive() = when (this.type) {
     OpenAPIV2Type.STRING -> when {
         pattern != null -> Reference.Primitive.Type.String(
@@ -629,8 +602,8 @@ private fun OpenAPIV2Model.toField(parameter: OpenAPIV2Parameter, name: String) 
 
 private fun Path.toSegments(parameters: List<OpenAPIV2Parameter>) = value.split("/").drop(1).map { segment ->
     val isParam = segment.isNotEmpty() && segment[0] == '{' && segment[segment.length - 1] == '}'
-    when {
-        isParam -> {
+    when (isParam) {
+        true -> {
             val param = segment.substring(1, segment.length - 1)
             parameters
                 .find { it.name == param }
@@ -644,89 +617,9 @@ private fun Path.toSegments(parameters: List<OpenAPIV2Parameter>) = value.split(
                 ?: error(" Declared path parameter $param needs to be defined as a path parameter in path or operation level")
         }
 
-        else -> Endpoint.Segment.Literal(segment)
+        false -> Endpoint.Segment.Literal(segment)
     }
 }
-
-private fun String.isParam() = this[0] == '{' && this[length - 1] == '}'
-
-private fun OpenAPIV2Operation.toName() = operationId?.let { className(it) }
-
-private fun Path.toName(): String = value
-    .split("/")
-    .drop(1)
-    .filter { it.isNotBlank() }
-    .joinToString("") {
-        when (it.isParam()) {
-            true -> className(it.substring(1, it.length - 1))
-            false -> className(it)
-        }
-    }
-
-private data class FlattenRequest(
-    val path: Path,
-    val pathItem: OpenAPIV2PathItem,
-    val method: Endpoint.Method,
-    val operation: OpenAPIV2Operation,
-    val type: String,
-)
-
-private fun OpenAPIV2Model.flatMapRequests(f: FlattenRequest.() -> List<Definition>) = paths
-    .flatMap { (path, pathItem) ->
-        pathItem.toOperationList()
-            .flatMap { (method, operation) ->
-                (consumes ?: operation.consumes ?: listOf(APPLICATION_JSON)).map { type ->
-                    FlattenRequest(
-                        path = path,
-                        pathItem = pathItem,
-                        method = method,
-                        operation = operation,
-                        type = type,
-                    )
-                }
-            }
-    }
-    .flatMap(f)
-
-private data class FlattenResponse(
-    val path: Path,
-    val pathItem: OpenAPIV2PathItem,
-    val method: Endpoint.Method,
-    val operation: OpenAPIV2Operation,
-    val statusCode: StatusCode,
-    val response: OpenAPIV2ResponseOrReference,
-    val type: String,
-)
-
-private fun OpenAPIV2Model.flatMapResponses(f: FlattenResponse.() -> List<Definition>) = paths
-    .flatMap { (path, pathItem) ->
-        pathItem.toOperationList()
-            .flatMap { (method, operation) ->
-                operation.responses.orEmpty()
-                    .flatMap { (statusCode, response) ->
-                        (produces ?: operation.produces ?: listOf(APPLICATION_JSON)).map { type ->
-                            FlattenResponse(
-                                path = path,
-                                pathItem = pathItem,
-                                method = method,
-                                operation = operation,
-                                statusCode = statusCode,
-                                response = response,
-                                type = type,
-                            )
-                        }
-                    }
-            }
-    }
-    .flatMap(f)
-
-private fun String.sanitize() = this
-    .split(".", " ", "-")
-    .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
-    .joinToString("")
-    .asSequence()
-    .filter { it.isLetterOrDigit() || it in listOf('_') }
-    .joinToString("")
 
 private fun OpenAPIV2Type?.isPrimitive() = when (this) {
     OpenAPIV2Type.STRING -> true
@@ -738,16 +631,6 @@ private fun OpenAPIV2Type?.isPrimitive() = when (this) {
     OpenAPIV2Type.FILE -> false
     null -> false
 }
-
-private fun Reference.toIterable(isNullable: Boolean) = Reference.Iterable(
-    reference = this,
-    isNullable = isNullable,
-)
-
-private fun Reference.toDict(isNullable: Boolean) = Reference.Dict(
-    reference = this,
-    isNullable = isNullable,
-)
 
 private fun OpenAPIV2SchemaOrReferenceOrBoolean?.exists() = when (this) {
     is OpenAPIV2SchemaOrReference -> true

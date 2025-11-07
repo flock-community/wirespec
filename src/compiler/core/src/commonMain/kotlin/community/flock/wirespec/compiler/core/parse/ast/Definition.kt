@@ -37,7 +37,7 @@ data class Endpoint(
     }
 
     data class Request(val content: Content?)
-    data class Response(val status: String, val headers: List<Field>, val content: Content?)
+    data class Response(val status: String, val headers: List<Field>, val content: Content?, val annotations: List<Annotation>)
     data class Content(val type: String, val reference: Reference)
 }
 

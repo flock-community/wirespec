@@ -4,7 +4,7 @@ import arrow.core.nonEmptyListOf
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
-import community.flock.wirespec.compiler.core.parse.Annotation
+import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
@@ -17,7 +17,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Type.Shape
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.openapi.common.Ast
-import community.flock.wirespec.openapi.toDescriptionAnnotationList
+import community.flock.wirespec.openapi.common.toDescriptionAnnotationList
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser.parse
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.nulls.shouldNotBeNull

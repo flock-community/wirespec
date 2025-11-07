@@ -123,6 +123,7 @@ private fun WsResponse.consume() = Endpoint.Response(
     status = status,
     headers = headers.map { it.consume() },
     content = content?.consume(),
+    annotations = emptyList(),
 )
 
 private fun WsContent.consume() = Endpoint.Content(

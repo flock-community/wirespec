@@ -1,7 +1,6 @@
 package community.flock.wirespec.openapi.v3
 
 import arrow.core.NonEmptyList
-import arrow.core.nonEmptyListOf
 import arrow.core.toNonEmptyListOrNull
 import community.flock.kotlinx.openapi.bindings.BooleanValue
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3
@@ -12,6 +11,7 @@ import community.flock.kotlinx.openapi.bindings.OpenAPIV3Model
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3Operation
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3Parameter
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3ParameterLocation
+import community.flock.kotlinx.openapi.bindings.OpenAPIV3ParameterOrReference
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3PathItem
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3Reference
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3RequestBody
@@ -25,7 +25,6 @@ import community.flock.kotlinx.openapi.bindings.OpenAPIV3Type
 import community.flock.kotlinx.openapi.bindings.Path
 import community.flock.kotlinx.openapi.bindings.StatusCode
 import community.flock.wirespec.compiler.core.ModuleContent
-import community.flock.wirespec.compiler.core.emit.LanguageEmitter.Companion.firstToUpper
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
@@ -33,139 +32,143 @@ import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
-import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.converter.common.Parser
 import community.flock.wirespec.openapi.common.className
-import community.flock.wirespec.openapi.common.filterNotNullValues
-import community.flock.wirespec.openapi.toDescriptionAnnotationList
-import kotlinx.serialization.json.Json
+import community.flock.wirespec.openapi.common.flatMapRequests
+import community.flock.wirespec.openapi.common.flatMapResponses
+import community.flock.wirespec.openapi.common.getReference
+import community.flock.wirespec.openapi.common.isParam
+import community.flock.wirespec.openapi.common.jsonDefault
+import community.flock.wirespec.openapi.common.parseOpenApi
+import community.flock.wirespec.openapi.common.sanitize
+import community.flock.wirespec.openapi.common.toDescriptionAnnotationList
+import community.flock.wirespec.openapi.common.toDict
+import community.flock.wirespec.openapi.common.toIterable
+import community.flock.wirespec.openapi.common.toName
+import community.flock.wirespec.openapi.common.toOperationList
 
 object OpenAPIV3Parser : Parser {
 
-    override fun parse(moduleContent: ModuleContent, strict: Boolean): AST = AST(
-        nonEmptyListOf(
-            Module(
-                moduleContent.fileUri,
-                OpenAPIV3(
-                    json = Json {
-                        prettyPrint = true
-                        ignoreUnknownKeys = !strict
-                    },
-                ).decodeFromString(moduleContent.content).parse()
-                    .let { requireNotNull(it) { "Cannot yield empty AST for OpenAPI v3" } },
-            ),
-        ),
-    )
+    override fun parse(moduleContent: ModuleContent, strict: Boolean): AST = parseOpenApi(moduleContent) {
+        OpenAPIV3(jsonDefault(strict))
+            .decodeFromString(it)
+            .parse()
+    }
 
-    fun OpenAPIV3Model.parse(): NonEmptyList<Definition>? = listOf(
-        parseEndpoint(),
+    fun OpenAPIV3Model.parse(): NonEmptyList<Definition> = listOf(
+        parseEndpoints(),
         parseParameters(),
         parseRequestBody(),
         parseResponseBody(),
-        parseComponents(),
-    ).reduce(List<Definition>::plus).toNonEmptyListOrNull()
+        parseDefinitions(),
+    ).reduce(List<Definition>::plus)
+        .toNonEmptyListOrNull()
+        .let { requireNotNull(it) { "Cannot yield empty AST for OpenAPI v3" } }
 }
 
-private fun OpenAPIV3Model.parseEndpoint(): List<Definition> = paths
-    .flatMap { (key, path) ->
-        path.toOperationList().map { (method, operation) ->
-            val parameters = resolveParameters(path) + resolveParameters(operation)
-            val segments = toSegments(key, parameters, operation, method)
-            val name = operation.toName() ?: (key.toName() + method.name)
-            val query = parameters
-                .filter { it.`in` == OpenAPIV3ParameterLocation.QUERY }
-                .map { toField(it, className(name, "Parameter", it.name)) }
-            val headers = parameters
-                .filter { it.`in` == OpenAPIV3ParameterLocation.HEADER }
-                .map { toField(it, className(name, "Parameter", it.name)) }
-            val requests = operation.requestBody?.let { resolve(it) }
-                ?.let { requestBody ->
-                    val isNullable = false
-                    requestBody.content?.map { (mediaType, mediaObject) ->
-                        val reference = when (val schema = mediaObject.schema) {
-                            is OpenAPIV3Reference -> toReference(schema, isNullable)
-                            is OpenAPIV3Schema -> toReference(schema, isNullable, className(name, "RequestBody"))
-                            null -> null
+private fun OpenAPIV3Model.parseEndpoints(): List<Definition> = paths
+    .flatMap { (path, pathItem) ->
+        pathItem.toOperationList()
+            .map { (method, operation) -> method to operation as OpenAPIV3Operation }
+            .map { (method, operation) ->
+                val parameters = resolveParameters(pathItem.parameters) + resolveParameters(operation.parameters)
+                val segments = toSegments(path, parameters, operation, method)
+                val name = operation.toName() ?: (path.toName() + method.name)
+                val query = parameters
+                    .filter { it.`in` == OpenAPIV3ParameterLocation.QUERY }
+                    .map { toField(it, className(name, "Parameter", it.name)) }
+                val headers = parameters
+                    .filter { it.`in` == OpenAPIV3ParameterLocation.HEADER }
+                    .map { toField(it, className(name, "Parameter", it.name)) }
+                val requests = operation.requestBody?.let { resolve(it) }
+                    ?.let { requestBody ->
+                        val isNullable = false
+                        requestBody.content?.map { (mediaType, mediaObject) ->
+                            val reference = when (val schema = mediaObject.schema) {
+                                is OpenAPIV3Reference -> toReference(schema, isNullable)
+                                is OpenAPIV3Schema -> toReference(schema, isNullable, className(name, "RequestBody"))
+                                null -> null
+                            }
+                            reference?.let {
+                                Endpoint.Request(
+                                    Endpoint.Content(
+                                        type = mediaType.value,
+                                        reference = reference,
+                                    ),
+                                )
+                            } ?: Endpoint.Request(null)
                         }
-                        reference?.let {
-                            Endpoint.Request(
-                                Endpoint.Content(
-                                    type = mediaType.value,
-                                    reference = reference,
+                    }
+                    ?: listOf(Endpoint.Request(null))
+
+                val responses = operation.responses.orEmpty().flatMap { (status, res) ->
+                    resolve(res).let { response ->
+                        if (response.content.isNullOrEmpty()) {
+                            listOf(
+                                Endpoint.Response(
+                                    annotations = response.description.toDescriptionAnnotationList(),
+                                    status = status.value,
+                                    headers = response.headers?.map { entry ->
+                                        toField(resolve(entry.value), entry.key, className(name, "ResponseHeader"))
+                                    }.orEmpty(),
+                                    content = null,
                                 ),
                             )
-                        } ?: Endpoint.Request(null)
-                    }
-                }
-                ?: listOf(Endpoint.Request(null))
+                        } else {
+                            response.content?.map { (contentType, media) ->
+                                val isNullable = media.schema?.let { resolve(it) }?.nullable ?: false
+                                Endpoint.Response(
+                                    annotations = response.description.toDescriptionAnnotationList(),
+                                    status = status.value,
+                                    headers = response.headers?.map { entry ->
+                                        toField(resolve(entry.value), entry.key, className(name, "ResponseHeader"))
+                                    }.orEmpty(),
+                                    content = Endpoint.Content(
+                                        type = contentType.value,
+                                        reference = when (val schema = media.schema) {
+                                            is OpenAPIV3Reference -> toReference(schema, isNullable)
+                                            is OpenAPIV3Schema -> toReference(
+                                                schema,
+                                                isNullable,
+                                                className(name, status.value, "ResponseBody"),
+                                            )
 
-            val responses = operation.responses.orEmpty().flatMap { (status, res) ->
-                resolve(res).let { response ->
-                    if (response.content.isNullOrEmpty()) {
-                        listOf(
+                                            null -> Reference.Any(isNullable)
+                                        },
+                                    ),
+                                )
+                            }
+                        }
+                    }
+                        ?: listOf(
                             Endpoint.Response(
-                                annotations = response.description.toDescriptionAnnotationList(),
                                 status = status.value,
-                                headers = response.headers?.map { entry ->
-                                    toField(resolve(entry.value), entry.key, className(name, "ResponseHeader"))
-                                }.orEmpty(),
+                                headers = emptyList(),
                                 content = null,
+                                annotations = emptyList(),
                             ),
                         )
-                    } else {
-                        response.content?.map { (contentType, media) ->
-                            val isNullable = media.schema?.let { resolve(it) }?.nullable ?: false
-                            Endpoint.Response(
-                                annotations = response.description.toDescriptionAnnotationList(),
-                                status = status.value,
-                                headers = response.headers?.map { entry ->
-                                    toField(resolve(entry.value), entry.key, className(name, "ResponseHeader"))
-                                }.orEmpty(),
-                                content = Endpoint.Content(
-                                    type = contentType.value,
-                                    reference = when (val schema = media.schema) {
-                                        is OpenAPIV3Reference -> toReference(schema, isNullable)
-                                        is OpenAPIV3Schema -> toReference(
-                                            schema,
-                                            isNullable,
-                                            className(name, status.value, "ResponseBody"),
-                                        )
-
-                                        null -> Reference.Any(isNullable)
-                                    },
-                                ),
-                            )
-                        }
-                    }
                 }
-                    ?: listOf(
-                        Endpoint.Response(
-                            status = status.value,
-                            headers = emptyList(),
-                            content = null,
-                        ),
-                    )
-            }
 
-            Endpoint(
-                comment = null,
-                annotations = operation.description.toDescriptionAnnotationList(),
-                identifier = DefinitionIdentifier(name),
-                method = method,
-                path = segments,
-                queries = query,
-                headers = headers,
-                requests = requests,
-                responses = responses,
-            )
-        }
+                Endpoint(
+                    comment = null,
+                    annotations = operation.description.toDescriptionAnnotationList(),
+                    identifier = DefinitionIdentifier(name),
+                    method = method,
+                    path = segments,
+                    queries = query,
+                    headers = headers,
+                    requests = requests,
+                    responses = responses,
+                )
+            }
     }
 
 private fun OpenAPIV3Model.parseParameters(): List<Definition> = flatMapRequests {
-    val parameters = resolveParameters(pathItem) + resolveParameters(operation)
+    val parameters = resolveParameters((pathItem as OpenAPIV3PathItem).parameters) + resolveParameters((operation as OpenAPIV3Operation).parameters)
     val name = operation.toName() ?: (path.toName() + method.name)
     parameters.flatMap { parameter ->
         parameter.schema?.let { flatten(it, className(name, "Parameter", parameter.name)) } ?: emptyList()
@@ -173,7 +176,7 @@ private fun OpenAPIV3Model.parseParameters(): List<Definition> = flatMapRequests
 }
 
 private fun OpenAPIV3Model.parseRequestBody(): List<Definition> = flatMapRequests {
-    val name = operation.toName() ?: (path.toName() + method.name)
+    val name = (operation as OpenAPIV3Operation).toName() ?: (path.toName() + method.name)
     operation.requestBody?.let { resolve(it) }?.content.orEmpty()
         .flatMap { (_, mediaObject) ->
             when (val schema = mediaObject.schema) {
@@ -218,14 +221,14 @@ private fun OpenAPIV3Model.flatMapResponse(
     }
 
 private fun OpenAPIV3Model.parseResponseBody(): List<Definition> = flatMapResponses {
-    val name = operation.toName() ?: (path.toName() + method.name)
-    when (val response = response) {
+    val name = (operation as OpenAPIV3Operation).toName() ?: (path.toName() + method.name)
+    when (val response = response as OpenAPIV3ResponseOrReference) {
         is OpenAPIV3Response -> flatMapResponse(response, name, statusCode)
         is OpenAPIV3Reference -> flatMapResponse(resolveOpenAPIV3Response(response).second, name, statusCode)
     }
 }
 
-private fun OpenAPIV3Model.parseComponents(): List<Definition> = components?.schemas.orEmpty()
+private fun OpenAPIV3Model.parseDefinitions(): List<Definition> = components?.schemas.orEmpty()
     .filter {
         when (val s = it.value) {
             is OpenAPIV3Schema -> when (s.additionalProperties) {
@@ -239,21 +242,6 @@ private fun OpenAPIV3Model.parseComponents(): List<Definition> = components?.sch
         }
     }
     .flatMap { flatten(it.value, className(it.key)) }
-
-private fun String.isParam() = this[0] == '{' && this[length - 1] == '}'
-
-private fun OpenAPIV3Operation.toName() = operationId?.let { className(it) }
-
-private fun Path.toName(): String = value
-    .split("/")
-    .drop(1)
-    .filter { it.isNotBlank() }
-    .joinToString("") {
-        when (it.isParam()) {
-            true -> className(it.substring(1, it.length - 1))
-            false -> className(it)
-        }
-    }
 
 private fun OpenAPIV3Model.toSegments(
     path: Path,
@@ -283,23 +271,13 @@ private fun OpenAPIV3Model.toSegments(
     }
 }
 
-private fun OpenAPIV3Model.resolveParameters(operation: OpenAPIV3Operation): List<OpenAPIV3Parameter> = operation.parameters
-    ?.mapNotNull {
+private fun OpenAPIV3Model.resolveParameters(parameters: List<OpenAPIV3ParameterOrReference>?): List<OpenAPIV3Parameter> = parameters.orEmpty()
+    .mapNotNull {
         when (it) {
             is OpenAPIV3Parameter -> it
             is OpenAPIV3Reference -> resolveOpenAPIV3Parameter(it)
         }
     }
-    ?: emptyList()
-
-private fun OpenAPIV3Model.resolveParameters(pathItem: OpenAPIV3PathItem): List<OpenAPIV3Parameter> = pathItem.parameters
-    ?.mapNotNull {
-        when (it) {
-            is OpenAPIV3Parameter -> it
-            is OpenAPIV3Reference -> resolveOpenAPIV3Parameter(it)
-        }
-    }
-    ?: emptyList()
 
 private fun OpenAPIV3Model.resolveOpenAPIV3Parameter(reference: OpenAPIV3Reference): OpenAPIV3Parameter? = components?.parameters
     ?.get(reference.getReference())
@@ -485,7 +463,7 @@ private fun OpenAPIV3Model.flatten(schemaObject: OpenAPIV3Schema, name: String):
     }
 }
 
-private fun OpenAPIV3Model.flatten(schemaOrReference: OpenAPIV3SchemaOrReference, name: String) = when (schemaOrReference) {
+private fun OpenAPIV3Model.flatten(schemaOrReference: OpenAPIV3SchemaOrReference, name: String): List<Definition> = when (schemaOrReference) {
     is OpenAPIV3Schema -> flatten(schemaOrReference, name)
     is OpenAPIV3Reference -> emptyList()
 }
@@ -593,25 +571,6 @@ private fun OpenAPIV3Model.toReference(
     }
 }
 
-private fun OpenAPIV3PathItem.toOperationList() = Endpoint.Method.entries
-    .associateWith {
-        when (it) {
-            Endpoint.Method.GET -> get
-            Endpoint.Method.POST -> post
-            Endpoint.Method.PUT -> put
-            Endpoint.Method.DELETE -> delete
-            Endpoint.Method.OPTIONS -> options
-            Endpoint.Method.HEAD -> head
-            Endpoint.Method.PATCH -> patch
-            Endpoint.Method.TRACE -> trace
-        }
-    }
-    .filterNotNullValues()
-
-private fun OpenAPIV3Reference.getReference() = ref.value
-    .split("/").getOrNull(3)
-    ?: error("Wrong reference: ${ref.value}")
-
 private fun OpenAPIV3Schema.toPrimitive() = when (this.type) {
     OpenAPIV3Type.STRING -> when {
         pattern != null -> Reference.Primitive.Type.String(
@@ -703,56 +662,6 @@ private fun OpenAPIV3Model.toField(header: OpenAPIV3Header, identifier: String, 
     }
 }
 
-private data class FlattenRequest(
-    val path: Path,
-    val pathItem: OpenAPIV3PathItem,
-    val method: Endpoint.Method,
-    val operation: OpenAPIV3Operation,
-)
-
-private fun OpenAPIV3Model.flatMapRequests(f: FlattenRequest.() -> List<Definition>) = paths
-    .flatMap { (path, pathItem) ->
-        pathItem.toOperationList().map { (method, operation) ->
-            FlattenRequest(path = path, pathItem = pathItem, method = method, operation = operation)
-        }
-    }
-    .flatMap(f)
-
-private data class FlattenResponse(
-    val path: Path,
-    val pathItem: OpenAPIV3PathItem,
-    val method: Endpoint.Method,
-    val operation: OpenAPIV3Operation,
-    val statusCode: StatusCode,
-    val response: OpenAPIV3ResponseOrReference,
-)
-
-private fun OpenAPIV3Model.flatMapResponses(f: FlattenResponse.() -> List<Definition>) = paths
-    .flatMap { (path, pathItem) ->
-        pathItem.toOperationList()
-            .flatMap { (method, operation) ->
-                operation.responses?.map { (statusCode, response) ->
-                    FlattenResponse(
-                        path = path,
-                        pathItem = pathItem,
-                        method = method,
-                        operation = operation,
-                        statusCode = statusCode,
-                        response = response,
-                    )
-                }.orEmpty()
-            }
-    }
-    .flatMap(f)
-
-private fun String.sanitize() = this
-    .split(".", " ", "-")
-    .mapIndexed { index, s -> if (index > 0) s.firstToUpper() else s }
-    .joinToString("")
-    .asSequence()
-    .filter { it.isLetterOrDigit() || it in listOf('_') }
-    .joinToString("")
-
 private fun OpenAPIV3Type?.isPrimitive() = when (this) {
     OpenAPIV3Type.STRING -> true
     OpenAPIV3Type.NUMBER -> true
@@ -762,10 +671,6 @@ private fun OpenAPIV3Type?.isPrimitive() = when (this) {
     OpenAPIV3Type.OBJECT -> false
     null -> false
 }
-
-private fun Reference.toIterable(isNullable: Boolean) = Reference.Iterable(reference = this, isNullable = isNullable)
-
-private fun Reference.toDict(isNullable: Boolean) = Reference.Dict(reference = this, isNullable = isNullable)
 
 private fun OpenAPIV3SchemaOrReferenceOrBoolean?.exists() = when (this) {
     is OpenAPIV3SchemaOrReference -> true

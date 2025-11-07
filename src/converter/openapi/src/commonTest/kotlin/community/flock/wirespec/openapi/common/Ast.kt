@@ -9,7 +9,6 @@ import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Union
-import community.flock.wirespec.openapi.toDescriptionAnnotationList
 
 object Ast {
 

@@ -4,7 +4,7 @@ import arrow.core.nonEmptyListOf
 import community.flock.kotlinx.openapi.bindings.OpenAPIV2
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
-import community.flock.wirespec.compiler.core.parse.Annotation
+import community.flock.wirespec.compiler.core.parse.ast.Annotation
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Enum
@@ -16,7 +16,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.core.parse.ast.Type.Shape
 import community.flock.wirespec.openapi.common.Ast
-import community.flock.wirespec.openapi.toDescriptionAnnotationList
+import community.flock.wirespec.openapi.common.toDescriptionAnnotationList
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser.parse
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -521,7 +521,7 @@ class OpenAPIV2ParserTest {
         val definitions = ast.modules.head.statements
 
         val todo = definitions.find { (it as? Type)?.identifier?.value == "Todo" }.shouldBeInstanceOf<Type>()
-        todo.annotations shouldContain community.flock.wirespec.compiler.core.parse.Annotation(
+        todo.annotations shouldContain Annotation(
             "Description",
             listOf(Annotation.Parameter("default", Annotation.Value.Single("Todo object"))),
         )

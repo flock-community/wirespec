@@ -31,12 +31,8 @@ import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.openapi.common.APPLICATION_JSON
 import community.flock.wirespec.openapi.common.emitFormat
+import community.flock.wirespec.openapi.common.findDescription
 import community.flock.wirespec.openapi.common.json
-import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter
-import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter.emitOpenAPIObject
-import community.flock.wirespec.openapi.APPLICATION_JSON
-import community.flock.wirespec.openapi.findDescription
-import community.flock.wirespec.openapi.json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 

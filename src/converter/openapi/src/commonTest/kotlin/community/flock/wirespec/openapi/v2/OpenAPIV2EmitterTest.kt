@@ -7,7 +7,7 @@ import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
-import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser.parse
