@@ -15,9 +15,9 @@ class WirespecEmitterTest {
     @Test
     fun compileFullEndpointTest() {
         val wirespec = """
-            |endpoint PutTodo PUT PotentialTodoDto /todos/{id: String} ? {done: Boolean,name: String?} -> {
+            |endpoint PutTodo PUT PotentialTodoDto /todos/{id: String} ?{done: Boolean,name: String?} #{token: Token,refreshToken: Token?} -> {
             |  200 -> TodoDto
-            |  201 -> TodoDto
+            |  201 -> TodoDto #{token: Token,refreshToken: Token?}
             |  500 -> Error
             |}
             |
