@@ -9,8 +9,8 @@ import community.flock.wirespec.compiler.core.parse.Field
 interface WirespecEndpointDefinitionEmitter:  EndpointDefinitionEmitter, WirespecTypeDefinitionEmitter {
 
     override fun emit(endpoint: Endpoint) = """
-        |endpoint ${emit(endpoint.identifier)} ${endpoint.method}${endpoint.requests.emitRequest()} ${endpoint.path.emitPath()}${endpoint.queries.emitQuery()} -> {
-        |${endpoint.responses.joinToString("\n") { "$Spacer${it.status.fixStatus()} -> ${it.content?.reference?.emit() ?: "Unit"}${if (it.content?.reference?.isNullable == true) "?" else ""}" }}
+        |endpoint ${emit(endpoint.identifier)} ${endpoint.method}${endpoint.requests.emitRequest()} ${endpoint.path.emitPath()}${endpoint.queries.emitQuery()}${endpoint.headers.emitHeader()} -> {
+        |${endpoint.responses.joinToString("\n") { "$Spacer${it.status.fixStatus()} -> ${it.content?.reference?.emit() ?: "Unit"}${if (it.content?.reference?.isNullable == true) "?" else ""}${it.headers.emitHeader()}" }}
         |}
         |
     """.trimMargin()
@@ -27,6 +27,11 @@ interface WirespecEndpointDefinitionEmitter:  EndpointDefinitionEmitter, Wirespe
 
     private fun List<Field>.emitQuery() = takeIf { it.isNotEmpty() }
         ?.joinToString(",", "{", "}") { it.emit() }
-        ?.let { " ? $it" }
+        ?.let { " ?$it" }
+        .orEmpty()
+
+    private fun List<Field>.emitHeader() = takeIf { it.isNotEmpty() }
+        ?.joinToString(",", "{", "}") { it.emit() }
+        ?.let { " #$it" }
         .orEmpty()
 }
