@@ -487,7 +487,7 @@ private fun OpenAPIV3Model.flatten(schemaOrReference: OpenAPIV3SchemaOrReference
 
 private fun OpenAPIV3Model.toReference(reference: OpenAPIV3Reference, isNullable: Boolean): Reference = resolveOpenAPIV3Schema(reference).let { (referencingObject, schema) ->
     when {
-        schema.additionalProperties != null -> when (val additionalProperties = schema.additionalProperties!!) {
+        schema.additionalProperties.exists() -> when (val additionalProperties = schema.additionalProperties!!) {
             is BooleanValue -> Reference.Dict(
                 reference = Reference.Any(isNullable = isNullable),
                 isNullable = false,
