@@ -31,7 +31,6 @@ import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.openapi.APPLICATION_JSON
 import community.flock.wirespec.openapi.getDescription
 import community.flock.wirespec.openapi.json
-import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 
@@ -46,7 +45,7 @@ object OpenAPIV2Emitter : Emitter {
         .flatMap { it.statements }
         .let {
             Emitted(
-                "OpenAPI.${OpenAPIV3Emitter.extension.value}",
+                "OpenAPI.${extension.value}",
                 json.encodeToString(emitSwaggerObject(it)),
             )
         }
@@ -142,14 +141,16 @@ object OpenAPIV2Emitter : Emitter {
             },
     )
 
-    private fun Field.toProperties(): Pair<String, OpenAPIV2SchemaOrReference> = identifier.value to reference.toSchemaOrReference().let {
-        when (it) {
-            is OpenAPIV2Schema -> it.copy(description = annotations.getDescription())
-            is OpenAPIV2Reference -> it
+    private fun Field.toProperties(): Pair<String, OpenAPIV2SchemaOrReference> =
+        identifier.value to reference.toSchemaOrReference().let {
+            when (it) {
+                is OpenAPIV2Schema -> it.copy(description = annotations.getDescription())
+                is OpenAPIV2Reference -> it
+            }
         }
-    }
 
-    private fun List<Endpoint>.emit(method: Endpoint.Method): OpenAPIV2Operation? = filter { it.method == method }.map { it.emit() }.firstOrNull()
+    private fun List<Endpoint>.emit(method: Endpoint.Method): OpenAPIV2Operation? =
+        filter { it.method == method }.map { it.emit() }.firstOrNull()
 
     private fun Endpoint.emit() = OpenAPIV2Operation(
         operationId = identifier.value,
