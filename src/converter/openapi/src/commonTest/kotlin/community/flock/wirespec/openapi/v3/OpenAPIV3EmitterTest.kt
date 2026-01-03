@@ -1,8 +1,18 @@
 package community.flock.wirespec.openapi.v3
 
+import arrow.core.nonEmptyListOf
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3
+import community.flock.wirespec.compiler.core.FileUri
+import community.flock.wirespec.compiler.core.ModuleContent
+import community.flock.wirespec.compiler.core.ParseContext
+import community.flock.wirespec.compiler.core.WirespecSpec
+import community.flock.wirespec.compiler.core.parse
+import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.utils.NoLogger
+import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.openapi.common.Ast
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser.parse
+import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.assertions.json.shouldEqualJson
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -151,4 +161,111 @@ class OpenAPIV3EmitterTest {
 
         petstoreConvertedOpenAPiAst shouldBe petstoreAst
     }
+
+    @Test
+    fun descriptionAnnotation() {
+        val source = """
+            @Description("Todo object")
+            type Todo {
+              @Description("id field") id: String,
+              @Description("done field") done: Boolean,
+              @Description("prio field") prio: Integer
+            }
+
+            @Description("Error object")
+            type Error {
+               @Description("reason field") reason: String
+            }
+
+            @Description("Get all todos")
+            endpoint GetTodos GET /todos -> {
+                @Description("GetTodos 200 response")
+                200 -> Todo[]
+            }
+        """.trimIndent()
+
+        val ast = parser(source).shouldBeRight()
+        val openapi = OpenAPIV3Emitter.emit(ast, noLogger).first().result
+
+        val expect = """
+            {
+                "openapi": "3.0.0",
+                "info": {
+                    "title": "Wirespec",
+                    "version": "0.0.0"
+                },
+                "paths": {
+                    "/todos": {
+                        "get": {
+                            "operationId": "GetTodos",
+                            "description": "Get all todos",
+                            "parameters": [],
+                            "responses": {
+                                "200": {
+                                    "description": "GetTodos 200 response",
+                                    "headers": {},
+                                    "content": {
+                                        "application/json": {
+                                            "schema": {
+                                                "nullable": false,
+                                                "type": "array",
+                                                "items": {
+                                                    "${'$'}ref": "#/components/schemas/Todo"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "components": {
+                    "schemas": {
+                        "Todo": {
+                            "description": "Todo object",
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "description": "id field"
+                                },
+                                "done": {
+                                    "type": "boolean",
+                                    "description": "done field"
+                                },
+                                "prio": {
+                                    "type": "integer",
+                                    "format": "int64",
+                                    "description": "prio field"
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "done",
+                                "prio"
+                            ]
+                        },
+                        "Error": {
+                            "description": "Error object",
+                            "properties": {
+                                "reason": {
+                                    "type": "string",
+                                    "description": "reason field"
+                                }
+                            },
+                            "required": [
+                                "reason"
+                            ]
+                        }
+                    }
+                }
+            }
+        """.trimIndent()
+
+        openapi shouldEqualJson expect
+    }
+
+    private fun parser(source: String) = object : ParseContext, NoLogger {
+        override val spec = WirespecSpec
+    }.parse(nonEmptyListOf(ModuleContent(FileUri("test.ws"), source))).map { AST(it.modules) }
 }

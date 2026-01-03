@@ -2,6 +2,9 @@ package community.flock.wirespec.openapi.v3
 
 import arrow.core.nonEmptyListOf
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3
+import community.flock.wirespec.compiler.core.FileUri
+import community.flock.wirespec.compiler.core.ModuleContent
+import community.flock.wirespec.compiler.core.parse.Annotation
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -15,8 +18,10 @@ import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.openapi.common.Ast
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser.parse
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -1451,5 +1456,67 @@ class OpenAPIV3ParserTest {
             ),
         )
         ast shouldBe expected
+    }
+
+    @Test
+    fun testDescriptionParsing() {
+        val json = """
+            {
+                "openapi": "3.0.0",
+                "info": {
+                    "title": "Test API",
+                    "version": "1.0.0"
+                },
+                "components": {
+                    "schemas": {
+                        "Todo": {
+                            "description": "Todo object",
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "description": "id field"
+                                }
+                            }
+                        }
+                    }
+                },
+                "paths": {
+                    "/todos": {
+                        "get": {
+                            "description": "Get all todos",
+                            "responses": {
+                                "200": {
+                                    "description": "Successful response"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        """.trimIndent()
+
+        val ast = OpenAPIV3Parser.parse(ModuleContent(FileUri("test.json"), json), false)
+        val definitions = ast.modules.head.statements
+        println(definitions.map { it.identifier.value })
+
+        val todo = definitions.find { (it as? Type)?.identifier?.value == "Todo" }.shouldBeInstanceOf<Type>()
+        todo.annotations shouldContain Annotation(
+            "Description",
+            listOf(Annotation.Parameter("default", Annotation.Value.Single("Todo object"))),
+        )
+
+        val idField = todo.shape.value.find { it.identifier.value == "id" }!!
+        idField.annotations shouldContain Annotation(
+            "Description",
+            listOf(Annotation.Parameter("default", Annotation.Value.Single("id field"))),
+        )
+
+        val endpoint =
+            definitions.find { (it as? Endpoint)?.identifier?.value == "TodosGET" }.shouldBeInstanceOf<Endpoint>()
+        endpoint.annotations shouldContain Annotation(
+            "Description",
+            listOf(Annotation.Parameter("default", Annotation.Value.Single("Get all todos"))),
+        )
     }
 }

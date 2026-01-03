@@ -3,6 +3,7 @@ package community.flock.wirespec.compiler.core.parse
 import arrow.core.Either
 import arrow.core.raise.either
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
+import community.flock.wirespec.compiler.core.parse.AnnotationParser.parseAnnotations
 import community.flock.wirespec.compiler.core.tokenize.Arrow
 import community.flock.wirespec.compiler.core.tokenize.Colon
 import community.flock.wirespec.compiler.core.tokenize.ForwardSlash
@@ -136,9 +137,12 @@ object EndpointParser {
     private fun TokenProvider.parseEndpointResponses() = either {
         val responses = mutableListOf<Endpoint.Response>()
         while (token.type !is RightCurly) {
+            val annotations = parseAnnotations().bind()
             when (token.type) {
-                is Integer -> responses.add(parseEndpointResponse(token.value).bind())
-                else -> raiseWrongToken<Integer>().bind()
+                is Integer -> responses.add(parseEndpointResponse(token.value, annotations).bind())
+                else -> {
+                    raiseWrongToken<Integer>().bind()
+                }
             }
         }
         when (token.type) {
@@ -148,7 +152,7 @@ object EndpointParser {
         responses.toList()
     }
 
-    private fun TokenProvider.parseEndpointResponse(statusCode: String) = parseToken {
+    private fun TokenProvider.parseEndpointResponse(statusCode: String, annotations: List<Annotation>) = parseToken {
         when (token.type) {
             is Arrow -> Unit
             else -> raiseWrongToken<Arrow>().bind()
@@ -175,7 +179,12 @@ object EndpointParser {
 
         val headers = parseHeaders().bind()
 
-        Endpoint.Response(status = statusCode, headers = headers, content = content)
+        Endpoint.Response(
+            status = statusCode,
+            headers = headers,
+            content = content,
+            annotations = annotations,
+        )
     }
 
     private fun TokenProvider.parseHeaders() = either {

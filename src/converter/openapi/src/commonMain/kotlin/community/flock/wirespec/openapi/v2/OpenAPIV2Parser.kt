@@ -41,6 +41,7 @@ import community.flock.wirespec.converter.common.Parser
 import community.flock.wirespec.openapi.APPLICATION_JSON
 import community.flock.wirespec.openapi.className
 import community.flock.wirespec.openapi.filterNotNullValues
+import community.flock.wirespec.openapi.toDescription
 import kotlinx.serialization.json.Json
 
 object OpenAPIV2Parser : Parser {
@@ -115,6 +116,7 @@ private fun OpenAPIV2Model.parseEndpoints(): List<Definition> = paths
                         .distinct()
                         .ifEmpty { listOf(APPLICATION_JSON) }.map { type ->
                             Endpoint.Response(
+                                annotations = res.description.toDescription(),
                                 status = status.value,
                                 headers = res.headers
                                     ?.map { (identifier, header) -> toField(header.resolve(), identifier) }
@@ -140,7 +142,8 @@ private fun OpenAPIV2Model.parseEndpoints(): List<Definition> = paths
             listOf(
                 Endpoint(
                     comment = null,
-                    annotations = emptyList(), identifier = DefinitionIdentifier(name.sanitize()),
+                    annotations = operation.description.toDescription(),
+                    identifier = DefinitionIdentifier(name.sanitize()),
                     method = method,
                     path = segments,
                     queries = query,
@@ -170,7 +173,7 @@ private fun OpenAPIV2Model.parseRequestBody(): List<Definition> = flatMapRequest
             parameter.enum != null -> listOf(
                 Enum(
                     comment = null,
-                    annotations = emptyList(),
+                    annotations = parameter.description.toDescription(),
                     identifier = DefinitionIdentifier(className(name, "Parameter", parameter.name).sanitize()),
                     entries = parameter.enum!!.map { it.content }.toSet(),
                 ),
@@ -297,7 +300,7 @@ private fun OpenAPIV2Model.flatten(openAPIV2Schema: OpenAPIV2Schema, name: Strin
     openAPIV2Schema.allOf != null -> listOf(
         Type(
             comment = null,
-            annotations = emptyList(),
+            annotations = openAPIV2Schema.description.toDescription(),
             identifier = DefinitionIdentifier(name.sanitize()),
             shape = Type.Shape(
                 openAPIV2Schema.allOf
@@ -334,7 +337,7 @@ private fun OpenAPIV2Model.flatten(openAPIV2Schema: OpenAPIV2Schema, name: Strin
                 listOf(
                     Enum(
                         comment = null,
-                        annotations = emptyList(),
+                        annotations = openAPIV2Schema.description.toDescription(),
                         identifier = DefinitionIdentifier(name.sanitize()),
                         entries = it,
                     ),
@@ -349,7 +352,7 @@ private fun OpenAPIV2Model.flatten(openAPIV2Schema: OpenAPIV2Schema, name: Strin
             val schema = listOf(
                 Type(
                     comment = null,
-                    annotations = emptyList(),
+                    annotations = openAPIV2Schema.description.toDescription(),
                     identifier = DefinitionIdentifier(name.sanitize()),
                     shape = Type.Shape(toField(openAPIV2Schema, name)),
                     extends = emptyList(),
@@ -525,7 +528,7 @@ private fun OpenAPIV2Base.toPrimitive() = when (this.type) {
 
 private fun OpenAPIV2Model.toField(header: OpenAPIV2Header, identifier: String) = Field(
     identifier = FieldIdentifier(identifier),
-    annotations = emptyList(),
+    annotations = header.description.toDescription(),
     reference = when (header.type) {
         OpenAPIV2Type.ARRAY -> header.items?.let { resolve(it) }?.let { toReference(it, identifier, false) }
             ?: error("Item cannot be null")
@@ -543,7 +546,7 @@ private fun OpenAPIV2Model.toField(schema: OpenAPIV2Schema, name: String) = sche
         is OpenAPIV2Schema -> {
             Field(
                 identifier = FieldIdentifier(key),
-                annotations = emptyList(),
+                annotations = value.description.toDescription(),
                 reference = when {
                     value.enum != null -> toReference(value, className(name, key), isNullable)
                     value.type == OpenAPIV2Type.ARRAY -> toReference(
@@ -600,7 +603,7 @@ private fun OpenAPIV2Model.toField(parameter: OpenAPIV2Parameter, name: String) 
     }.let {
         Field(
             identifier = FieldIdentifier(parameter.name),
-            annotations = emptyList(),
+            annotations = parameter.description.toDescription(),
             reference = it,
         )
     }

@@ -29,9 +29,9 @@ import community.flock.wirespec.compiler.core.parse.Statements
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.openapi.APPLICATION_JSON
+import community.flock.wirespec.openapi.getDescription
 import community.flock.wirespec.openapi.json
 import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter
-import community.flock.wirespec.openapi.v3.OpenAPIV3Emitter.emitOpenAPIObject
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 
@@ -47,7 +47,7 @@ object OpenAPIV2Emitter : Emitter {
         .let {
             Emitted(
                 "OpenAPI.${OpenAPIV3Emitter.extension.value}",
-                json.encodeToString(emitOpenAPIObject(it, null)),
+                json.encodeToString(emitSwaggerObject(it)),
             )
         }
         .let { nonEmptyListOf(it) }
@@ -125,6 +125,7 @@ object OpenAPIV2Emitter : Emitter {
             } + statements
             .filterIsInstance<Type>().associate { type ->
                 type.identifier.value to OpenAPIV2Schema(
+                    description = type.annotations.getDescription() ?: type.comment?.value,
                     properties = type.shape.value.associate { it.toProperties() },
                     required = type.shape.value
                         .filter { !it.reference.isNullable }
@@ -141,13 +142,18 @@ object OpenAPIV2Emitter : Emitter {
             },
     )
 
-    private fun Field.toProperties(): Pair<String, OpenAPIV2SchemaOrReference> = identifier.value to reference.toSchemaOrReference()
+    private fun Field.toProperties(): Pair<String, OpenAPIV2SchemaOrReference> = identifier.value to reference.toSchemaOrReference().let {
+        when (it) {
+            is OpenAPIV2Schema -> it.copy(description = annotations.getDescription())
+            is OpenAPIV2Reference -> it
+        }
+    }
 
     private fun List<Endpoint>.emit(method: Endpoint.Method): OpenAPIV2Operation? = filter { it.method == method }.map { it.emit() }.firstOrNull()
 
     private fun Endpoint.emit() = OpenAPIV2Operation(
         operationId = identifier.value,
-        description = comment?.value,
+        description = annotations.getDescription() ?: comment?.value,
         consumes = requests.mapNotNull { it.content?.type }.distinct().ifEmpty { null },
         produces = responses.mapNotNull { it.content?.type }.distinct().ifEmpty { null },
         parameters = requests
@@ -168,8 +174,7 @@ object OpenAPIV2Emitter : Emitter {
         responses = responses
             .associate { response ->
                 StatusCode(response.status) to OpenAPIV2Response(
-                    description = comment?.value
-                        ?: "${identifier.value} ${response.status} response",
+                    description = response.annotations.getDescription(),
                     headers = response.headers.associate {
                         it.identifier.value to OpenAPIV2Header(
                             type = it.reference.emitType(),
