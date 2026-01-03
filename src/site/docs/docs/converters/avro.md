@@ -34,4 +34,4 @@ Wirespec supports converting Avro schemas (.avsc) into Wirespec types.
 
 ## Playground
 
-You can try the conversion online: [Playground convert Avro](https://playground.wirespec.io/converter?format=avro)
+You can try the conversion online: [Playground convert Avro](https://playground.wirespec.io/?emitter=avro&specification=wirespec    )

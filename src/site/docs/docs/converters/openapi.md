@@ -49,4 +49,4 @@ This will be converted to the `description` field in the generated OpenAPI speci
 
 ## Playground
 
-You can try the conversion online: [Playground convert OAS](https://playground.wirespec.io/converter?format=open_api_v3)
+You can try the conversion online: [Playground convert OAS](https://playground.wirespec.io/?emitter=open_api_v3&specification=wirespec)
