@@ -37,11 +37,15 @@ class OpenAPIV2EmitterTest {
         val petstoreConvertedOpenAPI = OpenAPIV2Emitter.emitSwaggerObject(petstoreAst)
         val petstoreConvertedOpenAPiAst = petstoreConvertedOpenAPI.parse().shouldNotBeNull()
 
-        petstoreAst.toList()
+        val actual = petstoreAst.toList()
             .sortedBy { it.identifier.value }
-            .joinToString("\n") { it.toString() } shouldBe petstoreConvertedOpenAPiAst
+            .joinToString("\n")
+
+        val expected = petstoreConvertedOpenAPiAst
             .sortedBy { it.identifier.value }
-            .joinToString("\n") { it.toString() }
+            .joinToString("\n")
+
+        actual shouldBe expected
     }
 
     @Test

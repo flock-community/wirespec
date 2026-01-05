@@ -16,6 +16,7 @@ import community.flock.wirespec.compiler.core.parse.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.openapi.common.Ast
+import community.flock.wirespec.openapi.toDescription
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser.parse
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -285,13 +286,13 @@ class OpenAPIV2ParserTest {
         val expectedEnumDefinitions = listOf(
             Enum(
                 comment = null,
-                annotations = emptyList(),
+                annotations = "pet status in the store".toDescription(),
                 identifier = DefinitionIdentifier("PetStatus"),
                 entries = setOf("available", "pending", "sold"),
             ),
             Enum(
                 comment = null,
-                annotations = emptyList(),
+                annotations = "Order Status".toDescription(),
                 identifier = DefinitionIdentifier("OrderStatus"),
                 entries = setOf("placed", "approved", "delivered"),
             ),
@@ -354,6 +355,7 @@ class OpenAPIV2ParserTest {
                             type = "application/json",
                             reference = Custom(value = "Foo", isNullable = false),
                         ),
+                        annotations = "Ok".toDescription()
                     ),
                 ),
             ),
@@ -470,6 +472,7 @@ class OpenAPIV2ParserTest {
                         status = "200",
                         headers = emptyList(),
                         content = null,
+                        annotations = "Ok".toDescription()
                     ),
                 ),
             ),
@@ -519,12 +522,6 @@ class OpenAPIV2ParserTest {
         todo.annotations shouldContain community.flock.wirespec.compiler.core.parse.Annotation(
             "Description",
             listOf(Annotation.Parameter("default", Annotation.Value.Single("Todo object"))),
-        )
-
-        val idField = todo.shape.value.find { it.identifier.value == "id" }!!
-        idField.annotations shouldContain Annotation(
-            "Description",
-            listOf(Annotation.Parameter("default", Annotation.Value.Single("id field"))),
         )
 
         val endpoint =

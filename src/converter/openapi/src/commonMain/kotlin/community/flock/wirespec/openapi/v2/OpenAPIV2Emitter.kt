@@ -137,6 +137,7 @@ object OpenAPIV2Emitter : Emitter {
                 enum.identifier.value to OpenAPIV2Schema(
                     type = OpenAPIV2Type.STRING,
                     enum = enum.entries.map { JsonPrimitive(it) },
+                    description = enum.annotations.getDescription(),
                 )
             },
     )
@@ -175,9 +176,11 @@ object OpenAPIV2Emitter : Emitter {
         responses = responses
             .associate { response ->
                 StatusCode(response.status) to OpenAPIV2Response(
-                    description = response.annotations.getDescription(),
+                    description = response.annotations.getDescription()
+                        ?: "${identifier.value} ${response.status} response",
                     headers = response.headers.associate {
                         it.identifier.value to OpenAPIV2Header(
+                            description = it.annotations.getDescription(),
                             type = it.reference.emitType(),
                             format = it.reference.emitFormat(),
                             pattern = it.reference.emitPattern(),
@@ -222,6 +225,7 @@ object OpenAPIV2Emitter : Emitter {
             else -> null
         },
         required = !reference.isNullable,
+        description = annotations.getDescription(),
     )
 
     private fun Reference.toSchemaOrReference(): OpenAPIV2SchemaOrReference = when (this) {

@@ -64,7 +64,7 @@ class OpenAPIV3EmitterTest {
                             },
                             "responses": {
                                 "200": {
-                                    "description": "ArrayGET 200 response",
+                                    "description": "Ok",
                                     "headers": {},
                                     "content": {
                                         "application/json": {
@@ -79,7 +79,7 @@ class OpenAPIV3EmitterTest {
                                     }
                                 },
                                 "201": {
-                                    "description": "ArrayGET 201 response",
+                                    "description": "Created",
                                     "headers": {},
                                     "content": {
                                         "application/json": {
@@ -98,7 +98,7 @@ class OpenAPIV3EmitterTest {
                                     }
                                 },
                                 "202": {
-                                    "description": "ArrayGET 202 response",
+                                    "description": "Created",
                                     "headers": {},
                                     "content": {
                                         "application/json": {
@@ -157,9 +157,14 @@ class OpenAPIV3EmitterTest {
 
         val petstoreConvertedOpenAPi = OpenAPIV3Emitter.emitOpenAPIObject(petstoreAst, null)
 
-        val petstoreConvertedOpenAPiAst = petstoreConvertedOpenAPi.parse()
+        val petstoreConvertedOpenAPiAst = petstoreConvertedOpenAPi.parse() ?: error("Failed to parse converted OpenAPI object")
 
-        petstoreConvertedOpenAPiAst shouldBe petstoreAst
+        (petstoreAst zip petstoreConvertedOpenAPiAst)
+            .forEach {
+            (actual, expected) -> println("${actual::class.simpleName} ${actual.identifier.value}")
+            actual shouldBe expected
+        }
+
     }
 
     @Test

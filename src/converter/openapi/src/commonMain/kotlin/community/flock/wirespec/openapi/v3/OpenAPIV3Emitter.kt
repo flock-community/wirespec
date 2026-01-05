@@ -161,7 +161,8 @@ object OpenAPIV3Emitter : Emitter {
         oneOf = entries.map { it.emitSchema() },
     )
 
-    private fun List<Endpoint>.emit(method: Endpoint.Method): OpenAPIV3Operation? = filter { it.method == method }.map { it.emit() }.firstOrNull()
+    private fun List<Endpoint>.emit(method: Endpoint.Method): OpenAPIV3Operation? =
+        filter { it.method == method }.map { it.emit() }.firstOrNull()
 
     private fun Endpoint.emit(): OpenAPIV3Operation = OpenAPIV3Operation(
         operationId = identifier.value,
@@ -186,7 +187,8 @@ object OpenAPIV3Emitter : Emitter {
             .map { (statusCode, res) ->
                 StatusCode(statusCode) to OpenAPIV3Response(
                     headers = res.flatMap { it.headers }.associate { it.emitHeader() },
-                    description = res.first().annotations.getDescription(),
+                    description = res.first().annotations.getDescription()
+                        ?: "${identifier.value} $statusCode response",
                     content = res
                         .mapNotNull { it.content }
                         .associate { it.emit() }
@@ -218,20 +220,22 @@ object OpenAPIV3Emitter : Emitter {
         required = !reference.isNullable,
     )
 
-    private fun Field.emitHeader(): Pair<String, OpenAPIV3HeaderOrReference> = identifier.value to reference.emitHeader()
+    private fun Field.emitHeader(): Pair<String, OpenAPIV3HeaderOrReference> =
+        identifier.value to reference.emitHeader(annotations.getDescription())
 
-    private fun Field.emitSchema(): Pair<String, OpenAPIV3SchemaOrReference> = identifier.value to reference.emitSchema().let {
-        when (it) {
-            is OpenAPIV3Schema -> it.copy(description = annotations.getDescription() ?: it.description)
-            is OpenAPIV3Reference -> it
+    private fun Field.emitSchema(): Pair<String, OpenAPIV3SchemaOrReference> =
+        identifier.value to reference.emitSchema().let {
+            when (it) {
+                is OpenAPIV3Schema -> it.copy(description = annotations.getDescription())
+                is OpenAPIV3Reference -> it
+            }
         }
-    }
 
-    private fun Reference.emitHeader() = when (this) {
+    private fun Reference.emitHeader(description: String?) = when (this) {
         is Reference.Dict -> OpenAPIV3Reference(ref = Ref("#/components/headers/$value"))
         is Reference.Iterable -> OpenAPIV3Reference(ref = Ref("#/components/headers/$value"))
         is Reference.Custom -> OpenAPIV3Reference(ref = Ref("#/components/headers/$value"))
-        is Reference.Primitive -> OpenAPIV3Header(schema = emitSchema())
+        is Reference.Primitive -> OpenAPIV3Header(schema = emitSchema(), description = description)
         is Reference.Any -> error("Cannot map Any")
         is Reference.Unit -> error("Cannot map Unit")
     }

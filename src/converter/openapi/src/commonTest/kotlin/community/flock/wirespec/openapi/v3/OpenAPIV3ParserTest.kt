@@ -17,6 +17,7 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.openapi.common.Ast
+import community.flock.wirespec.openapi.toDescription
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser.parse
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -280,7 +281,7 @@ class OpenAPIV3ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("userStatus"),
-                            annotations = emptyList(),
+                            annotations = "User Status".toDescription(),
                             reference = Primitive(
                                 type = Primitive.Type.Integer(Primitive.Type.Precision.P32, null),
                                 isNullable = true,
@@ -381,8 +382,8 @@ class OpenAPIV3ParserTest {
                 extends = emptyList(),
             ),
             Enum(
-                comment = null,
                 annotations = emptyList(),
+                comment = null,
                 identifier = DefinitionIdentifier("PetStatus"),
                 entries = setOf("available", "pending", "sold"),
             ),
@@ -429,7 +430,7 @@ class OpenAPIV3ParserTest {
 
         val expectedEndpoint = Endpoint(
             comment = null,
-            annotations = emptyList(),
+            annotations = "Returns a map of status codes to quantities".toDescription(),
             identifier = DefinitionIdentifier("GetInventory"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "store"), Endpoint.Segment.Literal(value = "inventory")),
@@ -438,6 +439,7 @@ class OpenAPIV3ParserTest {
             requests = listOf(Endpoint.Request(content = null)),
             responses = listOf(
                 Endpoint.Response(
+                    annotations = "successful operation".toDescription(),
                     status = "200",
                     headers = emptyList(),
                     content = Endpoint.Content(
@@ -485,6 +487,7 @@ class OpenAPIV3ParserTest {
                 ),
                 responses = listOf(
                     Endpoint.Response(
+                        annotations = "Ok".toDescription(),
                         status = "200",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -499,6 +502,7 @@ class OpenAPIV3ParserTest {
                         ),
                     ),
                     Endpoint.Response(
+                        annotations = "NotFound".toDescription(),
                         status = "404",
                         headers = emptyList(),
                         content = null,
@@ -571,6 +575,7 @@ class OpenAPIV3ParserTest {
                 ),
                 responses = listOf(
                     Endpoint.Response(
+                        annotations = "OK".toDescription(),
                         status = "200",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -586,6 +591,7 @@ class OpenAPIV3ParserTest {
                         ),
                     ),
                     Endpoint.Response(
+                        annotations = "Error".toDescription(),
                         status = "500",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -636,11 +642,13 @@ class OpenAPIV3ParserTest {
                 ),
                 responses = listOf(
                     Endpoint.Response(
+                        annotations = "OkNotContent".toDescription(),
                         status = "201",
                         headers = emptyList(),
                         content = null,
                     ),
                     Endpoint.Response(
+                        annotations = "Error".toDescription(),
                         status = "500",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -672,6 +680,7 @@ class OpenAPIV3ParserTest {
                 ),
                 responses = listOf(
                     Endpoint.Response(
+                        annotations = "OK".toDescription(),
                         status = "200",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -683,6 +692,7 @@ class OpenAPIV3ParserTest {
                         ),
                     ),
                     Endpoint.Response(
+                        annotations = "Error".toDescription(),
                         status = "500",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -937,6 +947,7 @@ class OpenAPIV3ParserTest {
                 ),
                 responses = listOf(
                     Endpoint.Response(
+                        annotations = "An Address".toDescription(),
                         status = "201",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -948,6 +959,7 @@ class OpenAPIV3ParserTest {
                         ),
                     ),
                     Endpoint.Response(
+                        annotations = "An Address".toDescription(),
                         status = "202",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -1065,6 +1077,7 @@ class OpenAPIV3ParserTest {
                 requests = listOf(Endpoint.Request(content = null)),
                 responses = listOf(
                     Endpoint.Response(
+                        annotations = "Success".toDescription(),
                         status = "201",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -1133,6 +1146,7 @@ class OpenAPIV3ParserTest {
                 requests = listOf(Endpoint.Request(content = null)),
                 responses = listOf(
                     Endpoint.Response(
+                        annotations = "Proposals".toDescription(),
                         status = "200",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -1252,6 +1266,7 @@ class OpenAPIV3ParserTest {
                 requests = listOf(Endpoint.Request(content = null)),
                 responses = listOf(
                     Endpoint.Response(
+                        annotations = "Proposals".toDescription(),
                         status = "200",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -1366,6 +1381,7 @@ class OpenAPIV3ParserTest {
                 ),
                 responses = listOf(
                     Endpoint.Response(
+                        annotations = "Created contact".toDescription(),
                         status = "200",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -1448,6 +1464,7 @@ class OpenAPIV3ParserTest {
                 ),
                 responses = listOf(
                     Endpoint.Response(
+                        annotations = "Ok".toDescription(),
                         status = "200",
                         headers = emptyList(),
                         content = null,
