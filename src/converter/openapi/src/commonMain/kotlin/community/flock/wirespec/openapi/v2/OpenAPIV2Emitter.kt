@@ -142,16 +142,14 @@ object OpenAPIV2Emitter : Emitter {
             },
     )
 
-    private fun Field.toProperties(): Pair<String, OpenAPIV2SchemaOrReference> =
-        identifier.value to reference.toSchemaOrReference().let {
-            when (it) {
-                is OpenAPIV2Schema -> it.copy(description = annotations.getDescription())
-                is OpenAPIV2Reference -> it
-            }
+    private fun Field.toProperties(): Pair<String, OpenAPIV2SchemaOrReference> = identifier.value to reference.toSchemaOrReference().let {
+        when (it) {
+            is OpenAPIV2Schema -> it.copy(description = annotations.getDescription())
+            is OpenAPIV2Reference -> it
         }
+    }
 
-    private fun List<Endpoint>.emit(method: Endpoint.Method): OpenAPIV2Operation? =
-        filter { it.method == method }.map { it.emit() }.firstOrNull()
+    private fun List<Endpoint>.emit(method: Endpoint.Method): OpenAPIV2Operation? = filter { it.method == method }.map { it.emit() }.firstOrNull()
 
     private fun Endpoint.emit() = OpenAPIV2Operation(
         operationId = identifier.value,

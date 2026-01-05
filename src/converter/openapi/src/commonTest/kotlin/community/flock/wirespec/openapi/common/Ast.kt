@@ -41,7 +41,7 @@ object Ast {
                             isNullable = false,
                         ),
                     ),
-                    annotations = "Ok".toDescription()
+                    annotations = "Ok".toDescription(),
                 ),
             ),
         ),
@@ -112,7 +112,7 @@ object Ast {
                             isNullable = false,
                         ),
                     ),
-                    annotations = "Ok".toDescription()
+                    annotations = "Ok".toDescription(),
                 ),
             ),
         ),
@@ -210,7 +210,7 @@ object Ast {
                             isNullable = false,
                         ),
                     ),
-                    "Ok".toDescription()
+                    "Ok".toDescription(),
                 ),
                 Endpoint.Response(
                     status = "404",
@@ -225,7 +225,7 @@ object Ast {
                             isNullable = false,
                         ),
                     ),
-                    "Not found".toDescription()
+                    "Not found".toDescription(),
                 ),
                 Endpoint.Response(
                     status = "500",
@@ -239,7 +239,7 @@ object Ast {
                             isNullable = false,
                         ),
                     ),
-                    "Error".toDescription()
+                    "Error".toDescription(),
                 ),
             ),
         ),
@@ -372,7 +372,7 @@ object Ast {
 
                         ),
                     ),
-                    annotations = "Ok".toDescription()
+                    annotations = "Ok".toDescription(),
                 ),
                 Endpoint.Response(
                     status = "201",
@@ -391,7 +391,7 @@ object Ast {
                             isNullable = false,
                         ),
                     ),
-                    annotations = "Created".toDescription()
+                    annotations = "Created".toDescription(),
                 ),
                 Endpoint.Response(
                     status = "202",
@@ -407,7 +407,7 @@ object Ast {
 
                         ),
                     ),
-                    annotations = "Created".toDescription()
+                    annotations = "Created".toDescription(),
                 ),
             ),
         ),

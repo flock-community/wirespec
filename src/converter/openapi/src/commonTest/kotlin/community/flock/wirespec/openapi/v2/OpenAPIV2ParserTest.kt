@@ -355,7 +355,7 @@ class OpenAPIV2ParserTest {
                             type = "application/json",
                             reference = Custom(value = "Foo", isNullable = false),
                         ),
-                        annotations = "Ok".toDescription()
+                        annotations = "Ok".toDescription(),
                     ),
                 ),
             ),
@@ -472,7 +472,7 @@ class OpenAPIV2ParserTest {
                         status = "200",
                         headers = emptyList(),
                         content = null,
-                        annotations = "Ok".toDescription()
+                        annotations = "Ok".toDescription(),
                     ),
                 ),
             ),

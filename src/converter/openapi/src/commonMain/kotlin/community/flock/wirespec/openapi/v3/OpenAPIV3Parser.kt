@@ -283,110 +283,98 @@ private fun OpenAPIV3Model.toSegments(
     }
 }
 
-private fun OpenAPIV3Model.resolveParameters(operation: OpenAPIV3Operation): List<OpenAPIV3Parameter> =
-    operation.parameters
-        ?.mapNotNull {
-            when (it) {
-                is OpenAPIV3Parameter -> it
-                is OpenAPIV3Reference -> resolveOpenAPIV3Parameter(it)
-            }
+private fun OpenAPIV3Model.resolveParameters(operation: OpenAPIV3Operation): List<OpenAPIV3Parameter> = operation.parameters
+    ?.mapNotNull {
+        when (it) {
+            is OpenAPIV3Parameter -> it
+            is OpenAPIV3Reference -> resolveOpenAPIV3Parameter(it)
         }
-        ?: emptyList()
+    }
+    ?: emptyList()
 
-private fun OpenAPIV3Model.resolveParameters(pathItem: OpenAPIV3PathItem): List<OpenAPIV3Parameter> =
-    pathItem.parameters
-        ?.mapNotNull {
-            when (it) {
-                is OpenAPIV3Parameter -> it
-                is OpenAPIV3Reference -> resolveOpenAPIV3Parameter(it)
-            }
+private fun OpenAPIV3Model.resolveParameters(pathItem: OpenAPIV3PathItem): List<OpenAPIV3Parameter> = pathItem.parameters
+    ?.mapNotNull {
+        when (it) {
+            is OpenAPIV3Parameter -> it
+            is OpenAPIV3Reference -> resolveOpenAPIV3Parameter(it)
         }
-        ?: emptyList()
+    }
+    ?: emptyList()
 
-private fun OpenAPIV3Model.resolveOpenAPIV3Parameter(reference: OpenAPIV3Reference): OpenAPIV3Parameter? =
-    components?.parameters
-        ?.get(reference.getReference())
-        ?.let {
-            when (it) {
-                is OpenAPIV3Parameter -> it
-                is OpenAPIV3Reference -> resolveOpenAPIV3Parameter(it)
-            }
+private fun OpenAPIV3Model.resolveOpenAPIV3Parameter(reference: OpenAPIV3Reference): OpenAPIV3Parameter? = components?.parameters
+    ?.get(reference.getReference())
+    ?.let {
+        when (it) {
+            is OpenAPIV3Parameter -> it
+            is OpenAPIV3Reference -> resolveOpenAPIV3Parameter(it)
         }
-
-private fun OpenAPIV3Model.resolveOpenAPIV3Schema(reference: OpenAPIV3Reference): Pair<OpenAPIV3Reference, OpenAPIV3Schema> =
-    components?.schemas
-        ?.get(reference.getReference())
-        ?.let {
-            when (it) {
-                is OpenAPIV3Schema -> reference to it
-                is OpenAPIV3Reference -> resolveOpenAPIV3Schema(it)
-            }
-        }
-        ?: error("Cannot resolve ref: ${reference.ref}")
-
-private fun OpenAPIV3Model.resolveOpenAPIV3Header(reference: OpenAPIV3Reference): Pair<OpenAPIV3Reference, OpenAPIV3Header> =
-    components?.headers
-        ?.get(reference.getReference())
-        ?.let {
-            when (it) {
-                is OpenAPIV3Header -> reference to it
-                is OpenAPIV3Reference -> resolveOpenAPIV3Header(it)
-            }
-        }
-        ?: error("Cannot resolve ref: ${reference.ref}")
-
-private fun OpenAPIV3Model.resolveOpenAPIV3RequestBody(reference: OpenAPIV3Reference): Pair<OpenAPIV3Reference, OpenAPIV3RequestBody> =
-    components?.requestBodies
-        ?.get(reference.getReference())
-        ?.let {
-            when (it) {
-                is OpenAPIV3RequestBody -> reference to it
-                is OpenAPIV3Reference -> resolveOpenAPIV3RequestBody(it)
-            }
-        }
-        ?: error("Cannot resolve ref: ${reference.ref}")
-
-private fun OpenAPIV3Model.resolveOpenAPIV3Response(reference: OpenAPIV3Reference): Pair<OpenAPIV3Reference, OpenAPIV3Response> =
-    components?.responses
-        ?.get(reference.getReference())
-        ?.let {
-            when (it) {
-                is OpenAPIV3Response -> reference to it
-                is OpenAPIV3Reference -> resolveOpenAPIV3Response(it)
-            }
-        }
-        ?: error("Cannot resolve ref: ${reference.ref}")
-
-private fun OpenAPIV3Model.resolve(schemaOrReference: OpenAPIV3SchemaOrReference): OpenAPIV3Schema =
-    when (schemaOrReference) {
-        is OpenAPIV3Schema -> schemaOrReference
-        is OpenAPIV3Reference -> resolveOpenAPIV3Schema(schemaOrReference).second
     }
 
-private fun OpenAPIV3Model.resolve(headerOrReference: OpenAPIV3HeaderOrReference): OpenAPIV3Header =
-    when (headerOrReference) {
-        is OpenAPIV3Header -> headerOrReference
-        is OpenAPIV3Reference -> resolveOpenAPIV3Header(headerOrReference).second
+private fun OpenAPIV3Model.resolveOpenAPIV3Schema(reference: OpenAPIV3Reference): Pair<OpenAPIV3Reference, OpenAPIV3Schema> = components?.schemas
+    ?.get(reference.getReference())
+    ?.let {
+        when (it) {
+            is OpenAPIV3Schema -> reference to it
+            is OpenAPIV3Reference -> resolveOpenAPIV3Schema(it)
+        }
     }
+    ?: error("Cannot resolve ref: ${reference.ref}")
 
-private fun OpenAPIV3Model.resolve(schemaOrReferenceOrBoolean: OpenAPIV3SchemaOrReferenceOrBoolean): OpenAPIV3Schema =
-    when (schemaOrReferenceOrBoolean) {
-        is OpenAPIV3Schema -> schemaOrReferenceOrBoolean
-        is OpenAPIV3Reference -> resolveOpenAPIV3Schema(schemaOrReferenceOrBoolean).second
-        is BooleanValue -> TODO("Not yet implemented")
+private fun OpenAPIV3Model.resolveOpenAPIV3Header(reference: OpenAPIV3Reference): Pair<OpenAPIV3Reference, OpenAPIV3Header> = components?.headers
+    ?.get(reference.getReference())
+    ?.let {
+        when (it) {
+            is OpenAPIV3Header -> reference to it
+            is OpenAPIV3Reference -> resolveOpenAPIV3Header(it)
+        }
     }
+    ?: error("Cannot resolve ref: ${reference.ref}")
 
-private fun OpenAPIV3Model.resolve(requestBodyOrReference: OpenAPIV3RequestBodyOrReference): OpenAPIV3RequestBody =
-    when (requestBodyOrReference) {
-        is OpenAPIV3RequestBody -> requestBodyOrReference
-        is OpenAPIV3Reference -> resolveOpenAPIV3RequestBody(requestBodyOrReference).second
+private fun OpenAPIV3Model.resolveOpenAPIV3RequestBody(reference: OpenAPIV3Reference): Pair<OpenAPIV3Reference, OpenAPIV3RequestBody> = components?.requestBodies
+    ?.get(reference.getReference())
+    ?.let {
+        when (it) {
+            is OpenAPIV3RequestBody -> reference to it
+            is OpenAPIV3Reference -> resolveOpenAPIV3RequestBody(it)
+        }
     }
+    ?: error("Cannot resolve ref: ${reference.ref}")
 
-private fun OpenAPIV3Model.resolve(responseOrOpenAPIV3Reference: OpenAPIV3ResponseOrReference): OpenAPIV3Response =
-    when (responseOrOpenAPIV3Reference) {
-        is OpenAPIV3Response -> responseOrOpenAPIV3Reference
-        is OpenAPIV3Reference -> resolveOpenAPIV3Response(responseOrOpenAPIV3Reference).second
+private fun OpenAPIV3Model.resolveOpenAPIV3Response(reference: OpenAPIV3Reference): Pair<OpenAPIV3Reference, OpenAPIV3Response> = components?.responses
+    ?.get(reference.getReference())
+    ?.let {
+        when (it) {
+            is OpenAPIV3Response -> reference to it
+            is OpenAPIV3Reference -> resolveOpenAPIV3Response(it)
+        }
     }
+    ?: error("Cannot resolve ref: ${reference.ref}")
+
+private fun OpenAPIV3Model.resolve(schemaOrReference: OpenAPIV3SchemaOrReference): OpenAPIV3Schema = when (schemaOrReference) {
+    is OpenAPIV3Schema -> schemaOrReference
+    is OpenAPIV3Reference -> resolveOpenAPIV3Schema(schemaOrReference).second
+}
+
+private fun OpenAPIV3Model.resolve(headerOrReference: OpenAPIV3HeaderOrReference): OpenAPIV3Header = when (headerOrReference) {
+    is OpenAPIV3Header -> headerOrReference
+    is OpenAPIV3Reference -> resolveOpenAPIV3Header(headerOrReference).second
+}
+
+private fun OpenAPIV3Model.resolve(schemaOrReferenceOrBoolean: OpenAPIV3SchemaOrReferenceOrBoolean): OpenAPIV3Schema = when (schemaOrReferenceOrBoolean) {
+    is OpenAPIV3Schema -> schemaOrReferenceOrBoolean
+    is OpenAPIV3Reference -> resolveOpenAPIV3Schema(schemaOrReferenceOrBoolean).second
+    is BooleanValue -> TODO("Not yet implemented")
+}
+
+private fun OpenAPIV3Model.resolve(requestBodyOrReference: OpenAPIV3RequestBodyOrReference): OpenAPIV3RequestBody = when (requestBodyOrReference) {
+    is OpenAPIV3RequestBody -> requestBodyOrReference
+    is OpenAPIV3Reference -> resolveOpenAPIV3RequestBody(requestBodyOrReference).second
+}
+
+private fun OpenAPIV3Model.resolve(responseOrOpenAPIV3Reference: OpenAPIV3ResponseOrReference): OpenAPIV3Response = when (responseOrOpenAPIV3Reference) {
+    is OpenAPIV3Response -> responseOrOpenAPIV3Reference
+    is OpenAPIV3Reference -> resolveOpenAPIV3Response(responseOrOpenAPIV3Reference).second
+}
 
 private fun OpenAPIV3Model.flatten(schemaObject: OpenAPIV3Schema, name: String): List<Definition> = when {
     schemaObject.additionalProperties.exists() -> when (schemaObject.additionalProperties) {
@@ -414,7 +402,7 @@ private fun OpenAPIV3Model.flatten(schemaObject: OpenAPIV3Schema, name: String):
                 }
                 .toSet(),
 
-            ),
+        ),
     )
         .plus(
             schemaObject.oneOf.orEmpty().flatMapIndexed { index, it ->
@@ -497,55 +485,53 @@ private fun OpenAPIV3Model.flatten(schemaObject: OpenAPIV3Schema, name: String):
     }
 }
 
-private fun OpenAPIV3Model.flatten(schemaOrReference: OpenAPIV3SchemaOrReference, name: String) =
-    when (schemaOrReference) {
-        is OpenAPIV3Schema -> flatten(schemaOrReference, name)
-        is OpenAPIV3Reference -> emptyList()
-    }
+private fun OpenAPIV3Model.flatten(schemaOrReference: OpenAPIV3SchemaOrReference, name: String) = when (schemaOrReference) {
+    is OpenAPIV3Schema -> flatten(schemaOrReference, name)
+    is OpenAPIV3Reference -> emptyList()
+}
 
-private fun OpenAPIV3Model.toReference(reference: OpenAPIV3Reference, isNullable: Boolean): Reference =
-    resolveOpenAPIV3Schema(reference).let { (referencingObject, schema) ->
-        when {
-            schema.additionalProperties.exists() -> when (val additionalProperties = schema.additionalProperties!!) {
-                is BooleanValue -> Reference.Dict(
-                    reference = Reference.Any(isNullable = isNullable),
-                    isNullable = false,
-                )
-
-                is OpenAPIV3Reference -> toReference(additionalProperties, schema.nullable ?: false).toDict(isNullable)
-                is OpenAPIV3Schema -> toReference(
-                    additionalProperties,
-                    schema.nullable ?: false,
-                    reference.getReference(),
-                ).toDict(false)
-            }
-
-            schema.enum != null -> Reference.Custom(
-                value = className(referencingObject.getReference()).sanitize(),
-                isNullable = isNullable,
+private fun OpenAPIV3Model.toReference(reference: OpenAPIV3Reference, isNullable: Boolean): Reference = resolveOpenAPIV3Schema(reference).let { (referencingObject, schema) ->
+    when {
+        schema.additionalProperties.exists() -> when (val additionalProperties = schema.additionalProperties!!) {
+            is BooleanValue -> Reference.Dict(
+                reference = Reference.Any(isNullable = isNullable),
+                isNullable = false,
             )
 
-            schema.type.isPrimitive() -> Reference.Primitive(
-                type = schema.toPrimitive(),
-                isNullable = isNullable,
-            )
-
-            schema.type == OpenAPIV3Type.ARRAY -> when (val items = schema.items) {
-                is OpenAPIV3Reference -> toReference(items, schema.nullable ?: false).toIterable(isNullable)
-                is OpenAPIV3Schema -> Reference.Custom(
-                    className(referencingObject.getReference(), "Array").sanitize(),
-                    schema.nullable ?: false,
-                ).toIterable(isNullable)
-
-                null -> error("items cannot be null when type is array: ${reference.ref}")
-            }
-
-            else -> Reference.Custom(
-                value = className(referencingObject.getReference()).sanitize(),
-                isNullable = isNullable,
-            )
+            is OpenAPIV3Reference -> toReference(additionalProperties, schema.nullable ?: false).toDict(isNullable)
+            is OpenAPIV3Schema -> toReference(
+                additionalProperties,
+                schema.nullable ?: false,
+                reference.getReference(),
+            ).toDict(false)
         }
+
+        schema.enum != null -> Reference.Custom(
+            value = className(referencingObject.getReference()).sanitize(),
+            isNullable = isNullable,
+        )
+
+        schema.type.isPrimitive() -> Reference.Primitive(
+            type = schema.toPrimitive(),
+            isNullable = isNullable,
+        )
+
+        schema.type == OpenAPIV3Type.ARRAY -> when (val items = schema.items) {
+            is OpenAPIV3Reference -> toReference(items, schema.nullable ?: false).toIterable(isNullable)
+            is OpenAPIV3Schema -> Reference.Custom(
+                className(referencingObject.getReference(), "Array").sanitize(),
+                schema.nullable ?: false,
+            ).toIterable(isNullable)
+
+            null -> error("items cannot be null when type is array: ${reference.ref}")
+        }
+
+        else -> Reference.Custom(
+            value = className(referencingObject.getReference()).sanitize(),
+            isNullable = isNullable,
+        )
     }
+}
 
 private fun OpenAPIV3Model.toReference(
     schema: OpenAPIV3Schema,
@@ -651,36 +637,35 @@ private fun OpenAPIV3Schema.toPrimitive() = when (this.type) {
     else -> error("Type is not a primitive")
 }
 
-private fun OpenAPIV3Model.toField(schema: OpenAPIV3Schema, name: String) =
-    schema.properties.orEmpty().map { (key, value) ->
-        val isNullable = !(schema.required?.contains(key) ?: false)
-        when (value) {
-            is OpenAPIV3Schema -> {
-                Field(
-                    identifier = FieldIdentifier(key),
-                    annotations = value.description.toDescription(),
-                    reference = when {
-                        value.enum != null -> toReference(value, isNullable, className(name, key))
-                        value.type == OpenAPIV3Type.ARRAY -> toReference(
-                            value,
-                            isNullable,
-                            className(name, key, "Array"),
-                        )
+private fun OpenAPIV3Model.toField(schema: OpenAPIV3Schema, name: String) = schema.properties.orEmpty().map { (key, value) ->
+    val isNullable = !(schema.required?.contains(key) ?: false)
+    when (value) {
+        is OpenAPIV3Schema -> {
+            Field(
+                identifier = FieldIdentifier(key),
+                annotations = value.description.toDescription(),
+                reference = when {
+                    value.enum != null -> toReference(value, isNullable, className(name, key))
+                    value.type == OpenAPIV3Type.ARRAY -> toReference(
+                        value,
+                        isNullable,
+                        className(name, key, "Array"),
+                    )
 
-                        else -> toReference(value, isNullable, className(name, key))
-                    },
-                )
-            }
+                    else -> toReference(value, isNullable, className(name, key))
+                },
+            )
+        }
 
-            is OpenAPIV3Reference -> {
-                Field(
-                    identifier = FieldIdentifier(key),
-                    annotations = emptyList(),
-                    reference = toReference(value, isNullable),
-                )
-            }
+        is OpenAPIV3Reference -> {
+            Field(
+                identifier = FieldIdentifier(key),
+                annotations = emptyList(),
+                reference = toReference(value, isNullable),
+            )
         }
     }
+}
 
 private fun OpenAPIV3Model.toField(parameter: OpenAPIV3Parameter, name: String): Field {
     val isNullable = !(parameter.required ?: false)
@@ -689,7 +674,7 @@ private fun OpenAPIV3Model.toField(parameter: OpenAPIV3Parameter, name: String):
         is OpenAPIV3Schema -> toReference(s, isNullable, name + if (s.type == OpenAPIV3Type.ARRAY) "Array" else "")
         null -> Reference.Primitive(
             type = Reference.Primitive.Type.String(null),
-            isNullable = isNullable
+            isNullable = isNullable,
         )
     }.let {
         Field(
@@ -707,7 +692,7 @@ private fun OpenAPIV3Model.toField(header: OpenAPIV3Header, identifier: String, 
         is OpenAPIV3Schema -> toReference(s, isNullable, name)
         null -> Reference.Primitive(
             type = Reference.Primitive.Type.String(null),
-            isNullable = isNullable
+            isNullable = isNullable,
         )
     }.let {
         Field(

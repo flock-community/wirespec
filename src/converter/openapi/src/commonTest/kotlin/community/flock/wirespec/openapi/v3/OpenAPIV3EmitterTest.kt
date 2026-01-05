@@ -160,11 +160,10 @@ class OpenAPIV3EmitterTest {
         val petstoreConvertedOpenAPiAst = petstoreConvertedOpenAPi.parse() ?: error("Failed to parse converted OpenAPI object")
 
         (petstoreAst zip petstoreConvertedOpenAPiAst)
-            .forEach {
-            (actual, expected) -> println("${actual::class.simpleName} ${actual.identifier.value}")
-            actual shouldBe expected
-        }
-
+            .forEach { (actual, expected) ->
+                println("${actual::class.simpleName} ${actual.identifier.value}")
+                actual shouldBe expected
+            }
     }
 
     @Test
