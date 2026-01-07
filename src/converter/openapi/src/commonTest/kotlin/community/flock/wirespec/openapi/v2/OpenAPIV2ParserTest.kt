@@ -16,7 +16,7 @@ import community.flock.wirespec.compiler.core.parse.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.openapi.common.Ast
-import community.flock.wirespec.openapi.toDescription
+import community.flock.wirespec.openapi.toDescriptionAnnotationList
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser.parse
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -286,13 +286,13 @@ class OpenAPIV2ParserTest {
         val expectedEnumDefinitions = listOf(
             Enum(
                 comment = null,
-                annotations = "pet status in the store".toDescription(),
+                annotations = "pet status in the store".toDescriptionAnnotationList(),
                 identifier = DefinitionIdentifier("PetStatus"),
                 entries = setOf("available", "pending", "sold"),
             ),
             Enum(
                 comment = null,
-                annotations = "Order Status".toDescription(),
+                annotations = "Order Status".toDescriptionAnnotationList(),
                 identifier = DefinitionIdentifier("OrderStatus"),
                 entries = setOf("placed", "approved", "delivered"),
             ),
@@ -355,7 +355,7 @@ class OpenAPIV2ParserTest {
                             type = "application/json",
                             reference = Custom(value = "Foo", isNullable = false),
                         ),
-                        annotations = "Ok".toDescription(),
+                        annotations = "Ok".toDescriptionAnnotationList(),
                     ),
                 ),
             ),
@@ -472,7 +472,7 @@ class OpenAPIV2ParserTest {
                         status = "200",
                         headers = emptyList(),
                         content = null,
-                        annotations = "Ok".toDescription(),
+                        annotations = "Ok".toDescriptionAnnotationList(),
                     ),
                 ),
             ),

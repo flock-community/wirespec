@@ -10,22 +10,19 @@ fun className(vararg arg: String) = arg
 
 fun <K, V> Map<K, V?>.filterNotNullValues(): Map<K, V> = mapNotNull { (key, value) -> value?.let { key to it } }.toMap()
 
-fun List<Annotation>.getDescription(): String? = find { it.name == "Description" }
+fun List<Annotation>.findDescription(): String? = find { it.name == "Description" }
     ?.parameters
     ?.find { it.name == "default" }
     ?.value
-    ?.let { (it as? Annotation.Value.Single)?.value }
+    ?.let { (it as? Annotation.Value.Single) }
+    ?.value
 
-fun String?.toDescription(): List<Annotation> = this
-    ?.let {
-        listOf(
-            Annotation(
-                "Description",
-                listOf(Annotation.Parameter("default", Annotation.Value.Single(it))),
-            ),
-        )
-    }
-    ?: emptyList()
+fun String?.toDescriptionAnnotationList() = this?.let(::toDescriptionAnnotation)?.let(::listOf).orEmpty()
+
+private fun toDescriptionAnnotation(description: String): Annotation = Annotation(
+    "Description",
+    Annotation.Parameter("default", Annotation.Value.Single(description)).let(::listOf),
+)
 
 val json = Json { prettyPrint = true }
 

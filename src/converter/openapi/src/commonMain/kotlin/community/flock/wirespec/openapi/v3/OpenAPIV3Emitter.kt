@@ -37,7 +37,7 @@ import community.flock.wirespec.compiler.core.parse.Statements
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.openapi.getDescription
+import community.flock.wirespec.openapi.findDescription
 import community.flock.wirespec.openapi.json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
@@ -141,7 +141,7 @@ object OpenAPIV3Emitter : Emitter {
     }
 
     private fun Type.emit(): OpenAPIV3Schema = OpenAPIV3Schema(
-        description = annotations.getDescription() ?: comment?.value,
+        description = annotations.findDescription() ?: comment?.value,
         properties = shape.value.associate { it.emitSchema() },
         required = shape.value
             .filter { !it.reference.isNullable }
@@ -150,13 +150,13 @@ object OpenAPIV3Emitter : Emitter {
     )
 
     private fun Enum.emit(): OpenAPIV3Schema = OpenAPIV3Schema(
-        description = annotations.getDescription() ?: comment?.value,
+        description = annotations.findDescription() ?: comment?.value,
         type = OpenAPIV3Type.STRING,
         enum = entries.map { JsonPrimitive(it) },
     )
 
     private fun Union.emit(): OpenAPIV3Schema = OpenAPIV3Schema(
-        description = annotations.getDescription() ?: comment?.value,
+        description = annotations.findDescription() ?: comment?.value,
         type = OpenAPIV3Type.STRING,
         oneOf = entries.map { it.emitSchema() },
     )
@@ -165,7 +165,7 @@ object OpenAPIV3Emitter : Emitter {
 
     private fun Endpoint.emit(): OpenAPIV3Operation = OpenAPIV3Operation(
         operationId = identifier.value,
-        description = annotations.getDescription() ?: comment?.value,
+        description = annotations.findDescription() ?: comment?.value,
         parameters = path.filterIsInstance<Endpoint.Segment.Param>()
             .map { it.emitParameter() } + queries.map { it.emitParameter(OpenAPIV3ParameterLocation.QUERY) } + headers.map {
             it.emitParameter(
@@ -186,7 +186,7 @@ object OpenAPIV3Emitter : Emitter {
             .map { (statusCode, res) ->
                 StatusCode(statusCode) to OpenAPIV3Response(
                     headers = res.flatMap { it.headers }.associate { it.emitHeader() },
-                    description = res.first().annotations.getDescription()
+                    description = res.first().annotations.findDescription()
                         ?: "${identifier.value} $statusCode response",
                     content = res
                         .mapNotNull { it.content }
@@ -208,7 +208,7 @@ object OpenAPIV3Emitter : Emitter {
         `in` = location,
         name = identifier.value,
         schema = reference.emitSchema(),
-        description = annotations.getDescription(),
+        description = annotations.findDescription(),
         required = !reference.isNullable,
     )
 
@@ -219,11 +219,11 @@ object OpenAPIV3Emitter : Emitter {
         required = !reference.isNullable,
     )
 
-    private fun Field.emitHeader(): Pair<String, OpenAPIV3HeaderOrReference> = identifier.value to reference.emitHeader(annotations.getDescription())
+    private fun Field.emitHeader(): Pair<String, OpenAPIV3HeaderOrReference> = identifier.value to reference.emitHeader(annotations.findDescription())
 
     private fun Field.emitSchema(): Pair<String, OpenAPIV3SchemaOrReference> = identifier.value to reference.emitSchema().let {
         when (it) {
-            is OpenAPIV3Schema -> it.copy(description = annotations.getDescription())
+            is OpenAPIV3Schema -> it.copy(description = annotations.findDescription())
             is OpenAPIV3Reference -> it
         }
     }

@@ -29,7 +29,7 @@ import community.flock.wirespec.compiler.core.parse.Statements
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.openapi.APPLICATION_JSON
-import community.flock.wirespec.openapi.getDescription
+import community.flock.wirespec.openapi.findDescription
 import community.flock.wirespec.openapi.json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
@@ -124,7 +124,7 @@ object OpenAPIV2Emitter : Emitter {
             } + statements
             .filterIsInstance<Type>().associate { type ->
                 type.identifier.value to OpenAPIV2Schema(
-                    description = type.annotations.getDescription() ?: type.comment?.value,
+                    description = type.annotations.findDescription() ?: type.comment?.value,
                     properties = type.shape.value.associate { it.toProperties() },
                     required = type.shape.value
                         .filter { !it.reference.isNullable }
@@ -137,14 +137,14 @@ object OpenAPIV2Emitter : Emitter {
                 enum.identifier.value to OpenAPIV2Schema(
                     type = OpenAPIV2Type.STRING,
                     enum = enum.entries.map { JsonPrimitive(it) },
-                    description = enum.annotations.getDescription(),
+                    description = enum.annotations.findDescription(),
                 )
             },
     )
 
     private fun Field.toProperties(): Pair<String, OpenAPIV2SchemaOrReference> = identifier.value to reference.toSchemaOrReference().let {
         when (it) {
-            is OpenAPIV2Schema -> it.copy(description = annotations.getDescription())
+            is OpenAPIV2Schema -> it.copy(description = annotations.findDescription())
             is OpenAPIV2Reference -> it
         }
     }
@@ -153,7 +153,7 @@ object OpenAPIV2Emitter : Emitter {
 
     private fun Endpoint.emit() = OpenAPIV2Operation(
         operationId = identifier.value,
-        description = annotations.getDescription() ?: comment?.value,
+        description = annotations.findDescription() ?: comment?.value,
         consumes = requests.mapNotNull { it.content?.type }.distinct().ifEmpty { null },
         produces = responses.mapNotNull { it.content?.type }.distinct().ifEmpty { null },
         parameters = requests
@@ -174,11 +174,11 @@ object OpenAPIV2Emitter : Emitter {
         responses = responses
             .associate { response ->
                 StatusCode(response.status) to OpenAPIV2Response(
-                    description = response.annotations.getDescription()
+                    description = response.annotations.findDescription()
                         ?: "${identifier.value} ${response.status} response",
                     headers = response.headers.associate {
                         it.identifier.value to OpenAPIV2Header(
-                            description = it.annotations.getDescription(),
+                            description = it.annotations.findDescription(),
                             type = it.reference.emitType(),
                             format = it.reference.emitFormat(),
                             pattern = it.reference.emitPattern(),
@@ -223,7 +223,7 @@ object OpenAPIV2Emitter : Emitter {
             else -> null
         },
         required = !reference.isNullable,
-        description = annotations.getDescription(),
+        description = annotations.findDescription(),
     )
 
     private fun Reference.toSchemaOrReference(): OpenAPIV2SchemaOrReference = when (this) {
