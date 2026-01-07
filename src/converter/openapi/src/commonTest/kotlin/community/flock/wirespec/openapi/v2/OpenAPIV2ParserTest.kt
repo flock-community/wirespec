@@ -482,38 +482,40 @@ class OpenAPIV2ParserTest {
 
     @Test
     fun testDescriptionParsing() {
-        val json = """
-            {
-                "swagger": "2.0",
-                "info": {
-                    "title": "Test API",
-                    "version": "1.0.0"
-                },
-                "definitions": {
-                    "Todo": {
-                        "description": "Todo object",
-                        "properties": {
-                            "id": {
-                                "type": "string",
-                                "description": "id field"
-                            }
-                        }
-                    }
-                },
-                "paths": {
-                    "/todos": {
-                        "get": {
-                            "description": "Get all todos",
-                            "responses": {
-                                "200": {
-                                    "description": "Successful response"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        """.trimIndent()
+        val json =
+            // language=json
+            """
+            |{
+            |    "swagger": "2.0",
+            |    "info": {
+            |        "title": "Test API",
+            |        "version": "1.0.0"
+            |    },
+            |    "definitions": {
+            |        "Todo": {
+            |            "description": "Todo object",
+            |            "properties": {
+            |                "id": {
+            |                    "type": "string",
+            |                    "description": "id field"
+            |                }
+            |            }
+            |        }
+            |    },
+            |    "paths": {
+            |        "/todos": {
+            |            "get": {
+            |                "description": "Get all todos",
+            |                "responses": {
+            |                    "200": {
+            |                        "description": "Successful response"
+            |                    }
+            |                }
+            |            }
+            |        }
+            |    }
+            |}
+            """.trimMargin()
 
         val ast = OpenAPIV2Parser.parse(ModuleContent(FileUri("test.json"), json), false)
         val definitions = ast.modules.head.statements

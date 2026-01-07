@@ -25,13 +25,15 @@ class ParseTest {
 
     @Test
     fun testParserWithCorrectInput() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Bla {
             |  foo: String,
             |  bar: String
             |}
-
-        """.trimMargin()
+            |
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.head.message }
@@ -40,13 +42,15 @@ class ParseTest {
 
     @Test
     fun testParserWithDigits() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Bla {
             |  foo1: String,
             |  bar2: String
             |}
-
-        """.trimMargin()
+            |
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight()
@@ -55,13 +59,15 @@ class ParseTest {
 
     @Test
     fun testParserWithFaultyInput() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Bla {
             |  foo: String
             |  bar: String
             |}
-
-        """.trimMargin()
+            |
+            """.trimMargin()
 
         parser(source)
             .shouldBeLeft()
@@ -72,7 +78,9 @@ class ParseTest {
 
     @Test
     fun testParserWithComment() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |/**
             | * This is a comment
             | */
@@ -80,8 +88,8 @@ class ParseTest {
             |  foo: String,
             |  bar: String
             |}
-
-        """.trimMargin()
+            |
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight()
@@ -90,7 +98,9 @@ class ParseTest {
 
     @Test
     fun testParserWithDoubleComment() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |/*
             | This is comment 1
             | */
@@ -104,7 +114,7 @@ class ParseTest {
             |type Bar {
             |  bar: String
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight().map { it.comment?.value } shouldBe listOf(
@@ -115,7 +125,9 @@ class ParseTest {
 
     @Test
     fun testParserCommentRefinedType() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |/*
             |  comment Name
             |  */
@@ -127,7 +139,7 @@ class ParseTest {
             |  street: Name?,
             |  houseNumber: Integer
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight()
@@ -136,12 +148,14 @@ class ParseTest {
 
     @Test
     fun testParserWithRefinedType() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Bla {
             |  foo: String(/.{0,50}/g)
             |}
-
-        """.trimMargin()
+            |
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight()
@@ -157,12 +171,14 @@ class ParseTest {
 
     @Test
     fun testParserWithRefinedTypeOptional() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Bla {
             |  foo: String?(/.{0,50}/g)
             |}
-
-        """.trimMargin()
+            |
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.head.message }
@@ -179,12 +195,14 @@ class ParseTest {
 
     @Test
     fun testParserWithRefinedTypeArray() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Bla {
             |  foo: String?(/.{0,50}/g)[]?
             |}
-
-        """.trimMargin()
+            |
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.head.message }

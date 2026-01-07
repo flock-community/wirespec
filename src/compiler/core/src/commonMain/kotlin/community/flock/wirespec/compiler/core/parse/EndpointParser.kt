@@ -140,9 +140,7 @@ object EndpointParser {
             val annotations = parseAnnotations().bind()
             when (token.type) {
                 is Integer -> responses.add(parseEndpointResponse(token.value, annotations).bind())
-                else -> {
-                    raiseWrongToken<Integer>().bind()
-                }
+                else -> raiseWrongToken<Integer>().bind()
             }
         }
         when (token.type) {

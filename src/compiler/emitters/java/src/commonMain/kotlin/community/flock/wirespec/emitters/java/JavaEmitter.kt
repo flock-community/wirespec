@@ -27,11 +27,12 @@ open class JavaEmitter(
     private val emitShared: EmitShared = EmitShared(),
 ) : JavaEmitters, LanguageEmitter() {
 
-    val import = """
+    val import =
+        """
         |
         |import $DEFAULT_SHARED_PACKAGE_STRING.java.Wirespec;
         |
-    """.trimMargin()
+        """.trimMargin()
 
     override val extension = FileExtension.Java
 
@@ -50,11 +51,12 @@ open class JavaEmitter(
             val subPackageName = packageName + definition
             Emitted(
                 file = subPackageName.toDir() + it.file.sanitizeSymbol(),
-                result = """
+                result =
+                    """
                     |package $subPackageName;
                     |${if (module.needImports()) import else ""}
                     |${it.result}
-                """.trimMargin().trimStart()
+                    """.trimMargin().trimStart()
             )
         }
 }

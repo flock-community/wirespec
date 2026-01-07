@@ -17,6 +17,7 @@ class TokenizeAnnotationTest {
 
     @Test
     fun testAnnotationWithType() = testTokenizer(
+        // language=ws
         """
         |@Deprecated
         |type User = String
@@ -31,6 +32,7 @@ class TokenizeAnnotationTest {
 
     @Test
     fun testMultipleAnnotations() = testTokenizer(
+        // language=ws
         """
         |@Deprecated
         |@Internal
@@ -47,6 +49,7 @@ class TokenizeAnnotationTest {
 
     @Test
     fun testAnnotationWithParameters() = testTokenizer(
+        // language=ws
         """
         |@Since("1.0.0")
         |type User = String
@@ -58,6 +61,7 @@ class TokenizeAnnotationTest {
 
     @Test
     fun testAnnotationOnEndpoint() = testTokenizer(
+        // language=ws
         """
         |@Authenticated
         |endpoint GetUser GET /user/{id} -> User
@@ -69,6 +73,7 @@ class TokenizeAnnotationTest {
 
     @Test
     fun testAnnotationOnEnum() = testTokenizer(
+        // language=ws
         """
         |@Deprecated
         |enum Status {
@@ -86,6 +91,7 @@ class TokenizeAnnotationTest {
 
     @Test
     fun testAnnotationOnField() = testTokenizer(
+        // language=ws
         """
         |type User {
         |  @Required
@@ -105,6 +111,7 @@ class TokenizeAnnotationTest {
 
     @Test
     fun testComplexAnnotationWithMultipleParameters() = testTokenizer(
+        // language=ws
         """
         |@Validate(min: 0, max: 100)
         |type Age = Integer
@@ -118,6 +125,7 @@ class TokenizeAnnotationTest {
 
     @Test
     fun testAnnotationWithSingleQuotedString() = testTokenizer(
+        // language=ws
         """
         |@Description("This is a description")
         |type User = String
@@ -129,6 +137,8 @@ class TokenizeAnnotationTest {
 
     @Test
     fun testAnnotationWithEscapedQuotesInString() = testTokenizer(
+
+        // language=ws
         """
         |@Example("Say \"Hello World\"")
         |type Message = String
@@ -140,6 +150,7 @@ class TokenizeAnnotationTest {
 
     @Test
     fun testAnnotationWithMixedParameterTypes() = testTokenizer(
+        // language=ws
         """
         |@Config(name: "database", port: 5432, enabled: true)
         |type Config = String

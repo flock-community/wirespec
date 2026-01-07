@@ -50,106 +50,109 @@ class OpenAPIV2EmitterTest {
 
     @Test
     fun descriptionAnnotation() {
-        val source = """
-            @Description("Todo object")
-            type Todo {
-              @Description("id field") id: String,
-              @Description("done field") done: Boolean,
-              @Description("prio field") prio: Integer
-            }
-
-            @Description("Error object")
-            type Error {
-               @Description("reason field") reason: String
-            }
-
-            @Description("Get all todos")
-            endpoint GetTodos GET /todos -> {
-                @Description("GetTodos 200 response")
-                200 -> Todo[]
-            }
-        """.trimIndent()
+        val source =
+            // language=ws
+            """
+            |@Description("Todo object")
+            |type Todo {
+            |  @Description("id field") id: String,
+            |  @Description("done field") done: Boolean,
+            |  @Description("prio field") prio: Integer
+            |}
+            |
+            |@Description("Error object")
+            |type Error {
+            |   @Description("reason field") reason: String
+            |}
+            |
+            |@Description("Get all todos")
+            |endpoint GetTodos GET /todos -> {
+            |    @Description("GetTodos 200 response")
+            |    200 -> Todo[]
+            |}
+            """.trimMargin()
 
         val ast = parser(source).shouldBeRight()
         val openapi = OpenAPIV2Emitter.emit(ast, noLogger).first().result
 
-        val expect = """
-            {
-                "swagger": "2.0",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "definitions": {
-                    "Todo": {
-                        "description": "Todo object",
-                        "required": [
-                            "id",
-                            "done",
-                            "prio"
-                        ],
-                        "properties": {
-                            "id": {
-                                "type": "string",
-                                "description": "id field"
-                            },
-                            "done": {
-                                "type": "boolean",
-                                "description": "done field"
-                            },
-                            "prio": {
-                                "type": "integer",
-                                "description": "prio field",
-                                "format": "int64"
-                            }
-                        }
-                    },
-                    "Error": {
-                        "description": "Error object",
-                        "required": [
-                            "reason"
-                        ],
-                        "properties": {
-                            "reason": {
-                                "type": "string",
-                                "description": "reason field"
-                            }
-                        }
-                    }
-                },
-                "info": {
-                    "title": "Wirespec",
-                    "version": "0.0.0"
-                },
-                "paths": {
-                    "/todos": {
-                        "parameters": [],
-                        "get": {
-                            "produces": [
-                                "application/json"
-                            ],
-                            "parameters": [],
-                            "responses": {
-                                "200": {
-                                    "schema": {
-                                        "type": "array",
-                                        "items": {
-                                            "${'$'}ref": "#/definitions/Todo"
-                                        }
-                                    },
-                                    "description": "GetTodos 200 response",
-                                    "headers": {}
-                                }
-                            },
-                            "description": "Get all todos",
-                            "operationId": "GetTodos"
-                        }
-                    }
-                }
-            }
-        """.trimIndent()
+        val expect =
+            """
+            |{
+            |    "swagger": "2.0",
+            |    "consumes": [
+            |        "application/json"
+            |    ],
+            |    "produces": [
+            |        "application/json"
+            |    ],
+            |    "definitions": {
+            |        "Todo": {
+            |            "description": "Todo object",
+            |            "required": [
+            |                "id",
+            |                "done",
+            |                "prio"
+            |            ],
+            |            "properties": {
+            |                "id": {
+            |                    "type": "string",
+            |                    "description": "id field"
+            |                },
+            |                "done": {
+            |                    "type": "boolean",
+            |                    "description": "done field"
+            |                },
+            |                "prio": {
+            |                    "type": "integer",
+            |                    "description": "prio field",
+            |                    "format": "int64"
+            |                }
+            |            }
+            |        },
+            |        "Error": {
+            |            "description": "Error object",
+            |            "required": [
+            |                "reason"
+            |            ],
+            |            "properties": {
+            |                "reason": {
+            |                    "type": "string",
+            |                    "description": "reason field"
+            |                }
+            |            }
+            |        }
+            |    },
+            |    "info": {
+            |        "title": "Wirespec",
+            |        "version": "0.0.0"
+            |    },
+            |    "paths": {
+            |        "/todos": {
+            |            "parameters": [],
+            |            "get": {
+            |                "produces": [
+            |                    "application/json"
+            |                ],
+            |                "parameters": [],
+            |                "responses": {
+            |                    "200": {
+            |                        "schema": {
+            |                            "type": "array",
+            |                            "items": {
+            |                                "${'$'}ref": "#/definitions/Todo"
+            |                            }
+            |                        },
+            |                        "description": "GetTodos 200 response",
+            |                        "headers": {}
+            |                    }
+            |                },
+            |                "description": "Get all todos",
+            |                "operationId": "GetTodos"
+            |            }
+            |        }
+            |    }
+            |}
+            """.trimMargin()
 
         openapi shouldEqualJson expect
     }

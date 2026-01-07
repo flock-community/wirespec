@@ -32,118 +32,119 @@ class OpenAPIV3EmitterTest {
     fun astArray() {
         val res = OpenAPIV3Emitter.emitOpenAPIObject(Ast.array, null)
         val openapi = json.encodeToString(res)
-        val expect = """
-            {
-                "openapi": "3.0.0",
-                "info": {
-                    "title": "Wirespec",
-                    "version": "0.0.0"
-                },
-                "paths": {
-                    "/array": {
-                        "get": {
-                            "operationId": "ArrayGET",
-                            "parameters": [],
-                            "requestBody": {
-                                "content": {
-                                    "application/json": {
-                                        "schema": {
-                                            "nullable": false,
-                                            "type": "array",
-                                            "items": {
-                                                "nullable": false,
-                                                "type": "array",
-                                                "items": {
-                                                    "${'$'}ref": "#/components/schemas/MessageArray"
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-                                "required": true
-                            },
-                            "responses": {
-                                "200": {
-                                    "description": "Ok",
-                                    "headers": {},
-                                    "content": {
-                                        "application/json": {
-                                            "schema": {
-                                                "nullable": false,
-                                                "type": "array",
-                                                "items": {
-                                                    "${'$'}ref": "#/components/schemas/ArrayGET200ResponseBody"
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-                                "201": {
-                                    "description": "Created",
-                                    "headers": {},
-                                    "content": {
-                                        "application/json": {
-                                            "schema": {
-                                                "nullable": false,
-                                                "type": "array",
-                                                "items": {
-                                                    "nullable": false,
-                                                    "type": "array",
-                                                    "items": {
-                                                        "${'$'}ref": "#/components/schemas/MessageArray"
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-                                "202": {
-                                    "description": "Created",
-                                    "headers": {},
-                                    "content": {
-                                        "application/json": {
-                                            "schema": {
-                                                "nullable": false,
-                                                "type": "array",
-                                                "items": {
-                                                    "type": "string"
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "components": {
-                    "schemas": {
-                        "ArrayGET200ResponseBody": {
-                            "properties": {
-                                "code": {
-                                    "type": "number",
-                                    "format": "double"
-                                },
-                                "text": {
-                                    "type": "string"
-                                }
-                            }
-                        },
-                        "MessageArray": {
-                            "properties": {
-                                "code": {
-                                    "type": "number",
-                                    "format": "double"
-                                },
-                                "text": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        """.trimIndent()
+        val expect =
+            """
+            |{
+            |    "openapi": "3.0.0",
+            |    "info": {
+            |        "title": "Wirespec",
+            |        "version": "0.0.0"
+            |    },
+            |    "paths": {
+            |        "/array": {
+            |            "get": {
+            |                "operationId": "ArrayGET",
+            |                "parameters": [],
+            |                "requestBody": {
+            |                    "content": {
+            |                        "application/json": {
+            |                            "schema": {
+            |                                "nullable": false,
+            |                                "type": "array",
+            |                                "items": {
+            |                                    "nullable": false,
+            |                                    "type": "array",
+            |                                    "items": {
+            |                                        "${'$'}ref": "#/components/schemas/MessageArray"
+            |                                    }
+            |                                }
+            |                            }
+            |                        }
+            |                    },
+            |                    "required": true
+            |                },
+            |                "responses": {
+            |                    "200": {
+            |                        "description": "Ok",
+            |                        "headers": {},
+            |                        "content": {
+            |                            "application/json": {
+            |                                "schema": {
+            |                                    "nullable": false,
+            |                                    "type": "array",
+            |                                    "items": {
+            |                                        "${'$'}ref": "#/components/schemas/ArrayGET200ResponseBody"
+            |                                    }
+            |                                }
+            |                            }
+            |                        }
+            |                    },
+            |                    "201": {
+            |                        "description": "Created",
+            |                        "headers": {},
+            |                        "content": {
+            |                            "application/json": {
+            |                                "schema": {
+            |                                    "nullable": false,
+            |                                    "type": "array",
+            |                                    "items": {
+            |                                        "nullable": false,
+            |                                        "type": "array",
+            |                                        "items": {
+            |                                            "${'$'}ref": "#/components/schemas/MessageArray"
+            |                                        }
+            |                                    }
+            |                                }
+            |                            }
+            |                        }
+            |                    },
+            |                    "202": {
+            |                        "description": "Created",
+            |                        "headers": {},
+            |                        "content": {
+            |                            "application/json": {
+            |                                "schema": {
+            |                                    "nullable": false,
+            |                                    "type": "array",
+            |                                    "items": {
+            |                                        "type": "string"
+            |                                    }
+            |                                }
+            |                            }
+            |                        }
+            |                    }
+            |                }
+            |            }
+            |        }
+            |    },
+            |    "components": {
+            |        "schemas": {
+            |            "ArrayGET200ResponseBody": {
+            |                "properties": {
+            |                    "code": {
+            |                        "type": "number",
+            |                        "format": "double"
+            |                    },
+            |                    "text": {
+            |                        "type": "string"
+            |                    }
+            |                }
+            |            },
+            |            "MessageArray": {
+            |                "properties": {
+            |                    "code": {
+            |                        "type": "number",
+            |                        "format": "double"
+            |                    },
+            |                    "text": {
+            |                        "type": "string"
+            |                    }
+            |                }
+            |            }
+            |        }
+            |    }
+            |}
+            """.trimMargin()
         openapi shouldEqualJson expect
     }
 
@@ -168,103 +169,107 @@ class OpenAPIV3EmitterTest {
 
     @Test
     fun descriptionAnnotation() {
-        val source = """
-            @Description("Todo object")
-            type Todo {
-              @Description("id field") id: String,
-              @Description("done field") done: Boolean,
-              @Description("prio field") prio: Integer
-            }
-
-            @Description("Error object")
-            type Error {
-               @Description("reason field") reason: String
-            }
-
-            @Description("Get all todos")
-            endpoint GetTodos GET /todos -> {
-                @Description("GetTodos 200 response")
-                200 -> Todo[]
-            }
-        """.trimIndent()
+        val source =
+            // language=ws
+            """
+            |@Description("Todo object")
+            |type Todo {
+            |  @Description("id field") id: String,
+            |  @Description("done field") done: Boolean,
+            |  @Description("prio field") prio: Integer
+            |}
+            |
+            |@Description("Error object")
+            |type Error {
+            |   @Description("reason field") reason: String
+            |}
+            |
+            |@Description("Get all todos")
+            |endpoint GetTodos GET /todos -> {
+            |    @Description("GetTodos 200 response")
+            |    200 -> Todo[]
+            |}
+            """.trimMargin()
 
         val ast = parser(source).shouldBeRight()
         val openapi = OpenAPIV3Emitter.emit(ast, noLogger).first().result
 
-        val expect = """
-            {
-                "openapi": "3.0.0",
-                "info": {
-                    "title": "Wirespec",
-                    "version": "0.0.0"
-                },
-                "paths": {
-                    "/todos": {
-                        "get": {
-                            "operationId": "GetTodos",
-                            "description": "Get all todos",
-                            "parameters": [],
-                            "responses": {
-                                "200": {
-                                    "description": "GetTodos 200 response",
-                                    "headers": {},
-                                    "content": {
-                                        "application/json": {
-                                            "schema": {
-                                                "nullable": false,
-                                                "type": "array",
-                                                "items": {
-                                                    "${'$'}ref": "#/components/schemas/Todo"
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "components": {
-                    "schemas": {
-                        "Todo": {
-                            "description": "Todo object",
-                            "properties": {
-                                "id": {
-                                    "type": "string",
-                                    "description": "id field"
-                                },
-                                "done": {
-                                    "type": "boolean",
-                                    "description": "done field"
-                                },
-                                "prio": {
-                                    "type": "integer",
-                                    "format": "int64",
-                                    "description": "prio field"
-                                }
-                            },
-                            "required": [
-                                "id",
-                                "done",
-                                "prio"
-                            ]
-                        },
-                        "Error": {
-                            "description": "Error object",
-                            "properties": {
-                                "reason": {
-                                    "type": "string",
-                                    "description": "reason field"
-                                }
-                            },
-                            "required": [
-                                "reason"
-                            ]
-                        }
-                    }
-                }
-            }
-        """.trimIndent()
+        val expect =
+            // language=json
+            """
+            |{
+            |    "openapi": "3.0.0",
+            |    "info": {
+            |        "title": "Wirespec",
+            |        "version": "0.0.0"
+            |    },
+            |    "paths": {
+            |        "/todos": {
+            |            "get": {
+            |                "operationId": "GetTodos",
+            |                "description": "Get all todos",
+            |                "parameters": [],
+            |                "responses": {
+            |                    "200": {
+            |                        "description": "GetTodos 200 response",
+            |                        "headers": {},
+            |                        "content": {
+            |                            "application/json": {
+            |                                "schema": {
+            |                                    "nullable": false,
+            |                                    "type": "array",
+            |                                    "items": {
+            |                                        "${'$'}ref": "#/components/schemas/Todo"
+            |                                    }
+            |                                }
+            |                            }
+            |                        }
+            |                    }
+            |                }
+            |            }
+            |        }
+            |    },
+            |    "components": {
+            |        "schemas": {
+            |            "Todo": {
+            |                "description": "Todo object",
+            |                "properties": {
+            |                    "id": {
+            |                        "type": "string",
+            |                        "description": "id field"
+            |                    },
+            |                    "done": {
+            |                        "type": "boolean",
+            |                        "description": "done field"
+            |                    },
+            |                    "prio": {
+            |                        "type": "integer",
+            |                        "format": "int64",
+            |                        "description": "prio field"
+            |                    }
+            |                },
+            |                "required": [
+            |                    "id",
+            |                    "done",
+            |                    "prio"
+            |                ]
+            |            },
+            |            "Error": {
+            |                "description": "Error object",
+            |                "properties": {
+            |                    "reason": {
+            |                        "type": "string",
+            |                        "description": "reason field"
+            |                    }
+            |                },
+            |                "required": [
+            |                    "reason"
+            |                ]
+            |            }
+            |        }
+            |    }
+            |}
+            """.trimMargin()
 
         openapi shouldEqualJson expect
     }

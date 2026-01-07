@@ -20,7 +20,9 @@ class ParseMultipleErrorsTest {
 
     @Test
     fun testParserWithCorrectInput() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Foo {
             |  foo: String,
             |  bar: String,
@@ -30,7 +32,7 @@ class ParseMultipleErrorsTest {
             |  foo: String,
             |  bar: String,
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeLeft()

@@ -7,11 +7,12 @@ class TokenizeShapeTest {
 
     @Test
     fun testTokenizeShape() = testTokenizer(
+        // language=ws
         """
-            |type Foo {
-            |  dictA: {String},
-            |  dictB: {String[]}
-            |}
+        |type Foo {
+        |  dictA: {String},
+        |  dictB: {String[]}
+        |}
         """.trimMargin(),
         TypeDefinition, WirespecType, LeftCurly,
         DromedaryCaseIdentifier, Colon, LeftCurly, WsString, RightCurly, Comma,

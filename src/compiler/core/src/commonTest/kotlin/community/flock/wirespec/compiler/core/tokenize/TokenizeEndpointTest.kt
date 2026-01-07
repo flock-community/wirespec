@@ -16,11 +16,12 @@ class TokenizeEndpointTest {
 
     @Test
     fun testEndpointTokenizer() = testTokenizer(
+        // language=ws
         """
-            |endpoint GetTodos GET /todos/{id: String} -> {
-            |    200 -> Todo[]
-            |    404 -> Error
-            |}
+        |endpoint GetTodos GET /todos/{id: String} -> {
+        |    200 -> Todo[]
+        |    404 -> Error
+        |}
         """.trimMargin(),
         EndpointDefinition,
         WirespecType, Method, Path, ForwardSlash, LeftCurly, DromedaryCaseIdentifier, Colon, WsString,
@@ -32,10 +33,11 @@ class TokenizeEndpointTest {
 
     @Test
     fun testPOSTWithBodyTokenizer() = testTokenizer(
+        // language=ws
         """
-            |endpoint PostTodo Todo POST /todos -> {
-            |    200 -> Todo
-            |}
+        |endpoint PostTodo Todo POST /todos -> {
+        |    200 -> Todo
+        |}
         """.trimMargin(),
         EndpointDefinition,
         WirespecType,
@@ -46,11 +48,12 @@ class TokenizeEndpointTest {
 
     @Test
     fun testQueryParamsTokenizer() = testTokenizer(
+        // language=ws
         """
-            |endpoint GetTodos GET /todos
-            |?{name: String, date: String} -> {
-            |    200 -> Todo[]
-            |}
+        |endpoint GetTodos GET /todos
+        |?{name: String, date: String} -> {
+        |    200 -> Todo[]
+        |}
         """.trimMargin(),
         EndpointDefinition,
         WirespecType, Method, Path, QuestionMark, LeftCurly, DromedaryCaseIdentifier, Colon,
@@ -61,11 +64,12 @@ class TokenizeEndpointTest {
 
     @Test
     fun testHeadersTokenizer() = testTokenizer(
+        // language=ws
         """
-            |endpoint GetTodos GET /todos
-            |#{version: String, accept: String} -> {
-            |    200 -> Todo[]
-            |}
+        |endpoint GetTodos GET /todos
+        |#{version: String, accept: String} -> {
+        |    200 -> Todo[]
+        |}
         """.trimMargin(),
         EndpointDefinition,
         WirespecType, Method, Path, Hash, LeftCurly, DromedaryCaseIdentifier, Colon,

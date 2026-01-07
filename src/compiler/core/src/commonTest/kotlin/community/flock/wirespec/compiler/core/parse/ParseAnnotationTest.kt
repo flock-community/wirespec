@@ -22,10 +22,12 @@ class ParseAnnotationTest {
 
     @Test
     fun testSimpleAnnotationOnType() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Deprecated
             |type User = String
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.joinToString { it.message } }
@@ -44,13 +46,15 @@ class ParseAnnotationTest {
 
     @Test
     fun testMultipleAnnotationsOnType() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Deprecated
             |@Internal
             |type User {
             |  name: String
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.joinToString { it.message } }
@@ -67,10 +71,12 @@ class ParseAnnotationTest {
 
     @Test
     fun testAnnotationWithParametersOnType() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Since("1.0.0")
             |type User = String
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.joinToString { it.message } }
@@ -94,10 +100,12 @@ class ParseAnnotationTest {
 
     @Test
     fun testAnnotationWithNamedParametersOnType() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Validate(min: 0, max: 100)
             |type Age = Integer
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.joinToString { it.message } }
@@ -126,13 +134,15 @@ class ParseAnnotationTest {
 
     @Test
     fun testAnnotationOnEnum() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Deprecated
             |enum Status {
             |  ACTIVE,
             |  INACTIVE
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.joinToString { it.message } }
@@ -148,12 +158,14 @@ class ParseAnnotationTest {
 
     @Test
     fun testAnnotationOnEndpoint() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Authenticated
             |endpoint GetUser GET /user/{id:String} -> {
             |   200 -> String
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.joinToString { it.message } }
@@ -170,10 +182,12 @@ class ParseAnnotationTest {
 
     @Test
     fun testAnnotationOnChannel() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Secured
             |channel UserUpdates -> String
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.joinToString { it.message } }
@@ -189,10 +203,12 @@ class ParseAnnotationTest {
 
     @Test
     fun testComplexAnnotationWithMixedParameters() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Config("development", env: "test", debug: true)
             |type Config = String(/^([0-9]{2}-[0-9]{2}-20[0-9]{2})$/g)
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.joinToString { it.message } }
@@ -226,13 +242,15 @@ class ParseAnnotationTest {
 
     @Test
     fun testAnnotationWithCommentOnType() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Deprecated
             |/*
             | * This is a user type
             | */
             |type User = String
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.joinToString { it.message } }
@@ -243,21 +261,21 @@ class ParseAnnotationTest {
                 identifier.value shouldBe "User"
                 annotations.shouldHaveSize(1)
                 annotations.first().name shouldBe "Deprecated"
-                comment?.value shouldBe """
-                    |* This is a user type
-                """.trimMargin()
+                comment?.value shouldBe "* This is a user type"
             }
     }
 
     @Test
     fun testMultipleAnnotationsWithParametersOnEndpoint() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@RateLimit(requests: 100, window: 60)
             |@Authenticated
             |endpoint GetUsers GET /users -> {
             | 200 -> String
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it -> it.joinToString { it.message } }
@@ -290,10 +308,12 @@ class ParseAnnotationTest {
 
     @Test
     fun testAnnotationWithEmptyParametersOnType() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Experimental()
             |type NewFeature = String
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.joinToString { it.message } }
@@ -312,12 +332,14 @@ class ParseAnnotationTest {
 
     @Test
     fun testAnnotationWithUnnamedArrayParameter() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Tag(["TagA", "TagB"])
             |endpoint GetUser GET /user/{id:String} -> {
             |   200 -> String
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.joinToString { it.message } }
@@ -341,12 +363,14 @@ class ParseAnnotationTest {
 
     @Test
     fun testAnnotationWithNamedArrayParameter() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Security(roles: ["RoleA", "RoleB"])
             |endpoint GetUser GET /user/{id:String} -> {
             |   200 -> String
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.joinToString { it.message } }
@@ -370,10 +394,12 @@ class ParseAnnotationTest {
 
     @Test
     fun testAnnotationWithMixedArrayAndSingleParameters() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Config(environment: "dev", tags: ["tag1", "tag2"], debug: true)
             |type AppConfig = String
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.joinToString { it.message } }
@@ -407,7 +433,9 @@ class ParseAnnotationTest {
 
     @Test
     fun testAnnotationWithDictParameter() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Test(
             |    list: ["Test"],
             |    dict: {test: "hello"}
@@ -415,7 +443,7 @@ class ParseAnnotationTest {
             |type Hello {
             |    world: Integer
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.joinToString { it.message } }
@@ -449,12 +477,14 @@ class ParseAnnotationTest {
 
     @Test
     fun testSimpleAnnotationOnField() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type User {
             |  @Deprecated
             |  name: String
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.joinToString { it.message } }
@@ -474,14 +504,16 @@ class ParseAnnotationTest {
 
     @Test
     fun testMultipleAnnotationsOnField() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type User {
             |  @Deprecated
             |  @Internal
             |  name: String,
             |  age: Integer
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.joinToString { it.message } }
@@ -506,12 +538,14 @@ class ParseAnnotationTest {
 
     @Test
     fun testAnnotationWithParametersOnField() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type User {
             |  @Validate(min: 1, max: 100)
             |  name: String
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.joinToString { it.message } }
@@ -542,15 +576,17 @@ class ParseAnnotationTest {
 
     @Test
     fun testEndpointResponseAnnotationParser() {
-        val source = """
-            type MyResponse {
-                id: String
-            }
-            endpoint MyEndpoint GET /path -> {
-                @Status("created")
-                201 -> MyResponse
-            }
-        """.trimIndent()
+        val source =
+            // language=ws
+            """
+            |type MyResponse {
+            |    id: String
+            |}
+            |endpoint MyEndpoint GET /path -> {
+            |    @Status("created")
+            |    201 -> MyResponse
+            |}
+            """.trimMargin()
 
         val result = parser(source)
 

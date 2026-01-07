@@ -19,7 +19,9 @@ import kotlin.test.assertNotEquals
 
 class GeneratorTest {
 
-    private val src = """
+    private val src =
+        // language=ws
+        """
         |type UUID = String(/^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$/g)
         |type Name = String(/^[0-9a-zA-Z]{1,50}${'$'}/g)
         |type DutchPostalCode = String(/^([0-9]{4}[A-Z]{2})${'$'}/g)
@@ -46,7 +48,7 @@ class GeneratorTest {
         |  age: Integer,
         |  addresses: Address[]
         |}
-    """.trimMargin()
+        """.trimMargin()
 
     @Test
     fun generateAddress() {

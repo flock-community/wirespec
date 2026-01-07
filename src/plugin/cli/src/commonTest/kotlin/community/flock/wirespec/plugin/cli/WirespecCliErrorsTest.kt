@@ -11,15 +11,15 @@ class WirespecCliErrorsTest {
     fun testNoArgs() = inContext(emptyArray()) {
         statusCode shouldBe 0
         stdout shouldBe """
-                |Usage: wirespec [<options>] <command> [<args>]...
-                |
-                |Options:
-                |  -h, --help  Show this message and exit
-                |
-                |Commands:
-                |  compile
-                |  convert
-                |
+            |Usage: wirespec [<options>] <command> [<args>]...
+            |
+            |Options:
+            |  -h, --help  Show this message and exit
+            |
+            |Commands:
+            |  compile
+            |  convert
+            |
         """.trimMargin()
     }
 
