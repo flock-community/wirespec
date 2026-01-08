@@ -9,6 +9,7 @@ import community.flock.wirespec.compiler.core.parse.FieldIdentifier
 import community.flock.wirespec.compiler.core.parse.Reference
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
+import community.flock.wirespec.openapi.toDescriptionAnnotationList
 
 object Ast {
 
@@ -40,6 +41,7 @@ object Ast {
                             isNullable = false,
                         ),
                     ),
+                    annotations = "Ok".toDescriptionAnnotationList(),
                 ),
             ),
         ),
@@ -110,6 +112,7 @@ object Ast {
                             isNullable = false,
                         ),
                     ),
+                    annotations = "Ok".toDescriptionAnnotationList(),
                 ),
             ),
         ),
@@ -207,6 +210,7 @@ object Ast {
                             isNullable = false,
                         ),
                     ),
+                    "Ok".toDescriptionAnnotationList(),
                 ),
                 Endpoint.Response(
                     status = "404",
@@ -221,6 +225,7 @@ object Ast {
                             isNullable = false,
                         ),
                     ),
+                    "Not found".toDescriptionAnnotationList(),
                 ),
                 Endpoint.Response(
                     status = "500",
@@ -234,6 +239,7 @@ object Ast {
                             isNullable = false,
                         ),
                     ),
+                    "Error".toDescriptionAnnotationList(),
                 ),
             ),
         ),
@@ -366,6 +372,7 @@ object Ast {
 
                         ),
                     ),
+                    annotations = "Ok".toDescriptionAnnotationList(),
                 ),
                 Endpoint.Response(
                     status = "201",
@@ -384,6 +391,7 @@ object Ast {
                             isNullable = false,
                         ),
                     ),
+                    annotations = "Created".toDescriptionAnnotationList(),
                 ),
                 Endpoint.Response(
                     status = "202",
@@ -399,6 +407,7 @@ object Ast {
 
                         ),
                     ),
+                    annotations = "Created".toDescriptionAnnotationList(),
                 ),
             ),
         ),
@@ -481,6 +490,7 @@ object Ast {
                             isNullable = false,
                         ),
                     ),
+                    annotations = "Ok".toDescriptionAnnotationList(),
                 ),
             ),
         ),
@@ -598,6 +608,7 @@ object Ast {
             ),
             responses = listOf(
                 Endpoint.Response(
+                    annotations = "Ok".toDescriptionAnnotationList(),
                     status = "200",
                     headers = emptyList(),
                     content = Endpoint.Content(
@@ -753,6 +764,7 @@ object Ast {
                             isNullable = false,
                         ),
                     ),
+                    annotations = "Ok".toDescriptionAnnotationList(),
                 ),
                 Endpoint.Response(
                     status = "201",
@@ -764,6 +776,7 @@ object Ast {
                             isNullable = false,
                         ),
                     ),
+                    annotations = "Ok".toDescriptionAnnotationList(),
                 ),
             ),
         ),

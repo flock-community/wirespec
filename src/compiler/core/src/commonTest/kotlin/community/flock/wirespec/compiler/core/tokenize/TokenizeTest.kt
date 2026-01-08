@@ -14,10 +14,11 @@ class TokenizeTest {
 
     @Test
     fun testCommentSource() = testTokenizer(
+        // language=ws
         """
-            |/**
-            | * This is a comment
-            | */
+        |/**
+        | * This is a comment
+        | */
         """.trimMargin(),
         Comment,
         EndOfProgram,
@@ -25,18 +26,19 @@ class TokenizeTest {
 
     @Test
     fun testCommentRefinedSource() = testTokenizer(
+        // language=ws
         """
-            |/**
-            |  * comment Name
-            |  */
-            |type Name = String(/^[0-9a-zA-Z]{1,50}$/g)
-            |/**
-            |  * comment Address
-            |  */
-            |type Address {
-            |  street: Name?,
-            |  houseNumber: Integer
-            |}
+        |/**
+        |  * comment Name
+        |  */
+        |type Name = String(/^[0-9a-zA-Z]{1,50}$/g)
+        |/**
+        |  * comment Address
+        |  */
+        |type Address {
+        |  street: Name?,
+        |  houseNumber: Integer
+        |}
         """.trimMargin(),
         Comment,
         TypeDefinition, WirespecType, Equals, WsString, LeftParenthesis, RegExp, RightParenthesis,

@@ -7,7 +7,8 @@ import community.flock.wirespec.compiler.core.emit.Spacer
 data object JavaShared : Shared {
     override val packageString: String = "$DEFAULT_SHARED_PACKAGE_STRING.java"
 
-    override val source = """
+    override val source =
+        """
         |package $packageString;
         |
         |import java.lang.reflect.Type;
@@ -70,5 +71,5 @@ data object JavaShared : Shared {
         |$Spacer}
         |}
         |
-    """.trimMargin()
+        """.trimMargin()
 }

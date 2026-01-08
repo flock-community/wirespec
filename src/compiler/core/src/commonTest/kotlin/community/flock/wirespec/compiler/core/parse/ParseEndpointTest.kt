@@ -28,12 +28,14 @@ class ParseEndpointTest {
 
     @Test
     fun testEndpointParser() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Todo { name: String }
             |endpoint GetTodos GET /todos -> {
             |    200 -> Todo[]
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight()
@@ -53,12 +55,14 @@ class ParseEndpointTest {
 
     @Test
     fun testEndpointPathParser() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Todo { name: String }
             |endpoint GetTodos GET /To-Do_List -> {
             |    200 -> Todo[]
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight()
@@ -78,12 +82,14 @@ class ParseEndpointTest {
 
     @Test
     fun testPathParamsParser() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Todo { name: String }
             |endpoint PostTodo POST Todo /todos -> {
             |    200 -> Todo
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight()
@@ -105,12 +111,14 @@ class ParseEndpointTest {
 
     @Test
     fun testRequestBodyParser() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Todo { name: String }
             |endpoint GetTodo GET /todos/{id: String} -> {
             |    200 -> Todo
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight()
@@ -139,12 +147,14 @@ class ParseEndpointTest {
 
     @Test
     fun testQueryParamsParser() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Todo { name: String }
             |endpoint GetTodos GET /todos?{name: String, date: String} -> {
             |    200 -> Todo[]
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight()
@@ -167,12 +177,14 @@ class ParseEndpointTest {
 
     @Test
     fun testHeadersParser() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Todo { name: String }
             |endpoint GetTodos GET /todos#{name: String, date: String} -> {
             |    200 -> Todo[]
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight()
@@ -195,12 +207,14 @@ class ParseEndpointTest {
 
     @Test
     fun testResponseHeaderParser() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Todo { name: String }
             |endpoint GetTodo GET /todo/{id: Integer} -> {
             |   200 -> Todo #{token: String}
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight()
@@ -217,11 +231,13 @@ class ParseEndpointTest {
 
     @Test
     fun testDictionaryResponse() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |endpoint GetTodos GET /todos ? {done:{String}} # {token:{String}} -> {
             |    200 -> {String}
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight()

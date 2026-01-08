@@ -23,12 +23,14 @@ class ParserReferenceTest {
 
     @Test
     fun shouldHaveSelfRef() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Self {
             |  self: Self
             |}
-
-        """.trimMargin()
+            |
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.head.message }
@@ -49,11 +51,13 @@ class ParserReferenceTest {
 
     @Test
     fun shouldNotFindReferenceInType() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Foo {
             |  bar: Bar
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeLeft()
@@ -70,11 +74,13 @@ class ParserReferenceTest {
 
     @Test
     fun shouldNotFindReferenceInEndpointRequest() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |endpoint FooPoint POST Foo /foo -> {
             |  200 -> Bar
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeLeft()
@@ -90,12 +96,14 @@ class ParserReferenceTest {
 
     @Test
     fun shouldNotFindReferenceInEndpointResponse() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Foo { str:String }
             |endpoint FooPoint POST Foo /foo -> {
             |  200 -> Bar
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         val r = parser(source).right()
         println(r)
@@ -113,9 +121,11 @@ class ParserReferenceTest {
 
     @Test
     fun shouldNotFindReferenceInEnum() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Foo = Bar
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeLeft()
@@ -131,10 +141,12 @@ class ParserReferenceTest {
 
     @Test
     fun shouldNotFindReferenceInEnumSecond() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Bar { str:String }
             |type Foo = Bar | Baz
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeLeft()
@@ -150,12 +162,14 @@ class ParserReferenceTest {
 
     @Test
     fun singleLine() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |// This is a comment
             |type Address {
             |  houseNumber: Integer
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight()
@@ -164,12 +178,14 @@ class ParserReferenceTest {
 
     @Test
     fun multiLine() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |/* This is a comment */
             |type Address {
             |  houseNumber: Integer
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight()

@@ -258,22 +258,22 @@ Let's take a brief look at the code and schemas that get generated as a result:
                 companion object {
                     val SCHEMA = org.apache.avro.Schema.Parser().parse(
                         """
-                        {
-                          "type": "record",
-                          "name": "Task",
-                          "namespace": "community.flock.wirespec.generated",
-                          "fields": [
-                            {
-                              "name": "id",
-                              "type": "long"
-                            },
-                            {
-                              "name": "content",
-                              "type": "string"
-                            }
-                          ]
-                        }
-                        """.trimIndent()
+                        |{
+                        |  "type": "record",
+                        |  "name": "Task",
+                        |  "namespace": "community.flock.wirespec.generated",
+                        |  "fields": [
+                        |    {
+                        |      "name": "id",
+                        |      "type": "long"
+                        |    },
+                        |    {
+                        |      "name": "content",
+                        |      "type": "string"
+                        |    }
+                        |  ]
+                        |}
+                        """.trimMargin()
                     )
 
                     @JvmStatic

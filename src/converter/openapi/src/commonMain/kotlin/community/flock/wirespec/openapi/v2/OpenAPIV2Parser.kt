@@ -41,6 +41,7 @@ import community.flock.wirespec.converter.common.Parser
 import community.flock.wirespec.openapi.APPLICATION_JSON
 import community.flock.wirespec.openapi.className
 import community.flock.wirespec.openapi.filterNotNullValues
+import community.flock.wirespec.openapi.toDescriptionAnnotationList
 import kotlinx.serialization.json.Json
 
 object OpenAPIV2Parser : Parser {
@@ -115,6 +116,7 @@ private fun OpenAPIV2Model.parseEndpoints(): List<Definition> = paths
                         .distinct()
                         .ifEmpty { listOf(APPLICATION_JSON) }.map { type ->
                             Endpoint.Response(
+                                annotations = res.description.toDescriptionAnnotationList(),
                                 status = status.value,
                                 headers = res.headers
                                     ?.map { (identifier, header) -> toField(header.resolve(), identifier) }
@@ -140,7 +142,8 @@ private fun OpenAPIV2Model.parseEndpoints(): List<Definition> = paths
             listOf(
                 Endpoint(
                     comment = null,
-                    annotations = emptyList(), identifier = DefinitionIdentifier(name.sanitize()),
+                    annotations = operation.description.toDescriptionAnnotationList(),
+                    identifier = DefinitionIdentifier(name.sanitize()),
                     method = method,
                     path = segments,
                     queries = query,
@@ -170,7 +173,7 @@ private fun OpenAPIV2Model.parseRequestBody(): List<Definition> = flatMapRequest
             parameter.enum != null -> listOf(
                 Enum(
                     comment = null,
-                    annotations = emptyList(),
+                    annotations = parameter.description.toDescriptionAnnotationList(),
                     identifier = DefinitionIdentifier(className(name, "Parameter", parameter.name).sanitize()),
                     entries = parameter.enum!!.map { it.content }.toSet(),
                 ),
@@ -284,6 +287,17 @@ private fun OpenAPIV2Model.resolve(parameterOrReference: OpenAPIV2ParameterOrRef
 }
 
 private fun OpenAPIV2Model.flatten(openAPIV2Schema: OpenAPIV2Schema, name: String): List<Definition> = when {
+    // OpenAPI v2 workaround: we sometimes emit `{ allOf: [ { $ref: ... } ], description: ... }`
+    // to attach a field-level description to a referenced schema.
+    // This wrapper should *not* produce an extra synthetic definition during flattening.
+    openAPIV2Schema.allOf?.size == 1 &&
+        openAPIV2Schema.allOf!!.first() is OpenAPIV2Reference &&
+        openAPIV2Schema.properties == null &&
+        openAPIV2Schema.enum == null &&
+        openAPIV2Schema.type == null &&
+        openAPIV2Schema.items == null &&
+        openAPIV2Schema.additionalProperties == null -> emptyList()
+
     openAPIV2Schema.additionalProperties.exists() -> when (openAPIV2Schema.additionalProperties) {
         is BooleanValue -> emptyList()
         else ->
@@ -297,7 +311,7 @@ private fun OpenAPIV2Model.flatten(openAPIV2Schema: OpenAPIV2Schema, name: Strin
     openAPIV2Schema.allOf != null -> listOf(
         Type(
             comment = null,
-            annotations = emptyList(),
+            annotations = openAPIV2Schema.description.toDescriptionAnnotationList(),
             identifier = DefinitionIdentifier(name.sanitize()),
             shape = Type.Shape(
                 openAPIV2Schema.allOf
@@ -334,7 +348,7 @@ private fun OpenAPIV2Model.flatten(openAPIV2Schema: OpenAPIV2Schema, name: Strin
                 listOf(
                     Enum(
                         comment = null,
-                        annotations = emptyList(),
+                        annotations = openAPIV2Schema.description.toDescriptionAnnotationList(),
                         identifier = DefinitionIdentifier(name.sanitize()),
                         entries = it,
                     ),
@@ -349,7 +363,7 @@ private fun OpenAPIV2Model.flatten(openAPIV2Schema: OpenAPIV2Schema, name: Strin
             val schema = listOf(
                 Type(
                     comment = null,
-                    annotations = emptyList(),
+                    annotations = openAPIV2Schema.description.toDescriptionAnnotationList(),
                     identifier = DefinitionIdentifier(name.sanitize()),
                     shape = Type.Shape(toField(openAPIV2Schema, name)),
                     extends = emptyList(),
@@ -418,6 +432,14 @@ private fun OpenAPIV2Model.toReference(reference: OpenAPIV2Reference, isNullable
 }
 
 private fun OpenAPIV2Model.toReference(schema: OpenAPIV2Schema, name: String, isNullable: Boolean): Reference = when {
+    schema.allOf?.size == 1 &&
+        schema.allOf!!.first() is OpenAPIV2Reference &&
+        schema.properties == null &&
+        schema.enum == null &&
+        schema.type == null &&
+        schema.items == null &&
+        schema.additionalProperties == null -> toReference(schema.allOf!!.first() as OpenAPIV2Reference, isNullable)
+
     schema.additionalProperties != null -> when (val additionalProperties = schema.additionalProperties!!) {
         is BooleanValue -> Reference.Dict(Reference.Any(isNullable = false), isNullable = isNullable)
         is OpenAPIV2Reference -> toReference(additionalProperties, false).toDict(isNullable)
@@ -525,7 +547,7 @@ private fun OpenAPIV2Base.toPrimitive() = when (this.type) {
 
 private fun OpenAPIV2Model.toField(header: OpenAPIV2Header, identifier: String) = Field(
     identifier = FieldIdentifier(identifier),
-    annotations = emptyList(),
+    annotations = header.description.toDescriptionAnnotationList(),
     reference = when (header.type) {
         OpenAPIV2Type.ARRAY -> header.items?.let { resolve(it) }?.let { toReference(it, identifier, false) }
             ?: error("Item cannot be null")
@@ -600,7 +622,7 @@ private fun OpenAPIV2Model.toField(parameter: OpenAPIV2Parameter, name: String) 
     }.let {
         Field(
             identifier = FieldIdentifier(parameter.name),
-            annotations = emptyList(),
+            annotations = parameter.description.toDescriptionAnnotationList(),
             reference = it,
         )
     }

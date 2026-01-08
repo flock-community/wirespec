@@ -2,6 +2,9 @@ package community.flock.wirespec.openapi.v3
 
 import arrow.core.nonEmptyListOf
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3
+import community.flock.wirespec.compiler.core.FileUri
+import community.flock.wirespec.compiler.core.ModuleContent
+import community.flock.wirespec.compiler.core.parse.Annotation
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -14,9 +17,12 @@ import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.openapi.common.Ast
+import community.flock.wirespec.openapi.toDescriptionAnnotationList
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser.parse
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -275,7 +281,7 @@ class OpenAPIV3ParserTest {
                         ),
                         Field(
                             identifier = FieldIdentifier("userStatus"),
-                            annotations = emptyList(),
+                            annotations = "User Status".toDescriptionAnnotationList(),
                             reference = Primitive(
                                 type = Primitive.Type.Integer(Primitive.Type.Precision.P32, null),
                                 isNullable = true,
@@ -376,8 +382,8 @@ class OpenAPIV3ParserTest {
                 extends = emptyList(),
             ),
             Enum(
-                comment = null,
                 annotations = emptyList(),
+                comment = null,
                 identifier = DefinitionIdentifier("PetStatus"),
                 entries = setOf("available", "pending", "sold"),
             ),
@@ -424,7 +430,7 @@ class OpenAPIV3ParserTest {
 
         val expectedEndpoint = Endpoint(
             comment = null,
-            annotations = emptyList(),
+            annotations = "Returns a map of status codes to quantities".toDescriptionAnnotationList(),
             identifier = DefinitionIdentifier("GetInventory"),
             method = Endpoint.Method.GET,
             path = listOf(Endpoint.Segment.Literal(value = "store"), Endpoint.Segment.Literal(value = "inventory")),
@@ -433,6 +439,7 @@ class OpenAPIV3ParserTest {
             requests = listOf(Endpoint.Request(content = null)),
             responses = listOf(
                 Endpoint.Response(
+                    annotations = "successful operation".toDescriptionAnnotationList(),
                     status = "200",
                     headers = emptyList(),
                     content = Endpoint.Content(
@@ -480,6 +487,7 @@ class OpenAPIV3ParserTest {
                 ),
                 responses = listOf(
                     Endpoint.Response(
+                        annotations = "Ok".toDescriptionAnnotationList(),
                         status = "200",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -494,6 +502,7 @@ class OpenAPIV3ParserTest {
                         ),
                     ),
                     Endpoint.Response(
+                        annotations = "NotFound".toDescriptionAnnotationList(),
                         status = "404",
                         headers = emptyList(),
                         content = null,
@@ -566,6 +575,7 @@ class OpenAPIV3ParserTest {
                 ),
                 responses = listOf(
                     Endpoint.Response(
+                        annotations = "OK".toDescriptionAnnotationList(),
                         status = "200",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -581,6 +591,7 @@ class OpenAPIV3ParserTest {
                         ),
                     ),
                     Endpoint.Response(
+                        annotations = "Error".toDescriptionAnnotationList(),
                         status = "500",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -631,11 +642,13 @@ class OpenAPIV3ParserTest {
                 ),
                 responses = listOf(
                     Endpoint.Response(
+                        annotations = "OkNotContent".toDescriptionAnnotationList(),
                         status = "201",
                         headers = emptyList(),
                         content = null,
                     ),
                     Endpoint.Response(
+                        annotations = "Error".toDescriptionAnnotationList(),
                         status = "500",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -667,6 +680,7 @@ class OpenAPIV3ParserTest {
                 ),
                 responses = listOf(
                     Endpoint.Response(
+                        annotations = "OK".toDescriptionAnnotationList(),
                         status = "200",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -678,6 +692,7 @@ class OpenAPIV3ParserTest {
                         ),
                     ),
                     Endpoint.Response(
+                        annotations = "Error".toDescriptionAnnotationList(),
                         status = "500",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -932,6 +947,7 @@ class OpenAPIV3ParserTest {
                 ),
                 responses = listOf(
                     Endpoint.Response(
+                        annotations = "An Address".toDescriptionAnnotationList(),
                         status = "201",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -943,6 +959,7 @@ class OpenAPIV3ParserTest {
                         ),
                     ),
                     Endpoint.Response(
+                        annotations = "An Address".toDescriptionAnnotationList(),
                         status = "202",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -1060,6 +1077,7 @@ class OpenAPIV3ParserTest {
                 requests = listOf(Endpoint.Request(content = null)),
                 responses = listOf(
                     Endpoint.Response(
+                        annotations = "Success".toDescriptionAnnotationList(),
                         status = "201",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -1128,6 +1146,7 @@ class OpenAPIV3ParserTest {
                 requests = listOf(Endpoint.Request(content = null)),
                 responses = listOf(
                     Endpoint.Response(
+                        annotations = "Proposals".toDescriptionAnnotationList(),
                         status = "200",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -1247,6 +1266,7 @@ class OpenAPIV3ParserTest {
                 requests = listOf(Endpoint.Request(content = null)),
                 responses = listOf(
                     Endpoint.Response(
+                        annotations = "Proposals".toDescriptionAnnotationList(),
                         status = "200",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -1361,6 +1381,7 @@ class OpenAPIV3ParserTest {
                 ),
                 responses = listOf(
                     Endpoint.Response(
+                        annotations = "Created contact".toDescriptionAnnotationList(),
                         status = "200",
                         headers = emptyList(),
                         content = Endpoint.Content(
@@ -1443,6 +1464,7 @@ class OpenAPIV3ParserTest {
                 ),
                 responses = listOf(
                     Endpoint.Response(
+                        annotations = "Ok".toDescriptionAnnotationList(),
                         status = "200",
                         headers = emptyList(),
                         content = null,
@@ -1451,5 +1473,68 @@ class OpenAPIV3ParserTest {
             ),
         )
         ast shouldBe expected
+    }
+
+    @Test
+    fun testDescriptionParsing() {
+        val json =
+            """
+            |{
+            |    "openapi": "3.0.0",
+            |    "info": {
+            |        "title": "Test API",
+            |        "version": "1.0.0"
+            |    },
+            |    "components": {
+            |        "schemas": {
+            |            "Todo": {
+            |                "description": "Todo object",
+            |                "type": "object",
+            |                "properties": {
+            |                    "id": {
+            |                        "type": "string",
+            |                        "description": "id field"
+            |                    }
+            |                }
+            |            }
+            |        }
+            |    },
+            |    "paths": {
+            |        "/todos": {
+            |            "get": {
+            |                "description": "Get all todos",
+            |                "responses": {
+            |                    "200": {
+            |                        "description": "Successful response"
+            |                    }
+            |                }
+            |            }
+            |        }
+            |    }
+            |}
+            """.trimMargin()
+
+        val ast = OpenAPIV3Parser.parse(ModuleContent(FileUri("test.json"), json), false)
+        val definitions = ast.modules.head.statements
+        println(definitions.map { it.identifier.value })
+
+        val todo = definitions.find { (it as? Type)?.identifier?.value == "Todo" }.shouldBeInstanceOf<Type>()
+        todo.annotations shouldContain Annotation(
+            "Description",
+            listOf(Annotation.Parameter("default", Annotation.Value.Single("Todo object"))),
+        )
+
+        val idField = todo.shape.value.find { it.identifier.value == "id" }!!
+        idField.annotations shouldContain Annotation(
+            "Description",
+            listOf(Annotation.Parameter("default", Annotation.Value.Single("id field"))),
+        )
+
+        val endpoint =
+            definitions.find { (it as? Endpoint)?.identifier?.value == "TodosGET" }.shouldBeInstanceOf<Endpoint>()
+        endpoint.annotations shouldContain Annotation(
+            "Description",
+            listOf(Annotation.Parameter("default", Annotation.Value.Single("Get all todos"))),
+        )
     }
 }

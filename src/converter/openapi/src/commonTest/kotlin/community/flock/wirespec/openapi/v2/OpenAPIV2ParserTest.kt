@@ -2,6 +2,9 @@ package community.flock.wirespec.openapi.v2
 
 import arrow.core.nonEmptyListOf
 import community.flock.kotlinx.openapi.bindings.OpenAPIV2
+import community.flock.wirespec.compiler.core.FileUri
+import community.flock.wirespec.compiler.core.ModuleContent
+import community.flock.wirespec.compiler.core.parse.Annotation
 import community.flock.wirespec.compiler.core.parse.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.Endpoint
 import community.flock.wirespec.compiler.core.parse.Enum
@@ -13,9 +16,12 @@ import community.flock.wirespec.compiler.core.parse.Reference.Primitive
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Type.Shape
 import community.flock.wirespec.openapi.common.Ast
+import community.flock.wirespec.openapi.toDescriptionAnnotationList
 import community.flock.wirespec.openapi.v2.OpenAPIV2Parser.parse
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -280,13 +286,13 @@ class OpenAPIV2ParserTest {
         val expectedEnumDefinitions = listOf(
             Enum(
                 comment = null,
-                annotations = emptyList(),
+                annotations = "pet status in the store".toDescriptionAnnotationList(),
                 identifier = DefinitionIdentifier("PetStatus"),
                 entries = setOf("available", "pending", "sold"),
             ),
             Enum(
                 comment = null,
-                annotations = emptyList(),
+                annotations = "Order Status".toDescriptionAnnotationList(),
                 identifier = DefinitionIdentifier("OrderStatus"),
                 entries = setOf("placed", "approved", "delivered"),
             ),
@@ -349,6 +355,7 @@ class OpenAPIV2ParserTest {
                             type = "application/json",
                             reference = Custom(value = "Foo", isNullable = false),
                         ),
+                        annotations = "Ok".toDescriptionAnnotationList(),
                     ),
                 ),
             ),
@@ -465,10 +472,65 @@ class OpenAPIV2ParserTest {
                         status = "200",
                         headers = emptyList(),
                         content = null,
+                        annotations = "Ok".toDescriptionAnnotationList(),
                     ),
                 ),
             ),
         )
         ast shouldBe expected
+    }
+
+    @Test
+    fun testDescriptionParsing() {
+        val json =
+            // language=json
+            """
+            |{
+            |    "swagger": "2.0",
+            |    "info": {
+            |        "title": "Test API",
+            |        "version": "1.0.0"
+            |    },
+            |    "definitions": {
+            |        "Todo": {
+            |            "description": "Todo object",
+            |            "properties": {
+            |                "id": {
+            |                    "type": "string",
+            |                    "description": "id field"
+            |                }
+            |            }
+            |        }
+            |    },
+            |    "paths": {
+            |        "/todos": {
+            |            "get": {
+            |                "description": "Get all todos",
+            |                "responses": {
+            |                    "200": {
+            |                        "description": "Successful response"
+            |                    }
+            |                }
+            |            }
+            |        }
+            |    }
+            |}
+            """.trimMargin()
+
+        val ast = OpenAPIV2Parser.parse(ModuleContent(FileUri("test.json"), json), false)
+        val definitions = ast.modules.head.statements
+
+        val todo = definitions.find { (it as? Type)?.identifier?.value == "Todo" }.shouldBeInstanceOf<Type>()
+        todo.annotations shouldContain community.flock.wirespec.compiler.core.parse.Annotation(
+            "Description",
+            listOf(Annotation.Parameter("default", Annotation.Value.Single("Todo object"))),
+        )
+
+        val endpoint =
+            definitions.find { (it as? Endpoint)?.identifier?.value == "TodosGET" }.shouldBeInstanceOf<Endpoint>()
+        endpoint.annotations shouldContain Annotation(
+            "Description",
+            listOf(Annotation.Parameter("default", Annotation.Value.Single("Get all todos"))),
+        )
     }
 }

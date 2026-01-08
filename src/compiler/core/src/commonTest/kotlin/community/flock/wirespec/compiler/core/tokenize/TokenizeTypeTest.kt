@@ -7,15 +7,16 @@ class TokenizeTypeTest {
 
     @Test
     fun testTypeTokenize() = testTokenizer(
+        // language=ws
         """
-            |type Foo {
-            |    bar: String,
-            |    `Baz`: String,
-            |    `foo-bar`: String,
-            |    `FOO-BAR`: String,
-            |    `foo_bar`: String,
-            |    `FOO_BAR`: String
-            |}
+        |type Foo {
+        |    bar: String,
+        |    `Baz`: String,
+        |    `foo-bar`: String,
+        |    `FOO-BAR`: String,
+        |    `foo_bar`: String,
+        |    `FOO_BAR`: String
+        |}
         """.trimMargin(),
         TypeDefinition, WirespecType, LeftCurly,
         DromedaryCaseIdentifier, Colon, WsString, Comma,
@@ -49,10 +50,11 @@ class TokenizeTypeTest {
 
     @Test
     fun testNullableTypes() = testTokenizer(
+        // language=ws
         """
-            |type Foo {
-            |    bar: { String?[]? }?
-            |}
+        |type Foo {
+        |    bar: { String?[]? }?
+        |}
         """.trimMargin(),
         TypeDefinition, WirespecType, LeftCurly,
         DromedaryCaseIdentifier, Colon, LeftCurly, WsString, QuestionMark, Brackets, QuestionMark,
@@ -204,22 +206,23 @@ class TokenizeTypeTest {
 
     @Test
     fun testRegexWithComplexTypes() = testTokenizer(
+        // language=ws
         """
-                |type DutchPostalCode = String(/^([0-9]{4}[A-Z]{2})$}/g)
-                |type Model {
-                |  postalCode: DutchPostalCode,
-                |  postalCodeOptional: DutchPostalCode?,
-                |  postalCodesArray: DutchPostalCode[],
-                |  postalCodesDict: {DutchPostalCode},
-                |  simpleString: String,
-                |  refinedString: String(/.+/),
-                |  refinedString: String(/.+/),
-                |  refinedStringOptional: String(/.+/)?,
-                |  refinedStringArray: String(/.+/)[],
-                |  refinedInteger: Integer(0, 100),
-                |  refinedIntegerOptional: Integer(0, 100)?,
-                |  refinedIntegerArray: Integer(0, 100)?[]?
-                |}
+        |type DutchPostalCode = String(/^([0-9]{4}[A-Z]{2})$}/g)
+        |type Model {
+        |  postalCode: DutchPostalCode,
+        |  postalCodeOptional: DutchPostalCode?,
+        |  postalCodesArray: DutchPostalCode[],
+        |  postalCodesDict: {DutchPostalCode},
+        |  simpleString: String,
+        |  refinedString: String(/.+/),
+        |  refinedString: String(/.+/),
+        |  refinedStringOptional: String(/.+/)?,
+        |  refinedStringArray: String(/.+/)[],
+        |  refinedInteger: Integer(0, 100),
+        |  refinedIntegerOptional: Integer(0, 100)?,
+        |  refinedIntegerArray: Integer(0, 100)?[]?
+        |}
         """.trimMargin(),
         TypeDefinition, WirespecType, Equals, WsString, LeftParenthesis, RegExp, RightParenthesis,
         TypeDefinition, WirespecType, LeftCurly,
@@ -241,11 +244,12 @@ class TokenizeTypeTest {
 
     @Test
     fun testRegexRefinedNotEnding() = testTokenizer(
+        // language=ws
         """
-                |type DutchPostalCode = String(/^([0-9]))
-                |type Model {
-                |  postalCode: DutchPostalCode,
-                |}
+        |type DutchPostalCode = String(/^([0-9]))
+        |type Model {
+        |  postalCode: DutchPostalCode,
+        |}
         """.trimMargin(),
         TypeDefinition, WirespecType, Equals, WsString, LeftParenthesis, RegExp,
         TypeDefinition, WirespecType, LeftCurly, DromedaryCaseIdentifier, Colon, WirespecType, Comma, RightCurly,
@@ -254,10 +258,11 @@ class TokenizeTypeTest {
 
     @Test
     fun testRegexAdhocNotEnding() = testTokenizer(
+        // language=ws
         """
-                |type Model {
-                |  name: String(/^([0-9]))?,
-                |}
+        |type Model {
+        |  name: String(/^([0-9]))?,
+        |}
         """.trimMargin(),
         TypeDefinition, WirespecType, LeftCurly,
         DromedaryCaseIdentifier, Colon, WsString, LeftParenthesis, RegExp,

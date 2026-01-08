@@ -21,10 +21,12 @@ class ParseChannelTest {
 
     @Test
     fun testChannelParser() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Todo { name: String }
             |channel TodosChannel -> Todo
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight()
@@ -40,10 +42,12 @@ class ParseChannelTest {
 
     @Test
     fun testChannelParserNullable() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Todo { name: String }
             |channel TodosChannel -> Todo?
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight()

@@ -27,7 +27,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful operation",
+            "description": "Ok",
             "content": {
               "application/json": {
                 "schema": {
@@ -40,7 +40,7 @@
             }
           },
           "404": {
-            "description": "Pizza not found"
+            "description": "NotFound"
           }
         }
       }
@@ -52,16 +52,13 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "description": "The ID of the ingredient"
+            "type": "string"
           },
           "name": {
-            "type": "string",
-            "description": "The name of the ingredient"
+            "type": "string"
           },
           "quantity": {
-            "type": "string",
-            "description": "The quantity of the ingredient for the pizza"
+            "type": "string"
           }
         }
       }

@@ -1,10 +1,13 @@
 package community.flock.wirespec.compiler.core.parse
 
+import arrow.core.Either
+import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
+import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
@@ -22,13 +25,15 @@ class ParseAnnotationTest {
 
     @Test
     fun testSimpleAnnotationOnType() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Deprecated
             |type User = String
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Refined>()
@@ -44,16 +49,18 @@ class ParseAnnotationTest {
 
     @Test
     fun testMultipleAnnotationsOnType() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Deprecated
             |@Internal
             |type User {
             |  name: String
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Type>()
@@ -67,13 +74,15 @@ class ParseAnnotationTest {
 
     @Test
     fun testAnnotationWithParametersOnType() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Since("1.0.0")
             |type User = String
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Refined>()
@@ -94,13 +103,15 @@ class ParseAnnotationTest {
 
     @Test
     fun testAnnotationWithNamedParametersOnType() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Validate(min: 0, max: 100)
             |type Age = Integer
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Refined>()
@@ -126,16 +137,18 @@ class ParseAnnotationTest {
 
     @Test
     fun testAnnotationOnEnum() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Deprecated
             |enum Status {
             |  ACTIVE,
             |  INACTIVE
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Enum>()
@@ -148,15 +161,17 @@ class ParseAnnotationTest {
 
     @Test
     fun testAnnotationOnEndpoint() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Authenticated
             |endpoint GetUser GET /user/{id:String} -> {
             |   200 -> String
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Endpoint>()
@@ -170,13 +185,15 @@ class ParseAnnotationTest {
 
     @Test
     fun testAnnotationOnChannel() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Secured
             |channel UserUpdates -> String
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Channel>()
@@ -189,13 +206,15 @@ class ParseAnnotationTest {
 
     @Test
     fun testComplexAnnotationWithMixedParameters() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Config("development", env: "test", debug: true)
             |type Config = String(/^([0-9]{2}-[0-9]{2}-20[0-9]{2})$/g)
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Refined>()
@@ -226,16 +245,18 @@ class ParseAnnotationTest {
 
     @Test
     fun testAnnotationWithCommentOnType() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Deprecated
             |/*
             | * This is a user type
             | */
             |type User = String
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Refined>()
@@ -243,21 +264,21 @@ class ParseAnnotationTest {
                 identifier.value shouldBe "User"
                 annotations.shouldHaveSize(1)
                 annotations.first().name shouldBe "Deprecated"
-                comment?.value shouldBe """
-                    |* This is a user type
-                """.trimMargin()
+                comment?.value shouldBe "* This is a user type"
             }
     }
 
     @Test
     fun testMultipleAnnotationsWithParametersOnEndpoint() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@RateLimit(requests: 100, window: 60)
             |@Authenticated
             |endpoint GetUsers GET /users -> {
             | 200 -> String
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it -> it.joinToString { it.message } }
@@ -290,13 +311,15 @@ class ParseAnnotationTest {
 
     @Test
     fun testAnnotationWithEmptyParametersOnType() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Experimental()
             |type NewFeature = String
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Refined>()
@@ -312,15 +335,17 @@ class ParseAnnotationTest {
 
     @Test
     fun testAnnotationWithUnnamedArrayParameter() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Tag(["TagA", "TagB"])
             |endpoint GetUser GET /user/{id:String} -> {
             |   200 -> String
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Endpoint>()
@@ -341,15 +366,17 @@ class ParseAnnotationTest {
 
     @Test
     fun testAnnotationWithNamedArrayParameter() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Security(roles: ["RoleA", "RoleB"])
             |endpoint GetUser GET /user/{id:String} -> {
             |   200 -> String
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Endpoint>()
@@ -370,13 +397,15 @@ class ParseAnnotationTest {
 
     @Test
     fun testAnnotationWithMixedArrayAndSingleParameters() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Config(environment: "dev", tags: ["tag1", "tag2"], debug: true)
             |type AppConfig = String
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Refined>()
@@ -407,7 +436,9 @@ class ParseAnnotationTest {
 
     @Test
     fun testAnnotationWithDictParameter() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |@Test(
             |    list: ["Test"],
             |    dict: {test: "hello"}
@@ -415,10 +446,10 @@ class ParseAnnotationTest {
             |type Hello {
             |    world: Integer
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Type>()
@@ -446,4 +477,138 @@ class ParseAnnotationTest {
                 }
             }
     }
+
+    @Test
+    fun testSimpleAnnotationOnField() {
+        val source =
+            // language=ws
+            """
+            |type User {
+            |  @Deprecated
+            |  name: String
+            |}
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRightOrReport()
+            .shouldHaveSize(1)
+            .first()
+            .shouldBeInstanceOf<Type>()
+            .apply {
+                identifier.value shouldBe "User"
+                shape.value.shouldHaveSize(1).first().apply {
+                    identifier.value shouldBe "name"
+                    annotations.shouldHaveSize(1).first().name shouldBe "Deprecated"
+                }
+            }
+    }
+
+    @Test
+    fun testMultipleAnnotationsOnField() {
+        val source =
+            // language=ws
+            """
+            |type User {
+            |  @Deprecated
+            |  @Internal
+            |  name: String,
+            |  age: Integer
+            |}
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRightOrReport()
+            .shouldHaveSize(1)
+            .first()
+            .shouldBeInstanceOf<Type>()
+            .apply {
+                identifier.value shouldBe "User"
+                shape.value.shouldHaveSize(2).toList().let { (fieldA, fieldB) ->
+                    fieldA.apply {
+                        identifier.value shouldBe "name"
+                        annotations.shouldHaveSize(2).toList().let { (a, b) ->
+                            a.name shouldBe "Deprecated"
+                            b.name shouldBe "Internal"
+                        }
+                    }
+                    fieldB.apply {
+                        identifier.value shouldBe "age"
+                        annotations.shouldHaveSize(0)
+                    }
+                }
+            }
+    }
+
+    @Test
+    fun testAnnotationWithParametersOnField() {
+        val source =
+            // language=ws
+            """
+            |type User {
+            |  @Validate(min: 1, max: 100)
+            |  name: String
+            |}
+            """.trimMargin()
+
+        parser(source)
+            .shouldBeRightOrReport()
+            .shouldHaveSize(1)
+            .first()
+            .shouldBeInstanceOf<Type>()
+            .apply {
+                identifier.value shouldBe "User"
+                shape.value.shouldHaveSize(1)
+                    .first().apply {
+                        identifier.value shouldBe "name"
+                        annotations.shouldHaveSize(1)
+                            .first().apply {
+                                name shouldBe "Validate"
+                                parameters.shouldHaveSize(2).toList().let { (a, b) ->
+                                    a.apply {
+                                        name shouldBe "min"
+                                        value shouldBe Annotation.Value.Single("1")
+                                    }
+                                    b.apply {
+                                        name shouldBe "max"
+                                        value shouldBe Annotation.Value.Single("100")
+                                    }
+                                }
+                            }
+                    }
+            }
+    }
+
+    @Test
+    fun testEndpointResponseAnnotationParser() {
+        val source =
+            // language=ws
+            """
+            |type MyResponse {
+            |    id: String
+            |}
+            |endpoint MyEndpoint GET /path -> {
+            |    @Status("created")
+            |    201 -> MyResponse
+            |}
+            """.trimMargin()
+
+        val result = parser(source)
+
+        result
+            .shouldBeRightOrReport()
+            .shouldHaveSize(2)
+            .last()
+            .shouldBeInstanceOf<Endpoint>()
+            .apply {
+                responses.shouldHaveSize(1).first().apply {
+                    status shouldBe "201"
+                    annotations.shouldHaveSize(1).first().apply {
+                        name shouldBe "Status"
+                        parameters.shouldHaveSize(1).first().value shouldBe Annotation.Value.Single("created")
+                    }
+                }
+            }
+    }
 }
+
+private fun Either<NonEmptyList<WirespecException>, NonEmptyList<Definition>>.shouldBeRightOrReport() = shouldBeRight { exceptions -> exceptions.joinToString { it.message } }

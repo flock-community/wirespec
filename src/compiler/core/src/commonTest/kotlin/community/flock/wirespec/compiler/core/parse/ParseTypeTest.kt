@@ -23,11 +23,13 @@ class ParseTypeTest {
 
     @Test
     fun testTypeParser() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Foo {
             |    bar: {String[]}
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight()
@@ -53,9 +55,11 @@ class ParseTypeTest {
 
     @Test
     fun testRefinedParserString() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type DutchPostalCode = String(/^([0-9]{4}[A-Z]{2})$/g)
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight()
@@ -75,9 +79,11 @@ class ParseTypeTest {
 
     @Test
     fun testRefinedParserInteger() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Age = Integer(0,99)
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.head.message }
@@ -99,9 +105,11 @@ class ParseTypeTest {
 
     @Test
     fun testRefinedParserIntegerMinEmpty() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Age = Integer(_,99)
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.head.message }
@@ -123,9 +131,11 @@ class ParseTypeTest {
 
     @Test
     fun testRefinedParserNumber() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Age = Number(0.0,9.9)
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.head.message }
@@ -147,11 +157,13 @@ class ParseTypeTest {
 
     @Test
     fun testUnionParser() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Bar { str: String }
             |type Bal { str: String }
             |type Foo = Bar | Bal
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight()
@@ -169,10 +181,12 @@ class ParseTypeTest {
 
     @Test
     fun testIntegerNumberParser() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Bar { int32: Integer32, int64: Integer[] }
             |type Foo { num32: Number32, num64: Number? }
-        """.trimMargin()
+            """.trimMargin()
 
         parser(source)
             .shouldBeRight { it.head.message }

@@ -40,6 +40,7 @@ import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.converter.common.Parser
 import community.flock.wirespec.openapi.className
 import community.flock.wirespec.openapi.filterNotNullValues
+import community.flock.wirespec.openapi.toDescriptionAnnotationList
 import kotlinx.serialization.json.Json
 
 object OpenAPIV3Parser : Parser {
@@ -106,6 +107,7 @@ private fun OpenAPIV3Model.parseEndpoint(): List<Definition> = paths
                     if (response.content.isNullOrEmpty()) {
                         listOf(
                             Endpoint.Response(
+                                annotations = response.description.toDescriptionAnnotationList(),
                                 status = status.value,
                                 headers = response.headers?.map { entry ->
                                     toField(resolve(entry.value), entry.key, className(name, "ResponseHeader"))
@@ -117,6 +119,7 @@ private fun OpenAPIV3Model.parseEndpoint(): List<Definition> = paths
                         response.content?.map { (contentType, media) ->
                             val isNullable = media.schema?.let { resolve(it) }?.nullable ?: false
                             Endpoint.Response(
+                                annotations = response.description.toDescriptionAnnotationList(),
                                 status = status.value,
                                 headers = response.headers?.map { entry ->
                                     toField(resolve(entry.value), entry.key, className(name, "ResponseHeader"))
@@ -149,7 +152,8 @@ private fun OpenAPIV3Model.parseEndpoint(): List<Definition> = paths
 
             Endpoint(
                 comment = null,
-                annotations = emptyList(), identifier = DefinitionIdentifier(name),
+                annotations = operation.description.toDescriptionAnnotationList(),
+                identifier = DefinitionIdentifier(name),
                 method = method,
                 path = segments,
                 queries = query,
@@ -230,6 +234,7 @@ private fun OpenAPIV3Model.parseComponents(): List<Definition> = components?.sch
                 is OpenAPIV3Schema -> true
                 null -> true
             }
+
             is OpenAPIV3Reference -> false
         }
     }
@@ -385,7 +390,7 @@ private fun OpenAPIV3Model.flatten(schemaObject: OpenAPIV3Schema, name: String):
     schemaObject.oneOf != null || schemaObject.anyOf != null -> listOf(
         Union(
             comment = null,
-            annotations = emptyList(),
+            annotations = schemaObject.description.toDescriptionAnnotationList(),
             identifier = DefinitionIdentifier(name.sanitize()),
             entries = schemaObject.oneOf
                 .orEmpty()
@@ -411,7 +416,7 @@ private fun OpenAPIV3Model.flatten(schemaObject: OpenAPIV3Schema, name: String):
     schemaObject.allOf != null -> listOf(
         Type(
             comment = null,
-            annotations = emptyList(),
+            annotations = schemaObject.description.toDescriptionAnnotationList(),
             identifier = DefinitionIdentifier(name.sanitize()),
             shape = Type.Shape(
                 schemaObject.allOf.orEmpty().flatMap { toField(resolve(it), name) }
@@ -441,7 +446,7 @@ private fun OpenAPIV3Model.flatten(schemaObject: OpenAPIV3Schema, name: String):
                 listOf(
                     Enum(
                         comment = null,
-                        annotations = emptyList(),
+                        annotations = schemaObject.description.toDescriptionAnnotationList(),
                         identifier = DefinitionIdentifier(name),
                         entries = it,
                     ),
@@ -456,7 +461,7 @@ private fun OpenAPIV3Model.flatten(schemaObject: OpenAPIV3Schema, name: String):
             val schema = listOf(
                 Type(
                     comment = null,
-                    annotations = emptyList(),
+                    annotations = schemaObject.description.toDescriptionAnnotationList(),
                     identifier = DefinitionIdentifier(name),
                     shape = Type.Shape(toField(schemaObject, name)),
                     extends = emptyList(),
@@ -638,7 +643,7 @@ private fun OpenAPIV3Model.toField(schema: OpenAPIV3Schema, name: String) = sche
         is OpenAPIV3Schema -> {
             Field(
                 identifier = FieldIdentifier(key),
-                annotations = emptyList(),
+                annotations = value.description.toDescriptionAnnotationList(),
                 reference = when {
                     value.enum != null -> toReference(value, isNullable, className(name, key))
                     value.type == OpenAPIV3Type.ARRAY -> toReference(
@@ -667,11 +672,14 @@ private fun OpenAPIV3Model.toField(parameter: OpenAPIV3Parameter, name: String):
     return when (val s = parameter.schema) {
         is OpenAPIV3Reference -> toReference(s, isNullable)
         is OpenAPIV3Schema -> toReference(s, isNullable, name + if (s.type == OpenAPIV3Type.ARRAY) "Array" else "")
-        null -> Reference.Primitive(type = Reference.Primitive.Type.String(null), isNullable = isNullable)
+        null -> Reference.Primitive(
+            type = Reference.Primitive.Type.String(null),
+            isNullable = isNullable,
+        )
     }.let {
         Field(
             identifier = FieldIdentifier(parameter.name),
-            annotations = emptyList(),
+            annotations = parameter.description.toDescriptionAnnotationList(),
             reference = it,
         )
     }
@@ -682,11 +690,14 @@ private fun OpenAPIV3Model.toField(header: OpenAPIV3Header, identifier: String, 
     return when (val s = header.schema) {
         is OpenAPIV3Reference -> toReference(s, isNullable)
         is OpenAPIV3Schema -> toReference(s, isNullable, name)
-        null -> Reference.Primitive(type = Reference.Primitive.Type.String(null), isNullable = isNullable)
+        null -> Reference.Primitive(
+            type = Reference.Primitive.Type.String(null),
+            isNullable = isNullable,
+        )
     }.let {
         Field(
             identifier = FieldIdentifier(identifier),
-            annotations = emptyList(),
+            annotations = header.description.toDescriptionAnnotationList(),
             reference = it,
         )
     }

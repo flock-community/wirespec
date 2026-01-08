@@ -39,7 +39,9 @@ class TokenizerRegexTest {
 
     @Test
     fun testRegexComplexWithComments() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |/*
             |* File data structure containing filename and base64-encoded data URL for supported file types (CSV, PDF, XLS, XLSX)
             |*/
@@ -47,7 +49,7 @@ class TokenizerRegexTest {
             |    fileName: String,
             |    dataUrl: String(/^text\/test$/g)
             |}
-        """.trimMargin()
+            """.trimMargin()
         WirespecSpec.tokenize(source, TokenizeOptions(removeWhitespace = false)).run {
             map { it.type } shouldBe listOf(
                 StartOfProgram,
@@ -73,7 +75,9 @@ class TokenizerRegexTest {
 
     @Test
     fun testBoundValueWithUnderscore() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Todo {
             |    id: UUID,
             |    name: String(/.{0,50}/),
@@ -81,7 +85,7 @@ class TokenizerRegexTest {
             |    prio: Integer(  _,5),
             |    done: Number( 0.1,5.0)
             |}
-        """.trimMargin()
+            """.trimMargin()
         WirespecSpec.tokenize(source, TokenizeOptions(removeWhitespace = false)).run {
             map { it.type } shouldBe listOf(
                 StartOfProgram,
