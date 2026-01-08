@@ -1,10 +1,13 @@
 package community.flock.wirespec.compiler.core.parse
 
+import arrow.core.Either
+import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
 import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
+import community.flock.wirespec.compiler.core.exceptions.WirespecException
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
@@ -30,7 +33,7 @@ class ParseAnnotationTest {
             """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Refined>()
@@ -57,7 +60,7 @@ class ParseAnnotationTest {
             """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Type>()
@@ -79,7 +82,7 @@ class ParseAnnotationTest {
             """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Refined>()
@@ -108,7 +111,7 @@ class ParseAnnotationTest {
             """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Refined>()
@@ -145,7 +148,7 @@ class ParseAnnotationTest {
             """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Enum>()
@@ -168,7 +171,7 @@ class ParseAnnotationTest {
             """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Endpoint>()
@@ -190,7 +193,7 @@ class ParseAnnotationTest {
             """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Channel>()
@@ -211,7 +214,7 @@ class ParseAnnotationTest {
             """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Refined>()
@@ -253,7 +256,7 @@ class ParseAnnotationTest {
             """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Refined>()
@@ -316,7 +319,7 @@ class ParseAnnotationTest {
             """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Refined>()
@@ -342,7 +345,7 @@ class ParseAnnotationTest {
             """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Endpoint>()
@@ -373,7 +376,7 @@ class ParseAnnotationTest {
             """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Endpoint>()
@@ -402,7 +405,7 @@ class ParseAnnotationTest {
             """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Refined>()
@@ -446,7 +449,7 @@ class ParseAnnotationTest {
             """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Type>()
@@ -487,17 +490,15 @@ class ParseAnnotationTest {
             """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Type>()
             .apply {
                 identifier.value shouldBe "User"
-                shape.value.shouldHaveSize(1)
-                shape.value.first().apply {
+                shape.value.shouldHaveSize(1).first().apply {
                     identifier.value shouldBe "name"
-                    annotations.shouldHaveSize(1)
-                    annotations.first().name shouldBe "Deprecated"
+                    annotations.shouldHaveSize(1).first().name shouldBe "Deprecated"
                 }
             }
     }
@@ -516,22 +517,24 @@ class ParseAnnotationTest {
             """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Type>()
             .apply {
                 identifier.value shouldBe "User"
-                shape.value.shouldHaveSize(2)
-                shape.value[0].apply {
-                    identifier.value shouldBe "name"
-                    annotations.shouldHaveSize(2)
-                    annotations[0].name shouldBe "Deprecated"
-                    annotations[1].name shouldBe "Internal"
-                }
-                shape.value[1].apply {
-                    identifier.value shouldBe "age"
-                    annotations.shouldHaveSize(0)
+                shape.value.shouldHaveSize(2).toList().let { (fieldA, fieldB) ->
+                    fieldA.apply {
+                        identifier.value shouldBe "name"
+                        annotations.shouldHaveSize(2).toList().let { (a, b) ->
+                            a.name shouldBe "Deprecated"
+                            b.name shouldBe "Internal"
+                        }
+                    }
+                    fieldB.apply {
+                        identifier.value shouldBe "age"
+                        annotations.shouldHaveSize(0)
+                    }
                 }
             }
     }
@@ -548,29 +551,30 @@ class ParseAnnotationTest {
             """.trimMargin()
 
         parser(source)
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(1)
             .first()
             .shouldBeInstanceOf<Type>()
             .apply {
                 identifier.value shouldBe "User"
                 shape.value.shouldHaveSize(1)
-                shape.value.first().apply {
-                    identifier.value shouldBe "name"
-                    annotations.shouldHaveSize(1)
-                    annotations.first().apply {
-                        name shouldBe "Validate"
-                        parameters.shouldHaveSize(2)
-                        parameters[0].apply {
-                            name shouldBe "min"
-                            value shouldBe Annotation.Value.Single("1")
-                        }
-                        parameters[1].apply {
-                            name shouldBe "max"
-                            value shouldBe Annotation.Value.Single("100")
-                        }
+                    .first().apply {
+                        identifier.value shouldBe "name"
+                        annotations.shouldHaveSize(1)
+                            .first().apply {
+                                name shouldBe "Validate"
+                                parameters.shouldHaveSize(2).toList().let { (a, b) ->
+                                    a.apply {
+                                        name shouldBe "min"
+                                        value shouldBe Annotation.Value.Single("1")
+                                    }
+                                    b.apply {
+                                        name shouldBe "max"
+                                        value shouldBe Annotation.Value.Single("100")
+                                    }
+                                }
+                            }
                     }
-                }
             }
     }
 
@@ -591,20 +595,20 @@ class ParseAnnotationTest {
         val result = parser(source)
 
         result
-            .shouldBeRight { it.joinToString { it.message } }
+            .shouldBeRightOrReport()
             .shouldHaveSize(2)
             .last()
             .shouldBeInstanceOf<Endpoint>()
-            .run {
-                responses.shouldHaveSize(1).first().run {
+            .apply {
+                responses.shouldHaveSize(1).first().apply {
                     status shouldBe "201"
-                    annotations.shouldHaveSize(1).first().run {
+                    annotations.shouldHaveSize(1).first().apply {
                         name shouldBe "Status"
-                        parameters.shouldHaveSize(1).first().run {
-                            (value as Annotation.Value.Single).value shouldBe "created"
-                        }
+                        parameters.shouldHaveSize(1).first().value shouldBe Annotation.Value.Single("created")
                     }
                 }
             }
     }
 }
+
+private fun Either<NonEmptyList<WirespecException>, NonEmptyList<Definition>>.shouldBeRightOrReport() = shouldBeRight { exceptions -> exceptions.joinToString { it.message } }
