@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service
 @Service
 class Service {
 
+    val files = mutableListOf<ByteArray>()
     val list = mutableListOf<Pet>()
 
     fun create(pet: Pet): Pet = pet
@@ -21,5 +22,9 @@ class Service {
 
     fun delete(id: Long) {
         list.removeIf { it.id == id }
+    }
+
+    fun upload(file: ByteArray) {
+        files.add(file)
     }
 }

@@ -1,5 +1,8 @@
 package community.flock.wirespec.examples.maven.spring.integration;
 
+import java.nio.charset.StandardCharsets;
+
+import community.flock.wirespec.examples.maven.spring.integration.service.TodoService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -9,10 +12,15 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import org.springframework.mock.web.MockMultipartFile;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -23,6 +31,9 @@ class TodoTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private TodoService service;
 
     @Test
     void shouldReturnDefaultMessage() throws Exception {
@@ -54,5 +65,44 @@ class TodoTest {
                 .andExpect(jsonPath("$.name", equalTo("test")))
                 .andExpect(jsonPath("$.done", equalTo(true)));
 
+    }
+
+    @Test
+    void shouldUploadAttachment() throws Exception {
+
+        MockMultipartFile file = new MockMultipartFile(
+                "plain",
+                "hello.txt",
+                "text/plain",
+                "Hello Wirespec".getBytes()
+        );
+
+        MockMultipartFile csv = new MockMultipartFile(
+                "csv",
+                "hello.csv",
+                "text/csv",
+                "{\"id\": 1, \"name\": \"Todo 1\", \"done\": false}".getBytes()
+        );
+
+        MockMultipartFile json = new MockMultipartFile(
+                "json",
+                "hello.json",
+                "application/json",
+                "id,name,done\n1,'todo 1',true\n2,'todo 2',false".getBytes()
+        );
+
+        MvcResult mvcMultipartResult = mockMvc
+                .perform(multipart("/todos/{id}/upload", "1")
+                        .file(file)
+                        .file(json)
+                        .file(csv)
+                        .contentType(MULTIPART_FORM_DATA_VALUE))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        mockMvc.perform(asyncDispatch(mvcMultipartResult))
+                .andExpect(status().isCreated());
+
+        assertEquals("Hello Wirespec", new String(service.bucket.get("plain")));
     }
 }

@@ -2,6 +2,7 @@ package community.flock.wirespec.integration.spring.java.generated.endpoint;
 
 import community.flock.wirespec.java.Wirespec;
 
+import community.flock.wirespec.integration.spring.java.generated.model.UploadFileRequestBody;
 import community.flock.wirespec.integration.spring.java.generated.model.ApiResponse;
 
 public interface UploadFile extends Wirespec.Endpoint {
@@ -15,13 +16,13 @@ public interface UploadFile extends Wirespec.Endpoint {
 
   class RequestHeaders implements Wirespec.Request.Headers {}
 
-  class Request implements Wirespec.Request<String> {
+  class Request implements Wirespec.Request<UploadFileRequestBody> {
     private final Path path;
     private final Wirespec.Method method;
     private final Queries queries;
     private final RequestHeaders headers;
-    private final String body;
-    public Request(Long petId, java.util.Optional<String> additionalMetadata, String body) {
+    private final UploadFileRequestBody body;
+    public Request(Long petId, java.util.Optional<String> additionalMetadata, UploadFileRequestBody body) {
       this.path = new Path(petId);
       this.method = Wirespec.Method.POST;
       this.queries = new Queries(additionalMetadata);
@@ -32,7 +33,7 @@ public interface UploadFile extends Wirespec.Endpoint {
     @Override public Wirespec.Method getMethod() { return method; }
     @Override public Queries getQueries() { return queries; }
     @Override public RequestHeaders getHeaders() { return headers; }
-    @Override public String getBody() { return body; }
+    @Override public UploadFileRequestBody getBody() { return body; }
   }
 
   sealed interface Response<T> extends Wirespec.Response<T> {}
@@ -54,7 +55,7 @@ public interface UploadFile extends Wirespec.Endpoint {
         java.util.List.of("pet", serialization.serializePath(request.path.petId, Wirespec.getType(Long.class, null)), "uploadImage"),
         java.util.Map.ofEntries(java.util.Map.entry("additionalMetadata", serialization.serializeParam(request.queries.additionalMetadata, Wirespec.getType(String.class, java.util.Optional.class)))),
         java.util.Collections.emptyMap(),
-        serialization.serializeBody(request.getBody(), Wirespec.getType(String.class, null))
+        serialization.serializeBody(request.getBody(), Wirespec.getType(UploadFileRequestBody.class, null))
       );
     }
 
@@ -62,7 +63,7 @@ public interface UploadFile extends Wirespec.Endpoint {
       return new Request(
         serialization.deserializePath(request.path().get(1), Wirespec.getType(Long.class, null)),
         serialization.deserializeParam(request.queries().getOrDefault("additionalMetadata", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
-        serialization.deserializeBody(request.body(), Wirespec.getType(String.class, null))
+        serialization.deserializeBody(request.body(), Wirespec.getType(UploadFileRequestBody.class, null))
       );
     }
 

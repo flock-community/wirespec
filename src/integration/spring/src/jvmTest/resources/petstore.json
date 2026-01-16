@@ -127,15 +127,6 @@
         "responses": {
           "200": {
             "description": "Successful operation",
-            "headers": {
-              "X-Rate-Limit": {
-                "description": "calls per hour allowed by the user",
-                "schema": {
-                  "type": "integer",
-                  "format": "int32"
-                }
-              }
-            },
             "content": {
               "application/xml": {
                 "schema": {
@@ -411,11 +402,26 @@
         ],
         "requestBody": {
           "content": {
-            "application/octet-stream": {
+            "multipart/form-data": {
               "schema": {
-
-                "type": "string",
-                "format": "binary"
+                "type": "object",
+                "properties": {
+                  "additionalMetadata": {
+                    "type": "string"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "json": {
+                    "type": "object",
+                    "properties": {
+                      "foo": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
               }
             }
           }

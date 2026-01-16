@@ -6,6 +6,7 @@ import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.Del
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.FindPetsByTags
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.GetPetById
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.UpdatePet
+import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.UploadFile
 import org.springframework.stereotype.Component
 
 @Component
@@ -15,7 +16,8 @@ class WirespecPetstoreWebClient(
     UpdatePet.Handler,
     GetPetById.Handler,
     DeletePet.Handler,
-    FindPetsByTags.Handler {
+    FindPetsByTags.Handler,
+    UploadFile.Handler {
     override suspend fun getPetById(request: GetPetById.Request): GetPetById.Response<*> = wirespecWebClient.send(request)
 
     override suspend fun addPet(request: AddPet.Request): AddPet.Response<*> = wirespecWebClient.send(request)
@@ -25,4 +27,6 @@ class WirespecPetstoreWebClient(
     override suspend fun deletePet(request: DeletePet.Request): DeletePet.Response<*> = wirespecWebClient.send(request)
 
     override suspend fun findPetsByTags(request: FindPetsByTags.Request): FindPetsByTags.Response<*> = wirespecWebClient.send(request)
+
+    override suspend fun uploadFile(request: UploadFile.Request): UploadFile.Response<*> = wirespecWebClient.send(request)
 }

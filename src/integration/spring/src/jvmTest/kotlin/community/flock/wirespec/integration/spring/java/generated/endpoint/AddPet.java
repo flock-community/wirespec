@@ -37,13 +37,11 @@ public interface AddPet extends Wirespec.Endpoint {
   sealed interface ResponsePet extends Response<Pet> {}
   sealed interface ResponseVoid extends Response<Void> {}
 
-  record Response200(java.util.Optional<Integer> XRateLimit, Pet body) implements Response2XX<Pet>, ResponsePet {
+  record Response200(Pet body) implements Response2XX<Pet>, ResponsePet {
     @Override public int getStatus() { return 200; }
-    @Override public Headers getHeaders() { return new Headers(XRateLimit); }
+    @Override public Headers getHeaders() { return new Headers(); }
     @Override public Pet getBody() { return body; }
-    public record Headers(
-    java.util.Optional<Integer> XRateLimit
-  ) implements Wirespec.Response.Headers {}
+    class Headers implements Wirespec.Response.Headers {}
   }
   record Response405() implements Response4XX<Void>, ResponseVoid {
     @Override public int getStatus() { return 405; }
@@ -71,7 +69,7 @@ public interface AddPet extends Wirespec.Endpoint {
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Map.ofEntries(java.util.Map.entry("X-Rate-Limit", serialization.serializeParam(r.getHeaders().XRateLimit(), Wirespec.getType(Integer.class, java.util.Optional.class)))), serialization.serializeBody(r.body, Wirespec.getType(Pet.class, null))); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(Pet.class, null))); }
       if (response instanceof Response405 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), null); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
     }
@@ -79,7 +77,6 @@ public interface AddPet extends Wirespec.Endpoint {
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
       switch (response.statusCode()) {
         case 200: return new Response200(
-        serialization.deserializeParam(response.headers().getOrDefault("X-Rate-Limit", java.util.Collections.emptyList()), Wirespec.getType(Integer.class, java.util.Optional.class)),
         serialization.deserializeBody(response.body(), Wirespec.getType(Pet.class, null))
       );
         case 405: return new Response405();

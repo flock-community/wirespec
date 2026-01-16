@@ -14,7 +14,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice
 @ControllerAdvice
 class WirespecResponseBodyAdvice(
     private val objectMapper: ObjectMapper,
-    private val wirespecSerialization: Wirespec.Serialization,
+    private val wirespecSerializationMap: Map<MediaType, Wirespec.Serialization>,
 ) : ResponseBodyAdvice<Any?> {
 
     override fun supports(returnType: MethodParameter, converterType: Class<out HttpMessageConverter<*>?>): Boolean = Wirespec.Response::class.java.isAssignableFrom(returnType.parameterType)
@@ -32,12 +32,12 @@ class WirespecResponseBodyAdvice(
         val handler = declaringClass.declaredClasses.toList().find { it.simpleName == "Handler" }
         val handlers = handler?.declaredClasses?.toList()?.find { it.simpleName == "Handlers" } ?: error("Handlers not found")
         val instance = handlers.getDeclaredConstructor().newInstance() as Wirespec.Server<Wirespec.Request<*>, Wirespec.Response<*>>
-        val server = instance.getServer(wirespecSerialization)
+        val jsonSerialization = wirespecSerializationMap[MediaType.APPLICATION_JSON] ?: error("No serialization found for media type ${MediaType.APPLICATION_JSON_VALUE}")
+        val server = instance.getServer(jsonSerialization)
         return when (body) {
             is Wirespec.Response<*> -> {
                 val rawResponse = server.to(body)
                 response.setStatusCode(HttpStatusCode.valueOf(rawResponse.statusCode))
-                response.headers.putAll(rawResponse.headers)
                 rawResponse.body?.let { objectMapper.readTree(it) }
             }
             else -> body

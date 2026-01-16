@@ -6,7 +6,12 @@ import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.Del
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.FindPetsByTags
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.GetPetById
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.UpdatePet
+import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.UploadFile
+import community.flock.wirespec.integration.spring.kotlin.generated.model.ApiResponse
 import community.flock.wirespec.integration.spring.kotlin.generated.model.Pet
+import community.flock.wirespec.integration.spring.kotlin.generated.model.UploadFileRequestBody
+import community.flock.wirespec.integration.spring.kotlin.generated.model.UploadFileRequestBodyJson
+import community.flock.wirespec.openapi.json
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.springframework.beans.factory.annotation.Autowired
@@ -33,7 +38,7 @@ class WebClientIntegrationTest {
             )
 
         val addPetResponse = wirespecPetstoreWebClient.addPet(AddPet.Request(pet))
-        assertEquals(AddPet.Response200(pet, 100), addPetResponse)
+        assertEquals(AddPet.Response200(pet), addPetResponse)
 
         val updatedPet = pet.copy(name = "Cat")
         val updatePetResponse = wirespecPetstoreWebClient.updatePet(UpdatePet.Request(updatedPet))
@@ -53,5 +58,23 @@ class WebClientIntegrationTest {
                 FindPetsByTags.Request(listOf("Smilodon", "Dodo", "Mammoth")),
             )
         assertEquals(FindPetsByTags.Response200(emptyList()), queryParamResponse)
+    }
+
+    @Test
+    fun `multipart form data`() = runBlocking {
+        val request = UploadFile.Request(
+            petId = 1,
+            additionalMetadata = "metadata",
+            body = UploadFileRequestBody(
+                additionalMetadata = "metadata",
+                file = "data".toByteArray(),
+                json = UploadFileRequestBodyJson(foo = "bar"),
+            ),
+        )
+        val response = wirespecPetstoreWebClient.uploadFile(request)
+        assertEquals(
+            UploadFile.Response200(ApiResponse(code = 200, type = "type", message = "metadata")),
+            response,
+        )
     }
 }

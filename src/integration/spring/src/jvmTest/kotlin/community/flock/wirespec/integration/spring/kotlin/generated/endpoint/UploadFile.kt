@@ -3,6 +3,7 @@ package community.flock.wirespec.integration.spring.kotlin.generated.endpoint
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
+import community.flock.wirespec.integration.spring.kotlin.generated.model.UploadFileRequestBody
 import community.flock.wirespec.integration.spring.kotlin.generated.model.ApiResponse
 
 object UploadFile : Wirespec.Endpoint {
@@ -19,8 +20,8 @@ object UploadFile : Wirespec.Endpoint {
   class Request(
     petId: Long,
     additionalMetadata: String?,
-    override val body: String,
-  ) : Wirespec.Request<String> {
+    override val body: UploadFileRequestBody,
+  ) : Wirespec.Request<UploadFileRequestBody> {
     override val path = Path(petId)
     override val method = Wirespec.Method.POST
     override val queries = Queries(additionalMetadata)
@@ -33,14 +34,14 @@ object UploadFile : Wirespec.Endpoint {
       method = request.method.name,
       queries = (mapOf("additionalMetadata" to (request.queries.additionalMetadata?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
       headers = emptyMap(),
-      body = serialization.serializeBody(request.body, typeOf<String>()),
+      body = serialization.serializeBody(request.body, typeOf<UploadFileRequestBody>()),
     )
 
   fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
     Request(
       petId = serialization.deserializePath(request.path[1], typeOf<Long>()),
       additionalMetadata = request.queries["additionalMetadata"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) },
-      body = serialization.deserializeBody(requireNotNull(request.body) { "body is null" }, typeOf<String>()),
+      body = serialization.deserializeBody(requireNotNull(request.body) { "body is null" }, typeOf<UploadFileRequestBody>()),
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
