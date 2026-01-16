@@ -29,7 +29,7 @@ interface TypeScriptClientEmitter: ClientEmitter, TypeScriptTypeDefinitionEmitte
     private fun Endpoint.Request.emitClientInterface(endpoint: Endpoint) =
         paramList(endpoint)
             .takeIf { it.isNotEmpty() }
-            ?.joinToString(", ") { "${it.identifier.value.replace("-", "")}: ${it.reference.emit()}" }
+            ?.joinToString(", ") { "${it.identifier.value.sanitizeSymbol()}: ${it.reference.emit()}" }
             ?.let { "params: {${it}}" }
             .orEmpty()
     private fun emitFunction(endpoint: Endpoint, request: Endpoint.Request) = """

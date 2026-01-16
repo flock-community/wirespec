@@ -14,7 +14,7 @@ interface TypeScriptTypeDefinitionEmitter: TypeDefinitionEmitter, TypeScriptIden
     fun Identifier.sanitizeSymbol() = value.sanitizeSymbol()
 
     fun String.sanitizeSymbol() = asSequence()
-        .filter { it.isLetterOrDigit() || it in listOf('_') }
+        .filter { it.isLetterOrDigit() || it in listOf('_', '-') }
         .joinToString("")
 
     override fun emit(type: Type, module: Module):String =
