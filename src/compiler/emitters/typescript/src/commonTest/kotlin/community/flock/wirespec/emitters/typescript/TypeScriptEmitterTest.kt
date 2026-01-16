@@ -31,7 +31,7 @@ class TypeScriptEmitterTest {
             |  }
             |  type Headers = {
             |    "token": Token,
-            |    "refreshToken": Token | undefined,
+            |    "Refresh-Token": Token | undefined,
             |  }
             |  export type Request = {
             |    path: Path
@@ -56,12 +56,12 @@ class TypeScriptEmitterTest {
             |    body: Error
             |  }
             |  export type Response = Response200 | Response201 | Response500
-            |  export type RequestParams = {"id": string, "done": boolean, "name"?: string, "token": Token, "refreshToken"?: Token, "body": PotentialTodoDto}
+            |  export type RequestParams = {"id": string, "done": boolean, "name"?: string, "token": Token, "Refresh-Token"?: Token, "body": PotentialTodoDto}
             |  export const request = (params: RequestParams): Request => ({
             |    path: {"id": params["id"]},
             |    method: "PUT",
             |    queries: {"done": params["done"], "name": params["name"]},
-            |    headers: {"token": params["token"], "refreshToken": params["refreshToken"]},
+            |    headers: {"token": params["token"], "Refresh-Token": params["Refresh-Token"]},
             |    body: params.body,
             |  })
             |  export type Response200Params = {"body": TodoDto}
@@ -90,7 +90,7 @@ class TypeScriptEmitterTest {
             |      method: "PUT",
             |      path: ["todos", serialization.serialize(it.path["id"])],
             |      queries: {"done": serialization.serialize(it.queries["done"]), "name": serialization.serialize(it.queries["name"])},
-            |      headers: {"token": serialization.serialize(it.headers["token"]), "refreshToken": serialization.serialize(it.headers["refreshToken"])},
+            |      headers: {"token": serialization.serialize(it.headers["token"]), "Refresh-Token": serialization.serialize(it.headers["Refresh-Token"])},
             |      body: serialization.serialize(it.body)
             |    }),
             |    from: (it) => {
@@ -129,7 +129,7 @@ class TypeScriptEmitterTest {
             |          "done": serialization.deserialize(it.queries["done"]),      "name": serialization.deserialize(it.queries["name"])
             |        },
             |        headers: {
-            |          "token": serialization.deserialize(Object.entries(it.headers).find(([key]) => key.toLowerCase() === "token")?.[1]),      "refreshToken": serialization.deserialize(Object.entries(it.headers).find(([key]) => key.toLowerCase() === "refreshtoken")?.[1])
+            |          "token": serialization.deserialize(Object.entries(it.headers).find(([key]) => key.toLowerCase() === "token")?.[1]),      "Refresh-Token": serialization.deserialize(Object.entries(it.headers).find(([key]) => key.toLowerCase() === "refresh-token")?.[1])
             |        },
             |        body: serialization.deserialize(it.body)
             |      }
@@ -210,7 +210,7 @@ class TypeScriptEmitterTest {
             |type RawHandler = (req: Wirespec.RawRequest) => Promise<Wirespec.RawResponse>
             |
             |export const client = (serialization: Wirespec.Serialization, handler: RawHandler) => ({
-            |  PutTodo: async (params: {id: string, done: boolean, name: string | undefined, token: Token, refreshToken: Token | undefined, body: PotentialTodoDto}) => {
+            |  PutTodo: async (params: {"id": string, "done": boolean, "name": string | undefined, "token": Token, "Refresh-Token": Token | undefined, "body": PotentialTodoDto}) => {
             |    const req = PutTodo.request(params)
             |    const rawRequest = PutTodo.client(serialization).to(req)
             |    const rawResponse = await handler(rawRequest)

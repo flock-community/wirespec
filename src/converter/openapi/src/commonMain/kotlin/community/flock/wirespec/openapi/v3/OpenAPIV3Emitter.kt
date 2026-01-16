@@ -37,6 +37,7 @@ import community.flock.wirespec.compiler.core.parse.Statements
 import community.flock.wirespec.compiler.core.parse.Type
 import community.flock.wirespec.compiler.core.parse.Union
 import community.flock.wirespec.compiler.utils.Logger
+import community.flock.wirespec.openapi.findDescription
 import community.flock.wirespec.openapi.json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
@@ -140,7 +141,7 @@ object OpenAPIV3Emitter : Emitter {
     }
 
     private fun Type.emit(): OpenAPIV3Schema = OpenAPIV3Schema(
-        description = comment?.value,
+        description = annotations.findDescription() ?: comment?.value,
         properties = shape.value.associate { it.emitSchema() },
         required = shape.value
             .filter { !it.reference.isNullable }
@@ -149,13 +150,13 @@ object OpenAPIV3Emitter : Emitter {
     )
 
     private fun Enum.emit(): OpenAPIV3Schema = OpenAPIV3Schema(
-        description = comment?.value,
+        description = annotations.findDescription() ?: comment?.value,
         type = OpenAPIV3Type.STRING,
         enum = entries.map { JsonPrimitive(it) },
     )
 
     private fun Union.emit(): OpenAPIV3Schema = OpenAPIV3Schema(
-        description = comment?.value,
+        description = annotations.findDescription() ?: comment?.value,
         type = OpenAPIV3Type.STRING,
         oneOf = entries.map { it.emitSchema() },
     )
@@ -164,7 +165,7 @@ object OpenAPIV3Emitter : Emitter {
 
     private fun Endpoint.emit(): OpenAPIV3Operation = OpenAPIV3Operation(
         operationId = identifier.value,
-        description = comment?.value,
+        description = annotations.findDescription() ?: comment?.value,
         parameters = path.filterIsInstance<Endpoint.Segment.Param>()
             .map { it.emitParameter() } + queries.map { it.emitParameter(OpenAPIV3ParameterLocation.QUERY) } + headers.map {
             it.emitParameter(
@@ -185,7 +186,8 @@ object OpenAPIV3Emitter : Emitter {
             .map { (statusCode, res) ->
                 StatusCode(statusCode) to OpenAPIV3Response(
                     headers = res.flatMap { it.headers }.associate { it.emitHeader() },
-                    description = "${identifier.value} $statusCode response",
+                    description = res.first().annotations.findDescription()
+                        ?: "${identifier.value} $statusCode response",
                     content = res
                         .mapNotNull { it.content }
                         .associate { it.emit() }
@@ -206,6 +208,7 @@ object OpenAPIV3Emitter : Emitter {
         `in` = location,
         name = identifier.value,
         schema = reference.emitSchema(),
+        description = annotations.findDescription(),
         required = !reference.isNullable,
     )
 
@@ -216,15 +219,20 @@ object OpenAPIV3Emitter : Emitter {
         required = !reference.isNullable,
     )
 
-    private fun Field.emitHeader(): Pair<String, OpenAPIV3HeaderOrReference> = identifier.value to reference.emitHeader()
+    private fun Field.emitHeader(): Pair<String, OpenAPIV3HeaderOrReference> = identifier.value to reference.emitHeader(annotations.findDescription())
 
-    private fun Field.emitSchema(): Pair<String, OpenAPIV3SchemaOrReference> = identifier.value to reference.emitSchema()
+    private fun Field.emitSchema(): Pair<String, OpenAPIV3SchemaOrReference> = identifier.value to reference.emitSchema().let {
+        when (it) {
+            is OpenAPIV3Schema -> it.copy(description = annotations.findDescription())
+            is OpenAPIV3Reference -> it
+        }
+    }
 
-    private fun Reference.emitHeader() = when (this) {
+    private fun Reference.emitHeader(description: String?) = when (this) {
         is Reference.Dict -> OpenAPIV3Reference(ref = Ref("#/components/headers/$value"))
         is Reference.Iterable -> OpenAPIV3Reference(ref = Ref("#/components/headers/$value"))
         is Reference.Custom -> OpenAPIV3Reference(ref = Ref("#/components/headers/$value"))
-        is Reference.Primitive -> OpenAPIV3Header(schema = emitSchema())
+        is Reference.Primitive -> OpenAPIV3Header(schema = emitSchema(), description = description)
         is Reference.Any -> error("Cannot map Any")
         is Reference.Unit -> error("Cannot map Unit")
     }

@@ -33,7 +33,9 @@ class ValidatorTest {
 
     @Test
     fun uniqueEndpoints() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |endpoint Test1 GET /Test1 -> {
             |    200 -> String
             |}
@@ -41,7 +43,7 @@ class ValidatorTest {
             |endpoint Test2 GET /Test2 -> {
             |    200 -> String
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         validate(source)
             .shouldBeRight()
@@ -49,10 +51,12 @@ class ValidatorTest {
 
     @Test
     fun uniqueTypes() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Foo { str: String }
             |type Bar { str: String }
-        """.trimMargin()
+            """.trimMargin()
 
         validate(source)
             .shouldBeRight()
@@ -60,10 +64,12 @@ class ValidatorTest {
 
     @Test
     fun uniqueChannels() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |channel Foo -> String
             |channel Bar -> String
-        """.trimMargin()
+            """.trimMargin()
 
         validate(source)
             .shouldBeRight()
@@ -71,7 +77,9 @@ class ValidatorTest {
 
     @Test
     fun duplicateEndpointSameFile() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |endpoint Test GET /Test1 -> {
             |    200 -> String
             |}
@@ -79,7 +87,7 @@ class ValidatorTest {
             |endpoint Test GET /Test2 -> {
             |    200 -> String
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         validate(source)
             .shouldBeLeft()
@@ -88,17 +96,21 @@ class ValidatorTest {
 
     @Test
     fun duplicateEndpointDifferentFile() {
-        val source1 = """
+        val source1 =
+            // language=ws
+            """
             |endpoint Test GET /Test1 -> {
             |    200 -> String
             |}
-        """.trimMargin()
+            """.trimMargin()
 
-        val source2 = """
+        val source2 =
+            // language=ws
+            """
             |endpoint Test GET /Test2 -> {
             |    200 -> String
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         validate(source1, source2)
             .shouldBeLeft()
@@ -107,13 +119,17 @@ class ValidatorTest {
 
     @Test
     fun duplicateTypeDifferentFile() {
-        val source1 = """
-           |type Foo { str: String }
-        """.trimMargin()
-
-        val source2 = """
+        val source1 =
+            // language=ws
+            """
             |type Foo { str: String }
-        """.trimMargin()
+            """.trimMargin()
+
+        val source2 =
+            // language=ws
+            """
+            |type Foo { str: String }
+            """.trimMargin()
 
         validate(source1, source2)
             .shouldBeRight()
@@ -121,10 +137,12 @@ class ValidatorTest {
 
     @Test
     fun duplicateTypeSameFile() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Foo { str: String }
             |type Foo { str: String }
-        """.trimMargin()
+            """.trimMargin()
 
         validate(source)
             .shouldBeLeft()
@@ -133,11 +151,13 @@ class ValidatorTest {
 
     @Test
     fun multipleTypeViolations() {
-        val source = """
+        val source =
+            // language=ws
+            """
             |type Foo { str: String }
             |type Foo { str: String }
             |type Foo { str: String }
-        """.trimMargin()
+            """.trimMargin()
 
         validate(source)
             .shouldBeLeft()
@@ -146,7 +166,9 @@ class ValidatorTest {
 
     @Test
     fun multipleEndpointViolations() {
-        val source1 = """
+        val source1 =
+            // language=ws
+            """
             |endpoint Test GET /Test1 -> {
             |    200 -> String
             |}
@@ -154,13 +176,15 @@ class ValidatorTest {
             |endpoint Test GET /Test2 -> {
             |    200 -> String
             |}
-        """.trimMargin()
+            """.trimMargin()
 
-        val source2 = """
+        val source2 =
+            // language=ws
+            """
             |endpoint Test GET /Test2 -> {
             |    200 -> String
             |}
-        """.trimMargin()
+            """.trimMargin()
 
         validate(source1, source2)
             .shouldBeLeft()

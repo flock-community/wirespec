@@ -2,7 +2,9 @@ package community.flock.wirespec.compiler.test
 
 object CompileUnionTest {
 
-    val compiler = """
+    val compiler =
+        // language=ws
+        """
         |type UserAccount = UserAccountPassword | UserAccountToken
         |type UserAccountPassword {
         |  username: String,
@@ -15,5 +17,5 @@ object CompileUnionTest {
         |   username: String,
         |   account: UserAccount
         |}
-    """.trimMargin().let(::compile)
+        """.trimMargin().let(::compile)
 }

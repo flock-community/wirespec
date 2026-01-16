@@ -7,11 +7,12 @@ class TokenizeEnumTest {
 
     @Test
     fun testEnumTokenize() = testTokenizer(
+        // language=ws
         """
-            |enum Foo {
-            |    FOO,
-            |    DELETE_BAR
-            |}
+        |enum Foo {
+        |    FOO,
+        |    DELETE_BAR
+        |}
         """.trimMargin(),
         EnumTypeDefinition, WirespecType, LeftCurly,
         WirespecType, Comma,

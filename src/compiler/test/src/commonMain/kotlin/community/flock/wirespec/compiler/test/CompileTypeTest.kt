@@ -2,7 +2,9 @@ package community.flock.wirespec.compiler.test
 
 object CompileTypeTest {
 
-    val compiler = """
+    val compiler =
+        // language=ws
+        """
         |type Request {
         |  `type`: String,
         |  url: String,
@@ -11,5 +13,5 @@ object CompileTypeTest {
         |  headers: { String },
         |  body: { String?[]? }?
         |}
-    """.trimMargin().let(::compile)
+        """.trimMargin().let(::compile)
 }

@@ -139,29 +139,27 @@ interface TypeScriptEndpointDefinitionEmitter: EndpointDefinitionEmitter, TypeSc
 
     private fun Endpoint.Response.emitName() = "Response" + status.firstToUpper()
 
-    private fun Endpoint.Request.emitFunction(endpoint: Endpoint) = """
-      |${Spacer}export type RequestParams = ${paramList(endpoint).joinToObject { it.emit() }}
-      |${Spacer}export const request = (${
-        paramList(endpoint).takeIf { it.isNotEmpty() }?.run { "params: RequestParams" }.orEmpty()
-    }): Request => ({
-      |${Spacer(2)}path: ${endpoint.pathParams.joinToObject { "${emit(it.identifier)}: params[${emit(it.identifier)}]" }},
-      |${Spacer(2)}method: "${endpoint.method}",
-      |${Spacer(2)}queries: ${endpoint.queries.joinToObject { "${emit(it.identifier)}: params[${emit(it.identifier)}]" }},
-      |${Spacer(2)}headers: ${endpoint.headers.joinToObject { "${emit(it.identifier)}: params[${emit(it.identifier)}]" }},
-      |${Spacer(2)}body: ${content?.let { "params.body" } ?: "undefined"},
-      |${Spacer}})
-    """.trimIndent()
+    private fun Endpoint.Request.emitFunction(endpoint: Endpoint) =
+        """
+        |${Spacer}export type RequestParams = ${paramList(endpoint).joinToObject { it.emit() }}
+        |${Spacer}export const request = (${paramList(endpoint).takeIf { it.isNotEmpty() }?.run { "params: RequestParams" }.orEmpty()}): Request => ({
+        |${Spacer(2)}path: ${endpoint.pathParams.joinToObject { "${emit(it.identifier)}: params[${emit(it.identifier)}]" }},
+        |${Spacer(2)}method: "${endpoint.method}",
+        |${Spacer(2)}queries: ${endpoint.queries.joinToObject { "${emit(it.identifier)}: params[${emit(it.identifier)}]" }},
+        |${Spacer(2)}headers: ${endpoint.headers.joinToObject { "${emit(it.identifier)}: params[${emit(it.identifier)}]" }},
+        |${Spacer(2)}body: ${content?.let { "params.body" } ?: "undefined"},
+        |${Spacer}})
+        """.trimMargin()
 
-    private fun Endpoint.Response.emitFunction() = """
-      |${Spacer}export type Response${status.firstToUpper()}Params = ${paramList().joinToObject { it.emit() }}
-      |${Spacer}export const response${status.firstToUpper()} = (${
-        paramList().takeIf { it.isNotEmpty() }?.run { "params: Response${status.firstToUpper()}Params" }.orEmpty()
-    }): Response${status.firstToUpper()} => ({
-      |${Spacer(2)}status: ${status.fixStatus()},
-      |${Spacer(2)}headers: ${headers.joinToObject { "${emit(it.identifier)}: params[${emit(it.identifier)}]" }},
-      |${Spacer(2)}body: ${content?.let { "params.body" } ?: "undefined"},
-      |${Spacer}})
-    """.trimIndent()
+    private fun Endpoint.Response.emitFunction() =
+        """
+        |${Spacer}export type Response${status.firstToUpper()}Params = ${paramList().joinToObject { it.emit() }}
+        |${Spacer}export const response${status.firstToUpper()} = (${paramList().takeIf { it.isNotEmpty() }?.run { "params: Response${status.firstToUpper()}Params" }.orEmpty()}): Response${status.firstToUpper()} => ({
+        |${Spacer(2)}status: ${status.fixStatus()},
+        |${Spacer(2)}headers: ${headers.joinToObject { "${emit(it.identifier)}: params[${emit(it.identifier)}]" }},
+        |${Spacer(2)}body: ${content?.let { "params.body" } ?: "undefined"},
+        |${Spacer}})
+        """.trimMargin()
 
     private fun Endpoint.Response.emitReference() = content?.reference?.emit() ?: "undefined"
 
@@ -172,25 +170,27 @@ interface TypeScriptEndpointDefinitionEmitter: EndpointDefinitionEmitter, TypeSc
         }
     }
 
-    private fun Endpoint.Response.emitType() = """
-      |${Spacer}export type ${emitName()} = {
-      |${Spacer(2)}status: ${status.fixStatus()}
-      |${Spacer(2)}headers: {${headers.joinToString { "${emit(it.identifier)}: ${it.reference.emit()}" }}}
-      |${Spacer(2)}body: ${emitReference()}
-      |${Spacer}}
-    """.trimIndent()
+    private fun Endpoint.Response.emitType() =
+        """
+        |${Spacer}export type ${emitName()} = {
+        |${Spacer(2)}status: ${status.fixStatus()}
+        |${Spacer(2)}headers: {${headers.joinToString { "${emit(it.identifier)}: ${it.reference.emit()}" }}}
+        |${Spacer(2)}body: ${emitReference()}
+        |${Spacer}}
+        """.trimMargin()
 
     private fun Endpoint.Request.emitReference() = content?.reference?.emit() ?: "undefined"
 
-    private fun Endpoint.Request.emitType(endpoint: Endpoint) = """
-      |${Spacer}export type Request = {
-      |${Spacer(2)}path: Path
-      |${Spacer(2)}method: "${endpoint.method}"
-      |${Spacer(2)}queries: Queries
-      |${Spacer(2)}headers: Headers
-      |${Spacer(2)}body: ${emitReference()}
-      |${Spacer}}
-    """.trimIndent()
+    private fun Endpoint.Request.emitType(endpoint: Endpoint) =
+        """
+        |${Spacer}export type Request = {
+        |${Spacer(2)}path: Path
+        |${Spacer(2)}method: "${endpoint.method}"
+        |${Spacer(2)}queries: Queries
+        |${Spacer(2)}headers: Headers
+        |${Spacer(2)}body: ${emitReference()}
+        |${Spacer}}
+        """.trimMargin()
 
     private fun Endpoint.Segment.Param.emit() =
         "${Spacer}${emit(identifier)}: ${reference.emit()}"

@@ -2,10 +2,12 @@ package community.flock.wirespec.compiler.test
 
 object CompileFullEndpointTest {
 
-    val compiler = """
+    val compiler =
+        // language=ws
+        """
         |endpoint PutTodo PUT PotentialTodoDto /todos/{id: String}
         |    ?{done: Boolean, name: String?}
-        |    #{token: Token, refreshToken: Token?} -> {
+        |    #{token: Token, `Refresh-Token`: Token?} -> {
         |    200 -> TodoDto
         |    201 -> TodoDto #{token: Token, refreshToken: Token?}
         |    500 -> Error
@@ -26,5 +28,5 @@ object CompileFullEndpointTest {
         |    code: Integer,
         |    description: String
         |}
-    """.trimMargin().let(::compile)
+        """.trimMargin().let(::compile)
 }

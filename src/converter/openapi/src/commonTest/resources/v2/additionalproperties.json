@@ -73,6 +73,30 @@
           "type": "string"
         }
       }
+    },
+    "User": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "username",
+        "email"
+      ],
+      "properties": {
+        "username": {
+          "type": "string",
+          "example": "johndoe"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "example": "john@example.com"
+        },
+        "age": {
+          "type": "integer",
+          "minimum": 0,
+          "example": 30
+        }
+      }
     }
   }
 }

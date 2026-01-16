@@ -957,7 +957,6 @@
           },
           "status": {
             "type": "string",
-            "description": "Order Status",
             "example": "approved",
             "enum": [
               "placed",
@@ -1141,7 +1140,6 @@
           },
           "status": {
             "type": "string",
-            "description": "pet status in the store",
             "enum": [
               "available",
               "pending",
