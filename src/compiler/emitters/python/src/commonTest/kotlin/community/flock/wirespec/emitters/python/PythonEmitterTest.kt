@@ -98,7 +98,7 @@ class PythonEmitterTest {
         |    @dataclass
         |    class Headers (Wirespec.Request.Headers):
         |        token: 'Token'
-        |        refreshToken: 'Optional[Token]'
+        |        RefreshToken: 'Optional[Token]'
         |
         |    @property
         |    def body(self) -> PotentialTodoDto:
@@ -122,12 +122,12 @@ class PythonEmitterTest {
         |    _path: Path
         |    method: Wirespec.Method = Wirespec.Method.PUT
         |
-        |    def __init__(self, id: str, done: bool, name: Optional[str], token: Token, refreshToken: Optional[Token], body: PotentialTodoDto):
+        |    def __init__(self, id: str, done: bool, name: Optional[str], token: Token, RefreshToken: Optional[Token], body: PotentialTodoDto):
         |      self._path = PutTodo.Request.Path(id = id)
         |      self._queries =PutTodo.Request.Queries(  done = done,
         |        name = name)
         |      self._headers = PutTodo.Request.Headers(  token = token,
-        |        refreshToken = refreshToken)
+        |        RefreshToken = RefreshToken)
         |      self._body = body
         |
         |  @dataclass
@@ -211,7 +211,7 @@ class PythonEmitterTest {
         |        queries = {"done": serialization.serialize_param(request.queries.done, bool),
         |    "name": serialization.serialize_param(request.queries.name, str)},
         |        headers = {"token": serialization.serialize_param(request.headers.token, Token),
-        |    "refreshToken": serialization.serialize_param(request.headers.refreshToken, Token)},
+        |    "Refresh-Token": serialization.serialize_param(request.headers.RefreshToken, Token)},
         |        body = serialization.serialize(request.body, PotentialTodoDto),
         |      )
         |
@@ -222,7 +222,7 @@ class PythonEmitterTest {
         |    done = serialization.deserialize_param(request.queries.get("done".lower()), bool),
         |    name = serialization.deserialize_param(request.queries.get("name".lower()), str),
         |    token = serialization.deserialize_param(request.headers.get("token".lower()), Token),
-        |    refreshToken = serialization.deserialize_param(request.headers.get("refreshToken".lower()), Token),
+        |    RefreshToken = serialization.deserialize_param(request.headers.get("Refresh-Token".lower()), Token),
         |          body = serialization.deserialize(request.body, PotentialTodoDto),
         |    )
         |

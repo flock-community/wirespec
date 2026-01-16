@@ -7,7 +7,7 @@ object CompileFullEndpointTest {
         """
         |endpoint PutTodo PUT PotentialTodoDto /todos/{id: String}
         |    ?{done: Boolean, name: String?}
-        |    #{token: Token, refreshToken: Token?} -> {
+        |    #{token: Token, `Refresh-Token`: Token?} -> {
         |    200 -> TodoDto
         |    201 -> TodoDto #{token: Token, refreshToken: Token?}
         |    500 -> Error
