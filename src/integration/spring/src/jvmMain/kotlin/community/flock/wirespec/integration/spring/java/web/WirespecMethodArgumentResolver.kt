@@ -19,8 +19,7 @@ class WirespecMethodArgumentResolver(
     private val wirespecSerialization: Wirespec.Serialization,
 ) : HandlerMethodArgumentResolver {
 
-    override fun supportsParameter(parameter: MethodParameter): Boolean =
-        Wirespec.Request::class.java.isAssignableFrom(parameter.parameterType)
+    override fun supportsParameter(parameter: MethodParameter): Boolean = Wirespec.Request::class.java.isAssignableFrom(parameter.parameterType)
 
     override fun resolveArgument(
         parameter: MethodParameter,
@@ -36,7 +35,6 @@ class WirespecMethodArgumentResolver(
         val req = servletRequest.toRawRequest()
         return instance.getServer(wirespecSerialization).from(req)
     }
-
 
     @OptIn(ExperimentalEncodingApi::class)
     fun HttpServletRequest.toRawRequest(): Wirespec.RawRequest {
