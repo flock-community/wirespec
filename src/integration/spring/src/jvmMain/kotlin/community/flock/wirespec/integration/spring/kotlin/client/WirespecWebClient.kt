@@ -14,7 +14,7 @@ import kotlin.reflect.full.companionObjectInstance
 
 class WirespecWebClient(
     private val client: WebClient,
-    private val wirespecSerializationMap: Map<MediaType, Wirespec.Serialization>,
+    private val wirespecSerde: Serialization,
 ) {
     @Suppress("UNCHECKED_CAST")
     suspend fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> send(request: Req): Res {
@@ -23,8 +23,7 @@ class WirespecWebClient(
             .find { it.simpleName == "Handler" }
             ?: error("Handler not found")
         val instance = handler.kotlin.companionObjectInstance as Wirespec.Client<Req, Res>
-        val jsonSerde = wirespecSerializationMap[MediaType.APPLICATION_JSON] ?: error("No serialization found for media type ${MediaType.APPLICATION_JSON_VALUE}")
-        return with(instance.client(jsonSerde)) { executeRequest(to(request), client).let(::from) }
+        return with(instance.client(wirespecSerde)) { executeRequest(to(request), client).let(::from) }
     }
 
     private suspend fun executeRequest(

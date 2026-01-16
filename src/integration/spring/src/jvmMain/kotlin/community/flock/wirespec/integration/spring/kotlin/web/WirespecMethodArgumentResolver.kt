@@ -18,7 +18,7 @@ import kotlin.reflect.full.companionObjectInstance
 
 class WirespecMethodArgumentResolver(
     private val objectMapper: ObjectMapper,
-    private val wirespecSerializationMap: Map<MediaType, Wirespec.Serialization>,
+    private val wirespecSerialization: Wirespec.Serialization,
 ) : HandlerMethodArgumentResolver {
 
     override fun supportsParameter(parameter: MethodParameter): Boolean = Wirespec.Request::class.java.isAssignableFrom(parameter.parameterType)
@@ -35,10 +35,7 @@ class WirespecMethodArgumentResolver(
             .find { it.simpleName == "Handler" }
             ?: error("Handler not found")
         val instance = handler.kotlin.companionObjectInstance as Wirespec.Server<*, *>
-        val jsonSerde = wirespecSerializationMap[MediaType.APPLICATION_JSON]
-            ?: error("No serialization found for media type ${MediaType.APPLICATION_JSON_VALUE}")
-
-        val server = instance.server(jsonSerde)
+        val server = instance.server(wirespecSerialization)
         val rawRequest = servletRequest.toRawRequest()
         return server.from(rawRequest)
     }

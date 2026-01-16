@@ -22,7 +22,7 @@ import org.springframework.web.reactive.function.client.WebClient
 @EnableConfigurationProperties(WebClientConfigurationProperties::class)
 @Order(Ordered.LOWEST_PRECEDENCE)
 open class WirespecWebClientConfiguration(
-    val wirespecSerializationMap: Map<MediaType, Wirespec.Serialization>,
+    val serialization: Wirespec.Serialization,
 ) {
     private val log: Logger = getLogger(javaClass)
 
@@ -47,7 +47,7 @@ open class WirespecWebClientConfiguration(
         log.debug("Initializing WirespecWebclient for Wirespec, wrapping a Spring WebClient")
         return WirespecWebClient(
             client = webClient,
-            wirespecSerializationMap = wirespecSerializationMap,
+            wirespecSerde = serialization,
         )
     }
 }

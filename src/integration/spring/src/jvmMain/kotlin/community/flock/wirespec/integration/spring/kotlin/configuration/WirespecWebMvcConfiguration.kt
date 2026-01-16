@@ -5,7 +5,6 @@ import community.flock.wirespec.integration.spring.kotlin.web.WirespecMethodArgu
 import community.flock.wirespec.kotlin.Wirespec
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Configuration
-import org.springframework.http.MediaType
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
@@ -13,7 +12,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 open class WirespecWebMvcConfiguration : WebMvcConfigurer {
 
     @Autowired
-    lateinit var wirespecSerializationMap: Map<MediaType, Wirespec.Serialization>
+    lateinit var wirespecSerializationMap: Wirespec.Serialization
 
     @Autowired
     lateinit var objectMapper: ObjectMapper

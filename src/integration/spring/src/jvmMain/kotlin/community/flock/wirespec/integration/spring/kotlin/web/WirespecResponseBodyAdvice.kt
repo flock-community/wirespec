@@ -15,7 +15,7 @@ import kotlin.reflect.full.companionObjectInstance
 @ControllerAdvice
 class WirespecResponseBodyAdvice(
     private val objectMapper: ObjectMapper,
-    private val wirespecSerializationMap: Map<MediaType, Wirespec.Serialization>,
+    private val wirespecSerialization: Wirespec.Serialization,
 ) : ResponseBodyAdvice<Any?> {
 
     override fun supports(returnType: MethodParameter, converterType: Class<out HttpMessageConverter<*>?>): Boolean = Wirespec.Response::class.java.isAssignableFrom(returnType.parameterType)
@@ -35,12 +35,12 @@ class WirespecResponseBodyAdvice(
             ?: error("Handler not found")
         val instance = handler
             .kotlin.companionObjectInstance as Wirespec.Server<Wirespec.Request<*>, Wirespec.Response<*>>
-        val jsonSerde = wirespecSerializationMap[MediaType.APPLICATION_JSON] ?: error("No serialization found for media type ${MediaType.APPLICATION_JSON_VALUE}")
-        val server = instance.server(jsonSerde)
+        val server = instance.server(wirespecSerialization)
         return when (body) {
             is Wirespec.Response<*> -> {
                 val rawResponse = server.to(body)
                 response.setStatusCode(HttpStatusCode.valueOf(rawResponse.statusCode))
+                response.headers.putAll(rawResponse.headers)
                 if (rawResponse.body == null) {
                     Unit
                 } else {
