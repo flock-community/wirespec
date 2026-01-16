@@ -2,7 +2,7 @@ package community.flock.wirespec.integration.spring.java.configuration
 
 import community.flock.wirespec.integration.spring.java.client.WirespecWebClient
 import community.flock.wirespec.integration.spring.shared.WebClientConfigurationProperties
-import community.flock.wirespec.java.Wirespec.Serialization
+import community.flock.wirespec.java.Wirespec
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory.getLogger
 import org.springframework.beans.factory.annotation.Qualifier
@@ -22,7 +22,7 @@ import org.springframework.web.reactive.function.client.WebClient
 @EnableConfigurationProperties(WebClientConfigurationProperties::class)
 @Order(Ordered.LOWEST_PRECEDENCE)
 open class WirespecWebClientConfiguration(
-    val serializationMap: Map<MediaType, Serialization>,
+    val serialization: Wirespec.Serialization,
 ) {
     private val log: Logger = getLogger(javaClass)
 
@@ -47,7 +47,7 @@ open class WirespecWebClientConfiguration(
         log.debug("Initializing WirespecWebclient for Wirespec, wrapping a Spring WebClient")
         return WirespecWebClient(
             client = webClient,
-            wirespecSerdeMap = serializationMap,
+            wirespecSerde = serialization,
         )
     }
 }
