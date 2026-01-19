@@ -1,6 +1,6 @@
 package community.flock.wirespec.integration.spring.kotlin.configuration
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import community.flock.wirespec.integration.jackson.kotlin.WirespecSerialization
 import community.flock.wirespec.integration.spring.kotlin.web.WirespecResponseBodyAdvice
 import community.flock.wirespec.kotlin.Wirespec.Serialization
@@ -17,7 +17,5 @@ open class WirespecSerializationConfiguration {
     open fun queryParamSerde() = DefaultParamSerialization()
 
     @Bean
-    open fun wirespecSerialization(
-        objectMapper: ObjectMapper,
-    ): Serialization = WirespecSerialization(objectMapper)
+    open fun wirespecSerialization(): Serialization = WirespecSerialization(jacksonObjectMapper())
 }

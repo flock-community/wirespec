@@ -19,6 +19,7 @@
         <module>maven-spring-convert</module>
         <module>maven-spring-custom</module>
         <module>maven-spring-integration</module>
+        <module>maven-spring-boot-4-integration</module>
     </modules>
 
     <properties>
