@@ -1,6 +1,7 @@
 package community.flock.wirespec.examples.maven.spring.integration;
 
 import community.flock.wirespec.examples.maven.spring.integration.service.TodoService;
+import community.flock.wirespec.generated.examples.spring.model.Todo;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -97,6 +98,8 @@ class TodoTest {
         mockMvc.perform(asyncDispatch(mvcMultipartResult))
                 .andExpect(status().isCreated());
         byte[] files = (byte[]) service.files.get("plain");
+        Todo todo = (Todo) service.files.get("json");
         assertEquals("Hello Wirespec", new String(files));
+        assertEquals("Todo 1", todo.name());
     }
 }
