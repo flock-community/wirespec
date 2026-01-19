@@ -11,7 +11,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
-o
+
 public class WirespecWebClient {
     private final WebClient client;
     private final Serialization wirespecSerde;
