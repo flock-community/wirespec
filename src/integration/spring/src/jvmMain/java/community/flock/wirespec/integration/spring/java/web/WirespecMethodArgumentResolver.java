@@ -40,7 +40,7 @@ public class WirespecMethodArgumentResolver implements HandlerMethodArgumentReso
             WebDataBinderFactory binderFactory
     ) throws Exception {
         HttpServletRequest servletRequest = (HttpServletRequest) webRequest.getNativeRequest();
-        
+
         Class<?> declaringClass = parameter.getParameterType().getDeclaringClass();
         Class<?> handlerClass = Arrays.stream(declaringClass.getDeclaredClasses())
                 .filter(c -> c.getSimpleName().equals("Handler"))
@@ -75,17 +75,15 @@ public class WirespecMethodArgumentResolver implements HandlerMethodArgumentReso
                     if (fileContentType == null) throw new IllegalStateException("No content type found for file " + file.getOriginalFilename());
                     MediaType mediaType = MediaType.valueOf(fileContentType);
                     byte[] bytes = file.getInputStream().readAllBytes();
-                    
+
                     if (MediaType.APPLICATION_JSON.equals(mediaType)) {
                         map.put(file.getName(), objectMapper.readTree(bytes));
-                    } else if (MediaType.TEXT_PLAIN.equals(mediaType)) {
-                         map.put(file.getName(), bytes);
                     } else {
-                        throw new IllegalStateException("Unsupported media type " + mediaType);
+                        map.put(file.getName(), bytes);
                     }
                 }
             }
-             
+
             return new Wirespec.RawRequest(
                 request.getMethod(),
                 Controller.extractPath(request),
@@ -94,7 +92,7 @@ public class WirespecMethodArgumentResolver implements HandlerMethodArgumentReso
                 objectMapper.writeValueAsBytes(map)
             );
         }
-        
+
         return new Wirespec.RawRequest(
             request.getMethod(),
             Controller.extractPath(request),

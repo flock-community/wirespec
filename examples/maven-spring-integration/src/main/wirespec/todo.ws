@@ -23,6 +23,11 @@ endpoint DeleteTodo DELETE /todos/{id: String} -> {
   404 -> Error
 }
 
+endpoint UploadAttachment POST Attachment /todos/{id: String}/upload -> {
+  201 -> Unit
+  500 -> Error
+}
+
 type Todo {
   id: String,
   name: String,
@@ -37,4 +42,10 @@ type TodoInput {
 type Error {
   code: String,
   description: String?
+}
+
+type Attachment {
+  plain: Bytes,
+  csv: Bytes,
+  json: Todo
 }

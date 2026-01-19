@@ -27,7 +27,7 @@ public class Controller implements
     @Override
     public CompletableFuture<AddPet.Response<?>> addPet(AddPet.Request request) {
         service.create(request.getBody());
-        return CompletableFuture.completedFuture(new AddPet.Response200(request.getBody()));
+        return CompletableFuture.completedFuture(new AddPet.Response200(Optional.of(100), request.getBody()));
     }
 
     @Override

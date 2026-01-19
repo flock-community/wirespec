@@ -3,9 +3,7 @@ package community.flock.wirespec.examples.maven.spring.integration.service;
 import community.flock.wirespec.generated.examples.spring.model.Todo;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.stream.Collectors.toList;
@@ -14,6 +12,7 @@ import static java.util.stream.Collectors.toList;
 public class TodoService {
 
     public List<Todo> store = new ArrayList<>();
+    public Map<String, Object> files = new HashMap<>();
 
     public TodoService(){
         store.add(new Todo(UUID.randomUUID().toString(), "First todo", false));
@@ -48,5 +47,9 @@ public class TodoService {
                     return CompletableFuture.completedFuture(todo);
                 })
                 .orElseThrow();
+    }
+
+    public void uploadFile(String name, Object file){
+        files.put(name, file);
     }
 }

@@ -37,7 +37,7 @@ class WebClientIntegrationTest {
             )
 
         val addPetResponse = wirespecPetstoreWebClient.addPet(AddPet.Request(pet))
-        assertEquals(AddPet.Response200(pet), addPetResponse)
+        assertEquals(AddPet.Response200(pet, 100), addPetResponse)
 
         val updatedPet = pet.copy(name = "Cat")
         val updatePetResponse = wirespecPetstoreWebClient.updatePet(UpdatePet.Request(updatedPet))

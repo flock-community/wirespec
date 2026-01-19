@@ -49,8 +49,7 @@ class WirespecMethodArgumentResolver(
                 val bytes = it.inputStream.readAllBytes()
                 it.name to when (mediaType) {
                     MediaType.APPLICATION_JSON -> objectMapper.readTree(bytes)
-                    MediaType.TEXT_PLAIN -> bytes
-                    else -> error("Unsupported media type $mediaType")
+                    else -> bytes
                 }
             }
             return Wirespec.RawRequest(
