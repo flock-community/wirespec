@@ -1,8 +1,9 @@
 package community.flock.wirespec.integration.spring.kotlin.generated.endpoint
 
-import community.flock.wirespec.integration.spring.kotlin.generated.model.Pet
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
+import community.flock.wirespec.integration.spring.kotlin.generated.model.Pet
 
 object AddPet : Wirespec.Endpoint {
   data object Path : Wirespec.Path
@@ -42,10 +43,12 @@ object AddPet : Wirespec.Endpoint {
   sealed interface ResponsePet : Response<Pet>
   sealed interface ResponseUnit : Response<Unit>
 
-  data class Response200(override val body: Pet) : Response2XX<Pet>, ResponsePet {
+  data class Response200(override val body: Pet, val XRateLimit: Int?) : Response2XX<Pet>, ResponsePet {
     override val status = 200
-    override val headers = ResponseHeaders
-    data object ResponseHeaders : Wirespec.Response.Headers
+    override val headers = ResponseHeaders(XRateLimit)
+    data class ResponseHeaders(
+      val XRateLimit: Int?,
+    ) : Wirespec.Response.Headers
   }
 
   data class Response405(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
@@ -58,7 +61,7 @@ object AddPet : Wirespec.Endpoint {
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = emptyMap(),
+        headers = (mapOf("X-Rate-Limit" to (response.headers.XRateLimit?.let{ serialization.serializeParam(it, typeOf<Int?>()) } ?: emptyList()))),
         body = serialization.serializeBody(response.body, typeOf<Pet>()),
       )
       is Response405 -> Wirespec.RawResponse(
@@ -72,6 +75,7 @@ object AddPet : Wirespec.Endpoint {
     when (response.statusCode) {
       200 -> Response200(
         body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<Pet>()),
+        XRateLimit = response.headers["X-Rate-Limit"]?.let{ serialization.deserializeParam(it, typeOf<Int?>()) }
       )
       405 -> Response405(
         body = Unit,

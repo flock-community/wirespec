@@ -1,8 +1,9 @@
 package community.flock.wirespec.integration.spring.java.generated.endpoint;
 
+import community.flock.wirespec.java.Wirespec;
+
 import community.flock.wirespec.integration.spring.java.generated.model.FindPetsByStatusParameterStatus;
 import community.flock.wirespec.integration.spring.java.generated.model.Pet;
-import community.flock.wirespec.java.Wirespec;
 
 public interface FindPetsByStatus extends Wirespec.Endpoint {
   class Path implements Wirespec.Path {}

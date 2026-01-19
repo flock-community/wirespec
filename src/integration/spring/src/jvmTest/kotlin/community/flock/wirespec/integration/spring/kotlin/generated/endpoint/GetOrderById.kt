@@ -1,8 +1,9 @@
 package community.flock.wirespec.integration.spring.kotlin.generated.endpoint
 
-import community.flock.wirespec.integration.spring.kotlin.generated.model.Order
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
+import community.flock.wirespec.integration.spring.kotlin.generated.model.Order
 
 object GetOrderById : Wirespec.Endpoint {
   data class Path(

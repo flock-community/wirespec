@@ -1,7 +1,8 @@
 package community.flock.wirespec.integration.spring.java.generated.endpoint;
 
-import community.flock.wirespec.integration.spring.java.generated.model.Order;
 import community.flock.wirespec.java.Wirespec;
+
+import community.flock.wirespec.integration.spring.java.generated.model.Order;
 
 public interface GetOrderById extends Wirespec.Endpoint {
   public record Path(

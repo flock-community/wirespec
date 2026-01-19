@@ -1,5 +1,7 @@
 package community.flock.wirespec.integration.spring.java.generated.model;
 
+import community.flock.wirespec.java.Wirespec;
+
 public record Address (
   java.util.Optional<String> street,
   java.util.Optional<String> city,

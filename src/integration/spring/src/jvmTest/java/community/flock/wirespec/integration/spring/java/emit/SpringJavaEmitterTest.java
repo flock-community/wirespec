@@ -5,7 +5,7 @@ import arrow.core.NonEmptyList;
 import community.flock.wirespec.compiler.core.*;
 import community.flock.wirespec.compiler.core.emit.Emitted;
 import community.flock.wirespec.compiler.core.emit.PackageName;
-import community.flock.wirespec.compiler.core.parse.AST;
+import community.flock.wirespec.compiler.core.parse.ast.Root;
 import community.flock.wirespec.compiler.utils.Logger;
 import community.flock.wirespec.compiler.utils.LoggerKt;
 import org.junit.jupiter.api.Test;
@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SpringJavaEmitterTest {
 
-    private AST parse(String source) {
+    private Root parse(String source) {
         ParseContext context = new ParseContext() {
             @Override
             public LanguageSpec getSpec() {
@@ -42,7 +42,7 @@ public class SpringJavaEmitterTest {
         Either result = CompilerKt.parse(context, sourceList);
 
         if (result instanceof Either.Right) {
-            return (AST) ((Either.Right) result).getValue();
+            return (Root) ((Either.Right) result).getValue();
         } else {
             Either.Left left = (Either.Left) result;
             throw new RuntimeException(left.getValue().toString());
@@ -54,7 +54,7 @@ public class SpringJavaEmitterTest {
         Path path = Paths.get("src/jvmTest/resources/todo.ws");
         String text = Files.readString(path);
 
-        AST ast = parse(text);
+        Root ast = parse(text);
 
         SpringJavaEmitter emitter = new SpringJavaEmitter(new PackageName("community.flock.wirespec.spring.test", false));
 

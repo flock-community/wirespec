@@ -1,9 +1,10 @@
 package community.flock.wirespec.integration.spring.kotlin.generated.endpoint
 
-import community.flock.wirespec.integration.spring.kotlin.generated.model.FindPetsByStatusParameterStatus
-import community.flock.wirespec.integration.spring.kotlin.generated.model.Pet
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
+
+import community.flock.wirespec.integration.spring.kotlin.generated.model.FindPetsByStatusParameterStatus
+import community.flock.wirespec.integration.spring.kotlin.generated.model.Pet
 
 object FindPetsByStatus : Wirespec.Endpoint {
   data object Path : Wirespec.Path

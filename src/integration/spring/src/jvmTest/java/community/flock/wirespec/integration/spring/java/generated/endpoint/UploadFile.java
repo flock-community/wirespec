@@ -1,8 +1,9 @@
 package community.flock.wirespec.integration.spring.java.generated.endpoint;
 
-import community.flock.wirespec.integration.spring.java.generated.model.ApiResponse;
-import community.flock.wirespec.integration.spring.java.generated.model.UploadFileRequestBody;
 import community.flock.wirespec.java.Wirespec;
+
+import community.flock.wirespec.integration.spring.java.generated.model.UploadFileRequestBody;
+import community.flock.wirespec.integration.spring.java.generated.model.ApiResponse;
 
 public interface UploadFile extends Wirespec.Endpoint {
   public record Path(

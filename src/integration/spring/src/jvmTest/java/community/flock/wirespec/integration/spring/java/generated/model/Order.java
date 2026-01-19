@@ -1,5 +1,7 @@
 package community.flock.wirespec.integration.spring.java.generated.model;
 
+import community.flock.wirespec.java.Wirespec;
+
 public record Order (
   java.util.Optional<Long> id,
   java.util.Optional<Long> petId,
