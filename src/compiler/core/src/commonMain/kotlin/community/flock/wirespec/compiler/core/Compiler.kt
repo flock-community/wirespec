@@ -13,7 +13,6 @@ import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.HasLogger
-import kotlin.jvm.JvmInline
 
 interface TokenizeContext :
     HasLanguageSpec,
@@ -33,8 +32,7 @@ interface CompilationContext :
     ParseContext,
     EmitContext
 
-@JvmInline
-value class FileUri(override val value: String) : Value<String>
+data class FileUri(override val value: String) : Value<String>
 
 data class ModuleContent(val fileUri: FileUri, val content: String)
 

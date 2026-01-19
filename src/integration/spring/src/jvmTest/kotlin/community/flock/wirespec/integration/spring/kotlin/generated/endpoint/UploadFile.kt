@@ -1,10 +1,9 @@
 package community.flock.wirespec.integration.spring.kotlin.generated.endpoint
 
+import community.flock.wirespec.integration.spring.kotlin.generated.model.ApiResponse
+import community.flock.wirespec.integration.spring.kotlin.generated.model.UploadFileRequestBody
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
-
-import community.flock.wirespec.integration.spring.kotlin.generated.model.UploadFileRequestBody
-import community.flock.wirespec.integration.spring.kotlin.generated.model.ApiResponse
 
 object UploadFile : Wirespec.Endpoint {
   data class Path(

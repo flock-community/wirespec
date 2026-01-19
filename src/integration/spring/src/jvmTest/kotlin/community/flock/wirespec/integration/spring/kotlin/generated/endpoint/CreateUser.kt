@@ -1,9 +1,8 @@
 package community.flock.wirespec.integration.spring.kotlin.generated.endpoint
 
+import community.flock.wirespec.integration.spring.kotlin.generated.model.User
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
-
-import community.flock.wirespec.integration.spring.kotlin.generated.model.User
 
 object CreateUser : Wirespec.Endpoint {
   data object Path : Wirespec.Path

@@ -11,7 +11,6 @@ import community.flock.wirespec.integration.spring.kotlin.generated.model.ApiRes
 import community.flock.wirespec.integration.spring.kotlin.generated.model.Pet
 import community.flock.wirespec.integration.spring.kotlin.generated.model.UploadFileRequestBody
 import community.flock.wirespec.integration.spring.kotlin.generated.model.UploadFileRequestBodyJson
-import community.flock.wirespec.openapi.json
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.springframework.beans.factory.annotation.Autowired
