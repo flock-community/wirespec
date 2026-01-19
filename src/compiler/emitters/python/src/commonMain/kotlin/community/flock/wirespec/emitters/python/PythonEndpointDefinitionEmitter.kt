@@ -11,8 +11,8 @@ import community.flock.wirespec.compiler.core.emit.paramList
 import community.flock.wirespec.compiler.core.emit.pathParams
 import community.flock.wirespec.compiler.core.emit.spacer
 import community.flock.wirespec.compiler.core.orNull
-import community.flock.wirespec.compiler.core.parse.Endpoint
-import community.flock.wirespec.compiler.core.parse.Field
+import community.flock.wirespec.compiler.core.parse.ast.Endpoint
+import community.flock.wirespec.compiler.core.parse.ast.Field
 
 interface PythonEndpointDefinitionEmitter: EndpointDefinitionEmitter, PythonTypeDefinitionEmitter {
 

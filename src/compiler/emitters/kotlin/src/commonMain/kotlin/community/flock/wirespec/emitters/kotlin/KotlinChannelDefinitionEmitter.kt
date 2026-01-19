@@ -3,8 +3,8 @@ package community.flock.wirespec.emitters.kotlin
 import community.flock.wirespec.compiler.core.emit.ChannelDefinitionEmitter
 import community.flock.wirespec.compiler.core.emit.HasPackageName
 import community.flock.wirespec.compiler.core.emit.importReferences
-import community.flock.wirespec.compiler.core.parse.Channel
-import community.flock.wirespec.compiler.core.parse.Definition
+import community.flock.wirespec.compiler.core.parse.ast.Channel
+import community.flock.wirespec.compiler.core.parse.ast.Definition
 
 interface KotlinChannelDefinitionEmitter : ChannelDefinitionEmitter, HasPackageName, KotlinTypeDefinitionEmitter {
 

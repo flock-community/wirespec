@@ -8,8 +8,8 @@ import community.flock.wirespec.compiler.core.Stage.TOKENIZED
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.HasEmitters
 import community.flock.wirespec.compiler.core.exceptions.WirespecException
-import community.flock.wirespec.compiler.core.parse.AST
 import community.flock.wirespec.compiler.core.parse.Parser.parse
+import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.tokenize.Token
 import community.flock.wirespec.compiler.core.tokenize.tokenize
 import community.flock.wirespec.compiler.utils.HasLogger

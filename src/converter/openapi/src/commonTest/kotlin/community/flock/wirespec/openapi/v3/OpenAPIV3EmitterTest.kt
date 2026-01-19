@@ -7,7 +7,7 @@ import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
-import community.flock.wirespec.compiler.core.parse.AST
+import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.openapi.common.Ast
@@ -158,7 +158,7 @@ class OpenAPIV3EmitterTest {
 
         val petstoreConvertedOpenAPi = OpenAPIV3Emitter.emitOpenAPIObject(petstoreAst, null)
 
-        val petstoreConvertedOpenAPiAst = petstoreConvertedOpenAPi.parse() ?: error("Failed to parse converted OpenAPI object")
+        val petstoreConvertedOpenAPiAst = petstoreConvertedOpenAPi.parse()
 
         (petstoreAst zip petstoreConvertedOpenAPiAst)
             .forEach { (actual, expected) ->

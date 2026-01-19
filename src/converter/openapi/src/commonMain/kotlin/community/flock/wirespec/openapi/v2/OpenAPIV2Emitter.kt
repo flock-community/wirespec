@@ -20,17 +20,19 @@ import community.flock.kotlinx.openapi.bindings.StatusCode
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
-import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.parse.Endpoint
-import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Reference
-import community.flock.wirespec.compiler.core.parse.Refined
-import community.flock.wirespec.compiler.core.parse.Statements
-import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.Endpoint
+import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Field
+import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Statements
+import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.openapi.APPLICATION_JSON
-import community.flock.wirespec.openapi.findDescription
-import community.flock.wirespec.openapi.json
+import community.flock.wirespec.openapi.common.APPLICATION_JSON
+import community.flock.wirespec.openapi.common.emitFormat
+import community.flock.wirespec.openapi.common.findDescription
+import community.flock.wirespec.openapi.common.json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 
@@ -70,6 +72,7 @@ object OpenAPIV2Emitter : Emitter {
                             format = it.reference.emitFormat(),
                             pattern = it.reference.emitPattern(),
                             minimum = it.reference.emitMinimum(),
+                            maximum = it.reference.emitMaximum(),
                         )
                     },
                     get = endpoints.emit(Endpoint.Method.GET),
@@ -132,7 +135,7 @@ object OpenAPIV2Emitter : Emitter {
                         .takeIf { it.isNotEmpty() },
                 )
             } + statements
-            .filterIsInstance<community.flock.wirespec.compiler.core.parse.Enum>()
+            .filterIsInstance<Enum>()
             .associate { enum ->
                 enum.identifier.value to OpenAPIV2Schema(
                     type = OpenAPIV2Type.STRING,
@@ -263,26 +266,6 @@ object OpenAPIV2Emitter : Emitter {
         is Reference.Custom -> OpenAPIV2Type.OBJECT
         is Reference.Any -> OpenAPIV2Type.OBJECT
         is Reference.Unit -> OpenAPIV2Type.OBJECT
-    }
-
-    private fun Reference.emitFormat() = when (this) {
-        is Reference.Primitive -> when (val t = type) {
-            is Reference.Primitive.Type.Number -> when (t.precision) {
-                Reference.Primitive.Type.Precision.P32 -> "float"
-                Reference.Primitive.Type.Precision.P64 -> "double"
-            }
-
-            is Reference.Primitive.Type.Integer -> when (t.precision) {
-                Reference.Primitive.Type.Precision.P32 -> "int32"
-                Reference.Primitive.Type.Precision.P64 -> "int64"
-            }
-
-            is Reference.Primitive.Type.Bytes -> "binary"
-
-            else -> null
-        }
-
-        else -> null
     }
 
     private fun Reference.emitPattern() = when (this) {

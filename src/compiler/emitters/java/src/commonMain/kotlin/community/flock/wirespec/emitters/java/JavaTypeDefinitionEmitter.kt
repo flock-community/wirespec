@@ -3,10 +3,10 @@ package community.flock.wirespec.emitters.java
 import community.flock.wirespec.compiler.core.emit.IdentifierEmitter
 import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.emit.TypeDefinitionEmitter
-import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Module
-import community.flock.wirespec.compiler.core.parse.Reference
-import community.flock.wirespec.compiler.core.parse.Type
+import community.flock.wirespec.compiler.core.parse.ast.Field
+import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Type
 
 interface JavaTypeDefinitionEmitter: TypeDefinitionEmitter, IdentifierEmitter {
 

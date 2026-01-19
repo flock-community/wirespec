@@ -6,9 +6,13 @@ import community.flock.wirespec.compiler.core.ModuleContent
 import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
-import community.flock.wirespec.compiler.core.parse.Endpoint.Method.GET
-import community.flock.wirespec.compiler.core.parse.Endpoint.Method.POST
-import community.flock.wirespec.compiler.core.parse.Endpoint.Segment.Literal
+import community.flock.wirespec.compiler.core.parse.ast.Endpoint
+import community.flock.wirespec.compiler.core.parse.ast.Endpoint.Method.GET
+import community.flock.wirespec.compiler.core.parse.ast.Endpoint.Method.POST
+import community.flock.wirespec.compiler.core.parse.ast.Endpoint.Segment.Literal
+import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
+import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.assertions.arrow.core.shouldHaveSize

@@ -26,19 +26,20 @@ import community.flock.kotlinx.openapi.bindings.StatusCode
 import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.FileExtension
-import community.flock.wirespec.compiler.core.parse.AST
-import community.flock.wirespec.compiler.core.parse.Channel
-import community.flock.wirespec.compiler.core.parse.Endpoint
-import community.flock.wirespec.compiler.core.parse.Enum
-import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.Reference
-import community.flock.wirespec.compiler.core.parse.Refined
-import community.flock.wirespec.compiler.core.parse.Statements
-import community.flock.wirespec.compiler.core.parse.Type
-import community.flock.wirespec.compiler.core.parse.Union
+import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.Channel
+import community.flock.wirespec.compiler.core.parse.ast.Endpoint
+import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Field
+import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Statements
+import community.flock.wirespec.compiler.core.parse.ast.Type
+import community.flock.wirespec.compiler.core.parse.ast.Union
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.openapi.findDescription
-import community.flock.wirespec.openapi.json
+import community.flock.wirespec.openapi.common.emitFormat
+import community.flock.wirespec.openapi.common.findDescription
+import community.flock.wirespec.openapi.common.json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonPrimitive
 
@@ -108,28 +109,16 @@ object OpenAPIV3Emitter : Emitter {
         .toMap()
 
     private fun Refined.emit(): OpenAPIV3Schema = when (val type = reference.type) {
-        is Reference.Primitive.Type.Integer -> OpenAPIV3Schema(
+        is Reference.Primitive.Type.Integer, is Reference.Primitive.Type.Number -> OpenAPIV3Schema(
             type = OpenAPIV3Type.STRING,
             minimum = type.constraint?.min?.toDouble(),
             maximum = type.constraint?.max?.toDouble(),
         )
 
-        is Reference.Primitive.Type.Number -> OpenAPIV3Schema(
+        is Reference.Primitive.Type.String -> OpenAPIV3Schema(
             type = OpenAPIV3Type.STRING,
-            minimum = type.constraint?.min?.toDouble(),
-            maximum = type.constraint?.max?.toDouble(),
+            pattern = type.constraint?.value,
         )
-
-        is Reference.Primitive.Type.String -> when (val pattern = type.constraint) {
-            is Reference.Primitive.Type.Constraint.RegExp -> OpenAPIV3Schema(
-                type = OpenAPIV3Type.STRING,
-                pattern = pattern.value,
-            )
-
-            null -> OpenAPIV3Schema(
-                type = OpenAPIV3Type.STRING,
-            )
-        }
 
         Reference.Primitive.Type.Boolean -> OpenAPIV3Schema(
             type = OpenAPIV3Type.BOOLEAN,
@@ -274,26 +263,6 @@ object OpenAPIV3Emitter : Emitter {
     private fun Endpoint.Content.emit(): Pair<MediaType, OpenAPIV3MediaType> = MediaType(type) to OpenAPIV3MediaType(
         schema = reference.emitSchema(),
     )
-
-    private fun Reference.emitFormat() = when (this) {
-        is Reference.Primitive -> when (val t = type) {
-            is Reference.Primitive.Type.Number -> when (t.precision) {
-                Reference.Primitive.Type.Precision.P32 -> "float"
-                Reference.Primitive.Type.Precision.P64 -> "double"
-            }
-
-            is Reference.Primitive.Type.Integer -> when (t.precision) {
-                Reference.Primitive.Type.Precision.P32 -> "int32"
-                Reference.Primitive.Type.Precision.P64 -> "int64"
-            }
-
-            is Reference.Primitive.Type.Bytes -> "binary"
-
-            else -> null
-        }
-
-        else -> null
-    }
 
     private fun Reference.emitPattern() = when (this) {
         is Reference.Primitive -> when (val t = type) {

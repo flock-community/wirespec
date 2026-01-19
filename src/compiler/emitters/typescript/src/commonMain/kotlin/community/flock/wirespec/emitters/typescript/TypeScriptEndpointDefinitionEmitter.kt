@@ -11,9 +11,9 @@ import community.flock.wirespec.compiler.core.emit.importReferences
 import community.flock.wirespec.compiler.core.emit.indexedPathParams
 import community.flock.wirespec.compiler.core.emit.paramList
 import community.flock.wirespec.compiler.core.emit.pathParams
-import community.flock.wirespec.compiler.core.parse.Endpoint
-import community.flock.wirespec.compiler.core.parse.Field
-import community.flock.wirespec.compiler.core.parse.FieldIdentifier
+import community.flock.wirespec.compiler.core.parse.ast.Endpoint
+import community.flock.wirespec.compiler.core.parse.ast.Field
+import community.flock.wirespec.compiler.core.parse.ast.FieldIdentifier
 
 interface TypeScriptEndpointDefinitionEmitter: EndpointDefinitionEmitter, TypeScriptTypeDefinitionEmitter {
     override fun emit(endpoint: Endpoint) =

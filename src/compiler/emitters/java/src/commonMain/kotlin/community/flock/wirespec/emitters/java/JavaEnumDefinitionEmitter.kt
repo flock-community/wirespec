@@ -3,8 +3,8 @@ package community.flock.wirespec.emitters.java
 import community.flock.wirespec.compiler.core.emit.EnumDefinitionEmitter
 import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.emit.spacer
-import community.flock.wirespec.compiler.core.parse.Enum
-import community.flock.wirespec.compiler.core.parse.Module
+import community.flock.wirespec.compiler.core.parse.ast.Enum
+import community.flock.wirespec.compiler.core.parse.ast.Module
 
 interface JavaEnumDefinitionEmitter: EnumDefinitionEmitter, JavaIdentifierEmitter {
 

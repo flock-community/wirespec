@@ -3,9 +3,9 @@ package community.flock.wirespec.emitters.java
 import community.flock.wirespec.compiler.core.emit.ChannelDefinitionEmitter
 import community.flock.wirespec.compiler.core.emit.HasPackageName
 import community.flock.wirespec.compiler.core.emit.importReferences
-import community.flock.wirespec.compiler.core.parse.Channel
-import community.flock.wirespec.compiler.core.parse.Definition
-import community.flock.wirespec.compiler.core.parse.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Channel
+import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.Reference
 
 interface JavaChannelDefinitionEmitter: ChannelDefinitionEmitter, HasPackageName, JavaTypeDefinitionEmitter  {
 

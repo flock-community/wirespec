@@ -2,8 +2,8 @@ package community.flock.wirespec.emitters.typescript
 
 import community.flock.wirespec.compiler.core.emit.RefinedTypeDefinitionEmitter
 import community.flock.wirespec.compiler.core.emit.Spacer
-import community.flock.wirespec.compiler.core.parse.Reference
-import community.flock.wirespec.compiler.core.parse.Refined
+import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.compiler.core.parse.ast.Refined
 
 interface TypeScriptRefinedTypeDefinitionEmitter: RefinedTypeDefinitionEmitter, TypeScriptTypeDefinitionEmitter {
     override fun emit(refined: Refined) =
