@@ -1,5 +1,7 @@
 package community.flock.wirespec.integration.spring.kotlin.web
 
+import com.fasterxml.jackson.annotation.JsonRawValue
+import com.fasterxml.jackson.annotation.JsonValue
 import com.fasterxml.jackson.databind.ObjectMapper
 import community.flock.wirespec.kotlin.Wirespec
 import org.springframework.core.MethodParameter
@@ -14,7 +16,6 @@ import kotlin.reflect.full.companionObjectInstance
 
 @ControllerAdvice
 class WirespecResponseBodyAdvice(
-    private val objectMapper: ObjectMapper,
     private val wirespecSerialization: Wirespec.Serialization,
 ) : ResponseBodyAdvice<Any?> {
 
@@ -44,11 +45,16 @@ class WirespecResponseBodyAdvice(
                 if (rawResponse.body == null) {
                     Unit
                 } else {
-                    objectMapper.readTree(rawResponse.body)
+                    rawResponse.body?.let { RawJsonBody(String(it)) }
                 }
             }
 
             else -> body
         }
     }
+    class RawJsonBody(
+        @get:JsonValue
+        @get:JsonRawValue
+        val json: String,
+    )
 }

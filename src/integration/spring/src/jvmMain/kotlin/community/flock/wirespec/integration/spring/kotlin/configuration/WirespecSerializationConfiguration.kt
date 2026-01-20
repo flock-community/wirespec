@@ -17,5 +17,8 @@ open class WirespecSerializationConfiguration {
     open fun queryParamSerde() = DefaultParamSerialization()
 
     @Bean
-    open fun wirespecSerialization(): Serialization = WirespecSerialization(jacksonObjectMapper())
+    open fun wirespecSerialization(): Serialization {
+        val objectMapper = jacksonObjectMapper()
+        return WirespecSerialization(objectMapper)
+    }
 }
