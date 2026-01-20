@@ -2,7 +2,6 @@ package community.flock.wirespec.integration.spring.kotlin.web
 
 import com.fasterxml.jackson.annotation.JsonRawValue
 import com.fasterxml.jackson.annotation.JsonValue
-import com.fasterxml.jackson.databind.ObjectMapper
 import community.flock.wirespec.kotlin.Wirespec
 import org.springframework.core.MethodParameter
 import org.springframework.http.HttpStatusCode
