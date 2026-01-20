@@ -17,13 +17,13 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static community.flock.wirespec.integration.spring.java.configuration.WirespecSerializationConfiguration.objectMapper;
+
 public class WirespecMethodArgumentResolver implements HandlerMethodArgumentResolver {
 
-    private final ObjectMapper objectMapper;
     private final Wirespec.Serialization wirespecSerialization;
 
-    public WirespecMethodArgumentResolver(ObjectMapper objectMapper, Wirespec.Serialization wirespecSerialization) {
-        this.objectMapper = objectMapper;
+    public WirespecMethodArgumentResolver(Wirespec.Serialization wirespecSerialization) {
         this.wirespecSerialization = wirespecSerialization;
     }
 

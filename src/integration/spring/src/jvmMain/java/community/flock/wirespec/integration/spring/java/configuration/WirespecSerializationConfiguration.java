@@ -11,8 +11,11 @@ import org.springframework.context.annotation.Import;
 @Configuration
 @Import({WirespecResponseBodyAdvice.class, WirespecWebMvcConfiguration.class})
 public class WirespecSerializationConfiguration {
+
+    public static final ObjectMapper objectMapper = new ObjectMapper();
+
     @Bean
-    public Serialization wirespecSerialization(ObjectMapper objectMapper) {
+    public Serialization wirespecSerialization() {
         return new WirespecSerialization(objectMapper);
     }
 }

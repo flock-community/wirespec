@@ -7,6 +7,6 @@ class RawJsonBody(
     @get:JsonValue
     @get:JsonRawValue
     val json: String,
-){
+) {
     constructor(bytes: ByteArray) : this(String(bytes))
 }
