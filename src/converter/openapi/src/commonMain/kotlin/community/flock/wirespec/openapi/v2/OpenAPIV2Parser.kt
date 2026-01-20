@@ -500,7 +500,7 @@ private fun OpenAPIV2Base.toPrimitive() = when (this.type) {
                 pattern!!,
             ),
         )
-
+        format == "binary" -> Reference.Primitive.Type.Bytes
         else -> Reference.Primitive.Type.String(null)
     }
 

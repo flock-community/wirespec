@@ -24,7 +24,7 @@ class GenerateTestClasses {
 
     private val baseDir = File("src/jvmTest")
     private val kotlinOutputDir = baseDir.resolve("kotlin").resolve(pkgToPath(kotlinPkg))
-    private val javaOutputDir = baseDir.resolve("kotlin").resolve(pkgToPath(javaPkg))
+    private val javaOutputDir = baseDir.resolve("java").resolve(pkgToPath(javaPkg))
     private val modules = listOf("model", "endpoint", "channel")
 
     @Test
@@ -48,7 +48,7 @@ class GenerateTestClasses {
         modules.forEach { javaOutputDir.resolve(it).mkdirs() }
         emittedJava
             .filter { "Wirespec" !in it.file }.forEach {
-                baseDir.resolve("kotlin").resolve(it.file).writeText(it.result)
+                baseDir.resolve("java").resolve(it.file).writeText(it.result)
             }
     }
 }

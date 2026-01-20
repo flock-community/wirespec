@@ -578,7 +578,7 @@ private fun OpenAPIV3Schema.toPrimitive() = when (this.type) {
                 pattern!!,
             ),
         )
-
+        format == "binary" -> Reference.Primitive.Type.Bytes
         else -> Reference.Primitive.Type.String(null)
     }
 

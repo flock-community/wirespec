@@ -5,6 +5,8 @@ import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.Del
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.FindPetsByTags
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.GetPetById
 import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.UpdatePet
+import community.flock.wirespec.integration.spring.kotlin.generated.endpoint.UploadFile
+import community.flock.wirespec.integration.spring.kotlin.generated.model.ApiResponse
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -14,11 +16,12 @@ class Controller(
     GetPetById.Handler,
     UpdatePet.Handler,
     DeletePet.Handler,
-    FindPetsByTags.Handler {
+    FindPetsByTags.Handler,
+    UploadFile.Handler {
 
     override suspend fun addPet(request: AddPet.Request): AddPet.Response<*> {
         service.create(request.body)
-        return AddPet.Response200(request.body, 100)
+        return AddPet.Response200(request.body, 200)
     }
 
     override suspend fun getPetById(request: GetPetById.Request): GetPetById.Response<*> = service.list.find { it.id == request.path.petId }
@@ -38,4 +41,16 @@ class Controller(
     }
 
     override suspend fun findPetsByTags(request: FindPetsByTags.Request): FindPetsByTags.Response<*> = FindPetsByTags.Response200(emptyList())
+
+    override suspend fun uploadFile(request: UploadFile.Request): UploadFile.Response<*> {
+        val file = request.body.file ?: error("Missing file")
+        service.upload(file)
+        return UploadFile.Response200(
+            ApiResponse(
+                code = 200,
+                type = "type",
+                message = request.body.additionalMetadata ?: "none",
+            ),
+        )
+    }
 }

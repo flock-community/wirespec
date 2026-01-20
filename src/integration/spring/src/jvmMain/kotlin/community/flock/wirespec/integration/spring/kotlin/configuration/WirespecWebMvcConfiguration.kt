@@ -1,5 +1,6 @@
 package community.flock.wirespec.integration.spring.kotlin.configuration
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import community.flock.wirespec.integration.spring.kotlin.web.WirespecMethodArgumentResolver
 import community.flock.wirespec.kotlin.Wirespec
 import org.springframework.beans.factory.annotation.Autowired
@@ -13,7 +14,10 @@ open class WirespecWebMvcConfiguration : WebMvcConfigurer {
     @Autowired
     lateinit var wirespecSerialization: Wirespec.Serialization
 
+    @Autowired
+    lateinit var objectMapper: ObjectMapper
+
     override fun addArgumentResolvers(argumentResolvers: MutableList<HandlerMethodArgumentResolver>) {
-        argumentResolvers.add(WirespecMethodArgumentResolver(wirespecSerialization))
+        argumentResolvers.add(WirespecMethodArgumentResolver(objectMapper, wirespecSerialization))
     }
 }

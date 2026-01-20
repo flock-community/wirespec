@@ -282,6 +282,45 @@ public class TodoService {
 }
 ```
 
+## Handling Multipart Requests
+
+Wirespec supports `multipart/form-data` requests by defining a type that represents the form fields. Binary data (files) should be defined using the `Bytes` type.
+
+### Definition
+
+Define the request body type with the fields you expect in the multipart request. Use `Bytes` for file uploads.
+
+```wirespec
+type FileUploadRequest {
+  file: Bytes,
+  description: String
+}
+
+endpoint UploadFile POST FileUploadRequest /upload -> {
+  200 -> String
+}
+```
+
+### Controller
+
+In the Spring controller, the request body is automatically mapped to the defined type. You can access the binary data as a `byte[]`.
+
+```java
+@RestController
+class FileController implements UploadFile.Handler {
+
+    @Override
+    public CompletableFuture<UploadFile.Response<?>> uploadFile(UploadFile.Request request) {
+        byte[] fileContent = request.getBody().file();
+        String description = request.getBody().description();
+
+        // Process the file...
+
+        return CompletableFuture.completedFuture(new UploadFile.Response200("File uploaded successfully"));
+    }
+}
+```
+
 ## Conclusion
 
 This was a quick but comprehensive introduction to the Spring integration for Wirespec. As you might have noticed, the

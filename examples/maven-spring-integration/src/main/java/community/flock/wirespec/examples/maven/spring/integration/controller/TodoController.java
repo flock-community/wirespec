@@ -4,6 +4,7 @@ import community.flock.wirespec.generated.examples.spring.endpoint.CreateTodo;
 import community.flock.wirespec.generated.examples.spring.endpoint.DeleteTodo;
 import community.flock.wirespec.generated.examples.spring.endpoint.GetTodoById;
 import community.flock.wirespec.generated.examples.spring.endpoint.GetTodos;
+import community.flock.wirespec.generated.examples.spring.endpoint.UploadAttachment;
 import community.flock.wirespec.generated.examples.spring.model.Todo;
 import community.flock.wirespec.generated.examples.spring.endpoint.UpdateTodo;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
 import static java.lang.Integer.parseInt;
 
 @RestController
-class TodoController implements GetTodos.Handler, GetTodoById.Handler, CreateTodo.Handler, UpdateTodo.Handler, DeleteTodo.Handler {
+class TodoController implements GetTodos.Handler, GetTodoById.Handler, CreateTodo.Handler, UpdateTodo.Handler, DeleteTodo.Handler, UploadAttachment.Handler {
 
     private final TodoService service;
 
@@ -61,5 +62,16 @@ class TodoController implements GetTodos.Handler, GetTodoById.Handler, CreateTod
     public CompletableFuture<GetTodos.Response<?>> getTodos(GetTodos.Request request) {
         var res = new GetTodos.Response200(service.store);
         return CompletableFuture.completedFuture(res);
+    }
+
+    @Override
+    public CompletableFuture<UploadAttachment.Response<?>> uploadAttachment(UploadAttachment.Request request) {
+        byte[] bytes = request.getBody().plain();
+        byte[] csv = request.getBody().csv();
+        Todo json = request.getBody().json();
+        service.uploadFile("plain", bytes);
+        service.uploadFile("csv", csv);
+        service.uploadFile("json", json);
+        return CompletableFuture.completedFuture(new UploadAttachment.Response201());
     }
 }
