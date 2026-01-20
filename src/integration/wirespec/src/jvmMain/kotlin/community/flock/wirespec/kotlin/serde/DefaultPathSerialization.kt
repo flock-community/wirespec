@@ -7,7 +7,7 @@ import community.flock.wirespec.kotlin.serde.DefaultSerialization.isWirespecEnum
 import community.flock.wirespec.kotlin.serde.DefaultSerialization.primitiveTypesConversion
 import kotlin.reflect.KType
 
-open class DefaultPathSerialization : Wirespec.PathSerialization {
+class DefaultPathSerialization : Wirespec.PathSerialization {
     override fun <T> serializePath(t: T, kType: KType): String = when {
         else -> t.toString()
     }
