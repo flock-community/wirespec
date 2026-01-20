@@ -2,6 +2,7 @@ package community.flock.wirespec.integration.spring.kotlin.web
 
 import com.fasterxml.jackson.annotation.JsonRawValue
 import com.fasterxml.jackson.annotation.JsonValue
+import community.flock.wirespec.integration.spring.shared.RawJsonBody
 import community.flock.wirespec.kotlin.Wirespec
 import org.springframework.core.MethodParameter
 import org.springframework.http.HttpStatusCode
@@ -44,16 +45,10 @@ class WirespecResponseBodyAdvice(
                 if (rawResponse.body == null) {
                     Unit
                 } else {
-                    rawResponse.body?.let { RawJsonBody(String(it)) }
+                    rawResponse.body?.let { RawJsonBody(it) }
                 }
             }
-
             else -> body
         }
     }
-    class RawJsonBody(
-        @get:JsonValue
-        @get:JsonRawValue
-        val json: String,
-    )
 }

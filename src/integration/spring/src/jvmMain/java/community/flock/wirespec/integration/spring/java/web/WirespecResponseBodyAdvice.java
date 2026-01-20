@@ -1,6 +1,7 @@
 package community.flock.wirespec.integration.spring.java.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import community.flock.wirespec.integration.spring.shared.RawJsonBody;
 import community.flock.wirespec.java.Wirespec;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatusCode;
@@ -18,11 +19,9 @@ import java.util.Map;
 @ControllerAdvice
 public class WirespecResponseBodyAdvice implements ResponseBodyAdvice<Object> {
 
-    private final ObjectMapper objectMapper;
     private final Wirespec.Serialization wirespecSerialization;
 
-    public WirespecResponseBodyAdvice(ObjectMapper objectMapper, Wirespec.Serialization wirespecSerialization) {
-        this.objectMapper = objectMapper;
+    public WirespecResponseBodyAdvice(Wirespec.Serialization wirespecSerialization) {
         this.wirespecSerialization = wirespecSerialization;
     }
 
@@ -71,9 +70,8 @@ public class WirespecResponseBodyAdvice implements ResponseBodyAdvice<Object> {
                 for (Map.Entry<String, List<String>> entry : rawResponse.headers().entrySet()) {
                     response.getHeaders().put(entry.getKey(), entry.getValue());
                 }
-                
                 if (rawResponse.body() != null) {
-                    return objectMapper.readTree(rawResponse.body());
+                    return new RawJsonBody(rawResponse.body());
                 }
                 return null;
             }
