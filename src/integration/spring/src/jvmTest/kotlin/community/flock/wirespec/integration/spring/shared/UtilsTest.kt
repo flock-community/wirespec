@@ -41,7 +41,7 @@ class UtilsTest {
         val expected = mapOf(
             "name" to listOf("dog"),
             "status" to listOf("available", "pending"),
-            "encoded" to listOf(" ")
+            "encoded" to listOf(" "),
         )
         assertEquals(expected, result)
     }
@@ -51,7 +51,7 @@ class UtilsTest {
         val queryString = "name="
         val result = extractQueries(queryString)
         val expected = mapOf(
-            "name" to listOf("")
+            "name" to listOf(""),
         )
         assertEquals(expected, result)
     }
@@ -61,7 +61,7 @@ class UtilsTest {
         val queryString = "name=dog&name=cat"
         val result = extractQueries(queryString)
         val expected = mapOf(
-            "name" to listOf("dog", "cat")
+            "name" to listOf("dog", "cat"),
         )
         assertEquals(expected, result)
     }
@@ -77,12 +77,12 @@ class UtilsTest {
         val queries = mapOf(
             "name" to listOf("dog"),
             "empty" to emptyList(),
-            "status" to listOf("available")
+            "status" to listOf("available"),
         )
         val result = queries.filterNotEmpty()
         val expected = mapOf(
             "name" to listOf("dog"),
-            "status" to listOf("available")
+            "status" to listOf("available"),
         )
         assertEquals(expected, result)
     }
