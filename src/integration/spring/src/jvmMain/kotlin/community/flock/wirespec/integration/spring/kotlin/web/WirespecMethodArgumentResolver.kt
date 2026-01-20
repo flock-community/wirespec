@@ -1,7 +1,8 @@
 package community.flock.wirespec.integration.spring.kotlin.web
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import community.flock.wirespec.integration.spring.shared.Controller
+import community.flock.wirespec.integration.spring.shared.extractPath
+import community.flock.wirespec.integration.spring.shared.extractQueries
 import community.flock.wirespec.kotlin.Wirespec
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.core.MethodParameter
@@ -54,16 +55,16 @@ class WirespecMethodArgumentResolver(
             }
             return Wirespec.RawRequest(
                 method = method,
-                path = Controller.extractPath(this),
-                queries = Controller.extractQueries(this),
+                path = extractPath(),
+                queries = extractQueries(),
                 headers = headerNames.toList().associateWith { getHeaders(it).toList() },
                 body = objectMapper.writeValueAsBytes(map),
             )
         }
         return Wirespec.RawRequest(
             method = method,
-            path = Controller.extractPath(this),
-            queries = Controller.extractQueries(this),
+            path = extractPath(),
+            queries = extractQueries(),
             headers = headerNames.toList().associateWith { getHeaders(it).toList() },
             body = reader.lines().collect(Collectors.joining(System.lineSeparator())).toByteArray(),
         )

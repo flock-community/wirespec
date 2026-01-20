@@ -1,7 +1,7 @@
 package community.flock.wirespec.integration.spring.java.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import community.flock.wirespec.integration.spring.shared.Controller;
+import community.flock.wirespec.integration.spring.shared.UtilsKt;
 import community.flock.wirespec.java.Wirespec;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.MethodParameter;
@@ -86,8 +86,8 @@ public class WirespecMethodArgumentResolver implements HandlerMethodArgumentReso
 
             return new Wirespec.RawRequest(
                 request.getMethod(),
-                Controller.extractPath(request),
-                Controller.extractQueries(request),
+                UtilsKt.extractPath(request),
+                UtilsKt.extractQueries(request),
                 getHeadersMap(request),
                 objectMapper.writeValueAsBytes(map)
             );
@@ -95,8 +95,8 @@ public class WirespecMethodArgumentResolver implements HandlerMethodArgumentReso
 
         return new Wirespec.RawRequest(
             request.getMethod(),
-            Controller.extractPath(request),
-            Controller.extractQueries(request),
+            UtilsKt.extractPath(request),
+            UtilsKt.extractQueries(request),
             getHeadersMap(request),
             request.getInputStream().readAllBytes()
         );
