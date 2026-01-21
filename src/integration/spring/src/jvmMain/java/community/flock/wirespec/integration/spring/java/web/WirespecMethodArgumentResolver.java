@@ -1,6 +1,5 @@
 package community.flock.wirespec.integration.spring.java.web;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import community.flock.wirespec.integration.spring.shared.UtilsKt;
 import community.flock.wirespec.java.Wirespec;
 import jakarta.servlet.http.HttpServletRequest;

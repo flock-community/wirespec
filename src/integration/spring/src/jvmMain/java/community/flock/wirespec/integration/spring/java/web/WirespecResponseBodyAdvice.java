@@ -1,6 +1,5 @@
 package community.flock.wirespec.integration.spring.java.web;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import community.flock.wirespec.integration.spring.shared.RawJsonBody;
 import community.flock.wirespec.java.Wirespec;
 import org.springframework.core.MethodParameter;
@@ -62,8 +61,7 @@ public class WirespecResponseBodyAdvice implements ResponseBodyAdvice<Object> {
             
             Wirespec.ServerEdge<Wirespec.Request<?>, Wirespec.Response<?>> server = instance.getServer(wirespecSerialization);
 
-            if (body instanceof Wirespec.Response) {
-                Wirespec.Response<?> wirespecResponse = (Wirespec.Response<?>) body;
+            if (body instanceof Wirespec.Response<?> wirespecResponse) {
                 Wirespec.RawResponse rawResponse = server.to(wirespecResponse);
                 
                 response.setStatusCode(HttpStatusCode.valueOf(rawResponse.statusCode()));

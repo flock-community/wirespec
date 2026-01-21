@@ -1,13 +1,9 @@
 package community.flock.wirespec.examples.maven.spring.integration.controller;
 
-import community.flock.wirespec.generated.examples.spring.endpoint.CreateTodo;
-import community.flock.wirespec.generated.examples.spring.endpoint.DeleteTodo;
-import community.flock.wirespec.generated.examples.spring.endpoint.GetTodoById;
-import community.flock.wirespec.generated.examples.spring.endpoint.GetTodos;
-import community.flock.wirespec.generated.examples.spring.model.Todo;
-import community.flock.wirespec.generated.examples.spring.endpoint.UpdateTodo;
-import org.springframework.web.bind.annotation.RestController;
 import community.flock.wirespec.examples.maven.spring.integration.service.TodoService;
+import community.flock.wirespec.generated.examples.spring.endpoint.*;
+import community.flock.wirespec.generated.examples.spring.model.Todo;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -25,7 +21,7 @@ class TodoController implements GetTodos.Handler, GetTodoById.Handler, CreateTod
 
     @Override
     public CompletableFuture<CreateTodo.Response<?>> createTodo(CreateTodo.Request request) {
-        var todoInput = switch (request){
+        var todoInput = switch (request) {
             case CreateTodo.Request req -> req.getBody();
         };
         var todo = new Todo(
@@ -33,23 +29,24 @@ class TodoController implements GetTodos.Handler, GetTodoById.Handler, CreateTod
                 todoInput.name(),
                 todoInput.done()
         );
-        service.create(todo);
-        var res = new CreateTodo.Response200(todo);
-        return CompletableFuture.completedFuture(res);
+        return service.create(todo)
+                .thenApply(CreateTodo.Response200::new);
     }
 
     @Override
     public CompletableFuture<DeleteTodo.Response<?>> deleteTodo(DeleteTodo.Request request) {
-        return null;
+        return service.delete(request.getPath().id())
+                .thenApply(DeleteTodo.Response200::new);
     }
 
     @Override
     public CompletableFuture<GetTodoById.Response<?>> getTodoById(GetTodoById.Request request) {
-        var id = switch (request){
+        var id = switch (request) {
             case GetTodoById.Request req -> req.getPath().id();
         };
-        var res = new GetTodoById.Response200(service.store.get(parseInt(id)));
-        return CompletableFuture.completedFuture(res);
+
+        Todo todo = service.store.get(parseInt(id));
+        return CompletableFuture.completedFuture(new GetTodoById.Response200(todo));
     }
 
     @Override

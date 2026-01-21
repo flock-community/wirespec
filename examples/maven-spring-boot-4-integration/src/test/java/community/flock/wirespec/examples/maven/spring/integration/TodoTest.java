@@ -26,7 +26,7 @@ class TodoTest {
 
     @Test
     void shouldReturnDefaultMessage() throws Exception {
-        MvcResult mvcGetResult =  mockMvc
+        MvcResult mvcGetResult = mockMvc
                 .perform(get("/todos"))
                 .andExpect(request().asyncStarted())
                 .andReturn();
@@ -35,7 +35,7 @@ class TodoTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(3)));
 
-        MvcResult mvcPostResult =  mockMvc
+        MvcResult mvcPostResult = mockMvc
                 .perform(post("/todos")
                         .contentType(APPLICATION_JSON_VALUE)
                         .content(
