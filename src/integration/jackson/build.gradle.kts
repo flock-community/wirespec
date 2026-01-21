@@ -38,7 +38,7 @@ kotlin {
                 implementation(project(":src:compiler:core"))
                 implementation(project(":src:compiler:emitters:kotlin"))
                 implementation(project(":src:compiler:emitters:java"))
-                api(libs.bundles.jackson)
+                compileOnly(libs.bundles.jackson)
             }
         }
         jvmTest {
