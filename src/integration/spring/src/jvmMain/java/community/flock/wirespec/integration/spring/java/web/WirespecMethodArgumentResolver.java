@@ -1,6 +1,5 @@
 package community.flock.wirespec.integration.spring.java.web;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import community.flock.wirespec.integration.spring.shared.UtilsKt;
 import community.flock.wirespec.java.Wirespec;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,13 +16,13 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static community.flock.wirespec.integration.spring.java.configuration.WirespecSerializationConfiguration.objectMapper;
+
 public class WirespecMethodArgumentResolver implements HandlerMethodArgumentResolver {
 
-    private final ObjectMapper objectMapper;
     private final Wirespec.Serialization wirespecSerialization;
 
-    public WirespecMethodArgumentResolver(ObjectMapper objectMapper, Wirespec.Serialization wirespecSerialization) {
-        this.objectMapper = objectMapper;
+    public WirespecMethodArgumentResolver(Wirespec.Serialization wirespecSerialization) {
         this.wirespecSerialization = wirespecSerialization;
     }
 

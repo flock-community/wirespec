@@ -1,6 +1,6 @@
 package community.flock.wirespec.integration.spring.kotlin.web
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import community.flock.wirespec.integration.spring.kotlin.configuration.WirespecSerializationConfiguration.Companion.objectMapper
 import community.flock.wirespec.integration.spring.shared.extractPath
 import community.flock.wirespec.integration.spring.shared.extractQueries
 import community.flock.wirespec.kotlin.Wirespec
@@ -17,7 +17,6 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.reflect.full.companionObjectInstance
 
 class WirespecMethodArgumentResolver(
-    private val objectMapper: ObjectMapper,
     private val wirespecSerialization: Wirespec.Serialization,
 ) : HandlerMethodArgumentResolver {
 

@@ -2,6 +2,7 @@ package community.flock.wirespec.integration.jackson.java;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import community.flock.wirespec.java.Wirespec.Serialization;
 import community.flock.wirespec.java.serde.DefaultParamSerialization;
 import community.flock.wirespec.java.serde.DefaultPathSerialization;
@@ -19,7 +20,8 @@ public class WirespecSerialization implements Serialization, DefaultParamSeriali
     private final ObjectMapper wirespecObjectMapper;
 
     public WirespecSerialization(ObjectMapper objectMapper) {
-        this.wirespecObjectMapper = objectMapper.copy().registerModule(new WirespecModuleJava());
+        this.wirespecObjectMapper = objectMapper.copy()
+                .registerModule(new WirespecModuleJava());
     }
 
     @Override
