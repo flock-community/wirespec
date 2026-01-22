@@ -43,9 +43,10 @@ jobs:
           else
             VERSION="latest"
           fi
-          echo "WIRESPEC_VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
       - name: Run
         run: |
+          export WIRESPEC_VERSION=${{ steps.set_version.outputs.version }}
           make build
       - name: Archive linux cli
         uses: actions/upload-artifact@v4
