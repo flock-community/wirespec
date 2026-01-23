@@ -21,6 +21,7 @@ class JavaMethodCodeVisionProvider : DaemonBoundCodeVisionProvider {
     override val name: String = "Java Method Code Vision"
     override val id: String = "java.method.code.vision"
     override val groupId: String = "references"
+
     override val relativeOrderings: List<CodeVisionRelativeOrdering> =
         listOf(CodeVisionRelativeOrdering.CodeVisionRelativeOrderingFirst)
     override val defaultAnchor: CodeVisionAnchorKind = CodeVisionAnchorKind.Top
@@ -32,7 +33,7 @@ class JavaMethodCodeVisionProvider : DaemonBoundCodeVisionProvider {
             .mapNotNull { method ->
                 method.findSuperMethods()
                     .mapNotNull { it.containingClass }
-                    .firstOrNull { isWirespecHandler(it) }
+                    .firstNotNullOfOrNull { isWirespecHandler(it) }
                     ?.let { handlerInterface ->
                         val handlers = handlerInterface.innerClasses.find { it.name == "Handlers" }
 
@@ -44,10 +45,8 @@ class JavaMethodCodeVisionProvider : DaemonBoundCodeVisionProvider {
                         textRange to ClickableTextCodeVisionEntry(
                             text = text,
                             providerId = id,
-                            onClick = { event, editor ->
-                                val endpointClass = handlerInterface.containingClass
-                                val endpointName = endpointClass?.name
-                                if (endpointName != null) {
+                            onClick = { _, _ ->
+                                handlerInterface.containingClass?.name?.let { endpointName ->
                                     findEndpoint(file.project, endpointName)?.let { endpoint ->
                                         (endpoint.navigationElement as? Navigatable)?.navigate(true)
                                     }
@@ -60,33 +59,24 @@ class JavaMethodCodeVisionProvider : DaemonBoundCodeVisionProvider {
 
     private fun findEndpoint(project: Project, name: String): PsiElement? {
         val scope = GlobalSearchScope.allScope(project)
-        val files = FileTypeIndex.getFiles(FileType, scope)
-        val psiManager = PsiManager.getInstance(project)
-
-        for (file in files) {
-            val psiFile = psiManager.findFile(file) ?: continue
-            if (psiFile is community.flock.wirespec.ide.intellij.File) {
-                val endpoints = PsiTreeUtil.findChildrenOfType(psiFile, EndpointDefElement::class.java)
-                for (endpoint in endpoints) {
-                    if (endpoint.name == name) {
-                        return endpoint
-                    }
-                }
-            }
-        }
-        return null
+        return FileTypeIndex.getFiles(FileType, scope)
+            .asSequence()
+            .mapNotNull { PsiManager.getInstance(project).findFile(it) as? community.flock.wirespec.ide.intellij.File }
+            .flatMap { PsiTreeUtil.getChildrenOfTypeAsList(it, EndpointDefElement::class.java) }
+            .firstOrNull { it.name == name }
     }
 
     private fun PsiClass.getLiteralValue(methodName: String): String? =
         findMethodsByName(methodName, false)
             .firstOrNull()
             ?.let { method ->
-                PsiTreeUtil.findChildrenOfType(method, PsiReturnStatement::class.java)
-                    .firstNotNullOfOrNull { it.returnValue as? PsiLiteralExpression }
+                PsiTreeUtil.findChildOfType(method, PsiReturnStatement::class.java)
+                    ?.returnValue
+                    ?.let { it as? PsiLiteralExpression }
                     ?.value as? String
             }
 
-    private fun isWirespecHandler(psiClass: PsiClass): Boolean {
-        return InheritanceUtil.isInheritor(psiClass, "community.flock.wirespec.java.Wirespec.Handler")
-    }
+    private fun isWirespecHandler(psiClass: PsiClass): PsiClass? =
+        if (InheritanceUtil.isInheritor(psiClass, "community.flock.wirespec.java.Wirespec.Handler")) psiClass
+        else null
 }
