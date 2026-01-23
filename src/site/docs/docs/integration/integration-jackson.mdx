@@ -18,16 +18,21 @@ jackson integration to avoid unexpected behavior.
     <dependency>
       <groupId>community.flock.wirespec.integration</groupId>
       <artifactId>jackson</artifactId>
-      <version>0.14.3</version>
+      <version>{{WIRESPEC_VERSION}}</version>
     </dependency>
     ```
   </TabItem>
   <TabItem value="gradle" label="Gradle">
     ```gradle title="build.gradle.kts"
-    implementation("community.flock.wirespec.integration:jackson:0.14.3")
+    implementation("community.flock.wirespec.integration:jackson:{{WIRESPEC_VERSION}}")
     ```
   </TabItem>
 </Tabs>
+
+:::warning
+Note that this package is not a transitive dependency and only provides a module. You still need to add the Jackson 
+dependencies yourself.
+:::
 
 :::info
 Make sure to use the latest version, found here:

@@ -84,8 +84,7 @@ public class WirespecWebClient {
                                 ))
                 )
                 .onErrorResume(throwable -> {
-                    if (throwable instanceof WebClientResponseException) {
-                        WebClientResponseException e = (WebClientResponseException) throwable;
+                    if (throwable instanceof WebClientResponseException e) {
                         return Mono.just(new Wirespec.RawResponse(
                                 e.getStatusCode().value(),
                                 CollectionUtils.toMultiValueMap(e.getHeaders()),

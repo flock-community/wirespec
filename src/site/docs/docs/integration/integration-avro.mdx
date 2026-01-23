@@ -22,7 +22,7 @@ The integration works for both producers and consumers, and can be configured wi
         <dependency>
             <groupId>community.flock.wirespec.integration</groupId>
             <artifactId>avro-jvm</artifactId>
-            <version>0.14.3</version>
+            <version>{{WIRESPEC_VERSION}}</version>
         </dependency>
         ```
 
@@ -30,7 +30,7 @@ The integration works for both producers and consumers, and can be configured wi
         <plugin>
             <groupId>community.flock.wirespec.plugin.maven</groupId>
             <artifactId>wirespec-maven-plugin</artifactId>
-            <version>0.14.3</version>
+            <version>{{WIRESPEC_VERSION}}</version>
             <executions>
                 <execution>
                     <id>java</id>
@@ -54,7 +54,7 @@ The integration works for both producers and consumers, and can be configured wi
         <dependency>
             <groupId>community.flock.wirespec.integration</groupId>
             <artifactId>avro-jvm</artifactId>
-            <version>0.14.3</version>
+            <version>{{WIRESPEC_VERSION}}</version>
         </dependency>
         ```
 
@@ -62,7 +62,7 @@ The integration works for both producers and consumers, and can be configured wi
         <plugin>
             <groupId>community.flock.wirespec.plugin.maven</groupId>
             <artifactId>wirespec-maven-plugin</artifactId>
-            <version>0.14.3</version>
+            <version>{{WIRESPEC_VERSION}}</version>
             <executions>
                 <execution>
                     <id>java</id>
@@ -85,11 +85,11 @@ The integration works for both producers and consumers, and can be configured wi
 
         ```kotlin
         dependencies {
-            implementation("community.flock.wirespec.integration:avro-jvm:0.14.3")
+            implementation("community.flock.wirespec.integration:avro-jvm:{{WIRESPEC_VERSION}}")
         }
 
         plugins {
-            id("community.flock.wirespec.plugin.gradle") version "0.14.3"
+            id("community.flock.wirespec.plugin.gradle") version "{{WIRESPEC_VERSION}}"
         }
 
         tasks.register<CompileWirespecTask>("wirespec-avro-java") {
@@ -119,11 +119,11 @@ The integration works for both producers and consumers, and can be configured wi
 
         ```kotlin
         dependencies {
-            implementation("community.flock.wirespec.integration:avro-jvm:0.14.3")
+            implementation("community.flock.wirespec.integration:avro-jvm:{{WIRESPEC_VERSION}}")
         }
 
         plugins {
-            id("community.flock.wirespec.plugin.gradle") version "0.14.3"
+            id("community.flock.wirespec.plugin.gradle") version "{{WIRESPEC_VERSION}}"
         }
 
         tasks.register<CompileWirespecTask>("wirespec-avro-kotlin") {

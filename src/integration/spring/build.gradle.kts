@@ -39,7 +39,7 @@ kotlin {
                 compileOnly(project(":src:compiler:emitters:java"))
                 api(project(":src:integration:wirespec"))
                 implementation(project(":src:integration:jackson"))
-                implementation(libs.jackson.kotlin)
+                implementation(libs.bundles.jackson)
                 implementation(libs.kotlin.reflect)
                 implementation(libs.kotlinx.coroutines.reactor)
                 implementation(libs.spring.boot.web)

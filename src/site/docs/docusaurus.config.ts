@@ -17,7 +17,7 @@ const config: Config = {
     locales: ["en"],
   },
   customFields: {
-    version: "0.0.0-SNAPSHOT",
+    version: process.env.WIRESPEC_VERSION || "0.0.0-SNAPSHOT",
   },
   plugins: [["drawio", {}]],
   presets: [
@@ -204,12 +204,10 @@ const config: Config = {
   markdown: {
     format: "mdx",
     preprocessor: ({ fileContent }) => {
-      const variables = {
-        WIRESPEC_VERSION: "0.0.0-SNAPSHOT",
-      };
+      const wirespecVersion = process.env.WIRESPEC_VERSION || "0.0.0-SNAPSHOT";
       return fileContent.replaceAll(
         "{{WIRESPEC_VERSION}}",
-        variables.WIRESPEC_VERSION,
+        wirespecVersion,
       );
     },
   },
