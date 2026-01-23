@@ -11,15 +11,25 @@ import community.flock.wirespec.ide.intellij.parser.CustomTypeElementDef
 
 class Reference<A : CustomTypeElement>(element: A) : PsiReferenceBase<A>(element, TextRange(0, element.textLength)) {
 
-    override fun resolve(): PsiElement? = FileTypeIndex
-        .getFiles(FileType, GlobalSearchScope.allScope(element.project))
-        .map(PsiManager.getInstance(element.project)::findFile)
-        .flatMap { file ->
-            file?.visitAllElements().orEmpty()
-                .filterIsInstance<CustomTypeElementDef>()
-                .filter { it.text == element.text }
+    override fun resolve(): PsiElement? {
+        val scope = GlobalSearchScope.allScope(element.project)
+        val files = FileTypeIndex.getFiles(FileType, scope)
+        val psiManager = PsiManager.getInstance(element.project)
+
+        for (file in files) {
+            val psiFile = psiManager.findFile(file) ?: continue
+            if (psiFile is File) {
+                val defs = psiFile.visitAllElements()
+                    .filterIsInstance<CustomTypeElementDef>()
+                for (def in defs) {
+                    if (def.text == element.text) {
+                        return def
+                    }
+                }
+            }
         }
-        .firstOrNull()
+        return null
+    }
 
     override fun handleElementRename(newElementName: String): PsiElement = element.setName(newElementName)
 

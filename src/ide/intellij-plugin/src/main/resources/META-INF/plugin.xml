@@ -11,6 +11,7 @@
 
     <!-- Product and plugin compatibility requirements -->
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.java</depends>
 
     <!-- Text to display as description on Preferences/Settings | Plugin page -->
     <description>
@@ -63,6 +64,10 @@
 
         <gotoSymbolContributor
                 implementationClass="community.flock.wirespec.ide.intellij.ChooseByNameContributor"/>
+
+        <codeInsight.daemonBoundCodeVisionProvider
+                language="JAVA"
+                implementationClass="community.flock.wirespec.ide.intellij.inlay.JavaMethodCodeVisionProvider"/>
 
     </extensions>
 

@@ -15,13 +15,13 @@ import community.flock.wirespec.ide.intellij.Types.Companion.TYPE_IDENTIFIER
 import community.flock.wirespec.ide.intellij.parser.Parser.Body
 import community.flock.wirespec.ide.intellij.parser.Parser.CustomTypeDef
 import community.flock.wirespec.ide.intellij.parser.Parser.CustomTypeRef
-import community.flock.wirespec.ide.intellij.parser.Parser.TypeDef
 
 class Parser : PsiParser {
 
     object TypeDef : IElementType("TYPE_DEF", Language)
     object ChannelDef : IElementType("CHANNEL_DEF", Language)
     object EndpointDef : IElementType("ENDPOINT_DEF", Language)
+    object EnumDef : IElementType("ENUM_DEF", Language)
     object CustomTypeDef : IElementType("CUSTOM_TYPE_DEF", Language)
     object CustomTypeRef : IElementType("CUSTOM_TYPE_REF", Language)
     object Body : IElementType("BODY", Language)
@@ -34,16 +34,22 @@ class Parser : PsiParser {
     }.treeBuilt
 }
 
-private fun PsiBuilder.parse(): Unit = when {
-    eof() -> Unit
-    def() -> {
-        mark().apply {
-            advanceLexer()
-            parseDef()
-            done(TypeDef)
+    private fun PsiBuilder.parse(): Unit = when {
+        eof() -> Unit
+        def() -> {
+            val type = when (tokenType) {
+                CHANNEL_DEF -> Parser.ChannelDef
+                ENDPOINT_DEF -> Parser.EndpointDef
+                ENUM_DEF -> Parser.EnumDef
+                else -> Parser.TypeDef
+            }
+            mark().apply {
+                advanceLexer()
+                parseDef()
+                done(type)
+            }
+            parse()
         }
-        parse()
-    }
 
     else -> {
         advanceLexer()
