@@ -117,10 +117,11 @@ class ConvertMojo : BaseMojo() {
             is ClassPath -> inputPath.readFromClasspath<JSON>().let { (name, content) -> Source<JSON>(name, content) }
             is DirectoryPath -> throw ConvertNeedsAFile()
             is FilePath -> when (inputPath.extension) {
-                FileExtension.JSON -> Source(inputPath.name, inputPath.read())
-                FileExtension.Avro -> Source(inputPath.name, inputPath.read())
+                FileExtension.JSON -> Source<JSON>(inputPath.name, inputPath.read())
+                FileExtension.Avro -> Source<JSON>(inputPath.name, inputPath.read())
                 else -> throw JSONFileError()
             }
+                .also { logger.info("Found 1 file to process: $inputPath") }
         }.map(::preProcess)
 
         val outputDir = Directory(getOutPutPath(inputPath, output).or(::handleError))

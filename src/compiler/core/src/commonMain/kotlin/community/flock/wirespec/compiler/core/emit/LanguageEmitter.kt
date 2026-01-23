@@ -19,7 +19,10 @@ abstract class LanguageEmitter :
     abstract val shared: Shared?
 
     override fun emit(ast: AST, logger: Logger): NonEmptyList<Emitted> = ast
-        .modules.flatMap { emit(it, logger) }
+        .modules.flatMap { m ->
+            logger.info("Emitting Nodes from ${m.fileUri.value} ")
+            emit(m, logger)
+        }
         .map { e -> Emitted(e.file + "." + extension.value, e.result) }
 
     open fun emit(module: Module, logger: Logger): NonEmptyList<Emitted> = module
@@ -27,7 +30,7 @@ abstract class LanguageEmitter :
         .map { emit(it, module, logger) }
 
     open fun emit(definition: Definition, module: Module, logger: Logger): Emitted = run {
-        logger.info("Emitting Node ${definition.identifier.value}")
+        logger.info("Emitting ${definition::class.simpleName} ${definition.identifier.value}")
         when (definition) {
             is Type -> Emitted(emit(definition.identifier), emit(definition, module))
             is Endpoint -> Emitted(emit(definition.identifier), emit(definition))

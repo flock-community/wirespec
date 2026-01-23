@@ -6,6 +6,7 @@ import arrow.core.getOrElse
 import arrow.core.raise.either
 import arrow.core.toNonEmptySetOrNull
 import community.flock.wirespec.compiler.core.emit.FileExtension
+import community.flock.wirespec.compiler.utils.Logger
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -57,16 +58,24 @@ fun FilePath.write(string: String) = Path(toString())
             .flush()
     }
 
-fun Directory.wirespecSources(): Either<WirespecFileError, NonEmptySet<Source<Source.Type.Wirespec>>> = either {
-    Path(path.value)
-        .let(SystemFileSystem::list)
-        .filter(::isRegularFile)
-        .filter(::isWirespecFile)
-        .map { FilePath(it.toString()) to SystemFileSystem.source(it).buffered().readString() }
-        .map { (path, source) -> Source<Source.Type.Wirespec>(name = path.name, content = source) }
-        .toNonEmptySetOrNull()
-        ?: raise(WirespecFileError())
-}
+fun Directory.wirespecSources(logger: Logger): Either<WirespecFileError, NonEmptySet<Source<Source.Type.Wirespec>>> =
+    either {
+        Path(path.value)
+            .let(SystemFileSystem::list)
+            .filter(::isRegularFile)
+            .filter(::isWirespecFile)
+            .map { FilePath(it.toString()) to SystemFileSystem.source(it).buffered().readString() }
+            .also { paths ->
+                logger.info("Found ${paths.size} wirespec file(s) to process in ${this@wirespecSources.path.value}")
+                paths.forEachIndexed { index, it ->
+                    val prefix = if (index < paths.size - 1) "├── " else "└── "
+                    logger.info("  $prefix " + it.first.name.value + "." + it.first.extension.value)
+                }
+            }
+            .map { (path, source) -> Source<Source.Type.Wirespec>(name = path.name, content = source) }
+            .toNonEmptySetOrNull()
+            ?: raise(WirespecFileError())
+    }
 
 private fun isRegularFile(path: Path) = SystemFileSystem.metadataOrNull(path)?.isRegularFile == true
 

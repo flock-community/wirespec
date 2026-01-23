@@ -20,6 +20,8 @@ import community.flock.wirespec.compiler.lib.WsEmitted
 import community.flock.wirespec.compiler.lib.WsStringResult
 import community.flock.wirespec.compiler.lib.consume
 import community.flock.wirespec.compiler.lib.produce
+import community.flock.wirespec.compiler.utils.HasLogger
+import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.converter.avro.AvroEmitter

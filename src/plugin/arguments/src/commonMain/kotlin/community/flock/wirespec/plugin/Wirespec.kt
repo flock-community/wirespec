@@ -23,7 +23,9 @@ fun compile(arguments: CompilerArguments) {
     }
 
     ctx
-        .compile(arguments.input.map { ModuleContent(FileUri(it.name.value), it.content) })
+        .compile(arguments.input.map {
+            ModuleContent(FileUri(it.name.value), it.content)
+        })
         .fold(arguments)
 }
 
