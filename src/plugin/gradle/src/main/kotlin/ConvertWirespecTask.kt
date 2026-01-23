@@ -51,7 +51,6 @@ abstract class ConvertWirespecTask : BaseWirespecTask() {
                 else -> throw JSONFileError()
             }
                 .also { logger.info("Found 1 file to process: $inputPath") }
-
         }
 
         val outputDir = Directory(getOutPutPath(inputPath, outputPath).or(::handleError))

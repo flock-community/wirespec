@@ -92,27 +92,26 @@ object OpenAPIV3Emitter : Emitter {
         }
         .let { OpenAPIV3Components(it) }
 
-    private fun Statements.emitPaths(logger: Logger) =
-        filterIsInstance<Endpoint>()
-            .groupBy { it.path }
-            .map { (path, endpoints) ->
-                logger.info("Emitting endpoints for path ${path.emitSegment()}")
-                Path(path.emitSegment()) to OpenAPIV3PathItem(
-                    parameters = path
-                        .filterIsInstance<Endpoint.Segment.Param>()
-                        .map { it.emitParameter() }
-                        .ifEmpty { null },
-                    get = endpoints.emit(Endpoint.Method.GET),
-                    post = endpoints.emit(Endpoint.Method.POST),
-                    put = endpoints.emit(Endpoint.Method.PUT),
-                    delete = endpoints.emit(Endpoint.Method.DELETE),
-                    patch = endpoints.emit(Endpoint.Method.PATCH),
-                    options = endpoints.emit(Endpoint.Method.OPTIONS),
-                    trace = endpoints.emit(Endpoint.Method.TRACE),
-                    head = endpoints.emit(Endpoint.Method.HEAD),
-                )
-            }
-            .toMap()
+    private fun Statements.emitPaths(logger: Logger) = filterIsInstance<Endpoint>()
+        .groupBy { it.path }
+        .map { (path, endpoints) ->
+            logger.info("Emitting endpoints for path ${path.emitSegment()}")
+            Path(path.emitSegment()) to OpenAPIV3PathItem(
+                parameters = path
+                    .filterIsInstance<Endpoint.Segment.Param>()
+                    .map { it.emitParameter() }
+                    .ifEmpty { null },
+                get = endpoints.emit(Endpoint.Method.GET),
+                post = endpoints.emit(Endpoint.Method.POST),
+                put = endpoints.emit(Endpoint.Method.PUT),
+                delete = endpoints.emit(Endpoint.Method.DELETE),
+                patch = endpoints.emit(Endpoint.Method.PATCH),
+                options = endpoints.emit(Endpoint.Method.OPTIONS),
+                trace = endpoints.emit(Endpoint.Method.TRACE),
+                head = endpoints.emit(Endpoint.Method.HEAD),
+            )
+        }
+        .toMap()
 
     private fun Refined.emit(): OpenAPIV3Schema = when (val type = reference.type) {
         is Reference.Primitive.Type.Integer, is Reference.Primitive.Type.Number -> OpenAPIV3Schema(

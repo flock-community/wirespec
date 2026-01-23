@@ -34,7 +34,7 @@ class OpenAPIV2EmitterTest {
         val petstoreOpenAPi = OpenAPIV2.decodeFromString(petstoreJson)
         val petstoreAst = petstoreOpenAPi.parse().shouldNotBeNull()
 
-        val petstoreConvertedOpenAPI = OpenAPIV2Emitter.emitSwaggerObject(petstoreAst, logger)
+        val petstoreConvertedOpenAPI = OpenAPIV2Emitter.emitSwaggerObject(petstoreAst, noLogger)
         val petstoreConvertedOpenAPiAst = petstoreConvertedOpenAPI.parse().shouldNotBeNull()
 
         val actual = petstoreAst.toList()

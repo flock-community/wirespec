@@ -137,44 +137,41 @@ object OpenAPIV2Emitter : Emitter {
         return refined + types + enums
     }
 
-    private fun Statements.emitPaths(logger: Logger): Map<Path, OpenAPIV2PathItem> =
-        filterIsInstance<Endpoint>()
-            .groupBy { it.path }
-            .map { (path, endpoints) ->
-                logger.info("Emitting endpoints for path ${path.emitSegment()}")
-                Path(path.emitSegment()) to OpenAPIV2PathItem(
-                    parameters = path.filterIsInstance<Endpoint.Segment.Param>().map {
-                        OpenAPIV2Parameter(
-                            `in` = OpenAPIV2ParameterLocation.PATH,
-                            name = it.identifier.value,
-                            type = it.reference.emitType(),
-                            format = it.reference.emitFormat(),
-                            pattern = it.reference.emitPattern(),
-                            minimum = it.reference.emitMinimum(),
-                            maximum = it.reference.emitMaximum(),
-                        )
-                    },
-                    get = endpoints.emit(Endpoint.Method.GET),
-                    post = endpoints.emit(Endpoint.Method.POST),
-                    put = endpoints.emit(Endpoint.Method.PUT),
-                    delete = endpoints.emit(Endpoint.Method.DELETE),
-                    patch = endpoints.emit(Endpoint.Method.PATCH),
-                    options = endpoints.emit(Endpoint.Method.OPTIONS),
-                    trace = endpoints.emit(Endpoint.Method.TRACE),
-                    head = endpoints.emit(Endpoint.Method.HEAD),
-                )
-            }.toMap()
+    private fun Statements.emitPaths(logger: Logger): Map<Path, OpenAPIV2PathItem> = filterIsInstance<Endpoint>()
+        .groupBy { it.path }
+        .map { (path, endpoints) ->
+            logger.info("Emitting endpoints for path ${path.emitSegment()}")
+            Path(path.emitSegment()) to OpenAPIV2PathItem(
+                parameters = path.filterIsInstance<Endpoint.Segment.Param>().map {
+                    OpenAPIV2Parameter(
+                        `in` = OpenAPIV2ParameterLocation.PATH,
+                        name = it.identifier.value,
+                        type = it.reference.emitType(),
+                        format = it.reference.emitFormat(),
+                        pattern = it.reference.emitPattern(),
+                        minimum = it.reference.emitMinimum(),
+                        maximum = it.reference.emitMaximum(),
+                    )
+                },
+                get = endpoints.emit(Endpoint.Method.GET),
+                post = endpoints.emit(Endpoint.Method.POST),
+                put = endpoints.emit(Endpoint.Method.PUT),
+                delete = endpoints.emit(Endpoint.Method.DELETE),
+                patch = endpoints.emit(Endpoint.Method.PATCH),
+                options = endpoints.emit(Endpoint.Method.OPTIONS),
+                trace = endpoints.emit(Endpoint.Method.TRACE),
+                head = endpoints.emit(Endpoint.Method.HEAD),
+            )
+        }.toMap()
 
-    private fun Field.toProperties(): Pair<String, OpenAPIV2SchemaOrReference> =
-        identifier.value to reference.toSchemaOrReference().let {
-            when (it) {
-                is OpenAPIV2Schema -> it.copy(description = annotations.findDescription())
-                is OpenAPIV2Reference -> it
-            }
+    private fun Field.toProperties(): Pair<String, OpenAPIV2SchemaOrReference> = identifier.value to reference.toSchemaOrReference().let {
+        when (it) {
+            is OpenAPIV2Schema -> it.copy(description = annotations.findDescription())
+            is OpenAPIV2Reference -> it
         }
+    }
 
-    private fun List<Endpoint>.emit(method: Endpoint.Method): OpenAPIV2Operation? =
-        filter { it.method == method }.map { it.emit() }.firstOrNull()
+    private fun List<Endpoint>.emit(method: Endpoint.Method): OpenAPIV2Operation? = filter { it.method == method }.map { it.emit() }.firstOrNull()
 
     private fun Endpoint.emit() = OpenAPIV2Operation(
         operationId = identifier.value,

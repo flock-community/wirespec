@@ -60,8 +60,8 @@ class CommandLineEntitiesTest {
                 it.packageName.shouldNotBeNull().value shouldBe DEFAULT_GENERATED_PACKAGE_STRING
                 it.logger.run {
                     shouldDebugLog.shouldBeFalse()
-                    shouldInfoLog.shouldBeFalse()
-                    shouldWarnLog.shouldBeFalse()
+                    shouldInfoLog.shouldBeTrue()
+                    shouldWarnLog.shouldBeTrue()
                     shouldErrorLog.shouldBeTrue()
                 }
                 it.shared shouldBe false
