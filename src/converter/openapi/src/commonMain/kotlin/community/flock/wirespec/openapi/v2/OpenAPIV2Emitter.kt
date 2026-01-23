@@ -44,16 +44,19 @@ object OpenAPIV2Emitter : Emitter {
         ast: AST,
         logger: Logger,
     ): NonEmptyList<Emitted> = ast.modules
-        .flatMap { it.statements }
+        .flatMap { module ->
+            logger.info("Combining Nodes from ${module.fileUri.value} ")
+            module.statements
+        }
         .let {
             Emitted(
                 "OpenAPI.${extension.value}",
-                json.encodeToString(emitSwaggerObject(it)),
+                json.encodeToString(emitSwaggerObject(it, logger)),
             )
         }
         .let { nonEmptyListOf(it) }
 
-    fun emitSwaggerObject(statements: Statements): OpenAPIV2Model = OpenAPIV2Model(
+    fun emitSwaggerObject(statements: Statements, logger: Logger): OpenAPIV2Model = OpenAPIV2Model(
         swagger = "2.0",
         info = InfoObject(
             title = "Wirespec",
@@ -61,32 +64,13 @@ object OpenAPIV2Emitter : Emitter {
         ),
         consumes = listOf(APPLICATION_JSON),
         produces = listOf(APPLICATION_JSON),
-        paths = statements.filterIsInstance<Endpoint>().groupBy { it.path }
-            .map { (segments, endpoints) ->
-                Path(segments.emitSegment()) to OpenAPIV2PathItem(
-                    parameters = segments.filterIsInstance<Endpoint.Segment.Param>().map {
-                        OpenAPIV2Parameter(
-                            `in` = OpenAPIV2ParameterLocation.PATH,
-                            name = it.identifier.value,
-                            type = it.reference.emitType(),
-                            format = it.reference.emitFormat(),
-                            pattern = it.reference.emitPattern(),
-                            minimum = it.reference.emitMinimum(),
-                            maximum = it.reference.emitMaximum(),
-                        )
-                    },
-                    get = endpoints.emit(Endpoint.Method.GET),
-                    post = endpoints.emit(Endpoint.Method.POST),
-                    put = endpoints.emit(Endpoint.Method.PUT),
-                    delete = endpoints.emit(Endpoint.Method.DELETE),
-                    patch = endpoints.emit(Endpoint.Method.PATCH),
-                    options = endpoints.emit(Endpoint.Method.OPTIONS),
-                    trace = endpoints.emit(Endpoint.Method.TRACE),
-                    head = endpoints.emit(Endpoint.Method.HEAD),
-                )
-            }.toMap(),
-        definitions = statements
-            .filterIsInstance<Refined>().associate { refined ->
+        paths = statements.emitPaths(logger),
+        definitions = statements.emitDefinitions(logger),
+    )
+
+    private fun Statements.emitDefinitions(logger: Logger): Map<String, OpenAPIV2Schema> {
+        val refined = filterIsInstance<Refined>()
+            .associate { refined ->
                 when (val type = refined.reference.type) {
                     Reference.Primitive.Type.Boolean ->
                         refined.identifier.value to OpenAPIV2Schema(
@@ -124,8 +108,11 @@ object OpenAPIV2Emitter : Emitter {
                             )
                         }
                 }
-            } + statements
-            .filterIsInstance<Type>().associate { type ->
+                    .also { logger.info("Emitting Refined ${refined.identifier.value}") }
+            }
+
+        val types = filterIsInstance<Type>()
+            .associate { type ->
                 type.identifier.value to OpenAPIV2Schema(
                     description = type.annotations.findDescription() ?: type.comment?.value,
                     properties = type.shape.value.associate { it.toProperties() },
@@ -134,25 +121,60 @@ object OpenAPIV2Emitter : Emitter {
                         .map { it.identifier.value }
                         .takeIf { it.isNotEmpty() },
                 )
-            } + statements
-            .filterIsInstance<Enum>()
+                    .also { logger.info("Emitting Type ${type.identifier.value}") }
+            }
+
+        val enums = filterIsInstance<Enum>()
             .associate { enum ->
                 enum.identifier.value to OpenAPIV2Schema(
                     type = OpenAPIV2Type.STRING,
                     enum = enum.entries.map { JsonPrimitive(it) },
                     description = enum.annotations.findDescription(),
                 )
-            },
-    )
+                    .also { logger.info("Emitting Enum ${enum.identifier.value}") }
+            }
 
-    private fun Field.toProperties(): Pair<String, OpenAPIV2SchemaOrReference> = identifier.value to reference.toSchemaOrReference().let {
-        when (it) {
-            is OpenAPIV2Schema -> it.copy(description = annotations.findDescription())
-            is OpenAPIV2Reference -> it
-        }
+        return refined + types + enums
     }
 
-    private fun List<Endpoint>.emit(method: Endpoint.Method): OpenAPIV2Operation? = filter { it.method == method }.map { it.emit() }.firstOrNull()
+    private fun Statements.emitPaths(logger: Logger): Map<Path, OpenAPIV2PathItem> =
+        filterIsInstance<Endpoint>()
+            .groupBy { it.path }
+            .map { (path, endpoints) ->
+                logger.info("Emitting endpoints for path ${path.emitSegment()}")
+                Path(path.emitSegment()) to OpenAPIV2PathItem(
+                    parameters = path.filterIsInstance<Endpoint.Segment.Param>().map {
+                        OpenAPIV2Parameter(
+                            `in` = OpenAPIV2ParameterLocation.PATH,
+                            name = it.identifier.value,
+                            type = it.reference.emitType(),
+                            format = it.reference.emitFormat(),
+                            pattern = it.reference.emitPattern(),
+                            minimum = it.reference.emitMinimum(),
+                            maximum = it.reference.emitMaximum(),
+                        )
+                    },
+                    get = endpoints.emit(Endpoint.Method.GET),
+                    post = endpoints.emit(Endpoint.Method.POST),
+                    put = endpoints.emit(Endpoint.Method.PUT),
+                    delete = endpoints.emit(Endpoint.Method.DELETE),
+                    patch = endpoints.emit(Endpoint.Method.PATCH),
+                    options = endpoints.emit(Endpoint.Method.OPTIONS),
+                    trace = endpoints.emit(Endpoint.Method.TRACE),
+                    head = endpoints.emit(Endpoint.Method.HEAD),
+                )
+            }.toMap()
+
+    private fun Field.toProperties(): Pair<String, OpenAPIV2SchemaOrReference> =
+        identifier.value to reference.toSchemaOrReference().let {
+            when (it) {
+                is OpenAPIV2Schema -> it.copy(description = annotations.findDescription())
+                is OpenAPIV2Reference -> it
+            }
+        }
+
+    private fun List<Endpoint>.emit(method: Endpoint.Method): OpenAPIV2Operation? =
+        filter { it.method == method }.map { it.emit() }.firstOrNull()
 
     private fun Endpoint.emit() = OpenAPIV2Operation(
         operationId = identifier.value,

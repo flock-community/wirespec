@@ -66,7 +66,7 @@ fun Directory.wirespecSources(logger: Logger): Either<WirespecFileError, NonEmpt
             .filter(::isWirespecFile)
             .map { FilePath(it.toString()) to SystemFileSystem.source(it).buffered().readString() }
             .also { paths ->
-                logger.info("Found ${paths.size} wirespec file(s) to process in ${this@wirespecSources.path.value}")
+                logger.info("Found ${paths.size} file(s) to process in ${this@wirespecSources.path.value}")
                 paths.forEachIndexed { index, it ->
                     val prefix = if (index < paths.size - 1) "├── " else "└── "
                     logger.info("  $prefix " + it.first.name.value + "." + it.first.extension.value)

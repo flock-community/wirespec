@@ -78,7 +78,7 @@ class ConvertMojo : BaseMojo() {
             return input // Identity function if no preprocessor is specified
         }
 
-        log.info("load preprocessor: $preProcessor")
+        log.info("Load preprocessor: $preProcessor")
 
         try {
             val classLoader = getClassLoader(project)

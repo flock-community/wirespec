@@ -30,7 +30,7 @@ class OpenAPIV3EmitterTest {
 
     @Test
     fun astArray() {
-        val res = OpenAPIV3Emitter.emitOpenAPIObject(Ast.array, null)
+        val res = OpenAPIV3Emitter.emitOpenAPIObject(Ast.array, null, noLogger)
         val openapi = json.encodeToString(res)
         val expect =
             """
@@ -156,7 +156,7 @@ class OpenAPIV3EmitterTest {
         val petstoreOpenAPi = OpenAPIV3.decodeFromString(petstoreJson)
         val petstoreAst = petstoreOpenAPi.parse().shouldNotBeNull()
 
-        val petstoreConvertedOpenAPi = OpenAPIV3Emitter.emitOpenAPIObject(petstoreAst, null)
+        val petstoreConvertedOpenAPi = OpenAPIV3Emitter.emitOpenAPIObject(petstoreAst, null, noLogger)
 
         val petstoreConvertedOpenAPiAst = petstoreConvertedOpenAPi.parse()
 

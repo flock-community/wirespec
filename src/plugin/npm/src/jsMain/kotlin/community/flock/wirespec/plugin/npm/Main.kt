@@ -20,8 +20,6 @@ import community.flock.wirespec.compiler.lib.WsEmitted
 import community.flock.wirespec.compiler.lib.WsStringResult
 import community.flock.wirespec.compiler.lib.consume
 import community.flock.wirespec.compiler.lib.produce
-import community.flock.wirespec.compiler.utils.HasLogger
-import community.flock.wirespec.compiler.utils.Logger
 import community.flock.wirespec.compiler.utils.NoLogger
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.converter.avro.AvroEmitter
@@ -126,14 +124,14 @@ fun emit(wsAst: WsAST, emitter: Emitters, packageName: String, emitShared: Boole
 
         Emitters.OPENAPI_V2 ->
             OpenAPIV2Emitter
-                .emitSwaggerObject(ast.modules.flatMap { it.statements })
+                .emitSwaggerObject(ast.modules.flatMap { it.statements }, noLogger)
                 .let(encode(OpenAPIV2Model.serializer()))
                 .let(::Emitted.curried()("openapi")::invoke)
                 .let { nonEmptyListOf(it) }
 
         Emitters.OPENAPI_V3 ->
             OpenAPIV3Emitter
-                .emitOpenAPIObject(ast.modules.flatMap { it.statements }, null)
+                .emitOpenAPIObject(ast.modules.flatMap { it.statements }, null, noLogger)
                 .let(encode(OpenAPIV3Model.serializer()))
                 .let(::Emitted.curried()("openapi")::invoke)
                 .let { nonEmptyListOf(it) }

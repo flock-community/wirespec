@@ -25,7 +25,10 @@ object AvroEmitter : Emitter {
         ast: AST,
         logger: Logger,
     ): NonEmptyList<Emitted> = ast.modules
-        .map { emit(it) }
+        .map {
+            logger.info("Emitting Nodes from ${it.fileUri.value} ")
+            emit(it)
+        }
         .map { Json.encodeToString(it) }
         .map { Emitted("schema.avsc", it) }
 
@@ -84,6 +87,7 @@ object AvroEmitter : Emitter {
             type = "array",
             items = ref.reference.emit(module, hasEmitted),
         )
+
         else -> ref.emit(module, hasEmitted)
     }
 
