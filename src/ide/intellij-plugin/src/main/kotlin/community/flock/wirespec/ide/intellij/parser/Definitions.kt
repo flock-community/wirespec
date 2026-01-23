@@ -6,8 +6,10 @@ import com.intellij.lang.ParserDefinition
 import com.intellij.openapi.project.Project
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
+import com.intellij.psi.util.PsiTreeUtil
 import community.flock.wirespec.ide.intellij.File
 import community.flock.wirespec.ide.intellij.Language
 import community.flock.wirespec.ide.intellij.Lexer
@@ -16,6 +18,7 @@ import community.flock.wirespec.ide.intellij.parser.Parser.ChannelDef
 import community.flock.wirespec.ide.intellij.parser.Parser.CustomTypeDef
 import community.flock.wirespec.ide.intellij.parser.Parser.CustomTypeRef
 import community.flock.wirespec.ide.intellij.parser.Parser.EndpointDef
+import community.flock.wirespec.ide.intellij.parser.Parser.EnumDef
 import community.flock.wirespec.ide.intellij.parser.Parser.TypeDef
 
 class ParserDefinition : ParserDefinition {
@@ -35,6 +38,7 @@ class ParserDefinition : ParserDefinition {
         is TypeDef -> TypeDefElement(node)
         is ChannelDef -> ChannelDefElement(node)
         is EndpointDef -> EndpointDefElement(node)
+        is EnumDef -> EnumDefElement(node)
         is CustomTypeDef -> CustomTypeElementDef(node)
         is CustomTypeRef -> CustomTypeElementRef(node)
         is Body -> BodyElement(node)
@@ -44,5 +48,13 @@ class ParserDefinition : ParserDefinition {
 
 class TypeDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
 class ChannelDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
-class EndpointDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
+class EnumDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
+class EndpointDefElement(ast: ASTNode) :
+    ASTWrapperPsiElement(ast),
+    PsiNameIdentifierOwner {
+    override fun getName(): String? = nameIdentifier?.text
+    override fun setName(name: String): PsiElement = error("Not yet implemented")
+    override fun getNameIdentifier(): PsiElement? = PsiTreeUtil.findChildOfType(this, CustomTypeElementDef::class.java)
+    override fun getNavigationElement(): PsiElement = nameIdentifier ?: this
+}
 class BodyElement(ast: ASTNode) : ASTWrapperPsiElement(ast)

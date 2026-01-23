@@ -11,6 +11,8 @@
 
     <!-- Product and plugin compatibility requirements -->
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.java</depends>
+    <depends>org.jetbrains.kotlin</depends>
 
     <!-- Text to display as description on Preferences/Settings | Plugin page -->
     <description>
@@ -64,6 +66,18 @@
         <gotoSymbolContributor
                 implementationClass="community.flock.wirespec.ide.intellij.ChooseByNameContributor"/>
 
+        <codeInsight.daemonBoundCodeVisionProvider
+                language="JAVA"
+                implementationClass="community.flock.wirespec.ide.intellij.inlay.JavaMethodCodeVisionProvider"/>
+
+        <codeInsight.daemonBoundCodeVisionProvider
+                language="kotlin"
+                implementationClass="community.flock.wirespec.ide.intellij.inlay.KotlinMethodCodeVisionProvider"/>
+
+    </extensions>
+
+    <extensions defaultExtensionNs="org.jetbrains.kotlin">
+        <supportsKotlinPluginMode supportsK2="true"/>
     </extensions>
 
 </idea-plugin>
