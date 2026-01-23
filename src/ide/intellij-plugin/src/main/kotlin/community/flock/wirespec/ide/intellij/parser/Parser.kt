@@ -34,22 +34,22 @@ class Parser : PsiParser {
     }.treeBuilt
 }
 
-    private fun PsiBuilder.parse(): Unit = when {
-        eof() -> Unit
-        def() -> {
-            val type = when (tokenType) {
-                CHANNEL_DEF -> Parser.ChannelDef
-                ENDPOINT_DEF -> Parser.EndpointDef
-                ENUM_DEF -> Parser.EnumDef
-                else -> Parser.TypeDef
-            }
-            mark().apply {
-                advanceLexer()
-                parseDef()
-                done(type)
-            }
-            parse()
+private fun PsiBuilder.parse(): Unit = when {
+    eof() -> Unit
+    def() -> {
+        val type = when (tokenType) {
+            CHANNEL_DEF -> Parser.ChannelDef
+            ENDPOINT_DEF -> Parser.EndpointDef
+            ENUM_DEF -> Parser.EnumDef
+            else -> Parser.TypeDef
         }
+        mark().apply {
+            advanceLexer()
+            parseDef()
+            done(type)
+        }
+        parse()
+    }
 
     else -> {
         advanceLexer()

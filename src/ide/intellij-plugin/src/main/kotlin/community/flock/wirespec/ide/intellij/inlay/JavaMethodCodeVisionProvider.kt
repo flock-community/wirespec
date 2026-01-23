@@ -3,7 +3,11 @@ package community.flock.wirespec.ide.intellij.inlay
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiLiteralExpression
+import com.intellij.psi.PsiReturnStatement
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 
@@ -26,7 +30,7 @@ class JavaMethodCodeVisionProvider : WirespecMethodCodeVisionProvider() {
                         val methodText = handlers?.getLiteralValue("getMethod")
 
                         val text = listOfNotNull(methodText, pathTemplate).joinToString(" ")
-                        
+
                         handlerInterface.containingClass?.name?.let { endpointName ->
                             createEntry(file.project, text, endpointName, method.textOffset, id)
                         }
@@ -34,17 +38,18 @@ class JavaMethodCodeVisionProvider : WirespecMethodCodeVisionProvider() {
             }
     }
 
-    private fun PsiClass.getLiteralValue(methodName: String): String? =
-        findMethodsByName(methodName, false)
-            .firstOrNull()
-            ?.let { method ->
-                PsiTreeUtil.findChildOfType(method, PsiReturnStatement::class.java)
-                    ?.returnValue
-                    ?.let { it as? PsiLiteralExpression }
-                    ?.value as? String
-            }
+    private fun PsiClass.getLiteralValue(methodName: String): String? = findMethodsByName(methodName, false)
+        .firstOrNull()
+        ?.let { method ->
+            PsiTreeUtil.findChildOfType(method, PsiReturnStatement::class.java)
+                ?.returnValue
+                ?.let { it as? PsiLiteralExpression }
+                ?.value as? String
+        }
 
-    private fun isWirespecHandler(psiClass: PsiClass): PsiClass? =
-        if (InheritanceUtil.isInheritor(psiClass, "community.flock.wirespec.java.Wirespec.Handler")) psiClass
-        else null
+    private fun isWirespecHandler(psiClass: PsiClass): PsiClass? = if (InheritanceUtil.isInheritor(psiClass, "community.flock.wirespec.java.Wirespec.Handler")) {
+        psiClass
+    } else {
+        null
+    }
 }

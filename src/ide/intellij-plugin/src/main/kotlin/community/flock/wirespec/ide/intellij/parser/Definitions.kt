@@ -49,7 +49,9 @@ class ParserDefinition : ParserDefinition {
 class TypeDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
 class ChannelDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
 class EnumDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast)
-class EndpointDefElement(ast: ASTNode) : ASTWrapperPsiElement(ast), PsiNameIdentifierOwner {
+class EndpointDefElement(ast: ASTNode) :
+    ASTWrapperPsiElement(ast),
+    PsiNameIdentifierOwner {
     override fun getName(): String? = nameIdentifier?.text
     override fun setName(name: String): PsiElement = error("Not yet implemented")
     override fun getNameIdentifier(): PsiElement? = PsiTreeUtil.findChildOfType(this, CustomTypeElementDef::class.java)

@@ -28,7 +28,7 @@ abstract class WirespecMethodCodeVisionProvider : DaemonBoundCodeVisionProvider 
         text: String,
         endpointName: String,
         textOffset: Int,
-        providerId: String
+        providerId: String,
     ): Pair<TextRange, CodeVisionEntry> {
         val textRange = TextRange(textOffset, textOffset)
         return textRange to ClickableTextCodeVisionEntry(
@@ -38,7 +38,7 @@ abstract class WirespecMethodCodeVisionProvider : DaemonBoundCodeVisionProvider 
                 findEndpoint(project, endpointName)?.let { endpoint ->
                     (endpoint.navigationElement as? Navigatable)?.navigate(true)
                 }
-            }
+            },
         )
     }
 

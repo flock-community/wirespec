@@ -8,7 +8,11 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.toLightMethods
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 
 class KotlinMethodCodeVisionProvider : WirespecMethodCodeVisionProvider() {
     override val name: String = "Wirespec Kotlin Method Code Vision"
@@ -32,27 +36,29 @@ class KotlinMethodCodeVisionProvider : WirespecMethodCodeVisionProvider() {
 
                             if (pathTemplate != null || methodText != null) {
                                 val text = listOfNotNull(methodText, pathTemplate).joinToString(" ")
-                                
+
                                 handlerInterface.containingClass?.name?.let { endpointName ->
                                     createEntry(file.project, text, endpointName, function.textOffset, id)
                                 }
-                            } else null
+                            } else {
+                                null
+                            }
                         }
                 }
             }
             .toList()
     }
 
-    private fun KtObjectDeclaration.getPropertyValue(propertyName: String): String? {
-        return declarations.filterIsInstance<KtProperty>()
-            .firstOrNull { it.name == propertyName }
-            ?.initializer
-            ?.let { it as? KtStringTemplateExpression }
-            ?.entries
-            ?.joinToString("") { it.text }
-    }
+    private fun KtObjectDeclaration.getPropertyValue(propertyName: String): String? = declarations.filterIsInstance<KtProperty>()
+        .firstOrNull { it.name == propertyName }
+        ?.initializer
+        ?.let { it as? KtStringTemplateExpression }
+        ?.entries
+        ?.joinToString("") { it.text }
 
-    private fun isWirespecHandler(psiClass: PsiClass): PsiClass? =
-        if (InheritanceUtil.isInheritor(psiClass, "community.flock.wirespec.kotlin.Wirespec.Handler")) psiClass
-        else null
+    private fun isWirespecHandler(psiClass: PsiClass): PsiClass? = if (InheritanceUtil.isInheritor(psiClass, "community.flock.wirespec.kotlin.Wirespec.Handler")) {
+        psiClass
+    } else {
+        null
+    }
 }
