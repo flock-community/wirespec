@@ -388,8 +388,9 @@ class TypeScriptEmitterTest {
             |import {Wirespec} from '../Wirespec'
             |
             |export type TodoId = string;
-            |export const validateTodoId = (value: string): value is TodoId => 
-            |  /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}/g.test(value);
+            |export const validateTodoId = (value: string): value is TodoId => {
+            |  return /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}/g.test(value);
+            |}
             |
             |export {TodoId} from './TodoId'
         """.trimMargin()
