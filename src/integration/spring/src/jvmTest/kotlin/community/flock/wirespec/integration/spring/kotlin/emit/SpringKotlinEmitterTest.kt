@@ -199,16 +199,21 @@ class SpringKotlinEmitterTest {
             |
             |  data object Queries : Wirespec.Queries
             |
-            |  data object Headers : Wirespec.Request.Headers
+            |  data class Headers(
+            |    val X_Request_ID: String,
+            |    val Content_Type: String,
+            |  ) : Wirespec.Request.Headers
             |
             |  class Request(
             |    id: String,
+            |    X_Request_ID: String,
+            |    Content_Type: String,
             |    override val body: TodoDtoPatch,
             |  ) : Wirespec.Request<TodoDtoPatch> {
             |    override val path = Path(id)
             |    override val method = Wirespec.Method.PATCH
             |    override val queries = Queries
-            |    override val headers = Headers
+            |    override val headers = Headers(X_Request_ID, Content_Type)
             |  }
             |
             |  fun toRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
@@ -216,13 +221,15 @@ class SpringKotlinEmitterTest {
             |      path = listOf("api", "todos", request.path.id.let{serialization.serializePath(it, typeOf<String>())}),
             |      method = request.method.name,
             |      queries = emptyMap(),
-            |      headers = emptyMap(),
+            |      headers = (mapOf("x-request-id" to (request.headers.X_Request_ID?.let{ serialization.serializeParam(it, typeOf<String>()) } ?: emptyList())) + (mapOf("content-type" to (request.headers.Content_Type?.let{ serialization.serializeParam(it, typeOf<String>()) } ?: emptyList())))),
             |      body = serialization.serializeBody(request.body, typeOf<TodoDtoPatch>()),
             |    )
             |
             |  fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
             |    Request(
             |      id = serialization.deserializePath(request.path[2], typeOf<String>()),
+            |      X_Request_ID = serialization.deserializeParam(requireNotNull(request.headers["x-request-id"]) { "X_Request_ID is null" }, typeOf<String>()),
+            |      Content_Type = serialization.deserializeParam(requireNotNull(request.headers["content-type"]) { "Content_Type is null" }, typeOf<String>()),
             |      body = serialization.deserializeBody(requireNotNull(request.body) { "body is null" }, typeOf<TodoDtoPatch>()),
             |    )
             |

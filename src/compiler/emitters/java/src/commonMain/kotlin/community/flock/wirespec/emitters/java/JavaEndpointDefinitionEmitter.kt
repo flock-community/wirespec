@@ -138,7 +138,10 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
     """.trimMargin()
 
     private fun Endpoint.Response.emitDeserializedParams() = listOfNotNull(
-        headers.joinToString(",\n") { """${Spacer(4)}serialization.deserializeParam(response.headers().getOrDefault("${it.identifier.value}", java.util.Collections.emptyList()), ${it.reference.emitGetType()})""" }.orNull(),
+        headers.joinToString(",\n") {
+            // Use lowercase for header names (RFC 7230 - headers are case-insensitive)
+            """${Spacer(4)}serialization.deserializeParam(response.headers().getOrDefault("${it.identifier.value.lowercase()}", java.util.Collections.emptyList()), ${it.reference.emitGetType()})"""
+        }.orNull(),
         content?.let { """${Spacer(4)}serialization.deserializeBody(response.body(), ${it.reference.emitGetType()})""" }
     ).joinToString(",\n").let { if (it.isBlank()) "" else "\n$it\n${Spacer(3)}" }
 
@@ -152,16 +155,19 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
 
 
     private fun Field.emitSerializedParams(fields: String) =
-        """java.util.Map.entry("${identifier.value}", serialization.serializeParam(request.${if (fields == "queries") "queries" else "headers"}().${emit(identifier)}(), ${reference.emitGetType()}))"""
+        // Use lowercase for header names (RFC 7230 - headers are case-insensitive)
+        """java.util.Map.entry("${identifier.value.lowercase()}", serialization.serializeParam(request.${if (fields == "queries") "queries" else "headers"}().${emit(identifier)}(), ${reference.emitGetType()}))"""
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
         """${Spacer(4)}serialization.deserializePath(request.path().get(${index}), ${value.reference.emitGetType()})"""
 
     private fun Field.emitDeserializedParams(fields: String) =
-        """${Spacer(4)}serialization.deserializeParam(request.$fields().getOrDefault("${identifier.value}", java.util.Collections.emptyList()), ${reference.emitGetType()})"""
+        // Use lowercase for header names (RFC 7230 - headers are case-insensitive)
+        """${Spacer(4)}serialization.deserializeParam(request.$fields().getOrDefault("${identifier.value.lowercase()}", java.util.Collections.emptyList()), ${reference.emitGetType()})"""
 
     private fun Field.emitSerializedHeader() =
-        """java.util.Map.entry("${identifier.value}", serialization.serializeParam(r.headers().${emit(identifier)}(), ${reference.emitGetType()}))"""
+        // Use lowercase for header names (RFC 7230 - headers are case-insensitive)
+        """java.util.Map.entry("${identifier.value.lowercase()}", serialization.serializeParam(r.headers().${emit(identifier)}(), ${reference.emitGetType()}))"""
 
     private fun Endpoint.Segment.Param.emitIdentifier() =
         "serialization.serializePath(request.path().${emit(identifier).firstToLower()}(), ${reference.emitGetType()})"
