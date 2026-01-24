@@ -104,7 +104,7 @@ public class WirespecMethodArgumentResolver implements HandlerMethodArgumentReso
     private Map<String, List<String>> getHeadersMap(HttpServletRequest request) {
         return Collections.list(request.getHeaderNames()).stream()
                 .collect(Collectors.toMap(
-                        name -> name,
+                        name -> name.toLowerCase(),
                         name -> Collections.list(request.getHeaders(name))
                 ));
     }

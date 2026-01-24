@@ -146,16 +146,18 @@ interface KotlinEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackage
     ).joinToString("\n")
 
     private fun Field.emitSerializedParams(type: String, fields: String) =
-        """mapOf("${identifier.value}" to ($type.$fields.${emit(identifier)}?.let{ serialization.serializeParam(it, typeOf<${reference.emit()}>()) } ?: emptyList()))"""
+        // Use lowercase for header names (RFC 7230 - headers are case-insensitive)
+        """mapOf("${identifier.value.lowercase()}" to ($type.$fields.${emit(identifier)}?.let{ serialization.serializeParam(it, typeOf<${reference.emit()}>()) } ?: emptyList()))"""
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
         """${Spacer(3)}${emit(value.identifier)} = serialization.deserializePath(request.path[${index}], typeOf<${value.reference.emit()}>())"""
 
     private fun Field.emitDeserializedParams(type: String, fields: String, spaces: Int = 3) =
+        // Use lowercase for header names (RFC 7230 - headers are case-insensitive)
         if (reference.isNullable)
-            """${Spacer(spaces)}${emit(identifier)} = $type.$fields["${identifier.value}"]?.let{ serialization.deserializeParam(it, typeOf<${reference.emit()}>()) }"""
+            """${Spacer(spaces)}${emit(identifier)} = $type.$fields["${identifier.value.lowercase()}"]?.let{ serialization.deserializeParam(it, typeOf<${reference.emit()}>()) }"""
         else
-            """${Spacer(spaces)}${emit(identifier)} = serialization.deserializeParam(requireNotNull($type.$fields["${identifier.value}"]) { "${emit(identifier)} is null" }, typeOf<${reference.emit()}>())"""
+            """${Spacer(spaces)}${emit(identifier)} = serialization.deserializeParam(requireNotNull($type.$fields["${identifier.value.lowercase()}"]) { "${emit(identifier)} is null" }, typeOf<${reference.emit()}>())"""
 
     private fun Endpoint.Segment.Param.emitIdentifier() =
         "request.path.${emit(identifier)}.let{serialization.serializePath(it, typeOf<${reference.emit()}>())}"

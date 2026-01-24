@@ -21,7 +21,7 @@ endpoint GetTodos GET /api/todos ? {done:Boolean?} -> {
     500 -> Error
 }
 
-endpoint PatchTodos PATCH TodoDtoPatch /api/todos/{id:String} -> {
+endpoint PatchTodos PATCH TodoDtoPatch /api/todos/{id:String} #{X-Request-ID: String, Content-Type: String} -> {
     200 -> TodoDto
     500 -> Error
 }
