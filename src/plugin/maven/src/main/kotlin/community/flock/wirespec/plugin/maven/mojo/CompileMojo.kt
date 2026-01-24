@@ -25,6 +25,7 @@ import org.apache.maven.plugins.annotations.ResolutionScope
     name = "compile",
     defaultPhase = LifecyclePhase.GENERATE_SOURCES,
     requiresDependencyResolution = ResolutionScope.COMPILE,
+    threadSafe = true,
 )
 class CompileMojo : BaseMojo() {
 
