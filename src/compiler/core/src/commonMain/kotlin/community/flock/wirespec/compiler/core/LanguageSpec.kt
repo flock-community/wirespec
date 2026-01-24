@@ -94,8 +94,8 @@ object WirespecSpec : LanguageSpec {
         Regex("^\\/\\*(\\*(?!\\/)|[^*])*\\*\\/") to Comment,
         Regex("^\"([^\"\\\\]|\\\\.)*\"") to LiteralString,
         Regex("^/") to ForwardSlash,
-        Regex("^[0-9]+\\.[0-9]+") to Number,
-        Regex("^[0-9]+") to Integer,
+        Regex("^-?[0-9]+\\.[0-9]+") to Number,
+        Regex("^-?[0-9]+") to Integer,
         Regex("^_") to Underscore,
         Regex("^.") to Character, // Catch-all regular expression if none of the above matched
     )
