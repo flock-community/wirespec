@@ -71,7 +71,7 @@ private abstract class CommonOptions : CliktCommand() {
     val output by option(*Options.Output.flags, help = "Output")
     val packageName by option(*Options.PackageName.flags, help = "Package name")
         .default(DEFAULT_GENERATED_PACKAGE_STRING)
-    val logLevel by option(*Options.LogLevel.flags, help = "Log level: $Level").default("$ERROR")
+    val logLevel by option(*Options.LogLevel.flags, help = "Log level: $Level").default("$INFO")
     val shared by option(*Options.Shared.flags, help = "Generate shared wirespec code").flag(default = false)
     val strict by option(*Options.Strict.flags, help = "Strict mode").flag()
 
@@ -101,18 +101,19 @@ private class Compile(
         .multiple(default = listOf(Language.Kotlin))
 
     override fun run() {
+        val logger = Logger(logLevel.toLogLevel())
         val inputPath = getFullPath(input).getOrElse { throw CliktError(it.message) }
         val sources = when (inputPath) {
             null -> stdin?.let { nonEmptySetOf(Source(Name("stdin"), it)) } ?: throw NoInputReceived()
             is ClassPath -> throw NoClasspathPossible()
-            is DirectoryPath -> Directory(inputPath).wirespecSources().or(::handleError)
+            is DirectoryPath -> Directory(inputPath).wirespecSources(logger).or(::handleError)
             is FilePath -> when (inputPath.extension) {
-                FileExtension.Wirespec -> nonEmptySetOf(
+                FileExtension.Wirespec -> nonEmptySetOf<Source<Source.Type.Wirespec>>(
                     Source(
                         inputPath.name,
                         inputPath.read(),
                     ),
-                )
+                ).also { logger.info("Found 1 wirespec file to process: $inputPath") }
 
                 else -> throw WirespecFileError()
             }
@@ -127,7 +128,7 @@ private class Compile(
             writer = writer(outputDir),
             error = ::handleError,
             packageName = PackageName(packageName),
-            logger = Logger(logLevel.toLogLevel()),
+            logger = logger,
             shared = shared,
             strict = strict,
         ).let(compiler)
@@ -145,6 +146,7 @@ private class Convert(
         .multiple()
 
     override fun run() {
+        val logger = Logger(logLevel.toLogLevel())
         val inputPath = getFullPath(input).or(::handleError)
         val source = when (inputPath) {
             null -> stdin?.let { Source(Name("stdin"), it) } ?: throw NoInputReceived()
@@ -154,6 +156,7 @@ private class Convert(
                 FileExtension.JSON -> Source<JSON>(inputPath.name, inputPath.read())
                 else -> throw JSONFileError()
             }
+                .also { logger.info("Found 1 file to process: $inputPath") }
         }
 
         val emitters = languages.toEmitters(PackageName(packageName), EmitShared(shared))
@@ -165,7 +168,7 @@ private class Convert(
             writer = writer(directory),
             error = ::handleError,
             packageName = PackageName(packageName),
-            logger = Logger(logLevel.toLogLevel()),
+            logger = logger,
             shared = shared,
             strict = strict,
         ).let(converter)

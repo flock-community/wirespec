@@ -46,10 +46,11 @@ abstract class ConvertWirespecTask : BaseWirespecTask() {
             is ClassPath -> inputPath.readFromClasspath(preProcessorFunction)
             is DirectoryPath -> throw ConvertNeedsAFile()
             is FilePath -> when (inputPath.extension) {
-                FileExtension.JSON -> Source(inputPath.name, preProcessorFunction(inputPath.read()))
-                FileExtension.Avro -> Source(inputPath.name, preProcessorFunction(inputPath.read()))
+                FileExtension.JSON -> Source<JSON>(inputPath.name, preProcessorFunction(inputPath.read()))
+                FileExtension.Avro -> Source<JSON>(inputPath.name, preProcessorFunction(inputPath.read()))
                 else -> throw JSONFileError()
             }
+                .also { logger.info("Found 1 file to process: $inputPath") }
         }
 
         val outputDir = Directory(getOutPutPath(inputPath, outputPath).or(::handleError))

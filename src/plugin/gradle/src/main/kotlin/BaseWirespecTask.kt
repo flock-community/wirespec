@@ -8,7 +8,6 @@ import community.flock.wirespec.compiler.core.emit.Emitted
 import community.flock.wirespec.compiler.core.emit.Emitter
 import community.flock.wirespec.compiler.core.emit.PackageName
 import community.flock.wirespec.compiler.utils.Logger
-import community.flock.wirespec.compiler.utils.Logger.Level.ERROR
 import community.flock.wirespec.plugin.Language
 import community.flock.wirespec.plugin.io.ClassPath
 import community.flock.wirespec.plugin.io.Directory
@@ -60,7 +59,7 @@ abstract class BaseWirespecTask : DefaultTask() {
     abstract val strict: Property<Boolean>
 
     @Internal
-    val wirespecLogger = object : Logger(ERROR) {
+    val wirespecLogger = object : Logger(Level.INFO) {
         override fun debug(string: String) = logger.debug(string)
         override fun info(string: String) = logger.info(string)
         override fun warn(string: String) = logger.warn(string)
@@ -108,6 +107,7 @@ abstract class BaseWirespecTask : DefaultTask() {
             .getResourceAsStream(value) ?: error("Could not find file: $value on the classpath.")
         val content = inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
         val name = file.name.split(".").first()
+        logger.info("Found 1 file from classpath: $file")
         return Source(name = Name(name), content = preProcess(content))
     }
 

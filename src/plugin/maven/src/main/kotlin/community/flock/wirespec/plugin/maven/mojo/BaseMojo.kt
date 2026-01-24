@@ -144,13 +144,14 @@ abstract class BaseMojo : AbstractMojo() {
         JavaCompiler(project, log, classOutputDir()).compile(file)
     }
 
-    inline fun <reified E : Source.Type> ClassPath.readFromClasspath(): Source<E> {
+    protected inline fun <reified E : Source.Type> ClassPath.readFromClasspath(): Source<E> {
         val file = File(value)
         val classLoader = javaClass.classLoader
         val inputStream =
             classLoader.getResourceAsStream(value) ?: error("Could not find file: $value on the classpath.")
         val content = inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
         val name = file.name.split(".").first()
+        logger.info("Found 1 file from classpath: $file")
         return Source<E>(name = Name(name), content = content)
     }
 
