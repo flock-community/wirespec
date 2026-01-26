@@ -47,6 +47,10 @@ interface KotlinTypeDefinitionEmitter : TypeDefinitionEmitter, KotlinIdentifierE
 
     override fun Reference.Primitive.Type.Constraint.emit() = when (this) {
         is Reference.Primitive.Type.Constraint.RegExp -> "Regex(\"\"\"$expression\"\"\").matches(value)"
-        is Reference.Primitive.Type.Constraint.Bound -> """${Spacer}$min < record.value < $max;"""
+        is Reference.Primitive.Type.Constraint.Bound -> {
+            val minCheck = min?.let { "$it < value" }
+            val maxCheck = max?.let { "value < $it" }
+            listOfNotNull(minCheck, maxCheck).joinToString(" && ").let { it.ifEmpty { "true" } }
+        }
     }
 }

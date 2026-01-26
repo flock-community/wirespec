@@ -19,7 +19,7 @@ data object JavaShared : Shared {
         |public interface Wirespec {
         |${Spacer}interface Enum { String getLabel(); }
         |${Spacer}interface Endpoint {}
-        |${Spacer}interface Refined { String getValue(); }
+        |${Spacer}interface Refined<T> { T getValue(); }
         |${Spacer}interface Path {}
         |${Spacer}interface Queries {}
         |${Spacer}interface Headers {}

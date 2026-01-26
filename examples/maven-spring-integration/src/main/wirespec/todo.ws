@@ -1,3 +1,16 @@
+type StringRefinedRegex = String(/^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}$/g)
+type StringRefined = String
+
+type IntRefinedNoBound = Integer(_,_)
+type IntRefinedLowerBound = Integer(-1,_)
+type IntRefinedUpperound = Integer(_,2)
+type IntRefinedLowerAndUpper = Integer(3,4)
+
+type NumberRefinedNoBound = Number(_,_)
+type NumberRefinedLowerBound = Number(-1.0,_)
+type NumberRefinedUpperound = Number(_,2.0)
+type NumberRefinedLowerAndUpper = Number(3.0,4.0)
+
 endpoint GetTodos GET /todos ? {done: Boolean?} -> {
   200 -> Todo[]
   404 -> Error

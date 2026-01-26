@@ -73,9 +73,9 @@ class JavaEmitterTest {
             |
             |import community.flock.wirespec.java.Wirespec;
             |
-            |public record UUID (String value) implements Wirespec.Refined {
+            |public record UUID (String value) implements Wirespec.Refined<String> {
             |  @Override
-            |  public String toString() { return value; }
+            |  public String toString() { return value.toString(); }
             |  public static boolean validate(UUID record) {
             |    return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}${'$'}").matcher(record.value).find();
             |  }
@@ -475,14 +475,140 @@ class JavaEmitterTest {
             |
             |import community.flock.wirespec.java.Wirespec;
             |
-            |public record TodoId (String value) implements Wirespec.Refined {
+            |public record TodoId (String value) implements Wirespec.Refined<String> {
             |  @Override
-            |  public String toString() { return value; }
+            |  public String toString() { return value.toString(); }
             |  public static boolean validate(TodoId record) {
-            |    return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}${'$'}").matcher(record.value).find();
+            |    return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}$").matcher(record.value).find();
             |  }
             |  @Override
             |  public String getValue() { return value; }
+            |}
+            |
+            |package community.flock.wirespec.generated.model;
+            |
+            |import community.flock.wirespec.java.Wirespec;
+            |
+            |public record TodoNoRegex (String value) implements Wirespec.Refined<String> {
+            |  @Override
+            |  public String toString() { return value.toString(); }
+            |  public static boolean validate(TodoNoRegex record) {
+            |    return true;
+            |  }
+            |  @Override
+            |  public String getValue() { return value; }
+            |}
+            |
+            |package community.flock.wirespec.generated.model;
+            |
+            |import community.flock.wirespec.java.Wirespec;
+            |
+            |public record TestInt (Long value) implements Wirespec.Refined<Long> {
+            |  @Override
+            |  public String toString() { return value.toString(); }
+            |  public static boolean validate(TestInt record) {
+            |    return true;
+            |  }
+            |  @Override
+            |  public Long getValue() { return value; }
+            |}
+            |
+            |package community.flock.wirespec.generated.model;
+            |
+            |import community.flock.wirespec.java.Wirespec;
+            |
+            |public record TestInt0 (Long value) implements Wirespec.Refined<Long> {
+            |  @Override
+            |  public String toString() { return value.toString(); }
+            |  public static boolean validate(TestInt0 record) {
+            |    return true;
+            |  }
+            |  @Override
+            |  public Long getValue() { return value; }
+            |}
+            |
+            |package community.flock.wirespec.generated.model;
+            |
+            |import community.flock.wirespec.java.Wirespec;
+            |
+            |public record TestInt1 (Long value) implements Wirespec.Refined<Long> {
+            |  @Override
+            |  public String toString() { return value.toString(); }
+            |  public static boolean validate(TestInt1 record) {
+            |    return 0 < record.value;
+            |  }
+            |  @Override
+            |  public Long getValue() { return value; }
+            |}
+            |
+            |package community.flock.wirespec.generated.model;
+            |
+            |import community.flock.wirespec.java.Wirespec;
+            |
+            |public record TestInt2 (Long value) implements Wirespec.Refined<Long> {
+            |  @Override
+            |  public String toString() { return value.toString(); }
+            |  public static boolean validate(TestInt2 record) {
+            |    return 3 < record.value && record.value < 1;
+            |  }
+            |  @Override
+            |  public Long getValue() { return value; }
+            |}
+            |
+            |package community.flock.wirespec.generated.model;
+            |
+            |import community.flock.wirespec.java.Wirespec;
+            |
+            |public record TestNum (Double value) implements Wirespec.Refined<Double> {
+            |  @Override
+            |  public String toString() { return value.toString(); }
+            |  public static boolean validate(TestNum record) {
+            |    return true;
+            |  }
+            |  @Override
+            |  public Double getValue() { return value; }
+            |}
+            |
+            |package community.flock.wirespec.generated.model;
+            |
+            |import community.flock.wirespec.java.Wirespec;
+            |
+            |public record TestNum0 (Double value) implements Wirespec.Refined<Double> {
+            |  @Override
+            |  public String toString() { return value.toString(); }
+            |  public static boolean validate(TestNum0 record) {
+            |    return true;
+            |  }
+            |  @Override
+            |  public Double getValue() { return value; }
+            |}
+            |
+            |package community.flock.wirespec.generated.model;
+            |
+            |import community.flock.wirespec.java.Wirespec;
+            |
+            |public record TestNum1 (Double value) implements Wirespec.Refined<Double> {
+            |  @Override
+            |  public String toString() { return value.toString(); }
+            |  public static boolean validate(TestNum1 record) {
+            |    return record.value < 0.5;
+            |  }
+            |  @Override
+            |  public Double getValue() { return value; }
+            |}
+            |
+            |package community.flock.wirespec.generated.model;
+            |
+            |import community.flock.wirespec.java.Wirespec;
+            |
+            |public record TestNum2 (Double value) implements Wirespec.Refined<Double> {
+            |  @Override
+            |  public String toString() { return value.toString(); }
+            |  public static boolean validate(TestNum2 record) {
+            |    return -0.2 < record.value && record.value < 0.5;
+            |  }
+            |  @Override
+            |  public Double getValue() { return value; }
             |}
             |
         """.trimMargin()

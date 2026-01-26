@@ -3,8 +3,7 @@
 # The first command will be invoked with `make` only and should be `all`
 all: build image test example format
 
-build:
-	make build-wirespec && make build-site
+build: build-wirespec build-site
 
 build-site:
 	(cd src/site && make build)

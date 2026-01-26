@@ -61,8 +61,12 @@ interface PythonTypeDefinitionEmitter : TypeDefinitionEmitter, PythonIdentifierE
 
 
     override fun Reference.Primitive.Type.Constraint.emit() = when (this) {
-        is Reference.Primitive.Type.Constraint.RegExp -> """${Spacer}bool(re.match(r"$value", self.value))"""
-        is Reference.Primitive.Type.Constraint.Bound -> """${Spacer}$min < record.value < $max;"""
+        is Reference.Primitive.Type.Constraint.RegExp -> """bool(re.match(r"$value", self.value))"""
+        is Reference.Primitive.Type.Constraint.Bound -> {
+            val minCheck = min?.let { "$it < self.value" }
+            val maxCheck = max?.let { "self.value < $it" }
+            listOfNotNull(minCheck, maxCheck).joinToString(" and ").let { if (it.isEmpty()) "True" else it }
+        }
     }
 
     fun Reference.Custom.emitReferenceCustomImports() = "from ..model.${value} import $value"

@@ -5,8 +5,28 @@ import { Wirespec } from "./gen/Wirespec";
 import { GetTodoById, GetTodos, GetUsers, PostTodo } from "./gen/endpoint";
 
 const body = [
-  { id: "1", name: "Do it now", done: true },
-  { id: "2", name: "Do it tomorrow", done: false },
+  {
+    id: "1",
+    name: "Do it now",
+    done: true,
+    testInt0: 0,
+    testInt1: 1,
+    testInt2: 2,
+    testNum0: 0.0,
+    testNum1: 1.1,
+    testNum2: 2.2,
+  },
+  {
+    id: "2",
+    name: "Do it tomorrow",
+    done: false,
+    testInt0: 0,
+    testInt1: 1,
+    testInt2: 2,
+    testNum0: 0.0,
+    testNum1: 1.1,
+    testNum2: 2.2,
+  },
 ];
 
 const mock = (
@@ -31,7 +51,17 @@ const mocks = [
     ["api", "todos"],
     200,
     {},
-    JSON.stringify({ id: "3", name: "Do more", done: true }),
+    JSON.stringify({
+      id: "3",
+      name: "Do more",
+      done: true,
+      testInt0: 0,
+      testInt1: 1,
+      testInt2: 2,
+      testNum0: 0,
+      testNum1: 1.1,
+      testNum2: 2.2,
+    }),
   ),
 ];
 
@@ -102,11 +132,30 @@ test("testPostTodo", async () => {
     path: {},
     queries: {},
     headers: {},
-    body: { name: "Do more", done: true },
+    body: {
+      name: "Do more",
+      done: true,
+      testInt0: 0,
+      testInt1: 1,
+      testInt2: 2,
+      testNum0: 0,
+      testNum1: 1.1,
+      testNum2: 2.2,
+    },
   };
   const response = await api.postTodo(request);
   const expected = PostTodo.response200({
-    body: { id: "3", name: "Do more", done: true },
+    body: {
+      id: "3",
+      name: "Do more",
+      done: true,
+      testInt0: 0,
+      testInt1: 1,
+      testInt2: 2,
+      testNum0: 0,
+      testNum1: 1.1,
+      testNum2: 2.2,
+    },
   });
 
   expect(response).toEqual(expected);

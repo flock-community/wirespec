@@ -74,8 +74,8 @@ class WirespecModuleKotlin : SimpleModule() {
  * @see Wirespec.Refined
  * @see WirespecModuleKotlin
  */
-private class RefinedSerializer(x: Class<Wirespec.Refined>? = null) : StdSerializer<Wirespec.Refined>(x) {
-    override fun serialize(value: Wirespec.Refined, gen: JsonGenerator, provider: SerializerProvider) = gen.writeString(value.value)
+private class RefinedSerializer(x: Class<Wirespec.Refined<*>>? = null) : StdSerializer<Wirespec.Refined<*>>(x) {
+    override fun serialize(value: Wirespec.Refined<*>, gen: JsonGenerator, provider: SerializerProvider) = gen.writeString(value.value.toString())
 }
 
 /**
@@ -94,11 +94,11 @@ private class EnumSerializer(x: Class<Wirespec.Enum>? = null) : StdSerializer<Wi
  * @see Wirespec.Refined
  * @see WirespecModuleKotlin
  */
-private class RefinedDeserializer(private val vc: Class<*>) : StdDeserializer<Wirespec.Refined>(vc) {
-    override fun deserialize(jp: JsonParser, ctxt: DeserializationContext): Wirespec.Refined = jp
+private class RefinedDeserializer(private val vc: Class<*>) : StdDeserializer<Wirespec.Refined<*>>(vc) {
+    override fun deserialize(jp: JsonParser, ctxt: DeserializationContext): Wirespec.Refined<*> = jp
         .codec
         .readTree<JsonNode>(jp)
-        .run { vc.declaredConstructors.first().newInstance(asText()) as Wirespec.Refined }
+        .run { vc.declaredConstructors.first().newInstance(asText()) as Wirespec.Refined<*> }
 }
 
 /**

@@ -7,8 +7,8 @@ object Wirespec {
         val label: String
     }
     interface Endpoint
-    interface Refined {
-        val value: String
+    interface Refined<T : Any> {
+        val value: T
     }
     interface Path
     interface Queries

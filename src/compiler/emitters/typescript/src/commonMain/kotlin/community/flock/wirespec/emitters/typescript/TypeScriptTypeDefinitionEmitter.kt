@@ -46,13 +46,10 @@ interface TypeScriptTypeDefinitionEmitter : TypeDefinitionEmitter, TypeScriptIde
     override fun Reference.Primitive.Type.Constraint.emit() = when (this) {
         is Reference.Primitive.Type.Constraint.RegExp -> """${Spacer}return $value.test(value);"""
         is Reference.Primitive.Type.Constraint.Bound -> {
-            val nanCheck = """!isNaN(num)"""
             val minCheck = min?.let { "$it < num" }
             val maxCheck = max?.let { "num < $it" }
-            """
-                |${Spacer}const num = Number(value);
-                |${Spacer}return ${listOfNotNull(nanCheck, minCheck, maxCheck).joinToString(" && ")};
-            """.trimMargin()
+
+            "${Spacer}return ${listOfNotNull(minCheck, maxCheck).joinToString(" && ").let { it.ifEmpty { "true" } }};"
         }
     }
 

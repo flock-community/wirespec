@@ -1,6 +1,7 @@
 package community.flock.wirespec.emitters.typescript
 
 import community.flock.wirespec.compiler.core.emit.RefinedTypeDefinitionEmitter
+import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 
@@ -15,7 +16,7 @@ interface TypeScriptRefinedTypeDefinitionEmitter: RefinedTypeDefinitionEmitter, 
         """.trimMargin()
 
     override fun Refined.emitValidator(): String {
-        val defaultReturn = "true;"
+        val defaultReturn = "${Spacer}return true;"
         return when (val type = reference.type) {
             is Reference.Primitive.Type.Integer -> type.constraint?.emit() ?: defaultReturn
             is Reference.Primitive.Type.Number -> type.constraint?.emit() ?: defaultReturn

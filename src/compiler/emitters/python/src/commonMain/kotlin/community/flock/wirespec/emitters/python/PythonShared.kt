@@ -17,10 +17,10 @@ data object PythonShared : Shared {
         |
         |class Wirespec:
         |
-        |    class Refined(ABC):
+        |    class Refined(ABC, Generic[T]):
         |        @property
         |        @abstractmethod
-        |        def value(self) -> str: pass
+        |        def value(self) -> T: pass
         |
         |    class Endpoint(ABC):
         |

@@ -4,8 +4,28 @@ import { Wirespec } from "./gen/Wirespec";
 import { GetTodoById, GetTodos, PostTodo } from "./gen/endpoint";
 
 const body = [
-  { id: "1", name: "Do it now", done: true },
-  { id: "2", name: "Do it tomorrow", done: false },
+  {
+    id: "1",
+    name: "Do it now",
+    done: true,
+    testInt0: 0,
+    testInt1: 1,
+    testInt2: 2,
+    testNum0: 0.0,
+    testNum1: 1.1,
+    testNum2: 2.2,
+  },
+  {
+    id: "2",
+    name: "Do it tomorrow",
+    done: false,
+    testInt0: 0,
+    testInt1: 1,
+    testInt2: 2,
+    testNum0: 0.0,
+    testNum1: 1.1,
+    testNum2: 2.2,
+  },
 ];
 
 type Api = GetTodos.Handler & GetTodoById.Handler & PostTodo.Handler;

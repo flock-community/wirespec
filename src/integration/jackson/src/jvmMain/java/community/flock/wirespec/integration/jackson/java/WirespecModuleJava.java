@@ -83,7 +83,7 @@ public class WirespecModuleJava extends SimpleModule {
 
         @Override
         public void serialize(Wirespec.Refined value, JsonGenerator gen, SerializerProvider provider) throws IOException {
-            gen.writeString(value.getValue());
+            gen.writeString(value.getValue().toString());
         }
     }
 
