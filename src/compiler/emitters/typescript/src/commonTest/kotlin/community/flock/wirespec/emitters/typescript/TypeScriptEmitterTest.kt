@@ -449,14 +449,14 @@ class TypeScriptEmitterTest {
             |
             |export type TestInt1 = number;
             |export const validateTestInt1 = (value: number): value is TestInt1 => {
-            |  return 0 < num;
+            |  return 0 < value;
             |}
             |
             |import {Wirespec} from '../Wirespec'
             |
             |export type TestInt2 = number;
             |export const validateTestInt2 = (value: number): value is TestInt2 => {
-            |  return 3 < num && num < 1;
+            |  return 3 < value && value < 1;
             |}
             |
             |import {Wirespec} from '../Wirespec'
@@ -477,14 +477,14 @@ class TypeScriptEmitterTest {
             |
             |export type TestNum1 = number;
             |export const validateTestNum1 = (value: number): value is TestNum1 => {
-            |  return num < 0.5;
+            |  return value < 0.5;
             |}
             |
             |import {Wirespec} from '../Wirespec'
             |
             |export type TestNum2 = number;
             |export const validateTestNum2 = (value: number): value is TestNum2 => {
-            |  return -0.2 < num && num < 0.5;
+            |  return -0.2 < value && value < 0.5;
             |}
             |
             |export {TodoId} from './TodoId'

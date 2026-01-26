@@ -46,8 +46,8 @@ interface TypeScriptTypeDefinitionEmitter : TypeDefinitionEmitter, TypeScriptIde
     override fun Reference.Primitive.Type.Constraint.emit() = when (this) {
         is Reference.Primitive.Type.Constraint.RegExp -> """${Spacer}return $value.test(value);"""
         is Reference.Primitive.Type.Constraint.Bound -> {
-            val minCheck = min?.let { "$it < num" }
-            val maxCheck = max?.let { "num < $it" }
+            val minCheck = min?.let { "$it < value" }
+            val maxCheck = max?.let { "value < $it" }
 
             "${Spacer}return ${listOfNotNull(minCheck, maxCheck).joinToString(" && ").let { it.ifEmpty { "true" } }};"
         }
