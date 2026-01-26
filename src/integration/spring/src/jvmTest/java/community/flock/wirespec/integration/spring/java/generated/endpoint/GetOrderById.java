@@ -13,18 +13,15 @@ public interface GetOrderById extends Wirespec.Endpoint {
 
   class RequestHeaders implements Wirespec.Request.Headers {}
 
-  class Request implements Wirespec.Request<Void> {
-    private final Path path;
-    private final Wirespec.Method method;
-    private final Queries queries;
-    private final RequestHeaders headers;
-    private final Void body;
+  record Request (
+    Path path,
+    Wirespec.Method method,
+    Queries queries,
+    RequestHeaders headers,
+    Void body
+  ) implements Wirespec.Request<Void> {
     public Request(Long orderId) {
-      this.path = new Path(orderId);
-      this.method = Wirespec.Method.GET;
-      this.queries = new Queries();
-      this.headers = new RequestHeaders();
-      this.body = null;
+      this(new Path(orderId), Wirespec.Method.GET, new Queries(), new RequestHeaders(), null);
     }
     @Override public Path getPath() { return path; }
     @Override public Wirespec.Method getMethod() { return method; }
@@ -62,8 +59,8 @@ public interface GetOrderById extends Wirespec.Endpoint {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
-        request.method.name(),
-        java.util.List.of("store", "order", serialization.serializePath(request.path.orderId, Wirespec.getType(Long.class, null))),
+        request.getMethod().name(),
+        java.util.List.of("store", "order", serialization.serializePath(request.getPath().orderId(), Wirespec.getType(Long.class, null))),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
         null

@@ -88,12 +88,13 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
     }
 
     fun Endpoint.Request.emit(endpoint: Endpoint) = """
-        |${Spacer}class Request implements Wirespec.Request<${content.emit()}> {
-        |${Spacer(2)}private final Path path;
-        |${Spacer(2)}private final Wirespec.Method method;
-        |${Spacer(2)}private final Queries queries;
-        |${Spacer(2)}private final RequestHeaders headers;
-        |${Spacer(2)}private final ${content.emit()} body;
+        |${Spacer}record Request (
+        |${Spacer(2)}Path path,
+        |${Spacer(2)}Wirespec.Method method,
+        |${Spacer(2)}Queries queries,
+        |${Spacer(2)}RequestHeaders headers,
+        |${Spacer(2)}${content.emit()} body
+        |${Spacer}) implements Wirespec.Request<${content.emit()}> {
         |${Spacer(2)}${emitConstructor(endpoint)}
         |${Spacer(2)}@Override public Path getPath() { return path; }
         |${Spacer(2)}@Override public Wirespec.Method getMethod() { return method; }
@@ -111,16 +112,15 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
                 endpoint.headers.joinToString { it.emit() }.orNull(),
                 content?.let { "${it.emit()} body" }
             ).joinToString()
-        }) {\n${Spacer(3)}${
+        }) {\n${Spacer(3)}this(${
             listOfNotNull(
-                endpoint.pathParams.joinToString { emit(it.identifier) }.let { "this.path = new Path($it);" },
-                "this.method = Wirespec.Method.${endpoint.method.name};",
-                endpoint.queries.joinToString { emit(it.identifier) }.let { "this.queries = new Queries($it);" },
-                endpoint.headers.joinToString { emit(it.identifier) }
-                    .let { "this.headers = new RequestHeaders($it);" },
-                "this.body = ${content?.let { "body" } ?: "null"};"
-            ).joinToString("\n${Spacer(3)}")
-        }\n${Spacer(2)}}"
+                endpoint.pathParams.joinToString { emit(it.identifier) }.let { "new Path($it)" }.orNull() ?: "new Path()",
+                "Wirespec.Method.${endpoint.method.name}",
+                endpoint.queries.joinToString { emit(it.identifier) }.let { "new Queries($it)" }.orNull() ?: "new Queries()",
+                endpoint.headers.joinToString { emit(it.identifier) }.let { "new RequestHeaders($it)" }.orNull() ?: "new RequestHeaders()",
+                content?.let { "body" } ?: "null"
+            ).joinToString()
+        });\n${Spacer(2)}}"
 
     private fun Endpoint.Request.emitDeserializedParams(endpoint: Endpoint) = listOfNotNull(
         endpoint.indexedPathParams.joinToString { it.emitDeserialized() }.orNull(),
@@ -153,7 +153,7 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
 
 
     private fun Field.emitSerializedParams(fields: String) =
-        """java.util.Map.entry("${identifier.value}", serialization.serializeParam(request.$fields.${emit(identifier)}, ${reference.emitGetType()}))"""
+        """java.util.Map.entry("${identifier.value}", serialization.serializeParam(request.${if (fields == "queries") "getQueries" else "getHeaders"}().${emit(identifier)}(), ${reference.emitGetType()}))"""
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
         """${Spacer(4)}serialization.deserializePath(request.path().get(${index}), ${value.reference.emitGetType()})"""
@@ -165,7 +165,7 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
         """java.util.Map.entry("${identifier.value}", serialization.serializeParam(r.getHeaders().${emit(identifier)}(), ${reference.emitGetType()}))"""
 
     private fun Endpoint.Segment.Param.emitIdentifier() =
-        "serialization.serializePath(request.path.${emit(identifier).firstToLower()}, ${reference.emitGetType()})"
+        "serialization.serializePath(request.getPath().${emit(identifier).firstToLower()}(), ${reference.emitGetType()})"
 
     private fun Endpoint.Content?.emit() = this?.reference?.emit() ?: "Void"
 
@@ -180,7 +180,7 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
     private fun Endpoint.Request.emitRequestFunctions(endpoint: Endpoint) = """
         |${Spacer(2)}static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
         |${Spacer(3)}return new Wirespec.RawRequest(
-        |${Spacer(4)}request.method.name(),
+        |${Spacer(4)}request.getMethod().name(),
         |${Spacer(4)}java.util.List.of(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
         |${Spacer(4)}${if (endpoint.queries.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.queries.joinToString { it.emitSerializedParams("queries") }})" else EMPTY_MAP},
         |${Spacer(4)}${if (endpoint.headers.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.headers.joinToString { it.emitSerializedParams("headers") }})" else EMPTY_MAP},

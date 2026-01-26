@@ -11,18 +11,15 @@ public interface GetInventory extends Wirespec.Endpoint {
 
   class RequestHeaders implements Wirespec.Request.Headers {}
 
-  class Request implements Wirespec.Request<Void> {
-    private final Path path;
-    private final Wirespec.Method method;
-    private final Queries queries;
-    private final RequestHeaders headers;
-    private final Void body;
+  record Request (
+    Path path,
+    Wirespec.Method method,
+    Queries queries,
+    RequestHeaders headers,
+    Void body
+  ) implements Wirespec.Request<Void> {
     public Request() {
-      this.path = new Path();
-      this.method = Wirespec.Method.GET;
-      this.queries = new Queries();
-      this.headers = new RequestHeaders();
-      this.body = null;
+      this(new Path(), Wirespec.Method.GET, new Queries(), new RequestHeaders(), null);
     }
     @Override public Path getPath() { return path; }
     @Override public Wirespec.Method getMethod() { return method; }
@@ -46,7 +43,7 @@ public interface GetInventory extends Wirespec.Endpoint {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
-        request.method.name(),
+        request.getMethod().name(),
         java.util.List.of("store", "inventory"),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),

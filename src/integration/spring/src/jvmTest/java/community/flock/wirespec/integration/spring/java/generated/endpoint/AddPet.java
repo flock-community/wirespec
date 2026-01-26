@@ -11,18 +11,15 @@ public interface AddPet extends Wirespec.Endpoint {
 
   class RequestHeaders implements Wirespec.Request.Headers {}
 
-  class Request implements Wirespec.Request<Pet> {
-    private final Path path;
-    private final Wirespec.Method method;
-    private final Queries queries;
-    private final RequestHeaders headers;
-    private final Pet body;
+  record Request (
+    Path path,
+    Wirespec.Method method,
+    Queries queries,
+    RequestHeaders headers,
+    Pet body
+  ) implements Wirespec.Request<Pet> {
     public Request(Pet body) {
-      this.path = new Path();
-      this.method = Wirespec.Method.POST;
-      this.queries = new Queries();
-      this.headers = new RequestHeaders();
-      this.body = body;
+      this(new Path(), Wirespec.Method.POST, new Queries(), new RequestHeaders(), body);
     }
     @Override public Path getPath() { return path; }
     @Override public Wirespec.Method getMethod() { return method; }
@@ -56,7 +53,7 @@ public interface AddPet extends Wirespec.Endpoint {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
-        request.method.name(),
+        request.getMethod().name(),
         java.util.List.of("pet"),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),

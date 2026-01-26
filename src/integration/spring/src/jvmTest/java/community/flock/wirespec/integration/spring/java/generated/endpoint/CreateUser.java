@@ -11,18 +11,15 @@ public interface CreateUser extends Wirespec.Endpoint {
 
   class RequestHeaders implements Wirespec.Request.Headers {}
 
-  class Request implements Wirespec.Request<User> {
-    private final Path path;
-    private final Wirespec.Method method;
-    private final Queries queries;
-    private final RequestHeaders headers;
-    private final User body;
+  record Request (
+    Path path,
+    Wirespec.Method method,
+    Queries queries,
+    RequestHeaders headers,
+    User body
+  ) implements Wirespec.Request<User> {
     public Request(User body) {
-      this.path = new Path();
-      this.method = Wirespec.Method.POST;
-      this.queries = new Queries();
-      this.headers = new RequestHeaders();
-      this.body = body;
+      this(new Path(), Wirespec.Method.POST, new Queries(), new RequestHeaders(), body);
     }
     @Override public Path getPath() { return path; }
     @Override public Wirespec.Method getMethod() { return method; }
@@ -46,7 +43,7 @@ public interface CreateUser extends Wirespec.Endpoint {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
-        request.method.name(),
+        request.getMethod().name(),
         java.util.List.of("user"),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),

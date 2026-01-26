@@ -16,18 +16,15 @@ public interface UploadFile extends Wirespec.Endpoint {
 
   class RequestHeaders implements Wirespec.Request.Headers {}
 
-  class Request implements Wirespec.Request<UploadFileRequestBody> {
-    private final Path path;
-    private final Wirespec.Method method;
-    private final Queries queries;
-    private final RequestHeaders headers;
-    private final UploadFileRequestBody body;
+  record Request (
+    Path path,
+    Wirespec.Method method,
+    Queries queries,
+    RequestHeaders headers,
+    UploadFileRequestBody body
+  ) implements Wirespec.Request<UploadFileRequestBody> {
     public Request(Long petId, java.util.Optional<String> additionalMetadata, UploadFileRequestBody body) {
-      this.path = new Path(petId);
-      this.method = Wirespec.Method.POST;
-      this.queries = new Queries(additionalMetadata);
-      this.headers = new RequestHeaders();
-      this.body = body;
+      this(new Path(petId), Wirespec.Method.POST, new Queries(additionalMetadata), new RequestHeaders(), body);
     }
     @Override public Path getPath() { return path; }
     @Override public Wirespec.Method getMethod() { return method; }
@@ -51,9 +48,9 @@ public interface UploadFile extends Wirespec.Endpoint {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
-        request.method.name(),
-        java.util.List.of("pet", serialization.serializePath(request.path.petId, Wirespec.getType(Long.class, null)), "uploadImage"),
-        java.util.Map.ofEntries(java.util.Map.entry("additionalMetadata", serialization.serializeParam(request.queries.additionalMetadata, Wirespec.getType(String.class, java.util.Optional.class)))),
+        request.getMethod().name(),
+        java.util.List.of("pet", serialization.serializePath(request.getPath().petId(), Wirespec.getType(Long.class, null)), "uploadImage"),
+        java.util.Map.ofEntries(java.util.Map.entry("additionalMetadata", serialization.serializeParam(request.getQueries().additionalMetadata(), Wirespec.getType(String.class, java.util.Optional.class)))),
         java.util.Collections.emptyMap(),
         serialization.serializeBody(request.getBody(), Wirespec.getType(UploadFileRequestBody.class, null))
       );

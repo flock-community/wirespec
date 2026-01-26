@@ -16,18 +16,15 @@ public interface UpdatePetWithForm extends Wirespec.Endpoint {
 
   class RequestHeaders implements Wirespec.Request.Headers {}
 
-  class Request implements Wirespec.Request<Void> {
-    private final Path path;
-    private final Wirespec.Method method;
-    private final Queries queries;
-    private final RequestHeaders headers;
-    private final Void body;
+  record Request (
+    Path path,
+    Wirespec.Method method,
+    Queries queries,
+    RequestHeaders headers,
+    Void body
+  ) implements Wirespec.Request<Void> {
     public Request(Long petId, java.util.Optional<String> name, java.util.Optional<String> status) {
-      this.path = new Path(petId);
-      this.method = Wirespec.Method.POST;
-      this.queries = new Queries(name, status);
-      this.headers = new RequestHeaders();
-      this.body = null;
+      this(new Path(petId), Wirespec.Method.POST, new Queries(name, status), new RequestHeaders(), null);
     }
     @Override public Path getPath() { return path; }
     @Override public Wirespec.Method getMethod() { return method; }
@@ -51,9 +48,9 @@ public interface UpdatePetWithForm extends Wirespec.Endpoint {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
-        request.method.name(),
-        java.util.List.of("pet", serialization.serializePath(request.path.petId, Wirespec.getType(Long.class, null))),
-        java.util.Map.ofEntries(java.util.Map.entry("name", serialization.serializeParam(request.queries.name, Wirespec.getType(String.class, java.util.Optional.class))), java.util.Map.entry("status", serialization.serializeParam(request.queries.status, Wirespec.getType(String.class, java.util.Optional.class)))),
+        request.getMethod().name(),
+        java.util.List.of("pet", serialization.serializePath(request.getPath().petId(), Wirespec.getType(Long.class, null))),
+        java.util.Map.ofEntries(java.util.Map.entry("name", serialization.serializeParam(request.getQueries().name(), Wirespec.getType(String.class, java.util.Optional.class))), java.util.Map.entry("status", serialization.serializeParam(request.getQueries().status(), Wirespec.getType(String.class, java.util.Optional.class)))),
         java.util.Collections.emptyMap(),
         null
       );

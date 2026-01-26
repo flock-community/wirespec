@@ -14,18 +14,15 @@ public interface FindPetsByStatus extends Wirespec.Endpoint {
 
   class RequestHeaders implements Wirespec.Request.Headers {}
 
-  class Request implements Wirespec.Request<Void> {
-    private final Path path;
-    private final Wirespec.Method method;
-    private final Queries queries;
-    private final RequestHeaders headers;
-    private final Void body;
+  record Request (
+    Path path,
+    Wirespec.Method method,
+    Queries queries,
+    RequestHeaders headers,
+    Void body
+  ) implements Wirespec.Request<Void> {
     public Request(java.util.Optional<FindPetsByStatusParameterStatus> status) {
-      this.path = new Path();
-      this.method = Wirespec.Method.GET;
-      this.queries = new Queries(status);
-      this.headers = new RequestHeaders();
-      this.body = null;
+      this(new Path(), Wirespec.Method.GET, new Queries(status), new RequestHeaders(), null);
     }
     @Override public Path getPath() { return path; }
     @Override public Wirespec.Method getMethod() { return method; }
@@ -57,9 +54,9 @@ public interface FindPetsByStatus extends Wirespec.Endpoint {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
-        request.method.name(),
+        request.getMethod().name(),
         java.util.List.of("pet", "findByStatus"),
-        java.util.Map.ofEntries(java.util.Map.entry("status", serialization.serializeParam(request.queries.status, Wirespec.getType(FindPetsByStatusParameterStatus.class, java.util.Optional.class)))),
+        java.util.Map.ofEntries(java.util.Map.entry("status", serialization.serializeParam(request.getQueries().status(), Wirespec.getType(FindPetsByStatusParameterStatus.class, java.util.Optional.class)))),
         java.util.Collections.emptyMap(),
         null
       );

@@ -14,18 +14,15 @@ public interface LoginUser extends Wirespec.Endpoint {
 
   class RequestHeaders implements Wirespec.Request.Headers {}
 
-  class Request implements Wirespec.Request<Void> {
-    private final Path path;
-    private final Wirespec.Method method;
-    private final Queries queries;
-    private final RequestHeaders headers;
-    private final Void body;
+  record Request (
+    Path path,
+    Wirespec.Method method,
+    Queries queries,
+    RequestHeaders headers,
+    Void body
+  ) implements Wirespec.Request<Void> {
     public Request(java.util.Optional<String> username, java.util.Optional<String> password) {
-      this.path = new Path();
-      this.method = Wirespec.Method.GET;
-      this.queries = new Queries(username, password);
-      this.headers = new RequestHeaders();
-      this.body = null;
+      this(new Path(), Wirespec.Method.GET, new Queries(username, password), new RequestHeaders(), null);
     }
     @Override public Path getPath() { return path; }
     @Override public Wirespec.Method getMethod() { return method; }
@@ -60,9 +57,9 @@ public interface LoginUser extends Wirespec.Endpoint {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
-        request.method.name(),
+        request.getMethod().name(),
         java.util.List.of("user", "login"),
-        java.util.Map.ofEntries(java.util.Map.entry("username", serialization.serializeParam(request.queries.username, Wirespec.getType(String.class, java.util.Optional.class))), java.util.Map.entry("password", serialization.serializeParam(request.queries.password, Wirespec.getType(String.class, java.util.Optional.class)))),
+        java.util.Map.ofEntries(java.util.Map.entry("username", serialization.serializeParam(request.getQueries().username(), Wirespec.getType(String.class, java.util.Optional.class))), java.util.Map.entry("password", serialization.serializeParam(request.getQueries().password(), Wirespec.getType(String.class, java.util.Optional.class)))),
         java.util.Collections.emptyMap(),
         null
       );

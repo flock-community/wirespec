@@ -13,18 +13,15 @@ public interface UpdateUser extends Wirespec.Endpoint {
 
   class RequestHeaders implements Wirespec.Request.Headers {}
 
-  class Request implements Wirespec.Request<User> {
-    private final Path path;
-    private final Wirespec.Method method;
-    private final Queries queries;
-    private final RequestHeaders headers;
-    private final User body;
+  record Request (
+    Path path,
+    Wirespec.Method method,
+    Queries queries,
+    RequestHeaders headers,
+    User body
+  ) implements Wirespec.Request<User> {
     public Request(String username, User body) {
-      this.path = new Path(username);
-      this.method = Wirespec.Method.PUT;
-      this.queries = new Queries();
-      this.headers = new RequestHeaders();
-      this.body = body;
+      this(new Path(username), Wirespec.Method.PUT, new Queries(), new RequestHeaders(), body);
     }
     @Override public Path getPath() { return path; }
     @Override public Wirespec.Method getMethod() { return method; }
@@ -48,8 +45,8 @@ public interface UpdateUser extends Wirespec.Endpoint {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
-        request.method.name(),
-        java.util.List.of("user", serialization.serializePath(request.path.username, Wirespec.getType(String.class, null))),
+        request.getMethod().name(),
+        java.util.List.of("user", serialization.serializePath(request.getPath().username(), Wirespec.getType(String.class, null))),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
         serialization.serializeBody(request.getBody(), Wirespec.getType(User.class, null))

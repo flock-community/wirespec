@@ -151,18 +151,15 @@ class JavaEmitterTest {
             |    java.util.Optional<Token> RefreshToken
             |  ) implements Wirespec.Request.Headers {}
             |
-            |  class Request implements Wirespec.Request<PotentialTodoDto> {
-            |    private final Path path;
-            |    private final Wirespec.Method method;
-            |    private final Queries queries;
-            |    private final RequestHeaders headers;
-            |    private final PotentialTodoDto body;
+            |  record Request (
+            |    Path path,
+            |    Wirespec.Method method,
+            |    Queries queries,
+            |    RequestHeaders headers,
+            |    PotentialTodoDto body
+            |  ) implements Wirespec.Request<PotentialTodoDto> {
             |    public Request(String id, Boolean done, java.util.Optional<String> name, Token token, java.util.Optional<Token> RefreshToken, PotentialTodoDto body) {
-            |      this.path = new Path(id);
-            |      this.method = Wirespec.Method.PUT;
-            |      this.queries = new Queries(done, name);
-            |      this.headers = new RequestHeaders(token, RefreshToken);
-            |      this.body = body;
+            |      this(new Path(id), Wirespec.Method.PUT, new Queries(done, name), new RequestHeaders(token, RefreshToken), body);
             |    }
             |    @Override public Path getPath() { return path; }
             |    @Override public Wirespec.Method getMethod() { return method; }
@@ -203,10 +200,10 @@ class JavaEmitterTest {
             |
             |    static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
             |      return new Wirespec.RawRequest(
-            |        request.method.name(),
-            |        java.util.List.of("todos", serialization.serializePath(request.path.id, Wirespec.getType(String.class, null))),
-            |        java.util.Map.ofEntries(java.util.Map.entry("done", serialization.serializeParam(request.queries.done, Wirespec.getType(Boolean.class, null))), java.util.Map.entry("name", serialization.serializeParam(request.queries.name, Wirespec.getType(String.class, java.util.Optional.class)))),
-            |        java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serializeParam(request.headers.token, Wirespec.getType(Token.class, null))), java.util.Map.entry("Refresh-Token", serialization.serializeParam(request.headers.RefreshToken, Wirespec.getType(Token.class, java.util.Optional.class)))),
+            |        request.getMethod().name(),
+            |        java.util.List.of("todos", serialization.serializePath(request.getPath().id(), Wirespec.getType(String.class, null))),
+            |        java.util.Map.ofEntries(java.util.Map.entry("done", serialization.serializeParam(request.getQueries().done(), Wirespec.getType(Boolean.class, null))), java.util.Map.entry("name", serialization.serializeParam(request.getQueries().name(), Wirespec.getType(String.class, java.util.Optional.class)))),
+            |        java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serializeParam(request.getHeaders().token(), Wirespec.getType(Token.class, null))), java.util.Map.entry("Refresh-Token", serialization.serializeParam(request.getHeaders().RefreshToken(), Wirespec.getType(Token.class, java.util.Optional.class)))),
             |        serialization.serializeBody(request.getBody(), Wirespec.getType(PotentialTodoDto.class, null))
             |      );
             |    }
@@ -374,18 +371,15 @@ class JavaEmitterTest {
             |
             |  class RequestHeaders implements Wirespec.Request.Headers {}
             |
-            |  class Request implements Wirespec.Request<Void> {
-            |    private final Path path;
-            |    private final Wirespec.Method method;
-            |    private final Queries queries;
-            |    private final RequestHeaders headers;
-            |    private final Void body;
+            |  record Request (
+            |    Path path,
+            |    Wirespec.Method method,
+            |    Queries queries,
+            |    RequestHeaders headers,
+            |    Void body
+            |  ) implements Wirespec.Request<Void> {
             |    public Request() {
-            |      this.path = new Path();
-            |      this.method = Wirespec.Method.GET;
-            |      this.queries = new Queries();
-            |      this.headers = new RequestHeaders();
-            |      this.body = null;
+            |      this(new Path(), Wirespec.Method.GET, new Queries(), new RequestHeaders(), null);
             |    }
             |    @Override public Path getPath() { return path; }
             |    @Override public Wirespec.Method getMethod() { return method; }
@@ -409,7 +403,7 @@ class JavaEmitterTest {
             |
             |    static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
             |      return new Wirespec.RawRequest(
-            |        request.method.name(),
+            |        request.getMethod().name(),
             |        java.util.List.of("todos"),
             |        java.util.Collections.emptyMap(),
             |        java.util.Collections.emptyMap(),

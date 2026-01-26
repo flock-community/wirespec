@@ -11,18 +11,15 @@ public interface CreateUsersWithListInput extends Wirespec.Endpoint {
 
   class RequestHeaders implements Wirespec.Request.Headers {}
 
-  class Request implements Wirespec.Request<java.util.List<User>> {
-    private final Path path;
-    private final Wirespec.Method method;
-    private final Queries queries;
-    private final RequestHeaders headers;
-    private final java.util.List<User> body;
+  record Request (
+    Path path,
+    Wirespec.Method method,
+    Queries queries,
+    RequestHeaders headers,
+    java.util.List<User> body
+  ) implements Wirespec.Request<java.util.List<User>> {
     public Request(java.util.List<User> body) {
-      this.path = new Path();
-      this.method = Wirespec.Method.POST;
-      this.queries = new Queries();
-      this.headers = new RequestHeaders();
-      this.body = body;
+      this(new Path(), Wirespec.Method.POST, new Queries(), new RequestHeaders(), body);
     }
     @Override public Path getPath() { return path; }
     @Override public Wirespec.Method getMethod() { return method; }
@@ -54,7 +51,7 @@ public interface CreateUsersWithListInput extends Wirespec.Endpoint {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
-        request.method.name(),
+        request.getMethod().name(),
         java.util.List.of("user", "createWithList"),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),

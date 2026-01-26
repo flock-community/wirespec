@@ -15,18 +15,15 @@ public interface DeletePet extends Wirespec.Endpoint {
     java.util.Optional<String> api_key
   ) implements Wirespec.Request.Headers {}
 
-  class Request implements Wirespec.Request<Void> {
-    private final Path path;
-    private final Wirespec.Method method;
-    private final Queries queries;
-    private final RequestHeaders headers;
-    private final Void body;
+  record Request (
+    Path path,
+    Wirespec.Method method,
+    Queries queries,
+    RequestHeaders headers,
+    Void body
+  ) implements Wirespec.Request<Void> {
     public Request(Long petId, java.util.Optional<String> api_key) {
-      this.path = new Path(petId);
-      this.method = Wirespec.Method.DELETE;
-      this.queries = new Queries();
-      this.headers = new RequestHeaders(api_key);
-      this.body = null;
+      this(new Path(petId), Wirespec.Method.DELETE, new Queries(), new RequestHeaders(api_key), null);
     }
     @Override public Path getPath() { return path; }
     @Override public Wirespec.Method getMethod() { return method; }
@@ -50,10 +47,10 @@ public interface DeletePet extends Wirespec.Endpoint {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
-        request.method.name(),
-        java.util.List.of("pet", serialization.serializePath(request.path.petId, Wirespec.getType(Long.class, null))),
+        request.getMethod().name(),
+        java.util.List.of("pet", serialization.serializePath(request.getPath().petId(), Wirespec.getType(Long.class, null))),
         java.util.Collections.emptyMap(),
-        java.util.Map.ofEntries(java.util.Map.entry("api_key", serialization.serializeParam(request.headers.api_key, Wirespec.getType(String.class, java.util.Optional.class)))),
+        java.util.Map.ofEntries(java.util.Map.entry("api_key", serialization.serializeParam(request.getHeaders().api_key(), Wirespec.getType(String.class, java.util.Optional.class)))),
         null
       );
     }
