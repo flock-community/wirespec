@@ -7,9 +7,13 @@ import community.flock.wirespec.compiler.core.FileUri
 import community.flock.wirespec.compiler.core.parse.ast.AST
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.test.CompileChannelTest
+import community.flock.wirespec.compiler.test.CompileEnumTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
+import community.flock.wirespec.compiler.test.CompileTypeTest
+import community.flock.wirespec.compiler.test.CompileUnionTest
 import community.flock.wirespec.compiler.test.NodeFixtures
 import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
@@ -664,6 +668,168 @@ class PythonEmitterTest {
 
         CompileRefinedTest.compiler { PythonEmitter() } shouldBeRight python
     }
+
+    @Test
+    fun compileChannelTest() {
+        val result = CompileChannelTest.compiler { PythonEmitter() }
+        val expect =
+            //language=python
+            """
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |
+            |from . import model
+            |from . import endpoint
+            |from . import wirespec
+            |
+            """.trimMargin()
+        result shouldBeRight expect
+    }
+
+    @Test
+    fun compileEnumTest() {
+        val result = CompileEnumTest.compiler { PythonEmitter() }
+        val expect =
+            //language=python
+            """
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |class MyAwesomeEnum(str, Enum):
+            |  ONE = "ONE"
+            |  Two = "Two"
+            |  THREE_MORE = "THREE_MORE"
+            |  UnitedKingdom = "UnitedKingdom"
+            |
+            |  @property
+            |  def label(self) -> str:
+            |    return self.value
+            |
+            |  def __str__(self) -> str:
+            |    return self.value
+            |from . import model
+            |from . import endpoint
+            |from . import wirespec
+            |
+            """.trimMargin()
+        result shouldBeRight expect
+    }
+
+    @Test
+    fun compileUnionTest() {
+        val result = CompileUnionTest.compiler { PythonEmitter() }
+        val expect =
+            //language=python
+            """
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class UserAccountPassword:
+            |  username: 'str'
+            |  password: 'str'
+            |
+            |
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class UserAccountToken:
+            |  token: 'str'
+            |
+            |
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class User:
+            |  username: 'str'
+            |  account: 'UserAccount'
+            |
+            |from ..model.UserAccount import UserAccount
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |class UserAccount(ABC):
+            |  pass
+            |from . import model
+            |from . import endpoint
+            |from . import wirespec
+            |
+            """.trimMargin()
+        result shouldBeRight expect
+    }
+
+    @Test
+    fun compileTypeTest() {
+        val result = CompileTypeTest.compiler { PythonEmitter() }
+        val expect =
+            //language=python
+            """
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class Request:
+            |  type: 'str'
+            |  url: 'str'
+            |  BODY_TYPE: 'Optional[str]'
+            |  params: 'List[str]'
+            |  headers: 'Dict[str, str]'
+            |  body: 'Optional[Dict[str, Optional[List[Optional[str]]]]]'
+            |
+            |
+            |from . import model
+            |from . import endpoint
+            |from . import wirespec
+            |
+            """.trimMargin()
+        result shouldBeRight expect
+    }
+
 
     private fun EmitContext.emitFirst(node: Definition) = emitters.map {
         val ast = AST(
