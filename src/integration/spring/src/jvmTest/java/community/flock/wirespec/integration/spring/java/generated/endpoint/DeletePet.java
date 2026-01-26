@@ -9,7 +9,7 @@ public interface DeletePet extends Wirespec.Endpoint {
     Long petId
   ) implements Wirespec.Path {}
 
-  class Queries implements Wirespec.Queries {}
+  static class Queries implements Wirespec.Queries {}
 
   public record RequestHeaders(
     java.util.Optional<String> api_key
@@ -25,32 +25,31 @@ public interface DeletePet extends Wirespec.Endpoint {
     public Request(Long petId, java.util.Optional<String> api_key) {
       this(new Path(petId), Wirespec.Method.DELETE, new Queries(), new RequestHeaders(api_key), null);
     }
-    @Override public Path getPath() { return path; }
-    @Override public Wirespec.Method getMethod() { return method; }
-    @Override public Queries getQueries() { return queries; }
-    @Override public RequestHeaders getHeaders() { return headers; }
-    @Override public Void getBody() { return body; }
   }
 
   sealed interface Response<T> extends Wirespec.Response<T> {}
   sealed interface Response4XX<T> extends Response<T> {}
   sealed interface ResponseVoid extends Response<Void> {}
 
-  record Response400() implements Response4XX<Void>, ResponseVoid {
-    @Override public int getStatus() { return 400; }
-    @Override public Headers getHeaders() { return new Headers(); }
-    @Override public Void getBody() { return null; }
-    class Headers implements Wirespec.Response.Headers {}
+  record Response400(
+    int status,
+    Headers headers,
+    Void body
+  ) implements Response4XX<Void>, ResponseVoid {
+    public Response400() {
+      this(400, new Headers(), null);
+    }
+    static class Headers implements Wirespec.Response.Headers {}
   }
 
   interface Handler extends Wirespec.Handler {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
-        request.getMethod().name(),
-        java.util.List.of("pet", serialization.serializePath(request.getPath().petId(), Wirespec.getType(Long.class, null))),
+        request.method().name(),
+        java.util.List.of("pet", serialization.serializePath(request.path().petId(), Wirespec.getType(Long.class, null))),
         java.util.Collections.emptyMap(),
-        java.util.Map.ofEntries(java.util.Map.entry("api_key", serialization.serializeParam(request.getHeaders().api_key(), Wirespec.getType(String.class, java.util.Optional.class)))),
+        java.util.Map.ofEntries(java.util.Map.entry("api_key", serialization.serializeParam(request.headers().api_key(), Wirespec.getType(String.class, java.util.Optional.class)))),
         null
       );
     }
@@ -63,8 +62,8 @@ public interface DeletePet extends Wirespec.Endpoint {
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), null); }
-      else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
+      if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), null); }
+      else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {

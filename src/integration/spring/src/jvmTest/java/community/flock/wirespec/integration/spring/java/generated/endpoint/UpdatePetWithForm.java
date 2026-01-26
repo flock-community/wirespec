@@ -14,7 +14,7 @@ public interface UpdatePetWithForm extends Wirespec.Endpoint {
     java.util.Optional<String> status
   ) implements Wirespec.Queries {}
 
-  class RequestHeaders implements Wirespec.Request.Headers {}
+  static class RequestHeaders implements Wirespec.Request.Headers {}
 
   record Request (
     Path path,
@@ -26,31 +26,30 @@ public interface UpdatePetWithForm extends Wirespec.Endpoint {
     public Request(Long petId, java.util.Optional<String> name, java.util.Optional<String> status) {
       this(new Path(petId), Wirespec.Method.POST, new Queries(name, status), new RequestHeaders(), null);
     }
-    @Override public Path getPath() { return path; }
-    @Override public Wirespec.Method getMethod() { return method; }
-    @Override public Queries getQueries() { return queries; }
-    @Override public RequestHeaders getHeaders() { return headers; }
-    @Override public Void getBody() { return body; }
   }
 
   sealed interface Response<T> extends Wirespec.Response<T> {}
   sealed interface Response4XX<T> extends Response<T> {}
   sealed interface ResponseVoid extends Response<Void> {}
 
-  record Response405() implements Response4XX<Void>, ResponseVoid {
-    @Override public int getStatus() { return 405; }
-    @Override public Headers getHeaders() { return new Headers(); }
-    @Override public Void getBody() { return null; }
-    class Headers implements Wirespec.Response.Headers {}
+  record Response405(
+    int status,
+    Headers headers,
+    Void body
+  ) implements Response4XX<Void>, ResponseVoid {
+    public Response405() {
+      this(405, new Headers(), null);
+    }
+    static class Headers implements Wirespec.Response.Headers {}
   }
 
   interface Handler extends Wirespec.Handler {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
-        request.getMethod().name(),
-        java.util.List.of("pet", serialization.serializePath(request.getPath().petId(), Wirespec.getType(Long.class, null))),
-        java.util.Map.ofEntries(java.util.Map.entry("name", serialization.serializeParam(request.getQueries().name(), Wirespec.getType(String.class, java.util.Optional.class))), java.util.Map.entry("status", serialization.serializeParam(request.getQueries().status(), Wirespec.getType(String.class, java.util.Optional.class)))),
+        request.method().name(),
+        java.util.List.of("pet", serialization.serializePath(request.path().petId(), Wirespec.getType(Long.class, null))),
+        java.util.Map.ofEntries(java.util.Map.entry("name", serialization.serializeParam(request.queries().name(), Wirespec.getType(String.class, java.util.Optional.class))), java.util.Map.entry("status", serialization.serializeParam(request.queries().status(), Wirespec.getType(String.class, java.util.Optional.class)))),
         java.util.Collections.emptyMap(),
         null
       );
@@ -65,8 +64,8 @@ public interface UpdatePetWithForm extends Wirespec.Endpoint {
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response405 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), null); }
-      else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
+      if (response instanceof Response405 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), null); }
+      else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {

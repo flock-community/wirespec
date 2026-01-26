@@ -14,7 +14,7 @@ public interface UploadFile extends Wirespec.Endpoint {
     java.util.Optional<String> additionalMetadata
   ) implements Wirespec.Queries {}
 
-  class RequestHeaders implements Wirespec.Request.Headers {}
+  static class RequestHeaders implements Wirespec.Request.Headers {}
 
   record Request (
     Path path,
@@ -26,33 +26,32 @@ public interface UploadFile extends Wirespec.Endpoint {
     public Request(Long petId, java.util.Optional<String> additionalMetadata, UploadFileRequestBody body) {
       this(new Path(petId), Wirespec.Method.POST, new Queries(additionalMetadata), new RequestHeaders(), body);
     }
-    @Override public Path getPath() { return path; }
-    @Override public Wirespec.Method getMethod() { return method; }
-    @Override public Queries getQueries() { return queries; }
-    @Override public RequestHeaders getHeaders() { return headers; }
-    @Override public UploadFileRequestBody getBody() { return body; }
   }
 
   sealed interface Response<T> extends Wirespec.Response<T> {}
   sealed interface Response2XX<T> extends Response<T> {}
   sealed interface ResponseApiResponse extends Response<ApiResponse> {}
 
-  record Response200(ApiResponse body) implements Response2XX<ApiResponse>, ResponseApiResponse {
-    @Override public int getStatus() { return 200; }
-    @Override public Headers getHeaders() { return new Headers(); }
-    @Override public ApiResponse getBody() { return body; }
-    class Headers implements Wirespec.Response.Headers {}
+  record Response200(
+    int status,
+    Headers headers,
+    ApiResponse body
+  ) implements Response2XX<ApiResponse>, ResponseApiResponse {
+    public Response200(ApiResponse body) {
+      this(200, new Headers(), body);
+    }
+    static class Headers implements Wirespec.Response.Headers {}
   }
 
   interface Handler extends Wirespec.Handler {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
-        request.getMethod().name(),
-        java.util.List.of("pet", serialization.serializePath(request.getPath().petId(), Wirespec.getType(Long.class, null)), "uploadImage"),
-        java.util.Map.ofEntries(java.util.Map.entry("additionalMetadata", serialization.serializeParam(request.getQueries().additionalMetadata(), Wirespec.getType(String.class, java.util.Optional.class)))),
+        request.method().name(),
+        java.util.List.of("pet", serialization.serializePath(request.path().petId(), Wirespec.getType(Long.class, null)), "uploadImage"),
+        java.util.Map.ofEntries(java.util.Map.entry("additionalMetadata", serialization.serializeParam(request.queries().additionalMetadata(), Wirespec.getType(String.class, java.util.Optional.class)))),
         java.util.Collections.emptyMap(),
-        serialization.serializeBody(request.getBody(), Wirespec.getType(UploadFileRequestBody.class, null))
+        serialization.serializeBody(request.body(), Wirespec.getType(UploadFileRequestBody.class, null))
       );
     }
 
@@ -65,8 +64,8 @@ public interface UploadFile extends Wirespec.Endpoint {
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(ApiResponse.class, null))); }
-      else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(ApiResponse.class, null))); }
+      else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {

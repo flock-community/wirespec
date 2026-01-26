@@ -6,13 +6,13 @@ import community.flock.wirespec.integration.spring.java.generated.model.FindPets
 import community.flock.wirespec.integration.spring.java.generated.model.Pet;
 
 public interface FindPetsByStatus extends Wirespec.Endpoint {
-  class Path implements Wirespec.Path {}
+  static class Path implements Wirespec.Path {}
 
   public record Queries(
     java.util.Optional<FindPetsByStatusParameterStatus> status
   ) implements Wirespec.Queries {}
 
-  class RequestHeaders implements Wirespec.Request.Headers {}
+  static class RequestHeaders implements Wirespec.Request.Headers {}
 
   record Request (
     Path path,
@@ -24,11 +24,6 @@ public interface FindPetsByStatus extends Wirespec.Endpoint {
     public Request(java.util.Optional<FindPetsByStatusParameterStatus> status) {
       this(new Path(), Wirespec.Method.GET, new Queries(status), new RequestHeaders(), null);
     }
-    @Override public Path getPath() { return path; }
-    @Override public Wirespec.Method getMethod() { return method; }
-    @Override public Queries getQueries() { return queries; }
-    @Override public RequestHeaders getHeaders() { return headers; }
-    @Override public Void getBody() { return body; }
   }
 
   sealed interface Response<T> extends Wirespec.Response<T> {}
@@ -37,26 +32,34 @@ public interface FindPetsByStatus extends Wirespec.Endpoint {
   sealed interface ResponseListPet extends Response<java.util.List<Pet>> {}
   sealed interface ResponseVoid extends Response<Void> {}
 
-  record Response200(java.util.List<Pet> body) implements Response2XX<java.util.List<Pet>>, ResponseListPet {
-    @Override public int getStatus() { return 200; }
-    @Override public Headers getHeaders() { return new Headers(); }
-    @Override public java.util.List<Pet> getBody() { return body; }
-    class Headers implements Wirespec.Response.Headers {}
+  record Response200(
+    int status,
+    Headers headers,
+    java.util.List<Pet> body
+  ) implements Response2XX<java.util.List<Pet>>, ResponseListPet {
+    public Response200(java.util.List<Pet> body) {
+      this(200, new Headers(), body);
+    }
+    static class Headers implements Wirespec.Response.Headers {}
   }
-  record Response400() implements Response4XX<Void>, ResponseVoid {
-    @Override public int getStatus() { return 400; }
-    @Override public Headers getHeaders() { return new Headers(); }
-    @Override public Void getBody() { return null; }
-    class Headers implements Wirespec.Response.Headers {}
+  record Response400(
+    int status,
+    Headers headers,
+    Void body
+  ) implements Response4XX<Void>, ResponseVoid {
+    public Response400() {
+      this(400, new Headers(), null);
+    }
+    static class Headers implements Wirespec.Response.Headers {}
   }
 
   interface Handler extends Wirespec.Handler {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
-        request.getMethod().name(),
+        request.method().name(),
         java.util.List.of("pet", "findByStatus"),
-        java.util.Map.ofEntries(java.util.Map.entry("status", serialization.serializeParam(request.getQueries().status(), Wirespec.getType(FindPetsByStatusParameterStatus.class, java.util.Optional.class)))),
+        java.util.Map.ofEntries(java.util.Map.entry("status", serialization.serializeParam(request.queries().status(), Wirespec.getType(FindPetsByStatusParameterStatus.class, java.util.Optional.class)))),
         java.util.Collections.emptyMap(),
         null
       );
@@ -69,9 +72,9 @@ public interface FindPetsByStatus extends Wirespec.Endpoint {
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(Pet.class, java.util.List.class))); }
-      if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), null); }
-      else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(Pet.class, java.util.List.class))); }
+      if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), null); }
+      else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {

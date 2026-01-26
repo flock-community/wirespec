@@ -5,11 +5,11 @@ import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.integration.spring.java.generated.model.User;
 
 public interface CreateUsersWithListInput extends Wirespec.Endpoint {
-  class Path implements Wirespec.Path {}
+  static class Path implements Wirespec.Path {}
 
-  class Queries implements Wirespec.Queries {}
+  static class Queries implements Wirespec.Queries {}
 
-  class RequestHeaders implements Wirespec.Request.Headers {}
+  static class RequestHeaders implements Wirespec.Request.Headers {}
 
   record Request (
     Path path,
@@ -21,11 +21,6 @@ public interface CreateUsersWithListInput extends Wirespec.Endpoint {
     public Request(java.util.List<User> body) {
       this(new Path(), Wirespec.Method.POST, new Queries(), new RequestHeaders(), body);
     }
-    @Override public Path getPath() { return path; }
-    @Override public Wirespec.Method getMethod() { return method; }
-    @Override public Queries getQueries() { return queries; }
-    @Override public RequestHeaders getHeaders() { return headers; }
-    @Override public java.util.List<User> getBody() { return body; }
   }
 
   sealed interface Response<T> extends Wirespec.Response<T> {}
@@ -34,28 +29,36 @@ public interface CreateUsersWithListInput extends Wirespec.Endpoint {
   sealed interface ResponseUser extends Response<User> {}
   sealed interface ResponseVoid extends Response<Void> {}
 
-  record Response200(User body) implements Response2XX<User>, ResponseUser {
-    @Override public int getStatus() { return 200; }
-    @Override public Headers getHeaders() { return new Headers(); }
-    @Override public User getBody() { return body; }
-    class Headers implements Wirespec.Response.Headers {}
+  record Response200(
+    int status,
+    Headers headers,
+    User body
+  ) implements Response2XX<User>, ResponseUser {
+    public Response200(User body) {
+      this(200, new Headers(), body);
+    }
+    static class Headers implements Wirespec.Response.Headers {}
   }
-  record ResponseDefault() implements ResponsedXX<Void>, ResponseVoid {
-    @Override public int getStatus() { return 200; }
-    @Override public Headers getHeaders() { return new Headers(); }
-    @Override public Void getBody() { return null; }
-    class Headers implements Wirespec.Response.Headers {}
+  record ResponseDefault(
+    int status,
+    Headers headers,
+    Void body
+  ) implements ResponsedXX<Void>, ResponseVoid {
+    public ResponseDefault() {
+      this(200, new Headers(), null);
+    }
+    static class Headers implements Wirespec.Response.Headers {}
   }
 
   interface Handler extends Wirespec.Handler {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
-        request.getMethod().name(),
+        request.method().name(),
         java.util.List.of("user", "createWithList"),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
-        serialization.serializeBody(request.getBody(), Wirespec.getType(User.class, java.util.List.class))
+        serialization.serializeBody(request.body(), Wirespec.getType(User.class, java.util.List.class))
       );
     }
 
@@ -66,9 +69,9 @@ public interface CreateUsersWithListInput extends Wirespec.Endpoint {
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(User.class, null))); }
-      if (response instanceof ResponseDefault r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), null); }
-      else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(User.class, null))); }
+      if (response instanceof ResponseDefault r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), null); }
+      else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
