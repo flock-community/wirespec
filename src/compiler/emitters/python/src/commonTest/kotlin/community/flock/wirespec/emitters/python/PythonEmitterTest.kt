@@ -830,7 +830,6 @@ class PythonEmitterTest {
         result shouldBeRight expect
     }
 
-
     private fun EmitContext.emitFirst(node: Definition) = emitters.map {
         val ast = AST(
             nonEmptyListOf(

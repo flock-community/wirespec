@@ -191,7 +191,7 @@ class OpenAPIV3EmitterTest {
             |}
             """.trimMargin()
 
-        val openapi = compile(source)() { OpenAPIV3Emitter }
+        val result = compile(source).invoke { OpenAPIV3Emitter }
 
         val expect =
             // language=json
@@ -270,7 +270,7 @@ class OpenAPIV3EmitterTest {
             |}
             """.trimMargin()
 
-        openapi.shouldBeRight() shouldEqualJson expect
+        result.shouldBeRight() shouldEqualJson expect
     }
 
     @Test

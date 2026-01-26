@@ -72,7 +72,7 @@ class OpenAPIV2EmitterTest {
             |}
             """.trimMargin()
 
-        val result = compile(source)() { OpenAPIV2Emitter }
+        val result = compile(source).invoke { OpenAPIV2Emitter }
 
         val expect =
             """
