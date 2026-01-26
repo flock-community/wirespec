@@ -28,14 +28,14 @@ public class TestUserClient implements UserClient {
 
     @Override
     public CompletableFuture<GetUsers.Response<?>> getUsers(GetUsers.Request request) {
-        var filtered = users.stream().filter(it -> Objects.equals(it.name(), request.getQueries().name())).toList();
+        var filtered = users.stream().filter(it -> Objects.equals(it.name(), request.queries().name())).toList();
         return completedFuture(new GetUsers.Response200(filtered));
     }
 
     @Override
     public CompletableFuture<GetUserByName.Response<?>> getUserByName(GetUserByName.Request request) {
         var res = users.stream()
-                .filter(it -> Objects.equals(it.name(), request.getPath().name()))
+                .filter(it -> Objects.equals(it.name(), request.path().name()))
                 .findFirst()
                 .<GetUserByName.Response<?>>map(GetUserByName.Response200::new)
                 .orElseGet(() -> new GetUserByName.Response404());
@@ -45,7 +45,7 @@ public class TestUserClient implements UserClient {
 
     @Override
     public CompletableFuture<PostUser.Response<?>> postUser(PostUser.Request request) {
-        var user = request.getBody();
+        var user = request.body();
         if (users.add(user)) {
             return completedFuture(new PostUser.Response200(user));
         } else {
@@ -56,7 +56,7 @@ public class TestUserClient implements UserClient {
     @Override
     public CompletableFuture<DeleteUserByName.Response<?>> deleteUserByName(DeleteUserByName.Request request) {
         var res = users.stream()
-                .filter(it -> Objects.equals(it.name(), request.getPath().name()))
+                .filter(it -> Objects.equals(it.name(), request.path().name()))
                 .findFirst()
                 .<DeleteUserByName.Response<?>>map(body -> {
                     users.remove(body);
@@ -69,7 +69,7 @@ public class TestUserClient implements UserClient {
 
     @Override
     public CompletableFuture<UploadImage.Response<?>> uploadImage(UploadImage.Request request) {
-        images.put(request.getPath().name(),  request.getBody());
+        images.put(request.path().name(),  request.body());
         return completedFuture(new UploadImage.Response201());
     }
 }

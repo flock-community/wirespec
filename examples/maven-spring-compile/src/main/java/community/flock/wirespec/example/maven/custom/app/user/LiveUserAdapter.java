@@ -32,14 +32,14 @@ public class LiveUserAdapter implements UserAdapter {
     public List<User> getAllUsers(String name) {
         var res = complete(client.getUsers(new GetUsers.Request(name, UserClient.version)));
         return switch (res) {
-            case GetUsers.Response200 r -> converter.internalize(r.getBody());
+            case GetUsers.Response200 r -> converter.internalize(r.body());
         };
     }
 
     public User getUserByName(final String name) {
         var res = complete(client.getUserByName(new GetUserByName.Request(name)));
         return switch (res) {
-            case GetUserByName.Response200 r -> converter.internalize(r.getBody());
+            case GetUserByName.Response200 r -> converter.internalize(r.body());
             case GetUserByName.Response404 ignored -> throw new NotFound.User();
         };
     }
@@ -47,7 +47,7 @@ public class LiveUserAdapter implements UserAdapter {
     public User saveUser(final User user) {
         var res = complete(client.postUser(new PostUser.Request(converter.externalize(user))));
         return switch (res) {
-            case PostUser.Response200 r -> converter.internalize(r.getBody());
+            case PostUser.Response200 r -> converter.internalize(r.body());
             case PostUser.Response409 ignored -> throw new Conflict.User();
         };
     }
@@ -55,7 +55,7 @@ public class LiveUserAdapter implements UserAdapter {
     public User deleteUserByName(final String name) {
         var res = complete(client.deleteUserByName(new DeleteUserByName.Request(name)));
         return switch (res) {
-            case DeleteUserByName.Response200 r -> converter.internalize(r.getBody());
+            case DeleteUserByName.Response200 r -> converter.internalize(r.body());
             case DeleteUserByName.Response404 ignored -> throw new NotFound.User();
         };
     }

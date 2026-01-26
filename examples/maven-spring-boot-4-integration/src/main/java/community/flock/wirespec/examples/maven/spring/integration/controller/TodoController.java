@@ -22,7 +22,7 @@ class TodoController implements GetTodos.Handler, GetTodoById.Handler, CreateTod
     @Override
     public CompletableFuture<CreateTodo.Response<?>> createTodo(CreateTodo.Request request) {
         var todoInput = switch (request) {
-            case CreateTodo.Request req -> req.getBody();
+            case CreateTodo.Request req -> req.body();
         };
         var todo = new Todo(
                 UUID.randomUUID().toString(),
@@ -35,14 +35,14 @@ class TodoController implements GetTodos.Handler, GetTodoById.Handler, CreateTod
 
     @Override
     public CompletableFuture<DeleteTodo.Response<?>> deleteTodo(DeleteTodo.Request request) {
-        return service.delete(request.getPath().id())
+        return service.delete(request.path().id())
                 .thenApply(DeleteTodo.Response200::new);
     }
 
     @Override
     public CompletableFuture<GetTodoById.Response<?>> getTodoById(GetTodoById.Request request) {
         var id = switch (request) {
-            case GetTodoById.Request req -> req.getPath().id();
+            case GetTodoById.Request req -> req.path().id();
         };
 
         Todo todo = service.store.get(parseInt(id));
