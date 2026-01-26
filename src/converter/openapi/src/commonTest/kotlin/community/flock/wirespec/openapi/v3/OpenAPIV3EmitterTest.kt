@@ -1,14 +1,14 @@
 package community.flock.wirespec.openapi.v3
 
-import arrow.core.nonEmptyListOf
 import community.flock.kotlinx.openapi.bindings.OpenAPIV3
-import community.flock.wirespec.compiler.core.FileUri
-import community.flock.wirespec.compiler.core.ModuleContent
-import community.flock.wirespec.compiler.core.ParseContext
-import community.flock.wirespec.compiler.core.WirespecSpec
-import community.flock.wirespec.compiler.core.parse
-import community.flock.wirespec.compiler.core.parse.ast.AST
-import community.flock.wirespec.compiler.utils.NoLogger
+import community.flock.wirespec.compiler.test.CompileChannelTest
+import community.flock.wirespec.compiler.test.CompileEnumTest
+import community.flock.wirespec.compiler.test.CompileFullEndpointTest
+import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
+import community.flock.wirespec.compiler.test.CompileRefinedTest
+import community.flock.wirespec.compiler.test.CompileTypeTest
+import community.flock.wirespec.compiler.test.CompileUnionTest
+import community.flock.wirespec.compiler.test.compile
 import community.flock.wirespec.compiler.utils.noLogger
 import community.flock.wirespec.openapi.common.Ast
 import community.flock.wirespec.openapi.v3.OpenAPIV3Parser.parse
@@ -191,8 +191,7 @@ class OpenAPIV3EmitterTest {
             |}
             """.trimMargin()
 
-        val ast = parser(source).shouldBeRight()
-        val openapi = OpenAPIV3Emitter.emit(ast, noLogger).first().result
+        val openapi = compile(source)() { OpenAPIV3Emitter }
 
         val expect =
             // language=json
@@ -271,10 +270,491 @@ class OpenAPIV3EmitterTest {
             |}
             """.trimMargin()
 
-        openapi shouldEqualJson expect
+        openapi.shouldBeRight() shouldEqualJson expect
     }
 
-    private fun parser(source: String) = object : ParseContext, NoLogger {
-        override val spec = WirespecSpec
-    }.parse(nonEmptyListOf(ModuleContent(FileUri("test.ws"), source))).map { AST(it.modules) }
+    @Test
+    fun compileFullEndpointTest() {
+        val result = CompileFullEndpointTest.compiler { OpenAPIV3Emitter }
+        val expect =
+            // language=json
+            """
+                |{
+                |  "openapi": "3.0.0",
+                |  "components": {
+                |    "schemas": {
+                |      "PotentialTodoDto": {
+                |        "required": [
+                |          "name",
+                |          "done"
+                |        ],
+                |        "properties": {
+                |          "name": {
+                |            "type": "string"
+                |          },
+                |          "done": {
+                |            "type": "boolean"
+                |          }
+                |        }
+                |      },
+                |      "Token": {
+                |        "required": [
+                |          "iss"
+                |        ],
+                |        "properties": {
+                |          "iss": {
+                |            "type": "string"
+                |          }
+                |        }
+                |      },
+                |      "TodoDto": {
+                |        "required": [
+                |          "id",
+                |          "name",
+                |          "done"
+                |        ],
+                |        "properties": {
+                |          "id": {
+                |            "type": "string"
+                |          },
+                |          "name": {
+                |            "type": "string"
+                |          },
+                |          "done": {
+                |            "type": "boolean"
+                |          }
+                |        }
+                |      },
+                |      "Error": {
+                |        "required": [
+                |          "code",
+                |          "description"
+                |        ],
+                |        "properties": {
+                |          "code": {
+                |            "type": "integer",
+                |            "format": "int64"
+                |          },
+                |          "description": {
+                |            "type": "string"
+                |          }
+                |        }
+                |      }
+                |    }
+                |  },
+                |  "info": {
+                |    "title": "Wirespec",
+                |    "version": "0.0.0"
+                |  },
+                |  "paths": {
+                |    "/todos/{id}": {
+                |      "parameters": [
+                |        {
+                |          "required": true,
+                |          "in": "path",
+                |          "schema": {
+                |            "type": "string"
+                |          },
+                |          "name": "id"
+                |        }
+                |      ],
+                |      "put": {
+                |        "parameters": [
+                |          {
+                |            "required": true,
+                |            "in": "path",
+                |            "schema": {
+                |              "type": "string"
+                |            },
+                |            "name": "id"
+                |          },
+                |          {
+                |            "required": true,
+                |            "in": "query",
+                |            "schema": {
+                |              "type": "boolean"
+                |            },
+                |            "name": "done"
+                |          },
+                |          {
+                |            "required": false,
+                |            "in": "query",
+                |            "schema": {
+                |              "type": "string"
+                |            },
+                |            "name": "name"
+                |          },
+                |          {
+                |            "required": true,
+                |            "in": "header",
+                |            "schema": {
+                |              "${'$'}ref": "#/components/schemas/Token"
+                |            },
+                |            "name": "token"
+                |          },
+                |          {
+                |            "required": false,
+                |            "in": "header",
+                |            "schema": {
+                |              "${'$'}ref": "#/components/schemas/Token"
+                |            },
+                |            "name": "Refresh-Token"
+                |          }
+                |        ],
+                |        "requestBody": {
+                |          "content": {
+                |            "application/json": {
+                |              "schema": {
+                |                "${'$'}ref": "#/components/schemas/PotentialTodoDto"
+                |              }
+                |            }
+                |          },
+                |          "required": true
+                |        },
+                |        "responses": {
+                |          "200": {
+                |            "content": {
+                |              "application/json": {
+                |                "schema": {
+                |                  "${'$'}ref": "#/components/schemas/TodoDto"
+                |                }
+                |              }
+                |            },
+                |            "description": "PutTodo 200 response",
+                |            "headers": {}
+                |          },
+                |          "201": {
+                |            "content": {
+                |              "application/json": {
+                |                "schema": {
+                |                  "${'$'}ref": "#/components/schemas/TodoDto"
+                |                }
+                |              }
+                |            },
+                |            "description": "PutTodo 201 response",
+                |            "headers": {
+                |              "token": {
+                |                "${'$'}ref": "#/components/headers/Token"
+                |              },
+                |              "refreshToken": {
+                |                "${'$'}ref": "#/components/headers/Token"
+                |              }
+                |            }
+                |          },
+                |          "500": {
+                |            "content": {
+                |              "application/json": {
+                |                "schema": {
+                |                  "${'$'}ref": "#/components/schemas/Error"
+                |                }
+                |              }
+                |            },
+                |            "description": "PutTodo 500 response",
+                |            "headers": {}
+                |          }
+                |        },
+                |        "operationId": "PutTodo"
+                |      }
+                |    }
+                |  }
+                |}
+            """.trimMargin()
+        result.shouldBeRight() shouldEqualJson expect
+    }
+
+    @Test
+    fun compileMinimalEndpointTest() {
+        val result = CompileMinimalEndpointTest.compiler { OpenAPIV3Emitter }
+        val expect =
+            // language=json
+            """
+                |{
+                |  "openapi": "3.0.0",
+                |  "info": {
+                |    "title": "Wirespec",
+                |    "version": "0.0.0"
+                |  },
+                |  "paths": {
+                |    "/todos": {
+                |      "get": {
+                |        "operationId": "GetTodos",
+                |        "parameters": [],
+                |        "responses": {
+                |          "200": {
+                |            "description": "GetTodos 200 response",
+                |            "headers": {},
+                |            "content": {
+                |              "application/json": {
+                |                "schema": {
+                |                  "nullable": false,
+                |                  "type": "array",
+                |                  "items": {
+                |                    "${'$'}ref": "#/components/schemas/TodoDto"
+                |                  }
+                |                }
+                |              }
+                |            }
+                |          }
+                |        }
+                |      }
+                |    }
+                |  },
+                |  "components": {
+                |    "schemas": {
+                |      "TodoDto": {
+                |        "required": [
+                |          "description"
+                |        ],
+                |        "properties": {
+                |          "description": {
+                |            "type": "string"
+                |          }
+                |        }
+                |      }
+                |    }
+                |  }
+                |}
+            """.trimMargin()
+
+        result.shouldBeRight() shouldEqualJson expect
+    }
+
+    @Test
+    fun compileChannelTest() {
+        val result = CompileChannelTest.compiler { OpenAPIV3Emitter }
+        val expect =
+            // language=json
+            """
+            |{
+            |  "openapi": "3.0.0",
+            |  "components": {
+            |    "schemas": {}
+            |  },
+            |  "info": {
+            |    "title": "Wirespec",
+            |    "version": "0.0.0"
+            |  },
+            |  "paths": {}
+            |}
+            """.trimMargin()
+        result.shouldBeRight() shouldEqualJson expect
+    }
+
+    @Test
+    fun compileEnumTest() {
+        val result = CompileEnumTest.compiler { OpenAPIV3Emitter }
+        val expect =
+            // language=json
+            """
+                |{
+                |  "openapi": "3.0.0",
+                |  "info": {
+                |    "title": "Wirespec",
+                |    "version": "0.0.0"
+                |  },
+                |  "paths": {},
+                |  "components": {
+                |    "schemas": {
+                |      "MyAwesomeEnum": {
+                |        "type": "string",
+                |        "enum": ["ONE", "Two", "THREE_MORE", "UnitedKingdom"]
+                |      }
+                |    }
+                |  }
+                |}
+            """.trimMargin()
+        result.shouldBeRight() shouldEqualJson expect
+    }
+
+    @Test
+    fun compileRefinedTest() {
+        val result = CompileRefinedTest.compiler { OpenAPIV3Emitter }
+        val expect =
+            // language=json
+            """
+            |{
+            |  "openapi": "3.0.0",
+            |  "components": {
+            |    "schemas": {
+            |      "TodoId": {
+            |        "type": "string",
+            |        "pattern": "/^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}$/g"
+            |      },
+            |      "TodoNoRegex": {
+            |        "type": "string"
+            |      },
+            |      "TestInt": {
+            |        "type": "integer",
+            |        "format": "int32"
+            |      },
+            |      "TestInt0": {
+            |        "type": "integer",
+            |        "format": "int32"
+            |      },
+            |      "TestInt1": {
+            |        "type": "integer",
+            |        "format": "int32",
+            |        "minimum": 0.0
+            |      },
+            |      "TestInt2": {
+            |        "type": "integer",
+            |        "format": "int32",
+            |        "maximum": 1.0,
+            |        "minimum": 3.0
+            |      },
+            |      "TestNum": {
+            |        "type": "number",
+            |        "format": "float"
+            |      },
+            |      "TestNum0": {
+            |        "type": "number",
+            |        "format": "float"
+            |      },
+            |      "TestNum1": {
+            |        "type": "number",
+            |        "format": "float",
+            |        "maximum": 0.5
+            |      },
+            |      "TestNum2": {
+            |        "type": "number",
+            |        "format": "float",
+            |        "maximum": 0.5,
+            |        "minimum": -0.2
+            |      }
+            |    }
+            |  },
+            |  "info": {
+            |    "title": "Wirespec",
+            |    "version": "0.0.0"
+            |  },
+            |  "paths": {}
+            |}
+            """.trimMargin()
+        result.shouldBeRight() shouldEqualJson expect
+    }
+
+    @Test
+    fun compileUnionTest() {
+        val result = CompileUnionTest.compiler { OpenAPIV3Emitter }
+        val expect =
+            // language=json
+            """
+                |{
+                |  "openapi": "3.0.0",
+                |  "info": {
+                |    "title": "Wirespec",
+                |    "version": "0.0.0"
+                |  },
+                |  "paths": {},
+                |  "components": {
+                |    "schemas": {
+                |      "UserAccount": {
+                |        "oneOf": [
+                |          {"${'$'}ref": "#/components/schemas/UserAccountPassword"},
+                |          {"${'$'}ref": "#/components/schemas/UserAccountToken"}
+                |        ],
+                |        "type": "string"
+                |      },
+                |      "UserAccountPassword": {
+                |        "required": ["username", "password"],
+                |        "properties": {
+                |          "username": {
+                |            "type": "string"
+                |          },
+                |          "password": {
+                |            "type": "string"
+                |          }
+                |        }
+                |      },
+                |      "UserAccountToken": {
+                |        "required": ["token"],
+                |        "properties": {
+                |          "token": {
+                |            "type": "string"
+                |          }
+                |        }
+                |      },
+                |      "User": {
+                |        "required": ["username", "account"],
+                |        "properties": {
+                |          "username": {
+                |            "type": "string"
+                |          },
+                |          "account": {
+                |            "${'$'}ref": "#/components/schemas/UserAccount"
+                |          }
+                |        }
+                |      }
+                |    }
+                |  }
+                |}
+            """.trimMargin()
+        result.shouldBeRight() shouldEqualJson expect
+    }
+
+    @Test
+    fun compileTypeTest() {
+        val result = CompileTypeTest.compiler { OpenAPIV3Emitter }
+        val expect =
+            // language=json
+            """
+                |{
+                |  "openapi": "3.0.0",
+                |  "components": {
+                |    "schemas": {
+                |      "Request": {
+                |        "required": [
+                |          "type",
+                |          "url",
+                |          "params",
+                |          "headers"
+                |        ],
+                |        "properties": {
+                |          "type": {
+                |            "type": "string"
+                |          },
+                |          "url": {
+                |            "type": "string"
+                |          },
+                |          "BODY_TYPE": {
+                |            "type": "string"
+                |          },
+                |          "params": {
+                |            "nullable": false,
+                |            "type": "array",
+                |            "items": {
+                |              "type": "string"
+                |            }
+                |          },
+                |          "headers": {
+                |            "nullable": false,
+                |            "type": "object",
+                |            "additionalProperties": {
+                |              "type": "string"
+                |            }
+                |          },
+                |          "body": {
+                |            "nullable": true,
+                |            "type": "object",
+                |            "additionalProperties": {
+                |              "nullable": true,
+                |              "type": "array",
+                |              "items": {
+                |                "type": "string"
+                |              }
+                |            }
+                |          }
+                |        }
+                |      }
+                |    }
+                |  },
+                |  "info": {
+                |    "title": "Wirespec",
+                |    "version": "0.0.0"
+                |  },
+                |  "paths": {}
+                |}
+            """.trimMargin()
+        result.shouldBeRight() shouldEqualJson expect
+    }
 }

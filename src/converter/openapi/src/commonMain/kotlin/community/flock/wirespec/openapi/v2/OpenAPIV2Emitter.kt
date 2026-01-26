@@ -86,14 +86,16 @@ object OpenAPIV2Emitter : Emitter {
                         refined.identifier.value to OpenAPIV2Schema(
                             type = OpenAPIV2Type.INTEGER,
                             minimum = type.constraint?.min?.toDouble(),
-                            maximum = type.constraint?.min?.toDouble(),
+                            maximum = type.constraint?.max?.toDouble(),
+                            format = "int32",
                         )
 
                     is Reference.Primitive.Type.Number ->
                         refined.identifier.value to OpenAPIV2Schema(
                             type = OpenAPIV2Type.NUMBER,
                             minimum = type.constraint?.min?.toDouble(),
-                            maximum = type.constraint?.min?.toDouble(),
+                            maximum = type.constraint?.max?.toDouble(),
+                            format = "float",
                         )
 
                     is Reference.Primitive.Type.String ->
