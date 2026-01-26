@@ -30,7 +30,10 @@ kotlin {
     sourceSets {
         commonTest {
             dependencies {
+                implementation(libs.kotlin.test)
+                implementation(libs.bundles.kotest)
                 implementation(project(":src:integration:wirespec"))
+                implementation(project(":src:compiler:test"))
             }
         }
         jvmMain {
