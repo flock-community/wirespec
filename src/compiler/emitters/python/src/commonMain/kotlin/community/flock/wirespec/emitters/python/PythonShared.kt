@@ -135,5 +135,9 @@ data object PythonShared : Shared {
         |        headers: Dict[str, List[str]]
         |        body: Optional[str]
         |
+        |    class Transportation(ABC):
+        |        @abstractmethod
+        |        def transport(self, request: RawRequest) -> RawResponse: pass
+        |
     """.trimMargin()
 }
