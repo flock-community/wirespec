@@ -33,9 +33,10 @@ class GenerateTestClasses {
     @Test
     fun generate() {
         val todoFile = File("src/commonTest/resources/wirespec/todos.ws").readText()
+        val refinedFile = File("src/commonTest/resources/wirespec/refined.ws").readText()
         val ast = object : ParseContext, NoLogger {
             override val spec = WirespecSpec
-        }.parse(nonEmptyListOf(ModuleContent(FileUri(""), todoFile)))
+        }.parse(nonEmptyListOf(ModuleContent(FileUri(""), todoFile), ModuleContent(FileUri(""), refinedFile)))
             .fold({ error("Cannot parse wirespec: ${it.first().message}") }, { it })
 
         val emittedJava = javaEmitter.emit(ast, noLogger)
