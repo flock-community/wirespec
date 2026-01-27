@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import community.flock.wirespec.emitters.java.JavaIdentifierEmitter;
 import community.flock.wirespec.java.Wirespec;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
@@ -83,7 +84,7 @@ public class WirespecModuleJava extends SimpleModule {
 
         @Override
         public void serialize(Wirespec.Refined value, JsonGenerator gen, SerializerProvider provider) throws IOException {
-            gen.writeString(value.getValue().toString());
+            gen.writeObject(value.getValue());
         }
     }
 
@@ -126,8 +127,10 @@ public class WirespecModuleJava extends SimpleModule {
         @Override
         public Wirespec.Refined deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
             JsonNode node = jp.getCodec().readTree(jp);
+            Constructor<?> constructor = vc.getDeclaredConstructors()[0];
+            Object value = jp.getCodec().treeToValue(node, constructor.getParameterTypes()[0]);
             try {
-                return (Wirespec.Refined) vc.getDeclaredConstructors()[0].newInstance(node.asText());
+                return (Wirespec.Refined) constructor.newInstance(value);
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(e);
             }
