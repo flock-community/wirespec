@@ -7,11 +7,11 @@ public record TypeWithAllRefined (
   StringRefined stringRefined,
   IntRefinedNoBound intRefinedNoBound,
   IntRefinedLowerBound intRefinedLowerBound,
-  IntRefinedUpperound intRefinedUpperound,
+  IntRefinedUpperBound intRefinedUpperBound,
   IntRefinedLowerAndUpper intRefinedLowerAndUpper,
   NumberRefinedNoBound numberRefinedNoBound,
   NumberRefinedLowerBound numberRefinedLowerBound,
-  NumberRefinedUpperound numberRefinedUpperound,
+  NumberRefinedUpperBound numberRefinedUpperBound,
   NumberRefinedLowerAndUpper numberRefinedLowerAndUpper
 ) {
 };

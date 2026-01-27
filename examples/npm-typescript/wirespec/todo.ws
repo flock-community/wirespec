@@ -5,12 +5,12 @@ type StringRefined = String
 
 type IntRefinedNoBound = Integer(_,_)
 type IntRefinedLowerBound = Integer(-1,_)
-type IntRefinedUpperound = Integer(_,2)
+type IntRefinedUpperBound = Integer(_,2)
 type IntRefinedLowerAndUpper = Integer(3,4)
 
 type NumberRefinedNoBound = Number(_,_)
 type NumberRefinedLowerBound = Number(-1.0,_)
-type NumberRefinedUpperound = Number(_,2.0)
+type NumberRefinedUpperBound = Number(_,2.0)
 type NumberRefinedLowerAndUpper = Number(3.0,4.0)
 
 
@@ -22,7 +22,7 @@ type TodoDto {
     testInt1: IntRefinedLowerBound,
     testInt2: IntRefinedLowerAndUpper,
     testNum0: NumberRefinedNoBound,
-    testNum1: NumberRefinedUpperound,
+    testNum1: NumberRefinedUpperBound,
     testNum2: NumberRefinedLowerAndUpper
 }
 
@@ -33,7 +33,7 @@ type PotentialTodoDto {
     testInt1: IntRefinedLowerBound,
     testInt2: IntRefinedLowerAndUpper,
     testNum0: NumberRefinedNoBound,
-    testNum1: NumberRefinedUpperound,
+    testNum1: NumberRefinedUpperBound,
     testNum2: NumberRefinedLowerAndUpper
 }
 

@@ -8,10 +8,10 @@ data class TypeWithAllRefined(
   val stringRefined: StringRefined,
   val intRefinedNoBound: IntRefinedNoBound,
   val intRefinedLowerBound: IntRefinedLowerBound,
-  val intRefinedUpperound: IntRefinedUpperound,
+  val intRefinedUpperBound: IntRefinedUpperBound,
   val intRefinedLowerAndUpper: IntRefinedLowerAndUpper,
   val numberRefinedNoBound: NumberRefinedNoBound,
   val numberRefinedLowerBound: NumberRefinedLowerBound,
-  val numberRefinedUpperound: NumberRefinedUpperound,
+  val numberRefinedUpperBound: NumberRefinedUpperBound,
   val numberRefinedLowerAndUpper: NumberRefinedLowerAndUpper
 )

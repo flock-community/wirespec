@@ -3,8 +3,8 @@ package community.flock.wirespec.integration.jackson.kotlin.generated.model
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
-data class NumberRefinedUpperound(override val value: Double): Wirespec.Refined<Double> {
+data class IntRefinedUpperBound(override val value: Long): Wirespec.Refined<Long> {
   override fun toString() = value.toString()
 }
 
-fun NumberRefinedUpperound.validate() = value < 2.0
+fun IntRefinedUpperBound.validate() = value < 2
