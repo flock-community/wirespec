@@ -3,7 +3,20 @@ package community.flock.wirespec.integration.jackson.kotlin
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import community.flock.wirespec.integration.jackson.kotlin.generated.model.*
+import community.flock.wirespec.integration.jackson.kotlin.generated.model.IntRefinedLowerAndUpper
+import community.flock.wirespec.integration.jackson.kotlin.generated.model.IntRefinedLowerBound
+import community.flock.wirespec.integration.jackson.kotlin.generated.model.IntRefinedNoBound
+import community.flock.wirespec.integration.jackson.kotlin.generated.model.IntRefinedUpperound
+import community.flock.wirespec.integration.jackson.kotlin.generated.model.NumberRefinedLowerAndUpper
+import community.flock.wirespec.integration.jackson.kotlin.generated.model.NumberRefinedLowerBound
+import community.flock.wirespec.integration.jackson.kotlin.generated.model.NumberRefinedNoBound
+import community.flock.wirespec.integration.jackson.kotlin.generated.model.NumberRefinedUpperound
+import community.flock.wirespec.integration.jackson.kotlin.generated.model.StringRefined
+import community.flock.wirespec.integration.jackson.kotlin.generated.model.StringRefinedRegex
+import community.flock.wirespec.integration.jackson.kotlin.generated.model.Todo
+import community.flock.wirespec.integration.jackson.kotlin.generated.model.TodoCategory
+import community.flock.wirespec.integration.jackson.kotlin.generated.model.TodoId
+import community.flock.wirespec.integration.jackson.kotlin.generated.model.TypeWithAllRefined
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -17,7 +30,8 @@ class WirespecModuleKotlinTest {
         eMail = "test@wirespec.io",
     )
 
-    private val json = "{\"id\":\"123\",\"name\":\"Do It now\",\"final\":false,\"category\":\"LIFE\",\"eMail\":\"test@wirespec.io\"}"
+    private val json =
+        "{\"id\":\"123\",\"name\":\"Do It now\",\"final\":false,\"category\":\"LIFE\",\"eMail\":\"test@wirespec.io\"}"
 
     private val typeWithAllRefined = TypeWithAllRefined(
         stringRefinedRegex = StringRefinedRegex("string refined regex"),
@@ -29,10 +43,11 @@ class WirespecModuleKotlinTest {
         numberRefinedNoBound = NumberRefinedNoBound(1.0),
         numberRefinedLowerBound = NumberRefinedLowerBound(2.0),
         numberRefinedUpperound = NumberRefinedUpperound(3.0),
-        numberRefinedLowerAndUpper = NumberRefinedLowerAndUpper(4.0)
+        numberRefinedLowerAndUpper = NumberRefinedLowerAndUpper(4.0),
     )
 
-    private val typeJson = "{\"stringRefinedRegex\":\"string refined regex\",\"stringRefined\":\"string refined\",\"intRefinedNoBound\":1,\"intRefinedLowerBound\":2,\"intRefinedUpperound\":3,\"intRefinedLowerAndUpper\":4,\"numberRefinedNoBound\":1.0,\"numberRefinedLowerBound\":2.0,\"numberRefinedUpperound\":3.0,\"numberRefinedLowerAndUpper\":4.0}"
+    private val typeJson =
+        "{\"stringRefinedRegex\":\"string refined regex\",\"stringRefined\":\"string refined\",\"intRefinedNoBound\":1,\"intRefinedLowerBound\":2,\"intRefinedUpperound\":3,\"intRefinedLowerAndUpper\":4,\"numberRefinedNoBound\":1.0,\"numberRefinedLowerBound\":2.0,\"numberRefinedUpperound\":3.0,\"numberRefinedLowerAndUpper\":4.0}"
 
     private val objectMapper: ObjectMapper = ObjectMapper()
         .registerKotlinModule()
