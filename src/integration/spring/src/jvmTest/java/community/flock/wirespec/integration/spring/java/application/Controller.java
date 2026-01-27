@@ -26,14 +26,14 @@ public class Controller implements
 
     @Override
     public CompletableFuture<AddPet.Response<?>> addPet(AddPet.Request request) {
-        service.create(request.getBody());
-        return CompletableFuture.completedFuture(new AddPet.Response200(Optional.of(100), request.getBody()));
+        service.create(request.body());
+        return CompletableFuture.completedFuture(new AddPet.Response200(Optional.of(100), request.body()));
     }
 
     @Override
     public CompletableFuture<GetPetById.Response<?>> getPetById(GetPetById.Request request) {
         Optional<Pet> pet = service.list.stream()
-                .filter(it -> it.id().isPresent() && it.id().get().equals(request.getPath().petId()))
+                .filter(it -> it.id().isPresent() && it.id().get().equals(request.path().petId()))
                 .findFirst();
 
         GetPetById.Response<?> response = pet
@@ -45,8 +45,8 @@ public class Controller implements
 
     @Override
     public CompletableFuture<UpdatePet.Response<?>> updatePet(UpdatePet.Request request) {
-        service.update(request.getBody());
-        return CompletableFuture.completedFuture(new UpdatePet.Response200(request.getBody()));
+        service.update(request.body());
+        return CompletableFuture.completedFuture(new UpdatePet.Response200(request.body()));
     }
 
     @Override
@@ -63,7 +63,7 @@ public class Controller implements
 
     @Override
     public CompletableFuture<UploadFile.Response<?>> uploadFile(UploadFile.Request request) {
-        Optional<byte[]> file = request.getBody().file();
+        Optional<byte[]> file = request.body().file();
         if (file.isEmpty()) throw new RuntimeException("Missing file");
         service.upload(file.get());
         return CompletableFuture.completedFuture(
@@ -71,7 +71,7 @@ public class Controller implements
                 new ApiResponse(
                     Optional.of(200),
                     Optional.of("type"),
-                    Optional.of(request.getBody().additionalMetadata().orElse("none"))
+                    Optional.of(request.body().additionalMetadata().orElse("none"))
                 )
             )
         );

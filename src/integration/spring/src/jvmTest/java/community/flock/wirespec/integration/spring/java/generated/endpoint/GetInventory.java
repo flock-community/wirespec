@@ -5,48 +5,44 @@ import community.flock.wirespec.java.Wirespec;
 
 
 public interface GetInventory extends Wirespec.Endpoint {
-  class Path implements Wirespec.Path {}
+  static class Path implements Wirespec.Path {}
 
-  class Queries implements Wirespec.Queries {}
+  static class Queries implements Wirespec.Queries {}
 
-  class RequestHeaders implements Wirespec.Request.Headers {}
+  static class RequestHeaders implements Wirespec.Request.Headers {}
 
-  class Request implements Wirespec.Request<Void> {
-    private final Path path;
-    private final Wirespec.Method method;
-    private final Queries queries;
-    private final RequestHeaders headers;
-    private final Void body;
+  record Request (
+    Path path,
+    Wirespec.Method method,
+    Queries queries,
+    RequestHeaders headers,
+    Void body
+  ) implements Wirespec.Request<Void> {
     public Request() {
-      this.path = new Path();
-      this.method = Wirespec.Method.GET;
-      this.queries = new Queries();
-      this.headers = new RequestHeaders();
-      this.body = null;
+      this(new Path(), Wirespec.Method.GET, new Queries(), new RequestHeaders(), null);
     }
-    @Override public Path getPath() { return path; }
-    @Override public Wirespec.Method getMethod() { return method; }
-    @Override public Queries getQueries() { return queries; }
-    @Override public RequestHeaders getHeaders() { return headers; }
-    @Override public Void getBody() { return body; }
   }
 
   sealed interface Response<T> extends Wirespec.Response<T> {}
   sealed interface Response2XX<T> extends Response<T> {}
   sealed interface ResponseMapStringInteger extends Response<java.util.Map<String, Integer>> {}
 
-  record Response200(java.util.Map<String, Integer> body) implements Response2XX<java.util.Map<String, Integer>>, ResponseMapStringInteger {
-    @Override public int getStatus() { return 200; }
-    @Override public Headers getHeaders() { return new Headers(); }
-    @Override public java.util.Map<String, Integer> getBody() { return body; }
-    class Headers implements Wirespec.Response.Headers {}
+  record Response200(
+    int status,
+    Headers headers,
+    java.util.Map<String, Integer> body
+  ) implements Response2XX<java.util.Map<String, Integer>>, ResponseMapStringInteger {
+    public Response200(java.util.Map<String, Integer> body) {
+      this(200, new Headers(), body);
+    }
+    static class Headers implements Wirespec.Response.Headers {}
   }
 
   interface Handler extends Wirespec.Handler {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
-        request.method.name(),
+        request.method().name(),
         java.util.List.of("store", "inventory"),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
@@ -59,8 +55,8 @@ public interface GetInventory extends Wirespec.Endpoint {
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(Integer.class, null))); }
-      else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(Integer.class, null))); }
+      else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {

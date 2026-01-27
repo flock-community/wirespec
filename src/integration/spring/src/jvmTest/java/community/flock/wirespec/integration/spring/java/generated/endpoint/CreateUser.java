@@ -5,52 +5,48 @@ import community.flock.wirespec.java.Wirespec;
 import community.flock.wirespec.integration.spring.java.generated.model.User;
 
 public interface CreateUser extends Wirespec.Endpoint {
-  class Path implements Wirespec.Path {}
+  static class Path implements Wirespec.Path {}
 
-  class Queries implements Wirespec.Queries {}
+  static class Queries implements Wirespec.Queries {}
 
-  class RequestHeaders implements Wirespec.Request.Headers {}
+  static class RequestHeaders implements Wirespec.Request.Headers {}
 
-  class Request implements Wirespec.Request<User> {
-    private final Path path;
-    private final Wirespec.Method method;
-    private final Queries queries;
-    private final RequestHeaders headers;
-    private final User body;
+  record Request (
+    Path path,
+    Wirespec.Method method,
+    Queries queries,
+    RequestHeaders headers,
+    User body
+  ) implements Wirespec.Request<User> {
     public Request(User body) {
-      this.path = new Path();
-      this.method = Wirespec.Method.POST;
-      this.queries = new Queries();
-      this.headers = new RequestHeaders();
-      this.body = body;
+      this(new Path(), Wirespec.Method.POST, new Queries(), new RequestHeaders(), body);
     }
-    @Override public Path getPath() { return path; }
-    @Override public Wirespec.Method getMethod() { return method; }
-    @Override public Queries getQueries() { return queries; }
-    @Override public RequestHeaders getHeaders() { return headers; }
-    @Override public User getBody() { return body; }
   }
 
   sealed interface Response<T> extends Wirespec.Response<T> {}
   sealed interface ResponsedXX<T> extends Response<T> {}
   sealed interface ResponseUser extends Response<User> {}
 
-  record ResponseDefault(User body) implements ResponsedXX<User>, ResponseUser {
-    @Override public int getStatus() { return 200; }
-    @Override public Headers getHeaders() { return new Headers(); }
-    @Override public User getBody() { return body; }
-    class Headers implements Wirespec.Response.Headers {}
+  record ResponseDefault(
+    int status,
+    Headers headers,
+    User body
+  ) implements ResponsedXX<User>, ResponseUser {
+    public ResponseDefault(User body) {
+      this(200, new Headers(), body);
+    }
+    static class Headers implements Wirespec.Response.Headers {}
   }
 
   interface Handler extends Wirespec.Handler {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
-        request.method.name(),
+        request.method().name(),
         java.util.List.of("user"),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
-        serialization.serializeBody(request.getBody(), Wirespec.getType(User.class, null))
+        serialization.serializeBody(request.body(), Wirespec.getType(User.class, null))
       );
     }
 
@@ -61,8 +57,8 @@ public interface CreateUser extends Wirespec.Endpoint {
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof ResponseDefault r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(User.class, null))); }
-      else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
+      if (response instanceof ResponseDefault r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(User.class, null))); }
+      else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {

@@ -5,33 +5,25 @@ import community.flock.wirespec.java.Wirespec;
 
 
 public interface LoginUser extends Wirespec.Endpoint {
-  class Path implements Wirespec.Path {}
+  static class Path implements Wirespec.Path {}
 
   public record Queries(
     java.util.Optional<String> username,
     java.util.Optional<String> password
   ) implements Wirespec.Queries {}
 
-  class RequestHeaders implements Wirespec.Request.Headers {}
+  static class RequestHeaders implements Wirespec.Request.Headers {}
 
-  class Request implements Wirespec.Request<Void> {
-    private final Path path;
-    private final Wirespec.Method method;
-    private final Queries queries;
-    private final RequestHeaders headers;
-    private final Void body;
+  record Request (
+    Path path,
+    Wirespec.Method method,
+    Queries queries,
+    RequestHeaders headers,
+    Void body
+  ) implements Wirespec.Request<Void> {
     public Request(java.util.Optional<String> username, java.util.Optional<String> password) {
-      this.path = new Path();
-      this.method = Wirespec.Method.GET;
-      this.queries = new Queries(username, password);
-      this.headers = new RequestHeaders();
-      this.body = null;
+      this(new Path(), Wirespec.Method.GET, new Queries(username, password), new RequestHeaders(), null);
     }
-    @Override public Path getPath() { return path; }
-    @Override public Wirespec.Method getMethod() { return method; }
-    @Override public Queries getQueries() { return queries; }
-    @Override public RequestHeaders getHeaders() { return headers; }
-    @Override public Void getBody() { return body; }
   }
 
   sealed interface Response<T> extends Wirespec.Response<T> {}
@@ -40,29 +32,37 @@ public interface LoginUser extends Wirespec.Endpoint {
   sealed interface ResponseString extends Response<String> {}
   sealed interface ResponseVoid extends Response<Void> {}
 
-  record Response200(java.util.Optional<Integer> XRateLimit, java.util.Optional<String> XExpiresAfter, String body) implements Response2XX<String>, ResponseString {
-    @Override public int getStatus() { return 200; }
-    @Override public Headers getHeaders() { return new Headers(XRateLimit, XExpiresAfter); }
-    @Override public String getBody() { return body; }
+  record Response200(
+    int status,
+    Headers headers,
+    String body
+  ) implements Response2XX<String>, ResponseString {
+    public Response200(java.util.Optional<Integer> XRateLimit, java.util.Optional<String> XExpiresAfter, String body) {
+      this(200, new Headers(XRateLimit, XExpiresAfter), body);
+    }
     public record Headers(
     java.util.Optional<Integer> XRateLimit,
     java.util.Optional<String> XExpiresAfter
   ) implements Wirespec.Response.Headers {}
   }
-  record Response400() implements Response4XX<Void>, ResponseVoid {
-    @Override public int getStatus() { return 400; }
-    @Override public Headers getHeaders() { return new Headers(); }
-    @Override public Void getBody() { return null; }
-    class Headers implements Wirespec.Response.Headers {}
+  record Response400(
+    int status,
+    Headers headers,
+    Void body
+  ) implements Response4XX<Void>, ResponseVoid {
+    public Response400() {
+      this(400, new Headers(), null);
+    }
+    static class Headers implements Wirespec.Response.Headers {}
   }
 
   interface Handler extends Wirespec.Handler {
 
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
-        request.method.name(),
+        request.method().name(),
         java.util.List.of("user", "login"),
-        java.util.Map.ofEntries(java.util.Map.entry("username", serialization.serializeParam(request.queries.username, Wirespec.getType(String.class, java.util.Optional.class))), java.util.Map.entry("password", serialization.serializeParam(request.queries.password, Wirespec.getType(String.class, java.util.Optional.class)))),
+        java.util.Map.ofEntries(java.util.Map.entry("username", serialization.serializeParam(request.queries().username(), Wirespec.getType(String.class, java.util.Optional.class))), java.util.Map.entry("password", serialization.serializeParam(request.queries().password(), Wirespec.getType(String.class, java.util.Optional.class)))),
         java.util.Collections.emptyMap(),
         null
       );
@@ -76,9 +76,9 @@ public interface LoginUser extends Wirespec.Endpoint {
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Map.ofEntries(java.util.Map.entry("X-Rate-Limit", serialization.serializeParam(r.getHeaders().XRateLimit(), Wirespec.getType(Integer.class, java.util.Optional.class))), java.util.Map.entry("X-Expires-After", serialization.serializeParam(r.getHeaders().XExpiresAfter(), Wirespec.getType(String.class, java.util.Optional.class)))), serialization.serializeBody(r.body, Wirespec.getType(String.class, null))); }
-      if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.getStatus(), java.util.Collections.emptyMap(), null); }
-      else { throw new IllegalStateException("Cannot match response with status: " + response.getStatus());}
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Map.ofEntries(java.util.Map.entry("X-Rate-Limit", serialization.serializeParam(r.headers().XRateLimit(), Wirespec.getType(Integer.class, java.util.Optional.class))), java.util.Map.entry("X-Expires-After", serialization.serializeParam(r.headers().XExpiresAfter(), Wirespec.getType(String.class, java.util.Optional.class)))), serialization.serializeBody(r.body, Wirespec.getType(String.class, null))); }
+      if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), null); }
+      else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {

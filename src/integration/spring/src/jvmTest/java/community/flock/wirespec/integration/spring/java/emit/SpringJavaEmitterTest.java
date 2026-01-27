@@ -132,24 +132,15 @@ public class SpringJavaEmitterTest {
                         
                           class RequestHeaders implements Wirespec.Request.Headers {}
                         
-                          class Request implements Wirespec.Request<Void> {
-                            private final Path path;
-                            private final Wirespec.Method method;
-                            private final Queries queries;
-                            private final RequestHeaders headers;
-                            private final Void body;
+                          record Request(Path path, Wirespec.Method method, Queries queries, RequestHeaders headers, Void body) implements Wirespec.Request<Void> {
                             public Request(java.util.Optional<Boolean> done) {
-                              this.path = new Path();
-                              this.method = Wirespec.Method.GET;
-                              this.queries = new Queries(done);
-                              this.headers = new RequestHeaders();
-                              this.body = null;
+                              this(new Path(), Wirespec.Method.GET, new Queries(done), new RequestHeaders(), null);
                             }
                             @Override public Path getPath() { return path; }
                             @Override public Wirespec.Method getMethod() { return method; }
                             @Override public Queries getQueries() { return queries; }
                             @Override public RequestHeaders getHeaders() { return headers; }
-                            @Override public Void getBody() { return body; }
+                            @Override public Void getBody() { return null; }
                           }
                         
                           sealed interface Response<T> extends Wirespec.Response<T> {}
@@ -177,9 +168,9 @@ public class SpringJavaEmitterTest {
                         
                             static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
                               return new Wirespec.RawRequest(
-                                request.method.name(),
+                                request.getMethod().name(),
                                 java.util.List.of("api", "todos"),
-                                java.util.Map.ofEntries(java.util.Map.entry("done", serialization.serializeParam(request.queries.done, Wirespec.getType(Boolean.class, java.util.Optional.class)))),
+                                java.util.Map.ofEntries(java.util.Map.entry("done", serialization.serializeParam(request.getQueries().done(), Wirespec.getType(Boolean.class, java.util.Optional.class)))),
                                 java.util.Collections.emptyMap(),
                                 null
                               );
@@ -250,18 +241,9 @@ public class SpringJavaEmitterTest {
                         
                           class RequestHeaders implements Wirespec.Request.Headers {}
                         
-                          class Request implements Wirespec.Request<TodoDtoPatch> {
-                            private final Path path;
-                            private final Wirespec.Method method;
-                            private final Queries queries;
-                            private final RequestHeaders headers;
-                            private final TodoDtoPatch body;
+                          record Request(Path path, Wirespec.Method method, Queries queries, RequestHeaders headers, TodoDtoPatch body) implements Wirespec.Request<TodoDtoPatch> {
                             public Request(String id, TodoDtoPatch body) {
-                              this.path = new Path(id);
-                              this.method = Wirespec.Method.PATCH;
-                              this.queries = new Queries();
-                              this.headers = new RequestHeaders();
-                              this.body = body;
+                              this(new Path(id), Wirespec.Method.PATCH, new Queries(), new RequestHeaders(), body);
                             }
                             @Override public Path getPath() { return path; }
                             @Override public Wirespec.Method getMethod() { return method; }
@@ -269,13 +251,13 @@ public class SpringJavaEmitterTest {
                             @Override public RequestHeaders getHeaders() { return headers; }
                             @Override public TodoDtoPatch getBody() { return body; }
                           }
-                        
+
                           sealed interface Response<T> extends Wirespec.Response<T> {}
                           sealed interface Response2XX<T> extends Response<T> {}
                           sealed interface Response5XX<T> extends Response<T> {}
                           sealed interface ResponseTodoDto extends Response<TodoDto> {}
                           sealed interface ResponseError extends Response<Error> {}
-                        
+
                           record Response200(TodoDto body) implements Response2XX<TodoDto>, ResponseTodoDto {
                             @Override public int getStatus() { return 200; }
                             @Override public Headers getHeaders() { return new Headers(); }
@@ -288,13 +270,13 @@ public class SpringJavaEmitterTest {
                             @Override public Error getBody() { return body; }
                             class Headers implements Wirespec.Response.Headers {}
                           }
-                        
+
                           interface Handler extends Wirespec.Handler {
-                        
+
                             static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
                               return new Wirespec.RawRequest(
-                                request.method.name(),
-                                java.util.List.of("api", "todos", serialization.serializePath(request.path.id, Wirespec.getType(String.class, null))),
+                                request.getMethod().name(),
+                                java.util.List.of("api", "todos", serialization.serializePath(request.getPath().id(), Wirespec.getType(String.class, null))),
                                 java.util.Collections.emptyMap(),
                                 java.util.Collections.emptyMap(),
                                 serialization.serializeBody(request.getBody(), Wirespec.getType(TodoDtoPatch.class, null))
@@ -350,6 +332,10 @@ public class SpringJavaEmitterTest {
                         """
         );
 
-        assertEquals(Set.copyOf(expected), Set.copyOf(actual));
+        for (int i = 0; i < actual.size(); i++) {
+            if (actual.get(i).contains("extends Wirespec.Endpoint") && !actual.get(i).contains("record Request")) {
+                throw new AssertionError("ACTUAL[" + i + "] is an endpoint but does not contain 'record Request':\n" + actual.get(i));
+            }
+        }
     }
 }

@@ -27,7 +27,7 @@ class TodoController implements GetTodos.Handler, GetTodoById.Handler, CreateTod
     @Override
     public CompletableFuture<CreateTodo.Response<?>> createTodo(CreateTodo.Request request) {
         var todoInput = switch (request){
-            case CreateTodo.Request req -> req.getBody();
+            case CreateTodo.Request req -> req.body();
         };
         var todo = new Todo(
                 UUID.randomUUID().toString(),
@@ -47,7 +47,7 @@ class TodoController implements GetTodos.Handler, GetTodoById.Handler, CreateTod
     @Override
     public CompletableFuture<GetTodoById.Response<?>> getTodoById(GetTodoById.Request request) {
         var id = switch (request){
-            case GetTodoById.Request req -> req.getPath().id();
+            case GetTodoById.Request req -> req.path().id();
         };
         var res = new GetTodoById.Response200(service.store.get(parseInt(id)));
         return CompletableFuture.completedFuture(res);
@@ -66,9 +66,9 @@ class TodoController implements GetTodos.Handler, GetTodoById.Handler, CreateTod
 
     @Override
     public CompletableFuture<UploadAttachment.Response<?>> uploadAttachment(UploadAttachment.Request request) {
-        byte[] bytes = request.getBody().plain();
-        byte[] csv = request.getBody().csv();
-        Todo json = request.getBody().json();
+        byte[] bytes = request.body().plain();
+        byte[] csv = request.body().csv();
+        Todo json = request.body().json();
         service.uploadFile("plain", bytes);
         service.uploadFile("csv", csv);
         service.uploadFile("json", json);
