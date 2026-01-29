@@ -1,6 +1,7 @@
 package community.flock.wirespec.integration.spring.kotlin.generated.endpoint
 
 import community.flock.wirespec.kotlin.Wirespec
+import io.ktor.util.CaseInsensitiveMap
 import kotlin.reflect.typeOf
 
 
@@ -28,8 +29,8 @@ object DeleteOrder : Wirespec.Endpoint {
     Wirespec.RawRequest(
       path = listOf("store", "order", request.path.orderId.let{serialization.serializePath(it, typeOf<Long>())}),
       method = request.method.name,
-      queries = emptyMap(),
-      headers = emptyMap(),
+      queries = CaseInsensitiveMap(),
+      headers = CaseInsensitiveMap(),
       body = null,
     )
 
@@ -60,12 +61,12 @@ object DeleteOrder : Wirespec.Endpoint {
     when(response) {
       is Response400 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = emptyMap(),
+        headers = CaseInsensitiveMap(),
         body = null,
       )
       is Response404 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = emptyMap(),
+        headers = CaseInsensitiveMap(),
         body = null,
       )
     }

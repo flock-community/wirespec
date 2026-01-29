@@ -5,6 +5,7 @@ import kotlin.reflect.typeOf
 
 import community.flock.wirespec.integration.spring.kotlin.generated.model.FindPetsByStatusParameterStatus
 import community.flock.wirespec.integration.spring.kotlin.generated.model.Pet
+import io.ktor.util.CaseInsensitiveMap
 
 object FindPetsByStatus : Wirespec.Endpoint {
   data object Path : Wirespec.Path
@@ -30,7 +31,7 @@ object FindPetsByStatus : Wirespec.Endpoint {
       path = listOf("pet", "findByStatus"),
       method = request.method.name,
       queries = (mapOf("status" to (request.queries.status?.let{ serialization.serializeParam(it, typeOf<FindPetsByStatusParameterStatus?>()) } ?: emptyList()))),
-      headers = emptyMap(),
+      headers = CaseInsensitiveMap(),
       body = null,
     )
 
@@ -63,12 +64,12 @@ object FindPetsByStatus : Wirespec.Endpoint {
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = emptyMap(),
+        headers = CaseInsensitiveMap(),
         body = serialization.serializeBody(response.body, typeOf<List<Pet>>()),
       )
       is Response400 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = emptyMap(),
+        headers = CaseInsensitiveMap(),
         body = null,
       )
     }

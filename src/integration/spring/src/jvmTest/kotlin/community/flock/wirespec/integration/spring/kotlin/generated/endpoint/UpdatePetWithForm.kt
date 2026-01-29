@@ -1,6 +1,7 @@
 package community.flock.wirespec.integration.spring.kotlin.generated.endpoint
 
 import community.flock.wirespec.kotlin.Wirespec
+import io.ktor.util.CaseInsensitiveMap
 import kotlin.reflect.typeOf
 
 
@@ -33,7 +34,7 @@ object UpdatePetWithForm : Wirespec.Endpoint {
       path = listOf("pet", request.path.petId.let{serialization.serializePath(it, typeOf<Long>())}),
       method = request.method.name,
       queries = (mapOf("name" to (request.queries.name?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))) + (mapOf("status" to (request.queries.status?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
-      headers = emptyMap(),
+      headers = CaseInsensitiveMap(),
       body = null,
     )
 
@@ -59,7 +60,7 @@ object UpdatePetWithForm : Wirespec.Endpoint {
     when(response) {
       is Response405 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = emptyMap(),
+        headers = CaseInsensitiveMap(),
         body = null,
       )
     }

@@ -1,5 +1,6 @@
 package community.flock.wirespec.kotlin
 
+import io.ktor.util.CaseInsensitiveMap
 import kotlin.reflect.KType
 
 object Wirespec {
@@ -85,6 +86,6 @@ object Wirespec {
     interface ParamDeserializer {
         fun <T> deserializeParam(values: List<String>, kType: KType): T
     }
-    data class RawRequest(val method: String, val path: List<String>, val queries: Map<String, List<String>>, val headers: Map<String, List<String>>, val body: ByteArray?)
-    data class RawResponse(val statusCode: Int, val headers: Map<String, List<String>>, val body: ByteArray?)
+    data class RawRequest(val method: String, val path: List<String>, val queries: Map<String, List<String>>, val headers: CaseInsensitiveMap<List<String>>, val body: ByteArray?)
+    data class RawResponse(val statusCode: Int, val headers: CaseInsensitiveMap<List<String>>, val body: ByteArray?)
 }

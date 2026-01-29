@@ -4,6 +4,7 @@ import community.flock.wirespec.integration.spring.kotlin.configuration.Wirespec
 import community.flock.wirespec.integration.spring.shared.extractPath
 import community.flock.wirespec.integration.spring.shared.extractQueries
 import community.flock.wirespec.kotlin.Wirespec
+import io.ktor.util.CaseInsensitiveMap
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.core.MethodParameter
 import org.springframework.http.MediaType
@@ -56,7 +57,7 @@ class WirespecMethodArgumentResolver(
                 method = method,
                 path = extractPath(),
                 queries = extractQueries(),
-                headers = headerNames.toList().associateWith { getHeaders(it).toList() },
+                headers = CaseInsensitiveMap.fromMap(headerNames.toList().associateWith { getHeaders(it).toList() }),
                 body = objectMapper.writeValueAsBytes(map),
             )
         }
@@ -64,7 +65,7 @@ class WirespecMethodArgumentResolver(
             method = method,
             path = extractPath(),
             queries = extractQueries(),
-            headers = headerNames.toList().associateWith { getHeaders(it).toList() },
+            headers = CaseInsensitiveMap.fromMap(headerNames.toList().associateWith { getHeaders(it).toList() }),
             body = reader.lines().collect(Collectors.joining(System.lineSeparator())).toByteArray(),
         )
     }

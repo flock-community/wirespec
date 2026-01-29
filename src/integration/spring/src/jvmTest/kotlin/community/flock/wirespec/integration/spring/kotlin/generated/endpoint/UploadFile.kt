@@ -5,6 +5,7 @@ import kotlin.reflect.typeOf
 
 import community.flock.wirespec.integration.spring.kotlin.generated.model.UploadFileRequestBody
 import community.flock.wirespec.integration.spring.kotlin.generated.model.ApiResponse
+import io.ktor.util.CaseInsensitiveMap
 
 object UploadFile : Wirespec.Endpoint {
   data class Path(
@@ -33,7 +34,7 @@ object UploadFile : Wirespec.Endpoint {
       path = listOf("pet", request.path.petId.let{serialization.serializePath(it, typeOf<Long>())}, "uploadImage"),
       method = request.method.name,
       queries = (mapOf("additionalMetadata" to (request.queries.additionalMetadata?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
-      headers = emptyMap(),
+      headers = CaseInsensitiveMap(),
       body = serialization.serializeBody(request.body, typeOf<UploadFileRequestBody>()),
     )
 
@@ -60,7 +61,7 @@ object UploadFile : Wirespec.Endpoint {
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = emptyMap(),
+        headers = CaseInsensitiveMap(),
         body = serialization.serializeBody(response.body, typeOf<ApiResponse>()),
       )
     }

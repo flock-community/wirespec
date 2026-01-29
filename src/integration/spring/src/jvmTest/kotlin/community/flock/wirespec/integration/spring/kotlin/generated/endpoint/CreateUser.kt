@@ -4,6 +4,7 @@ import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
 import community.flock.wirespec.integration.spring.kotlin.generated.model.User
+import io.ktor.util.CaseInsensitiveMap
 
 object CreateUser : Wirespec.Endpoint {
   data object Path : Wirespec.Path
@@ -25,8 +26,8 @@ object CreateUser : Wirespec.Endpoint {
     Wirespec.RawRequest(
       path = listOf("user"),
       method = request.method.name,
-      queries = emptyMap(),
-      headers = emptyMap(),
+      queries = CaseInsensitiveMap(),
+      headers = CaseInsensitiveMap(),
       body = serialization.serializeBody(request.body, typeOf<User>()),
     )
 
@@ -51,7 +52,7 @@ object CreateUser : Wirespec.Endpoint {
     when(response) {
       is Responsedefault -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = emptyMap(),
+        headers = CaseInsensitiveMap(),
         body = serialization.serializeBody(response.body, typeOf<User>()),
       )
     }

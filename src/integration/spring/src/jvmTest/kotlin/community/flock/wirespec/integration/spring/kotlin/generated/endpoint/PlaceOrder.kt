@@ -4,6 +4,7 @@ import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
 import community.flock.wirespec.integration.spring.kotlin.generated.model.Order
+import io.ktor.util.CaseInsensitiveMap
 
 object PlaceOrder : Wirespec.Endpoint {
   data object Path : Wirespec.Path
@@ -26,7 +27,7 @@ object PlaceOrder : Wirespec.Endpoint {
       path = listOf("store", "order"),
       method = request.method.name,
       queries = emptyMap(),
-      headers = emptyMap(),
+      headers = CaseInsensitiveMap(),
       body = serialization.serializeBody(request.body, typeOf<Order>()),
     )
 
@@ -59,12 +60,12 @@ object PlaceOrder : Wirespec.Endpoint {
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = emptyMap(),
+        headers = CaseInsensitiveMap(),
         body = serialization.serializeBody(response.body, typeOf<Order>()),
       )
       is Response405 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = emptyMap(),
+        headers = CaseInsensitiveMap(),
         body = null,
       )
     }

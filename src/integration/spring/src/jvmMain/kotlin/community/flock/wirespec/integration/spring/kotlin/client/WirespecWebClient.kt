@@ -3,6 +3,7 @@ package community.flock.wirespec.integration.spring.kotlin.client
 import community.flock.wirespec.integration.spring.shared.filterNotEmpty
 import community.flock.wirespec.kotlin.Wirespec
 import community.flock.wirespec.kotlin.Wirespec.Serialization
+import io.ktor.util.CaseInsensitiveMap
 import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
@@ -47,11 +48,12 @@ class WirespecWebClient(
             }
         }
         .exchangeToMono { response ->
+            val headers = CaseInsensitiveMap.fromMap(response.headers().asHttpHeaders())
             response.bodyToMono(ByteArray::class.java)
                 .map { body ->
                     Wirespec.RawResponse(
                         statusCode = response.statusCode().value(),
-                        headers = toMultiValueMap(response.headers().asHttpHeaders()),
+                        headers = headers,
                         body = body,
                     )
                 }
@@ -59,7 +61,7 @@ class WirespecWebClient(
                     Mono.just(
                         Wirespec.RawResponse(
                             statusCode = response.statusCode().value(),
-                            headers = toMultiValueMap(response.headers().asHttpHeaders()),
+                            headers = headers,
                             body = null,
                         ),
                     ),
@@ -70,7 +72,7 @@ class WirespecWebClient(
                 is WebClientResponseException ->
                     Wirespec.RawResponse(
                         statusCode = throwable.statusCode.value(),
-                        headers = toMultiValueMap(throwable.headers),
+                        headers = CaseInsensitiveMap.fromMap(throwable.headers),
                         body = throwable.responseBodyAsByteArray,
                     ).let { Mono.just(it) }
 

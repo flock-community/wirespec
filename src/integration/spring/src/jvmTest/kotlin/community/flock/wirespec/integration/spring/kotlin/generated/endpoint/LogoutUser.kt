@@ -1,6 +1,7 @@
 package community.flock.wirespec.integration.spring.kotlin.generated.endpoint
 
 import community.flock.wirespec.kotlin.Wirespec
+import io.ktor.util.CaseInsensitiveMap
 import kotlin.reflect.typeOf
 
 
@@ -25,7 +26,7 @@ object LogoutUser : Wirespec.Endpoint {
       path = listOf("user", "logout"),
       method = request.method.name,
       queries = emptyMap(),
-      headers = emptyMap(),
+      headers = CaseInsensitiveMap(),
       body = null,
     )
 
@@ -48,7 +49,7 @@ object LogoutUser : Wirespec.Endpoint {
     when(response) {
       is Responsedefault -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = emptyMap(),
+        headers = CaseInsensitiveMap(),
         body = null,
       )
     }

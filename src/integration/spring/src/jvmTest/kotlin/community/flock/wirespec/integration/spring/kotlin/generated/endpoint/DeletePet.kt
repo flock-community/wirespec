@@ -1,6 +1,8 @@
 package community.flock.wirespec.integration.spring.kotlin.generated.endpoint
 
 import community.flock.wirespec.kotlin.Wirespec
+import io.ktor.util.CaseInsensitiveMap
+import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
 import kotlin.reflect.typeOf
 
 
@@ -32,7 +34,7 @@ object DeletePet : Wirespec.Endpoint {
       path = listOf("pet", request.path.petId.let{serialization.serializePath(it, typeOf<Long>())}),
       method = request.method.name,
       queries = emptyMap(),
-      headers = (mapOf("api_key" to (request.headers.api_key?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
+      headers = (mapOf("api_key" to (request.headers.api_key?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))).toCaseInsensitive(),
       body = null,
     )
 
@@ -58,7 +60,7 @@ object DeletePet : Wirespec.Endpoint {
     when(response) {
       is Response400 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = emptyMap(),
+        headers = CaseInsensitiveMap(),
         body = null,
       )
     }

@@ -1,6 +1,7 @@
 package community.flock.wirespec.integration.spring.kotlin.generated.endpoint
 
 import community.flock.wirespec.kotlin.Wirespec
+import io.ktor.util.CaseInsensitiveMap
 import kotlin.reflect.typeOf
 
 
@@ -24,8 +25,8 @@ object GetInventory : Wirespec.Endpoint {
     Wirespec.RawRequest(
       path = listOf("store", "inventory"),
       method = request.method.name,
-      queries = emptyMap(),
-      headers = emptyMap(),
+      queries = CaseInsensitiveMap(),
+      headers = CaseInsensitiveMap(),
       body = null,
     )
 
@@ -48,7 +49,7 @@ object GetInventory : Wirespec.Endpoint {
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = emptyMap(),
+        headers = CaseInsensitiveMap(),
         body = serialization.serializeBody(response.body, typeOf<Map<String, Int>>()),
       )
     }

@@ -4,6 +4,8 @@ import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
 import community.flock.wirespec.integration.spring.kotlin.generated.model.Pet
+import io.ktor.util.CaseInsensitiveMap
+import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
 
 object AddPet : Wirespec.Endpoint {
   data object Path : Wirespec.Path
@@ -26,7 +28,7 @@ object AddPet : Wirespec.Endpoint {
       path = listOf("pet"),
       method = request.method.name,
       queries = emptyMap(),
-      headers = emptyMap(),
+      headers = CaseInsensitiveMap(),
       body = serialization.serializeBody(request.body, typeOf<Pet>()),
     )
 
@@ -61,12 +63,12 @@ object AddPet : Wirespec.Endpoint {
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = (mapOf("X-Rate-Limit" to (response.headers.XRateLimit?.let{ serialization.serializeParam(it, typeOf<Int?>()) } ?: emptyList()))),
+        headers = (mapOf("X-Rate-Limit" to (response.headers.XRateLimit?.let{ serialization.serializeParam(it, typeOf<Int?>()) } ?: emptyList()))).toCaseInsensitive(),
         body = serialization.serializeBody(response.body, typeOf<Pet>()),
       )
       is Response405 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = emptyMap(),
+        headers = CaseInsensitiveMap(),
         body = null,
       )
     }
