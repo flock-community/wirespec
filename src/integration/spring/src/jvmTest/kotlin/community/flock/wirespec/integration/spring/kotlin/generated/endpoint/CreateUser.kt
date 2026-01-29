@@ -6,6 +6,7 @@ import kotlin.reflect.typeOf
 import community.flock.wirespec.integration.spring.kotlin.generated.model.User
 
 object CreateUser : Wirespec.Endpoint {
+
   data object Path : Wirespec.Path
 
   data object Queries : Wirespec.Queries
@@ -21,7 +22,9 @@ object CreateUser : Wirespec.Endpoint {
     override val headers = Headers
   }
 
-  fun toRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
+object Adapter: Wirespec.Adapter<Request, Response<*>> {
+
+  override fun toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
       path = listOf("user"),
       method = request.method.name,
@@ -30,10 +33,30 @@ object CreateUser : Wirespec.Endpoint {
       body = serialization.serializeBody(request.body, typeOf<User>()),
     )
 
-  fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
+  override fun fromRawRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
     Request(
       body = serialization.deserializeBody(requireNotNull(request.body) { "body is null" }, typeOf<User>()),
     )
+
+  override val pathTemplate = "/user"
+  override val method = "POST"
+
+  override fun toRawResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
+    when(response) {
+      is Responsedefault -> Wirespec.RawResponse(
+        statusCode = response.status,
+        headers = emptyMap(),
+        body = serialization.serializeBody(response.body, typeOf<User>()),
+      )
+    }
+
+  override fun fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
+    when (response.statusCode) {
+
+      else -> error("Cannot match response with status: ${response.statusCode}")
+    }
+
+}
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
 
@@ -47,36 +70,9 @@ object CreateUser : Wirespec.Endpoint {
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
-  fun toResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
-    when(response) {
-      is Responsedefault -> Wirespec.RawResponse(
-        statusCode = response.status,
-        headers = emptyMap(),
-        body = serialization.serializeBody(response.body, typeOf<User>()),
-      )
-    }
-
-  fun fromResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
-    when (response.statusCode) {
-
-      else -> error("Cannot match response with status: ${response.statusCode}")
-    }
-
   interface Handler: Wirespec.Handler {
     @org.springframework.web.bind.annotation.PostMapping("/user")
     suspend fun createUser(request: Request): Response<*>
 
-    companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
-      override val pathTemplate = "/user"
-      override val method = "POST"
-      override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
-        override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
-        override fun to(response: Response<*>) = toResponse(serialization, response)
-      }
-      override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
-        override fun to(request: Request) = toRequest(serialization, request)
-        override fun from(response: Wirespec.RawResponse) = fromResponse(serialization, response)
-      }
-    }
   }
 }

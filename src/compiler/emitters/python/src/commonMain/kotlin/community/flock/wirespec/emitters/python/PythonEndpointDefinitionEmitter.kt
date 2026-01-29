@@ -24,7 +24,7 @@ interface PythonEndpointDefinitionEmitter: EndpointDefinitionEmitter, PythonType
         |${endpoint.responses.distinctByStatus().joinToString("\n") { it.emit(endpoint) }.spacer(1)}
         |${endpoint.emitResponseUnion().spacer(1)}
         |${endpoint.emitHandleClass().spacer(1)}
-        |${endpoint.emitConvertClass().spacer(1)}
+        |${endpoint.emitAdapterClass().spacer(1)}
         |
         """.trimMargin()
 
@@ -101,8 +101,8 @@ interface PythonEndpointDefinitionEmitter: EndpointDefinitionEmitter, PythonType
         |
     """.trimMargin()
 
-    private fun Endpoint.emitConvertClass() = """
-        |class Convert(Wirespec.Endpoint.Convert[Request, Response]):
+    private fun Endpoint.emitAdapterClass() = """
+        |class Adapter(Wirespec.Endpoint.Adapter[Request, Response]):
         |${requests.first().emitToRawRequest(this).spacer(1)}
         |${requests.first().emitFromRawRequest(this).spacer(1)}
         |${emitToRawResponse().spacer(1)}

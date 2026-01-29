@@ -7,6 +7,7 @@ import community.flock.wirespec.integration.spring.kotlin.generated.model.Upload
 import community.flock.wirespec.integration.spring.kotlin.generated.model.ApiResponse
 
 object UploadFile : Wirespec.Endpoint {
+
   data class Path(
     val petId: Long,
   ) : Wirespec.Path
@@ -28,7 +29,9 @@ object UploadFile : Wirespec.Endpoint {
     override val headers = Headers
   }
 
-  fun toRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
+object Adapter: Wirespec.Adapter<Request, Response<*>> {
+
+  override fun toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
       path = listOf("pet", request.path.petId.let{serialization.serializePath(it, typeOf<Long>())}, "uploadImage"),
       method = request.method.name,
@@ -37,12 +40,34 @@ object UploadFile : Wirespec.Endpoint {
       body = serialization.serializeBody(request.body, typeOf<UploadFileRequestBody>()),
     )
 
-  fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
+  override fun fromRawRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
     Request(
       petId = serialization.deserializePath(request.path[1], typeOf<Long>()),
       additionalMetadata = request.queries["additionalMetadata"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) },
       body = serialization.deserializeBody(requireNotNull(request.body) { "body is null" }, typeOf<UploadFileRequestBody>()),
     )
+
+  override val pathTemplate = "/pet/{petId}/uploadImage"
+  override val method = "POST"
+
+  override fun toRawResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
+    when(response) {
+      is Response200 -> Wirespec.RawResponse(
+        statusCode = response.status,
+        headers = emptyMap(),
+        body = serialization.serializeBody(response.body, typeOf<ApiResponse>()),
+      )
+    }
+
+  override fun fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
+    when (response.statusCode) {
+      200 -> Response200(
+        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<ApiResponse>()),
+      )
+      else -> error("Cannot match response with status: ${response.statusCode}")
+    }
+
+}
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
 
@@ -56,38 +81,9 @@ object UploadFile : Wirespec.Endpoint {
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
-  fun toResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
-    when(response) {
-      is Response200 -> Wirespec.RawResponse(
-        statusCode = response.status,
-        headers = emptyMap(),
-        body = serialization.serializeBody(response.body, typeOf<ApiResponse>()),
-      )
-    }
-
-  fun fromResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
-    when (response.statusCode) {
-      200 -> Response200(
-        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<ApiResponse>()),
-      )
-      else -> error("Cannot match response with status: ${response.statusCode}")
-    }
-
   interface Handler: Wirespec.Handler {
     @org.springframework.web.bind.annotation.PostMapping("/pet/{petId}/uploadImage")
     suspend fun uploadFile(request: Request): Response<*>
 
-    companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
-      override val pathTemplate = "/pet/{petId}/uploadImage"
-      override val method = "POST"
-      override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
-        override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
-        override fun to(response: Response<*>) = toResponse(serialization, response)
-      }
-      override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
-        override fun to(request: Request) = toRequest(serialization, request)
-        override fun from(response: Wirespec.RawResponse) = fromResponse(serialization, response)
-      }
-    }
   }
 }

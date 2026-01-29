@@ -1,5 +1,6 @@
 package community.flock.wirespec.integration.spring.shared
 
+import community.flock.wirespec.kotlin.Wirespec
 import jakarta.servlet.http.HttpServletRequest
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
@@ -36,3 +37,8 @@ fun extractQueries(queryString: String?): Map<String, List<String>> = queryStrin
     .orEmpty()
 
 fun Map<String, List<String>>.filterNotEmpty(): Map<String, List<String>> = filter { it.value.isNotEmpty() }
+
+fun <Req : Wirespec.Request<*>, Res : Wirespec.Response<*>> Class<*>.findAdapter(): Wirespec.Adapter<Req, Res> {
+    val adapterClass = declaredClasses.toList().find { Wirespec.Adapter::class.java.isAssignableFrom(it) } ?: error("Adapter not found")
+    return adapterClass.kotlin.objectInstance as? Wirespec.Adapter<Req, Res> ?: error("Adapter not initialized")
+}

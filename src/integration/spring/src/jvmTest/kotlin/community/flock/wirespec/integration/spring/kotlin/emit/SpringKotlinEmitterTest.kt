@@ -42,7 +42,7 @@ class SpringKotlinEmitterTest {
             |  override fun toString() = value
             |}
             |
-            |fun TodoId.validate() = Regex(""${'"'}^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}""${'"'}).matches(value)
+            |fun TodoId.validate() = Regex(""${'"'}^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$""${'"'}).matches(value)
             |
             |package community.flock.wirespec.spring.test.model
             |
@@ -84,6 +84,7 @@ class SpringKotlinEmitterTest {
             |import community.flock.wirespec.spring.test.model.Error
             |
             |object GetTodos : Wirespec.Endpoint {
+            |
             |  data object Path : Wirespec.Path
             |
             |  data class Queries(
@@ -102,7 +103,9 @@ class SpringKotlinEmitterTest {
             |    override val body = Unit
             |  }
             |
-            |  fun toRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
+            |object Adapter: Wirespec.Adapter<Request, Response<*>> {
+            |
+            |  override fun toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
             |    Wirespec.RawRequest(
             |      path = listOf("api", "todos"),
             |      method = request.method.name,
@@ -111,10 +114,41 @@ class SpringKotlinEmitterTest {
             |      body = null,
             |    )
             |
-            |  fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
+            |  override fun fromRawRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
             |    Request(
             |      done = request.queries["done"]?.let{ serialization.deserializeParam(it, typeOf<Boolean?>()) }
             |    )
+            |
+            |  override val pathTemplate = "/api/todos"
+            |  override val method = "GET"
+            |
+            |  override fun toRawResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
+            |    when(response) {
+            |      is Response200 -> Wirespec.RawResponse(
+            |        statusCode = response.status,
+            |        headers = (mapOf("total" to (response.headers.total?.let{ serialization.serializeParam(it, typeOf<Long>()) } ?: emptyList()))),
+            |        body = serialization.serializeBody(response.body, typeOf<List<TodoDto>>()),
+            |      )
+            |      is Response500 -> Wirespec.RawResponse(
+            |        statusCode = response.status,
+            |        headers = emptyMap(),
+            |        body = serialization.serializeBody(response.body, typeOf<Error>()),
+            |      )
+            |    }
+            |
+            |  override fun fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
+            |    when (response.statusCode) {
+            |      200 -> Response200(
+            |        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<List<TodoDto>>()),
+            |        total = serialization.deserializeParam(requireNotNull(response.headers["total"]) { "total is null" }, typeOf<Long>())
+            |      )
+            |      500 -> Response500(
+            |        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<Error>()),
+            |      )
+            |      else -> error("Cannot match response with status: ${'$'}{response.statusCode}")
+            |    }
+            |
+            |}
             |
             |  sealed interface Response<T: Any> : Wirespec.Response<T>
             |
@@ -138,48 +172,10 @@ class SpringKotlinEmitterTest {
             |    data object ResponseHeaders : Wirespec.Response.Headers
             |  }
             |
-            |  fun toResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
-            |    when(response) {
-            |      is Response200 -> Wirespec.RawResponse(
-            |        statusCode = response.status,
-            |        headers = (mapOf("total" to (response.headers.total?.let{ serialization.serializeParam(it, typeOf<Long>()) } ?: emptyList()))),
-            |        body = serialization.serializeBody(response.body, typeOf<List<TodoDto>>()),
-            |      )
-            |      is Response500 -> Wirespec.RawResponse(
-            |        statusCode = response.status,
-            |        headers = emptyMap(),
-            |        body = serialization.serializeBody(response.body, typeOf<Error>()),
-            |      )
-            |    }
-            |
-            |  fun fromResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
-            |    when (response.statusCode) {
-            |      200 -> Response200(
-            |        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<List<TodoDto>>()),
-            |        total = serialization.deserializeParam(requireNotNull(response.headers["total"]) { "total is null" }, typeOf<Long>())
-            |      )
-            |      500 -> Response500(
-            |        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<Error>()),
-            |      )
-            |      else -> error("Cannot match response with status: ${"$"}{response.statusCode}")
-            |    }
-            |
             |  interface Handler: Wirespec.Handler {
             |    @org.springframework.web.bind.annotation.GetMapping("/api/todos")
             |    suspend fun getTodos(request: Request): Response<*>
             |
-            |    companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
-            |      override val pathTemplate = "/api/todos"
-            |      override val method = "GET"
-            |      override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
-            |        override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
-            |        override fun to(response: Response<*>) = toResponse(serialization, response)
-            |      }
-            |      override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
-            |        override fun to(request: Request) = toRequest(serialization, request)
-            |        override fun from(response: Wirespec.RawResponse) = fromResponse(serialization, response)
-            |      }
-            |    }
             |  }
             |}
             |
@@ -193,6 +189,7 @@ class SpringKotlinEmitterTest {
             |import community.flock.wirespec.spring.test.model.Error
             |
             |object PatchTodos : Wirespec.Endpoint {
+            |
             |  data class Path(
             |    val id: String,
             |  ) : Wirespec.Path
@@ -211,7 +208,9 @@ class SpringKotlinEmitterTest {
             |    override val headers = Headers
             |  }
             |
-            |  fun toRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
+            |object Adapter: Wirespec.Adapter<Request, Response<*>> {
+            |
+            |  override fun toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
             |    Wirespec.RawRequest(
             |      path = listOf("api", "todos", request.path.id.let{serialization.serializePath(it, typeOf<String>())}),
             |      method = request.method.name,
@@ -220,11 +219,41 @@ class SpringKotlinEmitterTest {
             |      body = serialization.serializeBody(request.body, typeOf<TodoDtoPatch>()),
             |    )
             |
-            |  fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
+            |  override fun fromRawRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
             |    Request(
             |      id = serialization.deserializePath(request.path[2], typeOf<String>()),
             |      body = serialization.deserializeBody(requireNotNull(request.body) { "body is null" }, typeOf<TodoDtoPatch>()),
             |    )
+            |
+            |  override val pathTemplate = "/api/todos/{id}"
+            |  override val method = "PATCH"
+            |
+            |  override fun toRawResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
+            |    when(response) {
+            |      is Response200 -> Wirespec.RawResponse(
+            |        statusCode = response.status,
+            |        headers = emptyMap(),
+            |        body = serialization.serializeBody(response.body, typeOf<TodoDto>()),
+            |      )
+            |      is Response500 -> Wirespec.RawResponse(
+            |        statusCode = response.status,
+            |        headers = emptyMap(),
+            |        body = serialization.serializeBody(response.body, typeOf<Error>()),
+            |      )
+            |    }
+            |
+            |  override fun fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
+            |    when (response.statusCode) {
+            |      200 -> Response200(
+            |        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<TodoDto>()),
+            |      )
+            |      500 -> Response500(
+            |        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<Error>()),
+            |      )
+            |      else -> error("Cannot match response with status: ${'$'}{response.statusCode}")
+            |    }
+            |
+            |}
             |
             |  sealed interface Response<T: Any> : Wirespec.Response<T>
             |
@@ -246,47 +275,10 @@ class SpringKotlinEmitterTest {
             |    data object ResponseHeaders : Wirespec.Response.Headers
             |  }
             |
-            |  fun toResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
-            |    when(response) {
-            |      is Response200 -> Wirespec.RawResponse(
-            |        statusCode = response.status,
-            |        headers = emptyMap(),
-            |        body = serialization.serializeBody(response.body, typeOf<TodoDto>()),
-            |      )
-            |      is Response500 -> Wirespec.RawResponse(
-            |        statusCode = response.status,
-            |        headers = emptyMap(),
-            |        body = serialization.serializeBody(response.body, typeOf<Error>()),
-            |      )
-            |    }
-            |
-            |  fun fromResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
-            |    when (response.statusCode) {
-            |      200 -> Response200(
-            |        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<TodoDto>()),
-            |      )
-            |      500 -> Response500(
-            |        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<Error>()),
-            |      )
-            |      else -> error("Cannot match response with status: ${'$'}{response.statusCode}")
-            |    }
-            |
             |  interface Handler: Wirespec.Handler {
             |    @org.springframework.web.bind.annotation.PatchMapping("/api/todos/{id}")
             |    suspend fun patchTodos(request: Request): Response<*>
             |
-            |    companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
-            |      override val pathTemplate = "/api/todos/{id}"
-            |      override val method = "PATCH"
-            |      override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
-            |        override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
-            |        override fun to(response: Response<*>) = toResponse(serialization, response)
-            |      }
-            |      override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
-            |        override fun to(request: Request) = toRequest(serialization, request)
-            |        override fun from(response: Wirespec.RawResponse) = fromResponse(serialization, response)
-            |      }
-            |    }
             |  }
             |}
             |

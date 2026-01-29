@@ -1,6 +1,7 @@
 package community.flock.wirespec.integration.spring.kotlin.web
 
 import community.flock.wirespec.integration.spring.shared.RawJsonBody
+import community.flock.wirespec.integration.spring.shared.findAdapter
 import community.flock.wirespec.kotlin.Wirespec
 import org.springframework.core.MethodParameter
 import org.springframework.http.HttpStatusCode
@@ -10,7 +11,6 @@ import org.springframework.http.server.ServerHttpRequest
 import org.springframework.http.server.ServerHttpResponse
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice
-import kotlin.reflect.full.companionObjectInstance
 
 @ControllerAdvice
 class WirespecResponseBodyAdvice(
@@ -28,16 +28,10 @@ class WirespecResponseBodyAdvice(
         request: ServerHttpRequest,
         response: ServerHttpResponse,
     ): Any? {
-        val declaringClass = returnType.parameterType.declaringClass
-        val handler = declaringClass.declaredClasses.toList()
-            .find { it.simpleName == "Handler" }
-            ?: error("Handler not found")
-        val instance = handler
-            .kotlin.companionObjectInstance as Wirespec.Server<Wirespec.Request<*>, Wirespec.Response<*>>
-        val server = instance.server(wirespecSerialization)
+        val adapter = returnType.parameterType.declaringClass.findAdapter<Wirespec.Request<*>, Wirespec.Response<*>>()
         return when (body) {
             is Wirespec.Response<*> -> {
-                val rawResponse = server.to(body)
+                val rawResponse = adapter.toRawResponse(wirespecSerialization, body) as Wirespec.RawResponse
                 response.setStatusCode(HttpStatusCode.valueOf(rawResponse.statusCode))
                 response.headers.putAll(rawResponse.headers)
                 if (rawResponse.body == null) {

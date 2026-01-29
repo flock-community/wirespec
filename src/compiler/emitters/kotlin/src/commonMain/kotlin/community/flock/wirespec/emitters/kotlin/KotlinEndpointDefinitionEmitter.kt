@@ -23,6 +23,7 @@ interface KotlinEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackage
         |${endpoint.importReferences().map { "import ${packageName.value}.model.${it.value}" }.joinToString("\n") { it.trimStart() }}
         |
         |object ${emit(endpoint.identifier)} : Wirespec.Endpoint {
+        |
         |${endpoint.pathParams.emitObject("Path", "Wirespec.Path") { it.emit() }}
         |
         |${endpoint.queries.emitObject("Queries", "Wirespec.Queries") { it.emit() }}
@@ -30,6 +31,22 @@ interface KotlinEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackage
         |${endpoint.headers.emitObject("Headers", "Wirespec.Request.Headers") { it.emit() }}
         |
         |${endpoint.requests.first().emit(endpoint)}
+        |
+        |${Spacer}override val pathTemplate = "/${endpoint.path.joinToString("/") { it.emit() }}"
+        |${Spacer}override val method = "${endpoint.method}"
+        |
+        |${Spacer}override fun toRawResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
+        |${Spacer(2)}when(response) {
+        |${endpoint.responses.distinctByStatus().joinToString("\n") { it.emitSerialized() }}
+        |${Spacer(2)}}
+        |
+        |${Spacer}override fun fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
+        |${Spacer(2)}when (response.statusCode) {
+        |${endpoint.responses.distinctByStatus().filter { it.status.isStatusCode() }.joinToString("\n") { it.emitDeserialized() }}
+        |${Spacer(3)}else -> error("Cannot match response with status: ${'$'}{response.statusCode}")
+        |${Spacer(2)}}
+        |
+        |}
         |
         |${Spacer}sealed interface Response<T: Any> : Wirespec.Response<T>
         |
@@ -39,31 +56,8 @@ interface KotlinEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackage
         |
         |${endpoint.responses.distinctByStatus().joinToString("\n\n") { it.emit() }}
         |
-        |${Spacer}fun toResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
-        |${Spacer(2)}when(response) {
-        |${endpoint.responses.distinctByStatus().joinToString("\n") { it.emitSerialized() }}
-        |${Spacer(2)}}
-        |
-        |${Spacer}fun fromResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
-        |${Spacer(2)}when (response.statusCode) {
-        |${endpoint.responses.distinctByStatus().filter { it.status.isStatusCode() }.joinToString("\n") { it.emitDeserialized() }}
-        |${Spacer(3)}else -> error("Cannot match response with status: ${'$'}{response.statusCode}")
-        |${Spacer(2)}}
-        |
         |${Spacer}interface Handler: Wirespec.Handler {
         |${Spacer(2)}${emitHandleFunction(endpoint)}
-        |${Spacer(2)}companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
-        |${Spacer(3)}override val pathTemplate = "/${endpoint.path.joinToString("/") { it.emit() }}"
-        |${Spacer(3)}override val method = "${endpoint.method}"
-        |${Spacer(3)}override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
-        |${Spacer(4)}override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
-        |${Spacer(4)}override fun to(response: Response<*>) = toResponse(serialization, response)
-        |${Spacer(3)}}
-        |${Spacer(3)}override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
-        |${Spacer(4)}override fun to(request: Request) = toRequest(serialization, request)
-        |${Spacer(4)}override fun from(response: Wirespec.RawResponse) = fromResponse(serialization, response)
-        |${Spacer(3)}}
-        |${Spacer(2)}}
         |${Spacer}}
         |}
         |
@@ -90,7 +84,9 @@ interface KotlinEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackage
         |${Spacer(2)}override val headers = Headers${endpoint.headers.joinToString { emit(it.identifier) }.brace()}${if (content == null) "\n${Spacer(2)}override val body = Unit" else ""}
         |${Spacer}}
         |
-        |${Spacer}fun toRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
+        |object Adapter: Wirespec.Adapter<Request, Response<*>> {
+        |
+        |${Spacer}override fun toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
         |${Spacer(2)}Wirespec.RawRequest(
         |${Spacer(3)}path = listOf(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
         |${Spacer(3)}method = request.method.name,
@@ -99,7 +95,7 @@ interface KotlinEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackage
         |${Spacer(3)}body = ${if(content != null) "serialization.serializeBody(request.body, typeOf<${content.emit()}>())" else "null"},
         |${Spacer(2)})
         |
-        |${Spacer}fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
+        |${Spacer}override fun fromRawRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
         |${Spacer(2)}Request${emitDeserializedParams(endpoint)}
     """.trimMargin()
 

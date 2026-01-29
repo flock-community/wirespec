@@ -16,19 +16,31 @@ interface UserClient :
 class LiveUserClient(
     private val wirespec: WirespecClient,
 ) : UserClient {
-    override suspend fun getUsers(request: GetUsers.Request) = with(GetUsers.Handler.client(Serialization)) {
-        to(request).let(wirespec::handle).let(::from)
+    override suspend fun getUsers(request: GetUsers.Request) = with(GetUsers.Adapter) {
+        request
+            .let { toRawRequest(Serialization, it) }
+            .let(wirespec::transport)
+            .let { fromRawResponse(Serialization, it) }
     }
 
-    override suspend fun getUserByName(request: GetUserByName.Request) = with(GetUserByName.Handler.client(Serialization)) {
-        to(request).let(wirespec::handle).let(::from)
+    override suspend fun getUserByName(request: GetUserByName.Request) = with(GetUserByName.Adapter) {
+        request
+            .let { toRawRequest(Serialization, it) }
+            .let(wirespec::transport)
+            .let { fromRawResponse(Serialization, it) }
     }
 
-    override suspend fun postUser(request: PostUser.Request) = with(PostUser.Handler.client(Serialization)) {
-        to(request).let(wirespec::handle).let(::from)
+    override suspend fun postUser(request: PostUser.Request) = with(PostUser.Adapter) {
+        request
+            .let { toRawRequest(Serialization, it) }
+            .let(wirespec::transport)
+            .let { fromRawResponse(Serialization, it) }
     }
 
-    override suspend fun deleteUserByName(request: DeleteUserByName.Request) = with(DeleteUserByName.Handler.client(Serialization)) {
-        to(request).let(wirespec::handle).let(::from)
+    override suspend fun deleteUserByName(request: DeleteUserByName.Request) = with(DeleteUserByName.Adapter) {
+        request
+            .let { toRawRequest(Serialization, it) }
+            .let(wirespec::transport)
+            .let { fromRawResponse(Serialization, it) }
     }
 }

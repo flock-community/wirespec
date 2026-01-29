@@ -6,31 +6,17 @@ import java.util.List;
 import java.util.Map;
 
 public interface Wirespec {
-    interface Enum { String getLabel(); }
     interface Endpoint {}
+    interface Adapter<Req extends Request<?>, Res extends Response<?>> {
+        String pathTemplate();
+        Method method();
+    }
+    interface Enum { String getLabel(); }
     interface Refined { String getValue(); }
     interface Path {}
     interface Queries {}
     interface Headers {}
     interface Handler {}
-    interface ServerEdge<Req extends Request<?>, Res extends Response<?>> {
-        Req from(RawRequest request);
-        RawResponse to(Res response);
-    }
-    interface ClientEdge<Req extends Request<?>, Res extends Response<?>> {
-        RawRequest to(Req request);
-        Res from(RawResponse response);
-    }
-    interface Client<Req extends Request<?>, Res extends Response<?>> {
-        String getPathTemplate();
-        String getMethod();
-        ClientEdge<Req, Res> getClient(Serialization serialization);
-    }
-    interface Server<Req extends Request<?>, Res extends Response<?>> {
-        String getPathTemplate();
-        String getMethod();
-        ServerEdge<Req, Res> getServer(Serialization serialization);
-    }
     enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
     interface Request<T> { Path path(); Method method(); Queries queries(); Headers headers(); T body(); interface Headers extends Wirespec.Headers {} }
     interface Response<T> { int status(); Headers headers(); T body(); interface Headers extends Wirespec.Headers {} }

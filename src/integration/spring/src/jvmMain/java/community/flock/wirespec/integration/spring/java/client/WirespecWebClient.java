@@ -9,6 +9,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 
@@ -24,22 +26,28 @@ public class WirespecWebClient {
     @SuppressWarnings("unchecked")
     public <Req extends Wirespec.Request<?>, Res extends Wirespec.Response<?>> CompletableFuture<Res> send(Req request) {
         try {
-            Class<?> declaringClass = request.getClass().getDeclaringClass();
-            Class<?> handler = Arrays.stream(declaringClass.getDeclaredClasses())
-                    .filter(c -> c.getSimpleName().equals("Handler"))
+            final Class<?> enpointClass = request.getClass().getDeclaringClass();
+            final Class<?> adapterClass = Arrays.stream(enpointClass.getDeclaredClasses())
+                    .filter(c -> c.getSimpleName().equals("Adapter"))
                     .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("Handler not found"));
-
-            Class<?> handlers = Arrays.stream(handler.getDeclaredClasses())
-                    .filter(c -> c.getSimpleName().equals("Handlers"))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("Handlers not found"));
-
-            Wirespec.Client<Req, Res> instance = (Wirespec.Client<Req, Res>) handlers.getDeclaredConstructor().newInstance();
-            Wirespec.ClientEdge<Req, Res> edge = instance.getClient(wirespecSerde);
-
-            return executeRequest(edge.to(request), client)
-                    .thenApply(edge::from);
+                    .orElseThrow();
+            final Class<?> requestClass = Arrays.stream(enpointClass.getClasses())
+                    .filter(Wirespec.Request.class::isAssignableFrom)
+                    .filter(c -> c.getSimpleName().equals("Request"))
+                    .findFirst().orElseThrow();
+            final Method toRawRequestMethod = adapterClass.getMethod("toRawRequest", Wirespec.Serializer.class, requestClass);
+            final Method fromRawResponseMethod = adapterClass.getMethod("fromRawResponse", Wirespec.Deserializer.class, Wirespec.RawRequest.class);
+            final Wirespec.RawRequest rawRequest = (Wirespec.RawRequest) toRawRequestMethod.invoke(null, wirespecSerde, request);
+            final CompletableFuture<Wirespec.RawResponse> response = executeRequest(rawRequest, client);
+            return response.thenApply(res -> {
+                try {
+                    return (Res) fromRawResponseMethod.invoke(null, wirespecSerde, res);
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                } catch (InvocationTargetException e) {
+                    throw new RuntimeException(e);
+                }
+            });
 
         } catch (Exception e) {
             CompletableFuture<Res> future = new CompletableFuture<>();

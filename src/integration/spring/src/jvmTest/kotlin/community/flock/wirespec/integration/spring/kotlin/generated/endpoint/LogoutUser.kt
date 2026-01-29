@@ -6,6 +6,7 @@ import kotlin.reflect.typeOf
 
 
 object LogoutUser : Wirespec.Endpoint {
+
   data object Path : Wirespec.Path
 
   data object Queries : Wirespec.Queries
@@ -20,7 +21,9 @@ object LogoutUser : Wirespec.Endpoint {
     override val body = Unit
   }
 
-  fun toRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
+object Adapter: Wirespec.Adapter<Request, Response<*>> {
+
+  override fun toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
       path = listOf("user", "logout"),
       method = request.method.name,
@@ -29,8 +32,28 @@ object LogoutUser : Wirespec.Endpoint {
       body = null,
     )
 
-  fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
+  override fun fromRawRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
     Request
+
+  override val pathTemplate = "/user/logout"
+  override val method = "GET"
+
+  override fun toRawResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
+    when(response) {
+      is Responsedefault -> Wirespec.RawResponse(
+        statusCode = response.status,
+        headers = emptyMap(),
+        body = null,
+      )
+    }
+
+  override fun fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
+    when (response.statusCode) {
+
+      else -> error("Cannot match response with status: ${response.statusCode}")
+    }
+
+}
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
 
@@ -44,36 +67,9 @@ object LogoutUser : Wirespec.Endpoint {
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
-  fun toResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
-    when(response) {
-      is Responsedefault -> Wirespec.RawResponse(
-        statusCode = response.status,
-        headers = emptyMap(),
-        body = null,
-      )
-    }
-
-  fun fromResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
-    when (response.statusCode) {
-
-      else -> error("Cannot match response with status: ${response.statusCode}")
-    }
-
   interface Handler: Wirespec.Handler {
     @org.springframework.web.bind.annotation.GetMapping("/user/logout")
     suspend fun logoutUser(request: Request): Response<*>
 
-    companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
-      override val pathTemplate = "/user/logout"
-      override val method = "GET"
-      override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
-        override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
-        override fun to(response: Response<*>) = toResponse(serialization, response)
-      }
-      override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
-        override fun to(request: Request) = toRequest(serialization, request)
-        override fun from(response: Wirespec.RawResponse) = fromResponse(serialization, response)
-      }
-    }
   }
 }

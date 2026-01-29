@@ -39,56 +39,43 @@ public interface UpdateUser extends Wirespec.Endpoint {
     }
     static class Headers implements Wirespec.Response.Headers {}
   }
+        
+  static interface Adapter extends Wirespec.Adapter<Request, Response<?>>{
+    public static String pathTemplate = "/user/{username}";
+    public static String method = "PUT";
+  static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Request request) {
+    return new Wirespec.RawRequest(
+      request.method().name(),
+      java.util.List.of("user", serialization.serializePath(request.path().username(), Wirespec.getType(String.class, null))),
+      java.util.Collections.emptyMap(),
+      java.util.Collections.emptyMap(),
+      serialization.serializeBody(request.body(), Wirespec.getType(User.class, null))
+    );
+  }
 
-  interface Handler extends Wirespec.Handler {
-
-    static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
-      return new Wirespec.RawRequest(
-        request.method().name(),
-        java.util.List.of("user", serialization.serializePath(request.path().username(), Wirespec.getType(String.class, null))),
-        java.util.Collections.emptyMap(),
-        java.util.Collections.emptyMap(),
-        serialization.serializeBody(request.body(), Wirespec.getType(User.class, null))
-      );
-    }
-
-    static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
-      return new Request(
+  static Request fromRawRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
+    return new Request(
         serialization.deserializePath(request.path().get(1), Wirespec.getType(String.class, null)),
         serialization.deserializeBody(request.body(), Wirespec.getType(User.class, null))
       );
-    }
+  }
 
-    static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
+  static Wirespec.RawResponse toRawResponse(Wirespec.Serializer serialization, Response<?> response) {
       if (response instanceof ResponseDefault r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), null); }
-      else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
+    else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
+  }
+
+  static Response<?> fromRawResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
+    switch (response.statusCode()) {
+
+      default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
     }
+  }
+}
 
-    static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
-      switch (response.statusCode()) {
-
-        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
-      }
-    }
-
+  interface Handler extends Wirespec.Handler {
     @org.springframework.web.bind.annotation.PutMapping("/user/{username}")
     java.util.concurrent.CompletableFuture<Response<?>> updateUser(Request request);
 
-    class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
-      @Override public String getPathTemplate() { return "/user/{username}"; }
-      @Override public String getMethod() { return "PUT"; }
-      @Override public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization serialization) {
-        return new Wirespec.ServerEdge<>() {
-          @Override public Request from(Wirespec.RawRequest request) { return fromRequest(serialization, request); }
-          @Override public Wirespec.RawResponse to(Response<?> response) { return toResponse(serialization, response); }
-        };
-      }
-      @Override public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization serialization) {
-        return new Wirespec.ClientEdge<>() {
-          @Override public Wirespec.RawRequest to(Request request) { return toRequest(serialization, request); }
-          @Override public Response<?> from(Wirespec.RawResponse response) { return fromResponse(serialization, response); }
-        };
-      }
-    }
   }
 }

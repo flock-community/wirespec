@@ -17,31 +17,14 @@ data object JavaShared : Shared {
         |import java.util.Map;
         |
         |public interface Wirespec {
-        |${Spacer}interface Enum { String getLabel(); }
         |${Spacer}interface Endpoint {}
+        |${Spacer}interface Adapter<Req extends Request<?>, Res extends Response<?>> {}
+        |${Spacer}interface Enum { String getLabel(); }
         |${Spacer}interface Refined { String getValue(); }
         |${Spacer}interface Path {}
         |${Spacer}interface Queries {}
         |${Spacer}interface Headers {}
         |${Spacer}interface Handler {}
-        |${Spacer}interface ServerEdge<Req extends Request<?>, Res extends Response<?>> {
-        |${Spacer(2)}Req from(RawRequest request);
-        |${Spacer(2)}RawResponse to(Res response);
-        |$Spacer}
-        |${Spacer}interface ClientEdge<Req extends Request<?>, Res extends Response<?>> {
-        |${Spacer(2)}RawRequest to(Req request);
-        |${Spacer(2)}Res from(RawResponse response);
-        |$Spacer}
-        |${Spacer}interface Client<Req extends Request<?>, Res extends Response<?>> {
-        |${Spacer(2)}String getPathTemplate();
-        |${Spacer(2)}String getMethod();
-        |${Spacer(2)}ClientEdge<Req, Res> getClient(Serialization serialization);
-        |$Spacer}
-        |${Spacer}interface Server<Req extends Request<?>, Res extends Response<?>> {
-        |${Spacer(2)}String getPathTemplate();
-        |${Spacer(2)}String getMethod();
-        |${Spacer(2)}ServerEdge<Req, Res> getServer(Serialization serialization);
-        |$Spacer}
         |${Spacer}enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
         |${Spacer}interface Request<T> { Path path(); Method method(); Queries queries(); Headers headers(); T body(); interface Headers extends Wirespec.Headers {} }
         |${Spacer}interface Response<T> { int status(); Headers headers(); T body(); interface Headers extends Wirespec.Headers {} }

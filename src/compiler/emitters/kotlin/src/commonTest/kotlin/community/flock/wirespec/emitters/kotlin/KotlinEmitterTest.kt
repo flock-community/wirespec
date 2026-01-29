@@ -161,6 +161,7 @@ class KotlinEmitterTest {
             |import community.flock.wirespec.generated.model.Error
             |
             |object PutTodo : Wirespec.Endpoint {
+            |
             |  data class Path(
             |    val id: String,
             |  ) : Wirespec.Path
@@ -187,7 +188,9 @@ class KotlinEmitterTest {
             |    override val headers = Headers(token, RefreshToken)
             |  }
             |
-            |  fun toRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
+            |object Adapter: Wirespec.Adapter<Request, Response<*>> {
+            |
+            |  override fun toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
             |    Wirespec.RawRequest(
             |      path = listOf("todos", request.path.id.let{serialization.serializePath(it, typeOf<String>())}),
             |      method = request.method.name,
@@ -196,13 +199,53 @@ class KotlinEmitterTest {
             |      body = serialization.serializeBody(request.body, typeOf<PotentialTodoDto>()),
             |    )
             |
-            |  fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
+            |  override fun fromRawRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
             |    Request(
             |      id = serialization.deserializePath(request.path[1], typeOf<String>()),
             |      done = serialization.deserializeParam(requireNotNull(request.queries["done"]) { "done is null" }, typeOf<Boolean>()),       name = request.queries["name"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) },
             |      token = serialization.deserializeParam(requireNotNull(request.headers["token"]) { "token is null" }, typeOf<Token>()),       RefreshToken = request.headers["Refresh-Token"]?.let{ serialization.deserializeParam(it, typeOf<Token?>()) },
             |      body = serialization.deserializeBody(requireNotNull(request.body) { "body is null" }, typeOf<PotentialTodoDto>()),
             |    )
+            |
+            |  override val pathTemplate = "/todos/{id}"
+            |  override val method = "PUT"
+            |
+            |  override fun toRawResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
+            |    when(response) {
+            |      is Response200 -> Wirespec.RawResponse(
+            |        statusCode = response.status,
+            |        headers = emptyMap(),
+            |        body = serialization.serializeBody(response.body, typeOf<TodoDto>()),
+            |      )
+            |      is Response201 -> Wirespec.RawResponse(
+            |        statusCode = response.status,
+            |        headers = (mapOf("token" to (response.headers.token?.let{ serialization.serializeParam(it, typeOf<Token>()) } ?: emptyList()))) + (mapOf("refreshToken" to (response.headers.refreshToken?.let{ serialization.serializeParam(it, typeOf<Token?>()) } ?: emptyList()))),
+            |        body = serialization.serializeBody(response.body, typeOf<TodoDto>()),
+            |      )
+            |      is Response500 -> Wirespec.RawResponse(
+            |        statusCode = response.status,
+            |        headers = emptyMap(),
+            |        body = serialization.serializeBody(response.body, typeOf<Error>()),
+            |      )
+            |    }
+            |
+            |  override fun fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
+            |    when (response.statusCode) {
+            |      200 -> Response200(
+            |        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<TodoDto>()),
+            |      )
+            |      201 -> Response201(
+            |        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<TodoDto>()),
+            |        token = serialization.deserializeParam(requireNotNull(response.headers["token"]) { "token is null" }, typeOf<Token>()),
+            |        refreshToken = response.headers["refreshToken"]?.let{ serialization.deserializeParam(it, typeOf<Token?>()) }
+            |      )
+            |      500 -> Response500(
+            |        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<Error>()),
+            |      )
+            |      else -> error("Cannot match response with status: ${'$'}{response.statusCode}")
+            |    }
+            |
+            |}
             |
             |  sealed interface Response<T: Any> : Wirespec.Response<T>
             |
@@ -233,55 +276,8 @@ class KotlinEmitterTest {
             |    data object ResponseHeaders : Wirespec.Response.Headers
             |  }
             |
-            |  fun toResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
-            |    when(response) {
-            |      is Response200 -> Wirespec.RawResponse(
-            |        statusCode = response.status,
-            |        headers = emptyMap(),
-            |        body = serialization.serializeBody(response.body, typeOf<TodoDto>()),
-            |      )
-            |      is Response201 -> Wirespec.RawResponse(
-            |        statusCode = response.status,
-            |        headers = (mapOf("token" to (response.headers.token?.let{ serialization.serializeParam(it, typeOf<Token>()) } ?: emptyList()))) + (mapOf("refreshToken" to (response.headers.refreshToken?.let{ serialization.serializeParam(it, typeOf<Token?>()) } ?: emptyList()))),
-            |        body = serialization.serializeBody(response.body, typeOf<TodoDto>()),
-            |      )
-            |      is Response500 -> Wirespec.RawResponse(
-            |        statusCode = response.status,
-            |        headers = emptyMap(),
-            |        body = serialization.serializeBody(response.body, typeOf<Error>()),
-            |      )
-            |    }
-            |
-            |  fun fromResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
-            |    when (response.statusCode) {
-            |      200 -> Response200(
-            |        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<TodoDto>()),
-            |      )
-            |      201 -> Response201(
-            |        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<TodoDto>()),
-            |        token = serialization.deserializeParam(requireNotNull(response.headers["token"]) { "token is null" }, typeOf<Token>()),
-            |        refreshToken = response.headers["refreshToken"]?.let{ serialization.deserializeParam(it, typeOf<Token?>()) }
-            |      )
-            |      500 -> Response500(
-            |        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<Error>()),
-            |      )
-            |      else -> error("Cannot match response with status: ${'$'}{response.statusCode}")
-            |    }
-            |
             |  interface Handler: Wirespec.Handler {
             |    suspend fun putTodo(request: Request): Response<*>
-            |    companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
-            |      override val pathTemplate = "/todos/{id}"
-            |      override val method = "PUT"
-            |      override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
-            |        override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
-            |        override fun to(response: Response<*>) = toResponse(serialization, response)
-            |      }
-            |      override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
-            |        override fun to(request: Request) = toRequest(serialization, request)
-            |        override fun from(response: Wirespec.RawResponse) = fromResponse(serialization, response)
-            |      }
-            |    }
             |  }
             |}
             |
@@ -341,6 +337,7 @@ class KotlinEmitterTest {
             |import community.flock.wirespec.generated.model.TodoDto
             |
             |object GetTodos : Wirespec.Endpoint {
+            |
             |  data object Path : Wirespec.Path
             |
             |  data object Queries : Wirespec.Queries
@@ -355,7 +352,9 @@ class KotlinEmitterTest {
             |    override val body = Unit
             |  }
             |
-            |  fun toRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
+            |object Adapter: Wirespec.Adapter<Request, Response<*>> {
+            |
+            |  override fun toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
             |    Wirespec.RawRequest(
             |      path = listOf("todos"),
             |      method = request.method.name,
@@ -364,8 +363,30 @@ class KotlinEmitterTest {
             |      body = null,
             |    )
             |
-            |  fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
+            |  override fun fromRawRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
             |    Request
+            |
+            |  override val pathTemplate = "/todos"
+            |  override val method = "GET"
+            |
+            |  override fun toRawResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
+            |    when(response) {
+            |      is Response200 -> Wirespec.RawResponse(
+            |        statusCode = response.status,
+            |        headers = emptyMap(),
+            |        body = serialization.serializeBody(response.body, typeOf<List<TodoDto>>()),
+            |      )
+            |    }
+            |
+            |  override fun fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
+            |    when (response.statusCode) {
+            |      200 -> Response200(
+            |        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<List<TodoDto>>()),
+            |      )
+            |      else -> error("Cannot match response with status: ${'$'}{response.statusCode}")
+            |    }
+            |
+            |}
             |
             |  sealed interface Response<T: Any> : Wirespec.Response<T>
             |
@@ -379,37 +400,8 @@ class KotlinEmitterTest {
             |    data object ResponseHeaders : Wirespec.Response.Headers
             |  }
             |
-            |  fun toResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
-            |    when(response) {
-            |      is Response200 -> Wirespec.RawResponse(
-            |        statusCode = response.status,
-            |        headers = emptyMap(),
-            |        body = serialization.serializeBody(response.body, typeOf<List<TodoDto>>()),
-            |      )
-            |    }
-            |
-            |  fun fromResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
-            |    when (response.statusCode) {
-            |      200 -> Response200(
-            |        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<List<TodoDto>>()),
-            |      )
-            |      else -> error("Cannot match response with status: ${'$'}{response.statusCode}")
-            |    }
-            |
             |  interface Handler: Wirespec.Handler {
             |    suspend fun getTodos(request: Request): Response<*>
-            |    companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
-            |      override val pathTemplate = "/todos"
-            |      override val method = "GET"
-            |      override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
-            |        override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
-            |        override fun to(response: Response<*>) = toResponse(serialization, response)
-            |      }
-            |      override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
-            |        override fun to(request: Request) = toRequest(serialization, request)
-            |        override fun from(response: Wirespec.RawResponse) = fromResponse(serialization, response)
-            |      }
-            |    }
             |  }
             |}
             |

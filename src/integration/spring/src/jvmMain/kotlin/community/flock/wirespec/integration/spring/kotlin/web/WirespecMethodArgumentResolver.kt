@@ -14,7 +14,6 @@ import org.springframework.web.method.support.ModelAndViewContainer
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import java.util.stream.Collectors
 import kotlin.io.encoding.ExperimentalEncodingApi
-import kotlin.reflect.full.companionObjectInstance
 
 class WirespecMethodArgumentResolver(
     private val wirespecSerialization: Wirespec.Serialization,
@@ -29,14 +28,11 @@ class WirespecMethodArgumentResolver(
         binderFactory: WebDataBinderFactory?,
     ): Wirespec.Request<*> {
         val servletRequest = webRequest.nativeRequest as HttpServletRequest
-        val declaringClass = parameter.parameterType.declaringClass
-        val handler = declaringClass.declaredClasses.toList()
-            .find { it.simpleName == "Handler" }
-            ?: error("Handler not found")
-        val instance = handler.kotlin.companionObjectInstance as Wirespec.Server<*, *>
-        val server = instance.server(wirespecSerialization)
+        val endpointClass = parameter.parameterType.declaringClass
+        val adapterClass = endpointClass.declaredClasses.toList().find { it.simpleName == "Adapter" } ?: error("Handler not found")
+        val adapter: Wirespec.Adapter<Wirespec.Request<*>, Wirespec.Response<*>> = adapterClass.kotlin.objectInstance as? Wirespec.Adapter<Wirespec.Request<*>, Wirespec.Response<*>> ?: error("Handler not initialized")
         val rawRequest = servletRequest.toRawRequest()
-        return server.from(rawRequest)
+        return adapter.fromRawRequest(wirespecSerialization, rawRequest)
     }
 
     @OptIn(ExperimentalEncodingApi::class)

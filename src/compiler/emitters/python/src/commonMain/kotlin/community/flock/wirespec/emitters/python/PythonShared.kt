@@ -27,7 +27,7 @@ data object PythonShared : Shared {
         |        class Handler(ABC):
         |            pass
         |
-        |        class Convert(ABC, Generic[REQ, RES]):
+        |        class Adapter(ABC, Generic[REQ, RES]):
         |            @staticmethod
         |            @abstractmethod
         |            def to_raw_request(serializer: 'Wirespec.Serializer', req: REQ) -> 'Wirespec.RawRequest': pass

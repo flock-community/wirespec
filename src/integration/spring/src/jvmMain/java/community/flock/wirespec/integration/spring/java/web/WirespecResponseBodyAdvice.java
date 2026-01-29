@@ -11,6 +11,7 @@ import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -40,30 +41,18 @@ public class WirespecResponseBodyAdvice implements ResponseBodyAdvice<Object> {
             ServerHttpResponse response
     ) {
         try {
-            Class<?> declaringClass = returnType.getParameterType().getDeclaringClass();
-            Class<?> handlerClass = Arrays.stream(declaringClass.getDeclaredClasses())
-                    .filter(c -> c.getSimpleName().equals("Handler"))
-                    .findFirst().orElse(null);
-
-            Class<?> handlersClass = null;
-            if (handlerClass != null) {
-                handlersClass = Arrays.stream(handlerClass.getDeclaredClasses())
-                        .filter(c -> c.getSimpleName().equals("Handlers"))
-                        .findFirst().orElse(null);
-            }
-            
-            if (handlersClass == null) {
-                throw new IllegalStateException("Handlers not found");
-            }
-
-            Wirespec.Server<Wirespec.Request<?>, Wirespec.Response<?>> instance = 
-                    (Wirespec.Server<Wirespec.Request<?>, Wirespec.Response<?>>) handlersClass.getDeclaredConstructor().newInstance();
-            
-            Wirespec.ServerEdge<Wirespec.Request<?>, Wirespec.Response<?>> server = instance.getServer(wirespecSerialization);
-
+            Class<?> endpointClass = returnType.getParameterType().getDeclaringClass();
             if (body instanceof Wirespec.Response<?> wirespecResponse) {
-                Wirespec.RawResponse rawResponse = server.to(wirespecResponse);
-                
+                final Class<?> adapterClass = Arrays.stream(endpointClass.getDeclaredClasses())
+                        .filter(c -> c.getSimpleName().equals("Adapter"))
+                        .findFirst()
+                        .orElseThrow();
+                final Class<?> responseClass = Arrays.stream(endpointClass.getClasses())
+                        .filter(Wirespec.Response.class::isAssignableFrom)
+                        .filter(c -> c.getSimpleName().equals("Response"))
+                        .findFirst().orElseThrow();
+                final Method toRawRequestMethod = adapterClass.getMethod("toRawResponse", Wirespec.Serializer.class, responseClass);
+                final Wirespec.RawResponse rawResponse = (Wirespec.RawResponse) toRawRequestMethod.invoke(null, this.wirespecSerialization, wirespecResponse);
                 response.setStatusCode(HttpStatusCode.valueOf(rawResponse.statusCode()));
                 for (Map.Entry<String, List<String>> entry : rawResponse.headers().entrySet()) {
                     response.getHeaders().put(entry.getKey(), entry.getValue());

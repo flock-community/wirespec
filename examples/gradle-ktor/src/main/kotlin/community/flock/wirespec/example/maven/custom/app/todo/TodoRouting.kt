@@ -22,48 +22,48 @@ fun Application.todoModule(todoRepository: TodoRepository) {
     val handler = TodoHandler(todoRepository)
 
     routing {
-        with(GetTodos.Handler) {
+        with(GetTodos.Adapter) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
                     call
                         .toRawRequest()
-                        .let(server(Serialization)::from)
+                        .let { fromRawRequest(Serialization, it) }
                         .let { handler.getTodos(it) }
                         .run { call.respond(body) }
                 }
             }
         }
 
-        with(GetTodoById.Handler) {
+        with(GetTodoById.Adapter) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
                     call
                         .toRawRequest()
-                        .let(server(Serialization)::from)
+                        .let { fromRawRequest(Serialization, it) }
                         .let { handler.getTodoById(it) }
                         .run { call.respond(body) }
                 }
             }
         }
 
-        with(PostTodo.Handler) {
+        with(PostTodo.Adapter) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
                     call
                         .toRawRequest()
-                        .let(server(Serialization)::from)
+                        .let { fromRawRequest(Serialization, it) }
                         .let { handler.postTodo(it) }
                         .run { call.respond(body) }
                 }
             }
         }
 
-        with(DeleteTodoById.Handler) {
+        with(DeleteTodoById.Adapter) {
             route(pathTemplate, method.let(HttpMethod::parse)) {
                 handle {
                     call
                         .toRawRequest()
-                        .let(server(Serialization)::from)
+                        .let { fromRawRequest(Serialization, it) }
                         .let { handler.deleteTodoById(it) }
                         .run { call.respond(body) }
                 }

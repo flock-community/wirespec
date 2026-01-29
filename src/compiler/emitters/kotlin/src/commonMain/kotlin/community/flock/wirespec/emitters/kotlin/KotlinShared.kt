@@ -13,31 +13,21 @@ data object KotlinShared : Shared {
         |import kotlin.reflect.KType
         |
         |object Wirespec {
+        |${Spacer}interface Endpoint {}
+        |${Spacer}interface Adapter<Req: Request<*>, Res: Response<*>> {
+        |${Spacer(2)}fun toRawRequest(serialization: Wirespec.Serializer, request: Req): RawRequest
+        |${Spacer(2)}fun fromRawRequest(serialization: Wirespec.Deserializer, request: RawRequest): Req
+        |${Spacer(2)}fun toRawResponse(serialization: Wirespec.Serializer, response: Res): RawResponse
+        |${Spacer(2)}fun fromRawResponse(serialization: Wirespec.Deserializer, response: RawResponse): Res
+        |${Spacer(2)}val pathTemplate: String
+        |${Spacer(2)}val method: String
+        |$Spacer}
         |${Spacer}interface Enum { val label: String }
-        |${Spacer}interface Endpoint
         |${Spacer}interface Refined { val value: String }
         |${Spacer}interface Path
         |${Spacer}interface Queries
         |${Spacer}interface Headers
         |${Spacer}interface Handler
-        |${Spacer}interface ServerEdge<Req: Request<*>, Res: Response<*>> { 
-        |${Spacer}fun from(request: RawRequest): Req  
-        |${Spacer}fun to(response: Res): RawResponse
-        |$Spacer}
-        |${Spacer}interface ClientEdge<Req: Request<*>, Res: Response<*>> { 
-        |${Spacer(2)}fun to(request: Req): RawRequest
-        |${Spacer(2)}fun from(response: RawResponse): Res
-        |$Spacer}
-        |${Spacer}interface Client<Req : Request<*>, Res : Response<*>> {
-        |${Spacer(2)}val pathTemplate: String
-        |${Spacer(2)}val method: String
-        |${Spacer(2)}fun client(serialization: Serialization): ClientEdge<Req, Res>
-        |$Spacer}
-        |${Spacer}interface Server<Req : Request<*>, Res : Response<*>> {
-        |${Spacer(2)}val pathTemplate: String
-        |${Spacer(2)}val method: String
-        |${Spacer(2)}fun server(serialization: Serialization): ServerEdge<Req, Res>
-        |$Spacer}
         |${Spacer}enum class Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
         |${Spacer}interface Request<T : Any> { val path: Path; val method: Method; val queries: Queries; val headers: Headers; val body: T; interface Headers : Wirespec.Headers }
         |${Spacer}interface Response<T : Any> { val status: Int; val headers: Headers; val body: T; interface Headers : Wirespec.Headers }

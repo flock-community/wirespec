@@ -38,40 +38,27 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
         |${endpoint.emitResponseInterfaces()}
         |
         |${endpoint.responses.distinctByStatus().joinToString("\n") { it.emit() }}
-        |
-        |${Spacer}interface Handler extends Wirespec.Handler {
-        |
+        
+        |${Spacer}static interface Adapter extends Wirespec.Adapter<Request, Response<?>>{
+        |${Spacer(2)}public static String pathTemplate = "/${endpoint.path.joinToString("/") { it.emit() }}";
+        |${Spacer(2)}public static String method = "${endpoint.method}";
         |${endpoint.requests.first().emitRequestFunctions(endpoint)}
         |
-        |${Spacer(2)}static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
+        |${Spacer(1)}static Wirespec.RawResponse toRawResponse(Wirespec.Serializer serialization, Response<?> response) {
         |${endpoint.responses.distinctByStatus().joinToString("\n") { it.emitSerialized() }}
-        |${Spacer(3)}else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
-        |${Spacer(2)}}
+        |${Spacer(2)}else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
+        |${Spacer(1)}}
         |
-        |${Spacer(2)}static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
-        |${Spacer(3)}switch (response.statusCode()) {
+        |${Spacer(1)}static Response<?> fromRawResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
+        |${Spacer(2)}switch (response.statusCode()) {
         |${endpoint.responses.distinctByStatus().filter { it.status.isStatusCode() }.joinToString("\n") { it.emitDeserialized() }}
-        |${Spacer(4)}default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
-        |${Spacer(3)}}
+        |${Spacer(3)}default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
         |${Spacer(2)}}
+        |${Spacer(1)}}
+        |}
         |
+        |${Spacer}interface Handler extends Wirespec.Handler {
         |${Spacer(2)}${emitHandleFunction(endpoint)}
-        |${Spacer(2)}class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
-        |${Spacer(3)}@Override public String getPathTemplate() { return "/${endpoint.path.joinToString("/") { it.emit() }}"; }
-        |${Spacer(3)}@Override public String getMethod() { return "${endpoint.method}"; }
-        |${Spacer(3)}@Override public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization serialization) {
-        |${Spacer(4)}return new Wirespec.ServerEdge<>() {
-        |${Spacer(5)}@Override public Request from(Wirespec.RawRequest request) { return fromRequest(serialization, request); }
-        |${Spacer(5)}@Override public Wirespec.RawResponse to(Response<?> response) { return toResponse(serialization, response); }
-        |${Spacer(4)}};
-        |${Spacer(3)}}
-        |${Spacer(3)}@Override public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization serialization) {
-        |${Spacer(4)}return new Wirespec.ClientEdge<>() {
-        |${Spacer(5)}@Override public Wirespec.RawRequest to(Request request) { return toRequest(serialization, request); }
-        |${Spacer(5)}@Override public Response<?> from(Wirespec.RawResponse response) { return fromResponse(serialization, response); }
-        |${Spacer(4)}};
-        |${Spacer(3)}}
-        |${Spacer(2)}}
         |${Spacer}}
         |}
         |
@@ -177,19 +164,19 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
         .map { "import ${packageName.value}.model.${it.value};" }.joinToString("\n") { it.trimStart() }
 
     private fun Endpoint.Request.emitRequestFunctions(endpoint: Endpoint) = """
-        |${Spacer(2)}static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
-        |${Spacer(3)}return new Wirespec.RawRequest(
-        |${Spacer(4)}request.method().name(),
-        |${Spacer(4)}java.util.List.of(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
-        |${Spacer(4)}${if (endpoint.queries.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.queries.joinToString { it.emitSerializedParams("queries") }})" else EMPTY_MAP},
-        |${Spacer(4)}${if (endpoint.headers.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.headers.joinToString { it.emitSerializedParams("headers") }})" else EMPTY_MAP},
-        |${Spacer(4)}${if (content != null) "serialization.serializeBody(request.body(), ${content?.reference?.emitGetType()})" else "null"}
-        |${Spacer(3)});
-        |${Spacer(2)}}
+        |${Spacer(1)}static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Request request) {
+        |${Spacer(2)}return new Wirespec.RawRequest(
+        |${Spacer(3)}request.method().name(),
+        |${Spacer(3)}java.util.List.of(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
+        |${Spacer(3)}${if (endpoint.queries.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.queries.joinToString { it.emitSerializedParams("queries") }})" else EMPTY_MAP},
+        |${Spacer(3)}${if (endpoint.headers.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.headers.joinToString { it.emitSerializedParams("headers") }})" else EMPTY_MAP},
+        |${Spacer(3)}${if (content != null) "serialization.serializeBody(request.body(), ${content?.reference?.emitGetType()})" else "null"}
+        |${Spacer(2)});
+        |${Spacer(1)}}
         |
-        |${Spacer(2)}static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
-        |${Spacer(3)}return new Request(${emitDeserializedParams(endpoint)});
-        |${Spacer(2)}}
+        |${Spacer(1)}static Request fromRawRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
+        |${Spacer(2)}return new Request(${emitDeserializedParams(endpoint)});
+        |${Spacer(1)}}
     """.trimMargin()
 
     private fun <E> List<E>.emitObject(name: String, extends: String, block: (E) -> String) =

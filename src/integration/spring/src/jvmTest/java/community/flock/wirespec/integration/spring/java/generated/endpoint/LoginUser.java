@@ -55,62 +55,49 @@ public interface LoginUser extends Wirespec.Endpoint {
     }
     static class Headers implements Wirespec.Response.Headers {}
   }
+        
+  static interface Adapter extends Wirespec.Adapter<Request, Response<?>>{
+    public static String pathTemplate = "/user/login";
+    public static String method = "GET";
+  static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Request request) {
+    return new Wirespec.RawRequest(
+      request.method().name(),
+      java.util.List.of("user", "login"),
+      java.util.Map.ofEntries(java.util.Map.entry("username", serialization.serializeParam(request.queries().username(), Wirespec.getType(String.class, java.util.Optional.class))), java.util.Map.entry("password", serialization.serializeParam(request.queries().password(), Wirespec.getType(String.class, java.util.Optional.class)))),
+      java.util.Collections.emptyMap(),
+      null
+    );
+  }
 
-  interface Handler extends Wirespec.Handler {
-
-    static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
-      return new Wirespec.RawRequest(
-        request.method().name(),
-        java.util.List.of("user", "login"),
-        java.util.Map.ofEntries(java.util.Map.entry("username", serialization.serializeParam(request.queries().username(), Wirespec.getType(String.class, java.util.Optional.class))), java.util.Map.entry("password", serialization.serializeParam(request.queries().password(), Wirespec.getType(String.class, java.util.Optional.class)))),
-        java.util.Collections.emptyMap(),
-        null
-      );
-    }
-
-    static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
-      return new Request(
+  static Request fromRawRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
+    return new Request(
         serialization.deserializeParam(request.queries().getOrDefault("username", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
         serialization.deserializeParam(request.queries().getOrDefault("password", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class))
       );
-    }
+  }
 
-    static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
+  static Wirespec.RawResponse toRawResponse(Wirespec.Serializer serialization, Response<?> response) {
       if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Map.ofEntries(java.util.Map.entry("X-Rate-Limit", serialization.serializeParam(r.headers().XRateLimit(), Wirespec.getType(Integer.class, java.util.Optional.class))), java.util.Map.entry("X-Expires-After", serialization.serializeParam(r.headers().XExpiresAfter(), Wirespec.getType(String.class, java.util.Optional.class)))), serialization.serializeBody(r.body, Wirespec.getType(String.class, null))); }
       if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), null); }
-      else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
-    }
+    else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
+  }
 
-    static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
-      switch (response.statusCode()) {
+  static Response<?> fromRawResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
+    switch (response.statusCode()) {
         case 200: return new Response200(
         serialization.deserializeParam(response.headers().getOrDefault("X-Rate-Limit", java.util.Collections.emptyList()), Wirespec.getType(Integer.class, java.util.Optional.class)),
         serialization.deserializeParam(response.headers().getOrDefault("X-Expires-After", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
         serialization.deserializeBody(response.body(), Wirespec.getType(String.class, null))
       );
         case 400: return new Response400();
-        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
-      }
+      default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
     }
+  }
+}
 
+  interface Handler extends Wirespec.Handler {
     @org.springframework.web.bind.annotation.GetMapping("/user/login")
     java.util.concurrent.CompletableFuture<Response<?>> loginUser(Request request);
 
-    class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
-      @Override public String getPathTemplate() { return "/user/login"; }
-      @Override public String getMethod() { return "GET"; }
-      @Override public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization serialization) {
-        return new Wirespec.ServerEdge<>() {
-          @Override public Request from(Wirespec.RawRequest request) { return fromRequest(serialization, request); }
-          @Override public Wirespec.RawResponse to(Response<?> response) { return toResponse(serialization, response); }
-        };
-      }
-      @Override public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization serialization) {
-        return new Wirespec.ClientEdge<>() {
-          @Override public Wirespec.RawRequest to(Request request) { return toRequest(serialization, request); }
-          @Override public Response<?> from(Wirespec.RawResponse response) { return fromResponse(serialization, response); }
-        };
-      }
-    }
   }
 }

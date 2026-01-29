@@ -37,55 +37,42 @@ public interface GetInventory extends Wirespec.Endpoint {
     }
     static class Headers implements Wirespec.Response.Headers {}
   }
+        
+  static interface Adapter extends Wirespec.Adapter<Request, Response<?>>{
+    public static String pathTemplate = "/store/inventory";
+    public static String method = "GET";
+  static Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Request request) {
+    return new Wirespec.RawRequest(
+      request.method().name(),
+      java.util.List.of("store", "inventory"),
+      java.util.Collections.emptyMap(),
+      java.util.Collections.emptyMap(),
+      null
+    );
+  }
 
-  interface Handler extends Wirespec.Handler {
+  static Request fromRawRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
+    return new Request();
+  }
 
-    static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
-      return new Wirespec.RawRequest(
-        request.method().name(),
-        java.util.List.of("store", "inventory"),
-        java.util.Collections.emptyMap(),
-        java.util.Collections.emptyMap(),
-        null
-      );
-    }
-
-    static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
-      return new Request();
-    }
-
-    static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
+  static Wirespec.RawResponse toRawResponse(Wirespec.Serializer serialization, Response<?> response) {
       if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(Integer.class, null))); }
-      else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
-    }
+    else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
+  }
 
-    static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
-      switch (response.statusCode()) {
+  static Response<?> fromRawResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
+    switch (response.statusCode()) {
         case 200: return new Response200(
         serialization.deserializeBody(response.body(), Wirespec.getType(Integer.class, null))
       );
-        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
-      }
+      default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
     }
+  }
+}
 
+  interface Handler extends Wirespec.Handler {
     @org.springframework.web.bind.annotation.GetMapping("/store/inventory")
     java.util.concurrent.CompletableFuture<Response<?>> getInventory(Request request);
 
-    class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
-      @Override public String getPathTemplate() { return "/store/inventory"; }
-      @Override public String getMethod() { return "GET"; }
-      @Override public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization serialization) {
-        return new Wirespec.ServerEdge<>() {
-          @Override public Request from(Wirespec.RawRequest request) { return fromRequest(serialization, request); }
-          @Override public Wirespec.RawResponse to(Response<?> response) { return toResponse(serialization, response); }
-        };
-      }
-      @Override public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization serialization) {
-        return new Wirespec.ClientEdge<>() {
-          @Override public Wirespec.RawRequest to(Request request) { return toRequest(serialization, request); }
-          @Override public Response<?> from(Wirespec.RawResponse response) { return fromResponse(serialization, response); }
-        };
-      }
-    }
   }
 }

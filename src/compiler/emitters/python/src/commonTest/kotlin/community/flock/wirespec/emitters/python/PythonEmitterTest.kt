@@ -202,7 +202,7 @@ class PythonEmitterTest {
         |    @abstractmethod
         |    def PutTodo(self, req: 'PutTodo.Request') -> 'PutTodo.Response': pass
         |
-        |  class Convert(Wirespec.Endpoint.Convert[Request, Response]):
+        |  class Adapter(Wirespec.Endpoint.Adapter[Request, Response]):
         |    @staticmethod
         |    def to_raw_request(serialization: Wirespec.Serializer, request: 'PutTodo.Request') -> Wirespec.RawRequest:
         |      return Wirespec.RawRequest(
@@ -372,7 +372,7 @@ class PythonEmitterTest {
             |    @abstractmethod
             |    def GetTodos(self, req: 'GetTodos.Request') -> 'GetTodos.Response': pass
             |
-            |  class Convert(Wirespec.Endpoint.Convert[Request, Response]):
+            |  class Adapter(Wirespec.Endpoint.Adapter[Request, Response]):
             |    @staticmethod
             |    def to_raw_request(serialization: Wirespec.Serializer, request: 'GetTodos.Request') -> Wirespec.RawRequest:
             |      return Wirespec.RawRequest(

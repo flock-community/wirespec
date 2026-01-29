@@ -9,7 +9,7 @@ class PreProcessTest {
 
     @Test
     fun test() {
-        val handlers = AddPetProcessed.Handler.Handlers()
-        Assertions.assertEquals("/pet", handlers.getPathTemplate())
+        Assertions.assertEquals("/pet", AddPetProcessed.Adapter.pathTemplate)
+        Assertions.assertEquals("POST", AddPetProcessed.Adapter.method)
     }
 }

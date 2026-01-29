@@ -6,6 +6,7 @@ import kotlin.reflect.typeOf
 
 
 object LoginUser : Wirespec.Endpoint {
+
   data object Path : Wirespec.Path
 
   data class Queries(
@@ -25,7 +26,9 @@ object LoginUser : Wirespec.Endpoint {
     override val body = Unit
   }
 
-  fun toRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
+object Adapter: Wirespec.Adapter<Request, Response<*>> {
+
+  override fun toRawRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
       path = listOf("user", "login"),
       method = request.method.name,
@@ -34,10 +37,42 @@ object LoginUser : Wirespec.Endpoint {
       body = null,
     )
 
-  fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
+  override fun fromRawRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
     Request(
       username = request.queries["username"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) },       password = request.queries["password"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) }
     )
+
+  override val pathTemplate = "/user/login"
+  override val method = "GET"
+
+  override fun toRawResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
+    when(response) {
+      is Response200 -> Wirespec.RawResponse(
+        statusCode = response.status,
+        headers = (mapOf("X-Rate-Limit" to (response.headers.XRateLimit?.let{ serialization.serializeParam(it, typeOf<Int?>()) } ?: emptyList()))) + (mapOf("X-Expires-After" to (response.headers.XExpiresAfter?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
+        body = serialization.serializeBody(response.body, typeOf<String>()),
+      )
+      is Response400 -> Wirespec.RawResponse(
+        statusCode = response.status,
+        headers = emptyMap(),
+        body = null,
+      )
+    }
+
+  override fun fromRawResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
+    when (response.statusCode) {
+      200 -> Response200(
+        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<String>()),
+        XRateLimit = response.headers["X-Rate-Limit"]?.let{ serialization.deserializeParam(it, typeOf<Int?>()) },
+        XExpiresAfter = response.headers["X-Expires-After"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) }
+      )
+      400 -> Response400(
+        body = Unit,
+      )
+      else -> error("Cannot match response with status: ${response.statusCode}")
+    }
+
+}
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
 
@@ -62,48 +97,9 @@ object LoginUser : Wirespec.Endpoint {
     data object ResponseHeaders : Wirespec.Response.Headers
   }
 
-  fun toResponse(serialization: Wirespec.Serializer, response: Response<*>): Wirespec.RawResponse =
-    when(response) {
-      is Response200 -> Wirespec.RawResponse(
-        statusCode = response.status,
-        headers = (mapOf("X-Rate-Limit" to (response.headers.XRateLimit?.let{ serialization.serializeParam(it, typeOf<Int?>()) } ?: emptyList()))) + (mapOf("X-Expires-After" to (response.headers.XExpiresAfter?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
-        body = serialization.serializeBody(response.body, typeOf<String>()),
-      )
-      is Response400 -> Wirespec.RawResponse(
-        statusCode = response.status,
-        headers = emptyMap(),
-        body = null,
-      )
-    }
-
-  fun fromResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
-    when (response.statusCode) {
-      200 -> Response200(
-        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<String>()),
-        XRateLimit = response.headers["X-Rate-Limit"]?.let{ serialization.deserializeParam(it, typeOf<Int?>()) },
-        XExpiresAfter = response.headers["X-Expires-After"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) }
-      )
-      400 -> Response400(
-        body = Unit,
-      )
-      else -> error("Cannot match response with status: ${response.statusCode}")
-    }
-
   interface Handler: Wirespec.Handler {
     @org.springframework.web.bind.annotation.GetMapping("/user/login")
     suspend fun loginUser(request: Request): Response<*>
 
-    companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
-      override val pathTemplate = "/user/login"
-      override val method = "GET"
-      override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
-        override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
-        override fun to(response: Response<*>) = toResponse(serialization, response)
-      }
-      override fun client(serialization: Wirespec.Serialization) = object : Wirespec.ClientEdge<Request, Response<*>> {
-        override fun to(request: Request) = toRequest(serialization, request)
-        override fun from(response: Wirespec.RawResponse) = fromResponse(serialization, response)
-      }
-    }
   }
 }

@@ -3,10 +3,18 @@ package community.flock.wirespec.kotlin
 import kotlin.reflect.KType
 
 object Wirespec {
+    interface Endpoint
+    interface Adapter<Req : Request<*>, Res : Response<*>> {
+        val pathTemplate: String
+        val method: String
+        fun toRawRequest(serialization: Wirespec.Serializer, request: Req): RawRequest
+        fun fromRawRequest(serialization: Wirespec.Deserializer, request: RawRequest): Req
+        fun toRawResponse(serialization: Wirespec.Serializer, response: Res): RawResponse
+        fun fromRawResponse(serialization: Wirespec.Deserializer, response: RawResponse): Res
+    }
     interface Enum {
         val label: String
     }
-    interface Endpoint
     interface Refined {
         val value: String
     }
@@ -14,24 +22,6 @@ object Wirespec {
     interface Queries
     interface Headers
     interface Handler
-    interface ServerEdge<Req : Request<*>, Res : Response<*>> {
-        fun from(request: RawRequest): Req
-        fun to(response: Res): RawResponse
-    }
-    interface ClientEdge<Req : Request<*>, Res : Response<*>> {
-        fun to(request: Req): RawRequest
-        fun from(response: RawResponse): Res
-    }
-    interface Client<Req : Request<*>, Res : Response<*>> {
-        val pathTemplate: String
-        val method: String
-        fun client(serialization: Serialization): ClientEdge<Req, Res>
-    }
-    interface Server<Req : Request<*>, Res : Response<*>> {
-        val pathTemplate: String
-        val method: String
-        fun server(serialization: Serialization): ServerEdge<Req, Res>
-    }
     enum class Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
     interface Request<T : Any> {
         val path: Path

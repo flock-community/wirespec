@@ -16,48 +16,40 @@ import java.util.concurrent.CompletableFuture;
 public class LiveUserClient implements UserClient {
 
     private final WirespecTransporter transporter;
-    private final Wirespec.ClientEdge<GetUsers.Request, GetUsers.Response<?>> getUsers;
-    private final Wirespec.ClientEdge<GetUserByName.Request, GetUserByName.Response<?>> getUserByName;
-    private final Wirespec.ClientEdge<PostUser.Request, PostUser.Response<?>> postUser;
-    private final Wirespec.ClientEdge<DeleteUserByName.Request, DeleteUserByName.Response<?>> deleteUserByName;
-    private final Wirespec.ClientEdge<UploadImage.Request, UploadImage.Response<?>> uploadImage;
+    private final WirespecSerializer serializer;
 
     public LiveUserClient(final WirespecTransporter transporter,final  WirespecSerializer serializer) {
         this.transporter = transporter;
-        this.getUsers = new GetUsers.Handler.Handlers().getClient(serializer);
-        this.getUserByName = new GetUserByName.Handler.Handlers().getClient(serializer);
-        this.postUser = new PostUser.Handler.Handlers().getClient(serializer);
-        this.deleteUserByName = new DeleteUserByName.Handler.Handlers().getClient(serializer);
-        this.uploadImage = new UploadImage.Handler.Handlers().getClient(serializer);
+        this.serializer = serializer;
     }
 
     @Override
     public CompletableFuture<GetUsers.Response<?>> getUsers(final GetUsers.Request request) {
-        return transporter.transport(getUsers.to(request))
-                .thenApplyAsync(getUsers::from);
+        return transporter.transport(GetUsers.Adapter.toRawRequest(this.serializer, request))
+                .thenApplyAsync(res -> GetUsers.Adapter.fromRawResponse(this.serializer, res));
     }
 
     @Override
     public CompletableFuture<GetUserByName.Response<?>> getUserByName(final GetUserByName.Request request) {
-        return transporter.transport(getUserByName.to(request))
-                .thenApplyAsync(getUserByName::from);
+        return transporter.transport(GetUserByName.Adapter.toRawRequest(this.serializer, request))
+                .thenApplyAsync(res -> GetUserByName.Adapter.fromRawResponse(this.serializer, res));
     }
 
     @Override
     public CompletableFuture<PostUser.Response<?>> postUser(final PostUser.Request request) {
-        return transporter.transport(postUser.to(request))
-                .thenApplyAsync(postUser::from);
+        return transporter.transport(PostUser.Adapter.toRawRequest(this.serializer, request))
+                .thenApplyAsync(res -> PostUser.Adapter.fromRawResponse(this.serializer, res));
     }
 
     @Override
     public CompletableFuture<DeleteUserByName.Response<?>> deleteUserByName(final DeleteUserByName.Request request) {
-        return transporter.transport(deleteUserByName.to(request))
-                .thenApplyAsync(deleteUserByName::from);
+        return transporter.transport(DeleteUserByName.Adapter.toRawRequest(this.serializer, request))
+                .thenApplyAsync(res -> DeleteUserByName.Adapter.fromRawResponse(this.serializer, res));
     }
 
     @Override
     public CompletableFuture<UploadImage.Response<?>> uploadImage(UploadImage.Request request) {
-        return transporter.transport(uploadImage.to(request))
-                .thenApplyAsync(uploadImage::from);
+        return transporter.transport(UploadImage.Adapter.toRawRequest(this.serializer, request))
+                .thenApplyAsync(res -> UploadImage.Adapter.fromRawResponse(this.serializer, res));
     }
 }

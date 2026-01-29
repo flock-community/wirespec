@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -38,27 +39,15 @@ public class WirespecMethodArgumentResolver implements HandlerMethodArgumentReso
             NativeWebRequest webRequest,
             WebDataBinderFactory binderFactory
     ) throws Exception {
-        HttpServletRequest servletRequest = (HttpServletRequest) webRequest.getNativeRequest();
-
-        Class<?> declaringClass = parameter.getParameterType().getDeclaringClass();
-        Class<?> handlerClass = Arrays.stream(declaringClass.getDeclaredClasses())
-                .filter(c -> c.getSimpleName().equals("Handler"))
-                .findFirst().orElse(null);
-
-        Class<?> handlersClass = null;
-        if (handlerClass != null) {
-            handlersClass = Arrays.stream(handlerClass.getDeclaredClasses())
-                    .filter(c -> c.getSimpleName().equals("Handlers"))
-                    .findFirst().orElse(null);
-        }
-
-        if (handlersClass == null) {
-             throw new IllegalStateException("Could not find Handlers class in " + declaringClass);
-        }
-
-        Wirespec.Server<?, ?> instance = (Wirespec.Server<?, ?>) handlersClass.getDeclaredConstructor().newInstance();
-        Wirespec.RawRequest req = toRawRequest(servletRequest);
-        return instance.getServer(wirespecSerialization).from(req);
+        final HttpServletRequest servletRequest = (HttpServletRequest) webRequest.getNativeRequest();
+        final Class<?> declaringClass = parameter.getParameterType().getDeclaringClass();
+        final Class<?> adapterClass = Arrays.stream(declaringClass.getDeclaredClasses())
+                .filter(c -> c.getSimpleName().equals("Adapter"))
+                .findFirst()
+                .orElseThrow();
+        final Wirespec.RawRequest req = toRawRequest(servletRequest);
+        final Method fromRawRequestMethod = adapterClass.getMethod("fromRawRequest", Wirespec.Deserializer.class, Wirespec.RawRequest.class);
+        return (Wirespec.Request<?>) fromRawRequestMethod.invoke(null, this.wirespecSerialization, req);
     }
 
     private Wirespec.RawRequest toRawRequest(HttpServletRequest request) throws IOException {
