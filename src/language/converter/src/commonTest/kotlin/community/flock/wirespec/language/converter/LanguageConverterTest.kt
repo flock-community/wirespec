@@ -1,0 +1,106 @@
+package community.flock.wirespec.language.converter
+
+import arrow.core.getOrElse
+import arrow.core.nonEmptyListOf
+import community.flock.wirespec.compiler.core.FileUri
+import community.flock.wirespec.compiler.core.ModuleContent
+import community.flock.wirespec.compiler.core.ParseContext
+import community.flock.wirespec.compiler.core.WirespecSpec
+import community.flock.wirespec.compiler.core.parse
+import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.utils.NoLogger
+import community.flock.wirespec.language.converter.convert
+import community.flock.wirespec.language.core.Element
+import community.flock.wirespec.language.core.Type
+import community.flock.wirespec.language.core.enum
+import community.flock.wirespec.language.core.struct
+import community.flock.wirespec.language.core.union
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.fail
+import community.flock.wirespec.compiler.core.parse.ast.Enum as AstEnum
+import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
+import community.flock.wirespec.compiler.core.parse.ast.Union as AstUnion
+
+class LanguageConverterTest {
+
+    private inline fun <reified T> parse(source: String): T {
+        return object : ParseContext, NoLogger {
+            override val spec = WirespecSpec
+        }.parse(nonEmptyListOf(ModuleContent(FileUri("test.ws"), source)))
+            .map { it.modules.flatMap(Module::statements) }
+            .getOrElse { fail("Parse failed: $it") }
+            .first()
+            .let { it as? T ?: fail("Expected ${T::class.simpleName} but got ${it::class.simpleName}") }
+    }
+
+    private fun parseNodes(source: String): List<Definition> {
+        return object : ParseContext, NoLogger {
+            override val spec = WirespecSpec
+        }.parse(nonEmptyListOf(ModuleContent(FileUri("test.ws"), source)))
+            .map { it.modules.flatMap(Module::statements) }
+            .getOrElse { fail("Parse failed: $it") }
+    }
+
+    @Test
+    fun testLanguageConverter() {
+        val source = """
+            type Foo {
+                bar: String
+            }
+        """.trimIndent()
+
+        val result = parse<AstType>(source).convert()
+
+        val expected = struct("Foo") {
+            field("bar", string)
+        }
+
+        assertEquals(expected, result)
+    }
+
+    @Test
+    fun testEnumConversion() {
+        val source = """
+            enum MyEnum {
+                FOO, BAR
+            }
+        """.trimIndent()
+
+        val result = parse<AstEnum>(source).convert()
+
+        val expected = enum("MyEnum") {
+            option("FOO")
+            option("BAR")
+        }
+
+        assertEquals(expected, result)
+    }
+
+    @Test
+    fun testUnionConversion() {
+        val source = """
+            type MyUnion = Foo | Bar
+            type Foo { a: String }
+            type Bar { b: String }
+        """.trimIndent()
+
+        val result = parseNodes(source).map { it.convert() }
+
+        val expected = listOf(
+            union("MyUnion") {
+                member("Foo")
+                member("Bar")
+            },
+            struct("Foo", Type.Custom("MyUnion")) {
+                field("a", string)
+            },
+            struct("Bar", Type.Custom("MyUnion")) {
+                field("b", string)
+            }
+        )
+
+        assertEquals(expected, result)
+    }
+}

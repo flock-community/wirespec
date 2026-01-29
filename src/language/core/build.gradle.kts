@@ -5,13 +5,8 @@ plugins {
     alias(libs.plugins.kotest)
 }
 
-group = "${libs.versions.group.id.get()}.compiler.emitters"
+group = "${libs.versions.group.id.get()}.language.common"
 version = System.getenv(libs.versions.from.env.get()) ?: libs.versions.default.get()
-
-repositories {
-    mavenCentral()
-    mavenLocal()
-}
 
 kotlin {
     macosX64()
@@ -19,7 +14,6 @@ kotlin {
     linuxX64()
     js(IR) {
         nodejs()
-        useEsModules()
     }
     jvm {
         withJava()
@@ -39,16 +33,12 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api(project(":src:compiler:core"))
-                api(project(":src:language:converter"))
-                implementation(project(":src:language:core"))
+                implementation(libs.kotlinx.io.core)
             }
         }
         commonTest {
             dependencies {
                 implementation(libs.kotlin.test)
-                implementation(libs.bundles.kotest)
-                implementation(project(":src:compiler:test"))
             }
         }
     }
