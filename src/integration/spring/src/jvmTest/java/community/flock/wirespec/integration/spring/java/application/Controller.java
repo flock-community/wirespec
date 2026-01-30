@@ -84,6 +84,8 @@ public class Controller implements
                 new RequestParrot.Response200(
                         request.headers().XRequestID(),
                         request.headers().RanDoMHeADer(),
+                        request.queries().QueryParam(),
+                        request.queries().RanDoMQueRY(),
                         request.body())
         );
     }

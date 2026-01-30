@@ -59,6 +59,7 @@ kotlin {
                 implementation(libs.spring.boot.test)
                 implementation(libs.kotlin.junit)
                 implementation(libs.kotlinx.io.core)
+                implementation(libs.wiremock)
             }
         }
     }
