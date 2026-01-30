@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @RestController
-public class Controller implements 
+public class Controller implements
     AddPet.Handler,
     GetPetById.Handler,
     UpdatePet.Handler,
@@ -27,7 +27,7 @@ public class Controller implements
     @Override
     public CompletableFuture<AddPet.Response<?>> addPet(AddPet.Request request) {
         service.create(request.body());
-        return CompletableFuture.completedFuture(new AddPet.Response200(Optional.of(100), request.body()));
+        return CompletableFuture.completedFuture(new AddPet.Response200(Optional.of(100), Optional.of("correlation-id-3"), request.body()));
     }
 
     @Override

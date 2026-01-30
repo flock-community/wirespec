@@ -12,15 +12,18 @@ object AddPet : Wirespec.Endpoint {
 
   data object Queries : Wirespec.Queries
 
-  data object Headers : Wirespec.Request.Headers
+  data class Headers(
+    val XCorrelationID: String?,
+  ) : Wirespec.Request.Headers
 
   class Request(
+    XCorrelationID: String?,
     override val body: Pet,
   ) : Wirespec.Request<Pet> {
     override val path = Path
     override val method = Wirespec.Method.POST
     override val queries = Queries
-    override val headers = Headers
+    override val headers = Headers(XCorrelationID)
   }
 
   fun toRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
@@ -28,12 +31,13 @@ object AddPet : Wirespec.Endpoint {
       path = listOf("pet"),
       method = request.method.name,
       queries = emptyMap(),
-      headers = CaseInsensitiveMap(),
+      headers = ((mapOf("X-Correlation-ID" to (request.headers.XCorrelationID?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList())))).toCaseInsensitive(),
       body = serialization.serializeBody(request.body, typeOf<Pet>()),
     )
 
   fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
     Request(
+      XCorrelationID = request.headers["X-Correlation-ID"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) },
       body = serialization.deserializeBody(requireNotNull(request.body) { "body is null" }, typeOf<Pet>()),
     )
 
@@ -45,11 +49,12 @@ object AddPet : Wirespec.Endpoint {
   sealed interface ResponsePet : Response<Pet>
   sealed interface ResponseUnit : Response<Unit>
 
-  data class Response200(override val body: Pet, val XRateLimit: Int?) : Response2XX<Pet>, ResponsePet {
+  data class Response200(override val body: Pet, val XRateLimit: Int?, val XCorrelationID: String?) : Response2XX<Pet>, ResponsePet {
     override val status = 200
-    override val headers = ResponseHeaders(XRateLimit)
+    override val headers = ResponseHeaders(XRateLimit, XCorrelationID)
     data class ResponseHeaders(
       val XRateLimit: Int?,
+      val XCorrelationID: String?,
     ) : Wirespec.Response.Headers
   }
 
@@ -63,7 +68,7 @@ object AddPet : Wirespec.Endpoint {
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = ((mapOf("X-Rate-Limit" to (response.headers.XRateLimit?.let{ serialization.serializeParam(it, typeOf<Int?>()) } ?: emptyList())))).toCaseInsensitive(),
+        headers = ((mapOf("X-Rate-Limit" to (response.headers.XRateLimit?.let{ serialization.serializeParam(it, typeOf<Int?>()) } ?: emptyList()))) + (mapOf("X-Correlation-ID" to (response.headers.XCorrelationID?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList())))).toCaseInsensitive(),
         body = serialization.serializeBody(response.body, typeOf<Pet>()),
       )
       is Response405 -> Wirespec.RawResponse(
@@ -77,7 +82,8 @@ object AddPet : Wirespec.Endpoint {
     when (response.statusCode) {
       200 -> Response200(
         body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<Pet>()),
-        XRateLimit = response.headers["X-Rate-Limit"]?.let{ serialization.deserializeParam(it, typeOf<Int?>()) }
+        XRateLimit = response.headers["X-Rate-Limit"]?.let{ serialization.deserializeParam(it, typeOf<Int?>()) },
+        XCorrelationID = response.headers["X-Correlation-ID"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) }
       )
       405 -> Response405(
         body = Unit,

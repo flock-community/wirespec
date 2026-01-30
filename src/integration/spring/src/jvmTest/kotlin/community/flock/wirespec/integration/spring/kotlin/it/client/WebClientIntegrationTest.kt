@@ -16,13 +16,22 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.http.MediaType
+import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.awaitBodilessEntity
 import kotlin.test.Test
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, classes = [Application::class, WirespecPetstoreWebClient::class])
+@SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
+    classes = [Application::class, WirespecPetstoreWebClient::class],
+)
 @EnableConfigurationProperties
 class WebClientIntegrationTest {
     @Autowired
     lateinit var wirespecPetstoreWebClient: WirespecPetstoreWebClient
+
+    @Autowired
+    lateinit var webClient: WebClient
 
     @Test
     fun `CRUD WebClient integration test`(): Unit = runBlocking {
@@ -36,8 +45,8 @@ class WebClientIntegrationTest {
                 status = null,
             )
 
-        val addPetResponse = wirespecPetstoreWebClient.addPet(AddPet.Request(pet))
-        assertEquals(AddPet.Response200(pet, 200), addPetResponse)
+        val addPetResponse = wirespecPetstoreWebClient.addPet(AddPet.Request("correlation-id-3", pet))
+        assertEquals(AddPet.Response200(pet, 200, "CORRELATION-ID-3"), addPetResponse)
 
         val updatedPet = pet.copy(name = "Cat")
         val updatePetResponse = wirespecPetstoreWebClient.updatePet(UpdatePet.Request(updatedPet))
@@ -48,6 +57,27 @@ class WebClientIntegrationTest {
 
         val deletePetResponse = wirespecPetstoreWebClient.deletePet(DeletePet.Request(pet.id, null))
         assertEquals(DeletePet.Response400(Unit), deletePetResponse)
+    }
+
+    @Test
+    fun `case-insensitive headers`(): Unit = runBlocking {
+        val pet =
+            Pet(
+                id = 1,
+                name = "Dog",
+                photoUrls = listOf(),
+                category = null,
+                tags = null,
+                status = null,
+            )
+        val res = webClient.post()
+            .uri("/pet")
+            .contentType(MediaType.APPLICATION_JSON)
+            .header("x-cOrReLaTiOn-id", "abc")
+            .bodyValue(pet)
+            .retrieve()
+            .awaitBodilessEntity()
+        assertEquals("ABC", res.headers.mapKeys { (k, _) -> k.lowercase() }["x-correlation-id"]?.first())
     }
 
     @Test

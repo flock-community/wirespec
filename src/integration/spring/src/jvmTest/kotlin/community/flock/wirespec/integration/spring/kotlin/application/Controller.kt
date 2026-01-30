@@ -21,7 +21,7 @@ class Controller(
 
     override suspend fun addPet(request: AddPet.Request): AddPet.Response<*> {
         service.create(request.body)
-        return AddPet.Response200(request.body, 200)
+        return AddPet.Response200(request.body, 200, request.headers.XCorrelationID?.uppercase())
     }
 
     override suspend fun getPetById(request: GetPetById.Request): GetPetById.Response<*> = service.list.find { it.id == request.path.petId }

@@ -67,6 +67,8 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
+            |import io.ktor.util.CaseInsensitiveMap
+            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |data class UUID(override val value: String): Wirespec.Refined {
@@ -89,6 +91,8 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
+            |import io.ktor.util.CaseInsensitiveMap
+            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |enum class TodoStatus (override val label: String): Wirespec.Enum {
@@ -129,6 +133,8 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
+            |import io.ktor.util.CaseInsensitiveMap
+            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |enum class MyAwesomeEnum (override val label: String): Wirespec.Enum {
@@ -152,6 +158,8 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated.endpoint
             |
             |import community.flock.wirespec.kotlin.Wirespec
+            |import io.ktor.util.CaseInsensitiveMap
+            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |import community.flock.wirespec.generated.model.Token
@@ -192,7 +200,7 @@ class KotlinEmitterTest {
             |      path = listOf("todos", request.path.id.let{serialization.serializePath(it, typeOf<String>())}),
             |      method = request.method.name,
             |      queries = (mapOf("done" to (request.queries.done?.let{ serialization.serializeParam(it, typeOf<Boolean>()) } ?: emptyList()))) + (mapOf("name" to (request.queries.name?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
-            |      headers = (mapOf("token" to (request.headers.token?.let{ serialization.serializeParam(it, typeOf<Token>()) } ?: emptyList()))) + (mapOf("Refresh-Token" to (request.headers.RefreshToken?.let{ serialization.serializeParam(it, typeOf<Token?>()) } ?: emptyList()))),
+            |      headers = ((mapOf("token" to (request.headers.token?.let{ serialization.serializeParam(it, typeOf<Token>()) } ?: emptyList()))) + (mapOf("Refresh-Token" to (request.headers.RefreshToken?.let{ serialization.serializeParam(it, typeOf<Token?>()) } ?: emptyList())))).toCaseInsensitive(),
             |      body = serialization.serializeBody(request.body, typeOf<PotentialTodoDto>()),
             |    )
             |
@@ -237,17 +245,17 @@ class KotlinEmitterTest {
             |    when(response) {
             |      is Response200 -> Wirespec.RawResponse(
             |        statusCode = response.status,
-            |        headers = emptyMap(),
+            |        headers = CaseInsensitiveMap(),
             |        body = serialization.serializeBody(response.body, typeOf<TodoDto>()),
             |      )
             |      is Response201 -> Wirespec.RawResponse(
             |        statusCode = response.status,
-            |        headers = (mapOf("token" to (response.headers.token?.let{ serialization.serializeParam(it, typeOf<Token>()) } ?: emptyList()))) + (mapOf("refreshToken" to (response.headers.refreshToken?.let{ serialization.serializeParam(it, typeOf<Token?>()) } ?: emptyList()))),
+            |        headers = ((mapOf("token" to (response.headers.token?.let{ serialization.serializeParam(it, typeOf<Token>()) } ?: emptyList()))) + (mapOf("refreshToken" to (response.headers.refreshToken?.let{ serialization.serializeParam(it, typeOf<Token?>()) } ?: emptyList())))).toCaseInsensitive(),
             |        body = serialization.serializeBody(response.body, typeOf<TodoDto>()),
             |      )
             |      is Response500 -> Wirespec.RawResponse(
             |        statusCode = response.status,
-            |        headers = emptyMap(),
+            |        headers = CaseInsensitiveMap(),
             |        body = serialization.serializeBody(response.body, typeOf<Error>()),
             |      )
             |    }
@@ -288,6 +296,8 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
+            |import io.ktor.util.CaseInsensitiveMap
+            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |data class PotentialTodoDto(
@@ -298,6 +308,8 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
+            |import io.ktor.util.CaseInsensitiveMap
+            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |data class Token(
@@ -307,6 +319,8 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
+            |import io.ktor.util.CaseInsensitiveMap
+            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |data class TodoDto(
@@ -318,6 +332,8 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
+            |import io.ktor.util.CaseInsensitiveMap
+            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |data class Error(
@@ -336,6 +352,8 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated.endpoint
             |
             |import community.flock.wirespec.kotlin.Wirespec
+            |import io.ktor.util.CaseInsensitiveMap
+            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |import community.flock.wirespec.generated.model.TodoDto
@@ -360,7 +378,7 @@ class KotlinEmitterTest {
             |      path = listOf("todos"),
             |      method = request.method.name,
             |      queries = emptyMap(),
-            |      headers = emptyMap(),
+            |      headers = CaseInsensitiveMap(),
             |      body = null,
             |    )
             |
@@ -383,7 +401,7 @@ class KotlinEmitterTest {
             |    when(response) {
             |      is Response200 -> Wirespec.RawResponse(
             |        statusCode = response.status,
-            |        headers = emptyMap(),
+            |        headers = CaseInsensitiveMap(),
             |        body = serialization.serializeBody(response.body, typeOf<List<TodoDto>>()),
             |      )
             |    }
@@ -416,6 +434,8 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
+            |import io.ktor.util.CaseInsensitiveMap
+            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |data class TodoDto(
@@ -433,6 +453,8 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
+            |import io.ktor.util.CaseInsensitiveMap
+            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |data class TodoId(override val value: String): Wirespec.Refined {
