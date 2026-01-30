@@ -7,7 +7,6 @@ import io.ktor.util.CaseInsensitiveMap
 import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
-import org.springframework.util.CollectionUtils.toMultiValueMap
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono

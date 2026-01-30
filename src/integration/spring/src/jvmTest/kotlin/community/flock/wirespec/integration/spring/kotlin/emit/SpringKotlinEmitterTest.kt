@@ -36,6 +36,8 @@ class SpringKotlinEmitterTest {
             |package community.flock.wirespec.spring.test.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
+            |import io.ktor.util.CaseInsensitiveMap
+            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |data class TodoId(override val value: String): Wirespec.Refined {
@@ -47,6 +49,8 @@ class SpringKotlinEmitterTest {
             |package community.flock.wirespec.spring.test.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
+            |import io.ktor.util.CaseInsensitiveMap
+            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |data class TodoDto(
@@ -58,6 +62,8 @@ class SpringKotlinEmitterTest {
             |package community.flock.wirespec.spring.test.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
+            |import io.ktor.util.CaseInsensitiveMap
+            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |data class TodoDtoPatch(
@@ -68,6 +74,8 @@ class SpringKotlinEmitterTest {
             |package community.flock.wirespec.spring.test.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
+            |import io.ktor.util.CaseInsensitiveMap
+            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |data class Error(
@@ -78,6 +86,8 @@ class SpringKotlinEmitterTest {
             |package community.flock.wirespec.spring.test.endpoint
             |
             |import community.flock.wirespec.kotlin.Wirespec
+            |import io.ktor.util.CaseInsensitiveMap
+            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |import community.flock.wirespec.spring.test.model.TodoDto
@@ -107,7 +117,7 @@ class SpringKotlinEmitterTest {
             |      path = listOf("api", "todos"),
             |      method = request.method.name,
             |      queries = (mapOf("done" to (request.queries.done?.let{ serialization.serializeParam(it, typeOf<Boolean?>()) } ?: emptyList()))),
-            |      headers = emptyMap(),
+            |      headers = CaseInsensitiveMap(),
             |      body = null,
             |    )
             |
@@ -142,12 +152,12 @@ class SpringKotlinEmitterTest {
             |    when(response) {
             |      is Response200 -> Wirespec.RawResponse(
             |        statusCode = response.status,
-            |        headers = (mapOf("total" to (response.headers.total?.let{ serialization.serializeParam(it, typeOf<Long>()) } ?: emptyList()))),
+            |        headers = ((mapOf("total" to (response.headers.total?.let{ serialization.serializeParam(it, typeOf<Long>()) } ?: emptyList())))).toCaseInsensitive(),
             |        body = serialization.serializeBody(response.body, typeOf<List<TodoDto>>()),
             |      )
             |      is Response500 -> Wirespec.RawResponse(
             |        statusCode = response.status,
-            |        headers = emptyMap(),
+            |        headers = CaseInsensitiveMap(),
             |        body = serialization.serializeBody(response.body, typeOf<Error>()),
             |      )
             |    }
@@ -186,6 +196,8 @@ class SpringKotlinEmitterTest {
             |package community.flock.wirespec.spring.test.endpoint
             |
             |import community.flock.wirespec.kotlin.Wirespec
+            |import io.ktor.util.CaseInsensitiveMap
+            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |import community.flock.wirespec.spring.test.model.TodoDtoPatch
@@ -216,7 +228,7 @@ class SpringKotlinEmitterTest {
             |      path = listOf("api", "todos", request.path.id.let{serialization.serializePath(it, typeOf<String>())}),
             |      method = request.method.name,
             |      queries = emptyMap(),
-            |      headers = emptyMap(),
+            |      headers = CaseInsensitiveMap(),
             |      body = serialization.serializeBody(request.body, typeOf<TodoDtoPatch>()),
             |    )
             |
@@ -250,12 +262,12 @@ class SpringKotlinEmitterTest {
             |    when(response) {
             |      is Response200 -> Wirespec.RawResponse(
             |        statusCode = response.status,
-            |        headers = emptyMap(),
+            |        headers = CaseInsensitiveMap(),
             |        body = serialization.serializeBody(response.body, typeOf<TodoDto>()),
             |      )
             |      is Response500 -> Wirespec.RawResponse(
             |        statusCode = response.status,
-            |        headers = emptyMap(),
+            |        headers = CaseInsensitiveMap(),
             |        body = serialization.serializeBody(response.body, typeOf<Error>()),
             |      )
             |    }

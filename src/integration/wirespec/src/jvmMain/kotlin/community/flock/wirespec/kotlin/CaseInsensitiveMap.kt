@@ -63,7 +63,7 @@ public class CaseInsensitiveMap<Value : Any> : MutableMap<String, Value> {
     companion object {
         fun <V : Any> fromMap(m: Map<String, V>) = CaseInsensitiveMap<V>().apply { putAll(m) }
 
-        fun <V : Any> Map<String, V>.toCaseInsensitive() = CaseInsensitiveMap<V>().apply { putAll(this) }
+        fun <V : Any> Map<String, V>.toCaseInsensitive() = CaseInsensitiveMap<V>().also { it.putAll(this) }
     }
 }
 
