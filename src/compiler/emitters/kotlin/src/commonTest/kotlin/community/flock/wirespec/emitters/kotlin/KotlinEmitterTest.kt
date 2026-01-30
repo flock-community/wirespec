@@ -67,8 +67,8 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
-            |import io.ktor.util.CaseInsensitiveMap
-            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
+            |import community.flock.wirespec.kotlin.util.CaseInsensitiveMap
+            |import community.flock.wirespec.kotlin.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |data class UUID(override val value: String): Wirespec.Refined {
@@ -91,8 +91,8 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
-            |import io.ktor.util.CaseInsensitiveMap
-            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
+            |import community.flock.wirespec.kotlin.util.CaseInsensitiveMap
+            |import community.flock.wirespec.kotlin.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |enum class TodoStatus (override val label: String): Wirespec.Enum {
@@ -133,8 +133,8 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
-            |import io.ktor.util.CaseInsensitiveMap
-            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
+            |import community.flock.wirespec.kotlin.util.CaseInsensitiveMap
+            |import community.flock.wirespec.kotlin.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |enum class MyAwesomeEnum (override val label: String): Wirespec.Enum {
@@ -158,8 +158,8 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated.endpoint
             |
             |import community.flock.wirespec.kotlin.Wirespec
-            |import io.ktor.util.CaseInsensitiveMap
-            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
+            |import community.flock.wirespec.kotlin.util.CaseInsensitiveMap
+            |import community.flock.wirespec.kotlin.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |import community.flock.wirespec.generated.model.Token
@@ -296,8 +296,8 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
-            |import io.ktor.util.CaseInsensitiveMap
-            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
+            |import community.flock.wirespec.kotlin.util.CaseInsensitiveMap
+            |import community.flock.wirespec.kotlin.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |data class PotentialTodoDto(
@@ -308,8 +308,8 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
-            |import io.ktor.util.CaseInsensitiveMap
-            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
+            |import community.flock.wirespec.kotlin.util.CaseInsensitiveMap
+            |import community.flock.wirespec.kotlin.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |data class Token(
@@ -319,8 +319,8 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
-            |import io.ktor.util.CaseInsensitiveMap
-            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
+            |import community.flock.wirespec.kotlin.util.CaseInsensitiveMap
+            |import community.flock.wirespec.kotlin.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |data class TodoDto(
@@ -332,8 +332,8 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
-            |import io.ktor.util.CaseInsensitiveMap
-            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
+            |import community.flock.wirespec.kotlin.util.CaseInsensitiveMap
+            |import community.flock.wirespec.kotlin.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |data class Error(
@@ -352,8 +352,8 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated.endpoint
             |
             |import community.flock.wirespec.kotlin.Wirespec
-            |import io.ktor.util.CaseInsensitiveMap
-            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
+            |import community.flock.wirespec.kotlin.util.CaseInsensitiveMap
+            |import community.flock.wirespec.kotlin.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |import community.flock.wirespec.generated.model.TodoDto
@@ -434,8 +434,8 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
-            |import io.ktor.util.CaseInsensitiveMap
-            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
+            |import community.flock.wirespec.kotlin.util.CaseInsensitiveMap
+            |import community.flock.wirespec.kotlin.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |data class TodoDto(
@@ -453,8 +453,8 @@ class KotlinEmitterTest {
             |package community.flock.wirespec.generated.model
             |
             |import community.flock.wirespec.kotlin.Wirespec
-            |import io.ktor.util.CaseInsensitiveMap
-            |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
+            |import community.flock.wirespec.kotlin.util.CaseInsensitiveMap
+            |import community.flock.wirespec.kotlin.util.CaseInsensitiveMap.Companion.toCaseInsensitive
             |import kotlin.reflect.typeOf
             |
             |data class TodoId(override val value: String): Wirespec.Refined {

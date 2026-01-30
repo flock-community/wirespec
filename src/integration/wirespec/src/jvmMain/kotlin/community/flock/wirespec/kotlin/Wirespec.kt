@@ -1,6 +1,6 @@
 package community.flock.wirespec.kotlin
 
-import io.ktor.util.CaseInsensitiveMap
+import community.flock.wirespec.kotlin.util.CaseInsensitiveMap
 import kotlin.reflect.KType
 
 object Wirespec {

@@ -3,7 +3,7 @@ package community.flock.wirespec.integration.spring.kotlin.client
 import community.flock.wirespec.integration.spring.shared.filterNotEmpty
 import community.flock.wirespec.kotlin.Wirespec
 import community.flock.wirespec.kotlin.Wirespec.Serialization
-import io.ktor.util.CaseInsensitiveMap
+import community.flock.wirespec.kotlin.util.CaseInsensitiveMap
 import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType

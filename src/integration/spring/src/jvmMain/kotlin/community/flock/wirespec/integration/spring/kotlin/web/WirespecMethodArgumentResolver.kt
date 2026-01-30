@@ -4,7 +4,7 @@ import community.flock.wirespec.integration.spring.kotlin.configuration.Wirespec
 import community.flock.wirespec.integration.spring.shared.extractPath
 import community.flock.wirespec.integration.spring.shared.extractQueries
 import community.flock.wirespec.kotlin.Wirespec
-import io.ktor.util.CaseInsensitiveMap
+import community.flock.wirespec.kotlin.util.CaseInsensitiveMap
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.core.MethodParameter
 import org.springframework.http.MediaType

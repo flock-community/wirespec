@@ -2,15 +2,10 @@
 * Copyright 2014-2021 JetBrains s.r.o and contributors. Use of this source code is governed by the Apache 2.0 license.
 */
 
-package io.ktor.util
-
-import community.flock.wirespec.kotlin.CaseInsensitiveString
-import community.flock.wirespec.kotlin.caseInsensitive
+package community.flock.wirespec.kotlin.util
 
 /**
  * A map with case-insensitive [String] keys
- *
- * [Report a problem](https://ktor.io/feedback/?fqname=io.ktor.util.CaseInsensitiveMap)
  */
 public class CaseInsensitiveMap<Value : Any> : MutableMap<String, Value> {
     private val delegate = mutableMapOf<CaseInsensitiveString, Value>()
