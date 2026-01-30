@@ -41,14 +41,14 @@ public class CaseInsensitiveMap<Value : Any> : MutableMap<String, Value> {
         get() = DelegatingMutableSet(
             delegate.keys,
             { content },
-            { caseInsensitive() }
+            { caseInsensitive() },
         )
 
     override val entries: MutableSet<MutableMap.MutableEntry<String, Value>>
         get() = DelegatingMutableSet(
             delegate.entries,
             { Entry(key.content, value) },
-            { Entry(key.caseInsensitive(), value) }
+            { Entry(key.caseInsensitive(), value) },
         )
 
     override val values: MutableCollection<Value> get() = delegate.values
@@ -69,7 +69,7 @@ public class CaseInsensitiveMap<Value : Any> : MutableMap<String, Value> {
 
 private class Entry<Key, Value>(
     override val key: Key,
-    override var value: Value
+    override var value: Value,
 ) : MutableMap.MutableEntry<Key, Value> {
 
     override fun setValue(newValue: Value): Value {

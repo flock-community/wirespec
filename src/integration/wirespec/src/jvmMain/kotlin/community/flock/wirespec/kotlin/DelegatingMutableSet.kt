@@ -7,7 +7,7 @@ package io.ktor.util
 internal open class DelegatingMutableSet<From, To>(
     private val delegate: MutableSet<From>,
     private val convertTo: From.() -> To,
-    private val convert: To.() -> From
+    private val convert: To.() -> From,
 ) : MutableSet<To> {
 
     open fun Collection<To>.convert(): Collection<From> = map { it.convert() }
