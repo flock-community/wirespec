@@ -46,7 +46,6 @@ class QueryParamCaseSensitivityTest {
                 .bodyValue(body)
                 .exchange()
 
-
         result.expectStatus().isOk
 
         if (shouldSucceed) {

@@ -12,9 +12,6 @@ import org.springframework.context.annotation.Import
 @Configuration
 @Import(WirespecResponseBodyAdvice::class, WirespecWebMvcConfiguration::class)
 open class WirespecSerializationConfiguration {
-    init {
-        println("WirespecSerializationConfiguration")
-    }
 
     @Bean
     open fun queryParamSerde() = DefaultParamSerialization()

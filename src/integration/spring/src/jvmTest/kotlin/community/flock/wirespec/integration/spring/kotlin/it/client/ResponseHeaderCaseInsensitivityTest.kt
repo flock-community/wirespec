@@ -70,8 +70,8 @@ class ResponseHeaderCaseInsensitivityTest {
                         .withHeader(randomQueryParrotHeader, "{{request.query.RanDoMQueRY}}")
                         .withHeader("Content-Type", "application/json")
                         .withBody(responseBody)
-                        .withTransformers("response-template")
-                )
+                        .withTransformers("response-template"),
+                ),
         )
 
         val request = RequestParrot.Request(
@@ -79,7 +79,7 @@ class ResponseHeaderCaseInsensitivityTest {
             RanDoMQueRY = "test-random",
             XRequestID = "request-123",
             RanDoMHeADer = "header-456",
-            body = RequestBodyParrot(number = 1, string = "test")
+            body = RequestBodyParrot(number = 1, string = "test"),
         )
 
         val response = wirespecWebClient.send<RequestParrot.Request, RequestParrot.Response<*>>(request)
@@ -116,8 +116,7 @@ class ResponseHeaderCaseInsensitivityTest {
 }
 
 @TestConfiguration
-open class TestConfig(
-) {
+open class TestConfig {
 
     @Bean
     @Primary

@@ -58,7 +58,7 @@ public interface UploadFile extends Wirespec.Endpoint {
     static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
       return new Request(
         serialization.deserializePath(request.path().get(1), Wirespec.getType(Long.class, null)),
-        serialization.deserializeParam(request.queries().getOrDefault("additionalMetadata", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
+        serialization.<java.util.Optional<String>>deserializeParam(request.queries().getOrDefault("additionalMetadata", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
         serialization.deserializeBody(request.body(), Wirespec.getType(UploadFileRequestBody.class, null))
       );
     }

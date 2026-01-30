@@ -10,8 +10,7 @@ import org.springframework.web.context.WebApplicationContext
 open class WebTestClientConfig {
 
     @Bean
-    open fun webTestClient(context: WebApplicationContext): WebTestClient =
-        MockMvcWebTestClient
-            .bindToApplicationContext(context)
-            .build()
+    open fun webTestClient(context: WebApplicationContext): WebTestClient = MockMvcWebTestClient
+        .bindToApplicationContext(context)
+        .build()
 }

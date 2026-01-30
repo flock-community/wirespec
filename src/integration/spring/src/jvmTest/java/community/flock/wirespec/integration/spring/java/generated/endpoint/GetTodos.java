@@ -69,12 +69,12 @@ public interface GetTodos extends Wirespec.Endpoint {
 
     static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
       return new Request(
-        serialization.deserializeParam(request.queries().getOrDefault("done", java.util.Collections.emptyList()), Wirespec.getType(Boolean.class, java.util.Optional.class))
+        serialization.<java.util.Optional<Boolean>>deserializeParam(request.queries().getOrDefault("done", java.util.Collections.emptyList()), Wirespec.getType(Boolean.class, java.util.Optional.class))
       );
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Map.ofEntries(java.util.Map.entry("total", serialization.serializeParam(r.headers().total(), Wirespec.getType(Long.class, null)))), serialization.serializeBody(r.body, Wirespec.getType(TodoDto.class, java.util.List.class))); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Map.ofEntries(java.util.Map.entry("total", serialization.<Long>serializeParam(r.headers().total(), Wirespec.getType(Long.class, null)))), serialization.serializeBody(r.body, Wirespec.getType(TodoDto.class, java.util.List.class))); }
       if (response instanceof Response500 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(Error.class, null))); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
@@ -82,7 +82,7 @@ public interface GetTodos extends Wirespec.Endpoint {
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
       switch (response.statusCode()) {
         case 200: return new Response200(
-        serialization.deserializeParam(response.headers().getOrDefault("total", java.util.Collections.emptyList()), Wirespec.getType(Long.class, null)),
+        serialization.<Long>deserializeParam(response.headers().getOrDefault("total", java.util.Collections.emptyList()), Wirespec.getType(Long.class, null)),
         serialization.deserializeBody(response.body(), Wirespec.getType(TodoDto.class, java.util.List.class))
       );
         case 500: return new Response500(
