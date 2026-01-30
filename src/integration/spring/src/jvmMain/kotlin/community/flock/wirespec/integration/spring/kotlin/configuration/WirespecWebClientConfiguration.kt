@@ -23,6 +23,11 @@ import org.springframework.web.reactive.function.client.WebClient
 open class WirespecWebClientConfiguration(
     val serialization: Wirespec.Serialization,
 ) {
+    init {
+        println("Initializing WirespecWebClientConfiguration")
+    }
+
+
     private val log: Logger = getLogger(javaClass)
 
     @Bean("wirespecSpringWebClient")

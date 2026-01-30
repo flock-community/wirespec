@@ -8,11 +8,14 @@ import community.flock.wirespec.integration.spring.java.generated.model.Error;
 public interface RequestParrot extends Wirespec.Endpoint {
   static class Path implements Wirespec.Path {}
 
-  static class Queries implements Wirespec.Queries {}
+  public record Queries(
+    java.util.Optional<String> QueryParam,
+    java.util.Optional<String> RanDoMQueRY
+  ) implements Wirespec.Queries {}
 
   public record RequestHeaders(
-    String XRequestID,
-    String RanDoMHeADer
+    java.util.Optional<String> XRequestID,
+    java.util.Optional<String> RanDoMHeADer
   ) implements Wirespec.Request.Headers {}
 
   record Request (
@@ -22,8 +25,8 @@ public interface RequestParrot extends Wirespec.Endpoint {
     RequestHeaders headers,
     RequestBodyParrot body
   ) implements Wirespec.Request<RequestBodyParrot> {
-    public Request(String XRequestID, String RanDoMHeADer, RequestBodyParrot body) {
-      this(new Path(), Wirespec.Method.POST, new Queries(), new RequestHeaders(XRequestID, RanDoMHeADer), body);
+    public Request(java.util.Optional<String> QueryParam, java.util.Optional<String> RanDoMQueRY, java.util.Optional<String> XRequestID, java.util.Optional<String> RanDoMHeADer, RequestBodyParrot body) {
+      this(new Path(), Wirespec.Method.POST, new Queries(QueryParam, RanDoMQueRY), new RequestHeaders(XRequestID, RanDoMHeADer), body);
     }
   }
 
@@ -38,12 +41,14 @@ public interface RequestParrot extends Wirespec.Endpoint {
     Headers headers,
     RequestBodyParrot body
   ) implements Response2XX<RequestBodyParrot>, ResponseRequestBodyParrot {
-    public Response200(String XRequestID, String RanDoMHeADer, RequestBodyParrot body) {
-      this(200, new Headers(XRequestID, RanDoMHeADer), body);
+    public Response200(java.util.Optional<String> XRequestID, java.util.Optional<String> RanDoMHeADer, java.util.Optional<String> QueryParamParrot, java.util.Optional<String> RanDoMQueRYParrot, RequestBodyParrot body) {
+      this(200, new Headers(XRequestID, RanDoMHeADer, QueryParamParrot, RanDoMQueRYParrot), body);
     }
     public record Headers(
-    String XRequestID,
-    String RanDoMHeADer
+    java.util.Optional<String> XRequestID,
+    java.util.Optional<String> RanDoMHeADer,
+    java.util.Optional<String> QueryParamParrot,
+    java.util.Optional<String> RanDoMQueRYParrot
   ) implements Wirespec.Response.Headers {}
   }
   record Response500(
@@ -63,22 +68,24 @@ public interface RequestParrot extends Wirespec.Endpoint {
       return new Wirespec.RawRequest(
         request.method().name(),
         java.util.List.of("api", "parrot"),
-        java.util.Collections.emptyMap(),
-        java.util.Map.ofEntries(java.util.Map.entry("x-request-id", serialization.serializeParam(request.headers().XRequestID(), Wirespec.getType(String.class, null))), java.util.Map.entry("randomheader", serialization.serializeParam(request.headers().RanDoMHeADer(), Wirespec.getType(String.class, null)))),
+        java.util.Map.ofEntries(java.util.Map.entry("Query-Param", serialization.serializeParam(request.queries().QueryParam(), Wirespec.getType(String.class, java.util.Optional.class))), java.util.Map.entry("RanDoMQueRY", serialization.serializeParam(request.queries().RanDoMQueRY(), Wirespec.getType(String.class, java.util.Optional.class)))),
+        java.util.Map.ofEntries(java.util.Map.entry("x-request-id", serialization.serializeParam(request.headers().XRequestID(), Wirespec.getType(String.class, java.util.Optional.class))), java.util.Map.entry("randomheader", serialization.serializeParam(request.headers().RanDoMHeADer(), Wirespec.getType(String.class, java.util.Optional.class)))),
         serialization.serializeBody(request.body(), Wirespec.getType(RequestBodyParrot.class, null))
       );
     }
 
     static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
       return new Request(
-        serialization.deserializeParam(request.headers().getOrDefault("x-request-id", java.util.Collections.emptyList()), Wirespec.getType(String.class, null)),
-        serialization.deserializeParam(request.headers().getOrDefault("randomheader", java.util.Collections.emptyList()), Wirespec.getType(String.class, null)),
+        serialization.deserializeParam(request.queries().getOrDefault("Query-Param", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
+        serialization.deserializeParam(request.queries().getOrDefault("RanDoMQueRY", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
+        serialization.deserializeParam(request.headers().getOrDefault("x-request-id", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
+        serialization.deserializeParam(request.headers().getOrDefault("randomheader", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
         serialization.deserializeBody(request.body(), Wirespec.getType(RequestBodyParrot.class, null))
       );
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Map.ofEntries(java.util.Map.entry("x-request-id", serialization.serializeParam(r.headers().XRequestID(), Wirespec.getType(String.class, null))), java.util.Map.entry("randomheader", serialization.serializeParam(r.headers().RanDoMHeADer(), Wirespec.getType(String.class, null)))), serialization.serializeBody(r.body, Wirespec.getType(RequestBodyParrot.class, null))); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Map.ofEntries(java.util.Map.entry("x-request-id", serialization.serializeParam(r.headers().XRequestID(), Wirespec.getType(String.class, java.util.Optional.class))), java.util.Map.entry("randomheader", serialization.serializeParam(r.headers().RanDoMHeADer(), Wirespec.getType(String.class, java.util.Optional.class))), java.util.Map.entry("query-param-parrot", serialization.serializeParam(r.headers().QueryParamParrot(), Wirespec.getType(String.class, java.util.Optional.class))), java.util.Map.entry("randomqueryparrot", serialization.serializeParam(r.headers().RanDoMQueRYParrot(), Wirespec.getType(String.class, java.util.Optional.class)))), serialization.serializeBody(r.body, Wirespec.getType(RequestBodyParrot.class, null))); }
       if (response instanceof Response500 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(Error.class, null))); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
@@ -86,8 +93,10 @@ public interface RequestParrot extends Wirespec.Endpoint {
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
       switch (response.statusCode()) {
         case 200: return new Response200(
-        serialization.deserializeParam(response.headers().getOrDefault("x-request-id", java.util.Collections.emptyList()), Wirespec.getType(String.class, null)),
-        serialization.deserializeParam(response.headers().getOrDefault("randomheader", java.util.Collections.emptyList()), Wirespec.getType(String.class, null)),
+        serialization.deserializeParam(response.headers().getOrDefault("x-request-id", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
+        serialization.deserializeParam(response.headers().getOrDefault("randomheader", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
+        serialization.deserializeParam(response.headers().getOrDefault("query-param-parrot", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
+        serialization.deserializeParam(response.headers().getOrDefault("randomqueryparrot", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
         serialization.deserializeBody(response.body(), Wirespec.getType(RequestBodyParrot.class, null))
       );
         case 500: return new Response500(
