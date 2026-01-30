@@ -201,6 +201,58 @@ we can access it like so:
 Long id = request.getPath().id();
 ```
 
+### HTTP Header Case Insensitivity
+
+The Spring integration adheres to **RFC 7230**, which specifies that HTTP header names are case-insensitive. This means:
+
+- **Request headers**: Incoming headers can be sent with any casing (e.g., `Content-Type`, `content-type`, `CONTENT-TYPE`) and will be correctly mapped to your Wirespec definition
+- **Response headers**: Outgoing headers are sent as defined in your Wirespec specification, but clients can read them case-insensitively
+
+For example, if your Wirespec definition includes a header `X-Request-ID`:
+
+```wirespec
+endpoint GetData GET /api/data #{ `X-Request-ID`: String } -> {
+    200 -> DataType #{ `X-Response-ID`: String }
+}
+```
+
+The handler can receive the request header regardless of how the client sends it (`X-Request-ID`, `x-request-id`, `X-REQUEST-ID`, etc.):
+
+```java
+@RestController
+class DataController implements GetData.Handler {
+    @Override
+    public CompletableFuture<GetData.Response<?>> getData(GetData.Request request) {
+        // Works with any casing of the header sent by the client
+        String requestId = request.getHeaders().XRequestID();
+        return completedFuture(new GetData.Response200(data, requestId));
+    }
+}
+```
+
+### Query Parameter Case Sensitivity
+
+Unlike HTTP headers, **query parameters are case-sensitive** as specified by **RFC 3986**. This means:
+
+- Query parameter names must match the exact casing defined in your Wirespec specification
+- `?status=active` is different from `?Status=active` or `?STATUS=active`
+
+For example, with this Wirespec definition:
+
+```wirespec
+endpoint GetTodos GET /api/todos ?{ done: Boolean? } -> {
+    200 -> TodoDto[]
+}
+```
+
+The query parameter must be sent exactly as `done`:
+
+```bash
+curl http://localhost:8080/api/todos?done=true  # ✓ Correct
+curl http://localhost:8080/api/todos?Done=true  # ✗ Will not match
+curl http://localhost:8080/api/todos?DONE=true  # ✗ Will not match
+```
+
 ## WebClient
 
 To enable the WebClient integration you can simply add the `@EnableWirespecWebClient` annotation to your application's
@@ -283,6 +335,13 @@ public class TodoService {
     }
 }
 ```
+
+:::info RFC 7230 Compliance
+
+The WebClient also adheres to RFC 7230 for case-insensitive header handling. Response headers from upstream services
+are processed case-insensitively, so you can access them reliably regardless of the casing used by the server.
+
+:::
 
 ## Handling Multipart Requests
 
