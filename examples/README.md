@@ -4,6 +4,8 @@ Here you can find examples of how to use:
 
 * [The Gradle Plugin](gradle-ktor/README.md)
 * [The Maven Plugin](maven-spring-compile/README.md)
+* [The NPM/TypeScript Plugin](npm-typescript/README.md)
+* [The Python CLI](python-todo/README.md)
 * [And convert an OpenAPI Specification](maven-spring-convert/README.md)
 * [A custom Emitter](maven-spring-custom/README.md)
 * [The Spring integration](../../src/integration/spring/README.md)
