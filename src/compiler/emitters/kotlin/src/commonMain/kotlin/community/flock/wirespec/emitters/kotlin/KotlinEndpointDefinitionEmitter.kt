@@ -145,13 +145,13 @@ interface KotlinEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackage
         "${Spacer(3)})"
     ).joinToString("\n")
 
-    private fun Field.emitSerializedParams(type: String, fields: String, isCaseSensitve: Boolean = true) =
+    private fun Field.emitSerializedParams(type: String, fields: String) =
         """mapOf("${identifier.value}" to ($type.$fields.${emit(identifier)}?.let{ serialization.serializeParam(it, typeOf<${reference.emit()}>()) } ?: emptyList()))"""
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
         """${Spacer(3)}${emit(value.identifier)} = serialization.deserializePath(request.path[${index}], typeOf<${value.reference.emit()}>())"""
 
-    private fun Field.emitDeserializedParams(type: String, fields: String, spaces: Int = 3, isCaseSensitive: Boolean = true) =
+    private fun Field.emitDeserializedParams(type: String, fields: String, spaces: Int = 3) =
         if (reference.isNullable)
             """${Spacer(spaces)}${emit(identifier)} = $type.$fields["${identifier.value}"]?.let{ serialization.deserializeParam(it, typeOf<${reference.emit()}>()) }"""
         else
