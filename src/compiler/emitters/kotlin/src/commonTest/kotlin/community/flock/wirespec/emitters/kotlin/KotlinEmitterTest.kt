@@ -198,7 +198,7 @@ class KotlinEmitterTest {
             |      path = listOf("todos", request.path.id.let{serialization.serializePath(it, typeOf<String>())}),
             |      method = request.method.name,
             |      queries = (mapOf("done" to (request.queries.done?.let{ serialization.serializeParam(it, typeOf<Boolean>()) } ?: emptyList()))) + (mapOf("name" to (request.queries.name?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
-            |      headers = (mapOf("token" to (request.headers.token?.let{ serialization.serializeParam(it, typeOf<Token>()) } ?: emptyList()))) + (mapOf("Refresh-Token" to (request.headers.RefreshToken?.let{ serialization.serializeParam(it, typeOf<Token?>()) } ?: emptyList()))),
+            |      headers = (mapOf("token" to (request.headers.token?.let{ serialization.serializeParam(it, typeOf<Token>()) } ?: emptyList()))) + (mapOf("refresh-token" to (request.headers.RefreshToken?.let{ serialization.serializeParam(it, typeOf<Token?>()) } ?: emptyList()))),
             |      body = serialization.serializeBody(request.body, typeOf<PotentialTodoDto>()),
             |    )
             |
@@ -206,7 +206,7 @@ class KotlinEmitterTest {
             |    Request(
             |      id = serialization.deserializePath(request.path[1], typeOf<String>()),
             |      done = serialization.deserializeParam(requireNotNull(request.queries["done"]) { "done is null" }, typeOf<Boolean>()),       name = request.queries["name"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) },
-            |      token = serialization.deserializeParam(requireNotNull(request.headers["token"]) { "token is null" }, typeOf<Token>()),       RefreshToken = request.headers["Refresh-Token"]?.let{ serialization.deserializeParam(it, typeOf<Token?>()) },
+            |      token = serialization.deserializeParam(requireNotNull(request.headers["token"]) { "token is null" }, typeOf<Token>()),       RefreshToken = request.headers["refresh-token"]?.let{ serialization.deserializeParam(it, typeOf<Token?>()) },
             |      body = serialization.deserializeBody(requireNotNull(request.body) { "body is null" }, typeOf<PotentialTodoDto>()),
             |    )
             |
@@ -248,7 +248,7 @@ class KotlinEmitterTest {
             |      )
             |      is Response201 -> Wirespec.RawResponse(
             |        statusCode = response.status,
-            |        headers = (mapOf("token" to (response.headers.token?.let{ serialization.serializeParam(it, typeOf<Token>()) } ?: emptyList()))) + (mapOf("refreshToken" to (response.headers.refreshToken?.let{ serialization.serializeParam(it, typeOf<Token?>()) } ?: emptyList()))),
+            |        headers = (mapOf("token" to (response.headers.token?.let{ serialization.serializeParam(it, typeOf<Token>()) } ?: emptyList()))) + (mapOf("refreshtoken" to (response.headers.refreshToken?.let{ serialization.serializeParam(it, typeOf<Token?>()) } ?: emptyList()))),
             |        body = serialization.serializeBody(response.body, typeOf<TodoDto>()),
             |      )
             |      is Response500 -> Wirespec.RawResponse(
@@ -266,7 +266,7 @@ class KotlinEmitterTest {
             |      201 -> Response201(
             |        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<TodoDto>()),
             |        token = serialization.deserializeParam(requireNotNull(response.headers["token"]) { "token is null" }, typeOf<Token>()),
-            |        refreshToken = response.headers["refreshToken"]?.let{ serialization.deserializeParam(it, typeOf<Token?>()) }
+            |        refreshToken = response.headers["refreshtoken"]?.let{ serialization.deserializeParam(it, typeOf<Token?>()) }
             |      )
             |      500 -> Response500(
             |        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<Error>()),

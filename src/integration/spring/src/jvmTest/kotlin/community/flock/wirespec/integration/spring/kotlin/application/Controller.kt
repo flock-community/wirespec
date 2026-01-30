@@ -60,7 +60,7 @@ class Controller(
         body = request.body,
         XRequestID = request.headers.XRequestID,
         RanDoMHeADer = request.headers.RanDoMHeADer,
-            QueryParamParrot = request.queries.QueryParam,
-            RanDoMQueRYParrot = request.queries.RanDoMQueRY,
-        )
+        QueryParamParrot = request.queries.QueryParam,
+        RanDoMQueRYParrot = request.queries.RanDoMQueRY,
+    )
 }

@@ -10,9 +10,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 @Configuration
 open class WirespecWebMvcConfiguration : WebMvcConfigurer {
 
-    init {
-        println("WirespecWebMvcConfiguration")
-    }
     @Autowired
     lateinit var wirespecSerialization: Wirespec.Serialization
 

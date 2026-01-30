@@ -140,7 +140,7 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
     private fun Endpoint.Response.emitDeserializedParams() = listOfNotNull(
         headers.joinToString(",\n") {
             // Use lowercase for header names (RFC 7230 - headers are case-insensitive)
-            """${Spacer(4)}serialization.deserializeParam(response.headers().getOrDefault("${it.identifier.value.lowercase()}", java.util.Collections.emptyList()), ${it.reference.emitGetType()})"""
+            """${Spacer(4)}serialization.<${it.reference.emit()}>deserializeParam(response.headers().getOrDefault("${it.identifier.value.lowercase()}", java.util.Collections.emptyList()), ${it.reference.emitGetType()})"""
         }.orNull(),
         content?.let { """${Spacer(4)}serialization.deserializeBody(response.body(), ${it.reference.emitGetType()})""" }
     ).joinToString(",\n").let { if (it.isBlank()) "" else "\n$it\n${Spacer(3)}" }
@@ -163,11 +163,11 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
 
     private fun Field.emitDeserializedParams(fields: String, caseSensitive: Boolean) =
         // Use lowercase for header names (RFC 7230 - headers are case-insensitive)
-        """${Spacer(4)}serialization.deserializeParam(request.$fields().getOrDefault("${identifier.value.let{if(caseSensitive)it else it.lowercase()}}", java.util.Collections.emptyList()), ${reference.emitGetType()})"""
+        """${Spacer(4)}serialization.<${reference.emit()}>deserializeParam(request.$fields().getOrDefault("${identifier.value.let{if(caseSensitive)it else it.lowercase()}}", java.util.Collections.emptyList()), ${reference.emitGetType()})"""
 
     private fun Field.emitSerializedHeader() =
         // Use lowercase for header names (RFC 7230 - headers are case-insensitive)
-        """java.util.Map.entry("${identifier.value.lowercase()}", serialization.serializeParam(r.headers().${emit(identifier)}(), ${reference.emitGetType()}))"""
+        """java.util.Map.entry("${identifier.value.lowercase()}", serialization.<${reference.emit()}>serializeParam(r.headers().${emit(identifier)}(), ${reference.emitGetType()}))"""
 
     private fun Endpoint.Segment.Param.emitIdentifier() =
         "serialization.serializePath(request.path().${emit(identifier).firstToLower()}(), ${reference.emitGetType()})"

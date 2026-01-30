@@ -47,7 +47,7 @@ class GenerateTestClasses {
 
         val ctx: CompilationContext = object : CompilationContext {
             override val emitters = nonEmptySetOf(kotlinEmitter)
-            override val logger: Logger = Logger(Logger.Level.DEBUG)
+            override val logger: Logger = noLogger
         }
         val todoFile = File("src/jvmTest/resources/todo.ws").readText()
         val result = ctx.compile(nonEmptyListOf(ModuleContent(FileUri("N/A"), todoFile)))
@@ -72,7 +72,7 @@ class GenerateTestClasses {
 
         val ctx: CompilationContext = object : CompilationContext {
             override val emitters = nonEmptySetOf(javaEmitter)
-            override val logger: Logger = Logger(Logger.Level.DEBUG)
+            override val logger: Logger = noLogger
         }
         val todoFile = File("src/jvmTest/resources/todo.ws").readText()
         val result = ctx.compile(nonEmptyListOf(ModuleContent(FileUri("N/A"), todoFile)))
