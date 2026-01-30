@@ -1,7 +1,7 @@
 [versions]
 arrow = "1.2.4"
 clikt = "4.4.0"
-default = "0.0.0-SNAPSHOT"
+default = "1.0.0-SNAPSHOT"
 dokka = "1.9.20"
 from_env = "VERSION"
 group_id = "community.flock.wirespec"

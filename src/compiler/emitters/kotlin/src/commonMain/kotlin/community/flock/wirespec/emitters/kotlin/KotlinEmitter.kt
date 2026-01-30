@@ -30,6 +30,8 @@ open class KotlinEmitter(
     val import = """
         |
         |import $DEFAULT_SHARED_PACKAGE_STRING.kotlin.Wirespec
+        |import io.ktor.util.CaseInsensitiveMap
+        |import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
         |import kotlin.reflect.typeOf
         |
     """.trimMargin()

@@ -34,7 +34,7 @@ object DeletePet : Wirespec.Endpoint {
       path = listOf("pet", request.path.petId.let{serialization.serializePath(it, typeOf<Long>())}),
       method = request.method.name,
       queries = emptyMap(),
-      headers = (mapOf("api_key" to (request.headers.api_key?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))).toCaseInsensitive(),
+      headers = ((mapOf("api_key" to (request.headers.api_key?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList())))).toCaseInsensitive(),
       body = null,
     )
 

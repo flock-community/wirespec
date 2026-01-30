@@ -95,7 +95,7 @@ interface KotlinEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackage
         |${Spacer(3)}path = listOf(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
         |${Spacer(3)}method = request.method.name,
         |${Spacer(3)}queries = ${if (endpoint.queries.isNotEmpty()) endpoint.queries.joinToString(" + ") { "(${it.emitSerializedParams("request", "queries")})" } else EMPTY_MAP},
-        |${Spacer(3)}headers = ${if (endpoint.headers.isNotEmpty()) endpoint.headers.joinToString(" + ") { "(${it.emitSerializedParams("request", "headers")})" } else EMPTY_MAP},
+        |${Spacer(3)}headers = ${if (endpoint.headers.isNotEmpty()) endpoint.headers.joinToString(" + ", prefix = "(", postfix = ").toCaseInsensitive()") { "(${it.emitSerializedParams("request", "headers")})" } else EMPTY_CI_MAP},
         |${Spacer(3)}body = ${if(content != null) "serialization.serializeBody(request.body, typeOf<${content.emit()}>())" else "null"},
         |${Spacer(2)})
         |
@@ -129,7 +129,7 @@ interface KotlinEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackage
     private fun Endpoint.Response.emitSerialized() = """
         |${Spacer(3)}is Response$status -> Wirespec.RawResponse(
         |${Spacer(4)}statusCode = response.status,
-        |${Spacer(4)}headers = ${if (headers.isNotEmpty()) headers.joinToString(" + ") { "(${it.emitSerializedParams("response", "headers")})" } else EMPTY_MAP},
+        |${Spacer(4)}headers = ${if (headers.isNotEmpty()) headers.joinToString(" + ", prefix = "(", postfix = ").toCaseInsensitive()") { "(${it.emitSerializedParams("response", "headers")})" } else EMPTY_CI_MAP},
         |${Spacer(4)}body = ${if (content != null) "serialization.serializeBody(response.body, typeOf<${content.emit()}>())" else "null"},
         |${Spacer(3)})
     """.trimMargin()
@@ -178,5 +178,6 @@ interface KotlinEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackage
 
     companion object {
         private const val EMPTY_MAP = "emptyMap()"
+        private const val EMPTY_CI_MAP = "CaseInsensitiveMap()"
     }
 }

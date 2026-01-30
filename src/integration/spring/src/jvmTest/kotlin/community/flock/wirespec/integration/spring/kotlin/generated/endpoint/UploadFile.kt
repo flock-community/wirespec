@@ -1,11 +1,12 @@
 package community.flock.wirespec.integration.spring.kotlin.generated.endpoint
 
 import community.flock.wirespec.kotlin.Wirespec
+import io.ktor.util.CaseInsensitiveMap
+import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
 import kotlin.reflect.typeOf
 
 import community.flock.wirespec.integration.spring.kotlin.generated.model.UploadFileRequestBody
 import community.flock.wirespec.integration.spring.kotlin.generated.model.ApiResponse
-import io.ktor.util.CaseInsensitiveMap
 
 object UploadFile : Wirespec.Endpoint {
   data class Path(

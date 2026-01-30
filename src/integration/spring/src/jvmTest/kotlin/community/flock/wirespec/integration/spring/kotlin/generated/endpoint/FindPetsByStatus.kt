@@ -1,11 +1,12 @@
 package community.flock.wirespec.integration.spring.kotlin.generated.endpoint
 
 import community.flock.wirespec.kotlin.Wirespec
+import io.ktor.util.CaseInsensitiveMap
+import io.ktor.util.CaseInsensitiveMap.Companion.toCaseInsensitive
 import kotlin.reflect.typeOf
 
 import community.flock.wirespec.integration.spring.kotlin.generated.model.FindPetsByStatusParameterStatus
 import community.flock.wirespec.integration.spring.kotlin.generated.model.Pet
-import io.ktor.util.CaseInsensitiveMap
 
 object FindPetsByStatus : Wirespec.Endpoint {
   data object Path : Wirespec.Path
