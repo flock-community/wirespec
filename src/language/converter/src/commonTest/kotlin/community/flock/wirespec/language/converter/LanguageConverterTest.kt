@@ -18,28 +18,24 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.fail
 import community.flock.wirespec.compiler.core.parse.ast.Enum as AstEnum
-import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
 import community.flock.wirespec.compiler.core.parse.ast.Refined as AstRefined
+import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
 
 class LanguageConverterTest {
 
-    private inline fun <reified T> parse(source: String): T {
-        return object : ParseContext, NoLogger {
-            override val spec = WirespecSpec
-        }.parse(nonEmptyListOf(ModuleContent(FileUri("test.ws"), source)))
-            .map { it.modules.flatMap(Module::statements) }
-            .getOrElse { fail("Parse failed: $it") }
-            .first()
-            .let { it as? T ?: fail("Expected ${T::class.simpleName} but got ${it::class.simpleName}") }
-    }
+    private inline fun <reified T> parse(source: String): T = object : ParseContext, NoLogger {
+        override val spec = WirespecSpec
+    }.parse(nonEmptyListOf(ModuleContent(FileUri("test.ws"), source)))
+        .map { it.modules.flatMap(Module::statements) }
+        .getOrElse { fail("Parse failed: $it") }
+        .first()
+        .let { it as? T ?: fail("Expected ${T::class.simpleName} but got ${it::class.simpleName}") }
 
-    private fun parseNodes(source: String): List<Definition> {
-        return object : ParseContext, NoLogger {
-            override val spec = WirespecSpec
-        }.parse(nonEmptyListOf(ModuleContent(FileUri("test.ws"), source)))
-            .map { it.modules.flatMap(Module::statements) }
-            .getOrElse { fail("Parse failed: $it") }
-    }
+    private fun parseNodes(source: String): List<Definition> = object : ParseContext, NoLogger {
+        override val spec = WirespecSpec
+    }.parse(nonEmptyListOf(ModuleContent(FileUri("test.ws"), source)))
+        .map { it.modules.flatMap(Module::statements) }
+        .getOrElse { fail("Parse failed: $it") }
 
     @Test
     fun testLanguageConverter() {
@@ -96,7 +92,7 @@ class LanguageConverterTest {
             },
             struct("Bar", Type.Custom("MyUnion")) {
                 field("b", string)
-            }
+            },
         )
 
         assertEquals(expected, result)

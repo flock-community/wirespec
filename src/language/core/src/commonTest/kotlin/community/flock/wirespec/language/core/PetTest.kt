@@ -88,7 +88,6 @@ class PetTest {
                 }
 
                 `interface`("Handler", type("Wirespec.Handler")) {
-
                     function("toRequest", type("Wirespec.RawRequest")) {
                         arg("serialization", type("Wirespec.Serializer"))
                         arg("request", type("Request"))
@@ -248,7 +247,6 @@ class PetTest {
                             }
                         }
                     }
-
 
                     asyncFunction("getTodos", type("Response"))
                 }

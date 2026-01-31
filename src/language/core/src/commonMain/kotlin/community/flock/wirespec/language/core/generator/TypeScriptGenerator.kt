@@ -41,8 +41,7 @@ object TypeScriptGenerator : CodeGenerator {
         return elements.joinToString("") { it.emit(indent, allUnions = allUnions) }.removeEmptyLines()
     }
 
-    private fun String.removeEmptyLines(): String =
-        lines().filter { it.isNotEmpty() }.joinToString("\n")
+    private fun String.removeEmptyLines(): String = lines().filter { it.isNotEmpty() }.joinToString("\n")
 
     private fun Element.emit(indent: Int, parents: List<Element> = emptyList(), allUnions: List<Union> = emptyList()): String = when (this) {
         is Package -> emit(indent)

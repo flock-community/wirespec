@@ -2,7 +2,7 @@ package community.flock.wirespec.language.core
 
 enum class Precision {
     P32,
-    P64
+    P64,
 }
 
 sealed interface Type {

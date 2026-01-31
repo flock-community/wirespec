@@ -66,8 +66,7 @@ private class JavaEmitter(val file: File) {
         return "$packagesStr$importsStr$elementsStr".removeEmptyLines()
     }
 
-    private fun String.removeEmptyLines(): String =
-        lines().filter { it.isNotEmpty() }.joinToString("\n")
+    private fun String.removeEmptyLines(): String = lines().filter { it.isNotEmpty() }.joinToString("\n")
 
     private fun Element.findAllUnions(): List<Union> = when (this) {
         is Union -> listOf(this)
@@ -155,8 +154,11 @@ private class JavaEmitter(val file: File) {
 
     private fun Enum.emit(indent: Int): String {
         val entriesStr = entries.joinToString(",\n") { entry ->
-            val e = if (entry.values.isEmpty()) entry.name
-            else "${entry.name}(${entry.values.joinToString(", ")})"
+            val e = if (entry.values.isEmpty()) {
+                entry.name
+            } else {
+                "${entry.name}(${entry.values.joinToString(", ")})"
+            }
             e.indentCode(indent + 1)
         }
         val implStr = extends?.let { " implements ${it.emit()}" } ?: ""
@@ -382,5 +384,5 @@ private val reservedKeywords = setOf(
     "char", "final", "interface", "static", "void",
     "class", "finally", "long", "strictfp", "volatile",
     "const", "float", "native", "super", "while",
-    "true", "false", "null"
+    "true", "false", "null",
 )

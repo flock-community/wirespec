@@ -233,7 +233,7 @@ class FunctionBuilder(
     private val returnType: Type?,
     private val isAsync: Boolean = false,
     private val isStatic: Boolean = false,
-    private val isOverride: Boolean = false
+    private val isOverride: Boolean = false,
 ) : BaseBuilder {
     private val parameters = mutableListOf<Parameter>()
     private val body = mutableListOf<Statement>()
@@ -465,9 +465,7 @@ fun struct(name: String, interfaces: List<Type.Custom> = emptyList(), block: (St
     return builder.build()
 }
 
-fun struct(name: String, interfaces: Type.Custom, block: (StructBuilder.() -> Unit)? = null): Struct {
-    return struct(name, listOf(interfaces), block)
-}
+fun struct(name: String, interfaces: Type.Custom, block: (StructBuilder.() -> Unit)? = null): Struct = struct(name, listOf(interfaces), block)
 
 fun enum(name: String, extends: Type.Custom? = null, block: (EnumBuilder.() -> Unit)? = null): Enum {
     val builder = EnumBuilder(name, extends)
