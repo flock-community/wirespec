@@ -57,6 +57,8 @@ data class Function(
     val returnType: Type?,
     val body: List<Statement>,
     val isAsync: Boolean = false,
+    val isStatic: Boolean = false,
+    val isOverride: Boolean = false,
 ) : Element
 
 data class Static(
@@ -79,8 +81,14 @@ data class Union(
 
 data class Enum(
     val name: String,
-    val entries: List<String>,
-) : Element
+    val extends: Type.Custom? = null,
+    val entries: List<Entry>,
+    val fields: List<Field> = emptyList(),
+    val constructors: List<Constructor> = emptyList(),
+    val elements: List<Element> = emptyList(),
+) : Element {
+    data class Entry(val name: String, val values: List<String>)
+}
 
 data class Parameter(
     val name: String,

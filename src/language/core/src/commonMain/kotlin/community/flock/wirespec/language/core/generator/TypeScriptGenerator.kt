@@ -100,7 +100,7 @@ object TypeScriptGenerator : CodeGenerator {
     }
 
     private fun Enum.emit(indent: Int): String {
-        val entriesStr = entries.joinToString(",\n") { it.indentCode(indent + 1) }
+        val entriesStr = entries.joinToString(",\n") { it.name.indentCode(indent + 1) }
         return "enum $name {\n$entriesStr\n${"}".indentCode(indent)}\n\n".indentCode(indent)
     }
 

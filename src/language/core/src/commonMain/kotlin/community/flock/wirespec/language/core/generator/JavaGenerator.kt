@@ -97,13 +97,28 @@ private class JavaEmitter(val file: File) {
             val isStaticContainer = lastParent is Static
             val isInterfaceBody = isInterface && body.isNotEmpty()
             val isInsideStruct = lastParent is Struct
-            val isStaticMethod = (isStatic || isStaticContainer) && !isInterface && !isInsideStruct
+            val shouldBeStatic = (isStatic || isStaticContainer || this.isStatic) && !isInterface && (!isInsideStruct || this.isStatic)
+            val overridePrefix = if (isOverride) "@Override\n" else ""
+
             if (indent == 0) {
                 emit(indent, isStatic = true, modifier = "public")
             } else if (isInterfaceBody) {
-                emit(indent, isStatic = false, modifier = "default")
+                if (this.isStatic) {
+                    emit(indent, isStatic = true, modifier = "public")
+                } else {
+                    emit(indent, isStatic = false, modifier = "${overridePrefix}default")
+                }
             } else {
-                emit(indent, isStatic = isStaticMethod, modifier = "")
+                val visibility = if (indent == 1) "public" else ""
+                val staticStr = if (shouldBeStatic) "static" else ""
+                val modParts = listOf(visibility, staticStr).filter { it.isNotEmpty() }
+                val modSuffix = modParts.joinToString(" ")
+                val fullModifier = if (isOverride) {
+                    if (modSuffix.isNotEmpty()) "$overridePrefix$modSuffix" else "@Override"
+                } else {
+                    modSuffix
+                }
+                emit(indent, isStatic = shouldBeStatic, modifier = fullModifier)
             }
         }
         is Static -> emit(indent, parents)
@@ -139,8 +154,33 @@ private class JavaEmitter(val file: File) {
     }
 
     private fun Enum.emit(indent: Int): String {
-        val entriesStr = entries.joinToString(", ")
-        return "public enum $name { $entriesStr }\n\n".indentCode(indent)
+        val entriesStr = entries.joinToString(",\n") { entry ->
+            val e = if (entry.values.isEmpty()) entry.name
+            else "${entry.name}(${entry.values.joinToString(", ")})"
+            e.indentCode(indent + 1)
+        }
+        val implStr = extends?.let { " implements ${it.emit()}" } ?: ""
+
+        val hasContent = fields.isNotEmpty() || constructors.isNotEmpty() || elements.isNotEmpty()
+        val terminator = if (hasContent) ";\n" else ""
+
+        val fieldsStr = fields.joinToString("\n") { "public final ${it.type.emit()} ${it.name};".indentCode(indent + 1) }
+        val constructorsStr = constructors.joinToString("\n") { it.emit(name, fields, indent + 1, false, "") }
+        val functionsStr = elements.filterIsInstance<AstFunction>().joinToString("\n") {
+            val isOverride = it.isOverride || it.name == "toString" || it.name == "getLabel"
+            val overridePrefix = if (isOverride) "@Override\n${"".indentCode(indent + 1)}" else ""
+            val visibility = "public"
+            val staticStr = if (it.isStatic) "static" else ""
+            val modParts = listOf(visibility, staticStr).filter { it.isNotEmpty() }
+            val fullModifier = "$overridePrefix${modParts.joinToString(" ")}"
+
+            it.emit(indent + 1, it.isStatic, fullModifier).trimEnd()
+        }
+
+        val content = listOf(fieldsStr, constructorsStr, functionsStr).filter { it.isNotEmpty() }.joinToString("\n")
+        val sep = if (content.isNotEmpty()) "\n" else ""
+
+        return ("public enum $name$implStr {\n$entriesStr$terminator$sep$content\n${"}".indentCode(indent)}\n".indentCode(indent)).trimEnd()
     }
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
@@ -165,9 +205,10 @@ private class JavaEmitter(val file: File) {
         )
         .distinct()
 
-    private fun Constructor.emit(structName: String, structFields: List<Field>, indent: Int, isRecord: Boolean): String {
+    private fun Constructor.emit(structName: String, structFields: List<Field>, indent: Int, isRecord: Boolean, modifier: String = "public"): String {
         val params = parameters.joinToString(", ") { it.emit(0) }
         val isDelegating = body.any { it is ConstructorStatement }
+        val prefix = if (modifier.isEmpty()) "" else "$modifier "
 
         if (isRecord && !isDelegating) {
             val assignments = body.filterIsInstance<Assignment>().associate {
@@ -183,15 +224,15 @@ private class JavaEmitter(val file: File) {
                 )
                 .joinToString("") { it.indentCode(1) }
 
-            return "public $structName($params) {\n$bodyContent}\n".indentCode(indent)
+            return "${prefix}$structName($params) {\n$bodyContent}\n".indentCode(indent)
         }
 
         val bodyContent = body.joinToString("") { it.emit(1, isInsideConstructor = true) }
 
         return if (isRecord && !isDelegating) {
-            "public $structName {\n$bodyContent}\n".indentCode(indent)
+            "${prefix}$structName {\n$bodyContent}\n".indentCode(indent)
         } else {
-            "public $structName($params) {\n$bodyContent}\n".indentCode(indent)
+            "${prefix}$structName($params) {\n$bodyContent}\n".indentCode(indent)
         }
     }
 

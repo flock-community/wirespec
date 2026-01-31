@@ -70,14 +70,14 @@ interface ContainerBuilder : BaseBuilder {
         struct(name, listOf(interfaces), block)
     }
 
-    fun function(name: String, returnType: Type? = null, block: (FunctionBuilder.() -> Unit)? = null) {
-        val builder = FunctionBuilder(name, returnType, isAsync = false)
+    fun function(name: String, returnType: Type? = null, isStatic: Boolean = false, isOverride: Boolean = false, block: (FunctionBuilder.() -> Unit)? = null) {
+        val builder = FunctionBuilder(name, returnType, isAsync = false, isStatic = isStatic, isOverride = isOverride)
         block?.let { builder.it() }
         elements.add(builder.build())
     }
 
-    fun asyncFunction(name: String, returnType: Type? = null, block: (FunctionBuilder.() -> Unit)? = null) {
-        val builder = FunctionBuilder(name, returnType, isAsync = true)
+    fun asyncFunction(name: String, returnType: Type? = null, isStatic: Boolean = false, isOverride: Boolean = false, block: (FunctionBuilder.() -> Unit)? = null) {
+        val builder = FunctionBuilder(name, returnType, isAsync = true, isStatic = isStatic, isOverride = isOverride)
         block?.let { builder.it() }
         elements.add(builder.build())
     }
@@ -100,8 +100,8 @@ interface ContainerBuilder : BaseBuilder {
         elements.add(builder.build())
     }
 
-    fun enum(name: String, block: (EnumBuilder.() -> Unit)? = null) {
-        val builder = EnumBuilder(name)
+    fun enum(name: String, extends: Type.Custom? = null, block: (EnumBuilder.() -> Unit)? = null) {
+        val builder = EnumBuilder(name, extends)
         block?.let { builder.it() }
         elements.add(builder.build())
     }
@@ -143,14 +143,27 @@ class UnionBuilder(private val name: String, private val extends: Type.Custom? =
 }
 
 @Dsl
-class EnumBuilder(private val name: String) {
-    private val entries = mutableListOf<String>()
+class EnumBuilder(private val name: String, private val extends: Type.Custom? = null) : ContainerBuilder {
+    private val entries = mutableListOf<Enum.Entry>()
+    private val fields = mutableListOf<Field>()
+    private val constructors = mutableListOf<Constructor>()
+    override val elements = mutableListOf<Element>()
 
-    fun option(name: String) {
-        entries.add(name)
+    fun entry(name: String, vararg values: String) {
+        entries.add(Enum.Entry(name, values.toList()))
     }
 
-    fun build(): Enum = Enum(name, entries)
+    fun field(name: String, type: Type) {
+        fields.add(Field(name, type))
+    }
+
+    fun constructo(block: StructConstructorBuilder.() -> Unit) {
+        val builder = StructConstructorBuilder()
+        builder.block()
+        constructors.add(builder.build())
+    }
+
+    fun build(): Enum = Enum(name, extends, entries, fields, constructors, elements)
 }
 
 @Dsl
@@ -215,7 +228,13 @@ class StructConstructorBuilder : BaseBuilder {
 }
 
 @Dsl
-class FunctionBuilder(private val name: String, private val returnType: Type?, private val isAsync: Boolean = false) : BaseBuilder {
+class FunctionBuilder(
+    private val name: String,
+    private val returnType: Type?,
+    private val isAsync: Boolean = false,
+    private val isStatic: Boolean = false,
+    private val isOverride: Boolean = false
+) : BaseBuilder {
     private val parameters = mutableListOf<Parameter>()
     private val body = mutableListOf<Statement>()
 
@@ -291,7 +310,7 @@ class FunctionBuilder(private val name: String, private val returnType: Type?, p
         body.add(ErrorStatement(message.toExpression()))
     }
 
-    fun build(): Function = Function(name, parameters, returnType, body, isAsync)
+    fun build(): Function = Function(name, parameters, returnType, body, isAsync, isStatic, isOverride)
 }
 
 @Dsl
@@ -450,8 +469,8 @@ fun struct(name: String, interfaces: Type.Custom, block: (StructBuilder.() -> Un
     return struct(name, listOf(interfaces), block)
 }
 
-fun enum(name: String, block: (EnumBuilder.() -> Unit)? = null): Enum {
-    val builder = EnumBuilder(name)
+fun enum(name: String, extends: Type.Custom? = null, block: (EnumBuilder.() -> Unit)? = null): Enum {
+    val builder = EnumBuilder(name, extends)
     block?.let { builder.it() }
     return builder.build()
 }
@@ -474,14 +493,14 @@ fun static(name: String, extends: Type.Custom? = null, block: (StaticBuilder.() 
     return builder.build()
 }
 
-fun function(name: String, returnType: Type? = null, block: (FunctionBuilder.() -> Unit)? = null): Function {
-    val builder = FunctionBuilder(name, returnType, isAsync = false)
+fun function(name: String, returnType: Type? = null, isStatic: Boolean = false, isOverride: Boolean = false, block: (FunctionBuilder.() -> Unit)? = null): Function {
+    val builder = FunctionBuilder(name, returnType, isAsync = false, isStatic = isStatic, isOverride = isOverride)
     block?.let { builder.it() }
     return builder.build()
 }
 
-fun asyncFunction(name: String, returnType: Type? = null, block: (FunctionBuilder.() -> Unit)? = null): Function {
-    val builder = FunctionBuilder(name, returnType, isAsync = true)
+fun asyncFunction(name: String, returnType: Type? = null, isStatic: Boolean = false, isOverride: Boolean = false, block: (FunctionBuilder.() -> Unit)? = null): Function {
+    val builder = FunctionBuilder(name, returnType, isAsync = true, isStatic = isStatic, isOverride = isOverride)
     block?.let { builder.it() }
     return builder.build()
 }

@@ -1,24 +1,37 @@
 package community.flock.wirespec.emitters.java
 
 import community.flock.wirespec.compiler.core.emit.RefinedTypeDefinitionEmitter
-import community.flock.wirespec.compiler.core.emit.Spacer
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
+import community.flock.wirespec.language.converter.convert
+import community.flock.wirespec.language.core.Type
+import community.flock.wirespec.language.core.function
+import community.flock.wirespec.language.core.RawExpression
+import community.flock.wirespec.language.core.generator.generateJava
 
 interface JavaRefinedTypeDefinitionEmitter: RefinedTypeDefinitionEmitter, JavaTypeDefinitionEmitter {
 
-    override fun emit(refined: Refined) = """
-        |public record ${emit(refined.identifier)} (String value) implements Wirespec.Refined {
-        |${Spacer}@Override
-        |${Spacer}public String toString() { return value; }
-        |${Spacer}public static boolean validate(${emit(refined.identifier)} record) {
-        |${Spacer}${Spacer}return ${refined.emitValidator()}
-        |${Spacer}}
-        |${Spacer}@Override
-        |${Spacer}public String getValue() { return value; }
-        |}
-        |
-    """.trimMargin()
+    override fun emit(refined: Refined) = refined
+        .convert()
+        .run {
+            copy(
+                interfaces= listOf(Type.Custom("Wirespec.Refined")),
+                elements = listOf(
+                    function("toString", Type.Custom("String"), isOverride = true) {
+                        returns(RawExpression("value"))
+                    },
+                    function("validate", Type.Boolean, isStatic = true) {
+                        arg("record", Type.Custom(name))
+                        returns(RawExpression(refined.emitValidator().removeSuffix(";")))
+                    },
+                    function("getValue", Type.Custom("String"), isOverride = true) {
+                        returns(RawExpression("value"))
+                    }
+                )
+            )
+        }
+        .generateJava()
+        .run { this + "\n" }
 
     override fun Refined.emitValidator():String {
         val defaultReturn = "true;"

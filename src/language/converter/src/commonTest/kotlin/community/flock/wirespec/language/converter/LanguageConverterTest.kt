@@ -10,8 +10,6 @@ import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.utils.NoLogger
-import community.flock.wirespec.language.converter.convert
-import community.flock.wirespec.language.core.Element
 import community.flock.wirespec.language.core.Type
 import community.flock.wirespec.language.core.enum
 import community.flock.wirespec.language.core.struct
@@ -21,7 +19,7 @@ import kotlin.test.assertEquals
 import kotlin.test.fail
 import community.flock.wirespec.compiler.core.parse.ast.Enum as AstEnum
 import community.flock.wirespec.compiler.core.parse.ast.Type as AstType
-import community.flock.wirespec.compiler.core.parse.ast.Union as AstUnion
+import community.flock.wirespec.compiler.core.parse.ast.Refined as AstRefined
 
 class LanguageConverterTest {
 
@@ -70,9 +68,9 @@ class LanguageConverterTest {
 
         val result = parse<AstEnum>(source).convert()
 
-        val expected = enum("MyEnum") {
-            option("FOO")
-            option("BAR")
+        val expected = enum("MyEnum", Type.Custom("Wirespec.Enum")) {
+            entry("FOO")
+            entry("BAR")
         }
 
         assertEquals(expected, result)
@@ -100,6 +98,21 @@ class LanguageConverterTest {
                 field("b", string)
             }
         )
+
+        assertEquals(expected, result)
+    }
+
+    @Test
+    fun testRefinedConversion() {
+        val source = """
+            type DutchPostalCode = String(/^([0-9]{4}[A-Z]{2})$/g)
+        """.trimIndent()
+
+        val result = parse<AstRefined>(source).convert()
+
+        val expected = struct("DutchPostalCode", Type.Custom("Wirespec.Refined")) {
+            field("value", Type.String)
+        }
 
         assertEquals(expected, result)
     }

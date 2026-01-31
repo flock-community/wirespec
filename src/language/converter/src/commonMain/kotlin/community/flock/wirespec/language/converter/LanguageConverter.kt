@@ -11,12 +11,14 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference as ReferenceWi
 import community.flock.wirespec.compiler.core.parse.ast.Type as TypeWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Enum as EnumWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Union as UnionWirespec
+import community.flock.wirespec.compiler.core.parse.ast.Refined as RefinedWirespec
 import community.flock.wirespec.compiler.core.parse.ast.Definition as DefinitionWirespec
 
 fun DefinitionWirespec.convert(): Element = when (this) {
     is TypeWirespec -> convert()
     is EnumWirespec -> convert()
     is UnionWirespec -> convert()
+    is RefinedWirespec -> convert()
     else -> error("Conversion not implemented for ${this::class.simpleName}")
 }
 
@@ -33,12 +35,24 @@ fun TypeWirespec.convert() = Struct(
 
 fun EnumWirespec.convert() = Enum(
     name = this.identifier.value,
-    entries = this.entries.toList()
+    extends = Type.Custom("Wirespec.Enum"),
+    entries = this.entries.map { Enum.Entry(it, emptyList()) }
 )
 
 fun UnionWirespec.convert() = Union(
     name = this.identifier.value,
     members = this.entries.map { it.convert() }.filterIsInstance<Type.Custom>().map { it.name }
+)
+
+fun RefinedWirespec.convert() = Struct(
+    name = this.identifier.value,
+    fields = listOf(
+        Field(
+            name = "value",
+            type = this.reference.convert(),
+        )
+    ),
+    interfaces = listOf(Type.Custom("Wirespec.Refined"))
 )
 
 fun ReferenceWirespec.convert(): Type =

@@ -102,7 +102,7 @@ object PythonGenerator : CodeGenerator {
         val entriesStr = if (entries.isEmpty()) {
             "pass".indentCode(indent + 1)
         } else {
-            entries.joinToString("\n") { "${it} = \"${it}\"".indentCode(indent + 1) }
+            entries.joinToString("\n") { "${it.name} = \"${it.name}\"".indentCode(indent + 1) }
         }
         return "class $name:\n$entriesStr\n\n".indentCode(indent)
     }
