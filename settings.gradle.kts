@@ -41,4 +41,6 @@ include(
     "src:integration:wirespec",
     "src:integration:spring",
     "src:tools:generator",
+    "src:language:core",
+    "src:language:converter",
 )

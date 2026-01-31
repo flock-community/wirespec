@@ -7,16 +7,12 @@ import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Type
+import community.flock.wirespec.language.converter.convert
+import community.flock.wirespec.language.core.generator.generateJava
 
 interface JavaTypeDefinitionEmitter: TypeDefinitionEmitter, IdentifierEmitter {
 
-    override fun emit(type: Type, module: Module) = """
-        |public record ${emit(type.identifier)} (
-        |${type.shape.emit()}
-        |)${type.extends.run { if (isEmpty()) "" else " implements ${joinToString(", ") { it.emit() }}" }} {
-        |};
-        |
-    """.trimMargin()
+    override fun emit(type: Type, module: Module) = type.convert().generateJava() + "\n"
 
     override fun Type.Shape.emit() = value.joinToString("\n") { "${Spacer}${it.emit()}," }.dropLast(1)
 

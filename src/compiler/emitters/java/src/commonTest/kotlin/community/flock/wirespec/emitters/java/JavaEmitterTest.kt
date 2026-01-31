@@ -53,9 +53,7 @@ class JavaEmitterTest {
             """
             |package community.flock.wirespec.generated.model;
             |
-            |public record TodoWithoutProperties (
-            |
-            |) {
+            |public record TodoWithoutProperties () {
             |};
             |
             """.trimMargin(),
