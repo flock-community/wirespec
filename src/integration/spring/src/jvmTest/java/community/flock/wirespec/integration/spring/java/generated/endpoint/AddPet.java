@@ -71,20 +71,20 @@ public interface AddPet extends Wirespec.Endpoint {
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Map.ofEntries(java.util.Map.entry("x-rate-limit", serialization.<java.util.Optional<Integer>>serializeParam(r.headers().XRateLimit(), Wirespec.getType(Integer.class, java.util.Optional.class)))), serialization.serializeBody(r.body, Wirespec.getType(Pet.class, null))); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Map.ofEntries(java.util.Map.entry("X-Rate-Limit", serialization.<java.util.Optional<Integer>>serializeParam(r.headers().XRateLimit(), Wirespec.getType(Integer.class, java.util.Optional.class)))), serialization.serializeBody(r.body, Wirespec.getType(Pet.class, null))); }
       if (response instanceof Response405 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), null); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
-      switch (response.statusCode()) {
-        case 200: return new Response200(
-        serialization.<java.util.Optional<Integer>>deserializeParam(response.headers().getOrDefault("x-rate-limit", java.util.Collections.emptyList()), Wirespec.getType(Integer.class, java.util.Optional.class)),
-        serialization.deserializeBody(response.body(), Wirespec.getType(Pet.class, null))
-      );
-        case 405: return new Response405();
-        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
-      }
+      return switch (response.statusCode()) {
+        case 200 -> new Response200(
+          serialization.<java.util.Optional<Integer>>deserializeParam(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("X-Rate-Limit")).findFirst().map(java.util.Map.Entry::getValue).orElse(java.util.Collections.emptyList()), Wirespec.getType(Integer.class, java.util.Optional.class)),
+          serialization.deserializeBody(response.body(), Wirespec.getType(Pet.class, null))
+        );
+        case 405 -> new Response405();
+        default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+      };
     }
 
     @org.springframework.web.bind.annotation.PostMapping("/pet")

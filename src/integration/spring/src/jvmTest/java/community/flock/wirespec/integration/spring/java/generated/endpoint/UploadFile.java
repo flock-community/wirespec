@@ -69,11 +69,12 @@ public interface UploadFile extends Wirespec.Endpoint {
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
-      switch (response.statusCode()) {
-        case 200: return new Response200(
-        serialization.deserializeBody(response.body(), Wirespec.getType(ApiResponse.class, null))
-      );
-        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+      if (response.statusCode() == 200) {
+        return new Response200(
+          serialization.deserializeBody(response.body(), Wirespec.getType(ApiResponse.class, null))
+        );
+      } else {
+        throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
       }
     }
 

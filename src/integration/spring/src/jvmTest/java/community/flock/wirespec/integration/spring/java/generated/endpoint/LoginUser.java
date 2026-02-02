@@ -76,21 +76,21 @@ public interface LoginUser extends Wirespec.Endpoint {
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Map.ofEntries(java.util.Map.entry("x-rate-limit", serialization.<java.util.Optional<Integer>>serializeParam(r.headers().XRateLimit(), Wirespec.getType(Integer.class, java.util.Optional.class))), java.util.Map.entry("x-expires-after", serialization.<java.util.Optional<String>>serializeParam(r.headers().XExpiresAfter(), Wirespec.getType(String.class, java.util.Optional.class)))), serialization.serializeBody(r.body, Wirespec.getType(String.class, null))); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Map.ofEntries(java.util.Map.entry("X-Rate-Limit", serialization.<java.util.Optional<Integer>>serializeParam(r.headers().XRateLimit(), Wirespec.getType(Integer.class, java.util.Optional.class))), java.util.Map.entry("X-Expires-After", serialization.<java.util.Optional<String>>serializeParam(r.headers().XExpiresAfter(), Wirespec.getType(String.class, java.util.Optional.class)))), serialization.serializeBody(r.body, Wirespec.getType(String.class, null))); }
       if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), null); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
-      switch (response.statusCode()) {
-        case 200: return new Response200(
-        serialization.<java.util.Optional<Integer>>deserializeParam(response.headers().getOrDefault("x-rate-limit", java.util.Collections.emptyList()), Wirespec.getType(Integer.class, java.util.Optional.class)),
-        serialization.<java.util.Optional<String>>deserializeParam(response.headers().getOrDefault("x-expires-after", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
-        serialization.deserializeBody(response.body(), Wirespec.getType(String.class, null))
-      );
-        case 400: return new Response400();
-        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
-      }
+      return switch (response.statusCode()) {
+        case 200 -> new Response200(
+          serialization.<java.util.Optional<Integer>>deserializeParam(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("X-Rate-Limit")).findFirst().map(java.util.Map.Entry::getValue).orElse(java.util.Collections.emptyList()), Wirespec.getType(Integer.class, java.util.Optional.class)),
+          serialization.<java.util.Optional<String>>deserializeParam(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("X-Expires-After")).findFirst().map(java.util.Map.Entry::getValue).orElse(java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
+          serialization.deserializeBody(response.body(), Wirespec.getType(String.class, null))
+        );
+        case 400 -> new Response400();
+        default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+      };
     }
 
     @org.springframework.web.bind.annotation.GetMapping("/user/login")

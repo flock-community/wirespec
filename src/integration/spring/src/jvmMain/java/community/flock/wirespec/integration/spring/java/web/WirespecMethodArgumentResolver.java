@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static community.flock.wirespec.integration.spring.java.configuration.WirespecSerializationConfiguration.objectMapper;
@@ -104,7 +105,7 @@ public class WirespecMethodArgumentResolver implements HandlerMethodArgumentReso
     private Map<String, List<String>> getHeadersMap(HttpServletRequest request) {
         return Collections.list(request.getHeaderNames()).stream()
                 .collect(Collectors.toMap(
-                        String::toLowerCase,
+                        Function.identity(),
                         name -> Collections.list(request.getHeaders(name))
                 ));
     }
