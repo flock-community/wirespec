@@ -34,15 +34,39 @@ object RequestParrot : Wirespec.Endpoint {
     Wirespec.RawRequest(
       path = listOf("api", "parrot"),
       method = request.method.name,
-      queries = (mapOf("Query-Param" to (request.queries.QueryParam?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))) + (mapOf("RanDoMQueRY" to (request.queries.RanDoMQueRY?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
-      headers = (mapOf("x-request-id" to (request.headers.XRequestID?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))) + (mapOf("randomheader" to (request.headers.RanDoMHeADer?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
+      queries = mapOf(
+          "Query-Param" to request.queries.QueryParam?.let{ serialization.serializeParam(it, typeOf<String?>()) }.orEmpty(),
+          "RanDoMQueRY" to request.queries.RanDoMQueRY?.let{ serialization.serializeParam(it, typeOf<String?>()) }.orEmpty()
+        ),
+      headers = mapOf(
+          "X-Request-ID" to request.headers.XRequestID?.let{ serialization.serializeParam(it, typeOf<String?>()) }.orEmpty(),
+          "RanDoMHeADer" to request.headers.RanDoMHeADer?.let{ serialization.serializeParam(it, typeOf<String?>()) }.orEmpty()
+        ),
       body = serialization.serializeBody(request.body, typeOf<RequestBodyParrot>()),
     )
 
   fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
     Request(
-      QueryParam = request.queries["Query-Param"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) },       RanDoMQueRY = request.queries["RanDoMQueRY"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) },
-      XRequestID = request.headers["x-request-id"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) },       RanDoMHeADer = request.headers["randomheader"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) },
+      QueryParam =
+        request.queries
+          .entries
+          .find { it.key.equals("Query-Param", ignoreCase = false) }
+          ?.let { serialization.deserializeParam(it.value, typeOf<String?>()) },
+      RanDoMQueRY =
+        request.queries
+          .entries
+          .find { it.key.equals("RanDoMQueRY", ignoreCase = false) }
+          ?.let { serialization.deserializeParam(it.value, typeOf<String?>()) },
+      XRequestID =
+        request.headers
+          .entries
+          .find { it.key.equals("X-Request-ID", ignoreCase = true) }
+          ?.let { serialization.deserializeParam(it.value, typeOf<String?>()) },
+      RanDoMHeADer =
+        request.headers
+          .entries
+          .find { it.key.equals("RanDoMHeADer", ignoreCase = true) }
+          ?.let { serialization.deserializeParam(it.value, typeOf<String?>()) },
       body = serialization.deserializeBody(requireNotNull(request.body) { "body is null" }, typeOf<RequestBodyParrot>()),
     )
 
@@ -75,7 +99,12 @@ object RequestParrot : Wirespec.Endpoint {
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = (mapOf("x-request-id" to (response.headers.XRequestID?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))) + (mapOf("randomheader" to (response.headers.RanDoMHeADer?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))) + (mapOf("query-param-parrot" to (response.headers.QueryParamParrot?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))) + (mapOf("randomqueryparrot" to (response.headers.RanDoMQueRYParrot?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
+        headers = mapOf(
+          "X-Request-ID" to response.headers.XRequestID?.let{ serialization.serializeParam(it, typeOf<String?>()) }.orEmpty(),
+          "RanDoMHeADer" to response.headers.RanDoMHeADer?.let{ serialization.serializeParam(it, typeOf<String?>()) }.orEmpty(),
+          "Query-Param-Parrot" to response.headers.QueryParamParrot?.let{ serialization.serializeParam(it, typeOf<String?>()) }.orEmpty(),
+          "RanDoMQueRYParrot" to response.headers.RanDoMQueRYParrot?.let{ serialization.serializeParam(it, typeOf<String?>()) }.orEmpty()
+        ),
         body = serialization.serializeBody(response.body, typeOf<RequestBodyParrot>()),
       )
       is Response500 -> Wirespec.RawResponse(
@@ -89,10 +118,26 @@ object RequestParrot : Wirespec.Endpoint {
     when (response.statusCode) {
       200 -> Response200(
         body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<RequestBodyParrot>()),
-        XRequestID = response.headers["x-request-id"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) },
-        RanDoMHeADer = response.headers["randomheader"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) },
-        QueryParamParrot = response.headers["query-param-parrot"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) },
-        RanDoMQueRYParrot = response.headers["randomqueryparrot"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) }
+        XRequestID =
+          response.headers
+            .entries
+            .find { it.key.equals("X-Request-ID", ignoreCase = true) }
+            ?.let { serialization.deserializeParam(it.value, typeOf<String?>()) },
+        RanDoMHeADer =
+          response.headers
+            .entries
+            .find { it.key.equals("RanDoMHeADer", ignoreCase = true) }
+            ?.let { serialization.deserializeParam(it.value, typeOf<String?>()) },
+        QueryParamParrot =
+          response.headers
+            .entries
+            .find { it.key.equals("Query-Param-Parrot", ignoreCase = true) }
+            ?.let { serialization.deserializeParam(it.value, typeOf<String?>()) },
+        RanDoMQueRYParrot =
+          response.headers
+            .entries
+            .find { it.key.equals("RanDoMQueRYParrot", ignoreCase = true) }
+            ?.let { serialization.deserializeParam(it.value, typeOf<String?>()) }
       )
       500 -> Response500(
         body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<Error>()),

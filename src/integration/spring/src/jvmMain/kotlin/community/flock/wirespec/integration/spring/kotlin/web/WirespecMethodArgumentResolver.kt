@@ -56,7 +56,7 @@ class WirespecMethodArgumentResolver(
                 method = method,
                 path = extractPath(),
                 queries = extractQueries(),
-                headers = headerNames.toList().associate { it.lowercase() to getHeaders(it).toList() },
+                headers = headerNames.toList().associateWith { getHeaders(it).toList() },
                 body = objectMapper.writeValueAsBytes(map),
             )
         }
@@ -64,7 +64,7 @@ class WirespecMethodArgumentResolver(
             method = method,
             path = extractPath(),
             queries = extractQueries(),
-            headers = headerNames.toList().associate { it.lowercase() to getHeaders(it).toList() },
+            headers = headerNames.toList().associateWith { getHeaders(it).toList() },
             body = reader.lines().collect(Collectors.joining(System.lineSeparator())).toByteArray(),
         )
     }

@@ -28,14 +28,20 @@ object FindPetsByTags : Wirespec.Endpoint {
     Wirespec.RawRequest(
       path = listOf("pet", "findByTags"),
       method = request.method.name,
-      queries = (mapOf("tags" to (request.queries.tags?.let{ serialization.serializeParam(it, typeOf<List<String>?>()) } ?: emptyList()))),
+      queries = mapOf(
+          "tags" to request.queries.tags?.let{ serialization.serializeParam(it, typeOf<List<String>?>()) }.orEmpty()
+        ),
       headers = emptyMap(),
       body = null,
     )
 
   fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
     Request(
-      tags = request.queries["tags"]?.let{ serialization.deserializeParam(it, typeOf<List<String>?>()) }
+      tags =
+        request.queries
+          .entries
+          .find { it.key.equals("tags", ignoreCase = false) }
+          ?.let { serialization.deserializeParam(it.value, typeOf<List<String>?>()) }
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>

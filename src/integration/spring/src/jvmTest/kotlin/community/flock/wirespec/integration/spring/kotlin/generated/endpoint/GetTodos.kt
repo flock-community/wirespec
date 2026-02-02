@@ -29,14 +29,20 @@ object GetTodos : Wirespec.Endpoint {
     Wirespec.RawRequest(
       path = listOf("api", "todos"),
       method = request.method.name,
-      queries = (mapOf("done" to (request.queries.done?.let{ serialization.serializeParam(it, typeOf<Boolean?>()) } ?: emptyList()))),
+      queries = mapOf(
+          "done" to request.queries.done?.let{ serialization.serializeParam(it, typeOf<Boolean?>()) }.orEmpty()
+        ),
       headers = emptyMap(),
       body = null,
     )
 
   fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
     Request(
-      done = request.queries["done"]?.let{ serialization.deserializeParam(it, typeOf<Boolean?>()) }
+      done =
+        request.queries
+          .entries
+          .find { it.key.equals("done", ignoreCase = false) }
+          ?.let { serialization.deserializeParam(it.value, typeOf<Boolean?>()) }
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
@@ -65,7 +71,9 @@ object GetTodos : Wirespec.Endpoint {
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = (mapOf("total" to (response.headers.total?.let{ serialization.serializeParam(it, typeOf<Long>()) } ?: emptyList()))),
+        headers = mapOf(
+          "total" to response.headers.total?.let{ serialization.serializeParam(it, typeOf<Long>()) }.orEmpty()
+        ),
         body = serialization.serializeBody(response.body, typeOf<List<TodoDto>>()),
       )
       is Response500 -> Wirespec.RawResponse(
@@ -79,7 +87,12 @@ object GetTodos : Wirespec.Endpoint {
     when (response.statusCode) {
       200 -> Response200(
         body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<List<TodoDto>>()),
-        total = serialization.deserializeParam(requireNotNull(response.headers["total"]) { "total is null" }, typeOf<Long>())
+        total =
+          response.headers
+            .entries
+            .find { it.key.equals("total", ignoreCase = true) }
+            ?.let { serialization.deserializeParam(it.value, typeOf<Long>()) }
+            ?: throw IllegalArgumentException("total is null")
       )
       500 -> Response500(
         body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<Error>()),

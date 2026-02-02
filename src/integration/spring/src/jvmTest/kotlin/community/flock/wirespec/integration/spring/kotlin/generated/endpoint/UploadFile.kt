@@ -32,7 +32,9 @@ object UploadFile : Wirespec.Endpoint {
     Wirespec.RawRequest(
       path = listOf("pet", request.path.petId.let{serialization.serializePath(it, typeOf<Long>())}, "uploadImage"),
       method = request.method.name,
-      queries = (mapOf("additionalMetadata" to (request.queries.additionalMetadata?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
+      queries = mapOf(
+          "additionalMetadata" to request.queries.additionalMetadata?.let{ serialization.serializeParam(it, typeOf<String?>()) }.orEmpty()
+        ),
       headers = emptyMap(),
       body = serialization.serializeBody(request.body, typeOf<UploadFileRequestBody>()),
     )
@@ -40,7 +42,11 @@ object UploadFile : Wirespec.Endpoint {
   fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
     Request(
       petId = serialization.deserializePath(request.path[1], typeOf<Long>()),
-      additionalMetadata = request.queries["additionalMetadata"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) },
+      additionalMetadata =
+        request.queries
+          .entries
+          .find { it.key.equals("additionalMetadata", ignoreCase = false) }
+          ?.let { serialization.deserializeParam(it.value, typeOf<String?>()) },
       body = serialization.deserializeBody(requireNotNull(request.body) { "body is null" }, typeOf<UploadFileRequestBody>()),
     )
 

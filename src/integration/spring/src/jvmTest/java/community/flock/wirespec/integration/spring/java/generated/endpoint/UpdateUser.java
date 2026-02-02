@@ -65,10 +65,7 @@ public interface UpdateUser extends Wirespec.Endpoint {
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
-      switch (response.statusCode()) {
-
-        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
-      }
+      throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
     }
 
     @org.springframework.web.bind.annotation.PutMapping("/user/{username}")

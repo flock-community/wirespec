@@ -80,16 +80,16 @@ public interface GetTodos extends Wirespec.Endpoint {
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
-      switch (response.statusCode()) {
-        case 200: return new Response200(
-        serialization.<Long>deserializeParam(response.headers().getOrDefault("total", java.util.Collections.emptyList()), Wirespec.getType(Long.class, null)),
-        serialization.deserializeBody(response.body(), Wirespec.getType(TodoDto.class, java.util.List.class))
-      );
-        case 500: return new Response500(
-        serialization.deserializeBody(response.body(), Wirespec.getType(Error.class, null))
-      );
-        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
-      }
+      return switch (response.statusCode()) {
+        case 200 -> new Response200(
+          serialization.<Long>deserializeParam(response.headers().entrySet().stream().filter(e -> e.getKey().equalsIgnoreCase("total")).findFirst().map(java.util.Map.Entry::getValue).orElse(java.util.Collections.emptyList()), Wirespec.getType(Long.class, null)),
+          serialization.deserializeBody(response.body(), Wirespec.getType(TodoDto.class, java.util.List.class))
+        );
+        case 500 -> new Response500(
+          serialization.deserializeBody(response.body(), Wirespec.getType(Error.class, null))
+        );
+        default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+      };
     }
 
     @org.springframework.web.bind.annotation.GetMapping("/api/todos")

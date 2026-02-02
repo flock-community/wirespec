@@ -32,7 +32,10 @@ object UpdatePetWithForm : Wirespec.Endpoint {
     Wirespec.RawRequest(
       path = listOf("pet", request.path.petId.let{serialization.serializePath(it, typeOf<Long>())}),
       method = request.method.name,
-      queries = (mapOf("name" to (request.queries.name?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))) + (mapOf("status" to (request.queries.status?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
+      queries = mapOf(
+          "name" to request.queries.name?.let{ serialization.serializeParam(it, typeOf<String?>()) }.orEmpty(),
+          "status" to request.queries.status?.let{ serialization.serializeParam(it, typeOf<String?>()) }.orEmpty()
+        ),
       headers = emptyMap(),
       body = null,
     )
@@ -40,7 +43,16 @@ object UpdatePetWithForm : Wirespec.Endpoint {
   fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
     Request(
       petId = serialization.deserializePath(request.path[1], typeOf<Long>()),
-      name = request.queries["name"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) },       status = request.queries["status"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) }
+      name =
+        request.queries
+          .entries
+          .find { it.key.equals("name", ignoreCase = false) }
+          ?.let { serialization.deserializeParam(it.value, typeOf<String?>()) },
+      status =
+        request.queries
+          .entries
+          .find { it.key.equals("status", ignoreCase = false) }
+          ?.let { serialization.deserializeParam(it.value, typeOf<String?>()) }
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>

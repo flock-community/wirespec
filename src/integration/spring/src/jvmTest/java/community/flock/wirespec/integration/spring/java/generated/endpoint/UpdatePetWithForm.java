@@ -69,9 +69,10 @@ public interface UpdatePetWithForm extends Wirespec.Endpoint {
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
-      switch (response.statusCode()) {
-        case 405: return new Response405();
-        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+      if (response.statusCode() == 405) {
+        return new Response405();
+      } else {
+        throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
       }
     }
 

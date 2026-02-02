@@ -88,14 +88,14 @@ public interface GetOrderById extends Wirespec.Endpoint {
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
-      switch (response.statusCode()) {
-        case 200: return new Response200(
-        serialization.deserializeBody(response.body(), Wirespec.getType(Order.class, null))
-      );
-        case 400: return new Response400();
-        case 404: return new Response404();
-        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
-      }
+      return switch (response.statusCode()) {
+        case 200 -> new Response200(
+          serialization.deserializeBody(response.body(), Wirespec.getType(Order.class, null))
+        );
+        case 400 -> new Response400();
+        case 404 -> new Response404();
+        default -> throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
+      };
     }
 
     @org.springframework.web.bind.annotation.GetMapping("/store/order/{orderId}")
