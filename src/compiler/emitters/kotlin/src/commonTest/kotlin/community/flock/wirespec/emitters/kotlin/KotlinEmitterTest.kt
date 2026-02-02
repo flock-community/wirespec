@@ -69,8 +69,8 @@ class KotlinEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |
-            |data class UUID(override val value: String): Wirespec.Refined {
-            |  override fun toString() = value
+            |data class UUID(override val value: String): Wirespec.Refined<String> {
+            |  override fun toString() = value.toString()
             |}
             |
             |fun UUID.validate() = Regex(${"\"\"\""}^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}${"\"\"\""}).matches(value)
@@ -435,11 +435,110 @@ class KotlinEmitterTest {
             |import community.flock.wirespec.kotlin.Wirespec
             |import kotlin.reflect.typeOf
             |
-            |data class TodoId(override val value: String): Wirespec.Refined {
-            |  override fun toString() = value
+            |data class TodoId(override val value: String): Wirespec.Refined<String> {
+            |  override fun toString() = value.toString()
             |}
             |
             |fun TodoId.validate() = Regex(""${'"'}^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$""${'"'}).matches(value)
+            |
+            |package community.flock.wirespec.generated.model
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |
+            |data class TodoNoRegex(override val value: String): Wirespec.Refined<String> {
+            |  override fun toString() = value.toString()
+            |}
+            |
+            |fun TodoNoRegex.validate() = true
+            |
+            |package community.flock.wirespec.generated.model
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |
+            |data class TestInt(override val value: Long): Wirespec.Refined<Long> {
+            |  override fun toString() = value.toString()
+            |}
+            |
+            |fun TestInt.validate() = true
+            |
+            |package community.flock.wirespec.generated.model
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |
+            |data class TestInt0(override val value: Long): Wirespec.Refined<Long> {
+            |  override fun toString() = value.toString()
+            |}
+            |
+            |fun TestInt0.validate() = true
+            |
+            |package community.flock.wirespec.generated.model
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |
+            |data class TestInt1(override val value: Long): Wirespec.Refined<Long> {
+            |  override fun toString() = value.toString()
+            |}
+            |
+            |fun TestInt1.validate() = 0 < value
+            |
+            |package community.flock.wirespec.generated.model
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |
+            |data class TestInt2(override val value: Long): Wirespec.Refined<Long> {
+            |  override fun toString() = value.toString()
+            |}
+            |
+            |fun TestInt2.validate() = 3 < value && value < 1
+            |
+            |package community.flock.wirespec.generated.model
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |
+            |data class TestNum(override val value: Double): Wirespec.Refined<Double> {
+            |  override fun toString() = value.toString()
+            |}
+            |
+            |fun TestNum.validate() = true
+            |
+            |package community.flock.wirespec.generated.model
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |
+            |data class TestNum0(override val value: Double): Wirespec.Refined<Double> {
+            |  override fun toString() = value.toString()
+            |}
+            |
+            |fun TestNum0.validate() = true
+            |
+            |package community.flock.wirespec.generated.model
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |
+            |data class TestNum1(override val value: Double): Wirespec.Refined<Double> {
+            |  override fun toString() = value.toString()
+            |}
+            |
+            |fun TestNum1.validate() = value < 0.5
+            |
+            |package community.flock.wirespec.generated.model
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |
+            |data class TestNum2(override val value: Double): Wirespec.Refined<Double> {
+            |  override fun toString() = value.toString()
+            |}
+            |
+            |fun TestNum2.validate() = -0.2 < value && value < 0.5
             |
         """.trimMargin()
 

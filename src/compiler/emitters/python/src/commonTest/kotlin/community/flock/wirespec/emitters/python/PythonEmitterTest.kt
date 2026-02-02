@@ -1,11 +1,60 @@
 package community.flock.wirespec.emitters.python
 
+import arrow.core.nonEmptyListOf
+import arrow.core.nonEmptySetOf
+import community.flock.wirespec.compiler.core.EmitContext
+import community.flock.wirespec.compiler.core.FileUri
+import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.Module
+import community.flock.wirespec.compiler.test.CompileChannelTest
+import community.flock.wirespec.compiler.test.CompileEnumTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
 import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
+import community.flock.wirespec.compiler.test.CompileRefinedTest
+import community.flock.wirespec.compiler.test.CompileTypeTest
+import community.flock.wirespec.compiler.test.CompileUnionTest
+import community.flock.wirespec.compiler.test.NodeFixtures
+import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
 class PythonEmitterTest {
+
+    private val emitContext = object : EmitContext, NoLogger {
+        override val emitters = nonEmptySetOf(PythonEmitter())
+    }
+
+    @Test
+    fun testEmitterRefined() {
+        val expected = listOf(
+            """
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class UUID(Wirespec.Refined):
+            |  value: str
+            |
+            |  def validate(self) -> bool:
+            |    return bool(re.match(r"/^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/", self.value))
+            |
+            |  def __str__(self) -> str:
+            |    return str(self.value)
+            |
+            """.trimMargin(),
+        )
+
+        val res = emitContext.emitFirst(NodeFixtures.refined)
+        res shouldBe expected
+    }
 
     @Test
     fun compileFullEndpointTest() {
@@ -416,5 +465,380 @@ class PythonEmitterTest {
             |
         """.trimMargin()
         CompileMinimalEndpointTest.compiler { PythonEmitter() } shouldBeRight python
+    }
+
+    @Test
+    fun compileRefinedTest() {
+        val python = """
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class TodoId(Wirespec.Refined):
+            |  value: str
+            |
+            |  def validate(self) -> bool:
+            |    return bool(re.match(r"/^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/g", self.value))
+            |
+            |  def __str__(self) -> str:
+            |    return str(self.value)
+            |
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class TodoNoRegex(Wirespec.Refined):
+            |  value: str
+            |
+            |  def validate(self) -> bool:
+            |    return True
+            |
+            |  def __str__(self) -> str:
+            |    return str(self.value)
+            |
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class TestInt(Wirespec.Refined):
+            |  value: int
+            |
+            |  def validate(self) -> bool:
+            |    return True
+            |
+            |  def __str__(self) -> str:
+            |    return str(self.value)
+            |
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class TestInt0(Wirespec.Refined):
+            |  value: int
+            |
+            |  def validate(self) -> bool:
+            |    return True
+            |
+            |  def __str__(self) -> str:
+            |    return str(self.value)
+            |
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class TestInt1(Wirespec.Refined):
+            |  value: int
+            |
+            |  def validate(self) -> bool:
+            |    return 0 < self.value
+            |
+            |  def __str__(self) -> str:
+            |    return str(self.value)
+            |
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class TestInt2(Wirespec.Refined):
+            |  value: int
+            |
+            |  def validate(self) -> bool:
+            |    return 3 < self.value and self.value < 1
+            |
+            |  def __str__(self) -> str:
+            |    return str(self.value)
+            |
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class TestNum(Wirespec.Refined):
+            |  value: float
+            |
+            |  def validate(self) -> bool:
+            |    return True
+            |
+            |  def __str__(self) -> str:
+            |    return str(self.value)
+            |
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class TestNum0(Wirespec.Refined):
+            |  value: float
+            |
+            |  def validate(self) -> bool:
+            |    return True
+            |
+            |  def __str__(self) -> str:
+            |    return str(self.value)
+            |
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class TestNum1(Wirespec.Refined):
+            |  value: float
+            |
+            |  def validate(self) -> bool:
+            |    return self.value < 0.5
+            |
+            |  def __str__(self) -> str:
+            |    return str(self.value)
+            |
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class TestNum2(Wirespec.Refined):
+            |  value: float
+            |
+            |  def validate(self) -> bool:
+            |    return -0.2 < self.value and self.value < 0.5
+            |
+            |  def __str__(self) -> str:
+            |    return str(self.value)
+            |
+            |from . import model
+            |from . import endpoint
+            |from . import wirespec
+            |
+        """.trimMargin()
+
+        CompileRefinedTest.compiler { PythonEmitter() } shouldBeRight python
+    }
+
+    @Test
+    fun compileChannelTest() {
+        val result = CompileChannelTest.compiler { PythonEmitter() }
+        val expect =
+            //language=python
+            """
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |
+            |from . import model
+            |from . import endpoint
+            |from . import wirespec
+            |
+            """.trimMargin()
+        result shouldBeRight expect
+    }
+
+    @Test
+    fun compileEnumTest() {
+        val result = CompileEnumTest.compiler { PythonEmitter() }
+        val expect =
+            //language=python
+            """
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |class MyAwesomeEnum(str, Enum):
+            |  ONE = "ONE"
+            |  Two = "Two"
+            |  THREE_MORE = "THREE_MORE"
+            |  UnitedKingdom = "UnitedKingdom"
+            |
+            |  @property
+            |  def label(self) -> str:
+            |    return self.value
+            |
+            |  def __str__(self) -> str:
+            |    return self.value
+            |from . import model
+            |from . import endpoint
+            |from . import wirespec
+            |
+            """.trimMargin()
+        result shouldBeRight expect
+    }
+
+    @Test
+    fun compileUnionTest() {
+        val result = CompileUnionTest.compiler { PythonEmitter() }
+        val expect =
+            //language=python
+            """
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class UserAccountPassword:
+            |  username: 'str'
+            |  password: 'str'
+            |
+            |
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class UserAccountToken:
+            |  token: 'str'
+            |
+            |
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class User:
+            |  username: 'str'
+            |  account: 'UserAccount'
+            |
+            |from ..model.UserAccount import UserAccount
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |class UserAccount(ABC):
+            |  pass
+            |from . import model
+            |from . import endpoint
+            |from . import wirespec
+            |
+            """.trimMargin()
+        result shouldBeRight expect
+    }
+
+    @Test
+    fun compileTypeTest() {
+        val result = CompileTypeTest.compiler { PythonEmitter() }
+        val expect =
+            //language=python
+            """
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |@dataclass
+            |class Request:
+            |  type: 'str'
+            |  url: 'str'
+            |  BODY_TYPE: 'Optional[str]'
+            |  params: 'List[str]'
+            |  headers: 'Dict[str, str]'
+            |  body: 'Optional[Dict[str, Optional[List[Optional[str]]]]]'
+            |
+            |
+            |from . import model
+            |from . import endpoint
+            |from . import wirespec
+            |
+            """.trimMargin()
+        result shouldBeRight expect
+    }
+
+    private fun EmitContext.emitFirst(node: Definition) = emitters.map {
+        val ast = AST(
+            nonEmptyListOf(
+                Module(
+                    FileUri(""),
+                    nonEmptyListOf(node),
+                ),
+            ),
+        )
+        it.emit(ast, logger).first().result
     }
 }

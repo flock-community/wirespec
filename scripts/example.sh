@@ -1,3 +1,4 @@
+
 dir="$(dirname -- "$0")"
 
 ./gradlew \

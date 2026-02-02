@@ -15,7 +15,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static arrow.core.NonEmptyListKt.nonEmptyListOf;
@@ -71,9 +70,9 @@ public class SpringJavaEmitterTest {
                         
                         import community.flock.wirespec.java.Wirespec;
                         
-                        public record TodoId (String value) implements Wirespec.Refined {
+                        public record TodoId (String value) implements Wirespec.Refined<String> {
                           @Override
-                          public String toString() { return value; }
+                          public String toString() { return value.toString(); }
                           public static boolean validate(TodoId record) {
                             return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{12}$").matcher(record.value).find();
                           }

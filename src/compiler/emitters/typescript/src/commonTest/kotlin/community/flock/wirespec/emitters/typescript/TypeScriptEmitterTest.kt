@@ -1,5 +1,12 @@
 package community.flock.wirespec.emitters.typescript
 
+import arrow.core.nonEmptyListOf
+import arrow.core.nonEmptySetOf
+import community.flock.wirespec.compiler.core.EmitContext
+import community.flock.wirespec.compiler.core.FileUri
+import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.core.parse.ast.Definition
+import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.test.CompileChannelTest
 import community.flock.wirespec.compiler.test.CompileEnumTest
 import community.flock.wirespec.compiler.test.CompileFullEndpointTest
@@ -7,10 +14,35 @@ import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
 import community.flock.wirespec.compiler.test.CompileRefinedTest
 import community.flock.wirespec.compiler.test.CompileTypeTest
 import community.flock.wirespec.compiler.test.CompileUnionTest
+import community.flock.wirespec.compiler.test.NodeFixtures
+import community.flock.wirespec.compiler.utils.NoLogger
 import io.kotest.assertions.arrow.core.shouldBeRight
+import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
 class TypeScriptEmitterTest {
+
+    private val emitContext = object : EmitContext, NoLogger {
+        override val emitters = nonEmptySetOf(TypeScriptEmitter())
+    }
+
+    @Test
+    fun testEmitterRefined() {
+        val expected = listOf(
+            """
+            |import {Wirespec} from '../Wirespec'
+            |
+            |export type UUID = string;
+            |export const validateUUID = (value: string): value is UUID => {
+            |  return /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}/.test(value);
+            |}
+            |
+            """.trimMargin(),
+        )
+
+        val res = emitContext.emitFirst(NodeFixtures.refined)
+        res shouldBe expected
+    }
 
     @Test
     fun compileFullEndpointTest() {
@@ -388,10 +420,83 @@ class TypeScriptEmitterTest {
             |import {Wirespec} from '../Wirespec'
             |
             |export type TodoId = string;
-            |export const validateTodoId = (value: string): value is TodoId => 
-            |  /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}${'$'}/g.test(value);
+            |export const validateTodoId = (value: string): value is TodoId => {
+            |  return /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/g.test(value);
+            |}
+            |
+            |import {Wirespec} from '../Wirespec'
+            |
+            |export type TodoNoRegex = string;
+            |export const validateTodoNoRegex = (value: string): value is TodoNoRegex => {
+            |  return true;
+            |}
+            |
+            |import {Wirespec} from '../Wirespec'
+            |
+            |export type TestInt = number;
+            |export const validateTestInt = (value: number): value is TestInt => {
+            |  return true;
+            |}
+            |
+            |import {Wirespec} from '../Wirespec'
+            |
+            |export type TestInt0 = number;
+            |export const validateTestInt0 = (value: number): value is TestInt0 => {
+            |  return true;
+            |}
+            |
+            |import {Wirespec} from '../Wirespec'
+            |
+            |export type TestInt1 = number;
+            |export const validateTestInt1 = (value: number): value is TestInt1 => {
+            |  return 0 < value;
+            |}
+            |
+            |import {Wirespec} from '../Wirespec'
+            |
+            |export type TestInt2 = number;
+            |export const validateTestInt2 = (value: number): value is TestInt2 => {
+            |  return 3 < value && value < 1;
+            |}
+            |
+            |import {Wirespec} from '../Wirespec'
+            |
+            |export type TestNum = number;
+            |export const validateTestNum = (value: number): value is TestNum => {
+            |  return true;
+            |}
+            |
+            |import {Wirespec} from '../Wirespec'
+            |
+            |export type TestNum0 = number;
+            |export const validateTestNum0 = (value: number): value is TestNum0 => {
+            |  return true;
+            |}
+            |
+            |import {Wirespec} from '../Wirespec'
+            |
+            |export type TestNum1 = number;
+            |export const validateTestNum1 = (value: number): value is TestNum1 => {
+            |  return value < 0.5;
+            |}
+            |
+            |import {Wirespec} from '../Wirespec'
+            |
+            |export type TestNum2 = number;
+            |export const validateTestNum2 = (value: number): value is TestNum2 => {
+            |  return -0.2 < value && value < 0.5;
+            |}
             |
             |export {TodoId} from './TodoId'
+            |export {TodoNoRegex} from './TodoNoRegex'
+            |export {TestInt} from './TestInt'
+            |export {TestInt0} from './TestInt0'
+            |export {TestInt1} from './TestInt1'
+            |export {TestInt2} from './TestInt2'
+            |export {TestNum} from './TestNum'
+            |export {TestNum0} from './TestNum0'
+            |export {TestNum1} from './TestNum1'
+            |export {TestNum2} from './TestNum2'
         """.trimMargin()
 
         CompileRefinedTest.compiler { TypeScriptEmitter() } shouldBeRight ts
@@ -457,5 +562,17 @@ class TypeScriptEmitterTest {
         """.trimMargin()
 
         CompileTypeTest.compiler { TypeScriptEmitter() } shouldBeRight ts
+    }
+
+    private fun EmitContext.emitFirst(node: Definition) = emitters.map {
+        val ast = AST(
+            nonEmptyListOf(
+                Module(
+                    FileUri(""),
+                    nonEmptyListOf(node),
+                ),
+            ),
+        )
+        it.emit(ast, logger).first().result
     }
 }

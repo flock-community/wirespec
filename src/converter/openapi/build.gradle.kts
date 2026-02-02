@@ -40,6 +40,7 @@ kotlin {
                 implementation(libs.kotlinx.io.core)
                 implementation(libs.kotlin.test)
                 implementation(libs.bundles.kotest)
+                implementation(project(":src:compiler:test"))
                 implementation(project(":src:compiler:emitters:kotlin"))
                 implementation(project(":src:compiler:emitters:wirespec"))
             }

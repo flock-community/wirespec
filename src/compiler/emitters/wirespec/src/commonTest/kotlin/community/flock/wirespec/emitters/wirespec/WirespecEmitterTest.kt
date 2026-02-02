@@ -88,6 +88,24 @@ class WirespecEmitterTest {
         val wirespec = """
             |type TodoId = String(/^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/g)
             |
+            |type TodoNoRegex = String
+            |
+            |type TestInt = Integer
+            |
+            |type TestInt0 = Integer(null, null)
+            |
+            |type TestInt1 = Integer(0, null)
+            |
+            |type TestInt2 = Integer(3, 1)
+            |
+            |type TestNum = Number
+            |
+            |type TestNum0 = Number(null, null)
+            |
+            |type TestNum1 = Number(null, 0.5)
+            |
+            |type TestNum2 = Number(-0.2, 0.5)
+            |
         """.trimMargin()
 
         CompileRefinedTest.compiler { WirespecEmitter() } shouldBeRight wirespec

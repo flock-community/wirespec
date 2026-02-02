@@ -1,5 +1,5 @@
 type TodoId = String(/^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/g)
-
+type Test = Integer
 type Todo {
     id: TodoId,
     name: String,

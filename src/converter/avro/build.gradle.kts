@@ -37,6 +37,7 @@ kotlin {
         }
         commonTest {
             dependencies {
+                implementation(project(":src:compiler:test"))
                 implementation(libs.kotlin.test)
                 implementation(libs.kotlinx.io.core)
                 implementation(libs.bundles.kotest)

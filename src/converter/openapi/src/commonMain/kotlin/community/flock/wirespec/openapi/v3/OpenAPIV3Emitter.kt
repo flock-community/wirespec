@@ -78,7 +78,7 @@ object OpenAPIV3Emitter : Emitter {
     )
 
     private fun Statements.emitComponents(logger: Logger) = this
-        .filter { it !is Endpoint }
+        .filter { it !is Endpoint && it !is Channel }
         .associate { definition ->
             definition.identifier.value to when (definition) {
                 is Enum -> definition.emit()
@@ -114,10 +114,18 @@ object OpenAPIV3Emitter : Emitter {
         .toMap()
 
     private fun Refined.emit(): OpenAPIV3Schema = when (val type = reference.type) {
-        is Reference.Primitive.Type.Integer, is Reference.Primitive.Type.Number -> OpenAPIV3Schema(
-            type = OpenAPIV3Type.STRING,
+        is Reference.Primitive.Type.Integer -> OpenAPIV3Schema(
+            type = OpenAPIV3Type.INTEGER,
             minimum = type.constraint?.min?.toDouble(),
             maximum = type.constraint?.max?.toDouble(),
+            format = "int32",
+        )
+
+        is Reference.Primitive.Type.Number -> OpenAPIV3Schema(
+            type = OpenAPIV3Type.NUMBER,
+            minimum = type.constraint?.min?.toDouble(),
+            maximum = type.constraint?.max?.toDouble(),
+            format = "float",
         )
 
         is Reference.Primitive.Type.String -> OpenAPIV3Schema(

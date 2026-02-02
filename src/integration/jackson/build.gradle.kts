@@ -31,6 +31,7 @@ kotlin {
             dependencies {
                 implementation(project(":src:integration:wirespec"))
                 implementation(libs.bundles.kotlin.test)
+                implementation(libs.bundles.kotest)
             }
         }
         jvmMain {

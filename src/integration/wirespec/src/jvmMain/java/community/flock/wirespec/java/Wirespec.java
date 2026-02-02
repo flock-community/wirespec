@@ -8,7 +8,7 @@ import java.util.Map;
 public interface Wirespec {
     interface Enum { String getLabel(); }
     interface Endpoint {}
-    interface Refined { String getValue(); }
+    interface Refined<T> { T getValue(); }
     interface Path {}
     interface Queries {}
     interface Headers {}

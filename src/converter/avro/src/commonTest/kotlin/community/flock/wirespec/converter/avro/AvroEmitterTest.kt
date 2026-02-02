@@ -7,7 +7,15 @@ import community.flock.wirespec.compiler.core.ParseContext
 import community.flock.wirespec.compiler.core.WirespecSpec
 import community.flock.wirespec.compiler.core.parse
 import community.flock.wirespec.compiler.core.parse.ast.AST
+import community.flock.wirespec.compiler.test.CompileChannelTest
+import community.flock.wirespec.compiler.test.CompileEnumTest
+import community.flock.wirespec.compiler.test.CompileFullEndpointTest
+import community.flock.wirespec.compiler.test.CompileMinimalEndpointTest
+import community.flock.wirespec.compiler.test.CompileRefinedTest
+import community.flock.wirespec.compiler.test.CompileTypeTest
+import community.flock.wirespec.compiler.test.CompileUnionTest
 import community.flock.wirespec.compiler.utils.NoLogger
+import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.assertions.json.shouldEqualJson
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
@@ -422,5 +430,268 @@ class AvroEmitterTest {
             """.trimMargin()
 
         actual shouldEqualJson expected
+    }
+
+    @Test
+    fun compileFullEndpointTest() {
+        val result = CompileFullEndpointTest.compiler {
+            AvroEmitter
+        }
+        val expect =
+            //language=json
+            """
+            |[
+            |  {
+            |    "type": "record",
+            |    "name": "PotentialTodoDto",
+            |    "fields": [
+            |      {
+            |        "name": "name",
+            |        "type": "string"
+            |      },
+            |      {
+            |        "name": "done",
+            |        "type": "boolean"
+            |      }
+            |    ]
+            |  },
+            |  {
+            |    "type": "record",
+            |    "name": "Token",
+            |    "fields": [
+            |      {
+            |        "name": "iss",
+            |        "type": "string"
+            |      }
+            |    ]
+            |  },
+            |  {
+            |    "type": "record",
+            |    "name": "TodoDto",
+            |    "fields": [
+            |      {
+            |        "name": "id",
+            |        "type": "string"
+            |      },
+            |      {
+            |        "name": "name",
+            |        "type": "string"
+            |      },
+            |      {
+            |        "name": "done",
+            |        "type": "boolean"
+            |      }
+            |    ]
+            |  },
+            |  {
+            |    "type": "record",
+            |    "name": "Error",
+            |    "fields": [
+            |      {
+            |        "name": "code",
+            |        "type": "long"
+            |      },
+            |      {
+            |        "name": "description",
+            |        "type": "string"
+            |      }
+            |    ]
+            |  }
+            |]
+            """.trimMargin()
+        result.shouldBeRight() shouldEqualJson expect
+    }
+
+    @Test
+    fun compileMinimalEndpointTest() {
+        val result = CompileMinimalEndpointTest.compiler {
+            AvroEmitter
+        }
+        val expect =
+            //language=json
+            """
+            |[
+            |  {
+            |    "type": "record",
+            |    "name": "TodoDto",
+            |    "fields": [
+            |      {
+            |        "name": "description",
+            |        "type": "string"
+            |      }
+            |    ]
+            |  }
+            |]
+            """.trimMargin()
+        result.shouldBeRight() shouldEqualJson expect
+    }
+
+    @Test
+    fun compileChannelTest() {
+        val result = CompileChannelTest.compiler {
+            AvroEmitter
+        }
+        val expect =
+            //language=json
+            """
+            |[]
+            """.trimMargin()
+        result.shouldBeRight() shouldEqualJson expect
+    }
+
+    @Test
+    fun compileEnumTest() {
+        val result = CompileEnumTest.compiler {
+            AvroEmitter
+        }
+        val expect =
+            //language=json
+            """
+            |[
+            |  {
+            |    "type": "enum",
+            |    "name": "MyAwesomeEnum",
+            |    "symbols": [
+            |      "ONE",
+            |      "Two",
+            |      "THREE_MORE",
+            |      "UnitedKingdom"
+            |    ]
+            |  }
+            |]
+            """.trimMargin()
+        result.shouldBeRight() shouldEqualJson expect
+    }
+
+    @Test
+    fun compileRefinedTest() {
+        val result = CompileRefinedTest.compiler {
+            AvroEmitter
+        }
+        val expect =
+            //language=json
+            """
+            |[]
+            """.trimMargin()
+        result.shouldBeRight() shouldEqualJson expect
+    }
+
+    @Test
+    fun compileUnionTest() {
+        val result = CompileUnionTest.compiler {
+            AvroEmitter
+        }
+        val expect =
+            //language=json
+            """
+            |[
+            |  {
+            |    "name": "UserAccount",
+            |    "type": [
+            |      "UserAccountPassword",
+            |      "UserAccountToken"
+            |    ]
+            |  },
+            |  {
+            |    "type": "record",
+            |    "name": "UserAccountPassword",
+            |    "fields": [
+            |      {
+            |        "name": "username",
+            |        "type": "string"
+            |      },
+            |      {
+            |        "name": "password",
+            |        "type": "string"
+            |      }
+            |    ]
+            |  },
+            |  {
+            |    "type": "record",
+            |    "name": "UserAccountToken",
+            |    "fields": [
+            |      {
+            |        "name": "token",
+            |        "type": "string"
+            |      }
+            |    ]
+            |  },
+            |  {
+            |    "type": "record",
+            |    "name": "User",
+            |    "fields": [
+            |      {
+            |        "name": "username",
+            |        "type": "string"
+            |      },
+            |      {
+            |        "name": "account",
+            |        "type": "UserAccount"
+            |      }
+            |    ]
+            |  }
+            |]
+            """.trimMargin()
+        result.shouldBeRight() shouldEqualJson expect
+    }
+
+    @Test
+    fun compileTypeTest() {
+        val result = CompileTypeTest.compiler { AvroEmitter }
+        val expect =
+            //language=json
+            """
+            |[
+            |  {
+            |    "type": "record",
+            |    "name": "Request",
+            |    "fields": [
+            |      {
+            |        "name": "type",
+            |        "type": "string"
+            |      },
+            |      {
+            |        "name": "url",
+            |        "type": "string"
+            |      },
+            |      {
+            |        "name": "BODY_TYPE",
+            |        "type": [
+            |          "null",
+            |          "string"
+            |        ]
+            |      },
+            |      {
+            |        "name": "params",
+            |        "type": {
+            |          "type": "array",
+            |          "items": "string"
+            |        }
+            |      },
+            |      {
+            |        "name": "headers",
+            |        "type": {
+            |          "type": "map",
+            |          "values": "string"
+            |        }
+            |      },
+            |      {
+            |        "name": "body",
+            |        "type": [
+            |          "null",
+            |          {
+            |            "type": "map",
+            |            "values": {
+            |              "type": "array",
+            |              "items": "string"
+            |            }
+            |          }
+            |        ]
+            |      }
+            |    ]
+            |  }
+            |]
+            """.trimMargin()
+        result.shouldBeRight() shouldEqualJson expect
     }
 }

@@ -8,8 +8,8 @@ import community.flock.wirespec.compiler.core.parse.ast.Refined
 interface KotlinRefinedTypeDefinitionEmitter: RefinedTypeDefinitionEmitter, KotlinIdentifierEmitter, KotlinTypeDefinitionEmitter {
 
     override fun emit(refined: Refined) = """
-        |data class ${refined.identifier.sanitize()}(override val value: String): Wirespec.Refined {
-        |${Spacer}override fun toString() = value
+        |data class ${refined.identifier.sanitize()}(override val value: ${refined.reference.emit()}): Wirespec.Refined<${refined.reference.emit()}> {
+        |${Spacer}override fun toString() = value.toString()
         |}
         |
         |fun ${refined.identifier.value}.validate() = ${refined.emitValidator()}
