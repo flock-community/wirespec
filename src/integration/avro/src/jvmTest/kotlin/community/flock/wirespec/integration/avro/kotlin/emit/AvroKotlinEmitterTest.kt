@@ -164,16 +164,42 @@ class AvroKotlinEmitterTest {
             |    Wirespec.RawRequest(
             |      path = listOf("todos", request.path.id.let{serialization.serializePath(it, typeOf<String>())}),
             |      method = request.method.name,
-            |      queries = (mapOf("done" to (request.queries.done?.let{ serialization.serializeParam(it, typeOf<Boolean>()) } ?: emptyList()))) + (mapOf("name" to (request.queries.name?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
-            |      headers = (mapOf("token" to (request.headers.token?.let{ serialization.serializeParam(it, typeOf<Token>()) } ?: emptyList()))) + (mapOf("Refresh-Token" to (request.headers.RefreshToken?.let{ serialization.serializeParam(it, typeOf<Token?>()) } ?: emptyList()))),
+            |      queries = mapOf(
+            |          "done" to request.queries.done?.let{ serialization.serializeParam(it, typeOf<Boolean>()) }.orEmpty(),
+            |          "name" to request.queries.name?.let{ serialization.serializeParam(it, typeOf<String?>()) }.orEmpty()
+            |        ),
+            |      headers = mapOf(
+            |          "token" to request.headers.token?.let{ serialization.serializeParam(it, typeOf<Token>()) }.orEmpty(),
+            |          "Refresh-Token" to request.headers.RefreshToken?.let{ serialization.serializeParam(it, typeOf<Token?>()) }.orEmpty()
+            |        ),
             |      body = serialization.serializeBody(request.body, typeOf<PotentialTodoDto>()),
             |    )
             |
             |  fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
             |    Request(
             |      id = serialization.deserializePath(request.path[1], typeOf<String>()),
-            |      done = serialization.deserializeParam(requireNotNull(request.queries["done"]) { "done is null" }, typeOf<Boolean>()),       name = request.queries["name"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) },
-            |      token = serialization.deserializeParam(requireNotNull(request.headers["token"]) { "token is null" }, typeOf<Token>()),       RefreshToken = request.headers["Refresh-Token"]?.let{ serialization.deserializeParam(it, typeOf<Token?>()) },
+            |      done =
+            |        request.queries
+            |          .entries
+            |          .find { it.key.equals("done", ignoreCase = false) }
+            |          ?.let { serialization.deserializeParam(it.value, typeOf<Boolean>()) }
+            |          ?: throw IllegalArgumentException("done is null"),
+            |      name =
+            |        request.queries
+            |          .entries
+            |          .find { it.key.equals("name", ignoreCase = false) }
+            |          ?.let { serialization.deserializeParam(it.value, typeOf<String?>()) },
+            |      token =
+            |        request.headers
+            |          .entries
+            |          .find { it.key.equals("token", ignoreCase = true) }
+            |          ?.let { serialization.deserializeParam(it.value, typeOf<Token>()) }
+            |          ?: throw IllegalArgumentException("token is null"),
+            |      RefreshToken =
+            |        request.headers
+            |          .entries
+            |          .find { it.key.equals("Refresh-Token", ignoreCase = true) }
+            |          ?.let { serialization.deserializeParam(it.value, typeOf<Token?>()) },
             |      body = serialization.deserializeBody(requireNotNull(request.body) { "body is null" }, typeOf<PotentialTodoDto>()),
             |    )
             |
@@ -215,7 +241,10 @@ class AvroKotlinEmitterTest {
             |      )
             |      is Response201 -> Wirespec.RawResponse(
             |        statusCode = response.status,
-            |        headers = (mapOf("token" to (response.headers.token?.let{ serialization.serializeParam(it, typeOf<Token>()) } ?: emptyList()))) + (mapOf("refreshToken" to (response.headers.refreshToken?.let{ serialization.serializeParam(it, typeOf<Token?>()) } ?: emptyList()))),
+            |        headers = mapOf(
+            |          "token" to response.headers.token?.let{ serialization.serializeParam(it, typeOf<Token>()) }.orEmpty(),
+            |          "refreshToken" to response.headers.refreshToken?.let{ serialization.serializeParam(it, typeOf<Token?>()) }.orEmpty()
+            |        ),
             |        body = serialization.serializeBody(response.body, typeOf<TodoDto>()),
             |      )
             |      is Response500 -> Wirespec.RawResponse(
@@ -232,8 +261,17 @@ class AvroKotlinEmitterTest {
             |      )
             |      201 -> Response201(
             |        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<TodoDto>()),
-            |        token = serialization.deserializeParam(requireNotNull(response.headers["token"]) { "token is null" }, typeOf<Token>()),
-            |        refreshToken = response.headers["refreshToken"]?.let{ serialization.deserializeParam(it, typeOf<Token?>()) }
+            |        token =
+            |          response.headers
+            |            .entries
+            |            .find { it.key.equals("token", ignoreCase = true) }
+            |            ?.let { serialization.deserializeParam(it.value, typeOf<Token>()) }
+            |            ?: throw IllegalArgumentException("token is null"),
+            |        refreshToken =
+            |          response.headers
+            |            .entries
+            |            .find { it.key.equals("refreshToken", ignoreCase = true) }
+            |            ?.let { serialization.deserializeParam(it.value, typeOf<Token?>()) }
             |      )
             |      500 -> Response500(
             |        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<Error>()),
@@ -406,7 +444,6 @@ class AvroKotlinEmitterTest {
     fun compileMinimalEndpointTest() {
         val result = CompileMinimalEndpointTest.compiler { emitter }
         val expect =
-            //language=kotlin
             """
             |package packageName.endpoint
             |
