@@ -34,6 +34,7 @@ import javax.tools.ToolProvider
     name = "convert",
     defaultPhase = LifecyclePhase.GENERATE_SOURCES,
     requiresDependencyResolution = ResolutionScope.COMPILE,
+    threadSafe = true,
 )
 class ConvertMojo : BaseMojo() {
 
