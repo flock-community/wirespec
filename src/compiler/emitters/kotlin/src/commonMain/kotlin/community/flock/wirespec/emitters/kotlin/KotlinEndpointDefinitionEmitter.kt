@@ -94,8 +94,8 @@ interface KotlinEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackage
         |${Spacer(2)}Wirespec.RawRequest(
         |${Spacer(3)}path = listOf(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
         |${Spacer(3)}method = request.method.name,
-        |${Spacer(3)}queries = ${if (endpoint.queries.isNotEmpty()) endpoint.queries.joinToString(" + ") { "(${it.emitSerializedParams("request", "queries")})" } else EMPTY_MAP},
-        |${Spacer(3)}headers = ${if (endpoint.headers.isNotEmpty()) endpoint.headers.joinToString(" + ") { "(${it.emitSerializedParams("request", "headers")})" } else EMPTY_MAP},
+        |${Spacer(3)}queries = ${if (endpoint.queries.isNotEmpty()) endpoint.queries.joinToString(" + ") { "(${it.emitSerializedParams("request", "queries", caseSensitive = true)})" } else EMPTY_MAP},
+        |${Spacer(3)}headers = ${if (endpoint.headers.isNotEmpty()) endpoint.headers.joinToString(" + ") { "(${it.emitSerializedParams("request", "headers", caseSensitive = false)})" } else EMPTY_MAP},
         |${Spacer(3)}body = ${if(content != null) "serialization.serializeBody(request.body, typeOf<${content.emit()}>())" else "null"},
         |${Spacer(2)})
         |
@@ -122,14 +122,14 @@ interface KotlinEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackage
     private fun Endpoint.Request.emitDeserializedParams(endpoint: Endpoint) = listOfNotNull(
         endpoint.indexedPathParams.joinToString { it.emitDeserialized() }.orNull(),
         endpoint.queries.joinToString { it.emitDeserializedParams("request", "queries") }.orNull(),
-        endpoint.headers.joinToString { it.emitDeserializedParams("request", "headers") }.orNull(),
+        endpoint.headers.joinToString { it.emitDeserializedParams("request", "headers", caseSensitive = false) }.orNull(),
         content?.let { """${Spacer(3)}body = serialization.deserializeBody(requireNotNull(request.body) { "body is null" }, typeOf<${it.emit()}>()),""" }
     ).joinToString(",\n").let { if (it.isBlank()) "" else "(\n$it\n${Spacer(2)})" }
 
     private fun Endpoint.Response.emitSerialized() = """
         |${Spacer(3)}is Response$status -> Wirespec.RawResponse(
         |${Spacer(4)}statusCode = response.status,
-        |${Spacer(4)}headers = ${if (headers.isNotEmpty()) headers.joinToString(" + ") { "(${it.emitSerializedParams("response", "headers")})" } else EMPTY_MAP},
+        |${Spacer(4)}headers = ${if (headers.isNotEmpty()) headers.joinToString(" + ") { "(${it.emitSerializedParams("response", "headers", caseSensitive = false)})" } else EMPTY_MAP},
         |${Spacer(4)}body = ${if (content != null) "serialization.serializeBody(response.body, typeOf<${content.emit()}>())" else "null"},
         |${Spacer(3)})
     """.trimMargin()
@@ -141,23 +141,23 @@ interface KotlinEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackage
         } else {
             "${Spacer(4)}body = Unit,"
         },
-        headers.joinToString(",\n") { it.emitDeserializedParams("response", "headers", 4) }.orNull(),
+        headers.joinToString(",\n") { it.emitDeserializedParams("response", "headers", 4, caseSensitive = false) }.orNull(),
         "${Spacer(3)})"
     ).joinToString("\n")
 
-    private fun Field.emitSerializedParams(type: String, fields: String) =
+    private fun Field.emitSerializedParams(type: String, fields: String, caseSensitive: Boolean) =
         // Use lowercase for header names (RFC 7230 - headers are case-insensitive)
-        """mapOf("${identifier.value.lowercase()}" to ($type.$fields.${emit(identifier)}?.let{ serialization.serializeParam(it, typeOf<${reference.emit()}>()) } ?: emptyList()))"""
+        """mapOf("${identifier.value.let{if(caseSensitive)it else it.lowercase()}}" to ($type.$fields.${emit(identifier)}?.let{ serialization.serializeParam(it, typeOf<${reference.emit()}>()) } ?: emptyList()))"""
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
         """${Spacer(3)}${emit(value.identifier)} = serialization.deserializePath(request.path[${index}], typeOf<${value.reference.emit()}>())"""
 
-    private fun Field.emitDeserializedParams(type: String, fields: String, spaces: Int = 3) =
+    private fun Field.emitDeserializedParams(type: String, fields: String, spaces: Int = 3, caseSensitive: Boolean = true) =
         // Use lowercase for header names (RFC 7230 - headers are case-insensitive)
         if (reference.isNullable)
-            """${Spacer(spaces)}${emit(identifier)} = $type.$fields["${identifier.value.lowercase()}"]?.let{ serialization.deserializeParam(it, typeOf<${reference.emit()}>()) }"""
+            """${Spacer(spaces)}${emit(identifier)} = $type.$fields["${identifier.value.let{if(caseSensitive)it else it.lowercase()}}"]?.let{ serialization.deserializeParam(it, typeOf<${reference.emit()}>()) }"""
         else
-            """${Spacer(spaces)}${emit(identifier)} = serialization.deserializeParam(requireNotNull($type.$fields["${identifier.value.lowercase()}"]) { "${emit(identifier)} is null" }, typeOf<${reference.emit()}>())"""
+            """${Spacer(spaces)}${emit(identifier)} = serialization.deserializeParam(requireNotNull($type.$fields["${identifier.value.let{if(caseSensitive)it else it.lowercase()}}"]) { "${emit(identifier)} is null" }, typeOf<${reference.emit()}>())"""
 
     private fun Endpoint.Segment.Param.emitIdentifier() =
         "request.path.${emit(identifier)}.let{serialization.serializePath(it, typeOf<${reference.emit()}>())}"

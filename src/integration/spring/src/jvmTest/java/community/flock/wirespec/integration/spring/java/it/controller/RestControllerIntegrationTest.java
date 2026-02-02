@@ -103,7 +103,7 @@ public class RestControllerIntegrationTest {
         MockMultipartFile file = new MockMultipartFile("file", "filename.txt", "text/plain", "data".getBytes());
         MockMultipartFile metadata = new MockMultipartFile("additionalMetadata", "", "application/json", "\"metadata\"".getBytes());
         MockMultipartFile json = new MockMultipartFile("json", "", "application/json", "{\"foo\":\"bar\"}".getBytes());
-        
+
         asyncDispatch(mockMvc
             .perform(
                 multipart("/pet/1/uploadImage")

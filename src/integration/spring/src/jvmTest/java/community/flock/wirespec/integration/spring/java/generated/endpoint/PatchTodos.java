@@ -2,10 +2,14 @@ package community.flock.wirespec.integration.spring.java.generated.endpoint;
 
 import community.flock.wirespec.java.Wirespec;
 
-import community.flock.wirespec.integration.spring.java.generated.model.Pet;
+import community.flock.wirespec.integration.spring.java.generated.model.TodoDtoPatch;
+import community.flock.wirespec.integration.spring.java.generated.model.TodoDto;
+import community.flock.wirespec.integration.spring.java.generated.model.Error;
 
-public interface AddPet extends Wirespec.Endpoint {
-  static class Path implements Wirespec.Path {}
+public interface PatchTodos extends Wirespec.Endpoint {
+  public record Path(
+    String id
+  ) implements Wirespec.Path {}
 
   static class Queries implements Wirespec.Queries {}
 
@@ -16,38 +20,36 @@ public interface AddPet extends Wirespec.Endpoint {
     Wirespec.Method method,
     Queries queries,
     RequestHeaders headers,
-    Pet body
-  ) implements Wirespec.Request<Pet> {
-    public Request(Pet body) {
-      this(new Path(), Wirespec.Method.POST, new Queries(), new RequestHeaders(), body);
+    TodoDtoPatch body
+  ) implements Wirespec.Request<TodoDtoPatch> {
+    public Request(String id, TodoDtoPatch body) {
+      this(new Path(id), Wirespec.Method.PATCH, new Queries(), new RequestHeaders(), body);
     }
   }
 
   sealed interface Response<T> extends Wirespec.Response<T> {}
   sealed interface Response2XX<T> extends Response<T> {}
-  sealed interface Response4XX<T> extends Response<T> {}
-  sealed interface ResponsePet extends Response<Pet> {}
-  sealed interface ResponseVoid extends Response<Void> {}
+  sealed interface Response5XX<T> extends Response<T> {}
+  sealed interface ResponseTodoDto extends Response<TodoDto> {}
+  sealed interface ResponseError extends Response<Error> {}
 
   record Response200(
     int status,
     Headers headers,
-    Pet body
-  ) implements Response2XX<Pet>, ResponsePet {
-    public Response200(java.util.Optional<Integer> XRateLimit, Pet body) {
-      this(200, new Headers(XRateLimit), body);
+    TodoDto body
+  ) implements Response2XX<TodoDto>, ResponseTodoDto {
+    public Response200(TodoDto body) {
+      this(200, new Headers(), body);
     }
-    public record Headers(
-    java.util.Optional<Integer> XRateLimit
-  ) implements Wirespec.Response.Headers {}
+    static class Headers implements Wirespec.Response.Headers {}
   }
-  record Response405(
+  record Response500(
     int status,
     Headers headers,
-    Void body
-  ) implements Response4XX<Void>, ResponseVoid {
-    public Response405() {
-      this(405, new Headers(), null);
+    Error body
+  ) implements Response5XX<Error>, ResponseError {
+    public Response500(Error body) {
+      this(500, new Headers(), body);
     }
     static class Headers implements Wirespec.Response.Headers {}
   }
@@ -57,42 +59,44 @@ public interface AddPet extends Wirespec.Endpoint {
     static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method().name(),
-        java.util.List.of("pet"),
+        java.util.List.of("api", "todos", serialization.serializePath(request.path().id(), Wirespec.getType(String.class, null))),
         java.util.Collections.emptyMap(),
         java.util.Collections.emptyMap(),
-        serialization.serializeBody(request.body(), Wirespec.getType(Pet.class, null))
+        serialization.serializeBody(request.body(), Wirespec.getType(TodoDtoPatch.class, null))
       );
     }
 
     static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
       return new Request(
-        serialization.deserializeBody(request.body(), Wirespec.getType(Pet.class, null))
+        serialization.deserializePath(request.path().get(2), Wirespec.getType(String.class, null)),
+        serialization.deserializeBody(request.body(), Wirespec.getType(TodoDtoPatch.class, null))
       );
     }
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Map.ofEntries(java.util.Map.entry("x-rate-limit", serialization.serializeParam(r.headers().XRateLimit(), Wirespec.getType(Integer.class, java.util.Optional.class)))), serialization.serializeBody(r.body, Wirespec.getType(Pet.class, null))); }
-      if (response instanceof Response405 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), null); }
+      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(TodoDto.class, null))); }
+      if (response instanceof Response500 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(Error.class, null))); }
       else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
     }
 
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
       switch (response.statusCode()) {
         case 200: return new Response200(
-        serialization.deserializeParam(response.headers().getOrDefault("x-rate-limit", java.util.Collections.emptyList()), Wirespec.getType(Integer.class, java.util.Optional.class)),
-        serialization.deserializeBody(response.body(), Wirespec.getType(Pet.class, null))
+        serialization.deserializeBody(response.body(), Wirespec.getType(TodoDto.class, null))
       );
-        case 405: return new Response405();
+        case 500: return new Response500(
+        serialization.deserializeBody(response.body(), Wirespec.getType(Error.class, null))
+      );
         default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
       }
     }
 
-    @org.springframework.web.bind.annotation.PostMapping("/pet")
-    java.util.concurrent.CompletableFuture<Response<?>> addPet(Request request);
+    @org.springframework.web.bind.annotation.RequestMapping(value="/api/todos/{id}", method = org.springframework.web.bind.annotation.RequestMethod.PATCH)
+    java.util.concurrent.CompletableFuture<Response<?>> patchTodos(Request request);
 
     class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
-      @Override public String getPathTemplate() { return "/pet"; }
-      @Override public String getMethod() { return "POST"; }
+      @Override public String getPathTemplate() { return "/api/todos/{id}"; }
+      @Override public String getMethod() { return "PATCH"; }
       @Override public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization serialization) {
         return new Wirespec.ServerEdge<>() {
           @Override public Request from(Wirespec.RawRequest request) { return fromRequest(serialization, request); }

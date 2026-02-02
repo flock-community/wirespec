@@ -33,7 +33,7 @@ public class Service {
     }
 
     public Pet update(Pet pet) {
-        pet.id().ifPresent(id -> 
+        pet.id().ifPresent(id ->
             list.removeIf(it -> it.id().isPresent() && Objects.equals(it.id().get(), id))
         );
         list.add(pet);
