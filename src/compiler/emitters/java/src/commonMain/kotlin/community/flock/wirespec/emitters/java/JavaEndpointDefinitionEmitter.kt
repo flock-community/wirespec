@@ -49,7 +49,7 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
         |${Spacer(2)}}
         |
         |${Spacer(2)}static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
-        |${endpoint.something()}
+        |${endpoint.emitFromResponse()}
         |${Spacer(2)}}
         |
         |${Spacer(2)}${emitHandleFunction(endpoint)}
@@ -129,12 +129,8 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
         |${Spacer(2)}int status,
         |${Spacer(2)}Headers headers,
         |${Spacer(2)}${content.emit()} body
-        |${Spacer}) implements Response${status.first()}XX<${content.emit()}>, Response${
-        content.emit().concatGenerics()
-    } {
-        |${Spacer(2)}public Response${status.firstToUpper()}(${
-        listOfNotNull(headers.joinToString { it.emit() }.orNull(), content?.let { "${it.emit()} body" }).joinToString()
-    }) {
+        |${Spacer}) implements Response${status.first()}XX<${content.emit()}>, Response${content.emit().concatGenerics()} {
+        |${Spacer(2)}public Response${status.firstToUpper()}(${listOfNotNull(headers.joinToString { it.emit() }.orNull(), content?.let { "${it.emit()} body" }).joinToString()}) {
         |${Spacer(3)}this(${status.fixStatus()}, ${
         headers.joinToString { emit(it.identifier) }.let { "new Headers($it)" }
     }, ${if (content == null) "null" else "body"});
@@ -254,7 +250,7 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
         private const val EMPTY_MAP = "java.util.Collections.emptyMap()"
     }
 
-    private fun Endpoint.something(): String {
+    private fun Endpoint.emitFromResponse(): String {
         val statusResponses = responses.distinctByStatus().filter { it.status.isStatusCode() }
         return if (statusResponses.isEmpty()) {
                 """
