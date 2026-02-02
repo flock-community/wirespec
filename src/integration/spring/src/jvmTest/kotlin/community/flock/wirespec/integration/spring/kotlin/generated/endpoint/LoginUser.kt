@@ -66,7 +66,7 @@ object LoginUser : Wirespec.Endpoint {
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = (mapOf("X-Rate-Limit" to (response.headers.XRateLimit?.let{ serialization.serializeParam(it, typeOf<Int?>()) } ?: emptyList()))) + (mapOf("X-Expires-After" to (response.headers.XExpiresAfter?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
+        headers = (mapOf("x-rate-limit" to (response.headers.XRateLimit?.let{ serialization.serializeParam(it, typeOf<Int?>()) } ?: emptyList()))) + (mapOf("x-expires-after" to (response.headers.XExpiresAfter?.let{ serialization.serializeParam(it, typeOf<String?>()) } ?: emptyList()))),
         body = serialization.serializeBody(response.body, typeOf<String>()),
       )
       is Response400 -> Wirespec.RawResponse(
@@ -80,8 +80,8 @@ object LoginUser : Wirespec.Endpoint {
     when (response.statusCode) {
       200 -> Response200(
         body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<String>()),
-        XRateLimit = response.headers["X-Rate-Limit"]?.let{ serialization.deserializeParam(it, typeOf<Int?>()) },
-        XExpiresAfter = response.headers["X-Expires-After"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) }
+        XRateLimit = response.headers["x-rate-limit"]?.let{ serialization.deserializeParam(it, typeOf<Int?>()) },
+        XExpiresAfter = response.headers["x-expires-after"]?.let{ serialization.deserializeParam(it, typeOf<String?>()) }
       )
       400 -> Response400(
         body = Unit,

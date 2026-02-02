@@ -1,5 +1,15 @@
 type TodoId = String(/^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/g)
 
+endpoint RequestParrot POST RequestBodyParrot /api/parrot #{`X-Request-ID`: String, `RanDoMHeADer`: String} -> {
+  200 -> RequestBodyParrot # {`X-Request-ID`: String, `RanDoMHeADer`: String }
+  500 -> Error
+}
+
+type RequestBodyParrot{
+   number: Integer,
+   string: String
+}
+
 type TodoDto {
     id: TodoId,
     name: String,
@@ -21,7 +31,7 @@ endpoint GetTodos GET /api/todos ? {done:Boolean?} -> {
     500 -> Error
 }
 
-endpoint PatchTodos PATCH TodoDtoPatch /api/todos/{id:String} #{X-Request-ID: String, Content-Type: String} -> {
+endpoint PatchTodos PATCH TodoDtoPatch /api/todos/{id:String} -> {
     200 -> TodoDto
     500 -> Error
 }

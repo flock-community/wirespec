@@ -3,56 +3,60 @@ package community.flock.wirespec.integration.spring.kotlin.generated.endpoint
 import community.flock.wirespec.kotlin.Wirespec
 import kotlin.reflect.typeOf
 
-import community.flock.wirespec.integration.spring.kotlin.generated.model.Pet
+import community.flock.wirespec.integration.spring.kotlin.generated.model.TodoDto
+import community.flock.wirespec.integration.spring.kotlin.generated.model.Error
 
-object AddPet : Wirespec.Endpoint {
+object GetTodos : Wirespec.Endpoint {
   data object Path : Wirespec.Path
 
-  data object Queries : Wirespec.Queries
+  data class Queries(
+    val done: Boolean?,
+  ) : Wirespec.Queries
 
   data object Headers : Wirespec.Request.Headers
 
   class Request(
-    override val body: Pet,
-  ) : Wirespec.Request<Pet> {
+    done: Boolean?
+  ) : Wirespec.Request<Unit> {
     override val path = Path
-    override val method = Wirespec.Method.POST
-    override val queries = Queries
+    override val method = Wirespec.Method.GET
+    override val queries = Queries(done)
     override val headers = Headers
+    override val body = Unit
   }
 
   fun toRequest(serialization: Wirespec.Serializer, request: Request): Wirespec.RawRequest =
     Wirespec.RawRequest(
-      path = listOf("pet"),
+      path = listOf("api", "todos"),
       method = request.method.name,
-      queries = emptyMap(),
+      queries = (mapOf("done" to (request.queries.done?.let{ serialization.serializeParam(it, typeOf<Boolean?>()) } ?: emptyList()))),
       headers = emptyMap(),
-      body = serialization.serializeBody(request.body, typeOf<Pet>()),
+      body = null,
     )
 
   fun fromRequest(serialization: Wirespec.Deserializer, request: Wirespec.RawRequest): Request =
     Request(
-      body = serialization.deserializeBody(requireNotNull(request.body) { "body is null" }, typeOf<Pet>()),
+      done = request.queries["done"]?.let{ serialization.deserializeParam(it, typeOf<Boolean?>()) }
     )
 
   sealed interface Response<T: Any> : Wirespec.Response<T>
 
   sealed interface Response2XX<T: Any> : Response<T>
-  sealed interface Response4XX<T: Any> : Response<T>
+  sealed interface Response5XX<T: Any> : Response<T>
 
-  sealed interface ResponsePet : Response<Pet>
-  sealed interface ResponseUnit : Response<Unit>
+  sealed interface ResponseListTodoDto : Response<List<TodoDto>>
+  sealed interface ResponseError : Response<Error>
 
-  data class Response200(override val body: Pet, val XRateLimit: Int?) : Response2XX<Pet>, ResponsePet {
+  data class Response200(override val body: List<TodoDto>, val total: Long) : Response2XX<List<TodoDto>>, ResponseListTodoDto {
     override val status = 200
-    override val headers = ResponseHeaders(XRateLimit)
+    override val headers = ResponseHeaders(total)
     data class ResponseHeaders(
-      val XRateLimit: Int?,
+      val total: Long,
     ) : Wirespec.Response.Headers
   }
 
-  data class Response405(override val body: Unit) : Response4XX<Unit>, ResponseUnit {
-    override val status = 405
+  data class Response500(override val body: Error) : Response5XX<Error>, ResponseError {
+    override val status = 500
     override val headers = ResponseHeaders
     data object ResponseHeaders : Wirespec.Response.Headers
   }
@@ -61,35 +65,35 @@ object AddPet : Wirespec.Endpoint {
     when(response) {
       is Response200 -> Wirespec.RawResponse(
         statusCode = response.status,
-        headers = (mapOf("x-rate-limit" to (response.headers.XRateLimit?.let{ serialization.serializeParam(it, typeOf<Int?>()) } ?: emptyList()))),
-        body = serialization.serializeBody(response.body, typeOf<Pet>()),
+        headers = (mapOf("total" to (response.headers.total?.let{ serialization.serializeParam(it, typeOf<Long>()) } ?: emptyList()))),
+        body = serialization.serializeBody(response.body, typeOf<List<TodoDto>>()),
       )
-      is Response405 -> Wirespec.RawResponse(
+      is Response500 -> Wirespec.RawResponse(
         statusCode = response.status,
         headers = emptyMap(),
-        body = null,
+        body = serialization.serializeBody(response.body, typeOf<Error>()),
       )
     }
 
   fun fromResponse(serialization: Wirespec.Deserializer, response: Wirespec.RawResponse): Response<*> =
     when (response.statusCode) {
       200 -> Response200(
-        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<Pet>()),
-        XRateLimit = response.headers["x-rate-limit"]?.let{ serialization.deserializeParam(it, typeOf<Int?>()) }
+        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<List<TodoDto>>()),
+        total = serialization.deserializeParam(requireNotNull(response.headers["total"]) { "total is null" }, typeOf<Long>())
       )
-      405 -> Response405(
-        body = Unit,
+      500 -> Response500(
+        body = serialization.deserializeBody(requireNotNull(response.body) { "body is null" }, typeOf<Error>()),
       )
       else -> error("Cannot match response with status: ${response.statusCode}")
     }
 
   interface Handler: Wirespec.Handler {
-    @org.springframework.web.bind.annotation.PostMapping("/pet")
-    suspend fun addPet(request: Request): Response<*>
+    @org.springframework.web.bind.annotation.GetMapping("/api/todos")
+    suspend fun getTodos(request: Request): Response<*>
 
     companion object: Wirespec.Server<Request, Response<*>>, Wirespec.Client<Request, Response<*>> {
-      override val pathTemplate = "/pet"
-      override val method = "POST"
+      override val pathTemplate = "/api/todos"
+      override val method = "GET"
       override fun server(serialization: Wirespec.Serialization) = object : Wirespec.ServerEdge<Request, Response<*>> {
         override fun from(request: Wirespec.RawRequest) = fromRequest(serialization, request)
         override fun to(response: Response<*>) = toResponse(serialization, response)

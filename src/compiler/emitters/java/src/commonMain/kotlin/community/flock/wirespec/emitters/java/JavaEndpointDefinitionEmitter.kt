@@ -119,8 +119,8 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
 
     private fun Endpoint.Request.emitDeserializedParams(endpoint: Endpoint) = listOfNotNull(
         endpoint.indexedPathParams.joinToString { it.emitDeserialized() }.orNull(),
-        endpoint.queries.joinToString(",\n"){ it.emitDeserializedParams("queries") }.orNull(),
-        endpoint.headers.joinToString(",\n"){ it.emitDeserializedParams("headers") }.orNull(),
+        endpoint.queries.joinToString(",\n"){ it.emitDeserializedParams("queries", caseSensitive = true) }.orNull(),
+        endpoint.headers.joinToString(",\n"){ it.emitDeserializedParams("headers", caseSensitive = false) }.orNull(),
         content?.let { """${Spacer(4)}serialization.deserializeBody(request.body(), ${it.reference.emitGetType()})""" }
     ).joinToString(",\n").let { if (it.isBlank()) "" else "\n$it\n${Spacer(3)}" }
 
@@ -154,16 +154,16 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
         """${Spacer(4)}case $status: return new Response${status.firstToUpper()}(${this.emitDeserializedParams()});"""
 
 
-    private fun Field.emitSerializedParams(fields: String) =
+    private fun Field.emitSerializedParams(fields: String, caseSensitive: Boolean) =
         // Use lowercase for header names (RFC 7230 - headers are case-insensitive)
-        """java.util.Map.entry("${identifier.value.lowercase()}", serialization.serializeParam(request.${if (fields == "queries") "queries" else "headers"}().${emit(identifier)}(), ${reference.emitGetType()}))"""
+        """java.util.Map.entry("${identifier.value.let{if(caseSensitive)it else it.lowercase()}}", serialization.serializeParam(request.${if (fields == "queries") "queries" else "headers"}().${emit(identifier)}(), ${reference.emitGetType()}))"""
 
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
         """${Spacer(4)}serialization.deserializePath(request.path().get(${index}), ${value.reference.emitGetType()})"""
 
-    private fun Field.emitDeserializedParams(fields: String) =
+    private fun Field.emitDeserializedParams(fields: String, caseSensitive: Boolean) =
         // Use lowercase for header names (RFC 7230 - headers are case-insensitive)
-        """${Spacer(4)}serialization.deserializeParam(request.$fields().getOrDefault("${identifier.value.lowercase()}", java.util.Collections.emptyList()), ${reference.emitGetType()})"""
+        """${Spacer(4)}serialization.deserializeParam(request.$fields().getOrDefault("${identifier.value.let{if(caseSensitive)it else it.lowercase()}}", java.util.Collections.emptyList()), ${reference.emitGetType()})"""
 
     private fun Field.emitSerializedHeader() =
         // Use lowercase for header names (RFC 7230 - headers are case-insensitive)
@@ -176,8 +176,6 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
 
     private fun Endpoint.Segment.Param.emit() = "${reference.emit()} ${emit(identifier)}"
 
-    private val Reference.isIterable get() = this is Reference.Iterable
-
     private fun Definition.emitImports() = importReferences()
         .filter { identifier.value != it.value }
         .map { "import ${packageName.value}.model.${it.value};" }.joinToString("\n") { it.trimStart() }
@@ -187,8 +185,8 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
         |${Spacer(3)}return new Wirespec.RawRequest(
         |${Spacer(4)}request.method().name(),
         |${Spacer(4)}java.util.List.of(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
-        |${Spacer(4)}${if (endpoint.queries.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.queries.joinToString { it.emitSerializedParams("queries") }})" else EMPTY_MAP},
-        |${Spacer(4)}${if (endpoint.headers.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.headers.joinToString { it.emitSerializedParams("headers") }})" else EMPTY_MAP},
+        |${Spacer(4)}${if (endpoint.queries.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.queries.joinToString { it.emitSerializedParams("queries", caseSensitive = true) }})" else EMPTY_MAP},
+        |${Spacer(4)}${if (endpoint.headers.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.headers.joinToString { it.emitSerializedParams("headers", caseSensitive = false) }})" else EMPTY_MAP},
         |${Spacer(4)}${if (content != null) "serialization.serializeBody(request.body(), ${content?.reference?.emitGetType()})" else "null"}
         |${Spacer(3)});
         |${Spacer(2)}}
