@@ -1,6 +1,5 @@
 package community.flock.wirespec.language.converter
 
-
 import community.flock.wirespec.language.core.Call
 import community.flock.wirespec.language.core.Case
 import community.flock.wirespec.language.core.ConstructorStatement
@@ -83,15 +82,15 @@ fun ChannelWirespec.convert() = Interface(
                 Parameter(
                     name = "message",
                     type = reference.convert(),
-                )
+                ),
             ),
             returnType = Type.Unit,
             body = emptyList(),
             isAsync = false,
             isStatic = false,
             isOverride = false,
-        )
-    )
+        ),
+    ),
 )
 
 fun ReferenceWirespec.convert(): Type = when (this) {
@@ -119,13 +118,12 @@ fun ReferenceWirespec.convert(): Type = when (this) {
 }
     .let { if (isNullable) Type.Nullable(it) else it }
 
-
 fun EndpointWirespec.convertFromResponse() = Function(
     name = "fromResponse",
     isStatic = true,
     parameters = listOf(
         Parameter("serialization", Type.Custom("Wirespec.Deserializer")),
-        Parameter("response", Type.Custom("Wirespec.RawResponse"))
+        Parameter("response", Type.Custom("Wirespec.RawResponse")),
     ),
     returnType = Type.Custom("Response", listOf(Type.Custom("?"))),
     body = listOf(
@@ -146,31 +144,33 @@ fun EndpointWirespec.convertFromResponse() = Function(
                                                 name = "serialization.deserializeParam",
                                                 arguments = mapOf(
                                                     "value" to RawExpression("response.headers().getOrDefault(\"${header.identifier.value}\", java.util.Collections.emptyList())"),
-                                                    "type" to header.reference.toJavaType()
-                                                )
+                                                    "type" to header.reference.toJavaType(),
+                                                ),
                                             )
-                                        }
+                                        },
                                     ),
-                                    "body" to (response.content?.let { content ->
-                                        Call(
-                                            name = "serialization.deserializeBody",
-                                            arguments = mapOf(
-                                                "value" to RawExpression("response.body()"),
-                                                "type" to content.reference.toJavaType()
+                                    "body" to (
+                                        response.content?.let { content ->
+                                            Call(
+                                                name = "serialization.deserializeBody",
+                                                arguments = mapOf(
+                                                    "value" to RawExpression("response.body()"),
+                                                    "type" to content.reference.toJavaType(),
+                                                ),
                                             )
-                                        )
-                                    } ?: RawExpression("null"))
-                                )
-                            )
-                        )
-                    )
+                                        } ?: RawExpression("null")
+                                        ),
+                                ),
+                            ),
+                        ),
+                    ),
                 )
             },
             default = listOf(
-                ErrorStatement(RawExpression("\"Cannot match response with status: \" + response.statusCode()"))
-            )
-        )
-    )
+                ErrorStatement(RawExpression("\"Cannot match response with status: \" + response.statusCode()")),
+            ),
+        ),
+    ),
 )
 
 fun EndpointWirespec.convertToRequest() = Function(
@@ -178,7 +178,7 @@ fun EndpointWirespec.convertToRequest() = Function(
     isStatic = true,
     parameters = listOf(
         Parameter("serialization", Type.Custom("Wirespec.Serializer")),
-        Parameter("request", Type.Custom("Request"))
+        Parameter("request", Type.Custom("Request")),
     ),
     returnType = Type.Custom("Wirespec.RawRequest"),
     body = listOf(
@@ -195,52 +195,54 @@ fun EndpointWirespec.convertToRequest() = Function(
                                     name = "serialization.serializePath",
                                     arguments = mapOf(
                                         "value" to RawExpression("request.path().${it.identifier.value.replaceFirstChar { char -> char.lowercase() }}()"),
-                                        "type" to it.reference.toJavaType()
-                                    )
+                                        "type" to it.reference.toJavaType(),
+                                    ),
                                 )
                             }
                         },
-                        type = Type.String
+                        type = Type.String,
                     ),
                     "queries" to LiteralMap(
                         values = queries.associate {
                             it.identifier.value to Call(
                                 name = "serialization.serializeParam",
                                 arguments = mapOf(
-                                    "value" to RawExpression("request.queries().${it.identifier.value}()"),
-                                    "type" to it.reference.toJavaType()
-                                )
+                                    "value" to RawExpression("request.queries().${it.identifier.value.sanitizeForJava()}()"),
+                                    "type" to it.reference.toJavaType(),
+                                ),
                             )
                         },
                         keyType = Type.String,
-                        valueType = Type.Custom("List<String>")
+                        valueType = Type.Custom("List<String>"),
                     ),
                     "headers" to LiteralMap(
                         values = headers.associate {
                             it.identifier.value to Call(
                                 name = "serialization.serializeParam",
                                 arguments = mapOf(
-                                    "value" to RawExpression("request.headers().${it.identifier.value}()"),
-                                    "type" to it.reference.toJavaType()
-                                )
+                                    "value" to RawExpression("request.headers().${it.identifier.value.sanitizeForJava()}()"),
+                                    "type" to it.reference.toJavaType(),
+                                ),
                             )
                         },
                         keyType = Type.String,
-                        valueType = Type.Custom("List<String>")
+                        valueType = Type.Custom("List<String>"),
                     ),
-                    "body" to (requests.first().content?.let {
-                        Call(
-                            name = "serialization.serializeBody",
-                            arguments = mapOf(
-                                "value" to RawExpression("request.body()"),
-                                "type" to it.reference.toJavaType()
+                    "body" to (
+                        requests.first().content?.let {
+                            Call(
+                                name = "serialization.serializeBody",
+                                arguments = mapOf(
+                                    "value" to RawExpression("request.body()"),
+                                    "type" to it.reference.toJavaType(),
+                                ),
                             )
-                        )
-                    } ?: RawExpression("null"))
-                )
-            )
-        )
-    )
+                        } ?: RawExpression("null")
+                        ),
+                ),
+            ),
+        ),
+    ),
 )
 
 fun EndpointWirespec.convertFromRequest() = Function(
@@ -248,7 +250,7 @@ fun EndpointWirespec.convertFromRequest() = Function(
     isStatic = true,
     parameters = listOf(
         Parameter("serialization", Type.Custom("Wirespec.Deserializer")),
-        Parameter("request", Type.Custom("Wirespec.RawRequest"))
+        Parameter("request", Type.Custom("Wirespec.RawRequest")),
     ),
     returnType = Type.Custom("Request"),
     body = listOf(
@@ -256,48 +258,71 @@ fun EndpointWirespec.convertFromRequest() = Function(
             ConstructorStatement(
                 type = Type.Custom("Request"),
                 namedArguments = mapOf<String, Expression>()
-                    .plus(path.mapIndexedNotNull { index, segment ->
-                        if (segment is EndpointWirespec.Segment.Param) {
-                            segment.identifier.value to Call(
-                                name = "serialization.deserializePath",
-                                arguments = mapOf(
-                                    "value" to RawExpression("request.path().get($index)"),
-                                    "type" to segment.reference.toJavaType()
+                    .plus(
+                        path.mapIndexedNotNull { index, segment ->
+                            if (segment is EndpointWirespec.Segment.Param) {
+                                segment.identifier.value to Call(
+                                    name = "serialization.deserializePath",
+                                    arguments = mapOf(
+                                        "value" to RawExpression("request.path().get($index)"),
+                                        "type" to segment.reference.toJavaType(),
+                                    ),
                                 )
+                            } else {
+                                null
+                            }
+                        },
+                    )
+                    .plus(
+                        queries.map { field ->
+                            field.identifier.value to Call(
+                                name = "serialization.deserializeParam",
+                                arguments = mapOf(
+                                    "value" to RawExpression("request.queries().getOrDefault(\"${field.identifier.value}\", java.util.Collections.emptyList())"),
+                                    "type" to field.reference.toJavaType(),
+                                ),
                             )
-                        } else null
-                    })
-                    .plus(queries.map { field ->
-                        field.identifier.value to Call(
-                            name = "serialization.deserializeParam",
-                            arguments = mapOf(
-                                "value" to RawExpression("request.queries().getOrDefault(\"${field.identifier.value}\", java.util.Collections.emptyList())"),
-                                "type" to field.reference.toJavaType()
+                        },
+                    )
+                    .plus(
+                        headers.map { field ->
+                            field.identifier.value to Call(
+                                name = "serialization.deserializeParam",
+                                arguments = mapOf(
+                                    "value" to RawExpression("request.headers().getOrDefault(\"${field.identifier.value}\", java.util.Collections.emptyList())"),
+                                    "type" to field.reference.toJavaType(),
+                                ),
                             )
-                        )
-                    })
-                    .plus(headers.map { field ->
-                        field.identifier.value to Call(
-                            name = "serialization.deserializeParam",
-                            arguments = mapOf(
-                                "value" to RawExpression("request.headers().getOrDefault(\"${field.identifier.value}\", java.util.Collections.emptyList())"),
-                                "type" to field.reference.toJavaType()
+                        },
+                    )
+                    .plus(
+                        requests.first().content?.let {
+                            mapOf(
+                                "body" to Call(
+                                    name = "serialization.deserializeBody",
+                                    arguments = mapOf(
+                                        "value" to RawExpression("request.body()"),
+                                        "type" to it.reference.toJavaType(),
+                                    ),
+                                ),
                             )
-                        )
-                    })
-                    .plus(requests.first().content?.let {
-                        mapOf("body" to Call(
-                            name = "serialization.deserializeBody",
-                            arguments = mapOf(
-                                "value" to RawExpression("request.body()"),
-                                "type" to it.reference.toJavaType()
-                            )
-                        ))
-                    } ?: emptyMap())
-            )
-        )
-    )
+                        } ?: emptyMap(),
+                    ),
+            ),
+        ),
+    ),
 )
+
+/**
+ * Sanitize an identifier value for use as a Java method/field name.
+ * Converts identifiers like "Refresh-Token" to "RefreshToken".
+ */
+private fun String.sanitizeForJava(): String = this
+    .split(".", " ", "-")
+    .mapIndexed { index, s -> if (index > 0) s.replaceFirstChar { c -> c.uppercaseChar() } else s }
+    .joinToString("")
+    .filter { it.isLetterOrDigit() || it == '_' }
+    .let { if (it.firstOrNull()?.isDigit() == true) "_$it" else it }
 
 private fun ReferenceWirespec.toJavaType(): Expression {
     val isIterable = this is ReferenceWirespec.Iterable
@@ -323,7 +348,13 @@ private fun ReferenceWirespec.toJavaType(): Expression {
         else -> "Void"
     }
 
-    val containerClass = if (isNullable) "java.util.Optional.class" else if (isIterable) "java.util.List.class" else "null"
+    val containerClass = if (isNullable) {
+        "java.util.Optional.class"
+    } else if (isIterable) {
+        "java.util.List.class"
+    } else {
+        "null"
+    }
 
     return RawExpression("Wirespec.getType($elementClass.class, $containerClass)")
 }

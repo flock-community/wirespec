@@ -49,6 +49,7 @@ interface JavaChannelDefinitionEmitter : ChannelDefinitionEmitter, HasPackageNam
         return """
             |@FunctionalInterface
             |${element.generateJava()}
+            |
         """.trimMargin()
     }
 
