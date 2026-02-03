@@ -1,0 +1,6 @@
+# Development dependencies
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+
+# Note: The generated Wirespec code has no runtime dependencies!
+# It's completely self-contained and dependency-free.
