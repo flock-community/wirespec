@@ -68,8 +68,12 @@ interface PythonEndpointDefinitionEmitter: EndpointDefinitionEmitter, PythonType
         |${Spacer}return Wirespec.RawRequest(
         |${Spacer}${Spacer}path = [${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> "str(request.path.${emit(it.identifier)})" } }}],
         |${Spacer}${Spacer}method = request.method.value,
-        |${Spacer}${Spacer}queries = ${if (endpoint.queries.isNotEmpty()) endpoint.queries.joinToString(",\n", "{", "}") { it.emitSerializedParams("request", "queries") } else "{}"},
-        |${Spacer}${Spacer}headers = ${if (endpoint.headers.isNotEmpty()) endpoint.headers.joinToString(",\n", "{", "}") { it.emitSerializedParams("request", "headers") } else "{}"},
+        |${Spacer}${Spacer}queries = {
+        |${if (endpoint.queries.isNotEmpty()) endpoint.queries.joinToString(",\n") { it.emitSerializedParams("request", "queries") }.prependIndent(Spacer(3)) else ""}
+        |${Spacer}${Spacer}},
+        |${Spacer}${Spacer}headers = {
+        |${if (endpoint.headers.isNotEmpty()) endpoint.headers.joinToString(",\n") { it.emitSerializedParams("request", "headers") }.prependIndent(Spacer(3)) else ""}
+        |${Spacer}${Spacer}},
         |${Spacer}${Spacer}body = serialization.serialize(request.body, ${content?.reference?.emitType() ?: NONE}),
         |${Spacer})
         |
@@ -85,7 +89,7 @@ interface PythonEndpointDefinitionEmitter: EndpointDefinitionEmitter, PythonType
     private fun Endpoint.Request.emitDeserializedParams(endpoint: Endpoint) = listOfNotNull(
         endpoint.indexedPathParams.joinToString { it.emitDeserialized() }.orNull(),
         endpoint.queries.joinToString(",\n") { it.emitDeserializedParams("request", "queries") }.orNull(),
-        endpoint.headers.joinToString(",\n") { it.emitDeserializedParams("request", "headers") }.orNull(),
+        endpoint.headers.joinToString(",\n") { it.emitDeserializedParams("request", "headers", caseSensitive = false) }.orNull(),
         content?.let { """${Spacer(3)}body = serialization.deserialize(request.body, ${it.reference.emitType()}),""" }
     ).joinToString(",\n").let { if (it.isBlank()) "()" else "(\n$it\n)" }
 
@@ -127,8 +131,11 @@ interface PythonEndpointDefinitionEmitter: EndpointDefinitionEmitter, PythonType
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialized() =
         """${Spacer(3)}${emit(value.identifier)} = serialization.deserialize(request.path[${index}], ${value.reference.emitType()})"""
 
-    private fun Field.emitDeserializedParams(type: String, fields: String) =
-        """${emit(identifier)} = serialization.deserialize_param($type.$fields.get("${identifier.value}".lower()), ${reference.emitType()})"""
+    private fun Field.emitDeserializedParams(type: String, fields: String, spaces: Int = 3, caseSensitive: Boolean = true) =
+        if (caseSensitive)
+            """${Spacer(spaces)}${emit(identifier)} = serialization.deserialize_param($type.$fields.get("${identifier.value}"), ${reference.emitType()})"""
+        else
+            """${Spacer(spaces)}${emit(identifier)} = serialization.deserialize_param(next((v for k, v in $type.$fields.items() if k.lower() == "${identifier.value.lowercase()}"), None), ${reference.emitType()})"""
 
     fun Endpoint.Response.emit(endpoint: Endpoint) = """
         |@dataclass
@@ -175,7 +182,7 @@ interface PythonEndpointDefinitionEmitter: EndpointDefinitionEmitter, PythonType
         "case $status:",
         "${Spacer}return ${emit(endpoint.identifier)}.Response$status(",
         "${Spacer(2)}body = serialization.deserialize(response.body, ${content?.reference?.emitType() ?: NONE}),",
-        headers.joinToString(",\n") { it.emitDeserializedParams("response", "headers") }.orNull()?.spacer(2),
+        headers.joinToString(",\n") { it.emitDeserializedParams("response", "headers", spaces = 2, caseSensitive = false) }.orNull(),
         "${Spacer})"
     ).joinToString("\n")
 

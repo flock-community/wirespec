@@ -81,7 +81,7 @@ interface TypeScriptEndpointDefinitionEmitter: EndpointDefinitionEmitter, TypeSc
         |case ${status.fixStatus()}:
         |${Spacer(1)}return {
         |${Spacer(2)}status: ${status.fixStatus()},
-        |${Spacer(2)}headers: {${headers.joinToString { it.emitDeserialize("headers") }}},
+        |${Spacer(2)}headers: {${headers.joinToString { it.emitDeserialize("headers", caseSensitive = false) }}},
         |${Spacer(2)}body: serialization.deserialize<${emitReference()}>(it.body)
         |${Spacer(1)}};
     """.trimMargin()
@@ -98,13 +98,13 @@ interface TypeScriptEndpointDefinitionEmitter: EndpointDefinitionEmitter, TypeSc
         |${Spacer(1)}return {
         |${Spacer(2)}method: "${method.name.uppercase()}",
         |${Spacer(2)}path: {
-        |${indexedPathParams.joinToString(",") { it.emitDeserialize() }.prependIndent(Spacer(3))}
+        |${indexedPathParams.joinToString(",\n") { it.emitDeserialize() }.prependIndent(Spacer(3))}
         |${Spacer(2)}},
         |${Spacer(2)}queries: {
-        |${queries.joinToString(",") { it.emitDeserialize("queries").prependIndent(Spacer(3)) }}
+        |${queries.joinToString(",\n") { it.emitDeserialize("queries").prependIndent(Spacer(3)) }}
         |${Spacer(2)}},
         |${Spacer(2)}headers: {
-        |${headers.joinToString(",") { it.emitDeserialize("headers").prependIndent(Spacer(3)) }}
+        |${headers.joinToString(",\n") { it.emitDeserialize("headers", caseSensitive = false).prependIndent(Spacer(3)) }}
         |${Spacer(2)}},
         |${Spacer(2)}body: serialization.deserialize(it.body)
         |${Spacer(1)}}
@@ -123,7 +123,9 @@ interface TypeScriptEndpointDefinitionEmitter: EndpointDefinitionEmitter, TypeSc
         |case ${status.fixStatus()}:
         |${Spacer(1)}return {
         |${Spacer(2)}status: ${status.fixStatus()},
-        |${Spacer(2)}headers: {${headers.joinToString { it.emitSerialize("headers") }}} as Record<string, string>,
+        |${Spacer(2)}headers: {
+        |${headers.joinToString(",\n") { it.emitSerialize("headers") }.prependIndent(Spacer(3))}
+        |${Spacer(2)}} as Record<string, string>,
         |${Spacer(2)}body: serialization.serialize(it.body),
         |${Spacer(1)}};
     """.trimMargin()
@@ -201,11 +203,11 @@ interface TypeScriptEndpointDefinitionEmitter: EndpointDefinitionEmitter, TypeSc
     private fun IndexedValue<Endpoint.Segment.Param>.emitDeserialize() =
         """${emit(value.identifier)}: serialization.deserialize(it.path[${index}])"""
 
-    private fun Field.emitDeserialize(fields: String) =
-        if(fields == "headers")
-            "${emit(identifier)}: serialization.deserialize(Object.entries(it.$fields).find(([key]) => key.toLowerCase() === ${emit(identifier.lowercase())})?.[1])"
-        else
+    private fun Field.emitDeserialize(fields: String, caseSensitive: Boolean = true) =
+        if(caseSensitive)
             "${emit(identifier)}: serialization.deserialize(it.$fields[${emit(identifier)}])"
+        else
+            "${emit(identifier)}: serialization.deserialize(Object.entries(it.$fields).find(([key]) => key.toLowerCase() === ${emit(identifier.lowercase())})?.[1])"
 
     private fun Field.emitSerialize(fields: String) =
         "${emit(identifier)}: serialization.serialize(it.$fields[${emit(identifier)}])"
