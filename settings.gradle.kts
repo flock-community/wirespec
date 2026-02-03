@@ -42,5 +42,6 @@ include(
     "src:integration:spring",
     "src:tools:generator",
     "src:language:core",
+    "src:language:generator",
     "src:language:converter",
 )

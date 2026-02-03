@@ -9,4 +9,4 @@ public record Todo (
   TodoCategory category,
   String eMail
 ) {
-};
+}

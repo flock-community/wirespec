@@ -7,4 +7,4 @@ public record UploadFileRequestBody (
   java.util.Optional<byte[]> file,
   java.util.Optional<UploadFileRequestBodyJson> json
 ) {
-};
+}

@@ -1,6 +1,9 @@
-package community.flock.wirespec.language.core
+package community.flock.wirespec.language.generator
 
-import community.flock.wirespec.language.core.generator.JavaGenerator
+import community.flock.wirespec.language.core.Package
+import community.flock.wirespec.language.core.RawExpression
+import community.flock.wirespec.language.core.Type
+import community.flock.wirespec.language.core.file
 import org.junit.Test
 import java.io.File
 import java.nio.file.Files
@@ -18,7 +21,7 @@ class JavaCompilationTest {
             public interface Endpoint {}
             public interface Handler {}
             public interface Request<T> { public interface Headers {} }
-            public interface Response<T> { public interface Headers {} public int getStatus(); }
+            public interface Response<T> { public interface Headers {} public Integer getStatus(); }
             public interface Queries {}
             public interface Path {}
             public interface Serializer {

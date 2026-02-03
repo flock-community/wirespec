@@ -12,4 +12,4 @@ public record User (
   java.util.Optional<String> phone,
   java.util.Optional<Integer> userStatus
 ) {
-};
+}

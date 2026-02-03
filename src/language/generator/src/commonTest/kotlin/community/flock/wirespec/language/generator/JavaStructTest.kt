@@ -1,7 +1,6 @@
-package com.wirelang
+package community.flock.wirespec.language.generator
 
 import community.flock.wirespec.language.core.file
-import community.flock.wirespec.language.core.generator.JavaGenerator
 import kotlin.test.Test
 import kotlin.test.assertContains
 

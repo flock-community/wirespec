@@ -10,4 +10,4 @@ public record Order (
   java.util.Optional<OrderStatus> status,
   java.util.Optional<Boolean> complete
 ) {
-};
+}

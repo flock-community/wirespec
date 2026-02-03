@@ -7,4 +7,4 @@ public record ApiResponse (
   java.util.Optional<String> type,
   java.util.Optional<String> message
 ) {
-};
+}

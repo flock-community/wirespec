@@ -4,7 +4,7 @@ import community.flock.wirespec.compiler.core.emit.EnumDefinitionEmitter
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.language.converter.convert
-import community.flock.wirespec.language.core.generator.generateJava
+import community.flock.wirespec.language.generator.generateJava
 
 interface JavaEnumDefinitionEmitter : EnumDefinitionEmitter, JavaIdentifierEmitter {
 

@@ -65,7 +65,7 @@ class WirespecCliTest {
             |  String yolo,
             |  Boolean _class
             |) {
-            |};
+            |}
             |
         """.trimMargin()
     }

@@ -1,11 +1,15 @@
-package community.flock.wirespec.language.core.generator
+package community.flock.wirespec.language.generator
 
+import community.flock.wirespec.language.core.AnonymousClass
 import community.flock.wirespec.language.core.Assignment
+import community.flock.wirespec.language.core.BinaryOp
 import community.flock.wirespec.language.core.Call
+import community.flock.wirespec.language.core.ClassLiteral
 import community.flock.wirespec.language.core.Constructor
 import community.flock.wirespec.language.core.ConstructorStatement
 import community.flock.wirespec.language.core.Element
 import community.flock.wirespec.language.core.Enum
+import community.flock.wirespec.language.core.EnumReference
 import community.flock.wirespec.language.core.ErrorStatement
 import community.flock.wirespec.language.core.Expression
 import community.flock.wirespec.language.core.Field
@@ -15,16 +19,22 @@ import community.flock.wirespec.language.core.Interface
 import community.flock.wirespec.language.core.Literal
 import community.flock.wirespec.language.core.LiteralList
 import community.flock.wirespec.language.core.LiteralMap
+import community.flock.wirespec.language.core.MethodCall
+import community.flock.wirespec.language.core.NullLiteral
 import community.flock.wirespec.language.core.Package
 import community.flock.wirespec.language.core.PrintStatement
+import community.flock.wirespec.language.core.PropertyAccess
+import community.flock.wirespec.language.core.RawElement
 import community.flock.wirespec.language.core.RawExpression
 import community.flock.wirespec.language.core.ReturnStatement
 import community.flock.wirespec.language.core.Statement
 import community.flock.wirespec.language.core.Static
+import community.flock.wirespec.language.core.StaticCall
 import community.flock.wirespec.language.core.Struct
 import community.flock.wirespec.language.core.Switch
 import community.flock.wirespec.language.core.Type
 import community.flock.wirespec.language.core.Union
+import community.flock.wirespec.language.core.VariableReference
 import community.flock.wirespec.language.core.Function as AstFunction
 
 object PythonGenerator : CodeGenerator {
@@ -52,6 +62,7 @@ object PythonGenerator : CodeGenerator {
         is Union -> emit(indent, parents, allUnions = allUnions)
         is Enum -> emit(indent)
         is File -> elements.joinToString("") { it.emit(indent, parents, allUnions) }
+        is RawElement -> code.indentCode(indent)
     }
 
     private fun Element.findAllUnions(): List<Union> {
@@ -193,6 +204,21 @@ object PythonGenerator : CodeGenerator {
             } ?: ""
             "match ${expression.emit()}:\n$casesStr$defaultStr"
         }
+        is NullLiteral -> "None\n".indentCode(indent)
+        is VariableReference -> "$name\n".indentCode(indent)
+        is PropertyAccess -> "${receiver.emit()}.$property\n".indentCode(indent)
+        is MethodCall -> "${receiver.emit()}.$method(${arguments.joinToString(", ") { it.emit() }})\n".indentCode(indent)
+        is EnumReference -> "${enumType.emit()}.$entry\n".indentCode(indent)
+        is BinaryOp -> "(${left.emit()} ${operator.toPython()} ${right.emit()})\n".indentCode(indent)
+        is StaticCall -> "$qualifiedName(${arguments.joinToString(", ") { it.emit() }})\n".indentCode(indent)
+        is ClassLiteral -> "${type.emit()}\n".indentCode(indent)
+        is AnonymousClass -> throw IllegalArgumentException("AnonymousClass is not supported in Python")
+    }
+
+    private fun BinaryOp.Operator.toPython(): String = when (this) {
+        BinaryOp.Operator.PLUS -> "+"
+        BinaryOp.Operator.EQUALS -> "=="
+        BinaryOp.Operator.NOT_EQUALS -> "!="
     }
 
     private fun Expression.emit(): String = when (this) {
@@ -202,6 +228,15 @@ object PythonGenerator : CodeGenerator {
         is LiteralList -> emit()
         is LiteralMap -> emit()
         is RawExpression -> code
+        is NullLiteral -> "None"
+        is VariableReference -> name
+        is PropertyAccess -> "${receiver.emit()}.$property"
+        is MethodCall -> "${receiver.emit()}.$method(${arguments.joinToString(", ") { it.emit() }})"
+        is EnumReference -> "${enumType.emit()}.$entry"
+        is BinaryOp -> "(${left.emit()} ${operator.toPython()} ${right.emit()})"
+        is StaticCall -> "$qualifiedName(${arguments.joinToString(", ") { it.emit() }})"
+        is ClassLiteral -> type.emit()
+        is AnonymousClass -> throw IllegalArgumentException("AnonymousClass is not supported in Python")
         is ErrorStatement -> throw IllegalArgumentException("ErrorStatement cannot be an expression in Python")
         is Switch -> throw IllegalArgumentException("Switch cannot be an expression in Python")
         is Assignment -> throw IllegalArgumentException("Assignment cannot be an expression in Python")

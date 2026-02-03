@@ -10,4 +10,4 @@ public record Pet (
   java.util.Optional<java.util.List<Tag>> tags,
   java.util.Optional<PetStatus> status
 ) {
-};
+}

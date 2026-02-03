@@ -71,6 +71,8 @@ data class Interface(
     val name: String,
     val elements: List<Element>,
     val extends: Type.Custom? = null,
+    val isSealed: Boolean = false,
+    val typeParameters: List<String> = emptyList(),
 ) : Element
 
 data class Union(
@@ -99,6 +101,59 @@ sealed interface Statement : Expression
 sealed interface Expression
 
 data class RawExpression(val code: String) : Expression
+
+// Raw element - allows injecting raw code as an Element
+data class RawElement(val code: String) : Element
+
+// Null literal - represents the null value
+data object NullLiteral : Statement, Expression
+
+// Variable/identifier reference - represents a reference to a variable
+data class VariableReference(val name: String) : Statement, Expression
+
+// Property access - represents accessing a property on a receiver (e.g., request.body())
+data class PropertyAccess(
+    val receiver: Expression,
+    val property: String,
+) : Statement, Expression
+
+// Method call on receiver - represents calling a method on an object (e.g., list.get(index))
+data class MethodCall(
+    val receiver: Expression,
+    val method: String,
+    val arguments: List<Expression> = emptyList(),
+) : Statement, Expression
+
+// Enum constant reference - represents an enum constant (e.g., Wirespec.Method.GET)
+data class EnumReference(
+    val enumType: Type.Custom,
+    val entry: String,
+) : Statement, Expression
+
+// Binary operations - represents binary operators (e.g., "message" + status)
+data class BinaryOp(
+    val left: Expression,
+    val operator: Operator,
+    val right: Expression,
+) : Statement, Expression {
+    enum class Operator { PLUS, EQUALS, NOT_EQUALS }
+}
+
+// Static/qualified method calls - represents static method calls (e.g., java.util.Collections.emptyMap())
+data class StaticCall(
+    val qualifiedName: String,
+    val arguments: List<Expression> = emptyList(),
+) : Statement, Expression
+
+// Class literal - represents a class reference (e.g., String.class)
+data class ClassLiteral(val type: Type) : Statement, Expression
+
+// Anonymous class - represents an anonymous class instantiation with method implementations
+data class AnonymousClass(
+    val baseType: Type.Custom,
+    val typeArguments: List<Type> = emptyList(),
+    val methods: List<Function>,
+) : Statement, Expression
 
 data class PrintStatement(val expression: Expression) : Statement
 data class ReturnStatement(val expression: Expression) : Statement

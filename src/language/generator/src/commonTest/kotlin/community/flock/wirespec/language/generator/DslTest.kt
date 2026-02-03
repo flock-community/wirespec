@@ -1,9 +1,6 @@
-package com.wirelang
+package community.flock.wirespec.language.generator
 
 import community.flock.wirespec.language.core.file
-import community.flock.wirespec.language.core.generator.JavaGenerator
-import community.flock.wirespec.language.core.generator.PythonGenerator
-import community.flock.wirespec.language.core.generator.TypeScriptGenerator
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -183,7 +180,7 @@ class DslTest {
         println("--- TypeScript (Async) ---")
         println(tsCode)
 
-        assertTrue(javaCode.contains("java.util.concurrent.CompletableFuture<String> fetchData(int id) {"))
+        assertTrue(javaCode.contains("java.util.concurrent.CompletableFuture<String> fetchData(Integer id) {"))
         assertTrue(pythonCode.contains("async def fetchData(id):"))
         assertTrue(tsCode.contains("async function fetchData(id: number): string {"))
     }
@@ -306,7 +303,7 @@ class DslTest {
         assertTrue(javaCode.contains("Boolean active,"))
         assertTrue(javaCode.contains("Double ratio"))
         assertTrue(javaCode.contains(") {"))
-        assertTrue(javaCode.contains("boolean process(int count, String name) {"))
+        assertTrue(javaCode.contains("Boolean process(Integer count, String name) {"))
         assertTrue(javaCode.contains("return true;"))
         assertTrue(javaCode.contains("System.out.println(\"count: count\");"))
 
@@ -579,7 +576,7 @@ class DslTest {
         assertTrue(javaCode.contains("Integer id,"))
         assertTrue(javaCode.contains("String name"))
         assertTrue(javaCode.contains(") {"))
-        assertTrue(javaCode.contains("User(int id) {"))
+        assertTrue(javaCode.contains("User(Integer id) {"))
         assertTrue(javaCode.contains("this(id, \"Anonymous\");"))
     }
 

@@ -6,4 +6,4 @@ public record Tag (
   java.util.Optional<Long> id,
   java.util.Optional<String> name
 ) {
-};
+}

@@ -34,7 +34,7 @@ public interface Wirespec {
     }
     enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
     interface Request<T> { Path path(); Method method(); Queries queries(); Headers headers(); T body(); interface Headers extends Wirespec.Headers {} }
-    interface Response<T> { int status(); Headers headers(); T body(); interface Headers extends Wirespec.Headers {} }
+    interface Response<T> { Integer status(); Headers headers(); T body(); interface Headers extends Wirespec.Headers {} }
     interface Serialization extends Serializer, Deserializer {}
     interface Serializer extends BodySerializer, PathSerializer, ParamSerializer {}
     interface Deserializer extends BodyDeserializer, PathDeserializer, ParamDeserializer {}
@@ -48,7 +48,7 @@ public interface Wirespec {
     interface ParamSerializer { <T> List<String> serializeParam(T value, Type type); }
     interface ParamDeserializer { <T> T deserializeParam(List<String> values, Type type); }
     record RawRequest(String method, List<String> path, Map<String, List<String>> queries, Map<String, List<String>> headers, byte[] body) {}
-    record RawResponse(int statusCode, Map<String, List<String>> headers, byte[] body) {}
+    record RawResponse(Integer statusCode, Map<String, List<String>> headers, byte[] body) {}
     static Type getType(final Class<?> actualTypeArguments, final Class<?> rawType) {
         if(rawType != null) {
             return new ParameterizedType() {

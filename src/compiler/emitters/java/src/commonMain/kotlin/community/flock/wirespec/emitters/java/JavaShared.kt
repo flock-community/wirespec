@@ -45,7 +45,7 @@ data object JavaShared : Shared {
         |$Spacer}
         |${Spacer}enum Method { GET, PUT, POST, DELETE, OPTIONS, HEAD, PATCH, TRACE }
         |${Spacer}interface Request<T> { Path path(); Method method(); Queries queries(); Headers headers(); T body(); interface Headers extends Wirespec.Headers {} }
-        |${Spacer}interface Response<T> { int status(); Headers headers(); T body(); interface Headers extends Wirespec.Headers {} }
+        |${Spacer}interface Response<T> { Integer status(); Headers headers(); T body(); interface Headers extends Wirespec.Headers {} }
         |${Spacer}interface Serialization extends Serializer, Deserializer {}
         |${Spacer}interface Serializer extends BodySerializer, PathSerializer, ParamSerializer {}
         |${Spacer}interface Deserializer extends BodyDeserializer, PathDeserializer, ParamDeserializer {}
@@ -59,7 +59,7 @@ data object JavaShared : Shared {
         |${Spacer}interface ParamSerializer { <T> List<String> serializeParam(T value, Type type); }
         |${Spacer}interface ParamDeserializer { <T> T deserializeParam(List<String> values, Type type); }
         |${Spacer}record RawRequest(String method, List<String> path, Map<String, List<String>> queries, Map<String, List<String>> headers, byte[] body) {} 
-        |${Spacer}record RawResponse(int statusCode, Map<String, List<String>> headers, byte[] body) {}
+        |${Spacer}record RawResponse(Integer statusCode, Map<String, List<String>> headers, byte[] body) {}
         |${Spacer}static Type getType(final Class<?> actualTypeArguments, final Class<?> rawType) {
         |${Spacer(2)}if(rawType != null) {
         |${Spacer(3)}return new ParameterizedType() {

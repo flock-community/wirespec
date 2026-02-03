@@ -7,7 +7,7 @@ import community.flock.wirespec.language.converter.convert
 import community.flock.wirespec.language.core.Type
 import community.flock.wirespec.language.core.function
 import community.flock.wirespec.language.core.RawExpression
-import community.flock.wirespec.language.core.generator.generateJava
+import community.flock.wirespec.language.generator.generateJava
 
 interface JavaRefinedTypeDefinitionEmitter: RefinedTypeDefinitionEmitter, JavaTypeDefinitionEmitter {
 

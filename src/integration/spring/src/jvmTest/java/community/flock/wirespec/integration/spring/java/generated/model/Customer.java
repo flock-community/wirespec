@@ -7,4 +7,4 @@ public record Customer (
   java.util.Optional<String> username,
   java.util.Optional<java.util.List<Address>> address
 ) {
-};
+}

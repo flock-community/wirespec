@@ -1,11 +1,15 @@
-package community.flock.wirespec.language.core.generator
+package community.flock.wirespec.language.generator
 
+import community.flock.wirespec.language.core.AnonymousClass
 import community.flock.wirespec.language.core.Assignment
+import community.flock.wirespec.language.core.BinaryOp
 import community.flock.wirespec.language.core.Call
+import community.flock.wirespec.language.core.ClassLiteral
 import community.flock.wirespec.language.core.Constructor
 import community.flock.wirespec.language.core.ConstructorStatement
 import community.flock.wirespec.language.core.Element
 import community.flock.wirespec.language.core.Enum
+import community.flock.wirespec.language.core.EnumReference
 import community.flock.wirespec.language.core.ErrorStatement
 import community.flock.wirespec.language.core.Expression
 import community.flock.wirespec.language.core.Field
@@ -15,18 +19,24 @@ import community.flock.wirespec.language.core.Interface
 import community.flock.wirespec.language.core.Literal
 import community.flock.wirespec.language.core.LiteralList
 import community.flock.wirespec.language.core.LiteralMap
+import community.flock.wirespec.language.core.MethodCall
+import community.flock.wirespec.language.core.NullLiteral
 import community.flock.wirespec.language.core.Package
 import community.flock.wirespec.language.core.Parameter
 import community.flock.wirespec.language.core.Precision
 import community.flock.wirespec.language.core.PrintStatement
+import community.flock.wirespec.language.core.PropertyAccess
+import community.flock.wirespec.language.core.RawElement
 import community.flock.wirespec.language.core.RawExpression
 import community.flock.wirespec.language.core.ReturnStatement
 import community.flock.wirespec.language.core.Statement
 import community.flock.wirespec.language.core.Static
+import community.flock.wirespec.language.core.StaticCall
 import community.flock.wirespec.language.core.Struct
 import community.flock.wirespec.language.core.Switch
 import community.flock.wirespec.language.core.Type
 import community.flock.wirespec.language.core.Union
+import community.flock.wirespec.language.core.VariableReference
 import community.flock.wirespec.language.core.Function as AstFunction
 
 object JavaGenerator : CodeGenerator {
@@ -125,6 +135,7 @@ private class JavaEmitter(val file: File) {
         is Union -> emit(indent, parents)
         is Enum -> emit(indent)
         is File -> elements.joinToString("") { it.emit(indent, isStatic, parents) }
+        is RawElement -> code.indentCode(indent)
     }
 
     private fun Package.emit(indent: Int): String = "package $path;\n\n".indentCode(indent)
@@ -138,9 +149,13 @@ private class JavaEmitter(val file: File) {
     }
 
     private fun Interface.emit(indent: Int, parents: List<Element>): String {
+        val isInsideStaticOrInterface = parents.any { it is Static || it is Interface }
+        val publicStr = if (indent == 0 || isInsideStaticOrInterface) "public " else ""
+        val sealedStr = if (isSealed) "sealed " else ""
+        val typeParamsStr = if (typeParameters.isNotEmpty()) "<${typeParameters.joinToString(", ")}>" else ""
         val extStr = extends?.let { " extends ${it.emit()}" } ?: ""
         val content = elements.joinToString("") { it.emit(1, isStatic = false, parents = parents + this) }
-        return "public interface $name$extStr {\n$content${"}".indentCode(0)}\n\n".indentCode(indent)
+        return "$publicStr${sealedStr}interface $name$typeParamsStr$extStr {\n$content${"}".indentCode(0)}\n\n".indentCode(indent)
     }
 
     private fun Union.emit(indent: Int, parents: List<Element>): String {
@@ -187,18 +202,23 @@ private class JavaEmitter(val file: File) {
 
     private fun Struct.emit(indent: Int, parents: List<Element>): String {
         val parentUnions = resolveParentUnions(parents)
-        val typeModifier = if (indent == 0) "public record" else "public static record"
-
         val combinedInterfaces = parentUnions + interfaces.map { it.emit() }
         val implStr = if (combinedInterfaces.isEmpty()) "" else " implements ${combinedInterfaces.distinct().joinToString(", ")}"
+
+        val isInsideStaticOrInterface = parents.any { it is Static || it is Interface }
+        val typeModifier = when {
+            indent == 0 -> "public record"
+            isInsideStaticOrInterface -> "public static record"
+            else -> "record"
+        }
 
         val customConstructors = constructors.joinToString("") { it.emit(name, fields, 1, isRecord = true) }
         val nestedContent = elements.joinToString("") { it.emit(1, isStatic = true, parents = parents + this) }
 
-        val params = fields.joinToString(",\n") { "${it.type.emit(true)} ${it.name.sanitize()}".indentCode(1) }
-        val paramsStr = if (fields.isEmpty()) "()" else "(\n$params\n)"
+        val params = fields.joinToString(",\n") { "${it.type.emit()} ${it.name.sanitize()}".indentCode(1) }
+        val paramsStr = if (fields.isEmpty()) " ()" else " (\n$params\n)"
 
-        return "$typeModifier $name $paramsStr$implStr {\n$customConstructors$nestedContent};\n\n".indentCode(indent)
+        return "$typeModifier $name$paramsStr$implStr {\n$customConstructors$nestedContent}\n\n".indentCode(indent)
     }
 
     private fun Struct.resolveParentUnions(parents: List<Element>): List<String> = (
@@ -240,9 +260,9 @@ private class JavaEmitter(val file: File) {
 
     private fun AstFunction.emit(indent: Int, isStatic: Boolean, modifier: String): String {
         val rType = if (isAsync) {
-            "java.util.concurrent.CompletableFuture<${returnType?.emit(true) ?: "Void"}>"
+            "java.util.concurrent.CompletableFuture<${returnType?.emit() ?: "Void"}>"
         } else {
-            returnType?.emit() ?: "void"
+            returnType?.takeIf { it != Type.Unit }?.emit() ?: "void"
         }
         val params = parameters.joinToString(", ") { it.emit(0) }
         val prefix = listOfNotNull(
@@ -263,29 +283,29 @@ private class JavaEmitter(val file: File) {
 
     private fun Parameter.emit(indent: Int): String = "${type.emit()} ${name.sanitize()}".indentCode(indent)
 
-    private fun Type.emit(boxed: Boolean = false): String = when (this) {
+    private fun Type.emit(): String = when (this) {
         is Type.Integer -> when (precision) {
-            Precision.P32 -> if (boxed) "Integer" else "int"
-            Precision.P64 -> if (boxed) "Long" else "long"
+            Precision.P32 -> "Integer"
+            Precision.P64 -> "Long"
         }
         is Type.Number -> when (precision) {
-            Precision.P32 -> if (boxed) "Float" else "float"
-            Precision.P64 -> if (boxed) "Double" else "double"
+            Precision.P32 -> "Float"
+            Precision.P64 -> "Double"
         }
         Type.String -> "String"
         Type.Bytes -> "byte[]"
-        Type.Boolean -> if (boxed) "Boolean" else "boolean"
-        Type.Unit -> if (boxed) "Void" else "void"
-        is Type.Array -> "java.util.List<${elementType.emit(true)}>"
-        is Type.Dict -> "java.util.Map<${keyType.emit(true)}, ${valueType.emit(true)}>"
+        Type.Boolean -> "Boolean"
+        Type.Unit -> "Void"
+        is Type.Array -> "java.util.List<${elementType.emit()}>"
+        is Type.Dict -> "java.util.Map<${keyType.emit()}, ${valueType.emit()}>"
         is Type.Custom -> {
             if (generics.isEmpty()) {
                 name
             } else {
-                "$name<${generics.joinToString(", ") { it.emit(true) }}>"
+                "$name<${generics.joinToString(", ") { it.emit() }}>"
             }
         }
-        is Type.Nullable -> "java.util.Optional<${type.emit(true)}>"
+        is Type.Nullable -> "java.util.Optional<${type.emit()}>"
     }
 
     private fun Statement.emit(indent: Int, isInsideConstructor: Boolean = false): String = when (this) {
@@ -311,17 +331,15 @@ private class JavaEmitter(val file: File) {
         is LiteralList -> "${emit()};\n".indentCode(indent)
         is LiteralMap -> "${emit()};\n".indentCode(indent)
         is Assignment -> {
-            val expr = if (value is ConstructorStatement) {
-                val allArgs = value.namedArguments.map { it.value.emit() }
+            val expr = (value as? ConstructorStatement)?.let { constructorStmt ->
+                val allArgs = constructorStmt.namedArguments.map { it.value.emit() }
                 val argsStr = when {
                     allArgs.isEmpty() -> "()"
                     allArgs.size == 1 -> "(${allArgs.first()})"
                     else -> "(\n${allArgs.joinToString(",\n") { it.indentCode(1) }}\n)"
                 }
-                "new ${value.type.emit()}$argsStr"
-            } else {
-                value.emit()
-            }
+                "new ${constructorStmt.type.emit()}$argsStr"
+            } ?: value.emit()
             if (isProperty) {
                 "${name.sanitize()} = $expr;\n".indentCode(indent)
             } else {
@@ -358,6 +376,32 @@ private class JavaEmitter(val file: File) {
                 "switch (${expression.emit()}) {\n$casesStr$defaultStr}\n".indentCode(indent)
             }
         }
+        is NullLiteral -> "null;\n".indentCode(indent)
+        is VariableReference -> "${name.sanitize()};\n".indentCode(indent)
+        is PropertyAccess -> "${receiver.emit()}.${property.sanitize()}();\n".indentCode(indent)
+        is MethodCall -> "${receiver.emit()}.${method.sanitize()}(${arguments.joinToString(", ") { it.emit() }});\n".indentCode(indent)
+        is EnumReference -> "${enumType.emit()}.${entry};\n".indentCode(indent)
+        is BinaryOp -> "(${left.emit()} ${operator.toJava()} ${right.emit()});\n".indentCode(indent)
+        is StaticCall -> "$qualifiedName(${arguments.joinToString(", ") { it.emit() }});\n".indentCode(indent)
+        is ClassLiteral -> "${type.emit()}.class;\n".indentCode(indent)
+        is AnonymousClass -> "${emitAsExpression()};\n".indentCode(indent)
+    }
+
+    private fun BinaryOp.Operator.toJava(): String = when (this) {
+        BinaryOp.Operator.PLUS -> "+"
+        BinaryOp.Operator.EQUALS -> "=="
+        BinaryOp.Operator.NOT_EQUALS -> "!="
+    }
+
+    private fun AnonymousClass.emitAsExpression(): String {
+        val typeArgsStr = if (typeArguments.isEmpty()) "<>" else "<${typeArguments.joinToString(", ") { it.emit() }}>"
+        val methodsStr = methods.joinToString("\n") { method ->
+            val rType = method.returnType?.emit() ?: "void"
+            val params = method.parameters.joinToString(", ") { "${it.type.emit()} ${it.name.sanitize()}" }
+            val body = method.body.joinToString("") { it.emit(1) }
+            "@Override public $rType ${method.name}($params) {\n$body}"
+        }
+        return "new ${baseType.emit()}$typeArgsStr() {\n$methodsStr}"
     }
 
     private fun Expression.emit(): String = when (this) {
@@ -375,6 +419,15 @@ private class JavaEmitter(val file: File) {
         is LiteralList -> emit()
         is LiteralMap -> emit()
         is RawExpression -> code
+        is NullLiteral -> "null"
+        is VariableReference -> name.sanitize()
+        is PropertyAccess -> "${receiver.emit()}.${property.sanitize()}()"
+        is MethodCall -> "${receiver.emit()}.${method.sanitize()}(${arguments.joinToString(", ") { it.emit() }})"
+        is EnumReference -> "${enumType.emit()}.${entry}"
+        is BinaryOp -> "(${left.emit()} ${operator.toJava()} ${right.emit()})"
+        is StaticCall -> "$qualifiedName(${arguments.joinToString(", ") { it.emit() }})"
+        is ClassLiteral -> "${type.emit()}.class"
+        is AnonymousClass -> emitAsExpression()
         is ErrorStatement -> throw IllegalArgumentException("ErrorStatement cannot be an expression in Java")
         is Switch -> throw IllegalArgumentException("Switch cannot be an expression in Java")
         is Assignment -> throw IllegalArgumentException("Assignment cannot be an expression in Java")

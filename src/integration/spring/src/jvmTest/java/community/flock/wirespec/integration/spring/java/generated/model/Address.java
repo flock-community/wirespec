@@ -8,4 +8,4 @@ public record Address (
   java.util.Optional<String> state,
   java.util.Optional<String> zip
 ) {
-};
+}

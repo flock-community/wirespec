@@ -8,7 +8,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Type
 import community.flock.wirespec.language.converter.convert
-import community.flock.wirespec.language.core.generator.generateJava
+import community.flock.wirespec.language.generator.generateJava
 
 interface JavaTypeDefinitionEmitter: TypeDefinitionEmitter, IdentifierEmitter {
 

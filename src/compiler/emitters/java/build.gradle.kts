@@ -42,6 +42,7 @@ kotlin {
                 api(project(":src:compiler:core"))
                 api(project(":src:language:converter"))
                 implementation(project(":src:language:core"))
+                implementation(project(":src:language:generator"))
             }
         }
         commonTest {

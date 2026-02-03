@@ -6,4 +6,4 @@ public record Error (
   String code,
   String description
 ) {
-};
+}

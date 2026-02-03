@@ -6,4 +6,4 @@ public record TodoInput (
   String name,
   Boolean done
 ) {
-};
+}
