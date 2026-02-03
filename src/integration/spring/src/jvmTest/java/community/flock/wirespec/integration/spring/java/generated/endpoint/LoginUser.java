@@ -101,8 +101,8 @@ public interface LoginUser extends Wirespec.Endpoint {
       switch (response.statusCode()) {
           case 200 -> {
             return new Response200(
-              serialization.deserializeParam(response.headers().getOrDefault("X-Rate-Limit", java.util.Collections.emptyList()), Wirespec.getType(Integer.class, java.util.Optional.class)),
-              serialization.deserializeParam(response.headers().getOrDefault("X-Expires-After", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
+              serialization.deserializeParam<java.util.Optional<Integer>>(response.headers().getOrDefault("X-Rate-Limit", java.util.Collections.emptyList()), Wirespec.getType(Integer.class, java.util.Optional.class)),
+              serialization.deserializeParam<java.util.Optional<String>>(response.headers().getOrDefault("X-Expires-After", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
               serialization.deserializeBody(response.body(), Wirespec.getType(String.class, null))
             );
           }

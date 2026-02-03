@@ -265,6 +265,11 @@ private class JavaEmitter(val file: File) {
             returnType?.takeIf { it != Type.Unit }?.emit() ?: "void"
         }
         val params = parameters.joinToString(", ") { it.emit(0) }
+        val typeParamsStr = if (typeParameters.isNotEmpty()) {
+            "<${typeParameters.joinToString(", ") { it.emit() }}> "
+        } else {
+            ""
+        }
         val prefix = listOfNotNull(
             "public".takeIf { indent == 1 && !modifier.contains("public") },
             "static".takeIf { isStatic && !modifier.contains("static") },
@@ -274,10 +279,10 @@ private class JavaEmitter(val file: File) {
         val fullPrefix = if (prefix.isEmpty()) "" else "$prefix "
 
         return if (body.isEmpty()) {
-            "$fullPrefix$rType $name($params);\n".indentCode(indent)
+            "$fullPrefix$typeParamsStr$rType $name($params);\n".indentCode(indent)
         } else {
             val content = body.joinToString("") { it.emit(1) }
-            "$fullPrefix$rType $name($params) {\n$content${"}".indentCode(0)}\n\n".indentCode(indent)
+            "$fullPrefix$typeParamsStr$rType $name($params) {\n$content${"}".indentCode(0)}\n\n".indentCode(indent)
         }
     }
 
@@ -325,7 +330,8 @@ private class JavaEmitter(val file: File) {
             }
         }
         is Call -> {
-            "$name(${arguments.map { it.value.emit() }.joinToString(", ")});\n".indentCode(indent)
+            val typeArgsStr = if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emit() }}>" else ""
+            "$typeArgsStr$name(${arguments.map { it.value.emit() }.joinToString(", ")});\n".indentCode(indent)
         }
         is Literal -> "${emit()};\n".indentCode(indent)
         is LiteralList -> "${emit()};\n".indentCode(indent)
@@ -379,10 +385,16 @@ private class JavaEmitter(val file: File) {
         is NullLiteral -> "null;\n".indentCode(indent)
         is VariableReference -> "${name.sanitize()};\n".indentCode(indent)
         is PropertyAccess -> "${receiver.emit()}.${property.sanitize()}();\n".indentCode(indent)
-        is MethodCall -> "${receiver.emit()}.${method.sanitize()}(${arguments.joinToString(", ") { it.emit() }});\n".indentCode(indent)
+        is MethodCall -> {
+            val typeArgsStr = if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emit() }}>" else ""
+            "${receiver.emit()}$typeArgsStr.${method.sanitize()}(${arguments.joinToString(", ") { it.emit() }});\n".indentCode(indent)
+        }
         is EnumReference -> "${enumType.emit()}.${entry};\n".indentCode(indent)
         is BinaryOp -> "(${left.emit()} ${operator.toJava()} ${right.emit()});\n".indentCode(indent)
-        is StaticCall -> "$qualifiedName(${arguments.joinToString(", ") { it.emit() }});\n".indentCode(indent)
+        is StaticCall -> {
+            val typeArgsStr = if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emit() }}>" else ""
+            "$qualifiedName$typeArgsStr(${arguments.joinToString(", ") { it.emit() }});\n".indentCode(indent)
+        }
         is ClassLiteral -> "${type.emit()}.class;\n".indentCode(indent)
         is AnonymousClass -> "${emitAsExpression()};\n".indentCode(indent)
     }
@@ -405,7 +417,10 @@ private class JavaEmitter(val file: File) {
     }
 
     private fun Expression.emit(): String = when (this) {
-        is Call -> "$name(${arguments.map { it.value.emit() }.joinToString(", ")})"
+        is Call -> {
+            val typeArgsStr = if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emit() }}>" else ""
+            "$name$typeArgsStr(${arguments.map { it.value.emit() }.joinToString(", ")})"
+        }
         is ConstructorStatement -> {
             val allArgs = namedArguments.map { it.value.emit() }
             val argsStr = when {
@@ -422,10 +437,16 @@ private class JavaEmitter(val file: File) {
         is NullLiteral -> "null"
         is VariableReference -> name.sanitize()
         is PropertyAccess -> "${receiver.emit()}.${property.sanitize()}()"
-        is MethodCall -> "${receiver.emit()}.${method.sanitize()}(${arguments.joinToString(", ") { it.emit() }})"
+        is MethodCall -> {
+            val typeArgsStr = if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emit() }}>" else ""
+            "${receiver.emit()}.$typeArgsStr${method.sanitize()}(${arguments.joinToString(", ") { it.emit() }})"
+        }
         is EnumReference -> "${enumType.emit()}.${entry}"
         is BinaryOp -> "(${left.emit()} ${operator.toJava()} ${right.emit()})"
-        is StaticCall -> "$qualifiedName(${arguments.joinToString(", ") { it.emit() }})"
+        is StaticCall -> {
+            val typeArgsStr = if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emit() }}>" else ""
+            "$qualifiedName$typeArgsStr(${arguments.joinToString(", ") { it.emit() }})"
+        }
         is ClassLiteral -> "${type.emit()}.class"
         is AnonymousClass -> emitAsExpression()
         is ErrorStatement -> throw IllegalArgumentException("ErrorStatement cannot be an expression in Java")

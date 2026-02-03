@@ -216,8 +216,8 @@ class StructConstructorBuilder : BaseBuilder {
         return node
     }
 
-    fun call(name: String, block: CallBuilder.() -> Unit = {}): Call {
-        val builder = CallBuilder(name)
+    fun call(name: String, typeArguments: List<Type> = emptyList(), block: CallBuilder.() -> Unit = {}): Call {
+        val builder = CallBuilder(name, typeArguments)
         builder.block()
         val node = builder.build()
         body.add(node)
@@ -235,8 +235,13 @@ class FunctionBuilder(
     private val isStatic: Boolean = false,
     private val isOverride: Boolean = false,
 ) : BaseBuilder {
+    private val typeParameters = mutableListOf<Type>()
     private val parameters = mutableListOf<Parameter>()
     private val body = mutableListOf<Statement>()
+
+    fun typeParam(type: Type) {
+        typeParameters.add(type)
+    }
 
     fun arg(name: String, type: Type) {
         parameters.add(Parameter(name, type))
@@ -292,8 +297,8 @@ class FunctionBuilder(
         return node
     }
 
-    fun call(name: String, block: CallBuilder.() -> Unit = {}): Call {
-        val builder = CallBuilder(name)
+    fun call(name: String, typeArguments: List<Type> = emptyList(), block: CallBuilder.() -> Unit = {}): Call {
+        val builder = CallBuilder(name, typeArguments)
         builder.block()
         val node = builder.build()
         body.add(node)
@@ -310,7 +315,7 @@ class FunctionBuilder(
         body.add(ErrorStatement(message.toExpression()))
     }
 
-    fun build(): Function = Function(name, parameters, returnType, body, isAsync, isStatic, isOverride)
+    fun build(): Function = Function(name, typeParameters, parameters, returnType, body, isAsync, isStatic, isOverride)
 }
 
 @Dsl
@@ -368,8 +373,8 @@ class CaseBuilder(private val value: Expression) : BaseBuilder {
         body.add(Assignment(name, expr))
     }
 
-    fun call(name: String, block: CallBuilder.() -> Unit = {}): Call {
-        val builder = CallBuilder(name)
+    fun call(name: String, typeArguments: List<Type> = emptyList(), block: CallBuilder.() -> Unit = {}): Call {
+        val builder = CallBuilder(name, typeArguments)
         builder.block()
         val node = builder.build()
         body.add(node)
@@ -392,7 +397,7 @@ class CaseBuilder(private val value: Expression) : BaseBuilder {
 }
 
 @Dsl
-class CallBuilder(private val name: String) : BaseBuilder {
+class CallBuilder(private val name: String, private val typeArguments: List<Type> = emptyList()) : BaseBuilder {
     private val arguments = mutableMapOf<String, Expression>()
 
     fun arg(name: String, value: Expression) {
@@ -403,8 +408,8 @@ class CallBuilder(private val name: String) : BaseBuilder {
         arguments[name] = value.toExpression()
     }
 
-    fun call(name: String, block: CallBuilder.() -> Unit = {}): Call {
-        val builder = CallBuilder(name)
+    fun call(name: String, typeArguments: List<Type> = emptyList(), block: CallBuilder.() -> Unit = {}): Call {
+        val builder = CallBuilder(name, typeArguments)
         builder.block()
         return builder.build()
     }
@@ -419,7 +424,7 @@ class CallBuilder(private val name: String) : BaseBuilder {
 
     fun emptyMap(keyType: Type, valueType: Type): LiteralMap = mapOf(emptyMap(), keyType, valueType)
 
-    fun build(): Call = Call(name, arguments)
+    fun build(): Call = Call(name, typeArguments, arguments)
 }
 
 @Dsl
@@ -434,8 +439,8 @@ class ConstructorBuilder(private val type: Type) : BaseBuilder {
         arguments[name] = value.toExpression()
     }
 
-    fun call(name: String, block: CallBuilder.() -> Unit = {}): Call {
-        val builder = CallBuilder(name)
+    fun call(name: String, typeArguments: List<Type> = emptyList(), block: CallBuilder.() -> Unit = {}): Call {
+        val builder = CallBuilder(name, typeArguments)
         builder.block()
         return builder.build()
     }

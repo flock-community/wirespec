@@ -53,6 +53,7 @@ data class Field(
 
 data class Function(
     val name: String,
+    val typeParameters: List<Type> = emptyList(),
     val parameters: List<Parameter>,
     val returnType: Type?,
     val body: List<Statement>,
@@ -120,6 +121,7 @@ data class PropertyAccess(
 // Method call on receiver - represents calling a method on an object (e.g., list.get(index))
 data class MethodCall(
     val receiver: Expression,
+    val typeArguments: List<Type> = emptyList(),
     val method: String,
     val arguments: List<Expression> = emptyList(),
 ) : Statement, Expression
@@ -142,6 +144,7 @@ data class BinaryOp(
 // Static/qualified method calls - represents static method calls (e.g., java.util.Collections.emptyMap())
 data class StaticCall(
     val qualifiedName: String,
+    val typeArguments: List<Type> = emptyList(),
     val arguments: List<Expression> = emptyList(),
 ) : Statement, Expression
 
@@ -160,7 +163,7 @@ data class ReturnStatement(val expression: Expression) : Statement
 data class ConstructorStatement(val type: Type, val namedArguments: Map<String, Expression> = emptyMap()) :
     Statement,
     Expression
-data class Call(val name: String, val arguments: Map<String, Expression> = emptyMap()) :
+data class Call(val name: String, val typeArguments: List<Type> = emptyList(), val arguments: Map<String, Expression> = emptyMap()) :
     Statement,
     Expression
 data class Literal(val value: Any, val type: Type) :

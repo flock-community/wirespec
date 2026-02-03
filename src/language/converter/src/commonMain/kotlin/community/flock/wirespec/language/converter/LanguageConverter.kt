@@ -573,6 +573,7 @@ fun EndpointWirespec.convertFromResponse() = Function(
                                 namedArguments = response.headers.associate { header ->
                                     header.identifier.value to Call(
                                         name = "serialization.deserializeParam",
+                                        typeArguments = listOf(header.reference.convert()),
                                         arguments = mapOf(
                                             "value" to MethodCall(
                                                 receiver = PropertyAccess(VariableReference("response"), "headers"),

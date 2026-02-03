@@ -4,18 +4,18 @@ import community.flock.wirespec.compiler.core.emit.RefinedTypeDefinitionEmitter
 import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.compiler.core.parse.ast.Refined
 import community.flock.wirespec.language.converter.convert
+import community.flock.wirespec.language.core.RawExpression
 import community.flock.wirespec.language.core.Type
 import community.flock.wirespec.language.core.function
-import community.flock.wirespec.language.core.RawExpression
 import community.flock.wirespec.language.generator.generateJava
 
-interface JavaRefinedTypeDefinitionEmitter: RefinedTypeDefinitionEmitter, JavaTypeDefinitionEmitter {
+interface JavaRefinedTypeDefinitionEmitter : RefinedTypeDefinitionEmitter, JavaTypeDefinitionEmitter {
 
     override fun emit(refined: Refined) = refined
         .convert()
         .run {
             copy(
-                interfaces= listOf(Type.Custom("Wirespec.Refined")),
+                interfaces = listOf(Type.Custom("Wirespec.Refined")),
                 elements = listOf(
                     function("toString", Type.Custom("String"), isOverride = true) {
                         returns(RawExpression("value"))
@@ -33,7 +33,7 @@ interface JavaRefinedTypeDefinitionEmitter: RefinedTypeDefinitionEmitter, JavaTy
         .generateJava()
         .run { this + "\n" }
 
-    override fun Refined.emitValidator():String {
+    override fun Refined.emitValidator(): String {
         val defaultReturn = "true;"
         return when (val type = reference.type) {
             is Reference.Primitive.Type.Integer -> type.constraint?.emit() ?: defaultReturn

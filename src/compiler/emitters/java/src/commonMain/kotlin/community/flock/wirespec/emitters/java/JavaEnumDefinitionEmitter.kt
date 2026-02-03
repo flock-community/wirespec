@@ -40,7 +40,7 @@ interface JavaEnumDefinitionEmitter : EnumDefinitionEmitter, JavaIdentifierEmitt
                 ),
                 elements = listOf(
                     community.flock.wirespec.language.core.Function(
-                        "toString", emptyList(), community.flock.wirespec.language.core.Type.String, listOf(
+                        "toString", emptyList(), emptyList(), community.flock.wirespec.language.core.Type.String, listOf(
                             community.flock.wirespec.language.core.ReturnStatement(
                                 community.flock.wirespec.language.core.RawExpression(
                                     "label"
@@ -49,7 +49,7 @@ interface JavaEnumDefinitionEmitter : EnumDefinitionEmitter, JavaIdentifierEmitt
                         )
                     ),
                     community.flock.wirespec.language.core.Function(
-                        "getLabel", emptyList(), community.flock.wirespec.language.core.Type.String, listOf(
+                        "getLabel", emptyList(), emptyList(), community.flock.wirespec.language.core.Type.String, listOf(
                             community.flock.wirespec.language.core.ReturnStatement(
                                 community.flock.wirespec.language.core.RawExpression(
                                     "label"
