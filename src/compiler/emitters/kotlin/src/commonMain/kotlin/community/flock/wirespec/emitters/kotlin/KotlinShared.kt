@@ -55,6 +55,7 @@ data object KotlinShared : Shared {
         |${Spacer}interface ParamDeserializer { fun <T> deserializeParam(values: List<String>, kType: KType): T }
         |${Spacer}data class RawRequest(val method: String, val path: List<String>, val queries: Map<String, List<String>>, val headers: Map<String, List<String>>, val body: ByteArray?) 
         |${Spacer}data class RawResponse(val statusCode: Int, val headers: Map<String, List<String>>, val body: ByteArray?)
+        |${Spacer}interface Transportation { suspend fun transport(request: RawResponse): RawRequest }
         |}
     """.trimMargin()
 }

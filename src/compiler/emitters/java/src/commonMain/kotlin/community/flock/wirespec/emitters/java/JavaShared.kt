@@ -15,6 +15,7 @@ data object JavaShared : Shared {
         |import java.lang.reflect.ParameterizedType;
         |import java.util.List;
         |import java.util.Map;
+        |import java.util.concurrent.CompletableFuture;
         |
         |public interface Wirespec {
         |${Spacer}interface Enum { String getLabel(); }
@@ -59,6 +60,7 @@ data object JavaShared : Shared {
         |${Spacer}interface ParamDeserializer { <T> T deserializeParam(List<String> values, Type type); }
         |${Spacer}record RawRequest(String method, List<String> path, Map<String, List<String>> queries, Map<String, List<String>> headers, byte[] body) {} 
         |${Spacer}record RawResponse(int statusCode, Map<String, List<String>> headers, byte[] body) {}
+        |${Spacer}interface Transportation { CompletableFuture<RawResponse> transport(RawRequest request); }
         |${Spacer}static Type getType(final Class<?> actualTypeArguments, final Class<?> rawType) {
         |${Spacer(2)}if(rawType != null) {
         |${Spacer(3)}return new ParameterizedType() {

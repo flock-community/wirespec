@@ -4,6 +4,7 @@ import java.lang.reflect.Type;
 import java.lang.reflect.ParameterizedType;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public interface Wirespec {
     interface Enum { String getLabel(); }
@@ -48,6 +49,7 @@ public interface Wirespec {
     interface ParamDeserializer { <T> T deserializeParam(List<String> values, Type type); }
     record RawRequest(String method, List<String> path, Map<String, List<String>> queries, Map<String, List<String>> headers, byte[] body) {}
     record RawResponse(int statusCode, Map<String, List<String>> headers, byte[] body) {}
+    interface Transportation { CompletableFuture<RawResponse> transport(RawRequest request); }
     static Type getType(final Class<?> actualTypeArguments, final Class<?> rawType) {
         if(rawType != null) {
             return new ParameterizedType() {
