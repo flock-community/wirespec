@@ -331,20 +331,32 @@ private class JavaEmitter(val file: File) {
         is ErrorStatement -> "throw new IllegalStateException(${message.emit()});\n".indentCode(indent)
         is Switch -> {
             val isPatternSwitch = cases.any { it.type != null }
-            val casesStr = cases.joinToString("") { case ->
-                val bodyStr = case.body.joinToString("") { it.emit(1) }
-                val valueStr = if (isPatternSwitch && case.type != null) {
-                    "${case.type.emit()} ${case.variable ?: "_"}"
-                } else {
-                    case.value.emit()
+            if (isPatternSwitch) {
+                // Use if-else chain with instanceof for pattern matching (Java 16+)
+                val casesStr = cases.mapIndexed { index, case ->
+                    val bodyStr = case.body.joinToString("") { it.emit(1) }
+                    val typeStr = case.type?.emit() ?: "Object"
+                    val varName = case.variable ?: "_"
+                    val prefix = if (index == 0) "if" else " else if"
+                    "$prefix (${expression.emit()} instanceof $typeStr $varName) {\n$bodyStr}"
+                }.joinToString("")
+                val defaultStr = default?.let {
+                    val bodyStr = it.joinToString("") { stmt -> stmt.emit(1) }
+                    " else {\n$bodyStr}"
+                } ?: ""
+                "$casesStr$defaultStr\n".indentCode(indent)
+            } else {
+                // Regular switch with arrow syntax
+                val casesStr = cases.joinToString("") { case ->
+                    val bodyStr = case.body.joinToString("") { it.emit(1) }
+                    "case ${case.value.emit()} -> {\n$bodyStr}\n".indentCode(indent + 1)
                 }
-                "case $valueStr -> {\n$bodyStr}\n".indentCode(indent + 1)
+                val defaultStr = default?.let {
+                    val bodyStr = it.joinToString("") { stmt -> stmt.emit(1) }
+                    "default -> {\n$bodyStr}\n".indentCode(indent + 1)
+                } ?: ""
+                "switch (${expression.emit()}) {\n$casesStr$defaultStr}\n".indentCode(indent)
             }
-            val defaultStr = default?.let {
-                val bodyStr = it.joinToString("") { stmt -> stmt.emit(1) }
-                "default -> {\n$bodyStr}\n".indentCode(indent + 1)
-            } ?: ""
-            "switch (${expression.emit()}) {\n$casesStr$defaultStr}\n".indentCode(indent)
         }
     }
 

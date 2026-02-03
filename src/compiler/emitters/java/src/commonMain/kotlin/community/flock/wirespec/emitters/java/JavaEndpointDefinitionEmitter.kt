@@ -21,6 +21,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Reference
 import community.flock.wirespec.language.converter.convertFromResponse
 import community.flock.wirespec.language.converter.convertFromRequest
 import community.flock.wirespec.language.converter.convertToRequest
+import community.flock.wirespec.language.converter.convertToResponse
 import community.flock.wirespec.language.core.generator.generateJava
 
 interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageName, JavaTypeDefinitionEmitter {
@@ -47,17 +48,7 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
         |
         |${endpoint.requests.first().emitRequestFunctions(endpoint)}
         |
-        |${Spacer(2)}static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-        |${endpoint.responses.distinctByStatus().joinToString("\n") { it.emitSerialized() }}
-        |${Spacer(3)}else { throw new IllegalStateException("Cannot match response with status: " + response.status());}
-        |${Spacer(2)}}
-        |
-        |${Spacer(2)}static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
-        |${Spacer(3)}switch (response.statusCode()) {
-        |${endpoint.responses.distinctByStatus().filter { it.status.isStatusCode() }.joinToString("\n") { it.emitDeserialized() }}
-        |${Spacer(4)}default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
-        |${Spacer(3)}}
-        |${Spacer(2)}}
+        |${endpoint.emitResponseFunctions()}
         |
         |${Spacer(2)}${emitHandleFunction(endpoint)}
         |${Spacer(2)}class Handlers implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
@@ -184,6 +175,13 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
         |${endpoint.convertToRequest().generateJava().indentLines(Spacer(2))}
         |
         |${endpoint.convertFromRequest().generateJava().indentLines(Spacer(2))}
+        |
+    """.trimMargin()
+
+    private fun Endpoint.emitResponseFunctions() = """
+        |${convertToResponse().generateJava().indentLines(Spacer(2))}
+        |
+        |${convertFromResponse().generateJava().indentLines(Spacer(2))}
         |
     """.trimMargin()
 

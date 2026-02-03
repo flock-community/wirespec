@@ -2,6 +2,7 @@ package community.flock.wirespec.language.converter
 
 import community.flock.wirespec.language.core.Call
 import community.flock.wirespec.language.core.Case
+import community.flock.wirespec.language.core.Constructor
 import community.flock.wirespec.language.core.ConstructorStatement
 import community.flock.wirespec.language.core.Element
 import community.flock.wirespec.language.core.Enum
@@ -36,6 +37,7 @@ fun DefinitionWirespec.convert(): Element = when (this) {
     is UnionWirespec -> convert()
     is RefinedWirespec -> convert()
     is ChannelWirespec -> convert()
+    is EndpointWirespec -> convert()
     else -> error("Conversion not implemented for ${this::class.simpleName}")
 }
 
@@ -93,6 +95,183 @@ fun ChannelWirespec.convert() = Interface(
     ),
 )
 
+fun EndpointWirespec.
+        convert(): Interface {
+    val pathParams = path.filterIsInstance<EndpointWirespec.Segment.Param>()
+    val requestContent = requests.first().content
+    val requestBodyType = requestContent?.reference?.convert() ?: Type.Unit
+
+    return Interface(
+        name = identifier.value,
+        extends = Type.Custom("Wirespec.Endpoint"),
+        elements = buildList {
+            // Path record
+            add(
+                Struct(
+                    name = "Path",
+                    fields = pathParams.map { Field(it.identifier.value, it.reference.convert()) },
+                    interfaces = listOf(Type.Custom("Wirespec.Path")),
+                )
+            )
+
+            // Queries record
+            add(
+                Struct(
+                    name = "Queries",
+                    fields = queries.map { Field(it.identifier.value, it.reference.convert()) },
+                    interfaces = listOf(Type.Custom("Wirespec.Queries")),
+                )
+            )
+
+            // RequestHeaders record
+            add(
+                Struct(
+                    name = "RequestHeaders",
+                    fields = headers.map { Field(it.identifier.value, it.reference.convert()) },
+                    interfaces = listOf(Type.Custom("Wirespec.Request.Headers")),
+                )
+            )
+
+            // Request record
+            add(
+                Struct(
+                    name = "Request",
+                    fields = listOf(
+                        Field("path", Type.Custom("Path")),
+                        Field("method", Type.Custom("Wirespec.Method")),
+                        Field("queries", Type.Custom("Queries")),
+                        Field("headers", Type.Custom("RequestHeaders")),
+                        Field("body", requestBodyType),
+                    ),
+                    interfaces = listOf(Type.Custom("Wirespec.Request", listOf(requestBodyType))),
+                    constructors = listOf(
+                        Constructor(
+                            parameters = buildList {
+                                pathParams.forEach { add(Parameter(it.identifier.value, it.reference.convert())) }
+                                queries.forEach { add(Parameter(it.identifier.value, it.reference.convert())) }
+                                headers.forEach { add(Parameter(it.identifier.value, it.reference.convert())) }
+                                requestContent?.let { add(Parameter("body", it.reference.convert())) }
+                            },
+                            body = emptyList(),
+                        )
+                    ),
+                )
+            )
+
+            // Response sealed interface
+            add(
+                Interface(
+                    name = "Response",
+                    extends = Type.Custom("Wirespec.Response", listOf(Type.Custom("T"))),
+                    elements = emptyList(),
+                )
+            )
+
+            // Response status interfaces (Response2XX, Response5XX, etc.)
+            responses.map { it.status.first() }.distinct().forEach { statusPrefix ->
+                add(
+                    Interface(
+                        name = "Response${statusPrefix}XX",
+                        extends = Type.Custom("Response", listOf(Type.Custom("T"))),
+                        elements = emptyList(),
+                    )
+                )
+            }
+
+            // Response content type interfaces (ResponseVoid, ResponseTodoDto, etc.)
+            responses.distinctBy { it.status }
+                .map { it.content?.reference }
+                .distinct()
+                .forEach { ref ->
+                    val contentType = ref?.convert() ?: Type.Unit
+                    val typeName = contentType.toTypeName()
+                    add(
+                        Interface(
+                            name = "Response$typeName",
+                            extends = Type.Custom("Response", listOf(contentType)),
+                            elements = emptyList(),
+                        )
+                    )
+                }
+
+            // Individual response records (Response200, Response201, etc.)
+            responses.distinctBy { it.status }.forEach { response ->
+                val bodyType = response.content?.reference?.convert() ?: Type.Unit
+                val typeName = bodyType.toTypeName()
+                add(
+                    Struct(
+                        name = "Response${response.status}",
+                        fields = listOf(
+                            Field("status", Type.Integer(Precision.P32)),
+                            Field("headers", Type.Custom("Headers")),
+                            Field("body", bodyType),
+                        ),
+                        interfaces = listOf(
+                            Type.Custom("Response${response.status.first()}XX", listOf(bodyType)),
+                            Type.Custom("Response$typeName"),
+                        ),
+                        elements = listOf(
+                            Struct(
+                                name = "Headers",
+                                fields = response.headers.map { Field(it.identifier.value, it.reference.convert()) },
+                                interfaces = listOf(Type.Custom("Wirespec.Response.Headers")),
+                            ),
+                        ),
+                        constructors = listOf(
+                            Constructor(
+                                parameters = buildList {
+                                    response.headers.forEach { add(Parameter(it.identifier.value, it.reference.convert())) }
+                                    response.content?.let { add(Parameter("body", it.reference.convert())) }
+                                },
+                                body = emptyList(),
+                            )
+                        ),
+                    )
+                )
+            }
+
+            // Handler interface
+            add(
+                Interface(
+                    name = "Handler",
+                    extends = Type.Custom("Wirespec.Handler"),
+                    elements = listOf(
+                        convertToRequest(),
+                        convertFromRequest(),
+                        convertToResponse(),
+                        convertFromResponse(),
+                        Function(
+                            name = identifier.value.replaceFirstChar { it.lowercase() },
+                            parameters = listOf(Parameter("request", Type.Custom("Request"))),
+                            returnType = Type.Custom(
+                                "java.util.concurrent.CompletableFuture",
+                                listOf(Type.Custom("Response", listOf(Type.Custom("?"))))
+                            ),
+                            body = emptyList(),
+                            isAsync = false,
+                            isStatic = false,
+                            isOverride = false,
+                        ),
+                    ),
+                )
+            )
+        },
+    )
+}
+
+private fun Type.toTypeName(): String = when (this) {
+    is Type.Unit -> "Void"
+    is Type.Custom -> name
+    is Type.Array -> "List${elementType.toTypeName()}"
+    is Type.Nullable -> "Optional${type.toTypeName()}"
+    is Type.String -> "String"
+    is Type.Integer -> "Integer"
+    is Type.Number -> "Number"
+    is Type.Boolean -> "Boolean"
+    is Type.Bytes -> "Bytes"
+    is Type.Dict -> "Map"
+}
+
 fun ReferenceWirespec.convert(): Type = when (this) {
     is ReferenceWirespec.Any -> TODO("Any is not implemented yet")
     is ReferenceWirespec.Custom -> Type.Custom(value)
@@ -118,6 +297,69 @@ fun ReferenceWirespec.convert(): Type = when (this) {
 }
     .let { if (isNullable) Type.Nullable(it) else it }
 
+fun EndpointWirespec.convertToResponse() = Function(
+    name = "toResponse",
+    isStatic = true,
+    parameters = listOf(
+        Parameter("serialization", Type.Custom("Wirespec.Serializer")),
+        Parameter("response", Type.Custom("Response", listOf(Type.Custom("?")))),
+    ),
+    returnType = Type.Custom("Wirespec.RawResponse"),
+    body = listOf(
+        Switch(
+            expression = RawExpression("response"),
+            cases = responses.distinctBy { it.status }.map { response ->
+                Case(
+                    value = RawExpression(""),
+                    type = Type.Custom("Response${response.status}"),
+                    variable = "r",
+                    body = listOf(
+                        ReturnStatement(
+                            ConstructorStatement(
+                                type = Type.Custom("Wirespec.RawResponse"),
+                                namedArguments = mapOf(
+                                    "status" to RawExpression("r.status()"),
+                                    "headers" to if (response.headers.isNotEmpty()) {
+                                        LiteralMap(
+                                            values = response.headers.associate { header ->
+                                                header.identifier.value to Call(
+                                                    name = "serialization.serializeParam",
+                                                    arguments = mapOf(
+                                                        "value" to RawExpression("r.headers().${header.identifier.value.sanitizeForJava()}()"),
+                                                        "type" to header.reference.toJavaType(),
+                                                    ),
+                                                )
+                                            },
+                                            keyType = Type.String,
+                                            valueType = Type.Custom("List<String>"),
+                                        )
+                                    } else {
+                                        RawExpression("java.util.Collections.emptyMap()")
+                                    },
+                                    "body" to (
+                                        response.content?.let { content ->
+                                            Call(
+                                                name = "serialization.serializeBody",
+                                                arguments = mapOf(
+                                                    "value" to RawExpression("r.body"),
+                                                    "type" to content.reference.toJavaType(),
+                                                ),
+                                            )
+                                        } ?: RawExpression("null")
+                                        ),
+                                ),
+                            ),
+                        ),
+                    ),
+                )
+            },
+            default = listOf(
+                ErrorStatement(RawExpression("\"Cannot match response with status: \" + response.status()")),
+            ),
+        ),
+    ),
+)
+
 fun EndpointWirespec.convertFromResponse() = Function(
     name = "fromResponse",
     isStatic = true,
@@ -136,31 +378,32 @@ fun EndpointWirespec.convertFromResponse() = Function(
                         ReturnStatement(
                             ConstructorStatement(
                                 type = Type.Custom("Response${response.status}"),
-                                namedArguments = mapOf(
-                                    "headers" to ConstructorStatement(
-                                        type = Type.Custom("Headers"),
-                                        namedArguments = response.headers.associate { header ->
-                                            header.identifier.value to Call(
+                                namedArguments = buildMap {
+                                    response.headers.forEach { header ->
+                                        put(
+                                            header.identifier.value,
+                                            Call(
                                                 name = "serialization.deserializeParam",
                                                 arguments = mapOf(
                                                     "value" to RawExpression("response.headers().getOrDefault(\"${header.identifier.value}\", java.util.Collections.emptyList())"),
                                                     "type" to header.reference.toJavaType(),
                                                 ),
-                                            )
-                                        },
-                                    ),
-                                    "body" to (
-                                        response.content?.let { content ->
+                                            ),
+                                        )
+                                    }
+                                    response.content?.let { content ->
+                                        put(
+                                            "body",
                                             Call(
                                                 name = "serialization.deserializeBody",
                                                 arguments = mapOf(
                                                     "value" to RawExpression("response.body()"),
                                                     "type" to content.reference.toJavaType(),
                                                 ),
-                                            )
-                                        } ?: RawExpression("null")
-                                        ),
-                                ),
+                                            ),
+                                        )
+                                    }
+                                },
                             ),
                         ),
                     ),
