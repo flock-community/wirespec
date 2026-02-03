@@ -92,17 +92,17 @@ class PetTest {
                         arg("request", type("Request"))
                         returns(
                             construct(type("Wirespec.RawRequest")) {
-                                arg("method", call("request.method.name"))
+                                arg("method", methodCall("request.method.name"))
                                 arg("path", listOf(kotlin.collections.listOf(literal("todos")), string))
                                 arg(
                                     "queries",
                                     mapOf(
                                         mapOf(
-                                            "done" to call("serialization.serializeParam") {
+                                            "done" to methodCall("serialization.serializeParam") {
                                                 arg("value", "request.queries.done")
                                                 arg(
                                                     "type",
-                                                    call("Wirespec.getType") {
+                                                    methodCall("Wirespec.getType") {
                                                         arg("type", "Boolean.class")
                                                         arg("container", "java.util.Optional.class")
                                                     },
@@ -126,17 +126,17 @@ class PetTest {
                             construct(type("Request")) {
                                 arg(
                                     "done",
-                                    call("serialization.deserializeParam") {
+                                    methodCall("serialization.deserializeParam") {
                                         arg(
                                             "value",
-                                            call("request.queries().getOrDefault") {
+                                            methodCall("request.queries().getOrDefault") {
                                                 arg("key", literal("done"))
                                                 arg("defaultValue", emptyList(string))
                                             },
                                         )
                                         arg(
                                             "type",
-                                            call("Wirespec.getType") {
+                                            methodCall("Wirespec.getType") {
                                                 arg("type", "Boolean.class")
                                                 arg("container", "java.util.Optional.class")
                                             },
@@ -150,17 +150,17 @@ class PetTest {
                     function("fromResponse", type("Response")) {
                         arg("serialization", type("Wirespec.Deserializer"))
                         arg("response", type("Wirespec.RawResponse"))
-                        switch(call("response.statusCode")) {
+                        switch(methodCall("response.statusCode")) {
                             case(literal(200)) {
                                 returns(
                                     construct(type("Response200")) {
                                         arg(
                                             "body",
-                                            call("serialization.deserializeBody") {
+                                            methodCall("serialization.deserializeBody") {
                                                 arg("body", "response.body()")
                                                 arg(
                                                     "type",
-                                                    call("Wirespec.getType") {
+                                                    methodCall("Wirespec.getType") {
                                                         arg("type", "Todo.class")
                                                         arg("container", "java.util.List.class")
                                                     },
@@ -175,11 +175,11 @@ class PetTest {
                                     construct(type("Response404")) {
                                         arg(
                                             "body",
-                                            call("serialization.deserializeBody") {
-                                                arg("body", call("response.body"))
+                                            methodCall("serialization.deserializeBody") {
+                                                arg("body", methodCall("response.body"))
                                                 arg(
                                                     "type",
-                                                    call("Wirespec.getType") {
+                                                    methodCall("Wirespec.getType") {
                                                         arg("type", "Error.class")
                                                         arg("container", "null")
                                                     },
@@ -202,15 +202,15 @@ class PetTest {
                             case(type("Response200"), "r") {
                                 returns(
                                     construct(type("Wirespec.RawResponse")) {
-                                        arg("statusCode", call("r.status"))
+                                        arg("statusCode", methodCall("r.status"))
                                         arg("headers", "java.util.Collections.emptyMap()")
                                         arg(
                                             "body",
-                                            call("serialization.serializeBody") {
+                                            methodCall("serialization.serializeBody") {
                                                 arg("body", "r.body")
                                                 arg(
                                                     "type",
-                                                    call("Wirespec.getType") {
+                                                    methodCall("Wirespec.getType") {
                                                         arg("type", "Todo.class")
                                                         arg("container", "java.util.List.class")
                                                     },
@@ -223,15 +223,15 @@ class PetTest {
                             case(type("Response404"), "r") {
                                 returns(
                                     construct(type("Wirespec.RawResponse")) {
-                                        arg("statusCode", call("r.status"))
+                                        arg("statusCode", methodCall("r.status"))
                                         arg("headers", "java.util.Collections.emptyMap()")
                                         arg(
                                             "body",
-                                            call("serialization.serializeBody") {
+                                            methodCall("serialization.serializeBody") {
                                                 arg("body", "r.body")
                                                 arg(
                                                     "type",
-                                                    call("Wirespec.getType") {
+                                                    methodCall("Wirespec.getType") {
                                                         arg("type", "Error.class")
                                                         arg("container", "null")
                                                     },

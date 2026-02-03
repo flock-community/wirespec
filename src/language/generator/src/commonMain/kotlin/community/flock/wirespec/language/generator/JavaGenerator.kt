@@ -3,7 +3,6 @@ package community.flock.wirespec.language.generator
 import community.flock.wirespec.language.core.AnonymousClass
 import community.flock.wirespec.language.core.Assignment
 import community.flock.wirespec.language.core.BinaryOp
-import community.flock.wirespec.language.core.Call
 import community.flock.wirespec.language.core.ClassLiteral
 import community.flock.wirespec.language.core.Constructor
 import community.flock.wirespec.language.core.ConstructorStatement
@@ -329,10 +328,6 @@ private class JavaEmitter(val file: File) {
                 "new ${type.emit()}$argsStr;\n".indentCode(indent)
             }
         }
-        is Call -> {
-            val typeArgsStr = if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emit() }}>" else ""
-            "$typeArgsStr$name(${arguments.map { it.value.emit() }.joinToString(", ")});\n".indentCode(indent)
-        }
         is Literal -> "${emit()};\n".indentCode(indent)
         is LiteralList -> "${emit()};\n".indentCode(indent)
         is LiteralMap -> "${emit()};\n".indentCode(indent)
@@ -387,13 +382,14 @@ private class JavaEmitter(val file: File) {
         is PropertyAccess -> "${receiver.emit()}.${property.sanitize()}();\n".indentCode(indent)
         is MethodCall -> {
             val typeArgsStr = if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emit() }}>" else ""
-            "${receiver.emit()}$typeArgsStr.${method.sanitize()}(${arguments.joinToString(", ") { it.emit() }});\n".indentCode(indent)
+            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
+            "$receiverStr$typeArgsStr${method.sanitize()}(${arguments.values.joinToString(", ") { it.emit() }});\n".indentCode(indent)
         }
         is EnumReference -> "${enumType.emit()}.${entry};\n".indentCode(indent)
         is BinaryOp -> "(${left.emit()} ${operator.toJava()} ${right.emit()});\n".indentCode(indent)
         is StaticCall -> {
             val typeArgsStr = if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emit() }}>" else ""
-            "$qualifiedName$typeArgsStr(${arguments.joinToString(", ") { it.emit() }});\n".indentCode(indent)
+            "$qualifiedName$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }});\n".indentCode(indent)
         }
         is ClassLiteral -> "${type.emit()}.class;\n".indentCode(indent)
         is AnonymousClass -> "${emitAsExpression()};\n".indentCode(indent)
@@ -417,10 +413,6 @@ private class JavaEmitter(val file: File) {
     }
 
     private fun Expression.emit(): String = when (this) {
-        is Call -> {
-            val typeArgsStr = if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emit() }}>" else ""
-            "$name$typeArgsStr(${arguments.map { it.value.emit() }.joinToString(", ")})"
-        }
         is ConstructorStatement -> {
             val allArgs = namedArguments.map { it.value.emit() }
             val argsStr = when {
@@ -439,13 +431,14 @@ private class JavaEmitter(val file: File) {
         is PropertyAccess -> "${receiver.emit()}.${property.sanitize()}()"
         is MethodCall -> {
             val typeArgsStr = if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emit() }}>" else ""
-            "${receiver.emit()}.$typeArgsStr${method.sanitize()}(${arguments.joinToString(", ") { it.emit() }})"
+            val receiverStr = receiver?.let { "${it.emit()}." } ?: ""
+            "$receiverStr$typeArgsStr${method.sanitize()}(${arguments.values.joinToString(", ") { it.emit() }})"
         }
         is EnumReference -> "${enumType.emit()}.${entry}"
         is BinaryOp -> "(${left.emit()} ${operator.toJava()} ${right.emit()})"
         is StaticCall -> {
             val typeArgsStr = if (typeArguments.isNotEmpty()) "<${typeArguments.joinToString(", ") { it.emit() }}>" else ""
-            "$qualifiedName$typeArgsStr(${arguments.joinToString(", ") { it.emit() }})"
+            "$qualifiedName$typeArgsStr(${arguments.values.joinToString(", ") { it.emit() }})"
         }
         is ClassLiteral -> "${type.emit()}.class"
         is AnonymousClass -> emitAsExpression()

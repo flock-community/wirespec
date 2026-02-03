@@ -119,11 +119,12 @@ data class PropertyAccess(
 ) : Statement, Expression
 
 // Method call on receiver - represents calling a method on an object (e.g., list.get(index))
+// If receiver is null, it's a simple function call (e.g., fromRequest(...))
 data class MethodCall(
-    val receiver: Expression,
+    val receiver: Expression? = null,
     val typeArguments: List<Type> = emptyList(),
     val method: String,
-    val arguments: List<Expression> = emptyList(),
+    val arguments: Map<String, Expression> = emptyMap(),
 ) : Statement, Expression
 
 // Enum constant reference - represents an enum constant (e.g., Wirespec.Method.GET)
@@ -145,7 +146,7 @@ data class BinaryOp(
 data class StaticCall(
     val qualifiedName: String,
     val typeArguments: List<Type> = emptyList(),
-    val arguments: List<Expression> = emptyList(),
+    val arguments: Map<String, Expression> = emptyMap(),
 ) : Statement, Expression
 
 // Class literal - represents a class reference (e.g., String.class)
@@ -161,9 +162,6 @@ data class AnonymousClass(
 data class PrintStatement(val expression: Expression) : Statement
 data class ReturnStatement(val expression: Expression) : Statement
 data class ConstructorStatement(val type: Type, val namedArguments: Map<String, Expression> = emptyMap()) :
-    Statement,
-    Expression
-data class Call(val name: String, val typeArguments: List<Type> = emptyList(), val arguments: Map<String, Expression> = emptyMap()) :
     Statement,
     Expression
 data class Literal(val value: Any, val type: Type) :

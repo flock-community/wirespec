@@ -3,7 +3,6 @@ package community.flock.wirespec.language.converter
 import community.flock.wirespec.language.core.AnonymousClass
 import community.flock.wirespec.language.core.Assignment
 import community.flock.wirespec.language.core.BinaryOp
-import community.flock.wirespec.language.core.Call
 import community.flock.wirespec.language.core.Case
 import community.flock.wirespec.language.core.ClassLiteral
 import community.flock.wirespec.language.core.Constructor
@@ -392,8 +391,8 @@ fun EndpointWirespec.convertHandlers(): Struct {
                                     isOverride = true,
                                     body = listOf(
                                         ReturnStatement(
-                                            Call(
-                                                name = "fromRequest",
+                                            MethodCall(
+                                                method = "fromRequest",
                                                 arguments = mapOf(
                                                     "serialization" to VariableReference("serialization"),
                                                     "request" to VariableReference("request"),
@@ -409,8 +408,8 @@ fun EndpointWirespec.convertHandlers(): Struct {
                                     isOverride = true,
                                     body = listOf(
                                         ReturnStatement(
-                                            Call(
-                                                name = "toResponse",
+                                            MethodCall(
+                                                method = "toResponse",
                                                 arguments = mapOf(
                                                     "serialization" to VariableReference("serialization"),
                                                     "response" to VariableReference("response"),
@@ -442,8 +441,8 @@ fun EndpointWirespec.convertHandlers(): Struct {
                                     isOverride = true,
                                     body = listOf(
                                         ReturnStatement(
-                                            Call(
-                                                name = "toRequest",
+                                            MethodCall(
+                                                method = "toRequest",
                                                 arguments = mapOf(
                                                     "serialization" to VariableReference("serialization"),
                                                     "request" to VariableReference("request"),
@@ -459,8 +458,8 @@ fun EndpointWirespec.convertHandlers(): Struct {
                                     isOverride = true,
                                     body = listOf(
                                         ReturnStatement(
-                                            Call(
-                                                name = "fromResponse",
+                                            MethodCall(
+                                                method = "fromResponse",
                                                 arguments = mapOf(
                                                     "serialization" to VariableReference("serialization"),
                                                     "response" to VariableReference("response"),
@@ -504,8 +503,8 @@ fun EndpointWirespec.convertToResponse() = Function(
                                     "headers" to if (response.headers.isNotEmpty()) {
                                         LiteralMap(
                                             values = response.headers.associate { header ->
-                                                header.identifier.value to Call(
-                                                    name = "serialization.serializeParam",
+                                                header.identifier.value to MethodCall(
+                                                    method = "serialization.serializeParam",
                                                     arguments = mapOf(
                                                         "value" to PropertyAccess(
                                                             PropertyAccess(VariableReference("r"), "headers"),
@@ -523,8 +522,8 @@ fun EndpointWirespec.convertToResponse() = Function(
                                     },
                                     "body" to (
                                         response.content?.let { content ->
-                                            Call(
-                                                name = "serialization.serializeBody",
+                                            MethodCall(
+                                                method = "serialization.serializeBody",
                                                 arguments = mapOf(
                                                     "value" to PropertyAccess(VariableReference("r"), "body"),
                                                     "type" to content.reference.toJavaType(),
@@ -571,16 +570,17 @@ fun EndpointWirespec.convertFromResponse() = Function(
                             ConstructorStatement(
                                 type = Type.Custom("Response$statusClassName"),
                                 namedArguments = response.headers.associate { header ->
-                                    header.identifier.value to Call(
-                                        name = "serialization.deserializeParam",
+                                    header.identifier.value to MethodCall(
+                                        receiver = VariableReference("serialization"),
+                                        method = "deserializeParam",
                                         typeArguments = listOf(header.reference.convert()),
                                         arguments = mapOf(
                                             "value" to MethodCall(
                                                 receiver = PropertyAccess(VariableReference("response"), "headers"),
                                                 method = "getOrDefault",
-                                                arguments = listOf(
-                                                    Literal(header.identifier.value, Type.String),
-                                                    StaticCall("java.util.Collections.emptyList"),
+                                                arguments = mapOf(
+                                                    "key" to Literal(header.identifier.value, Type.String),
+                                                    "defaultValue" to StaticCall("java.util.Collections.emptyList"),
                                                 ),
                                             ),
                                             "type" to header.reference.toJavaType(),
@@ -588,8 +588,8 @@ fun EndpointWirespec.convertFromResponse() = Function(
                                     )
                                 } + (response.content?.let { content ->
                                     mapOf(
-                                        "body" to Call(
-                                            name = "serialization.deserializeBody",
+                                        "body" to MethodCall(
+                                            method = "serialization.deserializeBody",
                                             arguments = mapOf(
                                                 "value" to PropertyAccess(VariableReference("response"), "body"),
                                                 "type" to content.reference.toJavaType(),
@@ -633,8 +633,8 @@ fun EndpointWirespec.convertToRequest() = Function(
                         values = path.map {
                             when (it) {
                                 is EndpointWirespec.Segment.Literal -> Literal(it.value, Type.String)
-                                is EndpointWirespec.Segment.Param -> Call(
-                                    name = "serialization.serializePath",
+                                is EndpointWirespec.Segment.Param -> MethodCall(
+                                    method = "serialization.serializePath",
                                     arguments = mapOf(
                                         "value" to PropertyAccess(
                                             PropertyAccess(VariableReference("request"), "path"),
@@ -649,8 +649,8 @@ fun EndpointWirespec.convertToRequest() = Function(
                     ),
                     "queries" to LiteralMap(
                         values = queries.associate {
-                            it.identifier.value to Call(
-                                name = "serialization.serializeParam",
+                            it.identifier.value to MethodCall(
+                                method = "serialization.serializeParam",
                                 arguments = mapOf(
                                     "value" to PropertyAccess(
                                         PropertyAccess(VariableReference("request"), "queries"),
@@ -665,8 +665,8 @@ fun EndpointWirespec.convertToRequest() = Function(
                     ),
                     "headers" to LiteralMap(
                         values = headers.associate {
-                            it.identifier.value to Call(
-                                name = "serialization.serializeParam",
+                            it.identifier.value to MethodCall(
+                                method = "serialization.serializeParam",
                                 arguments = mapOf(
                                     "value" to PropertyAccess(
                                         PropertyAccess(VariableReference("request"), "headers"),
@@ -681,8 +681,8 @@ fun EndpointWirespec.convertToRequest() = Function(
                     ),
                     "body" to (
                         requests.first().content?.let {
-                            Call(
-                                name = "serialization.serializeBody",
+                            MethodCall(
+                                method = "serialization.serializeBody",
                                 arguments = mapOf(
                                     "value" to PropertyAccess(VariableReference("request"), "body"),
                                     "type" to it.reference.toJavaType(),
@@ -712,13 +712,13 @@ fun EndpointWirespec.convertFromRequest() = Function(
                     .plus(
                         path.mapIndexedNotNull { index, segment ->
                             if (segment is EndpointWirespec.Segment.Param) {
-                                segment.identifier.value to Call(
-                                    name = "serialization.deserializePath",
+                                segment.identifier.value to MethodCall(
+                                    method = "serialization.deserializePath",
                                     arguments = mapOf(
                                         "value" to MethodCall(
                                             receiver = PropertyAccess(VariableReference("request"), "path"),
                                             method = "get",
-                                            arguments = listOf(Literal(index, Type.Integer(Precision.P32))),
+                                            arguments = mapOf("index" to Literal(index, Type.Integer(Precision.P32))),
                                         ),
                                         "type" to segment.reference.toJavaType(),
                                     ),
@@ -730,15 +730,15 @@ fun EndpointWirespec.convertFromRequest() = Function(
                     )
                     .plus(
                         queries.map { field ->
-                            field.identifier.value to Call(
-                                name = "serialization.deserializeParam",
+                            field.identifier.value to MethodCall(
+                                method = "serialization.deserializeParam",
                                 arguments = mapOf(
                                     "value" to MethodCall(
                                         receiver = PropertyAccess(VariableReference("request"), "queries"),
                                         method = "getOrDefault",
-                                        arguments = listOf(
-                                            Literal(field.identifier.value, Type.String),
-                                            StaticCall("java.util.Collections.emptyList"),
+                                        arguments = mapOf(
+                                            "key" to Literal(field.identifier.value, Type.String),
+                                            "defaultValue" to StaticCall("java.util.Collections.emptyList"),
                                         ),
                                     ),
                                     "type" to field.reference.toJavaType(),
@@ -748,15 +748,15 @@ fun EndpointWirespec.convertFromRequest() = Function(
                     )
                     .plus(
                         headers.map { field ->
-                            field.identifier.value to Call(
-                                name = "serialization.deserializeParam",
+                            field.identifier.value to MethodCall(
+                                method = "serialization.deserializeParam",
                                 arguments = mapOf(
                                     "value" to MethodCall(
                                         receiver = PropertyAccess(VariableReference("request"), "headers"),
                                         method = "getOrDefault",
-                                        arguments = listOf(
-                                            Literal(field.identifier.value, Type.String),
-                                            StaticCall("java.util.Collections.emptyList"),
+                                        arguments = mapOf(
+                                            "key" to Literal(field.identifier.value, Type.String),
+                                            "defaultValue" to StaticCall("java.util.Collections.emptyList"),
                                         ),
                                     ),
                                     "type" to field.reference.toJavaType(),
@@ -767,8 +767,8 @@ fun EndpointWirespec.convertFromRequest() = Function(
                     .plus(
                         requests.first().content?.let {
                             mapOf(
-                                "body" to Call(
-                                    name = "serialization.deserializeBody",
+                                "body" to MethodCall(
+                                    method = "serialization.deserializeBody",
                                     arguments = mapOf(
                                         "value" to PropertyAccess(VariableReference("request"), "body"),
                                         "type" to it.reference.toJavaType(),
@@ -827,9 +827,9 @@ private fun ReferenceWirespec.toJavaType(): Expression {
 
     return StaticCall(
         qualifiedName = "Wirespec.getType",
-        arguments = listOf(
-            ClassLiteral(elementType),
-            containerArg,
+        arguments = mapOf(
+            "type" to ClassLiteral(elementType),
+            "container" to containerArg,
         ),
     )
 }

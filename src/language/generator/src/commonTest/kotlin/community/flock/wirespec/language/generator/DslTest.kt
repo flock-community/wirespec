@@ -229,7 +229,7 @@ class DslTest {
         val file = file("ReturnModule") {
             function("test") {
                 returns(
-                    call("myFunc") {
+                    methodCall("myFunc") {
                         arg("a", "1")
                     },
                 )
@@ -417,7 +417,7 @@ class DslTest {
                 assign("x", literal(1, integer))
                 assign(
                     "y",
-                    call("myFunc") {
+                    methodCall("myFunc") {
                         arg("a", "1")
                     },
                 )
@@ -516,7 +516,7 @@ class DslTest {
                 assign("emptyList", emptyList(string))
                 assign("emptyMap", emptyMap(string, integer))
 
-                call("myFunc") {
+                methodCall("myFunc") {
                     arg("list", emptyList(integer))
                     arg("map", emptyMap(string, string))
                 }

@@ -3,7 +3,6 @@ package community.flock.wirespec.language.generator
 import community.flock.wirespec.language.core.AnonymousClass
 import community.flock.wirespec.language.core.Assignment
 import community.flock.wirespec.language.core.BinaryOp
-import community.flock.wirespec.language.core.Call
 import community.flock.wirespec.language.core.ClassLiteral
 import community.flock.wirespec.language.core.Constructor
 import community.flock.wirespec.language.core.ConstructorStatement
@@ -187,7 +186,6 @@ object PythonGenerator : CodeGenerator {
             val allArgs = namedArguments.map { "${it.key}=${it.value.emit()}" }
             "${type.emit()}(${allArgs.joinToString(", ")})\n".indentCode(indent)
         }
-        is Call -> "$name(${arguments.map { "${it.key}=${it.value.emit()}" }.joinToString(", ")})\n".indentCode(indent)
         is Literal -> "${emit()}\n".indentCode(indent)
         is LiteralList -> "${emit()}\n".indentCode(indent)
         is LiteralMap -> "${emit()}\n".indentCode(indent)
@@ -207,10 +205,17 @@ object PythonGenerator : CodeGenerator {
         is NullLiteral -> "None\n".indentCode(indent)
         is VariableReference -> "$name\n".indentCode(indent)
         is PropertyAccess -> "${receiver.emit()}.$property\n".indentCode(indent)
-        is MethodCall -> "${receiver.emit()}.$method(${arguments.joinToString(", ") { it.emit() }})\n".indentCode(indent)
+        is MethodCall -> {
+            val recv = receiver
+            if (recv != null) {
+                "${recv.emit()}.$method(${arguments.values.joinToString(", ") { it.emit() }})\n".indentCode(indent)
+            } else {
+                "$method(${arguments.map { "${it.key}=${it.value.emit()}" }.joinToString(", ")})\n".indentCode(indent)
+            }
+        }
         is EnumReference -> "${enumType.emit()}.$entry\n".indentCode(indent)
         is BinaryOp -> "(${left.emit()} ${operator.toPython()} ${right.emit()})\n".indentCode(indent)
-        is StaticCall -> "$qualifiedName(${arguments.joinToString(", ") { it.emit() }})\n".indentCode(indent)
+        is StaticCall -> "$qualifiedName(${arguments.values.joinToString(", ") { it.emit() }})\n".indentCode(indent)
         is ClassLiteral -> "${type.emit()}\n".indentCode(indent)
         is AnonymousClass -> throw IllegalArgumentException("AnonymousClass is not supported in Python")
     }
@@ -222,7 +227,6 @@ object PythonGenerator : CodeGenerator {
     }
 
     private fun Expression.emit(): String = when (this) {
-        is Call -> "$name(${arguments.map { "${it.key}=${it.value.emit()}" }.joinToString(", ")})"
         is ConstructorStatement -> "${type.emit()}(${namedArguments.map { "${it.key}=${it.value.emit()}" }.joinToString(", ")})"
         is Literal -> emit()
         is LiteralList -> emit()
@@ -231,10 +235,17 @@ object PythonGenerator : CodeGenerator {
         is NullLiteral -> "None"
         is VariableReference -> name
         is PropertyAccess -> "${receiver.emit()}.$property"
-        is MethodCall -> "${receiver.emit()}.$method(${arguments.joinToString(", ") { it.emit() }})"
+        is MethodCall -> {
+            val recv = receiver
+            if (recv != null) {
+                "${recv.emit()}.$method(${arguments.values.joinToString(", ") { it.emit() }})"
+            } else {
+                "$method(${arguments.map { "${it.key}=${it.value.emit()}" }.joinToString(", ")})"
+            }
+        }
         is EnumReference -> "${enumType.emit()}.$entry"
         is BinaryOp -> "(${left.emit()} ${operator.toPython()} ${right.emit()})"
-        is StaticCall -> "$qualifiedName(${arguments.joinToString(", ") { it.emit() }})"
+        is StaticCall -> "$qualifiedName(${arguments.values.joinToString(", ") { it.emit() }})"
         is ClassLiteral -> type.emit()
         is AnonymousClass -> throw IllegalArgumentException("AnonymousClass is not supported in Python")
         is ErrorStatement -> throw IllegalArgumentException("ErrorStatement cannot be an expression in Python")

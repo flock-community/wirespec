@@ -129,11 +129,11 @@ class JavaCompilationTest {
                         construct(type("Request")) {
                             arg(
                                 "done",
-                                call("serialization.deserializeParam") {
+                                methodCall("serialization.deserializeParam") {
                                     arg("value", RawExpression("request.queries().get(\"done\")"))
                                     arg(
                                         "type",
-                                        call("Wirespec.getType") {
+                                        methodCall("Wirespec.getType") {
                                             arg("type", "Boolean.class")
                                             arg("container", "java.util.Optional.class")
                                         },
@@ -147,7 +147,7 @@ class JavaCompilationTest {
                 function("fromResponse", type("Response")) {
                     arg("serialization", type("Wirespec.Deserializer"))
                     arg("response", type("Wirespec.RawResponse"))
-                    switch(call("response.statusCode")) {
+                    switch(methodCall("response.statusCode")) {
                         case(literal(200)) {
                             returns(RawExpression("new Response200((java.util.List<Todo>) serialization.deserializeBody(response.body(), Wirespec.getType(Todo.class, java.util.List.class)))"))
                         }

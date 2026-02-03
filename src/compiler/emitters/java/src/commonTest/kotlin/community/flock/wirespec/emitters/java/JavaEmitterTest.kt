@@ -271,8 +271,8 @@ class JavaEmitterTest {
             |          }
             |          case 201 -> {
             |            return new Response201(
-            |              serialization.deserializeParam<Token>(response.headers().getOrDefault("token", java.util.Collections.emptyList()), Wirespec.getType(Token.class, null)),
-            |              serialization.deserializeParam<java.util.Optional<Token>>(response.headers().getOrDefault("refreshToken", java.util.Collections.emptyList()), Wirespec.getType(Token.class, java.util.Optional.class)),
+            |              serialization.<Token>deserializeParam(response.headers().getOrDefault("token", java.util.Collections.emptyList()), Wirespec.getType(Token.class, null)),
+            |              serialization.<java.util.Optional<Token>>deserializeParam(response.headers().getOrDefault("refreshToken", java.util.Collections.emptyList()), Wirespec.getType(Token.class, java.util.Optional.class)),
             |              serialization.deserializeBody(response.body(), Wirespec.getType(TodoDto.class, null))
             |            );
             |          }

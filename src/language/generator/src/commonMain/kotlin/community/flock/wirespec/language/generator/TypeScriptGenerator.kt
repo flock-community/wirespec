@@ -3,7 +3,6 @@ package community.flock.wirespec.language.generator
 import community.flock.wirespec.language.core.AnonymousClass
 import community.flock.wirespec.language.core.Assignment
 import community.flock.wirespec.language.core.BinaryOp
-import community.flock.wirespec.language.core.Call
 import community.flock.wirespec.language.core.ClassLiteral
 import community.flock.wirespec.language.core.Constructor
 import community.flock.wirespec.language.core.ConstructorStatement
@@ -203,11 +202,6 @@ object TypeScriptGenerator : CodeGenerator {
             val allArgs = if (named.isEmpty()) "" else "{ $named }"
             "new ${type.emit()}($allArgs);\n".indentCode(indent)
         }
-        is Call -> {
-            val named = arguments.map { "${it.key}: ${it.value.emit()}" }.joinToString(", ")
-            val allArgs = if (named.isEmpty()) "" else "{ $named }"
-            "$name($allArgs);\n".indentCode(indent)
-        }
         is Literal -> "${emit()};\n".indentCode(indent)
         is LiteralList -> "${emit()};\n".indentCode(indent)
         is LiteralMap -> "${emit()};\n".indentCode(indent)
@@ -233,10 +227,19 @@ object TypeScriptGenerator : CodeGenerator {
         is NullLiteral -> "null;\n".indentCode(indent)
         is VariableReference -> "$name;\n".indentCode(indent)
         is PropertyAccess -> "${receiver.emit()}.$property;\n".indentCode(indent)
-        is MethodCall -> "${receiver.emit()}.$method(${arguments.joinToString(", ") { it.emit() }});\n".indentCode(indent)
+        is MethodCall -> {
+            val recv = receiver
+            if (recv != null) {
+                "${recv.emit()}.$method(${arguments.values.joinToString(", ") { it.emit() }});\n".indentCode(indent)
+            } else {
+                val named = arguments.map { "${it.key}: ${it.value.emit()}" }.joinToString(", ")
+                val allArgs = if (named.isEmpty()) "" else "{ $named }"
+                "$method($allArgs);\n".indentCode(indent)
+            }
+        }
         is EnumReference -> "${enumType.emit()}.$entry;\n".indentCode(indent)
         is BinaryOp -> "(${left.emit()} ${operator.toTypeScript()} ${right.emit()});\n".indentCode(indent)
-        is StaticCall -> "$qualifiedName(${arguments.joinToString(", ") { it.emit() }});\n".indentCode(indent)
+        is StaticCall -> "$qualifiedName(${arguments.values.joinToString(", ") { it.emit() }});\n".indentCode(indent)
         is ClassLiteral -> "${type.emit()};\n".indentCode(indent)
         is AnonymousClass -> throw IllegalArgumentException("AnonymousClass is not directly supported in TypeScript")
     }
@@ -248,11 +251,6 @@ object TypeScriptGenerator : CodeGenerator {
     }
 
     private fun Expression.emit(): String = when (this) {
-        is Call -> {
-            val named = arguments.map { "${it.key}: ${it.value.emit()}" }.joinToString(", ")
-            val allArgs = if (named.isEmpty()) "" else "{ $named }"
-            "$name($allArgs)"
-        }
         is ConstructorStatement -> {
             val named = namedArguments.map { "${it.key}: ${it.value.emit()}" }.joinToString(", ")
             val allArgs = if (named.isEmpty()) "" else "{ $named }"
@@ -265,10 +263,19 @@ object TypeScriptGenerator : CodeGenerator {
         is NullLiteral -> "null"
         is VariableReference -> name
         is PropertyAccess -> "${receiver.emit()}.$property"
-        is MethodCall -> "${receiver.emit()}.$method(${arguments.joinToString(", ") { it.emit() }})"
+        is MethodCall -> {
+            val recv = receiver
+            if (recv != null) {
+                "${recv.emit()}.$method(${arguments.values.joinToString(", ") { it.emit() }})"
+            } else {
+                val named = arguments.map { "${it.key}: ${it.value.emit()}" }.joinToString(", ")
+                val allArgs = if (named.isEmpty()) "" else "{ $named }"
+                "$method($allArgs)"
+            }
+        }
         is EnumReference -> "${enumType.emit()}.$entry"
         is BinaryOp -> "(${left.emit()} ${operator.toTypeScript()} ${right.emit()})"
-        is StaticCall -> "$qualifiedName(${arguments.joinToString(", ") { it.emit() }})"
+        is StaticCall -> "$qualifiedName(${arguments.values.joinToString(", ") { it.emit() }})"
         is ClassLiteral -> type.emit()
         is AnonymousClass -> throw IllegalArgumentException("AnonymousClass is not directly supported in TypeScript")
         is ErrorStatement -> throw IllegalArgumentException("ErrorStatement cannot be an expression in TypeScript")

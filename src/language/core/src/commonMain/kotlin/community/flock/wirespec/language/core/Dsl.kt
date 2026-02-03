@@ -33,7 +33,7 @@ interface BaseBuilder {
             if (this.startsWith("\"") && this.endsWith("\"")) {
                 Literal(this.substring(1, this.length - 1), Type.String)
             } else if (this.endsWith("()")) {
-                Call(this.substring(0, this.length - 2))
+                MethodCall(method = this.substring(0, this.length - 2))
             } else if (this == "true" || this == "false") {
                 Literal(this.toBoolean(), Type.Boolean)
             } else if (this.startsWith("call(")) {
@@ -216,8 +216,8 @@ class StructConstructorBuilder : BaseBuilder {
         return node
     }
 
-    fun call(name: String, typeArguments: List<Type> = emptyList(), block: CallBuilder.() -> Unit = {}): Call {
-        val builder = CallBuilder(name, typeArguments)
+    fun methodCall(method: String, receiver: Expression? = null, typeArguments: List<Type> = emptyList(), block: MethodCallBuilder.() -> Unit = {}): MethodCall {
+        val builder = MethodCallBuilder(method, receiver, typeArguments)
         builder.block()
         val node = builder.build()
         body.add(node)
@@ -297,8 +297,8 @@ class FunctionBuilder(
         return node
     }
 
-    fun call(name: String, typeArguments: List<Type> = emptyList(), block: CallBuilder.() -> Unit = {}): Call {
-        val builder = CallBuilder(name, typeArguments)
+    fun methodCall(method: String, receiver: Expression? = null, typeArguments: List<Type> = emptyList(), block: MethodCallBuilder.() -> Unit = {}): MethodCall {
+        val builder = MethodCallBuilder(method, receiver, typeArguments)
         builder.block()
         val node = builder.build()
         body.add(node)
@@ -373,8 +373,8 @@ class CaseBuilder(private val value: Expression) : BaseBuilder {
         body.add(Assignment(name, expr))
     }
 
-    fun call(name: String, typeArguments: List<Type> = emptyList(), block: CallBuilder.() -> Unit = {}): Call {
-        val builder = CallBuilder(name, typeArguments)
+    fun methodCall(method: String, receiver: Expression? = null, typeArguments: List<Type> = emptyList(), block: MethodCallBuilder.() -> Unit = {}): MethodCall {
+        val builder = MethodCallBuilder(method, receiver, typeArguments)
         builder.block()
         val node = builder.build()
         body.add(node)
@@ -397,7 +397,7 @@ class CaseBuilder(private val value: Expression) : BaseBuilder {
 }
 
 @Dsl
-class CallBuilder(private val name: String, private val typeArguments: List<Type> = emptyList()) : BaseBuilder {
+class MethodCallBuilder(private val method: String, private val receiver: Expression? = null, private val typeArguments: List<Type> = emptyList()) : BaseBuilder {
     private val arguments = mutableMapOf<String, Expression>()
 
     fun arg(name: String, value: Expression) {
@@ -408,8 +408,8 @@ class CallBuilder(private val name: String, private val typeArguments: List<Type
         arguments[name] = value.toExpression()
     }
 
-    fun call(name: String, typeArguments: List<Type> = emptyList(), block: CallBuilder.() -> Unit = {}): Call {
-        val builder = CallBuilder(name, typeArguments)
+    fun methodCall(method: String, receiver: Expression? = null, typeArguments: List<Type> = emptyList(), block: MethodCallBuilder.() -> Unit = {}): MethodCall {
+        val builder = MethodCallBuilder(method, receiver, typeArguments)
         builder.block()
         return builder.build()
     }
@@ -424,7 +424,7 @@ class CallBuilder(private val name: String, private val typeArguments: List<Type
 
     fun emptyMap(keyType: Type, valueType: Type): LiteralMap = mapOf(emptyMap(), keyType, valueType)
 
-    fun build(): Call = Call(name, typeArguments, arguments)
+    fun build(): MethodCall = MethodCall(receiver, typeArguments, method, arguments)
 }
 
 @Dsl
@@ -439,8 +439,8 @@ class ConstructorBuilder(private val type: Type) : BaseBuilder {
         arguments[name] = value.toExpression()
     }
 
-    fun call(name: String, typeArguments: List<Type> = emptyList(), block: CallBuilder.() -> Unit = {}): Call {
-        val builder = CallBuilder(name, typeArguments)
+    fun methodCall(method: String, receiver: Expression? = null, typeArguments: List<Type> = emptyList(), block: MethodCallBuilder.() -> Unit = {}): MethodCall {
+        val builder = MethodCallBuilder(method, receiver, typeArguments)
         builder.block()
         return builder.build()
     }

@@ -90,7 +90,7 @@ public interface AddPet extends Wirespec.Endpoint {
       switch (response.statusCode()) {
           case 200 -> {
             return new Response200(
-              serialization.deserializeParam<java.util.Optional<Integer>>(response.headers().getOrDefault("X-Rate-Limit", java.util.Collections.emptyList()), Wirespec.getType(Integer.class, java.util.Optional.class)),
+              serialization.<java.util.Optional<Integer>>deserializeParam(response.headers().getOrDefault("X-Rate-Limit", java.util.Collections.emptyList()), Wirespec.getType(Integer.class, java.util.Optional.class)),
               serialization.deserializeBody(response.body(), Wirespec.getType(Pet.class, null))
             );
           }

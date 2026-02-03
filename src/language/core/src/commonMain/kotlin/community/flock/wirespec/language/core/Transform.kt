@@ -124,7 +124,6 @@ fun Statement.transformChildren(transformer: Transformer): Statement = when (thi
         type = transformer.transformType(type),
         namedArguments = namedArguments.mapValues { transformer.transformExpression(it.value) },
     )
-    is Call -> copy(arguments = arguments.mapValues { transformer.transformExpression(it.value) })
     is Literal -> copy(type = transformer.transformType(type))
     is LiteralList -> copy(
         values = values.map { transformer.transformExpression(it) },
@@ -146,15 +145,15 @@ fun Statement.transformChildren(transformer: Transformer): Statement = when (thi
     is VariableReference -> this
     is PropertyAccess -> copy(receiver = transformer.transformExpression(receiver))
     is MethodCall -> copy(
-        receiver = transformer.transformExpression(receiver),
-        arguments = arguments.map { transformer.transformExpression(it) },
+        receiver = receiver?.let { transformer.transformExpression(it) },
+        arguments = arguments.mapValues { transformer.transformExpression(it.value) },
     )
     is EnumReference -> copy(enumType = transformer.transformType(enumType) as Type.Custom)
     is BinaryOp -> copy(
         left = transformer.transformExpression(left),
         right = transformer.transformExpression(right),
     )
-    is StaticCall -> copy(arguments = arguments.map { transformer.transformExpression(it) })
+    is StaticCall -> copy(arguments = arguments.mapValues { transformer.transformExpression(it.value) })
     is ClassLiteral -> copy(type = transformer.transformType(type))
     is AnonymousClass -> copy(
         baseType = transformer.transformType(baseType) as Type.Custom,
@@ -347,7 +346,6 @@ fun Statement.visitChildren(visitor: Visitor) {
             visitor.visitType(type)
             namedArguments.values.forEach { visitor.visitExpression(it) }
         }
-        is Call -> arguments.values.forEach { visitor.visitExpression(it) }
         is Literal -> visitor.visitType(type)
         is LiteralList -> {
             values.forEach { visitor.visitExpression(it) }
@@ -369,15 +367,15 @@ fun Statement.visitChildren(visitor: Visitor) {
         is VariableReference -> {}
         is PropertyAccess -> visitor.visitExpression(receiver)
         is MethodCall -> {
-            visitor.visitExpression(receiver)
-            arguments.forEach { visitor.visitExpression(it) }
+            receiver?.let { visitor.visitExpression(it) }
+            arguments.values.forEach { visitor.visitExpression(it) }
         }
         is EnumReference -> visitor.visitType(enumType)
         is BinaryOp -> {
             visitor.visitExpression(left)
             visitor.visitExpression(right)
         }
-        is StaticCall -> arguments.forEach { visitor.visitExpression(it) }
+        is StaticCall -> arguments.values.forEach { visitor.visitExpression(it) }
         is ClassLiteral -> visitor.visitType(type)
         is AnonymousClass -> {
             visitor.visitType(baseType)
