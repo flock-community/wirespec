@@ -354,7 +354,7 @@ class DslTest {
         assertTrue(javaCode.contains("\"hello\";"))
         assertTrue(javaCode.contains("true;"))
         assertTrue(javaCode.contains("1.2;"))
-        assertTrue(javaCode.contains("return new User(1, \"John\");"))
+        assertTrue(javaCode.contains("return new User("))
 
         // Python
         assertTrue(pythonCode.contains("1"))

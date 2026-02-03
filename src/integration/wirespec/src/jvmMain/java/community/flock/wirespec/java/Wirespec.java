@@ -8,6 +8,7 @@ import java.util.Map;
 public interface Wirespec {
     interface Enum { String getLabel(); }
     interface Endpoint {}
+    interface Channel {}
     interface Refined { String getValue(); }
     interface Path {}
     interface Queries {}

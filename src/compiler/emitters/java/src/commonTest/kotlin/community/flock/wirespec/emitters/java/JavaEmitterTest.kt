@@ -71,15 +71,21 @@ class JavaEmitterTest {
             |
             |import community.flock.wirespec.java.Wirespec;
             |
-            |public record UUID (String value) implements Wirespec.Refined {
+            |public record UUID (
+            |  String value
+            |) implements Wirespec.Refined {
             |  @Override
-            |  public String toString() { return value; }
+            |  public String toString() {
+            |    return value;
+            |  }
             |  public static boolean validate(UUID record) {
             |    return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}${'$'}").matcher(record.value).find();
             |  }
             |  @Override
-            |  public String getValue() { return value; }
-            |}
+            |  public String getValue() {
+            |    return value;
+            |  }
+            |};
             |
             """.trimMargin(),
         )
@@ -203,7 +209,7 @@ class JavaEmitterTest {
             |
             |  interface Handler extends Wirespec.Handler {
             |
-            |    static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
+            |    static public Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
             |      return new Wirespec.RawRequest(
             |        request.method().name(),
             |        java.util.List.of("todos", serialization.serializePath(request.path().id(), Wirespec.getType(String.class, null))),
@@ -213,7 +219,7 @@ class JavaEmitterTest {
             |      );
             |    }
             |
-            |    static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
+            |    static public Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
             |      return new Request(
             |        serialization.deserializePath(request.path().get(1), Wirespec.getType(String.class, null)),
             |        serialization.deserializeParam(request.queries().getOrDefault("done", java.util.Collections.emptyList()), Wirespec.getType(Boolean.class, null)),
@@ -223,6 +229,7 @@ class JavaEmitterTest {
             |        serialization.deserializeBody(request.body(), Wirespec.getType(PotentialTodoDto.class, null))
             |      );
             |    }
+            |
             |
             |    static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
             |      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(TodoDto.class, null))); }
@@ -234,16 +241,16 @@ class JavaEmitterTest {
             |    static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
             |      switch (response.statusCode()) {
             |        case 200: return new Response200(
-            |        serialization.deserializeBody(response.body(), Wirespec.getType(TodoDto.class, null))
-            |      );
+            |          serialization.deserializeBody(response.body(), Wirespec.getType(TodoDto.class, null))
+            |        );
             |        case 201: return new Response201(
-            |        serialization.deserializeParam(response.headers().getOrDefault("token", java.util.Collections.emptyList()), Wirespec.getType(Token.class, null)),
-            |        serialization.deserializeParam(response.headers().getOrDefault("refreshToken", java.util.Collections.emptyList()), Wirespec.getType(Token.class, java.util.Optional.class)),
-            |        serialization.deserializeBody(response.body(), Wirespec.getType(TodoDto.class, null))
-            |      );
+            |          serialization.deserializeParam(response.headers().getOrDefault("token", java.util.Collections.emptyList()), Wirespec.getType(Token.class, null)),
+            |          serialization.deserializeParam(response.headers().getOrDefault("refreshToken", java.util.Collections.emptyList()), Wirespec.getType(Token.class, java.util.Optional.class)),
+            |          serialization.deserializeBody(response.body(), Wirespec.getType(TodoDto.class, null))
+            |        );
             |        case 500: return new Response500(
-            |        serialization.deserializeBody(response.body(), Wirespec.getType(Error.class, null))
-            |      );
+            |          serialization.deserializeBody(response.body(), Wirespec.getType(Error.class, null))
+            |        );
             |        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
             |      }
             |    }
@@ -317,11 +324,9 @@ class JavaEmitterTest {
         val java = """
             |package community.flock.wirespec.generated.channel;
             |
-            |
-            |
             |@FunctionalInterface
-            |public interface Queue {
-            |   void invoke(String message);
+            |public interface Queue extends Wirespec.Channel {
+            |  public void invoke(String message);
             |}
             |
         """.trimMargin()
@@ -405,7 +410,7 @@ class JavaEmitterTest {
             |
             |  interface Handler extends Wirespec.Handler {
             |
-            |    static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
+            |    static public Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
             |      return new Wirespec.RawRequest(
             |        request.method().name(),
             |        java.util.List.of("todos"),
@@ -415,9 +420,10 @@ class JavaEmitterTest {
             |      );
             |    }
             |
-            |    static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
+            |    static public Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
             |      return new Request();
             |    }
+            |
             |
             |    static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
             |      if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(TodoDto.class, java.util.List.class))); }
@@ -427,8 +433,8 @@ class JavaEmitterTest {
             |    static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
             |      switch (response.statusCode()) {
             |        case 200: return new Response200(
-            |        serialization.deserializeBody(response.body(), Wirespec.getType(TodoDto.class, java.util.List.class))
-            |      );
+            |          serialization.deserializeBody(response.body(), Wirespec.getType(TodoDto.class, java.util.List.class))
+            |        );
             |        default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
             |      }
             |    }
@@ -473,15 +479,21 @@ class JavaEmitterTest {
             |
             |import community.flock.wirespec.java.Wirespec;
             |
-            |public record TodoId (String value) implements Wirespec.Refined {
+            |public record TodoId (
+            |  String value
+            |) implements Wirespec.Refined {
             |  @Override
-            |  public String toString() { return value; }
+            |  public String toString() {
+            |    return value;
+            |  }
             |  public static boolean validate(TodoId record) {
             |    return java.util.regex.Pattern.compile("^[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}${'$'}").matcher(record.value).find();
             |  }
             |  @Override
-            |  public String getValue() { return value; }
-            |}
+            |  public String getValue() {
+            |    return value;
+            |  }
+            |};
             |
         """.trimMargin()
 

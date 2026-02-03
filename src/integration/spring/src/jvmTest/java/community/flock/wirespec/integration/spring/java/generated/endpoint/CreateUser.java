@@ -40,7 +40,7 @@ public interface CreateUser extends Wirespec.Endpoint {
 
   interface Handler extends Wirespec.Handler {
 
-    static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
+    static public Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method().name(),
         java.util.List.of("user"),
@@ -50,11 +50,10 @@ public interface CreateUser extends Wirespec.Endpoint {
       );
     }
 
-    static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
-      return new Request(
-        serialization.deserializeBody(request.body(), Wirespec.getType(User.class, null))
-      );
+    static public Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
+      return new Request(serialization.deserializeBody(request.body(), Wirespec.getType(User.class, null)));
     }
+
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
       if (response instanceof ResponseDefault r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(User.class, null))); }

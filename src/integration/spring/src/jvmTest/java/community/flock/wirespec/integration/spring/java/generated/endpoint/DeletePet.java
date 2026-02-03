@@ -44,7 +44,7 @@ public interface DeletePet extends Wirespec.Endpoint {
 
   interface Handler extends Wirespec.Handler {
 
-    static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
+    static public Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method().name(),
         java.util.List.of("pet", serialization.serializePath(request.path().petId(), Wirespec.getType(Long.class, null))),
@@ -54,12 +54,13 @@ public interface DeletePet extends Wirespec.Endpoint {
       );
     }
 
-    static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
+    static public Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
       return new Request(
         serialization.deserializePath(request.path().get(1), Wirespec.getType(Long.class, null)),
         serialization.deserializeParam(request.headers().getOrDefault("api_key", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class))
       );
     }
+
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
       if (response instanceof Response400 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), null); }

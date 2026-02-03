@@ -52,7 +52,7 @@ public interface PlaceOrder extends Wirespec.Endpoint {
 
   interface Handler extends Wirespec.Handler {
 
-    static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
+    static public Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method().name(),
         java.util.List.of("store", "order"),
@@ -62,11 +62,10 @@ public interface PlaceOrder extends Wirespec.Endpoint {
       );
     }
 
-    static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
-      return new Request(
-        serialization.deserializeBody(request.body(), Wirespec.getType(Order.class, null))
-      );
+    static public Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
+      return new Request(serialization.deserializeBody(request.body(), Wirespec.getType(Order.class, null)));
     }
+
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
       if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(Order.class, null))); }
@@ -77,8 +76,8 @@ public interface PlaceOrder extends Wirespec.Endpoint {
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
       switch (response.statusCode()) {
         case 200: return new Response200(
-        serialization.deserializeBody(response.body(), Wirespec.getType(Order.class, null))
-      );
+          serialization.deserializeBody(response.body(), Wirespec.getType(Order.class, null))
+        );
         case 405: return new Response405();
         default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
       }

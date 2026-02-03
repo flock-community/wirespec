@@ -52,7 +52,7 @@ public interface CreateUsersWithListInput extends Wirespec.Endpoint {
 
   interface Handler extends Wirespec.Handler {
 
-    static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
+    static public Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method().name(),
         java.util.List.of("user", "createWithList"),
@@ -62,11 +62,10 @@ public interface CreateUsersWithListInput extends Wirespec.Endpoint {
       );
     }
 
-    static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
-      return new Request(
-        serialization.deserializeBody(request.body(), Wirespec.getType(User.class, java.util.List.class))
-      );
+    static public Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
+      return new Request(serialization.deserializeBody(request.body(), Wirespec.getType(User.class, java.util.List.class)));
     }
+
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
       if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(User.class, null))); }
@@ -77,8 +76,8 @@ public interface CreateUsersWithListInput extends Wirespec.Endpoint {
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
       switch (response.statusCode()) {
         case 200: return new Response200(
-        serialization.deserializeBody(response.body(), Wirespec.getType(User.class, null))
-      );
+          serialization.deserializeBody(response.body(), Wirespec.getType(User.class, null))
+        );
         default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
       }
     }

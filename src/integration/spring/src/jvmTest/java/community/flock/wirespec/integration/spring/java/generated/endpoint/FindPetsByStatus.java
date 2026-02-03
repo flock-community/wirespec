@@ -55,7 +55,7 @@ public interface FindPetsByStatus extends Wirespec.Endpoint {
 
   interface Handler extends Wirespec.Handler {
 
-    static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
+    static public Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method().name(),
         java.util.List.of("pet", "findByStatus"),
@@ -65,11 +65,10 @@ public interface FindPetsByStatus extends Wirespec.Endpoint {
       );
     }
 
-    static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
-      return new Request(
-        serialization.deserializeParam(request.queries().getOrDefault("status", java.util.Collections.emptyList()), Wirespec.getType(FindPetsByStatusParameterStatus.class, java.util.Optional.class))
-      );
+    static public Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
+      return new Request(serialization.deserializeParam(request.queries().getOrDefault("status", java.util.Collections.emptyList()), Wirespec.getType(FindPetsByStatusParameterStatus.class, java.util.Optional.class)));
     }
+
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
       if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(Pet.class, java.util.List.class))); }
@@ -80,8 +79,8 @@ public interface FindPetsByStatus extends Wirespec.Endpoint {
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
       switch (response.statusCode()) {
         case 200: return new Response200(
-        serialization.deserializeBody(response.body(), Wirespec.getType(Pet.class, java.util.List.class))
-      );
+          serialization.deserializeBody(response.body(), Wirespec.getType(Pet.class, java.util.List.class))
+        );
         case 400: return new Response400();
         default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
       }

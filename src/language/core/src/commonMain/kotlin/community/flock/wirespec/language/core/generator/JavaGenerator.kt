@@ -293,10 +293,15 @@ private class JavaEmitter(val file: File) {
         is ReturnStatement -> "return ${expression.emit()};\n".indentCode(indent)
         is ConstructorStatement -> {
             val allArgs = namedArguments.map { it.value.emit() }
+            val argsStr = when {
+                allArgs.isEmpty() -> "()"
+                allArgs.size == 1 -> "(${allArgs.first()})"
+                else -> "(\n${allArgs.joinToString(",\n") { it.indentCode(1) }}\n)"
+            }
             if (isInsideConstructor) {
-                "this(${allArgs.joinToString(", ")});\n".indentCode(indent)
+                "this$argsStr;\n".indentCode(indent)
             } else {
-                "new ${type.emit()}(${allArgs.joinToString(", ")});\n".indentCode(indent)
+                "new ${type.emit()}$argsStr;\n".indentCode(indent)
             }
         }
         is Call -> {
@@ -308,7 +313,12 @@ private class JavaEmitter(val file: File) {
         is Assignment -> {
             val expr = if (value is ConstructorStatement) {
                 val allArgs = value.namedArguments.map { it.value.emit() }
-                "new ${value.type.emit()}(${allArgs.joinToString(", ")})"
+                val argsStr = when {
+                    allArgs.isEmpty() -> "()"
+                    allArgs.size == 1 -> "(${allArgs.first()})"
+                    else -> "(\n${allArgs.joinToString(",\n") { it.indentCode(1) }}\n)"
+                }
+                "new ${value.type.emit()}$argsStr"
             } else {
                 value.emit()
             }
@@ -328,19 +338,27 @@ private class JavaEmitter(val file: File) {
                 } else {
                     case.value.emit()
                 }
-                "case $valueStr -> {\n$bodyStr${"}".indentCode(indent + 1)}\n".indentCode(indent + 1)
+                "case $valueStr -> {\n$bodyStr}\n".indentCode(indent + 1)
             }
             val defaultStr = default?.let {
                 val bodyStr = it.joinToString("") { stmt -> stmt.emit(1) }
-                "default -> {\n$bodyStr${"}".indentCode(indent + 1)}\n".indentCode(indent + 1)
+                "default -> {\n$bodyStr}\n".indentCode(indent + 1)
             } ?: ""
-            "switch (${expression.emit()}) {\n$casesStr$defaultStr${"}".indentCode(0)}\n".indentCode(indent)
+            "switch (${expression.emit()}) {\n$casesStr$defaultStr}\n".indentCode(indent)
         }
     }
 
     private fun Expression.emit(): String = when (this) {
         is Call -> "$name(${arguments.map { it.value.emit() }.joinToString(", ")})"
-        is ConstructorStatement -> "new ${type.emit()}(${namedArguments.map { it.value.emit() }.joinToString(", ")})"
+        is ConstructorStatement -> {
+            val allArgs = namedArguments.map { it.value.emit() }
+            val argsStr = when {
+                allArgs.isEmpty() -> "()"
+                allArgs.size == 1 -> "(${allArgs.first()})"
+                else -> "(\n${allArgs.joinToString(",\n") { it.indentCode(1) }}\n)"
+            }
+            "new ${type.emit()}$argsStr"
+        }
         is Literal -> emit()
         is LiteralList -> emit()
         is LiteralMap -> emit()

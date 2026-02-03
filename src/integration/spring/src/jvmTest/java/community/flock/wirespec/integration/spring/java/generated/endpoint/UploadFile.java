@@ -45,7 +45,7 @@ public interface UploadFile extends Wirespec.Endpoint {
 
   interface Handler extends Wirespec.Handler {
 
-    static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
+    static public Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
       return new Wirespec.RawRequest(
         request.method().name(),
         java.util.List.of("pet", serialization.serializePath(request.path().petId(), Wirespec.getType(Long.class, null)), "uploadImage"),
@@ -55,13 +55,14 @@ public interface UploadFile extends Wirespec.Endpoint {
       );
     }
 
-    static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
+    static public Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
       return new Request(
         serialization.deserializePath(request.path().get(1), Wirespec.getType(Long.class, null)),
         serialization.deserializeParam(request.queries().getOrDefault("additionalMetadata", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
         serialization.deserializeBody(request.body(), Wirespec.getType(UploadFileRequestBody.class, null))
       );
     }
+
 
     static Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
       if (response instanceof Response200 r) { return new Wirespec.RawResponse(r.status(), java.util.Collections.emptyMap(), serialization.serializeBody(r.body, Wirespec.getType(ApiResponse.class, null))); }
@@ -71,8 +72,8 @@ public interface UploadFile extends Wirespec.Endpoint {
     static Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
       switch (response.statusCode()) {
         case 200: return new Response200(
-        serialization.deserializeBody(response.body(), Wirespec.getType(ApiResponse.class, null))
-      );
+          serialization.deserializeBody(response.body(), Wirespec.getType(ApiResponse.class, null))
+        );
         default: throw new IllegalStateException("Cannot match response with status: " + response.statusCode());
       }
     }

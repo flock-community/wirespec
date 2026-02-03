@@ -18,6 +18,10 @@ import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.compiler.core.parse.ast.Field
 import community.flock.wirespec.compiler.core.parse.ast.Reference
+import community.flock.wirespec.language.converter.convertFromResponse
+import community.flock.wirespec.language.converter.convertFromRequest
+import community.flock.wirespec.language.converter.convertToRequest
+import community.flock.wirespec.language.core.generator.generateJava
 
 interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageName, JavaTypeDefinitionEmitter {
 
@@ -138,9 +142,9 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
     """.trimMargin()
 
     private fun Endpoint.Response.emitDeserializedParams() = listOfNotNull(
-        headers.joinToString(",\n") { """${Spacer(4)}serialization.deserializeParam(response.headers().getOrDefault("${it.identifier.value}", java.util.Collections.emptyList()), ${it.reference.emitGetType()})""" }.orNull(),
-        content?.let { """${Spacer(4)}serialization.deserializeBody(response.body(), ${it.reference.emitGetType()})""" }
-    ).joinToString(",\n").let { if (it.isBlank()) "" else "\n$it\n${Spacer(3)}" }
+        headers.joinToString(",\n") { """${Spacer(5)}serialization.deserializeParam(response.headers().getOrDefault("${it.identifier.value}", java.util.Collections.emptyList()), ${it.reference.emitGetType()})""" }.orNull(),
+        content?.let { """${Spacer(5)}serialization.deserializeBody(response.body(), ${it.reference.emitGetType()})""" }
+    ).joinToString(",\n").let { if (it.isBlank()) "" else "\n$it\n${Spacer(4)}" }
 
     private fun Endpoint.Response.emitSerialized() =
         """${Spacer(3)}if (response instanceof Response${status.firstToUpper()} r) { return new Wirespec.RawResponse(r.status(), ${if (headers.isNotEmpty()) "java.util.Map.ofEntries(${headers.joinToString { it.emitSerializedHeader() }})" else EMPTY_MAP}, ${
@@ -177,20 +181,13 @@ interface JavaEndpointDefinitionEmitter: EndpointDefinitionEmitter, HasPackageNa
         .map { "import ${packageName.value}.model.${it.value};" }.joinToString("\n") { it.trimStart() }
 
     private fun Endpoint.Request.emitRequestFunctions(endpoint: Endpoint) = """
-        |${Spacer(2)}static Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
-        |${Spacer(3)}return new Wirespec.RawRequest(
-        |${Spacer(4)}request.method().name(),
-        |${Spacer(4)}java.util.List.of(${endpoint.path.joinToString { when (it) {is Endpoint.Segment.Literal -> """"${it.value}""""; is Endpoint.Segment.Param -> it.emitIdentifier() } }}),
-        |${Spacer(4)}${if (endpoint.queries.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.queries.joinToString { it.emitSerializedParams("queries") }})" else EMPTY_MAP},
-        |${Spacer(4)}${if (endpoint.headers.isNotEmpty()) "java.util.Map.ofEntries(${endpoint.headers.joinToString { it.emitSerializedParams("headers") }})" else EMPTY_MAP},
-        |${Spacer(4)}${if (content != null) "serialization.serializeBody(request.body(), ${content?.reference?.emitGetType()})" else "null"}
-        |${Spacer(3)});
-        |${Spacer(2)}}
+        |${endpoint.convertToRequest().generateJava().indentLines(Spacer(2))}
         |
-        |${Spacer(2)}static Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
-        |${Spacer(3)}return new Request(${emitDeserializedParams(endpoint)});
-        |${Spacer(2)}}
+        |${endpoint.convertFromRequest().generateJava().indentLines(Spacer(2))}
+        |
     """.trimMargin()
+
+    private fun String.indentLines(indent: String) = lines().joinToString("\n") { if (it.isEmpty()) it else indent + it }
 
     private fun <E> List<E>.emitObject(name: String, extends: String, block: (E) -> String) =
         if (isEmpty()) "${Spacer}static class $name implements $extends {}"

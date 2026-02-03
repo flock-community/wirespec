@@ -7,6 +7,7 @@ object Wirespec {
         val label: String
     }
     interface Endpoint
+    interface Channel
     interface Refined {
         val value: String
     }
