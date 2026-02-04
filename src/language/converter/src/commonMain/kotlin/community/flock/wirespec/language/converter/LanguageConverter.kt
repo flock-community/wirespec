@@ -289,7 +289,7 @@ fun EndpointWirespec.convert(): Interface {
                             parameters = listOf(Parameter("request", Type.Custom("Request"))),
                             returnType = Type.Custom(
                                 "java.util.concurrent.CompletableFuture",
-                                listOf(Type.Custom("Response", listOf(Type.Custom("?")))),
+                                listOf(Type.Custom("Response", listOf(Type.Wildcard))),
                             ),
                             body = emptyList(),
                             isAsync = false,
@@ -305,6 +305,7 @@ fun EndpointWirespec.convert(): Interface {
 
 private fun Type.toTypeName(): String = when (this) {
     is Type.Unit -> "Void"
+    is Type.Wildcard -> "Wildcard"
     is Type.Custom -> name
     is Type.Array -> "List${elementType.toTypeName()}"
     is Type.Nullable -> "Optional${type.toTypeName()}"
@@ -346,7 +347,7 @@ fun EndpointWirespec.convertToRawResponse() = Function(
     isStatic = true,
     parameters = listOf(
         Parameter("serialization", Type.Custom("Wirespec.Serializer")),
-        Parameter("response", Type.Custom("Response", listOf(Type.Custom("?")))),
+        Parameter("response", Type.Custom("Response", listOf(Type.Wildcard))),
     ),
     returnType = Type.Custom("Wirespec.RawResponse"),
     body = listOf(
@@ -421,7 +422,7 @@ fun EndpointWirespec.convertFromRawResponse() = Function(
         Parameter("serialization", Type.Custom("Wirespec.Deserializer")),
         Parameter("response", Type.Custom("Wirespec.RawResponse")),
     ),
-    returnType = Type.Custom("Response", listOf(Type.Custom("?"))),
+    returnType = Type.Custom("Response", listOf(Type.Wildcard)),
     body = listOf(
         Switch(
             expression = PropertyAccess(VariableReference("response"), "statusCode"),

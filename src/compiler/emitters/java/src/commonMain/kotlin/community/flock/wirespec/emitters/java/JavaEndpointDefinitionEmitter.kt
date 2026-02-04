@@ -46,7 +46,7 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
         name = emit(endpoint.identifier).firstToLower(),
         returnType = Type.Custom(
             "java.util.concurrent.CompletableFuture",
-            listOf(Type.Custom("Response", listOf(Type.Custom("?")))),
+            listOf(Type.Custom("Response", listOf(Type.Wildcard))),
         ),
     ) {
         arg("request", Type.Custom("Request"))
@@ -90,8 +90,8 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
         return struct(
             name = "Handlers",
             interfaces = listOf(
-                Type.Custom("Wirespec.Server", listOf(Type.Custom("Request"), Type.Custom("Response", listOf(Type.Custom("?"))))),
-                Type.Custom("Wirespec.Client", listOf(Type.Custom("Request"), Type.Custom("Response", listOf(Type.Custom("?"))))),
+                Type.Custom("Wirespec.Server", listOf(Type.Custom("Request"), Type.Custom("Response", listOf(Type.Wildcard)))),
+                Type.Custom("Wirespec.Client", listOf(Type.Custom("Request"), Type.Custom("Response", listOf(Type.Wildcard)))),
             ),
         ) {
             function("getPathTemplate", Type.String, isOverride = true) {
@@ -100,7 +100,7 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
             function("getMethod", Type.String, isOverride = true) {
                 returns(literal(endpoint.method.name))
             }
-            function("getServer", Type.Custom("Wirespec.ServerEdge", listOf(Type.Custom("Request"), Type.Custom("Response", listOf(Type.Custom("?"))))), isOverride = true) {
+            function("getServer", Type.Custom("Wirespec.ServerEdge", listOf(Type.Custom("Request"), Type.Custom("Response", listOf(Type.Wildcard)))), isOverride = true) {
                 arg("serialization", Type.Custom("Wirespec.Serialization"))
                 returns(
                     AnonymousClass(
@@ -120,7 +120,7 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
                                 )
                             },
                             dslFunction("to", Type.Custom("Wirespec.RawResponse"), isOverride = true) {
-                                arg("response", Type.Custom("Response", listOf(Type.Custom("?"))))
+                                arg("response", Type.Custom("Response", listOf(Type.Wildcard)))
                                 returns(
                                     MethodCall(
                                         method = "toRawResponse",
@@ -135,7 +135,7 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
                     ),
                 )
             }
-            function("getClient", Type.Custom("Wirespec.ClientEdge", listOf(Type.Custom("Request"), Type.Custom("Response", listOf(Type.Custom("?"))))), isOverride = true) {
+            function("getClient", Type.Custom("Wirespec.ClientEdge", listOf(Type.Custom("Request"), Type.Custom("Response", listOf(Type.Wildcard)))), isOverride = true) {
                 arg("serialization", Type.Custom("Wirespec.Serialization"))
                 returns(
                     AnonymousClass(
@@ -154,7 +154,7 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
                                     ),
                                 )
                             },
-                            dslFunction("from", Type.Custom("Response", listOf(Type.Custom("?"))), isOverride = true) {
+                            dslFunction("from", Type.Custom("Response", listOf(Type.Wildcard)), isOverride = true) {
                                 arg("response", Type.Custom("Wirespec.RawResponse"))
                                 returns(
                                     MethodCall(

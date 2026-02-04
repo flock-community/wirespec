@@ -168,6 +168,7 @@ object PythonGenerator : CodeGenerator {
         Type.Boolean -> "bool"
         Type.Bytes -> "bytes"
         Type.Unit -> "None"
+        Type.Wildcard -> "Any"
         is Type.Array -> "list"
         is Type.Dict -> "dict[${keyType.emit()}, ${valueType.emit()}]"
         is Type.Custom -> {

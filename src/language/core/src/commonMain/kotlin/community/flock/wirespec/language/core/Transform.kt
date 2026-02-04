@@ -48,7 +48,7 @@ fun Type.transformChildren(transformer: Transformer): Type = when (this) {
     )
     is Type.Custom -> copy(generics = generics.map { transformer.transformType(it) })
     is Type.Nullable -> copy(type = transformer.transformType(type))
-    is Type.Integer, is Type.Number, Type.String, Type.Boolean, Type.Bytes, Type.Unit -> this
+    is Type.Integer, is Type.Number, Type.String, Type.Boolean, Type.Bytes, Type.Unit, Type.Wildcard -> this
 }
 
 fun Type.transform(transformer: Transformer): Type = transformer.transformType(this)
@@ -305,7 +305,7 @@ fun Type.visitChildren(visitor: Visitor) {
         }
         is Type.Custom -> generics.forEach { visitor.visitType(it) }
         is Type.Nullable -> visitor.visitType(type)
-        is Type.Integer, is Type.Number, Type.String, Type.Boolean, Type.Bytes, Type.Unit -> {}
+        is Type.Integer, is Type.Number, Type.String, Type.Boolean, Type.Bytes, Type.Unit, Type.Wildcard -> {}
     }
 }
 

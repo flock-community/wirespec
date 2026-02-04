@@ -180,6 +180,7 @@ object TypeScriptGenerator : CodeGenerator {
         Type.Boolean -> "boolean"
         Type.Bytes -> "Uint8Array"
         Type.Unit -> "void"
+        Type.Wildcard -> "unknown"
         is Type.Array -> {
             val element = elementType.emit()
             if (elementType is Type.Nullable) "($element)[]" else "$element[]"
