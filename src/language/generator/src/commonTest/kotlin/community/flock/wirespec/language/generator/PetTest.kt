@@ -261,9 +261,9 @@ class PetTest {
         assertTrue(output.contains("import community.flock.wirespec.generated.examples.spring.model.Todo;"))
         assertTrue(output.contains("import community.flock.wirespec.generated.examples.spring.model.Error;"))
 
-        assertTrue(output.contains("public sealed interface Response extends Wirespec.Response {}"))
-        assertTrue(output.contains("public sealed interface Response2XX extends Response {}"))
-        assertTrue(output.contains("public sealed interface Response4XX extends Response {}"))
+        assertTrue(output.contains("public sealed interface Response extends Wirespec.Response permits Response2XX, Response4XX {}"))
+        assertTrue(output.contains("public sealed interface Response2XX extends Response permits Response200 {}"))
+        assertTrue(output.contains("public sealed interface Response4XX extends Response permits Response404 {}"))
 
         assertTrue(output.contains("public static record Response200 ("))
         assertTrue(output.contains("java.util.List<Todo> body"))

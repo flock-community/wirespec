@@ -8,20 +8,19 @@ import community.flock.wirespec.compiler.core.parse.ast.Definition
 import community.flock.wirespec.compiler.core.parse.ast.Endpoint
 import community.flock.wirespec.language.converter.convert
 import community.flock.wirespec.language.core.AnonymousClass
-import community.flock.wirespec.language.core.Function
 import community.flock.wirespec.language.core.Interface
-import community.flock.wirespec.language.core.Literal
 import community.flock.wirespec.language.core.MethodCall
-import community.flock.wirespec.language.core.Parameter
 import community.flock.wirespec.language.core.RawElement
-import community.flock.wirespec.language.core.ReturnStatement
 import community.flock.wirespec.language.core.Struct
 import community.flock.wirespec.language.core.Type
 import community.flock.wirespec.language.core.VariableReference
+import community.flock.wirespec.language.core.struct
 import community.flock.wirespec.language.core.transform
 import community.flock.wirespec.language.core.transformChildren
 import community.flock.wirespec.language.core.transformer
 import community.flock.wirespec.language.generator.generateJava
+import community.flock.wirespec.language.core.Function as LanguageFunction
+import community.flock.wirespec.language.core.function as dslFunction
 
 interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageName, JavaTypeDefinitionEmitter {
 
@@ -43,18 +42,15 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
         return "public java.util.concurrent.CompletableFuture<Response<?>> $name(Request request);\n"
     }
 
-    fun buildHandleFunction(endpoint: Endpoint): Function = Function(
+    fun buildHandleFunction(endpoint: Endpoint) = dslFunction(
         name = emit(endpoint.identifier).firstToLower(),
-        parameters = listOf(Parameter("request", Type.Custom("Request"))),
         returnType = Type.Custom(
             "java.util.concurrent.CompletableFuture",
-            listOf(Type.Custom("Response", listOf(Type.Custom("?"))))
+            listOf(Type.Custom("Response", listOf(Type.Custom("?")))),
         ),
-        body = emptyList(),
-        isAsync = false,
-        isStatic = false,
-        isOverride = false,
-    )
+    ) {
+        arg("request", Type.Custom("Request"))
+    }
 
     private fun Interface.injectHandleFunction(endpoint: Endpoint): Interface {
         val rawHandleFunction = RawElement(emitHandleFunction(endpoint))
@@ -64,7 +60,7 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
         val handlerTransformer = transformer(
             transformElement = { element, t ->
                 when {
-                    element is Function && element.name == targetFunctionName -> rawHandleFunction
+                    element is LanguageFunction && element.name == targetFunctionName -> rawHandleFunction
                     else -> element.transformChildren(t)
                 }
             },
@@ -91,130 +87,90 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
             }
         }
 
-        return Struct(
+        return struct(
             name = "Handlers",
-            fields = emptyList(),
             interfaces = listOf(
                 Type.Custom("Wirespec.Server", listOf(Type.Custom("Request"), Type.Custom("Response", listOf(Type.Custom("?"))))),
                 Type.Custom("Wirespec.Client", listOf(Type.Custom("Request"), Type.Custom("Response", listOf(Type.Custom("?"))))),
             ),
-            elements = listOf(
-                Function(
-                    name = "getPathTemplate",
-                    parameters = emptyList(),
-                    returnType = Type.String,
-                    isOverride = true,
-                    body = listOf(ReturnStatement(Literal(pathTemplate, Type.String))),
-                ),
-                Function(
-                    name = "getMethod",
-                    parameters = emptyList(),
-                    returnType = Type.String,
-                    isOverride = true,
-                    body = listOf(ReturnStatement(Literal(endpoint.method.name, Type.String))),
-                ),
-                Function(
-                    name = "getServer",
-                    parameters = listOf(Parameter("serialization", Type.Custom("Wirespec.Serialization"))),
-                    returnType = Type.Custom("Wirespec.ServerEdge", listOf(Type.Custom("Request"), Type.Custom("Response", listOf(Type.Custom("?"))))),
-                    isOverride = true,
-                    body = listOf(
-                        ReturnStatement(
-                            AnonymousClass(
-                                baseType = Type.Custom("Wirespec.ServerEdge"),
-                                typeArguments = emptyList(),
-                                methods = listOf(
-                                    Function(
-                                        name = "from",
-                                        parameters = listOf(Parameter("request", Type.Custom("Wirespec.RawRequest"))),
-                                        returnType = Type.Custom("Request"),
-                                        isOverride = true,
-                                        body = listOf(
-                                            ReturnStatement(
-                                                MethodCall(
-                                                    method = "fromRawRequest",
-                                                    arguments = mapOf(
-                                                        "serialization" to VariableReference("serialization"),
-                                                        "request" to VariableReference("request"),
-                                                    ),
-                                                ),
-                                            ),
+        ) {
+            function("getPathTemplate", Type.String, isOverride = true) {
+                returns(literal(pathTemplate))
+            }
+            function("getMethod", Type.String, isOverride = true) {
+                returns(literal(endpoint.method.name))
+            }
+            function("getServer", Type.Custom("Wirespec.ServerEdge", listOf(Type.Custom("Request"), Type.Custom("Response", listOf(Type.Custom("?"))))), isOverride = true) {
+                arg("serialization", Type.Custom("Wirespec.Serialization"))
+                returns(
+                    AnonymousClass(
+                        baseType = Type.Custom("Wirespec.ServerEdge"),
+                        typeArguments = emptyList(),
+                        methods = listOf(
+                            dslFunction("from", Type.Custom("Request"), isOverride = true) {
+                                arg("request", Type.Custom("Wirespec.RawRequest"))
+                                returns(
+                                    MethodCall(
+                                        method = "fromRawRequest",
+                                        arguments = mapOf(
+                                            "serialization" to VariableReference("serialization"),
+                                            "request" to VariableReference("request"),
                                         ),
                                     ),
-                                    Function(
-                                        name = "to",
-                                        parameters = listOf(Parameter("response", Type.Custom("Response", listOf(Type.Custom("?"))))),
-                                        returnType = Type.Custom("Wirespec.RawResponse"),
-                                        isOverride = true,
-                                        body = listOf(
-                                            ReturnStatement(
-                                                MethodCall(
-                                                    method = "toRawResponse",
-                                                    arguments = mapOf(
-                                                        "serialization" to VariableReference("serialization"),
-                                                        "response" to VariableReference("response"),
-                                                    ),
-                                                ),
-                                            ),
+                                )
+                            },
+                            dslFunction("to", Type.Custom("Wirespec.RawResponse"), isOverride = true) {
+                                arg("response", Type.Custom("Response", listOf(Type.Custom("?"))))
+                                returns(
+                                    MethodCall(
+                                        method = "toRawResponse",
+                                        arguments = mapOf(
+                                            "serialization" to VariableReference("serialization"),
+                                            "response" to VariableReference("response"),
                                         ),
                                     ),
-                                ),
-                            ),
+                                )
+                            },
                         ),
                     ),
-                ),
-                Function(
-                    name = "getClient",
-                    parameters = listOf(Parameter("serialization", Type.Custom("Wirespec.Serialization"))),
-                    returnType = Type.Custom("Wirespec.ClientEdge", listOf(Type.Custom("Request"), Type.Custom("Response", listOf(Type.Custom("?"))))),
-                    isOverride = true,
-                    body = listOf(
-                        ReturnStatement(
-                            AnonymousClass(
-                                baseType = Type.Custom("Wirespec.ClientEdge"),
-                                typeArguments = emptyList(),
-                                methods = listOf(
-                                    Function(
-                                        name = "to",
-                                        parameters = listOf(Parameter("request", Type.Custom("Request"))),
-                                        returnType = Type.Custom("Wirespec.RawRequest"),
-                                        isOverride = true,
-                                        body = listOf(
-                                            ReturnStatement(
-                                                MethodCall(
-                                                    method = "toRawRequest",
-                                                    arguments = mapOf(
-                                                        "serialization" to VariableReference("serialization"),
-                                                        "request" to VariableReference("request"),
-                                                    ),
-                                                ),
-                                            ),
+                )
+            }
+            function("getClient", Type.Custom("Wirespec.ClientEdge", listOf(Type.Custom("Request"), Type.Custom("Response", listOf(Type.Custom("?"))))), isOverride = true) {
+                arg("serialization", Type.Custom("Wirespec.Serialization"))
+                returns(
+                    AnonymousClass(
+                        baseType = Type.Custom("Wirespec.ClientEdge"),
+                        typeArguments = emptyList(),
+                        methods = listOf(
+                            dslFunction("to", Type.Custom("Wirespec.RawRequest"), isOverride = true) {
+                                arg("request", Type.Custom("Request"))
+                                returns(
+                                    MethodCall(
+                                        method = "toRawRequest",
+                                        arguments = mapOf(
+                                            "serialization" to VariableReference("serialization"),
+                                            "request" to VariableReference("request"),
                                         ),
                                     ),
-                                    Function(
-                                        name = "from",
-                                        parameters = listOf(Parameter("response", Type.Custom("Wirespec.RawResponse"))),
-                                        returnType = Type.Custom("Response", listOf(Type.Custom("?"))),
-                                        isOverride = true,
-                                        body = listOf(
-                                            ReturnStatement(
-                                                MethodCall(
-                                                    method = "fromRawResponse",
-                                                    arguments = mapOf(
-                                                        "serialization" to VariableReference("serialization"),
-                                                        "response" to VariableReference("response"),
-                                                    ),
-                                                ),
-                                            ),
+                                )
+                            },
+                            dslFunction("from", Type.Custom("Response", listOf(Type.Custom("?"))), isOverride = true) {
+                                arg("response", Type.Custom("Wirespec.RawResponse"))
+                                returns(
+                                    MethodCall(
+                                        method = "fromRawResponse",
+                                        arguments = mapOf(
+                                            "serialization" to VariableReference("serialization"),
+                                            "response" to VariableReference("response"),
                                         ),
                                     ),
-                                ),
-                            ),
+                                )
+                            },
                         ),
                     ),
-                ),
-            ),
-        )
+                )
+            }
+        }
     }
 
     private fun Definition.emitImports() = importReferences()

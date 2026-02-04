@@ -164,7 +164,8 @@ private class JavaEmitter(val file: File) {
             allUnions.filter { it.members.contains(this.name) }.map { it.name }
 
         val extStr = if (ext.isEmpty()) "" else " extends ${ext.distinct().joinToString(", ")}"
-        return "public sealed interface $name$extStr {}\n\n".indentCode(indent)
+        val permitsStr = if (members.isEmpty()) "" else " permits ${members.joinToString(", ")}"
+        return "public sealed interface $name$extStr$permitsStr {}\n\n".indentCode(indent)
     }
 
     private fun Enum.emit(indent: Int): String {

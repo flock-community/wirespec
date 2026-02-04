@@ -786,7 +786,7 @@ class DslTest {
         println(tsCode)
 
         // Java
-        assertTrue(javaCode.contains("public sealed interface Response {}"))
+        assertTrue(javaCode.contains("public sealed interface Response permits Success, Error {}"))
         assertTrue(javaCode.contains("public record Success"))
         assertTrue(javaCode.contains(") implements Response {"))
         assertTrue(javaCode.contains("public record Error"))
@@ -821,8 +821,8 @@ class DslTest {
         println("--- Java (Multiple Unions) ---")
         println(javaCode)
 
-        assertTrue(javaCode.contains("public sealed interface Response {}"))
-        assertTrue(javaCode.contains("public sealed interface Response2XX extends Response {}"))
+        assertTrue(javaCode.contains("public sealed interface Response permits Response2XX {}"))
+        assertTrue(javaCode.contains("public sealed interface Response2XX extends Response permits Response200 {}"))
         assertTrue(javaCode.contains("public record Response200"))
         assertTrue(javaCode.contains("String body"))
         assertTrue(javaCode.contains(") implements Response2XX {"))

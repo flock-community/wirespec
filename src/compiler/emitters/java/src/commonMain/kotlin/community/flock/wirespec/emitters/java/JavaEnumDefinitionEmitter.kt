@@ -4,7 +4,14 @@ import community.flock.wirespec.compiler.core.emit.EnumDefinitionEmitter
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.parse.ast.Module
 import community.flock.wirespec.language.converter.convert
+import community.flock.wirespec.language.core.Assignment
+import community.flock.wirespec.language.core.Constructor
+import community.flock.wirespec.language.core.Field
+import community.flock.wirespec.language.core.RawExpression
+import community.flock.wirespec.language.core.Type
+import community.flock.wirespec.language.core.function
 import community.flock.wirespec.language.generator.generateJava
+import community.flock.wirespec.language.core.Enum as LanguageEnum
 
 interface JavaEnumDefinitionEmitter : EnumDefinitionEmitter, JavaIdentifierEmitter {
 
@@ -13,51 +20,25 @@ interface JavaEnumDefinitionEmitter : EnumDefinitionEmitter, JavaIdentifierEmitt
         .run {
             copy(
                 entries = entries.map {
-                    community.flock.wirespec.language.core.Enum.Entry(it.name.sanitizeEnum(), listOf("\"${it.name}\""))
+                    LanguageEnum.Entry(it.name.sanitizeEnum(), listOf("\"${it.name}\""))
                 },
                 fields = listOf(
-                    community.flock.wirespec.language.core.Field(
-                        "label",
-                        community.flock.wirespec.language.core.Type.String
-                    )
+                    Field("label", Type.String),
                 ),
                 constructors = listOf(
-                    community.flock.wirespec.language.core.Constructor(
-                        listOf(
-                            community.flock.wirespec.language.core.Parameter(
-                                "label",
-                                community.flock.wirespec.language.core.Type.String
-                            )
-                        ),
-                        listOf(
-                            community.flock.wirespec.language.core.Assignment(
-                                "this.label",
-                                community.flock.wirespec.language.core.RawExpression("label"),
-                                true
-                            )
-                        )
-                    )
+                    Constructor(
+                        parameters = listOf(community.flock.wirespec.language.core.Parameter("label", Type.String)),
+                        body = listOf(Assignment("this.label", RawExpression("label"), true)),
+                    ),
                 ),
                 elements = listOf(
-                    community.flock.wirespec.language.core.Function(
-                        "toString", emptyList(), emptyList(), community.flock.wirespec.language.core.Type.String, listOf(
-                            community.flock.wirespec.language.core.ReturnStatement(
-                                community.flock.wirespec.language.core.RawExpression(
-                                    "label"
-                                )
-                            )
-                        )
-                    ),
-                    community.flock.wirespec.language.core.Function(
-                        "getLabel", emptyList(), emptyList(), community.flock.wirespec.language.core.Type.String, listOf(
-                            community.flock.wirespec.language.core.ReturnStatement(
-                                community.flock.wirespec.language.core.RawExpression(
-                                    "label"
-                                )
-                            )
-                        )
-                    )
-                )
+                    function("toString", Type.String, isOverride = true) {
+                        returns(RawExpression("label"))
+                    },
+                    function("getLabel", Type.String) {
+                        returns(RawExpression("label"))
+                    },
+                ),
             )
         }
         .generateJava()
