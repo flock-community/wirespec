@@ -132,7 +132,7 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
                                         body = listOf(
                                             ReturnStatement(
                                                 MethodCall(
-                                                    method = "fromRequest",
+                                                    method = "fromRawRequest",
                                                     arguments = mapOf(
                                                         "serialization" to VariableReference("serialization"),
                                                         "request" to VariableReference("request"),
@@ -149,7 +149,7 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
                                         body = listOf(
                                             ReturnStatement(
                                                 MethodCall(
-                                                    method = "toResponse",
+                                                    method = "toRawResponse",
                                                     arguments = mapOf(
                                                         "serialization" to VariableReference("serialization"),
                                                         "response" to VariableReference("response"),
@@ -182,7 +182,7 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
                                         body = listOf(
                                             ReturnStatement(
                                                 MethodCall(
-                                                    method = "toRequest",
+                                                    method = "toRawRequest",
                                                     arguments = mapOf(
                                                         "serialization" to VariableReference("serialization"),
                                                         "request" to VariableReference("request"),
@@ -199,7 +199,7 @@ interface JavaEndpointDefinitionEmitter : EndpointDefinitionEmitter, HasPackageN
                                         body = listOf(
                                             ReturnStatement(
                                                 MethodCall(
-                                                    method = "fromResponse",
+                                                    method = "fromRawResponse",
                                                     arguments = mapOf(
                                                         "serialization" to VariableReference("serialization"),
                                                         "response" to VariableReference("response"),

@@ -272,16 +272,18 @@ fun EndpointWirespec.convert(): Interface {
                 },
             )
 
+            // Conversion functions at Endpoint interface level
+            add(convertToRawRequest())
+            add(convertFromRawRequest())
+            add(convertToRawResponse())
+            add(convertFromRawResponse())
+
             // Handler interface
             add(
                 Interface(
                     name = "Handler",
                     extends = Type.Custom("Wirespec.Handler"),
                     elements = listOf(
-                        convertToRequest(),
-                        convertFromRequest(),
-                        convertToResponse(),
-                        convertFromResponse(),
                         Function(
                             name = identifier.value.replaceFirstChar { it.lowercase() },
                             parameters = listOf(Parameter("request", Type.Custom("Request"))),
@@ -339,8 +341,8 @@ fun ReferenceWirespec.convert(): Type = when (this) {
 }
     .let { if (isNullable) Type.Nullable(it) else it }
 
-fun EndpointWirespec.convertToResponse() = Function(
-    name = "toResponse",
+fun EndpointWirespec.convertToRawResponse() = Function(
+    name = "toRawResponse",
     isStatic = true,
     parameters = listOf(
         Parameter("serialization", Type.Custom("Wirespec.Serializer")),
@@ -412,8 +414,8 @@ fun EndpointWirespec.convertToResponse() = Function(
     ),
 )
 
-fun EndpointWirespec.convertFromResponse() = Function(
-    name = "fromResponse",
+fun EndpointWirespec.convertFromRawResponse() = Function(
+    name = "fromRawResponse",
     isStatic = true,
     parameters = listOf(
         Parameter("serialization", Type.Custom("Wirespec.Deserializer")),
@@ -479,8 +481,8 @@ fun EndpointWirespec.convertFromResponse() = Function(
     ),
 )
 
-fun EndpointWirespec.convertToRequest() = Function(
-    name = "toRequest",
+fun EndpointWirespec.convertToRawRequest() = Function(
+    name = "toRawRequest",
     isStatic = true,
     parameters = listOf(
         Parameter("serialization", Type.Custom("Wirespec.Serializer")),
@@ -560,8 +562,8 @@ fun EndpointWirespec.convertToRequest() = Function(
     ),
 )
 
-fun EndpointWirespec.convertFromRequest() = Function(
-    name = "fromRequest",
+fun EndpointWirespec.convertFromRawRequest() = Function(
+    name = "fromRawRequest",
     isStatic = true,
     parameters = listOf(
         Parameter("serialization", Type.Custom("Wirespec.Deserializer")),

@@ -221,69 +221,69 @@ class JavaEmitterTest {
             |    public static record Headers () implements Wirespec.Response.Headers {
             |    }
             |  }
+            |  static public Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Request request) {
+            |    return new Wirespec.RawRequest(
+            |      request.method().name(),
+            |      java.util.List.of("todos", serialization.serializePath(request.path().id(), Wirespec.getType(String.class, null))),
+            |      java.util.Map.ofEntries(java.util.Map.entry("done", serialization.serializeParam(request.queries().done(), Wirespec.getType(Boolean.class, null))), java.util.Map.entry("name", serialization.serializeParam(request.queries().name(), Wirespec.getType(String.class, java.util.Optional.class)))),
+            |      java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serializeParam(request.headers().token(), Wirespec.getType(Token.class, null))), java.util.Map.entry("Refresh-Token", serialization.serializeParam(request.headers().RefreshToken(), Wirespec.getType(Token.class, java.util.Optional.class)))),
+            |      serialization.serializeBody(request.body(), Wirespec.getType(PotentialTodoDto.class, null))
+            |    );
+            |  }
+            |  static public Request fromRawRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
+            |    return new Request(
+            |      serialization.deserializePath(request.path().get(1), Wirespec.getType(String.class, null)),
+            |      serialization.deserializeParam(request.queries().getOrDefault("done", java.util.Collections.emptyList()), Wirespec.getType(Boolean.class, null)),
+            |      serialization.deserializeParam(request.queries().getOrDefault("name", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
+            |      serialization.deserializeParam(request.headers().getOrDefault("token", java.util.Collections.emptyList()), Wirespec.getType(Token.class, null)),
+            |      serialization.deserializeParam(request.headers().getOrDefault("Refresh-Token", java.util.Collections.emptyList()), Wirespec.getType(Token.class, java.util.Optional.class)),
+            |      serialization.deserializeBody(request.body(), Wirespec.getType(PotentialTodoDto.class, null))
+            |    );
+            |  }
+            |  static public Wirespec.RawResponse toRawResponse(Wirespec.Serializer serialization, Response<?> response) {
+            |    if (response instanceof Response200 r) {
+            |      return new Wirespec.RawResponse(
+            |        r.status(),
+            |        java.util.Collections.emptyMap(),
+            |        serialization.serializeBody(r.body(), Wirespec.getType(TodoDto.class, null))
+            |      );
+            |    } else if (response instanceof Response201 r) {
+            |      return new Wirespec.RawResponse(
+            |        r.status(),
+            |        java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serializeParam(r.headers().token(), Wirespec.getType(Token.class, null))), java.util.Map.entry("refreshToken", serialization.serializeParam(r.headers().refreshToken(), Wirespec.getType(Token.class, java.util.Optional.class)))),
+            |        serialization.serializeBody(r.body(), Wirespec.getType(TodoDto.class, null))
+            |      );
+            |    } else if (response instanceof Response500 r) {
+            |      return new Wirespec.RawResponse(
+            |        r.status(),
+            |        java.util.Collections.emptyMap(),
+            |        serialization.serializeBody(r.body(), Wirespec.getType(Error.class, null))
+            |      );
+            |    } else {
+            |      throw new IllegalStateException(("Cannot match response with status: " + response.status()));
+            |    }
+            |  }
+            |  static public Response<?> fromRawResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
+            |    switch (response.statusCode()) {
+            |        case 200 -> {
+            |          return new Response200(serialization.deserializeBody(response.body(), Wirespec.getType(TodoDto.class, null)));
+            |        }
+            |        case 201 -> {
+            |          return new Response201(
+            |            serialization.<Token>deserializeParam(response.headers().getOrDefault("token", java.util.Collections.emptyList()), Wirespec.getType(Token.class, null)),
+            |            serialization.<java.util.Optional<Token>>deserializeParam(response.headers().getOrDefault("refreshToken", java.util.Collections.emptyList()), Wirespec.getType(Token.class, java.util.Optional.class)),
+            |            serialization.deserializeBody(response.body(), Wirespec.getType(TodoDto.class, null))
+            |          );
+            |        }
+            |        case 500 -> {
+            |          return new Response500(serialization.deserializeBody(response.body(), Wirespec.getType(Error.class, null)));
+            |        }
+            |        default -> {
+            |          throw new IllegalStateException(("Cannot match response with status: " + response.statusCode()));
+            |        }
+            |    }
+            |  }
             |  public interface Handler extends Wirespec.Handler {
-            |    static public Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
-            |      return new Wirespec.RawRequest(
-            |        request.method().name(),
-            |        java.util.List.of("todos", serialization.serializePath(request.path().id(), Wirespec.getType(String.class, null))),
-            |        java.util.Map.ofEntries(java.util.Map.entry("done", serialization.serializeParam(request.queries().done(), Wirespec.getType(Boolean.class, null))), java.util.Map.entry("name", serialization.serializeParam(request.queries().name(), Wirespec.getType(String.class, java.util.Optional.class)))),
-            |        java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serializeParam(request.headers().token(), Wirespec.getType(Token.class, null))), java.util.Map.entry("Refresh-Token", serialization.serializeParam(request.headers().RefreshToken(), Wirespec.getType(Token.class, java.util.Optional.class)))),
-            |        serialization.serializeBody(request.body(), Wirespec.getType(PotentialTodoDto.class, null))
-            |      );
-            |    }
-            |    static public Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
-            |      return new Request(
-            |        serialization.deserializePath(request.path().get(1), Wirespec.getType(String.class, null)),
-            |        serialization.deserializeParam(request.queries().getOrDefault("done", java.util.Collections.emptyList()), Wirespec.getType(Boolean.class, null)),
-            |        serialization.deserializeParam(request.queries().getOrDefault("name", java.util.Collections.emptyList()), Wirespec.getType(String.class, java.util.Optional.class)),
-            |        serialization.deserializeParam(request.headers().getOrDefault("token", java.util.Collections.emptyList()), Wirespec.getType(Token.class, null)),
-            |        serialization.deserializeParam(request.headers().getOrDefault("Refresh-Token", java.util.Collections.emptyList()), Wirespec.getType(Token.class, java.util.Optional.class)),
-            |        serialization.deserializeBody(request.body(), Wirespec.getType(PotentialTodoDto.class, null))
-            |      );
-            |    }
-            |    static public Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-            |      if (response instanceof Response200 r) {
-            |        return new Wirespec.RawResponse(
-            |          r.status(),
-            |          java.util.Collections.emptyMap(),
-            |          serialization.serializeBody(r.body(), Wirespec.getType(TodoDto.class, null))
-            |        );
-            |      } else if (response instanceof Response201 r) {
-            |        return new Wirespec.RawResponse(
-            |          r.status(),
-            |          java.util.Map.ofEntries(java.util.Map.entry("token", serialization.serializeParam(r.headers().token(), Wirespec.getType(Token.class, null))), java.util.Map.entry("refreshToken", serialization.serializeParam(r.headers().refreshToken(), Wirespec.getType(Token.class, java.util.Optional.class)))),
-            |          serialization.serializeBody(r.body(), Wirespec.getType(TodoDto.class, null))
-            |        );
-            |      } else if (response instanceof Response500 r) {
-            |        return new Wirespec.RawResponse(
-            |          r.status(),
-            |          java.util.Collections.emptyMap(),
-            |          serialization.serializeBody(r.body(), Wirespec.getType(Error.class, null))
-            |        );
-            |      } else {
-            |        throw new IllegalStateException(("Cannot match response with status: " + response.status()));
-            |      }
-            |    }
-            |    static public Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
-            |      switch (response.statusCode()) {
-            |          case 200 -> {
-            |            return new Response200(serialization.deserializeBody(response.body(), Wirespec.getType(TodoDto.class, null)));
-            |          }
-            |          case 201 -> {
-            |            return new Response201(
-            |              serialization.<Token>deserializeParam(response.headers().getOrDefault("token", java.util.Collections.emptyList()), Wirespec.getType(Token.class, null)),
-            |              serialization.<java.util.Optional<Token>>deserializeParam(response.headers().getOrDefault("refreshToken", java.util.Collections.emptyList()), Wirespec.getType(Token.class, java.util.Optional.class)),
-            |              serialization.deserializeBody(response.body(), Wirespec.getType(TodoDto.class, null))
-            |            );
-            |          }
-            |          case 500 -> {
-            |            return new Response500(serialization.deserializeBody(response.body(), Wirespec.getType(Error.class, null)));
-            |          }
-            |          default -> {
-            |            throw new IllegalStateException(("Cannot match response with status: " + response.statusCode()));
-            |          }
-            |      }
-            |    }
             |    public java.util.concurrent.CompletableFuture<Response<?>> putTodo(Request request);
             |    public static record Handlers () implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
             |      @Override
@@ -298,20 +298,20 @@ class JavaEmitterTest {
             |      public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization serialization) {
             |        return new Wirespec.ServerEdge<>() {
             |        @Override public Request from(Wirespec.RawRequest request) {
-            |          return fromRequest(serialization, request);
+            |          return fromRawRequest(serialization, request);
             |        }
             |        @Override public Wirespec.RawResponse to(Response<?> response) {
-            |          return toResponse(serialization, response);
+            |          return toRawResponse(serialization, response);
             |        }};
             |      }
             |      @Override
             |      public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization serialization) {
             |        return new Wirespec.ClientEdge<>() {
             |        @Override public Wirespec.RawRequest to(Request request) {
-            |          return toRequest(serialization, request);
+            |          return toRawRequest(serialization, request);
             |        }
             |        @Override public Response<?> from(Wirespec.RawResponse response) {
-            |          return fromResponse(serialization, response);
+            |          return fromRawResponse(serialization, response);
             |        }};
             |      }
             |    }
@@ -451,40 +451,40 @@ class JavaEmitterTest {
             |    public static record Headers () implements Wirespec.Response.Headers {
             |    }
             |  }
-            |  public interface Handler extends Wirespec.Handler {
-            |    static public Wirespec.RawRequest toRequest(Wirespec.Serializer serialization, Request request) {
-            |      return new Wirespec.RawRequest(
-            |        request.method().name(),
-            |        java.util.List.of("todos"),
+            |  static public Wirespec.RawRequest toRawRequest(Wirespec.Serializer serialization, Request request) {
+            |    return new Wirespec.RawRequest(
+            |      request.method().name(),
+            |      java.util.List.of("todos"),
+            |      java.util.Collections.emptyMap(),
+            |      java.util.Collections.emptyMap(),
+            |      null
+            |    );
+            |  }
+            |  static public Request fromRawRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
+            |    return new Request();
+            |  }
+            |  static public Wirespec.RawResponse toRawResponse(Wirespec.Serializer serialization, Response<?> response) {
+            |    if (response instanceof Response200 r) {
+            |      return new Wirespec.RawResponse(
+            |        r.status(),
             |        java.util.Collections.emptyMap(),
-            |        java.util.Collections.emptyMap(),
-            |        null
+            |        serialization.serializeBody(r.body(), Wirespec.getType(TodoDto.class, java.util.List.class))
             |      );
+            |    } else {
+            |      throw new IllegalStateException(("Cannot match response with status: " + response.status()));
             |    }
-            |    static public Request fromRequest(Wirespec.Deserializer serialization, Wirespec.RawRequest request) {
-            |      return new Request();
+            |  }
+            |  static public Response<?> fromRawResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
+            |    switch (response.statusCode()) {
+            |        case 200 -> {
+            |          return new Response200(serialization.deserializeBody(response.body(), Wirespec.getType(TodoDto.class, java.util.List.class)));
+            |        }
+            |        default -> {
+            |          throw new IllegalStateException(("Cannot match response with status: " + response.statusCode()));
+            |        }
             |    }
-            |    static public Wirespec.RawResponse toResponse(Wirespec.Serializer serialization, Response<?> response) {
-            |      if (response instanceof Response200 r) {
-            |        return new Wirespec.RawResponse(
-            |          r.status(),
-            |          java.util.Collections.emptyMap(),
-            |          serialization.serializeBody(r.body(), Wirespec.getType(TodoDto.class, java.util.List.class))
-            |        );
-            |      } else {
-            |        throw new IllegalStateException(("Cannot match response with status: " + response.status()));
-            |      }
-            |    }
-            |    static public Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
-            |      switch (response.statusCode()) {
-            |          case 200 -> {
-            |            return new Response200(serialization.deserializeBody(response.body(), Wirespec.getType(TodoDto.class, java.util.List.class)));
-            |          }
-            |          default -> {
-            |            throw new IllegalStateException(("Cannot match response with status: " + response.statusCode()));
-            |          }
-            |      }
-            |    }
+            |  }
+            |  public interface Handler extends Wirespec.Handler {
             |    public java.util.concurrent.CompletableFuture<Response<?>> getTodos(Request request);
             |    public static record Handlers () implements Wirespec.Server<Request, Response<?>>, Wirespec.Client<Request, Response<?>> {
             |      @Override
@@ -499,20 +499,20 @@ class JavaEmitterTest {
             |      public Wirespec.ServerEdge<Request, Response<?>> getServer(Wirespec.Serialization serialization) {
             |        return new Wirespec.ServerEdge<>() {
             |        @Override public Request from(Wirespec.RawRequest request) {
-            |          return fromRequest(serialization, request);
+            |          return fromRawRequest(serialization, request);
             |        }
             |        @Override public Wirespec.RawResponse to(Response<?> response) {
-            |          return toResponse(serialization, response);
+            |          return toRawResponse(serialization, response);
             |        }};
             |      }
             |      @Override
             |      public Wirespec.ClientEdge<Request, Response<?>> getClient(Wirespec.Serialization serialization) {
             |        return new Wirespec.ClientEdge<>() {
             |        @Override public Wirespec.RawRequest to(Request request) {
-            |          return toRequest(serialization, request);
+            |          return toRawRequest(serialization, request);
             |        }
             |        @Override public Response<?> from(Wirespec.RawResponse response) {
-            |          return fromResponse(serialization, response);
+            |          return fromRawResponse(serialization, response);
             |        }};
             |      }
             |    }
