@@ -94,15 +94,13 @@ fun Element.transform(transformer: Transformer): Element = transformer.transform
 
 // Field transformation
 
-fun Field.transformChildren(transformer: Transformer): Field =
-    copy(type = transformer.transformType(type))
+fun Field.transformChildren(transformer: Transformer): Field = copy(type = transformer.transformType(type))
 
 fun Field.transform(transformer: Transformer): Field = transformer.transformField(this)
 
 // Parameter transformation
 
-fun Parameter.transformChildren(transformer: Transformer): Parameter =
-    copy(type = transformer.transformType(type))
+fun Parameter.transformChildren(transformer: Transformer): Parameter = copy(type = transformer.transformType(type))
 
 fun Parameter.transform(transformer: Transformer): Parameter = transformer.transformParameter(this)
 
@@ -155,6 +153,7 @@ fun Statement.transformChildren(transformer: Transformer): Statement = when (thi
     )
     is StaticCall -> copy(arguments = arguments.mapValues { transformer.transformExpression(it.value) })
     is ClassLiteral -> copy(type = transformer.transformType(type))
+    is TypeDescriptor -> copy(type = transformer.transformType(type))
     is AnonymousClass -> copy(
         baseType = transformer.transformType(baseType) as Type.Custom,
         typeArguments = typeArguments.map { transformer.transformType(it) },
@@ -190,24 +189,28 @@ fun Case.transform(transformer: Transformer): Case = transformer.transformCase(t
  */
 inline fun <reified T : Type> Element.transformMatching(
     crossinline transform: (T) -> Type,
-): Element = transform(transformer(
-    transformType = { type, transformer ->
-        val transformed = if (type is T) transform(type) else type
-        transformed.transformChildren(transformer)
-    },
-))
+): Element = transform(
+    transformer(
+        transformType = { type, transformer ->
+            val transformed = if (type is T) transform(type) else type
+            transformed.transformChildren(transformer)
+        },
+    ),
+)
 
 /**
  * Match and transform elements using pattern matching.
  */
 inline fun <reified T : Element> Element.transformMatchingElements(
     crossinline transform: (T) -> Element,
-): Element = transform(transformer(
-    transformElement = { element, transformer ->
-        val transformed = if (element is T) transform(element) else element
-        transformed.transformChildren(transformer)
-    },
-))
+): Element = transform(
+    transformer(
+        transformElement = { element, transformer ->
+            val transformed = if (element is T) transform(element) else element
+            transformed.transformChildren(transformer)
+        },
+    ),
+)
 
 /**
  * Match and transform fields using a predicate.
@@ -215,12 +218,14 @@ inline fun <reified T : Element> Element.transformMatchingElements(
 fun Element.transformFieldsWhere(
     predicate: (Field) -> Boolean,
     transform: (Field) -> Field,
-): Element = transform(transformer(
-    transformField = { field, transformer ->
-        val transformed = if (predicate(field)) transform(field) else field
-        transformed.transformChildren(transformer)
-    },
-))
+): Element = transform(
+    transformer(
+        transformField = { field, transformer ->
+            val transformed = if (predicate(field)) transform(field) else field
+            transformed.transformChildren(transformer)
+        },
+    ),
+)
 
 /**
  * Match and transform types by name.
@@ -235,14 +240,12 @@ fun Element.transformTypeByName(
 /**
  * Rename a custom type throughout the AST.
  */
-fun Element.renameType(oldName: String, newName: String): Element =
-    transformTypeByName(oldName) { it.copy(name = newName) }
+fun Element.renameType(oldName: String, newName: String): Element = transformTypeByName(oldName) { it.copy(name = newName) }
 
 /**
  * Rename a field throughout the AST.
  */
-fun Element.renameField(oldName: String, newName: String): Element =
-    transformFieldsWhere({ it.name == oldName }) { it.copy(name = newName) }
+fun Element.renameField(oldName: String, newName: String): Element = transformFieldsWhere({ it.name == oldName }) { it.copy(name = newName) }
 
 /**
  * Match and transform parameters using a predicate.
@@ -250,12 +253,14 @@ fun Element.renameField(oldName: String, newName: String): Element =
 fun Element.transformParametersWhere(
     predicate: (Parameter) -> Boolean,
     transform: (Parameter) -> Parameter,
-): Element = transform(transformer(
-    transformParameter = { parameter, transformer ->
-        val transformed = if (predicate(parameter)) transform(parameter) else parameter
-        transformed.transformChildren(transformer)
-    },
-))
+): Element = transform(
+    transformer(
+        transformParameter = { parameter, transformer ->
+            val transformed = if (predicate(parameter)) transform(parameter) else parameter
+            transformed.transformChildren(transformer)
+        },
+    ),
+)
 
 // Visitor interface for traversing AST without mutation
 
@@ -263,14 +268,30 @@ fun Element.transformParametersWhere(
  * Visitor interface for traversing AST nodes.
  */
 interface Visitor {
-    fun visitType(type: Type) { type.visitChildren(this) }
-    fun visitElement(element: Element) { element.visitChildren(this) }
-    fun visitStatement(statement: Statement) { statement.visitChildren(this) }
-    fun visitExpression(expression: Expression) { expression.visitChildren(this) }
-    fun visitField(field: Field) { field.visitChildren(this) }
-    fun visitParameter(parameter: Parameter) { parameter.visitChildren(this) }
-    fun visitConstructor(constructor: Constructor) { constructor.visitChildren(this) }
-    fun visitCase(case: Case) { case.visitChildren(this) }
+    fun visitType(type: Type) {
+        type.visitChildren(this)
+    }
+    fun visitElement(element: Element) {
+        element.visitChildren(this)
+    }
+    fun visitStatement(statement: Statement) {
+        statement.visitChildren(this)
+    }
+    fun visitExpression(expression: Expression) {
+        expression.visitChildren(this)
+    }
+    fun visitField(field: Field) {
+        field.visitChildren(this)
+    }
+    fun visitParameter(parameter: Parameter) {
+        parameter.visitChildren(this)
+    }
+    fun visitConstructor(constructor: Constructor) {
+        constructor.visitChildren(this)
+    }
+    fun visitCase(case: Case) {
+        case.visitChildren(this)
+    }
 }
 
 // Visitor child traversal functions
@@ -377,6 +398,7 @@ fun Statement.visitChildren(visitor: Visitor) {
         }
         is StaticCall -> arguments.values.forEach { visitor.visitExpression(it) }
         is ClassLiteral -> visitor.visitType(type)
+        is TypeDescriptor -> visitor.visitType(type)
         is AnonymousClass -> {
             visitor.visitType(baseType)
             typeArguments.forEach { visitor.visitType(it) }

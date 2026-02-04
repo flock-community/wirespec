@@ -33,6 +33,7 @@ import community.flock.wirespec.language.core.StaticCall
 import community.flock.wirespec.language.core.Struct
 import community.flock.wirespec.language.core.Switch
 import community.flock.wirespec.language.core.Type
+import community.flock.wirespec.language.core.TypeDescriptor
 import community.flock.wirespec.language.core.Union
 import community.flock.wirespec.language.core.VariableReference
 import community.flock.wirespec.language.core.Function as AstFunction
@@ -241,6 +242,7 @@ object TypeScriptGenerator : CodeGenerator {
         is BinaryOp -> "(${left.emit()} ${operator.toTypeScript()} ${right.emit()});\n".indentCode(indent)
         is StaticCall -> "$qualifiedName(${arguments.values.joinToString(", ") { it.emit() }});\n".indentCode(indent)
         is ClassLiteral -> "${type.emit()};\n".indentCode(indent)
+        is TypeDescriptor -> throw IllegalArgumentException("TypeDescriptor is not directly supported in TypeScript")
         is AnonymousClass -> throw IllegalArgumentException("AnonymousClass is not directly supported in TypeScript")
     }
 
@@ -277,6 +279,7 @@ object TypeScriptGenerator : CodeGenerator {
         is BinaryOp -> "(${left.emit()} ${operator.toTypeScript()} ${right.emit()})"
         is StaticCall -> "$qualifiedName(${arguments.values.joinToString(", ") { it.emit() }})"
         is ClassLiteral -> type.emit()
+        is TypeDescriptor -> throw IllegalArgumentException("TypeDescriptor is not directly supported in TypeScript")
         is AnonymousClass -> throw IllegalArgumentException("AnonymousClass is not directly supported in TypeScript")
         is ErrorStatement -> throw IllegalArgumentException("ErrorStatement cannot be an expression in TypeScript")
         is Switch -> throw IllegalArgumentException("Switch cannot be an expression in TypeScript")

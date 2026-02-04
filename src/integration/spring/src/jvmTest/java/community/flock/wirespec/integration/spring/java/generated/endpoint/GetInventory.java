@@ -55,7 +55,7 @@ public interface GetInventory extends Wirespec.Endpoint {
         return new Wirespec.RawResponse(
           r.status(),
           java.util.Collections.emptyMap(),
-          serialization.serializeBody(r.body(), Wirespec.getType(Void.class, null))
+          serialization.serializeBody(r.body(), Wirespec.getType(Integer.class, java.util.Map.class))
         );
       } else {
         throw new IllegalStateException(("Cannot match response with status: " + response.status()));
@@ -64,7 +64,7 @@ public interface GetInventory extends Wirespec.Endpoint {
     static public Response<?> fromResponse(Wirespec.Deserializer serialization, Wirespec.RawResponse response) {
       switch (response.statusCode()) {
           case 200 -> {
-            return new Response200(serialization.deserializeBody(response.body(), Wirespec.getType(Void.class, null)));
+            return new Response200(serialization.deserializeBody(response.body(), Wirespec.getType(Integer.class, java.util.Map.class)));
           }
           default -> {
             throw new IllegalStateException(("Cannot match response with status: " + response.statusCode()));

@@ -110,13 +110,16 @@ data class RawElement(val code: String) : Element
 data object NullLiteral : Statement, Expression
 
 // Variable/identifier reference - represents a reference to a variable
-data class VariableReference(val name: String) : Statement, Expression
+data class VariableReference(val name: String) :
+    Statement,
+    Expression
 
 // Property access - represents accessing a property on a receiver (e.g., request.body())
 data class PropertyAccess(
     val receiver: Expression,
     val property: String,
-) : Statement, Expression
+) : Statement,
+    Expression
 
 // Method call on receiver - represents calling a method on an object (e.g., list.get(index))
 // If receiver is null, it's a simple function call (e.g., fromRequest(...))
@@ -125,20 +128,23 @@ data class MethodCall(
     val typeArguments: List<Type> = emptyList(),
     val method: String,
     val arguments: Map<String, Expression> = emptyMap(),
-) : Statement, Expression
+) : Statement,
+    Expression
 
 // Enum constant reference - represents an enum constant (e.g., Wirespec.Method.GET)
 data class EnumReference(
     val enumType: Type.Custom,
     val entry: String,
-) : Statement, Expression
+) : Statement,
+    Expression
 
 // Binary operations - represents binary operators (e.g., "message" + status)
 data class BinaryOp(
     val left: Expression,
     val operator: Operator,
     val right: Expression,
-) : Statement, Expression {
+) : Statement,
+    Expression {
     enum class Operator { PLUS, EQUALS, NOT_EQUALS }
 }
 
@@ -147,17 +153,28 @@ data class StaticCall(
     val qualifiedName: String,
     val typeArguments: List<Type> = emptyList(),
     val arguments: Map<String, Expression> = emptyMap(),
-) : Statement, Expression
+) : Statement,
+    Expression
 
 // Class literal - represents a class reference (e.g., String.class)
-data class ClassLiteral(val type: Type) : Statement, Expression
+data class ClassLiteral(val type: Type) :
+    Statement,
+    Expression
+
+// Type descriptor - represents a runtime type descriptor for serialization
+// In Java this emits Wirespec.getType(Type.class, Container.class)
+// In other languages it may emit different type descriptor patterns
+data class TypeDescriptor(val type: Type) :
+    Statement,
+    Expression
 
 // Anonymous class - represents an anonymous class instantiation with method implementations
 data class AnonymousClass(
     val baseType: Type.Custom,
     val typeArguments: List<Type> = emptyList(),
     val methods: List<Function>,
-) : Statement, Expression
+) : Statement,
+    Expression
 
 data class PrintStatement(val expression: Expression) : Statement
 data class ReturnStatement(val expression: Expression) : Statement

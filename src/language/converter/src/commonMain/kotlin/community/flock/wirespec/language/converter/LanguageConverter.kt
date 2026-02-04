@@ -1,10 +1,8 @@
 package community.flock.wirespec.language.converter
 
-import community.flock.wirespec.language.core.AnonymousClass
 import community.flock.wirespec.language.core.Assignment
 import community.flock.wirespec.language.core.BinaryOp
 import community.flock.wirespec.language.core.Case
-import community.flock.wirespec.language.core.ClassLiteral
 import community.flock.wirespec.language.core.Constructor
 import community.flock.wirespec.language.core.ConstructorStatement
 import community.flock.wirespec.language.core.Element
@@ -28,6 +26,7 @@ import community.flock.wirespec.language.core.StaticCall
 import community.flock.wirespec.language.core.Struct
 import community.flock.wirespec.language.core.Switch
 import community.flock.wirespec.language.core.Type
+import community.flock.wirespec.language.core.TypeDescriptor
 import community.flock.wirespec.language.core.Union
 import community.flock.wirespec.language.core.VariableReference
 import community.flock.wirespec.compiler.core.parse.ast.Channel as ChannelWirespec
@@ -46,7 +45,6 @@ fun DefinitionWirespec.convert(): Element = when (this) {
     is RefinedWirespec -> convert()
     is ChannelWirespec -> convert()
     is EndpointWirespec -> convert()
-    else -> error("Conversion not implemented for ${this::class.simpleName}")
 }
 
 fun TypeWirespec.convert() = Struct(
@@ -103,8 +101,7 @@ fun ChannelWirespec.convert() = Interface(
     ),
 )
 
-fun EndpointWirespec.
-        convert(): Interface {
+fun EndpointWirespec.convert(): Interface {
     val pathParams = path.filterIsInstance<EndpointWirespec.Segment.Param>()
     val requestContent = requests.first().content
     val requestBodyType = requestContent?.reference?.convert() ?: Type.Unit
@@ -119,7 +116,7 @@ fun EndpointWirespec.
                     name = "Path",
                     fields = pathParams.map { Field(it.identifier.value.sanitizeForJava(), it.reference.convert()) },
                     interfaces = listOf(Type.Custom("Wirespec.Path")),
-                )
+                ),
             )
 
             // Queries record
@@ -128,7 +125,7 @@ fun EndpointWirespec.
                     name = "Queries",
                     fields = queries.map { Field(it.identifier.value.sanitizeForJava(), it.reference.convert()) },
                     interfaces = listOf(Type.Custom("Wirespec.Queries")),
-                )
+                ),
             )
 
             // RequestHeaders record
@@ -137,7 +134,7 @@ fun EndpointWirespec.
                     name = "RequestHeaders",
                     fields = headers.map { Field(it.identifier.value.sanitizeForJava(), it.reference.convert()) },
                     interfaces = listOf(Type.Custom("Wirespec.Request.Headers")),
-                )
+                ),
             )
 
             // Request record
@@ -164,7 +161,7 @@ fun EndpointWirespec.
                                     ConstructorStatement(
                                         type = Type.Custom("Path"),
                                         namedArguments = pathParams.associate { it.identifier.value.sanitizeForJava() to VariableReference(it.identifier.value.sanitizeForJava()) },
-                                    )
+                                    ),
                                 ),
                                 Assignment("method", EnumReference(Type.Custom("Wirespec.Method"), method.name)),
                                 Assignment(
@@ -172,20 +169,20 @@ fun EndpointWirespec.
                                     ConstructorStatement(
                                         type = Type.Custom("Queries"),
                                         namedArguments = queries.associate { it.identifier.value.sanitizeForJava() to VariableReference(it.identifier.value.sanitizeForJava()) },
-                                    )
+                                    ),
                                 ),
                                 Assignment(
                                     "headers",
                                     ConstructorStatement(
                                         type = Type.Custom("RequestHeaders"),
                                         namedArguments = headers.associate { it.identifier.value.sanitizeForJava() to VariableReference(it.identifier.value.sanitizeForJava()) },
-                                    )
+                                    ),
                                 ),
                                 Assignment("body", if (requestContent != null) VariableReference("body") else NullLiteral),
                             ),
-                        )
+                        ),
                     ),
-                )
+                ),
             )
 
             // Response sealed interface
@@ -196,7 +193,7 @@ fun EndpointWirespec.
                     elements = emptyList(),
                     isSealed = true,
                     typeParameters = listOf("T"),
-                )
+                ),
             )
 
             // Response status interfaces (Response2XX, Response5XX, etc.)
@@ -209,7 +206,7 @@ fun EndpointWirespec.
                         isSealed = true,
                         typeParameters = listOf("T"),
                     )
-                }
+                },
             )
 
             // Response content type interfaces (ResponseVoid, ResponseTodoDto, etc.)
@@ -226,7 +223,7 @@ fun EndpointWirespec.
                             elements = emptyList(),
                             isSealed = true,
                         )
-                    }
+                    },
             )
 
             // Individual response records (Response200, Response201, etc.)
@@ -265,14 +262,14 @@ fun EndpointWirespec.
                                         ConstructorStatement(
                                             type = Type.Custom("Headers"),
                                             namedArguments = response.headers.associate { it.identifier.value.sanitizeForJava() to VariableReference(it.identifier.value.sanitizeForJava()) },
-                                        )
+                                        ),
                                     ),
                                     Assignment("body", if (response.content != null) VariableReference("body") else NullLiteral),
                                 ),
-                            )
+                            ),
                         ),
                     )
-                }
+                },
             )
 
             // Handler interface
@@ -290,16 +287,15 @@ fun EndpointWirespec.
                             parameters = listOf(Parameter("request", Type.Custom("Request"))),
                             returnType = Type.Custom(
                                 "java.util.concurrent.CompletableFuture",
-                                listOf(Type.Custom("Response", listOf(Type.Custom("?"))))
+                                listOf(Type.Custom("Response", listOf(Type.Custom("?")))),
                             ),
                             body = emptyList(),
                             isAsync = false,
                             isStatic = false,
                             isOverride = false,
                         ),
-                        convertHandlers(),
                     ),
-                )
+                ),
             )
         },
     )
@@ -343,140 +339,6 @@ fun ReferenceWirespec.convert(): Type = when (this) {
 }
     .let { if (isNullable) Type.Nullable(it) else it }
 
-fun EndpointWirespec.convertHandlers(): Struct {
-    val pathTemplate = "/" + path.joinToString("/") {
-        when (it) {
-            is EndpointWirespec.Segment.Literal -> it.value
-            is EndpointWirespec.Segment.Param -> "{${it.identifier.value}}"
-        }
-    }
-
-    return Struct(
-        name = "Handlers",
-        fields = emptyList(),
-        interfaces = listOf(
-            Type.Custom("Wirespec.Server", listOf(Type.Custom("Request"), Type.Custom("Response", listOf(Type.Custom("?"))))),
-            Type.Custom("Wirespec.Client", listOf(Type.Custom("Request"), Type.Custom("Response", listOf(Type.Custom("?"))))),
-        ),
-        elements = listOf(
-            Function(
-                name = "getPathTemplate",
-                parameters = emptyList(),
-                returnType = Type.String,
-                isOverride = true,
-                body = listOf(ReturnStatement(Literal(pathTemplate, Type.String))),
-            ),
-            Function(
-                name = "getMethod",
-                parameters = emptyList(),
-                returnType = Type.String,
-                isOverride = true,
-                body = listOf(ReturnStatement(Literal(method.name, Type.String))),
-            ),
-            Function(
-                name = "getServer",
-                parameters = listOf(Parameter("serialization", Type.Custom("Wirespec.Serialization"))),
-                returnType = Type.Custom("Wirespec.ServerEdge", listOf(Type.Custom("Request"), Type.Custom("Response", listOf(Type.Custom("?"))))),
-                isOverride = true,
-                body = listOf(
-                    ReturnStatement(
-                        AnonymousClass(
-                            baseType = Type.Custom("Wirespec.ServerEdge"),
-                            typeArguments = emptyList(),
-                            methods = listOf(
-                                Function(
-                                    name = "from",
-                                    parameters = listOf(Parameter("request", Type.Custom("Wirespec.RawRequest"))),
-                                    returnType = Type.Custom("Request"),
-                                    isOverride = true,
-                                    body = listOf(
-                                        ReturnStatement(
-                                            MethodCall(
-                                                method = "fromRequest",
-                                                arguments = mapOf(
-                                                    "serialization" to VariableReference("serialization"),
-                                                    "request" to VariableReference("request"),
-                                                ),
-                                            )
-                                        )
-                                    ),
-                                ),
-                                Function(
-                                    name = "to",
-                                    parameters = listOf(Parameter("response", Type.Custom("Response", listOf(Type.Custom("?"))))),
-                                    returnType = Type.Custom("Wirespec.RawResponse"),
-                                    isOverride = true,
-                                    body = listOf(
-                                        ReturnStatement(
-                                            MethodCall(
-                                                method = "toResponse",
-                                                arguments = mapOf(
-                                                    "serialization" to VariableReference("serialization"),
-                                                    "response" to VariableReference("response"),
-                                                ),
-                                            )
-                                        )
-                                    ),
-                                ),
-                            ),
-                        )
-                    )
-                ),
-            ),
-            Function(
-                name = "getClient",
-                parameters = listOf(Parameter("serialization", Type.Custom("Wirespec.Serialization"))),
-                returnType = Type.Custom("Wirespec.ClientEdge", listOf(Type.Custom("Request"), Type.Custom("Response", listOf(Type.Custom("?"))))),
-                isOverride = true,
-                body = listOf(
-                    ReturnStatement(
-                        AnonymousClass(
-                            baseType = Type.Custom("Wirespec.ClientEdge"),
-                            typeArguments = emptyList(),
-                            methods = listOf(
-                                Function(
-                                    name = "to",
-                                    parameters = listOf(Parameter("request", Type.Custom("Request"))),
-                                    returnType = Type.Custom("Wirespec.RawRequest"),
-                                    isOverride = true,
-                                    body = listOf(
-                                        ReturnStatement(
-                                            MethodCall(
-                                                method = "toRequest",
-                                                arguments = mapOf(
-                                                    "serialization" to VariableReference("serialization"),
-                                                    "request" to VariableReference("request"),
-                                                ),
-                                            )
-                                        )
-                                    ),
-                                ),
-                                Function(
-                                    name = "from",
-                                    parameters = listOf(Parameter("response", Type.Custom("Wirespec.RawResponse"))),
-                                    returnType = Type.Custom("Response", listOf(Type.Custom("?"))),
-                                    isOverride = true,
-                                    body = listOf(
-                                        ReturnStatement(
-                                            MethodCall(
-                                                method = "fromResponse",
-                                                arguments = mapOf(
-                                                    "serialization" to VariableReference("serialization"),
-                                                    "response" to VariableReference("response"),
-                                                ),
-                                            )
-                                        )
-                                    ),
-                                ),
-                            ),
-                        )
-                    )
-                ),
-            ),
-        ),
-    )
-}
-
 fun EndpointWirespec.convertToResponse() = Function(
     name = "toResponse",
     isStatic = true,
@@ -508,9 +370,9 @@ fun EndpointWirespec.convertToResponse() = Function(
                                                     arguments = mapOf(
                                                         "value" to PropertyAccess(
                                                             PropertyAccess(VariableReference("r"), "headers"),
-                                                            header.identifier.value.sanitizeForJava()
+                                                            header.identifier.value.sanitizeForJava(),
                                                         ),
-                                                        "type" to header.reference.toJavaType(),
+                                                        "type" to header.reference.toTypeDescriptor(),
                                                     ),
                                                 )
                                             },
@@ -526,7 +388,7 @@ fun EndpointWirespec.convertToResponse() = Function(
                                                 method = "serialization.serializeBody",
                                                 arguments = mapOf(
                                                     "value" to PropertyAccess(VariableReference("r"), "body"),
-                                                    "type" to content.reference.toJavaType(),
+                                                    "type" to content.reference.toTypeDescriptor(),
                                                 ),
                                             )
                                         } ?: NullLiteral
@@ -542,8 +404,8 @@ fun EndpointWirespec.convertToResponse() = Function(
                     BinaryOp(
                         Literal("Cannot match response with status: ", Type.String),
                         BinaryOp.Operator.PLUS,
-                        PropertyAccess(VariableReference("response"), "status")
-                    )
+                        PropertyAccess(VariableReference("response"), "status"),
+                    ),
                 ),
             ),
         ),
@@ -583,20 +445,22 @@ fun EndpointWirespec.convertFromResponse() = Function(
                                                     "defaultValue" to StaticCall("java.util.Collections.emptyList"),
                                                 ),
                                             ),
-                                            "type" to header.reference.toJavaType(),
+                                            "type" to header.reference.toTypeDescriptor(),
                                         ),
                                     )
-                                } + (response.content?.let { content ->
-                                    mapOf(
-                                        "body" to MethodCall(
-                                            method = "serialization.deserializeBody",
-                                            arguments = mapOf(
-                                                "value" to PropertyAccess(VariableReference("response"), "body"),
-                                                "type" to content.reference.toJavaType(),
+                                } + (
+                                    response.content?.let { content ->
+                                        mapOf(
+                                            "body" to MethodCall(
+                                                method = "serialization.deserializeBody",
+                                                arguments = mapOf(
+                                                    "value" to PropertyAccess(VariableReference("response"), "body"),
+                                                    "type" to content.reference.toTypeDescriptor(),
+                                                ),
                                             ),
                                         )
-                                    )
-                                } ?: emptyMap()),
+                                    } ?: emptyMap()
+                                    ),
                             ),
                         ),
                     ),
@@ -607,8 +471,8 @@ fun EndpointWirespec.convertFromResponse() = Function(
                     BinaryOp(
                         Literal("Cannot match response with status: ", Type.String),
                         BinaryOp.Operator.PLUS,
-                        PropertyAccess(VariableReference("response"), "statusCode")
-                    )
+                        PropertyAccess(VariableReference("response"), "statusCode"),
+                    ),
                 ),
             ),
         ),
@@ -638,9 +502,9 @@ fun EndpointWirespec.convertToRequest() = Function(
                                     arguments = mapOf(
                                         "value" to PropertyAccess(
                                             PropertyAccess(VariableReference("request"), "path"),
-                                            it.identifier.value.replaceFirstChar { char -> char.lowercase() }
+                                            it.identifier.value.replaceFirstChar { char -> char.lowercase() },
                                         ),
-                                        "type" to it.reference.toJavaType(),
+                                        "type" to it.reference.toTypeDescriptor(),
                                     ),
                                 )
                             }
@@ -654,9 +518,9 @@ fun EndpointWirespec.convertToRequest() = Function(
                                 arguments = mapOf(
                                     "value" to PropertyAccess(
                                         PropertyAccess(VariableReference("request"), "queries"),
-                                        it.identifier.value.sanitizeForJava()
+                                        it.identifier.value.sanitizeForJava(),
                                     ),
-                                    "type" to it.reference.toJavaType(),
+                                    "type" to it.reference.toTypeDescriptor(),
                                 ),
                             )
                         },
@@ -670,9 +534,9 @@ fun EndpointWirespec.convertToRequest() = Function(
                                 arguments = mapOf(
                                     "value" to PropertyAccess(
                                         PropertyAccess(VariableReference("request"), "headers"),
-                                        it.identifier.value.sanitizeForJava()
+                                        it.identifier.value.sanitizeForJava(),
                                     ),
-                                    "type" to it.reference.toJavaType(),
+                                    "type" to it.reference.toTypeDescriptor(),
                                 ),
                             )
                         },
@@ -685,7 +549,7 @@ fun EndpointWirespec.convertToRequest() = Function(
                                 method = "serialization.serializeBody",
                                 arguments = mapOf(
                                     "value" to PropertyAccess(VariableReference("request"), "body"),
-                                    "type" to it.reference.toJavaType(),
+                                    "type" to it.reference.toTypeDescriptor(),
                                 ),
                             )
                         } ?: NullLiteral
@@ -720,7 +584,7 @@ fun EndpointWirespec.convertFromRequest() = Function(
                                             method = "get",
                                             arguments = mapOf("index" to Literal(index, Type.Integer(Precision.P32))),
                                         ),
-                                        "type" to segment.reference.toJavaType(),
+                                        "type" to segment.reference.toTypeDescriptor(),
                                     ),
                                 )
                             } else {
@@ -741,7 +605,7 @@ fun EndpointWirespec.convertFromRequest() = Function(
                                             "defaultValue" to StaticCall("java.util.Collections.emptyList"),
                                         ),
                                     ),
-                                    "type" to field.reference.toJavaType(),
+                                    "type" to field.reference.toTypeDescriptor(),
                                 ),
                             )
                         },
@@ -749,7 +613,8 @@ fun EndpointWirespec.convertFromRequest() = Function(
                     .plus(
                         headers.map { field ->
                             field.identifier.value to MethodCall(
-                                method = "serialization.deserializeParam",
+                                receiver = VariableReference("serialization"),
+                                method = "deserializeParam",
                                 arguments = mapOf(
                                     "value" to MethodCall(
                                         receiver = PropertyAccess(VariableReference("request"), "headers"),
@@ -759,7 +624,7 @@ fun EndpointWirespec.convertFromRequest() = Function(
                                             "defaultValue" to StaticCall("java.util.Collections.emptyList"),
                                         ),
                                     ),
-                                    "type" to field.reference.toJavaType(),
+                                    "type" to field.reference.toTypeDescriptor(),
                                 ),
                             )
                         },
@@ -771,7 +636,7 @@ fun EndpointWirespec.convertFromRequest() = Function(
                                     method = "serialization.deserializeBody",
                                     arguments = mapOf(
                                         "value" to PropertyAccess(VariableReference("request"), "body"),
-                                        "type" to it.reference.toJavaType(),
+                                        "type" to it.reference.toTypeDescriptor(),
                                     ),
                                 ),
                             )
@@ -793,43 +658,4 @@ private fun String.sanitizeForJava(): String = this
     .filter { it.isLetterOrDigit() || it == '_' }
     .let { if (it.firstOrNull()?.isDigit() == true) "_$it" else it }
 
-private fun ReferenceWirespec.toJavaType(): Expression {
-    val isIterable = this is ReferenceWirespec.Iterable
-    val isNullable = this.isNullable
-
-    val element = if (isIterable) (this as ReferenceWirespec.Iterable).reference else this
-
-    val elementType = when (element) {
-        is ReferenceWirespec.Custom -> Type.Custom(element.value)
-        is ReferenceWirespec.Primitive -> when (val t = element.type) {
-            is ReferenceWirespec.Primitive.Type.String -> Type.Custom("String")
-            is ReferenceWirespec.Primitive.Type.Integer -> when (t.precision) {
-                ReferenceWirespec.Primitive.Type.Precision.P32 -> Type.Custom("Integer")
-                ReferenceWirespec.Primitive.Type.Precision.P64 -> Type.Custom("Long")
-            }
-            is ReferenceWirespec.Primitive.Type.Number -> when (t.precision) {
-                ReferenceWirespec.Primitive.Type.Precision.P32 -> Type.Custom("Float")
-                ReferenceWirespec.Primitive.Type.Precision.P64 -> Type.Custom("Double")
-            }
-            is ReferenceWirespec.Primitive.Type.Boolean -> Type.Custom("Boolean")
-            is ReferenceWirespec.Primitive.Type.Bytes -> Type.Custom("byte[]")
-        }
-        else -> Type.Custom("Void")
-    }
-
-    val containerArg: Expression = if (isNullable) {
-        ClassLiteral(Type.Custom("java.util.Optional"))
-    } else if (isIterable) {
-        ClassLiteral(Type.Custom("java.util.List"))
-    } else {
-        NullLiteral
-    }
-
-    return StaticCall(
-        qualifiedName = "Wirespec.getType",
-        arguments = mapOf(
-            "type" to ClassLiteral(elementType),
-            "container" to containerArg,
-        ),
-    )
-}
+private fun ReferenceWirespec.toTypeDescriptor(): TypeDescriptor = TypeDescriptor(convert())

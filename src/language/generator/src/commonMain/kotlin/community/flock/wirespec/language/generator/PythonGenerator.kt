@@ -32,6 +32,7 @@ import community.flock.wirespec.language.core.StaticCall
 import community.flock.wirespec.language.core.Struct
 import community.flock.wirespec.language.core.Switch
 import community.flock.wirespec.language.core.Type
+import community.flock.wirespec.language.core.TypeDescriptor
 import community.flock.wirespec.language.core.Union
 import community.flock.wirespec.language.core.VariableReference
 import community.flock.wirespec.language.core.Function as AstFunction
@@ -217,6 +218,7 @@ object PythonGenerator : CodeGenerator {
         is BinaryOp -> "(${left.emit()} ${operator.toPython()} ${right.emit()})\n".indentCode(indent)
         is StaticCall -> "$qualifiedName(${arguments.values.joinToString(", ") { it.emit() }})\n".indentCode(indent)
         is ClassLiteral -> "${type.emit()}\n".indentCode(indent)
+        is TypeDescriptor -> throw IllegalArgumentException("TypeDescriptor is not supported in Python")
         is AnonymousClass -> throw IllegalArgumentException("AnonymousClass is not supported in Python")
     }
 
@@ -247,6 +249,7 @@ object PythonGenerator : CodeGenerator {
         is BinaryOp -> "(${left.emit()} ${operator.toPython()} ${right.emit()})"
         is StaticCall -> "$qualifiedName(${arguments.values.joinToString(", ") { it.emit() }})"
         is ClassLiteral -> type.emit()
+        is TypeDescriptor -> throw IllegalArgumentException("TypeDescriptor is not supported in Python")
         is AnonymousClass -> throw IllegalArgumentException("AnonymousClass is not supported in Python")
         is ErrorStatement -> throw IllegalArgumentException("ErrorStatement cannot be an expression in Python")
         is Switch -> throw IllegalArgumentException("Switch cannot be an expression in Python")
