@@ -7,6 +7,7 @@ import community.flock.wirespec.compiler.core.parse.ast.Comment
 import community.flock.wirespec.compiler.core.parse.ast.DefinitionIdentifier
 import community.flock.wirespec.compiler.core.parse.ast.Enum
 import community.flock.wirespec.compiler.core.tokenize.Comma
+import community.flock.wirespec.compiler.core.tokenize.Integer
 import community.flock.wirespec.compiler.core.tokenize.LeftCurly
 import community.flock.wirespec.compiler.core.tokenize.RightCurly
 import community.flock.wirespec.compiler.core.tokenize.WirespecType
@@ -38,15 +39,17 @@ object EnumParser {
         }
     }
 
+    private fun TokenProvider.isEnumEntry() = token.type is WirespecType || token.type is Integer
+
     private fun TokenProvider.parseEnumTypeEntries() = parseToken {
-        when (token.type) {
-            is WirespecType -> mutableListOf<String>().apply {
+        when {
+            isEnumEntry() -> mutableListOf<String>().apply {
                 add(token.value)
                 eatToken().bind()
                 while (token.type == Comma) {
                     eatToken().bind()
-                    when (token.type) {
-                        is WirespecType -> add(token.value).also { eatToken().bind() }
+                    when {
+                        isEnumEntry() -> add(token.value).also { eatToken().bind() }
                         else -> raiseWrongToken<WirespecType>().bind()
                     }
                 }

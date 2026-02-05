@@ -729,6 +729,42 @@ class PythonEmitterTest {
     }
 
     @Test
+    fun compileNegativeEnumTest() {
+        val result = CompileEnumTest.negativeCompiler { PythonEmitter() }
+        val expect =
+            //language=python
+            """
+            |import re
+            |
+            |from abc import abstractmethod
+            |from dataclasses import dataclass
+            |from typing import List, Optional
+            |from enum import Enum
+            |
+            |from ..wirespec import T, Wirespec
+            |
+            |class InnerErrorCode(str, Enum):
+            |  _0 = "0"
+            |  _1 = "1"
+            |  __1 = "-1"
+            |  _2 = "2"
+            |  __999 = "-999"
+            |
+            |  @property
+            |  def label(self) -> str:
+            |    return self.value
+            |
+            |  def __str__(self) -> str:
+            |    return self.value
+            |from . import model
+            |from . import endpoint
+            |from . import wirespec
+            |
+            """.trimMargin()
+        result shouldBeRight expect
+    }
+
+    @Test
     fun compileUnionTest() {
         val result = CompileUnionTest.compiler { PythonEmitter() }
         val expect =
