@@ -416,6 +416,19 @@ class TypeScriptEmitterTest {
     }
 
     @Test
+    fun compileNegativeEnumTest() {
+        val ts = """
+            |import {Wirespec} from '../Wirespec'
+            |
+            |export type InnerErrorCode = "0" | "1" | "-1" | "2" | "-999"
+            |
+            |export {InnerErrorCode} from './InnerErrorCode'
+        """.trimMargin()
+
+        CompileEnumTest.negativeCompiler { TypeScriptEmitter() } shouldBeRight ts
+    }
+
+    @Test
     fun compileRefinedTest() {
         val ts = """
             |import {Wirespec} from '../Wirespec'

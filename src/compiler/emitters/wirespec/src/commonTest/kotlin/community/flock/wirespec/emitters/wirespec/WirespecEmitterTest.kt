@@ -69,6 +69,18 @@ class WirespecEmitterTest {
     }
 
     @Test
+    fun compileNegativeEnumTest() {
+        val wirespec = """
+            |enum InnerErrorCode {
+            |  0, 1, -1, 2, -999
+            |}
+            |
+        """.trimMargin()
+
+        CompileEnumTest.negativeCompiler { WirespecEmitter() } shouldBeRight wirespec
+    }
+
+    @Test
     fun compileMinimalEndpointTest() {
         val wirespec = """
             |endpoint GetTodos GET /todos -> {

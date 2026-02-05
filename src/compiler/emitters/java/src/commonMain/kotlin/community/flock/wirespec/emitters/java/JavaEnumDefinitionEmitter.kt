@@ -27,7 +27,10 @@ interface JavaEnumDefinitionEmitter: EnumDefinitionEmitter, JavaIdentifierEmitte
         |
     """.trimMargin()
 
-    fun String.sanitizeEnum() = split("-", ", ", ".", " ", "//")
+    fun String.sanitizeNegative() = if (startsWith("-")) "__${substring(1)}" else this
+
+    fun String.sanitizeEnum() = sanitizeNegative()
+        .split("-", ", ", ".", " ", "//")
         .joinToString("_")
         .sanitizeFirstIsDigit()
         .sanitizeKeywords()

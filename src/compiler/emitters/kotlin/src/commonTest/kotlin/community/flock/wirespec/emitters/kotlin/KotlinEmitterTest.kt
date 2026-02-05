@@ -148,6 +148,30 @@ class KotlinEmitterTest {
     }
 
     @Test
+    fun compileNegativeEnumTest() {
+        val kotlin = """
+            |package community.flock.wirespec.generated.model
+            |
+            |import community.flock.wirespec.kotlin.Wirespec
+            |import kotlin.reflect.typeOf
+            |
+            |enum class InnerErrorCode (override val label: String): Wirespec.Enum {
+            |  _0("0"),
+            |  _1("1"),
+            |  __1("-1"),
+            |  _2("2"),
+            |  __999("-999");
+            |  override fun toString(): String {
+            |    return label
+            |  }
+            |}
+            |
+        """.trimMargin()
+
+        CompileEnumTest.negativeCompiler { KotlinEmitter() } shouldBeRight kotlin
+    }
+
+    @Test
     fun compileFullEndpointTest() {
         val kotlin = """
             |package community.flock.wirespec.generated.endpoint
